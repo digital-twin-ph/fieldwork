@@ -1,0 +1,8 @@
+node_modules/
+.secrets/
+.env
+.env.*
+server.log
+server-error.log
+test-results/
+playwright-report/

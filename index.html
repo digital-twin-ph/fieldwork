@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#126557">
+  <title>Fieldwork — Semantic GIS Studio</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./build/canvas.css">
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="./" aria-label="Fieldwork home"><img src="./icon.svg" alt=""><span>fieldwork<span class="brand-sub">SEMANTIC GIS STUDIO</span></span></a>
+    <div class="header-divider"></div><span class="workspace-name">Research workspace <span class="tag">PROTOTYPE</span></span>
+    <div class="header-right"><span id="offline-status" class="connection"><i></i> Preparing offline workspace</span><button id="help-button" class="icon-button" title="How to use Fieldwork" aria-label="How to use Fieldwork">?</button><span class="avatar" title="Local workspace">FW</span></div>
+  </header>
+  <section class="project-bar">
+    <div><div class="eyebrow">WORKFLOWS <span>/</span> EXAMPLES</div><h1>Heat outreach screening <span class="title-dot"></span></h1><p>Connect geography to evidence. Make every decision explainable.</p></div>
+    <div class="project-actions"><span id="save-status">Saved on this device</span><button id="import-button" class="button">↑ Import</button><button id="export-button" class="button">↓ Export</button><button id="run-button" class="button primary"><span>▶</span> Run workflow</button></div>
+  </section>
+  <main class="studio">
+    <aside class="library">
+      <div class="section-title">Node library <span class="tag">6</span></div>
+      <label class="search"><span>⌕</span><input id="node-search" placeholder="Find a node…" aria-label="Find a node"></label>
+      <p class="muted library-help">Click to add. Connect matching ports.</p>
+      <div id="node-library"></div>
+      <div class="library-bottom"><span class="tiny-icon">⌁</span><strong>Your data stays here</strong><p>Local files. Local reasoning.<br>No account or cloud required.</p><button id="reset-button" class="text-button">Restore example ↗</button></div>
+    </aside>
+    <section class="work-area">
+      <div class="canvas-toolbar"><div class="tabs"><button class="tab active" data-view="workflow">Workflow <span id="node-count">6</span></button><button class="tab" data-view="rules">N3 & evidence</button></div><div class="toolbar-actions"><span id="workflow-state" class="state">Ready to run</span><button id="undo-button" class="icon-button" title="Undo" aria-label="Undo">↶</button><button id="redo-button" class="icon-button" title="Redo" aria-label="Redo">↷</button></div></div>
+      <div id="workflow-view" class="canvas-view">
+        <div class="canvas-heading"><span class="eyebrow">HEAT OUTREACH · DEMO 01</span><span>Drag nodes to arrange your analysis</span></div>
+        <div id="canvas" aria-label="Workflow canvas"></div>
+        <div class="canvas-footer"><span id="canvas-hint">Select a node to inspect · Output port → input port to connect</span><div class="zoom-controls"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-value">100%</span><button id="zoom-in" aria-label="Zoom in">+</button><button id="fit-button" title="Fit workflow" aria-label="Fit workflow">⛶</button></div></div>
+      </div>
+      <div id="rules-view" class="rules-view" hidden><div class="rules-intro"><strong>Executable evidence</strong><span>Generated N3 facts and rules, evaluated by EYE-JS locally.</span><button id="download-evidence" class="button small">↓ Run receipt</button></div><pre id="n3-preview">Run the workflow to inspect its N3 input and conclusions.</pre></div>
+      <section class="results-panel">
+        <div class="results-heading"><div><span class="section-title">Results</span><span id="run-summary" class="muted">Run the workflow to see results</span></div><span class="muted">One tab per output node</span></div>
+        <div id="result-tabs" class="result-switch" role="tablist" aria-label="Workflow outputs"></div>
+        <div id="results-empty" class="empty-state">Connect visual output nodes and run the workflow to create Results tabs. Name each output and choose Map or Table in the Inspector.</div>
+        <div id="result-metrics" class="metrics"></div>
+        <div id="map-panel" role="tabpanel" tabindex="0" hidden><svg id="map" viewBox="0 0 850 295" role="img" aria-label="Neighborhoods and cooling centers"></svg><div class="map-legend"><span><i class="legend-dot review"></i> Review</span><span><i class="legend-dot clear"></i> No flag</span><span><i class="legend-square"></i> Cooling center</span><span class="map-note">Local locations · no external map tiles</span></div></div>
+        <div id="table-panel" role="tabpanel" tabindex="0" hidden><table><thead><tr><th>Neighborhood</th><th>Nearest center</th><th>Distance</th><th>Decision</th></tr></thead><tbody id="result-rows"></tbody></table></div>
+      </section>
+    </section>
+    <aside class="inspector"><div class="inspector-header"><span class="section-title">Inspector</span><span class="tag">LOCAL</span></div><div id="inspector-content"></div></aside>
+  </main>
+  <footer class="app-footer"><span><i class="footer-dot"></i> <span id="engine-status">EYE-JS 21.1.24 · WebAssembly</span></span><span>CRS84 coordinates · geodesic approximation · synthetic data</span><span>Exploratory research / v0.1</span></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <input id="workflow-file" type="file" accept=".json,application/json" hidden><input id="geojson-file" type="file" accept=".json,.geojson,application/json,application/geo+json" hidden>
+  <dialog id="help-dialog"><div class="dialog-heading"><h2>From places to decisions</h2><button id="close-help" class="icon-button" aria-label="Close help">×</button></div><p>Build a small spatial analysis by connecting data, operations, and rules. Everything runs on this device.</p><ol><li><strong>Explore.</strong> Select a node to see its inputs and settings.</li><li><strong>Connect.</strong> Click an output circle, then a compatible input circle. Click a connector to remove it.</li><li><strong>Experiment.</strong> Change the distance threshold or heat alert, then run again.</li><li><strong>Understand.</strong> Select a neighborhood on the map or table for its supporting evidence.</li><li><strong>Keep.</strong> Export a workflow to move it between devices. Export a run receipt for inputs, rules, and results.</li></ol><p class="notice">This is a research example, not a validated public health policy. Distances are straight-line approximations, not travel distances. Logical English comparison is not implemented in this slice.</p><p>Keyboard: Tab to controls, Enter to activate. Selected nodes can be moved with arrow keys. Delete removes a focused node. Ctrl/Cmd+Z undoes an edit.</p></dialog>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

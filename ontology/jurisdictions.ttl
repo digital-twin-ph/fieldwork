@@ -1,0 +1,86 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<urn:fieldwork:ontology:jurisdictions> a owl:Ontology;
+  rdfs:label "Jurisdiction assets and study area membership";
+  owl:versionInfo "0.1 experimental, 2026-10-06";
+  rdfs:comment "Proposed extension to fieldwork.ttl. Load both graphs explicitly. Declarations do not implement ingestion, geometry operations or validation.".
+
+fw:Jurisdiction a owl:Class;
+  rdfs:subClassOf geo:Feature;
+  rdfs:comment "Named administrative territory, not its governing organization. Identity is scoped to an authority or identifier scheme; names alone are not keys.";
+  fw:implementationStatus "proposed".
+fw:JurisdictionBoundary a owl:Class;
+  rdfs:subClassOf geo:Feature, prov:Entity;
+  rdfs:comment "A dataset-version-specific representation of a jurisdiction, with its own identity, source attributes and geo:hasGeometry. This is not asserted owl:sameAs the jurisdiction or a representation from another release.";
+  fw:implementationStatus "proposed".
+fw:JurisdictionDataset a owl:Class;
+  rdfs:subClassOf dcat:Dataset, prov:Entity;
+  rdfs:comment "Boundary data for a stated provider, release and scope. Encodings are separate dcat:Distributions. Dataset version is not the validity date of a boundary.";
+  fw:implementationStatus "proposed".
+fw:DownloadedAsset a owl:Class;
+  rdfs:subClassOf prov:Entity;
+  rdfs:comment "Exact locally acquired file bytes, derived from a dcat:Distribution. Record fw:sha256, fw:byteSize, fw:filename and retrieval activity. Its local availability is separate from its identity.";
+  fw:implementationStatus "proposed".
+fw:AssetAcquisition a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:comment "A download or user-supplied-file acquisition. prov:used identifies the distribution when known; prov:generated identifies local bytes. A URL alone does not mean acquisition succeeded.";
+  fw:implementationStatus "proposed".
+fw:BoundaryImport a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:comment "Reads a selected layer from an asset, validates geometry and CRS, preserves source fields, and generates an imported dataset. Archive extraction may be a separate provenance activity.";
+  fw:implementationStatus "proposed".
+fw:ImportedFeatureDataset a owl:Class;
+  rdfs:subClassOf fw:DerivedSpatialDataset, geo:FeatureCollection;
+  rdfs:comment "A decoded local feature collection before or after provider-specific normalization. A generic reader does not have to resolve jurisdiction identity.";
+  fw:implementationStatus "proposed".
+fw:ImportedBoundaryDataset a owl:Class;
+  rdfs:subClassOf fw:ImportedFeatureDataset;
+  rdfs:comment "Locally imported boundary features, linked using rdfs:member. Record derivation from the original bytes and the boundary import activity.";
+  fw:implementationStatus "proposed".
+fw:JurisdictionSelection a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Explicitly selects versioned boundary features from imported datasets into a study area. The proposed N3 rules project eligible members; they do not validate completion or compute a geometric union.";
+  fw:implementationStatus "proposed".
+
+fw:representsJurisdiction a owl:ObjectProperty;
+  rdfs:domain fw:JurisdictionBoundary; rdfs:range fw:Jurisdiction.
+fw:boundaryDataset a owl:ObjectProperty;
+  rdfs:domain fw:JurisdictionBoundary; rdfs:range fw:JurisdictionDataset;
+  rdfs:comment "The provider dataset version represented, distinct from local imported collection membership.".
+fw:identifierScheme a owl:ObjectProperty;
+  rdfs:comment "Authority or scheme qualifying a dcterms:identifier. No cross-provider equivalence follows from matching strings.".
+fw:administrativeLevel a owl:DatatypeProperty;
+  rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "Provider-relative hierarchy depth. Level 2 is not globally synonymous with county or city.".
+fw:administrativeType a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:administrativeTypeEnglish a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:parentJurisdictionBoundary a owl:ObjectProperty;
+  rdfs:subPropertyOf dcterms:isPartOf;
+  rdfs:domain fw:JurisdictionBoundary; rdfs:range fw:JurisdictionBoundary;
+  rdfs:comment "Source-declared administrative parent in the same release, resolved from source fields. Does not assert a computed geo:sfWithin relationship.".
+fw:sourceField a owl:AnnotationProperty;
+  rdfs:comment "Profile mapping to a provider field; not an executable import instruction.".
+fw:sourceCRS a owl:ObjectProperty;
+  rdfs:domain fw:BoundaryImport;
+  rdfs:comment "Verified coordinate reference system read from input metadata. Axis interpretation is recorded separately. Merely changing this identifier does not reproject coordinates.".
+fw:sourceAxisOrder a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:sourceLayer a owl:DatatypeProperty;
+  rdfs:domain fw:BoundaryImport; rdfs:range xsd:string.
+fw:importComplete a owl:DatatypeProperty;
+  rdfs:domain fw:ImportedFeatureDataset; rdfs:range xsd:boolean;
+  rdfs:comment "Explicit importer assertion after all required checks succeed. The selection rules neither derive this flag nor treat its absence as false.".
+fw:requestedBoundary a owl:ObjectProperty;
+  rdfs:domain fw:JurisdictionSelection; rdfs:range fw:JurisdictionBoundary.
+fw:outputStudyArea a owl:ObjectProperty;
+  rdfs:domain fw:JurisdictionSelection; rdfs:range fw:StudyArea;
+  rdfs:comment "A new study-area snapshot for this selection execution, not a reused mutable resource across different selections.".
+fw:hasStudyAreaMember a owl:ObjectProperty;
+  rdfs:domain fw:StudyArea; rdfs:range geo:Feature;
+  rdfs:comment "An explicitly included feature with retained identity and geometry, including a jurisdiction boundary or a custom zone. Membership does not assert topological containment or create an aggregate geometry.".

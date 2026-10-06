@@ -1,0 +1,31 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+fw:ProcessingContractShape a sh:NodeShape; sh:targetClass fw:ProcessingContract;
+  sh:nodeKind sh:IRI;
+  sh:property [sh:path rdfs:label; sh:minCount 1],
+    [sh:path fw:acceptsKind; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI],
+    [sh:path fw:producesKind; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI],
+    [sh:path fw:requiresInputShape; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI; sh:class sh:NodeShape],
+    [sh:path fw:implementationStatus; sh:minCount 1; sh:maxCount 1; sh:in ("proposed" "implemented")],
+    [sh:path fw:routingMode; sh:minCount 1; sh:maxCount 1; sh:in (fw:ByteFormatRoute fw:DatasetKindRoute fw:ProfileRoute)];
+  sh:or (
+    [sh:property [sh:path fw:routingMode; sh:hasValue fw:ByteFormatRoute], [sh:path fw:acceptsKind; sh:hasValue fw:ByteAssetKind], [sh:path fw:acceptsFormat; sh:minCount 1; sh:nodeKind sh:IRI], [sh:path fw:requiresProfile; sh:maxCount 0]]
+    [sh:property [sh:path fw:routingMode; sh:hasValue fw:DatasetKindRoute], [sh:path fw:acceptsFormat; sh:maxCount 0], [sh:path fw:requiresProfile; sh:maxCount 0]]
+    [sh:property [sh:path fw:routingMode; sh:hasValue fw:ProfileRoute], [sh:path fw:requiresProfile; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI], [sh:path fw:acceptsFormat; sh:maxCount 0]]
+  ).
+fw:InspectionShape a sh:NodeShape; sh:targetClass fw:AssetInspection;
+  sh:property [sh:path fw:inspectedAsset; sh:minCount 1; sh:maxCount 1; sh:class fw:DownloadedAsset],
+    [sh:path fw:observedFormat; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI],
+    [sh:path fw:inspectionComplete; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean].
+fw:RoutingRequestShape a sh:NodeShape; sh:targetClass fw:RoutingRequest;
+  sh:property [sh:path fw:routingInput; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI],
+    [sh:path fw:candidateOperation; sh:class fw:ProcessingContract];
+  sh:or (
+    [sh:property [sh:path fw:routingInput; sh:class fw:DownloadedAsset],
+      [sh:path fw:inspection; sh:minCount 1; sh:maxCount 1; sh:class fw:AssetInspection],
+      [sh:path (fw:inspection fw:inspectedAsset); sh:equals fw:routingInput]]
+    [sh:property [sh:path fw:routingInput; sh:class fw:ImportedFeatureDataset], [sh:path fw:inspection; sh:maxCount 0]]
+  ).

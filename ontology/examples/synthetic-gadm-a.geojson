@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"GID_0":"AAA","NAME_0":"Synthetic Country A","GID_1":"AAA.1_1","NAME_1":"Harbor","TYPE_1":"District","ENGTYPE_1":"District"},"geometry":{"type":"Polygon","coordinates":[[[10,10],[14,10],[14,14],[10,14],[10,10]],[[11,11],[11,12],[12,12],[12,11],[11,11]]]}}]}

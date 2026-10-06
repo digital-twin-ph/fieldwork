@@ -1,0 +1,4 @@
+# These bytes are fingerprinted in the ontology fixture; preserve them on every OS.
+ontology/examples/synthetic-gadm-*.geojson -text
+# Registry release digests must survive checkout on Windows and Unix.
+widgets/releases/**/*.json -text

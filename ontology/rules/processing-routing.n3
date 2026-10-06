@@ -1,0 +1,22 @@
+@prefix fw: <urn:fieldwork:>.
+
+{
+  ?request a fw:RoutingRequest; fw:routingInput ?asset; fw:inspection ?inspection.
+  ?asset a fw:DownloadedAsset; fw:localAvailable true.
+  ?inspection a fw:AssetInspection; fw:inspectedAsset ?asset;
+    fw:inspectionComplete true; fw:observedFormat ?format.
+  ?operation a fw:ProcessingContract; fw:routingMode fw:ByteFormatRoute;
+    fw:acceptsKind fw:ByteAssetKind; fw:acceptsFormat ?format.
+} => { ?request fw:candidateOperation ?operation. }.
+{
+  ?request a fw:RoutingRequest; fw:routingInput ?dataset.
+  ?dataset a fw:ImportedFeatureDataset; fw:importComplete true; fw:dataKind ?kind.
+  ?operation a fw:ProcessingContract; fw:routingMode fw:DatasetKindRoute; fw:acceptsKind ?kind.
+} => { ?request fw:candidateOperation ?operation. }.
+{
+  ?request a fw:RoutingRequest; fw:routingInput ?dataset.
+  ?dataset a fw:ImportedFeatureDataset; fw:importComplete true;
+    fw:dataKind ?kind; fw:dataProfile ?profile.
+  ?operation a fw:ProcessingContract; fw:routingMode fw:ProfileRoute;
+    fw:acceptsKind ?kind; fw:requiresProfile ?profile.
+} => { ?request fw:candidateOperation ?operation. }.

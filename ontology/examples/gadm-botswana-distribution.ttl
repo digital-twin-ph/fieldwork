@@ -1,0 +1,26 @@
+@prefix source: <urn:fieldwork:source:gadm:>.
+@prefix fw: <urn:fieldwork:>.
+@prefix gadm: <urn:fieldwork:gadm:>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+
+# Metadata-only description of a link exposed by GADM's country selector.
+# This is not an official GADM catalog, an acquired file or a completed import.
+# The version is explicit; this does not assert that 4.1 is the latest release.
+<urn:fieldwork:source:gadm:4.1:BWA> a gadm:BoundaryDataset, fw:JurisdictionDataset, dcat:Dataset;
+  dcterms:title "GADM 4.1 Botswana administrative boundaries";
+  dcat:version "4.1";
+  dcterms:spatial source:jurisdiction-BWA;
+  dcat:landingPage <https://gadm.org/download_country.html>;
+  dcterms:source <https://gadm.org/>;
+  dcat:distribution <urn:fieldwork:source:gadm:4.1:BWA:gpkg>.
+<urn:fieldwork:source:gadm:4.1:BWA:gpkg> a dcat:Distribution;
+  dcat:downloadURL <https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_BWA.gpkg>;
+  dcterms:format "GeoPackage";
+  dcterms:license <https://gadm.org/license.html>;
+  rdfs:comment "Inspect available layers and source CRS during import. No local availability, byte count or checksum is asserted here.".
+source:jurisdiction-BWA a fw:Jurisdiction;
+  fw:identifierScheme gadm:GIDScheme;
+  dcterms:identifier "BWA";
+  rdfs:label "Botswana".

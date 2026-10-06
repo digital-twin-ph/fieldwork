@@ -1,0 +1,55 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:facility_audit",
+  "version": "0.1.0",
+  "nodeType": "facility_audit",
+  "title": "Evidence register",
+  "released": "2026-10-06",
+  "implementationStatus": "implemented",
+  "standardization": "example-specific",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['facility_audit']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "facilities",
+        "type": "gradedFacilities"
+      }
+    ],
+    "output": "decisions",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title."
+  },
+  "implementation": {
+    "files": [
+      "src/old-naledi.ts",
+      "src/old-naledi-ui.ts"
+    ],
+    "definition": "src/old-naledi.ts#OLD_TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "baseline",
+      "description": "First registry snapshot of existing behavior; no implementation change or historical version reconstruction."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

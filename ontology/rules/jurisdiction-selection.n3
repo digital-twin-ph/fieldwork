@@ -1,0 +1,23 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+
+# Positive membership projection only: no closed-world completeness verdict,
+# coordinate computation, administrative-name matching or download operation.
+{
+  ?selection a fw:JurisdictionSelection;
+    fw:inputDataset ?dataset;
+    fw:requestedBoundary ?boundary;
+    fw:outputStudyArea ?area.
+  ?dataset a fw:ImportedBoundaryDataset;
+    fw:importComplete true;
+    rdfs:member ?boundary.
+  ?boundary a fw:JurisdictionBoundary.
+} => {
+  ?area a fw:StudyArea;
+    fw:hasStudyAreaMember ?boundary;
+    prov:wasGeneratedBy ?selection;
+    prov:wasDerivedFrom ?boundary.
+  ?selection prov:used ?dataset, ?boundary;
+    prov:generated ?area.
+}.

@@ -1,0 +1,59 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix gadm: <urn:fieldwork:gadm:>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<urn:fieldwork:ontology:processing> a owl:Ontology;
+  owl:versionInfo "0.1 experimental, 2026-10-06";
+  rdfs:comment "Candidate operation contracts, not an executable plugin registry. No downloading, reader or scheduling capability is implied by a declaration.".
+fw:InputConfiguration a owl:Class; rdfs:subClassOf prov:Plan.
+fw:GenericInputConfiguration a owl:Class; rdfs:subClassOf fw:InputConfiguration.
+fw:STACInputConfiguration a owl:Class; rdfs:subClassOf fw:InputConfiguration.
+fw:describesDataset a owl:ObjectProperty.
+fw:ProcessingContract a owl:Class; rdfs:subClassOf prov:Plan.
+fw:RoutingRequest a owl:Class; rdfs:subClassOf prov:Plan.
+fw:AssetInspection a owl:Class; rdfs:subClassOf prov:Activity;
+  rdfs:comment "An explicitly recorded inspection of actual file bytes. Provider metadata alone cannot create this observation.".
+fw:inspectedAsset a owl:ObjectProperty; rdfs:domain fw:AssetInspection; rdfs:range fw:DownloadedAsset.
+fw:observedFormat a owl:ObjectProperty; rdfs:domain fw:AssetInspection.
+fw:inspectionComplete a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:localAvailable a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:comment "Availability at the routing snapshot; recheck storage and digest immediately before execution.".
+fw:routingInput a owl:ObjectProperty; rdfs:domain fw:RoutingRequest.
+fw:inspection a owl:ObjectProperty; rdfs:domain fw:RoutingRequest; rdfs:range fw:AssetInspection.
+fw:dataKind a owl:ObjectProperty.
+fw:dataProfile a owl:ObjectProperty;
+  rdfs:comment "Profile identified by import validation; a filename containing GADM is insufficient.".
+fw:acceptsKind a owl:ObjectProperty; rdfs:domain fw:ProcessingContract.
+fw:acceptsFormat a owl:ObjectProperty; rdfs:domain fw:ProcessingContract.
+fw:requiresProfile a owl:ObjectProperty; rdfs:domain fw:ProcessingContract.
+fw:requiresInputShape a owl:ObjectProperty; rdfs:domain fw:ProcessingContract.
+fw:producesKind a owl:ObjectProperty; rdfs:domain fw:ProcessingContract.
+fw:routingMode a owl:ObjectProperty; rdfs:domain fw:ProcessingContract.
+fw:candidateOperation a owl:ObjectProperty;
+  rdfs:domain fw:RoutingRequest; rdfs:range fw:ProcessingContract;
+  rdfs:comment "Candidate only, scoped to this request. Requires shape validation, installed implementation, parameters, byte/CRS checks and resource budget before execution.".
+
+fw:GeoPackageReader a fw:ProcessingContract;
+  rdfs:label "Generic GeoPackage reader"; fw:implementationStatus "proposed";
+  fw:routingMode fw:ByteFormatRoute; fw:acceptsKind fw:ByteAssetKind;
+  fw:acceptsFormat fw:GeoPackage; fw:requiresInputShape fw:DownloadedAssetShape;
+  fw:producesKind fw:FeatureDatasetKind.
+fw:GeoJSONReader a fw:ProcessingContract;
+  rdfs:label "Generic GeoJSON reader"; fw:implementationStatus "proposed";
+  fw:routingMode fw:ByteFormatRoute; fw:acceptsKind fw:ByteAssetKind;
+  fw:acceptsFormat fw:GeoJSON; fw:requiresInputShape fw:DownloadedAssetShape;
+  fw:producesKind fw:FeatureDatasetKind.
+fw:PolygonAreaRoutine a fw:ProcessingContract;
+  rdfs:label "Polygon dataset area calculation"; fw:implementationStatus "proposed";
+  fw:routingMode fw:DatasetKindRoute; fw:acceptsKind fw:PolygonDatasetKind;
+  fw:requiresInputShape fw:PolygonDatasetShape; fw:producesKind fw:MeasuredDatasetKind.
+gadm:NormalizeJurisdictions a fw:ProcessingContract;
+  rdfs:label "GADM field and jurisdiction normalization"; fw:implementationStatus "proposed";
+  fw:routingMode fw:ProfileRoute; fw:acceptsKind fw:PolygonDatasetKind;
+  fw:requiresProfile gadm:Profile; fw:requiresInputShape gadm:ImportedDatasetShape;
+  fw:producesKind fw:JurisdictionDatasetKind.
+gadm:Profile a prov:Entity;
+  rdfs:comment "GADM field interpretation profile; not a storage format or evidence of STAC discovery.".

@@ -1,0 +1,59 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:policy",
+  "version": "0.1.0",
+  "nodeType": "policy",
+  "title": "Outreach criteria",
+  "released": "2026-10-06",
+  "implementationStatus": "implemented",
+  "standardization": "example-specific",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['policy']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "distances",
+        "type": "distances"
+      },
+      {
+        "name": "alert",
+        "type": "alert"
+      }
+    ],
+    "output": "decisions",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title."
+  },
+  "implementation": {
+    "files": [
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "baseline",
+      "description": "First registry snapshot of existing behavior; no implementation change or historical version reconstruction."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

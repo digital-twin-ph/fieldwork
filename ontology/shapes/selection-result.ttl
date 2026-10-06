@@ -1,0 +1,11 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+
+# Load only AFTER the selection rules; partial outputs must fail this phase.
+fw:SelectionResultShape a sh:NodeShape; sh:targetClass fw:JurisdictionSelection;
+  sh:property [sh:path (fw:outputStudyArea fw:hasStudyAreaMember);
+    sh:equals fw:requestedBoundary;
+    sh:message "Study-area members must exactly match the requested boundary versions. Resolve missing or unexpected members before accepting the result."],
+    [sh:path fw:outputStudyArea; sh:minCount 1; sh:maxCount 1; sh:class fw:StudyArea;
+      sh:node [sh:property [sh:path [sh:inversePath fw:outputStudyArea]; sh:maxCount 1;
+        sh:message "Each selection execution needs its own study-area snapshot."]]].

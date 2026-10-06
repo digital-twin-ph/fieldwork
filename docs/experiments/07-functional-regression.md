@@ -28,6 +28,8 @@ The GitLab `functional-regression` job runs the same command after installing lo
 | Point Table output, direct/reviewed inputs, attributes, bounded paging, search and review-alert counts | `table-output.test.mjs`, `table-output.browser.mjs`; see the [Table decision record](08-point-table-output.md) |
 | Existing heat and Old Naledi workflows, independent output branches, keyboard tabs and evidence | `core.test.mjs`, `old-naledi.test.mjs`, `outputs.browser.mjs`, `old-naledi.browser.mjs` |
 | PDF/URL references on nodes, portable files, provenance, offline retrieval and save recovery | `evidence.test.mjs`, `evidence.browser.mjs`; see [node evidence references](13-node-evidence-references.md) |
+| Proposed GADM ontology: multi-place membership, file identity/lineage, incomplete inputs and version isolation | `jurisdiction-ontology.browser.mjs`; see [the jurisdiction asset model](14-gadm-jurisdiction-assets.md). These are semantic checks, not polygon-import UI tests. |
+| STAC RDF mapping, shared and provider-specific candidate routing, SHACL acceptance/rejection and post-selection completeness | `ontology-shacl.test.mjs`, `stac-routing.browser.mjs`; see [processing contracts and SHACL](15-stac-processing-shacl.md). No runtime dispatcher is claimed. |
 | Saved-workflow compatibility, schema/value-set retention, invalid-import recovery | `workflow-compatibility.test.mjs`, `workflow-compatibility.browser.mjs` |
 | Offline replay with cached engines/assets; export/import; narrow-screen layout | Existing browser scenarios and frozen-workflow replay |
 
@@ -52,5 +54,13 @@ The [N3 output evaluation experiment](11-n3-output-evaluation.md) extends this b
 A green gate preserves the behaviors represented by these assertions; it cannot guarantee the absence of untested regressions. Chromium is the current execution target. Firefox/WebKit, practitioner effectiveness, large geoprocessing memory reclamation and proposed Reproject/raster nodes require separate tests when implemented. Online basemap availability is an optional observation and is not a prerequisite for local drawing or offline reasoning.
 
 ## Validation record
+
+The October 6 STAC/SHACL gate passed strict TypeScript checks, build, 44 unit tests and 31 Chromium scenarios, with no skips or retries (2.5 minutes for the browser suite). Six new unit groups validate SHACL acceptance and deliberate violations; two new browser scenarios execute candidate-routing rules and validate merged EYE conclusions. The validation CLI also emits readable JSON and RDF reports and returns nonzero for a partial selection.
+
+The subsequent October 6 release gate passed strict TypeScript checks, build, **47 unit tests and 31 Chromium scenarios** (3.0 minutes for the browser suite). Three widget-registry test groups now check implementation coverage and reject missing widgets, duplicate versions, digest tampering, port drift and undeclared ontology mappings. Both `npm run validate:ontology` and `npm run validate:widgets` passed. The visualization and publication-product specifications remain design-only and add no runtime capability.
+
+The STAC/SHACL gate exposed an import-fit timing failure in the existing fresh-browser PDF transfer scenario. Canvas fitting now waits for the new React Flow nodes to be measured, rather than fitting the previous empty graph. The scenario additionally asserts that all imported nodes fit inside the canvas before selecting a node. Existing save, transfer and offline assertions remain in place; no retry or timeout increase was added.
+
+On October 6, 2026, the expanded local gate passed strict TypeScript checks, the production build, 38 unit tests and 29 Chromium scenarios. The three added jurisdiction-ontology scenarios exercise the bundled EYE worker with synthetic boundary assets and proposed selection rules. This record does not imply that a polygon importer or multi-jurisdiction widget is implemented.
 
 On October 5, 2026, the full `npm run check` command passed locally on Windows with Node 22 and Chromium: build successful, 28 unit tests passed and nine browser scenarios passed, with no skips or retries. The browser portion took approximately 1.5 minutes. HTML and JUnit reports were generated; the test server used port 4174 while the user's viewing server remained on 4173. Local documentation links and whitespace checks passed. The GitLab/Linux job has not yet been run remotely.

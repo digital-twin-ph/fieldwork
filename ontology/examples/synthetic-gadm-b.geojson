@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"GID_0":"BBB","NAME_0":"Synthetic Country B","GID_1":"BBB.1_1","NAME_1":"Harbor","TYPE_1":"Region","ENGTYPE_1":"Region"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-20,-10],[-18,-10],[-18,-8],[-20,-8],[-20,-10]]],[[[-16,-10],[-15,-10],[-15,-9],[-16,-9],[-16,-10]]]]}}]}

@@ -1,0 +1,94 @@
+@prefix ex: <urn:fieldwork:example:gadm:>.
+@prefix fw: <urn:fieldwork:>.
+@prefix gadm: <urn:fieldwork:gadm:>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+@prefix sf: <http://www.opengis.net/ont/sf#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# ALL jurisdictions, URLs, versions, geometries and activities below are synthetic.
+# This models GADM-shaped fields; it is not downloaded GADM data or a real run.
+# Hashes and sizes refer to the two adjacent synthetic GeoJSON fixtures.
+ex:datasetA a gadm:BoundaryDataset, fw:JurisdictionDataset, dcat:Dataset;
+  dcterms:title "Synthetic GADM-shaped Country A level 1 fixture";
+  dcat:version "fixture-1";
+  fw:administrativeLevel 1;
+  dcat:distribution ex:distributionA.
+ex:datasetB a gadm:BoundaryDataset, fw:JurisdictionDataset, dcat:Dataset;
+  dcterms:title "Synthetic GADM-shaped Country B level 1 fixture";
+  dcat:version "fixture-1";
+  fw:administrativeLevel 1;
+  dcat:distribution ex:distributionB.
+ex:distributionA a dcat:Distribution, prov:Entity;
+  dcat:downloadURL <https://example.org/synthetic-gadm-a.geojson>;
+  dcat:mediaType <https://www.iana.org/assignments/media-types/application/geo+json>;
+  dcterms:license <https://www.apache.org/licenses/LICENSE-2.0>.
+ex:distributionB a dcat:Distribution, prov:Entity;
+  dcat:downloadURL <https://example.org/synthetic-gadm-b.geojson>;
+  dcat:mediaType <https://www.iana.org/assignments/media-types/application/geo+json>;
+  dcterms:license <https://www.apache.org/licenses/LICENSE-2.0>.
+ex:downloadA a fw:AssetAcquisition, prov:Activity;
+  prov:used ex:distributionA; prov:generated ex:fileA;
+  prov:endedAtTime "2026-10-06T12:00:00Z"^^xsd:dateTime.
+ex:downloadB a fw:AssetAcquisition, prov:Activity;
+  prov:used ex:distributionB; prov:generated ex:fileB;
+  prov:endedAtTime "2026-10-06T12:01:00Z"^^xsd:dateTime.
+ex:fileA a fw:DownloadedAsset, prov:Entity;
+  prov:wasDerivedFrom ex:distributionA; prov:wasGeneratedBy ex:downloadA;
+  fw:filename "synthetic-gadm-a.geojson"; fw:sha256 "afdf248848343d6c7e0ec1284c0c3906b26fd573458f0e7a210cc6bd5c95a0fa"; fw:byteSize 330.
+ex:fileB a fw:DownloadedAsset, prov:Entity;
+  prov:wasDerivedFrom ex:distributionB; prov:wasGeneratedBy ex:downloadB;
+  fw:filename "synthetic-gadm-b.geojson"; fw:sha256 "9f6a8cb357236f9cd018dc03a111080fbabdb8236e27d24f5ee7318df14a7c1c"; fw:byteSize 351.
+ex:importA a fw:BoundaryImport, prov:Activity;
+  prov:used ex:fileA; prov:generated ex:localA;
+  fw:sourceCRS <http://www.opengis.net/def/crs/OGC/1.3/CRS84>;
+  fw:sourceAxisOrder "longitude, latitude"; fw:sourceLayer "GeoJSON features".
+ex:importB a fw:BoundaryImport, prov:Activity;
+  prov:used ex:fileB; prov:generated ex:localB;
+  fw:sourceCRS <http://www.opengis.net/def/crs/OGC/1.3/CRS84>;
+  fw:sourceAxisOrder "longitude, latitude"; fw:sourceLayer "GeoJSON features".
+ex:localA a fw:ImportedBoundaryDataset;
+  prov:wasDerivedFrom ex:fileA; prov:wasGeneratedBy ex:importA;
+  fw:importComplete true; rdfs:member ex:boundaryA.
+ex:localB a fw:ImportedBoundaryDataset;
+  prov:wasDerivedFrom ex:fileB; prov:wasGeneratedBy ex:importB;
+  fw:importComplete true; rdfs:member ex:boundaryB.
+ex:jurisdictionA a fw:Jurisdiction;
+  fw:identifierScheme gadm:GIDScheme; dcterms:identifier "AAA.1_1".
+ex:jurisdictionB a fw:Jurisdiction;
+  fw:identifierScheme gadm:GIDScheme; dcterms:identifier "BBB.1_1".
+ex:boundaryA a fw:JurisdictionBoundary;
+  fw:representsJurisdiction ex:jurisdictionA; fw:boundaryDataset ex:datasetA;
+  dcterms:identifier "AAA.1_1"; rdfs:label "Harbor";
+  fw:administrativeLevel 1; fw:administrativeType "District";
+  geo:hasGeometry ex:geometryA;
+  fw:attribute [fw:fieldKey "GID_0"; rdf:value "AAA"],
+    [fw:fieldKey "NAME_0"; rdf:value "Synthetic Country A"],
+    [fw:fieldKey "GID_1"; rdf:value "AAA.1_1"],
+    [fw:fieldKey "NAME_1"; rdf:value "Harbor"],
+    [fw:fieldKey "TYPE_1"; rdf:value "District"],
+    [fw:fieldKey "ENGTYPE_1"; rdf:value "District"].
+ex:boundaryB a fw:JurisdictionBoundary;
+  fw:representsJurisdiction ex:jurisdictionB; fw:boundaryDataset ex:datasetB;
+  dcterms:identifier "BBB.1_1"; rdfs:label "Harbor";
+  fw:administrativeLevel 1; fw:administrativeType "Region";
+  geo:hasGeometry ex:geometryB;
+  fw:attribute [fw:fieldKey "GID_0"; rdf:value "BBB"],
+    [fw:fieldKey "NAME_0"; rdf:value "Synthetic Country B"],
+    [fw:fieldKey "GID_1"; rdf:value "BBB.1_1"],
+    [fw:fieldKey "NAME_1"; rdf:value "Harbor"],
+    [fw:fieldKey "TYPE_1"; rdf:value "Region"],
+    [fw:fieldKey "ENGTYPE_1"; rdf:value "Region"].
+ex:geometryA a geo:Geometry, sf:Polygon;
+  geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POLYGON ((10 10,14 10,14 14,10 14,10 10),(11 11,11 12,12 12,12 11,11 11))"^^geo:wktLiteral.
+ex:geometryB a geo:Geometry, sf:MultiPolygon;
+  geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> MULTIPOLYGON (((-20 -10,-18 -10,-18 -8,-20 -8,-20 -10)),((-16 -10,-15 -10,-15 -9,-16 -9,-16 -10)))"^^geo:wktLiteral.
+ex:select a fw:JurisdictionSelection;
+  fw:inputDataset ex:localA, ex:localB;
+  fw:requestedBoundary ex:boundaryA, ex:boundaryB;
+  fw:outputStudyArea ex:study.
+ex:study rdfs:label "Synthetic cross-country comparison".

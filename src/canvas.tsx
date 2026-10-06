@@ -6,7 +6,7 @@ export interface CanvasAPI {update:(graph:Workflow,selection:string|null|undefin
 export interface CanvasCallbacks {ready:(api:CanvasAPI)=>void;describe:(node:WorkflowNode,status?:string)=>NodeDescription;select:(id:string)=>void;clear:()=>void;move:(id:string,position:{x:number;y:number})=>void;connect:(connection:Connection)=>void;valid:(connection:Connection|Edge)=>boolean;remove:(ids:string[])=>void;removeEdges:(ids:string[])=>void;zoom:(zoom:number)=>void}
 import React, {useState, useEffect, useCallback} from 'react';
 import {createRoot} from 'react-dom/client';
-import {ReactFlow, ReactFlowProvider, Background, Handle, Position, useNodesState, useEdgesState, useReactFlow, useUpdateNodeInternals} from '@xyflow/react';
+import {ReactFlow, ReactFlowProvider, Background, Handle, Position, useNodesState, useEdgesState, useReactFlow, useUpdateNodeInternals, useNodesInitialized} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import '../flow.css';
 function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
@@ -38,6 +38,14 @@ export function mountCanvas(container:HTMLElement,callbacks:CanvasCallbacks):Can
   function Flow(){
     const [nodes,setNodes,onNodesChange]=useNodesState<OperationFlowNode>([]),[edges,setEdges,onEdgesChange]=useEdgesState<Edge>([]),[busy,setBusy]=useState(false);
     const flow=useReactFlow<OperationFlowNode,Edge>();
+    const initialized=useNodesInitialized(),[fitRequested,setFitRequested]=useState(false);
+    useEffect(()=>{
+      if(!fitRequested||!initialized||!nodes.length||nodes.some(n=>!n.measured?.width||!n.measured?.height))return;
+      // Imported nodes enter React state before React Flow measures them.
+      // Fit the committed, measured graph rather than the previous empty canvas.
+      const frame=requestAnimationFrame(()=>{void flow.fitView({padding:.16,duration:220});setFitRequested(false);});
+      return ()=>cancelAnimationFrame(frame);
+    },[fitRequested,initialized,nodes,flow]);
     useEffect(()=>{
       api.update=(graph,selection,statuses={})=>{
         // Keep React Flow's measured dimensions across status and selection updates.
@@ -45,7 +53,7 @@ export function mountCanvas(container:HTMLElement,callbacks:CanvasCallbacks):Can
         setNodes(previous=>{const current=new Map(previous.map(n=>[n.id,n]));return graph.nodes.map(n=>({...current.get(n.id),id:n.id,type:'operation',position:{x:n.x,y:n.y},selected:n.id===selection,data:callbacks.describe(n,statuses[n.id])}));});
         setEdges(graph.edges.map(e=>({id:e.id,source:e.from,sourceHandle:'out',target:e.to,targetHandle:e.port,type:'default',style:{stroke:'#9fb5a5',strokeWidth:1.7},interactionWidth:20})));
       };
-      api.fit=()=>flow.fitView({padding:.16,duration:220});api.zoomIn=()=>flow.zoomIn();api.zoomOut=()=>flow.zoomOut();api.setBusy=setBusy;
+      api.fit=()=>setFitRequested(true);api.zoomIn=()=>flow.zoomIn();api.zoomOut=()=>flow.zoomOut();api.setBusy=setBusy;
       callbacks.ready(api);
     },[]);
     return <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}

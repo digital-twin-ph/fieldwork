@@ -34,7 +34,10 @@ test('workflow bundles transfer PDF bytes to a fresh browser and retrieve them o
   await addPDF(page);await page.locator('#evidence-close').click();const bytes=await download(page,'#export-button'),bundle=JSON.parse(bytes);
   assert.equal(bundle.schema,'fieldwork/bundle/1');assert.equal(bundle.attachments.length,1);
   const fresh=await browser.newContext({baseURL});
-  try{const other=await fresh.newPage();await other.goto('/?example=blank');await expect(other.locator('#offline-status')).toContainText('Available offline');await upload(other,bytes);await expect(other.locator('.react-flow__node[data-id="observations"]')).toBeVisible();await open(other);await expect(other.locator('[data-file-status]')).toContainText('available on this device');assert.deepEqual(await download(other,'[data-download]'),pdf);await other.locator('#evidence-close').click();
+  try{const other=await fresh.newPage();await other.goto('/?example=blank');await expect(other.locator('#offline-status')).toContainText('Available offline');await upload(other,bytes);await expect(other.locator('.react-flow__node[data-id="observations"]')).toBeVisible();
+    // Import must fit the newly measured graph before its nodes are selected.
+    await expect.poll(()=>other.evaluate(()=>{const c=document.querySelector('#canvas').getBoundingClientRect();return [...document.querySelectorAll('.react-flow__node')].every(n=>{const b=n.getBoundingClientRect();return b.left>=c.left&&b.right<=c.right&&b.top>=c.top&&b.bottom<=c.bottom;});})).toBe(true);
+    await open(other);await expect(other.locator('[data-file-status]')).toContainText('available on this device');assert.deepEqual(await download(other,'[data-download]'),pdf);await other.locator('#evidence-close').click();
     await fresh.setOffline(true);await other.reload();await expect(other.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await open(other);await expect(other.locator('[data-file-status]')).toContainText('offline');assert.deepEqual(await download(other,'[data-download]'),pdf);
   }finally{await fresh.close();}
 });

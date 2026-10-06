@@ -1,0 +1,222 @@
+{
+  "schema": "fieldwork/widget-registry/1",
+  "description": "Development catalog. Versions are not yet persisted in workflow nodes or used for runtime dispatch.",
+  "widgets": [
+    {
+      "id": "urn:fieldwork:widget:places",
+      "nodeType": "places",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/places/0.1.0.json",
+          "sha256": "ef821a58d6c01c0ec9cf0dcfa88aded9de3bf080cdc94df6e006072af995c7bc"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:centers",
+      "nodeType": "centers",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/centers/0.1.0.json",
+          "sha256": "9e626148e3de8640f8639e7f5bf560d242371fdbdf8ab347e17722ad42fc8b58"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:alert",
+      "nodeType": "alert",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/alert/0.1.0.json",
+          "sha256": "324e8ecc76c4f5eb086308dcbdfed2d56bd997068c939bc455e4003aa7b510bd"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:nearest",
+      "nodeType": "nearest",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/nearest/0.1.0.json",
+          "sha256": "d670c08999c79dfcb4422907a289102fcf10dba32b0c61cb2bb642972dcb7e5c"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:policy",
+      "nodeType": "policy",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/policy/0.1.0.json",
+          "sha256": "4c4bc7457d998d87904c4487380c156a8e52babb279089802c99f138ac4710e2"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:area",
+      "nodeType": "area",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/area/0.1.0.json",
+          "sha256": "bb24afb87dc5478136dba95aa5a66a93fc9d19547784c2bc630bdd231dbb7fbd"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:facilities",
+      "nodeType": "facilities",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/facilities/0.1.0.json",
+          "sha256": "c28db77356de38ac22f94b2cd11414b323b034d98f0efab275bf685e1a261c56"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:samples",
+      "nodeType": "samples",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/samples/0.1.0.json",
+          "sha256": "e3ba8b6b62fe650ef620c560d266be500008daced8f6b335e325bd2d6cc64a8f"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:xpert",
+      "nodeType": "xpert",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/xpert/0.1.0.json",
+          "sha256": "4d8dda9091a8135633c782e61e2aaf41b8e27f2460073f4d3041ae53bb600088"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:access",
+      "nodeType": "access",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/access/0.1.0.json",
+          "sha256": "20303cb64ca3ac6e67436fc33fe6da8ce05b998265900eb31d53b6ced6943336"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:access_policy",
+      "nodeType": "access_policy",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/access_policy/0.1.0.json",
+          "sha256": "e4ebf9a29a240fbe950e2b44c17197ae7d38d2b3840cd5c2b9ed7f97d66717af"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:facility_audit",
+      "nodeType": "facility_audit",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/facility_audit/0.1.0.json",
+          "sha256": "0c02cf7915912adcbd84f59fc1a0e17adc35d9c62118babf643459765f96ed83"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:measure_area",
+      "nodeType": "measure_area",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/measure_area/0.1.0.json",
+          "sha256": "9fa3708e4e263bc1d639e0efc1987e81189b3208185ab7037bf137ea4ebfbdd5"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:observations",
+      "nodeType": "observations",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/observations/0.1.0.json",
+          "sha256": "c49c093b8c0f331b8ecd3410ace9f275a01631f257ad9be66127cc1b5b38e597"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:coverage_check",
+      "nodeType": "coverage_check",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/coverage_check/0.1.0.json",
+          "sha256": "38f72d2e657fb2d64e92d6d94b9d405f2be502ca22e14adba58b818d48abbfba"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:map_output",
+      "nodeType": "map_output",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/map_output/0.1.0.json",
+          "sha256": "e83f0e94f0dab0e1e682bdaf3c42b0300063cdc2cd37a00b3757b3e65e80ce7f"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:table_output",
+      "nodeType": "table_output",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/table_output/0.1.0.json",
+          "sha256": "173e5d23a0b284bb9618417fcaef4210cadbed4dc34715504ca694580445e1a9"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:output",
+      "nodeType": "output",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/output/0.1.0.json",
+          "sha256": "b457d66ac53ab483b1cd7af5adb67ec846d106b401b1148efd05ab47e8225b0a"
+        }
+      ]
+    }
+  ]
+}

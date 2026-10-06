@@ -1,0 +1,52 @@
+@prefix stac: <urn:fieldwork:stac:>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+
+# An application RDF profile, not a replacement for upstream STAC JSON Schema.
+stac:DocumentShape a sh:NodeShape;
+  sh:targetClass stac:Catalog, stac:Collection, stac:Item;
+  sh:nodeKind sh:IRI;
+  sh:property [sh:path dcterms:identifier; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1],
+    [sh:path stac:version; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1],
+    [sh:path stac:sourceDocument; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI],
+    [sh:path stac:extension; sh:nodeKind sh:IRI],
+    [sh:path stac:asset; sh:class stac:Asset].
+stac:CatalogShape a sh:NodeShape; sh:targetClass stac:Catalog;
+  sh:property [sh:path stac:child; sh:or ([sh:class stac:Catalog] [sh:class stac:Collection])],
+    [sh:path stac:item; sh:class stac:Item].
+stac:CollectionShape a sh:NodeShape; sh:targetClass stac:Collection;
+  sh:property [sh:path dcterms:license; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI],
+    [sh:path stac:item; sh:class stac:Item].
+stac:ItemShape a sh:NodeShape; sh:targetClass stac:Item;
+  sh:node stac:IntervalPairShape;
+  sh:property [sh:path stac:collection; sh:maxCount 1; sh:class stac:Collection],
+    [sh:path stac:datetime; sh:maxCount 1; sh:datatype xsd:dateTime; sh:pattern "Z$"],
+    [sh:path stac:startDatetime; sh:maxCount 1; sh:datatype xsd:dateTime; sh:pattern "Z$"; sh:lessThanOrEquals stac:endDatetime],
+    [sh:path stac:endDatetime; sh:maxCount 1; sh:datatype xsd:dateTime; sh:pattern "Z$"],
+    [sh:path stac:footprint; sh:maxCount 1; sh:class geo:Geometry],
+    [sh:path stac:geometryIsNull; sh:maxCount 1; sh:datatype xsd:boolean];
+  sh:or (
+    [sh:property [sh:path stac:datetime; sh:minCount 1]]
+    [sh:property [sh:path stac:startDatetime; sh:minCount 1], [sh:path stac:endDatetime; sh:minCount 1]]
+  );
+  sh:xone (
+    [sh:property [sh:path stac:footprint; sh:minCount 1], [sh:path stac:geometryIsNull; sh:maxCount 0]]
+    [sh:property [sh:path stac:geometryIsNull; sh:hasValue true], [sh:path stac:footprint; sh:maxCount 0]]
+  ).
+stac:IntervalPairShape a sh:NodeShape;
+  sh:or (
+    [sh:property [sh:path stac:startDatetime; sh:maxCount 0], [sh:path stac:endDatetime; sh:maxCount 0]]
+    [sh:property [sh:path stac:startDatetime; sh:minCount 1], [sh:path stac:endDatetime; sh:minCount 1]]
+  ).
+stac:AssetShape a sh:NodeShape; sh:targetClass stac:Asset;
+  sh:nodeKind sh:IRI;
+  sh:property [sh:path stac:assetKey; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1],
+    [sh:path stac:assetOwner; sh:minCount 1; sh:maxCount 1; sh:or ([sh:class stac:Item] [sh:class stac:Collection])],
+    [sh:path dcat:downloadURL; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI; sh:pattern "^https?://";
+      sh:message "This Fieldwork acquisition profile requires an absolute HTTP(S) asset URL; other STAC URI schemes need a separate adapter."],
+    [sh:path stac:originalHref; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1],
+    [sh:path stac:role; sh:datatype xsd:string],
+    [sh:path stac:mediaType; sh:maxCount 1; sh:datatype xsd:string].

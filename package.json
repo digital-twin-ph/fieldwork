@@ -11,7 +11,9 @@
     "test:browser": "playwright test",
     "test:report": "playwright show-report",
     "check": "npm run build && node scripts/test-unit.mjs && npm run test:browser",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.workers.json --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.workers.json --noEmit",
+    "validate:ontology": "node scripts/validate-ontology.mjs",
+    "validate:widgets": "node scripts/validate-widgets.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -34,6 +36,8 @@
     "@types/react-dom": "19.3.0",
     "@types/sql.js": "1.4.11",
     "esbuild": "^0.28.2",
+    "n3": "2.13.8",
+    "rdf-validate-shacl": "0.6.5",
     "typescript": "7.0.2"
   }
 }

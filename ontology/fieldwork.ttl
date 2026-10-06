@@ -31,7 +31,7 @@ fw:filename a owl:DatatypeProperty; rdfs:range xsd:string.
 
 fw:ontology a owl:Ontology;
   rdfs:label "Fieldwork study-area and spatial-operation vocabulary";
-  owl:versionInfo "0.1 experimental, 2026-10-05";
+  owl:versionInfo "0.2 experimental, 2026-10-06";
   rdfs:comment "A bounded vocabulary for study areas and their reusable roles. A class declaration is not an implementation or validation constraint.".
 
 fw:implementationStatus a owl:AnnotationProperty;
@@ -39,7 +39,7 @@ fw:implementationStatus a owl:AnnotationProperty;
 fw:StudyArea a owl:Class;
   rdfs:subClassOf geo:Feature;
   rdfs:label "Study area";
-  rdfs:comment "A geographic feature used to scope one or more analyses. Its geometry is linked with geo:hasGeometry; it is not itself a clipping operation.";
+  rdfs:comment "A geographic feature used to scope one or more analyses. Its geometry is linked with geo:hasGeometry; it is not itself a clipping operation. The current widget draws one polygon. Proposed membership supports multiple named, disconnected features without requiring a dissolved aggregate geometry.";
   fw:implementationStatus "implemented".
 fw:SpatialOperation a owl:Class;
   rdfs:subClassOf prov:Activity;

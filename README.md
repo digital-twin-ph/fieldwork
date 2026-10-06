@@ -25,6 +25,10 @@ Workflows and attached PDFs stay in your browser; export them to move between th
 
 Reprojection, raster/NetCDF clipping, a GEOS-WASM geoprocessing executor, Logical English comparison and agent-based simulation are not implemented. See [Scope and research](#scope-and-research) and the linked design experiments for the current boundaries.
 
+The [GADM and jurisdiction design experiment](docs/experiments/14-gadm-jurisdiction-assets.md) now models provider datasets, downloaded assets, versioned jurisdiction boundaries and study areas with multiple named members. It includes synthetic RDF/N3 examples and executable selection-rule checks. GADM download, polygon import and jurisdiction-selection widgets remain proposed; this ontology work does not add them to the canvas.
+
+The [STAC and processing-contract experiment](docs/experiments/15-stac-processing-shacl.md) adds a STAC RDF profile, shared processing contracts, candidate-routing rules and executable SHACL Core shapes. Generic and STAC input configurations converge on the same asset model; GADM normalization specializes reusable processing. Run `npm run validate:ontology` to validate the synthetic graphs and write JSON/RDF reports under `test-results/`. This tooling does not yet integrate a STAC browser or processing dispatcher into the application.
+
 ## Run locally
 
 Install Node.js 22 or newer, then run:
@@ -85,7 +89,7 @@ Citation metadata uses PROV-O and Dublin Core alongside the spatial GeoSPARQL fa
 
 ## Validation
 
-The local baseline on October 6, 2026 passed strict TypeScript checks, the production build, **38 unit tests and 26 Chromium scenarios**. Deployment status for the latest GitHub commit is recorded in [the Pages workflow](https://github.com/digital-twin-ph/fieldwork/actions/workflows/pages.yml).
+The local baseline on October 6, 2026 passed strict TypeScript checks, the production build, **47 unit tests and 31 Chromium scenarios**, including widget-registry checks, SHACL validation, N3 candidate routing and jurisdiction selection. Deployment status for the latest GitHub commit is recorded in [the Pages workflow](https://github.com/digital-twin-ph/fieldwork/actions/workflows/pages.yml).
 
 Use the full regression gate before accepting a functional change:
 
@@ -107,6 +111,12 @@ The [TypeScript migration decision record](docs/experiments/12-typescript-migrat
 
 ## Scope and research
 
+The [workflow publication products design](docs/experiments/17-workflow-publication-products.md) records future field reports, story maps, infographics and dashboards as pipeline end products. It proposes reusable content blocks, versioned templates, evidence-linked findings and local export, beginning with a spatial coverage field-report experiment. These composition and export capabilities are not implemented.
+
+The [widget registry](widgets/README.md) inventories all 18 implemented node types with stable identities, independent release versions, port contracts, source references and explicit ontology mappings or gaps. Run `npm run validate:widgets` to check coverage, release digests and alignment with current TypeScript definitions. This is a development catalog; saved workflows do not yet pin widget versions or execute migrations.
+
+The [shared visualization design specification](docs/experiments/16-semantic-visualization-design.md) proposes common semantics for maps, charts and tables using GeoSPARQL, CSVW, RDF Data Cube, QUDT, SKOS and PROV, with selective OGC portrayal reuse and a candidate Vega-Lite chart adapter. It defines configuration, rendering and artifact provenance, proposed SHACL contracts, offline constraints and a developmental evaluation exercise. The shared profile and chart adapter are design work, not new implemented capabilities.
+
 Input data accepts up to 2,000 points and 5 MB local files, retaining scalar attributes. GeoPackage import currently supports standard 2D POINT layers in EPSG:4326; CSV needs longitude/latitude in degrees. The bounded GeoPackage importer reads the file into memory and does not implement streaming clipping. The legacy heat-example GeoJSON importer retains identifiers, names and coordinates. The study-area editor supports bounding boxes and simple polygons of 3–200 vertices; holes, antimeridian crossings, and polar areas are outside this drawing contract. It emits GeoSPARQL feature/geometry facts and CRS84 WKT literals, while EYE runs application-specific rules. GeoSPARQL query functions are not implemented. The bundled Old Naledi source additionally supplies its pinned polygon and selected facility attributes. General polygon-file import, street routing, arbitrary N3 editing, and the Logical English comparison are not yet implemented.
 
 The [research review](docs/research/related-research-2026-10-05.md) provides background. The [Gaborone TB modeling repository](https://git.cdc.gov/digital-twin/Gaborone-TB-Agent-Based-Modeling) supplies the Old Naledi geometry, historical facilities, and evidence hierarchy. Its building preparation, network routing, and Starsim simulation have not been integrated here. Source commit and file hashes accompany the bundled data and run outputs.
@@ -123,6 +133,8 @@ The [research review](docs/research/related-research-2026-10-05.md) provides bac
 - src/attribute-schema.ts and src/spatial-reference.ts: attribute types/value sets and the current geographic CRS contract; rebuild after attribute form changes.
 - src/spatial-predicates.ts, src/spatial-coverage.ts and src/coverage-ui.ts: geometric classifications, N3 review rules, exclusions and recovery controls; rebuild after changing src/spatial-predicates.ts.
 - ontology/fieldwork.ttl: implemented study-area/measurement vocabulary and proposed spatial-operation/resource-planning terms.
+- ontology/jurisdictions.ttl, ontology/gadm.ttl, ontology/rules/ and ontology/examples/: proposed boundary-asset model, GADM profile, selection rules and synthetic worked examples.
+- ontology/stac.ttl, ontology/processing.ttl, ontology/shapes/ and scripts/validate-ontology.mjs: proposed discovery/routing profiles and executable SHACL validation tooling.
 - examples/old-naledi/: selected source data and provenance; regenerated by scripts/extract-old-naledi.mjs.
 - src/canvas.tsx and flow.css: React Flow editor, bundled by build.mjs.
 - src/reasoning-worker.ts and vendor/: local EYE-JS engine and upstream license notices.

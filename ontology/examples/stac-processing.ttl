@@ -1,0 +1,43 @@
+@prefix ex: <urn:fieldwork:example:stac:>.
+@prefix sample: <urn:fieldwork:example:gadm:>.
+@prefix stac: <urn:fieldwork:stac:>.
+@prefix fw: <urn:fieldwork:>.
+@prefix gadm: <urn:fieldwork:gadm:>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# Synthetic metadata, not a GADM STAC service. Load with gadm-study-area.ttl.
+ex:catalog a stac:Catalog; dcterms:identifier "demo"; stac:version "1.1.0";
+  stac:sourceDocument <https://example.org/catalog.json>; stac:child ex:collection.
+ex:collection a stac:Collection; dcterms:identifier "boundary-fixtures"; stac:version "1.1.0";
+  dcat:version "fixture-1"; dcterms:license <https://www.apache.org/licenses/LICENSE-2.0>;
+  stac:sourceDocument <https://example.org/collection.json>; stac:item ex:item.
+ex:item a stac:Item; dcterms:identifier "two-countries"; stac:version "1.1.0";
+  stac:sourceDocument <https://example.org/items/two-countries.json>;
+  stac:collection ex:collection; stac:geometryIsNull true;
+  stac:startDatetime "2026-01-01T00:00:00Z"^^xsd:dateTime;
+  stac:endDatetime "2026-10-06T00:00:00Z"^^xsd:dateTime;
+  stac:asset ex:asset.
+ex:asset a stac:Asset;
+  stac:assetOwner ex:item; stac:assetKey "boundaries";
+  stac:role "data"; stac:mediaType "application/geo+json";
+  stac:originalHref "../synthetic-gadm-a.geojson";
+  dcat:downloadURL <https://example.org/synthetic-gadm-a.geojson>.
+
+# Both discovery methods lead to the same local data contracts.
+ex:genericInput a fw:GenericInputConfiguration; fw:describesDataset sample:localB.
+ex:stacInput a fw:STACInputConfiguration; fw:describesDataset sample:localA.
+sample:fileA <http://www.w3.org/ns/prov#wasDerivedFrom> ex:asset.
+sample:fileA fw:localAvailable true.
+sample:fileB fw:localAvailable true.
+ex:inspectionA a fw:AssetInspection; fw:inspectedAsset sample:fileA;
+  fw:observedFormat fw:GeoJSON; fw:inspectionComplete true.
+ex:inspectionB a fw:AssetInspection; fw:inspectedAsset sample:fileB;
+  fw:observedFormat fw:GeoJSON; fw:inspectionComplete true.
+ex:readA a fw:RoutingRequest; fw:routingInput sample:fileA; fw:inspection ex:inspectionA.
+ex:readB a fw:RoutingRequest; fw:routingInput sample:fileB; fw:inspection ex:inspectionB.
+sample:localA a fw:ImportedFeatureDataset; fw:dataKind fw:PolygonDatasetKind; fw:dataProfile gadm:Profile.
+sample:localB a fw:ImportedFeatureDataset; fw:dataKind fw:PolygonDatasetKind.
+ex:processA a fw:RoutingRequest; fw:routingInput sample:localA.
+ex:processB a fw:RoutingRequest; fw:routingInput sample:localB.

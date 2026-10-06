@@ -1,0 +1,36 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix gadm: <urn:fieldwork:gadm:>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+
+<urn:fieldwork:ontology:gadm> a owl:Ontology;
+  rdfs:label "Fieldwork GADM import profile";
+  owl:versionInfo "0.1 experimental, 2026-10-06";
+  dcterms:source <https://gadm.org/metadata.html>, <https://gadm.org/download_country.html>;
+  rdfs:comment "Fieldwork-owned profile, not an official GADM ontology or catalog. Load with fieldwork.ttl and jurisdictions.ttl. No GADM geometries are bundled.".
+
+gadm:BoundaryDataset a owl:Class;
+  rdfs:subClassOf fw:JurisdictionDataset;
+  rdfs:comment "GADM boundaries for an explicit release and country, optionally restricted to an administrative level. Use dcat:version for the dataset release. A whole-country GeoPackage may contain several layers.";
+  fw:implementationStatus "proposed".
+gadm:GIDScheme a dcterms:Standard;
+  rdfs:label "GADM GID identifier scheme";
+  dcterms:source <https://gadm.org/metadata.html>;
+  rdfs:comment "Preserve the complete GID including its suffix. The suffix is not the GADM dataset release. Cross-release identity is not evidence of unchanged geometry.".
+
+# Mappings are annotations on shared terms; preserve all original row attributes
+# with fw:attribute / fw:fieldKey / rdf:value as well (see example and design record).
+fw:representsJurisdiction fw:sourceField "GID_i identifies the source-scoped jurisdiction; mint a separate dataset-version-specific boundary IRI".
+fw:identifierScheme fw:sourceField "GID_i uses gadm:GIDScheme; preserve raw HASC_i, CC_i and other identifiers separately".
+fw:administrativeLevel fw:sourceField "Selected and verified layer level i; do not infer jurisdiction type from level alone".
+fw:administrativeType fw:sourceField "TYPE_i".
+fw:administrativeTypeEnglish fw:sourceField "ENGTYPE_i".
+fw:parentJurisdictionBoundary fw:sourceField "Resolve GID_(i-1) within the same release; do not truncate the child GID".
+rdfs:label fw:sourceField "NAME_i; retain NAME_0 and ancestor names as raw attributes for qualified display".
+dcterms:identifier fw:sourceField "Full GID_i; boundary identity additionally includes provider dataset version, country and layer".
+
+# This is an external source link, not an assertion that Fieldwork publishes GADM.
+gadm:downloads dcat:landingPage <https://gadm.org/download_country.html>;
+  dcterms:references <https://gadm.org/license.html>, <https://gadm.org/metadata.html>.

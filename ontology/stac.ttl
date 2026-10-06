@@ -1,0 +1,40 @@
+@prefix stac: <urn:fieldwork:stac:>.
+@prefix fw: <urn:fieldwork:>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+
+stac:ontology a owl:Ontology;
+  rdfs:label "Fieldwork STAC metadata profile";
+  owl:versionInfo "0.1 experimental, 2026-10-06";
+  rdfs:comment "Fieldwork-owned RDF mapping, not an official STAC ontology or JSON-LD context. Raw STAC JSON and extension metadata remain source evidence. These definitions do not implement a STAC client.".
+stac:Catalog a owl:Class; rdfs:subClassOf dcat:Catalog.
+stac:Collection a owl:Class; rdfs:subClassOf dcat:Dataset.
+stac:Item a owl:Class; rdfs:subClassOf prov:Entity;
+  rdfs:comment "A STAC metadata item, whose footprint describes asset coverage. It is not automatically a jurisdiction or its boundary.".
+stac:Asset a owl:Class; rdfs:subClassOf dcat:Distribution;
+  rdfs:comment "An owner-scoped asset descriptor. The resolved href is dcat:downloadURL. An asset descriptor does not assert locally available file bytes.".
+stac:version a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "STAC specification version, separate from dcat:version of the data product.".
+stac:extension a owl:ObjectProperty.
+stac:child a owl:ObjectProperty.
+stac:item a owl:ObjectProperty; rdfs:range stac:Item.
+stac:collection a owl:ObjectProperty; rdfs:domain stac:Item; rdfs:range stac:Collection.
+stac:asset a owl:ObjectProperty; rdfs:range stac:Asset.
+stac:assetKey a owl:DatatypeProperty; rdfs:domain stac:Asset; rdfs:range xsd:string.
+stac:assetOwner a owl:ObjectProperty; rdfs:domain stac:Asset;
+  rdfs:comment "Item or Collection owning the assets dictionary; asset keys are unique within that owner, not globally.".
+stac:role a owl:DatatypeProperty; rdfs:range xsd:string.
+stac:mediaType a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "Provider-declared MIME string; not a verified file format.".
+stac:sourceDocument a owl:ObjectProperty;
+  rdfs:comment "Absolute source-document IRI used as the base for resolving relative hrefs. Local imports require an explicit original base or an offline asset mapping.".
+stac:originalHref a owl:DatatypeProperty; rdfs:range xsd:string.
+stac:datetime a owl:DatatypeProperty; rdfs:range xsd:dateTime.
+stac:startDatetime a owl:DatatypeProperty; rdfs:range xsd:dateTime.
+stac:endDatetime a owl:DatatypeProperty; rdfs:range xsd:dateTime.
+stac:footprint a owl:ObjectProperty; rdfs:range geo:Geometry.
+stac:geometryIsNull a owl:DatatypeProperty; rdfs:range xsd:boolean.

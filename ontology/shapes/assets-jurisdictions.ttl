@@ -1,0 +1,72 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix gadm: <urn:fieldwork:gadm:>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+@prefix sf: <http://www.opengis.net/ont/sf#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+fw:DownloadedAssetShape a sh:NodeShape; sh:targetClass fw:DownloadedAsset;
+  sh:nodeKind sh:IRI;
+  sh:property [sh:path fw:sha256; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:pattern "^[0-9a-f]{64}$"; sh:message "Record one SHA-256 digest of the actual acquired bytes."],
+    [sh:path fw:byteSize; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0],
+    [sh:path fw:filename; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1],
+    [sh:path prov:wasGeneratedBy; sh:minCount 1; sh:class fw:AssetAcquisition],
+    [sh:path prov:wasDerivedFrom; sh:class dcat:Distribution],
+    [sh:path fw:localAvailable; sh:maxCount 1; sh:datatype xsd:boolean].
+fw:JurisdictionShape a sh:NodeShape; sh:targetClass fw:Jurisdiction;
+  sh:nodeKind sh:IRI;
+  sh:property [sh:path dcterms:identifier; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1],
+    [sh:path fw:identifierScheme; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI].
+fw:BoundaryShape a sh:NodeShape; sh:targetClass fw:JurisdictionBoundary;
+  sh:nodeKind sh:IRI;
+  sh:property [sh:path fw:representsJurisdiction; sh:minCount 1; sh:maxCount 1; sh:class fw:Jurisdiction],
+    [sh:path fw:boundaryDataset; sh:minCount 1; sh:maxCount 1; sh:class fw:JurisdictionDataset],
+    [sh:path dcterms:identifier; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1],
+    [sh:path rdfs:label; sh:minCount 1; sh:minLength 1],
+    [sh:path fw:administrativeLevel; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0],
+    [sh:path geo:hasGeometry; sh:minCount 1; sh:maxCount 1; sh:node fw:PolygonGeometryShape].
+fw:PolygonGeometryShape a sh:NodeShape;
+  sh:class geo:Geometry;
+  sh:or ([sh:class sf:Polygon] [sh:class sf:MultiPolygon]);
+  sh:property [sh:path geo:asWKT; sh:minCount 1; sh:maxCount 1; sh:datatype geo:wktLiteral; sh:minLength 1;
+    sh:message "Provide the preserved polygon representation; topology and coordinate validity require a geometry engine."].
+fw:BoundaryDatasetShape a sh:NodeShape; sh:targetClass fw:JurisdictionDataset;
+  sh:property [sh:path dcat:version; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1].
+fw:ImportedBoundaryShape a sh:NodeShape; sh:targetClass fw:ImportedBoundaryDataset;
+  sh:property [sh:path fw:importComplete; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean],
+    [sh:path rdfs:member; sh:class fw:JurisdictionBoundary],
+    [sh:path prov:wasDerivedFrom; sh:minCount 1; sh:class fw:DownloadedAsset],
+    [sh:path prov:wasGeneratedBy; sh:minCount 1; sh:class fw:BoundaryImport].
+fw:BoundaryImportShape a sh:NodeShape; sh:targetClass fw:BoundaryImport;
+  sh:property [sh:path fw:sourceCRS; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI],
+    [sh:path fw:sourceLayer; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1],
+    [sh:path fw:sourceAxisOrder; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1],
+    [sh:path prov:used; sh:minCount 1; sh:class fw:DownloadedAsset].
+fw:SelectionShape a sh:NodeShape; sh:targetClass fw:JurisdictionSelection;
+  sh:property [sh:path fw:requestedBoundary; sh:minCount 1; sh:class fw:JurisdictionBoundary],
+    [sh:path fw:inputDataset; sh:minCount 1; sh:class fw:ImportedBoundaryDataset;
+      sh:node [sh:property [sh:path fw:importComplete; sh:hasValue true]]],
+    [sh:path fw:outputStudyArea; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI].
+gadm:BoundaryShape a sh:NodeShape; sh:targetClass fw:JurisdictionBoundary;
+  # Apply GADM-specific constraints only when the source dataset has that profile.
+  sh:or (
+    [sh:not [sh:property [sh:path fw:boundaryDataset; sh:qualifiedValueShape [sh:class gadm:BoundaryDataset]; sh:qualifiedMinCount 1]]]
+    [sh:property [sh:path fw:administrativeLevel; sh:maxInclusive 5],
+      [sh:path (fw:representsJurisdiction fw:identifierScheme); sh:hasValue gadm:GIDScheme]]
+  ).
+fw:PolygonDatasetShape a sh:NodeShape;
+  sh:class fw:ImportedFeatureDataset;
+  sh:property [sh:path fw:importComplete; sh:hasValue true],
+    [sh:path fw:dataKind; sh:hasValue fw:PolygonDatasetKind],
+    [sh:path rdfs:member; sh:minCount 1; sh:property [sh:path geo:hasGeometry; sh:minCount 1; sh:node fw:PolygonGeometryShape]].
+gadm:ImportedDatasetShape a sh:NodeShape;
+  sh:node fw:PolygonDatasetShape;
+  sh:property [sh:path fw:dataProfile; sh:hasValue gadm:Profile],
+    [sh:path rdfs:member; sh:property [sh:path fw:attribute;
+      sh:qualifiedMinCount 1; sh:qualifiedValueShape [sh:property
+        [sh:path fw:fieldKey; sh:pattern "^GID_[0-5]$"; sh:minCount 1],
+        [sh:path <http://www.w3.org/1999/02/22-rdf-syntax-ns#value>; sh:datatype xsd:string; sh:minLength 1; sh:minCount 1]]]].

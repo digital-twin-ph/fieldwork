@@ -4,9 +4,28 @@ Fieldwork is a browser prototype for exploring semantic visual GIS workflows in 
 
 Two worked examples explore heat outreach and Old Naledi diagnostic access; a third synthetic exercise explores spatial coverage and input forms. The heat example uses synthetic neighborhoods; Old Naledi combines a real source boundary and historical facility registry with generated demonstration locations. This is exploratory software, not a validated public health policy or risk model.
 
-## Run locally
+## Try the prototype
 
-Try the published app at **https://digital-twin-ph.github.io/fieldwork/**. Workflows and attached PDFs stay in your browser; export them to move between the local and published sites, which have separate browser storage.
+Open the [published app](https://digital-twin-ph.github.io/fieldwork/), start with a [blank canvas](https://digital-twin-ph.github.io/fieldwork/?example=blank), or explore [Old Naledi diagnostic access](https://digital-twin-ph.github.io/fieldwork/?example=old-naledi) and [spatial coverage review](https://digital-twin-ph.github.io/fieldwork/?example=coverage).
+
+Workflows and attached PDFs stay in your browser; export them to move between the local and published sites, which have separate browser storage.
+
+## Current capabilities
+
+| Component | What you can do now |
+| --- | --- |
+| Workflow canvas | Connect typed ports, edit nodes, undo/redo, save separate examples and import/export workflows. |
+| Study area | Draw and label a bounding box or simple polygon; inspect its GeoSPARQL representation. |
+| Calculate area | Enrich the study area with a spherical area measurement; choose metric or imperial units. |
+| Input data | Generate synthetic points, import CSV/GeoPackage/GeoJSON, or place map pins with typed attributes, value sets and optional UUIDs. |
+| Spatial coverage | Check multiple point layers against one boundary; review outside/missing locations and record exclusions without deleting source records. |
+| Visual outputs | Connect maps and point tables; worked examples also provide decision maps, tables and bar charts in Results tabs. |
+| N3 and evidence | Run EYE-JS locally, inspect facts and assertions, and download run receipts. |
+| Supporting references | Attach PDFs or URLs to nodes, describe supporting passages, and preserve citations and file identity with run provenance. |
+
+Reprojection, raster/NetCDF clipping, a GEOS-WASM geoprocessing executor, Logical English comparison and agent-based simulation are not implemented. See [Scope and research](#scope-and-research) and the linked design experiments for the current boundaries.
+
+## Run locally
 
 Install Node.js 22 or newer, then run:
 
@@ -58,9 +77,15 @@ Application assets and the bundled EYE engine are cached after the first success
 
 After updating the application, reload to install the updated service worker, then reload again if the old interface remains visible.
 
+## References and provenance
+
 Select any node and choose **Manage references** to attach a PDF or URL, identify its author/year and passage, and explain how it supports the data, method or assumption. **Save reference** persists the citation; uploaded PDFs remain local and are available offline. **Export** includes referenced PDFs in a portable workflow bundle; **Run receipt** includes a snapshot of references, file hashes and provenance for the run. URL contents are not downloaded. Limits are 5 MB per PDF and 10 MB total per workflow. See the [evidence-reference design experiment](docs/experiments/13-node-evidence-references.md).
 
+Citation metadata uses PROV-O and Dublin Core alongside the spatial GeoSPARQL facts. Attaching a document records the workflow author's supporting reference; it does not parse the PDF, verify its claims or insert its contents into rule premises.
+
 ## Validation
+
+The local baseline on October 6, 2026 passed strict TypeScript checks, the production build, **38 unit tests and 26 Chromium scenarios**. Deployment status for the latest GitHub commit is recorded in [the Pages workflow](https://github.com/digital-twin-ph/fieldwork/actions/workflows/pages.yml).
 
 Use the full regression gate before accepting a functional change:
 
@@ -106,5 +131,10 @@ The [research review](docs/research/related-research-2026-10-05.md) provides bac
 - src/types.ts, src/results.ts and src/worker-types.ts: workflow, result and message contracts.
 - tsconfig.json and tsconfig.workers.json: strict application and worker type-checking.
 - tests/: core and Chromium integration checks.
+- .github/workflows/pages.yml and scripts/stage-pages.mjs: tested GitHub Pages publication and bounded static-site packaging.
+
+## Keeping this README current
+
+Update this README in the same change that adds or changes a widget, accepted input format, workflow connection, storage/export behavior, deployment step or prototype limit. Include a short practitioner exercise and architectural rationale in the relevant [design experiment](docs/experiments/), and maintain the [regression coverage record](docs/experiments/07-functional-regression.md). Describe proposed capabilities separately from implemented behavior; date validation claims and name the browsers actually exercised.
 
 Keep local access tokens under .secrets/, which is excluded from Git and blocked by the static server. Credentials are not needed to run the application.

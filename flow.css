@@ -1,1 +1,9 @@
 .react-flow{background:#f7f9f5}.react-flow .node{position:relative;left:0!important;top:0!important}.react-flow__handle{width:11px;height:11px;border:2px solid white;background:#89aa99;box-shadow:0 0 0 1px #89aa99}.react-flow__handle:hover{background:#176b59}.react-flow__node:focus-visible{outline:2px solid #3e856c;outline-offset:5px;border-radius:9px}.react-flow__attribution{font-size:8px;background:#f7f9f5b0;color:#99a58f;bottom:43px;right:10px}.react-flow__attribution a{color:#99a58f}.handle-name{position:absolute;left:11px;top:-2px;font-size:7px;color:#8b9c80;background:#fff;opacity:0;pointer-events:none}.react-flow__handle:hover .handle-name{opacity:1}.react-flow__edge:hover .react-flow__edge-path{stroke:#b77b58!important;stroke-width:3!important}
+.node-ports{border-top:1px solid #edf0e9;padding:4px 0}.node-port-row{position:relative;min-height:26px;display:flex;align-items:center;padding:4px 13px;font-size:10px;color:#526e60}.node-port-row.alternative-input{border-top:1px dashed #dce4d5;margin-top:4px;padding-top:7px;padding-bottom:7px;color:#76578f}.node-output-row{justify-content:flex-end;color:#76578f}.react-flow__handle.valid{background:#176b59;box-shadow:0 0 0 4px #176b5933}
+.react-flow .node[data-node-role="input"]{background:#edf0f2;--tone:#52616b;--tint:#dce2e6}
+.react-flow .node[data-node-role="processing"]{background:#fff0dd;--tone:#995215;--tint:#ffe0b8}
+.react-flow .node[data-node-role="output"]{background:#e5f3e5;--tone:#306b3a;--tint:#cee7ce}
+.react-flow .react-flow__handle.target{--port-color:#2563eb}
+.react-flow .react-flow__handle.source{--port-color:#dc2626}
+.react-flow .react-flow__handle{background:var(--port-color);box-shadow:0 0 0 1px var(--port-color)}
+.react-flow .react-flow__handle:hover,.react-flow .react-flow__handle.valid{background:var(--port-color);box-shadow:0 0 0 3px var(--port-color)}

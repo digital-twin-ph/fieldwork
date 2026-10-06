@@ -1,1 +1,38 @@
-{"name":"fieldwork-semantic-gis","version":"0.1.0","private":true,"type":"module","scripts":{"start":"node server.mjs","build":"node build.mjs","test":"node --test tests/core.test.mjs","test:browser":"node tests/outputs.browser.mjs"},"engines":{"node":">=22"},"dependencies":{"@xyflow/react":"^12.12.0","react":"^19.3.0","react-dom":"^19.3.0"},"devDependencies":{"@playwright/test":"^1.63.0","esbuild":"^0.28.2"}}
+{
+  "name": "fieldwork-semantic-gis",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "build": "npm run typecheck && node build.mjs",
+    "test": "npm run build && node scripts/test-unit.mjs",
+    "test:browser": "playwright test",
+    "test:report": "playwright show-report",
+    "check": "npm run build && node scripts/test-unit.mjs && npm run test:browser",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.workers.json --noEmit"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@turf/area": "7.3.5",
+    "@turf/boolean-point-in-polygon": "7.3.5",
+    "@xyflow/react": "^12.12.0",
+    "leaflet": "^1.9.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "sql.js": "1.14.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/geojson": "7946.0.16",
+    "@types/leaflet": "1.9.22",
+    "@types/node": "26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/sql.js": "1.4.11",
+    "esbuild": "^0.28.2",
+    "typescript": "7.0.2"
+  }
+}

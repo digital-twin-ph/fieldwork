@@ -1,0 +1,2 @@
+import{a as o}from"./chunk-ZZ35OGHL.js";var i=()=>({datum:"WGS84",geodeticCRS:"EPSG:4326",geometryCRS:"OGC:CRS84",axisOrder:"longitude-latitude",units:"degree"});function s(e){let t=i();if(!o(e)||Object.keys(e).length!==Object.keys(t).length||Object.entries(t).some(([n,r])=>e[n]!==r))throw new Error("This prototype requires WGS84 geographic coordinates in longitude/latitude order (OGC:CRS84). Reprojection is not implemented; changing a CRS label does not transform coordinates.");return structuredClone(e)}export{i as a,s as b};
+//# sourceMappingURL=chunk-6GWLMVKH.js.map

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../src/guards.ts"],
+  "sourcesContent": ["/** Runtime checks are still necessary at JSON, file and browser-storage boundaries. */\nexport function isRecord(value:unknown):value is Record<string,unknown> {return typeof value==='object' && value!==null && !Array.isArray(value);}\nexport function errorMessage(error:unknown):string {return error instanceof Error?error.message:String(error);}\nexport function required<T>(value:T|null|undefined,message='Required application value is missing'):T {if(value===null||value===undefined)throw new Error(message);return value;}\n"],
+  "mappings": "AACO,SAASA,EAASC,EAA+C,CAAC,OAAO,OAAOA,GAAQ,UAAYA,IAAQ,MAAQ,CAAC,MAAM,QAAQA,CAAK,CAAE,CAC1I,SAASC,EAAaC,EAAsB,CAAC,OAAOA,aAAiB,MAAMA,EAAM,QAAQ,OAAOA,CAAK,CAAE,CACvG,SAASC,EAAYH,EAAuBI,EAAQ,wCAA2C,CAAC,GAAGJ,GAAQ,KAAwB,MAAM,IAAI,MAAMI,CAAO,EAAE,OAAOJ,CAAM",
+  "names": ["isRecord", "value", "errorMessage", "error", "required", "message"]
+}

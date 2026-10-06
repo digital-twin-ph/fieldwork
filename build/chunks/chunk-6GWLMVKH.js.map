@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../src/spatial-reference.ts"],
+  "sourcesContent": ["import type {SpatialReference} from './types.js';\nimport {isRecord} from './guards.js';\nexport const defaultSpatialReference=():SpatialReference=>({datum:'WGS84',geodeticCRS:'EPSG:4326',geometryCRS:'OGC:CRS84',axisOrder:'longitude-latitude',units:'degree'});\nexport function validateSpatialReference(reference:unknown):SpatialReference{\n  const expected=defaultSpatialReference();\n  if(!isRecord(reference)||Object.keys(reference).length!==Object.keys(expected).length||Object.entries(expected).some(([key,value])=>reference[key]!==value))throw new Error('This prototype requires WGS84 geographic coordinates in longitude/latitude order (OGC:CRS84). Reprojection is not implemented; changing a CRS label does not transform coordinates.');\n  return structuredClone(reference) as unknown as SpatialReference;\n}\n"],
+  "mappings": "wCAEO,IAAMA,EAAwB,KAAsB,CAAC,MAAM,QAAQ,YAAY,YAAY,YAAY,YAAY,UAAU,qBAAqB,MAAM,QAAQ,GAChK,SAASC,EAAyBC,EAAmC,CAC1E,IAAMC,EAASH,EAAwB,EACvC,GAAG,CAACI,EAASF,CAAS,GAAG,OAAO,KAAKA,CAAS,EAAE,SAAS,OAAO,KAAKC,CAAQ,EAAE,QAAQ,OAAO,QAAQA,CAAQ,EAAE,KAAK,CAAC,CAACE,EAAIC,CAAK,IAAIJ,EAAUG,CAAG,IAAIC,CAAK,EAAE,MAAM,IAAI,MAAM,qLAAqL,EACjW,OAAO,gBAAgBJ,CAAS,CAClC",
+  "names": ["defaultSpatialReference", "validateSpatialReference", "reference", "expected", "isRecord", "key", "value"]
+}

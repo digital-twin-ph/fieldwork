@@ -1,14 +1,12 @@
-import {chromium,expect} from '@playwright/test';
-import {exampleWorkflow} from '../core.js';
+import {test,expect} from '@playwright/test';
+import {exampleWorkflow} from '../build/core.js';
 import {mkdir} from 'node:fs/promises';
-const browser=await chromium.launch(process.env.BROWSER_EXECUTABLE?{executablePath:process.env.BROWSER_EXECUTABLE}:{});
-const context=await browser.newContext({viewport:{width:1440,height:1000}});
-const page=await context.newPage(),errors=[];
+test("Independent result branches, tabs and offline inference",async({page,context})=>{
+const errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 const done=()=>expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 const run=async()=>{await page.locator('#run-button').click();await done();};
-try{
-  await page.goto('http://127.0.0.1:4173');await done();
+  await page.goto('/');await done();
   await expect(page.getByRole('tab')).toHaveCount(2);
   await expect(page.locator('#map-panel')).toBeVisible();
   await page.getByRole('tab',{name:'Decision table'}).click();
@@ -58,4 +56,4 @@ try{
   await page.screenshot({path:'test-results/output-tabs-mobile.png',fullPage:true});
   if(errors.length)throw new Error(errors.join('\n'));
   console.log('PASS: multi-output EYE execution, independent branch evidence, output settings/removal, keyboard tabs, offline reload, mobile layout.');
-}finally{await browser.close();}
+});

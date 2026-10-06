@@ -1,0 +1,281 @@
+{
+  "schema": "fieldwork/workflow/1",
+  "exampleId": "blank",
+  "name": "Frozen coverage baseline 2026-10-05",
+  "nodes": [
+    {
+      "id": "scope",
+      "type": "area",
+      "x": 40,
+      "y": 40,
+      "params": {
+        "source": "drawn",
+        "label": "Synthetic study boundary",
+        "selectionMode": "bbox",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                25.89,
+                -24.7
+              ],
+              [
+                25.91,
+                -24.7
+              ],
+              [
+                25.91,
+                -24.68
+              ],
+              [
+                25.89,
+                -24.68
+              ],
+              [
+                25.89,
+                -24.7
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "observations",
+      "type": "observations",
+      "x": 40,
+      "y": 230,
+      "params": {
+        "label": "Field visits",
+        "data": {
+          "type": "FeatureCollection",
+          "features": [
+            {
+              "type": "Feature",
+              "id": "inside",
+              "properties": {
+                "name": "Inside example",
+                "visit_status": "Completed",
+                "household_size": 5,
+                "visit_date": "2026-10-05",
+                "consented": true,
+                "capturedAt": "2026-10-05T12:00:00.000Z"
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [
+                  25.9,
+                  -24.69
+                ]
+              }
+            },
+            {
+              "type": "Feature",
+              "id": "edge",
+              "properties": {
+                "name": "Boundary example"
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [
+                  25.91,
+                  -24.69
+                ]
+              }
+            },
+            {
+              "type": "Feature",
+              "id": "outside",
+              "properties": {
+                "name": "Outside example"
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [
+                  25.92,
+                  -24.69
+                ]
+              }
+            },
+            {
+              "type": "Feature",
+              "id": "missing",
+              "properties": {
+                "name": "Missing-location example"
+              },
+              "geometry": null
+            }
+          ]
+        },
+        "fields": [
+          {
+            "key": "visit_status",
+            "label": "Visit status",
+            "type": "text",
+            "allowedValues": [
+              "Planned",
+              "Completed"
+            ],
+            "defaultValue": "Planned"
+          }
+        ],
+        "attributeRules": [
+          {
+            "key": "household_size",
+            "type": "integer"
+          },
+          {
+            "key": "visit_date",
+            "type": "date"
+          },
+          {
+            "key": "consented",
+            "type": "boolean"
+          }
+        ]
+      }
+    },
+    {
+      "id": "coverage",
+      "type": "coverage_check",
+      "x": 600,
+      "y": 130,
+      "params": {
+        "pointInputCount": 2,
+        "exclusions": [
+          {
+            "sourceNodeId": "observations",
+            "featureId": "outside",
+            "signature": "[\"outside\",{\"name\":\"Outside example\"},[25.92,-24.69]]",
+            "reason": "Confirmed synthetic coordinate error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "second",
+      "type": "observations",
+      "x": 310,
+      "y": 280,
+      "params": {
+        "label": "Second survey",
+        "data": {
+          "type": "FeatureCollection",
+          "features": [
+            {
+              "type": "Feature",
+              "id": "inside",
+              "properties": {
+                "name": "Inside example",
+                "visit_status": "Completed",
+                "household_size": 5,
+                "visit_date": "2026-10-05",
+                "consented": true,
+                "capturedAt": "2026-10-05T12:00:00.000Z"
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [
+                  25.9,
+                  -24.69
+                ]
+              }
+            },
+            {
+              "type": "Feature",
+              "id": "outside",
+              "properties": {
+                "name": "Outside example"
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [
+                  25.92,
+                  -24.69
+                ]
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "key": "visit_status",
+            "label": "Visit status",
+            "type": "text",
+            "allowedValues": [
+              "Planned",
+              "Completed"
+            ],
+            "defaultValue": "Planned"
+          }
+        ],
+        "attributeRules": [
+          {
+            "key": "household_size",
+            "type": "integer"
+          },
+          {
+            "key": "visit_date",
+            "type": "date"
+          },
+          {
+            "key": "consented",
+            "type": "boolean"
+          }
+        ]
+      }
+    },
+    {
+      "id": "measure",
+      "type": "measure_area",
+      "x": 310,
+      "y": 30,
+      "params": {
+        "unit": "km2"
+      }
+    },
+    {
+      "id": "map",
+      "type": "map_output",
+      "x": 880,
+      "y": 140,
+      "params": {
+        "label": "Regression map",
+        "pointInputCount": 1
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "scope-link",
+      "from": "measure",
+      "to": "coverage",
+      "port": "area"
+    },
+    {
+      "id": "points-link",
+      "from": "observations",
+      "to": "coverage",
+      "port": "points"
+    },
+    {
+      "id": "measurement-link",
+      "from": "scope",
+      "to": "measure",
+      "port": "area"
+    },
+    {
+      "id": "second-link",
+      "from": "second",
+      "to": "coverage",
+      "port": "points_2"
+    },
+    {
+      "id": "map-link",
+      "from": "coverage",
+      "to": "map",
+      "port": "coverage"
+    }
+  ]
+}

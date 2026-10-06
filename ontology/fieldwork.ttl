@@ -1,0 +1,201 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix qudt: <http://qudt.org/schema/qudt/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+
+fw:EvidenceReference a owl:Class;
+  rdfs:subClassOf prov:Entity;
+  rdfs:label "Evidence reference supplied by the workflow author";
+  rdfs:comment "A citation documenting a node plan. Linked by dcterms:references; attaching it does not establish independent verification or make PDF contents a reasoning premise.";
+  fw:implementationStatus "implemented".
+fw:workflowNode a owl:ObjectProperty;
+  rdfs:domain prov:Activity; rdfs:range prov:Plan;
+  rdfs:comment "The run-specific snapshot of the visual node executed by this activity.".
+fw:referenceRole a owl:ObjectProperty;
+  rdfs:comment "The author's stated purpose for citing a source.".
+fw:DataSourceReference a prov:Role; rdfs:label "Data source reference".
+fw:MethodReference a prov:Role; rdfs:label "Method reference".
+fw:AssumptionReference a prov:Role; rdfs:label "Assumption or parameter reference".
+fw:ContextReference a prov:Role; rdfs:label "Background context reference".
+fw:locator a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "A page, table, section or other locator supplied by the author.".
+fw:sha256 a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:byteSize a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:filename a owl:DatatypeProperty; rdfs:range xsd:string.
+
+fw:ontology a owl:Ontology;
+  rdfs:label "Fieldwork study-area and spatial-operation vocabulary";
+  owl:versionInfo "0.1 experimental, 2026-10-05";
+  rdfs:comment "A bounded vocabulary for study areas and their reusable roles. A class declaration is not an implementation or validation constraint.".
+
+fw:implementationStatus a owl:AnnotationProperty;
+  rdfs:comment "Prototype implementation status attached to a class, not a capability inferred for an arbitrary activity.".
+fw:StudyArea a owl:Class;
+  rdfs:subClassOf geo:Feature;
+  rdfs:label "Study area";
+  rdfs:comment "A geographic feature used to scope one or more analyses. Its geometry is linked with geo:hasGeometry; it is not itself a clipping operation.";
+  fw:implementationStatus "implemented".
+fw:SpatialOperation a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Spatial operation execution";
+  rdfs:comment "An execution that uses a spatial scope and optional datasets to produce derived entities. Workflow node configuration is distinct from its execution.".
+fw:studyArea a owl:ObjectProperty;
+  rdfs:subPropertyOf prov:used;
+  rdfs:domain fw:SpatialOperation;
+  rdfs:range fw:StudyArea;
+  rdfs:label "uses study area".
+fw:inputGeometry a owl:ObjectProperty;
+  rdfs:subPropertyOf prov:used;
+  rdfs:domain fw:SpatialOperation;
+  rdfs:range geo:Geometry;
+  rdfs:label "uses geometry representation".
+fw:inputDataset a owl:ObjectProperty;
+  rdfs:subPropertyOf prov:used;
+  rdfs:domain fw:SpatialOperation;
+  rdfs:range dcat:Dataset;
+  rdfs:label "uses dataset".
+fw:method a owl:DatatypeProperty;
+  rdfs:domain fw:SpatialOperation;
+  rdfs:range xsd:string;
+  rdfs:label "calculation method description".
+
+fw:AreaComputation a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Area calculation";
+  rdfs:comment "Enriches the same study area with a polygon-area measurement, preserving feature and geometry identity. The workflow output remains a study area; the generated measurement records canonical square metres and provenance, with an independently chosen display unit.";
+  fw:implementationStatus "implemented".
+fw:AreaMeasurement a owl:Class;
+  rdfs:subClassOf prov:Entity, qudt:QuantityValue;
+  rdfs:label "Computed area measurement".
+fw:MapView a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Spatial map view";
+  rdfs:comment "Displays a study boundary and point records. Direct-input views compute spatial relations for display without inferring acceptance or excluding records; reviewed views reuse a coverage check.";
+  fw:implementationStatus "implemented".
+fw:Reprojection a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Coordinate transformation";
+  rdfs:comment "Proposed operation transforming a geometry between known CRS definitions, recording the coordinate operation and generating a new geometry representation. Changing a CRS label is not a transformation.";
+  fw:implementationStatus "proposed".
+fw:measuredGeometry a owl:ObjectProperty;
+  rdfs:domain fw:AreaMeasurement;
+  rdfs:range geo:Geometry;
+  rdfs:label "geometry measured by this result".
+
+fw:ZonalStatistics a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Raster zonal statistics";
+  rdfs:comment "Summarizes raster values within a zone. Requires explicit pixel inclusion, nodata, weighting, statistic, and coverage policies.";
+  fw:implementationStatus "proposed".
+fw:RasterClipping a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Raster polygon clipping";
+  rdfs:comment "Creates a derived raster using a polygon mask. Cropping to the rectangular extent alone does not implement this operation.";
+  fw:implementationStatus "proposed".
+fw:CoverageSubsetting a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Multidimensional coverage subsetting";
+  rdfs:comment "Selects coverage coordinates, variables and dimensions; for example a NetCDF spatial/time/depth subset. Polygon masking is an additional explicit operation when needed.";
+  fw:implementationStatus "proposed".
+fw:FeatureExtraction a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Spatial feature extraction";
+  rdfs:comment "Selects features by a stated spatial relation, or creates clipped feature geometries under an explicit clipping mode. Intersects and within are distinct policies.";
+  fw:implementationStatus "proposed".
+fw:SpatialAggregation a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Spatial aggregation";
+  rdfs:comment "Aggregates records into spatial reporting units using a stated measure, denominator, spatial predicate, and overlap/missing-data policy.";
+  fw:implementationStatus "proposed".
+
+# Candidate resource-planning vocabulary. No loader or budget enforcement yet.
+fw:AssetSubsetPlan a owl:Class;
+  rdfs:subClassOf prov:Plan;
+  rdfs:label "Asset subset plan";
+  rdfs:comment "A plan to acquire and decode a bounded portion of an asset before analysis. Requested area, retrieval geometry and precise mask may differ.";
+  fw:implementationStatus "proposed".
+fw:ResourceBudget a owl:Class;
+  rdfs:subClassOf prov:Entity;
+  rdfs:label "Browser resource budget";
+  rdfs:comment "Explicit limits for a run, rather than assumptions about available browser resources.";
+  fw:implementationStatus "proposed".
+fw:ResourceEstimate a owl:Class;
+  rdfs:subClassOf prov:Entity;
+  rdfs:label "Estimated asset costs";
+  rdfs:comment "Estimated transfer and decoded-memory costs with a documented method and uncertainty. Unknown cost is not zero.";
+  fw:implementationStatus "proposed".
+fw:requestedArea a owl:ObjectProperty;
+  rdfs:domain fw:AssetSubsetPlan; rdfs:range fw:StudyArea.
+fw:retrievalGeometry a owl:ObjectProperty;
+  rdfs:domain fw:AssetSubsetPlan; rdfs:range geo:Geometry;
+  rdfs:comment "Coarse retrieval scope, such as tile extent or bounding box, which may include pixels outside the requested polygon.".
+fw:maskGeometry a owl:ObjectProperty;
+  rdfs:domain fw:AssetSubsetPlan; rdfs:range geo:Geometry;
+  rdfs:comment "Precise polygon used to mask or select analysis content after retrieval.".
+fw:resourceBudget a owl:ObjectProperty; rdfs:range fw:ResourceBudget.
+fw:resourceEstimate a owl:ObjectProperty;
+  rdfs:domain fw:AssetSubsetPlan; rdfs:range fw:ResourceEstimate.
+fw:maximumTransferBytes a owl:DatatypeProperty;
+  rdfs:domain fw:ResourceBudget; rdfs:range xsd:nonNegativeInteger.
+fw:maximumDecodedBytes a owl:DatatypeProperty;
+  rdfs:domain fw:ResourceBudget; rdfs:range xsd:nonNegativeInteger.
+fw:maximumCells a owl:DatatypeProperty;
+  rdfs:domain fw:ResourceBudget; rdfs:range xsd:nonNegativeInteger.
+fw:estimatedTransferBytes a owl:DatatypeProperty;
+  rdfs:domain fw:ResourceEstimate; rdfs:range xsd:nonNegativeInteger.
+fw:estimatedDecodedBytes a owl:DatatypeProperty;
+  rdfs:domain fw:ResourceEstimate; rdfs:range xsd:nonNegativeInteger.
+
+fw:StreamingSpatialSubset a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Streaming spatial subset ingestion";
+  rdfs:comment "A proposed ingest operation that incrementally selects or clips incoming content before registering the completed derivative. It does not imply reduced network transfer.";
+  fw:implementationStatus "proposed".
+fw:DerivedSpatialDataset a owl:Class;
+  rdfs:subClassOf dcat:Dataset, prov:Entity;
+  rdfs:label "Derived spatial dataset";
+  rdfs:comment "A derived dataset linked to upstream assets with prov:wasDerivedFrom and its operation with prov:wasGeneratedBy. Registration as usable requires a separate completion check.";
+  fw:implementationStatus "proposed".
+fw:ResourceObservation a owl:Class;
+  rdfs:subClassOf prov:Entity;
+  rdfs:label "Observed resource costs";
+  rdfs:comment "Measured costs of an ingest or computation, with definitions of counters and their availability; distinct from estimates.";
+  fw:implementationStatus "proposed".
+fw:receivedBodyBytes a owl:DatatypeProperty;
+  rdfs:domain fw:ResourceObservation; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "Bytes delivered to the application's response-body reader, not necessarily compressed network transfer bytes.".
+fw:retainedBytes a owl:DatatypeProperty;
+  rdfs:domain fw:ResourceObservation; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "Bytes retained in the resulting persisted asset.".
+
+fw:SpatialCoverageCheck a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Spatial coverage check";
+  rdfs:comment "Checks point records against a study area. Outside and missing-location records require review. This is not a statistical outlier detector or evidence that a record is incorrect.";
+  fw:implementationStatus "implemented".
+fw:checkedRecord a owl:ObjectProperty;
+  rdfs:domain fw:SpatialCoverageCheck; rdfs:range geo:Feature.
+fw:spatialRelation a owl:ObjectProperty;
+  rdfs:comment "Application classification: Inside, Boundary, Outside, or MissingLocation. Geometric relations also use GeoSPARQL predicates when coordinates exist.".
+fw:coverageDecision a owl:ObjectProperty;
+  rdfs:comment "Application policy outcome: Accept, Review, or Excluded.".
+fw:requiresReview a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:excluded a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:comment "User-directed exclusion in the current check, never automatic deletion of the input record.".
+fw:exclusionReason a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:attribute a owl:ObjectProperty;
+  rdfs:comment "Links a feature to an input attribute described by a local field key and rdf:value, or an explicit missing-value flag. User field keys are not assumed to be shared domain concepts.".
+fw:fieldKey a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:missingValue a owl:DatatypeProperty; rdfs:range xsd:boolean.
+
+fw:TableView a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Point table presentation";
+  rdfs:comment "Displays source coordinates and attributes, or existing spatial coverage decisions. Does not infer new spatial relationships or exclude records.";
+  fw:implementationStatus "implemented".

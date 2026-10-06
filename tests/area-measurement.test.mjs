@@ -1,0 +1,64 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {calculateArea,AREA_UNITS} from '../build/area-computation.js';
+import {bboxPolygon,newStudyArea,blankWorkflow,studyAreaN3} from '../build/study-area.js';
+import {newAreaMeasurement,measureArea} from '../build/area-measurement.js';
+import {coverageExercise,coverageFacts} from '../build/spatial-coverage.js';
+import {executeWorkflow,executionPlan,validateWorkflow} from '../build/core.js';
+const close=(actual,expected)=>assert.ok(Math.abs(actual-expected)<=Math.max(1,Math.abs(expected))*1e-10,`${actual} differs from ${expected}`);
+test('spherical area agrees with analytic latitude-longitude rectangle and respects polygon shape',()=>{
+  const box=bboxPolygon(0,0,1,1),expected=6371008.8**2*(Math.PI/180)*Math.sin(Math.PI/180);
+  close(calculateArea(box).squareMetres,expected);
+  close(calculateArea({type:'Polygon',coordinates:[box.coordinates[0].toReversed()]}).squareMetres,expected);
+  close(calculateArea({type:'Polygon',coordinates:[[[0,0],[1,0],[0,1],[0,0]]]}).squareMetres,expected/2);
+  const inner=bboxPolygon(.25,.25,.75,.75);
+  close(calculateArea({type:'Polygon',coordinates:[box.coordinates[0],inner.coordinates[0]]}).squareMetres,expected-calculateArea(inner).squareMetres);
+  close(calculateArea({type:'MultiPolygon',coordinates:[box.coordinates,bboxPolygon(2,0,3,1).coordinates]}).squareMetres,2*expected);
+});
+test('metric and international imperial conversions retain one canonical value',()=>{
+  const box=bboxPolygon(25.89,-24.7,25.91,-24.68),m2=calculateArea(box,'m2').value;
+  close(calculateArea(box,'km2').value,m2/1e6);close(calculateArea(box,'ha').value,m2/1e4);
+  close(calculateArea(box,'ft2').value,calculateArea(box,'acre').value*43560);
+  close(calculateArea(box,'acre').value,calculateArea(box,'mi2').value*640);
+  for(const unit of Object.keys(AREA_UNITS))assert.equal(calculateArea(box,unit).squareMetres,m2);
+  assert.throws(()=>calculateArea(box,'degrees'),/supported/);
+  assert.throws(()=>calculateArea({type:'Point',coordinates:[0,0]}),/polygon/);
+});
+test('area computation requires a boundary, shares its identity, and never uses a recursive connector',async()=>{
+  const w=blankWorkflow();w.nodes=[{...newStudyArea(),id:'source',x:0,y:0},{...newAreaMeasurement(),id:'measure',x:300,y:0}];
+  w.nodes[0].params.geometry=bboxPolygon(25.89,-24.7,25.91,-24.68);
+  assert.throws(()=>executionPlan(w),/area input connected/);
+  w.edges=[{id:'link',from:'source',to:'measure',port:'area'}];
+  let calls=0;
+  const run=()=>executeWorkflow(w,async()=>{calls++;return [{subject:'urn:fieldwork:area:source',predicate:'urn:fieldwork:readyForSpatialAnalysis',object:'true'}];});
+  const first=await run();assert.equal(calls,1);assert.equal(first.outputs.length,1);
+  assert.equal(first.outputs[0].kind,'study-area');assert.equal(first.outputs[0].areaId,'urn:fieldwork:area:source');
+  const {measurement,geometryId}=first.outputs[0];assert.equal(geometryId,'urn:fieldwork:geometry:source');
+  const receipt=first.receipts.find(r=>r.kind==='computation');assert.equal(receipt.conclusions.length,0);
+  assert.ok(receipt.facts.includes(`geo:hasMetricArea "${measurement.squareMetres}"^^xsd:double`));
+  assert.ok(!studyAreaN3(w.nodes[0]).facts.includes('hasMetricArea'));
+  w.nodes[1].params.unit='acre';assert.equal((await run()).outputs[0].measurement.squareMetres,measurement.squareMetres);
+  w.nodes[0].params.geometry=bboxPolygon(25.89,-24.7,25.9,-24.68);
+  close((await run()).outputs[0].measurement.squareMetres,measurement.squareMetres/2);
+  w.edges[0].from='measure';assert.throws(()=>validateWorkflow(w),/Incompatible/);
+});
+
+test('area enrichment preserves source attributes and can feed downstream spatial operations',()=>{
+  const w=coverageExercise(),geometry=w.nodes[0].params.geometry;
+  const source={kind:'study-area',areaId:'urn:fieldwork:area:scope',geometryId:'urn:fieldwork:geometry:scope',boundary:geometry,label:'My area',ready:true,metadata:{owner:'Example'}};
+  const before=structuredClone(source),node={...newAreaMeasurement(),id:'measure',x:200,y:0};
+  const enriched=measureArea(node,source,'test').value;
+  assert.deepEqual(source,before);assert.equal(source.measurement,undefined);
+  assert.deepEqual(enriched.boundary,geometry);assert.deepEqual(enriched.metadata,source.metadata);
+  assert.equal(enriched.label,source.label);assert.equal(enriched.ready,true);
+  assert.equal(enriched.geometryId,source.geometryId);assert.equal(enriched.areaId,source.areaId);
+  const points={...w.nodes[1].params.data,sourceNodeId:'observations'};
+  const plain=coverageFacts(w.nodes[2],source,points,'plain'),measured=coverageFacts(w.nodes[2],enriched,points,'measured');
+  assert.deepEqual(measured.rows,plain.rows);assert.match(measured.input,/geo:hasMetricArea/);
+  w.nodes.push(node);w.edges.find(e=>e.port==='area').from='measure';w.edges.push({id:'measure-link',from:'scope',to:'measure',port:'area'});
+  assert.deepEqual(executionPlan(w).map(n=>n.id),['scope','measure','observations','coverage']);
+  enriched.metadata.owner='Changed';enriched.boundary.coordinates[0][0][0]=0;assert.deepEqual(source,before);
+  w.nodes.push({...newAreaMeasurement(),id:'second',x:500,y:0});w.edges.push({id:'second-link',from:'measure',to:'second',port:'area'});
+  assert.doesNotThrow(()=>validateWorkflow(w));
+  w.edges.find(e=>e.id==='measure-link').from='second';assert.throws(()=>validateWorkflow(w),/cycles/);
+});

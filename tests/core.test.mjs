@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exampleWorkflow,validateWorkflow,executionPlan,executeWorkflow,NS} from '../core.js';
+import {exampleWorkflow,validateWorkflow,executionPlan,executeWorkflow,NS} from '../build/core.js';
 
 test('all outputs run and share one upstream inference',async()=>{
   const w=exampleWorkflow();let calls=0;
@@ -28,5 +28,5 @@ test('each output requires connected dependencies and a supported display',()=>{
   const w=exampleWorkflow();w.edges=w.edges.filter(e=>e.to!=='table');
   assert.throws(()=>executionPlan(w),/decisions input connected/);
   w.nodes.at(-1).params.view='chart';
-  assert.throws(()=>validateWorkflow(w),/map or table/);
+  assert.throws(()=>validateWorkflow(w),/map, table/);
 });

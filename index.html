@@ -8,6 +8,8 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./build/canvas.css">
+  <link rel="stylesheet" href="./build/study-area-map.css">
+  <link rel="stylesheet" href="./study-area.css">
 </head>
 <body>
   <header class="app-header">
@@ -16,12 +18,13 @@
     <div class="header-right"><span id="offline-status" class="connection"><i></i> Preparing offline workspace</span><button id="help-button" class="icon-button" title="How to use Fieldwork" aria-label="How to use Fieldwork">?</button><span class="avatar" title="Local workspace">FW</span></div>
   </header>
   <section class="project-bar">
-    <div><div class="eyebrow">WORKFLOWS <span>/</span> EXAMPLES</div><h1>Heat outreach screening <span class="title-dot"></span></h1><p>Connect geography to evidence. Make every decision explainable.</p></div>
+    <div><div class="eyebrow">WORKFLOWS <span>/</span> EXAMPLES</div><h1 id="project-title">Heat outreach screening</h1><p id="project-description">Connect geography to evidence. Make every decision explainable.</p></div>
     <div class="project-actions"><span id="save-status">Saved on this device</span><button id="import-button" class="button">↑ Import</button><button id="export-button" class="button">↓ Export</button><button id="run-button" class="button primary"><span>▶</span> Run workflow</button></div>
   </section>
+  <div class="example-bar"><label for="example-select">Workspace</label><select id="example-select"><option value="blank">Blank · study area experiment</option><option value="heat">01 · Heat outreach</option><option value="old-naledi">02 · Old Naledi diagnostic access</option><option value="coverage">03 · Spatial coverage exercise</option></select><button id="new-workflow" class="button small">＋ New empty canvas</button><span id="example-note"></span></div>
   <main class="studio">
     <aside class="library">
-      <div class="section-title">Node library <span class="tag">6</span></div>
+      <div class="section-title">Node library <span id="library-count" class="tag">6</span></div>
       <label class="search"><span>⌕</span><input id="node-search" placeholder="Find a node…" aria-label="Find a node"></label>
       <p class="muted library-help">Click to add. Connect matching ports.</p>
       <div id="node-library"></div>
@@ -30,26 +33,47 @@
     <section class="work-area">
       <div class="canvas-toolbar"><div class="tabs"><button class="tab active" data-view="workflow">Workflow <span id="node-count">6</span></button><button class="tab" data-view="rules">N3 & evidence</button></div><div class="toolbar-actions"><span id="workflow-state" class="state">Ready to run</span><button id="undo-button" class="icon-button" title="Undo" aria-label="Undo">↶</button><button id="redo-button" class="icon-button" title="Redo" aria-label="Redo">↷</button></div></div>
       <div id="workflow-view" class="canvas-view">
-        <div class="canvas-heading"><span class="eyebrow">HEAT OUTREACH · DEMO 01</span><span>Drag nodes to arrange your analysis</span></div>
+        <div class="canvas-heading"><span id="canvas-example" class="eyebrow">HEAT OUTREACH · DEMO 01</span><span>Drag nodes to arrange your analysis</span></div>
         <div id="canvas" aria-label="Workflow canvas"></div>
+        <div id="blank-canvas" class="blank-canvas" hidden><span class="tag">DEVELOPMENTAL EVALUATION · STEP 1</span><h2>Where will your simulation take place?</h2><p>Start with a Study area. Draw a boundary on the map, inspect its N3 facts, then run the rule.</p><button id="blank-add" class="button primary">＋ Add Study area</button></div>
         <div class="canvas-footer"><span id="canvas-hint">Select a node to inspect · Output port → input port to connect</span><div class="zoom-controls"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-value">100%</span><button id="zoom-in" aria-label="Zoom in">+</button><button id="fit-button" title="Fit workflow" aria-label="Fit workflow">⛶</button></div></div>
       </div>
-      <div id="rules-view" class="rules-view" hidden><div class="rules-intro"><strong>Executable evidence</strong><span>Generated N3 facts and rules, evaluated by EYE-JS locally.</span><button id="download-evidence" class="button small">↓ Run receipt</button></div><pre id="n3-preview">Run the workflow to inspect its N3 input and conclusions.</pre></div>
+      <div id="rules-view" class="rules-view" hidden><div class="rules-intro"><strong>Executable evidence</strong><span>Generated facts → explicit rules → local inference.</span><button id="download-evidence" class="button small">↓ Run receipt</button></div><div id="area-semantic-graph" class="semantic-strip" hidden></div><pre id="n3-preview">Run the workflow to inspect its N3 input and conclusions.</pre></div>
       <section class="results-panel">
-        <div class="results-heading"><div><span class="section-title">Results</span><span id="run-summary" class="muted">Run the workflow to see results</span></div><span class="muted">One tab per output node</span></div>
+        <div class="results-heading"><div><span class="section-title">Results</span><span id="run-summary" class="muted">Run the workflow to see results</span></div><button id="expand-results" class="button small" aria-expanded="false">⛶ Expand</button></div>
         <div id="result-tabs" class="result-switch" role="tablist" aria-label="Workflow outputs"></div>
-        <div id="results-empty" class="empty-state">Connect visual output nodes and run the workflow to create Results tabs. Name each output and choose Map or Table in the Inspector.</div>
+        <div id="results-empty" class="empty-state">Connect visual output nodes and run the workflow to create Results tabs. Name each output and choose Map, Table, or Bar chart in the Inspector.</div>
         <div id="result-metrics" class="metrics"></div>
-        <div id="map-panel" role="tabpanel" tabindex="0" hidden><svg id="map" viewBox="0 0 850 295" role="img" aria-label="Neighborhoods and cooling centers"></svg><div class="map-legend"><span><i class="legend-dot review"></i> Review</span><span><i class="legend-dot clear"></i> No flag</span><span><i class="legend-square"></i> Cooling center</span><span class="map-note">Local locations · no external map tiles</span></div></div>
-        <div id="table-panel" role="tabpanel" tabindex="0" hidden><table><thead><tr><th>Neighborhood</th><th>Nearest center</th><th>Distance</th><th>Decision</th></tr></thead><tbody id="result-rows"></tbody></table></div>
+        <div id="coverage-alert" class="notice coverage-alert" role="alert" hidden></div>
+        <div id="map-panel" role="tabpanel" tabindex="0" hidden><svg id="map" viewBox="0 0 850 295" role="img" aria-label="Spatial results and supporting geography"></svg><div class="map-legend"><span><i class="legend-dot review"></i> <span id="review-legend">Review</span></span><span><i class="legend-dot clear"></i> <span id="clear-legend">No flag</span></span><span><i class="legend-dot" style="background:#a89b87"></i> <span id="unknown-legend">Unknown</span></span><span><i class="legend-square"></i> <span id="facility-legend">Cooling center</span></span><span id="map-note" class="map-note">Local locations · no external map tiles</span></div></div>
+        <div id="map-layer-list" class="map-layer-list" aria-label="Visible point layers" hidden></div><div id="map-spatial-notice" class="notice" role="status" hidden></div><div id="map-missing-records" class="map-missing-records"></div>
+        <div id="table-panel" role="tabpanel" tabindex="0" hidden><label class="result-search"><span>Filter rows</span><input id="result-search" type="search" placeholder="Name, evidence, or service…" aria-label="Filter result rows"></label><div id="point-table-controls" hidden></div><table><thead><tr id="result-head"></tr></thead><tbody id="result-rows"></tbody></table></div>
+        <div id="bars-panel" role="tabpanel" tabindex="0" hidden></div>
       </section>
     </section>
     <aside class="inspector"><div class="inspector-header"><span class="section-title">Inspector</span><span class="tag">LOCAL</span></div><div id="inspector-content"></div></aside>
   </main>
-  <footer class="app-footer"><span><i class="footer-dot"></i> <span id="engine-status">EYE-JS 21.1.24 · WebAssembly</span></span><span>CRS84 coordinates · geodesic approximation · synthetic data</span><span>Exploratory research / v0.1</span></footer>
+  <footer class="app-footer"><span><i class="footer-dot"></i> <span id="engine-status">EYE-JS 21.1.24 · WebAssembly</span></span><span id="footer-context">CRS84 coordinates · geodesic approximation · synthetic data</span><span>Exploratory research / v0.2</span></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <input id="workflow-file" type="file" accept=".json,application/json" hidden><input id="geojson-file" type="file" accept=".json,.geojson,application/json,application/geo+json" hidden>
-  <dialog id="help-dialog"><div class="dialog-heading"><h2>From places to decisions</h2><button id="close-help" class="icon-button" aria-label="Close help">×</button></div><p>Build a small spatial analysis by connecting data, operations, and rules. Everything runs on this device.</p><ol><li><strong>Explore.</strong> Select a node to see its inputs and settings.</li><li><strong>Connect.</strong> Click an output circle, then a compatible input circle. Click a connector to remove it.</li><li><strong>Experiment.</strong> Change the distance threshold or heat alert, then run again.</li><li><strong>Understand.</strong> Select a neighborhood on the map or table for its supporting evidence.</li><li><strong>Keep.</strong> Export a workflow to move it between devices. Export a run receipt for inputs, rules, and results.</li></ol><p class="notice">This is a research example, not a validated public health policy. Distances are straight-line approximations, not travel distances. Logical English comparison is not implemented in this slice.</p><p>Keyboard: Tab to controls, Enter to activate. Selected nodes can be moved with arrow keys. Delete removes a focused node. Ctrl/Cmd+Z undoes an edit.</p></dialog>
-  <script type="module" src="./app.js"></script>
+  <dialog id="area-dialog" aria-labelledby="area-dialog-title">
+    <div class="area-dialog-heading"><div><span class="eyebrow">STUDY AREA · DRAW → INSPECT → APPLY</span><h2 id="area-dialog-title">Choose your study area</h2></div><button id="area-close" class="icon-button" aria-label="Close study area editor">×</button></div>
+    <div class="area-editor-layout"><section class="area-map-column">
+      <div class="area-tools" aria-label="Drawing tools"><button class="button small" data-draw="pan" aria-pressed="true">Move map</button><button id="draw-bbox" class="button small" data-draw="bbox" aria-pressed="false">▭ Bounding box</button><button id="draw-polygon" class="button small" data-draw="polygon" aria-pressed="false">⬡ Polygon</button><button id="area-finish" class="button small" disabled>Finish polygon</button><button id="area-undo-point" class="button small" disabled>Undo point</button><button id="area-clear" class="button small">Clear draft</button></div>
+      <div id="area-map" aria-label="Online map for selecting a study area"></div>
+      <div class="area-map-footer"><label><input id="area-online" type="checkbox" checked> Online basemap</label><span id="area-tile-status" role="status"></span><button id="area-fit" class="text-button">Fit selection</button><button id="area-old-naledi" class="text-button">Go to Old Naledi</button></div>
+      <p id="area-feedback" class="area-feedback" role="status"></p>
+    </section><aside class="area-draft">
+      <label class="field-label" for="area-name">Study area label</label><input id="area-name" maxlength="100">
+      <p id="area-summary" class="muted">No area selected</p>
+      <details><summary>Enter bounding coordinates</summary><div class="area-bounds"><label>West<input id="area-west" type="number" step="any" aria-label="West longitude"></label><label>South<input id="area-south" type="number" step="any" aria-label="South latitude"></label><label>East<input id="area-east" type="number" step="any" aria-label="East longitude"></label><label>North<input id="area-north" type="number" step="any" aria-label="North latitude"></label></div><button id="area-use-bounds" class="button small">Use these bounds</button></details>
+      <span class="inspector-section">N3 draft · not yet evaluated</span><pre id="area-n3"></pre>
+      <details><summary>GeoJSON coordinates</summary><pre id="area-geojson"></pre></details>
+      <p class="muted">The widget validates the shape. The rule derives readiness from those facts. A valid shape does not establish an appropriate study design.</p>
+    </aside></div>
+    <div class="area-dialog-actions"><span class="muted">Geometry stays on this device. Online tiles provide map context.</span><button id="area-cancel" class="button">Cancel</button><button id="area-apply" class="button primary" disabled>Apply study area</button></div>
+  </dialog>
+  <dialog id="help-dialog"><div class="dialog-heading"><h2>From places to decisions</h2><button id="close-help" class="icon-button" aria-label="Close help">×</button></div><p>Build a small spatial analysis by connecting data, operations, and rules. Everything runs on this device.</p><ol><li><strong>Explore.</strong> Select a node to see its inputs and settings.</li><li><strong>Connect.</strong> Click an output circle, then a compatible input circle. Click a connector to remove it.</li><li><strong>Experiment.</strong> Change a threshold, evidence filter, or example setting, then run again.</li><li><strong>Understand.</strong> Select a location on the map or table for its supporting evidence.</li><li><strong>Keep.</strong> Export a workflow to move it between devices. Export a run receipt for inputs, rules, and results.</li></ol><p class="notice">This is a research example, not a validated public health policy. Distances are straight-line approximations, not travel distances. Logical English comparison is not implemented in this slice.</p><p>Keyboard: Tab to controls, Enter to activate. Selected nodes can be moved with arrow keys. Delete removes a focused node. Ctrl/Cmd+Z undoes an edit.</p></dialog>
+  <script type="module" src="./build/app.js"></script>
 </body>
 </html>

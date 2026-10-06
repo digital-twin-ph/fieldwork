@@ -63,6 +63,8 @@ This follows the earlier pushpin evaluation finding: an action must visibly dist
 
 ## Evaluation and validation
 
+The later [encrypted-package and persistent-manifest design](24-encrypted-project-packages.md) tightens reference-only JSON import: required PDFs must verify locally or arrive in a complete bundle. It supersedes the earlier acceptance of imports with missing PDF bytes while retaining the editor's missing-file recovery messages for local storage loss.
+
 The added unit checks cover metadata/URL validation, file identity and limits, graph scope and escaping, snapshot retention, separation from rule inputs, and rejection of tampered or incomplete bundles. The added browser scenarios cover both input and processing nodes, actual EYE parsing of the provenance graph, byte-exact downloads, fresh-browser transfer, offline reopening, edit/remove/Undo, previous-run receipts, short-screen errors, failed persistence/retry, unsaved-draft recovery and missing files.
 
 The full `npm run check` gate passed locally on October 6, 2026: strict TypeScript checks, the production build, all 38 unit tests and all 26 Chromium scenarios (2.9 minutes for the browser suite). This includes five new unit tests and five new browser scenarios for references. No practitioner sessions, Firefox/WebKit validation or remote CI execution are claimed.

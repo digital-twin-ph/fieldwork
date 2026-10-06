@@ -1,0 +1,26 @@
+import {test,expect} from '@playwright/test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {oldNalediWorkflow} from '../build/old-naledi.js';
+test('generated samples feed shared outputs and access accepts ordinary point input offline',async({page,context})=>{
+  const w=oldNalediWorkflow();
+  w.nodes.push({id:'sample-table',type:'table_output',x:0,y:650,params:{label:'Generated sample table'}},{id:'sample-map',type:'map_output',x:250,y:650,params:{label:'Generated sample map'}},{id:'custom',type:'observations',x:0,y:800,params:{label:'Observed locations',data:{type:'FeatureCollection',features:[{type:'Feature',id:'custom-one',properties:{name:'Observed location',visits:2},geometry:{type:'Point',coordinates:[25.901,-24.689]}},{type:'Feature',id:'custom-missing',properties:{name:'Unlocated observation'},geometry:null}]}}});
+  w.edges.push({id:'sample-table-edge',from:'samples',to:'sample-table',port:'points'},{id:'sample-map-edge',from:'samples',to:'sample-map',port:'points'},{id:'sample-map-area',from:'area',to:'sample-map',port:'area'});
+  w.edges.find(e=>e.to==='access'&&e.port==='samples').from='custom';
+  await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'shared-samples.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+  await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.getByRole('tab',{name:'Generated sample table'}).click();
+  await expect(page.locator('#table-panel')).toContainText('Sample 21');
+  await page.getByRole('tab',{name:'Generated sample map'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(21);
+  await page.getByRole('tab',{name:'Access table'}).click();await expect(page.locator('#result-rows tr')).toHaveCount(2);await expect(page.locator('#result-metrics')).toContainText('2 input locations');
+  const missing=page.locator('#result-rows tr').filter({hasText:'Unlocated observation'});await missing.click();
+  await expect(page.locator('#inspector-content')).toContainText('no coordinates');await expect(page.locator('#inspector-content')).toContainText('Connected input point');
+  await page.locator('[data-view="rules"]').click();const pending=page.waitForEvent('download');await page.locator('#download-evidence').click();const receipt=JSON.parse(await readFile(await (await pending).path(),'utf8'));
+  const rows=receipt.outputs.find(o=>o.nodeId==='access-table').rows;
+  assert.equal(rows.find(r=>r.id==='custom-missing').status,'Unknown');
+  assert.equal(rows.find(r=>r.id==='custom-one').attributes.visits,2);
+  assert.match(receipt.receipts.find(r=>r.nodeId==='samples').facts,/fw:GridSampleGeneration/);
+  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.getByRole('tab',{name:'Generated sample table'}).click();await expect(page.locator('#table-panel')).toContainText('Sample 21');
+});

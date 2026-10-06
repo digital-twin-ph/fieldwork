@@ -25,11 +25,11 @@ test('dataset retains source attributes without patient data or disease aggregat
 
 test('workflow supports four outputs, shared inference, and pinned dataset validation',()=>{
   const w=oldNalediWorkflow(),plan=executionPlan(w);
-  assert.equal(plan.filter(n=>n.type==='output').length,4);
+  assert.equal(plan.filter(n=>['output','map_output','table_output','chart_output'].includes(n.type)).length,4);
   assert.equal(plan.filter(n=>n.type==='xpert').length,1);
-  assert.equal(w.nodes[0].params.dataset,DATASET);
+  assert.equal(w.nodes.find(n=>n.type==='area').params.dataset,DATASET);
   w.nodes.find(n=>n.type==='access').params.speedMPerMin=0;
   assert.throws(()=>validateWorkflow(w),/speedMPerMin/);
   w.nodes.find(n=>n.type==='access').params.speedMPerMin=70;
-  w.nodes[0].params.dataset='unknown';assert.throws(()=>validateWorkflow(w),/dataset version/);
+  w.nodes.find(n=>n.type==='area').params.dataset='unknown';assert.throws(()=>validateWorkflow(w),/dataset version/);
 });

@@ -31,7 +31,7 @@ const run=async()=>{await page.locator('#run-button').click();await done();};
 
   // Configure the output through the inspector, rerun, and remove it.
   await page.locator('.react-flow__node[data-id="table"]').click();
-  await page.locator('#output-label').fill('Second map');await page.locator('#output-label').press('Tab');
+  await page.locator('#table-label').fill('Second map');await page.locator('#table-label').press('Tab');
   await page.locator('#output-view').selectOption('map');
   await expect(page.locator('#run-summary')).toContainText('Previous run');
   await run();

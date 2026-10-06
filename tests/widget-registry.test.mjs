@@ -25,3 +25,12 @@ test('registry rejects undeclared semantic mappings even with a matching release
   const changed=JSON.stringify(release);ref.sha256=createHash('sha256').update(changed).digest('hex');
   await assert.rejects(validateRegistry({...source,catalog,read:path=>path===ref.path?changed:readFile(path,'utf8')}),/Undeclared ontology class/);
 });
+
+test('registry rejects an unimplemented migration adapter',async()=>{
+  const catalog=structuredClone(original),entry=catalog.widgets.find(w=>w.nodeType==='observations');
+  const ref=entry.releases.find(r=>r.version===entry.currentVersion);
+  const release=JSON.parse(await readFile(ref.path,'utf8'));
+  release.compatibility.migrationFrom=[{nodeType:'facilities',adapterVersion:'1',implementation:'src/core.ts#validateWorkflow'}];
+  const changed=JSON.stringify(release);ref.sha256=createHash('sha256').update(changed).digest('hex');
+  await assert.rejects(validateRegistry({...source,catalog,read:path=>path===ref.path?changed:readFile(path,'utf8')}),/Unknown migration adapter/);
+});

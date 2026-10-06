@@ -40,7 +40,7 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('fw:evidenceLevel');
   const downloadPromise=page.waitForEvent('download');await page.locator('#download-evidence').click();const download=await downloadPromise;
   const receipt=JSON.parse(await readFile(await download.path(),'utf8'));
-  assert.equal(receipt.outputs.length,4);assert.equal(receipt.receipts.length,2);assert.equal(receipt.outputs[0].dataset,'gaborone-7f183843');
+  assert.equal(receipt.outputs.length,4);assert.equal(receipt.receipts.length,8);assert.equal(receipt.outputs[0].dataset,'gaborone-7f183843');
   assert.equal(receipt.outputs[0].provenance.files.length,3);assert.ok(receipt.outputs[0].provenance.files.every(f=>/^[a-f0-9]{64}$/.test(f.sha256)));
   assert.equal(receipt.outputs[0].rows.length,21);assert.equal(receipt.workflow.nodes.find(n=>n.type==='facilities').params.radiusKm,6);
   // Exercise actual N3 boundary semantics and unknown access independently of the UI.

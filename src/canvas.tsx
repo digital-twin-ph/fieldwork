@@ -12,10 +12,10 @@ import '../flow.css';
 function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   const t=data.definition;
   const role=t.group==='Sources'?'input':t.group==='Outputs'?'output':'processing';
-  const spatialPorts=['map_output','table_output','coverage_check'].includes(data.type);
-  const portLabel=(port:string)=>port==='area'?'Study area':port==='coverage'?'Or: Coverage result':`Points ${port==='points'?'1':port.split('_')[1]}`;
+  const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster'].includes(data.type);
+  const portLabel=(port:string)=>port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':`Points ${port==='points'?'1':port.split('_')[1]}`;
   const updateInternals=useUpdateNodeInternals();
-  useEffect(()=>{updateInternals(id);},[id,t.inputs.length,updateInternals]);
+  useEffect(()=>{updateInternals(id);},[id,JSON.stringify(t.inputs),updateInternals]);
   return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''}`}>
     <div className="node-heading"><span className="node-icon">{t.icon}</span><div><strong>{data.label}</strong><span className="node-id">{t.group}</span></div></div>
     <div className="node-subtitle">{data.subtitle}</div>
@@ -24,7 +24,7 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
         <Handle type="target" position={Position.Left} id={port} style={{top:'50%'}} title={`${portLabel(port)} (${type})`} aria-label={`${data.label}: ${portLabel(port)} input`}/>
         <span>{portLabel(port)}</span>
       </div>)}
-      {t.output&&<div className="node-port-row node-output-row"><span>Coverage result →</span><Handle type="source" position={Position.Right} id="out" style={{top:'50%'}} title="Coverage result: study area, points and review decisions" aria-label={`${data.label}: output`}/></div>}
+      {t.output&&<div className="node-port-row node-output-row"><span>{t.output==='raster'?'Raster →':'Coverage result →'}</span><Handle type="source" position={Position.Right} id="out" style={{top:'50%'}} title={t.output==='raster'?'Raster output':'Coverage result: study area, points and review decisions'} aria-label={`${data.label}: output`}/></div>}
     </div>}
     <div className="node-bottom"><span>{data.detail}</span><span className="count">{data.status==='done'?'✓ Done':data.status==='running'?'Running…':data.type==='policy'?'N3 · WASM':'●'}</span></div>
     {!spatialPorts&&t.inputs.map(([port,type],i)=><Handle key={port} type="target" position={Position.Left} id={port} style={{top:48+i*26}} title={`${port} (${type})`} aria-label={`${data.label}: ${port} input`}><span className="handle-name">{port}</span></Handle>)}

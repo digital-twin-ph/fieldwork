@@ -1,0 +1,177 @@
+{
+  "schema": "fieldwork/workflow/1",
+  "exampleId": "old-naledi",
+  "name": "Old Naledi · diagnostic access",
+  "nodes": [
+    {
+      "id": "area",
+      "type": "area",
+      "x": 25,
+      "y": 140,
+      "params": {
+        "dataset": "gaborone-7f183843"
+      }
+    },
+    {
+      "id": "samples",
+      "type": "samples",
+      "x": 255,
+      "y": 30,
+      "params": {
+        "spacingM": 250
+      }
+    },
+    {
+      "id": "facilities",
+      "type": "facilities",
+      "x": 255,
+      "y": 265,
+      "params": {
+        "dataset": "gaborone-7f183843",
+        "radiusKm": 6
+      }
+    },
+    {
+      "id": "xpert",
+      "type": "xpert",
+      "x": 485,
+      "y": 265,
+      "params": {}
+    },
+    {
+      "id": "access",
+      "type": "access",
+      "x": 715,
+      "y": 30,
+      "params": {
+        "minimumEvidence": "contextual",
+        "service": "onsite",
+        "speedMPerMin": 70
+      }
+    },
+    {
+      "id": "review",
+      "type": "access_policy",
+      "x": 945,
+      "y": 30,
+      "params": {
+        "thresholdMin": 30
+      }
+    },
+    {
+      "id": "audit",
+      "type": "facility_audit",
+      "x": 715,
+      "y": 300,
+      "params": {}
+    },
+    {
+      "id": "access-map",
+      "type": "output",
+      "x": 1175,
+      "y": 0,
+      "params": {
+        "label": "Access map",
+        "view": "map"
+      }
+    },
+    {
+      "id": "access-table",
+      "type": "output",
+      "x": 1175,
+      "y": 150,
+      "params": {
+        "label": "Access table",
+        "view": "table"
+      }
+    },
+    {
+      "id": "access-chart",
+      "type": "output",
+      "x": 1175,
+      "y": 300,
+      "params": {
+        "label": "Access zones",
+        "view": "bars"
+      }
+    },
+    {
+      "id": "evidence-table",
+      "type": "output",
+      "x": 945,
+      "y": 300,
+      "params": {
+        "label": "Facility evidence",
+        "view": "table"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "old-e0",
+      "from": "area",
+      "to": "samples",
+      "port": "area"
+    },
+    {
+      "id": "old-e1",
+      "from": "area",
+      "to": "facilities",
+      "port": "area"
+    },
+    {
+      "id": "old-e2",
+      "from": "facilities",
+      "to": "xpert",
+      "port": "facilities"
+    },
+    {
+      "id": "old-e3",
+      "from": "samples",
+      "to": "access",
+      "port": "samples"
+    },
+    {
+      "id": "old-e4",
+      "from": "xpert",
+      "to": "access",
+      "port": "facilities"
+    },
+    {
+      "id": "old-e5",
+      "from": "access",
+      "to": "review",
+      "port": "access"
+    },
+    {
+      "id": "old-e6",
+      "from": "xpert",
+      "to": "audit",
+      "port": "facilities"
+    },
+    {
+      "id": "old-e7",
+      "from": "review",
+      "to": "access-map",
+      "port": "decisions"
+    },
+    {
+      "id": "old-e8",
+      "from": "review",
+      "to": "access-table",
+      "port": "decisions"
+    },
+    {
+      "id": "old-e9",
+      "from": "review",
+      "to": "access-chart",
+      "port": "decisions"
+    },
+    {
+      "id": "old-e10",
+      "from": "audit",
+      "to": "evidence-table",
+      "port": "decisions"
+    }
+  ]
+}

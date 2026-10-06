@@ -8,22 +8,30 @@ Two worked examples explore heat outreach and Old Naledi diagnostic access; a th
 
 Open the [published app](https://digital-twin-ph.github.io/fieldwork/), start with a [blank canvas](https://digital-twin-ph.github.io/fieldwork/?example=blank), or explore [Old Naledi diagnostic access](https://digital-twin-ph.github.io/fieldwork/?example=old-naledi) and [spatial coverage review](https://digital-twin-ph.github.io/fieldwork/?example=coverage).
 
-Workflows and attached PDFs stay in your browser; export them to move between the local and published sites, which have separate browser storage.
+Workflows, attached PDFs and retained raster windows stay in your browser; export them to move between the local and published sites, which have separate browser storage.
+
+**Encrypted ZIP** creates a password-protected project containing the workflow, referenced PDFs and retained raster windows as binary files. Enter and confirm a long passphrase, then use **Import** to restore the ZIP on another device. Generic archive entry names, counts and sizes remain visible; original PDF filenames and citations are inside encrypted content. There is no password recovery. Browser storage and the existing JSON export/run receipts remain unencrypted. The prototype supports PDFs and bounded GeoTIFF windows, with a 20 MB archive limit; original national rasters and arbitrary attachments are not embedded. See the [encrypted-package design](docs/experiments/24-encrypted-project-packages.md).
+
+Projects now keep a manifest alongside their workflow. Edits update its inventory of nodes, connections, embedded records, fields and references. Export/import validate this inventory and required PDF/raster contents; incomplete packages are rejected. Older workflows acquire a manifest when saved. Reference-only JSON imports require their PDF/raster assets to be available locally—use a complete bundle to move projects between devices.
+
+On desktop, drag the dividers beside the Node library and Inspector, or between Workflow/N3 and Results, to resize the panels. Sizes are saved on this device. Focus a divider and use arrow keys for keyboard resizing; double-click it or choose **Reset layout** to restore defaults. Narrow screens keep the stacked layout. See the [panel-layout design record](docs/experiments/23-resizable-panels.md).
 
 ## Current capabilities
 
 | Component | What you can do now |
 | --- | --- |
 | Workflow canvas | Connect typed ports, edit nodes, undo/redo, save separate examples and import/export workflows. |
+| Panel layout | Drag the library/inspector dividers and Workflow/N3–Results split on desktop. Sizes stay on this device. Keyboard arrows resize; Reset layout restores defaults. |
 | Study area | Draw and label a bounding box or simple polygon; inspect its GeoSPARQL representation. |
 | Calculate area | Enrich the study area with a spherical area measurement; choose metric or imperial units. |
 | Input data | Generate synthetic points, import CSV/GeoPackage/GeoJSON, or place map pins with typed attributes, value sets and optional UUIDs. |
+| Raster input and Clip raster | Acquire a bounded WGS84 GeoTIFF window, then crop and mask it with a study polygon. Preserve native values and metadata; display and download the result. |
 | Spatial coverage | Check multiple point layers against one boundary; review outside/missing locations and record exclusions without deleting source records. |
 | Visual outputs | Connect maps and point tables; worked examples also provide decision maps, tables and bar charts in Results tabs. |
 | N3 and evidence | Run EYE-JS locally, inspect facts and assertions, and download run receipts. |
 | Supporting references | Attach PDFs or URLs to nodes, describe supporting passages, and preserve citations and file identity with run provenance. |
 
-Reprojection, raster/NetCDF clipping, a GEOS-WASM geoprocessing executor, Logical English comparison and agent-based simulation are not implemented. See [Scope and research](#scope-and-research) and the linked design experiments for the current boundaries.
+Reprojection, NetCDF clipping, a GEOS-WASM geoprocessing executor, Logical English comparison and agent-based simulation are not implemented. See [Scope and research](#scope-and-research) and the linked design experiments for the current boundaries.
 
 The [GADM and jurisdiction design experiment](docs/experiments/14-gadm-jurisdiction-assets.md) now models provider datasets, downloaded assets, versioned jurisdiction boundaries and study areas with multiple named members. It includes synthetic RDF/N3 examples and executable selection-rule checks. GADM download, polygon import and jurisdiction-selection widgets remain proposed; this ontology work does not add them to the canvas.
 
@@ -47,6 +55,14 @@ Pushes to GitHub `main` run `.github/workflows/pages.yml`: install locked depend
 
 ## Build a workflow
 
+Heat and Old Naledi now use the shared **Map** and **Table** widgets for reasoning results. Choose **Input mode** to distinguish a reasoning result from direct points/coverage; changing modes clears input connectors and can be undone. Legacy map/table outputs migrate on load with their identities and evidence intact. See the [shared result-output record](docs/experiments/21-shared-result-outputs.md). The shared **Chart** widget now replaces legacy bar outputs, with explicit categorical counts and source provenance. Connect a reasoning result and name its Results tab. See the [chart standardization record](docs/experiments/22-shared-chart.md).
+
+**Sample locations** now supplies shared point data to Map, Table and coverage widgets. **Facility access** also accepts points from Input data, preserving missing coordinates as Unknown results. The [shared sample-point design](docs/experiments/20-shared-sample-points.md) records the contract, provenance and compatibility changes.
+
+Old Naledi now separates **Input data: Gaborone facility registry** from **Select nearby facilities**. Edit the connected records through the shared input form; the selection node retains the radius control and feeds the unchanged diagnostic rules. Existing saved Old Naledi workflows gain the explicit source on load. See the [facility-input standardization record](docs/experiments/19-facility-input-standardization.md).
+
+Heat outreach's **Neighborhoods** and **Cooling centers** now use the shared **Input data** widget and its full editing form. Older saved sources are normalized on load while retaining their IDs, labels, scalar attributes, references and connections. The [first widget-standardization experiment](docs/experiments/18-shared-input-standardization.md) documents this migration and the remaining work for Old Naledi and output widgets.
+
 For the first developmental evaluation, open `http://127.0.0.1:4173/?example=blank` or choose **New empty canvas**. Add **Study area**, open **Select area on map**, draw a bounding box or polygon, and apply it. Inspect **N3 & evidence**, then run to see the geometry preview and inferred readiness. The [study-area experiment record](docs/experiments/01-study-area.md) documents each task, architectural decision, standards mapping, and evidence to collect. Readiness means the geometry meets the widget's input contract, not that the selected area is scientifically appropriate.
 
 Select nodes to edit their settings. Add nodes from the library and connect compatible ports. All visual output branches execute together, and shared upstream nodes execute once.
@@ -63,6 +79,8 @@ Changes mark existing results as belonging to the previous run until you run aga
 
 ## Local execution and offline use
 
+For a raster exercise, connect **Study area ? Raster input ? Clip raster ? Map**, with Study area also connected to Clip raster. In Raster input choose **Prepare GeoTIFF input**, select the local file and **Save raster window**. Select Clip raster, connect its raster input, and choose **Add raster map**, then run. A default Map exposes **Or: Raster**; connecting there switches its input mode to **Raster**. Undo restores the previous inputs. The Results toolbar offers **Download GeoTIFF**. Only the bounded input window is saved; the original national file remains on disk. Expanding beyond the saved window requires preparation again. Use **Prepare GeoTIFF input** again to enter or edit the separate **Source metadata and citation** fields without re-uploading. Source details follow the clip into N3, packages and downloaded GeoTIFF metadata; the exact Botswana filename offers an explicit WorldPop template. See [source provenance](docs/experiments/26-raster-source-provenance.md) and [the WorldPop clipping experiment](docs/experiments/25-raster-input-and-clipping.md) for metadata, pixel rules and resource limits.
+
 For input and spatial exceptions, open `http://127.0.0.1:4173/?example=coverage`. **Input data → Prepare input data** offers synthetic generation, CSV, GeoPackage, GeoJSON and map pushpins with predefined/custom fields and automatic location/time. **Check spatial coverage** combines the source with a Study area and raises alerts for outside or missing-coordinate records. Select a record to exclude with a reason, restore it, or edit the boundary with the point in view. The [input and review exercise](docs/experiments/03-input-data-and-spatial-review.md) documents each step, decision, limit and evaluation question.
 
 Pushpin key/value pairs support text, number, whole number, yes/no and date types, with optional allowed values entered one per line. Value sets become dropdowns. Shared form fields and per-pin attributes retain their definitions in the saved workflow; invalid values/defaults are rejected. Geographic sources carry explicit WGS84 metadata and longitude/latitude storage order. The [CRS decision record](docs/experiments/05-coordinate-reference-systems.md) distinguishes EPSG:4326 from CRS84 and specifies the future Reproject node; reprojection is not implemented yet.
@@ -77,7 +95,7 @@ Spatial distance uses a JavaScript haversine calculation. EYE-JS 21.1.24 runs in
 
 The [geoprocessing memory lifecycle record](docs/experiments/06-geoprocessing-memory-lifecycle.md) proposes disposable workers, bounded output ownership and cancellation for future heavy jobs. It distinguishes reusable Wasm allocations from browser memory reclamation. This executor and its resource budgets are not implemented yet.
 
-Application assets and the bundled EYE engine are cached after the first successful visit. Wait for Available offline before disconnecting. Workflows are stored in browser localStorage without encryption. Clearing browser storage removes local workflows, attached PDFs and offline assets, so export work you want to keep. Package installation requires network access; workflow execution runs locally. The map editors request OpenStreetMap tiles when their online basemaps are enabled. Saved geometry, pushpin editing and inference work offline; map tiles are not precached for offline use.
+Application assets and the bundled EYE engine are cached after the first successful visit. Wait for Available offline before disconnecting. Workflows are stored in browser localStorage without encryption. Clearing browser storage removes local workflows, attached PDFs, retained raster windows and offline assets, so export work you want to keep. Package installation requires network access; workflow execution runs locally. The map editors request OpenStreetMap tiles when their online basemaps are enabled. Saved geometry, pushpin editing and inference work offline; map tiles are not precached for offline use.
 
 After updating the application, reload to install the updated service worker, then reload again if the old interface remains visible.
 
@@ -89,7 +107,7 @@ Citation metadata uses PROV-O and Dublin Core alongside the spatial GeoSPARQL fa
 
 ## Validation
 
-The local baseline on October 6, 2026 passed strict TypeScript checks, the production build, **47 unit tests and 31 Chromium scenarios**, including widget-registry checks, SHACL validation, N3 candidate routing and jurisdiction selection. Deployment status for the latest GitHub commit is recorded in [the Pages workflow](https://github.com/digital-twin-ph/fieldwork/actions/workflows/pages.yml).
+The local baseline on October 6, 2026 passed strict TypeScript checks, the production build, **73 unit tests and 44 Chromium scenarios**, including the local Botswana WorldPop GeoTIFF, including shared-input migration, widget-registry checks, SHACL validation, N3 candidate routing and jurisdiction selection. Deployment status for the latest GitHub commit is recorded in [the Pages workflow](https://github.com/digital-twin-ph/fieldwork/actions/workflows/pages.yml).
 
 Use the full regression gate before accepting a functional change:
 
@@ -111,11 +129,13 @@ The [TypeScript migration decision record](docs/experiments/12-typescript-migrat
 
 ## Scope and research
 
+The [workflow learning and gamification design](docs/experiments/27-workflow-learning-and-gamification.md) proposes an opt-in Old Naledi learning exercise, evidence-based milestones, a separate local learning record and future GIS competency ontology mappings. It specifies widget learning profiles, versioned assessment receipts, idempotent points and transfer evaluation. Learning mode and scoring are not implemented.
+
 The [workflow publication products design](docs/experiments/17-workflow-publication-products.md) records future field reports, story maps, infographics and dashboards as pipeline end products. It proposes reusable content blocks, versioned templates, evidence-linked findings and local export, beginning with a spatial coverage field-report experiment. These composition and export capabilities are not implemented.
 
-The [widget registry](widgets/README.md) inventories all 18 implemented node types with stable identities, independent release versions, port contracts, source references and explicit ontology mappings or gaps. Run `npm run validate:widgets` to check coverage, release digests and alignment with current TypeScript definitions. This is a development catalog; saved workflows do not yet pin widget versions or execute migrations.
+The [widget registry](widgets/README.md) inventories all 21 node types, including legacy aliases, with stable identities, independent release versions, port contracts, source references and explicit ontology mappings or gaps. Run `npm run validate:widgets` to check coverage, release digests and alignment with current TypeScript definitions. Saved workflows do not yet pin widget versions; the specific heat-source adapter runs on load, while general registry-driven migrations remain future work.
 
-The [shared visualization design specification](docs/experiments/16-semantic-visualization-design.md) proposes common semantics for maps, charts and tables using GeoSPARQL, CSVW, RDF Data Cube, QUDT, SKOS and PROV, with selective OGC portrayal reuse and a candidate Vega-Lite chart adapter. It defines configuration, rendering and artifact provenance, proposed SHACL contracts, offline constraints and a developmental evaluation exercise. The shared profile and chart adapter are design work, not new implemented capabilities.
+The [shared visualization design specification](docs/experiments/16-semantic-visualization-design.md) proposes common semantics for maps, charts and tables using GeoSPARQL, CSVW, RDF Data Cube, QUDT, SKOS and PROV, with selective OGC portrayal reuse and a candidate Vega-Lite chart adapter. It defines configuration, rendering and artifact provenance, proposed SHACL contracts, offline constraints and a developmental evaluation exercise. The general shared profile and Vega-Lite adapter remain design work; the bounded categorical Chart adapter is implemented as described above.
 
 Input data accepts up to 2,000 points and 5 MB local files, retaining scalar attributes. GeoPackage import currently supports standard 2D POINT layers in EPSG:4326; CSV needs longitude/latitude in degrees. The bounded GeoPackage importer reads the file into memory and does not implement streaming clipping. The legacy heat-example GeoJSON importer retains identifiers, names and coordinates. The study-area editor supports bounding boxes and simple polygons of 3–200 vertices; holes, antimeridian crossings, and polar areas are outside this drawing contract. It emits GeoSPARQL feature/geometry facts and CRS84 WKT literals, while EYE runs application-specific rules. GeoSPARQL query functions are not implemented. The bundled Old Naledi source additionally supplies its pinned polygon and selected facility attributes. General polygon-file import, street routing, arbitrary N3 editing, and the Logical English comparison are not yet implemented.
 
@@ -139,7 +159,9 @@ The [research review](docs/research/related-research-2026-10-05.md) provides bac
 - src/canvas.tsx and flow.css: React Flow editor, bundled by build.mjs.
 - src/reasoning-worker.ts and vendor/: local EYE-JS engine and upstream license notices.
 - src/sw.ts: service-worker source; root sw.js and build/asset-manifest.json are generated.
+- src/raster.ts, src/raster-workflow.ts and src/raster-ui.ts: native-grid GeoTIFF acquisition, explicit polygon clipping, metadata, provenance and raster display.
 - src/evidence.ts, src/evidence-storage.ts and src/evidence-ui.ts: node citations, local PDF storage, portable bundles and run provenance.
+- src/project-manifest.ts, src/encrypted-package.ts and src/package-ui.ts: saved project inventory, bounded encrypted ZIP validation and password dialogs.
 - src/types.ts, src/results.ts and src/worker-types.ts: workflow, result and message contracts.
 - tsconfig.json and tsconfig.workers.json: strict application and worker type-checking.
 - tests/: core and Chromium integration checks.

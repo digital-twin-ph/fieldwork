@@ -1,0 +1,67 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:observations",
+  "version": "0.2.0",
+  "nodeType": "observations",
+  "title": "Input data",
+  "released": "2026-10-06",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['observations']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [],
+    "output": "points",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "configuration",
+        "iri": "urn:fieldwork:GenericInputConfiguration",
+        "file": "ontology/processing.ttl"
+      }
+    ],
+    "note": "Design alignment to GenericInputConfiguration; not a claim that current receipts emit this type."
+  },
+  "implementation": {
+    "files": [
+      "src/input-data.ts",
+      "src/input-data-ui.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "places",
+        "adapterVersion": "1",
+        "implementation": "src/core.ts#validateWorkflow"
+      },
+      {
+        "nodeType": "centers",
+        "adapterVersion": "1",
+        "implementation": "src/core.ts#validateWorkflow"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Heat examples use shared input editing. Legacy places and centers normalize on load without changing IDs, labels, references, geometry or scalar attributes; sourceMigration records adapter version 1."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Shared-input unit and Chromium regressions cover migration, data preservation, editor saving and offline EYE results; repository gate remains authoritative."
+  }
+}

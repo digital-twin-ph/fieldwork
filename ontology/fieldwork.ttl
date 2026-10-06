@@ -78,6 +78,22 @@ fw:MapView a owl:Class;
   rdfs:label "Spatial map view";
   rdfs:comment "Displays a study boundary and point records. Direct-input views compute spatial relations for display without inferring acceptance or excluding records; reviewed views reuse a coverage check.";
   fw:implementationStatus "implemented".
+fw:NearbyFacilitySelection a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Select nearby facilities";
+  rdfs:comment "Select connected facility points at or within a spherical distance from the center of the study boundary bounding box. Requires text owner and serviceType attributes. Missing-coordinate records are counted and omitted from the candidate set without changing the input. This is not polygon containment, travel time or a service-availability inference.";
+  fw:implementationStatus "implemented".
+fw:searchRadiusKm a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:inputRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:missingLocationCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:selectedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:GridSampleGeneration a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Generate demonstration grid points";
+  rdfs:comment "Generates a bounded regular grid using local geographic spacing and polygon containment. Output is a GeoSPARQL feature collection, not observed households, population, or cases.";
+  fw:implementationStatus "implemented".
+fw:spacingMetres a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:generatedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:Reprojection a owl:Class;
   rdfs:subClassOf fw:SpatialOperation;
   rdfs:label "Coordinate transformation";
@@ -199,3 +215,38 @@ fw:TableView a owl:Class;
   rdfs:label "Point table presentation";
   rdfs:comment "Displays source coordinates and attributes, or existing spatial coverage decisions. Does not infer new spatial relationships or exclude records.";
   fw:implementationStatus "implemented".
+
+fw:ChartView a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Categorical chart presentation";
+  rdfs:comment "Presents record counts while retaining the source reasoning results and evidence.";
+  fw:implementationStatus "implemented".
+fw:CategoricalCount a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Categorical frequency computation";
+  rdfs:comment "Counts each source record once, retaining zero categories and reporting unclassified values separately. Does not estimate population.";
+  fw:implementationStatus "implemented".
+fw:CountBin a owl:Class; rdfs:subClassOf prov:Entity.
+fw:countBin a owl:ObjectProperty; rdfs:range fw:CountBin.
+fw:groupingField a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:categoryKey a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:recordCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+
+fw:RasterDataset a owl:Class; rdfs:subClassOf prov:Entity; rdfs:label "Raster dataset".
+fw:RasterWindowAcquisition a owl:Class; rdfs:subClassOf prov:Activity; rdfs:label "Native raster window acquisition".
+
+fw:LocalFileDescriptor a owl:Class; rdfs:subClassOf prov:Entity; rdfs:label "Local source file descriptor"; rdfs:comment "Filename, size and metadata supplied with a retained subset; not a full-file checksum or embedded original.".
+fw:rasterWidth a owl:DatatypeProperty.
+fw:rasterHeight a owl:DatatypeProperty.
+fw:validCellCount a owl:DatatypeProperty.
+fw:insideCellCount a owl:DatatypeProperty.
+fw:sourceBytes a owl:DatatypeProperty.
+fw:pixelSizeX a owl:DatatypeProperty.
+fw:pixelSizeY a owl:DatatypeProperty.
+fw:rasterMaskMethod a owl:DatatypeProperty.
+fw:sourcePixelWindow a owl:DatatypeProperty.
+fw:rasterCRS a owl:ObjectProperty.
+
+fw:pixelValueUnits a owl:DatatypeProperty; rdfs:label "Source-reported pixel value units".
+fw:sourceAccessed a owl:DatatypeProperty; rdfs:label "Source access date entered by author".
+fw:metadataOrigin a owl:DatatypeProperty; rdfs:label "Origin of descriptive metadata".

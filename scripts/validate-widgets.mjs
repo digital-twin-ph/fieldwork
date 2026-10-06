@@ -53,7 +53,13 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         check(quads.some(q=>q.subject.value===mapping.iri&&q.predicate.value==='http://www.w3.org/1999/02/22-rdf-syntax-ns#type'&&q.object.value==='http://www.w3.org/2002/07/owl#Class'),`Undeclared ontology class: ${mapping.iri}`);
       }
       check(release.compatibility?.workflowSchema==='fieldwork/workflow/1'&&release.compatibility.versionPersistence==='not-yet-persisted','Unsupported workflow compatibility claim');
-      check(Array.isArray(release.compatibility.migrationFrom)&&release.compatibility.migrationFrom.length===0,'Executable migrations are not supported yet');
+      check(Array.isArray(release.compatibility.migrationFrom),'Missing migration declarations');
+      for(const migration of release.compatibility.migrationFrom){
+        const heat=entry.nodeType==='observations'&&['places','centers'].includes(migration.nodeType)&&migration.implementation==='src/core.ts#validateWorkflow';
+        const facilities=entry.nodeType==='facilities'&&migration.nodeType==='facilities'&&migration.implementation==='src/old-naledi.ts#migrateFacilitySources';
+        const output=['map_output','table_output','chart_output'].includes(entry.nodeType)&&migration.nodeType==='output'&&migration.implementation==='src/output-contract.ts#migrateOutputNodes';
+        check((heat||facilities||output)&&migration.adapterVersion==='1','Unknown migration adapter');
+      }
       check(Array.isArray(release.changes)&&release.changes.length>0&&release.changes.every(c=>typeof c.description==='string'&&c.description.length>0),'Missing change history');
       check(release.evidence?.status==='not-individually-certified','Unsupported certification claim');
       // Historical releases may reference removed source paths. Check current paths only.
@@ -63,8 +69,13 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
     const def=definitions[entry.nodeType];
     check(current.title===def.title,'Widget title drift');
     check(JSON.stringify(current.ports.inputs)===JSON.stringify(def.inputs.map(([name,type])=>({name,type})))&&current.ports.output===def.output,`Port contract drift: ${entry.nodeType}`);
+    if(entry.nodeType==='map_output'){check(current.ports.rasterInput?.value==='raster','Missing raster input mode');if(nodeInputs)check(JSON.stringify(nodeInputs({type:'map_output',params:{inputMode:'raster'}}))===JSON.stringify([['raster','raster']]),'Raster port contract drift');}
     const dynamic=['coverage_check','map_output','table_output'].includes(entry.nodeType);
     check(dynamic===Boolean(current.ports.dynamicInputs),'Dynamic port contract drift');
+    if(['map_output','table_output'].includes(entry.nodeType)){
+      check(current.ports.reasoningInput?.parameter==='inputMode'&&current.ports.reasoningInput.value==='decisions','Missing reasoning input mode');
+      if(nodeInputs)check(JSON.stringify(nodeInputs({type:entry.nodeType,params:{inputMode:'decisions'}}))===JSON.stringify([['decisions','decisions']]),'Reasoning port contract drift');
+    }
     if(dynamic){
       const d=current.ports.dynamicInputs;
       check(d.kind==='point-layers'&&d.minimum===1&&d.maximum===8,'Dynamic port limits drift');

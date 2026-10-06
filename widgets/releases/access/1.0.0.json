@@ -1,0 +1,65 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:access",
+  "version": "1.0.0",
+  "nodeType": "access",
+  "title": "Facility access",
+  "released": "2026-10-06",
+  "implementationStatus": "implemented",
+  "standardization": "example-specific",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['access']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "samples",
+        "type": "points"
+      },
+      {
+        "name": "facilities",
+        "type": "gradedFacilities"
+      }
+    ],
+    "output": "access",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:SpatialOperation",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Generic spatial-operation alignment; accepts point features, preserves missing coordinates as unknown; no dedicated activity-type receipt is added."
+  },
+  "implementation": {
+    "files": [
+      "src/old-naledi.ts",
+      "src/old-naledi-ui.ts"
+    ],
+    "definition": "src/old-naledi.ts#OLD_TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "major",
+      "description": "Location input accepts standard point features instead of sample-only payloads. Existing generator connections remain compatible. Missing coordinates retain Unknown status; input attributes and location source identity are preserved."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

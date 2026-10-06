@@ -21,7 +21,8 @@ The source is [Gaborone TB Agent Based Modeling](https://git.cdc.gov/digital-twi
 |---|---|---|
 | Study area | Boundary and provenance card | Supplies the pinned Old Naledi polygon |
 | Sample locations | Grid spacing in meters | Generates a local geographic grid and excludes points outside the polygon |
-| Facility registry | Candidate search radius in kilometers | Selects facilities within the radius of the boundary bounding-box center |
+| Input data: Gaborone facility registry | Shared input editor with typed ownership and service-type fields | Supplies the 214 historical point records; edits and replacements remain explicit |
+| Select nearby facilities | Candidate radius in km | Selects connected facility points near the study boundary center; records missing locations and selection counts |
 | Diagnostic evidence | Readable evidence hierarchy | EYE-JS derives evidence tier and diagnostic-service assignment from N3 |
 | Facility access | Minimum evidence, service pathway, walking-speed proxy | Filters facilities, finds the nearest eligible point, and computes straight-line distance divided by speed |
 | Access review | Review threshold in proxy minutes | EYE-JS derives Review, NoFlag, or Unknown plus an access zone |
@@ -50,7 +51,7 @@ Missing eligible facilities produce Unknown. They are not labeled unreachable, b
 
 ## Extension path
 
-The typed ports separate area, samples, raw facilities, graded facilities, access calculations, and decisions. A future prepared-building source can supply real spatial units with documented population semantics; a network-routing operation can replace the straight-line proxy. The source's workforce, population-allocation, and scenario components can become further widgets after their inputs and validation contracts are available. Logical English can be compared against the same facts and expected assertions without changing the geometry operations.
+The typed ports separate study areas, shared point data, selected facilities, graded facilities, access calculations, and decisions. Sample locations can also feed the shared Map and Table widgets; Facility access can take ordinary Input data points, keeping missing coordinates as Unknown. A future prepared-building source can supply real spatial units with documented population semantics; a network-routing operation can replace the straight-line proxy. The source's workforce, population-allocation, and scenario components can become further widgets after their inputs and validation contracts are available. Logical English can be compared against the same facts and expected assertions without changing the geometry operations.
 
 ## Validation
 

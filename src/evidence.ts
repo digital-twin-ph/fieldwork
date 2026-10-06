@@ -13,7 +13,7 @@ export type EvidenceReference=ReferenceMetadata & (
   {kind:'pdf';filename:string;sha256:string;bytes:number;mediaType:'application/pdf'}
 );
 export interface NodeEvidence {nodeId:string;references:EvidenceReference[]}
-export interface EvidenceFile {sha256:string;bytes:number;dataBase64:string}
+export interface EvidenceFile {sha256:string;bytes:number;dataBase64:string;mediaType?:'application/pdf'|'image/tiff'}
 export interface EvidenceBundle {schema:'fieldwork/bundle/1';workflow:Workflow;attachments:EvidenceFile[]}
 
 export function referenceURL(raw:string):string {

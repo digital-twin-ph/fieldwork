@@ -1,9 +1,11 @@
 import {build} from 'esbuild';
 import {copyFile,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-const entries=['evidence','evidence-storage','app','core','canvas','study-area','study-area-map','area-computation','area-measurement','spatial-predicates','spatial-coverage','coverage-ui','input-data','input-data-ui','attribute-schema','spatial-reference','point-layers','map-output','table-output','old-naledi','old-naledi-ui'];
+const entries=['raster-provenance','raster','raster-workflow','project-files','project-manifest','encrypted-package','evidence','evidence-storage','app','core','canvas','study-area','study-area-map','area-computation','area-measurement','spatial-predicates','spatial-coverage','coverage-ui','input-data','input-data-ui','attribute-schema','spatial-reference','point-layers','map-output','table-output','chart-output','old-naledi','old-naledi-ui'];
 const application=await build({entryPoints:entries.map(name=>'src/'+name+(name==='canvas'?'.tsx':'.ts')),bundle:true,splitting:true,format:'esm',outdir:'build',entryNames:'[name]',chunkNames:'chunks/[name]-[hash]',minify:true,sourcemap:true,metafile:true,loader:{'.png':'dataurl'},define:{'process.env.NODE_ENV':'"production"'},legalComments:'linked'});
 const worker=await build({entryPoints:['src/reasoning-worker.ts'],bundle:true,format:'iife',outdir:'build',minify:true,sourcemap:true,metafile:true});
+await copyFile('node_modules/geotiff/LICENSE','build/geotiff-LICENSE.txt');
+await copyFile('node_modules/@zip.js/zip.js/LICENSE','build/zip-js-LICENSE.txt');
 await copyFile('node_modules/leaflet/LICENSE','build/leaflet-LICENSE.txt');
 for(const name of ['area','helpers','meta','boolean-point-in-polygon','invariant'])await copyFile(`node_modules/@turf/${name}/LICENSE`,`build/turf-${name}-LICENSE.txt`);
 for(const name of ['point-in-polygon-hao','robust-predicates'])await copyFile(`node_modules/${name}/LICENSE`,`build/${name}-LICENSE.txt`);

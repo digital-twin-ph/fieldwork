@@ -1,0 +1,71 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:facilities",
+  "version": "1.0.0",
+  "nodeType": "facilities",
+  "title": "Select nearby facilities",
+  "released": "2026-10-06",
+  "implementationStatus": "implemented",
+  "standardization": "example-specific",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['facilities']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      },
+      {
+        "name": "points",
+        "type": "points"
+      }
+    ],
+    "output": "facilities",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:NearbyFacilitySelection",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Implemented activity receipt. Facility field requirements are checked in application code; RDF configuration and port shapes remain incomplete."
+  },
+  "implementation": {
+    "files": [
+      "src/old-naledi.ts",
+      "src/old-naledi-ui.ts"
+    ],
+    "definition": "src/old-naledi.ts#OLD_TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "facilities",
+        "adapterVersion": "1",
+        "implementation": "src/old-naledi.ts#migrateFacilitySources"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "major",
+      "description": "Separate historical registry into shared Input data and connected radius selection. Legacy nodes without sourceMode receive a source and connector once; existing selection IDs, settings and outgoing connections remain. Computation receipt and source lineage are retained."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

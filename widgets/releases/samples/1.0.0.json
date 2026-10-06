@@ -1,0 +1,61 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:samples",
+  "version": "1.0.0",
+  "nodeType": "samples",
+  "title": "Sample locations",
+  "released": "2026-10-06",
+  "implementationStatus": "implemented",
+  "standardization": "example-specific",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['samples']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      }
+    ],
+    "output": "points",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:GridSampleGeneration",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Generation emits a computation receipt and GeoSPARQL point feature collection; full port SHACL remains future work."
+  },
+  "implementation": {
+    "files": [
+      "src/old-naledi.ts",
+      "src/old-naledi-ui.ts"
+    ],
+    "definition": "src/old-naledi.ts#OLD_TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "major",
+      "description": "Standard point output enables Map, Table and coverage reuse. Existing graph IDs and edge names remain compatible; grid method unchanged; generation receipt added."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

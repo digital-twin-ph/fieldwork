@@ -1,0 +1,56 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:output",
+  "version": "0.1.1",
+  "nodeType": "output",
+  "title": "Visual output",
+  "released": "2026-10-06",
+  "implementationStatus": "implemented",
+  "standardization": "example-specific",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['output']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "decisions",
+        "type": "decisions"
+      }
+    ],
+    "output": null,
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title."
+  },
+  "implementation": {
+    "files": [
+      "src/core.ts",
+      "src/app.ts",
+      "src/output-contract.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "patch",
+      "description": "Legacy map/table configurations normalize to shared output widgets. Bar charts remain on this implementation."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

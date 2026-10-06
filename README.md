@@ -6,6 +6,8 @@ Two worked examples explore heat outreach and Old Naledi diagnostic access; a th
 
 ## Run locally
 
+Try the published app at **https://digital-twin-ph.github.io/fieldwork/**. Workflows and attached PDFs stay in your browser; export them to move between the local and published sites, which have separate browser storage.
+
 Install Node.js 22 or newer, then run:
 
     npm ci
@@ -13,6 +15,12 @@ Install Node.js 22 or newer, then run:
     npm start
 
 Open http://127.0.0.1:4173. The server listens on the local machine only. Application source is TypeScript under `src/`. Run `npm run build` after source or style changes; it checks types and rebuilds the browser application, workers and offline cache manifest. Browsers load generated JavaScript under `build/`.
+
+## Publication and license
+
+This work is licensed under [Apache License 2.0](LICENSE). Third-party libraries and source datasets retain their own licenses and attribution requirements; bundled library notices and the Old Naledi provenance record are preserved.
+
+Pushes to GitHub `main` run `.github/workflows/pages.yml`: install locked dependencies, type-check, build, run the unit and Chromium regression suites, and deploy to GitHub Pages only after success. Manual publication is available through the workflow's **Run workflow** action. The staging script copies the build's explicit browser asset manifest and license files into `_site`; repository configuration, tests, source documents and secrets are excluded. Pages uses relative asset paths under `/fieldwork/`, including its service worker. No personal access token is stored in the workflow; deployment uses GitHub's job token.
 
 ## Build a workflow
 

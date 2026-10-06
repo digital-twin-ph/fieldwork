@@ -6,3 +6,4 @@ server.log
 server-error.log
 test-results/
 playwright-report/
+_site/

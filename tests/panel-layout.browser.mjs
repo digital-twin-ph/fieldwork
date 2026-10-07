@@ -33,3 +33,30 @@ test('malformed preferences and unavailable storage do not block resizing; cance
   const box=await page.locator('#resize-library').boundingBox();await page.mouse.move(box.x+4,box.y+50);await page.mouse.down();await page.mouse.move(box.x+70,box.y+50);await page.keyboard.press('Escape');await page.mouse.up();
   expect(await size(page,'.library')).toBeCloseTo(before+10,0);await page.locator('#resize-library').dblclick();expect(await size(page,'.library')).toBeCloseTo(before,0);
 });
+
+test('widget panel collapses and workbench and Results each fill the viewport',async({page})=>{
+  await page.goto('/?example=blank');
+  const initial=await size(page,'.work-area');
+  await page.locator('#toggle-library').click();
+  await expect(page.locator('.library')).toBeHidden();
+  await expect(page.locator('#toggle-library')).toHaveAttribute('aria-expanded','false');
+  expect(await size(page,'.work-area')).toBeGreaterThan(initial);
+  await page.locator('#toggle-library').click();
+  await expect(page.locator('.library')).toBeVisible();
+  await page.locator('#fullscreen-workbench').click();
+  await expect(page.locator('#fullscreen-workbench')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.results-panel')).toBeHidden();
+  expect(await size(page,'.work-area')).toBeCloseTo(page.viewportSize().width,0);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.results-panel')).toBeVisible();
+  await page.locator('#fullscreen-results').click();
+  await expect(page.locator('#fullscreen-results')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.canvas-toolbar')).toBeHidden();
+  expect(await size(page,'.results-panel')).toBeCloseTo(page.viewportSize().width,0);
+  await page.locator('#fullscreen-results').click();
+  await expect(page.locator('.canvas-toolbar')).toBeVisible();
+  await page.setViewportSize({width:390,height:844});
+  await page.locator('#toggle-library').click();await expect(page.locator('.library')).toBeHidden();
+  await page.locator('#fullscreen-results').click();expect(await size(page,'.results-panel')).toBeCloseTo(390,0);
+  await page.keyboard.press('Escape');
+});

@@ -1,0 +1,60 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:mean_center",
+  "nodeType": "mean_center",
+  "version": "0.1.0",
+  "title": "Mean center",
+  "released": "2026-10-07",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['mean_center']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      }
+    ],
+    "output": "mean-center"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:MeanCenterComputation",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "PROV computation, WGS84 UTM calculation CRS, and GeoSPARQL CRS84 center geometry."
+  },
+  "implementation": {
+    "files": [
+      "src/mean-center.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Reusable unweighted projected mean center of a point set."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Numeric projection and SHACL checks; no privacy guarantee."
+  }
+}

@@ -460,6 +460,71 @@
           "sha256": "982d972afcfcb9fef4990e6b026a819d305c4b0227a70388170cc8ad83666789"
         }
       ]
+    },
+    {
+      "id": "urn:fieldwork:widget:donut_geomask",
+      "nodeType": "donut_geomask",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/donut_geomask/0.1.0.json",
+          "sha256": "03b48f379218e4df730f7e2e31716c93f7e0a10f24c13a03fd4fdd3e84d4f907"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:hex_aggregate",
+      "nodeType": "hex_aggregate",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/hex_aggregate/0.1.0.json",
+          "sha256": "5ae72b9523f6990798da8f9afbf4a19947173dd1ada66b6500106e2ad28c8ee1"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:compare_point_sets",
+      "nodeType": "compare_point_sets",
+      "currentVersion": "0.2.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/compare_point_sets/0.1.0.json",
+          "sha256": "341656fcaebff3ee61186088eecf5690781d3b3200966982c2f626b074a58ef6"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/compare_point_sets/0.2.0.json",
+          "sha256": "8ca048d03bed8498fd25498c6cbc2235cbfb15253b8d9ef99c4229e199688b8f"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:comparison_map",
+      "nodeType": "comparison_map",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/comparison_map/0.1.0.json",
+          "sha256": "ce32e4f5b4a3942fda084e11bf36fd421484bb840890aea6a11cc6ec2b60d778"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:mean_center",
+      "nodeType": "mean_center",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/mean_center/0.1.0.json",
+          "sha256": "7ef06f9e35bce9922d0a600e75ae32eda723bded6413782180483f06ce0b793e"
+        }
+      ]
     }
   ]
 }

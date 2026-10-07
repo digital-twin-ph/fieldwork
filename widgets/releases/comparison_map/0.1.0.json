@@ -1,0 +1,61 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:comparison_map",
+  "nodeType": "comparison_map",
+  "version": "0.1.0",
+  "title": "Comparison map",
+  "released": "2026-10-07",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['comparison_map']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "comparison",
+        "type": "point-comparison"
+      }
+    ],
+    "output": null
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:MapView",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Map presentation of the comparison result; no center recomputation."
+  },
+  "implementation": {
+    "files": [
+      "src/point-comparison.ts",
+      "src/point-comparison-ui.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Unweighted mean-center evaluation with shared pump context; see docs/experiments/35-cholera-geoprivacy-workflow.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Projection, count, display and SHACL checks; no privacy guarantee or independent scientific certification."
+  }
+}

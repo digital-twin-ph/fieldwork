@@ -34,6 +34,7 @@ export interface DisplayRow {
 }
 export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'; caption:string; total:number; bins:{key:string; label:string; count:number}[]}
 export interface DisplayValue {
+  comparison?:import('./point-comparison.js').PointComparison;
   polygonPresentation?:'plot'|'interactive';
   contextPoints?:PointCollection;
   polygons?:import('./catchments.js').Polygons;

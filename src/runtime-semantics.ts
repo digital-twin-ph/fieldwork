@@ -7,6 +7,10 @@ import {attributeLiteral} from './attribute-schema.js';
 export function receiptActivities(node:WorkflowNode,runId:string):string[]{
   const base=`urn:fieldwork:run:${runId}:`,id=node.id;
   if(['network_input','voronoi','isochrone','clip_polygons','summarize_polygons'].includes(node.type))return [base+'output:'+id+':activity'];
+  if(node.type==='donut_geomask'||node.type==='hex_aggregate')return [base+'output:'+id+':activity'];
+  if(node.type==='compare_point_sets')return [base+'output:'+id+':activity'];
+  if(node.type==='mean_center')return [base+'output:'+id+':activity'];
+  if(node.type==='comparison_map')return [base+'output:'+id+':view'];
   if(node.type==='buffer_area')return [base+'output:'+id+':buffer'];
   if(node.type==='raster_input'||node.type==='clip_raster')return [base+'raster:'+id];
   if(node.type==='measure_area')return [base+'computation:'+id];

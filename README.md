@@ -1,10 +1,10 @@
-# Fieldwork
+﻿# Fieldwork
 
 Fieldwork is a browser prototype for exploring semantic visual GIS workflows in public health. Build workflows with React Flow, compute spatial facts locally, and evaluate Notation3 rules with EYE-JS in WebAssembly.
 
 The application version appears beside the mark in the header. See the [release notes](CHANGELOG.md) for what each version includes and [AGENTS.md](AGENTS.md#versioning-and-release-notes) for the versioning policy. Widget versions evolve independently.
 
-Worked examples explore heat outreach, Old Naledi diagnostic access and raster clipping, and John Snow Voronoi/network catchments; a synthetic exercise explores spatial coverage and input forms. The heat example uses synthetic neighborhoods; Old Naledi combines a real source boundary and historical facility registry with generated demonstration locations. This is exploratory software, not a validated public health policy or risk model.
+Worked examples explore heat outreach, Old Naledi diagnostic access and raster clipping, and John Snow Voronoi/network catchments and geoprivacy transformations; a synthetic exercise explores spatial coverage and input forms. The heat example uses synthetic neighborhoods; Old Naledi combines a real source boundary and historical facility registry with generated demonstration locations. This is exploratory software, not a validated public health policy, risk model or privacy control.
 
 ## Try the prototype
 
@@ -18,6 +18,8 @@ Projects now keep a manifest alongside their workflow. Edits update its inventor
 
 On desktop, drag the dividers beside the Node library and Inspector, or between Workflow/N3 and Results, to resize the panels. Sizes are saved on this device. Focus a divider and use arrow keys for keyboard resizing; double-click it or choose **Reset layout** to restore defaults. Narrow screens keep the stacked layout. See the [panel-layout design record](docs/experiments/23-resizable-panels.md).
 
+Use **Hide widgets** beside the workflow tabs to collapse the left node library. The workbench and Results each have a **Full screen** control; press Escape or the same control to return to the normal layout.
+
 ## Current capabilities
 
 | Component | What you can do now |
@@ -29,6 +31,7 @@ On desktop, drag the dividers beside the Node library and Inspector, or between 
 | Input data | Generate synthetic points, import CSV/GeoPackage/GeoJSON, or place map pins with typed attributes, value sets and optional UUIDs. |
 | Raster input and Clip raster | Acquire a bounded WGS84 GeoTIFF window, then crop and mask it with a study polygon. Preserve native values and metadata; display and download the result. |
 | Spatial coverage | Check multiple point layers against one boundary; review outside/missing locations and record exclusions without deleting source records. |
+| Geoprivacy experiment | Move points with a configurable, seeded donut displacement or aggregate them into H3 cells with sparse-cell omission. Compare private before and derived after maps/tables. These methods do not establish anonymity. |
 | Visual outputs | Connect maps and point tables; worked examples also provide decision maps, tables and bar charts in Results tabs. |
 | N3 and evidence | Run EYE-JS locally, inspect facts and assertions, and download run receipts. |
 | Supporting references | Attach PDFs or URLs to nodes, describe supporting passages, and preserve citations and file identity with run provenance. |
@@ -60,6 +63,8 @@ Pushes to GitLab `main` run the regression and security stages before the `pages
 ## Build a workflow
 
 The local [John Snow worked examples](docs/examples/john-snow.md) translate pump catchments into shared primitives: **Voronoi catchments** or **Network isochrone ? Clip polygons ? Summarize points in polygons ? Map/Table/Chart**. Select workspaces 05 or 06. Historical source tables contain 250 locations and 489 deaths; the street graph is a modern OSM snapshot, not reconstructed 1854 streets. Parameterized UTM distance, travel time, direction, speed, buffer width and count/sum choices are explicit. See [design experiment 32](docs/experiments/32-john-snow-primitives.md).
+
+The local in-development workspace 07 uses those 250 death locations for a [geoprivacy design experiment](docs/experiments/35-cholera-geoprivacy-workflow.md). It branches from the private source to **Move points in a donut** and **Group points in H3 cells**, each with before/after map and table tabs. A **Mean center** widget runs on each point branch. **Compare point sets** takes both centers, their corresponding point sets and eight pump locations; its Comparison map shows the two maps side by side on one extent with projected mean centers, center shift and nearest-pump distances. The UTM projection is visible as a computation parameter and in N3 evidence. The after tabs offer a demo GeoJSON download containing derived geometry only. The editable project, before tabs, comparison map, N3 view and run receipt retain source coordinates and must be treated as private. The seeded movement is predictable, cell occupancy is not an anonymity guarantee, and neither method is cleared for real sensitive data. Contextual **Hide data** and calibrated encrypt/decrypt/evaluate operations remain TODO; the widget notes link to the [geoprivacy notebooks](https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library).
 
 **Street network** is a specialized input: upload directed WGS84 GraphML/JSON or explicitly download a bounded OSM walking candidate graph. Connect **Study area ? Buffer study area ? Street network** to expand acquisition while keeping the original area for reporting. Existing saved networks change only on upload/download. Study area also offers centre-and-dimension square/rectangle controls in addition to free boxes and polygons. Saved normalized networks are included in project export and offline replay; raw uploaded network files are represented by their hash, not embedded.
 
@@ -128,6 +133,8 @@ The published baseline on October 6, 2026 passed strict TypeScript checks, the p
 
 The October 7 release candidate passed 94 unit tests, ontology and widget registry checks, and 57 distinct Chromium browser scenarios after updating an outdated draft-N3 text assertion. The browser coverage includes the local Botswana WorldPop GeoTIFF and N3/SHACL UI checks; see [experiment 34](docs/experiments/34-widget-ontology-audit.md).
 
+Version 0.3.0 passed 99 unit tests and all 60 local Chromium browser scenarios, including the real WorldPop raster, geoprivacy N3/SHACL evidence, panel controls, and desktop/narrow-screen version badge. The widget registry validates 32 widgets and 60 releases. These checks do not establish privacy effectiveness or Firefox/Safari behavior.
+
 Use the full regression gate before accepting a functional change:
 
     npm ci
@@ -156,7 +163,7 @@ The [workflow learning and gamification design](docs/experiments/27-workflow-lea
 
 The [workflow publication products design](docs/experiments/17-workflow-publication-products.md) records future field reports, story maps, infographics and dashboards as pipeline end products. It proposes reusable content blocks, versioned templates, evidence-linked findings and local export, beginning with a spatial coverage field-report experiment. These composition and export capabilities are not implemented.
 
-The [widget registry](widgets/README.md) inventories all 27 node types, including legacy aliases, with stable identities, independent release versions, port contracts, source references and explicit ontology mappings or gaps. Run `npm run validate:widgets` to check coverage, release digests and alignment with current TypeScript definitions. Saved workflows do not yet pin widget versions; the specific heat-source adapter runs on load, while general registry-driven migrations remain future work.
+The [widget registry](widgets/README.md) inventories all 32 node types, including legacy aliases, with stable identities, independent release versions, port contracts, source references and explicit ontology mappings or gaps. Run `npm run validate:widgets` to check coverage, release digests and alignment with current TypeScript definitions. Saved workflows do not yet pin widget versions; the specific heat-source adapter runs on load, while general registry-driven migrations remain future work.
 
 The [shared visualization design specification](docs/experiments/16-semantic-visualization-design.md) proposes common semantics for maps, charts and tables using GeoSPARQL, CSVW, RDF Data Cube, QUDT, SKOS and PROV, with selective OGC portrayal reuse and a candidate Vega-Lite chart adapter. It defines configuration, rendering and artifact provenance, proposed SHACL contracts, offline constraints and a developmental evaluation exercise. The general shared profile and Vega-Lite adapter remain design work; the bounded categorical Chart adapter is implemented as described above.
 

@@ -1,6 +1,6 @@
 {
   "name": "fieldwork-semantic-gis",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
@@ -25,6 +25,7 @@
     "@xyflow/react": "^12.12.0",
     "@zip.js/zip.js": "2.23.0",
     "geotiff": "3.0.5",
+    "h3-js": "4.5.0",
     "leaflet": "^1.9.4",
     "polyclip-ts": "0.16.8",
     "proj4": "2.19.10",

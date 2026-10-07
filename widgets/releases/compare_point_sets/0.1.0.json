@@ -1,0 +1,68 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:compare_point_sets",
+  "nodeType": "compare_point_sets",
+  "version": "0.1.0",
+  "title": "Compare point sets",
+  "released": "2026-10-07",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['compare_point_sets']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "original",
+        "type": "points"
+      },
+      {
+        "name": "moved",
+        "type": "points"
+      },
+      {
+        "name": "pumps",
+        "type": "points"
+      }
+    ],
+    "output": "point-comparison"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:PointSetComparison",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "PROV computation with UTM CRS, GeoSPARQL center geometries and QUDT metre quantities."
+  },
+  "implementation": {
+    "files": [
+      "src/point-comparison.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Unweighted mean-center evaluation with shared pump context; see docs/experiments/35-cholera-geoprivacy-workflow.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Projection, count, display and SHACL checks; no privacy guarantee or independent scientific certification."
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:hex_aggregate",
+  "nodeType": "hex_aggregate",
+  "version": "0.1.0",
+  "title": "Group points in H3 cells",
+  "released": "2026-10-07",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['hex_aggregate']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      }
+    ],
+    "output": "polygons"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:HexAggregation",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "PROV computation activity with typed SHACL runtime receipt; configuration and privacy effectiveness require separate validation."
+  },
+  "implementation": {
+    "files": [
+      "src/geoprivacy.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Bounded geoprivacy worked example; see docs/experiments/35-cholera-geoprivacy-workflow.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Structural and deterministic checks only. No privacy guarantee or independent scientific certification."
+  }
+}

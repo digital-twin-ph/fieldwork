@@ -40,6 +40,10 @@ Record unresolved gaps and update this audit when closing them.
 | Isochrone | Cumulative modeled travel-time region under stated network assumptions |
 | Evidence reference | A cited source, not automatically an executable premise |
 | Presentation | A view of existing results, not new scientific inference |
+| Donut geomasking | Derived point displacement within a metre-valued annulus; a demonstrator, not encryption or proven anonymity |
+| H3 cell aggregate | Count of source locations in an indexed hexagonal cell; not a nearest-site catchment or an anonymity guarantee |
+| Mean center | One unweighted projected arithmetic center of a point set, returned in CRS84; not a burden-weighted center or privacy metric |
+| Point-set comparison | Computed unweighted projected means and pump-context distances for two point sets; a private evaluation activity, not geomasking or a privacy guarantee |
 
 ## Validation profiles
 
@@ -69,3 +73,14 @@ legacy heat/access operation semantics remain incomplete. Ground EYE conclusions
 are included in the combined SHACL data graph, separately from rule formulas. Scientific correctness,
 learning effectiveness and external source truth require separate evaluation.
 Proposed game/learner vocabulary in note 27 remains design-only.
+The John Snow geoprivacy example has separate `DonutGeomasking`, two
+`MeanCenterComputation` branches, `PointSetComparison`, and `HexAggregation`
+computation receipts and SHACL shapes. Each mean-center branch must consume
+the same point source as its corresponding comparison input; the two centers
+must use the comparison CRS and match source counts.
+The comparison map is a presentation activity that reuses those results. Positive and negative
+checks are in `tests/geoprivacy.test.mjs`; the executed graph and browser N3
+view are covered there and in `tests/geoprivacy.browser.mjs`. These establish
+structural and deterministic behavior only. The source-bearing project/run
+evidence is intentionally private; the demo derived GeoJSON is a distinct
+artifact. Hide-by-context and map encryption remain proposed (experiment 35).

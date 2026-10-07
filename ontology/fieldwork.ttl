@@ -1,4 +1,4 @@
-@prefix fw: <urn:fieldwork:>.
+﻿@prefix fw: <urn:fieldwork:>.
 @prefix owl: <http://www.w3.org/2002/07/owl#>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
@@ -14,6 +14,31 @@ fw:VoronoiComputation a owl:Class; fw:implementationStatus "implemented"; rdfs:s
   rdfs:comment "Projected Euclidean nearest-site allocation; not observed facility use.".
 fw:NetworkIsochrone a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Directed network reachability with explicit cost, snapping and corridor approximation.".
+fw:DonutGeomasking a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Reproducible educational point displacement within a metre-valued annulus; not a privacy guarantee.".
+fw:HexAggregation a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Aggregation of located points into H3 cells, with sparse cells omitted.".
+fw:MovedPointDataset a owl:Class; rdfs:subClassOf geo:FeatureCollection, prov:Entity.
+fw:MovedPoint a owl:Class; rdfs:subClassOf geo:Feature.
+fw:HexCellDataset a owl:Class; rdfs:subClassOf geo:FeatureCollection, prov:Entity.
+fw:HexCell a owl:Class; rdfs:subClassOf geo:Feature.
+fw:MeanCenterComputation a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Unweighted arithmetic mean of projected point coordinates, returned as a CRS84 point.".
+fw:MeanCenterResult a owl:Class; rdfs:subClassOf prov:Entity.
+fw:PointSetComparison a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Compare unweighted projected mean centers and their distances with a contextual reference-point layer.".
+fw:PointComparisonResult a owl:Class; rdfs:subClassOf prov:Entity.
+fw:referenceCount a owl:DatatypeProperty.
+fw:centerShift a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:originalNearestPumpDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:movedNearestPumpDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:originalMeanCenter a owl:ObjectProperty; rdfs:range geo:Geometry.
+fw:movedMeanCenter a owl:ObjectProperty; rdfs:range geo:Geometry.
+fw:originalNearestPumpId a owl:DatatypeProperty.
+fw:movedNearestPumpId a owl:DatatypeProperty.
+fw:innerRadius a owl:ObjectProperty.
+fw:outerRadius a owl:ObjectProperty.
+fw:randomSeed a owl:DatatypeProperty.
+fw:h3Resolution a owl:DatatypeProperty.
+fw:minimumOccupancy a owl:DatatypeProperty.
+fw:inputCount a owl:DatatypeProperty.
+fw:outputCount a owl:DatatypeProperty.
 fw:NetworkInput a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf prov:Activity;
   rdfs:label "Read prepared street network";
   rdfs:comment "Validate and expose a previously prepared directed network for a run. Acquisition or file normalization happens in the input editor; this execution does not imply a new OSM request.".

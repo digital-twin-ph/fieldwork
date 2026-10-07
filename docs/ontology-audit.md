@@ -40,6 +40,7 @@ Record unresolved gaps and update this audit when closing them.
 | Isochrone | Cumulative modeled travel-time region under stated network assumptions |
 | Evidence reference | A cited source, not automatically an executable premise |
 | Presentation | A view of existing results, not new scientific inference |
+| Chart specification | A bounded presentation plan over a named result; mark and orientation do not change its measure |
 | Donut geomasking | Derived point displacement within a metre-valued annulus; a demonstrator, not encryption or proven anonymity |
 | H3 cell aggregate | Count of source locations in an indexed hexagonal cell; not a nearest-site catchment or an anonymity guarantee |
 | Mean center | One unweighted projected arithmetic center of a point set, returned in CRS84; not a burden-weighted center or privacy metric |
@@ -84,3 +85,26 @@ view are covered there and in `tests/geoprivacy.browser.mjs`. These establish
 structural and deterministic behavior only. The source-bearing project/run
 evidence is intentionally private; the demo derived GeoJSON is a distinct
 artifact. Hide-by-context and map encryption remain proposed (experiment 35).
+
+The Chart enhancement reuses the existing Chart widget and count/summarized-polygon
+inputs. Its `fw:ChartSpecification` plan records renderer, mark, orientation,
+source field and measure kind; each `fw:ChartView` receipt must point to one
+such plan. Positive and negative tests cover absent binding, invalid renderer
+and negative bin values. The bounded Vega-Lite renderer consumes the recorded
+bins without a new statistical transformation. This is structural and
+presentation validation, not proof of an appropriate visualization or a valid
+public-health conclusion; see [experiment 37](experiments/37-vega-lite-chart-spike.md).
+
+The Map communication slice reuses `map_output` rather than admitting a new
+primitive. `fw:MapSpecification` is a presentation plan linked from the
+executed `fw:MapView`; it records title, subtitle, source/method note, legend
+visibility, static/interactive presentation, basemap choice and upstream
+result identities. Inputs remain the existing typed spatial, decision, raster
+or polygon ports. CRS84 geometry, missing/outside records, raster NoData,
+source references and computation receipts remain upstream. The default local
+basemap requests no tiles; online OSM/OpenTopoMap selections are presentation
+resources only and are excluded from SVG. Positive and negative SHACL checks
+are in `tests/map-communication.test.mjs`; executed N3, visual controls and
+basemap switching are exercised in `tests/catchments.browser.mjs`. This checks
+structural provenance and rendering behavior, not scientific or cartographic
+suitability. See [experiment 38](experiments/38-standalone-map-communication.md).

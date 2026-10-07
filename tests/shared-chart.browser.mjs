@@ -27,3 +27,31 @@ test('shared Chart supports migration, source selection, view switching, evidenc
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.getByRole('tab',{name:'Decision counts'}).click();await expect(page.locator('#bars-panel')).toContainText('8 records');
 });
+
+test('Vega-Lite Chart enhancement renders from local count bins and reopens offline',async({page,context})=>{
+  const w=exampleWorkflow();w.nodes.push({id:'enhanced',type:'chart_output',x:850,y:420,params:{label:'Enhanced counts',renderer:'vega-lite',mark:'point',orientation:'horizontal'}});
+  w.edges.push({id:'enhanced-edge',from:'criteria',to:'enhanced',port:'decisions'});
+  await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'enhanced.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+  await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.getByRole('tab',{name:'Enhanced counts'}).click();
+  await expect(page.locator('#vega-chart svg.marks')).toBeVisible({timeout:30000});
+  await expect(page.locator('#bars-panel')).toContainText('Underlying chart values');
+  await page.locator('.react-flow__node[data-id="enhanced"]').click();await expect(page.locator('#chart-renderer')).toHaveValue('vega-lite');await expect(page.locator('#chart-mark')).toHaveValue('point');
+  await page.locator('#chart-title').fill('Heat screening decisions');await page.locator('#chart-title').press('Tab');
+  await page.locator('#chart-subtitle').fill('Demonstration records');await page.locator('#chart-subtitle').press('Tab');
+  await page.locator('#chart-x-axis').fill('Number of records');await page.locator('#chart-x-axis').press('Tab');
+  await page.locator('#chart-y-axis').fill('Decision');await page.locator('#chart-y-axis').press('Tab');
+  await page.locator('#chart-legend').check();
+  await page.locator('#chart-source-note').fill('Source: synthetic heat fixture');await page.locator('#chart-source-note').press('Tab');
+  await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.getByRole('tab',{name:'Enhanced counts'}).click();await expect(page.locator('#vega-chart svg.marks')).toContainText('Heat screening decisions');
+  await expect(page.locator('#vega-chart svg.marks')).toContainText('Source: synthetic heat fixture');
+  await expect(page.locator('#vega-chart svg.marks')).toContainText('Decision');
+  await page.locator('#vega-chart details[title="Click to view actions"] summary').click();
+  const chartDownload=page.waitForEvent('download');await page.locator('#vega-chart .vega-actions a[download$=".svg"]').click();
+  const svg=await readFile(await (await chartDownload).path(),'utf8');assert.match(svg,/Heat screening decisions/);assert.match(svg,/Source: synthetic heat fixture/);
+  await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('fw:ChartSpecification');
+  await expect(page.locator('#n3-preview')).toContainText('fw:chartLegend true');
+  await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.getByRole('tab',{name:'Enhanced counts'}).click();await expect(page.locator('#vega-chart svg.marks')).toBeVisible({timeout:30000});
+});

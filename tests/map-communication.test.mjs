@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {Parser,Store,DataFactory} from 'n3';
+import {mapPresentation,standaloneMapSvg,mapSpecificationFacts} from '../build/map-communication.js';
+import {mapOutput} from '../build/map-output.js';
+import {coverageExercise} from '../build/spatial-coverage.js';
+import {validateGraph} from '../scripts/validate-ontology.mjs';
+
+test('Map presentation is independent of geometry and emits a validated, source-linked plan',async()=>{
+  const workflow=coverageExercise();workflow.nodes=workflow.nodes.slice(0,2);
+  const node={id:'map',type:'map_output',x:0,y:0,params:{label:'Result tab',mapTitle:'Old Naledi & observations',mapSubtitle:'Synthetic teaching records',mapSourceNote:'Synthetic data <local>; method: point-in-polygon',showLegend:true}};
+  workflow.nodes.push(node);workflow.edges=[{id:'a',from:'scope',to:'map',port:'area'},{id:'b',from:'observations',to:'map',port:'points'}];
+  const boundary=workflow.nodes[0].params.geometry,points=workflow.nodes[1].params.data;
+  const mapped=mapOutput(node,{area:{boundary,areaId:'urn:fieldwork:area:scope',geometryId:'urn:fieldwork:geometry:scope',label:'Old Naledi'},points:{sourceNodeId:'observations',label:'Synthetic coverage records',features:points.features}},'run');
+  const output={...mapped.value,nodeId:'map',label:'Result tab',view:'map'},before=structuredClone(output);
+  const spec=mapPresentation(node,output,workflow);
+  assert.equal(spec.title,'Old Naledi & observations');assert.equal(spec.items[0].label,'Outside boundary');
+  const svg=standaloneMapSvg('<rect width="850" height="295"/>','0 0 850 295',spec);
+  assert.match(svg,/<title>Old Naledi &amp; observations<\/title>/);assert.match(svg,/Synthetic data &lt;local&gt;/);assert.match(svg,/Inside \/ boundary/);
+  assert.deepEqual(output,before);
+  mapSpecificationFacts(node,output,workflow,'run',mapped.receipt);
+  const graph=new Store(new Parser().parse(mapped.receipt.facts));
+  assert.equal((await validateGraph(graph)).conforms,true);
+  assert.equal([...graph.match(null,DataFactory.namedNode('urn:fieldwork:mapSpecification'),null)].length,1);
+  assert.equal([...graph.match(null,DataFactory.namedNode('urn:fieldwork:mapBasemap'),null)][0].object.value,'none');
+  const subject=DataFactory.namedNode('urn:fieldwork:run:run:map-specification:map'),predicate=DataFactory.namedNode('urn:fieldwork:mapSourceNote');
+  graph.removeMatches(subject,predicate,null);assert.equal((await validateGraph(graph)).conforms,false);
+  const bad=structuredClone(workflow);bad.nodes.at(-1).params.showLegend='sometimes';
+  const {validateWorkflow}=await import('../build/core.js');assert.throws(()=>validateWorkflow(bad),/Invalid map presentation/);
+  bad.nodes.at(-1).params.showLegend=true;bad.nodes.at(-1).params.basemap='unsafe-url';assert.throws(()=>validateWorkflow(bad),/Invalid map presentation/);
+});

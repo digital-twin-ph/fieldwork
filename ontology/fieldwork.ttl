@@ -274,6 +274,40 @@ fw:ChartView a owl:Class;
   rdfs:label "Categorical chart presentation";
   rdfs:comment "Presents categorical record counts or upstream polygon counts/numeric totals. Cumulative catchments are not disjoint time bands. Polygon presentation reuses upstream summaries.";
   fw:implementationStatus "implemented".
+fw:ChartSpecification a owl:Class;
+  rdfs:subClassOf prov:Plan;
+  rdfs:label "Bounded chart presentation specification";
+  rdfs:comment "Configured presentation of an exact upstream result. Mark and orientation affect appearance; field and measure kind disclose the already-computed quantity. The specification is not a statistical computation or an arbitrary Vega-Lite program.";
+  fw:implementationStatus "implemented".
+fw:MapSpecification a owl:Class;
+  rdfs:subClassOf prov:Plan;
+  rdfs:label "Bounded map communication specification";
+  rdfs:comment "Title, subtitle, legend visibility and source note for an existing spatial result. Does not compute, transform or validate geography. An interactive view exports local geometry as a static SVG, without basemap tiles.";
+  fw:implementationStatus "implemented".
+fw:mapSpecification a owl:ObjectProperty; rdfs:domain fw:MapView; rdfs:range fw:MapSpecification.
+fw:mapLegend a owl:DatatypeProperty; rdfs:domain fw:MapSpecification; rdfs:range xsd:boolean.
+fw:mapPresentation a owl:DatatypeProperty; rdfs:domain fw:MapSpecification; rdfs:range xsd:string.
+fw:mapBasemap a owl:DatatypeProperty; rdfs:domain fw:MapSpecification; rdfs:range xsd:string;
+  rdfs:comment "None uses local geometry offline; OSM and OpenTopoMap request third-party viewport tiles with visible attribution. Tiles are not included in the SVG export.".
+fw:mapSourceNote a owl:DatatypeProperty; rdfs:domain fw:MapSpecification; rdfs:range xsd:string;
+  rdfs:comment "Authored note or connected-source and method fallback; not a verified citation.".
+fw:chartSpecification a owl:ObjectProperty; rdfs:domain fw:ChartView; rdfs:range fw:ChartSpecification.
+fw:chartRenderer a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
+fw:chartMark a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
+fw:chartOrientation a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
+fw:chartField a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
+fw:chartMeasureKind a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
+fw:chartUnitStatus a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string;
+  rdfs:comment "Record-count and location-membership-count have explicit counting units. Numeric totals whose source unit is unavailable are marked source-unit-not-specified; no physical unit is inferred.".
+fw:chartLegend a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:boolean;
+  rdfs:comment "True means categories are color encoded and a corresponding legend is shown.".
+fw:chartXAxisTitle a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
+fw:chartYAxisTitle a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
+fw:chartSourceNote a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string;
+  rdfs:comment "Authored source/method label or fallback result/run identifier shown with the chart. Not a verified citation.".
+fw:rendererSpecification a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string;
+  rdfs:comment "Exact generated renderer JSON for the bounded, executable view; data values are inline from the recorded count bins.".
+fw:chartRendererVersion a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
 fw:CategoricalCount a owl:Class;
   rdfs:subClassOf prov:Activity;
   rdfs:label "Categorical frequency computation";

@@ -19,6 +19,8 @@ This is a development registry, not an executable plugin loader. Workflow nodes 
 
 Existing mapped classes include StudyArea, AreaComputation, SpatialCoverageCheck, MapView, TableView, ChartView and CategoricalCount. GenericInputConfiguration is a proposed alignment for Input data; registration does not assert that runtime receipts already emit it. Other widgets explicitly report a mapping gap. All configurations align conceptually with `prov:Plan`; this does not change their serialization. Full semantic port contracts and widget-specific SHACL shapes are still required. Existing application port strings are preserved without claiming ontology equivalence.
 
+Chart `0.3.0` adds an optional bundled Vega-Lite presentation for existing categorical counts and maps its bounded `fw:ChartSpecification` to a SHACL-checked `prov:Plan`. Its release metadata still reports application-only widget-configuration validation; the runtime chart-spec shape does not validate the whole widget or scientific result. See the [chart spike](../docs/experiments/37-vega-lite-chart-spike.md).
+
 Neighborhoods and Cooling centers now normalize to Input data through the specific adapter recorded in the current releases. New heat canvases instantiate Input data directly. Historical releases retain their earlier replacement-candidate descriptions. Old Naledi now splits its registry into Input data and Select nearby facilities (`1.0.0`); its downstream evidence and access contracts remain specialized. See the [first standardization slice](../docs/experiments/18-shared-input-standardization.md).
 
 ## Version and change policy
@@ -68,3 +70,10 @@ Clip raster 0.5.0 adds all-touched inclusion and a 0-1 native pixel margin. Map 
 Experiment 32 adds six shared primitives (27 identities / 51 releases): Voronoi catchments, Street network, Network isochrone, Clip polygons, Summarize points in polygons, and Buffer study area. Map 0.6.0, Table 0.3.0 and Chart 0.2.0 accept explicit polygon mode. Study area 0.2.0 adds sized boxes. See [design record](../docs/experiments/32-john-snow-primitives.md).
 
 Map 0.7.0 adds polygon plot/interactive views and a context point connector. Network isochrone 0.2.0 adds cumulative thresholds and explicit infill. See experiment 33.
+
+Map 0.8.0 adds a bounded communication specification (title, subtitle, key,
+source note and local SVG export) plus an interactive basemap selector with
+offline, OSM streets and OpenTopoMap terrain choices. Its runtime N3 uses
+`fw:MapSpecification` with SHACL checks; the registry validator still labels
+release configuration as application-only because it has no per-release SHACL
+dispatch. See [experiment 38](../docs/experiments/38-standalone-map-communication.md).

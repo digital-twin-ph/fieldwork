@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Parser} from 'n3';
+import {Parser,Store,DataFactory} from 'n3';
 import {summarizeChart,chartOutput,chartMarkup} from '../build/chart-output.js';
+import {chartVegaSpec} from '../build/chart-vega.js';
+import {validateGraph} from '../scripts/validate-ontology.mjs';
 import {exampleWorkflow,validateWorkflow,executionPlan,executeWorkflow,NS} from '../build/core.js';
 
 test('legacy bars migrate idempotently with stable connections, settings and references',()=>{
@@ -41,4 +43,34 @@ test('shared charts execute alongside maps with one inference and auditable coun
   assert.deepEqual(chart.rows,result.outputs[0].rows);assert.equal(chart.chart.total,chart.rows.length);
   assert.equal(chart.chart.bins.find(b=>b.key==='Unknown').count,chart.rows.length);
   assert.equal(result.receipts.find(r=>r.nodeId==='chart').kind,'computation');
+  assert.match(result.receipts.find(r=>r.nodeId==='chart').facts,/chart-spec:chart> dcterms:references <urn:fieldwork:run:.*:reference:chart:method>/);
+});
+
+test('bounded Vega-Lite enhancement preserves source counts and validates its semantic contract',async()=>{
+  const node={id:'chart',type:'chart_output',params:{label:'Decision counts',renderer:'vega-lite',mark:'point',orientation:'vertical',chartTitle:'Screening decisions',subtitle:'Demonstration records',xAxisTitle:'Decision class',yAxisTitle:'Records',sourceNote:'Synthetic fixture',colorByCategory:true}};
+  const input={rows:[{id:'a',status:'Review'},{id:'b',status:'Unknown'}],centers:[]};
+  const shown=chartOutput(node,input,'criteria','run');
+  const spec=chartVegaSpec(shown.value.chart,node.params);
+  assert.equal(spec.mark.type,'point');assert.equal(spec.encoding.x.field,'displayLabel');assert.equal(spec.encoding.y.field,'count');
+  assert.equal(spec.title.text,'Screening decisions');assert.deepEqual(spec.title.subtitle,['Demonstration records','Synthetic fixture']);
+  assert.equal(spec.encoding.x.title,'Decision class');assert.equal(spec.encoding.y.title,'Records');
+  assert.equal(spec.encoding.color.legend.title,'Category');
+  assert.equal(spec.data.values.reduce((sum,row)=>sum+row.count,0),2);
+  assert.ok(!('transform' in spec));assert.ok(!('url' in spec.data));
+  const duplicateLabels=chartVegaSpec({...shown.value.chart,bins:[{key:'a',label:'Site',count:1},{key:'b',label:'Site',count:1}]},node.params);
+  assert.deepEqual(duplicateLabels.data.values.map(b=>b.displayLabel),['Site (a)','Site (b)']);
+  const graph=new Store(new Parser().parse(shown.receipt.facts));
+  assert.equal((await validateGraph(graph)).conforms,true);
+  assert.equal([...graph.match(null,DataFactory.namedNode('urn:fieldwork:chartUnitStatus'),null)][0].object.value,'records');
+  assert.equal([...graph.match(null,DataFactory.namedNode('urn:fieldwork:chartLegend'),null)][0].object.value,'true');
+  assert.deepEqual(JSON.parse([...graph.match(null,DataFactory.namedNode('urn:fieldwork:rendererSpecification'),null)][0].object.value),chartVegaSpec(shown.value.chart,node.params,{sourceId:'criteria',runId:'run'}));
+  assert.match([...graph.match(null,DataFactory.namedNode('urn:fieldwork:chartRendererVersion'),null)][0].object.value,/vega-lite@6[.]/);
+  const activity=DataFactory.namedNode('urn:fieldwork:run:run:view:chart'),binding=DataFactory.namedNode('urn:fieldwork:chartSpecification'),specIri=DataFactory.namedNode('urn:fieldwork:run:run:chart-spec:chart');
+  graph.removeQuad(activity,binding,specIri);assert.equal((await validateGraph(graph)).conforms,false);
+  graph.addQuad(activity,binding,specIri);
+  const n=DataFactory.namedNode,l=DataFactory.literal,subject=n('urn:fieldwork:run:run:chart-spec:chart'),predicate=n('urn:fieldwork:chartRenderer');
+  graph.removeQuad(subject,predicate,l('vega-lite'));graph.addQuad(subject,predicate,l('arbitrary'));
+  assert.equal((await validateGraph(graph)).conforms,false);
+  assert.throws(()=>chartVegaSpec({...shown.value.chart,bins:[{key:'bad',label:'Bad',count:-1}]},node.params),/nonnegative/);
+  const invalid=structuredClone(node);invalid.params.mark='arc';assert.throws(()=>validateWorkflow({schema:'fieldwork/workflow/1',name:'Invalid',nodes:[{...invalid,x:0,y:0}],edges:[]}),/supported chart/);
 });

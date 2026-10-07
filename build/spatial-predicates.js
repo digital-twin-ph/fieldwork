@@ -1,2 +1,2 @@
-import{a}from"./chunks/chunk-5SCLFDIO.js";import"./chunks/chunk-Z644EMGM.js";import"./chunks/chunk-FY3BTKY4.js";export{a as pointRelation};
+import{a}from"./chunks/chunk-7QYLAAFN.js";import"./chunks/chunk-ZEWYUARN.js";import"./chunks/chunk-Z644EMGM.js";import"./chunks/chunk-KVMUXFPB.js";export{a as pointRelation};
 //# sourceMappingURL=spatial-predicates.js.map

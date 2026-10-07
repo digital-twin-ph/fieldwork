@@ -220,7 +220,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.7.0",
+      "currentVersion": "0.8.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -261,6 +261,11 @@
           "version": "0.7.0",
           "path": "widgets/releases/map_output/0.7.0.json",
           "sha256": "41561617c1cd919811db3d58bee2c90e18dbb07205e75222b1a193d469ecdf5d"
+        },
+        {
+          "version": "0.8.0",
+          "path": "widgets/releases/map_output/0.8.0.json",
+          "sha256": "4ca35547466917cf68f48b48cb28bfd1a14f433e9e186bdff4d144e3faf9db31"
         }
       ]
     },
@@ -311,7 +316,7 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -322,6 +327,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/chart_output/0.2.0.json",
           "sha256": "ff7451a396ec32b0c5d9fff8b6ce5ba171ddd51c4bdb20b3ef9f32b257f6ad7d"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/chart_output/0.3.0.json",
+          "sha256": "6e8ee23593bfcdd70951f931a5f4d25bc45236a4cf20de72a76e4c9a13c17f5d"
         }
       ]
     },

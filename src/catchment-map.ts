@@ -2,10 +2,16 @@ import L from 'leaflet';
 import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape} from './types.js';
 
+export type BasemapChoice='none'|'osm'|'topo';
+const BASEMAPS={
+  osm:{label:'OpenStreetMap streets',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',maxZoom:19},
+  topo:{label:'OpenTopoMap terrain',url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attribution:'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC BY-SA)',maxZoom:17}
+} as const;
+
 /** Presentation only: never changes polygons, memberships, or source points. */
-export function mountCatchmentMap(host:HTMLElement,p:Polygons,context:PointCollection|undefined,esc:Escape){
+export function mountCatchmentMap(host:HTMLElement,p:Polygons,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void){
   const toolbar=document.createElement('div');toolbar.className='catchment-map-toolbar';
-  toolbar.innerHTML='<button class="button small" data-fit>Fit all layers</button><button class="button small" data-fullscreen>Full screen</button><label><input type="checkbox" data-basemap> Online street basemap</label><span data-tile-status role="status">Local layers work offline</span>';
+  toolbar.innerHTML='<button class="button small" data-fit>Fit all layers</button><button class="button small" data-fullscreen>Full screen</button><label>Basemap <select data-basemap aria-label="Interactive map basemap"><option value="none">Local geometry (offline)</option><option value="osm">OpenStreetMap streets</option><option value="topo">OpenTopoMap terrain</option></select></label><span data-tile-status role="status">Local layers work offline</span>';
   const canvas=document.createElement('div');canvas.className='catchment-leaflet';canvas.setAttribute('aria-label','Interactive catchment map');
   host.append(toolbar,canvas);
   // Views can disappear immediately on tab/workspace changes. Avoid delayed zoom
@@ -25,16 +31,25 @@ export function mountCatchmentMap(host:HTMLElement,p:Polygons,context:PointColle
   observations.addTo(map);all.addLayer(observations);overlays['Observations (red circles)']=observations;
   const pumps=L.featureGroup(),points=context?.features||p.sites;
   for(const f of points){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates;
-    L.marker([lat,lon],{icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
+    const marker=L.marker([lat,lon],{icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
+    marker.on('add',()=>{const icon=marker.getElement();if(icon){L.DomEvent.disableClickPropagation(icon);icon.addEventListener('mousedown',event=>event.preventDefault());icon.addEventListener('click',event=>{event.stopPropagation();marker.openPopup();});}});
   }
   pumps.addTo(map);all.addLayer(pumps);overlays['Sites / context (blue squares)']=pumps;
   L.control.layers({},overlays,{collapsed:false}).addTo(map);L.control.scale({imperial:false}).addTo(map);
   const fit=()=>{if(all.getBounds().isValid())map.fitBounds(all.getBounds(),{padding:[20,20]});else map.setView([0,0],2);};fit();
   toolbar.querySelector<HTMLButtonElement>('[data-fit]')!.onclick=fit;
-  toolbar.querySelector<HTMLButtonElement>('[data-fullscreen]')!.onclick=async()=>{if(document.fullscreenElement===host)await document.exitFullscreen();else await host.requestFullscreen().catch(()=>{status.textContent='Full screen unavailable; use Expand Results.';});};
-  const status=toolbar.querySelector<HTMLElement>('[data-tile-status]')!,tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'});
-  tiles.on('tileerror',()=>{status.textContent='Basemap unavailable; local layers remain visible.';});
-  toolbar.querySelector<HTMLInputElement>('[data-basemap]')!.onchange=e=>{if((e.target as HTMLInputElement).checked){tiles.addTo(map);status.textContent='Online basemap requested';}else{tiles.remove();status.textContent='Local layers work offline';}};
+  toolbar.querySelector<HTMLButtonElement>('[data-fullscreen]')!.onclick=async()=>{const panel=host.closest<HTMLElement>('#map-panel')||host;if(document.fullscreenElement===panel)await document.exitFullscreen();else await panel.requestFullscreen().catch(()=>{status.textContent='Full screen unavailable; use Expand Results.';});requestAnimationFrame(()=>map.invalidateSize());};
+  const status=toolbar.querySelector<HTMLElement>('[data-tile-status]')!,select=toolbar.querySelector<HTMLSelectElement>('[data-basemap]')!;
+  let tiles:L.TileLayer|undefined;
+  const setBasemap=(choice:BasemapChoice)=>{
+    if(tiles){tiles.remove();tiles=undefined;}
+    if(choice==='none'){status.textContent='Local layers work offline';return;}
+    const source=BASEMAPS[choice];tiles=L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution});
+    tiles.on('tileerror',()=>{status.textContent='Basemap unavailable; local layers remain visible.';});
+    tiles.addTo(map);tiles.bringToBack();status.textContent=`${source.label} online · viewed area sent to provider`;
+  };
+  select.value=basemap;setBasemap(basemap);
+  select.onchange=()=>{const choice=select.value as BasemapChoice;setBasemap(choice);onBasemapChange?.(choice);};
   const note=document.createElement('p');note.className='muted';note.textContent='Blue nested regions: cumulative travel times. Red circles: observations (DEATHS radius capped at 20 px); blue squares: sites/context. Use layer controls and click features for details.';host.append(note);
   let disposed=false;const observer=new ResizeObserver(()=>{if(!disposed)map.invalidateSize();});observer.observe(canvas);
   return ()=>{disposed=true;observer.disconnect();map.stop();map.remove();host.replaceChildren();};

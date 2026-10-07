@@ -6,7 +6,7 @@ Date: October 6, 2026. Status: future-work design experiment. No publication wid
 
 The workflow pipeline should support communication products as end products, alongside individual maps, charts and tables. A practitioner should be able to turn a completed analysis into a field report, story map, infographic or dashboard while preserving the connection between displayed findings, underlying results, assumptions and supporting evidence.
 
-This extends the [shared visualization design](16-semantic-visualization-design.md) and [widget registry](../../widgets/README.md). The key design hypothesis is that composing products from traceable workflow results will reduce manual transcription and make findings easier to inspect and update. That benefit remains to be evaluated; producing an attractive artifact does not establish scientific validity or reader understanding.
+This extends the [shared visualization design](16-semantic-visualization-design.md), [communication-layer profile](36-communication-layer.md) and [widget registry](../../widgets/README.md). The key design hypothesis is that composing products from traceable workflow results will reduce manual transcription and make findings easier to inspect and update. That benefit remains to be evaluated; producing an attractive artifact does not establish scientific validity or reader understanding.
 
 ## A64 Compose workflow products from reusable blocks
 

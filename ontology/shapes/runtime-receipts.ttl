@@ -1,6 +1,7 @@
 @prefix fw: <urn:fieldwork:>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
 @prefix geo: <http://www.opengis.net/ont/geosparql#>.
 @prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -82,6 +83,31 @@ fw:RasterReceiptShape a sh:NodeShape; sh:targetClass fw:RasterInputReading, fw:R
 fw:PresentationReceiptShape a sh:NodeShape; sh:targetClass fw:MapView, fw:TableView, fw:ChartView;
   sh:class prov:Activity;
   sh:property [ sh:path prov:used; sh:minCount 1; sh:nodeKind sh:IRI ].
+fw:MapSpecificationShape a sh:NodeShape; sh:targetClass fw:MapSpecification;
+  sh:class prov:Plan;
+  sh:property [ sh:path dcterms:title; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path dcterms:description; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path prov:wasDerivedFrom; sh:minCount 1; sh:nodeKind sh:IRI ];
+  sh:property [ sh:path fw:mapLegend; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean ];
+  sh:property [ sh:path fw:mapPresentation; sh:minCount 1; sh:maxCount 1; sh:in ("plot" "interactive") ];
+  sh:property [ sh:path fw:mapBasemap; sh:minCount 1; sh:maxCount 1; sh:in ("none" "osm" "topo") ];
+  sh:property [ sh:path fw:mapSourceNote; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ].
+fw:ChartSpecificationShape a sh:NodeShape; sh:targetClass fw:ChartSpecification;
+  sh:class prov:Plan;
+  sh:property [ sh:path dcterms:title; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path prov:wasDerivedFrom; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI ];
+  sh:property [ sh:path fw:chartRenderer; sh:minCount 1; sh:maxCount 1; sh:in ("html" "vega-lite") ];
+  sh:property [ sh:path fw:chartMark; sh:minCount 1; sh:maxCount 1; sh:in ("bar" "point") ];
+  sh:property [ sh:path fw:chartOrientation; sh:minCount 1; sh:maxCount 1; sh:in ("horizontal" "vertical") ];
+  sh:property [ sh:path fw:chartField; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path fw:chartMeasureKind; sh:minCount 1; sh:maxCount 1; sh:in ("record-count" "location-membership-count" "numeric-total") ];
+  sh:property [ sh:path fw:chartUnitStatus; sh:minCount 1; sh:maxCount 1; sh:in ("records" "location-memberships" "source-unit-not-specified") ];
+  sh:property [ sh:path fw:chartLegend; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean ];
+  sh:property [ sh:path fw:chartSourceNote; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path fw:rendererSpecification; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:chartRendererVersion; sh:maxCount 1; sh:datatype xsd:string ].
+fw:ChartViewSpecificationShape a sh:NodeShape; sh:targetClass fw:ChartView;
+  sh:property [ sh:path fw:chartSpecification; sh:minCount 1; sh:maxCount 1; sh:node fw:ChartSpecificationShape ].
 fw:ReadinessConclusionShape a sh:NodeShape; sh:targetSubjectsOf fw:readyForSpatialAnalysis;
   sh:property [ sh:path fw:readyForSpatialAnalysis; sh:maxCount 1; sh:datatype xsd:boolean ].
 fw:AreaMeasurementShape a sh:NodeShape; sh:targetClass fw:AreaMeasurement;

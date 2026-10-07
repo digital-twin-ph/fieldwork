@@ -1,5 +1,6 @@
 import type {WorkflowNode} from './types.js';
 import type {ChartSummary,DisplayValue,Receipt} from './results.js';
+import {chartSpecificationFacts} from './chart-vega.js';
 
 /** Bounded categorical frequency adapter. No filtering or population weighting. */
 export function summarizeChart(input:DisplayValue):ChartSummary{
@@ -23,7 +24,8 @@ export function chartOutput(node:WorkflowNode<'chart_output'>,input:DisplayValue
   const chart=summarizeChart(input),activity=`<urn:fieldwork:run:${runId}:view:${node.id}>`,source=`<urn:fieldwork:run:${runId}:output:${sourceNodeId}>`,result=`<urn:fieldwork:run:${runId}:output:${node.id}>`;
   const facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n'+
     `${activity} a fw:ChartView, fw:CategoricalCount, prov:Activity; prov:used ${source}; fw:groupingField "${chart.field}"; fw:inputRecordCount ${chart.total}.\n${result} a prov:Entity; prov:wasGeneratedBy ${activity}; prov:wasDerivedFrom ${source}.\n`+
-    chart.bins.map((bin,i)=>`${result} fw:countBin <urn:fieldwork:run:${runId}:chart:${node.id}:bin:${i}>.\n<urn:fieldwork:run:${runId}:chart:${node.id}:bin:${i}> a fw:CountBin; fw:categoryKey "${bin.key}"; fw:recordCount ${bin.count}.\n`).join('');
+    chart.bins.map((bin,i)=>`${result} fw:countBin <urn:fieldwork:run:${runId}:chart:${node.id}:bin:${i}>.\n<urn:fieldwork:run:${runId}:chart:${node.id}:bin:${i}> a fw:CountBin; fw:categoryKey "${bin.key}"; fw:recordCount ${bin.count}.\n`).join('')+
+    chartSpecificationFacts(node,runId,sourceNodeId,chart,'record-count');
   return {value:{...structuredClone(input),chart},receipt:{nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:'Categorical frequency: count every input row once; retain zero-count categories and report missing or unrecognized categories separately. No population weighting, filtering or new inference.'}};
 }
 

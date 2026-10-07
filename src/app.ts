@@ -9,6 +9,7 @@ import {CATCHMENT_TYPES} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
 import {mountCatchmentMap} from './catchment-map.js';
 import {catchmentPlot,polygonSvg} from './catchment-output.js';
+import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {installCredentials} from './credentials-ui.js';
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles} from './evidence-storage.js';
@@ -35,6 +36,7 @@ import {coverageTable,coverageEvidence} from './coverage-ui.js';
 import {openInputDataEditor} from './input-data-ui.js';
 import {boundary as oldNalediBoundary} from '../examples/old-naledi/data.js';
 import {chartMarkup} from './chart-output.js';
+import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,downloadRaster} from './raster-ui.js';
 import {previewArea,prepareRasterPreview} from './raster-preview.js';
 import {rasterExample} from './raster-example.js';
@@ -45,6 +47,29 @@ import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
 import {pointPort,MAX_POINT_LAYERS} from './point-layers.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+function chartControls(n:WorkflowNode<'chart_output'>){
+  const p=n.params;
+  return `<div class="field"><label class="field-label" for="chart-renderer">Chart enhancement</label><select id="chart-renderer"><option value="html" ${p.renderer!=='vega-lite'?'selected':''}>Classic bars</option><option value="vega-lite" ${p.renderer==='vega-lite'?'selected':''}>Vega-Lite (experimental)</option></select></div>`+
+    (p.renderer==='vega-lite'?`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${p.mark!=='point'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option></select>
+    <label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>
+    <label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(p.chartTitle||'')}" placeholder="Default: result caption">
+    <label class="field-label" for="chart-subtitle">Subtitle / context</label><input id="chart-subtitle" maxlength="160" value="${esc(p.subtitle||'')}" placeholder="Optional context or limitation">
+    <label class="field-label" for="chart-x-axis">Horizontal axis label</label><input id="chart-x-axis" maxlength="80" value="${esc(p.xAxisTitle||'')}" placeholder="Default from data">
+    <label class="field-label" for="chart-y-axis">Vertical axis label</label><input id="chart-y-axis" maxlength="80" value="${esc(p.yAxisTitle||'')}" placeholder="Default from data">
+    <label><input id="chart-legend" type="checkbox" ${p.colorByCategory?'checked':''}> Color categories and show legend</label>
+    <label class="field-label" for="chart-source-note">Source / method note</label><textarea id="chart-source-note" maxlength="240" rows="2" placeholder="Default: connected result and run">${esc(p.sourceNote||'')}</textarea>
+    <p class="description">The title, note, axes and legend travel with the SVG. Both renderers use the same recorded values. Add a Method reference for supporting research.</p>`:'');
+}
+function mapControls(n:WorkflowNode<'map_output'>){
+  const p=n.params;
+  return `<div class="source-card" data-map-communication><span class="inspector-section">Standalone map</span>
+    <label class="field-label" for="map-title">Map title</label><input id="map-title" maxlength="120" value="${esc(p.mapTitle||'')}" placeholder="Default: results tab name">
+    <label class="field-label" for="map-subtitle">Subtitle / context</label><input id="map-subtitle" maxlength="160" value="${esc(p.mapSubtitle||'')}" placeholder="Optional scope or limitation">
+    <label><input id="map-legend-toggle" type="checkbox" ${p.showLegend!==false?'checked':''}> Show map key</label>
+    <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="240" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
+    ${p.inputMode==='polygons'&&p.presentation==='interactive'?`<label class="field-label" for="map-basemap">Interactive basemap</label><select id="map-basemap"><option value="none" ${!p.basemap||p.basemap==='none'?'selected':''}>Local geometry (offline)</option><option value="osm" ${p.basemap==='osm'?'selected':''}>OpenStreetMap streets</option><option value="topo" ${p.basemap==='topo'?'selected':''}>OpenTopoMap terrain</option></select>`:''}
+    <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
+}
 const KEY='fieldwork-workflow-v1';
 $('#app-version').textContent=`v${appPackage.version}`;
 // Keep keyboard and scroll-to-element navigation clear of the floating controls.
@@ -142,6 +167,8 @@ function renderInspector(){
   }else if(['map_output','table_output','chart_output'].includes(n.type)&&'inputMode' in n.params&&n.params.inputMode==='polygons'){
     content+=`<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="polygons">Catchment polygons / summaries</option><option value="${n.type==='chart_output'?'decisions':'spatial'}">${n.type==='chart_output'?'Reasoning results':'Point layers'}</option></select><label class="field-label" for="polygon-source">Polygon input</label><select id="polygon-source" data-map-port="polygons"><option value="">Select input</option>${workflow.nodes.filter(x=>TYPES[x.type].output==='polygons').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select><label class="field-label" for="polygon-output-label">Results tab name</label><input id="polygon-output-label" maxlength="60" value="${esc(n.params.label||'')}"><p class="notice">Connect a polygon operation. Charts require Summarize points in polygons. Display only; processing parameters belong to upstream nodes.</p>`;
     if(n.type==='map_output')content+=`<label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation" data-catchment-param="presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select><label><input id="polygon-context-toggle" type="checkbox" ${n.params.contextPoints?'checked':''}> Add context point layer (e.g. other pumps)</label>`+(n.params.contextPoints?`<label class="field-label" for="polygon-context">Context points</label><select id="polygon-context" data-map-port="context"><option value="">Select input</option>${workflow.nodes.filter(x=>TYPES[x.type].output==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='context'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`:'');
+    if(n.type==='chart_output')content+=chartControls(n);
+    if(n.type==='map_output')content+=mapControls(n);
   }else if(n.type==='map_output'||n.type==='table_output'){
 
     const outputType=n.type==='table_output'?'table':'map',reasoning=n.params.inputMode==='decisions',raster=n.type==='map_output'&&n.params.inputMode==='raster';
@@ -150,6 +177,7 @@ function renderInspector(){
     content+=`<div class="field"><label class="field-label" for="${outputType}-label">Results tab name</label><input id="${outputType}-label" maxlength="60" value="${esc(n.params.label)}"></div><p class="description">${raster?'Connect Raster input or Clip raster. The native grid is displayed with its clipping boundary.':reasoning?'Connect an existing reasoning result. Decisions, missing evidence and supporting references are retained.':outputType==='table'?'Connect point data directly; no study area is required. Or connect a coverage result to include spatial relations and review decisions.':'Connect a study area and points, or use a coverage check that already contains both.'}${!reasoning&&!raster?' Connecting a coverage result or raster replaces the separate inputs; Undo restores them.':''}</p>`;
     content+=nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);return `<div class="field"><label class="field-label" for="${outputType}-${port}">${({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',raster:raster?'Raster':'Or: Raster'}[port]||'Point data '+(port==='points'?1:port.split('_')[1]))}</label><select id="${outputType}-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>TYPES[x.type].output===type).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;}).join('');
     content+=raster?'<div class="notice">Colors show relative cell values; gray cells are NoData. Download GeoTIFF preserves native values and georeferencing.</div>':reasoning?'<div class="notice">This is a presentation of existing results, with no new inference or exclusion.</div>':outputType==='table'?'<div class="notice">Rows include coordinates and all point attributes. Missing coordinates and excluded records remain visible. Search covers all rows and attributes; large tables use row and attribute pages. Works offline.</div>':'<div class="notice">The map fits the polygon and every located point, including outside records. Missing coordinates appear in a selectable list. This local map works offline.</div>';
+    if(n.type==='map_output')content+=mapControls(n);
   }else if(n.type==='raster_input'||n.type==='clip_raster'){
     content+=nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="raster-${port}">${port==='area'?'Study area':'Raster input'}</label><select id="raster-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&TYPES[x.type].output===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('');
     if(n.type==='raster_input'){content+='<button id="prepare-raster" class="button primary">Prepare GeoTIFF input</button><p class="description">Acquire a rectangular window and enter source metadata/citation. Reopen to edit metadata without re-uploading. Use Clip raster to apply the polygon mask.</p>';if(n.params.asset)content+=`<p>${esc(n.params.asset.source.filename)}<br>${n.params.asset.source.metadata.width} x ${n.params.asset.source.metadata.height} source cells; retained ${n.params.asset.metadata.width} x ${n.params.asset.metadata.height}.</p><details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(n.params.asset,null,2))}</pre></details>`;}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
@@ -178,6 +206,7 @@ function renderInspector(){
   }else if(n.type==='chart_output'||n.type==='output'){
     if(n.type==='chart_output')content+='<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="decisions">Reasoning results</option><option value="polygons">Catchment summaries</option></select>';
     content+=`<div class="field"><label class="field-label" for="chart-decisions">Reasoning result</label><select id="chart-decisions" data-map-port="decisions"><option value="">Select input</option>${workflow.nodes.filter(x=>TYPES[x.type].output==='decisions').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='decisions'&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div><p class="description">Counts every input record once by decision, access zone or evidence tier. Unclassified values are shown separately. Counts and source provenance are included in evidence; sample locations are not population estimates.</p><div class="field"><label class="field-label" for="output-label">Results tab name</label><input id="output-label" maxlength="60" value="${esc(n.params.label||'')}"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map" ${n.type==='output'&&n.params.view==='map'?'selected':''}>Map</option><option value="table" ${n.type==='output'&&n.params.view==='table'?'selected':''}>Table</option><option value="bars" ${n.type==='chart_output'||n.params.view==='bars'?'selected':''}>Bar chart</option></select></div><div class="rule-preview">Each output node creates a named tab in Results. Connect it to the results you want to display, then run the workflow.</div><p class="description">All output branches run together. Shared analysis nodes run once. Select a location in the map or table to inspect its evidence.</p>`;
+    if(n.type==='chart_output')content+=chartControls(n);
   }
   if(['area','observations','places','centers','measure_area','coverage_check','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). Other CRSs will require a Reproject node; reprojection is not implemented yet.</p></div>';
   if(n.type==='coverage_check'||((n.type==='map_output'||n.type==='table_output')&&(!n.params.inputMode||n.params.inputMode==='spatial')))content+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">${n.type==='table_output'?'No boundary required for point inputs':'One study boundary'} · up to 8 point layers and 2,000 records combined. Each added point port needs a source. Removing the last port also removes its connector; Undo restores it. Adding a point input switches a Map or Table from reviewed input to direct layers.</p>`;
@@ -244,11 +273,21 @@ function renderInspector(){
   optionalElement('#source-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title));
   optionalElement('#replace-data')?.addEventListener('click',()=>{importNode=n.id;$('#geojson-file').click();});
   optionalElement('#output-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()));
+  optionalElement('#chart-renderer')?.addEventListener('change',e=>change(w=>{const params=getNode(w,n.id,'chart_output').params;params.renderer=control(e).value as 'html'|'vega-lite';if(params.renderer==='html'){params.mark='bar';params.orientation='horizontal';}}));
+  optionalElement('#chart-mark')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.mark=control(e).value as 'bar'|'point'));
+  optionalElement('#chart-orientation')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical'));
+  for(const [selector,key] of [['#chart-title','chartTitle'],['#chart-subtitle','subtitle'],['#chart-x-axis','xAxisTitle'],['#chart-y-axis','yAxisTitle'],['#chart-source-note','sourceNote']] as const)
+    document.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector)?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'chart_output').params[key]=control(e).value.trim();}));
+  document.querySelector<HTMLInputElement>('#chart-legend')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.colorByCategory=(e.currentTarget as HTMLInputElement).checked));
+  for(const [selector,key] of [['#map-title','mapTitle'],['#map-subtitle','mapSubtitle'],['#map-source-note','mapSourceNote']] as const)
+    document.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector)?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'map_output').params[key]=control(e).value.trim();}));
+  document.querySelector<HTMLInputElement>('#map-legend-toggle')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'map_output').params.showLegend=(e.currentTarget as HTMLInputElement).checked));
+  optionalElement('#map-basemap')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'map_output').params.basemap=control(e).value as 'none'|'osm'|'topo'));
   optionalElement('#output-view')?.addEventListener('change',e=>change(w=>{const index=w.nodes.findIndex(x=>x.id===n.id);w.nodes[index]={...w.nodes[index],type:'output',params:{label:n.params.label,view:control(e).value as 'map'|'table'|'bars'}};}));
   optionalElement('#output-input-mode')?.addEventListener('change',e=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'>;node.params.inputMode=control(e).value as 'spatial'|'decisions'|'raster'|'polygons';w.edges=w.edges.filter(edge=>edge.to!==n.id);}));
   $('#delete-node').onclick=()=>removeNodes([n.id]);
   $('#duplicate-node').onclick=()=>change(w=>{const copy=structuredClone(n);copy.id=`${n.type}-${Date.now()}`;copy.x+=40;copy.y+=90;w.nodes.push(copy);selected=copy.id;});
-  if(busy)$('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('input,select,button').forEach(el=>el.disabled=true);
+  if(busy)$('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement|HTMLButtonElement>('input,select,textarea,button').forEach(el=>el.disabled=true);
 }
 function removeNodes(ids:string[]){change(w=>{w.nodes=w.nodes.filter(n=>!ids.includes(n.id));w.edges=w.edges.filter(e=>!ids.includes(e.from)&&!ids.includes(e.to));if(ids.includes(w.outputId||''))w.outputId=w.nodes.find(n=>n.type==='output')?.id;if(ids.includes(selected||''))selected=null;});}
 function renderEvidence(id:string){
@@ -270,6 +309,7 @@ function renderEvidence(id:string){
 function statusLabel(status:string|undefined){return ({Review:'Review',NoFlag:'No flag',Unknown:'Insufficient data'} as Record<string,string>)[status||'Unknown'];}
 function renderCoverageAlert(){const checks=[...new Map((result?.outputs.filter(o=>o.kind==='spatial-coverage'&&o.view==='table')||[]).map(o=>[o.checkNodeId,o])).values()],count=checks.reduce((sum,o)=>sum+(o.reviewCount||0),0),empty=checks.some(o=>!o.rows.length||o.rows.length===o.excludedCount);$('#coverage-alert').hidden=!count&&!empty;$('#coverage-alert').textContent=(dirty?'Previous run — rerun after changes. ':'')+(count?`${count} records require spatial review. Outside or missing coordinates do not establish a data-quality error. Select a record to exclude with a reason or edit the boundary.`:empty?'Coverage cannot be established: no usable records remain.':'');}
 function renderResults(){
+  disposeVegaChart();
   const output=activeOutput();$('.results-panel').classList.toggle('catchment-results',!!output?.polygons);$('.results-panel').classList.toggle('comparison-results',!!output?.comparison);activeOutputId=output?.nodeId||null;
   if(output?.comparison&&!$('.work-area').classList.contains('results-expanded')){$('.work-area').classList.add('results-expanded');$('#expand-results').textContent='↙ Split view';$('#expand-results').setAttribute('aria-expanded','true');}
   $('#release-download').hidden=!(exampleKey(workflow)==='snow-geoprivacy'&&!!output&&output.nodeId.startsWith('after-'));
@@ -294,7 +334,13 @@ function renderResults(){
   $('#point-table-controls').hidden=!output?.pointTable;
   $('#table-panel').classList.toggle('point-table',!!output?.pointTable);
   if(output?.pointTable)renderPointTable();
-  $('#bars-panel').innerHTML=output?.chart?chartMarkup(output.chart,esc):'';
+  const chartNode=runWorkflow?.nodes.find(n=>n.id===output?.nodeId&&n.type==='chart_output') as WorkflowNode<'chart_output'>|undefined;
+  if(output?.chart&&chartNode?.params.renderer==='vega-lite'){
+    const chartContext={sourceId:runWorkflow?.edges.find(e=>e.to===output.nodeId)?.from,runId:result?.runId};
+    const spec=chartVegaSpec(output.chart,chartNode.params,chartContext);
+    $('#bars-panel').innerHTML=`<p class="muted">${esc(output.chart.caption)} · ${output.chart.total} input records · grouping: ${esc(output.chart.field)}</p>${output.chart.field==='total'?'<p class="notice">The chart source does not declare a physical unit for this numeric total. Check the source and method before interpreting it.</p>':''}<div id="vega-chart" role="img" aria-label="${esc(output.chart.caption)}"></div><details><summary>Underlying chart values</summary><table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>${output.chart.bins.map(b=>`<tr><td>${esc(b.label)}</td><td>${b.count}</td></tr>`).join('')}</tbody></table></details><details><summary>Vega-Lite specification</summary><pre>${esc(JSON.stringify(spec,null,2))}</pre></details>`;
+    const host=$('#vega-chart');void renderVegaChart(host,output.chart,chartNode.params,chartContext).catch(e=>{if(host.isConnected)host.textContent=`Chart could not render: ${errorMessage(e)}. Underlying values remain available below.`;});
+  }else $('#bars-panel').innerHTML=output?.chart?chartMarkup(output.chart,esc):'';
   $('#facility-legend').textContent=output?.kind?'Qualifying facility':'Cooling center';$('#map-note').textContent=output?.kind==='facility-evidence'?'Historical facilities · evidence tiers':output?.kind==='access'?`${output.locationSource?.kind==='input-points'?'Input locations':'Generated samples'} \u00b7 source boundary`:'Local locations · no external map tiles';
   $('#review-legend').textContent=output?.kind==='facility-evidence'?'Contextual / inferential':'Review';$('#clear-legend').textContent=output?.kind==='facility-evidence'?'Direct':'No flag';$('#unknown-legend').textContent=output?.kind==='facility-evidence'?'No evidence':'Unknown';$('#facility-legend').parentElement!.hidden=output?.kind==='facility-evidence';
   $('.map-legend').hidden=output?.kind==='study-area';
@@ -333,12 +379,25 @@ let disposeCatchmentMap:(()=>void)|undefined;
 function renderMap(){
   disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#comparison-map-host')?.remove();
   const result=activeOutput(),svg=$('#map'), rows=result?.rows||[], centers=result?.centers||[], points=[...rows.filter(r=>r.coordinates).map(r=>r.coordinates!),...centers.filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
+  const mapNode=runWorkflow?.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result?.nodeId&&n.type==='map_output');
+  const spec=result&&mapNode&&runWorkflow?mapPresentation(mapNode,result,runWorkflow):undefined;
+  $('#map-panel').classList.toggle('has-communication',!!spec);
+  $('#map-communication').hidden=!spec;$('#map-communication-key').hidden=!spec?.legend;$('#map-communication-source').hidden=!spec;
+  if(spec){
+    $('#map-communication-title').textContent=spec.title;$('#map-communication-subtitle').textContent=spec.subtitle;
+    $('#map-communication-source').textContent=spec.sourceNote;$('#map-communication-header-source').textContent=spec.sourceNote;
+    const key=spec.legend?spec.items.map(item=>`<span><i class="map-key-symbol" style="background:${item.color};border-radius:${item.shape==='square'?'2px':'50%'}"></i>${esc(item.label)}</span>`).join(''):'';
+    $('#map-communication-key').innerHTML=key;$('#map-communication-header-key').innerHTML=key;
+    $('#map-download-svg').onclick=()=>{const content=result?.polygons&&result.polygonPresentation==='interactive'?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonSvg(result.polygons,esc)):svg.innerHTML;
+      const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':svg.getAttribute('viewBox')||'0 0 850 295';
+      download(`${result!.nodeId}-map.svg`,standaloneMapSvg(content,viewBox,spec),'image/svg+xml');};
+  }
   svg.style.display='';svg.setAttribute('viewBox','0 0 850 295');
   if(result?.comparison){svg.style.display='none';const host=document.createElement('div');host.id='comparison-map-host';host.innerHTML=pointComparisonMarkup(result.comparison,esc);$('#map-panel').append(host);return;}
   if(result?.polygons){
-    const note=document.createElement('div');note.id='catchment-map-host';$('#map-panel').append(note);
-    if(result.polygonPresentation==='interactive'&&result.view==='map'){svg.style.display='none';disposeCatchmentMap=mountCatchmentMap(note,result.polygons,result.contextPoints,esc);}
-    else if(result.polygons.features.some(f=>f.minutes!==undefined)){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);const button=document.createElement('button');button.id='catchment-plot-download';button.className='button small';button.textContent='Download plot (SVG)';button.onclick=()=>download('catchment-plot.svg','<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 650" width="850" height="650">'+svg.innerHTML+'</svg>','image/svg+xml');note.append(button);}
+    const note=document.createElement('div');note.id='catchment-map-host';$('#map-panel').insertBefore(note,$('#map-communication-key'));
+    if(result.polygonPresentation==='interactive'&&result.view==='map'){svg.style.display='none';disposeCatchmentMap=mountCatchmentMap(note,result.polygons,result.contextPoints,esc,mapNode?.params.basemap||'none',choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);});}
+    else if(result.polygons.features.some(f=>f.minutes!==undefined)){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
     else svg.innerHTML=polygonSvg(result.polygons,esc);
     const method=document.createElement('p');method.className='muted';method.textContent=result.polygons.method+' / '+result.polygons.notes.join(' ');note.append(method);return;
   }

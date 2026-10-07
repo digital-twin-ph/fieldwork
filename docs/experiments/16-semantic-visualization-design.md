@@ -142,7 +142,7 @@ Use semantic and numerical assertions rather than pixel-identical screenshots as
 
 ## Implementation sequence and open decisions
 
-The [workflow publication products extension](17-workflow-publication-products.md) proposes composing these visualizations into field reports, story maps, infographics and dashboards, with versioned templates and traceable result bindings.
+The [workflow publication products extension](17-workflow-publication-products.md) proposes composing these visualizations into field reports, story maps, infographics and dashboards, with versioned templates and traceable result bindings. The [communication-layer profile](36-communication-layer.md) maps detailed static/interactive maps, chart families and composed products to existing Fieldwork activities, external vocabularies and candidate local terms. The [bounded Vega-Lite Chart spike](37-vega-lite-chart-spike.md) implements one small part of this proposal; the general profile remains future work.
 
 1. Define a minimal visualization vocabulary, mappings and SHACL fixtures for the existing map and table. Preserve current activity types and saved-workflow behavior with explicit migrations where required.
 2. Build the chart adapter and a synthetic count-by-jurisdiction example. Add it to the regression gate before exposing new widgets.

@@ -3,6 +3,27 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## In development (after 0.3.0)
+
+- Make Map outputs standalone communication views with configurable title,
+  subtitle, visible map key, source/method note and local SVG export. Interactive
+  polygon maps can choose no basemap, OpenStreetMap streets or OpenTopoMap
+  terrain; online tiles are requested only for the current view and are absent
+  from the SVG. Record the bounded map plan in N3 and validate it with SHACL.
+  Existing saved maps default to local geometry; no migration is required.
+  Validation covers structural evidence and Chromium interaction, not
+  cartographic suitability or the correctness of source citations.
+
+- Add an opt-in, locally bundled Vega-Lite Chart enhancement for the existing
+  categorical counts: bar or dot marks, orientation, title, subtitle, axis
+  labels, optional color legend, source note, SVG export,
+  an underlying values table and an inspectable specification. Classic bars
+  remain the default for saved workflows; no migration is required.
+- Record the bounded chart specification in N3 and validate its structure with
+  SHACL. This does not establish scientific correctness, chart suitability or
+  practitioner comprehension. Local browser and cross-browser validation are
+  recorded in [the spike note](docs/experiments/37-vega-lite-chart-spike.md).
+
 ## 0.3.0 — 2026-10-07
 
 - Add a collapsible widget library and full-screen workbench and Results views,

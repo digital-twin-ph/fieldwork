@@ -2,6 +2,8 @@
 
 Fieldwork is a browser prototype for exploring semantic visual GIS workflows in public health. Build workflows with React Flow, compute spatial facts locally, and evaluate Notation3 rules with EYE-JS in WebAssembly.
 
+The application version appears beside the mark in the header. See the [release notes](CHANGELOG.md) for what each version includes and [AGENTS.md](AGENTS.md#versioning-and-release-notes) for the versioning policy. Widget versions evolve independently.
+
 Worked examples explore heat outreach, Old Naledi diagnostic access and raster clipping, and John Snow Voronoi/network catchments; a synthetic exercise explores spatial coverage and input forms. The heat example uses synthetic neighborhoods; Old Naledi combines a real source boundary and historical facility registry with generated demonstration locations. This is exploratory software, not a validated public health policy or risk model.
 
 ## Try the prototype

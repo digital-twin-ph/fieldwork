@@ -1,4 +1,5 @@
 import {canvasN3} from './canvas-semantics.js';
+import appPackage from '../package.json';
 import {networkDownloadStatus} from './network-throttle.js';
 import {downloadOSM,importNetwork} from './street-network.js';
 import {johnSnowExample} from './john-snow.js';
@@ -43,6 +44,7 @@ import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output
 import {pointPort,MAX_POINT_LAYERS} from './point-layers.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const KEY='fieldwork-workflow-v1';
+$('#app-version').textContent=`v${appPackage.version}`;
 // Keep keyboard and scroll-to-element navigation clear of the floating controls.
 new ResizeObserver(([entry])=>document.documentElement.style.setProperty('--project-bar-height',`${entry.target.getBoundingClientRect().height+12}px`)).observe($('.project-bar'));
 const WORKSPACES='fieldwork-examples-v1';

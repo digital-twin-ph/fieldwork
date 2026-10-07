@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## In development (after 0.3.0)
+## 0.4.0 — 2026-10-07
 
 - Make Map outputs standalone communication views with configurable title,
   subtitle, visible map key, source/method note and local SVG export. Interactive
@@ -23,6 +23,10 @@ shown in a local build is not a claim that it has been published.
   SHACL. This does not establish scientific correctness, chart suitability or
   practitioner comprehension. Local browser and cross-browser validation are
   recorded in [the spike note](docs/experiments/37-vega-lite-chart-spike.md).
+- No saved-workflow migration is required. The release build passed 101 unit
+  tests, ontology and widget validation, and a Chromium desktop/narrow-screen
+  version check. Scientific suitability and Firefox/WebKit behavior remain
+  unverified for this release.
 
 ## 0.3.0 — 2026-10-07
 

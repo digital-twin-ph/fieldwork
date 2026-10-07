@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {coverageExercise} from '../build/spatial-coverage.js';
+import {Parser} from 'n3';
+import {loadGraph,ontologyFiles,validateGraph,summarize} from '../scripts/validate-ontology.mjs';
+import {quadToN3} from '../build/study-area.js';
 
 const pdf=Buffer.from('%PDF-1.4\nSynthetic census reference for testing\n%%EOF');
 const hash=createHash('sha256').update(pdf).digest('hex');
@@ -24,6 +27,9 @@ test('input PDFs and processing URLs appear in run snapshots and parse as proven
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await page.locator('[data-view="rules"]').click();
   await expect(page.locator('#n3-preview')).toContainText('REFERENCE PROVENANCE');await expect(page.locator('#n3-preview')).toContainText('Annual census 2022');
   const receipt=JSON.parse(await download(page,'#download-evidence'));assert.equal(receipt.evidence.length,2);assert.equal(receipt.attachments[0].sha256,hash);assert.equal(receipt.workflow.nodes.find(n=>n.id==='observations').references[0].sha256,hash);
+  const graph=await loadGraph(ontologyFiles);
+  for(const source of [receipt.provenanceN3,...receipt.receipts.flatMap(r=>[r.facts,r.conclusions.map(quadToN3).join('\n')])])graph.addQuads(new Parser().parse(source));
+  const report=await validateGraph(graph);assert.equal(report.conforms,true,JSON.stringify(summarize(report)));
   assert.deepEqual(Buffer.from(receipt.attachments[0].dataBase64,'base64'),pdf);assert.ok(receipt.receipts.every(r=>!r.input.includes('Boundary inclusion policy')));
   const ontology=await readFile('ontology/fieldwork.ttl','utf8');
   const quads=await page.evaluate(input=>new Promise((resolve,reject)=>{const worker=new Worker('./build/reasoning-worker.js');worker.onmessage=({data})=>{worker.terminate();data.error?reject(new Error(data.error)):resolve(data.quads);};worker.onerror=e=>{worker.terminate();reject(new Error(e.message));};worker.postMessage({id:1,input});}),ontology+'\n'+receipt.provenanceN3+'\n{ ?plan <http://purl.org/dc/terms/references> ?ref. } => { ?ref <urn:test:citationParsed> true. }.');

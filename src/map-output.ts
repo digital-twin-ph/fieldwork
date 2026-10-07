@@ -8,7 +8,7 @@ import {pointLayers,layerRecords,layerSummary} from './point-layers.js';
 export const newMapOutput=():NodeSpec<'map_output'>=>({type:'map_output',params:{label:'Study area and points'}});
 export function mapOutput(node:WorkflowNode<'map_output'>,inputs:MapInputs,runId:string):{value:MapValue|CoverageValue;receipt?:Receipt}{
   // A reviewed input already includes the area, points and explicit decisions.
-  if(inputs.coverage)return {value:structuredClone(inputs.coverage)};
+  if(inputs.coverage){const activity=`<urn:fieldwork:run:${runId}:map:${node.id}>`,source=`<urn:fieldwork:run:${runId}:output:${inputs.coverage.checkNodeId}>`,output=`<urn:fieldwork:run:${runId}:output:${node.id}>`;const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n${activity} a fw:MapView, prov:Activity; prov:used ${source}.\n${output} a prov:Entity; prov:wasGeneratedBy ${activity}; prov:wasDerivedFrom ${source}.\n`;return {value:structuredClone(inputs.coverage),receipt:{nodeId:node.id,kind:'presentation',facts,input:facts,rules:'',conclusions:[],method:'Display existing coverage decisions without reclassification.'}};}
   const area=inputs.area,layers=pointLayers(inputs.points);
   const rows=layerRecords(layers).map(({feature:f,...identity}):MapRow=>{const relation=pointRelation(f.geometry?.coordinates,area.boundary);return {...identity,name:f.properties.name,attributes:structuredClone(f.properties),coordinates:f.geometry?.coordinates||null,relation,status:relation==='Outside'?'Review':relation==='MissingLocation'?'Unknown':'NoFlag'};});
   const activity=`<urn:fieldwork:run:${runId}:map:${node.id}>`;

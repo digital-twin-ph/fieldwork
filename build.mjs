@@ -1,18 +1,23 @@
 import {build} from 'esbuild';
 import {copyFile,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-const entries=['raster-provenance','raster','raster-workflow','project-files','project-manifest','encrypted-package','evidence','evidence-storage','app','core','canvas','study-area','study-area-map','area-computation','area-measurement','spatial-predicates','spatial-coverage','coverage-ui','input-data','input-data-ui','attribute-schema','spatial-reference','point-layers','map-output','table-output','chart-output','old-naledi','old-naledi-ui'];
+const entries=['canvas-semantics','network-throttle','area-buffer','street-network','john-snow','catchments','credentials','raster-provenance','raster','raster-workflow','project-files','project-manifest','encrypted-package','evidence','evidence-storage','app','core','canvas','study-area','study-area-map','area-computation','area-measurement','spatial-predicates','spatial-coverage','coverage-ui','input-data','input-data-ui','attribute-schema','spatial-reference','point-layers','map-output','table-output','chart-output','old-naledi','old-naledi-ui'];
 const application=await build({entryPoints:entries.map(name=>'src/'+name+(name==='canvas'?'.tsx':'.ts')),bundle:true,splitting:true,format:'esm',outdir:'build',entryNames:'[name]',chunkNames:'chunks/[name]-[hash]',minify:true,sourcemap:true,metafile:true,loader:{'.png':'dataurl'},define:{'process.env.NODE_ENV':'"production"'},legalComments:'linked'});
-const worker=await build({entryPoints:['src/reasoning-worker.ts'],bundle:true,format:'iife',outdir:'build',minify:true,sourcemap:true,metafile:true});
+const worker=await build({entryPoints:['src/reasoning-worker.ts','src/catchment-worker.ts'],bundle:true,format:'iife',outdir:'build',minify:true,sourcemap:true,metafile:true});
+await copyFile('node_modules/polyclip-ts/LICENSE','build/polyclip-ts-LICENSE.txt');
+await copyFile('node_modules/proj4/LICENSE.md','build/proj4-LICENSE.txt');
 await copyFile('node_modules/geotiff/LICENSE','build/geotiff-LICENSE.txt');
 await copyFile('node_modules/@zip.js/zip.js/LICENSE','build/zip-js-LICENSE.txt');
 await copyFile('node_modules/leaflet/LICENSE','build/leaflet-LICENSE.txt');
-for(const name of ['area','helpers','meta','boolean-point-in-polygon','invariant'])await copyFile(`node_modules/@turf/${name}/LICENSE`,`build/turf-${name}-LICENSE.txt`);
+for(const name of ['buffer','center','bbox','area','helpers','meta','boolean-point-in-polygon','invariant'])await copyFile(`node_modules/@turf/${name}/LICENSE`,`build/turf-${name}-LICENSE.txt`);
 for(const name of ['point-in-polygon-hao','robust-predicates'])await copyFile(`node_modules/${name}/LICENSE`,`build/${name}-LICENSE.txt`);
 for(const name of ['sql-wasm.js','sql-wasm.wasm'])await copyFile(`node_modules/sql.js/dist/${name}`,`vendor/${name}`);
 await copyFile('node_modules/sql.js/LICENSE','vendor/sql.js-LICENSE.txt');
 
+await copyFile('examples/john-snow/NOTICE.txt','build/john-snow-NOTICE.txt');
+for(const [source,name] of [['vendor/licenses/jsts-LICENSE_EDLv1.txt','jsts-EDL-LICENSE.txt'],['vendor/licenses/jsts-LICENSE_EPLv1.txt','jsts-EPL-LICENSE.txt'],['vendor/licenses/jsts-license.txt','jsts-NOTICE.txt'],['node_modules/d3-geo/LICENSE','d3-geo-LICENSE.txt'],['node_modules/d3-array/LICENSE','d3-array-LICENSE.txt'],['node_modules/wkt-parser/LICENSE.md','wkt-parser-LICENSE.txt'],['node_modules/bignumber.js/LICENCE.md','bignumber-LICENSE.txt'],['node_modules/splaytree-ts/LICENSE','splaytree-ts-LICENSE.txt']])await copyFile(source,'build/'+name);
 const staticAssets=['./','./index.html','./styles.css','./study-area.css','./icon.svg','./manifest.webmanifest','./examples/old-naledi/data.js','./examples/old-naledi/provenance.json','./vendor/eye-21.1.24.js','./vendor/sql-wasm.js','./vendor/sql-wasm.wasm'];
+staticAssets.push(...['NOTICE.txt','upstream-LICENSE','provenance.json','network.json','soho.graphml','pumps.csv','cholera_deaths.csv'].map(name=>'./examples/john-snow/'+name));
 const generated=Object.keys({...application.metafile.outputs,...worker.metafile.outputs}).filter(path=>!path.endsWith('.map')).map(path=>'./'+path.replaceAll('\\','/'));
 const assets=[...new Set([...staticAssets,...generated])].sort();
 const hash=createHash('sha256');

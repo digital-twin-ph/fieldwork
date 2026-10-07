@@ -1,6 +1,6 @@
 # Widget registry
 
-The [catalog](registry.json) tracks all 21 current node identities (including legacy import identities). Each widget has a stable `urn:fieldwork:widget:<nodeType>` identity, an independent current version, and a history of release files under `releases/<nodeType>/<version>.json`. The first `0.1.0` releases record the existing prototype on October 6, 2026; they do not reconstruct historical versions or claim a new implementation.
+The [catalog](registry.json) tracks all 27 current node identities (including legacy import identities). Each widget has a stable `urn:fieldwork:widget:<nodeType>` identity, an independent current version, and a history of release files under `releases/<nodeType>/<version>.json`. The first `0.1.0` releases record the existing prototype on October 6, 2026; they do not reconstruct historical versions or claim a new implementation.
 
 This is a development registry, not an executable plugin loader. Workflow nodes still use the existing `fieldwork/workflow/1` format without widget version pins. Runtime version selection, general migrations and per-version implementation archives remain future work; the heat-source adapter is explicitly implemented. A historical release file describes a contract; it does not retain executable historical code. Use Git revisions to recover historical implementations.
 
@@ -51,10 +51,20 @@ Before runtime pinning is added, define how unversioned saved workflows resolve,
 
 The [shared visualization design](../docs/experiments/16-semantic-visualization-design.md) describes the planned relationship between specifications, activities and artifacts. This registry is the starting inventory for applying that ontology discipline across all widgets.
 
-Raster input and Clip raster are shared widgets at 0.1.0. Map 0.3.0 adds an explicit raster input mode. The catalog now tracks 21 widget identities and 35 releases; the validator checks raster-mode ports as well as reasoning and point-layer ports. The raster computation reuses `fw:RasterClipping`, with GeoSPARQL cutlines and PROV source links. See [the raster experiment](../docs/experiments/25-raster-input-and-clipping.md).
+Raster input and Clip raster are shared widgets at 0.1.0. Map 0.3.0 adds an explicit raster input mode. The catalog now tracks 27 widget identities and 53 releases; the validator checks raster-mode ports as well as reasoning and point-layer ports. The raster computation reuses `fw:RasterClipping`, with GeoSPARQL cutlines and PROV source links. See [the raster experiment](../docs/experiments/25-raster-input-and-clipping.md).
 
 Map 0.4.0 exposes the alternative raster port on ordinary spatial Maps and switches modes on connection. The unused raster port does not become a required point-map dependency. Historical release files remain unchanged.
 
 Raster input and Clip raster 0.2.0 preserve author-entered source metadata separately from extracted file metadata, including N3 and GeoTIFF export. See [source provenance](../docs/experiments/26-raster-source-provenance.md).
 
 The proposed [workflow learning framework](../docs/experiments/27-workflow-learning-and-gamification.md) adds companion learning profiles that map widget identities and supported versions to competencies and assessment evidence. Profiles and scoring policies would be independently versioned; they are not current registry fields and do not change scientific port contracts.
+
+Clip raster 0.3.0 adds [preview and parameter adjustment](../docs/experiments/28-raster-preview-and-adjustment.md) using the shared Study area editor. Boundary edits change the connected Study area explicitly; opacity is display-only. Computational ports and cell-center semantics are unchanged.
+
+Clip raster 0.4.0 supersedes the shared-boundary editing behavior of 0.3.0: the operation owns an independent cutline initially copied from Study area. Map 0.4.1 removes the gray rectangle outside the clipped polygon. Computational resolution and cell-center inclusion remain unchanged.
+
+Clip raster 0.5.0 adds all-touched inclusion and a 0-1 native pixel margin. Map 0.5.0 hides pixel portions outside that footprint; Raster input 0.3.0 can acquire one extra pixel of source coverage. Saved center-based workflows retain their method. See [edge inclusion and display masking](../docs/experiments/29-raster-edge-inclusion.md).
+
+Experiment 32 adds six shared primitives (27 identities / 51 releases): Voronoi catchments, Street network, Network isochrone, Clip polygons, Summarize points in polygons, and Buffer study area. Map 0.6.0, Table 0.3.0 and Chart 0.2.0 accept explicit polygon mode. Study area 0.2.0 adds sized boxes. See [design record](../docs/experiments/32-john-snow-primitives.md).
+
+Map 0.7.0 adds polygon plot/interactive views and a context point connector. Network isochrone 0.2.0 adds cumulative thresholds and explicit infill. See experiment 33.

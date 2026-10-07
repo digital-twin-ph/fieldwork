@@ -1,0 +1,65 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:summarize_polygons",
+  "nodeType": "summarize_polygons",
+  "version": "0.1.0",
+  "title": "Summarize points in polygons",
+  "released": "2026-10-07",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['summarize_polygons']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "polygons",
+        "type": "polygons"
+      },
+      {
+        "name": "points",
+        "type": "points"
+      }
+    ],
+    "output": "polygons"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:PolygonPointSummary",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. Configuration SHACL is future work."
+  },
+  "implementation": {
+    "files": [
+      "src/catchments.ts",
+      "src/street-network.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Reusable local catchment primitive; see docs/experiments/32-john-snow-primitives.md. Bounded prototype, not an exact notebook replay."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Synthetic numerical contracts and pinned source regression cases; no independent scientific certification."
+  }
+}

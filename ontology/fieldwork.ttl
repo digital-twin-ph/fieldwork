@@ -9,6 +9,34 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix dcterms: <http://purl.org/dc/terms/>.
 
+# Bounded catchment primitives, experimental implementation (2026-10-07).
+fw:VoronoiComputation a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Projected Euclidean nearest-site allocation; not observed facility use.".
+fw:NetworkIsochrone a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Directed network reachability with explicit cost, snapping and corridor approximation.".
+fw:NetworkInput a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf prov:Activity;
+  rdfs:label "Read prepared street network";
+  rdfs:comment "Validate and expose a previously prepared directed network for a run. Acquisition or file normalization happens in the input editor; this execution does not imply a new OSM request.".
+fw:PolygonClipping a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation.
+fw:PolygonPointSummary a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Count point memberships and optionally sum a named numeric attribute; overlaps and missing values are explicit.".
+fw:AreaBuffer a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Generate a distinct expanded acquisition boundary without changing the reporting study area.".
+fw:bufferDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:parameters a owl:DatatypeProperty.
+fw:computationCRS a owl:DatatypeProperty.
+fw:caveats a owl:DatatypeProperty.
+fw:member a owl:ObjectProperty.
+fw:siteId a owl:DatatypeProperty.
+fw:numericTotal a owl:DatatypeProperty.
+fw:missingValueCount a owl:DatatypeProperty.
+fw:summary a owl:DatatypeProperty.
+fw:networkSnaps a owl:DatatypeProperty.
+fw:sourceDescription a owl:DatatypeProperty.
+fw:networkMetadata a owl:DatatypeProperty.
+fw:networkNodeCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:networkEdgeCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+
 fw:EvidenceReference a owl:Class;
   rdfs:subClassOf prov:Entity;
   rdfs:label "Evidence reference supplied by the workflow author";
@@ -31,7 +59,7 @@ fw:filename a owl:DatatypeProperty; rdfs:range xsd:string.
 
 fw:ontology a owl:Ontology;
   rdfs:label "Fieldwork study-area and spatial-operation vocabulary";
-  owl:versionInfo "0.2 experimental, 2026-10-06";
+  owl:versionInfo "0.3 experimental, 2026-10-07";
   rdfs:comment "A bounded vocabulary for study areas and their reusable roles. A class declaration is not an implementation or validation constraint.".
 
 fw:implementationStatus a owl:AnnotationProperty;
@@ -61,7 +89,7 @@ fw:inputDataset a owl:ObjectProperty;
   rdfs:range dcat:Dataset;
   rdfs:label "uses dataset".
 fw:method a owl:DatatypeProperty;
-  rdfs:domain fw:SpatialOperation;
+  rdfs:domain prov:Activity;
   rdfs:range xsd:string;
   rdfs:label "calculation method description".
 
@@ -76,7 +104,7 @@ fw:AreaMeasurement a owl:Class;
 fw:MapView a owl:Class;
   rdfs:subClassOf prov:Activity;
   rdfs:label "Spatial map view";
-  rdfs:comment "Displays a study boundary and point records. Direct-input views compute spatial relations for display without inferring acceptance or excluding records; reviewed views reuse a coverage check.";
+  rdfs:comment "Displays boundaries, points, raster grids or catchment polygons as configured. Polygon plot and interactive map share upstream results and can include context points. Direct spatial mode computes display relations; reviewed and polygon modes reuse supplied results.";
   fw:implementationStatus "implemented".
 fw:NearbyFacilitySelection a owl:Class;
   rdfs:subClassOf fw:SpatialOperation;
@@ -112,8 +140,8 @@ fw:ZonalStatistics a owl:Class;
 fw:RasterClipping a owl:Class;
   rdfs:subClassOf fw:SpatialOperation;
   rdfs:label "Raster polygon clipping";
-  rdfs:comment "Creates a derived raster using a polygon mask. Cropping to the rectangular extent alone does not implement this operation.";
-  fw:implementationStatus "proposed".
+  rdfs:comment "Implemented for bounded single-band WGS84 native GeoTIFF windows: cell-center or all-touched masking, optional native-pixel margin, independent cutline and tight crop. No resampling or global raster engine.";
+  fw:implementationStatus "implemented".
 fw:CoverageSubsetting a owl:Class;
   rdfs:subClassOf fw:SpatialOperation;
   rdfs:label "Multidimensional coverage subsetting";
@@ -213,13 +241,13 @@ fw:missingValue a owl:DatatypeProperty; rdfs:range xsd:boolean.
 fw:TableView a owl:Class;
   rdfs:subClassOf prov:Activity;
   rdfs:label "Point table presentation";
-  rdfs:comment "Displays source coordinates and attributes, or existing spatial coverage decisions. Does not infer new spatial relationships or exclude records.";
+  rdfs:comment "Displays source coordinates and attributes, existing coverage decisions or catchment summaries. Does not infer new spatial relationships or exclude records.";
   fw:implementationStatus "implemented".
 
 fw:ChartView a owl:Class;
   rdfs:subClassOf prov:Activity;
   rdfs:label "Categorical chart presentation";
-  rdfs:comment "Presents record counts while retaining the source reasoning results and evidence.";
+  rdfs:comment "Presents categorical record counts or upstream polygon counts/numeric totals. Cumulative catchments are not disjoint time bands. Polygon presentation reuses upstream summaries.";
   fw:implementationStatus "implemented".
 fw:CategoricalCount a owl:Class;
   rdfs:subClassOf prov:Activity;
@@ -234,6 +262,9 @@ fw:recordCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
 
 fw:RasterDataset a owl:Class; rdfs:subClassOf prov:Entity; rdfs:label "Raster dataset".
 fw:RasterWindowAcquisition a owl:Class; rdfs:subClassOf prov:Activity; rdfs:label "Native raster window acquisition".
+fw:RasterInputReading a owl:Class; rdfs:subClassOf prov:Activity;
+  rdfs:label "Read retained raster input"; fw:implementationStatus "implemented";
+  rdfs:comment "Read and verify a previously retained GeoTIFF window. This run activity is distinct from the earlier local-file acquisition and does not claim a fresh download or national-file checksum.".
 
 fw:LocalFileDescriptor a owl:Class; rdfs:subClassOf prov:Entity; rdfs:label "Local source file descriptor"; rdfs:comment "Filename, size and metadata supplied with a retained subset; not a full-file checksum or embedded original.".
 fw:rasterWidth a owl:DatatypeProperty.
@@ -244,9 +275,16 @@ fw:sourceBytes a owl:DatatypeProperty.
 fw:pixelSizeX a owl:DatatypeProperty.
 fw:pixelSizeY a owl:DatatypeProperty.
 fw:rasterMaskMethod a owl:DatatypeProperty.
+fw:rasterMarginPixels a owl:DatatypeProperty; rdfs:domain fw:RasterClipping; rdfs:range xsd:decimal;
+  rdfs:comment "Outward cutline margin measured in native raster pixel coordinates, not metres.".
+fw:clipGeometry a owl:ObjectProperty; rdfs:domain fw:SpatialOperation; rdfs:range geo:Geometry;
+  rdfs:comment "The actual cutline used by a raster clipping activity, distinct from the shared study area.".
 fw:sourcePixelWindow a owl:DatatypeProperty.
 fw:rasterCRS a owl:ObjectProperty.
 
 fw:pixelValueUnits a owl:DatatypeProperty; rdfs:label "Source-reported pixel value units".
 fw:sourceAccessed a owl:DatatypeProperty; rdfs:label "Source access date entered by author".
 fw:metadataOrigin a owl:DatatypeProperty; rdfs:label "Origin of descriptive metadata".
+fw:travelTimeMinutes a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:label "Cumulative network travel-time threshold in minutes";
+  rdfs:comment "Time budget of a computed catchment; not an observed journey duration or disjoint time band.".

@@ -6,10 +6,10 @@ const compare=(a:string,b:string)=>a<b?-1:a>b?1:0;
 export function projectInventory(workflow:Workflow){
   const nodes=workflow.nodes.map(node=>{
     const params=node.params as unknown as Record<string,unknown>,data=params.data;
-    return {id:node.id,type:node.type,records:isRecord(data)&&Array.isArray(data.features)?data.features.map(f=>String(f.id)).sort():null,
+    return {id:node.id,type:node.type,...(node.type==='network_input'?{network:{nodes:node.params.data.nodes.map(n=>n.id).sort(),edges:node.params.data.edges.map(e=>`${e.from}:${e.to}`).sort()}}:{}),records:isRecord(data)&&Array.isArray(data.features)?data.features.map(f=>String(f.id)).sort():null,
       fields:Array.isArray(params.fields)?params.fields.map(f=>String(f.key)).sort():[],attributeRules:Array.isArray(params.attributeRules)?params.attributeRules.map(f=>String(f.key)).sort():[],
       attributeKeys:isRecord(data)&&Array.isArray(data.features)?[...new Set(data.features.flatMap(f=>Object.keys(f.properties||{})))].sort():[],
-      geometry:!!params.geometry,referenceIds:(node.references||[]).map(ref=>ref.id).sort()};
+      geometry:!!params.geometry||(isRecord(params.cutline)&&!!params.cutline.geometry),referenceIds:(node.references||[]).map(ref=>ref.id).sort()};
   }).sort((a,b)=>compare(a.id,b.id));
   const connections=workflow.edges.map(edge=>({id:edge.id,from:edge.from,to:edge.to,port:edge.port})).sort((a,b)=>compare(a.id,b.id));
   const assets=new Map<string,{sha256:string;bytes:number;mediaType:string;references:{nodeId:string;referenceId:string;filename:string}[]}>(),links:{nodeId:string;referenceId:string;url:string}[]=[];

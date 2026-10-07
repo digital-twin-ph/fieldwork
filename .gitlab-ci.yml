@@ -8,6 +8,7 @@
 stages:
 - test
 - secret-detection
+- deploy
 sast:
   stage: test
 include:
@@ -34,3 +35,16 @@ functional-regression:
     - playwright-report/
     reports:
       junit: test-results/browser-junit.xml
+
+pages:
+  stage: deploy
+  image: node:22-bookworm
+  timeout: 15m
+  script:
+  - npm ci
+  - npm run build
+  - node scripts/stage-pages.mjs
+  - mv _site public
+  artifacts:
+    paths:
+    - public

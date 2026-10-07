@@ -1,0 +1,67 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:raster_input",
+  "version": "0.3.1",
+  "nodeType": "raster_input",
+  "title": "Raster input",
+  "released": "2026-10-07",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['raster_input']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      }
+    ],
+    "output": "raster"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:RasterDataset",
+        "file": "ontology/fieldwork.ttl"
+      },
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:RasterInputReading",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined."
+  },
+  "implementation": {
+    "files": [
+      "src/raster.ts",
+      "src/raster-workflow.ts",
+      "src/raster-ui.ts",
+      "src/raster-provenance.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "patch",
+      "description": "Distinguish reading a retained raster window at execution from acquiring the source asset."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

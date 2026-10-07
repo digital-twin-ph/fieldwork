@@ -1,6 +1,6 @@
-﻿# Learning through workflow construction
+# Learning through workflow construction
 
-Date: October 6, 2026. Status: proposed design experiment. This document does not implement points, assessment, learner tracking, badges, new ontology terms or registry fields.
+Date: October 6, 2026. Updated: October 7, 2026 (A96: worked examples packaged as games). Status: proposed design experiment. This document does not implement points, assessment, learner tracking, badges, new ontology terms or registry fields.
 
 ## Purpose and first boundary
 
@@ -64,7 +64,7 @@ An Award references a satisfied receipt, milestone, award slot, points and scori
 
 ## A89 Points follow milestones, not clicks
 
-The following is a trial rubric, not a validated scale. Maximum: **70 points** for this exercise family under one scoring-policy version.
+The following is a trial rubric, not a validated scale. Base maximum: **70 points** for this exercise family under one scoring-policy version. A96 proposes a separately versioned, capped independence bonus for a game variant; it does not change awards under this original policy.
 
 | Milestone | Evidence and assessment boundary | Trial points |
 | --- | --- | ---: |
@@ -78,7 +78,7 @@ The following is a trial rubric, not a validated scale. Maximum: **70 points** f
 
 Award at most once per local learner, exercise family, milestone and scoring-policy version. Multiple legitimate attempts remain available without accumulating repeat points. Reconnecting, duplicating nodes, undo/redo, repeated runs, reloading and reimporting do not create additional award slots. Starting a new attempt does not reset the cap; transfer is a separately defined assessment rather than a points multiplier.
 
-A first valid connection is modest evidence of construction. Use separate progress descriptions such as **attempted**, **practiced with support**, **demonstrated in this task** and **transferred to a new task**. Do not infer mastery from a numeric threshold. Record hints and assistance without penalizing their use; a guided success remains valuable but does not satisfy an independent-transfer criterion.
+A first valid connection is modest evidence of construction. Use separate progress descriptions such as **attempted**, **practiced with support**, **demonstrated in this task** and **transferred to a new task**. Do not infer mastery from a numeric threshold. Record hints and assistance without deducting base points; a guided success remains valuable but does not satisfy an independent-transfer criterion. A96's proposed bonus recognizes separately evidenced independence, not simply hiding the guide.
 
 Mistakes incur no negative points, time penalties or broken streaks. Diagnose faults in supplied scenarios rather than rewarding creation of arbitrary errors. Avoid speed bonuses, which confound prior familiarity, accessibility and available hardware with understanding. Points can be hidden while explanatory feedback remains available.
 
@@ -292,6 +292,119 @@ Begin with local checkpoints, a version list, a textual scientific diff and rest
 - Old assets remain available while referenced, and unavailable historical assets are clearly reported.
 - Restoring a workflow does not replace the learner's history or reinterpret an old assessment under a new rubric.
 - Reload and offline use retain checkpoint identity; a failed write leaves the previous branch head intact.
+
+## A96 Worked examples packaged as games
+
+Added October 7, 2026. **Design only.** A worked example can have two entry modes: **Explore the example**, which opens the existing completed demonstration, and **Play the challenge**, which opens a new attempt with an empty workflow canvas. Preserve the learner's current scientific project; creating a game attempt must not clear an existing workspace. The learning goal is to construct, test and explain the workflow, rather than reproduce the author's layout.
+
+The game opens with a short public-health question, desired outputs, available data, completion criteria and a choice of **Guided** or **Independent** mode. No widgets or connections are preplaced. Supporting assets may be provided in a resource tray without becoming input nodes until the learner adds and configures them. A returning learner can resume their saved canvas, notes and progress; blank-canvas startup applies to a new attempt, not every reload.
+
+### Focused widget library and challenge package
+
+Show only the primitives needed for the exercise and its explicitly supported alternatives. The full catalog remains available in the ordinary workspace. The reduced palette is a teaching choice, not a new set of computational widgets: it references stable widget registry identities and learning profiles. All required primitives are available from the start; chevrons guide sequencing without forcing a particular node position or click order. Multiple instances of a primitive are permitted where the task needs them. A role-to-node binding identifies which instances satisfy each step; matching a label is not sufficient.
+
+For the initial Old Naledi raster game, the palette can contain just **Study area**, **Raster input**, **Clip raster** and **Map**. Learners define a boundary, prepare and cite a bounded raster, connect the clipping operation, and display and explain the result. Do not expose Voronoi, routing or unrelated reasoning widgets in this package. If an exercise admits two scientifically appropriate solutions, include the necessary primitives and assessment alternatives instead of requiring one hidden canonical graph. An unrestricted exploration fork may leave the bounded game rubric; make that change explicit and retain the attempt history.
+
+A proposed game definition extends A88's challenge contract with:
+
+| Definition field | Responsibility |
+| --- | --- |
+| Identity and compatibility | Game ID/version/digest, challenge/rubric/scoring-policy bindings, supported application and widget contracts |
+| Scenario and starting state | Brief, desired outputs, `blank` starting canvas, supplied resource descriptors and source citations |
+| Palette | Allowed widget IRIs, supported versions/profiles, necessary instance roles and accepted alternatives |
+| Steps | Stable IDs, plain-language labels, instructional prerequisites, evidence selectors and completion criteria |
+| Guidance | Chevron visibility default, procedural hints, assistance categories and motion preference |
+| Reflection | Planning and iteration prompts, optional or assessed status, links to snapshots/runs |
+| Help | Widget help cards, concept mappings and optional external notebook descriptors |
+| Package inventory | Embedded or linked resources, bytes, media types, hashes, licenses and offline availability |
+
+Reuse the [project-package manifest design](24-encrypted-project-packages.md) through a future explicit game-package profile. Check that the definition, required widget contracts, evaluators and embedded assets are supported and complete before starting. A linked URL is not an offline asset. Published game content contains no private attempts, notes or awards; personal continuation uses a separate opt-in learning-record export under A92. Imported definitions select supported local criterion evaluators; they do not supply arbitrary executable assessment code. Current JSON/encrypted ZIP formats do not yet implement this game profile.
+
+### Optional top chevrons
+
+Above the canvas, show a compact sequence such as:
+
+**Define area › Prepare source › Clip › Inspect result › Explain**
+
+The current actionable step has a gently blinking or pulsing chevron with a visible **Current step** label. Completing that step's required widget work stops its blinking and adds a checkmark. Activate the next eligible step. Instructional prerequisites belong to the game definition, separate from scientific dataflow dependencies. If several steps are eligible, recommend one current step while allowing the learner to choose another. The strip can collapse or wrap on a narrow screen.
+
+| Step state | Display | Evidence/state transition |
+| --- | --- | --- |
+| Not started | Quiet label | No qualifying saved evidence yet |
+| Current / in progress | Gentle blink/pulse plus text | Selected eligible step; existing partial work is retained |
+| Blocked | Static reason and recovery action | A required source, supported contract or prerequisite is unavailable |
+| Complete | Static checkmark; no blinking | All declared criteria satisfied against saved evidence and, where needed, a matching successful run |
+| Needs recheck | Static notice | Relevant inputs, parameters or connections changed after the assessed snapshot |
+
+Adding a widget alone does not complete every kind of step. A boundary step checks a valid saved geometry and required label; source preparation checks the expected asset and citation; a clipping step checks the intended typed dependencies, parameters and successful execution. An inspection or explanation step needs its declared response/evidence in addition to the output widget. The definition must distinguish automatically checked construction criteria, structured interpretation questions and reflection requiring review. Unassessed free text cannot silently become a correct explanation.
+
+Persist completion receipts and assistance events after successful saves. On resume, derive current status from the saved attempt, supported definition and relevant snapshot/run digests. A failed write must not leave a permanent completion checkmark. Changes to a source or operation invalidate dependent current-step checks until reassessed; moving a node does not. Historical satisfied receipts remain attached to their old snapshots, following A89/A95. If a previously completed step needs revision, the learner can select it as current again. Finishing the whole game requires all mandatory criteria; it does not imply general GIS mastery.
+
+Guidance can be hidden or reopened at any time without losing work. **Hide guide** changes presentation, not the underlying criteria or evidence record. Already received guidance remains part of the assistance history. Provide an explicit **Reduce motion / Stop blinking** control and respect reduced-motion preferences: use a static outlined current chevron, text and `aria-current="step"` instead. Turning off animation is not choosing Independent mode and must not affect points. All steps and hints are keyboard accessible, use more than color to convey state, and announce state changes without repeated blinking announcements or forced focus changes.
+
+### Side notepad: plan, prototype and reflect
+
+Provide an optional resizable/collapsible notepad beside the workbench, independent of the parameter Inspector. It encourages the learner to write a plan before constructing nodes, sketch dependencies as a short list or textual graph, predict an output, and explain revisions. On narrow screens it becomes a drawer or tab without covering Save or Run controls. Learners can keep working without a prescribed amount of writing.
+
+Suggested prompts are **What am I trying to find out?**, **Which inputs and steps do I expect to need?**, **What do I predict?**, **What changed in this iteration?**, **Why did I change it?**, and **What did the result teach me?**
+
+Keep a mutable planning draft with a visible local save state, plus **Save iteration note** to capture a dated entry. Each entry has an opaque ID, attempt ID, optional step/node references, parent or comparison checkpoint IDs, workflow digest, optional run receipt and learner-authored text. Attach it to A95's checkpoint history when available; until then retain the bounded snapshot needed for the note. A note about a failed run is still useful evidence of diagnosis. An automatic diff may list added/removed widgets, connections, parameters or replaced assets, but it is labeled as an application-generated summary, distinct from the learner's explanation.
+
+For example, iteration 1 proposes a study polygon and predicts the clipped extent; iteration 2 adds Raster input and its source citation; iteration 3 adds Clip raster and Map, then records why a border gap remains; iteration 4 acquires adequate source coverage and explains the changed result. Nodes, connections and data can change between iterations without erasing earlier reasoning. Provide comparison and a final reflection on the full workflow, not points for the number of notes or revisions.
+
+Notes stay with the one local learner and survive reload, guide toggles and supported resume/import. They remain separate from scientific source citations and public game definitions. Exporting an ordinary workflow must not unexpectedly include the learner's reflections; the optional learning-record package explicitly inventories them. Unsubmitted drafts and optional notes are not automatically assessed. If a particular reflection is required, declare its rubric and review method in advance. Do not infer understanding from word count, prose style or the mere presence of text.
+
+### Independent mode and points
+
+Retain A89's base milestone points for guided and independent completion alike. A game can offer **additional points for demonstrated independent completion** under a published, separately versioned scoring policy. For this proposed raster variant, trial a **10-point maximum independence bonus**, making its cap **70 base + 10 bonus = 80**. This is a candidate design weight to evaluate, not a validated measure. Original 70-point receipts remain under their original policy and are not automatically rescored.
+
+Eligibility requires the same construction, execution and interpretation evidence, plus an assistance record showing that the assessed construction was completed without the procedural chevron guide, step walkthroughs or a revealed solution. Selecting Independent mode or hiding the strip after following it earns nothing by itself. Concept definitions, accessibility support, the notepad and ordinary widget `?` help remain available in both modes; help that reveals a task-specific procedure is explicitly tagged as procedural. Define notebook assistance similarly rather than treating all external study as disqualifying.
+
+Taking a procedural hint changes the assistance label and eligibility for this attempt's independence bonus; it does not subtract earned base points, block help or mark the learner as having failed. State that consequence before revealing the hint. A learner can later demonstrate independence on an equivalent fresh task. Use one bonus award slot per learner/exercise family/milestone/policy binding, with explicit cross-version migration as in A89, so toggling guidance, replaying a completed artifact, branching, importing or repeating a task cannot farm extra points. Incomplete assistance history yields insufficient evidence for the bonus, not an assumption of independence. The bonus is local motivational evidence, not a tamper-proof credential or proof of transfer to a new setting.
+
+### Widget skills, plain-language help and notebook deep dives
+
+Link each primitive to opportunities for progressively stronger evidence: recognize its purpose, choose it, configure it, connect it, interpret its output, diagnose problems and transfer its use. Selecting or using a widget records an opportunity/action; successful assessed use supports a bounded skill claim. Multiple instances and repeated clicks do not themselves establish increasing skill. Reuse A90/A94's concept/competency/profile distinctions and [experiment 33's canvas-to-library highlighting](33-isochrone-plot-and-interactive-map.md) so learners can see the primitive behind a workflow instance.
+
+Add a keyboard-accessible **?** button to the palette item and instantiated widget. It opens a plain-language card or dialog without adding a node, starting a drag or running a computation. Include **What this does**, **What it needs**, **What comes out**, **When to use it**, **A common mistake**, and a small example. For Clip raster: “Keep raster cells for your selected area. Supply a raster and a boundary. Outside cells become NoData; this cannot create data missing from the source.” Avoid making help depend on hover. Close/Escape returns focus to the originating help button.
+
+Future help cards can link to external JupyterLite notebooks for deeper explanations of concepts, principles and Python implementations. A reprojection deep dive could explore coordinate reference systems, datum/axis order, why display and measurement CRSs differ, and code comparing transformed coordinates. This is a learning-resource example; it does not claim a general Reproject widget exists today.
+
+Store a notebook resource's title, URL, publisher/source repository, pinned revision where available, relevant section, concepts/competencies, prerequisites, assistance category and offline availability in the learning profile. Open it explicitly in a separate tab after saving the local draft; do not send workflow data, credentials or private notes in its URL. External notebooks may need connectivity and have their own persistence/runtime behavior. A link click is not evidence of notebook completion or competence. A later integration can accept explicitly imported exercises/results with provenance and a compatible rubric. Bundling notebooks for offline use, executing them inside Fieldwork and sharing learner state require separate implementation decisions.
+
+### Future ontology and assessment contracts
+
+Extend the proposed `fwl:` profile without changing scientific GeoSPARQL facts:
+
+| Proposed term | Mapping and purpose |
+| --- | --- |
+| GamePackage | Versioned `prov:Entity` that packages a Challenge, assets, profiles and scoring policy |
+| ChallengeStep | Part of a Challenge plan; has criterion, instructional prerequisites and required widget roles |
+| Guided / Independent | Assistance-mode concepts; record mode changes and actual procedural guidance exposure in the Attempt |
+| ReflectionEntry | EvidenceArtifact linked to an Attempt, optional step and exact workflow checkpoint/run; distinguished from generated diffs |
+| WidgetHelpResource | Versioned learning resource about a widget/concept, with conceptual or procedural assistance category |
+| NotebookDeepDive | Learning resource with source/revision, concept/competency links and an external delivery location |
+
+Chevron state is a rebuildable interface projection over criteria, dependencies and assessment receipts, not a mastery assertion. Future SHACL admission checks should require valid step/profile references, supported state/status vocabulary, resource identity, reflection provenance and bounded bonus definitions. Application validation must check acyclic instructional prerequisites, executable evaluator compatibility, package completeness, assistance sequencing and award uniqueness. No new ontology declarations, shapes or runtime scoring are implemented by this note.
+
+### Bounded prototype and evaluation
+
+Start with one game definition for Old Naledi clipping: four primitives, an empty canvas, five optional chevrons, widget help cards and a local planning/iteration notepad. Add deterministic structural/run checks and a small explicit interpretation rubric. Then add the capped bonus and recovery/portability checks. External notebook links follow as curated learning resources; embedded notebook execution is outside this first prototype.
+
+Acceptance checks for that future implementation:
+
+- Starting a game preserves other workspaces and produces zero preplaced nodes; resume restores the learner's work.
+- The package exposes only its declared needed primitives; all required roles and accepted alternatives can be constructed.
+- Chevron completion depends on declared saved evidence, not clicking Next, node labels, layout or importing a solved graph.
+- Completing a step stops its animation; relevant later edits mark affected steps for recheck without deleting historical receipts.
+- Guide visibility and reduced-motion settings are independent; keyboard and pointer workflows receive equivalent assessment.
+- Notepad drafts and iteration links survive offline reload; failed saves stay visibly unsaved; comparison identifies actual scientific changes.
+- A guided solution earns all eligible base points; an independent solution can earn its capped bonus; toggles/replays/imports do not duplicate awards.
+- Clicking `?` opens help without creating or moving a widget; concept help remains accessible in both modes.
+- Ordinary project export excludes private notes; optional learning export checks required artifacts and conflicting IDs before restore.
+- External notebooks are clearly identified, do not receive private state automatically, and do not count as completed merely because they were opened.
+
+Extend A93's developmental evaluation with guided and independent tasks of comparable difficulty, prior-familiarity notes and counterbalanced order where feasible. Observe whether the reduced palette aids operation choice, whether chevrons clarify dependencies or encourage unthinking recipe-following, whether the notepad captures meaningful predictions/revisions, and whether the bonus discourages needed help. Ask learners to explain and transfer the workflow after guidance is hidden. Completion rates, points and more frequent widget use remain usability/motivation indicators until interpretation and transfer evidence support a learning claim.
 
 ## Delivery slices and open decisions
 

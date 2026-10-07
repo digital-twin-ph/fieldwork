@@ -70,6 +70,10 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
     check(current.title===def.title,'Widget title drift');
     check(JSON.stringify(current.ports.inputs)===JSON.stringify(def.inputs.map(([name,type])=>({name,type})))&&current.ports.output===def.output,`Port contract drift: ${entry.nodeType}`);
     if(entry.nodeType==='map_output'){check(current.ports.rasterInput?.value==='raster','Missing raster input mode');if(nodeInputs)check(JSON.stringify(nodeInputs({type:'map_output',params:{inputMode:'raster'}}))===JSON.stringify([['raster','raster']]),'Raster port contract drift');}
+    if(['map_output','table_output','chart_output'].includes(entry.nodeType)){
+      check(current.ports.polygonInput?.value==='polygons','Missing polygon input mode');
+      if(nodeInputs)check(JSON.stringify(nodeInputs({type:entry.nodeType,params:{inputMode:'polygons'}}))===JSON.stringify([['polygons','polygons']]),'Polygon port contract drift');
+    }
     const dynamic=['coverage_check','map_output','table_output'].includes(entry.nodeType);
     check(dynamic===Boolean(current.ports.dynamicInputs),'Dynamic port contract drift');
     if(['map_output','table_output'].includes(entry.nodeType)){

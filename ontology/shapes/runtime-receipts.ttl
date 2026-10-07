@@ -1,0 +1,95 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+@prefix qudt: <http://qudt.org/schema/qudt/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# Runtime evidence profile, not widget configuration shapes or a geometry verifier.
+fw:RuntimePlanShape a sh:NodeShape; sh:targetClass fw:WorkflowNodePlan, fw:CanvasNodePlan;
+  sh:property [ sh:path fw:widget; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI; sh:class fw:WidgetDefinition ];
+  sh:property [ sh:path fw:nodeType; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:catalogVersion; sh:minCount 1; sh:maxCount 1; sh:pattern "^[0-9]+[.][0-9]+[.][0-9]+$" ];
+  sh:property [ sh:path fw:catalogDigest; sh:minCount 1; sh:maxCount 1; sh:pattern "^[a-f0-9]{64}$" ].
+fw:RuntimeStepShape a sh:NodeShape; sh:targetClass fw:WorkflowStep;
+  sh:property [ sh:path fw:workflowNode; sh:minCount 1; sh:maxCount 1; sh:class fw:WorkflowNodePlan ];
+  sh:property [ sh:path fw:resultEntity; sh:minCount 1; sh:maxCount 1; sh:class prov:Entity ];
+  sh:property [ sh:path fw:receiptActivity; sh:class prov:Activity; sh:node fw:ReceiptActivityShape ].
+fw:ReceiptActivityShape a sh:NodeShape;
+  sh:property [ sh:path fw:workflowNode; sh:minCount 1; sh:maxCount 1; sh:class fw:WorkflowNodePlan ].
+fw:RuntimeGeometryShape a sh:NodeShape;
+  sh:property [ sh:path geo:asWKT; sh:minCount 1; sh:maxCount 1; sh:datatype geo:wktLiteral ].
+fw:RuntimeQuantityShape a sh:NodeShape;
+  sh:class qudt:QuantityValue;
+  sh:property [ sh:path qudt:numericValue; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:Literal; sh:minInclusive 0 ];
+  sh:property [ sh:path qudt:unit; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI ].
+fw:RuntimeMetresShape a sh:NodeShape; sh:node fw:RuntimeQuantityShape;
+  sh:property [ sh:path qudt:unit; sh:hasValue <http://qudt.org/vocab/unit/M> ].
+fw:RuntimeMinutesShape a sh:NodeShape; sh:node fw:RuntimeQuantityShape;
+  sh:property [ sh:path qudt:unit; sh:hasValue <http://qudt.org/vocab/unit/MIN> ];
+  sh:property [ sh:path qudt:numericValue; sh:minExclusive 0 ].
+fw:StreetNetworkShape a sh:NodeShape; sh:targetClass fw:StreetNetwork;
+  sh:property [ sh:path fw:directed; sh:hasValue true; sh:maxCount 1 ];
+  sh:property [ sh:path fw:networkNode; sh:minCount 1; sh:class fw:NetworkVertex ];
+  sh:property [ sh:path fw:networkEdge; sh:class fw:NetworkEdge ];
+  sh:property [ sh:path prov:wasGeneratedBy; sh:minCount 1; sh:maxCount 1; sh:class fw:NetworkInput ].
+fw:NetworkVertexShape a sh:NodeShape; sh:targetClass fw:NetworkVertex;
+  sh:property [ sh:path geo:hasGeometry; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeGeometryShape ].
+fw:NetworkEdgeShape a sh:NodeShape; sh:targetClass fw:NetworkEdge;
+  sh:property [ sh:path fw:fromVertex; sh:minCount 1; sh:maxCount 1; sh:class fw:NetworkVertex ];
+  sh:property [ sh:path fw:toVertex; sh:minCount 1; sh:maxCount 1; sh:class fw:NetworkVertex ];
+  sh:property [ sh:path fw:edgeLength; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeMetresShape;
+    sh:node [ sh:property [ sh:path qudt:numericValue; sh:minExclusive 0 ] ] ].
+fw:CatchmentDatasetShape a sh:NodeShape; sh:targetClass fw:CatchmentDataset;
+  sh:property [ sh:path fw:member; sh:class fw:Catchment ];
+  sh:property [ sh:path fw:countSemantics; sh:minCount 1; sh:maxCount 1; sh:in ( "cumulative-threshold-memberships" "all-polygon-memberships" ) ];
+  sh:property [ sh:path prov:wasGeneratedBy; sh:minCount 1; sh:maxCount 1; sh:class prov:Activity ].
+fw:CatchmentShape a sh:NodeShape; sh:targetClass fw:Catchment;
+  sh:property [ sh:path fw:siteId; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:sourceSite; sh:minCount 1; sh:maxCount 1; sh:class geo:Feature ];
+  sh:property [ sh:path geo:hasGeometry; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeGeometryShape ];
+  sh:property [ sh:path fw:travelTime; sh:maxCount 1; sh:node fw:RuntimeMinutesShape ];
+  sh:property [ sh:path fw:recordCount; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ].
+fw:IsochroneReceiptShape a sh:NodeShape; sh:targetClass fw:NetworkIsochrone;
+  sh:property [ sh:path fw:timeBudget; sh:minCount 1; sh:maxCount 6; sh:node fw:RuntimeMinutesShape ];
+  sh:property [ sh:path fw:corridorWidth; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeMetresShape ];
+  sh:property [ sh:path fw:snapLimit; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeMetresShape ];
+  sh:property [ sh:path fw:walkingSpeed; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeQuantityShape;
+    sh:node [ sh:property [ sh:path qudt:unit; sh:hasValue <http://qudt.org/vocab/unit/M-PER-SEC> ]; sh:property [ sh:path qudt:numericValue; sh:minExclusive 0 ] ] ];
+  sh:property [ sh:path fw:travelDirection; sh:minCount 1; sh:maxCount 1; sh:in ( "inbound" "outbound" ) ];
+  sh:property [ sh:path fw:fillInteriorHoles; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean ].
+fw:BufferReceiptShape a sh:NodeShape; sh:targetClass fw:AreaBuffer;
+  sh:property [ sh:path fw:bufferDistance; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeMetresShape ].
+fw:PolygonSummaryReceiptShape a sh:NodeShape; sh:targetClass fw:PolygonPointSummary;
+  sh:property [ sh:path fw:boundaryPolicy; sh:minCount 1; sh:maxCount 1; sh:in ( "include" "exclude" ) ];
+  sh:property [ sh:path fw:valueField; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ].
+
+fw:CanvasPlanShape a sh:NodeShape; sh:targetClass fw:CanvasNodePlan;
+  sh:property [ sh:path fw:configuration; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ].
+fw:CanvasConnectionShape a sh:NodeShape; sh:targetClass fw:CanvasConnection;
+  sh:property [ sh:path fw:fromPlan; sh:minCount 1; sh:maxCount 1; sh:class fw:CanvasNodePlan ];
+  sh:property [ sh:path fw:toPlan; sh:minCount 1; sh:maxCount 1; sh:class fw:CanvasNodePlan ];
+  sh:property [ sh:path fw:inputPort; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ].
+fw:PointDatasetShape a sh:NodeShape; sh:targetClass fw:PointDataset;
+  sh:property [ sh:path fw:recordCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:member; sh:class geo:Feature ];
+  sh:property [ sh:path prov:wasGeneratedBy; sh:minCount 1; sh:maxCount 1; sh:class fw:PointInput ].
+fw:PolygonClipReceiptShape a sh:NodeShape; sh:targetClass fw:PolygonClipping;
+  sh:property [ sh:path fw:clipGeometry; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeGeometryShape ].
+fw:RasterReceiptShape a sh:NodeShape; sh:targetClass fw:RasterInputReading, fw:RasterClipping;
+  sh:property [ sh:path prov:used; sh:minCount 2; sh:nodeKind sh:IRI ];
+  sh:property [ sh:path fw:rasterMaskMethod; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ].
+fw:PresentationReceiptShape a sh:NodeShape; sh:targetClass fw:MapView, fw:TableView, fw:ChartView;
+  sh:class prov:Activity;
+  sh:property [ sh:path prov:used; sh:minCount 1; sh:nodeKind sh:IRI ].
+fw:ReadinessConclusionShape a sh:NodeShape; sh:targetSubjectsOf fw:readyForSpatialAnalysis;
+  sh:property [ sh:path fw:readyForSpatialAnalysis; sh:maxCount 1; sh:datatype xsd:boolean ].
+fw:AreaMeasurementShape a sh:NodeShape; sh:targetClass fw:AreaMeasurement;
+  sh:node fw:RuntimeQuantityShape;
+  sh:property [ sh:path qudt:unit; sh:hasValue <http://qudt.org/vocab/unit/M2> ];
+  sh:property [ sh:path fw:measuredGeometry; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeGeometryShape ];
+  sh:property [ sh:path prov:wasGeneratedBy; sh:minCount 1; sh:maxCount 1; sh:class fw:AreaComputation ].
+fw:CoverageReceiptShape a sh:NodeShape; sh:targetClass fw:SpatialCoverageCheck;
+  sh:property [ sh:path fw:studyArea; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI ];
+  sh:property [ sh:path fw:inputGeometry; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeGeometryShape ];
+  sh:property [ sh:path fw:checkedRecord; sh:class geo:Feature ].

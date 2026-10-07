@@ -10,11 +10,11 @@ const files=new Set(['sw.js','LICENSE','build/asset-manifest.json']);
 for(const asset of manifest.assets){
   const file=asset==='./'?'index.html':asset.replace(/^\.\//,'');
   if(file.includes('\\')||file.split('/').some(part=>part.startsWith('.')||!part)||path.isAbsolute(file))throw new Error('Invalid asset path');
-  if(!/^(index\.html|styles\.css|study-area\.css|icon\.svg|manifest\.webmanifest|build\/.+|vendor\/.+|examples\/old-naledi\/(data\.js|provenance\.json))$/.test(file))throw new Error('Unexpected browser asset');
+  if(!/^(index\.html|styles\.css|study-area\.css|icon\.svg|manifest\.webmanifest|build\/.+|vendor\/.+|examples\/old-naledi\/(data\.js|provenance\.json)|examples\/john-snow\/(NOTICE\.txt|upstream-LICENSE|provenance\.json|network\.json|soho\.graphml|pumps\.csv|cholera_deaths\.csv))$/.test(file))throw new Error('Unexpected browser asset');
   files.add(file);
 }
 for(const directory of ['build','vendor']){
-  for(const name of await readdir(path.join(root,directory)))if(/(?:LICENSE|LEGAL|NOTICE)/i.test(name))files.add(`${directory}/${name}`);
+  for(const entry of await readdir(path.join(root,directory),{withFileTypes:true}))if(entry.isFile()&&/(?:LICENSE|LEGAL|NOTICE)/i.test(entry.name))files.add(`${directory}/${entry.name}`);
 }
 // Only this fixed, checked staging directory is replaced; never the repository.
 await rm(destination,{recursive:true,force:true});

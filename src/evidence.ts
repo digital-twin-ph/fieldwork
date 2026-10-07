@@ -1,5 +1,7 @@
 import type {Workflow,WorkflowNode} from './types.js';
 import {isRecord} from './guards.js';
+import type {Receipt} from './results.js';
+import {runtimeBindingN3} from './runtime-semantics.js';
 
 export const MAX_PDF_BYTES=5_000_000,MAX_WORKFLOW_PDF_BYTES=10_000_000,MAX_BUNDLE_BYTES=20_000_000;
 export const REFERENCE_ROLES={data:'Data source',method:'Method or processing step',assumption:'Assumption or parameter',context:'Background context'} as const;
@@ -63,15 +65,16 @@ export function decodeFile(text:unknown):Uint8Array<ArrayBuffer> {
 }
 
 /** References document the plan. PDF/link contents are not computation inputs or EYE premises. */
-export function evidenceProvenance(nodes:WorkflowNode[],edges:Workflow['edges'],runId:string):{evidence:NodeEvidence[];provenanceN3:string} {
+export function evidenceProvenance(nodes:WorkflowNode[],edges:Workflow['edges'],runId:string,receipts:Receipt[]=[]):{evidence:NodeEvidence[];provenanceN3:string} {
   const evidence=nodes.filter(n=>n.references?.length).map(n=>({nodeId:n.id,references:structuredClone(n.references!)}));
-  if(!evidence.length)return {evidence,provenanceN3:''};
   const iri=(part:string)=>`<urn:fieldwork:run:${runId}:${part}>`,literal=(text:string)=>JSON.stringify(text);
   let facts='@prefix dc: <http://purl.org/dc/elements/1.1/>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix fw: <urn:fieldwork:>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n# Citation metadata supplied by the workflow author; not independently verified evidence.\n';
+  facts+='@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.\n';
   const ids=new Set(nodes.map(n=>n.id));
   for(const node of nodes){
     const step=iri('step:'+node.id),plan=iri('plan:'+node.id),output=iri('output:'+node.id);
-    facts+=`${plan} a prov:Plan; dcterms:identifier ${literal(node.id)}.\n${step} a prov:Activity; fw:workflowNode ${plan}.\n${output} a prov:Entity; prov:wasGeneratedBy ${step}.\n`;
+    facts+=`${plan} a prov:Plan; dcterms:identifier ${literal(node.id)}.\n${step} a prov:Activity; fw:workflowNode ${plan}.\n${output} a prov:Entity.\n`;
+    facts+=runtimeBindingN3(node,runId,receipts);
     for(const edge of edges.filter(e=>e.to===node.id&&ids.has(e.from)))facts+=`${step} prov:used ${iri('output:'+edge.from)}.\n`;
     for(const ref of node.references||[]){
       const citation=iri('reference:'+node.id+':'+ref.id),role={data:'DataSourceReference',method:'MethodReference',assumption:'AssumptionReference',context:'ContextReference'}[ref.role];

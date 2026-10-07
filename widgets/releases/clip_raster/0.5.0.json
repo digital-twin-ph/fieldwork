@@ -1,0 +1,74 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:clip_raster",
+  "version": "0.5.0",
+  "nodeType": "clip_raster",
+  "title": "Clip raster",
+  "released": "2026-10-06",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['clip_raster']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      },
+      {
+        "name": "raster",
+        "type": "raster"
+      }
+    ],
+    "output": "raster"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:RasterDataset",
+        "file": "ontology/fieldwork.ttl"
+      },
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:RasterClipping",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined."
+  },
+  "implementation": {
+    "files": [
+      "src/raster.ts",
+      "src/raster-workflow.ts",
+      "src/raster-ui.ts",
+      "src/raster-provenance.ts",
+      "src/raster-preview.ts",
+      "src/study-area-map.ts",
+      "src/raster-mask.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Add all-touched native pixel inclusion and an adjustable zero-to-one pixel margin, with legacy center inclusion preserved and settings in preview, saved parameters and run evidence."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

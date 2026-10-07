@@ -1,0 +1,72 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix qudt: <http://qudt.org/schema/qudt/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.1 experimental, 2026-10-07";
+  rdfs:comment "Implemented run bindings and bounded network/catchment receipts. No learner/game runtime is implied.".
+fw:WidgetDefinition a owl:Class; rdfs:subClassOf prov:Entity.
+fw:WorkflowNodePlan a owl:Class; rdfs:subClassOf prov:Plan.
+fw:WorkflowStep a owl:Class; rdfs:subClassOf prov:Activity;
+  rdfs:comment "Execution envelope connecting a node plan, upstream outputs and operation-specific receipt activities; not an additional generating activity for an already generated entity.".
+fw:widget a owl:ObjectProperty; rdfs:range fw:WidgetDefinition.
+fw:nodeType a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:catalogVersion a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "Observed descriptor version bundled with the application, not a request to dispatch an old executable.".
+fw:catalogDigest a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:resultEntity a owl:ObjectProperty; rdfs:domain fw:WorkflowStep; rdfs:range prov:Entity.
+fw:receiptActivity a owl:ObjectProperty; rdfs:domain fw:WorkflowStep; rdfs:range prov:Activity.
+
+fw:PointInput a owl:Class; rdfs:subClassOf prov:Activity; fw:implementationStatus "implemented".
+fw:PointDataset a owl:Class; rdfs:subClassOf geo:FeatureCollection, dcat:Dataset, prov:Entity.
+fw:sourceMetadata a owl:DatatypeProperty; rdfs:comment "Supplemental source metadata JSON; author supplied, not independently verified.".
+fw:missingLocation a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:StreetNetwork a owl:Class; rdfs:subClassOf dcat:Dataset, prov:Entity.
+fw:NetworkVertex a owl:Class; rdfs:subClassOf geo:Feature.
+fw:NetworkEdge a owl:Class; rdfs:subClassOf prov:Entity;
+  rdfs:comment "Directed edge with supplied cost length; optional curved geometry. Parallel edges remain distinct.".
+fw:networkNode a owl:ObjectProperty; rdfs:domain fw:StreetNetwork; rdfs:range fw:NetworkVertex.
+fw:networkEdge a owl:ObjectProperty; rdfs:domain fw:StreetNetwork; rdfs:range fw:NetworkEdge.
+fw:fromVertex a owl:ObjectProperty; rdfs:range fw:NetworkVertex.
+fw:toVertex a owl:ObjectProperty; rdfs:range fw:NetworkVertex.
+fw:directed a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:edgeLength a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:CatchmentDataset a owl:Class; rdfs:subClassOf geo:FeatureCollection, dcat:Dataset, prov:Entity.
+fw:Catchment a owl:Class; rdfs:subClassOf geo:Feature;
+  rdfs:comment "Modeled region for a source site. A network threshold is cumulative, not an observed service catchment.".
+fw:sourceSite a owl:ObjectProperty; rdfs:range geo:Feature.
+fw:countSemantics a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:travelTime a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:timeBudget a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:walkingSpeed a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:corridorWidth a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:snapLimit a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:fillInteriorHoles a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:travelDirection a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:NetworkSnap a owl:Class; rdfs:subClassOf prov:Entity.
+fw:snap a owl:ObjectProperty; rdfs:range fw:NetworkSnap.
+fw:networkVertexId a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:snapDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:boundaryPolicy a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:valueField a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:matchedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:outsideRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:multipleMembershipCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+
+fw:CanvasNodePlan a owl:Class; rdfs:subClassOf prov:Plan; rdfs:label "Canvas node plan"; rdfs:comment "Editable, possibly incomplete configuration. Does not assert that execution or scientific validation occurred.".
+fw:CanvasConnection a owl:Class; rdfs:label "Canvas connection".
+fw:configuration a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:comment "JSON configuration snapshot; operation-specific configuration checks remain application checks.".
+fw:fromPlan a owl:ObjectProperty; rdfs:range fw:CanvasNodePlan.
+fw:toPlan a owl:ObjectProperty; rdfs:range fw:CanvasNodePlan.
+fw:inputPort a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:selectionMode a owl:ObjectProperty; rdfs:comment "Boundary drawing method, not a CRS or a geometry type.".
+fw:geometryValidated a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:comment "Passed the widget's bounded geometry checks; not general topological certification.".
+fw:west a owl:DatatypeProperty; rdfs:comment "Western longitude of the CRS84 bounding envelope in degrees.".
+fw:east a owl:DatatypeProperty; rdfs:comment "Eastern longitude of the CRS84 bounding envelope in degrees.".
+fw:south a owl:DatatypeProperty; rdfs:comment "Southern latitude of the CRS84 bounding envelope in degrees.".
+fw:north a owl:DatatypeProperty; rdfs:comment "Northern latitude of the CRS84 bounding envelope in degrees.".
+fw:readyForSpatialAnalysis a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:comment "Conclusion of the bounded study-area readiness rule, not scientific fitness certification.".

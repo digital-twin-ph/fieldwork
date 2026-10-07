@@ -75,12 +75,17 @@
     {
       "id": "urn:fieldwork:widget:area",
       "nodeType": "area",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/area/0.1.0.json",
           "sha256": "bb24afb87dc5478136dba95aa5a66a93fc9d19547784c2bc630bdd231dbb7fbd"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/area/0.2.0.json",
+          "sha256": "35c27341f2860d1a8e6f6b261f22fdeaa33472d34426f98ff718f6f374b5fb31"
         }
       ]
     },
@@ -215,7 +220,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.7.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -236,13 +241,33 @@
           "version": "0.4.0",
           "path": "widgets/releases/map_output/0.4.0.json",
           "sha256": "84f3ad49967acf231def0032e95e069b46592c8b3fd83b80a00074b69e85be0f"
+        },
+        {
+          "version": "0.4.1",
+          "path": "widgets/releases/map_output/0.4.1.json",
+          "sha256": "c0d7c77d7db76a3fe3149b64e00a35c1df01769754820ef8d8b395f4688245bb"
+        },
+        {
+          "version": "0.5.0",
+          "path": "widgets/releases/map_output/0.5.0.json",
+          "sha256": "c2947005628e49c4a8f49b5cf05a8e05bc11abd89e95f3bb6eaed0259db429ec"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/map_output/0.6.0.json",
+          "sha256": "0bbb901e7c0fd817c12b0b0b051b4f8482d68889e1e3ab05dff01f723caec786"
+        },
+        {
+          "version": "0.7.0",
+          "path": "widgets/releases/map_output/0.7.0.json",
+          "sha256": "41561617c1cd919811db3d58bee2c90e18dbb07205e75222b1a193d469ecdf5d"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:table_output",
       "nodeType": "table_output",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -253,6 +278,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/table_output/0.2.0.json",
           "sha256": "4370e812f98f92f643bb5506634341e2dc5e23be64dea6487e4caac7e3600f60"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/table_output/0.3.0.json",
+          "sha256": "bb7d9c1e880dbf67e9391ac26ca370c25207548e006756743b6a0e0bb6506846"
         }
       ]
     },
@@ -281,19 +311,24 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/chart_output/0.1.0.json",
           "sha256": "454a94ed3b80245a7cbd363dce19fa1c0109320ed84c2ef9e2ab4ecb841e2933"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/chart_output/0.2.0.json",
+          "sha256": "ff7451a396ec32b0c5d9fff8b6ce5ba171ddd51c4bdb20b3ef9f32b257f6ad7d"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:raster_input",
       "nodeType": "raster_input",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -304,13 +339,23 @@
           "version": "0.2.0",
           "path": "widgets/releases/raster_input/0.2.0.json",
           "sha256": "acd1673514ae8ab02af5b73c72ca957f8301bfc340c27acb1267d26d16ddc8fc"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/raster_input/0.3.0.json",
+          "sha256": "48627f882a2161420eaac57324ff1c49efd28a576b5161303c415b5faf52e045"
+        },
+        {
+          "version": "0.3.1",
+          "path": "widgets/releases/raster_input/0.3.1.json",
+          "sha256": "e48850b7e01da4cc5a96556b4610258c56a47f59a55aa0eede1ac2dc5c1ba253"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:clip_raster",
       "nodeType": "clip_raster",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.5.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -321,6 +366,98 @@
           "version": "0.2.0",
           "path": "widgets/releases/clip_raster/0.2.0.json",
           "sha256": "4b4f0eede44af4128a50c38834ec54eb8357048c8299a7874436c13f48e58ea9"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/clip_raster/0.3.0.json",
+          "sha256": "a64906609ba89d294f1a141a41dbb917a71cb0e518df087962bf4c66daa7ec7b"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/clip_raster/0.4.0.json",
+          "sha256": "bfa86f2f6780da57b4263bfea7c2149aefa27cdc4e17fe5ab0a21241b3ef6eb6"
+        },
+        {
+          "version": "0.5.0",
+          "path": "widgets/releases/clip_raster/0.5.0.json",
+          "sha256": "05ab447f3341d1191d64fb450e0c55bb34248365fc92338dca16c7204e10cd18"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:voronoi",
+      "nodeType": "voronoi",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/voronoi/0.1.0.json",
+          "sha256": "d5ff3126d0b638c40fdb0efbfe1fb0c8cd34b7ee5e1a6eebadd68b839489880b"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:isochrone",
+      "nodeType": "isochrone",
+      "currentVersion": "0.2.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/isochrone/0.1.0.json",
+          "sha256": "4fc66eb5abfe9f135c2d1262427686d21807d9b7c38e8de50517f1966a6ad23b"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/isochrone/0.2.0.json",
+          "sha256": "2c57bf98022f46c7602e7edad82a3b86e8448727890cdb44ba7dcfc04ba0699b"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:network_input",
+      "nodeType": "network_input",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/network_input/0.1.0.json",
+          "sha256": "bf5039c590835fcdfc3bb8f34fd4d46ff6bd12f7ef89d9cad3f62e5de6350be9"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:clip_polygons",
+      "nodeType": "clip_polygons",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/clip_polygons/0.1.0.json",
+          "sha256": "d2a5be0957285aa17eaf2663ac667df04f8907e2fdb676ecdfcef5af1fa4880f"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:summarize_polygons",
+      "nodeType": "summarize_polygons",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/summarize_polygons/0.1.0.json",
+          "sha256": "8f45adde2229b5a79328bd12f9b860df0004bd56616c096c85c75a8296f3887a"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:buffer_area",
+      "nodeType": "buffer_area",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/buffer_area/0.1.0.json",
+          "sha256": "982d972afcfcb9fef4990e6b026a819d305c4b0227a70388170cc8ad83666789"
         }
       ]
     }

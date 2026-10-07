@@ -13,19 +13,29 @@ export function validateRasterAsset(asset:RasterAsset):void{
 }
 export async function loadRaster(asset:RasterAsset,area:AreaValue):Promise<RasterGrid>{
   validateRasterAsset(asset);rasterWindow(asset.metadata,area.boundary);
-  const bytes=await verifiedProjectFile({...asset,asset}),blob=new Blob([bytes]),actual=await inspectRaster(blob),data=await readRasterWindow(blob,actual,[0,0,actual.width,actual.height]);
-  rasterWindow(actual,area.boundary);
-  return {metadata:actual,values:data.values,asset,boundary:structuredClone(area.boundary)};
+  const grid=await loadRasterAsset(asset);
+  rasterWindow(grid.metadata,area.boundary);
+  return {...grid,boundary:structuredClone(area.boundary)};
+}
+/** Preview may need to repair a boundary outside the retained window. */
+export async function loadRasterAsset(asset:RasterAsset):Promise<RasterGrid>{
+  validateRasterAsset(asset);
+  const bytes=await verifiedProjectFile({...asset,asset}),blob=new Blob([bytes]),actual=await inspectRaster(blob);
+  if(actual.width!==asset.metadata.width||actual.height!==asset.metadata.height||actual.bounds.some((v,i)=>Math.abs(v-asset.metadata.bounds[i])>1e-9))throw new Error('Retained GeoTIFF dimensions or bounds do not match the project metadata.');
+  const [w,s,e,n]=actual.bounds;rasterWindow(actual,{type:'Polygon',coordinates:[[[w,s],[e,s],[e,n],[w,n],[w,s]]]});
+  const data=await readRasterWindow(blob,actual,[0,0,actual.width,actual.height]);
+  return {metadata:actual,values:data.values,asset};
 }
 export function rasterReceipt(node:WorkflowNode<'raster_input'|'clip_raster'>,grid:RasterGrid,area:AreaValue,runId:string,sourceId?:string):Receipt{
   const activity=`<urn:fieldwork:run:${runId}:raster:${node.id}>`,result=`<urn:fieldwork:run:${runId}:output:${node.id}>`,source=sourceId?`<urn:fieldwork:run:${runId}:output:${sourceId}>`:`<urn:sha256:${grid.asset.sha256}>`;
   const original=`<urn:fieldwork:run:${runId}:source-descriptor:${node.id}>`;
   const facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix dcat: <http://www.w3.org/ns/dcat#>.\n@prefix dct: <http://purl.org/dc/terms/>.\n'+
-    `${activity} a fw:${node.type==='clip_raster'?'RasterClipping':'RasterWindowAcquisition'}, prov:Activity; prov:used ${source}, <${area.areaId}>; fw:rasterMaskMethod "${grid.mask?'cell-center':'bounding-window'}".\n${result} a fw:RasterDataset, dcat:Dataset, prov:Entity; prov:wasGeneratedBy ${activity}; prov:wasDerivedFrom ${source}; fw:rasterWidth ${grid.metadata.width}; fw:rasterHeight ${grid.metadata.height}.\n<${area.areaId}> geo:hasGeometry <${area.geometryId}>.\n<${area.geometryId}> a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(area.boundary))}^^geo:wktLiteral.\n`+
+    `${activity} a fw:${node.type==='clip_raster'?'RasterClipping':'RasterInputReading'}, prov:Activity; prov:used ${source}, <${area.areaId}>; fw:rasterMaskMethod "${grid.mask?grid.mask.method:'bounding-window'}".\n${result} a fw:RasterDataset, dcat:Dataset, prov:Entity; prov:wasGeneratedBy ${activity}; prov:wasDerivedFrom ${source}; fw:rasterWidth ${grid.metadata.width}; fw:rasterHeight ${grid.metadata.height}.\n<${area.areaId}> geo:hasGeometry <${area.geometryId}>.\n<${area.geometryId}> a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(area.boundary))}^^geo:wktLiteral.\n`+
     `${result} fw:rasterCRS <http://www.opengis.net/def/crs/EPSG/0/4326>; fw:pixelSizeX ${grid.metadata.resolution[0]}; fw:pixelSizeY ${grid.metadata.resolution[1]}.\n`+
+    (grid.mask&&grid.boundary?`${activity} fw:clipGeometry <urn:fieldwork:run:${runId}:cutline:${node.id}>; prov:used <urn:fieldwork:run:${runId}:cutline:${node.id}>.\n<urn:fieldwork:run:${runId}:cutline:${node.id}> a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(grid.boundary))}^^geo:wktLiteral.\n`:'')+
     (sourceId?'':`${source} a fw:RasterDataset; fw:sha256 "${grid.asset.sha256}"; prov:wasDerivedFrom ${original}; fw:sourcePixelWindow ${JSON.stringify(grid.asset.window.join(','))}.\n${original} a fw:LocalFileDescriptor; dct:title ${JSON.stringify(grid.asset.source.filename)}; fw:sourceBytes ${grid.asset.source.bytes}; fw:rasterWidth ${grid.asset.source.metadata.width}; fw:rasterHeight ${grid.asset.source.metadata.height}.\n`)+
     (sourceId?`${original} a fw:LocalFileDescriptor. ${result} prov:wasDerivedFrom ${original}.\n`:'')+rasterProvenanceN3(original,grid.asset.provenance)+
-    (grid.mask?`${result} fw:validCellCount ${grid.mask.valid}; fw:insideCellCount ${grid.mask.inside}.\n`:'');
-  return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:grid.mask?'Mask native cells by center-in-polygon; outside cells become NoData. No resampling, population total or fractional-cell weighting.':'Use a locally retained native-resolution GeoTIFF window. Original file descriptors and extracted source metadata accompany the raster asset.'};
+    (grid.mask?`${activity} fw:rasterMarginPixels ${grid.mask.marginPixels||0}. ${result} fw:validCellCount ${grid.mask.valid}; fw:insideCellCount ${grid.mask.inside}.\n`:'');
+  return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:grid.mask?`Mask native cells using ${grid.mask.method} inclusion and an outer margin of ${grid.mask.marginPixels||0} native pixels. Map hides pixel portions outside this footprint; stored values are unchanged. No resampling, population total or fractional-cell weighting.`:'Use a locally retained native-resolution GeoTIFF window. Original file descriptors and extracted source metadata accompany the raster asset.'};
 }
 export {clipRaster};

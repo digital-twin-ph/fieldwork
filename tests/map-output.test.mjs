@@ -49,7 +49,7 @@ test('Map accepts a coverage check as the sole input and preserves decisions wit
   const w=coverageExercise();w.nodes.push({...newMapOutput(),id:'map',x:700,y:0});w.edges.push({id:'review',from:'coverage',to:'map',port:'coverage'});
   assert.deepEqual(executionPlan(w).map(n=>n.id),['scope','observations','coverage','map']);
   const coverage={kind:'spatial-coverage',rows:[{id:'outside',relation:'Outside',excluded:true,exclusionReason:'Verified error'}],checkNodeId:'coverage',areaNodeId:'scope',measurement:{squareMetres:4}};
-  const {value,receipt}=mapOutput(w.nodes.at(-1),{coverage},'test');assert.deepEqual(value,coverage);assert.equal(receipt,undefined);
+  const {value,receipt}=mapOutput(w.nodes.at(-1),{coverage},'test');assert.deepEqual(value,coverage);assert.equal(receipt.kind,'presentation');assert.equal(receipt.rules,'');assert.match(receipt.facts,/fw:MapView/);
   value.rows[0].excluded=false;assert.equal(coverage.rows[0].excluded,true);
   w.edges.push({id:'mixed',from:'scope',to:'map',port:'area'});assert.throws(()=>validateWorkflow(w),/either a coverage check/);
 });

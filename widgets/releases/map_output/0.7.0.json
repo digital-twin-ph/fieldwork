@@ -1,0 +1,117 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:map_output",
+  "version": "0.7.0",
+  "nodeType": "map_output",
+  "title": "Map",
+  "released": "2026-10-07",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['map_output']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      },
+      {
+        "name": "points",
+        "type": "points"
+      },
+      {
+        "name": "coverage",
+        "type": "coverage-check"
+      },
+      {
+        "name": "raster",
+        "type": "raster"
+      }
+    ],
+    "output": null,
+    "dynamicInputs": {
+      "kind": "point-layers",
+      "minimum": 1,
+      "maximum": 8,
+      "implementation": "src/core.ts#nodeInputs"
+    },
+    "reasoningInput": {
+      "parameter": "inputMode",
+      "value": "decisions"
+    },
+    "rasterInput": {
+      "parameter": "inputMode",
+      "value": "raster"
+    },
+    "polygonInput": {
+      "parameter": "inputMode",
+      "value": "polygons",
+      "inputs": [
+        {
+          "name": "polygons",
+          "type": "polygons"
+        }
+      ],
+      "contextInput": {
+        "parameter": "contextPoints",
+        "value": true,
+        "inputs": [
+          {
+            "name": "context",
+            "type": "points"
+          }
+        ]
+      }
+    }
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:MapView",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined."
+  },
+  "implementation": {
+    "files": [
+      "src/raster.ts",
+      "src/raster-workflow.ts",
+      "src/raster-ui.ts",
+      "src/app.ts",
+      "src/canvas.tsx",
+      "src/catchment-output.ts",
+      "src/catchment-map.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "output",
+        "adapterVersion": "1",
+        "implementation": "src/output-contract.ts#migrateOutputNodes"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Polygon plot or interactive Leaflet view, SVG export and optional context point input; presentation does not compute catchments."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

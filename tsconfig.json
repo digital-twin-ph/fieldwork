@@ -12,6 +12,7 @@
     "strict": true,
     "noEmit": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "allowJs": false,
     "skipLibCheck": true,
@@ -26,6 +27,7 @@
     "tests/types.test.ts"
   ],
   "exclude": [
+    "src/catchment-worker.ts",
     "src/sw.ts",
     "src/reasoning-worker.ts"
   ]

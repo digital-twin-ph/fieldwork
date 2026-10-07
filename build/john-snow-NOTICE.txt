@@ -1,0 +1,26 @@
+John Snow worked-example source data
+
+Pump and death CSVs: PHI-Case-Studies/1854-Cholera-Outbreak-London-Advanced-2,
+revision d1b56c135b0fab2f470b837a51e6777dfc20b286, data/pumps.csv and
+data/cholera_deaths.csv. Upstream repository Apache 2.0 license is preserved
+as upstream-LICENSE. Original dataset authorship and historical completeness
+are not established by that repository license. Retain source attribution.
+These files contain 8 pumps and 250 death locations (489 recorded deaths).
+Fieldwork prefixes IDs and converts coordinates to GeoJSON without moving them.
+
+Soho network: OpenStreetMap contributors, Open Database License (ODbL) 1.0.
+https://www.openstreetmap.org/copyright
+https://opendatacommons.org/licenses/odbl/1-0/
+Source: PHI-Case-Studies/Jupyterlite-1854-Cholera-Outbreak-London-Advanced-1,
+revision 8bde848d13d71602b2b32c62e5d4b4957e4a45a1,
+content/outputs/soho.graphml. Original GraphML retained alongside network.json.
+network.json is a derived graph database under ODbL: node IDs, x/y coordinates,
+directed edge endpoints, length and LINESTRING geometry retained; other tags
+omitted. 738 nodes, 1619 directed edges. Extraction date unknown. This is not
+a reconstruction of 1854 streets. Obtain the original and derived data from
+examples/john-snow in Fieldwork's repository or the cited pinned source.
+
+Fieldwork's algorithms are independent conceptual adaptations. No notebook
+code, finite Voronoi helper, or Python pickle is copied or executed.
+Study boundary is an illustrative Fieldwork-authored reporting rectangle.
+Outputs are modeled proximity/reachability, not actual pump use or causation.

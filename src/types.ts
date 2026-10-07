@@ -20,13 +20,19 @@ export interface Exclusion {sourceNodeId:string; featureId:string; signature:str
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';
 export interface Measurement {squareMetres:number; value:number; unit:AreaUnit; method:string}
 export interface ParamsByType {
+  buffer_area:{label:string;distanceM:number};
+  network_input:{label:string;data:import('./catchments.js').Network;inputMethod?:'osm'|'file';marginM?:number};
+  voronoi:{label:string;zone:number;hemisphere:'north'|'south'};
+  isochrone:{label:string;zone:number;hemisphere:'north'|'south';minutes:number;thresholds?:number[];fillHoles?:boolean;speedMPerMin:number;bufferM:number;maxSnapM:number;direction:'inbound'|'outbound'};
+  clip_polygons:{label:string};
+  summarize_polygons:{label:string;boundary:'include'|'exclude';valueField:string};
   raster_input:{label:string;asset?:import('./raster.js').RasterAsset};
-  clip_raster:{label:string;method:'cell-center'};
+  clip_raster:{label:string;method:'cell-center'|'all-touched';marginPixels?:number;cutline?:{geometry:Polygon;selectionMode:'bbox'|'polygon'}};
   places:PointParams; centers:PointParams; observations:ObservationParams; area:AreaParams;
   alert:{active:boolean|null; date:string}; nearest:Record<string,never>; policy:{thresholdKm:number};
   measure_area:{unit:AreaUnit}; coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
-  map_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'raster'}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'};
-  chart_output:{label:string};
+  map_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'raster'|'polygons';presentation?:'plot'|'interactive';contextPoints?:boolean}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'};
+  chart_output:{label:string;inputMode?:'decisions'|'polygons'};
   output:{label?:string; view:'map'|'table'|'bars'};
   facilities:{dataset:string; radiusKm:number; sourceMode?:'connected'}; samples:{spacingM:number};
   xpert:Record<string,never>; facility_audit:Record<string,never>;
@@ -37,8 +43,8 @@ export type NodeType = keyof ParamsByType;
 export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:ParamsByType[T] & {label?:string}}}[K];
 export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:'places'|'centers'; version:'1'}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}
-export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
-export type PortType = 'points'|'alert'|'distances'|'decisions'|'area'|'facilities'|'samples'|'gradedFacilities'|'access'|'coverage-check'|'raster';
+export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'|'raster'|'snow-voronoi'|'snow-isochrone'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
+export type PortType = 'points'|'alert'|'distances'|'decisions'|'area'|'facilities'|'samples'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'polygons'|'network';
 export interface NodeDefinition {title:string; group:string; icon:string; color:string; description:string; inputs:[string,PortType][]; output:PortType|null}
 export type Escape = (value:unknown)=>string;
 export type SpatialRelation = 'Inside'|'Boundary'|'Outside'|'MissingLocation';

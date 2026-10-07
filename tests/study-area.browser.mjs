@@ -30,7 +30,7 @@ const points=async(list)=>{const b=await page.locator('#area-map').boundingBox()
   await page.locator('#study-area-label').fill(label);await page.locator('#study-area-label-form button').click();
   assert.equal((await saved()).nodes[0].id,areaId);assert.deepEqual((await saved()).nodes[0].params.geometry,box);
   await expect(page.locator('.react-flow__node')).toContainText(label);
-  await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('not evaluated');
+  await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('not executed evidence');
   await run();await expect(page.locator('#area-semantic-graph')).toContainText('Ready for spatial analysis');
   await expect(page.locator('#n3-preview')).toContainText(`rdfs:label "${label}"`);await expect(page.locator('#map')).toContainText(label);
   await expect(page.locator('#n3-preview')).toContainText('"true"^^<http://www.w3.org/2001/XMLSchema#boolean>');

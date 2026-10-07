@@ -13,7 +13,7 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   const t=data.definition;
   const role=t.group==='Sources'?'input':t.group==='Outputs'?'output':'processing';
   const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster'].includes(data.type);
-  const portLabel=(port:string)=>port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':`Points ${port==='points'?'1':port.split('_')[1]}`;
+  const portLabel=(port:string)=>port==='context'?'Context points':port==='polygons'?'Catchment polygons':port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':`Points ${port==='points'?'1':port.split('_')[1]}`;
   const updateInternals=useUpdateNodeInternals();
   useEffect(()=>{updateInternals(id);},[id,JSON.stringify(t.inputs),updateInternals]);
   return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''}`}>

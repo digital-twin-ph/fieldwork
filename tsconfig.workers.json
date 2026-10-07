@@ -5,6 +5,6 @@
     "types": [],
     "allowJs": false
   },
-  "include": ["src/sw.ts", "src/reasoning-worker.ts", "src/worker-types.ts"],
+  "include": ["src/sw.ts", "src/reasoning-worker.ts", "src/catchment-worker.ts", "src/worker-types.ts"],
   "exclude": []
 }

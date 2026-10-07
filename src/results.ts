@@ -32,8 +32,11 @@ export interface DisplayRow {
   recordId?:string; sourceNodeId?:string; layerLabel?:string; attributeTypes?:Record<string,AttributeType>; attributes?:Record<string,Scalar>;
   relation?:SpatialRelation; decision?:CoverageRow['decision']; excluded?:boolean; exclusionReason?:string; signature?:string;
 }
-export interface ChartSummary {field:'status'|'zone'|'tier'; caption:string; total:number; bins:{key:string; label:string; count:number}[]}
+export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'; caption:string; total:number; bins:{key:string; label:string; count:number}[]}
 export interface DisplayValue {
+  polygonPresentation?:'plot'|'interactive';
+  contextPoints?:PointCollection;
+  polygons?:import('./catchments.js').Polygons;
   raster?:import('./raster.js').RasterGrid;
   chart?:ChartSummary;
   locationSource?:{nodeId?:string; kind:string};

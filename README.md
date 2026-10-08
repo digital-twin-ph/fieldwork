@@ -138,6 +138,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [43 · Widget packs](docs/experiments/43-widget-packs.md) | Curated, governed packs carrying vocabulary, shapes, rules and worked examples |
 | [48 · Tabular data](docs/experiments/48-tabular-input.md) | Long-format import, why a wide table is refused rather than reshaped, and what a table is forbidden to imply |
 | [49 · Catalog and field readiness](docs/experiments/49-catalog-in-the-interface.md) | Preparing online then working offline: what the interface fails to say about readiness, and where the pack catalog belongs |
+| [50 · Preparation checklist](docs/experiments/50-preparation-checklist.md) | An open developmental-evaluation item: why each checklist format encodes a different theory of failure, and what a cheap comparison would settle |
 
 ## Repository contents
 

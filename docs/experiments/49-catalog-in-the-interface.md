@@ -240,3 +240,10 @@ lifecycle correction is what exposed them.
 This record changes no code. The catalog remains reviewable as a file and checkable
 by `npm run validate:packs`, which is correct for reviewers and curators, and
 insufficient for a practitioner about to go offline.
+
+The form a preparation surface should take is **not settled here**, and is carried
+as its own developmental-evaluation item in
+[experiment 50](50-preparation-checklist.md): a checklist is a theory of failure
+wearing a user interface, and the formats are not interchangeable. The two readiness
+defects above are prerequisites for it, because a checklist derived from an
+unenumerated cache would report confidently and be wrong.

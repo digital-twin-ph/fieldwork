@@ -1,0 +1,78 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:clip_raster",
+  "version": "1.0.0",
+  "nodeType": "clip_raster",
+  "title": "Clip raster",
+  "released": "2026-10-08",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['clip_raster']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      },
+      {
+        "name": "raster",
+        "type": "raster"
+      }
+    ],
+    "output": "raster"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:RasterDataset",
+        "file": "ontology/fieldwork.ttl"
+      },
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:RasterClipping",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Existing ontology alignment, plus the inclusion rule and outer margin now recorded as typed provenance so receipts produced under different rules cannot be mistaken for each other. fw:rasterMaskConvention is constrained by SHACL to a known identifier."
+  },
+  "implementation": {
+    "files": [
+      "src/raster.ts",
+      "src/raster-workflow.ts",
+      "src/raster-ui.ts",
+      "src/raster-provenance.ts",
+      "src/raster-preview.ts",
+      "src/study-area-map.ts",
+      "src/raster-mask.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "major",
+      "description": "Align the all-touched inclusion rule with GDAL ALL_TOUCHED, measured cell by cell against rasterio 1.5.2 and GDAL 3.12.2 in the Validation Lab: differences over a deliberately pixel-aligned cutline fall from 35 cells to 2, and the cropped window now agrees. The residual 2 cells come from GDAL burning cells along a cutline vertex lying exactly on a cell border, which is an artifact of its line rasterizer rather than a stateable rule. Records the convention and the outer margin in N3 evidence. See docs/experiments/29-raster-edge-inclusion.md."
+    },
+    {
+      "kind": "major",
+      "description": "Migration, no adapter required: All touched now includes a cell only when the cutline covers part of its area or crosses its interior. A cutline edge lying exactly on the border between two cells no longer pulls in the cell outside it, and the cropped window is no longer padded. Re-running a saved all-touched clip can therefore retain fewer boundary cells, and any total derived from one can change. Cell center inside is unaffected. Receipts from earlier runs carry no fw:rasterMaskConvention and were produced by the more inclusive rule."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Independently compared against rasterio 1.5.2 with GDAL 3.12.2 over a synthetic CRS84 grid and a concave, pixel-aligned cutline: cell centre inside agrees exactly; all touched differs by 2 of 146 cells, both GDAL-only and attributable to its line rasterizer. A unit test pins the convention at an exactly aligned border. The margin has no GDAL equivalent and is compared only against a dilation model, so it remains unvalidated. No claim is made about cartographic or scientific suitability."
+  }
+}

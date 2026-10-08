@@ -79,7 +79,9 @@ fw:PolygonClipReceiptShape a sh:NodeShape; sh:targetClass fw:PolygonClipping;
   sh:property [ sh:path fw:clipGeometry; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeGeometryShape ].
 fw:RasterReceiptShape a sh:NodeShape; sh:targetClass fw:RasterInputReading, fw:RasterClipping;
   sh:property [ sh:path prov:used; sh:minCount 2; sh:nodeKind sh:IRI ];
-  sh:property [ sh:path fw:rasterMaskMethod; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ].
+  sh:property [ sh:path fw:rasterMaskMethod; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:rasterMaskConvention; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:in ( "native-window/1" "cell-centre/1" "positive-area/1" ) ];
+  sh:property [ sh:path fw:rasterMaskMarginPixels; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0; sh:maxInclusive 1 ].
 fw:PresentationReceiptShape a sh:NodeShape; sh:targetClass fw:MapView, fw:TableView, fw:ChartView;
   sh:class prov:Activity;
   sh:property [ sh:path prov:used; sh:minCount 1; sh:nodeKind sh:IRI ].

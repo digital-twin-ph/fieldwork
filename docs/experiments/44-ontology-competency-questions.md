@@ -58,6 +58,7 @@ a design decision with its own migration, not a bug fix.
 | S3 | Was data acquired over a wider area than the one reported? | A reviewer | Buffer activities and their distance quantity | Partial: the buffered output is still typed `fw:StudyArea`, so the distinction is not machine-readable |
 | S4 | In which CRS are these coordinates, and in which axis order? | Anyone reusing the geometry | CRS84 in the WKT literal | Answerable |
 | S5 | Which transformation produced these coordinates, with which library and datum handling? | A reviewer of reprojected data | Reprojection provenance | **Not answerable**: carried as source JSON on the layer, not as typed RDF |
+| S7 | Which inclusion rule and outer margin produced this clipped raster? | A reviewer comparing a total with a GDAL-derived one | `fw:rasterMaskConvention` and `fw:rasterMaskMarginPixels`, both SHACL-constrained | Answerable, not yet executable: the raster workspace needs a local GeoTIFF, so no bundled fixture exercises it |
 | S6 | Was this raster resampled or reprojected? | A reviewer of a clipped raster | `fw:rasterMaskMethod`; no resampling operation exists | Answerable |
 
 ## Data identity and missing data

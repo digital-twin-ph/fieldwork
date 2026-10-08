@@ -106,7 +106,7 @@ fw:filename a owl:DatatypeProperty; rdfs:range xsd:string.
 
 fw:ontology a owl:Ontology;
   rdfs:label "Fieldwork study-area and spatial-operation vocabulary";
-  owl:versionInfo "0.4 experimental, 2026-10-08";
+  owl:versionInfo "0.5 experimental, 2026-10-08";
   rdfs:comment "A bounded vocabulary for study areas and their reusable roles. A class declaration is not an implementation or validation constraint.".
 
 fw:implementationStatus a owl:AnnotationProperty;
@@ -408,6 +408,8 @@ fw:MapView rdfs:subClassOf fw:Presentation.
 fw:TableView rdfs:subClassOf fw:Presentation.
 fw:ChartView rdfs:subClassOf fw:Presentation.
 
+# Axioms about runtime plan and widget classes live in runtime.ttl beside those classes, so
+# that file is self-consistent when a reader or reasoner loads it on its own.
 # Disjointness, asserted only where both terms describe the same kind of thing and no graph
 # this prototype emits types one individual as both. Cross-kind conflations, such as an
 # activity that is also an entity, are PROV-O's own axioms and are checked by merging PROV-O
@@ -415,8 +417,6 @@ fw:ChartView rdfs:subClassOf fw:Presentation.
 fw:StudyArea owl:disjointWith fw:ClippingBoundary, fw:AcquisitionBoundary, fw:Catchment.
 fw:ClippingBoundary owl:disjointWith fw:AcquisitionBoundary, fw:Catchment.
 fw:AcquisitionBoundary owl:disjointWith fw:Catchment.
-fw:CanvasNodePlan owl:disjointWith fw:WorkflowNodePlan.
-fw:WidgetDefinition owl:disjointWith fw:CanvasNodePlan, fw:WorkflowNodePlan.
 fw:Presentation owl:disjointWith fw:SpatialOperation.
 
 # Fieldwork's boundary features are PROV entities as well as GeoSPARQL features. Stating this

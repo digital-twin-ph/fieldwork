@@ -216,9 +216,9 @@ and maintenance noted, nothing adopted by this document.
 
 | Tool | Architecture | Licence | Disposition |
 | --- | --- | --- | --- |
-| [Ontosphere](https://github.com/ThHanke/ontosphere) 1.7.6 | React 19, TypeScript, fully client-side; Konclude OWL 2 DL and `shacl-engine` in WebAssembly; loads files, URLs or SPARQL endpoints | Apache-2.0 | **Adopt as an accompanying inspector.** Its engine is already used headlessly here. Its architecture is close to this prototype's, which makes it a credible comparator |
+| [Ontosphere](https://github.com/ThHanke/ontosphere) 1.7.6 | React 19, TypeScript, fully client-side; Konclude OWL 2 DL and `shacl-engine` in WebAssembly | Apache-2.0 | **Tried and retired.** Its engine is used headlessly in the lab, but it is a graph editor and browsing a vocabulary's relationships through it proved awkward. Replaced by the reading view in [experiment 45](45-ontology-viewer.md) |
 | [WebVOWL, Hadden Industries fork](https://github.com/Hadden-Industries/webvowl) | VOWL visualisation; OWL ingestion and conversion now run in the browser, so no Java backend | **AGPL-3.0** | Evaluate as a separate linked tool only. The licence makes vendoring any part of it into this Apache-2.0 bundle a decision with consequences |
-| [OntoInk](https://github.com/ISE-FIZKarlsruhe/ontoink) | MkDocs plugin: ontology diagrams, SHACL validation, live Turtle editing | MIT | Candidate for publishing `ontology/` as navigable, validated documentation |
+| [OntoInk](https://github.com/ISE-FIZKarlsruhe/ontoink) 0.7.9 | MkDocs plugin: diagrams in formal notation, pySHACL, optional reasoner, competency questions as a build gate | MIT | **Adopted.** See [experiment 45](45-ontology-viewer.md) |
 
 "Client-side" is not "offline". This repository precaches through a service
 worker and reports *Available offline*; none of the three has been tested in a

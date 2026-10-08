@@ -32,10 +32,10 @@ A storefront answers neither half.
 
 | Who | Decision | What they need | Where they are when they need it |
 | --- | --- | --- | --- |
-| Practitioner | Can I rely on this result? | Which definitions produced it, at which digests; whether any came from a pack | Looking at a Results tab or a run receipt |
+| Practitioner | Can I rely on this result? | Which definitions produced it, at which digests; whether any came from a pack; **and what the methods and models rest on, with their sources** — a pack is a technical workflow, not a bundle of code ([experiment 56](56-basis-behind-identity.md)) | Looking at a Results tab or a run receipt |
 | Practitioner | May I say what this output means? | What the producing vocabulary **refuses** to claim | Before writing the result down, not before running |
 | Reviewer | Is this pack admissible? | The three reviews, the diff, the digests | In the repository, with the pack open |
-| Curator | Is the catalog itself sound? | Rules, owners, pinned commits | In the repository, at review time |
+| Curator | Is the catalog itself sound? | Rules, owners, pinned commits, **and the validation results** — what was checked, against which host, registry and catalog, and when ([experiment 56](56-basis-behind-identity.md)) | In the repository, at review time |
 
 Only the first two are in the application at all. The reviewer and the curator are
 already served by the file and the validator, and moving their work into a

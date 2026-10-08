@@ -15,6 +15,11 @@ shown in a local build is not a claim that it has been published.
   Validation: 5 new unit checks within 128, 71 Chromium scenarios with 1 skipped, SHACL
   conformant, registry valid at 34 widgets and 66 releases, catalog verified at 8 pinned
   digests. See [experiment 49](docs/experiments/49-catalog-in-the-interface.md).
+- Make the pack validation report citable. `validate:packs` now records what it validated
+  against — host version, registry digest, catalog version and digest, widget count — plus the
+  rules it evaluated and, per pack, files verified against files pinned and the state of each
+  required review. A review state is a claim; this is the evidence a curator attaches to it. See
+  [experiment 56](docs/experiments/56-basis-behind-identity.md).
 
 - Add **Tabular data**, a source widget that imports a long-format CSV: one row
   per observation, with the columns that identify a row declared as keys and one

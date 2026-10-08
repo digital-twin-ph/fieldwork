@@ -1,0 +1,92 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:table_output",
+  "version": "0.4.0",
+  "nodeType": "table_output",
+  "title": "Table",
+  "released": "2026-10-08",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['table_output']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      },
+      {
+        "name": "coverage",
+        "type": "coverage-check"
+      }
+    ],
+    "output": null,
+    "dynamicInputs": {
+      "kind": "point-layers",
+      "minimum": 1,
+      "maximum": 8,
+      "implementation": "src/core.ts#nodeInputs"
+    },
+    "reasoningInput": {
+      "parameter": "inputMode",
+      "value": "decisions"
+    },
+    "polygonInput": {
+      "parameter": "inputMode",
+      "value": "polygons",
+      "inputs": [
+        {
+          "name": "polygons",
+          "type": "polygons"
+        }
+      ]
+    },
+    "note": " An input mode accepts a keyed data table and displays its key columns and value."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:TableView",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined."
+  },
+  "implementation": {
+    "files": [
+      "src/table-output.ts",
+      "src/output-contract.ts",
+      "src/catchment-output.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "output",
+        "adapterVersion": "1",
+        "implementation": "src/output-contract.ts#migrateOutputNodes"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Accept a keyed data table as an input mode, displaying its key columns and value. Saved workflows keep their existing mode and need no migration. Chart and Map deliberately do not accept a table: charting one requires choosing which key varies and whether to aggregate, which is a design decision rather than a rendering detail."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

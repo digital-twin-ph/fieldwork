@@ -42,7 +42,7 @@ export interface DisplayValue {
   chart?:ChartSummary;
   locationSource?:{nodeId?:string; kind:string};
   facilitySource?:RegistryValue['facilitySource'];
-  kind?:'study-area'|'spatial-coverage'|'spatial-map'|'point-table'|'access'|'facility-evidence'|'raster-map';
+  kind?:'study-area'|'spatial-coverage'|'spatial-map'|'point-table'|'data-table'|'access'|'facility-evidence'|'raster-map';
   rows:DisplayRow[]; centers:PointFeature[]; boundary?:Boundary; label?:string; areaId?:string; geometryId?:string;
   measurement?:Measurement; ready?:boolean; pointTable?:boolean; pointLayers?:LayerSummary[];
   checkNodeId?:string; areaNodeId?:string; reviewCount?:number; excludedCount?:number; canProceed?:boolean;

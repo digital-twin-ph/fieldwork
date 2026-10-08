@@ -146,6 +146,13 @@ extraction belongs in the Validation Lab. Writing it as a single arrow from
 
 ## Do the import widgets this needs already exist? No, and one of them is base work
 
+> **Resolved, 2026-10-08.** The base work landed: **Tabular data** (`table_input`
+> 0.1.0) imports a long-format CSV keyed by declared columns, and Table output
+> displays it. The pack's `tabular-import` capability is now `present` and its
+> import stage is `proposed`. The analysis below is kept as written, because it is
+> how the gap was found; see [experiment 48](48-tabular-input.md) for what the
+> importer does and, more importantly, refuses.
+
 Discovery is now out of scope by decision: the practitioner has already obtained
 the resource. That makes the next question concrete — can this prototype read
 what they obtained?

@@ -126,10 +126,36 @@ async function checkPack(pack){
       problems.push(`data source ${source.name} is CC BY 4.0 with fewer than three citations and no note`);
   }
 
-  const missing=(manifest.requires?.hostCapabilities??[]).filter(c=>c.status!=='present');
+  const declared=manifest.requires?.hostCapabilities??[];
+  const missing=declared.filter(c=>c.status!=='present');
   for(const capability of missing)notes.push(`requires host capability "${capability.capability}" (${capability.status})`);
   if(missing.length&&pack.admission?.status==='admitted')
     problems.push('catalog admits a pack that declares a missing host capability');
+
+  // The catalog's own list of outstanding capabilities has to agree with the manifest, or the
+  // catalog can say a pack is unblocked while the pack still says it is not.
+  const outstanding=new Set(missing.map(c=>c.capability));
+  const claimed=new Set(pack.requiredHostCapabilities??[]);
+  for(const name of claimed)if(!outstanding.has(name))
+    problems.push(`catalog lists "${name}" as an outstanding host capability; the manifest does not`);
+  for(const name of outstanding)if(!claimed.has(name))
+    problems.push(`manifest declares host capability "${name}" unsatisfied; the catalog does not list it`);
+
+  // A capability claimed as present must name host widgets that the host registry actually has.
+  // Otherwise "present" is an assertion about the host made by the pack, checked by nobody.
+  for(const capability of declared.filter(c=>c.status==='present')){
+    if(!capability.hostWidgets?.length){
+      notes.push(`host capability "${capability.capability}" is present but names no host widget`);
+      continue;
+    }
+    for(const reference of capability.hostWidgets){
+      const [identity,version]=String(reference).split('@');
+      const widget=registry.widgets?.find(w=>w.id===identity);
+      if(!widget)problems.push(`host capability "${capability.capability}" names unknown host widget ${identity}`);
+      else if(version&&!widget.releases?.some(r=>r.version===version))
+        problems.push(`host capability "${capability.capability}" names ${identity}@${version}, which the host registry does not release`);
+    }
+  }
   return {problems,notes,manifest};
 }
 

@@ -59,8 +59,19 @@ candidate.
 ## What it unblocks, and what it does not
 
 The sea-level pack's `slr_extract_import` contract becomes implementable, and the
-host capability it declares as missing becomes present. The pack still needs its
-own widgets, so this does not admit it.
+host capability it declared as missing is now `present`, naming `table_input`
+0.1.0 and `table_output` 0.4.0. The pack still needs its own widgets and its three
+reviews, so this does not admit it: its admission reason changed from a missing
+capability to an unrun review, which is a different kind of blocker and is
+recorded as such in the catalog.
+
+Clearing that blocker also exposed a gap in the governance itself. "Present" was a
+claim about the **host**, written in the **pack**, verified by nobody: a pack
+could assert a port the host lacks, or the catalog could call a pack unblocked
+while the pack still said otherwise. `validate:packs` now requires the two sides
+to agree and requires a present capability to name host widgets and versions the
+registry actually releases. Both rules are negative-tested; see
+[experiment 43](43-widget-packs.md).
 
 Table output gains a mode that displays a data table with its keys as columns.
 Chart and Map are deliberately left out: charting a keyed table requires choosing
@@ -72,8 +83,26 @@ meaningless for a table with no geometry.
 
 Unit checks cover the long-format contract, duplicate key rejection, missing
 values retained and counted, a stated and an unstated unit, declared columns
-absent from the header, and the row cap. A browser check imports a real
-projection-shaped extract, displays it, inspects a row and reloads offline.
+absent from the header, and the row cap. Two browser checks import a real
+projection-shaped extract keyed on PSGC codes, display it, search it, read the
+absent value as unknown rather than zero, inspect the emitted facts and reload
+offline; the second refuses a value column that is also a key and a non-numeric
+value, leaving a recoverable draft.
+
+**Result, 2026-10-08:** 123 unit tests and 71 Chromium scenarios with 1 skipped,
+all passing; `fw:DataTableShape` conformant; registry valid at 34 widgets and 66
+releases. Claimed for Chromium only.
+
+Two things were found during the build and are worth recording because neither
+was visible from the design. First, an unconfigured node must be a **valid
+draft**: validating the key and value contract unconditionally made the node
+impossible to add at all, since a freshly added node has no columns yet, and the
+workflow reverted silently. The contract is now checked once a table exists, and
+execution refuses to run without one — the same division Reproject input uses.
+Second, the display value and the table shared a field name: spreading the table
+into the display contract with `rows:[]` silently emptied it, and the table
+rendered with headers and no rows. A name collision between two contracts is not
+caught by either one's shape.
 
 Not established: that any particular table's units or values are correct, that a
 practitioner reads a keyed table correctly, or anything about tables larger than

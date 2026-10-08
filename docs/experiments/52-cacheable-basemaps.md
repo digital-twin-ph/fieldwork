@@ -144,6 +144,66 @@ Three roles, then, which should never be collapsed into one "basemap" item:
   the date and digest must be recorded, and the file kept, which is exactly the
   vintage discipline experiment 51 requires of every other class.
 
+## What a basemap is for, and what it costs
+
+The records so far treat a basemap as a provenance and storage problem. That is only
+half of it. A basemap does cognitive work, and which basemap is right depends on what
+the figure is for:
+
+- **Orientation.** Recognising *where* this is, from features a reader already knows —
+  a coastline, a main road, a river, a city name. Without it, a polygon with points in
+  it is a diagram.
+- **Context.** What else is there that the analysis did not include: the settlement
+  just outside the study area, the road the facilities sit along, the river a catchment
+  stops at.
+- **Offloading.** A reader who can see the street layout does not have to hold it in
+  working memory while interpreting the data layer. That is a real reduction in
+  cognitive load, and it is why a well-chosen basemap makes a figure readable at a
+  glance that would otherwise need a caption.
+
+The cost is that **context competes with data for attention**, and the competition is
+not symmetric: basemaps are dense, so detail tends to win unless it is deliberately
+suppressed. Three specific costs, each of which argues for a different choice:
+
+1. **Figure–ground collapse.** Point symbols lose salience against a busy basemap. The
+   cartographic answer is a muted, low-contrast context layer — which is a *rendering
+   choice*, available with a vector basemap and not available with somebody else's
+   pre-rendered raster tiles.
+2. **Borrowed precision.** A crisp basemap at zoom 17 implies the data is locatable to
+   the same degree. It is the same error as reading a raster's resolution as precision
+   ([experiment 51](51-dataset-profiles.md)), arriving through the background instead of
+   the foreground.
+3. **Measured contrast does not survive it.** [Experiment 46](46-colour-theme.md)
+   established WCAG contrast for every rendered text element against known panel
+   colours. A photographic or shaded-relief basemap replaces that known background with
+   an arbitrary one, and the guarantee lapses: a symbol legible over pale terrain is
+   illegible over dark. Contrast over a variable background cannot be asserted, only
+   constrained — by muting the basemap, or by halo and casing on symbols.
+
+So purpose selects the basemap, and the three roles from the table above are not ranked:
+
+| Purpose of the figure | Wants | Tolerates |
+| --- | --- | --- |
+| Fieldwork navigation | streets, landmarks, labels, high zoom | clutter, since the reader is locating themselves |
+| Analytical display | minimal muted context, strong figure–ground | losing recognisable detail |
+| Publication or communication | a few recognisable anchors, attribution, fixed scale | less interactivity |
+
+This has a provenance consequence rather than only an aesthetic one: **the purpose a
+basemap was chosen for should be recorded with the choice**, because it is what makes
+the choice reviewable. "Drawn over muted vector context at 1:50m for analytical
+display" is auditable; "basemap: osm" is not.
+
+It also makes the cognitive claim a developmental-evaluation question rather than an
+assertion. Whether a basemap reduces load, and which one, is observable and should not
+be assumed:
+
+| Observation | Would disconfirm |
+| --- | --- |
+| Do readers orient faster with a context layer than without one? | That the basemap earns its bytes |
+| Do readers attribute features to the analysis that came from the basemap? | That context can be added without borrowing precision |
+| Are symbols still legible over the chosen basemap at the sizes used? | That muting is sufficient, rather than needing halos |
+| Does anyone choose high-detail navigation context for an analytical figure? | That purpose is legible in the interface |
+
 ## Does a basemap need a widget? No, and the reason generalises
 
 The question is worth answering architecturally rather than by taste, because the same
@@ -187,6 +247,12 @@ That last row is the only genuinely new work, and it is small: a receipt that sa
 figure was drawn over Natural Earth 1:50m*, or *over a PMTiles archive of build
 20261008, digest abc…*, lets a reader reconstruct the figure without the workflow
 pretending to contain 3 GB.
+
+> That row turns out to be the point rather than a detail, and
+> [experiment 53](53-reproducible-maps.md) audits it: a figure drawn over a live tile
+> service cannot be redrawn even in principle, because unversioned tiles change
+> upstream. **Reproducibility, not offline convenience, is the strongest argument for a
+> digest-pinned archive.**
 
 **The case that would change the answer.** If a coastline or boundary is used
 *analytically* — clipped against, measured, joined to — then it is not a basemap at all.

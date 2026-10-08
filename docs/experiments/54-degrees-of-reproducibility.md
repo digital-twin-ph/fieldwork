@@ -85,7 +85,12 @@ as a raster image loses the receipt entirely: the machine-readable provenance do
 travel, while the figure travels widely. That argues for a **visible minimal stamp** —
 source note, application version, basemap and its vintage — rendered into the artifact
 itself. The application already has `mapSourceNote` for exactly this kind of text, which
-makes the fix a matter of what it is populated with rather than new machinery.
+makes the fix a matter of what it is populated with rather than new machinery. The mechanisms for carrying
+provenance inside an artifact — visible text, RDF in the SVG container, a signed manifest,
+or hidden in the pixels — are compared in
+[experiment 55](55-embedded-provenance.md), which recommends the first two, refuses the
+last, and finds that embedding a receipt by default would breach an existing privacy
+rule.
 
 ## Constraints on grading
 

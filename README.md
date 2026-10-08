@@ -144,6 +144,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [53 · Reproducible maps](docs/experiments/53-reproducible-maps.md) | What a figure records and what it omits, why a live tile basemap cannot be reproduced at all, and an executable round-trip gate |
 | [54 · Degrees of reproducibility](docs/experiments/54-degrees-of-reproducibility.md) | A ladder of input classes, why a figure inherits its weakest one, and what a report, publication or presentation each require |
 | [55 · Embedded provenance](docs/experiments/55-embedded-provenance.md) | Visible stamps, RDF in SVG and signed manifests compared; why steganography is refused, and the disclosure trap in embedding receipts |
+| [56 · The basis behind an identity](docs/experiments/56-basis-behind-identity.md) | A digest says which code ran, not what the method rests on: method provenance for widgets, and validation evidence a curator can cite |
 
 ## Repository contents
 

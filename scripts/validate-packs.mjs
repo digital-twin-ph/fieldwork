@@ -168,11 +168,32 @@ async function checkPack(pack){
   return {problems,notes,manifest};
 }
 
-const report={ran:new Date().toISOString(),catalogVersion:catalog.catalogVersion,catalogProblems,source:localRoot?`local:${localRoot}`:'pinned commits over the network',packs:[]};
+const hostPackage=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
+const registryText=await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8');
+const catalogText=await readFile(new URL('../widgets/packs.json',import.meta.url),'utf8');
+// A review state is a claim; this report is the evidence a curator attaches to it. So it has
+// to identify what it ran against — host, registry and catalog — and which rules it evaluated.
+const report={
+  schema:'fieldwork/pack-validation/1',
+  ran:new Date().toISOString(),
+  validatedAgainst:{
+    hostVersion:hostPackage.version,
+    registryDigest:sha256(registryText),
+    catalogVersion:catalog.catalogVersion,
+    catalogDigest:sha256(catalogText),
+    widgets:registry.widgets.length,
+  },
+  rulesEvaluated:catalog.governance?.rules??[],
+  catalogProblems,
+  source:localRoot?`local:${localRoot}`:'pinned commits over the network',
+  packs:[],
+};
 let failed=catalogProblems.length>0;
 for(const pack of catalog.packs){
   const {problems,notes}=await checkPack(pack);
-  report.packs.push({id:pack.id,version:pack.version,commit:pack.commit,admission:pack.admission?.status,problems,notes});
+  report.packs.push({id:pack.id,version:pack.version,commit:pack.commit,admission:pack.admission?.status,
+    filesVerified:problems.length?0:Object.keys(pack.files).length,filesPinned:Object.keys(pack.files).length,
+    reviews:Object.fromEntries(Object.entries(pack.admission?.reviews??{}).map(([k,v])=>[k,v.state])),problems,notes});
   console.log(`${pack.id} ${pack.version} at ${pack.commit.slice(0,8)} — ${pack.admission?.status}`);
   for(const note of notes)console.log(`  note: ${note}`);
   for(const problem of problems)console.log(`  PROBLEM: ${problem}`);

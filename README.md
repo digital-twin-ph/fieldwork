@@ -142,6 +142,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [51 · Dataset profiles](docs/experiments/51-dataset-profiles.md) | What the problem type predicts about the data needed, the vintages that must agree, and why sources may be named only with their licence |
 | [52 · Cacheable basemaps](docs/experiments/52-cacheable-basemaps.md) | Measured: a planet of vector tiles as one 138.7 GB file, Natural Earth context from 215 kB, and why a basemap is never an analytical frame |
 | [53 · Reproducible maps](docs/experiments/53-reproducible-maps.md) | What a figure records and what it omits, why a live tile basemap cannot be reproduced at all, and an executable round-trip gate |
+| [54 · Degrees of reproducibility](docs/experiments/54-degrees-of-reproducibility.md) | A ladder of input classes, why a figure inherits its weakest one, and what a report, publication or presentation each require |
 
 ## Repository contents
 

@@ -12,6 +12,11 @@ is downstream of that.
 So this record audits what a Fieldwork figure actually carries, against what redrawing
 it would require.
 
+> Refined by [experiment 54](54-degrees-of-reproducibility.md): reproducibility is a
+> property of each *input*, and a figure inherits the weakest one, so it is a continuum
+> rather than a state — and the required degree depends on whether the figure is glanced
+> at in the field or printed in a publication.
+
 ## Three claims, which are not the same claim
 
 | Level | Claim | Status |

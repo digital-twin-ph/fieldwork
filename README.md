@@ -108,6 +108,15 @@ excluding holes, antimeridian crossings and polar areas. Browser storage is
 unencrypted, and clearing it removes local workflows, attachments and offline
 assets, so export anything worth keeping.
 
+Offline use means **prepare online, then work offline**: open the application while
+connected so it caches, and expect no network in the field. The offline cache covers
+this application and its bundled example data only. It does **not** cover anything
+from another origin, so basemap tiles, Overpass street-network download and remote
+raster acquisition all stop working offline — the study-area editor draws on an
+online map. The header's "Available offline" is inferred from a single cached
+asset and is not a readiness check; see
+[experiment 49](docs/experiments/49-catalog-in-the-interface.md).
+
 ## Design records
 
 Every decision is recorded in [docs/experiments/](docs/experiments/), separating
@@ -128,7 +137,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [42 · Ontology structure and meaning](docs/experiments/42-ontology-structure-and-meaning.md) | An OWL 2 DL reasoner over the vocabulary: what it establishes, and why its consistency is currently unfalsifiable |
 | [43 · Widget packs](docs/experiments/43-widget-packs.md) | Curated, governed packs carrying vocabulary, shapes, rules and worked examples |
 | [48 · Tabular data](docs/experiments/48-tabular-input.md) | Long-format import, why a wide table is refused rather than reshaped, and what a table is forbidden to imply |
-| [49 · Catalog in the interface](docs/experiments/49-catalog-in-the-interface.md) | Why the pack catalog is invisible to practitioners, why a pack browser is the wrong fix, and the one honest addition |
+| [49 · Catalog and field readiness](docs/experiments/49-catalog-in-the-interface.md) | Preparing online then working offline: what the interface fails to say about readiness, and where the pack catalog belongs |
 
 ## Repository contents
 

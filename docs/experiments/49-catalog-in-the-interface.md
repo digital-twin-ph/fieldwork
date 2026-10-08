@@ -41,11 +41,61 @@ Only the first two are in the application at all. The reviewer and the curator a
 already served by the file and the validator, and moving their work into a
 rendered page would weaken it — review needs a diff, not a view.
 
+## Correction: offline-first is a lifecycle, not a state
+
+This record originally treated "offline-first, no runtime fetch" as a flat
+constraint. That was wrong, and the error mattered, because it ruled out the one
+moment when showing the catalog is obviously right.
+
+The actual flow is a **lifecycle with a preparation phase**:
+
+| Phase | Network | What happens |
+| --- | --- | --- |
+| Prepare | **Online, deliberately** | The practitioner or learner downloads everything the field activity will need |
+| Field | **Offline** | The work happens; nothing may depend on a network |
+| Exception | Online only if necessary | A return to connectivity is a recoverable event, not the normal case |
+
+So there is a legitimate online moment, it happens before departure, and the
+practitioner is making exactly one decision at it: **am I ready to go offline?**
+That is a real decision, at a known moment, with a consequence that is discovered
+in the field where it cannot be fixed. It is a far better DE subject than anything
+in the original record.
+
+It also means staleness is manageable rather than fatal. A catalog shown during
+preparation can be refreshed while online and stamped with the time it was read,
+instead of being frozen at build time.
+
+### What the preparation phase currently does not tell you, measured
+
+Two findings, both from reading the shipped code rather than reasoning about it:
+
+1. **Cross-origin resources are never cached.** The service worker handles
+   same-origin GETs only; a request to another origin is not intercepted at all and
+   falls through to the network. Every cross-origin dependency is therefore
+   field-fatal, and there are three: OpenStreetMap and OpenTopoMap basemap tiles,
+   the Overpass API for street-network download, and any remote raster acquisition.
+   The study-area editor draws on an online map. A practitioner who prepares by
+   opening the application, seeing "Available offline" and leaving will lose the
+   basemap in the field.
+2. **"Available offline" is inferred from one asset.** The indicator reports ready
+   when a single cached file is present — the EYE engine — standing in for roughly
+   140 precached assets plus everything above that is not cached at all. It is a
+   liveness probe presented as a readiness claim.
+
+Neither is a defect in the service worker, which precaches the application shell
+and the bundled example data correctly. Both are defects in **what the interface
+says about readiness**, which is the same class of problem as the catalog's
+invisibility: a governance or readiness fact that exists and is not legible.
+
 ## The constraints, which conflict
 
-1. **Offline-first, no runtime fetch.** `runtimeFetching: none` is an admission
-   rule. Anything the interface shows is a **build-time snapshot** and can be
-   stale by any amount.
+1. **No pack is fetched or executed at runtime.** `runtimeFetching: none` is an
+   admission rule and is unaffected by the lifecycle above: preparation may
+   download *resources*, never widget *definitions*. Caching a pack's documents and
+   admitting its widgets are different acts, and conflating them is the one
+   mistake a preparation view could make that governance could not recover from.
+   What the interface shows about the catalog is as-of a stated time — refreshable
+   while online, never implicitly current.
 2. **Proposed is not implemented.** The project's documentation discipline
    separates the two deliberately. A list of packs inside the application reads as
    a list of things you can use.
@@ -62,7 +112,7 @@ and refusals**, and should not carry **inventory or status**.
 
 ## Three candidate surfaces
 
-### A. A pack browser — recommended against
+### A. A pack browser — still recommended against, but it was hiding a real surface
 
 A panel listing catalog entries with their admission states. It is the obvious
 reading of "see the catalog", and it is the wrong one. It implies installability
@@ -74,6 +124,23 @@ falsehood rather than a validator problem.
 
 If the demand for it recurs, the honest form is a link out to the file, not a
 rendering of it.
+
+**What the browser was standing in for, though, is worth building: a preparation
+view.** The question "how do I see the catalog" is downstream of "what do I need
+before I go offline", and that question deserves a surface of its own:
+
+- what is cached and what is not, enumerated rather than inferred from one probe;
+- which widgets in the current workflow need a network, named before departure —
+  the study-area basemap, street-network download, remote raster acquisition;
+- the pack catalog as read at a stated time, with a refresh available while online,
+  and an explicit statement that no pack definition is or can be loaded;
+- what to do about each gap, since a readiness view that only reports is a
+  worry-generator.
+
+This subsumes the legitimate part of A without becoming an inventory: it lists what
+*this activity* needs, not what exists. The distinction between a cached document
+and an admitted widget must be stated on the surface itself, not left to the
+reader.
 
 ### B. Pack provenance in the receipt — recommended, and small
 
@@ -119,6 +186,8 @@ they can come out badly:
 | Asked what the output does **not** establish, do they name a refusal unprompted? | That a refusals surface changes anything |
 | Does the refusal get read, dismissed, or resented? | That this is the right moment or wording |
 | Does anyone, after seeing it, ask how to install a pack? | That the interface successfully avoided implying inventory |
+| Does a practitioner who prepared, went offline and lost the basemap describe it as their mistake or the application's? | That readiness was legible before departure |
+| After a preparation view exists, does anyone still go to the field missing something? | That enumerating readiness is sufficient, rather than needing a blocking check |
 
 The last one is the test of option A's exclusion. If people ask anyway, the
 exclusion is not working and the design, not the user, is wrong.
@@ -137,7 +206,13 @@ The application must **refuse** these, and should be seen to refuse them:
    review; it can only point at the catalog and the report.
 5. Is this pack safe to use? — not a question any artifact answers about itself.
 6. Can I install this pack? — there is no runtime loading, by rule.
-7. Is the catalog shown here current? — no: it is as compiled.
+7. Is the catalog shown here current? — no: it is as read, at a stated time.
+
+Answerable, if the preparation view is built:
+
+8. Which resources this activity needs are cached, and which are missing?
+9. Which widgets in this workflow will stop working without a network?
+10. When was the pack catalog last read, and by what route?
 
 ## Practitioner exercise
 
@@ -149,10 +224,19 @@ answering is the measurement.
 
 ## Decision
 
-Option A is excluded. Option B is specified here and left unbuilt pending the
-vocabulary review it requires. Option C is the open DE question, and nothing
-should be built for it until the observations above have somewhere to be recorded.
+A pack browser remains excluded. **A preparation view is now the recommended
+surface**, and it is where the catalog belongs: it is the one moment the
+practitioner is online on purpose, deciding something consequential, with the cost
+of being wrong deferred to a place where it cannot be fixed. Option B, receipt
+provenance, stands and is still gated on vocabulary review. Option C, refusals,
+remains the open DE question.
+
+The two measured readiness findings above are **defects, not design options**, and
+should be fixed independently of anything in this record: an enumerated cache
+report rather than a one-asset probe, and a pre-departure statement of which
+widgets in the current workflow need a network. They are recorded here because the
+lifecycle correction is what exposed them.
 
 This record changes no code. The catalog remains reviewable as a file and checkable
 by `npm run validate:packs`, which is correct for reviewers and curators, and
-insufficient for practitioners.
+insufficient for a practitioner about to go offline.

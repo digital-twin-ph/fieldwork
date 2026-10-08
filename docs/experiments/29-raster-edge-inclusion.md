@@ -14,7 +14,33 @@ For an outward margin, select **One pixel around Study area** under **Extra sour
 
 **A101 — Separate pixel selection from pixel presentation.** All-touched retains a native cell when its closed rectangle intersects the polygon or configured outward margin, including edge/corner contacts within available coverage. Cell-center remains available for legacy work. Neither method resamples values, estimates population totals, or assigns fractional-cell weights. The map uses an SVG alpha mask to hide portions outside the footprint. Exported GeoTIFFs retain whole native cells on a rectangular georeferenced grid, with the mask method, margin and boundary in their description. They are not subpixel raster encodings.
 
-**A102 — Margin is a processing parameter in native pixel coordinates.** The permitted margin is 0–1 pixel, measured by Euclidean distance after transforming coordinates into the source grid. This is not a metre buffer; geographic pixels may have unequal physical dimensions. Round joins in the SVG display use the same pixel-coordinate space. Positive margin expands outer boundaries and contracts holes. Multipart polygons are a union. A small numerical tolerance handles floating-point contacts; equivalence with a GDAL implementation has not been established.
+**A102 — Margin is a processing parameter in native pixel coordinates.** The permitted margin is 0–1 pixel, measured by Euclidean distance after transforming coordinates into the source grid. This is not a metre buffer; geographic pixels may have unequal physical dimensions. Round joins in the SVG display use the same pixel-coordinate space. Positive margin expands outer boundaries and contracts holes. Multipart polygons are a union. A small numerical tolerance handles floating-point contacts.
+
+Equivalence with GDAL is now measured, and it does not hold for All touched.
+Against `rasterio` 1.5.2 with GDAL 3.12.2, over a synthetic CRS84 grid and a
+cutline with vertices deliberately placed on pixel corners, **Cell center inside
+agrees exactly**: same cropped window, same 132 included cells, same retained
+values. **All touched does not**: Fieldwork includes 35 cells that GDAL excludes
+and none that it includes, and its cropped window is one cell wider on each
+side. All 35 differing cells sit beside a cutline coordinate lying exactly on a
+pixel boundary.
+
+Two causes, both in this prototype's own definition rather than in GDAL. The
+inclusion test measures distance to a **closed** cell rectangle, so a cutline
+edge running exactly along the border between two cells touches both of them,
+while GDAL's ALL_TOUCHED assigns such an edge to one side. Separately,
+`clipRaster` pads the All touched window by 1e-9 pixel, which flips a floor at
+an exactly aligned boundary and widens the window by a whole cell; the extra
+frame is written as NoData.
+
+The difference is one-sided: All touched here is strictly more inclusive than
+GDAL's. For a count-valued raster such as population, retaining extra boundary
+cells inflates any total computed from the clip, so a figure derived from an All
+touched clip is not comparable with a GDAL-derived one without stating which
+convention produced it. Whether to change the convention, or to document it as
+deliberate, is an open decision; the measurement is recorded in
+[the Validation Lab record](41-validation-lab.md) and reproducible from its
+check 02.
 
 **A103 — Missing data stays missing.** Edge selection can retain an actual source value that a center-only mask would discard. It cannot fill source NoData. Gray within the footprint denotes NoData; outside is transparent. Counts describe selected cells and selected cells with valid data. All-touched and positive margins can select cells extending beyond the original study polygon, so summing whole population-count pixels requires a separate, explicitly justified statistical operation.
 

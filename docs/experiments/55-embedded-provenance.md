@@ -54,6 +54,49 @@ carries prose where it could carry the graph.
    tampering. It also requires key management and a signing identity, which this project
    does not have and should not improvise.
 
+## Encoding: what base64 does, and what it cannot do
+
+Base64 is an **encoding, not a mechanism**. It adds no robustness, no integrity, no
+authentication and no concealment — it solves exactly one problem, which is carrying bytes
+that a text container would otherwise mangle. It is worth measuring rather than debating,
+because the numbers decide the SVG question.
+
+Measured on a real payload: the canvas N3 for the coverage-workflow fixture, 5,670 bytes
+of Turtle containing 72 characters that XML requires escaping.
+
+| Form | Size | Against raw text | Readable in a text editor |
+| --- | --- | --- | --- |
+| Raw text | 5,670 B | — | yes |
+| XML-escaped, or wrapped in CDATA | 5,886 B | **+4 %** | yes |
+| base64 of raw text | 7,560 B | +33 % | no |
+| gzip | 1,334 B | 4.3× smaller | no |
+| **gzip then base64** | 1,780 B | **3.2× smaller** | no |
+
+That settles the default. Escaping costs **4 %** and keeps the figure self-describing to
+anyone who opens it — which is the entire argument for RDF in SVG `<metadata>`. Base64 of
+plain text is the worst option available: a third larger *and* unreadable. So the
+recommendation above stands as escaped text or CDATA, not base64.
+
+Where base64 is genuinely the right tool here:
+
+1. **Compressed payloads.** `gzip` then base64 is 3.2× smaller than raw text and the gap
+   widens with payload size, so a full multi-node run receipt may justify it where a short
+   one does not. The threshold should be a measured size, not a preference.
+2. **ASCII-only containers.** The GeoTIFF description path escapes non-ASCII to `\uXXXX`
+   and caps at 60 KB, so a compressed payload could only travel there base64-encoded. That
+   combination — compress, encode, and still fit 60 KB — is the case where it earns its
+   keep.
+3. **Data URIs**, if a raster basemap is ever embedded to make an SVG self-contained. Note
+   the cost: +33 % on the image bytes, and it forfeits the muting and figure–ground control
+   that argued for vector context in [experiment 52](52-cacheable-basemaps.md).
+
+Two rules that go with it. An encoded payload must **declare its encoding and carry a
+digest of the decoded content**, or a reader cannot tell a truncated blob from a complete
+one. And base64 must never be used **as obfuscation**: it is recognisable on sight and
+decodable by anyone, so hiding a sensitive payload in it is strictly worse than plaintext —
+it looks opaque while being transparent, which invites exactly the mistake the allow-list
+below exists to prevent. **Encoding never changes what is permitted to be embedded.**
+
 ## The refusal: steganography should not be the mechanism
 
 Three reasons, in increasing order of how much they matter.

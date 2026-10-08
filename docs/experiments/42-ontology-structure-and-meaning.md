@@ -195,7 +195,7 @@ rejecting a misuse, so a wrong domain silently mistypes data.
 
 Structure and semantics say nothing about whether the vocabulary answers a
 question anyone has. The audit procedure now carries a third dimension,
-**relevance**, assessed against [competency questions](../competency-questions.md):
+**relevance**, assessed against [competency questions](44-ontology-competency-questions.md):
 each question names who asks it, what would answer it, and an honest status.
 
 Writing that list found gaps no reasoner would: reprojection parameters are

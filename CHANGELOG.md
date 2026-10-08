@@ -5,6 +5,17 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Record the curated pack catalog in run provenance. A run asserts `fw:PackCatalog` with the
+  catalog version and the SHA-256 of `widgets/packs.json` as built, and every node plan states
+  `fw:widgetDefinitionSource "host-registry"`, which the runtime shape requires from a closed
+  set. The application still loads no pack — `runtimeFetching: "none"` is an admission rule —
+  and that is why the receipt now says so positively instead of being silent, since an absence
+  cannot be checked. Recorded metadata only: not a claim that any pack was reviewed, admitted,
+  available or used. The identity is generated into `widgets/pack-catalog.json` by the build.
+  Validation: 5 new unit checks within 128, 71 Chromium scenarios with 1 skipped, SHACL
+  conformant, registry valid at 34 widgets and 66 releases, catalog verified at 8 pinned
+  digests. See [experiment 49](docs/experiments/49-catalog-in-the-interface.md).
+
 - Add **Tabular data**, a source widget that imports a long-format CSV: one row
   per observation, with the columns that identify a row declared as keys and one
   column holding the value. The key tuple must be unique, so a wide table or a

@@ -148,7 +148,7 @@ This subsumes the legitimate part of A without becoming an inventory: it lists w
 and an admitted widget must be stated on the surface itself, not left to the
 reader.
 
-### B. Pack provenance in the receipt — recommended, and small
+### B. Pack provenance in the receipt — **implemented, 2026-10-08**
 
 The run receipt already names, per node, `fw:widget`, `fw:catalogVersion` and
 `fw:catalogDigest` from the **widget registry**. The slot therefore exists; what is
@@ -166,6 +166,29 @@ falsifiable: if a pack definition ever does execute, the assertion fails loudly
 instead of the receipt quietly staying the same. It needs vocabulary terms, which
 means it is subject to the [semantic audit](../ontology-audit.md) before it is
 declared, not after.
+
+**Built.** A run now records the catalog it was built from, and every node states where its
+definition came from:
+
+- `fw:PackCatalog` with `fw:packCatalogVersion` and `fw:packCatalogDigest` — the SHA-256 of
+  `widgets/packs.json` as built — asserted once per run, in the receipt section already marked
+  recorded metadata rather than rule premises. A digest replaced the "short commit" proposed
+  above, because the build knows the file and not the repository state. The vocabulary comment
+  states what it is not: not a claim that any pack was reviewed, admitted, available or used.
+  `fw:PackCatalog` is disjoint from `fw:WidgetDefinition` and from both plan classes, so a
+  catalog cannot be read as a definition or a plan.
+- `fw:widgetDefinitionSource "host-registry"` on every plan, canvas and runtime alike, with the
+  runtime shape requiring exactly one value from `("host-registry" "pack")`. Silence cannot pass
+  for host provenance, and a pack-supplied definition would have to say `"pack"` or fail SHACL.
+- The identity is generated into `widgets/pack-catalog.json` by the build. A bundle-time define
+  was tried first and rejected: it did not reach the separate compilation in `validate:widgets`,
+  and defaulting the constant would have let a receipt name a catalog nobody built — the
+  silent-failure pattern this project keeps rediscovering.
+
+Checked by five unit tests: that the digest recomputes from `widgets/packs.json`, so a stale
+bundle fails; that a catalog without a digest or with a non-semver version fails SHACL; that a
+plan whose source is removed or invented fails; and that the catalog never appears as something
+a step `prov:used`.
 
 ### C. A refusals surface — the actual DE experiment
 
@@ -234,7 +257,7 @@ A pack browser remains excluded. **A preparation view is now the recommended
 surface**, and it is where the catalog belongs: it is the one moment the
 practitioner is online on purpose, deciding something consequential, with the cost
 of being wrong deferred to a place where it cannot be fixed. Option B, receipt
-provenance, stands and is still gated on vocabulary review. Option C, refusals,
+provenance, is **implemented**, recorded above. Option C, refusals,
 remains the open DE question.
 
 The two measured readiness findings above are **defects, not design options**, and

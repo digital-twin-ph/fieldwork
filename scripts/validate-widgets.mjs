@@ -92,7 +92,50 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
   check(Object.keys(definitions).every(type=>types.has(type)),'Unregistered implementation widget');
   return {widgets:ids.size,releases:releaseCount};
 }
+
+// --- Parity evidence -----------------------------------------------------------------
+// Shape and registry agreement only; verifying a recorded result against the Validation Lab's
+// own file needs that repository, so it lives in validate-parity.mjs and stays out of the gate.
+export function checkParity(parity,registryDoc){
+  const problems=[],notes=[];
+  if(parity.schema!=='fieldwork/parity-evidence/1')problems.push(`unknown parity schema ${parity.schema}`);
+  if(!/^[0-9a-f]{40}$/.test(parity.lab?.commit??''))problems.push('parity lab commit is not a full 40-character SHA');
+  const outcomes=Object.keys(parity.outcomes??{});
+  if(!outcomes.length)problems.push('no parity outcomes declared');
+  const seen=new Set();
+  for(const e of parity.entries??[]){
+    const where=`${e.widget??'an entry'} ${e.coversRelease??''}`.trim();
+    const widget=registryDoc.widgets.find(w=>w.id===e.widget);
+    if(!widget){problems.push(`${where}: unknown widget`);continue;}
+    if(!widget.releases.some(r=>r.version===e.coversRelease))
+      problems.push(`${where}: names a release the registry does not list`);
+    for(const field of ['check','result','sha256','criterion','outcome','measured','ranAt'])
+      if(!e[field])problems.push(`${where}: missing ${field}`);
+    if(!/^[a-f0-9]{64}$/.test(e.sha256??''))problems.push(`${where}: result digest is not a SHA-256`);
+    if(e.outcome&&!outcomes.includes(e.outcome))problems.push(`${where}: undeclared outcome ${e.outcome}`);
+    if(!e.external?.length)problems.push(`${where}: names no external implementation`);
+    const key=`${e.widget}@${e.coversRelease}:${e.check}`;
+    if(seen.has(key))problems.push(`${where}: duplicate entry for check ${e.check}`);
+    seen.add(key);
+    // A result about an older release is evidence about that release, not about what runs now.
+    if(e.coversRelease!==widget.currentVersion)
+      notes.push(`${e.widget}: parity covers ${e.coversRelease}, but ${widget.currentVersion} is current — not re-established`);
+    if(e.outcome!=='agrees')notes.push(`${e.widget} ${e.coversRelease}: ${e.outcome} — ${e.measured}`);
+  }
+  const covered=new Set((parity.entries??[]).map(e=>e.widget));
+  notes.push(`parity recorded for ${covered.size} of ${registryDoc.widgets.length} widgets`);
+  return {problems,notes};
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
-  try{const result=await validateRegistry();console.log(`Widget registry valid: ${result.widgets} widgets, ${result.releases} releases. No runtime version dispatch is implied.`);}
+  try{
+    const result=await validateRegistry();
+    console.log(`Widget registry valid: ${result.widgets} widgets, ${result.releases} releases. No runtime version dispatch is implied.`);
+    const registryDoc=JSON.parse(await readFile(localPath('widgets/registry.json'),'utf8'));
+    const parityDoc=JSON.parse(await readFile(localPath('widgets/parity.json'),'utf8'));
+    const parity=checkParity(parityDoc,registryDoc);
+    for(const note of parity.notes)console.log(`  parity: ${note}`);
+    if(parity.problems.length){for(const problem of parity.problems)console.error(`PARITY PROBLEM: ${problem}`);process.exitCode=1;}
+  }
   catch(error){console.error(error.message);process.exitCode=1;}
 }

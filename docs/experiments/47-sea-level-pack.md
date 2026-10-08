@@ -140,11 +140,88 @@ either widget-ise over the store index or document as an external procedure, and
 extraction belongs in the Validation Lab. Writing it as a single arrow from
 "data" to "widget" is what let the first draft assume its hardest step away.
 
+## Do the import widgets this needs already exist? No, and one of them is base work
+
+Discovery is now out of scope by decision: the practitioner has already obtained
+the resource. That makes the next question concrete — can this prototype read
+what they obtained?
+
+**What exists.** Every file-reading widget produces one of three things:
+
+| Widget | Reads | Produces |
+| --- | --- | --- |
+| Input data | CSV, GeoJSON, GeoPackage, synthetic, map pins | points |
+| Reproject input | CSV, GeoJSON in WGS84 UTM metres | points |
+| Raster input | one-band north-up WGS84 GeoTIFF | raster |
+| Street network | OSMnx GraphML, Overpass JSON, graph JSON | network |
+| Evidence references | PDF | a citation, not data |
+
+Points, a raster, or a graph. Nothing else.
+
+**What the resource is.** The AR6 summary projections are **NetCDF**: the project's
+own FAQ notes that "the gridded sites are on a grid but are not stored in a
+gridded fashion in the netcdf files". There is no NetCDF reader here —
+[experiment 02](02-area-computation-and-resource-scope.md) records it as design
+work — and no zarr reader.
+
+**Two gaps, and the second is the real one.** The missing NetCDF reader is the
+obvious gap, but it is avoidable. The structural gap is that **an AR6 projection
+is not points, a raster, or a graph.** It is a table keyed by site, scenario,
+workflow, year and quantile: many rows per site. Input data's CSV importer makes
+one point per row, so feeding it a projection table would mint duplicate points
+and lose the key. There is no tabular import in this prototype at all.
+
+**So only one new importer is needed, and it is not a NetCDF reader.** Extraction
+belongs where `xarray` already exists, in the Validation Lab, which can read the
+NetCDF and write a small long-format CSV. The application then needs a **tabular
+import** that reads a declared key and value column set and preserves the key
+rather than flattening it to geometry. Putting a NetCDF or HDF5 reader in a
+3.8 MB offline bundle to avoid a CSV would be the wrong trade, and the WorldPop
+measurements in [experiment 39](39-stac-discovery-and-remote-acquisition.md) are
+the precedent: prepare outside, import bounded, record provenance.
+
+**That importer is base work, not pack work.** A table is a new result kind, and
+`PortType` is a closed TypeScript union with `NodeDefinition` declaring a single
+`output`; all 41 existing widgets use it that way. A pack cannot add a port type
+without changing the base contract, which [experiment 43](43-widget-packs.md)
+puts out of a pack's scope. So the ordering is forced: **a tabular import and its
+port type must land in the application before this pack can be declaration-only.**
+Discovering that is what a use case is for — the pack looked buildable until its
+data turned out to have a shape the host cannot carry.
+
+## The datasets the worked example must bundle
+
+A worked example here bundles its data, as Old Naledi bundles a boundary and a
+facility registry with `provenance.json` and SHA-256 digests. The licence allows
+it: the AR6 projections are **CC BY 4.0**, with three citations the licence file
+makes obligatory — the WG1 Chapter 9 chapter, the FACTS model-description paper,
+and the dataset itself at its version, `20210809`, with the access date. A bundled
+extract must therefore carry all three plus the Zenodo DOI, not a general
+"IPCC AR6" attribution.
+
+What would be bundled, and how small it is:
+
+| Artifact | Content | Size |
+| --- | --- | --- |
+| Site subset | The Philippine entries from the published site list, which has 66,190 rows at 3.0 MB in full | 228 rows |
+| Projection extract | One site, both dataset families, selected scenarios, years and quantiles | tens of rows |
+| `provenance.json` | Dataset DOI and version, store paths, the selection, extraction code and version, digests, the three required citations | under a kilobyte |
+
+The site list already supplies what site assignment needs: `MANILA` is entry 145
+at 14.58 N, 120.97 E, and 228 of the published sites fall within a Philippine
+bounding box. Bundling the Philippine subset rather than the 3 MB global list is
+the same bounded-extract discipline applied to the index as to the data.
+
+One consequence of bundling: a regenerated extract changes a digest, which must
+move the pack version and the integration report with it. That is already
+required by experiment 43, and this is the case that makes it concrete.
+
 ## Widgets, preferring reuse
 
-**`slr_extract_import`** reads a prepared extract as an ordinary CRS84 point
-dataset with typed attributes, so it reuses the `points` port and every existing
-output widget works unchanged. Its parameters name the scenario, workflow, year,
+**`slr_extract_import`** reads a prepared extract. It cannot reuse the `points`
+port, for the reason above: a projection has many rows per site, so flattening it
+to points would lose the key. It needs the tabular port that the application does
+not yet have, which is why this widget is blocked on base work. Its parameters name the scenario, workflow, year,
 quantile set and dataset family. It introduces no new port type, which
 [AGENTS.md](../../AGENTS.md) prefers over a synonymous widget.
 

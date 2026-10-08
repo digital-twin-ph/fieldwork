@@ -1,8 +1,11 @@
 # 50 · The preparation checklist, and what its format would decide
 
-**Status:** developmental-evaluation item. Open by intent. This record does not
-choose a format, and choosing one on present evidence would be the error it exists
-to prevent.
+**Status:** developmental-evaluation item. The layout is open by intent; four
+constraints on it are not. This record does not choose a format, because choosing one
+on present evidence would be the error it exists to prevent — but it records what any
+format must satisfy: falsifiable items, verified facts kept visibly distinct from
+declared ones, a size on every download, and deferral as a stated state rather than an
+empty box.
 
 [Experiment 49](49-catalog-in-the-interface.md) established that the practitioner
 makes one consequential decision while still online — am I ready to go offline? —
@@ -47,32 +50,73 @@ This cuts the space in half before any format is chosen. Whatever the layout,
 derived items and declared items must be visibly different kinds, and a format that
 cannot show that difference is excluded.
 
-## Creation is the wrong moment, and also the only moment that can choose
+## Creation knows more than this record first claimed
 
-The request was a checklist "when creating a project", which is worth examining
-rather than implementing, because creation is when the practitioner knows **least**:
+An earlier draft argued that project creation carries the ability to change the plan
+but none of the information. That is wrong, and the correction is the most useful
+thing in this record: **the study area is known at creation**, and the study area is
+the key from which nearly every downloadable resource follows. The blank workspace
+already makes drawing it step 1.
 
-- At creation there is no workflow, so nothing can be derived. What data the
-  activity needs, which widgets will want a network, what the study area covers —
-  none of it exists yet.
-- At creation the practitioner can still **change the plan** cheaply. By departure
-  they cannot.
+Once a boundary exists, the application can derive — not ask — what the activity
+will need: basemap tiles for that extent, a street graph for that bounding box, a
+raster window, a boundary file. What it cannot derive is the **case data**, because
+that is collected on site and does not exist yet.
 
-So the moment carries the choice but not the information, and the moment with the
-information carries no choice. This suggests two surfaces rather than one, which is
-a hypothesis and not a decision:
+So the three things on a preparation list are not one kind of item:
 
-1. **At creation: a declaration of intent.** Is this a field activity or a desk
-   activity? Will there be a network? What is being taken in? This is short, it is
-   all declared rather than derived, and its value is that it makes later derivation
-   possible and later contradiction visible.
-2. **Before departure: a derived readiness report.** Everything checkable, checked,
-   against the intent declared at creation.
+| Class | Example | Can the application check it? | What the item is *for* |
+| --- | --- | --- | --- |
+| **Provisionable** — derived from the study area, fetchable now | basemap tiles for the extent, street graph, raster window | Yes, and it can measure the size | Deciding whether to download it, and when |
+| **Capture capacity** — derived, but nothing to fetch | attribute schema present offline, identifier strategy chosen, storage headroom | Yes, but about *capability*, not content | Being able to record what you find |
+| **Declared** — outside the software entirely | consent, permission to be present, batteries, a paper fallback | No | Being honest that the list is not the whole job |
 
-An intent declared at creation also gives the application grounds to say something
-it currently cannot: *you said this was an offline field activity, and you have just
-added a widget that needs a network.* That sentence is worth more than a page of
-ticks, and it is only available if intent was captured early.
+Case data is not a missing item on the list. It is the second class, and conflating
+the two produces the familiar bad checklist: a line reading "case data ☐" that can
+only ever be ticked dishonestly. The right item is *can this device record an
+observation offline, with the attributes this study needs* — which is checkable, and
+which is a different question.
+
+This also replaces the two-surface hypothesis with something simpler. Intent need
+not be declared abstractly at creation if the study area is drawn there: the area
+*is* the declaration, and the derived list follows from it.
+
+## Size changes the format, measured
+
+The practitioner knows their connectivity and will defer a large download until the
+link is stable. That is correct judgment the application does not have, and it means
+a readiness item cannot be a binary tick. It has to carry a size.
+
+How much that matters, computed for the Old Naledi extent
+(25.783 E to 25.982 E, −24.708 S to −24.544 S — roughly 20 km by 18 km) at
+approximately 23 kB per tile:
+
+| Tiles through zoom | Tiles | Estimated bytes |
+| --- | --- | --- |
+| 15 | 481 | ~11 MB |
+| 16 | 1,739 | ~39 MB |
+| 17 (the editor's maximum for this layer) | 6,630 | ~149 MB |
+
+The depth dominates everything else: the last zoom level alone is 4,891 of the 6,630
+tiles. A checklist that says "basemap tiles: not cached ☐" hides the only decision
+that matters here, which is **how deep**, and it is a decision only the practitioner
+can make, because it trades street-level detail against a download they may not be
+able to finish.
+
+Three format requirements follow, and they are now constraints rather than
+preferences:
+
+1. **Every provisionable item carries an estimated size**, labelled as an estimate,
+   because tile bytes vary with terrain and rendering.
+2. **Deferral is a first-class state with a reason**, not an unchecked box. An item
+   is required, deferred by choice, or unavailable here — and a deferral records why,
+   because that is what explains a field failure afterwards.
+3. **A partial download reports as partial.** A tile set interrupted at 60 % must
+   never present as cached; this is exactly the one-asset-probe failure from
+   [experiment 49](49-catalog-in-the-interface.md) repeated at a finer grain.
+
+Nothing here says the application should fetch automatically. It should propose with
+sizes and let the person with the knowledge of the link decide.
 
 ## Learners are a second audience with different needs
 
@@ -85,6 +129,12 @@ are — and the reverse.
 
 Whether one format can serve both is unknown. It is the second open question in
 this record, and it may be the one that decides the first.
+
+One capability the derived list would unlock either way: because the study area is
+known at creation and widgets declare what they need, the application can say
+something it currently cannot — *this workflow now includes a widget that needs a
+network, and you prepared for an offline activity.* That sentence is worth more than
+a page of ticks.
 
 ## What a cheap comparison would look like
 
@@ -109,6 +159,8 @@ the design did not know it needed, supplied by the person who needed it.
 | A derived report is read but produces no action | That reporting is sufficient, rather than blocking |
 | Nothing is added by hand across several uses | That the checklist content is incomplete — or that people have stopped engaging |
 | Learners and practitioners want the same items in the same order | That two formats are needed |
+| Does anyone change the zoom depth once they see the byte estimate? | That size belongs on the item at all |
+| Is a deferred item revisited before departure, or forgotten because deferring felt like completing? | That deferral is a safe state rather than a disguised omission |
 | Someone goes to the field unprepared anyway, with the checklist present and correct | That the problem was ever one of information |
 
 The last row is the one that would retire this whole line of work, and it should be
@@ -120,15 +172,17 @@ Answerable, if a derived report exists:
 
 1. Which resources this activity needs are cached, and which are missing?
 2. Which widgets in this workflow stop working without a network?
-3. Does the current workflow contradict the intent declared when the project was
-   created?
+3. Does the current workflow need a network it will not have, given the study area
+   and widgets in it?
+4. How large is each outstanding download, and how deep does the basemap go?
+5. Which items were deferred, and for what stated reason?
 
 Must be refused, whatever the format:
 
-4. Is this activity ready? — the application can report what it checked, and must
+6. Is this activity ready? — the application can report what it checked, and must
    not certify readiness it cannot see. Consent forms, batteries, a paper fallback
    and permission to be present are all outside it.
-5. Did the practitioner actually do what they ticked? — a tick is a claim. It can
+7. Did the practitioner actually do what they ticked? — a tick is a claim. It can
    be recorded and attributed; it cannot be verified.
 
 ## Dependency, and the sequence this implies

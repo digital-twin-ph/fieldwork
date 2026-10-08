@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["<define:__PACK_CATALOG__>"],
+  "sourcesContent": ["{\"version\":\"0.1.2\",\"digest\":\"ac57e8f1e2ed0006abb27caad2d8efc81f63ce4966d4d13d9458f12f479e621d\"}"],
+  "mappings": "wrBAAA,IAAAA,EAAAC,EAAAC,EAAA,KAAAF,EAAA,CAAC,QAAU,QAAQ,OAAS,kEAAkE",
+  "names": ["define_PACK_CATALOG_default", "init_define_PACK_CATALOG", "__esmMin"]
+}

@@ -7,7 +7,7 @@
 @prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.3 experimental, 2026-10-08";
+<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.4 experimental, 2026-10-08";
   rdfs:comment "Implemented run bindings and bounded network/catchment receipts. No learner/game runtime is implied.".
 fw:WidgetDefinition a owl:Class;
   rdfs:comment "A versioned description of a reusable operation and interface contract. A definition is not a configured plan and not an execution.";
@@ -23,6 +23,14 @@ fw:nodeType a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:catalogVersion a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "Observed descriptor version bundled with the application, not a request to dispatch an old executable.".
 fw:catalogDigest a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:widgetDefinitionSource a owl:DatatypeProperty; rdfs:domain fw:WorkflowNodePlan; rdfs:range xsd:string;
+  rdfs:comment "Where the executed definition came from: \"host-registry\" for a definition compiled into the application, \"pack\" for one supplied by an admitted widget pack. Stated positively so that a receipt asserting host provenance can be falsified rather than assumed from silence.".
+fw:PackCatalog a owl:Class;
+  rdfs:label "Widget pack catalog"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "The curated pack catalog a build was made from, identified by its version and the digest of its file. Recorded metadata about the build, not a rule premise, not a claim that any pack was reviewed, admitted, available or used, and not a dataset the run took as evidence.".
+fw:packCatalogVersion a owl:DatatypeProperty; rdfs:domain fw:PackCatalog; rdfs:range xsd:string.
+fw:packCatalogDigest a owl:DatatypeProperty; rdfs:domain fw:PackCatalog; rdfs:range xsd:string;
+  rdfs:comment "SHA-256 of the catalog file as built, so a receipt can be compared with the catalog in the repository.". 
 fw:resultEntity a owl:ObjectProperty; rdfs:domain fw:WorkflowStep; rdfs:range prov:Entity.
 fw:receiptActivity a owl:ObjectProperty; rdfs:domain fw:WorkflowStep; rdfs:range prov:Activity.
 
@@ -96,3 +104,4 @@ fw:readyForSpatialAnalysis a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:
 # classes; the urn: ontology IRIs do not resolve, so owl:imports is not available.
 fw:CanvasNodePlan owl:disjointWith fw:WorkflowNodePlan.
 fw:WidgetDefinition owl:disjointWith fw:CanvasNodePlan, fw:WorkflowNodePlan.
+fw:PackCatalog owl:disjointWith fw:WidgetDefinition, fw:WorkflowNodePlan, fw:CanvasNodePlan.

@@ -1,0 +1,2 @@
+import{a as d}from"./chunk-6CMATRGN.js";import{d as i}from"./chunk-ZUGTHI7D.js";i();var s=class extends d{decodeBlock(a){let o=new DataView(a),r=[];for(let e=0;e<a.byteLength;++e){let t=o.getInt8(e);if(t<0){let n=o.getUint8(e+1);t=-t;for(let l=0;l<=t;++l)r.push(n);e+=1}else{for(let n=0;n<=t;++n)r.push(o.getUint8(e+n+1));e+=t+1}}return new Uint8Array(r).buffer}};export{s as default};
+//# sourceMappingURL=packbits-NQ6UGQME.js.map

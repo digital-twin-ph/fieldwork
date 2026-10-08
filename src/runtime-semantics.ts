@@ -2,6 +2,7 @@ import registry from '../widgets/registry.json';
 import type {WorkflowNode} from './types.js';
 import type {Receipt} from './results.js';
 import {attributeLiteral} from './attribute-schema.js';
+import {HOST_REGISTRY} from './pack-catalog.js';
 
 /** Explicit bindings to receipt writers, not a parser or runtime version dispatcher. */
 export function receiptActivities(node:WorkflowNode,runId:string):string[]{
@@ -27,7 +28,7 @@ export function runtimeBindingN3(node:WorkflowNode,runId:string,receipts:Receipt
   const base=`urn:fieldwork:run:${runId}:`,plan=`<${base}plan:${node.id}>`,step=`<${base}step:${node.id}>`,output=`<${base}output:${node.id}>`;
   const entry=registry.widgets.find(w=>w.nodeType===node.type)!;
   const release=entry.releases.find(r=>r.version===entry.currentVersion)!;
-  let facts=`${plan} a fw:WorkflowNodePlan; fw:widget <${entry.id}>; fw:nodeType ${JSON.stringify(node.type)}; fw:catalogVersion ${JSON.stringify(entry.currentVersion)}; fw:catalogDigest ${JSON.stringify(release.sha256)}.\n<${entry.id}> a fw:WidgetDefinition.\n${step} a fw:WorkflowStep; fw:resultEntity ${output}.\n`;
+  let facts=`${plan} a fw:WorkflowNodePlan; fw:widget <${entry.id}>; fw:nodeType ${JSON.stringify(node.type)}; fw:catalogVersion ${JSON.stringify(entry.currentVersion)}; fw:catalogDigest ${JSON.stringify(release.sha256)}; fw:widgetDefinitionSource ${JSON.stringify(HOST_REGISTRY)}.\n<${entry.id}> a fw:WidgetDefinition.\n${step} a fw:WorkflowStep; fw:resultEntity ${output}.\n`;
   // Catalog versions describe the bundle's current descriptors, not selected old executables.
   for(const receipt of receipts.filter(r=>r.nodeId===node.id))for(const activity of receiptActivities(node,runId))facts+=`${step} fw:receiptActivity <${activity}>.\n<${activity}> a prov:Activity; fw:workflowNode ${plan}.\n`;
   if(node.type==='observations'||node.type==='places'||node.type==='centers'){

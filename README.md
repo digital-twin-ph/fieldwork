@@ -111,7 +111,8 @@ proposed capabilities from implemented behaviour. Start with:
 
 | Record | Subject |
 | --- | --- |
-| [Semantic audit procedure](docs/ontology-audit.md) | Admission review and worked-example checkpoints, opening with a glossary of the ontology vocabulary so the work can be reviewed without a background in description logic |
+| [Semantic audit procedure](docs/ontology-audit.md) | Admission review and worked-example checkpoints across three dimensions — structure, semantics and relevance — opening with a glossary so the work can be reviewed without a background in description logic |
+| [Competency questions](docs/competency-questions.md) | The questions the ontology exists to answer, each with its status, and five it must refuse |
 | [Prior art](docs/prior-art.md) | openEO, QGIS, Geo Engine and APE: what to adapt, what to evaluate, and the limits of each comparison |
 | [Widget registry](widgets/README.md) | All 33 node identities with independent versions, port contracts and ontology mappings |
 | [39 · STAC discovery](docs/experiments/39-stac-discovery-and-remote-acquisition.md) | Measured catalog behaviour and a proposed acquisition adapter |

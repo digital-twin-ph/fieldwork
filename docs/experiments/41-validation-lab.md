@@ -219,6 +219,49 @@ written up separately in
 procedure they concern. The reasoner is LGPL-3.0 and about 25 MB, so it is a
 dependency of the lab and deliberately not of this repository.
 
+## Result: check 04, executable competency questions
+
+Run on October 8, 2026 against a real exported run receipt from the Old Naledi
+worked example: 8 receipts, 12 executed nodes, 4,280 triples once provenance,
+receipt facts and ground conclusions are merged. Rule formulas are deliberately
+excluded, since they are parsed as N3 elsewhere and are not data.
+
+The check answers each question with SPARQL through Comunica 4.5.0 over an N3
+store, **with no reasoning applied**, so a query must match asserted triples and
+cannot lean on subclass inference. It then compares the measured answer with the
+status recorded in [the competency-question list](../competency-questions.md).
+Comparing the two is the point: the list is prose and can drift from what
+receipts actually carry.
+
+| Outcome | Result |
+| --- | --- |
+| Expectations met | **12 of 13** |
+| Refusals that held | **4 of 4** — no population count, no reprojection parameters, no draft/executed conflation, no view claiming to compute |
+| Drift found | **1** |
+
+The drift is S1b. The list claimed the reporting boundary is answerable through
+`fw:StudyArea`, and in the Old Naledi receipt **no individual carries that type**:
+the boundary appears only as a `geo:Feature`. A reviewer who does not already know
+which of 235 features is the study area cannot find it by its role. Drawn study
+areas do emit the type; the pinned-dataset examples do not. The list now records
+S1 and S1b separately with honest statuses, and closing the gap means changing
+what those receipts emit, so it needs its own migration rather than a quiet fix.
+
+Two refusals are worth separating. **R1**, population counts, must always return
+nothing: a term that answered it would be a defect. **S5**, reprojection
+provenance, returns nothing today because the facts travel as opaque JSON rather
+than typed RDF — so here an empty result records a gap, and a future non-empty
+result would mean the gap closed and the list needs updating. The check cannot
+tell those two cases apart, which is why each question carries its reason in
+prose beside the query.
+
+This check differs in kind from the others in this lab. Checks 01 to 03
+recompute or reason; this one asks whether the recorded knowledge answers
+anything a practitioner needs, and its output is a list of questions the work
+cannot yet answer. It is a **developmental-evaluation** instrument rather than a
+release gate: a question moving from Not answerable to Answerable is a design
+decision with a migration, not a defect being closed.
+
 ## Acceptance criteria
 
 Before any Fieldwork document claims the lab validates an operation:

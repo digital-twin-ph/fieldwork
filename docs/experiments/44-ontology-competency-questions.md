@@ -1,9 +1,15 @@
-# Competency questions
+# Experiment 44: ontology competency questions
 
-A competency question is a question the ontology exists to answer. The list is
-the **relevance** dimension of [the audit procedure](ontology-audit.md): structure
-asks whether a graph is well formed, semantics asks whether it means what we say,
-and relevance asks whether it answers anything a practitioner needs.
+Date: October 8, 2026. Status: question list with measured statuses, thirteen of
+them executable. No vocabulary term is changed by this document; it records what
+the ontology can and cannot answer, and why.
+
+A competency question is a question the ontology exists to answer. This list is
+the **relevance** dimension of [the audit procedure](../ontology-audit.md):
+structure asks whether a graph is well formed, semantics asks whether it means
+what we say, and relevance asks whether it answers anything a practitioner needs.
+A vocabulary can pass the first two and still be useless, which is why relevance
+is assessed separately rather than inferred from conformance.
 
 Each question names who asks it, what must be in the graph to answer it, and its
 current status. Status is assessed against what this prototype's vocabulary

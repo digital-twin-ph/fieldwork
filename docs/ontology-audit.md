@@ -39,7 +39,7 @@ pass on one is not evidence about the others.
 | --- | --- | --- | --- |
 | **Structure** | Is the graph well formed and completely declared? | SHACL shapes over runtime and canvas graphs; a declaration check over the vocabulary itself for undeclared terms, missing labels and missing comments | That the terms mean anything in particular, or that the graph is worth producing |
 | **Semantics** | Does the vocabulary mean what these documents claim? | An OWL 2 DL reasoner: consistency, class satisfiability, and whether a conflation the audit forbids is actually rejected | That the distinctions drawn are the right ones. A reasoner enforces the modelling it is given |
-| **Relevance** | Does it answer anything a practitioner needs to ask? | [Competency questions](competency-questions.md), each with the facts that would answer it and an honest status | That an answer is correct, timely or appropriate to a public-health question |
+| **Relevance** | Does it answer anything a practitioner needs to ask? | [Competency questions](experiments/44-ontology-competency-questions.md), each with the facts that would answer it and an honest status | That an answer is correct, timely or appropriate to a public-health question |
 
 Structure is the oldest check here and the easiest to mistake for the others. A
 conforming graph can be semantically empty, and a consistent vocabulary can

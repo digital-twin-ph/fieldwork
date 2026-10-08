@@ -229,7 +229,7 @@ excluded, since they are parsed as N3 elsewhere and are not data.
 The check answers each question with SPARQL through Comunica 4.5.0 over an N3
 store, **with no reasoning applied**, so a query must match asserted triples and
 cannot lean on subclass inference. It then compares the measured answer with the
-status recorded in [the competency-question list](../competency-questions.md).
+status recorded in [the competency-question list](44-ontology-competency-questions.md).
 Comparing the two is the point: the list is prose and can drift from what
 receipts actually carry.
 

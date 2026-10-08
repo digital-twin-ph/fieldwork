@@ -132,6 +132,15 @@ async function checkPack(pack){
   if(missing.length&&pack.admission?.status==='admitted')
     problems.push('catalog admits a pack that declares a missing host capability');
 
+  // Same reasoning one level down: a catalog entry restates the pipeline stages, and a restated
+  // fact drifts. This rule exists because it did drift — the catalog still read "import: blocked"
+  // after the pack had moved that stage to "proposed".
+  for(const stage of STAGES){
+    const entry=pack.stages?.[stage],declared=manifest.stages?.[stage]?.status;
+    if(entry===undefined||declared===undefined)continue;
+    if(entry!==declared)problems.push(`catalog records stage ${stage} as "${entry}"; the manifest declares "${declared}"`);
+  }
+
   // The catalog's own list of outstanding capabilities has to agree with the manifest, or the
   // catalog can say a pack is unblocked while the pack still says it is not.
   const outstanding=new Set(missing.map(c=>c.capability));

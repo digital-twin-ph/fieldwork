@@ -50,3 +50,21 @@ test('unsupported CRS and pixel interpretation are rejected before acquisition',
 test('source provenance uses safe bounded metadata, standard RDF and preserves existing assets',async()=>{validateRasterProvenance(undefined);validateRasterProvenance(WORLDPOP_BOTSWANA);assert.throws(()=>validateRasterProvenance({sourceURL:'javascript:alert(1)'}),/HTTP/);assert.throws(()=>validateRasterProvenance({citation:'x'.repeat(4001)}),/length/);assert.throws(()=>validateRasterProvenance({unexpected:'x'}));const facts='@prefix dct:<http://purl.org/dc/terms/>. @prefix dcat:<http://www.w3.org/ns/dcat#>. @prefix fw:<urn:fieldwork:>. '+rasterProvenanceN3('<urn:source>',{...WORLDPOP_BOTSWANA,title:'Title "quoted"\nline'});assert.ok(new Parser().parse(facts).some(q=>q.predicate.value.endsWith('bibliographicCitation')));const {grid,bytes}=await fixture();grid.asset.provenance=WORLDPOP_BOTSWANA;const w=oldNalediWorkflow();w.nodes.push({id:'r',type:'raster_input',x:0,y:0,params:{label:'Source',asset:grid.asset}});const zip=await createEncryptedPackage(w,new Map([[grid.asset.sha256,bytes]]),'provenance test passphrase');const restored=await readEncryptedPackage(zip,'provenance test passphrase',validateWorkflow);assert.deepEqual(restored.workflow.nodes.find(n=>n.id==='r').params.asset.provenance,WORLDPOP_BOTSWANA);});
 
 test('long Unicode citation in exported TIFF preserves header, source distinction and pixels',async()=>{const {grid}=await fixture();grid.asset.provenance={citation:'\u00e9\u4eba'.repeat(1500),sourceURL:'https://example.org/source'};const encoded=encodeRaster(grid),m=await inspectRaster(new Blob([encoded])),description=JSON.parse(m.description.replace(/\x00+$/,''));assert.equal(description.source.citation,grid.asset.provenance.citation);assert.equal(description.embeddedBy,'Fieldwork');assert.match(description.sourceMetadataOrigin,/separate from original/);assert.deepEqual(description.originalRasterMetadata,grid.asset.source.metadata);const decoded=await readRasterWindow(new Blob([encoded]),m,[0,0,4,4]);assert.deepEqual(decoded.values,grid.values);});
+
+test('a cutline running exactly along a cell border does not include the cell outside it',async()=>{
+  // The convention is positive area: a cell joins the mask when the cutline covers part of
+  // its area or crosses its interior, not when an edge merely grazes its border. Measured
+  // against GDAL ALL_TOUCHED in the Validation Lab; see docs/experiments/29-raster-edge-inclusion.md.
+  const {grid}=await fixture();
+  const {origin,resolution}=grid.metadata;
+  const edge=(column,row)=>[origin[0]+column*resolution[0],origin[1]+row*resolution[1]];
+  // A rectangle whose sides sit exactly on the borders of cells 1..2 in both directions.
+  const aligned={type:'Polygon',coordinates:[[edge(1,1),edge(3,1),edge(3,3),edge(1,3),edge(1,1)]]};
+  const clipped=clipRaster(grid,aligned,{method:'all-touched',marginPixels:0});
+  assert.equal(clipped.metadata.width,2,'the window covers only the cells the cutline encloses');
+  assert.equal(clipped.metadata.height,2);
+  assert.equal(clipped.mask.inside,4,'four enclosed cells, and none of the eight neighbours');
+  // A cutline inset inside one cell must still include that cell, and only that cell.
+  const inside={type:'Polygon',coordinates:[[edge(1.25,1.25),edge(1.75,1.25),edge(1.75,1.75),edge(1.25,1.75),edge(1.25,1.25)]]};
+  assert.equal(clipRaster(grid,inside,{method:'all-touched'}).mask.inside,1);
+});

@@ -47,7 +47,7 @@ export function encodeRaster(grid:Pick<RasterGrid,'metadata'|'values'> & Partial
 }
 export function clipRaster(grid:RasterGrid,boundary:Boundary,options:RasterClipOptions={}):RasterGrid{
   validateClipOptions(options);const method=options.method||'cell-center',marginPixels=options.marginPixels||0;
-  const [x0,y0,x1,y1]=rasterWindow(grid.metadata,boundary,marginPixels+(method==='all-touched'?1e-9:0)),source=grid.metadata,width=x1-x0,height=y1-y0,origin:[number,number]=[source.origin[0]+x0*source.resolution[0],source.origin[1]+y0*source.resolution[1]];
+  const [x0,y0,x1,y1]=rasterWindow(grid.metadata,boundary,marginPixels),source=grid.metadata,width=x1-x0,height=y1-y0,origin:[number,number]=[source.origin[0]+x0*source.resolution[0],source.origin[1]+y0*source.resolution[1]];
   const m:RasterMetadata={...source,width,height,origin,bounds:[origin[0],origin[1]+height*source.resolution[1],origin[0]+width*source.resolution[0],origin[1]]};let inside=0,valid=0,outside=0;
   const included=rasterCellPredicate(boundary,source.origin,source.resolution,{method,marginPixels});
   const values=Array.from({length:width*height},(_,i)=>{const column=i%width,row=Math.floor(i/width),value=grid.values[(row+y0)*source.width+column+x0];if(!included(column+x0,row+y0)){outside++;return null;}inside++;if(value!==null)valid++;return value;});

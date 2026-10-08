@@ -7,11 +7,16 @@
 @prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.1 experimental, 2026-10-07";
+<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.2 experimental, 2026-10-08";
   rdfs:comment "Implemented run bindings and bounded network/catchment receipts. No learner/game runtime is implied.".
-fw:WidgetDefinition a owl:Class; rdfs:subClassOf prov:Entity.
-fw:WorkflowNodePlan a owl:Class; rdfs:subClassOf prov:Plan.
-fw:WorkflowStep a owl:Class; rdfs:subClassOf prov:Activity;
+fw:WidgetDefinition a owl:Class;
+  rdfs:comment "A versioned description of a reusable operation and interface contract. A definition is not a configured plan and not an execution.";
+  rdfs:label "Widget definition"; rdfs:subClassOf prov:Entity.
+fw:WorkflowNodePlan a owl:Class;
+  rdfs:comment "The configuration identity of a node as observed in a completed run. Distinct from an unfinished canvas plan, which carries no execution claim.";
+  rdfs:label "Workflow node plan"; rdfs:subClassOf prov:Plan.
+fw:WorkflowStep a owl:Class;
+  rdfs:label "Workflow step"; rdfs:subClassOf prov:Activity;
   rdfs:comment "Execution envelope connecting a node plan, upstream outputs and operation-specific receipt activities; not an additional generating activity for an already generated entity.".
 fw:widget a owl:ObjectProperty; rdfs:range fw:WidgetDefinition.
 fw:nodeType a owl:DatatypeProperty; rdfs:range xsd:string.
@@ -21,13 +26,22 @@ fw:catalogDigest a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:resultEntity a owl:ObjectProperty; rdfs:domain fw:WorkflowStep; rdfs:range prov:Entity.
 fw:receiptActivity a owl:ObjectProperty; rdfs:domain fw:WorkflowStep; rdfs:range prov:Activity.
 
-fw:PointInput a owl:Class; rdfs:subClassOf prov:Activity; fw:implementationStatus "implemented".
-fw:PointDataset a owl:Class; rdfs:subClassOf geo:FeatureCollection, dcat:Dataset, prov:Entity.
+fw:PointInput a owl:Class;
+  rdfs:comment "Point data supplied to an operation through a typed port. The port guarantees shape, not scientific suitability.";
+  rdfs:label "Point input"; rdfs:subClassOf prov:Activity; fw:implementationStatus "implemented".
+fw:PointDataset a owl:Class;
+  rdfs:comment "A collection of point features with their attributes. Records without coordinates are retained and remain explicitly unknown.";
+  rdfs:label "Point dataset"; rdfs:subClassOf geo:FeatureCollection, dcat:Dataset, prov:Entity.
 fw:sourceMetadata a owl:DatatypeProperty; rdfs:comment "Supplemental source metadata JSON; author supplied, not independently verified.".
 fw:missingLocation a owl:DatatypeProperty; rdfs:range xsd:boolean.
-fw:StreetNetwork a owl:Class; rdfs:subClassOf dcat:Dataset, prov:Entity.
-fw:NetworkVertex a owl:Class; rdfs:subClassOf geo:Feature.
-fw:NetworkEdge a owl:Class; rdfs:subClassOf prov:Entity;
+fw:StreetNetwork a owl:Class;
+  rdfs:comment "A directed graph of street segments with metre lengths, from an upload or a bounded download. Reachability is modelled under the graph’s own assumptions; it is not observed travel.";
+  rdfs:label "Street network"; rdfs:subClassOf dcat:Dataset, prov:Entity.
+fw:NetworkVertex a owl:Class;
+  rdfs:comment "A node of a street network graph with its location. Vertex identity comes from the source graph and is not reinterpreted.";
+  rdfs:label "Network vertex"; rdfs:subClassOf geo:Feature.
+fw:NetworkEdge a owl:Class;
+  rdfs:label "Network edge"; rdfs:subClassOf prov:Entity;
   rdfs:comment "Directed edge with supplied cost length; optional curved geometry. Parallel edges remain distinct.".
 fw:networkNode a owl:ObjectProperty; rdfs:domain fw:StreetNetwork; rdfs:range fw:NetworkVertex.
 fw:networkEdge a owl:ObjectProperty; rdfs:domain fw:StreetNetwork; rdfs:range fw:NetworkEdge.
@@ -35,8 +49,11 @@ fw:fromVertex a owl:ObjectProperty; rdfs:range fw:NetworkVertex.
 fw:toVertex a owl:ObjectProperty; rdfs:range fw:NetworkVertex.
 fw:directed a owl:DatatypeProperty; rdfs:range xsd:boolean.
 fw:edgeLength a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
-fw:CatchmentDataset a owl:Class; rdfs:subClassOf geo:FeatureCollection, dcat:Dataset, prov:Entity.
-fw:Catchment a owl:Class; rdfs:subClassOf geo:Feature;
+fw:CatchmentDataset a owl:Class;
+  rdfs:comment "A collection of modelled catchment features produced by one computation. Membership models allocation or reachability under stated assumptions, not observed service use.";
+  rdfs:label "Catchment dataset"; rdfs:subClassOf geo:FeatureCollection, dcat:Dataset, prov:Entity.
+fw:Catchment a owl:Class;
+  rdfs:label "Catchment"; rdfs:subClassOf geo:Feature;
   rdfs:comment "Modeled region for a source site. A network threshold is cumulative, not an observed service catchment.".
 fw:sourceSite a owl:ObjectProperty; rdfs:range geo:Feature.
 fw:countSemantics a owl:DatatypeProperty; rdfs:range xsd:string.
@@ -47,7 +64,9 @@ fw:corridorWidth a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
 fw:snapLimit a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
 fw:fillInteriorHoles a owl:DatatypeProperty; rdfs:range xsd:boolean.
 fw:travelDirection a owl:DatatypeProperty; rdfs:range xsd:string.
-fw:NetworkSnap a owl:Class; rdfs:subClassOf prov:Entity.
+fw:NetworkSnap a owl:Class;
+  rdfs:comment "The association of a site with a network vertex, with the snapping distance. Snap distance is not charged as travel time.";
+  rdfs:label "Network snap"; rdfs:subClassOf prov:Entity.
 fw:snap a owl:ObjectProperty; rdfs:range fw:NetworkSnap.
 fw:networkVertexId a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:snapDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
@@ -58,7 +77,8 @@ fw:outsideRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:multipleMembershipCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 
 fw:CanvasNodePlan a owl:Class; rdfs:subClassOf prov:Plan; rdfs:label "Canvas node plan"; rdfs:comment "Editable, possibly incomplete configuration. Does not assert that execution or scientific validation occurred.".
-fw:CanvasConnection a owl:Class; rdfs:label "Canvas connection".
+fw:CanvasConnection a owl:Class;
+  rdfs:comment "A declared link between two canvas node plans on an input port. Endpoint existence is checked; compatible port types and executability are application checks."; rdfs:label "Canvas connection".
 fw:configuration a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:comment "JSON configuration snapshot; operation-specific configuration checks remain application checks.".
 fw:fromPlan a owl:ObjectProperty; rdfs:range fw:CanvasNodePlan.
 fw:toPlan a owl:ObjectProperty; rdfs:range fw:CanvasNodePlan.

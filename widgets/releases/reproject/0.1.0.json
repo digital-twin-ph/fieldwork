@@ -1,0 +1,52 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:reproject",
+  "nodeType": "reproject",
+  "version": "0.1.0",
+  "title": "Reproject input",
+  "released": "2026-10-07",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['reproject']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [],
+    "output": "points",
+    "optionalInputs": [],
+    "note": "A source widget. The file and its declared UTM zone/hemisphere are configuration; the output is the ordinary CRS84 points contract."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "A coordinate-transformation activity class and its runtime SHACL shape are not yet defined. Provenance is currently carried as source information on the point layer, not as typed RDF."
+  },
+  "implementation": {
+    "files": [
+      "src/reproject.ts",
+      "src/reproject-ui.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Import-time projection change from WGS84 UTM metres to CRS84 degrees; see docs/experiments/40-reprojection-primitives.md. WGS84 zones only, no datum shift, no raster warping. Narrower than the general Reproject node proposed in experiment 05."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks assert UTM definitional invariants (false easting and northing, symmetry about the central meridian), round-trip error within 0.01 m and guard refusals. Independently compared against pyproj 3.8.0 / PROJ 9.8.1 over nine points in zone 35 south: maximum separation 6.70e-05 m against a 1 mm tolerance, explained by the nine-decimal coordinate rounding (see docs/experiments/41-validation-lab.md). That comparison ran in CPython, not a browser kernel, covers one zone, and establishes no datum other than WGS84."
+  }
+}

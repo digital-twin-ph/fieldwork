@@ -1,24 +1,25 @@
-﻿# Fieldwork
+# Fieldwork
 
-Fieldwork is a browser prototype for exploring semantic visual GIS workflows in public health. Build workflows with React Flow, compute spatial facts locally, and evaluate Notation3 rules with EYE-JS in WebAssembly.
+A browser prototype for semantic visual GIS workflows in public health. Build a
+workflow from typed widgets, compute spatial facts locally, and evaluate
+Notation3 rules with EYE-JS in WebAssembly. Nothing is sent to a server.
 
-The application version appears beside the mark in the header. See the [release notes](CHANGELOG.md) for what each version includes and [AGENTS.md](AGENTS.md#versioning-and-release-notes) for the versioning policy. Widget versions evolve independently.
+This is exploratory software, not a validated public health policy, risk model
+or privacy control.
 
-Worked examples explore heat outreach, Old Naledi diagnostic access and raster clipping, and John Snow Voronoi/network catchments and geoprivacy transformations; a synthetic exercise explores spatial coverage and input forms. The heat example uses synthetic neighborhoods; Old Naledi combines a real source boundary and historical facility registry with generated demonstration locations. This is exploratory software, not a validated public health policy, risk model or privacy control.
+## Published
 
-## Try the prototype
+| Site | What it is |
+| --- | --- |
+| [Fieldwork](https://digital-twin-ph.github.io/fieldwork/) | The application. Also on [GitLab Pages](https://fieldwork-47c2e8.gitpages.cdc.gov/), which may require a sign-in |
+| [Validation Lab](https://digital-twin-ph.github.io/validation-lab/) | JupyterLite notebooks that independently recompute Fieldwork's spatial results in Python and report agreement with a stated tolerance |
+| [Ontology browser](https://digital-twin-ph.github.io/fieldwork-ontosphere/) | A curated Ontosphere instance that opens on this project's ontology and SHACL shapes |
 
-Open the [published app](https://digital-twin-ph.github.io/fieldwork/), start with a [blank canvas](https://digital-twin-ph.github.io/fieldwork/?example=blank), or explore [Old Naledi diagnostic access](https://digital-twin-ph.github.io/fieldwork/?example=old-naledi) and [spatial coverage review](https://digital-twin-ph.github.io/fieldwork/?example=coverage).
-
-Workflows, attached PDFs and retained raster windows stay in your browser; export them to move between the local and published sites, which have separate browser storage.
-
-**Encrypted ZIP** creates a password-protected project containing the workflow, referenced PDFs and retained raster windows as binary files. Enter and confirm a long passphrase, then use **Import** to restore the ZIP on another device. Generic archive entry names, counts and sizes remain visible; original PDF filenames and citations are inside encrypted content. There is no password recovery. Browser storage and the existing JSON export/run receipts remain unencrypted. The prototype supports PDFs and bounded GeoTIFF windows, with a 20 MB archive limit; original national rasters and arbitrary attachments are not embedded. See the [encrypted-package design](docs/experiments/24-encrypted-project-packages.md).
-
-Projects now keep a manifest alongside their workflow. Edits update its inventory of nodes, connections, embedded records, fields and references. Export/import validate this inventory and required PDF/raster contents; incomplete packages are rejected. Older workflows acquire a manifest when saved. Reference-only JSON imports require their PDF/raster assets to be available locally—use a complete bundle to move projects between devices.
-
-On desktop, drag the dividers beside the Node library and Inspector, or between Workflow/N3 and Results, to resize the panels. Sizes are saved on this device. Focus a divider and use arrow keys for keyboard resizing; double-click it or choose **Reset layout** to restore defaults. Narrow screens keep the stacked layout. See the [panel-layout design record](docs/experiments/23-resizable-panels.md).
-
-Use **Hide widgets** beside the workflow tabs to collapse the left node library. The workbench and Results each have a **Full screen** control; press Escape or the same control to return to the normal layout.
+Worked examples: [blank canvas](https://digital-twin-ph.github.io/fieldwork/?example=blank),
+[Old Naledi diagnostic access](https://digital-twin-ph.github.io/fieldwork/?example=old-naledi),
+[spatial coverage review](https://digital-twin-ph.github.io/fieldwork/?example=coverage).
+The version beside the header mark is the released application version; see the
+[release notes](CHANGELOG.md).
 
 ## Current capabilities
 
@@ -29,6 +30,7 @@ Use **Hide widgets** beside the workflow tabs to collapse the left node library.
 | Study area | Draw and label a bounding box or simple polygon; inspect its GeoSPARQL representation. |
 | Calculate area | Enrich the study area with a spherical area measurement; choose metric or imperial units. |
 | Input data | Generate synthetic points, import CSV/GeoPackage/GeoJSON, or place map pins with typed attributes, value sets and optional UUIDs. |
+| Reproject input | Import a local CSV or GeoJSON in WGS84 UTM metres and convert it to CRS84 longitude/latitude for the other widgets. WGS84 zones only; no datum shift and no raster warping. |
 | Raster input and Clip raster | Acquire a bounded WGS84 GeoTIFF window, then crop and mask it with a study polygon. Preserve native values and metadata; display and download the result. |
 | Spatial coverage | Check multiple point layers against one boundary; review outside/missing locations and record exclusions without deleting source records. |
 | Geoprivacy experiment | Move points with a configurable, seeded donut displacement or aggregate them into H3 cells with sparse-cell omission. Compare private before and derived after maps/tables. These methods do not establish anonymity. |
@@ -36,182 +38,122 @@ Use **Hide widgets** beside the workflow tabs to collapse the left node library.
 | N3 and evidence | Run EYE-JS locally, inspect facts and assertions, and download run receipts. |
 | Supporting references | Attach PDFs or URLs to nodes, describe supporting passages, and preserve citations and file identity with run provenance. |
 
-General-purpose reprojection, NetCDF clipping, a GEOS-WASM geoprocessing executor, Logical English comparison and agent-based simulation are not implemented. See [Scope and research](#scope-and-research) and the linked design experiments for the current boundaries.
+Worked examples cover heat outreach, Old Naledi diagnostic access and raster
+clipping, John Snow Voronoi and network catchments, geoprivacy transformations,
+and a synthetic coverage exercise. Heat uses synthetic neighborhoods; Old Naledi
+combines a real boundary and historical facility registry with generated
+demonstration locations.
 
-The [GADM and jurisdiction design experiment](docs/experiments/14-gadm-jurisdiction-assets.md) now models provider datasets, downloaded assets, versioned jurisdiction boundaries and study areas with multiple named members. It includes synthetic RDF/N3 examples and executable selection-rule checks. GADM download, polygon import and jurisdiction-selection widgets remain proposed; this ontology work does not add them to the canvas.
-
-The [STAC and processing-contract experiment](docs/experiments/15-stac-processing-shacl.md) adds a STAC RDF profile, shared processing contracts, candidate-routing rules and executable SHACL Core shapes. Generic and STAC input configurations converge on the same asset model; GADM normalization specializes reusable processing. Run `npm run validate:ontology` to validate the synthetic graphs and write JSON/RDF reports under `test-results/`. This tooling does not yet integrate a STAC browser or processing dispatcher into the application.
+Step-by-step instructions are in [the usage guide](docs/usage.md); the worked
+examples have their own guides for [Old Naledi](docs/examples/old-naledi.md) and
+[John Snow](docs/examples/john-snow.md).
 
 ## Run locally
 
-Install Node.js 22 or newer, then run:
+Node.js 22 or newer:
 
     npm ci
     npm run build
     npm start
 
-Open http://127.0.0.1:4173. The server listens on the local machine only. Application source is TypeScript under `src/`. Run `npm run build` after source or style changes; it checks types and rebuilds the browser application, workers and offline cache manifest. Browsers load generated JavaScript under `build/`.
-
-## Publication and license
-
-This work is licensed under [Apache License 2.0](LICENSE). Third-party libraries and source datasets retain their own licenses and attribution requirements; bundled library notices and the Old Naledi provenance record are preserved.
-
-Pushes to GitHub `main` run `.github/workflows/pages.yml`: install locked dependencies, type-check, build, run the unit and Chromium regression suites, and deploy to GitHub Pages only after success. Manual publication is available through the workflow's **Run workflow** action. The staging script copies the build's explicit browser asset manifest and license files into `_site`; repository configuration, tests, source documents and secrets are excluded. Pages uses relative asset paths under `/fieldwork/`, including its service worker. No personal access token is stored in the workflow; deployment uses GitHub's job token.
-
-Pushes to GitLab `main` run the regression and security stages before the `pages` job publishes the same staged browser assets at [Fieldwork on GitLab Pages](https://fieldwork-47c2e8.gitpages.cdc.gov/). GitLab currently reports the Pages access level as private, so a GitLab sign-in may be required.
-
-## Build a workflow
-
-The local [John Snow worked examples](docs/examples/john-snow.md) translate pump catchments into shared primitives: **Voronoi catchments** or **Network isochrone ? Clip polygons ? Summarize points in polygons ? Map/Table/Chart**. Select workspaces 05 or 06. Historical source tables contain 250 locations and 489 deaths; the street graph is a modern OSM snapshot, not reconstructed 1854 streets. Parameterized UTM distance, travel time, direction, speed, buffer width and count/sum choices are explicit. See [design experiment 32](docs/experiments/32-john-snow-primitives.md).
-
-The local in-development workspace 07 uses those 250 death locations for a [geoprivacy design experiment](docs/experiments/35-cholera-geoprivacy-workflow.md). It branches from the private source to **Move points in a donut** and **Group points in H3 cells**, each with before/after map and table tabs. A **Mean center** widget runs on each point branch. **Compare point sets** takes both centers, their corresponding point sets and eight pump locations; its Comparison map shows the two maps side by side on one extent with projected mean centers, center shift and nearest-pump distances. The UTM projection is visible as a computation parameter and in N3 evidence. The after tabs offer a demo GeoJSON download containing derived geometry only. The editable project, before tabs, comparison map, N3 view and run receipt retain source coordinates and must be treated as private. The seeded movement is predictable, cell occupancy is not an anonymity guarantee, and neither method is cleared for real sensitive data. Contextual **Hide data** and calibrated encrypt/decrypt/evaluate operations remain TODO; the widget notes link to the [geoprivacy notebooks](https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library).
-
-**Street network** is a specialized input: upload directed WGS84 GraphML/JSON or explicitly download a bounded OSM walking candidate graph. Connect **Study area ? Buffer study area ? Street network** to expand acquisition while keeping the original area for reporting. Existing saved networks change only on upload/download. Study area also offers centre-and-dimension square/rectangle controls in addition to free boxes and polygons. Saved normalized networks are included in project export and offline replay; raw uploaded network files are represented by their hash, not embedded.
-
-
-Heat and Old Naledi now use the shared **Map** and **Table** widgets for reasoning results. Choose **Input mode** to distinguish a reasoning result from direct points/coverage; changing modes clears input connectors and can be undone. Legacy map/table outputs migrate on load with their identities and evidence intact. See the [shared result-output record](docs/experiments/21-shared-result-outputs.md). The shared **Chart** widget now replaces legacy bar outputs, with explicit categorical counts and source provenance. Connect a reasoning result and name its Results tab. See the [chart standardization record](docs/experiments/22-shared-chart.md).
-
-**Sample locations** now supplies shared point data to Map, Table and coverage widgets. **Facility access** also accepts points from Input data, preserving missing coordinates as Unknown results. The [shared sample-point design](docs/experiments/20-shared-sample-points.md) records the contract, provenance and compatibility changes.
-
-Old Naledi now separates **Input data: Gaborone facility registry** from **Select nearby facilities**. Edit the connected records through the shared input form; the selection node retains the radius control and feeds the unchanged diagnostic rules. Existing saved Old Naledi workflows gain the explicit source on load. See the [facility-input standardization record](docs/experiments/19-facility-input-standardization.md).
-
-Heat outreach's **Neighborhoods** and **Cooling centers** now use the shared **Input data** widget and its full editing form. Older saved sources are normalized on load while retaining their IDs, labels, scalar attributes, references and connections. The [first widget-standardization experiment](docs/experiments/18-shared-input-standardization.md) documents this migration and the remaining work for Old Naledi and output widgets.
-
-For the first developmental evaluation, open `http://127.0.0.1:4173/?example=blank` or choose **New empty canvas**. Add **Study area**, open **Select area on map**, draw a bounding box or polygon, and apply it. Inspect **N3 & evidence**, then run to see the geometry preview and inferred readiness. The [study-area experiment record](docs/experiments/01-study-area.md) documents each task, architectural decision, standards mapping, and evidence to collect. Readiness means the geometry meets the widget's input contract, not that the selected area is scientifically appropriate.
-
-Select nodes to edit their settings. Add nodes from the library and connect compatible ports. All visual output branches execute together, and shared upstream nodes execute once.
-
-Add **Map** under Outputs to display a study polygon and point layers. Connect the Study area (or Calculate area) and Input data, or connect a Check spatial coverage result. Map and Check spatial coverage offer **Add point input** for multiple datasets with one boundary. Map highlights outside points, lists records without coordinates and lets you toggle layers. See the [map/layer exercise](docs/experiments/04-map-layers-and-attribute-contracts.md).
-
-Add **Table** under Outputs to display point coordinates and attributes in a named Results tab. Connect Input data to **Points 1**, or Check spatial coverage to **Or: Coverage result** to include review decisions and exclusion reasons. Direct point input needs no study area. Tables support multiple layers, search, row/attribute paging, record inspection, saved workflows and offline use. See the [point-table exercise](docs/experiments/08-point-table-output.md).
-
-Workflow and N3 & evidence are the main views. Each visual output node creates a named Results tab; choose Map, Table, or Bar chart in its inspector. Select a location in a map or table to inspect the inputs and assertions behind its result. Expand Results for a larger view or filter table rows by text.
-
-Use the worked-example selector to open **Old Naledi diagnostic access**, or visit `http://127.0.0.1:4173/?example=old-naledi`. Its widgets control sample spacing, facility search radius, minimum evidence, diagnostic-service pathway, speed proxy, and review threshold. The [worked-example guide](docs/examples/old-naledi.md) explains the source data, assumptions, and three comparisons to try. Each example retains its own local edits when you switch.
-
-Changes mark existing results as belonging to the previous run until you run again. Export a workflow to transfer it, or export a run receipt to preserve the executed workflow, N3 inputs, conclusions, and output data. Existing saved workflows remain local; Restore example replaces the current workflow with the latest example and can be undone.
-
-## Local execution and offline use
-
-The local clipping prototype now supports all-touched inclusion and a 0-1 pixel outer margin. TypeScript/build and 76 unit tests passed; all 47 Chromium scenarios passed across the full run and correction of one test baseline, with the actual Botswana WorldPop file enabled. See the [validation record](docs/experiments/29-raster-edge-inclusion.md). Clip raster owns its cutline and settings; Map displays their result.
-
-Open the dedicated [Old Naledi raster clipping workspace](http://127.0.0.1:4173/?example=raster), or choose **04 · Old Naledi raster clipping** in Workspace. Study area, Raster input, Clip raster and Map are already connected. Prepare your local GeoTIFF and its source citation, use **Clip parameters → Preview and adjust**, then **Run workflow**. This workspace saves separately from diagnostic access and your blank canvas. It waits for a raster before automatically running; no national raster is bundled with the app.
-
-For a raster exercise, connect **Study area → Raster input → Clip raster → Map**, with Study area also connected to Clip raster. In Raster input choose **Prepare GeoTIFF input**, select the local file and **Save raster window**. Select Clip raster, connect its raster input, and choose **Preview and adjust**. Drag polygon vertices or enter bounding coordinates; inspect the cell counts, then apply the clip parameters and run. Opacity is a display control. Out-of-coverage drafts cannot be applied; Cancel and Undo preserve or restore the prior cutline. Clip adjustments leave the shared Study area unchanged; masked-out space appears transparent in the output. See [preview parameters and decisions](docs/experiments/28-raster-preview-and-adjustment.md).
-
-Choose **Add raster map** to display the clipped result. A default Map also exposes **Or: Raster**; connecting there switches its input mode to **Raster**. Undo restores the previous inputs. The Results toolbar offers **Download GeoTIFF**. Only the bounded input window is saved; the original national file remains on disk. Expanding beyond the saved window requires preparation again. Use **Prepare GeoTIFF input** again to enter or edit the separate **Source metadata and citation** fields without re-uploading. Source details follow the clip into N3, packages and downloaded GeoTIFF metadata; the exact Botswana filename offers an explicit WorldPop template. See [source provenance](docs/experiments/26-raster-source-provenance.md) and [the WorldPop clipping experiment](docs/experiments/25-raster-input-and-clipping.md) for metadata, pixel rules and resource limits.
-
-For input and spatial exceptions, open `http://127.0.0.1:4173/?example=coverage`. **Input data → Prepare input data** offers synthetic generation, CSV, GeoPackage, GeoJSON and map pushpins with predefined/custom fields and automatic location/time. **Check spatial coverage** combines the source with a Study area and raises alerts for outside or missing-coordinate records. Select a record to exclude with a reason, restore it, or edit the boundary with the point in view. The [input and review exercise](docs/experiments/03-input-data-and-spatial-review.md) documents each step, decision, limit and evaluation question.
-
-Pushpin key/value pairs support text, number, whole number, yes/no and date types, with optional allowed values entered one per line. Value sets become dropdowns. Shared form fields and per-pin attributes retain their definitions in the saved workflow; invalid values/defaults are rejected. Geographic sources carry explicit WGS84 metadata and longitude/latitude storage order. The [CRS decision record](docs/experiments/05-coordinate-reference-systems.md) distinguishes EPSG:4326 from CRS84 and specifies the future Reproject node; reprojection is not implemented yet.
-
-Use **Save Edits** in Prepare input data to keep changes on your device, including a pending key/value pair. **Delete Pin** edits the draft until saved. **Generate UUIDs for new pins** assigns stable record IDs without renaming existing pins. Category is an optional location label; Notes is free text. See the [pushpin editing and identity record](docs/experiments/09-pushpin-editing-and-identity.md).
-
-Canvas ports are blue for inputs and red for outputs. Nodes are shaded gray for sources, orange for processing and green for visual outputs. See the [canvas color decision](docs/experiments/10-canvas-colors.md).
-
-Add **Calculate area**, choose its **Boundary input**, select a metric or imperial **Area unit**, and run. It outputs the same study area with its measurement attached, so you can connect **Study area → Calculate area → Check spatial coverage**. The calculation measures the polygon using a spherical approximation and records canonical square metres as `geo:hasMetricArea`. The [follow-up evaluation notes](docs/experiments/02-area-computation-and-resource-scope.md) explain the operation, units, reusable study-area ontology, and proposed resource-aware asset subsetting. Bounded GeoTIFF input and clipping are implemented; NetCDF loading remains design work.
-
-Spatial distance uses a JavaScript haversine calculation. EYE-JS 21.1.24 runs in a worker and derives Review, NoFlag, or Unknown assertions from N3 facts and rules. The explanations combine run inputs and returned assertions; they are not EYE proof certificates.
-
-The [geoprocessing memory lifecycle record](docs/experiments/06-geoprocessing-memory-lifecycle.md) proposes disposable workers, bounded output ownership and cancellation for future heavy jobs. It distinguishes reusable Wasm allocations from browser memory reclamation. This executor and its resource budgets are not implemented yet.
-
-Application assets and the bundled EYE engine are cached after the first successful visit. Wait for Available offline before disconnecting. Workflows are stored in browser localStorage without encryption. Clearing browser storage removes local workflows, attached PDFs, retained raster windows and offline assets, so export work you want to keep. Package installation requires network access; workflow execution runs locally. The map editors request OpenStreetMap tiles when their online basemaps are enabled. Saved geometry, pushpin editing and inference work offline; map tiles are not precached for offline use.
-
-After updating the application, reload to install the updated service worker, then reload again if the old interface remains visible.
-
-## References and provenance
-
-**Credentials** opens a separate, session-only credential manager. Choose **Create empty collection**, add named API keys and their allowed HTTPS origin, then **Download encrypted credentials** with a long passphrase. Keep the `.fwcredentials` file on your computer. To reuse it, select the file and unlock it. Keys are excluded from project exports and browser persistence; reload, manual Lock or 15 minutes of inactivity clears the session. Editing downloads a new file rather than overwriting the original. Healthsites querying and node assignment are a future adapter; current input nodes do not consume these keys. See the [credential-file design and security boundary](docs/experiments/30-local-credential-files.md).
-
-Select any node and choose **Manage references** to attach a PDF or URL, identify its author/year and passage, and explain how it supports the data, method or assumption. **Save reference** persists the citation; uploaded PDFs remain local and are available offline. **Export** includes referenced PDFs in a portable workflow bundle; **Run receipt** includes a snapshot of references, file hashes and provenance for the run. URL contents are not downloaded. Limits are 5 MB per PDF and 10 MB total per workflow. See the [evidence-reference design experiment](docs/experiments/13-node-evidence-references.md).
-
-Citation metadata uses PROV-O and Dublin Core alongside the spatial GeoSPARQL facts. Attaching a document records the workflow author's supporting reference; it does not parse the PDF, verify its claims or insert its contents into rule premises.
+Open http://127.0.0.1:4173. The server listens on this machine only. Source is
+TypeScript under `src/`; rebuild after changing source or styles.
 
 ## Validation
 
-The published baseline on October 6, 2026 passed strict TypeScript checks, the production build, **73 unit tests and 44 Chromium scenarios**, including the local Botswana WorldPop GeoTIFF, shared-input migration, widget-registry checks, SHACL validation, N3 candidate routing and jurisdiction selection. Deployment status for the latest GitHub commit is recorded in [the Pages workflow](https://github.com/digital-twin-ph/fieldwork/actions/workflows/pages.yml).
-
-The October 7 release candidate passed 94 unit tests, ontology and widget registry checks, and 57 distinct Chromium browser scenarios after updating an outdated draft-N3 text assertion. The browser coverage includes the local Botswana WorldPop GeoTIFF and N3/SHACL UI checks; see [experiment 34](docs/experiments/34-widget-ontology-audit.md).
-
-Version 0.3.0 passed 99 unit tests and all 60 local Chromium browser scenarios, including the real WorldPop raster, geoprivacy N3/SHACL evidence, panel controls, and desktop/narrow-screen version badge. The widget registry validates 32 widgets and 60 releases. These checks do not establish privacy effectiveness or Firefox/Safari behavior.
-
-Use the full regression gate before accepting a functional change:
+Run the full gate before accepting a functional change:
 
     npm ci
     npx playwright install chromium
     npm run check
 
-This first checks the application, worker and compile-only regression types, rebuilds the local assets, discovers all `tests/*.test.mjs` unit tests and runs all `tests/*.browser.mjs` browser scenarios. Playwright starts and stops its own test server on port 4174, using isolated browser contexts; your canvas and server on port 4173 are unaffected. Set `FIELDWORK_TEST_PORT` if 4174 is occupied. The runner refuses to reuse an existing server so it cannot silently test another checkout.
+That type-checks application, worker and compile-only sources, rebuilds, runs
+every `tests/*.test.mjs` unit test and every `tests/*.browser.mjs` scenario on
+its own server. There are no retries, and a focused `.only` fails the gate. Use
+`npm run validate:ontology` and `npm run validate:widgets` for the RDF and
+registry checks. Set `FIELDWORK_BROWSERS` to a comma-separated list to exercise
+other browsers; the default gate is Chromium only, and a result is claimed only
+for the browsers actually run.
 
-For a focused check, use `npm run typecheck`, `npm test` (type-check, build and unit tests), or `npm run test:browser -- tests/map-output.browser.mjs` after building. Use `npm run test:report` to open the latest HTML report. Failures retain traces and screenshots under `test-results/artifacts/`; the JUnit report is `test-results/browser-junit.xml`. There are no automatic retries, and focused `.only` tests fail the gate.
+Version 0.4.0 passed 101 unit tests, ontology and widget validation and a
+Chromium version check. Work since then is unreleased and recorded as in
+development in the [release notes](CHANGELOG.md). The
+[regression baseline](docs/experiments/07-functional-regression.md) maps
+behaviour to tests. These checks establish structure and deterministic
+behaviour, not scientific validity, privacy effectiveness or practitioner
+effectiveness.
 
-`BROWSER_EXECUTABLE` can select an existing Chromium executable. The GitLab `functional-regression` job installs dependencies and Chromium, runs the same gate, and retains reports on failure. This job complements the existing security jobs. Its first remote run still needs to be verified after publication; repository settings determine whether a passing pipeline is required for merging.
+Independent recomputation lives in the Validation Lab rather than here. It has
+confirmed reprojection against `pyproj` and cell-centre raster clipping against
+`rasterio`, and found that all-touched clipping is **more inclusive than GDAL's**
+at pixel-aligned cutlines — see
+[experiment 29](docs/experiments/29-raster-edge-inclusion.md).
 
-The [regression baseline and contribution policy](docs/experiments/07-functional-regression.md) maps current behavior to tests. Browser checks exercise actual EYE inference, widgets and connectors, evidence, typed attributes, saved-workflow compatibility, offline reload and mobile layout. Current browser validation is Chromium only; tests do not establish practitioner effectiveness or cover proposed geoprocessing features.
+## Limits
 
-The [N3 output evaluation design experiment](docs/experiments/11-n3-output-evaluation.md) separates representation, spatial calculation, rule behavior, evidence and practitioner understanding. It defines controlled cases, independent expectations, a participant protocol and a proposed Evaluation tab; the additional evaluation tooling and study remain design work.
+Not implemented: general reprojection beyond the UTM import path, NetCDF, a
+GEOS-WASM geoprocessing executor, Logical English comparison, agent-based
+simulation, learning and scoring, publication products, GADM download widgets, a
+STAC browser or acquisition adapter, runtime widget-version pinning, widget
+packs, and a live SHACL report in the browser.
 
-The [TypeScript migration decision record](docs/experiments/12-typescript-migration.md) describes source ownership, compile-time contracts, runtime validation and the generated offline asset manifest.
+Input data accepts up to 2,000 points and 5 MB files. GeoPackage import supports
+2D POINT layers in EPSG:4326; CSV needs longitude and latitude in degrees. The
+study-area editor draws bounding boxes and simple polygons of 3–200 vertices,
+excluding holes, antimeridian crossings and polar areas. Browser storage is
+unencrypted, and clearing it removes local workflows, attachments and offline
+assets, so export anything worth keeping.
 
-## Scope and research
+## Design records
 
-The [facility-access primitives design](docs/experiments/31-facility-access-primitives.md) describes completing Old Naledi standardization with a Health facilities input profile, generic spatial selection, separate service eligibility, straight-line/network costs, Voronoi catchments and isochrone assessments. These methods have distinct result contracts and population-aggregation assumptions. The design preserves the legacy center-radius example while planning Healthsites/ministry adapters and comparative access experiments.
+Every decision is recorded in [docs/experiments/](docs/experiments/), separating
+proposed capabilities from implemented behaviour. Start with:
 
-The [Prior art design document](docs/prior-art.md) compares openEO, QGIS Processing Modeler, Geo Engine and APE. It identifies concepts to adapt, tools to evaluate, ontology mappings and bounded adoption experiments, with explicit limits for offline browser execution.
-
-The [workflow learning and gamification design](docs/experiments/27-workflow-learning-and-gamification.md) proposes an opt-in Old Naledi learning exercise, evidence-based milestones, a separate local learning record and future GIS competency ontology mappings. It specifies widget learning profiles, versioned assessment receipts, idempotent points and transfer evaluation. Its [worked-example game specification](docs/experiments/27-workflow-learning-and-gamification.md#a96-worked-examples-packaged-as-games) adds blank-canvas challenges, a focused widget palette, optional progress chevrons, an iteration notepad, a capped independence bonus, plain-language widget help and future JupyterLite deep dives. Learning mode and scoring are not implemented.
-
-The [workflow publication products design](docs/experiments/17-workflow-publication-products.md) records future field reports, story maps, infographics and dashboards as pipeline end products. It proposes reusable content blocks, versioned templates, evidence-linked findings and local export, beginning with a spatial coverage field-report experiment. These composition and export capabilities are not implemented.
-
-The [communication-layer profile](docs/experiments/36-communication-layer.md) maps detailed static/interactive maps, chart families, infographics and dashboards to current Fieldwork view activities and reusable GeoSPARQL, PROV-O, Data Cube, CSVW, QUDT, SKOS, DCAT and Dublin Core terms. It separates implemented map and categorical-bar outputs from proposed composition and broader chart capabilities.
-
-The [Vega-Lite Chart spike](docs/experiments/37-vega-lite-chart-spike.md) adds an optional offline bar/dot renderer with title, axes, category legend, source note and SVG export to the existing Chart widget. Both renderers use the same recorded count bins; the chart specification is represented in N3 and checked by SHACL. This is a bounded categorical visualization experiment, not general chart programming.
-
-The [standalone Map experiment](docs/experiments/38-standalone-map-communication.md) adds a title, subtitle, map key, source/method note and SVG export to Map outputs. Interactive polygon maps can select local geometry (offline), OpenStreetMap streets or OpenTopoMap terrain. Online tiles are requested only for the displayed viewport, credited on the map and excluded from SVG export. The map presentation plan is recorded in N3 and checked with SHACL; upstream calculations remain in their processing nodes.
-
-The [widget registry](widgets/README.md) inventories all 32 node types, including legacy aliases, with stable identities, independent release versions, port contracts, source references and explicit ontology mappings or gaps. Run `npm run validate:widgets` to check coverage, release digests and alignment with current TypeScript definitions. Saved workflows do not yet pin widget versions; the specific heat-source adapter runs on load, while general registry-driven migrations remain future work.
-
-The [shared visualization design specification](docs/experiments/16-semantic-visualization-design.md) proposes common semantics for maps, charts and tables using GeoSPARQL, CSVW, RDF Data Cube, QUDT, SKOS and PROV, with selective OGC portrayal reuse. It defines configuration, rendering and artifact provenance, proposed SHACL contracts, offline constraints and a developmental evaluation exercise. The general shared profile remains design work; the bounded categorical Chart adapter and optional Vega-Lite presentation spike are implemented as described above.
-
-Input data accepts up to 2,000 points and 5 MB local files, retaining scalar attributes. GeoPackage import currently supports standard 2D POINT layers in EPSG:4326; CSV needs longitude/latitude in degrees. The bounded GeoPackage importer reads the file into memory and does not implement streaming clipping. The legacy heat-example GeoJSON importer retains identifiers, names and coordinates. The study-area editor supports bounding boxes and simple polygons of 3–200 vertices; holes, antimeridian crossings, and polar areas are outside this drawing contract. It emits GeoSPARQL feature/geometry facts and CRS84 WKT literals, while EYE runs application-specific rules. GeoSPARQL query functions are not implemented. The bundled Old Naledi source additionally supplies its pinned polygon and selected facility attributes. General polygon-file import, street routing, arbitrary N3 editing, and the Logical English comparison are not yet implemented.
-
-The [research review](docs/research/related-research-2026-10-05.md) provides background. The [Gaborone TB modeling repository](https://git.cdc.gov/digital-twin/Gaborone-TB-Agent-Based-Modeling) supplies the Old Naledi geometry, historical facilities, and evidence hierarchy. Its building preparation, network routing, and Starsim simulation have not been integrated here. Source commit and file hashes accompany the bundled data and run outputs.
+| Record | Subject |
+| --- | --- |
+| [Semantic audit procedure](docs/ontology-audit.md) | Admission review and worked-example checkpoints across three dimensions — structure, semantics and relevance — opening with a glossary so the work can be reviewed without a background in description logic |
+| [44 · Competency questions](docs/experiments/44-ontology-competency-questions.md) | The questions the ontology exists to answer, each with its status, and five it must refuse |
+| [Prior art](docs/prior-art.md) | openEO, QGIS, Geo Engine and APE: what to adapt, what to evaluate, and the limits of each comparison |
+| [Widget registry](widgets/README.md) | All 33 node identities with independent versions, port contracts and ontology mappings |
+| [39 · STAC discovery](docs/experiments/39-stac-discovery-and-remote-acquisition.md) | Measured catalog behaviour and a proposed acquisition adapter |
+| [40 · Reprojection](docs/experiments/40-reprojection-primitives.md) | The implemented UTM import path, and raster warping as specified but unbuilt |
+| [41 · Validation Lab](docs/experiments/41-validation-lab.md) | Independent recomputation in Python, its boundary rules and results |
+| [42 · Ontology structure and meaning](docs/experiments/42-ontology-structure-and-meaning.md) | An OWL 2 DL reasoner over the vocabulary: what it establishes, and why its consistency is currently unfalsifiable |
+| [43 · Widget packs](docs/experiments/43-widget-packs.md) | Curated, governed packs carrying vocabulary, shapes, rules and worked examples |
 
 ## Repository contents
 
-- src/app.ts and src/core.ts: application controls, graph validation, spatial facts, and execution.
-- src/old-naledi.ts and src/old-naledi-ui.ts: typed example nodes, evidence rules, and practitioner widgets.
-- src/study-area.ts, src/study-area-map.ts, and study-area.css: drawing contract, GeoSPARQL/N3 generation, and map editor.
-- src/area-computation.ts and src/area-measurement.ts: polygon area calculation, units, and computation provenance; rebuild after changing the numerical module.
-- src/input-data.ts and src/input-data-ui.ts: point import, synthetic generation, pushpin forms and local SQLite/WASM integration; rebuild after changes.
-- src/map-output.ts and src/point-layers.ts: explicit Map output, multiple point inputs, layer identity and source-preserving review.
-- src/table-output.ts: point Table output, attribute columns, bounded paging/search and presentation provenance.
-- src/attribute-schema.ts and src/spatial-reference.ts: attribute types/value sets and the current geographic CRS contract; rebuild after attribute form changes.
-- src/spatial-predicates.ts, src/spatial-coverage.ts and src/coverage-ui.ts: geometric classifications, N3 review rules, exclusions and recovery controls; rebuild after changing src/spatial-predicates.ts.
-- ontology/fieldwork.ttl: implemented study-area/measurement vocabulary and proposed spatial-operation/resource-planning terms.
-- ontology/jurisdictions.ttl, ontology/gadm.ttl, ontology/rules/ and ontology/examples/: proposed boundary-asset model, GADM profile, selection rules and synthetic worked examples.
-- ontology/stac.ttl, ontology/processing.ttl, ontology/shapes/ and scripts/validate-ontology.mjs: proposed discovery/routing profiles and executable SHACL validation tooling.
-- examples/old-naledi/: selected source data and provenance; regenerated by scripts/extract-old-naledi.mjs.
-- src/canvas.tsx and flow.css: React Flow editor, bundled by build.mjs.
-- src/reasoning-worker.ts and vendor/: local EYE-JS engine and upstream license notices.
-- src/sw.ts: service-worker source; root sw.js and build/asset-manifest.json are generated.
-- src/raster.ts, src/raster-workflow.ts and src/raster-ui.ts: native-grid GeoTIFF acquisition, explicit polygon clipping, metadata, provenance and raster display.
-- src/evidence.ts, src/evidence-storage.ts and src/evidence-ui.ts: node citations, local PDF storage, portable bundles and run provenance.
-- src/project-manifest.ts, src/encrypted-package.ts and src/package-ui.ts: saved project inventory, bounded encrypted ZIP validation and password dialogs.
-- src/types.ts, src/results.ts and src/worker-types.ts: workflow, result and message contracts.
-- tsconfig.json and tsconfig.workers.json: strict application and worker type-checking.
-- tests/: core and Chromium integration checks.
-- .github/workflows/pages.yml and scripts/stage-pages.mjs: tested GitHub Pages publication and bounded static-site packaging.
+| Path | Contents |
+| --- | --- |
+| `src/` | TypeScript application: canvas, core execution, widgets, reasoning worker, service worker |
+| `ontology/` | Vocabulary, SHACL shapes, N3 rules and synthetic examples |
+| `widgets/` | Registry and per-widget release files with digests |
+| `tests/` | Unit tests and Chromium scenarios |
+| `scripts/` | Validation, staging, source extraction and fixture export |
+| `docs/` | Usage guide, worked examples, design experiments and research notes |
+| `examples/old-naledi/` | Selected source data with provenance |
+
+## Publication and license
+
+[Apache License 2.0](LICENSE). Third-party libraries and source datasets keep
+their own licenses and attribution; bundled notices and the Old Naledi
+provenance record are preserved.
+
+A push to GitHub `main` runs `.github/workflows/pages.yml`: locked install,
+type-check, build, unit and Chromium suites, then deploy to Pages only on
+success. The staging script copies an explicit asset manifest and license files;
+repository configuration, tests, source documents and secrets are excluded.
+GitLab `main` runs the regression and security stages before publishing the same
+assets. No access token is stored in either workflow.
 
 ## Keeping this README current
 
-Update this README in the same change that adds or changes a widget, accepted input format, workflow connection, storage/export behavior, deployment step or prototype limit. Include a short practitioner exercise and architectural rationale in the relevant [design experiment](docs/experiments/), and maintain the [regression coverage record](docs/experiments/07-functional-regression.md). Describe proposed capabilities separately from implemented behavior; date validation claims and name the browsers actually exercised.
-
-Keep local access tokens under .secrets/, which is excluded from Git and blocked by the static server. Credentials are not needed to run the application.
-
-The next local clipping slice adds **All touched** pixel inclusion and an **Outer margin** of 0-1 native pixel on Clip raster. Map hides portions outside that footprint without altering retained values or filling NoData. For a margin, prepare the GeoTIFF with **One pixel around Study area** of extra source coverage. Existing center-based clips keep their method. See [edge inclusion, evidence and related projects](docs/experiments/29-raster-edge-inclusion.md).
-## NB04-style isochrone views
-
-The John Snow network example now pairs an SVG plot with an interactive map of cumulative 1/5/10/15-minute catchments, mortality locations and all pump locations. Travel-time and infill settings remain in the processing widget. Selecting a canvas widget highlights its source primitive in the library. See [worked example](docs/examples/john-snow.md) and [design experiment 33](docs/experiments/33-isochrone-plot-and-interactive-map.md). Existing saved workspaces are preserved; Restore example loads the revised template.
-
-The [semantic audit procedure](docs/ontology-audit.md) defines admission and worked-example checkpoints. [Experiment 34](docs/experiments/34-widget-ontology-audit.md) records canvas RDF, runtime provenance and SHACL regression coverage, with explicit remaining semantic gaps.
+Update this file in the same change that adds or changes a widget, an accepted
+input format, a workflow connection, storage or export behaviour, a deployment
+step, or a prototype limit. Keep it short: step-by-step material belongs in
+[the usage guide](docs/usage.md), and rationale belongs in the relevant
+[design experiment](docs/experiments/), which should also carry a practitioner
+exercise. Describe proposed capabilities separately from implemented behaviour,
+date validation claims, and name the browsers actually exercised. Keep local
+access tokens under `.secrets/`, which Git ignores and the static server blocks;
+credentials are not needed to run the application.

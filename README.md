@@ -128,6 +128,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [42 · Ontology structure and meaning](docs/experiments/42-ontology-structure-and-meaning.md) | An OWL 2 DL reasoner over the vocabulary: what it establishes, and why its consistency is currently unfalsifiable |
 | [43 · Widget packs](docs/experiments/43-widget-packs.md) | Curated, governed packs carrying vocabulary, shapes, rules and worked examples |
 | [48 · Tabular data](docs/experiments/48-tabular-input.md) | Long-format import, why a wide table is refused rather than reshaped, and what a table is forbidden to imply |
+| [49 · Catalog in the interface](docs/experiments/49-catalog-in-the-interface.md) | Why the pack catalog is invisible to practitioners, why a pack browser is the wrong fix, and the one honest addition |
 
 ## Repository contents
 

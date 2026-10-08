@@ -10,20 +10,38 @@
 @prefix dcterms: <http://purl.org/dc/terms/>.
 
 # Bounded catchment primitives, experimental implementation (2026-10-07).
-fw:VoronoiComputation a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+fw:VoronoiComputation a owl:Class;
+  rdfs:label "Voronoi catchment computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Projected Euclidean nearest-site allocation; not observed facility use.".
-fw:NetworkIsochrone a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+fw:NetworkIsochrone a owl:Class;
+  rdfs:label "Network isochrone computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Directed network reachability with explicit cost, snapping and corridor approximation.".
-fw:DonutGeomasking a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Reproducible educational point displacement within a metre-valued annulus; not a privacy guarantee.".
-fw:HexAggregation a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Aggregation of located points into H3 cells, with sparse cells omitted.".
-fw:MovedPointDataset a owl:Class; rdfs:subClassOf geo:FeatureCollection, prov:Entity.
-fw:MovedPoint a owl:Class; rdfs:subClassOf geo:Feature.
-fw:HexCellDataset a owl:Class; rdfs:subClassOf geo:FeatureCollection, prov:Entity.
-fw:HexCell a owl:Class; rdfs:subClassOf geo:Feature.
-fw:MeanCenterComputation a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Unweighted arithmetic mean of projected point coordinates, returned as a CRS84 point.".
-fw:MeanCenterResult a owl:Class; rdfs:subClassOf prov:Entity.
-fw:PointSetComparison a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Compare unweighted projected mean centers and their distances with a contextual reference-point layer.".
-fw:PointComparisonResult a owl:Class; rdfs:subClassOf prov:Entity.
+fw:DonutGeomasking a owl:Class;
+  rdfs:label "Donut geomasking"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Reproducible educational point displacement within a metre-valued annulus; not a privacy guarantee.".
+fw:HexAggregation a owl:Class;
+  rdfs:label "H3 cell aggregation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Aggregation of located points into H3 cells, with sparse cells omitted.".
+fw:MovedPointDataset a owl:Class;
+  rdfs:comment "A collection of displaced points from one geomasking execution. Displacement is seeded and predictable, and is not proven anonymity.";
+  rdfs:label "Displaced point dataset"; rdfs:subClassOf geo:FeatureCollection, prov:Entity.
+fw:MovedPoint a owl:Class;
+  rdfs:comment "A derived point displaced from a source location by a geomasking operation. Derived geometry only; it does not carry the original coordinate.";
+  rdfs:label "Displaced point"; rdfs:subClassOf geo:Feature.
+fw:HexCellDataset a owl:Class;
+  rdfs:comment "A collection of H3 cells with their counts. Cell occupancy is not an anonymity guarantee.";
+  rdfs:label "H3 cell dataset"; rdfs:subClassOf geo:FeatureCollection, prov:Entity.
+fw:HexCell a owl:Class;
+  rdfs:comment "One indexed hexagonal cell at a stated H3 resolution. A cell is an index unit, not a nearest-site catchment.";
+  rdfs:label "H3 cell"; rdfs:subClassOf geo:Feature.
+fw:MeanCenterComputation a owl:Class;
+  rdfs:label "Mean centre computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Unweighted arithmetic mean of projected point coordinates, returned as a CRS84 point.".
+fw:MeanCenterResult a owl:Class;
+  rdfs:comment "One unweighted arithmetic centre of a point set, computed in a projected CRS and returned in CRS84. Not a burden-weighted centre and not a privacy metric.";
+  rdfs:label "Mean centre result"; rdfs:subClassOf prov:Entity.
+fw:PointSetComparison a owl:Class;
+  rdfs:label "Point-set comparison"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Compare unweighted projected mean centers and their distances with a contextual reference-point layer.".
+fw:PointComparisonResult a owl:Class;
+  rdfs:comment "The computed comparison of two point sets, their projected mean centres and their distances to reference sites. A private evaluation result, not a geomasking operation.";
+  rdfs:label "Point-set comparison result"; rdfs:subClassOf prov:Entity.
 fw:referenceCount a owl:DatatypeProperty.
 fw:centerShift a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
 fw:originalNearestPumpDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
@@ -42,10 +60,14 @@ fw:outputCount a owl:DatatypeProperty.
 fw:NetworkInput a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf prov:Activity;
   rdfs:label "Read prepared street network";
   rdfs:comment "Validate and expose a previously prepared directed network for a run. Acquisition or file normalization happens in the input editor; this execution does not imply a new OSM request.".
-fw:PolygonClipping a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation.
-fw:PolygonPointSummary a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+fw:PolygonClipping a owl:Class;
+  rdfs:comment "An execution that intersects polygons with a boundary. The clipping boundary is operation-specific and may differ from the study area.";
+  rdfs:label "Polygon clipping"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation.
+fw:PolygonPointSummary a owl:Class;
+  rdfs:label "Polygon point summary"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Count point memberships and optionally sum a named numeric attribute; overlaps and missing values are explicit.".
-fw:AreaBuffer a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+fw:AreaBuffer a owl:Class;
+  rdfs:label "Acquisition buffer computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Generate a distinct expanded acquisition boundary without changing the reporting study area.".
 fw:bufferDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
 fw:parameters a owl:DatatypeProperty.
@@ -84,7 +106,7 @@ fw:filename a owl:DatatypeProperty; rdfs:range xsd:string.
 
 fw:ontology a owl:Ontology;
   rdfs:label "Fieldwork study-area and spatial-operation vocabulary";
-  owl:versionInfo "0.3 experimental, 2026-10-07";
+  owl:versionInfo "0.4 experimental, 2026-10-08";
   rdfs:comment "A bounded vocabulary for study areas and their reusable roles. A class declaration is not an implementation or validation constraint.".
 
 fw:implementationStatus a owl:AnnotationProperty;
@@ -124,6 +146,7 @@ fw:AreaComputation a owl:Class;
   rdfs:comment "Enriches the same study area with a polygon-area measurement, preserving feature and geometry identity. The workflow output remains a study area; the generated measurement records canonical square metres and provenance, with an independently chosen display unit.";
   fw:implementationStatus "implemented".
 fw:AreaMeasurement a owl:Class;
+  rdfs:comment "A measured quantity attached to one geometry, with its unit. The measurement describes the geometry it was computed from, not a later edited geometry.";
   rdfs:subClassOf prov:Entity, qudt:QuantityValue;
   rdfs:label "Computed area measurement".
 fw:MapView a owl:Class;
@@ -313,14 +336,18 @@ fw:CategoricalCount a owl:Class;
   rdfs:label "Categorical frequency computation";
   rdfs:comment "Counts each source record once, retaining zero categories and reporting unclassified values separately. Does not estimate population.";
   fw:implementationStatus "implemented".
-fw:CountBin a owl:Class; rdfs:subClassOf prov:Entity.
+fw:CountBin a owl:Class;
+  rdfs:comment "One category and its count within a categorical summary. The count is of records or memberships, never of population.";
+  rdfs:label "Count bin"; rdfs:subClassOf prov:Entity.
 fw:countBin a owl:ObjectProperty; rdfs:range fw:CountBin.
 fw:groupingField a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:categoryKey a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:recordCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
 
-fw:RasterDataset a owl:Class; rdfs:subClassOf prov:Entity; rdfs:label "Raster dataset".
-fw:RasterWindowAcquisition a owl:Class; rdfs:subClassOf prov:Activity; rdfs:label "Native raster window acquisition".
+fw:RasterDataset a owl:Class;
+  rdfs:comment "A raster held as a bounded window of native cells with its metadata. Cell values are not automatically interpretable as population or any other measure."; rdfs:subClassOf prov:Entity; rdfs:label "Raster dataset".
+fw:RasterWindowAcquisition a owl:Class;
+  rdfs:comment "An execution that retains a bounded native-resolution window of a source raster. No resampling or reprojection is performed."; rdfs:subClassOf prov:Activity; rdfs:label "Native raster window acquisition".
 fw:RasterInputReading a owl:Class; rdfs:subClassOf prov:Activity;
   rdfs:label "Read retained raster input"; fw:implementationStatus "implemented";
   rdfs:comment "Read and verify a previously retained GeoTIFF window. This run activity is distinct from the earlier local-file acquisition and does not claim a fresh download or national-file checksum.".
@@ -347,3 +374,48 @@ fw:metadataOrigin a owl:DatatypeProperty; rdfs:label "Origin of descriptive meta
 fw:travelTimeMinutes a owl:DatatypeProperty; rdfs:range xsd:decimal;
   rdfs:label "Cumulative network travel-time threshold in minutes";
   rdfs:comment "Time budget of a computed catchment; not an observed journey duration or disjoint time band.".
+
+# Added 2026-10-08. Terms the audit procedure requires to remain distinct but which had no
+# class, and the disjointness axioms that make those distinctions checkable rather than
+# merely documented. See docs/experiments/42-ontology-structure-and-meaning.md.
+
+fw:ClippingBoundary a owl:Class;
+  rdfs:subClassOf geo:Feature;
+  rdfs:label "Clipping boundary";
+  rdfs:comment "An operation-specific cutline. It may differ from the study area, and a clip must not be read as a statement about the reporting boundary. Raster and polygon clipping already emit their cutline under its own geometry identity, so the distinction holds in practice; this class names it. Receipts do not yet type the cutline with this class.";
+  fw:implementationStatus "proposed".
+
+fw:AcquisitionBoundary a owl:Class;
+  rdfs:subClassOf geo:Feature;
+  rdfs:label "Acquisition boundary";
+  rdfs:comment "An expanded scope used to reduce boundary effects while acquiring data, distinct from the study area used for reporting. Buffer receipts currently type their output fw:StudyArea, so this distinction is not yet honoured at runtime; adopting this class would change those receipts and needs its own migration.";
+  fw:implementationStatus "proposed".
+
+fw:Presentation a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Presentation";
+  rdfs:comment "An execution that displays existing results. A presentation preserves the values, geometry, CRS and missing-data decisions of the operation that produced them, and performs no scientific inference of its own.";
+  fw:implementationStatus "implemented".
+fw:MapView rdfs:subClassOf fw:Presentation.
+fw:TableView rdfs:subClassOf fw:Presentation.
+fw:ChartView rdfs:subClassOf fw:Presentation.
+
+# Disjointness, asserted only where both terms describe the same kind of thing and no graph
+# this prototype emits types one individual as both. Cross-kind conflations, such as an
+# activity that is also an entity, are PROV-O's own axioms and are checked by merging PROV-O
+# in the Validation Lab rather than by restating them here.
+fw:StudyArea owl:disjointWith fw:ClippingBoundary, fw:AcquisitionBoundary, fw:Catchment.
+fw:ClippingBoundary owl:disjointWith fw:AcquisitionBoundary, fw:Catchment.
+fw:AcquisitionBoundary owl:disjointWith fw:Catchment.
+fw:CanvasNodePlan owl:disjointWith fw:WorkflowNodePlan.
+fw:WidgetDefinition owl:disjointWith fw:CanvasNodePlan, fw:WorkflowNodePlan.
+fw:Presentation owl:disjointWith fw:SpatialOperation.
+
+# Fieldwork's boundary features are PROV entities as well as GeoSPARQL features. Stating this
+# locally, rather than asserting it of geo:Feature in general, lets a reasoner see that a
+# boundary cannot also be an execution: PROV-O declares prov:Entity and prov:Activity
+# disjoint, and without this link the two hierarchies never meet.
+fw:StudyArea rdfs:subClassOf prov:Entity.
+fw:ClippingBoundary rdfs:subClassOf prov:Entity.
+fw:AcquisitionBoundary rdfs:subClassOf prov:Entity.
+fw:Catchment rdfs:subClassOf prov:Entity.

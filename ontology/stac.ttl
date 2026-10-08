@@ -9,13 +9,19 @@
 
 stac:ontology a owl:Ontology;
   rdfs:label "Fieldwork STAC metadata profile";
-  owl:versionInfo "0.1 experimental, 2026-10-06";
+  owl:versionInfo "0.2 experimental, 2026-10-08";
   rdfs:comment "Fieldwork-owned RDF mapping, not an official STAC ontology or JSON-LD context. Raw STAC JSON and extension metadata remain source evidence. These definitions do not implement a STAC client.".
-stac:Catalog a owl:Class; rdfs:subClassOf dcat:Catalog.
-stac:Collection a owl:Class; rdfs:subClassOf dcat:Dataset.
-stac:Item a owl:Class; rdfs:subClassOf prov:Entity;
+stac:Catalog a owl:Class;
+  rdfs:comment "A STAC catalog as described by its source document. Catalog membership describes metadata, not acquired data.";
+  rdfs:label "STAC catalog"; rdfs:subClassOf dcat:Catalog.
+stac:Collection a owl:Class;
+  rdfs:comment "A STAC collection as described by its source document. Its extent describes advertised coverage, not verified assets.";
+  rdfs:label "STAC collection"; rdfs:subClassOf dcat:Dataset.
+stac:Item a owl:Class;
+  rdfs:label "STAC item"; rdfs:subClassOf prov:Entity;
   rdfs:comment "A STAC metadata item, whose footprint describes asset coverage. It is not automatically a jurisdiction or its boundary.".
-stac:Asset a owl:Class; rdfs:subClassOf dcat:Distribution;
+stac:Asset a owl:Class;
+  rdfs:label "STAC asset"; rdfs:subClassOf dcat:Distribution;
   rdfs:comment "An owner-scoped asset descriptor. The resolved href is dcat:downloadURL. An asset descriptor does not assert locally available file bytes.".
 stac:version a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "STAC specification version, separate from dcat:version of the data product.".

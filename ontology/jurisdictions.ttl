@@ -9,42 +9,51 @@
 
 <urn:fieldwork:ontology:jurisdictions> a owl:Ontology;
   rdfs:label "Jurisdiction assets and study area membership";
-  owl:versionInfo "0.1 experimental, 2026-10-06";
+  owl:versionInfo "0.2 experimental, 2026-10-08";
   rdfs:comment "Proposed extension to fieldwork.ttl. Load both graphs explicitly. Declarations do not implement ingestion, geometry operations or validation.".
 
 fw:Jurisdiction a owl:Class;
+  rdfs:label "Jurisdiction";
   rdfs:subClassOf geo:Feature;
   rdfs:comment "Named administrative territory, not its governing organization. Identity is scoped to an authority or identifier scheme; names alone are not keys.";
   fw:implementationStatus "proposed".
 fw:JurisdictionBoundary a owl:Class;
+  rdfs:label "Jurisdiction boundary";
   rdfs:subClassOf geo:Feature, prov:Entity;
   rdfs:comment "A dataset-version-specific representation of a jurisdiction, with its own identity, source attributes and geo:hasGeometry. This is not asserted owl:sameAs the jurisdiction or a representation from another release.";
   fw:implementationStatus "proposed".
 fw:JurisdictionDataset a owl:Class;
+  rdfs:label "Jurisdiction dataset";
   rdfs:subClassOf dcat:Dataset, prov:Entity;
   rdfs:comment "Boundary data for a stated provider, release and scope. Encodings are separate dcat:Distributions. Dataset version is not the validity date of a boundary.";
   fw:implementationStatus "proposed".
 fw:DownloadedAsset a owl:Class;
+  rdfs:label "Downloaded asset";
   rdfs:subClassOf prov:Entity;
   rdfs:comment "Exact locally acquired file bytes, derived from a dcat:Distribution. Record fw:sha256, fw:byteSize, fw:filename and retrieval activity. Its local availability is separate from its identity.";
   fw:implementationStatus "proposed".
 fw:AssetAcquisition a owl:Class;
+  rdfs:label "Asset acquisition";
   rdfs:subClassOf prov:Activity;
   rdfs:comment "A download or user-supplied-file acquisition. prov:used identifies the distribution when known; prov:generated identifies local bytes. A URL alone does not mean acquisition succeeded.";
   fw:implementationStatus "proposed".
 fw:BoundaryImport a owl:Class;
+  rdfs:label "Boundary import";
   rdfs:subClassOf prov:Activity;
   rdfs:comment "Reads a selected layer from an asset, validates geometry and CRS, preserves source fields, and generates an imported dataset. Archive extraction may be a separate provenance activity.";
   fw:implementationStatus "proposed".
 fw:ImportedFeatureDataset a owl:Class;
+  rdfs:label "Imported feature dataset";
   rdfs:subClassOf fw:DerivedSpatialDataset, geo:FeatureCollection;
   rdfs:comment "A decoded local feature collection before or after provider-specific normalization. A generic reader does not have to resolve jurisdiction identity.";
   fw:implementationStatus "proposed".
 fw:ImportedBoundaryDataset a owl:Class;
+  rdfs:label "Imported boundary dataset";
   rdfs:subClassOf fw:ImportedFeatureDataset;
   rdfs:comment "Locally imported boundary features, linked using rdfs:member. Record derivation from the original bytes and the boundary import activity.";
   fw:implementationStatus "proposed".
 fw:JurisdictionSelection a owl:Class;
+  rdfs:label "Jurisdiction selection";
   rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Explicitly selects versioned boundary features from imported datasets into a study area. The proposed N3 rules project eligible members; they do not validate completion or compute a geometric union.";
   fw:implementationStatus "proposed".

@@ -144,6 +144,58 @@ Three roles, then, which should never be collapsed into one "basemap" item:
   the date and digest must be recorded, and the file kept, which is exactly the
   vintage discipline experiment 51 requires of every other class.
 
+## Does a basemap need a widget? No, and the reason generalises
+
+The question is worth answering architecturally rather than by taste, because the same
+question will arrive for fonts, vocabularies, pack files and anything else large and
+shared.
+
+**What exists already.** A basemap is a parameter of the Map output — `basemap` is one
+of `none`, `osm` or `topo` — and it is already recorded in provenance: the map
+specification receipt asserts `fw:mapBasemap` alongside the title, legend and
+presentation mode. The display choice therefore has a home, and adopting PMTiles or
+Natural Earth extends an enumeration rather than needing a node.
+
+**Why a widget would be wrong.** Three tests, each of which a basemap fails:
+
+1. **Does anything downstream consume its value?** No. A basemap node would need a new
+   `basemap` port type that exactly one node accepts, in a closed union. A node that can
+   only ever connect to one other node is a parameter wearing a node costume.
+2. **Is it scoped to the workflow or to the device?** To the device. A cached archive is
+   shared across every project, persists independently of all of them, and is measured
+   in gigabytes. Widgets are workflow-scoped: they appear on the canvas, travel in an
+   exported workflow and are replayed from a run receipt. A workflow carrying a
+   "basemap" node would imply the archive travels with the export, and it cannot.
+3. **Does it change what the result means, or only how it looks?** Only how it looks. A
+   basemap is presentation context; nothing in the inference depends on it.
+
+**Why `raster_input` is not a counter-example.** That widget also acquires a file, and
+it *is* a widget, correctly: its output is consumed analytically by Clip raster and by
+the Map's raster mode. Its values enter the inference, so they need a port, a digest and
+a place in the execution order. A basemap's values never do. The distinction is
+consumption, not file size.
+
+**Where each part belongs, then:**
+
+| Concern | Scope | Home |
+| --- | --- | --- |
+| Which basemap this figure displays, at which scale | workflow | a Map output parameter, asserted as `fw:mapBasemap` |
+| Which archives are cached on this device, at what size and vintage | device | the preparation surface of [experiment 49](49-catalog-in-the-interface.md) |
+| What a given run was displayed against | workflow | the map specification receipt, extended to name the basemap's build date and digest |
+
+That last row is the only genuinely new work, and it is small: a receipt that says *this
+figure was drawn over Natural Earth 1:50m*, or *over a PMTiles archive of build
+20261008, digest abc…*, lets a reader reconstruct the figure without the workflow
+pretending to contain 3 GB.
+
+**The case that would change the answer.** If a coastline or boundary is used
+*analytically* — clipped against, measured, joined to — then it is not a basemap at all.
+It is a frame input, it needs a source with authoritative codes and a recorded vintage,
+and it goes through the existing input widgets. Keeping basemaps out of the canvas is
+what makes that distinction structural rather than advisory: there is no basemap node to
+mistakenly connect to an analysis, which is the context-is-not-frame rule enforced by
+the architecture instead of by a warning.
+
 ## What is not established, and must be measured before any of this is built
 
 1. **Bundle cost.** The application renders basemaps with Leaflet raster tiles today.

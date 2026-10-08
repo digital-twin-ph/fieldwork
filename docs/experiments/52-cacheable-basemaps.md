@@ -1,4 +1,4 @@
-# 52 · Cacheable basemaps: PMTiles
+# 52 · Cacheable basemaps: PMTiles and Natural Earth
 
 **Status:** design record with measurements, covering two formats for two different
 jobs — PMTiles for interactive navigation, Natural Earth for static figures. Nothing

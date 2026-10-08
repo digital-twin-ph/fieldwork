@@ -6,15 +6,26 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
 <urn:fieldwork:ontology:processing> a owl:Ontology;
-  owl:versionInfo "0.1 experimental, 2026-10-06";
+  owl:versionInfo "0.2 experimental, 2026-10-08";
   rdfs:comment "Candidate operation contracts, not an executable plugin registry. No downloading, reader or scheduling capability is implied by a declaration.".
-fw:InputConfiguration a owl:Class; rdfs:subClassOf prov:Plan.
-fw:GenericInputConfiguration a owl:Class; rdfs:subClassOf fw:InputConfiguration.
-fw:STACInputConfiguration a owl:Class; rdfs:subClassOf fw:InputConfiguration.
+fw:InputConfiguration a owl:Class;
+  rdfs:comment "A configured source of data for a workflow. A configuration is a plan; it is not evidence that data was acquired.";
+  rdfs:label "Input configuration"; rdfs:subClassOf prov:Plan.
+fw:GenericInputConfiguration a owl:Class;
+  rdfs:comment "A configured input that supplies a dataset without a provider-specific profile. Format, extent and missing-data policy remain explicit.";
+  rdfs:label "Generic input configuration"; rdfs:subClassOf fw:InputConfiguration.
+fw:STACInputConfiguration a owl:Class;
+  rdfs:comment "An input configured from a STAC descriptor. A STAC role or media type never establishes that a file is locally available or format-verified.";
+  rdfs:label "STAC input configuration"; rdfs:subClassOf fw:InputConfiguration.
 fw:describesDataset a owl:ObjectProperty.
-fw:ProcessingContract a owl:Class; rdfs:subClassOf prov:Plan.
-fw:RoutingRequest a owl:Class; rdfs:subClassOf prov:Plan.
-fw:AssetInspection a owl:Class; rdfs:subClassOf prov:Activity;
+fw:ProcessingContract a owl:Class;
+  rdfs:comment "A declared description of an operation: its input and output kinds, optional format or provider requirements, and implementation status. A contract is not a registration of a working implementation.";
+  rdfs:label "Processing contract"; rdfs:subClassOf prov:Plan.
+fw:RoutingRequest a owl:Class;
+  rdfs:comment "A scoped request for candidate operations over named inputs. Candidates are proposals; no rule derives execution readiness.";
+  rdfs:label "Routing request"; rdfs:subClassOf prov:Plan.
+fw:AssetInspection a owl:Class;
+  rdfs:label "Asset inspection"; rdfs:subClassOf prov:Activity;
   rdfs:comment "An explicitly recorded inspection of actual file bytes. Provider metadata alone cannot create this observation.".
 fw:inspectedAsset a owl:ObjectProperty; rdfs:domain fw:AssetInspection; rdfs:range fw:DownloadedAsset.
 fw:observedFormat a owl:ObjectProperty; rdfs:domain fw:AssetInspection.

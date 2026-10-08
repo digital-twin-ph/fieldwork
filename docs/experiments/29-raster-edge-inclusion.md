@@ -14,7 +14,51 @@ For an outward margin, select **One pixel around Study area** under **Extra sour
 
 **A101 — Separate pixel selection from pixel presentation.** All-touched retains a native cell when its closed rectangle intersects the polygon or configured outward margin, including edge/corner contacts within available coverage. Cell-center remains available for legacy work. Neither method resamples values, estimates population totals, or assigns fractional-cell weights. The map uses an SVG alpha mask to hide portions outside the footprint. Exported GeoTIFFs retain whole native cells on a rectangular georeferenced grid, with the mask method, margin and boundary in their description. They are not subpixel raster encodings.
 
-**A102 — Margin is a processing parameter in native pixel coordinates.** The permitted margin is 0–1 pixel, measured by Euclidean distance after transforming coordinates into the source grid. This is not a metre buffer; geographic pixels may have unequal physical dimensions. Round joins in the SVG display use the same pixel-coordinate space. Positive margin expands outer boundaries and contracts holes. Multipart polygons are a union. A small numerical tolerance handles floating-point contacts; equivalence with a GDAL implementation has not been established.
+**A102 — Margin is a processing parameter in native pixel coordinates.** The permitted margin is 0–1 pixel, measured by Euclidean distance after transforming coordinates into the source grid. This is not a metre buffer; geographic pixels may have unequal physical dimensions. Round joins in the SVG display use the same pixel-coordinate space. Positive margin expands outer boundaries and contracts holes. Multipart polygons are a union. A small numerical tolerance handles floating-point contacts.
+
+Equivalence with GDAL was measured, found not to hold for All touched, and the
+rule has since been changed to match. Against `rasterio` 1.5.2 with GDAL 3.12.2,
+over a synthetic CRS84 grid and a cutline with vertices deliberately placed on
+pixel corners:
+
+| Case | Reference | Fieldwork | Outcome |
+| --- | --- | --- | --- |
+| Cell center inside, margin 0 | 132 cells | 132 cells | Agrees exactly, including the window and retained values |
+| All touched, margin 0, before | 146 cells | 181 cells | 35 differing cells, window one cell wider on each side |
+| All touched, margin 0, now | 146 cells | **144 cells** | **2 differing cells, window agrees** |
+
+**The rule.** A cell is included when the cutline covers part of its area or
+crosses its interior. An edge lying exactly on the border between two cells
+belongs to the covered one, so no exterior ring is added, and the window is no
+longer padded by a fraction of a pixel. Getting there corrected an intermediate
+assumption: treating a cell as owning the half-open area `[column, column+1)`
+still added a ring, because GDAL does not burn the cell on the **outside** of an
+exactly aligned edge. Positive-area coverage is the rule that matches.
+
+**The residual 2 cells** are GDAL-only, in the row whose top border is exactly
+the cutline's southernmost extent. They come from GDAL's line rasterizer burning
+cells along an exactly aligned vertex, which is an artifact of that
+implementation rather than a rule anyone can state. Reproducing them would mean
+reproducing the rasterizer's quirks, so they are recorded instead. "Use GDAL's
+rule" has a clean answer that reaches 2 cells of 146; the last 2 are GDAL being
+GDAL.
+
+**Provenance.** A method name alone cannot distinguish a clip made under the old
+rule from one made under the new one, and receipts previously recorded nothing
+about the margin, so two different clips were indistinguishable in their
+evidence. Each raster receipt now carries `fw:rasterMaskConvention`, constrained
+by SHACL to a known identifier, and `fw:rasterMaskMarginPixels`. Receipts
+exported before 2026-10-08 carry no convention and were produced by the earlier,
+more inclusive rule.
+
+**Effect on saved work.** Re-running a saved All touched clip can retain fewer
+boundary cells, so a total derived from one can change; for a count-valued raster
+such as population that total was previously inflated relative to GDAL. Cell
+center inside is unaffected. `clip_raster` is released as **1.0.0** with the
+effect recorded, and a unit test pins the convention at an exactly aligned
+border. The margin remains this prototype's own extension with no GDAL
+equivalent, compared only against a dilation model, so it is unvalidated. The
+measurement is reproducible from the Validation Lab's check 02.
 
 **A103 — Missing data stays missing.** Edge selection can retain an actual source value that a center-only mask would discard. It cannot fill source NoData. Gray within the footprint denotes NoData; outside is transparent. Counts describe selected cells and selected cells with valid data. All-touched and positive margins can select cells extending beyond the original study polygon, so summing whole population-count pixels requires a separate, explicitly justified statistical operation.
 

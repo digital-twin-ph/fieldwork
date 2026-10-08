@@ -7,11 +7,12 @@
 
 <urn:fieldwork:ontology:gadm> a owl:Ontology;
   rdfs:label "Fieldwork GADM import profile";
-  owl:versionInfo "0.1 experimental, 2026-10-06";
+  owl:versionInfo "0.2 experimental, 2026-10-08";
   dcterms:source <https://gadm.org/metadata.html>, <https://gadm.org/download_country.html>;
   rdfs:comment "Fieldwork-owned profile, not an official GADM ontology or catalog. Load with fieldwork.ttl and jurisdictions.ttl. No GADM geometries are bundled.".
 
 gadm:BoundaryDataset a owl:Class;
+  rdfs:label "Boundary dataset";
   rdfs:subClassOf fw:JurisdictionDataset;
   rdfs:comment "GADM boundaries for an explicit release and country, optionally restricted to an administrative level. Use dcat:version for the dataset release. A whole-country GeoPackage may contain several layers.";
   fw:implementationStatus "proposed".

@@ -3,6 +3,60 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.5.0 — 2026-10-08
+
+- **Change the All touched clipping rule to match GDAL.** A cell is now included
+  only when the clipping boundary covers part of its area or crosses its
+  interior. A boundary edge lying exactly on the border between two cells no
+  longer pulls in the cell outside it, and the cropped window is no longer
+  padded by a fraction of a pixel. Measured cell by cell against rasterio 1.5.2
+  with GDAL 3.12.2, differences over a deliberately pixel-aligned cutline fall
+  from 35 cells to 2, and the window now agrees; the residual 2 cells come from
+  GDAL burning cells along a cutline vertex lying exactly on a cell border,
+  which is an artifact of its line rasterizer rather than a stateable rule.
+  **Migration:** re-running a saved All touched clip can retain fewer boundary
+  cells, so a total derived from one can change. Cell center inside is
+  unaffected. `clip_raster` is released as 1.0.0 with that effect recorded.
+- Validation: strict TypeScript, production build, **112 unit tests**, ontology
+  SHACL conformance, widget-registry validation at 33 widgets and 64 releases,
+  and **63 Chromium scenarios with 1 skipped** (the local WorldPop raster, which
+  is not bundled). Independent recomputation in the Validation Lab confirms
+  reprojection against pyproj and cell-centre clipping against GDAL, and records
+  a 2-cell residual on all-touched. **Not established:** scientific suitability,
+  privacy effectiveness, cartographic suitability, or Firefox and WebKit
+  behaviour. A first WebKit run passed 31 of 64 scenarios, with 21 of the
+  failures attributable to the test harness rather than the application and the
+  remainder untriaged.
+- Record the inclusion rule and the outer margin in N3 evidence as
+  `fw:rasterMaskConvention` and `fw:rasterMaskMarginPixels`, constrained by
+  SHACL. Receipts previously stated only a method name, so two clips made under
+  different rules, or with different margins, were indistinguishable in their
+  evidence. Receipts exported before this change carry no convention and were
+  produced by the earlier, more inclusive rule.
+- Add a **Reproject input** source widget that imports a local CSV or GeoJSON in
+  WGS84 UTM metres and converts it to CRS84 longitude/latitude, so projected
+  files can reach the existing point widgets for the first time. The conversion
+  runs once on import and replays offline; the output is the ordinary CRS84
+  points contract, so no downstream widget changes.
+- Record the declared source EPSG code, exact proj4 definition, axis order,
+  units, operation, library version, converted and unconverted counts, maximum
+  round-trip error and an explicit `datumShift: none` with the imported points.
+- Admit WGS84 UTM zones only. A file on another datum needs a datum shift this
+  prototype does not implement, and is refused rather than approximated.
+  Coordinates outside the UTM easting/northing ranges, points outside the
+  declared zone's validity guard and round-trip disagreements above 0.01 m are
+  refused with an explanation.
+- No workflow migration is required; existing saved projects are unaffected.
+- Validation of this work in progress: strict TypeScript, production build, 111 unit tests, ontology and
+  widget-registry checks (33 widgets, 63 releases) and 63 Chromium scenarios
+  with 1 skipped. Unit checks assert UTM definitional invariants, round-trip
+  tolerance and guard refusals. **Not established:** agreement with PROJ or
+  GDAL to a stated tolerance, any datum other than WGS84, that a declared zone
+  or hemisphere is the correct one for a given file, or Firefox and WebKit
+  behavior. Raster warping is specified in
+  [experiment 40](docs/experiments/40-reprojection-primitives.md) but not built;
+  `raster_input` keeps its no-resampling contract.
+
 ## 0.4.0 — 2026-10-07
 
 - Make Map outputs standalone communication views with configurable title,

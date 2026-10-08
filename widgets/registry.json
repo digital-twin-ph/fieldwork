@@ -336,6 +336,18 @@
       ]
     },
     {
+      "id": "urn:fieldwork:widget:reproject",
+      "nodeType": "reproject",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/reproject/0.1.0.json",
+          "sha256": "dffeecbf96534c06a0e9f1bb88eed316943b1c94587f19ebfe9273280ea192ad"
+        }
+      ]
+    },
+    {
       "id": "urn:fieldwork:widget:raster_input",
       "nodeType": "raster_input",
       "currentVersion": "0.3.1",
@@ -365,7 +377,7 @@
     {
       "id": "urn:fieldwork:widget:clip_raster",
       "nodeType": "clip_raster",
-      "currentVersion": "0.5.0",
+      "currentVersion": "1.0.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -391,6 +403,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/clip_raster/0.5.0.json",
           "sha256": "05ab447f3341d1191d64fb450e0c55bb34248365fc92338dca16c7204e10cd18"
+        },
+        {
+          "version": "1.0.0",
+          "path": "widgets/releases/clip_raster/1.0.0.json",
+          "sha256": "6676aa13d90569adfe526d6903e62cc6118d28613067caa0554f4ea2b112548a"
         }
       ]
     },

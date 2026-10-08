@@ -1,5 +1,9 @@
 # Semantic admission and worked-example audit
 
+If the vocabulary below is unfamiliar, start with
+[the glossary](#glossary-the-semantic-vocabulary-used-in-these-documents); the
+terms it defines are used throughout this procedure and the experiment records.
+
 The canvas must emit parseable N3/RDF. Its RDF must conform to the relevant
 SHACL profile. Add missing shapes with a positive example and a negative test.
 This is a development requirement, not a claim of complete semantic coverage.
@@ -25,7 +29,101 @@ missing input, unit, identity, provenance and malformed-output cases. Confirm
 that presentation nodes preserve rather than recompute scientific results.
 Record unresolved gaps and update this audit when closing them.
 
+## Glossary: the semantic vocabulary used in these documents
+
+This procedure and the experiment records use the vocabulary of ontology
+engineering. That vocabulary is unavoidable, but it should not be a barrier to
+reviewing the work, and several of its terms mean something narrower than
+everyday usage suggests. Where a term is commonly misread, the entry says what
+it does **not** mean.
+
+### Writing facts down
+
+| Term | Meaning |
+| --- | --- |
+| IRI | A globally unique identifier for a thing, written like a web address. `urn:fieldwork:StudyArea` is an IRI. It need not resolve to anything; it is a name, not a link. |
+| Triple | One statement in three parts: subject, predicate, object. "This node plan has node type `reproject`" is a triple. |
+| RDF | The data model in which everything is triples. A set of triples is a graph. |
+| Turtle, N3 | Text formats for writing triples. Turtle is the `.ttl` files here; N3 adds rules, which is what the reasoning engine evaluates. |
+| Prefix | A shorthand for a long IRI. `fw:` stands for `urn:fieldwork:`, so `fw:StudyArea` is the full IRI written briefly. |
+| Named graph | A labelled set of triples, used to keep sources apart — for example to separate what was asserted from what a reasoner inferred. |
+| Ground RDF | Plain facts, as distinct from rules. This procedure insists rule formulas are parsed separately and never validated as if they were facts. |
+
+### Describing kinds of things
+
+| Term | Meaning |
+| --- | --- |
+| Class | A kind of thing, such as `fw:StudyArea`. Not a software class, and not a table. |
+| Individual | A particular thing belonging to a class — one specific study area, not the idea of study areas. |
+| Property | A named relationship. An **object property** links a thing to another thing; a **datatype property** links a thing to a value such as a number or date. |
+| `rdfs:subClassOf` | Every member of this class is also a member of that one. Catchment datasets are spatial datasets. |
+| `rdfs:domain` | Declares what kind of thing a property is used **on**. Read the caution below: it does not reject other uses. |
+| `rdfs:range` | Declares what kind of thing or value a property points **to**. The same caution applies. |
+| Declaration vs assertion | Declaring a class says the term exists. Asserting a fact says something about a particular thing. A catalogue of declarations is not a claim that anything has been built or run. |
+
+### Reasoning about them
+
+| Term | Meaning |
+| --- | --- |
+| OWL | A language for writing statements precise enough for a machine to draw conclusions from them. |
+| OWL 2 DL | A profile of OWL restricted so that reasoning is decidable: a reasoner is guaranteed to finish and to be correct for it. |
+| Description logic | The formal logic underlying OWL. "DL" in tool names refers to it. |
+| Reasoner | A program that derives conclusions from a graph. Konclude, used in experiment 42, is one; the EYE engine in the application evaluates N3 rules, which is a different job. |
+| Entailment, inference | A conclusion that follows necessarily from what was asserted, whether or not anyone wrote it down. |
+| Materialisation | Writing inferred triples out explicitly so they can be inspected or queried. |
+| Classification | Working out the full class hierarchy that the asserted axioms imply, including subclass relationships nobody stated. |
+| Consistency | Whether a graph contains a contradiction. A graph with no contradictory axioms **cannot** be inconsistent, so "consistent" is only informative when the ontology says enough to be contradicted. |
+| Satisfiability | Whether a class could have any member at all. An unsatisfiable class is a modelling error: it has been defined so that nothing could ever belong to it. |
+| Disjointness | An explicit statement that two classes share no members. Without it, nothing stops one thing from belonging to both. |
+| Cardinality | How many times a property may or must be used — "exactly one source", "at least one input". |
+| Open-world assumption | Absent information means unknown, not false. A reasoner will not conclude that a facility has no coordinates merely because none were stated. This is why absence of a fact is never proof of compatibility. |
+
+### Validating them
+
+| Term | Meaning |
+| --- | --- |
+| SHACL | A language for stating requirements a graph must meet, and a tool that reports where it fails. Unlike OWL, it checks rather than infers. |
+| Shape | One such set of requirements, aimed at a class or at specific nodes. |
+| Conformance | A graph satisfies the shapes it was checked against. It does not mean the graph is correct, complete, or scientifically meaningful. |
+| Constraint vs entailment | The distinction that matters most here. SHACL **rejects** a graph that breaks a rule. `rdfs:domain` and `rdfs:range` instead **infer** a type for whatever they are applied to, so a property used on an unintended subject produces a new inference rather than an error. Declaring domains and ranges is therefore not a way to validate how properties are used. |
+
+### Vocabularies reused rather than reinvented
+
+| Vocabulary | What it supplies here |
+| --- | --- |
+| GeoSPARQL | Spatial features, geometries and their coordinate reference system. |
+| PROV-O | Lineage: an **Activity** is something that happened, an **Entity** is something it used or produced, and a **Plan** is the configuration it followed. A configured widget is a plan; one execution is an activity. |
+| QUDT | Quantities with units, so a number carries what it measures. |
+| DCAT | Datasets, their distributions and where they came from. |
+| Dublin Core (`dcterms:`) | Descriptive metadata: titles, identifiers, descriptions, references. |
+| SKOS | Controlled lists of concepts, for category vocabularies rather than classes. |
+
+### Three traps these documents try to avoid
+
+A reviewer can hold the project to these without knowing any description logic.
+
+1. **A declaration is not a capability.** A class, a shape or a catalogue entry
+   describes an intended contract. It is not evidence that code exists, runs, or
+   produces the result the term suggests.
+2. **Passing a check is not being right.** SHACL conformance establishes
+   structure. Consistency establishes the absence of contradiction, and only
+   where contradiction was possible. Neither establishes numerical accuracy,
+   methodological suitability or a valid public-health conclusion.
+3. **Similar labels are not identical meanings.** Two operations called "clip"
+   may differ in pixel selection, coordinate reference system and missing-data
+   behaviour. The table below exists because of this.
+
 ## Terms that must remain distinct
+
+These distinctions are **not currently enforced by the ontology**. Measured on
+October 8, 2026 with an OWL 2 DL reasoner, the vocabulary contains no
+disjointness, cardinality or restriction axioms, so a graph that types one
+individual as both a catchment and an isochrone, or both a study area and an
+acquisition buffer, is consistent. Adding one `owl:disjointWith` axiom per pair
+makes such a graph inconsistent. Until that is done, this table is a convention
+for reviewers, and conformance to it is a review activity rather than a check.
+Clipping boundary and Presentation have no class at all. See
+[experiment 42](experiments/42-ontology-structure-and-meaning.md).
 
 | Term | Meaning |
 | --- | --- |
@@ -74,6 +172,10 @@ legacy heat/access operation semantics remain incomplete. Ground EYE conclusions
 are included in the combined SHACL data graph, separately from rule formulas. Scientific correctness,
 learning effectiveness and external source truth require separate evaluation.
 Proposed game/learner vocabulary in note 27 remains design-only.
+The STAC discovery, asset-selection and windowed-acquisition terms in note 39
+are design-only; no shape, widget release or acquisition path exists, and the
+`fw:AssetSelection` and `fw:WindowedAcquisition` shapes must be written before
+any implementation.
 The John Snow geoprivacy example has separate `DonutGeomasking`, two
 `MeanCenterComputation` branches, `PointSetComparison`, and `HexAggregation`
 computation receipts and SHACL shapes. Each mean-center branch must consume

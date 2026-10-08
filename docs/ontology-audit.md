@@ -29,6 +29,29 @@ missing input, unit, identity, provenance and malformed-output cases. Confirm
 that presentation nodes preserve rather than recompute scientific results.
 Record unresolved gaps and update this audit when closing them.
 
+## Three dimensions: structure, semantics, relevance
+
+An ontology can be well formed, mean what it says, and still be useless. These
+are separate questions, each with its own instrument and its own limits, and a
+pass on one is not evidence about the others.
+
+| Dimension | The question | Instrument | What a pass does **not** establish |
+| --- | --- | --- | --- |
+| **Structure** | Is the graph well formed and completely declared? | SHACL shapes over runtime and canvas graphs; a declaration check over the vocabulary itself for undeclared terms, missing labels and missing comments | That the terms mean anything in particular, or that the graph is worth producing |
+| **Semantics** | Does the vocabulary mean what these documents claim? | An OWL 2 DL reasoner: consistency, class satisfiability, and whether a conflation the audit forbids is actually rejected | That the distinctions drawn are the right ones. A reasoner enforces the modelling it is given |
+| **Relevance** | Does it answer anything a practitioner needs to ask? | [Competency questions](competency-questions.md), each with the facts that would answer it and an honest status | That an answer is correct, timely or appropriate to a public-health question |
+
+Structure is the oldest check here and the easiest to mistake for the others. A
+conforming graph can be semantically empty, and a consistent vocabulary can
+answer no question anyone has. Relevance is the newest dimension and the only one
+that asks what the work is *for*.
+
+Two rules follow. Admitting a primitive requires naming the competency question
+it serves; if it answers none and suggests none, its value is unclear and should
+be argued before it is built. And a question the ontology must **refuse** is
+recorded as deliberately refused, in the term's own comment, so a reader meets
+the limit where they meet the term.
+
 ## Glossary: the semantic vocabulary used in these documents
 
 This procedure and the experiment records use the vocabulary of ontology
@@ -115,15 +138,17 @@ A reviewer can hold the project to these without knowing any description logic.
 
 ## Terms that must remain distinct
 
-These distinctions are **not currently enforced by the ontology**. Measured on
-October 8, 2026 with an OWL 2 DL reasoner, the vocabulary contains no
-disjointness, cardinality or restriction axioms, so a graph that types one
-individual as both a catchment and an isochrone, or both a study area and an
-acquisition buffer, is consistent. Adding one `owl:disjointWith` axiom per pair
-makes such a graph inconsistent. Until that is done, this table is a convention
-for reviewers, and conformance to it is a review activity rather than a check.
-Clipping boundary and Presentation have no class at all. See
-[experiment 42](experiments/42-ontology-structure-and-meaning.md).
+Several of these distinctions are now **enforced**, and the rest are not yet.
+Measured on October 8, 2026 with an OWL 2 DL reasoner: conflating study area with
+clipping boundary, acquisition boundary or catchment, a canvas plan with a
+workflow plan, a widget definition with either plan, or a presentation with a
+spatial operation now makes a graph inconsistent. Conflating a boundary with an
+execution is caught too, once PROV-O is merged, because this vocabulary declares
+its boundary features to be PROV entities and PROV-O declares entities and
+activities disjoint. Terms distinguished only by prose remain unenforced, and
+`fw:AcquisitionBoundary` is declared but not yet emitted: buffer receipts still
+type their output `fw:StudyArea`, so that distinction holds in documentation
+only. See [experiment 42](experiments/42-ontology-structure-and-meaning.md).
 
 | Term | Meaning |
 | --- | --- |
@@ -159,7 +184,11 @@ structure and presentation inputs. Validate the combined run graph because sourc
 identities and generators span receipts. Rule formulas are parsed as N3 separately
 and are not treated as ground RDF for SHACL.
 
-Run `npm test`, `npm run validate:ontology`, and `npm run validate:widgets`.
+Structure and semantics are checked by `npm test`, `npm run validate:ontology`,
+`npm run validate:widgets`, and the Validation Lab's ontology check, which reasons
+over the vocabulary merged with a vendored PROV-O so that cross-kind conflations
+are detectable. Relevance is reviewed by hand against the competency questions;
+turning each into a query that runs against a receipt is not yet implemented.
 For a run object JSON, use `node scripts/audit-runtime-n3.mjs run.json`.
 The audit accepts known historical catalog releases and verifies their recorded
 digest. It does not dispatch old executable versions.

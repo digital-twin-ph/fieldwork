@@ -137,6 +137,13 @@ kilobytes to a few megabytes per country, with raster tiles cached only for the
 The practitioner's deferral decision therefore changes shape too: not "how deep" but
 "which jurisdictions as vector, and which operational areas as tiles".
 
+> **Revised by [experiment 52](52-cacheable-basemaps.md).** The numbers above assume
+> raster PNG tiles fetched per request. A vector basemap delivered as a single PMTiles
+> archive measures roughly 20× smaller per tile and deduplicates empty area, which puts
+> the same ten-country extent in the range of a few gigabytes as **one file** rather
+> than 245 GiB as 8.6 million requests. The prescription stands with the delivery
+> changed: one archive for the relevance extent, plus this project's vector overlays.
+
 ## Four recurring classes, named by the role they play
 
 The useful unit is not the file but the **role it plays in an inference**, because the

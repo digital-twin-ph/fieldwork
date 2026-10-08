@@ -281,6 +281,34 @@ for code.
 6. When a pack's example disagrees with the base widgets' behaviour, is it clear
    which one is wrong?
 
+## A pack must say which pipeline stages it supplies
+
+Writing the first use case exposed a gap in this contract. A pack description
+that begins "the widget consumes dataset X" has already assumed away the hardest
+parts. The stages are distinct, and conflating them is how a design comes to look
+finished while its first step is undefined:
+
+| Stage | Produces | Who supplies it |
+| --- | --- | --- |
+| **Discovery** | A request naming a resolved location, never data | A widget, or an external procedure the pack documents |
+| **Acquisition** | Bytes with a digest and byte identity | Only possible where the format and transport allow it in a browser |
+| **Extraction** | A bounded artifact from something too large to read here | Outside the application, in the Validation Lab or a recorded procedure |
+| **Import** | The artifact inside a project, with provenance | A widget, whose provenance duty is heavier than an acquisition's |
+| **Application** | A result computed from the artifact | A widget, which must not imply it produced the underlying science |
+| **Presentation** | A view | Base widgets, reused |
+
+Two naming rules follow, both learned the hard way. A widget that reads a file
+somebody else produced is an **import**, not an acquisition: an acquisition can be
+replayed from its request, while an import can only be trusted if it records
+where it came from. And a widget that applies published results is a **consumer**,
+not a model. Experiment 39 corrected the first error when `stac_input` became
+`stac_discovery`; the second is the same error one level up, and a pack that
+called itself a model would be claiming scientific work it did not do.
+
+A pack's manifest should therefore state, per stage, whether it supplies it,
+assumes it, or declares it out of scope. "Assumes" is an acceptable answer. Silence
+is not.
+
 ## First use case
 
 [Experiment 47](47-sea-level-pack.md) works the contract above through a real

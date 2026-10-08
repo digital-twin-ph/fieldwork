@@ -62,9 +62,87 @@ handle. Preparation happens outside the browser — in the
 and the extract travels with the project, exactly as a prepared GeoTIFF window
 does. This mirrors the only pattern that has been shown to work.
 
+## The assumptions this design was hiding
+
+Written as reasoning, before anything is built. The section above begins at "the
+pack consumes a prepared extract", which quietly assumes three things and
+misnames a fourth. Each assumption is a stage of a pipeline this prototype has
+only partly designed.
+
+**Stage 1, discovery: assumed already done.** Choosing an AR6 projection is not
+choosing a file. A practitioner must decide between tide-gauge and gridded data,
+among seven workflows whose confidence characterisations differ, among five SSPs
+and the temperature-limit experiments, and between the two families that differ
+by vertical land motion. That is 51 stores per family before any of the component
+files. Experiment 47 as first written assumed the practitioner arrives already
+knowing which one they want, which is the least safe assumption in the document:
+the choice *is* the analysis, and recording it is most of the provenance.
+
+Only one discovery primitive has been designed here,
+[`stac_discovery`](39-stac-discovery-and-remote-acquisition.md), and it is
+specific to STAC. The AR6 store index is a plain JSON file served with permissive
+CORS from `raw.githubusercontent.com`, so a discovery widget over it is feasible
+and would emit the same kind of artifact experiment 39 settled on: a
+`remote-asset-request` naming a resolved location, not data. The alternative is to
+leave discovery outside the application as a documented procedure. Either is
+defensible; what is not defensible is the current silence, where a prepared file
+appears with no record of why that file.
+
+**Stage 2, acquisition: assumed to exist, and it does not.** Nothing here can read
+zarr, and the smallest relevant store is 38.42 GB. So whatever enters the
+application is not acquired by it. Experiment 39 drew exactly this line —
+discovery yields a request, acquisition yields bytes with a digest — and a pack
+must not blur it. Calling a widget an acquisition widget when it reads a file
+somebody else produced would repeat the naming error experiment 39 corrected when
+`stac_input` became `stac_discovery`.
+
+So the widget below is an **import of a prepared extract**, and its provenance
+obligation is heavier than an acquisition's, not lighter: it must carry the
+dataset DOI and version, the store path, the selection that produced it, the code
+and version that performed the extraction, and a digest of the result. An
+acquisition can be repeated by replaying a request; an import can only be trusted
+if it says where it came from.
+
+**Stage 3, the model: this pack does not have one.** "Sea-level rise model widget"
+is the natural phrase and it is the wrong one. FACTS did the modelling; AR6
+published the result. A widget here *applies* a published projection, and must
+never imply that this prototype computes sea-level change. The distinction is the
+same one the audit procedure already draws between a presentation and a
+computation, one level up: a **projection consumer** is not a **projection
+producer**. If a pack widget ever did compute a projection, it would need its own
+scientific validation, which is far outside what a curated widget pack can carry.
+
+**Stage 4, several outputs: supported in one sense, blocked in another.** A single
+widget output can feed as many downstream branches as you like — all visual output
+branches execute together and shared upstream nodes execute once — so a projection
+feeding a Map, a Table and a Chart is already how this prototype works.
+
+What is **not** supported is one widget emitting several *distinct result kinds*.
+`NodeDefinition` declares `output: PortType | null`, a single value, and all 41
+existing widgets use it that way. A consumer that wanted to emit per-site levels,
+per-facility assignments and an exceedance classification as three separately
+connectable results cannot, today. The options are to split it into three widgets
+whose outputs are separately typed, to emit one richer result that downstream
+widgets select from — which is how the shared Map and Table already take an input
+mode — or to change `NodeDefinition`, which is a change to the base contract and
+not a pack's business. The pack design below chooses the split, because three
+named widgets state their semantics where one widget with three meanings would
+hide them.
+
+**What this means for the pipeline as a whole.** The honest shape is four stages,
+and a pack must say which it supplies and which it assumes:
+
+    discovery → request → extraction (outside) → prepared extract
+      → import (with provenance) → application (consumer) → outputs
+
+This pack supplies the last three. Discovery is a decision this design should
+either widget-ise over the store index or document as an external procedure, and
+extraction belongs in the Validation Lab. Writing it as a single arrow from
+"data" to "widget" is what let the first draft assume its hardest step away.
+
 ## Widgets, preferring reuse
 
-**`slr_projection_input`** supplies the extract as an ordinary CRS84 point
+**`slr_extract_import`** reads a prepared extract as an ordinary CRS84 point
 dataset with typed attributes, so it reuses the `points` port and every existing
 output widget works unchanged. Its parameters name the scenario, workflow, year,
 quantile set and dataset family. It introduces no new port type, which
@@ -76,7 +154,7 @@ assignment and its distance are the provenance that makes the number
 interpretable, and the AR6 guide itself advises tide-gauge data only where
 coverage is good.
 
-**`slr_threshold_comparison`** compares a projected water level against a facility
+**`slr_threshold_comparison`**, a consumer and not a model, compares a projected water level against a facility
 elevation that the practitioner supplies, and classifies the result. It is the
 widget most likely to be misread, so its contract is mostly refusals, below.
 

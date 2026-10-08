@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## In development
+## 0.5.0 — 2026-10-08
 
 - **Change the All touched clipping rule to match GDAL.** A cell is now included
   only when the clipping boundary covers part of its area or crosses its
@@ -17,6 +17,16 @@ shown in a local build is not a claim that it has been published.
   **Migration:** re-running a saved All touched clip can retain fewer boundary
   cells, so a total derived from one can change. Cell center inside is
   unaffected. `clip_raster` is released as 1.0.0 with that effect recorded.
+- Validation: strict TypeScript, production build, **112 unit tests**, ontology
+  SHACL conformance, widget-registry validation at 33 widgets and 64 releases,
+  and **63 Chromium scenarios with 1 skipped** (the local WorldPop raster, which
+  is not bundled). Independent recomputation in the Validation Lab confirms
+  reprojection against pyproj and cell-centre clipping against GDAL, and records
+  a 2-cell residual on all-touched. **Not established:** scientific suitability,
+  privacy effectiveness, cartographic suitability, or Firefox and WebKit
+  behaviour. A first WebKit run passed 31 of 64 scenarios, with 21 of the
+  failures attributable to the test harness rather than the application and the
+  remainder untriaged.
 - Record the inclusion rule and the outer margin in N3 evidence as
   `fw:rasterMaskConvention` and `fw:rasterMaskMarginPixels`, constrained by
   SHACL. Receipts previously stated only a method name, so two clips made under

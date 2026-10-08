@@ -15,6 +15,16 @@ shown in a local build is not a claim that it has been published.
   Validation: 5 new unit checks within 128, 71 Chromium scenarios with 1 skipped, SHACL
   conformant, registry valid at 34 widgets and 66 releases, catalog verified at 8 pinned
   digests. See [experiment 49](docs/experiments/49-catalog-in-the-interface.md).
+- Record parity evidence for widget releases in `widgets/parity.json`: which external
+  implementation recomputed a release, under what criterion, with what measured result. Release
+  files are immutable once committed, so evidence about a release accrues in a separate record
+  pinned to a Validation Lab commit. `validate:widgets` checks its shape and registry agreement
+  offline; the new `validate:parity` verifies each claim against the Lab's own result file and
+  lists the widgets with no evidence. Recorded so far: `reproject` 0.1.0 agrees with pyproj within
+  6.70e-5 m, and `clip_raster` 1.0.0 is partial — cell-centre agrees exactly, all-touched differs
+  by 2 cells at a pixel-aligned cutline, and the margin case is an unresolved comparison. Parity is
+  2 of 34 widgets, and the other 32 are printed by name. See
+  [experiment 57](docs/experiments/57-parity-evidence.md).
 - Make the pack validation report citable. `validate:packs` now records what it validated
   against — host version, registry digest, catalog version and digest, widget count — plus the
   rules it evaluated and, per pack, files verified against files pinned and the state of each

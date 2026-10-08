@@ -73,7 +73,10 @@ That type-checks application, worker and compile-only sources, rebuilds, runs
 every `tests/*.test.mjs` unit test and every `tests/*.browser.mjs` scenario on
 its own server. There are no retries, and a focused `.only` fails the gate. Use
 `npm run validate:ontology` and `npm run validate:widgets` for the RDF and
-registry checks. Set `FIELDWORK_BROWSERS` to a comma-separated list to exercise
+registry checks, which include the shape of recorded parity evidence.
+`npm run validate:parity` verifies that evidence against a Validation Lab
+checkout and lists the widgets with none; it needs that repository, so it is not
+part of the gate. Set `FIELDWORK_BROWSERS` to a comma-separated list to exercise
 other browsers; the default gate is Chromium only, and a result is claimed only
 for the browsers actually run.
 
@@ -145,6 +148,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [54 · Degrees of reproducibility](docs/experiments/54-degrees-of-reproducibility.md) | A ladder of input classes, why a figure inherits its weakest one, and what a report, publication or presentation each require |
 | [55 · Embedded provenance](docs/experiments/55-embedded-provenance.md) | Visible stamps, RDF in SVG and signed manifests compared; why steganography is refused, and the disclosure trap in embedding receipts |
 | [56 · The basis behind an identity](docs/experiments/56-basis-behind-identity.md) | A digest says which code ran, not what the method rests on: method provenance for widgets, and validation evidence a curator can cite |
+| [57 · Parity evidence](docs/experiments/57-parity-evidence.md) | Independent recomputation as the evidence this project can actually produce: two widgets measured, 32 named as unchecked |
 
 ## Repository contents
 

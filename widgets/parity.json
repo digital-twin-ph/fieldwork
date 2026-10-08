@@ -1,0 +1,50 @@
+{
+  "schema": "fieldwork/parity-evidence/1",
+  "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
+  "lab": {
+    "repository": "https://github.com/digital-twin-ph/validation-lab",
+    "commit": "e5ed7402d3423cb9965050ab648b9c8d5a2dc586"
+  },
+  "outcomes": {
+    "agrees": "Every case met the stated criterion.",
+    "partial": "Some cases met it and others did not; the measurement states which.",
+    "diverges": "The stated criterion was not met.",
+    "unresolved": "The comparison could not be made, for a reason the note gives."
+  },
+  "entries": [
+    {
+      "widget": "urn:fieldwork:widget:reproject",
+      "coversRelease": "0.1.0",
+      "check": "01-reproject",
+      "result": "content/results/check-01-reproject.json",
+      "sha256": "2036a28dfdf36f4ffbf2a3e28639558347f22c9a9dd2d481f7c07e2942da41d4",
+      "external": [
+        "pyproj 3.8.0",
+        "PROJ 9.8.1"
+      ],
+      "criterion": "maximum separation below 0.001 m over the fixture points",
+      "outcome": "agrees",
+      "measured": "maximum separation 6.70e-5 m over 9 points",
+      "ranAt": "2026-10-08T09:33:44Z",
+      "note": "Recomputed from the declared PROJ definition rather than the source EPSG code, so the comparison tests what the widget says it did. Covers a projection change on one datum; no datum shift is exercised."
+    },
+    {
+      "widget": "urn:fieldwork:widget:clip_raster",
+      "coversRelease": "1.0.0",
+      "check": "02-clip",
+      "result": "content/results/check-02-clip.json",
+      "sha256": "f35ba681754375a68d349afa4447979846ee49f59564c777ae2dbf31d0f978b5",
+      "external": [
+        "rasterio 1.5.2",
+        "GDAL 3.12.2",
+        "shapely 2.2.0",
+        "GEOS 3.14.1"
+      ],
+      "criterion": "identical opened window, included-cell set and retained values, per case",
+      "outcome": "partial",
+      "measured": "Cell-centre: agrees, 0 of 132 cells differ and retained values are identical. All-touched at a pixel-aligned cutline: 2 cells differ, both beside the alignment. All-touched with a one-pixel margin: the window differs and 61 cells differ, where the reference models the margin as a 3x3 binary dilation, which is not this widget's rule.",
+      "ranAt": "2026-10-08T13:16:49Z",
+      "note": "Recorded per case rather than as one verdict. The two residual all-touched cells are what remains after adopting GDAL's positive-area rule, down from 35; see docs/experiments/29-raster-edge-inclusion.md. The margin case is an unresolved comparison, not an established defect: the reference and the widget define the margin differently."
+    }
+  ]
+}

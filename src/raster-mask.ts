@@ -19,6 +19,13 @@ function segmentBox(a:Position,b:Position,left:number,top:number,right:number,bo
   const endpoint=(p:Position)=>Math.max(left-p[0],0,p[0]-right)**2+Math.max(top-p[1],0,p[1]-bottom)**2;
   return Math.min(endpoint(a),endpoint(b),...[[left,top],[left,bottom],[right,top],[right,bottom]].map(p=>pointSegment(p,a,b)));
 }
+/** All touched includes a cell when the cutline covers part of its area or crosses its
+ *  interior, not when an edge merely grazes its border. Measured against GDAL: a cutline
+ *  edge lying exactly on the boundary between two cells belongs to the covered one, so an
+ *  exterior ring is not added. Implemented by testing a slightly inset rectangle, inset by
+ *  more than the contact tolerance below, and only for an unmargined all-touched test,
+ *  where a cell has area. A cell whose centre is inside is already included above. */
+const CELL_INSET=1e-7;
 /** Work in native pixel coordinates: a margin is a grid distance, not metres. */
 export function rasterCellPredicate(boundary:Boundary,origin:Position,resolution:Position,options:RasterClipOptions){
   validateClipOptions(options);const method=options.method||'cell-center',margin=options.marginPixels||0;
@@ -29,7 +36,9 @@ export function rasterCellPredicate(boundary:Boundary,origin:Position,resolution
   return (column:number,row:number)=>{
     const p=[column+.5,row+.5];if(pointRelation(p,pixelBoundary)!=='Outside')return true;
     if(method==='cell-center'&&margin===0)return false;
-    const left=method==='all-touched'?column:p[0],top=method==='all-touched'?row:p[1],right=method==='all-touched'?column+1:p[0],bottom=method==='all-touched'?row+1:p[1];
+    const inset=method==='all-touched'&&margin===0?CELL_INSET:0;
+    const left=(method==='all-touched'?column:p[0])+inset,top=(method==='all-touched'?row:p[1])+inset;
+    const right=(method==='all-touched'?column+1:p[0])-inset,bottom=(method==='all-touched'?row+1:p[1])-inset;
     return edges.some(e=>e.right>=left-margin-1e-9&&e.left<=right+margin+1e-9&&e.bottom>=top-margin-1e-9&&e.top<=bottom+margin+1e-9&&segmentBox(e.a,e.b,left,top,right,bottom)<=margin*margin+1e-18);
   };
 }

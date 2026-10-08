@@ -360,7 +360,15 @@ fw:insideCellCount a owl:DatatypeProperty.
 fw:sourceBytes a owl:DatatypeProperty.
 fw:pixelSizeX a owl:DatatypeProperty.
 fw:pixelSizeY a owl:DatatypeProperty.
-fw:rasterMaskMethod a owl:DatatypeProperty.
+fw:rasterMaskMethod a owl:DatatypeProperty;
+  rdfs:label "Raster mask method";
+  rdfs:comment "The author-selected inclusion method: cell-center, all-touched, or bounding-window for an unmasked acquisition. The name alone does not fix the rule; fw:rasterMaskConvention identifies which rule the run applied.".
+fw:rasterMaskConvention a owl:DatatypeProperty;
+  rdfs:label "Raster mask convention";
+  rdfs:comment "Identifies the exact inclusion rule a run applied, so receipts produced under different rules are not mistaken for each other. \"native-window/1\" retains a bounding window without masking. \"cell-centre/1\" includes a cell when its centre lies inside or on the cutline. \"positive-area/1\" includes a cell when the cutline covers part of its area or crosses its interior, which aligns with GDAL ALL_TOUCHED except where a cutline vertex lies exactly on a cell border. Receipts exported before 2026-10-08 carry no convention and were produced by an earlier, more inclusive all-touched rule.".
+fw:rasterMaskMarginPixels a owl:DatatypeProperty;
+  rdfs:label "Raster mask outer margin";
+  rdfs:comment "The outer margin in native pixels applied to the inclusion test, between 0 and 1. A margin is a grid distance, not metres, and is this prototype\u2019s own extension with no GDAL equivalent.".
 fw:rasterMarginPixels a owl:DatatypeProperty; rdfs:domain fw:RasterClipping; rdfs:range xsd:decimal;
   rdfs:comment "Outward cutline margin measured in native raster pixel coordinates, not metres.".
 fw:clipGeometry a owl:ObjectProperty; rdfs:domain fw:SpatialOperation; rdfs:range geo:Geometry;

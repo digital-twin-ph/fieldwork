@@ -159,44 +159,32 @@ than WGS84 is in scope.
 
 ## Result: check 02, all-touched clipping
 
-Run on October 8, 2026 against fixture `clip-all-touched-001`: a synthetic
-24 × 18 CRS84 grid with a deterministic value ramp, and a concave cutline whose
-vertices are deliberately placed on pixel corners, since pixel-edge alignment is
-where rasterization conventions diverge.
+Run against fixture `clip-all-touched-001`: a synthetic 24 x 18 CRS84 grid with a
+deterministic value ramp, and a concave cutline whose vertices are deliberately
+placed on pixel corners, since pixel-edge alignment is where rasterization
+conventions diverge.
 
 | Case | Reference included | Fieldwork included | Verdict |
 | --- | --- | --- | --- |
 | Cell center inside, margin 0 | 132 | 132 | **Agrees**: same window, same cells, same retained values |
-| All touched, margin 0 | 146 | 181 | **Differs**: 35 cells, all Fieldwork-only |
-| All touched, margin 1 | 195 (modelled) | 228 | **Differs**: 61 cells; the margin has no `rasterio` equivalent |
+| All touched, margin 0 | 146 | 144 | **2 differing cells**, both GDAL-only, after the rule was changed to match |
+| All touched, margin 1 | 195 (modelled) | 228 | **Inconclusive by construction**; the margin has no `rasterio` equivalent |
 
 Reference: `rasterio` 1.5.2 with GDAL 3.12.2, `shapely` 2.2.0 with GEOS 3.14.1,
-in CPython 3.13.3 on macOS arm64 — again not Pyodide.
+in CPython 3.13.3 on macOS arm64 - not Pyodide.
 
-The disagreement is one-sided and explained. Every one of the 35 differing cells
-is adjacent to a cutline coordinate lying exactly on a pixel boundary, and none
-is included by GDAL but missed by Fieldwork. The cause is this prototype's own
-definition: the inclusion test measures distance to a **closed** cell rectangle,
-so an edge running along the border between two cells touches both, whereas
-GDAL's ALL_TOUCHED assigns it to one. A second, smaller cause is the 1e-9 pixel
-pad `clipRaster` applies to the All touched window, which widens the crop by a
-whole cell when the cutline is exactly aligned.
+This check did what a lab is for: it found a 35-cell divergence, attributed it to
+two specific lines of this prototype's own code, and the rule was then changed to
+match GDAL, which the same check confirmed. The residual 2 cells are an artifact
+of GDAL's line rasterizer at an exactly aligned cutline vertex. The finding and
+the new convention are recorded beside the operation in
+[experiment 29](29-raster-edge-inclusion.md).
 
-The margin-1 case cannot be compared directly, because `rasterio` has no margin
-parameter. The check models it as a one-pixel binary dilation with a 3 × 3
-square element and **says so in the report**, so the 61-cell difference is read
-as the gap between Fieldwork's Euclidean margin and that discrete model, not as
-a validated disagreement. A margin defined as a Euclidean distance from a cell
-rectangle has no exact discrete analogue, which is itself worth knowing.
-
-This result is the lab working as intended. It confirms one path exactly, finds
-a real difference on another, attributes it to a specific line of this
-prototype's own code, and reports a third comparison as inconclusive by
-construction rather than forcing a verdict. The finding is recorded beside the
-operation in [experiment 29](29-raster-edge-inclusion.md). The committed
-`clip_raster` release file is left unchanged, because this is a finding about
-existing behavior and not a change to it; a convention change would need a new
-release with a migration note.
+The margin case cannot be compared directly, because `rasterio` has no margin
+parameter. The check models it as a one-pixel binary dilation with a 3 x 3 square
+element and **says so in the report**, so the difference is read as the gap
+between a Euclidean margin and that discrete model, not as a validated
+disagreement.
 
 ## Result: check 03, ontology structure and meaning
 

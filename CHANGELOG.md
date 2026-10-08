@@ -5,6 +5,24 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- **Change the All touched clipping rule to match GDAL.** A cell is now included
+  only when the clipping boundary covers part of its area or crosses its
+  interior. A boundary edge lying exactly on the border between two cells no
+  longer pulls in the cell outside it, and the cropped window is no longer
+  padded by a fraction of a pixel. Measured cell by cell against rasterio 1.5.2
+  with GDAL 3.12.2, differences over a deliberately pixel-aligned cutline fall
+  from 35 cells to 2, and the window now agrees; the residual 2 cells come from
+  GDAL burning cells along a cutline vertex lying exactly on a cell border,
+  which is an artifact of its line rasterizer rather than a stateable rule.
+  **Migration:** re-running a saved All touched clip can retain fewer boundary
+  cells, so a total derived from one can change. Cell center inside is
+  unaffected. `clip_raster` is released as 1.0.0 with that effect recorded.
+- Record the inclusion rule and the outer margin in N3 evidence as
+  `fw:rasterMaskConvention` and `fw:rasterMaskMarginPixels`, constrained by
+  SHACL. Receipts previously stated only a method name, so two clips made under
+  different rules, or with different margins, were indistinguishable in their
+  evidence. Receipts exported before this change carry no convention and were
+  produced by the earlier, more inclusive rule.
 - Add a **Reproject input** source widget that imports a local CSV or GeoJSON in
   WGS84 UTM metres and converts it to CRS84 longitude/latitude, so projected
   files can reach the existing point widgets for the first time. The conversion

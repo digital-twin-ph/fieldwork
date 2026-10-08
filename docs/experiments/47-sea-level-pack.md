@@ -1,8 +1,12 @@
 # Experiment 47: a sea-level-rise widget pack over the IPCC AR6 projections
 
-Date: October 8, 2026. Status: design specification for the first
-[widget pack](43-widget-packs.md). No pack, widget, vocabulary or dependency is
-implemented by this document.
+Date: October 8, 2026. Status: the pack repository exists at
+[digital-twin-ph/widget-pack-sea-level-rise](https://github.com/digital-twin-ph/widget-pack-sea-level-rise)
+with its manifest, vocabulary, shapes, widget contracts, extraction script and
+worked example. It is **declaration-only and not admitted**: no widget code exists
+and the host lacks the tabular port it needs. The catalog entry in
+`widgets/packs.json` records that, and `npm run validate:packs` pulls the pack at
+its pinned commit and verifies all eight file digests.
 
 ## Why this use case
 

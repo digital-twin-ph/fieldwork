@@ -131,7 +131,7 @@ proposed capabilities from implemented behaviour. Start with:
 | --- | --- |
 | `src/` | TypeScript application: canvas, core execution, widgets, reasoning worker, service worker |
 | `ontology/` | Vocabulary, SHACL shapes, N3 rules and synthetic examples |
-| `widgets/` | Registry and per-widget release files with digests |
+| `widgets/` | Registry and per-widget release files with digests, and `packs.json`, the curated pack catalog |
 | `tests/` | Unit tests and Chromium scenarios |
 | `scripts/` | Validation, staging, source extraction and fixture export |
 | `docs/` | Usage guide, worked examples, design experiments and research notes |

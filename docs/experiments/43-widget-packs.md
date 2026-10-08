@@ -114,6 +114,35 @@ repository. A pack that passes all three can still be scientifically wrong: thes
 reviews establish that it is reviewable, bounded, and does not disturb existing
 work. They do not establish that its operations suit a public-health question.
 
+### The catalog is the trust root, so it is checked first
+
+Pinning a digest protects the pack. Nothing protects the file that holds the
+digests, and that file is where an unreviewed entry would do the most damage: a
+single added line could point the host at anything. So the catalog carries its own
+schema and governance rules, and the checker validates **the catalog before
+anything it points at**.
+
+`widgets/packs.json` declares the curated owners, the required reviews and the
+permitted admission states, and `npm run validate:packs` enforces, with each rule
+negative-tested:
+
+| Rule | Caught |
+| --- | --- |
+| A pack may be admitted only from a curated owner | `owner "some-stranger" is not a curated owner` |
+| Only at a full 40-character commit SHA | `a tag or branch is not an approval` |
+| Not while it declares a missing host capability | admission refused |
+| Not until every required review has passed and names the host version | refused, with the failing review named |
+| Every pinned digest must match the fetched file | `digest 5ec42087… does not match the pinned 00000000…` |
+| A pack may not declare a node type the host already defines | refused, so a saved workflow cannot be ambiguous about which definition produced a result |
+
+`CODEOWNERS` requires an owner's approval for the catalog, the widget registry and
+the vocabulary, separately from ordinary source review.
+
+The checker is **development tooling and needs network**, so it is deliberately
+not part of `npm run check`, which stays offline and deterministic. `--local`
+checks a working copy instead. The application still loads nothing: admitting a
+pack is a recorded review decision, not a runtime fetch.
+
 Curation also creates an obligation this design should state rather than
 discover: **withdrawal**. An approved pack may later be found wrong. Because the
 catalog pins digests and receipts record them, the affected runs are

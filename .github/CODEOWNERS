@@ -1,0 +1,7 @@
+# The pack catalog is the trust root for every curated widget pack: a pinned digest is only as
+# strong as the review of the file that holds it. Changes here need an owner's approval
+# separately from ordinary source review.
+/widgets/packs.json          @hermantolentino
+/widgets/registry.json       @hermantolentino
+/ontology/                   @hermantolentino
+/docs/ontology-audit.md      @hermantolentino

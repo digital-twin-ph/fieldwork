@@ -7,7 +7,7 @@
 @prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.2 experimental, 2026-10-08";
+<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.3 experimental, 2026-10-08";
   rdfs:comment "Implemented run bindings and bounded network/catchment receipts. No learner/game runtime is implied.".
 fw:WidgetDefinition a owl:Class;
   rdfs:comment "A versioned description of a reusable operation and interface contract. A definition is not a configured plan and not an execution.";
@@ -90,3 +90,9 @@ fw:east a owl:DatatypeProperty; rdfs:comment "Eastern longitude of the CRS84 bou
 fw:south a owl:DatatypeProperty; rdfs:comment "Southern latitude of the CRS84 bounding envelope in degrees.".
 fw:north a owl:DatatypeProperty; rdfs:comment "Northern latitude of the CRS84 bounding envelope in degrees.".
 fw:readyForSpatialAnalysis a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:comment "Conclusion of the bounded study-area readiness rule, not scientific fitness certification.".
+
+# A draft plan, an observed plan and a widget definition are different kinds of thing. Asserted
+# here rather than in the core vocabulary so this file carries the constraints on its own
+# classes; the urn: ontology IRIs do not resolve, so owl:imports is not available.
+fw:CanvasNodePlan owl:disjointWith fw:WorkflowNodePlan.
+fw:WidgetDefinition owl:disjointWith fw:CanvasNodePlan, fw:WorkflowNodePlan.

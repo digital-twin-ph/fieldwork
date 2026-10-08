@@ -1,0 +1,63 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:table_input",
+  "nodeType": "table_input",
+  "version": "0.1.0",
+  "title": "Tabular data",
+  "released": "2026-10-08",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['table_input']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "A source. The output is a keyed table with no geometry and no CRS, which is why it is not the points port: flattening a table to points would mint one point per row and lose the key."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:DataTable",
+        "file": "ontology/fieldwork.ttl"
+      },
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:TabularInput",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "fw:DataTable is declared disjoint from fw:PointDataset, so the distinction the admission review turns on is enforced. CSVW alignment is a recorded candidate and deliberately not claimed. fw:DataTableShape in ontology/shapes/runtime-receipts.ttl constrains the emitted receipt; this registry version records application validation only, so the shape is not referenced in a field."
+  },
+  "implementation": {
+    "files": [
+      "src/data-table.ts",
+      "src/data-table-ui.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Long-format tabular import with declared key and value columns, an author-stated unit and rejection of duplicate key tuples. Closes the host gap that blocked the sea-level pack; see docs/experiments/48-tabular-input.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks cover the long-format contract, duplicate key rejection, missing values retained and counted, stated and unstated units, absent columns and the row cap. The importer checks shape and identity, not whether a table's units or values are correct."
+  }
+}

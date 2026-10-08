@@ -106,7 +106,7 @@ fw:filename a owl:DatatypeProperty; rdfs:range xsd:string.
 
 fw:ontology a owl:Ontology;
   rdfs:label "Fieldwork study-area and spatial-operation vocabulary";
-  owl:versionInfo "0.5 experimental, 2026-10-08";
+  owl:versionInfo "0.6 experimental, 2026-10-08";
   rdfs:comment "A bounded vocabulary for study areas and their reusable roles. A class declaration is not an implementation or validation constraint.".
 
 fw:implementationStatus a owl:AnnotationProperty;
@@ -427,3 +427,32 @@ fw:StudyArea rdfs:subClassOf prov:Entity.
 fw:ClippingBoundary rdfs:subClassOf prov:Entity.
 fw:AcquisitionBoundary rdfs:subClassOf prov:Entity.
 fw:Catchment rdfs:subClassOf prov:Entity.
+# Tabular input, added 2026-10-08. A table is keyed data without geometry; see
+# docs/experiments/48-tabular-input.md.
+fw:DataTable a owl:Class;
+  rdfs:subClassOf prov:Entity, dcat:Dataset;
+  rdfs:label "Data table";
+  rdfs:comment "Rows identified by a tuple of declared key fields, carrying one declared value field, in long format. A data table has no geometry and no coordinate reference system: latitude and longitude columns, if present, are ordinary columns with no spatial meaning. It is not a point dataset, not a multi-measure cube and not a join.";
+  fw:implementationStatus "implemented".
+fw:TabularInput a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Tabular input";
+  rdfs:comment "An execution that reads a long-format table, validates its declared key and value fields and retains it. It performs no calculation, no aggregation and no inference, and declaring a unit does not verify it.";
+  fw:implementationStatus "implemented".
+fw:keyField a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range xsd:string;
+  rdfs:label "Key field";
+  rdfs:comment "One declared key column, emitted once per key in the order declared. Together the key fields identify a row uniquely; a duplicate key tuple is rejected on import.".
+fw:valueField a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range xsd:string;
+  rdfs:label "Value field"; rdfs:comment "The single declared value column. One table carries one measure.".
+fw:valueUnitStatus a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range xsd:string;
+  rdfs:label "Value unit status";
+  rdfs:comment "Whether the workflow author stated a unit for the value field. A unit is author-stated and never inferred, and an unstated unit is recorded as unstated rather than assumed dimensionless.".
+fw:valueUnit a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range xsd:string;
+  rdfs:label "Value unit"; rdfs:comment "The author-stated unit, present only when one was stated.".
+fw:tableRowCount a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range xsd:integer; rdfs:label "Table row count".
+fw:tableMissingValueCount a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range xsd:integer;
+  rdfs:label "Missing value count";
+  rdfs:comment "Rows whose value cell was empty. These are retained as unknown and never zero-filled, because zero is a measurement and absence is not.".
+
+# A keyed table is not a point dataset. This is the distinction the admission review turns on.
+fw:DataTable owl:disjointWith fw:PointDataset.

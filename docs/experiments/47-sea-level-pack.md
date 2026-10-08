@@ -220,6 +220,42 @@ One consequence of bundling: a regenerated extract changes a digest, which must
 move the pack version and the integration report with it. That is already
 required by experiment 43, and this is the case that makes it concrete.
 
+### Administrative boundaries: not GADM
+
+A projection keyed by site is answerable at a site. The moment the question
+becomes "which municipalities", the pack needs administrative polygons, and the
+obvious source is the wrong one. **GADM's licence forbids redistribution**:
+freely available for academic and other non-commercial use, with redistribution
+or commercial use requiring prior permission. A widget pack publishes its data —
+digest-pinned in `widgets/packs.json`, fetched from a public repository, served
+from Pages — so bundling GADM is redistribution, and the catalog validator cannot
+certify a file the project is not permitted to host. GADM remains perfectly
+usable for a practitioner's own local exploration, where the file never leaves
+their machine. It cannot be a pack dependency.
+
+Two redistributable alternatives, both carrying the same CC BY obligation shape
+the AR6 data already imposes:
+
+| Source | Licence | Levels | Note |
+| --- | --- | --- | --- |
+| geoBoundaries | CC BY 4.0 | ADM0–ADM3 | Built for redistribution; attribution obligation only |
+| OCHA COD-AB via HDX | Open, PSA/NAMRIA-derived | ADM0–ADM4 | Carries official PSGC codes |
+
+The design consequence is a key, not a file. A join between a projection table and
+a Philippine boundary is sound only if the table's key column holds a **PSGC
+code**: "San Isidro" names dozens of municipalities, so a name-keyed join matches
+the wrong polygon silently. The pack's extract must therefore key on
+`psgc_code`, and its `provenance.json` must record which COD-AB or geoBoundaries
+vintage those codes came from, because PSGC codes are renumbered when units are
+reclassified or created. This is the same class of error the tabular widget's
+unique-key rule refuses at import (experiment 48); here it is refused at
+specification time instead, since a wrong join produces a plausible answer rather
+than a failure.
+
+A boundary acquisition widget is **not** proposed by this record. Keying the
+extract correctly is what the worked example needs; aggregating to polygons is a
+later capability, and listing it here would overstate what the pack delivers.
+
 ## Widgets, preferring reuse
 
 **`slr_extract_import`** reads a prepared extract. It cannot reuse the `points`

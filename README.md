@@ -31,6 +31,7 @@ The version beside the header mark is the released application version; see the
 | Study area | Draw and label a bounding box or simple polygon; inspect its GeoSPARQL representation. |
 | Calculate area | Enrich the study area with a spherical area measurement; choose metric or imperial units. |
 | Input data | Generate synthetic points, import CSV/GeoPackage/GeoJSON, or place map pins with typed attributes, value sets and optional UUIDs. |
+| Tabular data | Import a long-format CSV keyed by the columns you declare, with one value column and a unit you state. No geometry is claimed; connect a Table output to display it. |
 | Reproject input | Import a local CSV or GeoJSON in WGS84 UTM metres and convert it to CRS84 longitude/latitude for the other widgets. WGS84 zones only; no datum shift and no raster warping. |
 | Raster input and Clip raster | Acquire a bounded WGS84 GeoTIFF window, then crop and mask it with a study polygon. Preserve native values and metadata; display and download the result. |
 | Spatial coverage | Check multiple point layers against one boundary; review outside/missing locations and record exclusions without deleting source records. |
@@ -98,7 +99,9 @@ simulation, learning and scoring, publication products, GADM download widgets, a
 STAC browser or acquisition adapter, runtime widget-version pinning, widget
 packs, and a live SHACL report in the browser.
 
-Input data accepts up to 2,000 points and 5 MB files. GeoPackage import supports
+Input data and Tabular data each accept up to 2,000 rows and 5 MB files. A
+tabular value must be a number or empty; a non-numeric value is refused rather
+than coerced, and no unit is inferred. GeoPackage import supports
 2D POINT layers in EPSG:4326; CSV needs longitude and latitude in degrees. The
 study-area editor draws bounding boxes and simple polygons of 3–200 vertices,
 excluding holes, antimeridian crossings and polar areas. Browser storage is
@@ -118,12 +121,13 @@ proposed capabilities from implemented behaviour. Start with:
 | [46 · Colour theme](docs/experiments/46-colour-theme.md) | Light, dark and device, and why the released light theme is pixel-identical |
 | [45 · Ontology viewer](docs/experiments/45-ontology-viewer.md) | Why the reading view replaced the graph editor, and what a green build does and does not establish |
 | [Prior art](docs/prior-art.md) | openEO, QGIS, Geo Engine and APE: what to adapt, what to evaluate, and the limits of each comparison |
-| [Widget registry](widgets/README.md) | All 33 node identities with independent versions, port contracts and ontology mappings |
+| [Widget registry](widgets/README.md) | All 34 node identities with independent versions, port contracts and ontology mappings |
 | [39 · STAC discovery](docs/experiments/39-stac-discovery-and-remote-acquisition.md) | Measured catalog behaviour and a proposed acquisition adapter |
 | [40 · Reprojection](docs/experiments/40-reprojection-primitives.md) | The implemented UTM import path, and raster warping as specified but unbuilt |
 | [41 · Validation Lab](docs/experiments/41-validation-lab.md) | Independent recomputation in Python, its boundary rules and results |
 | [42 · Ontology structure and meaning](docs/experiments/42-ontology-structure-and-meaning.md) | An OWL 2 DL reasoner over the vocabulary: what it establishes, and why its consistency is currently unfalsifiable |
 | [43 · Widget packs](docs/experiments/43-widget-packs.md) | Curated, governed packs carrying vocabulary, shapes, rules and worked examples |
+| [48 · Tabular data](docs/experiments/48-tabular-input.md) | Long-format import, why a wide table is refused rather than reshaped, and what a table is forbidden to imply |
 
 ## Repository contents
 

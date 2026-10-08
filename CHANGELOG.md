@@ -3,6 +3,23 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## In development
+
+- Add **Tabular data**, a source widget that imports a long-format CSV: one row
+  per observation, with the columns that identify a row declared as keys and one
+  column holding the value. The key tuple must be unique, so a wide table or a
+  dropped key column is refused by name rather than silently collapsed onto one
+  row. A unit is recorded only as the person states it and is never inferred from
+  the file; an absent value is kept as unknown and counted, never read as zero.
+  The widget claims no geometry: `fw:DataTable` is declared disjoint from
+  `fw:PointDataset`, so a table cannot be mistaken for a point set by the
+  reasoner. Table output gains a Tabular data mode that displays an imported
+  table with its unit stated or marked unstated. Limits: 2,000 rows and 5 MB, the
+  same as point input. Validation: 8 new unit checks and 2 Chromium scenarios
+  within 123 unit tests and 71 scenarios, SHACL conformance for
+  `fw:DataTableShape`, and registry validation at 34 widgets and 66 releases. See
+  [the design record](docs/experiments/48-tabular-input.md).
+
 ## 0.6.0 — 2026-10-08
 
 - Add a colour theme: light, dark, or following the device, chosen from the

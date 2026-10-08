@@ -272,7 +272,7 @@
     {
       "id": "urn:fieldwork:widget:table_output",
       "nodeType": "table_output",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -288,6 +288,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/table_output/0.3.0.json",
           "sha256": "bb7d9c1e880dbf67e9391ac26ca370c25207548e006756743b6a0e0bb6506846"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/table_output/0.4.0.json",
+          "sha256": "3eba13d48d016fa88371b84e0601d43b6b7ab4d134a7af6609326654f2564bd0"
         }
       ]
     },
@@ -332,6 +337,18 @@
           "version": "0.3.0",
           "path": "widgets/releases/chart_output/0.3.0.json",
           "sha256": "6e8ee23593bfcdd70951f931a5f4d25bc45236a4cf20de72a76e4c9a13c17f5d"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:table_input",
+      "nodeType": "table_input",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/table_input/0.1.0.json",
+          "sha256": "2c6a5519f181b452f001367220fda63da40951963397965eac53d156a4b875df"
         }
       ]
     },

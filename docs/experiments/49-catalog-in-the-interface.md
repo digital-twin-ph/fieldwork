@@ -131,7 +131,9 @@ before I go offline", and that question deserves a surface of its own:
 
 - what is cached and what is not, enumerated rather than inferred from one probe;
 - which widgets in the current workflow need a network, named before departure —
-  the study-area basemap, street-network download, remote raster acquisition;
+  the study-area basemap, street-network download, remote raster acquisition — with
+  the size of each outstanding download, since the study area is known from the start
+  and the practitioner, not the application, knows whether the link will carry it;
 - the pack catalog as read at a stated time, with a refresh available while online,
   and an explicit statement that no pack definition is or can be loaded;
 - what to do about each gap, since a readiness view that only reports is a

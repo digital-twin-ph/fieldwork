@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.6.0 — 2026-10-08
+
+- Add a colour theme: light, dark, or following the device, chosen from the
+  header and saved on this device. The default follows the device, so a first
+  visit matches the operating system, and an explicit choice beats a later device
+  change. Every colour the interface used keeps its exact released value in
+  light, verified by screenshot at 2,162 differing pixels of 1,760,000, all but
+  71 of them the new control itself. Canvas node colours are authored separately
+  for dark so the widget roles stay distinguishable. Exported SVG and GeoTIFF
+  artifacts are unaffected and stay light. No workflow migration is required.
+  Validation: 115 unit tests and 67 Chromium scenarios with 1 skipped. Contrast
+  ratios, colour-vision accessibility and Firefox or WebKit rendering are not
+  established; see [the design record](docs/experiments/46-colour-theme.md).
+
 ## 0.5.0 — 2026-10-08
 
 - **Change the All touched clipping rule to match GDAL.** A cell is now included

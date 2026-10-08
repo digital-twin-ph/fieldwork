@@ -39,6 +39,7 @@ import {chartMarkup} from './chart-output.js';
 import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,downloadRaster} from './raster-ui.js';
 import {openReprojectEditor} from './reproject-ui.js';
+import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview} from './raster-preview.js';
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
@@ -451,6 +452,18 @@ $('#release-download').onclick=()=>{const output=activeOutput();if(!output||exam
   const features=output.polygons?.kind==='hexbin'?output.polygons.features.map(f=>({type:'Feature',id:f.id,properties:{count:f.count},geometry:f.geometry})):output.rows.map(r=>({type:'Feature',id:r.id,properties:{name:r.name},geometry:r.coordinates?{type:'Point',coordinates:r.coordinates}:null}));
   download(`${output.nodeId}-derived.geojson`,JSON.stringify({type:'FeatureCollection',features},null,2),'application/geo+json');
 };
+function wireThemeControl(){
+  const select=document.querySelector<HTMLSelectElement>('#theme-select');
+  const preference=initTheme();
+  if(!select)return;
+  select.value=preference;
+  select.addEventListener('change',()=>{
+    const chosen=select.value;
+    if(!isThemePreference(chosen))return;
+    applyTheme(chosen);
+    if(!saveThemePreference(chosen))toast('This device would not store the theme; it applies until reload.');
+  });
+}
 function switchView(view:string){$('.work-area').classList.remove('results-expanded');$('#expand-results').textContent='⛶ Expand';$('#expand-results').setAttribute('aria-expanded','false');$('#workflow-view').hidden=view!=='workflow';$('#rules-view').hidden=view!=='rules';document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));}
 function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id===c.source),b=workflow.nodes.find(n=>n.id===c.target);return !!a&&!!b&&a.id!==b.id&&!!TYPES[a.type].output&&nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1]===TYPES[a.type].output;}
 mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},select(id){selected=id;$('#node-search').value='';render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
@@ -490,7 +503,7 @@ $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onc
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});
 const requestedExample=new URLSearchParams(location.search).get('example');
 if(requestedExample&&['old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':requestedExample==='raster'?'raster-input':requestedExample==='old-naledi'?'access':'criteria';}
-renderLibrary();renderResults();save();render();mountPanelLayout();
+wireThemeControl();renderLibrary();renderResults();save();render();mountPanelLayout();
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(async()=>{const ok=!!(await caches.match('./vendor/eye-21.1.24.js'));$('#offline-status').innerHTML=ok?'<i></i> Available offline':'<i></i> Offline setup incomplete';}).catch(()=>{$('#offline-status').textContent='Offline cache unavailable';});}else{$('#offline-status').textContent='Offline cache unsupported';}
 if(canAutoRun(workflow))setTimeout(run,350);
 

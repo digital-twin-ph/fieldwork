@@ -18,6 +18,21 @@ On desktop, drag the dividers beside the Node library and Inspector, or between 
 
 Use **Hide widgets** beside the workflow tabs to collapse the left node library. The workbench and Results each have a **Full screen** control; press Escape or the same control to return to the normal layout.
 
+## Choosing a colour theme
+
+**Theme** in the header offers **Match device**, **Light** and **Dark**. Matching
+the device is the default, so a first visit follows the operating system, and a
+later change there is picked up without reloading. An explicit choice overrides
+the device and is saved on this device; if the browser will not store it, the
+choice still applies for the session and the interface says so. On a narrow
+screen the label is hidden and the control stays.
+
+Canvas node colours are chosen separately for dark so sources, processing and
+outputs remain distinguishable. Downloaded SVG and GeoTIFF artifacts are
+unaffected by the theme and stay light, because an artifact for sharing should not
+carry the viewer's display preference. See the
+[colour theme record](experiments/46-colour-theme.md).
+
 ## Build a workflow
 
 The local [John Snow worked examples](examples/john-snow.md) translate pump catchments into shared primitives: **Voronoi catchments** or **Network isochrone ? Clip polygons ? Summarize points in polygons ? Map/Table/Chart**. Select workspaces 05 or 06. Historical source tables contain 250 locations and 489 deaths; the street graph is a modern OSM snapshot, not reconstructed 1854 streets. Parameterized UTM distance, travel time, direction, speed, buffer width and count/sum choices are explicit. See [design experiment 32](experiments/32-john-snow-primitives.md).

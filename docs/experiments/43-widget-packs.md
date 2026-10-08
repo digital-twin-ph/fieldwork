@@ -281,6 +281,20 @@ for code.
 6. When a pack's example disagrees with the base widgets' behaviour, is it clear
    which one is wrong?
 
+## First use case
+
+[Experiment 47](47-sea-level-pack.md) works the contract above through a real
+subject: sea-level rise over the IPCC AR6 projections produced by FACTS. It is a
+useful first test because the science is external and authoritative, the data is
+far too large to read in a browser, the result is easy to over-read, and the
+existing worked examples cannot host it — Gaborone is landlocked — so the pack
+must arrive with its own data and still compose with the base widgets.
+
+It also supplies a concrete answer to what a pack's refused connection looks
+like: a projected water level connected to a raster map would render something
+that looks like a flood map, the ports would appear compatible, and the pack must
+refuse it because a level is not an extent.
+
 ## Bounded first slice
 
 Not implemented here. Proposed: lift one existing vocabulary into a

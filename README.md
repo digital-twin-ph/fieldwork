@@ -140,6 +140,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [49 · Catalog and field readiness](docs/experiments/49-catalog-in-the-interface.md) | Preparing online then working offline: what the interface fails to say about readiness, and where the pack catalog belongs |
 | [50 · Preparation checklist](docs/experiments/50-preparation-checklist.md) | An open developmental-evaluation item: why each checklist format encodes a different theory of failure, and what a cheap comparison would settle |
 | [51 · Dataset profiles](docs/experiments/51-dataset-profiles.md) | What the problem type predicts about the data needed, the vintages that must agree, and why sources may be named only with their licence |
+| [52 · Cacheable basemaps](docs/experiments/52-cacheable-basemaps.md) | Measured: a planet of vector tiles as one 138.7 GB file, Natural Earth context from 215 kB, and why a basemap is never an analytical frame |
 
 ## Repository contents
 

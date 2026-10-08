@@ -1,0 +1,204 @@
+# 52 · Cacheable basemaps: PMTiles
+
+**Status:** design record with measurements, covering two formats for two different
+jobs — PMTiles for interactive navigation, Natural Earth for static figures. Nothing
+implemented. The PMTiles integration cost is explicitly *not* established; the Natural
+Earth path is cheap, public domain and nearly uncoupled.
+
+[Experiment 49](49-catalog-in-the-interface.md) recorded a field-fatal defect: the
+service worker caches same-origin requests only, so basemap tiles fetched from
+`tile.openstreetmap.org` are never cached and the study-area editor stops working
+offline. [Experiment 51](51-dataset-profiles.md) then measured that caching tiles for
+a cross-border relevance extent is hopeless — 134,493 tiles through zoom 12 for DRC
+and its neighbours, 245 GiB through zoom 15 as raster PNGs — and concluded that
+regional layers must therefore be vector only.
+
+That conclusion was too pessimistic, because it assumed the delivery model. A basemap
+can be **one file**.
+
+## What was measured, 2026-10-08
+
+[PMTiles](https://docs.protomaps.com/guide/getting-started) is a single-file tile
+archive addressed by HTTP range request, and Protomaps publishes
+[daily planet basemap builds](https://docs.protomaps.com/basemaps/downloads) in it.
+Reading the 127-byte header of the current build directly, rather than relying on
+documentation:
+
+| Property | Measured |
+| --- | --- |
+| File | `build.protomaps.com/20261008.pmtiles`, **138.7 GB** (129.2 GiB) |
+| Spec | PMTiles version 3, clustered |
+| Tile type | **MVT vector**, gzip-compressed |
+| Zoom range | **0–15** |
+| Bounds | whole planet, ±85.05° |
+| Addressed tiles | 1,431,655,765 |
+| Distinct tile contents | 136,266,273 |
+| Range requests | `accept-ranges: bytes`, confirmed by a 127-byte range read |
+
+Two of those numbers do the work. **Addressed tiles exceed distinct contents by 10.5
+to one**, because empty ocean and repeated terrain deduplicate to the same bytes; and
+the implied means are **97 bytes per addressed tile** against **1,018 bytes per
+distinct tile**. Compare the 23 kB raster PNG assumed in experiment 51: a vector tile
+is roughly 20× smaller, and sparse areas cost almost nothing at all.
+
+### What that implies for a relevance extent
+
+Applying those measured means to the tile counts from experiment 51, through zoom 15:
+
+| Extent | Tile slots, z0–15 | Estimated extract | Raster equivalent |
+| --- | --- | --- | --- |
+| Old Naledi (20 × 18 km) | 496 | under 1 MB | 149 MB to z17 |
+| DRC | 4.0 M | ~370 MB – 3.8 GB | — |
+| DRC and nine neighbours | 11.4 M | **~1 – 11 GB** | 245 GiB |
+
+**These are estimates and the range is wide on purpose.** The low figure applies the
+planet-wide addressed-tile mean, which is dominated by ocean; the high figure applies
+the distinct-content mean, which is dominated by dense cities. A ten-country extract
+of low-urban-density interior Africa will fall nearer the low end, but *where* is not
+something this calculation can tell you. An extract's real size is obtained by making
+one, and a profile that quotes a size must quote a measured one.
+
+The honest summary is still decisive: a cross-border basemap moves from **245 GiB and
+8.6 million cross-origin requests** to **a single file of a few gigabytes** — and a
+suburban one to **under a megabyte**, which is the difference between an item a
+practitioner can complete before departure and one they cannot.
+
+## Static maps want a different basemap, and a much simpler licence
+
+A slippy vector archive answers interactive navigation. It is the wrong instrument for
+the application's **static plot** output, which renders at a fixed scale and exports to
+SVG: there is no zooming to serve, and a generalised vector context layer is both
+smaller and more legible than tiles rendered at one zoom.
+
+[Natural Earth](https://www.naturalearthdata.com/) is the openly available answer, and
+it is **public domain** — no attribution obligation and, crucially, **no share-alike**,
+unlike the ODbL that follows OpenStreetMap-derived data. That makes it the only
+basemap class in this record that may simply be bundled.
+
+Measured by HTTP header, 2026-10-08:
+
+| Layer | Scale | Size |
+| --- | --- | --- |
+| `admin_0_countries` | 1:110m | **215 kB** |
+| `admin_0_countries` | 1:50m | 800 kB |
+| `admin_0_countries` | 1:10m | 4.9 MB |
+| `admin_1_states_provinces` | 1:10m | 14.9 MB |
+| `land` | 1:50m | 457 kB |
+| `airports` | 1:10m | 291 kB |
+| `ports` | 1:10m | 52 kB |
+| `roads` | 1:10m | 9.1 MB |
+| `NE1_50M_SR_W` shaded relief raster | 1:50m | 88.4 MB |
+
+A continental static map therefore costs **a few hundred kilobytes**, which is small
+enough to be a bundled asset rather than a preparation item at all. The shaded-relief
+raster is the one exception and belongs on the provisionable list.
+
+### Match the generalisation to the display scale
+
+The three scales are not quality tiers, they are intended display scales, and using
+the wrong one is the "resolution read as precision" error from
+[experiment 51](51-dataset-profiles.md) in cartographic form. 1:110m coastlines are
+displaced by kilometres and are correct for a world map and wrong for a city. 1:10m on
+a continental figure is wasted bytes and false delicacy. A profile that names a static
+context layer must name its scale.
+
+### The rule that matters: context is not frame
+
+Natural Earth boundaries must **never** serve as the geographic frame class. They are
+cartographic context — deliberately generalised, with disputed boundaries rendered as a
+cartographic choice — so joining data to them, computing areas from them, or reporting
+results by them produces wrong answers that look professional. The frame class needs
+authoritative units with codes: COD-AB or geoBoundaries, at a recorded vintage.
+
+The same split applies to the pathway class. `ne_10m_airports` at 291 kB and
+`ne_10m_ports` at 52 kB are an excellent regional *overview* and are a selection of
+major facilities; they are not the border-crossing-level detail an outbreak response
+needs. Cheap context and operational data are both legitimate, and substituting one for
+the other is the failure.
+
+Three roles, then, which should never be collapsed into one "basemap" item:
+
+| Role | Source | Licence | Delivery |
+| --- | --- | --- | --- |
+| **Static context** | Natural Earth, at a stated scale | public domain | bundled, or one small file |
+| **Interactive navigation** | PMTiles vector basemap | ODbL, attribution and share-alike | one archive per extent |
+| **Analytical frame** | COD-AB, geoBoundaries, national sources | CC BY or per-country terms | per jurisdiction, with vintage |
+
+## Why this fits what the project already decided
+
+- **It is a provisionable item with a size.** Experiment 50 required exactly that of
+  every checklist item, and a single file with a byte count satisfies it precisely,
+  including the deferral case: it either finished or it did not.
+- **A partial download is detectable.** The earlier worry about a tile set interrupted
+  at 60 % reporting as cached becomes a file-length and digest comparison.
+- **The licence permits redistribution**, unlike GADM. The basemap is built from
+  OpenStreetMap, so it is **ODbL** — attribution required, share-alike on derived
+  databases, which is the same obligation experiment 51 already flags for OSM-derived
+  pathway data. It may therefore be carried, cached and even pack-distributed, with
+  its attribution intact.
+- **Integrity is checkable.** Protomaps publishes BLAKE3 hashes for daily builds; this
+  project records SHA-256 digests, so a downloaded extract gets digested on arrival
+  like every other provenance-bearing input.
+- **It has a vintage, and the vintage expires.** Builds are retained for a week, plus
+  weekly Monday builds for a month. A URL is therefore **not a durable reference**:
+  the date and digest must be recorded, and the file kept, which is exactly the
+  vintage discipline experiment 51 requires of every other class.
+
+## What is not established, and must be measured before any of this is built
+
+1. **Bundle cost.** The application renders basemaps with Leaflet raster tiles today.
+   MVT needs either MapLibre GL JS, which is WebGL and substantially larger, or
+   `protomaps-leaflet`, which draws vector tiles to Canvas inside the existing map.
+   The budget is about 3.8 MB and is already committed; neither option's real cost is
+   known here, and the cheaper-looking one may not render what the current tests
+   assert.
+2. **Browser storage for a multi-gigabyte file.** A regional extract is not an asset
+   the service worker can precache from the manifest — it is user-acquired data, so it
+   belongs in the Origin Private File System or IndexedDB, under a quota that varies by
+   browser and device and may require `navigator.storage.persist()`. Whether a 3 GB
+   file survives on the devices practitioners actually carry is an empirical question
+   and the single biggest risk in this record.
+3. **Who makes the extract.** `pmtiles extract` reads a bbox subset from a remote
+   archive over range requests without re-tiling, which means the practitioner can cut
+   their own region during the preparation phase and the project never hosts 138 GB.
+   That is the right division, but it puts a command-line step in a browser-first
+   workflow — and the alternative, a hosted extract service, is infrastructure this
+   project does not have.
+
+Also unaddressed: OpenTopoMap, the application's terrain option, has no PMTiles
+equivalent here, so adopting this would make the two basemap choices unequal in
+offline capability. That must be stated in the interface rather than discovered.
+
+Natural Earth, by contrast, has no unresolved question of this kind: it is public
+domain, measured in hundreds of kilobytes for the scales a static figure needs, and
+needs no new renderer, since the application already draws polygon geometry to SVG.
+It is the cheapest honest improvement in this record and the one least coupled to
+anything else.
+
+## Competency questions
+
+Answerable, if this is adopted:
+
+1. Which basemap extent is cached on this device, at which zoom range, from which
+   build date and digest?
+2. Is the cached archive complete?
+3. What attribution and licence obligations does the cached basemap carry?
+4. Which context layer and scale does this static figure use?
+
+Must be refused:
+
+5. Is this basemap current? — a build has a date; currency is a judgment about the
+   activity, not a property of the file.
+7. May I report results by these boundaries? — not for a context layer, whatever it
+   looks like on screen.
+6. Does this basemap cover my study area adequately? — coverage of an extent is not
+   fitness for a purpose, and zoom 15 is not the same as surveyed detail.
+
+## Correction to experiment 51
+
+The prescription there — vector layers at regional scale, raster tiles only for
+operational sub-areas — should be read as **a single PMTiles archive for the relevance
+extent, plus the project's own vector overlays**, with the archive's size measured per
+region rather than estimated from these means. The conclusion that *rendering*
+regional raster tiles from a public tile server is infeasible stands; the conclusion
+that a cached basemap is therefore impossible does not.

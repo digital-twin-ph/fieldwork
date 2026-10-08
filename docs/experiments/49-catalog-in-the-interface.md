@@ -82,6 +82,10 @@ Two findings, both from reading the shipped code rather than reasoning about it:
    140 precached assets plus everything above that is not cached at all. It is a
    liveness probe presented as a readiness claim.
 
+The first of those is not inevitable: a basemap delivered as a single PMTiles archive
+is one same-origin or locally stored file rather than thousands of cross-origin
+requests, measured in [experiment 52](52-cacheable-basemaps.md).
+
 Neither is a defect in the service worker, which precaches the application shell
 and the bundled example data correctly. Both are defects in **what the interface
 says about readiness**, which is the same class of problem as the catalog's

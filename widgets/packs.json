@@ -1,6 +1,6 @@
 {
   "schema": "fieldwork/pack-catalog/1",
-  "catalogVersion": "1.0.0",
+  "catalogVersion": "0.1.1",
   "updated": "2026-10-08",
   "description": "Curated widget packs. This file is the trust root: digest pinning is only as strong as the review of the file that holds the digests. A pack is admitted only at a full commit SHA, only from a curated owner, and only with a complete review record naming the host versions it was verified against. Nothing here is loaded by the application at run time; the catalog is checked by development tooling with npm run validate:packs.",
   "governance": {
@@ -28,7 +28,9 @@
       "A pack may be admitted only at a full 40-character commit SHA; a branch or tag is not an approval.",
       "A pack may not be admitted while it declares a missing host capability.",
       "A pack may not be admitted until all required reviews have passed and name the host version.",
-      "A withdrawn pack keeps its entry, so runs that recorded its digest remain traceable."
+      "A withdrawn pack keeps its entry, so runs that recorded its digest remain traceable.",
+      "The catalog's list of outstanding host capabilities must agree with the pack's own manifest, so neither can declare a pack unblocked alone.",
+      "A host capability a pack declares present must name host widgets and versions the host registry actually releases."
     ]
   },
   "packs": [
@@ -37,12 +39,12 @@
       "name": "Sea-level rise (IPCC AR6)",
       "version": "0.1.0",
       "repository": "https://github.com/digital-twin-ph/widget-pack-sea-level-rise",
-      "commit": "305b304b671fbc6f6629bea1f5e013a6c4e89e88",
+      "commit": "f8eb929c90b0af1f26087a33214ed969e8f618b5",
       "namespace": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#",
       "kind": "declaration-only",
       "admission": {
         "status": "not-admitted",
-        "reason": "Blocked on a host tabular port and importer. A projection is keyed by site, scenario, workflow, family, year and quantile with many rows per site; the host imports points, rasters and graphs only and PortType is a closed union a pack cannot extend. See docs/experiments/47-sea-level-pack.md.",
+        "reason": "Not reviewed. The host tabular port that previously blocked this pack now exists (table_input 0.1.0, table_output 0.4.0 in table mode) as unreleased host work, so admission is blocked on the three required reviews rather than on a missing capability. See docs/experiments/47-sea-level-pack.md and docs/experiments/48-tabular-input.md.",
         "reviews": {
           "semantic": {
             "state": "not-started"
@@ -67,11 +69,9 @@
         "application": "proposed",
         "presentation": "reuses-base"
       },
-      "requiredHostCapabilities": [
-        "tabular-import"
-      ],
+      "requiredHostCapabilities": [],
       "files": {
-        "pack.json": "ed97eafc3bdb36e07944b268103cb2cd190d7b6296b5d44375f35d942bd9b2a5",
+        "pack.json": "29bdad13bdfe94cf56fbf3272bab5f82ad3d08989250577569b2b5b99a45e2b2",
         "ontology/sea-level.ttl": "5ec4208706159c503334854048ece409dfc2eccbb86283c51e631b4615f760c8",
         "ontology/shapes/sea-level.ttl": "ed935b2eb371ff8c37e9c9114b5fb56aa638ed658fa491e41f942a2917567864",
         "widgets/slr_extract_import/0.1.0.json": "68a120c565df6ddfe44479e9fce88478f65f27506ab7d9bb866edefc73c52016",

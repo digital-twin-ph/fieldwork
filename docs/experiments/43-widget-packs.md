@@ -134,6 +134,17 @@ negative-tested:
 | Not until every required review has passed and names the host version | refused, with the failing review named |
 | Every pinned digest must match the fetched file | `digest 5ec42087… does not match the pinned 00000000…` |
 | A pack may not declare a node type the host already defines | refused, so a saved workflow cannot be ambiguous about which definition produced a result |
+| The catalog's outstanding capabilities must agree with the pack manifest | `catalog lists "tabular-import" as an outstanding host capability; the manifest does not`, and the converse |
+| A capability declared present must name host widgets the registry releases | `names urn:fieldwork:widget:table_input@9.9.9, which the host registry does not release`, and an unknown widget identity |
+
+The last two rules were added when the sea-level pack's blocker was cleared, and
+they exist because of what that moment makes possible. A capability moving from
+`missing` to `present` is a claim about the **host**, written in the **pack**, and
+previously checked by nobody: the pack could assert a port it does not have, or
+the catalog could record a pack as unblocked while the pack still said otherwise.
+Both sides must now say the same thing, and the named host widget and version must
+exist in `widgets/registry.json`. Clearing a blocker is therefore no longer a
+matter of editing one word.
 
 `CODEOWNERS` requires an owner's approval for the catalog, the widget registry and
 the vocabulary, separately from ordinary source review.

@@ -11,7 +11,11 @@ fw:RuntimePlanShape a sh:NodeShape; sh:targetClass fw:WorkflowNodePlan, fw:Canva
   sh:property [ sh:path fw:widget; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI; sh:class fw:WidgetDefinition ];
   sh:property [ sh:path fw:nodeType; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
   sh:property [ sh:path fw:catalogVersion; sh:minCount 1; sh:maxCount 1; sh:pattern "^[0-9]+[.][0-9]+[.][0-9]+$" ];
-  sh:property [ sh:path fw:catalogDigest; sh:minCount 1; sh:maxCount 1; sh:pattern "^[a-f0-9]{64}$" ].
+  sh:property [ sh:path fw:catalogDigest; sh:minCount 1; sh:maxCount 1; sh:pattern "^[a-f0-9]{64}$" ];
+  sh:property [ sh:path fw:widgetDefinitionSource; sh:minCount 1; sh:maxCount 1; sh:in ( "host-registry" "pack" ) ].
+fw:PackCatalogShape a sh:NodeShape; sh:targetClass fw:PackCatalog;
+  sh:property [ sh:path fw:packCatalogVersion; sh:minCount 1; sh:maxCount 1; sh:pattern "^[0-9]+[.][0-9]+[.][0-9]+$" ];
+  sh:property [ sh:path fw:packCatalogDigest; sh:minCount 1; sh:maxCount 1; sh:pattern "^[a-f0-9]{64}$" ].
 fw:RuntimeStepShape a sh:NodeShape; sh:targetClass fw:WorkflowStep;
   sh:property [ sh:path fw:workflowNode; sh:minCount 1; sh:maxCount 1; sh:class fw:WorkflowNodePlan ];
   sh:property [ sh:path fw:resultEntity; sh:minCount 1; sh:maxCount 1; sh:class prov:Entity ];

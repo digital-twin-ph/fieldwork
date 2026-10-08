@@ -1,3 +1,4 @@
+import {packCatalogN3} from './pack-catalog.js';
 import type {Workflow,WorkflowNode} from './types.js';
 import {isRecord} from './guards.js';
 import type {Receipt} from './results.js';
@@ -70,6 +71,7 @@ export function evidenceProvenance(nodes:WorkflowNode[],edges:Workflow['edges'],
   const iri=(part:string)=>`<urn:fieldwork:run:${runId}:${part}>`,literal=(text:string)=>JSON.stringify(text);
   let facts='@prefix dc: <http://purl.org/dc/elements/1.1/>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix fw: <urn:fieldwork:>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n# Citation metadata supplied by the workflow author; not independently verified evidence.\n';
   facts+='@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.\n';
+  facts+=packCatalogN3(runId);
   const ids=new Set(nodes.map(n=>n.id));
   for(const node of nodes){
     const step=iri('step:'+node.id),plan=iri('plan:'+node.id),output=iri('output:'+node.id);

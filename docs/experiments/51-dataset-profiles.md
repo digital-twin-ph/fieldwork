@@ -5,14 +5,23 @@ download: a profile names the **class** of dataset a problem requires and the
 sources that may legally be offered, and refuses to pretend it knows which file is
 right for a given place.
 
-[Experiment 50](50-preparation-checklist.md) left two unknowns, the checklist's form
-and its content. This record closes most of the second one, using two predictors that
-are both available at project creation: the **problem type** and the **study area**. The datasets a public
-health field activity needs are not open-ended: census or survey denominators,
-population rasters, jurisdiction boundaries, and health facility registries recur
-across almost every activity, and **the nature of the problem predicts which of them
-matter**. That makes the content derivable from the question being asked, in the same
-way experiment 50 found the resource list derivable from the study area.
+[Experiment 50](50-preparation-checklist.md) left two unknowns: the checklist's form
+and its content. This record closes most of the second one, from two predictors that
+are both available at project creation — the **problem type** and the **study area**.
+
+The claim it rests on is that **data requirements are predictable**. The datasets a
+public health field activity needs are not open-ended: census or survey denominators,
+population rasters, jurisdiction boundaries and health facility registries recur across
+almost every activity, and the problem being addressed predicts which of them matter,
+how far relevance extends, and what the result must refuse to claim. Predictability is
+what makes a profile worth publishing at all — an unpredictable requirement list could
+only ever be a blank page with a prompt.
+
+Where the record was wrong, it was wrong about *extent* rather than about
+predictability: an Ebola response needs its neighbours' boundaries, populations and
+mobility networks, which the study area does not contain but the archetype does
+predict. That correction is below, and it strengthens the claim rather than weakening
+it.
 
 ## Two predictors, and neither works alone
 
@@ -45,6 +54,89 @@ PSA terms; a Botswana one does not. So the useful unit is the pair:
 That pairing is also what makes a profile publishable. A class alone cannot carry a
 licence, and a jurisdiction alone cannot carry a refusal.
 
+## Correction: the relevance extent is not the study area
+
+The section above says the study area predicts the extent. For some problems it does
+not, and the counter-example is decisive. An Ebola response in DRC needs boundaries and
+populations for the **neighbouring countries**, and it needs the means by which people
+move: airports and air routes, ferry and river routes, land routes, and official and
+informal border crossings. None of that is inside the study area, and all of it is
+predictable from the problem type.
+
+So the composition is one step longer than first recorded:
+
+> *problem type* → the classes required, **and the rule for how far relevance extends**
+> *study area* → the origin that rule is applied from
+> together → a bounded, sized, jurisdiction-aware list
+
+The extent rule is itself a property of the archetype. A coverage assessment's
+relevance stops at the frame it reports on. An outbreak response with cross-border risk
+extends to every adjacent jurisdiction and to the mobility network that connects them,
+because importation and exportation are the questions being asked. A profile that
+cannot express "and the neighbours" cannot express this archetype at all.
+
+### A fifth class: pathway
+
+Four classes were not enough. Mobility is a distinct role in the inference — not a
+denominator, a frame, a service or a hazard, but the **pathway** along which exposure
+travels:
+
+| Class | Role | Typical form | What goes wrong |
+| --- | --- | --- | --- |
+| **Pathway** | How people, and therefore exposure, move between places | airports and air routes, ferry and river routes, roads, border crossings and points of entry | A mapped route is read as an actual flow; informal crossings are absent precisely where they matter; capacity data is proprietary, so openly available networks understate movement |
+
+The characteristic error here is worth stating plainly because it is seductive: **a
+route is not a flow, and connectivity is not importation risk**. A map of roads and
+airports shows what is possible, not what happens, and volume data — the thing that
+would turn possibility into estimate — is largely commercial.
+
+### Crossing a border multiplies everything the profile tracks
+
+A multi-country relevance extent is not the same work at larger scale. Three things
+change in kind:
+
+1. **There is no shared administrative key.** The PSGC lesson from
+   [experiment 47](47-sea-level-pack.md) was that a name-keyed join matches the wrong
+   polygon silently. Across borders there is no equivalent code at all: each country
+   numbers its own units. Harmonisation becomes an explicit step with its own error
+   mode, and a cross-border aggregate built without one is not approximate but wrong.
+2. **Vintages and licences multiply per country.** Ten countries means ten boundary
+   vintages, ten census years and potentially ten sets of terms. The vintage triple
+   this record requires becomes a triple *per jurisdiction*, and a single stated
+   "2020" across a region is almost certainly false.
+3. **Openly licensed sources thin out exactly here.** Global sources carry the frame
+   and the denominator — geoBoundaries and WorldPop are both CC BY 4.0 and global.
+   Pathway data does not follow: airport locations are published as public domain by
+   OurAirports, roads, ferries and crossings come from OpenStreetMap under
+   share-alike ODbL, and **scheduled air traffic volumes are commercial** (OAG, IATA).
+   Points-of-entry and displacement-flow datasets from WHO and IOM vary in terms per
+   release. So a profile for this archetype must say, in the open, which of its
+   requirements cannot be met with redistributable data.
+
+### Measured: at this extent, tiles stop being an option
+
+Experiment 50 established that a preparation item must carry a size, and measured a
+suburb. The same calculation at a cross-border extent, at roughly 23 kB per tile:
+
+| Extent | Through zoom 10 | Through zoom 12 | Zoom 15 alone |
+| --- | --- | --- | --- |
+| Old Naledi (20 × 18 km) | 1 tile | 9 tiles, 0.2 MB | 342 tiles, 7.7 MB |
+| DRC | 3,080 tiles, 69 MB | 47,523 tiles, 1.0 GB | 3.0 M tiles, 66 GB |
+| DRC and nine neighbours | 8,544 tiles, 192 MB | 134,493 tiles, 3.0 GB | 8.6 M tiles, 188 GB |
+
+Cumulatively, the regional extent is about 0.3 GB through zoom 10 and 4.0 GB through
+zoom 12. That settles a design question rather than merely illustrating one: **raster
+basemap caching does not scale to a relevance extent of this kind**, and a checklist
+that offers it as an item is offering something nobody can complete in the field.
+
+What follows is a change to what the profile prescribes, not just to the numbers it
+displays. At regional scale the cached layers must be **vector** — boundaries,
+settlement points, facilities, airports, crossings, route geometry — which are
+kilobytes to a few megabytes per country, with raster tiles cached only for the
+*operational* sub-areas where work actually happens, at the depth those areas need.
+The practitioner's deferral decision therefore changes shape too: not "how deep" but
+"which jurisdictions as vector, and which operational areas as tiles".
+
 ## Four recurring classes, named by the role they play
 
 The useful unit is not the file but the **role it plays in an inference**, because the
@@ -59,7 +151,9 @@ workflow and an exposure count in another, and the two are not interchangeable.
 | **Hazard or exposure** | The thing populations are exposed to | population raster, flood or heat surface, projections | Resolution read as precision; a modelled surface treated as an observation |
 
 A profile that names classes rather than files survives moving between countries,
-which a list of filenames does not.
+which a list of filenames does not. A fifth class, **pathway**, is introduced above,
+because the problem that needed it also broke the assumption that the study area bounds
+the data.
 
 ## Archetypes, and what each one distinctively refuses
 
@@ -72,6 +166,7 @@ characteristic overclaim that the profile should carry as a refusal:
 | Access or catchment analysis | frame, service supply, (network) | That proximity is access; a straight-line or network proxy is not care received |
 | Exposure or hazard assessment | hazard, denominator, frame | That exposure is impact; an exposed count is not a case count |
 | Outbreak or cluster investigation | denominator, frame, case data | That a cluster is a cause, and that absence of reports is absence of cases |
+| Outbreak response with cross-border risk | denominator, frame, pathway, service supply — **for the affected area and every adjacent jurisdiction** | That a route is a flow, and that connectivity is importation risk; open network data also understates informal movement |
 | Facility audit | service supply, (frame) | That a registry entry is a functioning service |
 
 The refusal column is the part worth building. It is already how this project's
@@ -185,13 +280,16 @@ Answerable, if profiles exist:
 3. Do the denominator year, frame vintage and numerator period agree?
 4. What does this archetype characteristically overclaim?
 5. Which worked examples instantiate this archetype, and at which profile version?
+6. How far does relevance extend for this archetype, and which jurisdictions does that
+   include from this study area?
+7. Which requirements of this profile cannot be met with redistributable data?
 
 Must be refused:
 
-6. Which dataset should I use here? — a profile narrows; the practitioner chooses, and
+8. Which dataset should I use here? — a profile narrows; the practitioner chooses, and
    records why.
-7. Is this dataset current for this place? — nothing in the application can know.
-8. Are these four classes sufficient for my question? — the profile is a floor, never
+9. Is this dataset current for this place? — nothing in the application can know.
+10. Are these classes sufficient for my question? — the profile is a floor, never
    a ceiling, and treating it as complete is the failure mode it introduces.
 
 ## Observations, written so they can come out badly
@@ -205,6 +303,8 @@ Must be refused:
 | Does the profile become a checklist people complete rather than a prompt they think with? | That a floor can be published without becoming a ceiling |
 | As examples accumulate, do the profiles converge or keep churning? | That extraction from examples is a ratchet rather than a drift |
 | Does an archetype distilled from Gaborone and Soho fit an activity in neither? | That the corpus is broad enough to generalise from |
+| Does anyone, given a cross-border profile, attempt the regional tile download anyway? | That stating a size is enough without the vector-first prescription |
+| Is the per-jurisdiction vintage filled in, or collapsed to one year for the region? | That requiring the triple per jurisdiction is workable |
 
 ## Practitioner exercise
 

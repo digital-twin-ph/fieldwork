@@ -81,6 +81,15 @@ This also replaces the two-surface hypothesis with something simpler. Intent nee
 not be declared abstractly at creation if the study area is drawn there: the area
 *is* the declaration, and the derived list follows from it.
 
+The area is not the only predictor, though, and the two compose. The **problem type**
+predicts which classes of dataset matter and which refusals apply; the **study area**
+predicts the jurisdiction, and therefore which sources are admissible and under what
+licence, and the extent, and therefore the size. Both are known at creation. Together
+they yield a list that is sized, sourced and jurisdiction-correct — see
+[experiment 51](51-dataset-profiles.md), which also records why the content should be
+extracted from accumulated worked examples rather than invented, and what that corpus
+cannot supply.
+
 ## Size changes the format, measured
 
 The practitioner knows their connectivity and will defer a large download until the
@@ -149,6 +158,14 @@ as a DE item:
 
 The hand-added items are the most informative signal, because they are the content
 the design did not know it needed, supplied by the person who needed it.
+
+The content of those items is less open than this record first implied. The datasets
+a public health activity needs are largely predictable from the **problem type** —
+denominators, jurisdiction boundaries, facility registries, population and hazard
+rasters — which is recorded separately in
+[experiment 51](51-dataset-profiles.md). That leaves the format as the genuinely open
+question, which is where it should be: a hand-added item is now evidence about
+*wording and moment*, not about which datasets exist.
 
 ## Observations, written so they can come out badly
 

@@ -1,0 +1,2 @@
+import{a,b,c,d,e,f}from"./chunks/chunk-ERX6T25W.js";import"./chunks/chunk-LTZTSG6I.js";import"./chunks/chunk-7QYLAAFN.js";import"./chunks/chunk-ZEWYUARN.js";import"./chunks/chunk-M5JSOBQI.js";import"./chunks/chunk-VAKTMS4B.js";import"./chunks/chunk-TYIWYWGA.js";import"./chunks/chunk-Z644EMGM.js";import"./chunks/chunk-ZZ35OGHL.js";import"./chunks/chunk-KVMUXFPB.js";export{a as PROJ4_VERSION,b as REPROJECT_MAX_RECORDS,c as ROUND_TRIP_TOLERANCE_M,f as projectedGeoJSONPoints,e as reprojectToCRS84,d as utmDefinition};
+//# sourceMappingURL=reproject.js.map

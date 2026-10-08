@@ -336,6 +336,18 @@
       ]
     },
     {
+      "id": "urn:fieldwork:widget:reproject",
+      "nodeType": "reproject",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/reproject/0.1.0.json",
+          "sha256": "dffeecbf96534c06a0e9f1bb88eed316943b1c94587f19ebfe9273280ea192ad"
+        }
+      ]
+    },
+    {
       "id": "urn:fieldwork:widget:raster_input",
       "nodeType": "raster_input",
       "currentVersion": "0.3.1",

@@ -3,6 +3,32 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## In development
+
+- Add a **Reproject input** source widget that imports a local CSV or GeoJSON in
+  WGS84 UTM metres and converts it to CRS84 longitude/latitude, so projected
+  files can reach the existing point widgets for the first time. The conversion
+  runs once on import and replays offline; the output is the ordinary CRS84
+  points contract, so no downstream widget changes.
+- Record the declared source EPSG code, exact proj4 definition, axis order,
+  units, operation, library version, converted and unconverted counts, maximum
+  round-trip error and an explicit `datumShift: none` with the imported points.
+- Admit WGS84 UTM zones only. A file on another datum needs a datum shift this
+  prototype does not implement, and is refused rather than approximated.
+  Coordinates outside the UTM easting/northing ranges, points outside the
+  declared zone's validity guard and round-trip disagreements above 0.01 m are
+  refused with an explanation.
+- No workflow migration is required; existing saved projects are unaffected.
+- Validation of this work in progress: strict TypeScript, production build, 111 unit tests, ontology and
+  widget-registry checks (33 widgets, 63 releases) and 63 Chromium scenarios
+  with 1 skipped. Unit checks assert UTM definitional invariants, round-trip
+  tolerance and guard refusals. **Not established:** agreement with PROJ or
+  GDAL to a stated tolerance, any datum other than WGS84, that a declared zone
+  or hemisphere is the correct one for a given file, or Firefox and WebKit
+  behavior. Raster warping is specified in
+  [experiment 40](docs/experiments/40-reprojection-primitives.md) but not built;
+  `raster_input` keeps its no-resampling contract.
+
 ## 0.4.0 — 2026-10-07
 
 - Make Map outputs standalone communication views with configurable title,

@@ -26,6 +26,7 @@ export interface ParamsByType {
   donut_geomask:{label:string;innerM:number;outerM:number;seed:number};
   hex_aggregate:{label:string;resolution:number;minOccupancy:number};
   buffer_area:{label:string;distanceM:number};
+  reproject:{label:string;zone:number;hemisphere:'north'|'south';data:PointCollection;spatialReference?:SpatialReference;source?:import('./reproject.js').ReprojectSource;provenance?:import('./reproject.js').ReprojectProvenance};
   network_input:{label:string;data:import('./catchments.js').Network;inputMethod?:'osm'|'file';marginM?:number};
   voronoi:{label:string;zone:number;hemisphere:'north'|'south'};
   isochrone:{label:string;zone:number;hemisphere:'north'|'south';minutes:number;thresholds?:number[];fillHoles?:boolean;speedMPerMin:number;bufferM:number;maxSnapM:number;direction:'inbound'|'outbound'};

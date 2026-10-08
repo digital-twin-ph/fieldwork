@@ -13,7 +13,7 @@ or privacy control.
 | --- | --- |
 | [Fieldwork](https://digital-twin-ph.github.io/fieldwork/) | The application. Also on [GitLab Pages](https://fieldwork-47c2e8.gitpages.cdc.gov/), which may require a sign-in |
 | [Validation Lab](https://digital-twin-ph.github.io/validation-lab/) | JupyterLite notebooks that independently recompute Fieldwork's spatial results in Python and report agreement with a stated tolerance |
-| [Ontology browser](https://digital-twin-ph.github.io/fieldwork-ontosphere/) | A curated Ontosphere instance that opens on this project's ontology and SHACL shapes |
+| [Ontology viewer](https://digital-twin-ph.github.io/fieldwork-ontology/) | A reading view of this project's vocabulary, its shapes and its competency questions, with the schema-level questions as a build gate |
 
 Worked examples: [blank canvas](https://digital-twin-ph.github.io/fieldwork/?example=blank),
 [Old Naledi diagnostic access](https://digital-twin-ph.github.io/fieldwork/?example=old-naledi),
@@ -113,6 +113,7 @@ proposed capabilities from implemented behaviour. Start with:
 | --- | --- |
 | [Semantic audit procedure](docs/ontology-audit.md) | Admission review and worked-example checkpoints across three dimensions — structure, semantics and relevance — opening with a glossary so the work can be reviewed without a background in description logic |
 | [44 · Competency questions](docs/experiments/44-ontology-competency-questions.md) | The questions the ontology exists to answer, each with its status, and five it must refuse |
+| [45 · Ontology viewer](docs/experiments/45-ontology-viewer.md) | Why the reading view replaced the graph editor, and what a green build does and does not establish |
 | [Prior art](docs/prior-art.md) | openEO, QGIS, Geo Engine and APE: what to adapt, what to evaluate, and the limits of each comparison |
 | [Widget registry](widgets/README.md) | All 33 node identities with independent versions, port contracts and ontology mappings |
 | [39 · STAC discovery](docs/experiments/39-stac-discovery-and-remote-acquisition.md) | Measured catalog behaviour and a proposed acquisition adapter |

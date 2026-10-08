@@ -151,6 +151,62 @@ Disjointness is a strong claim: before asserting that two classes cannot share
 an individual, confirm no worked example already produces one. The probe graphs
 in check 03 are the place to record that confirmation.
 
+## Gaps closed on October 8, 2026
+
+The recommendation above was carried out, except where doing so would have
+changed what receipts emit.
+
+| Change | Result |
+| --- | --- |
+| Labels for every class | 47 added; **0 classes now lack `rdfs:label`** |
+| Comments where the meaning is established | 27 added, each stating what the term is and, where it matters, what it excludes |
+| `fw:ClippingBoundary`, `fw:AcquisitionBoundary`, `fw:Presentation` | Declared. The first two are **proposed**, not yet emitted; `fw:Presentation` is implemented and `fw:MapView`, `fw:TableView` and `fw:ChartView` are now its subclasses |
+| Disjointness within a kind | 10 strong axioms where none existed. Study area is disjoint from clipping boundary, acquisition boundary and catchment; canvas plan from workflow plan; widget definition from either plan; presentation from spatial operation |
+| Boundary features declared as PROV entities | Lets a reasoner see that a boundary cannot be an execution, since PROV-O declares entities and activities disjoint |
+| Vocabulary versions | Each changed file's `owl:versionInfo` incremented |
+
+The conflation probe is now a regression test rather than a demonstration of a
+gap. Check 03 reports **5 of 5** same-kind conflations rejected by this
+vocabulary's own axioms, and **2 of 2** cross-kind conflations rejected once a
+vendored PROV-O is merged — the merge being necessary because this vocabulary
+reuses PROV-O terms and declares no `owl:imports`, so a reasoner given only these
+files cannot see PROV-O's own disjointness. The vocabulary remains consistent
+with **0 unsatisfiable classes**, which is the check that matters after asserting
+disjointness: an axiom that contradicts an existing subclass chain would have
+made some class impossible to instantiate.
+
+**Migration.** The new axioms reject graphs that no worked example produces, so
+no saved project or exported receipt is invalidated, and the regression gate
+passes unchanged: 111 unit tests, 63 Chromium scenarios, SHACL conformant. A
+future graph that types one individual as both members of an asserted pair will
+now be rejected, which is the intended effect.
+
+**Two findings this work surfaced, both recorded rather than fixed.**
+`fw:AreaBuffer` is an activity while `fw:StudyArea` is a feature, so the audit's
+"study area versus acquisition buffer" pair was never comparable as stated; the
+real distinction needs the feature-level `fw:AcquisitionBoundary`, and
+[area-buffer.ts](../../src/area-buffer.ts) currently types a buffered area
+`fw:StudyArea`. Adopting the new class would change buffer receipts and needs its
+own migration. Separately, 129 of 194 properties still declare no domain; adding
+domains is not obviously safe, because a domain *infers* a type rather than
+rejecting a misuse, so a wrong domain silently mistypes data.
+
+## Relevance, the dimension this experiment did not have
+
+Structure and semantics say nothing about whether the vocabulary answers a
+question anyone has. The audit procedure now carries a third dimension,
+**relevance**, assessed against [competency questions](../competency-questions.md):
+each question names who asks it, what would answer it, and an honest status.
+
+Writing that list found gaps no reasoner would: reprojection parameters are
+**not answerable** from the graph because they travel as opaque JSON rather than
+typed RDF, which is the same gap the Reproject widget's registry release records;
+whether data is synthetic, generated or observed is only partial; and which
+exported artifact carries source coordinates is documented but not typed. It also
+records five questions the ontology must **refuse**, including population counts
+from record counts, so a term that appeared to answer them would be a defect
+rather than a feature.
+
 ## Tooling assessed
 
 The question that led here was which offline, browser-based ontology browser

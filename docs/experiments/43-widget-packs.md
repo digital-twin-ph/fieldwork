@@ -136,6 +136,18 @@ negative-tested:
 | A pack may not declare a node type the host already defines | refused, so a saved workflow cannot be ambiguous about which definition produced a result |
 | The catalog's outstanding capabilities must agree with the pack manifest | `catalog lists "tabular-import" as an outstanding host capability; the manifest does not`, and the converse |
 | A capability declared present must name host widgets the registry releases | `names urn:fieldwork:widget:table_input@9.9.9, which the host registry does not release`, and an unknown widget identity |
+| A catalog entry's stage statuses must match the pack manifest's | `catalog records stage import as "blocked"; the manifest declares "proposed"` |
+
+The stage rule was added after the drift it describes had already happened. The
+catalog still read `import: blocked` after the pack had moved that stage to
+`proposed`, and nothing noticed until the catalog was read aloud. The general
+lesson is about the catalog's design rather than this entry: **every field a
+catalog entry restates from a pack manifest will drift**, because the two are
+edited in different repositories at different times. A restated fact therefore
+needs either a check or a reason to exist. Digests and the commit SHA are restated
+deliberately — that is the pin, and it is verified on every run. Stage statuses and
+capability names are restated for readability, so they are now checked against the
+manifest instead of trusted.
 
 The last two rules were added when the sea-level pack's blocker was cleared, and
 they exist because of what that moment makes possible. A capability moving from

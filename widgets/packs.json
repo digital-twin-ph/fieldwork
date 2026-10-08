@@ -1,6 +1,6 @@
 {
   "schema": "fieldwork/pack-catalog/1",
-  "catalogVersion": "0.1.1",
+  "catalogVersion": "0.1.2",
   "updated": "2026-10-08",
   "description": "Curated widget packs. This file is the trust root: digest pinning is only as strong as the review of the file that holds the digests. A pack is admitted only at a full commit SHA, only from a curated owner, and only with a complete review record naming the host versions it was verified against. Nothing here is loaded by the application at run time; the catalog is checked by development tooling with npm run validate:packs.",
   "governance": {
@@ -30,7 +30,8 @@
       "A pack may not be admitted until all required reviews have passed and name the host version.",
       "A withdrawn pack keeps its entry, so runs that recorded its digest remain traceable.",
       "The catalog's list of outstanding host capabilities must agree with the pack's own manifest, so neither can declare a pack unblocked alone.",
-      "A host capability a pack declares present must name host widgets and versions the host registry actually releases."
+      "A host capability a pack declares present must name host widgets and versions the host registry actually releases.",
+      "The stage statuses in a catalog entry must match the pack manifest's own, so the catalog cannot describe a pipeline the pack does not declare."
     ]
   },
   "packs": [
@@ -65,7 +66,7 @@
         "discovery": "excluded",
         "acquisition": "excluded",
         "extraction": "external",
-        "import": "blocked",
+        "import": "proposed",
         "application": "proposed",
         "presentation": "reuses-base"
       },

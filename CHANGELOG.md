@@ -13,9 +13,18 @@ shown in a local build is not a claim that it has been published.
   71 of them the new control itself. Canvas node colours are authored separately
   for dark so the widget roles stay distinguishable. Exported SVG and GeoTIFF
   artifacts are unaffected and stay light. No workflow migration is required.
-  Validation: 115 unit tests and 67 Chromium scenarios with 1 skipped. Contrast
-  ratios, colour-vision accessibility and Firefox or WebKit rendering are not
-  established; see [the design record](docs/experiments/46-colour-theme.md).
+  Dark meets WCAG AA for every rendered text element, measured: fixing 38 colours
+  written as the keyword `white`, which had left panels light in dark mode, and
+  adding contrast tokens for text on filled accent and danger surfaces. The
+  released light theme has 144 long-standing low-contrast labels which are
+  recorded rather than changed, and a check ratchets them so they cannot get
+  worse. Validation: 115 unit tests and 69 Chromium scenarios with 1 skipped.
+  Colour-vision accessibility, non-text contrast and Firefox or WebKit rendering
+  are not established; see [the design record](docs/experiments/46-colour-theme.md).
+- Fix a latent defect in the encrypted-project dialog: opening it again before the
+  previous one had closed left two elements sharing one id, which is invalid and
+  made the dialog ambiguous to find. Opening is now idempotent. This was
+  intermittent and predated the theme work.
 
 ## 0.5.0 — 2026-10-08
 

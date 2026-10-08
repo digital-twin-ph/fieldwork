@@ -61,9 +61,48 @@ generated in TypeScript, not CSS, so an exported artifact stays light-on-white
 whichever theme produced it. An artifact for sharing should not carry the
 viewer's display preference.
 
+## A116: contrast measured, and what it found
+
+Contrast was measured rather than judged, on what the browser actually renders:
+for every visible element with its own text, the effective foreground after alpha
+compositing against the nearest opaque ancestor background, with the WCAG 2.1
+threshold of 4.5:1 for normal text and 3:1 for large text. The Old Naledi
+workspace at 1600 x 1100 presents 263 such elements.
+
+| Theme | Elements below AA, before | After | Distinct failing pairs |
+| --- | --- | --- | --- |
+| Dark | 62 | **0** | 9 → 0 |
+| Light | 144 | 144 | 46 |
+
+**Dark had a real defect this found.** 38 colours were written as the keyword
+`white`, which the hex-based tokenisation never saw, so those panels stayed white
+in dark while text turned light: a ratio of 1.20, on buttons, labels and section
+titles. They are now tokens. Separately, text sitting on a filled accent or
+danger surface was `color:white`, which fails once the accent itself is light in
+dark, so `--accent-contrast` and `--danger-contrast` flip with the theme. Two
+decorative separators drew text with a border colour and fell to 1.58; they are
+raised in dark only.
+
+**Light's 144 failures are pre-existing and were deliberately not changed.** They
+are overwhelmingly 8 to 10 pixel labels in pale green on white, between 2.3:1 and
+2.8:1 — the node identifier, library group headings, field hints and the palette
+"+" affordance. Adding a theme is not a mandate to redesign the released light
+interface, and the browser suite pins several of those colours. They are recorded
+here so the next person does not have to rediscover them, and improving them is a
+separate, deliberate change.
+
+A browser check now asserts that dark has **no** failures, and ratchets light at
+46 distinct failing pairs: it may improve, it must not regress.
+
+What this does not establish: contrast for non-text elements such as icons, port
+handles, edges and map symbols; legibility of the raster value ramp in dark;
+colour-vision deficiency, which contrast ratio does not model; and anything
+outside Chromium at this viewport. The dark palette was still chosen by eye, and
+now has a floor.
+
 ## Validation
 
-TypeScript, build, **115 unit tests** and **67 Chromium scenarios with 1 skipped**
+TypeScript, build, **115 unit tests** and **69 Chromium scenarios with 1 skipped**
 passed. Three new unit checks cover the resolution table, the accepted
 preferences and the versioned storage key. Four browser checks cover a first
 visit in both device schemes, an explicit choice beating the device and surviving
@@ -73,6 +112,5 @@ The suite also caught two defects during the work: the first palette changed
 released light colours, and the header control broke the no-horizontal-scroll
 assertion at 390 pixels, now fixed by hiding the label below 850 pixels.
 
-Not established: contrast ratios against WCAG, readability for colour-vision
-deficiency, dark-theme legibility of raster value ramps, and Firefox or WebKit
-rendering. Dark values were chosen by eye, not measured.
+Not established: readability for colour-vision deficiency, dark-theme legibility
+of raster value ramps, non-text contrast, and Firefox or WebKit rendering.

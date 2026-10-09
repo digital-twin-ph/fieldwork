@@ -18,7 +18,9 @@ shown in a local build is not a claim that it has been published.
   cartographic device rather than case locations and was withdrawn from the Chicago compilation; the
   bundled 250-building file has an unknown licence; a denominator exists only as **houses** in the
   1,852-house General Board of Health digitisation, so a rate per house is defensible and a mortality
-  rate per person is not; and the numerator and denominator come from different years. Measured there:
+  rate per person is not; the numerator and denominator come from different years; and the GPL on that
+  digitisation permits redistribution, so the file can be bundled verbatim with its licence and
+  attribution, while a reprojected or filtered copy would itself have to carry the GPL. Measured there:
   186.7 deaths per 100 houses within 50 m of the Broad Street pump against 2.0 beyond 300 m, and 55.6 %
   of houses within 50 m having at least one death against 5.0 % at 250–300 m.
 

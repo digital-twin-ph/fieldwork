@@ -11,7 +11,8 @@
     {
       "file": "cholera_deaths.csv",
       "sha256": "1be1926dca480fe8c9a83b663e62758e57c7ebe6c296d6a32c5e93a50d62b40a",
-      "bytes": 6607
+      "bytes": 6607,
+      "note": "250 buildings with death counts, shared by Wilson (2011); the same data as the University of Chicago Center for Spatial Data Science compilation's deaths_by_bldg, whose overview table records the licence as unknown. Not the 578-point digitisation of Snow's map: those points are stacked beside houses as a cartographic device and are displaced from the buildings they belong to, which is why that dataset was withdrawn from later versions of the Chicago compilation. No date is recorded for any death here."
     },
     {
       "file": "soho.graphml",

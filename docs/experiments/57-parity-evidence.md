@@ -29,6 +29,30 @@ the pack catalog already uses, where a mutable catalog points at immutable pinne
 | --- | --- | --- | --- | --- |
 | `reproject` | 0.1.0 | pyproj 3.8.0, PROJ 9.8.1 | **agrees** | maximum separation 6.70 × 10⁻⁵ m over 9 points, against a stated tolerance of 1 mm |
 | `clip_raster` | 1.0.0 | rasterio 1.5.2, GDAL 3.12.2, shapely 2.2.0, GEOS 3.14.1 | **partial** | cell-centre agrees, 0 of 132 cells differing and retained values identical; all-touched differs by **2 cells** at a pixel-aligned cutline; the one-pixel margin case differs by 61 cells, where the reference models the margin as a 3 × 3 binary dilation |
+| `measure_area` | 0.1.0 | independent closed form; pyproj geodesic areas | **agrees** | implementation within 4.78 × 10⁻¹⁴ relative over five boundaries, one with a hole. Reported separately: **0.30 %** against great-circle edges for an oblique triangle, and **+0.45 % to −0.56 %** against WGS84 from the equator to 60° N |
+| `mean_center` | 0.1.0 | pyproj 3.8.0, PROJ 9.8.1 | **agrees** | easting exact, northing 9.31 × 10⁻¹⁰ m, returned position 4.09 × 10⁻¹⁰ m ground separation over 6 points |
+
+### Spatial operations first, and what the two new checks found
+
+Work is proceeding through the **Spatial operations** group, because that is where a number
+leaves the application and enters a report.
+
+`measure_area` is the more instructive of the two, because the useful result is not the pass.
+The check asks three separate questions and refuses to collapse them: whether the widget
+computes the spherical formula it declares (it does, to 10⁻¹⁴); how far that formula sits from a
+geodesic area whose edges are great circles; and how far from an ellipsoidal area. The second
+and third are **reported, never failed** — they are modelling choices, and the widget already
+calls its result approximate. What parity adds is the **size** of that approximation: under
+0.01 % for latitude–longitude boxes whose edges already follow parallels, **0.30 %** for a
+triangle with long oblique edges, and **+0.45 % at the equator to −0.56 % at 60° N** against
+WGS84, where the sign changes with latitude so no single factor corrects it. A practitioner can
+now decide whether 0.2–0.6 % matters for their purpose rather than guess.
+
+`mean_center` agrees to 4 × 10⁻¹⁰ m, which is the expected answer and still worth recording: it
+establishes that proj4js in the browser and PROJ in Python agree on this UTM transform. Its
+fixture deliberately includes an outlier 25 km from the cluster, because agreement about
+arithmetic is not agreement about method — both implementations are pulled identically, and
+neither says a mean centre is a sensible summary.
 
 Two things in that table matter more than the numbers.
 
@@ -64,7 +88,7 @@ evidence is about the release it was measured on, and a new release inherits not
 
 ## The gap, stated numerically
 
-**Parity is recorded for 2 of 34 widgets.** `validate:parity` prints the other 32 by name, so the
+**Parity is recorded for 4 of 34 widgets.** `validate:parity` prints the other 32 by name, so the
 absence is a visible list rather than an impression. That list is the honest answer to "which of
 these has been independently checked", and it is the most useful thing in this record.
 
@@ -73,7 +97,7 @@ plan:
 
 | Category | Widgets | External reference available? |
 | --- | --- | --- |
-| Geometry and projection | `buffer_area`, `measure_area`, `clip_polygons`, `summarize_polygons`, `voronoi`, `mean_center` | Yes — shapely, pyproj's geodesic routines, scipy, geopandas |
+| Geometry and projection | `buffer_area`, `clip_polygons`, `summarize_polygons`, `voronoi` | Yes — shapely, scipy; `measure_area` and `mean_center` are now done |
 | Network | `isochrone`, `network_input` | Yes — networkx shortest paths over the same graph |
 | Indexing | `hex_aggregate` | Yes — `h3-py` for identical cell assignment |
 | Tabular | `table_input` | Yes — pandas, for the long-format contract |

@@ -22,8 +22,12 @@ shown in a local build is not a claim that it has been published.
   offline; the new `validate:parity` verifies each claim against the Lab's own result file and
   lists the widgets with no evidence. Recorded so far: `reproject` 0.1.0 agrees with pyproj within
   6.70e-5 m, and `clip_raster` 1.0.0 is partial — cell-centre agrees exactly, all-touched differs
-  by 2 cells at a pixel-aligned cutline, and the margin case is an unresolved comparison. Parity is
-  2 of 34 widgets, and the other 32 are printed by name. See
+  by 2 cells at a pixel-aligned cutline, and the margin case is an unresolved comparison. Also recorded, working through the Spatial
+  operations group: `measure_area` 0.1.0 agrees with an independent spherical computation to
+  4.8e-14 relative, while the same check quantifies the approximation the widget declares — 0.30 %
+  against great-circle edges for an oblique triangle, and +0.45 % to -0.56 % against WGS84 between
+  the equator and 60 N; and `mean_center` 0.1.0 agrees with pyproj to 4.1e-10 m. Parity is
+  4 of 34 widgets, and the other 30 are printed by name. See
   [experiment 57](docs/experiments/57-parity-evidence.md).
 - Make the pack validation report citable. `validate:packs` now records what it validated
   against — host version, registry digest, catalog version and digest, widget count — plus the

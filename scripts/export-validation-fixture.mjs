@@ -3,11 +3,13 @@
 // declaredParameters alone. See docs/experiments/41-validation-lab.md.
 //
 // Usage: node scripts/export-validation-fixture.mjs <fixtureId> <outputDir>
-//        fixtureId: reproject-utm35s-001 | clip-all-touched-001
+//        fixtureId: reproject-utm35s-001 | clip-all-touched-001 | measure-area-001 | mean-center-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84} from '../build/reproject.js';
 import {clipRaster,encodeRaster} from '../build/raster.js';
+import {calculateArea,AREA_METHOD} from '../build/area-computation.js';
+import {computeMeanCenter} from '../build/mean-center.js';
 
 const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -20,6 +22,61 @@ const base=(id,nodeType,label,implementation)=>({
 });
 
 const builders={
+  'mean-center-001'(){
+    // A Gaborone-area cluster with one outlier, so an unweighted mean is visibly pulled:
+    // the point of the check is the projection and the average, not a robust statistic.
+    const zone=35,hemisphere='south';
+    const coordinates=[[25.8700,-24.6600],[25.8900,-24.6700],[25.9100,-24.6400],[25.8800,-24.6300],
+                       [25.9000,-24.6500],[26.1500,-24.4000]];
+    const points={type:'FeatureCollection',features:coordinates.map(([lon,lat],i)=>({
+      type:'Feature',id:`c${i+1}`,properties:{name:`Clinic ${i+1}`},geometry:{type:'Point',coordinates:[lon,lat]}}))};
+    const result=computeMeanCenter(points,{label:'Mean center',zone,hemisphere});
+    return {fixture:{
+      ...base('mean-center-001','mean_center','Mean center','src/mean-center.ts#computeMeanCenter'),
+      declaredParameters:{
+        zone,hemisphere,computationCRS:result.crs,sourceCRS:'OGC:CRS84',
+        method:result.method,
+        semantics:'Every point is projected to the stated WGS84 UTM CRS, easting and northing are averaged without weights, and the mean is converted back to CRS84. No point is excluded and no outlier is down-weighted.'
+      },
+      selfReported:{count:result.count},
+      input:{points:coordinates.map(([longitude,latitude],i)=>({id:`c${i+1}`,longitude,latitude}))},
+      output:{coordinates:result.coordinates,projected:result.projected,crs:result.crs,count:result.count},
+      note:'Project the input points to the declared CRS, average the coordinates without weights, and invert. Compare both the projected mean in metres and the returned CRS84 position as a ground separation.'
+    },files:{}};
+  },
+  'measure-area-001'(){
+    // Four boundaries chosen so the sphere-versus-ellipsoid gap can be seen to grow with
+    // latitude and size: an equatorial box, a Gaborone-sized box at -24.6, a high-latitude
+    // box, and a large mid-latitude box. The last case carries a hole, because a ring
+    // subtraction is where a reimplementation is most likely to differ.
+    const box=(w,s,e,n)=>({type:'Polygon',coordinates:[[[w,s],[e,s],[e,n],[w,n],[w,s]]]});
+    const cases=[
+      {id:'equatorial-1deg',unit:'km2',geometry:box(0,0,1,1)},
+      {id:'gaborone-box',unit:'km2',geometry:box(25.7829,-24.7082,25.9821,-24.5438)},
+      {id:'high-latitude-box',unit:'km2',geometry:box(10,60,11,61)},
+      {id:'triangle-mid-latitude',unit:'ha',geometry:{type:'Polygon',coordinates:[[[25,-24],[26,-24],[25.5,-23],[25,-24]]]}},
+      {id:'box-with-hole',unit:'km2',geometry:{type:'Polygon',coordinates:[
+        [[25,-24],[26,-24],[26,-23],[25,-23],[25,-24]],
+        [[25.4,-23.6],[25.6,-23.6],[25.6,-23.4],[25.4,-23.4],[25.4,-23.6]]]}},
+    ].map(c=>{const measurement=calculateArea(c.geometry,c.unit);
+      return {...c,output:{squareMetres:measurement.squareMetres,value:measurement.value,unit:measurement.unit}};});
+    return {fixture:{
+      ...base('measure-area-001','measure_area','Calculate area','src/area-computation.ts#calculateArea'),
+      declaredParameters:{
+        method:AREA_METHOD,
+        earthRadiusM:6371008.8,
+        model:'sphere',
+        geometryCRS:'OGC:CRS84',
+        axisOrder:'longitude-latitude',
+        ringRule:'Exterior ring area minus the area of each interior ring.',
+        semantics:'Area of a polygon on a sphere of the stated mean radius. No ellipsoidal correction is applied, and the widget reports the result as approximate.'
+      },
+      selfReported:{cases:cases.length},
+      input:{cases:cases.map(({id,unit,geometry})=>({id,unit,geometry}))},
+      output:cases.map(({id,output})=>({id,...output})),
+      note:'Recompute each case from its geometry and the declared method. Two separate claims are available: that this implementation computes the stated spherical formula, and how far that formula sits from an ellipsoidal area, which is the approximation the widget declares.'
+    },files:{}};
+  },
   'reproject-utm35s-001'(){
     // A spread across zone 35 south: near and far from the central meridian, and from
     // near-equatorial to mid-latitude, all inside the widget's validity guard.

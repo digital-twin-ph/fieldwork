@@ -34,6 +34,7 @@ The version beside the header mark is the released application version; see the
 | Study area | Draw and label a bounding box or simple polygon; inspect its GeoSPARQL representation. |
 | Calculate area | Enrich the study area with a spherical area measurement; choose metric or imperial units. |
 | Input data | Generate synthetic points, import CSV/GeoPackage/GeoJSON, or place map pins with typed attributes, value sets and optional UUIDs. |
+| Rate with a denominator | Divide counts by a declared population at risk, grouped by an attribute or by bands of a numeric one. What the denominator counts, whether it is a proportion or a ratio, the multiplier, the smallest reportable denominator and both vintages are stated, not implied. Small groups report their counts and no rate. |
 | Cases by period | Count cases per day, week or month from a declared date attribute and a declared kind of date — onset, report, death or specimen collection — optionally weighted where one row stands for several cases. Connect a Chart to draw an epidemic curve. Empty periods are kept; records without an ISO 8601 date are excluded and counted. |
 | Sea-level projections | Declare an imported long-format AR6 extract with its dataset, version, baseline and three obligatory citations; assign each point its nearest published projection site with the distance kept; compare one fully keyed projected change against an elevation you supply on a datum you state. A comparison of two numbers, never an inundation model. |
 | Tabular data | Import a long-format CSV keyed by the columns you declare, with one value column and a unit you state. No geometry is claimed; connect a Table output to display it. |
@@ -147,6 +148,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [47 · Sea-level pack](docs/experiments/47-sea-level-pack.md) | The first widget pack use case, over the IPCC AR6 projections: what a browser can honestly consume, and the inundation claim it must refuse |
 | [46 · Colour theme](docs/experiments/46-colour-theme.md) | Light, dark and device, and why the released light theme is pixel-identical |
 | [45 · Ontology viewer](docs/experiments/45-ontology-viewer.md) | Why the reading view replaced the graph editor, and what a green build does and does not establish |
+| [John Snow data sets](docs/research/john-snow-data-sets.md) | What the surviving 1854 data can and cannot support: the denominator that exists, the 578-point trap, and why case-level space-time is not available |
 | [Prior art](docs/prior-art.md) | openEO, QGIS, Geo Engine and APE: what to adapt, what to evaluate, and the limits of each comparison |
 | [Widget registry](widgets/README.md) | All 34 node identities with independent versions, port contracts and ontology mappings |
 | [39 · STAC discovery](docs/experiments/39-stac-discovery-and-remote-acquisition.md) | Measured catalog behaviour and a proposed acquisition adapter |

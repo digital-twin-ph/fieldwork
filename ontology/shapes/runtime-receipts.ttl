@@ -13,6 +13,18 @@ fw:RuntimePlanShape a sh:NodeShape; sh:targetClass fw:WorkflowNodePlan, fw:Canva
   sh:property [ sh:path fw:catalogVersion; sh:minCount 1; sh:maxCount 1; sh:pattern "^[0-9]+[.][0-9]+[.][0-9]+$" ];
   sh:property [ sh:path fw:catalogDigest; sh:minCount 1; sh:maxCount 1; sh:pattern "^[a-f0-9]{64}$" ];
   sh:property [ sh:path fw:widgetDefinitionSource; sh:minCount 1; sh:maxCount 1; sh:in ( "host-registry" "pack" ) ].
+fw:RateResultShape a sh:NodeShape; sh:targetClass fw:RateResult;
+  sh:property [ sh:path fw:denominatorUnit; sh:minCount 1; sh:maxCount 1;
+                sh:in ( "people" "houses" "households" "person-time" "other" ) ];
+  sh:property [ sh:path fw:rateKind; sh:minCount 1; sh:maxCount 1; sh:in ( "proportion" "ratio" ) ];
+  sh:property [ sh:path fw:vintagesAgree; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean ];
+  sh:property [ sh:path fw:suppressedGroupCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer ];
+  sh:property [ sh:path fw:rateGroup; sh:minCount 1; sh:class fw:RateGroup ].
+fw:RateGroupShape a sh:NodeShape; sh:targetClass fw:RateGroup;
+  sh:property [ sh:path fw:groupLabel; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:numeratorCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:denominatorCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:rateValue; sh:maxCount 1; sh:datatype xsd:decimal ].
 fw:CaseSeriesShape a sh:NodeShape; sh:targetClass fw:CaseSeries;
   sh:property [ sh:path fw:eventDateKind; sh:minCount 1; sh:maxCount 1;
                 sh:in ( "onset" "report" "death" "specimen-collection" "other" ) ];

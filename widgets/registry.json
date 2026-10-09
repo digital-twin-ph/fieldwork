@@ -622,6 +622,18 @@
           "sha256": "878ccedea4fa9c9abf95625e32807a160dfa8c4cb2c5ce461d3bda49f04a7731"
         }
       ]
+    },
+    {
+      "id": "urn:fieldwork:widget:rate",
+      "nodeType": "rate",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/rate/0.1.0.json",
+          "sha256": "d21837bc9398e044d817ba9a09b282e867b657b5cface3b9f6231136b6b6fc75"
+        }
+      ]
     }
   ]
 }

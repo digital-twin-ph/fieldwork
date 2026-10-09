@@ -1,0 +1,68 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:rate",
+  "nodeType": "rate",
+  "version": "0.1.0",
+  "title": "Rate with a denominator",
+  "released": "2026-10-09",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['rate']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "points"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Records in, a keyed table of rates out, so a Table output displays them and a Chart output draws them. The person axis needs no new port type: the counts are already attributes of the input."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:RateComputation",
+        "file": "ontology/runtime.ttl"
+      },
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:RateResult",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "fw:RateResultShape requires the denominator unit and the rate kind from closed sets and records whether the numerator period and denominator vintage agree, so a rate that does not say what it is a rate of cannot conform. Verified in tests; this registry version records application validation only."
+  },
+  "implementation": {
+    "files": [
+      "src/rate.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Divides counted events by a declared population at risk, grouping by an attribute or by bands of a numeric one. The denominator's unit, the kind of rate, the multiplier, the smallest reportable denominator and both vintages are declared rather than implied. See docs/research/john-snow-data-sets.md for the data that motivated it."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks cover the required declarations, refusal of a proportion exceeding one, banding and order, suppression at a zero or small denominator with the counts still reported, refusal of non-numeric and negative values, and comparison of the two vintages. Division is arithmetic; nothing here establishes that a denominator is the right population at risk, which is a judgment about the data."
+  }
+}

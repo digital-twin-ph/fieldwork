@@ -5,6 +5,23 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Add **Rate with a denominator**, the first widget on the person axis: divides counted events by a
+  declared population at risk, grouped by an attribute or by bands of a numeric one. The declarations
+  are the point — what the denominator counts (people, houses, households, person-time), whether the
+  result is a proportion or a ratio, the multiplier, the smallest denominator that gets a rate, and the
+  numerator period beside the denominator vintage, which are compared rather than assumed to match. A
+  proportion exceeding one is refused, a zero or small denominator reports its counts and no rate, and
+  a non-numeric or negative value is refused rather than read as zero. `fw:RateResultShape` requires
+  the unit and the kind, so a rate that does not say what it is a rate of cannot conform.
+- Record what the surviving John Snow data sets can and cannot support in
+  [a research note](docs/research/john-snow-data-sets.md): the 578-point digitisation is a stacked
+  cartographic device rather than case locations and was withdrawn from the Chicago compilation; the
+  bundled 250-building file has an unknown licence; a denominator exists only as **houses** in the
+  1,852-house General Board of Health digitisation, so a rate per house is defensible and a mortality
+  rate per person is not; and the numerator and denominator come from different years. Measured there:
+  186.7 deaths per 100 houses within 50 m of the Broad Street pump against 2.0 beyond 300 m, and 55.6 %
+  of houses within 50 m having at least one death against 5.0 % at 250–300 m.
+
 - Add **Cases by period**, the first widget on the time axis: counts cases per day, week or month
   from a declared date attribute and a declared **kind** of date, reading either a point layer or a
   keyed table, and optionally weighting by an attribute where one row stands for several cases. A

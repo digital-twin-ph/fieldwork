@@ -150,6 +150,36 @@ export function checkVendored(catalog,read){
   return {problems,checked};
 }
 
+
+// --- Standard versus domain widgets ---------------------------------------------------------
+// Two kinds of widget, and the line between them is derived rather than declared: a widget whose
+// vocabulary is entirely the host's is a standard component that ships with the application and
+// applies to any domain; a widget that maps to a pack's namespace belongs to that pack's domain.
+// Deriving it means nobody can forget to label one, and merging a domain widget into the standard
+// set — which is how the sea-level work landed — fails here instead of passing silently.
+const STANDARD_VOCABULARIES=['urn:fieldwork:','http://www.opengis.net/ont/geosparql#',
+  'http://www.w3.org/ns/prov#','http://qudt.org/schema/qudt/','http://purl.org/dc/terms/',
+  'http://www.w3.org/ns/dcat#','http://www.w3.org/2004/02/skos/core#'];
+
+export function classifyWidgets(releases,catalog){
+  const problems=[],widgets=[];
+  const packs=(catalog.packs??[]).map(pack=>({id:pack.id,name:pack.name,namespace:pack.namespace}));
+  for(const [nodeType,release] of Object.entries(releases)){
+    const iris=(release.ontology?.mappings??[]).map(mapping=>mapping.iri);
+    const foreign=iris.filter(iri=>!STANDARD_VOCABULARIES.some(prefix=>iri.startsWith(prefix)));
+    const owners=[...new Set(foreign.map(iri=>packs.find(pack=>iri.startsWith(pack.namespace))?.id??`unknown:${iri}`))];
+    for(const owner of owners)if(owner.startsWith('unknown:'))
+      problems.push(`${nodeType} maps to ${owner.slice(8)}, which is neither a host vocabulary nor a namespace of any catalogued pack`);
+    if(owners.length>1)problems.push(`${nodeType} maps to more than one domain: ${owners.join(', ')}. A widget belongs to one domain or to none.`);
+    const pack=owners.length===1&&!owners[0].startsWith('unknown:')?owners[0]:null;
+    widgets.push({nodeType,classification:foreign.length?'domain':'standard',...(pack?{pack}:{})});
+  }
+  const domain=widgets.filter(w=>w.classification==='domain');
+  return {problems,widgets:widgets.sort((a,b)=>a.nodeType.localeCompare(b.nodeType)),
+    standardCount:widgets.length-domain.length,domainCount:domain.length,
+    byPack:Object.fromEntries(packs.map(pack=>[pack.id,domain.filter(w=>w.pack===pack.id).map(w=>w.nodeType)]))};
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{
     const result=await validateRegistry();
@@ -159,6 +189,15 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
     const parity=checkParity(parityDoc,registryDoc);
     const catalogDoc=JSON.parse(await readFile(localPath('widgets/packs.json'),'utf8'));
     const vendored=checkVendored(catalogDoc,path=>{try{return readFileSync(localPath(path),'utf8');}catch{return null;}});
+    const releases=Object.fromEntries(registryDoc.widgets.map(w=>[w.nodeType,
+      JSON.parse(readFileSync(localPath(w.releases.find(r=>r.version===w.currentVersion).path),'utf8'))]));
+    const kinds=classifyWidgets(releases,catalogDoc);
+    console.log(`  widgets: ${kinds.standardCount} standard (ship with the application, any domain), ${kinds.domainCount} domain`);
+    for(const [pack,types] of Object.entries(kinds.byPack))if(types.length)console.log(`  domain: ${pack} → ${types.join(', ')}`);
+    if(kinds.problems.length){for(const problem of kinds.problems)console.error(`CLASSIFICATION PROBLEM: ${problem}`);process.exitCode=1;}
+    const generated=JSON.parse(readFileSync(localPath('widgets/classification.json'),'utf8'));
+    if(JSON.stringify(generated.widgets)!==JSON.stringify(kinds.widgets))
+      {console.error('CLASSIFICATION PROBLEM: widgets/classification.json is stale; rebuild to regenerate it');process.exitCode=1;}
     for(const file of vendored.checked)console.log(`  vendored: ${file} matches the digest the catalog pins`);
     if(vendored.problems.length){for(const problem of vendored.problems)console.error(`VENDOR PROBLEM: ${problem}`);process.exitCode=1;}
     for(const note of parity.notes)console.log(`  parity: ${note}`);

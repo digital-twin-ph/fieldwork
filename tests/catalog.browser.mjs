@@ -5,6 +5,7 @@ const registry=JSON.parse(readFileSync(new URL('../widgets/registry.json',import
 const parity=JSON.parse(readFileSync(new URL('../widgets/parity.json',import.meta.url),'utf8'));
 const identity=JSON.parse(readFileSync(new URL('../widgets/pack-catalog.json',import.meta.url),'utf8'));
 const packs=JSON.parse(readFileSync(new URL('../widgets/packs.json',import.meta.url),'utf8'));
+const kinds=JSON.parse(readFileSync(new URL('../widgets/classification.json',import.meta.url),'utf8'));
 
 test('the widget catalog shows identities, digests and independent checks, and works offline',async({page,context})=>{
   await page.goto('/?example=blank');
@@ -30,17 +31,26 @@ test('the widget catalog shows identities, digests and independent checks, and w
   const row=dialog.locator('tr[data-widget="reproject"]');
   await expect(row).toContainText(reproject.currentVersion);
   await expect(row).toContainText(reproject.releases.find(r=>r.version===reproject.currentVersion).sha256.slice(0,12));
-  await expect(row.locator('.tag')).toHaveText('agrees');
+  await expect(row.locator('[data-parity]')).toHaveText('agrees');
 
   // A partial result is shown as partial rather than rounded up to a pass.
-  await expect(dialog.locator('tr[data-widget="clip_raster"] .tag')).toHaveText('partial');
+  await expect(dialog.locator('tr[data-widget="clip_raster"] [data-parity]')).toHaveText('partial');
   // An unchecked widget says so plainly.
-  await expect(dialog.locator('tr[data-widget="voronoi"] .tag')).toHaveText('not checked');
+  await expect(dialog.locator('tr[data-widget="voronoi"] [data-parity]')).toHaveText('not checked');
   const checked=new Set(parity.entries.map(e=>e.widget)).size;
   await expect(dialog).toContainText(`${checked} of ${registry.widgets.length} widgets`);
   // The catalog must not imply anything is installable or certified.
   await expect(dialog).toContainText('nothing is installable');
   await expect(dialog).toContainText('no widget here is individually certified');
+
+  // Standard components are distinguished from widgets that belong to a pack's domain.
+  await expect(dialog).toContainText(`${kinds.standardCount} standard`);
+  await expect(dialog).toContainText(`${kinds.domainCount} belonging to a pack's domain`);
+  await expect(dialog.locator('tr[data-widget="table_input"] .tag').first()).toHaveText('standard');
+  const domainRow=dialog.locator(`tr[data-widget="${kinds.widgets.find(w=>w.classification==='domain').nodeType}"]`);
+  await expect(domainRow).toContainText('domain');
+  await expect(domainRow).toContainText('Sea-level rise');
+  await expect(dialog).toContainText('derived from those mappings, not declared');
 
   // Packs are listed with their recorded admission state and why they are not admitted, and the
   // view says plainly that nothing here can be added, with the reason.
@@ -61,8 +71,13 @@ test('the widget catalog shows identities, digests and independent checks, and w
   await expect(page.locator('.inspector')).toContainText('Definition');
   await expect(page.locator('.inspector')).toContainText(`reproject ${reproject.currentVersion}`);
   await expect(page.locator('.inspector')).toContainText('Compiled into this build');
+  await expect(page.locator('.inspector')).toContainText('Standard widget · any domain');
   await page.locator('.inspector details', {hasText:'What was checked'}).first().click();
   await expect(page.locator('.inspector')).toContainText('maximum separation');
+
+  // A domain widget says which pack's domain it belongs to, in the same place.
+  await page.locator('[data-add="slr_site_assignment"]').click();
+  await expect(page.locator('.inspector')).toContainText('Domain widget · Sea-level rise');
 
   // A link can open it directly, so it can be pointed at rather than described.
   await page.goto('/?example=blank&catalog=1');

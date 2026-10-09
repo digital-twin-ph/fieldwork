@@ -51,7 +51,12 @@ not that place is overweight, it is that **person and time have no representatio
 workflow cannot say "cases by week of onset" or "rate per 1,000 children under five" in any way the
 application could reason over.
 
-Because `PortType` is a closed union compiled into the application, adding either axis is base work
+> **Revised by [experiment 61](61-input-dimensions.md).** New port types are probably not what the
+> missing axes need. The project's own John Snow data carries 489 deaths in 250 rows — person,
+> aggregated, as an ordinary attribute — so the dimensions are already in the input and what is absent
+> is a way to declare which column means what. That is a declaration on existing inputs, not a new type.
+
+Because `PortType` is a closed union compiled into the application, adding a port type would be base work
 rather than pack work — which is exactly the engine
 [experiment 59](59-pattern-for-engineered-knowledge.md) described: a domain exercise reveals a missing
 general primitive, and the primitive belongs in the host.

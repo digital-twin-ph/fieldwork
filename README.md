@@ -159,6 +159,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [58 · Sea-level widgets](docs/experiments/58-sea-level-widgets.md) | Implementing a declaration-only pack in the host: why a pack that cannot ship code is a specification, and the three contract deviations |
 | [59 · Pattern for engineered knowledge](docs/experiments/59-pattern-for-engineered-knowledge.md) | What the sea-level exercise taught: the knowledge is the durable artifact, the code is cheap, and governance built ahead of its operation created the problem |
 | [60 · Person, place and time](docs/experiments/60-from-gis-studio-to-public-health-studio.md) | Measured: place is built out across 31 widgets and 12 port types, while person and time have no port type at all |
+| [61 · Input dimensions](docs/experiments/61-input-dimensions.md) | The John Snow file carries 489 deaths in 250 rows: person and time belong to the input as declarations, and no new port type is needed |
 
 ## Repository contents
 

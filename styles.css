@@ -88,6 +88,11 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 :root[data-theme="dark"] .eyebrow span{color:var(--text-faint)}
 
 
+/* Measured at 390px: the header is 395px wide with this control and 390px without it, even
+   reduced to its icon, so below 850px it goes entirely. The node library keeps the labelled
+   entry point, and ?catalog=1 opens the dialog directly. */
+@media (max-width:850px){#header-catalog{display:none}}
+
 /* Widget catalog: a reference table, readable at phone width by scrolling the table alone. */
 #catalog-dialog{max-width:min(72rem,94vw)}
 #catalog-dialog h3{margin:1.25rem 0 .35rem;font-size:.95rem;color:var(--text-muted)}

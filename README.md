@@ -158,6 +158,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [57 · Parity evidence](docs/experiments/57-parity-evidence.md) | Independent recomputation as the evidence this project can actually produce: two widgets measured, 32 named as unchecked |
 | [58 · Sea-level widgets](docs/experiments/58-sea-level-widgets.md) | Implementing a declaration-only pack in the host: why a pack that cannot ship code is a specification, and the three contract deviations |
 | [59 · Pattern for engineered knowledge](docs/experiments/59-pattern-for-engineered-knowledge.md) | What the sea-level exercise taught: the knowledge is the durable artifact, the code is cheap, and governance built ahead of its operation created the problem |
+| [60 · From a GIS studio to a public health studio](docs/experiments/60-from-gis-studio-to-public-health-studio.md) | Measured: 31 of 37 widgets are spatial, so GIS is the first domain rather than the platform, and the universal layer is thin |
 
 ## Repository contents
 

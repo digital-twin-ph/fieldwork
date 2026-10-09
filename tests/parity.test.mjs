@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {checkParity,checkVendored} from '../scripts/validate-widgets.mjs';
+import {checkParity,checkVendored,classifyWidgets} from '../scripts/validate-widgets.mjs';
 
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
 const parity=JSON.parse(await readFile(new URL('../widgets/parity.json',import.meta.url),'utf8'));
@@ -70,4 +70,31 @@ test('a vendored copy that drifts from the pinned digest is refused, and a missi
   assert.equal(problems.length,2);
   assert.match(problems.join(' '),/does not match the pinned/);
   assert.match(problems.join(' '),/vendored from .* but missing/);
+});
+
+const release=async nodeType=>JSON.parse(await readFile(new URL(
+  '../'+registry.widgets.find(w=>w.nodeType===nodeType).releases.slice(-1)[0].path,import.meta.url),'utf8'));
+
+test('a widget is standard or domain by its vocabulary, not by a label someone remembered to set', async () => {
+  const releases={table_input:await release('table_input'),slr_site_assignment:await release('slr_site_assignment')};
+  const {problems,widgets,standardCount,domainCount}=classifyWidgets(releases,catalog);
+  assert.deepEqual(problems,[]);
+  assert.equal(standardCount,1);assert.equal(domainCount,1);
+  assert.equal(widgets.find(w=>w.nodeType==='table_input').classification,'standard');
+  const domain=widgets.find(w=>w.nodeType==='slr_site_assignment');
+  assert.equal(domain.classification,'domain');
+  assert.equal(domain.pack,'urn:fieldwork:pack:sea-level-rise');
+});
+
+test('an uncatalogued namespace and a widget straddling two domains are refused', async () => {
+  const stray=structuredClone(await release('table_input'));
+  stray.ontology.mappings.push({role:'entity',iri:'https://example.org/invented/ns#Thing',file:'nowhere.ttl'});
+  assert.match(classifyWidgets({table_input:stray},catalog).problems.join(' '),
+    /neither a host vocabulary nor a namespace of any catalogued pack/);
+  const straddle=structuredClone(await release('slr_site_assignment'));
+  straddle.ontology.mappings.push({role:'entity',iri:'https://digital-twin-ph.github.io/widget-pack-other/ns#Thing',file:'nowhere.ttl'});
+  const withSecondPack={...catalog,packs:[...catalog.packs,
+    {id:'urn:fieldwork:pack:other',name:'Other',namespace:'https://digital-twin-ph.github.io/widget-pack-other/ns#'}]};
+  assert.match(classifyWidgets({slr_site_assignment:straddle},withSecondPack).problems.join(' '),
+    /more than one domain/);
 });

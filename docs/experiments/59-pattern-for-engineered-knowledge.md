@@ -1,6 +1,6 @@
 # 59 · What the sea-level exercise taught about packaging engineered knowledge
 
-_Created 2026-10-09 · Updated 2026-10-09_
+_Created 2026-10-08 · Updated 2026-10-08_
 
 **Status:** lesson record. No mechanism is added here, and one is proposed for removal.
 

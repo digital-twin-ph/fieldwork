@@ -27,6 +27,7 @@ export interface ParamsByType {
   hex_aggregate:{label:string;resolution:number;minOccupancy:number};
   buffer_area:{label:string;distanceM:number};
   table_input:{label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;source?:import('./data-table.js').DataTableSource};
+  rate:{label:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
   slr_extract_import:{label:string;datasetIRI:string;datasetVersion:string;baselinePeriod:string;citations:string[];familyValues:{withVerticalLandMotion:string;withoutVerticalLandMotion:string}};
   slr_site_assignment:{label:string};

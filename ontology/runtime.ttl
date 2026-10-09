@@ -7,7 +7,7 @@
 @prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.5 experimental, 2026-10-09";
+<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.6 experimental, 2026-10-09";
   rdfs:comment "Implemented run bindings and bounded network/catchment receipts. No learner/game runtime is implied.".
 fw:WidgetDefinition a owl:Class;
   rdfs:comment "A versioned description of a reusable operation and interface contract. A definition is not a configured plan and not an execution.";
@@ -127,6 +127,35 @@ fw:undatedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer;
 fw:seriesBin a owl:ObjectProperty; rdfs:domain fw:CaseSeries; rdfs:range fw:SeriesBin.
 fw:periodKey a owl:DatatypeProperty; rdfs:domain fw:SeriesBin; rdfs:range xsd:string.
 fw:caseCount a owl:DatatypeProperty; rdfs:domain fw:SeriesBin; rdfs:range xsd:decimal.
+fw:RateComputation a owl:Class;
+  rdfs:label "Rate computation"; rdfs:subClassOf prov:Activity;
+  rdfs:comment "Divides counted events by a declared population at risk. The denominator's unit is part of the result, not a presentation detail: deaths per house is not a mortality rate, and a rate whose denominator is unstated cannot be compared with any other rate.".
+fw:RateResult a owl:Class;
+  rdfs:label "Rate result"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "Rates by group, each carrying its own numerator and denominator so a reader can see what was divided by what. Groups whose denominator is below the stated minimum report no rate rather than an unstable one.".
+fw:RateGroup a owl:Class;
+  rdfs:label "Rate group"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "One group's numerator, denominator and rate. A group with no rate is reported with its counts, because suppressing the rate is a decision the reader must be able to see.".
+fw:numeratorField a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:denominatorField a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:denominatorUnit a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "What the denominator counts: people, houses, households, person-time or other. Required, because a number per house and a number per person are different quantities that look identical once printed.".
+fw:rateKind a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "A proportion, whose numerator is part of its denominator and so cannot exceed it, or a ratio of events per unit, which can. Snow's data yields both and they are not interchangeable.".
+fw:rateMultiplier a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:minimumDenominator a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:numeratorPeriod a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:denominatorVintage a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "When the population at risk was counted. Recorded beside the numerator's period so a reader can see whether the two describe the same moment; they often do not.".
+fw:vintagesAgree a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:suppressedGroupCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:rateGroup a owl:ObjectProperty; rdfs:domain fw:RateResult; rdfs:range fw:RateGroup.
+fw:groupLabel a owl:DatatypeProperty; rdfs:domain fw:RateGroup; rdfs:range xsd:string.
+fw:numeratorCount a owl:DatatypeProperty; rdfs:domain fw:RateGroup; rdfs:range xsd:decimal.
+fw:denominatorCount a owl:DatatypeProperty; rdfs:domain fw:RateGroup; rdfs:range xsd:decimal.
+fw:rateValue a owl:DatatypeProperty; rdfs:domain fw:RateGroup; rdfs:range xsd:decimal.
+fw:RateResult owl:disjointWith fw:PointDataset, fw:CaseSeries.
+
 fw:CaseSeries owl:disjointWith fw:PointDataset.
 
 fw:PackCatalog owl:disjointWith fw:WidgetDefinition, fw:WorkflowNodePlan, fw:CanvasNodePlan.

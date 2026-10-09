@@ -163,6 +163,17 @@ matter of editing one word.
 `CODEOWNERS` requires an owner's approval for the catalog, the widget registry and
 the vocabulary, separately from ordinary source review.
 
+> **Corrected, 2026-10-09.** This record's own checklist asks "Does installing a pack change any
+> existing result?", so installation was always part of the concept. The catalog's
+> `runtimeFetching: none` rule was later read as *no pack is ever installed*, which does not follow:
+> the rule forbids fetching **while running**, not **installing at build time** — vendoring a pack's
+> files at a pinned commit, verifying digests, type-checking and compiling them in. Build-time
+> installation keeps every property the rule protects, and it permits a pack to ship widget source,
+> since `PortType` is closed at compile time rather than at runtime. The host has already done this
+> by hand for the sea-level pack's vocabulary and shapes; what is missing is the operation, not the
+> possibility. See [experiment 59](59-pattern-for-engineered-knowledge.md) for what the exercise cost
+> and [experiment 58](58-sea-level-widgets.md) for the hand-rolled version.
+
 The checker is **development tooling and needs network**, so it is deliberately
 not part of `npm run check`, which stays offline and deterministic. `--local`
 checks a working copy instead. The application still loads nothing: admitting a

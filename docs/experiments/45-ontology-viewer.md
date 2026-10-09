@@ -1,5 +1,7 @@
 # Experiment 45: an ontology viewer built for reading
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 Date: October 8, 2026. Status: adopted and published. The viewer is live, the
 Ontosphere instance is retired, and this record states what the new site
 establishes and what it does not.

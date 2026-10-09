@@ -1,5 +1,7 @@
 # GADM assets and jurisdiction study areas
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 6, 2026. Status: ontology and executable N3 examples; polygon ingestion, jurisdiction selection widgets and GADM retrieval are not yet implemented in the application.
 
 Fieldwork will let a practitioner acquire administrative boundaries, select named places and use those places as a study area. A study can span several countries and disconnected regions while retaining each member for comparison. GADM is the first provider profile; the underlying asset and jurisdiction model also applies to other boundary sources.

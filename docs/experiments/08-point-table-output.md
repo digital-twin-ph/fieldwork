@@ -1,5 +1,7 @@
 # Developmental evaluation: point table output
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 5, 2026. The user requested an output table to display points, following the introduction of the regression gate.
 
 ## A31: an explicit Table output for point data

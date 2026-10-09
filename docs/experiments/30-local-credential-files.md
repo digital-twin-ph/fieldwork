@@ -1,5 +1,7 @@
 # Encrypted local credential files
 
+_Created 2026-10-07 · Updated 2026-10-07_
+
 Date: 2026-10-07. Design and bounded implementation specification.
 
 ## Contract

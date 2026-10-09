@@ -1,5 +1,7 @@
 # 50 · The preparation checklist, and what its format would decide
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 **Status:** developmental-evaluation item. The layout is open by intent; four
 constraints on it are not. This record does not choose a format, because choosing one
 on present evidence would be the error it exists to prevent — but it records what any

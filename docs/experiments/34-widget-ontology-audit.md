@@ -1,5 +1,7 @@
 # 34 — Canvas and runtime semantic audit
 
+_Created 2026-10-07 · Updated 2026-10-07_
+
 Date: 2026-10-07. Developmental evaluation; local implementation.
 
 Question: can a practitioner trace each canvas primitive through its meaning,

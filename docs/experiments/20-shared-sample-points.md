@@ -1,5 +1,7 @@
 # Shared points for generation and facility access
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 6, 2026. Status: third implementation slice of widget standardization.
 
 ## A70 Generate a reusable point dataset

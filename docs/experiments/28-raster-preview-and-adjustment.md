@@ -1,5 +1,7 @@
 # Experiment 28: preview and adjust raster clipping
 
+_Created 2026-10-07 · Updated 2026-10-07_
+
 Date: 2026-10-06. Developmental evaluation prototype.
 
 Follow-up: [Experiment 29](29-raster-edge-inclusion.md) adds all-touched selection and a pixel margin. The fixed cell-center descriptions below record this earlier slice.

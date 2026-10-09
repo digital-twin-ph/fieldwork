@@ -1,5 +1,7 @@
 # Shared Chart widget
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 6, 2026. Status: fifth widget-standardization slice.
 
 ## A74 Use an explicit categorical count adapter

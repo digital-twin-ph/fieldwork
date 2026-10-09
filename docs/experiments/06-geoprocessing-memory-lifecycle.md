@@ -1,5 +1,7 @@
 # Developmental evaluation: geoprocessing memory lifecycle
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 5, 2026. The user supplied an AI overview proposing disposable workers, arena allocation and Wasm multi-memory for releasing heavy geoprocessing memory. This record assesses those suggestions and extends the [asset resource plan](02-area-computation-and-resource-scope.md). These are architectural proposals, not an implemented executor or measured memory savings.
 
 ## A25: give heavy jobs a disposable execution lifetime

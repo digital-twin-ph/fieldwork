@@ -1,5 +1,7 @@
 # John Snow: two catchment worked examples
 
+_Created 2026-10-07 · Updated 2026-10-07_
+
 Open **05 · John Snow Voronoi catchments** or **06 · John Snow network isochrones** in Workspace. Local links: [Voronoi](http://127.0.0.1:4173/?example=snow-voronoi) and [Isochrones](http://127.0.0.1:4173/?example=snow-isochrone). Each workspace saves separately. Source data are bundled; initial execution and subsequent replay need no data-service request.
 
 The revised isochrone example has **Isochrone plot** (downloadable SVG) and **Interactive isochrone map**, modeled on NB04's executed Cell 15 and later Folium map. Use Expand Results for more room. The map supports layer toggles, clickable points/polygons and an optional online street basemap. Local layers work offline. Use Restore example if your saved workspace still has the earlier single-time template; export personal changes first.

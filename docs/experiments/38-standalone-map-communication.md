@@ -1,5 +1,7 @@
 # Experiment 38: standalone communication maps
 
+_Created 2026-10-07 · Updated 2026-10-07_
+
 ## Admission and scope
 
 Reuse the existing terminal `map_output` primitive. Its input is a typed spatial

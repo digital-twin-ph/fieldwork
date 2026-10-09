@@ -1,5 +1,7 @@
 # John Snow case study: isochrone workflow reuse
 
+_Created 2026-10-07 · Updated 2026-10-07_
+
 Reviewed 2026-10-07. Source inspection only; notebooks were not executed. No source code or data files were copied into the Fieldwork runtime.
 
 Repository: [PHI-Case-Studies/Jupyterlite-1854-Cholera-Outbreak-London-Advanced-1](https://github.com/PHI-Case-Studies/Jupyterlite-1854-Cholera-Outbreak-London-Advanced-1). Inspected main at commit `8bde848d13d71602b2b32c62e5d4b4957e4a45a1`; references below are pinned to that snapshot. Notebook cell numbers are zero-based indices in the notebook JSON.

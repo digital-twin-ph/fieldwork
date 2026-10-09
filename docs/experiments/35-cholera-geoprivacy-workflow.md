@@ -1,5 +1,7 @@
 ﻿# Cholera geoprivacy workflow: semantic admission and evaluation
 
+_Created 2026-10-07 · Updated 2026-10-07_
+
 Status: bounded prototype, 2026-10-07. Source case-study coordinates remain private inputs in this exercise. The 1854 data are used to explain transformations, not to assert a contemporary disclosure risk or prove a privacy guarantee.
 
 ## Admission decisions

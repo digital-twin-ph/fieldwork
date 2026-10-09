@@ -1,5 +1,7 @@
 # Shared input widgets: heat outreach migration
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 6, 2026. Status: first implementation slice of widget standardization.
 
 ## A67 Use example labels on shared input contracts

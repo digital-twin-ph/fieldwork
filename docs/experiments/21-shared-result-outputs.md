@@ -1,5 +1,7 @@
 # Shared Map and Table widgets for reasoning results
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 6, 2026. Status: fourth widget-standardization slice. The historical bar-chart limitations below are superseded by [the fifth slice](22-shared-chart.md).
 
 ## A72 Keep a shared widget with explicit input modes

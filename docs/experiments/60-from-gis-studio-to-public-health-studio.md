@@ -72,6 +72,31 @@ Replacing the flat list an earlier draft of this record carried, since the axes 
 | All three | **Rate**, with denominator provenance | Refuses when the denominator year, the frame vintage and the numerator period disagree ([experiment 51](51-dataset-profiles.md)) |
 | Laboratory | **Result with method and limit**; **QC status** | A value below the limit of detection is not zero; detection is not infection; a failed control invalidates a batch rather than a sample |
 
+## Spatially enabled, not parallel
+
+The direction this settles into: epidemiology workflows are **added to** the semantic GIS studio, and
+what results is a spatially enabled public health workflow rather than two studios side by side. Place
+is the substrate almost every problem already has; person and time extend it.
+
+That is an architectural constraint, not a slogan. Whatever represents a person, a period or a series
+must **join cleanly to the spatial ports**, or the composition is claimed rather than built: a case
+series has to be mappable, a rate has to be computable per area, a cohort has to be joinable to a
+point layer or a boundary. So the primitive that makes spatial enablement real is the one that lets
+axes meet — **a join on declared keys** — and it should be built before, or alongside, the first
+time-axis widget rather than after.
+
+### The sea-level exercise already revealed this, and I missed it
+
+`slr_site_assignment` is a join: a table of projected values meets a layer of published sites, matched
+by proximity, with the distance kept as part of the result. It was written as a domain widget because
+the exercise needed it, and by the test in
+[experiment 59](59-pattern-for-engineered-knowledge.md) — a thick domain layer means a primitive is
+missing underneath — it should have been read as a second missing primitive rather than domain code.
+
+So that exercise revealed **two** general primitives, not one: tabular intake with a declared key,
+which was built, and a keyed join between a table and a layer, which was not. Generalising the join
+would make the sea-level widget thinner, which is the measurable form of the claim.
+
 ## The distribution axis, which is a different question
 
 Yesterday's mechanism derives `standard` versus `domain` from a widget's vocabulary namespace.
@@ -127,8 +152,10 @@ line list, which needs a period, a series, and the distinction between onset dat
 whose refusals are already well established in practice. It composes with place immediately — cases by
 week *and* by barangay — which is the triad working rather than two parallel capabilities.
 
-Record which parts the universal layer cannot express; whatever it cannot express names the next
-primitive. A person-axis exercise, a service-coverage rate with its denominator, is the natural second,
+The exercise is only passed if the series is **mappable** — cases by week shown by area — because
+that is what distinguishes a spatially enabled epidemiology workflow from an epidemiology report that
+happens to live in the same application. Record which parts the universal layer cannot express;
+whatever it cannot express names the next primitive. A person-axis exercise, a service-coverage rate with its denominator, is the natural second,
 because it forces the rate primitive that experiment 51 identified as the most common serious error.
 
 Either exercise also tests something the sea-level work could not: whether a workflow organised around

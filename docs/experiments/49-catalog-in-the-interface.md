@@ -79,7 +79,16 @@ Two findings, both from reading the shipped code rather than reasoning about it:
    The study-area editor draws on an online map. A practitioner who prepares by
    opening the application, seeing "Available offline" and leaving will lose the
    basemap in the field.
-2. **"Available offline" is inferred from one asset.** The indicator reports ready
+2. **Nothing said which build was serving the page, which is the third defect in this family and
+   the one that wasted the most time.** The service worker answers from its cache first and never
+   revalidates, so a loaded tab keeps running old code until it is reloaded; nothing announced that a
+   newer build had installed. A feature could therefore be live, deployed and verified, and still be
+   absent for the person looking at it, with no way to tell the two cases apart. **Fixed, 2026-10-09**:
+   the controlling service worker now reports its own build identity, which the catalog shows as
+   "Serving this page", and an installed update raises a notice with a Reload action that stays until
+   it is used. The identity is reported by the worker rather than compiled into the page, so it names
+   the build actually answering rather than the build the page came from.
+3. **"Available offline" is inferred from one asset.** The indicator reports ready
    when a single cached file is present — the EYE engine — standing in for roughly
    140 precached assets plus everything above that is not cached at all. It is a
    liveness probe presented as a readiness claim.

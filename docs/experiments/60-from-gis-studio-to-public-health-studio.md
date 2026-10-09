@@ -1,6 +1,6 @@
 # 60 · From a GIS studio to a studio for public health domains
 
-_Created 2026-10-09 · Updated 2026-10-09_
+_Created 2026-10-08 · Updated 2026-10-08_
 
 **Status:** measurement and reframing. No widget moves and nothing is renamed here; the measurement
 is the point, because it shows that one of yesterday's mechanisms is measuring the wrong thing.
@@ -10,8 +10,15 @@ laboratory science studio**, not only a semantic GIS studio — because every on
 the same shape: data is collected, processed, analysed, and outputs are generated, with the meaning
 of each step needing to be explicit.
 
-If that is the direction, then **GIS is the first domain, not the platform**. The measurement below
-says how far the current code is from acting like that is true.
+**Correction, same day.** An earlier draft of this record concluded that "GIS is the first domain, not
+the platform", which is wrong and would have led somewhere bad. Public health characterises a problem
+in terms of **person, place and time**, and almost every problem has a place component. Place is not a
+domain to be demoted beside epidemiology and laboratory science; it is one of the three axes those
+domains are described along. A GIS studio for public health is well founded for that reason.
+
+The measurement below therefore means something different from what the draft claimed. It does not
+show that the application over-invested in a domain. It shows that **one axis is built out and the
+other two are missing**.
 
 ## Measured, 2026-10-09
 
@@ -29,11 +36,47 @@ epidemiology or laboratory workflow could reuse unchanged, plus the parts that a
 all: the canvas, typed ports, receipts and provenance, evidence and citations, the reasoner, the
 catalog, and the validation machinery.
 
-## The correction: two axes, and yesterday's mechanism measures only one
+## The axes, measured
 
-The classification added a day ago derives `standard` versus `domain` from a widget's vocabulary
-namespace: host terms mean standard, a pack namespace means that pack's domain. That is a useful
-check — it caught that the sea-level widgets had been merged into the shipped set unlabelled — but it
+Looking for the other two axes in the same code, by configuration surface and by port type:
+
+| Axis | Port types | Widgets | State |
+| --- | --- | --- | --- |
+| **Place** | `points`, `area`, `polygons`, `raster`, `network`, `distances`, `facilities`, `gradedFacilities`, `access`, `coverage-check`, `mean-center`, `point-comparison` — 12 of 15 | 31 | Built out, with its refusals recorded across experiments 29, 40, 48, 51 and 52 |
+| **Time** | none | 1 carries a date (`alert`); two sea-level widgets carry a year inside a key | Absent as a first-class concept |
+| **Person** | none | none | Absent entirely |
+
+There is no port type for a person, a cohort, a period or a series. That is the finding: the gap is
+not that place is overweight, it is that **person and time have no representation at all**, so a
+workflow cannot say "cases by week of onset" or "rate per 1,000 children under five" in any way the
+application could reason over.
+
+Because `PortType` is a closed union compiled into the application, adding either axis is base work
+rather than pack work — which is exactly the engine
+[experiment 59](59-pattern-for-engineered-knowledge.md) described: a domain exercise reveals a missing
+general primitive, and the primitive belongs in the host.
+
+## What the universal layer needs, by axis
+
+Replacing the flat list an earlier draft of this record carried, since the axes give it a structure:
+
+| Axis | Primitive | The refusal it carries |
+| --- | --- | --- |
+| Person | **Case definition**, versioned | A case definition is a decision, not a filter: changing it changes the series, so a series must name the definition that produced it |
+| Person | **Denominator population** | A denominator is a population at risk, not a count of records; a stratum too small for a rate must refuse to produce one |
+| Person | **Linkage** | A linkage is not an identity, and de-duplication changes counts, so both must be recorded rather than performed silently |
+| Time | **Period and series** | A count per week is not a rate; a period needs its boundary convention stated |
+| Time | **Onset versus report date** | An epidemic curve by report date is not one by onset date, and the two must never be plotted as though interchangeable |
+| Time | **Reporting completeness** | Absence of reports is not absence of cases, and a recent period is incomplete by construction |
+| Place | built | recorded already: context is not frame; a route is not a flow; a table has no geometry |
+| All three | **Rate**, with denominator provenance | Refuses when the denominator year, the frame vintage and the numerator period disagree ([experiment 51](51-dataset-profiles.md)) |
+| Laboratory | **Result with method and limit**; **QC status** | A value below the limit of detection is not zero; detection is not infection; a failed control invalidates a batch rather than a sample |
+
+## The distribution axis, which is a different question
+
+Yesterday's mechanism derives `standard` versus `domain` from a widget's vocabulary namespace.
+
+Host terms mean standard, a pack namespace means that pack's domain. That is a useful check — it caught that the sea-level widgets had been merged into the shipped set unlabelled — but it
 measures **who ships a widget**, not **which domain it serves**. Two different questions:
 
 | Axis | Values | Derived from |
@@ -41,10 +84,9 @@ measures **who ships a widget**, not **which domain it serves**. Two different q
 | Distribution | ships with the application · installed from a pack | vocabulary namespace (implemented) |
 | Domain | universal · spatial · epidemiology · laboratory · … | port types and vocabulary (not implemented) |
 
-Under the current mechanism every shipped widget reads as "standard, applying to any domain", and 31
-of them do not apply to any domain at all — they apply to spatial analysis. The label is wrong in a
-way that matters for the stated direction, because it makes the universal layer look complete when
-it is thin.
+Under the current mechanism every shipped widget reads as "standard, applying to any domain", when 31
+of them are about place specifically. The label overstates generality, which matters because it makes
+the universal layer look complete when two of its three axes are missing.
 
 ## What the universal layer would have to contain
 
@@ -80,10 +122,15 @@ plausible wrong answer, expressible in vocabulary and enforceable by shapes.
 
 ## The test, continuing experiment 59's
 
-Run a domain exercise that is **not spatial at all** — laboratory results or service-coverage rates —
-and record which parts of the universal layer it cannot express. Whatever it cannot express names the
-next general primitive, and whether the domain layer stays thin is the test of the pattern.
+Run an exercise on an axis that does not exist yet. The sharpest is **time**: an epidemic curve from a
+line list, which needs a period, a series, and the distinction between onset date and report date, and
+whose refusals are already well established in practice. It composes with place immediately — cases by
+week *and* by barangay — which is the triad working rather than two parallel capabilities.
 
-A non-spatial exercise also tests something the sea-level work could not: whether a workflow whose
-widgets never touch a geometry can be built, run, reasoned over and presented in this application at
-all. That is the question the stated direction turns on, and it is currently unanswered.
+Record which parts the universal layer cannot express; whatever it cannot express names the next
+primitive. A person-axis exercise, a service-coverage rate with its denominator, is the natural second,
+because it forces the rate primitive that experiment 51 identified as the most common serious error.
+
+Either exercise also tests something the sea-level work could not: whether a workflow organised around
+time or person, rather than geometry, can be built, run, reasoned over and presented here at all. That
+is the question the stated direction turns on, and it is currently unanswered.

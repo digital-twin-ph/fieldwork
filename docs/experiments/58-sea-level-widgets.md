@@ -1,6 +1,6 @@
 # 58 · Implementing the sea-level pack in the host
 
-_Created 2026-10-09 · Updated 2026-10-09_
+_Created 2026-10-08 · Updated 2026-10-08_
 
 **Status:** admission review. Written before the code, as
 [experiment 48](48-tabular-input.md) was, so that the decisions are reviewable separately from the

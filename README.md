@@ -157,6 +157,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [56 · The basis behind an identity](docs/experiments/56-basis-behind-identity.md) | A digest says which code ran, not what the method rests on: method provenance for widgets, and validation evidence a curator can cite |
 | [57 · Parity evidence](docs/experiments/57-parity-evidence.md) | Independent recomputation as the evidence this project can actually produce: two widgets measured, 32 named as unchecked |
 | [58 · Sea-level widgets](docs/experiments/58-sea-level-widgets.md) | Implementing a declaration-only pack in the host: why a pack that cannot ship code is a specification, and the three contract deviations |
+| [59 · Pattern for engineered knowledge](docs/experiments/59-pattern-for-engineered-knowledge.md) | What the sea-level exercise taught: the knowledge is the durable artifact, the code is cheap, and governance built ahead of its operation created the problem |
 
 ## Repository contents
 

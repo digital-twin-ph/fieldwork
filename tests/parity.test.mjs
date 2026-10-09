@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {checkParity} from '../scripts/validate-widgets.mjs';
+import {checkParity,checkVendored} from '../scripts/validate-widgets.mjs';
 
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
 const parity=JSON.parse(await readFile(new URL('../widgets/parity.json',import.meta.url),'utf8'));
@@ -51,4 +51,23 @@ test('parity established for an older release is reported as not re-established'
 test('two results for the same check on the same release are refused', () => {
   const doc=clone();doc.entries.push({...doc.entries[0]});
   assert.match(checkParity(doc,registry).problems.join(' '),/duplicate entry for check/);
+});
+
+const catalog=JSON.parse(await readFile(new URL('../widgets/packs.json',import.meta.url),'utf8'));
+const readHost=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
+
+test('the vendored pack declarations match the digests the catalog pins', async () => {
+  const files=Object.fromEntries(await Promise.all(
+    ['ontology/packs/sea-level.ttl','ontology/shapes/pack-sea-level.ttl'].map(async p=>[p,await readHost(p)])));
+  const {problems,checked}=checkVendored(catalog,path=>files[path]??null);
+  assert.deepEqual(problems,[]);
+  assert.equal(checked.length,2);
+});
+
+test('a vendored copy that drifts from the pinned digest is refused, and a missing one is named', () => {
+  const files={'ontology/packs/sea-level.ttl':'# edited\n','ontology/shapes/pack-sea-level.ttl':null};
+  const {problems}=checkVendored(catalog,path=>files[path]??null);
+  assert.equal(problems.length,2);
+  assert.match(problems.join(' '),/does not match the pinned/);
+  assert.match(problems.join(' '),/vendored from .* but missing/);
 });

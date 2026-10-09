@@ -1,0 +1,68 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:slr_extract_import",
+  "nodeType": "slr_extract_import",
+  "version": "0.1.0",
+  "title": "Sea-level projection extract",
+  "released": "2026-10-09",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['slr_extract_import']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "projections",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes a table rather than importing the CSV itself, which deviates from the pack contract: the host already has a tabular importer, and a second reader of the same file would be a second place for the contract to drift."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#ProjectionExtract",
+        "file": "ontology/packs/sea-level.ttl"
+      },
+      {
+        "role": "entity",
+        "iri": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#ProjectionValue",
+        "file": "ontology/packs/sea-level.ttl"
+      }
+    ],
+    "note": "Maps to the sea-level pack's vocabulary, vendored into ontology/packs/sea-level.ttl at the digest widgets/packs.json pins. This widget mints no host term: the pack's namespace stays authoritative for the meaning. See docs/experiments/58-sea-level-widgets.md. The receipt is constrained by slr:ProjectionValueShape, slr:SiteAssignmentShape and slr:ThresholdComparisonShape in ontology/shapes/pack-sea-level.ttl, verified in tests; this registry version records application validation only, so the shapes are not referenced in a field."
+  },
+  "implementation": {
+    "files": [
+      "src/sea-level.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Declares an imported long-format table as a bounded extract of published AR6 projections, requiring the full key, metre units, the dataset and version, the baseline period, three obligatory citations and which family value includes vertical land motion. Imports and declares; acquires nothing and produces no projection."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks cover the full-key requirement, the unit, the baseline, the three citations and refusal of an undeclared family value. Nothing here establishes that the extracted values are correct, or that the extraction was faithful: that is the pack's extraction script and the dataset's own provenance."
+  }
+}

@@ -1,0 +1,311 @@
+{
+  "schema": "fieldwork/workflow/1",
+  "name": "Sea-level comparison fixture",
+  "exampleId": "blank",
+  "nodes": [
+    {
+      "id": "extract-table",
+      "type": "table_input",
+      "x": 40,
+      "y": 40,
+      "params": {
+        "label": "Projection extract CSV",
+        "keys": [
+          "site_id",
+          "scenario",
+          "workflow",
+          "family",
+          "year",
+          "quantile"
+        ],
+        "valueField": "value_m",
+        "unit": "metre",
+        "data": {
+          "kind": "data-table",
+          "keys": [
+            "site_id",
+            "scenario",
+            "workflow",
+            "family",
+            "year",
+            "quantile"
+          ],
+          "valueField": "value_m",
+          "unit": "metre",
+          "rows": [
+            {
+              "key": {
+                "site_id": "145",
+                "scenario": "ssp126",
+                "workflow": "wf_1e",
+                "family": "with_vlm",
+                "year": "2050",
+                "quantile": "0.5"
+              },
+              "value": 0.21
+            },
+            {
+              "key": {
+                "site_id": "145",
+                "scenario": "ssp585",
+                "workflow": "wf_1e",
+                "family": "with_vlm",
+                "year": "2100",
+                "quantile": "0.5"
+              },
+              "value": 0.77
+            },
+            {
+              "key": {
+                "site_id": "145",
+                "scenario": "ssp585",
+                "workflow": "wf_1e",
+                "family": "without_vlm",
+                "year": "2100",
+                "quantile": "0.5"
+              },
+              "value": 0.63
+            },
+            {
+              "key": {
+                "site_id": "394",
+                "scenario": "ssp585",
+                "workflow": "wf_1e",
+                "family": "with_vlm",
+                "year": "2100",
+                "quantile": "0.5"
+              },
+              "value": 0.58
+            }
+          ],
+          "rowCount": 4,
+          "missingValueCount": 0,
+          "source": {
+            "filename": "synthetic-extract.csv",
+            "bytes": 256,
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "rows": 4
+          }
+        },
+        "source": {
+          "filename": "synthetic-extract.csv",
+          "bytes": 256,
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "rows": 4
+        }
+      }
+    },
+    {
+      "id": "extract",
+      "type": "slr_extract_import",
+      "x": 300,
+      "y": 40,
+      "params": {
+        "label": "AR6 extract (synthetic)",
+        "datasetIRI": "https://example.org/synthetic-projection-extract",
+        "datasetVersion": "synthetic-001",
+        "baselinePeriod": "1995-2014",
+        "citations": [
+          "Synthetic stand-in for the WG1 Chapter 9 citation",
+          "Synthetic stand-in for the FACTS model-description citation",
+          "Synthetic stand-in for the dataset version citation"
+        ],
+        "familyValues": {
+          "withVerticalLandMotion": "with_vlm",
+          "withoutVerticalLandMotion": "without_vlm"
+        }
+      }
+    },
+    {
+      "id": "facilities",
+      "type": "observations",
+      "x": 0,
+      "y": 0,
+      "params": {
+        "label": "Coastal facilities",
+        "data": {
+          "type": "FeatureCollection",
+          "features": [
+            {
+              "type": "Feature",
+              "id": "c1",
+              "properties": {
+                "name": "Clinic A",
+                "elevation_m": 0.9
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [
+                  120.99,
+                  14.6
+                ]
+              }
+            },
+            {
+              "type": "Feature",
+              "id": "c2",
+              "properties": {
+                "name": "Clinic B",
+                "elevation_m": 0.4
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [
+                  123.9,
+                  10.31
+                ]
+              }
+            },
+            {
+              "type": "Feature",
+              "id": "c3",
+              "properties": {
+                "name": "Unlocated clinic",
+                "elevation_m": 2
+              },
+              "geometry": null
+            }
+          ]
+        },
+        "fields": [
+          {
+            "key": "elevation_m",
+            "type": "number",
+            "label": "Elevation (m)"
+          }
+        ],
+        "sourceInfo": {
+          "format": "synthetic fixture"
+        }
+      }
+    },
+    {
+      "id": "sites",
+      "type": "observations",
+      "x": 0,
+      "y": 0,
+      "params": {
+        "label": "Published projection sites",
+        "data": {
+          "type": "FeatureCollection",
+          "features": [
+            {
+              "type": "Feature",
+              "id": "s1",
+              "properties": {
+                "name": "MANILA",
+                "site_id": "145"
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [
+                  120.97,
+                  14.58
+                ]
+              }
+            },
+            {
+              "type": "Feature",
+              "id": "s2",
+              "properties": {
+                "name": "CEBU",
+                "site_id": "394"
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": [
+                  123.92,
+                  10.3
+                ]
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "key": "elevation_m",
+            "type": "number",
+            "label": "Elevation (m)"
+          }
+        ],
+        "sourceInfo": {
+          "format": "synthetic fixture"
+        }
+      }
+    },
+    {
+      "id": "assign",
+      "type": "slr_site_assignment",
+      "x": 560,
+      "y": 140,
+      "params": {
+        "label": "Assign projection site"
+      }
+    },
+    {
+      "id": "compare",
+      "type": "slr_threshold_comparison",
+      "x": 820,
+      "y": 140,
+      "params": {
+        "label": "Compare level to elevation",
+        "scenario": "ssp585",
+        "workflow": "wf_1e",
+        "family": "with_vlm",
+        "year": "2100",
+        "quantile": "0.5",
+        "elevationField": "elevation_m",
+        "verticalDatum": "MSL 1995-2014 (synthetic)"
+      }
+    },
+    {
+      "id": "table",
+      "type": "table_output",
+      "x": 1080,
+      "y": 140,
+      "params": {
+        "label": "Comparison",
+        "inputMode": "decisions"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "extract-table",
+      "to": "extract",
+      "port": "projections"
+    },
+    {
+      "id": "e2",
+      "from": "facilities",
+      "to": "assign",
+      "port": "points"
+    },
+    {
+      "id": "e3",
+      "from": "sites",
+      "to": "assign",
+      "port": "sites"
+    },
+    {
+      "id": "e4",
+      "from": "extract",
+      "to": "assign",
+      "port": "projections"
+    },
+    {
+      "id": "e5",
+      "from": "assign",
+      "to": "compare",
+      "port": "assignments"
+    },
+    {
+      "id": "e6",
+      "from": "compare",
+      "to": "table",
+      "port": "decisions"
+    }
+  ],
+  "outputId": "table"
+}

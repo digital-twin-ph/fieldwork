@@ -27,6 +27,9 @@ export interface ParamsByType {
   hex_aggregate:{label:string;resolution:number;minOccupancy:number};
   buffer_area:{label:string;distanceM:number};
   table_input:{label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;source?:import('./data-table.js').DataTableSource};
+  slr_extract_import:{label:string;datasetIRI:string;datasetVersion:string;baselinePeriod:string;citations:string[];familyValues:{withVerticalLandMotion:string;withoutVerticalLandMotion:string}};
+  slr_site_assignment:{label:string};
+  slr_threshold_comparison:{label:string;scenario:string;workflow:string;family:string;year:string;quantile:string;elevationField:string;verticalDatum:string};
   reproject:{label:string;zone:number;hemisphere:'north'|'south';data:PointCollection;spatialReference?:SpatialReference;source?:import('./reproject.js').ReprojectSource;provenance?:import('./reproject.js').ReprojectProvenance};
   network_input:{label:string;data:import('./catchments.js').Network;inputMethod?:'osm'|'file';marginM?:number};
   voronoi:{label:string;zone:number;hemisphere:'north'|'south'};

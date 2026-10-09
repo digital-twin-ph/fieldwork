@@ -1,0 +1,72 @@
+@prefix slr: <https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix qudt: <http://qudt.org/schema/qudt/>.
+
+<https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns> a owl:Ontology;
+  dcterms:title "Sea-level rise pack vocabulary";
+  owl:versionInfo "0.1 proposed, 2026-10-08";
+  rdfs:comment "Terms for applying published IPCC AR6 relative sea-level projections to coastal point data. This vocabulary describes projections that FACTS produced and AR6 published; nothing here models sea level. It mints no urn:fieldwork: term and reuses the host's GeoSPARQL, PROV-O, QUDT and Dublin Core alignments.".
+
+slr:ProjectionExtract a owl:Class;
+  rdfs:subClassOf prov:Entity;
+  rdfs:label "Projection extract";
+  rdfs:comment "A bounded tabular selection from a published projection dataset, keyed by site, scenario, workflow, dataset family, year and quantile. An extract is not the dataset and carries no samples; it records which selection produced it.".
+
+slr:ProjectionSite a owl:Class;
+  rdfs:subClassOf geo:Feature, prov:Entity;
+  rdfs:label "Projection site";
+  rdfs:comment "A location at which the published dataset provides projections, from the dataset's own site list. A site is where a projection exists, not a place of interest; it is distinct from any facility assigned to it.".
+
+slr:DatasetFamily a owl:Class;
+  rdfs:label "Dataset family";
+  rdfs:comment "Which published family an extract came from. The AR6 archive publishes families that differ by whether vertical land motion is included, so a value is uninterpretable without this.".
+slr:WithVerticalLandMotion a slr:DatasetFamily; rdfs:label "Includes vertical land motion".
+slr:WithoutVerticalLandMotion a slr:DatasetFamily; rdfs:label "Excludes vertical land motion".
+
+slr:SiteAssignment a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Site assignment";
+  rdfs:comment "Associates a point of interest with a projection site and records the distance between them. The distance is part of the result: a projection at a site is not a value for an arbitrary point.".
+
+slr:ThresholdComparison a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Threshold comparison";
+  rdfs:comment "Compares a projected level against an elevation the practitioner supplied, and classifies the result. It is a comparison of two numbers, not an inundation model: it accounts for no hydrodynamics, defences, drainage or wave action, and must never be presented as a flood extent.".
+
+slr:ProjectionValue a owl:Class;
+  rdfs:subClassOf qudt:QuantityValue;
+  rdfs:label "Projected level change";
+  rdfs:comment "A change in relative sea level in metres, for one site, scenario, workflow, family, year and quantile, measured against the dataset's stated baseline period. It is not an absolute water level and not a water depth.".
+
+slr:scenario a owl:DatatypeProperty; rdfs:domain slr:ProjectionValue; rdfs:range xsd:string;
+  rdfs:label "Scenario"; rdfs:comment "The published scenario identifier, such as ssp245. A scenario is a conditional pathway and carries no likelihood of occurrence.".
+slr:workflow a owl:DatatypeProperty; rdfs:domain slr:ProjectionValue; rdfs:range xsd:string;
+  rdfs:label "Workflow"; rdfs:comment "The published workflow identifier, such as wf_1e. Workflows differ in how they characterise confidence, and values from different workflows are not interchangeable.".
+slr:datasetFamily a owl:ObjectProperty; rdfs:domain slr:ProjectionValue; rdfs:range slr:DatasetFamily;
+  rdfs:label "Dataset family".
+slr:targetYear a owl:DatatypeProperty; rdfs:domain slr:ProjectionValue; rdfs:range xsd:gYear; rdfs:label "Target year".
+slr:quantile a owl:DatatypeProperty; rdfs:domain slr:ProjectionValue; rdfs:range xsd:decimal;
+  rdfs:label "Quantile"; rdfs:comment "A quantile of the published distribution, between 0 and 1. A quantile is not a p-box bound and neither is a worst case.".
+slr:baselinePeriod a owl:DatatypeProperty; rdfs:domain slr:ProjectionExtract; rdfs:range xsd:string;
+  rdfs:label "Baseline period"; rdfs:comment "The period the change is measured against, read from the dataset documentation and never assumed.".
+slr:projectionSite a owl:ObjectProperty; rdfs:domain slr:ProjectionValue; rdfs:range slr:ProjectionSite; rdfs:label "Projection site".
+slr:assignedSite a owl:ObjectProperty; rdfs:domain slr:SiteAssignment; rdfs:range slr:ProjectionSite; rdfs:label "Assigned site".
+slr:assignmentDistance a owl:DatatypeProperty; rdfs:domain slr:SiteAssignment; rdfs:range xsd:decimal;
+  rdfs:label "Assignment distance in metres"; rdfs:comment "Straight-line distance between the point of interest and its assigned projection site.".
+slr:suppliedElevation a owl:DatatypeProperty; rdfs:domain slr:ThresholdComparison; rdfs:range xsd:decimal;
+  rdfs:label "Supplied elevation"; rdfs:comment "An elevation the practitioner supplied for the point, with its own source and vertical datum. This pack derives no elevation and reads no terrain model.".
+slr:elevationDatum a owl:DatatypeProperty; rdfs:domain slr:ThresholdComparison; rdfs:range xsd:string;
+  rdfs:label "Vertical datum of the supplied elevation";
+  rdfs:comment "Comparing a projection to an elevation on an unstated datum is meaningless, so the datum is required rather than optional.".
+slr:sourceDataset a owl:ObjectProperty; rdfs:domain slr:ProjectionExtract; rdfs:range prov:Entity; rdfs:label "Source dataset".
+
+# A projection site is where data exists; a threshold comparison is an activity. Neither can be
+# the other, and an extract is not a site.
+slr:ProjectionSite owl:disjointWith slr:ProjectionExtract.
+slr:SiteAssignment owl:disjointWith slr:ThresholdComparison.
+slr:WithVerticalLandMotion owl:differentFrom slr:WithoutVerticalLandMotion.

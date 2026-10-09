@@ -1,0 +1,76 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:slr_site_assignment",
+  "nodeType": "slr_site_assignment",
+  "version": "0.1.0",
+  "title": "Assign projection site",
+  "released": "2026-10-09",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['slr_site_assignment']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      },
+      {
+        "name": "sites",
+        "type": "points"
+      },
+      {
+        "name": "projections",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Three inputs rather than the pack's two: a table has no geometry (fw:DataTable is disjoint from fw:PointDataset), so the published sites must arrive as a point layer rather than inside the projections table. The output is a table of distances, so the join itself can be displayed and checked."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#SiteAssignment",
+        "file": "ontology/packs/sea-level.ttl"
+      },
+      {
+        "role": "entity",
+        "iri": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#ProjectionSite",
+        "file": "ontology/packs/sea-level.ttl"
+      }
+    ],
+    "note": "Maps to the sea-level pack's vocabulary, vendored into ontology/packs/sea-level.ttl at the digest widgets/packs.json pins. This widget mints no host term: the pack's namespace stays authoritative for the meaning. See docs/experiments/58-sea-level-widgets.md. The receipt is constrained by slr:ProjectionValueShape, slr:SiteAssignmentShape and slr:ThresholdComparisonShape in ontology/shapes/pack-sea-level.ttl, verified in tests; this registry version records application validation only, so the shapes are not referenced in a field."
+  },
+  "implementation": {
+    "files": [
+      "src/sea-level.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Nearest published site per point by straight-line distance, with the distance retained as part of the result and points without coordinates kept and reported as unassigned."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks cover nearest assignment, retained distance, unlocated points and refusal of a site layer whose identifiers are absent from the extract. Assignment is not a claim that the projection applies at the point; the distance is recorded so a reader can judge that."
+  }
+}

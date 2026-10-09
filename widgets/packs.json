@@ -1,6 +1,6 @@
 {
   "schema": "fieldwork/pack-catalog/1",
-  "catalogVersion": "0.1.2",
+  "catalogVersion": "0.2.0",
   "updated": "2026-10-08",
   "description": "Curated widget packs. This file is the trust root: digest pinning is only as strong as the review of the file that holds the digests. A pack is admitted only at a full commit SHA, only from a curated owner, and only with a complete review record naming the host versions it was verified against. Nothing here is loaded by the application at run time; the catalog is checked by development tooling with npm run validate:packs.",
   "governance": {
@@ -31,7 +31,8 @@
       "A withdrawn pack keeps its entry, so runs that recorded its digest remain traceable.",
       "The catalog's list of outstanding host capabilities must agree with the pack's own manifest, so neither can declare a pack unblocked alone.",
       "A host capability a pack declares present must name host widgets and versions the host registry actually releases.",
-      "The stage statuses in a catalog entry must match the pack manifest's own, so the catalog cannot describe a pipeline the pack does not declare."
+      "The stage statuses in a catalog entry must match the pack manifest's own, so the catalog cannot describe a pipeline the pack does not declare.",
+      "A pack that ships no executable code is a specification: the host implements its contracts, and the pack retires the widget declarations so no node type has two definitions."
     ]
   },
   "packs": [
@@ -40,12 +41,12 @@
       "name": "Sea-level rise (IPCC AR6)",
       "version": "0.1.0",
       "repository": "https://github.com/digital-twin-ph/widget-pack-sea-level-rise",
-      "commit": "f8eb929c90b0af1f26087a33214ed969e8f618b5",
+      "commit": "b9d466f705a2816684963f0158a415fcff5c0459",
       "namespace": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#",
       "kind": "declaration-only",
       "admission": {
         "status": "not-admitted",
-        "reason": "Not reviewed. The host tabular port that previously blocked this pack now exists (table_input 0.1.0, table_output 0.4.0 in table mode) as unreleased host work, so admission is blocked on the three required reviews rather than on a missing capability. See docs/experiments/47-sea-level-pack.md and docs/experiments/48-tabular-input.md.",
+        "reason": "Not reviewed. The three widget contracts are implemented in the host (slr_extract_import, slr_site_assignment, slr_threshold_comparison at 0.1.0), and this pack now supplies the vocabulary, the shapes and the worked example, which the host vendors at these pinned digests. Admission turns on the three required reviews.",
         "reviews": {
           "semantic": {
             "state": "not-started"
@@ -66,18 +67,15 @@
         "discovery": "excluded",
         "acquisition": "excluded",
         "extraction": "external",
-        "import": "proposed",
-        "application": "proposed",
+        "import": "implemented-in-host",
+        "application": "implemented-in-host",
         "presentation": "reuses-base"
       },
       "requiredHostCapabilities": [],
       "files": {
-        "pack.json": "29bdad13bdfe94cf56fbf3272bab5f82ad3d08989250577569b2b5b99a45e2b2",
+        "pack.json": "040d290e702258c50dee403b80940675e90b586e68d78e432f9c5691bb987c12",
         "ontology/sea-level.ttl": "5ec4208706159c503334854048ece409dfc2eccbb86283c51e631b4615f760c8",
         "ontology/shapes/sea-level.ttl": "ed935b2eb371ff8c37e9c9114b5fb56aa638ed658fa491e41f942a2917567864",
-        "widgets/slr_extract_import/0.1.0.json": "68a120c565df6ddfe44479e9fce88478f65f27506ab7d9bb866edefc73c52016",
-        "widgets/slr_site_assignment/0.1.0.json": "5ee7fe35b40f35186a64655c9787511a6006fd98ce8378f35e063218f0d98199",
-        "widgets/slr_threshold_comparison/0.1.0.json": "02cf210a63d65dfece4198a1597aeb12063c76df9b8e55e56a52cc6d36686bd3",
         "examples/manila-coastal-exposure/projection-sites-ph.csv": "1fc8c902bd98ec061cd538e028bbc74f6381781457bdf1c36d7ba62fa71a87a8",
         "scripts/extract-projection.py": "bbda69524862be31b796c757c1aca759747b88ef3e4859b753804d3964832451"
       }

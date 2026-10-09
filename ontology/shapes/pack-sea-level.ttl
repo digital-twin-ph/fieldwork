@@ -1,0 +1,34 @@
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix slr: <https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+
+# A value without its full key is not interpretable, so every key component is required.
+slr:ProjectionValueShape a sh:NodeShape; sh:targetClass slr:ProjectionValue;
+  sh:property [ sh:path slr:scenario; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path slr:workflow; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path slr:datasetFamily; sh:minCount 1; sh:maxCount 1;
+                sh:in ( slr:WithVerticalLandMotion slr:WithoutVerticalLandMotion ) ];
+  sh:property [ sh:path slr:targetYear; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:gYear ];
+  sh:property [ sh:path slr:quantile; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal;
+                sh:minInclusive 0; sh:maxInclusive 1 ];
+  sh:property [ sh:path slr:projectionSite; sh:minCount 1; sh:maxCount 1; sh:class slr:ProjectionSite ].
+
+# An extract must say which dataset and baseline it came from.
+slr:ProjectionExtractShape a sh:NodeShape; sh:targetClass slr:ProjectionExtract;
+  sh:property [ sh:path slr:sourceDataset; sh:minCount 1; sh:nodeKind sh:IRI ];
+  sh:property [ sh:path slr:baselinePeriod; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 4 ];
+  sh:property [ sh:path dcterms:bibliographicCitation; sh:minCount 3;
+                sh:description "The licence makes three citations obligatory: the chapter, the FACTS paper and the dataset version." ].
+
+slr:SiteAssignmentShape a sh:NodeShape; sh:targetClass slr:SiteAssignment;
+  sh:property [ sh:path slr:assignedSite; sh:minCount 1; sh:maxCount 1; sh:class slr:ProjectionSite ];
+  sh:property [ sh:path slr:assignmentDistance; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ].
+
+# A comparison without a stated vertical datum is not interpretable, so the datum is required.
+slr:ThresholdComparisonShape a sh:NodeShape; sh:targetClass slr:ThresholdComparison;
+  sh:property [ sh:path slr:suppliedElevation; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal ];
+  sh:property [ sh:path slr:elevationDatum; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path prov:used; sh:minCount 2; sh:nodeKind sh:IRI;
+                sh:description "A comparison uses both a projection value and the point it concerns." ].

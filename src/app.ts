@@ -84,6 +84,8 @@ const template=(key:string)=>key==='snow-geoprivacy'?geoprivacyExample():key==='
 const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='raster_input'&&!n.params.asset||n.type==='network_input'&&!n.params.data.nodes.length||n.type==='reproject'&&!n.params.data.features.length||n.type==='table_input'&&!n.params.data.rows.length);
 let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
+/** The run whose comparison result may expand the results pane, consumed the first time it does. */
+let expandForRun:string|null=null;
 const activeOutput=()=>result?.outputs.find(o=>o.nodeId===activeOutputId)||result?.outputs[0];
 /** The result tabs a node produced. Coverage checks make two, suffixed -table and -map, so a node
  *  can own more than one tab. */
@@ -448,7 +450,10 @@ function renderCoverageAlert(){const checks=[...new Map((result?.outputs.filter(
 function renderResults(){
   disposeVegaChart();
   const output=activeOutput();$('.results-panel').classList.toggle('catchment-results',!!output?.polygons);$('.results-panel').classList.toggle('comparison-results',!!output?.comparison);activeOutputId=output?.nodeId||null;
-  if(output?.comparison&&!$('.work-area').classList.contains('results-expanded')){$('.work-area').classList.add('results-expanded');$('#expand-results').textContent='↙ Split view';$('#expand-results').setAttribute('aria-expanded','true');}
+  if(output?.comparison&&expandForRun===result?.runId&&!$('.work-area').classList.contains('results-expanded')){
+    $('.work-area').classList.add('results-expanded');$('#expand-results').textContent='↙ Split view';$('#expand-results').setAttribute('aria-expanded','true');
+  }
+  expandForRun=null;
   $('#release-download').hidden=!(exampleKey(workflow)==='snow-geoprivacy'&&!!output&&output.nodeId.startsWith('after-'));
   $('.results-panel').classList.toggle('spatial-results',['spatial-map','spatial-coverage'].includes(output?.kind||''));
   const ownedTabs=new Set(outputsOf(selected).map(o=>o.nodeId));
@@ -575,7 +580,7 @@ function reason(input:string):Promise<ReasonerQuad[]>{return new Promise<Reasone
   worker.onmessage=({data}:MessageEvent<ReasoningResponse>)=>{if(data.id!==id)return;clearTimeout(timeout);if('error' in data)reject(new Error(data.error));else resolve(data.quads);};
   worker.onerror=e=>{clearTimeout(timeout);worker?.terminate();worker=null;reject(new Error(`Reasoning worker failed: ${errorMessage(e)}`));};worker.postMessage({id,input} satisfies ReasoningRequest);
 });}
-async function run(){if(busy)return;try{executionPlan(workflow);}catch(e){toast(errorMessage(e));return;}busy=true;statuses={};render();const snapshot=structuredClone(workflow);try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;flow?.update(workflow,selected,statuses);});result=next;runWorkflow=snapshot;dirty=false;renderResults();toast(`Complete: ${result.outputs.length} output tabs updated.`);}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`);$('#workflow-state').textContent='Run failed';console.error(e);}finally{busy=false;render();}}
+async function run(){if(busy)return;try{executionPlan(workflow);}catch(e){toast(errorMessage(e));return;}busy=true;statuses={};render();const snapshot=structuredClone(workflow);try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;flow?.update(workflow,selected,statuses);});result=next;runWorkflow=snapshot;dirty=false;expandForRun=next.runId;renderResults();toast(`Complete: ${result.outputs.length} output tabs updated.`);}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`);$('#workflow-state').textContent='Run failed';console.error(e);}finally{busy=false;render();}}
 function download(name:string,text:string,type='application/json'){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 $('#release-download').onclick=()=>{const output=activeOutput();if(!output||exampleKey(workflow)!=='snow-geoprivacy'||!output.nodeId.startsWith('after-'))return;
   const features=output.polygons?.kind==='hexbin'?output.polygons.features.map(f=>({type:'Feature',id:f.id,properties:{count:f.count},geometry:f.geometry})):output.rows.map(r=>({type:'Feature',id:r.id,properties:{name:r.name},geometry:r.coordinates?{type:'Point',coordinates:r.coordinates}:null}));

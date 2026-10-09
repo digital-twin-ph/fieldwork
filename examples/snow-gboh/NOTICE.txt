@@ -1,0 +1,20 @@
+Deaths and non-deaths by house, Soho 1854
+=========================================
+
+Source:    Center for Spatial Data Science, University of Chicago
+           https://geodacenter.github.io/data-and-lab//snow/
+Licence:   GPL, as stated in the publisher's documentation. The version is not
+           stated, and no licence file ships with the data.
+
+These files are redistributed verbatim and unmodified, with attribution, as an
+aggregate alongside this repository's own Apache-2.0 licensed work. They are not
+combined with it and nothing here is derived from them. Any modified copy —
+reprojected, filtered or re-keyed — would be a derived work under the GPL and
+would have to be licensed and marked accordingly; no such copy is distributed.
+
+The underlying map is General Board of Health, Medical Council (1855), an HMSO
+publication. The copyrightable contribution in these files is the publisher’s
+digitisation of it.
+
+See provenance.json for digests, contents and the limits that apply to any
+analysis built on this data.

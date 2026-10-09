@@ -37,6 +37,24 @@ For a sized boundary, open Study area → **Select area on map** → **Configure
 
 The saved Soho graph is a modern OSM snapshot of unknown extraction date, not reconstructed 1854 streets. Network corridors model reachability under assumptions; Voronoi models nearest-site allocation. Neither establishes actual pump use. See [design and validation boundaries](../experiments/32-john-snow-primitives.md) and [data attribution](../../examples/john-snow/NOTICE.txt).
 
+## Place and time in one workspace, deliberately unjoined
+
+Both John Snow workspaces now carry the time axis beside the spatial one. **Snow 1855 Table 1 · deaths
+by date** imports his own daily table, **Deaths by day** turns it into a series declared as a series of
+*dates of death*, and **Epidemic curve** draws it: 43 daily bins totalling 616 deaths, peaking on 2
+September 1854. The catchment map and the curve are results of the same workspace and the same
+outbreak.
+
+They are **not connected**, and the gap is the lesson rather than an omission. The death locations
+carry no date and the daily table carries no place, so nothing in the workflow links a case in one to a
+case in the other. The 45 attacks Snow recorded without a date are excluded by the import, because a
+keyed table cannot hold an empty key, and the node's reference says so.
+
+The GPL-licensed house file bundled at `examples/snow-gboh/` is not used by these workspaces: its
+coordinates are OSGB 1936 and bringing them onto the map would need a datum shift this application
+does not perform. It is included for reference and for analysis that needs a denominator, as described
+below.
+
 ## Person, place and time in the Snow data — what exists and what does not
 
 A recurring question is whether a case-level Snow dataset exists carrying **both** a location and a

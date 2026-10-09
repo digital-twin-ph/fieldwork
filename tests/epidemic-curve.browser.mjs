@@ -56,3 +56,28 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   await page.screenshot({path:'test-results/snow-epidemic-curve.png',fullPage:true});
   assert.deepEqual(errors,[]);
 });
+
+test('the John Snow workspace shows place and time together, and refuses to join them',async({page})=>{
+  await page.goto('/?example=snow-voronoi');
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
+
+  // The catchment map and the epidemic curve are results of one workspace.
+  await page.locator('#result-tabs [data-output="map"]').click();
+  await expect(page.locator('#map-panel')).toBeVisible();
+  await page.locator('#result-tabs [data-output="epidemic"]').click();
+  await expect(page.locator('#bars-panel')).toContainText('Cases by day of date of death');
+  await expect(page.locator('#bars-panel')).toContainText('616 records');
+  await expect(page.locator('#bars-panel .bar-row')).toHaveCount(43);
+
+  // Selecting the curve's source states what was excluded and why.
+  await page.locator('.react-flow__node[data-id="dates"]').click();
+  await expect(page.locator('.inspector')).toContainText('616 rows'.replace('616','43'));
+  await expect(page.locator('.inspector')).toContainText('Snow 1855 Table 1');
+
+  // The two sources cannot be joined: the death locations carry no date, and the series carries no
+  // place, so no connection exists between them in the workflow.
+  const linked=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).edges
+    .filter(e=>['dates','curve','epidemic'].includes(e.from)||['dates','curve','epidemic'].includes(e.to))
+    .map(e=>`${e.from}->${e.to}`));
+  expect(linked.sort()).toEqual(['curve->epidemic','dates->curve']);
+});

@@ -6,9 +6,10 @@ test('selecting an output node shows and marks its result',async({page})=>{
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
 
-  // Three outputs in this workspace: a map, a table and a chart.
+  // Four outputs in this workspace: a map, a table, a chart of the catchments, and the epidemic
+  // curve from Snow's own daily table.
   const tabs=page.locator('#result-tabs [data-output]');
-  await expect(tabs).toHaveCount(3);
+  await expect(tabs).toHaveCount(4);
 
   // Selecting the chart node opens the chart's own tab and marks it as belonging to the selection.
   await node(page,'chart').click();

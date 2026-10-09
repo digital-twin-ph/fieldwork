@@ -1,4 +1,5 @@
 import data from '../examples/john-snow/points.json';
+import dates from '../examples/john-snow/dates.json';
 import graph from '../examples/john-snow/network.json';
 import type {Workflow,WorkflowNode,PointFeature} from './types.js';
 import type {EvidenceReference} from './evidence.js';
@@ -17,7 +18,19 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
     {id:'summary',type:'summarize_polygons',x:910,y:100,params:{label:'Locations and deaths by catchment',boundary:'include',valueField:'DEATHS'}},
     {id:'map',type:'map_output',x:1210,y:0,params:{label:iso?'Isochrone plot':'Voronoi catchment map',inputMode:'polygons',presentation:'plot',contextPoints:iso}},
     {id:'table',type:'table_output',x:1210,y:170,params:{label:'Catchment counts and deaths',inputMode:'polygons'}},
-    {id:'chart',type:'chart_output',x:1210,y:340,params:{label:'Deaths by catchment',inputMode:'polygons'}}
+    {id:'chart',type:'chart_output',x:1210,y:340,params:{label:'Deaths by catchment',inputMode:'polygons'}},
+    // Place and time from the same outbreak, side by side and deliberately not joined: the map has
+    // buildings without dates and the table has dates without buildings, so no case links the two.
+    {id:'dates',type:'table_input',x:20,y:620,params:{label:'Snow 1855 Table 1 · deaths by date',
+      keys:['date'],valueField:'deaths',data:{kind:'data-table',keys:['date'],valueField:'deaths',
+        rows:dates.rows.map(row=>({key:{date:row.date},value:row.deaths})),
+        rowCount:dates.rows.length,missingValueCount:0},
+      source:{filename:'snow_dates.csv',bytes:828,sha256:'',rows:dates.rows.length}},
+      references:[reference('snow-dates','Snow 1855, Table 1','https://geodacenter.github.io/data-and-lab//snow/','data',
+        `Daily attacks and deaths for the Broad Street outbreak. ${dates.excludedUndated.attacks} attacks of unknown date are excluded, because a keyed table cannot hold an empty key.`)]},
+    {id:'curve',type:'case_series',x:470,y:620,params:{label:'Deaths by day',source:'table',
+      dateField:'date',dateKind:'death',period:'day'}},
+    {id:'epidemic',type:'chart_output',x:900,y:620,params:{label:'Epidemic curve · by date of death',inputMode:'series'}}
   ];
   if(iso)nodes.push({id:'network',type:'network_input',x:20,y:390,params:{label:'Soho OSM network snapshot',inputMethod:'file',marginM:250,data:structuredClone(graph)},references:[reference('network-source','Soho saved GraphML',isoSource+'outputs/soho.graphml','data','OpenStreetMap contributors, ODbL. Extraction date unknown. 738 nodes / 1619 directed edges; not a reconstructed 1854 network.')]});
   if(iso){
@@ -26,7 +39,7 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
     nodes.push({id:'interactive',type:'map_output',x:1210,y:510,params:{label:'Interactive isochrone map',inputMode:'polygons',presentation:'interactive',contextPoints:true}});
     nodes.find(n=>n.id==='catchments')!.references!.push(reference('nb04-visual','NB04 Cell 15 plot and Folium map','https://github.com/PHI-Case-Studies/1854-Cholera-Outbreak-London-Advanced-1/blob/97a1d13dfb23032387ed23804e3d6f4dbc99aec7/NB04-Cholera-Case-Study-Isochrone-Map.ipynb','method','Visual target: executed Cell 15 and Cell 18. Fieldwork retains its independent computational method; cumulative counts are not notebook band counts.'));
   }
-  const edges=[{id:'sites-catchments',from:'pumps',to:'catchments',port:'sites'},{id:'area-clip',from:'study',to:'clip',port:'area'},{id:'catchments-clip',from:'catchments',to:'clip',port:'polygons'},{id:'clip-summary',from:'clip',to:'summary',port:'polygons'},{id:'points-summary',from:'locations',to:'summary',port:'points'},...['map','table','chart'].map(id=>({id:'summary-'+id,from:'summary',to:id,port:'polygons'})),iso?{id:'network-catchments',from:'network',to:'catchments',port:'network'}:{id:'area-catchments',from:'study',to:'catchments',port:'area'}];
+  const edges=[{id:'sites-catchments',from:'pumps',to:'catchments',port:'sites'},{id:'area-clip',from:'study',to:'clip',port:'area'},{id:'catchments-clip',from:'catchments',to:'clip',port:'polygons'},{id:'clip-summary',from:'clip',to:'summary',port:'polygons'},{id:'points-summary',from:'locations',to:'summary',port:'points'},...['map','table','chart'].map(id=>({id:'summary-'+id,from:'summary',to:id,port:'polygons'})),{id:'dates-curve',from:'dates',to:'curve',port:'cases'},{id:'curve-epidemic',from:'curve',to:'epidemic',port:'series'},iso?{id:'network-catchments',from:'network',to:'catchments',port:'network'}:{id:'area-catchments',from:'study',to:'catchments',port:'area'}];
   if(iso){edges.push({id:'summary-interactive',from:'summary',to:'interactive',port:'polygons'},...['map','interactive'].map(to=>({id:'context-'+to,from:'context-pumps',to,port:'context'})));nodes.push({id:'acquisition-buffer',type:'buffer_area',x:320,y:430,params:{label:'Network acquisition buffer',distanceM:500}});edges.push({id:'area-buffer',from:'study',to:'acquisition-buffer',port:'area'},{id:'area-network',from:'acquisition-buffer',to:'network',port:'area'});}
 
   return {schema:'fieldwork/workflow/1',exampleId:kind,name:iso?'John Snow · network isochrones':'John Snow · Voronoi catchments',nodes,edges};

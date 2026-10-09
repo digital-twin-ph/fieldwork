@@ -5,6 +5,22 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Fix the results pane taking over the screen when a comparison result was opened. Expanding to full
+  width was triggered on every render of a comparison, so selecting the comparison node — which now
+  shows that node's result — expanded the window behind a click aimed at a node. It happens on the
+  render following a run and is otherwise the reader's choice, guarded by
+  `tests/results-expand.browser.mjs`.
+- Rework both John Snow workspaces to carry place and time together: Snow's own 1855 daily table is
+  imported, turned into a series declared as deaths by date of death, and drawn as an epidemic curve
+  beside the catchment map. The two are deliberately **not connected**, because his death locations
+  carry no date and his daily table carries no place; the 45 attacks of unknown date are excluded by
+  the import and the node says so.
+- Bundle the 1,852-house General Board of Health digitisation at `examples/snow-gboh/`, verbatim and
+  unmodified, with a NOTICE recording its stated GPL licence, the absence of a licence file and
+  version in the download, its 1855 HMSO origin, and the limits that apply: the denominator counts
+  houses rather than people, the numerator and denominator come from different years, and the
+  coordinates are OSGB 1936, so no modified or reprojected copy is distributed.
+
 - Make the running build identifiable, and announce updates. The service worker answers from its cache
   first and never revalidates, so a tab keeps running old code until it is reloaded — which meant a
   feature could be deployed, verified and still absent for the person looking at it, with no way to

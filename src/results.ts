@@ -32,7 +32,7 @@ export interface DisplayRow {
   recordId?:string; sourceNodeId?:string; layerLabel?:string; attributeTypes?:Record<string,AttributeType>; attributes?:Record<string,Scalar>;
   relation?:SpatialRelation; decision?:CoverageRow['decision']; excluded?:boolean; exclusionReason?:string; signature?:string;
 }
-export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'; caption:string; total:number; bins:{key:string; label:string; count:number}[]}
+export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'period'; caption:string; total:number; bins:{key:string; label:string; count:number}[]}
 export interface DisplayValue {
   comparison?:import('./point-comparison.js').PointComparison;
   polygonPresentation?:'plot'|'interactive';

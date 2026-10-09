@@ -13,6 +13,17 @@ fw:RuntimePlanShape a sh:NodeShape; sh:targetClass fw:WorkflowNodePlan, fw:Canva
   sh:property [ sh:path fw:catalogVersion; sh:minCount 1; sh:maxCount 1; sh:pattern "^[0-9]+[.][0-9]+[.][0-9]+$" ];
   sh:property [ sh:path fw:catalogDigest; sh:minCount 1; sh:maxCount 1; sh:pattern "^[a-f0-9]{64}$" ];
   sh:property [ sh:path fw:widgetDefinitionSource; sh:minCount 1; sh:maxCount 1; sh:in ( "host-registry" "pack" ) ].
+fw:CaseSeriesShape a sh:NodeShape; sh:targetClass fw:CaseSeries;
+  sh:property [ sh:path fw:eventDateKind; sh:minCount 1; sh:maxCount 1;
+                sh:in ( "onset" "report" "death" "specimen-collection" "other" ) ];
+  sh:property [ sh:path fw:seriesPeriod; sh:minCount 1; sh:maxCount 1; sh:in ( "day" "week" "month" ) ];
+  sh:property [ sh:path fw:seriesTotal; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:datedRecordCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer ];
+  sh:property [ sh:path fw:undatedRecordCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer ];
+  sh:property [ sh:path fw:seriesBin; sh:minCount 1; sh:class fw:SeriesBin ].
+fw:SeriesBinShape a sh:NodeShape; sh:targetClass fw:SeriesBin;
+  sh:property [ sh:path fw:periodKey; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 4 ];
+  sh:property [ sh:path fw:caseCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ].
 fw:PackCatalogShape a sh:NodeShape; sh:targetClass fw:PackCatalog;
   sh:property [ sh:path fw:packCatalogVersion; sh:minCount 1; sh:maxCount 1; sh:pattern "^[0-9]+[.][0-9]+[.][0-9]+$" ];
   sh:property [ sh:path fw:packCatalogDigest; sh:minCount 1; sh:maxCount 1; sh:pattern "^[a-f0-9]{64}$" ].

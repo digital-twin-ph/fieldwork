@@ -7,7 +7,7 @@
 @prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 
-<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.4 experimental, 2026-10-08";
+<urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.5 experimental, 2026-10-09";
   rdfs:comment "Implemented run bindings and bounded network/catchment receipts. No learner/game runtime is implied.".
 fw:WidgetDefinition a owl:Class;
   rdfs:comment "A versioned description of a reusable operation and interface contract. A definition is not a configured plan and not an execution.";
@@ -104,4 +104,29 @@ fw:readyForSpatialAnalysis a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:
 # classes; the urn: ontology IRIs do not resolve, so owl:imports is not available.
 fw:CanvasNodePlan owl:disjointWith fw:WorkflowNodePlan.
 fw:WidgetDefinition owl:disjointWith fw:CanvasNodePlan, fw:WorkflowNodePlan.
+fw:CaseSeries a owl:Class;
+  rdfs:label "Case series"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "Counts of cases per period, by one declared kind of date. A series states what it is a series of: a curve by date of death is not a curve by date of onset, and the two are not interchangeable. Periods with no cases are retained, because a gap is a fact about the outbreak rather than an absence of data to be compressed away.".
+fw:CaseSeriesComputation a owl:Class;
+  rdfs:label "Case series computation"; rdfs:subClassOf prov:Activity;
+  rdfs:comment "Counts input records into periods, optionally weighted by a declared attribute where one record stands for several cases. Records without a parseable ISO 8601 date are excluded and counted, never redistributed across periods.".
+fw:SeriesBin a owl:Class;
+  rdfs:label "Series bin"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "One period of a case series and its count. The count is a number of cases, which equals the number of records only when each record stands for one case.".
+fw:eventDateField a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The input attribute read as the event date. Nothing is inferred from a column name.".
+fw:eventDateKind a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "Which date this is: onset, report, death, specimen-collection or other. Required, because series of different kinds must never be merged or compared as though they were the same quantity.".
+fw:seriesPeriod a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "Series period".
+fw:caseWeightField a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The attribute holding how many cases a record stands for. Absent means one case per record, which is a claim about the data and not a default to be assumed quietly.".
+fw:seriesTotal a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:datedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:undatedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:comment "Records excluded for want of a usable date. Reported rather than silently dropped: a curve computed from fewer records than were supplied is a different curve.".
+fw:seriesBin a owl:ObjectProperty; rdfs:domain fw:CaseSeries; rdfs:range fw:SeriesBin.
+fw:periodKey a owl:DatatypeProperty; rdfs:domain fw:SeriesBin; rdfs:range xsd:string.
+fw:caseCount a owl:DatatypeProperty; rdfs:domain fw:SeriesBin; rdfs:range xsd:decimal.
+fw:CaseSeries owl:disjointWith fw:PointDataset.
+
 fw:PackCatalog owl:disjointWith fw:WidgetDefinition, fw:WorkflowNodePlan, fw:CanvasNodePlan.

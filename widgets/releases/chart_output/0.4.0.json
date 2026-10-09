@@ -1,0 +1,88 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:chart_output",
+  "version": "0.4.0",
+  "nodeType": "chart_output",
+  "title": "Chart",
+  "released": "2026-10-09",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['chart_output']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "decisions",
+        "type": "decisions"
+      }
+    ],
+    "output": null,
+    "polygonInput": {
+      "parameter": "inputMode",
+      "value": "polygons",
+      "inputs": [
+        {
+          "name": "polygons",
+          "type": "polygons"
+        }
+      ]
+    }
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:ChartView",
+        "file": "ontology/fieldwork.ttl"
+      },
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:CategoricalCount",
+        "file": "ontology/fieldwork.ttl"
+      },
+      {
+        "role": "configuration",
+        "iri": "urn:fieldwork:ChartSpecification",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined."
+  },
+  "implementation": {
+    "files": [
+      "src/chart-output.ts",
+      "src/chart-vega.ts",
+      "src/output-contract.ts",
+      "src/catchment-output.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "output",
+        "adapterVersion": "1",
+        "implementation": "src/output-contract.ts#migrateOutputNodes"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Adds a case-series mode: a Chart output connected to Cases by period draws an epidemic curve, with the period on the axis and the kind of date stated in the caption. A presentation of the series with no smoothing and no interpolation."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

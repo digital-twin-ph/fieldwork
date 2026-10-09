@@ -321,7 +321,7 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -337,6 +337,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/chart_output/0.3.0.json",
           "sha256": "6e8ee23593bfcdd70951f931a5f4d25bc45236a4cf20de72a76e4c9a13c17f5d"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/chart_output/0.4.0.json",
+          "sha256": "ab1cd0af78881bf9018ffbb1c55847639299f11bc96a6b6975ab27177f81304d"
         }
       ]
     },
@@ -603,6 +608,18 @@
           "version": "0.1.0",
           "path": "widgets/releases/slr_threshold_comparison/0.1.0.json",
           "sha256": "b060a3977c3ada6fefa8991cdb3cb6dc09653b20cfd7eff5771a150a433a0277"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:case_series",
+      "nodeType": "case_series",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/case_series/0.1.0.json",
+          "sha256": "878ccedea4fa9c9abf95625e32807a160dfa8c4cb2c5ce461d3bda49f04a7731"
         }
       ]
     }

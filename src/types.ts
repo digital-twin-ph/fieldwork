@@ -27,6 +27,7 @@ export interface ParamsByType {
   hex_aggregate:{label:string;resolution:number;minOccupancy:number};
   buffer_area:{label:string;distanceM:number};
   table_input:{label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;source?:import('./data-table.js').DataTableSource};
+  case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
   slr_extract_import:{label:string;datasetIRI:string;datasetVersion:string;baselinePeriod:string;citations:string[];familyValues:{withVerticalLandMotion:string;withoutVerticalLandMotion:string}};
   slr_site_assignment:{label:string};
   slr_threshold_comparison:{label:string;scenario:string;workflow:string;family:string;year:string;quantile:string;elevationField:string;verticalDatum:string};
@@ -42,7 +43,7 @@ export interface ParamsByType {
   alert:{active:boolean|null; date:string}; nearest:Record<string,never>; policy:{thresholdKm:number};
   measure_area:{unit:AreaUnit}; coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
   map_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'raster'|'polygons';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:'none'|'osm'|'topo'}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'};
-  chart_output:{label:string;inputMode?:'decisions'|'polygons';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string};
+  chart_output:{label:string;inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string};
   output:{label?:string; view:'map'|'table'|'bars'};
   facilities:{dataset:string; radiusKm:number; sourceMode?:'connected'}; samples:{spacingM:number};
   xpert:Record<string,never>; facility_audit:Record<string,never>;

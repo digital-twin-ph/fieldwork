@@ -34,6 +34,7 @@ The version beside the header mark is the released application version; see the
 | Study area | Draw and label a bounding box or simple polygon; inspect its GeoSPARQL representation. |
 | Calculate area | Enrich the study area with a spherical area measurement; choose metric or imperial units. |
 | Input data | Generate synthetic points, import CSV/GeoPackage/GeoJSON, or place map pins with typed attributes, value sets and optional UUIDs. |
+| Cases by period | Count cases per day, week or month from a declared date attribute and a declared kind of date — onset, report, death or specimen collection — optionally weighted where one row stands for several cases. Connect a Chart to draw an epidemic curve. Empty periods are kept; records without an ISO 8601 date are excluded and counted. |
 | Sea-level projections | Declare an imported long-format AR6 extract with its dataset, version, baseline and three obligatory citations; assign each point its nearest published projection site with the distance kept; compare one fully keyed projected change against an elevation you supply on a datum you state. A comparison of two numbers, never an inundation model. |
 | Tabular data | Import a long-format CSV keyed by the columns you declare, with one value column and a unit you state. No geometry is claimed; connect a Table output to display it. |
 | Reproject input | Import a local CSV or GeoJSON in WGS84 UTM metres and convert it to CRS84 longitude/latitude for the other widgets. WGS84 zones only; no datum shift and no raster warping. |
@@ -53,6 +54,13 @@ demonstration locations.
 Step-by-step instructions are in [the usage guide](docs/usage.md); the worked
 examples have their own guides for [Old Naledi](docs/examples/old-naledi.md) and
 [John Snow](docs/examples/john-snow.md).
+
+John Snow's own daily table of attacks and deaths (1855, Table 1) is bundled at
+`examples/john-snow/snow_dates.csv` with its provenance. It gives the time axis
+the map cannot: attacks peak on 1 September 1854 and deaths on 2 September, which
+is why a series must state which kind of date it counts. The two Snow files
+cannot be joined case by case — one has places without dates, the other dates
+without places.
 
 ## Run locally
 

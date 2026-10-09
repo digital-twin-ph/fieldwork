@@ -5,6 +5,28 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Add **Cases by period**, the first widget on the time axis: counts cases per day, week or month
+  from a declared date attribute and a declared **kind** of date, reading either a point layer or a
+  keyed table, and optionally weighting by an attribute where one row stands for several cases. A
+  Chart output gains a case-series mode that draws the result as an epidemic curve, so the curve is a
+  presentation of the series with no smoothing or interpolation. Periods with no cases are retained,
+  because a gap is a fact about the outbreak; records whose date is not ISO 8601 are excluded and
+  counted rather than guessed at, since a widget that chose between day-first and month-first ordering
+  would be silently wrong for a third of the year; and a non-numeric or negative weight is refused,
+  naming the record. `fw:CaseSeriesShape` requires the kind and the period, so a series that does not
+  say what it is a series of cannot conform.
+- Bundle **John Snow's own daily table** (1855, Table 1) at `examples/john-snow/snow_dates.csv` with
+  its citation chain, digest and retrieval route. It supplies the time axis his map cannot: 616 deaths
+  and 571 dated attacks between 19 August and 30 September 1854, with **attacks peaking on 1 September
+  and deaths on 2 September** — the historical demonstration of why the kind of date must be declared.
+  Recorded limits: the file's final row carries 45 attacks with no date, which a keyed table cannot
+  represent, and the two Snow files cannot be joined case by case because one has places without dates
+  and the other dates without places.
+- Record a measured contrast finding: an amber palette icon is 2.83:1 on its own wash, a pre-existing
+  defect the new widget surfaced in the node library for the first time. The widget uses the Summaries
+  group's teal instead, and the amber token is left for a deliberate decision rather than changed as a
+  side effect. See [experiment 46](docs/experiments/46-colour-theme.md).
+
 - Implement the sea-level pack's three contracts in the application, since the pack ships no code and
   the application loads none: **Sea-level projection extract** declares an imported long-format table
   as a bounded AR6 extract, requiring the full key of site, scenario, workflow, family, year and

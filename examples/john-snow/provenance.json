@@ -27,11 +27,21 @@
       "file": "network.json",
       "sha256": "584a6160e5987f306881deac6e3d6cd2d281a14ea8094e9b52baac7b4833a882",
       "bytes": 225023
+    },
+    {
+      "file": "snow_dates.csv",
+      "sha256": "8510a5a9af820d8c6e4565562f87ed3f423a3a7826a2e363976590ff4323bb75",
+      "bytes": 828,
+      "retrieved": "2026-10-09",
+      "source": "https://vincentarelbundock.github.io/Rdatasets/csv/HistData/Snow.dates.csv",
+      "citation": "John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, Table 1: attacks and deaths by date, Broad Street outbreak. Digitised in the HistData R package (Friendly) as Snow.dates; retrieved as CSV through Rdatasets.",
+      "note": "Outbreak-wide daily totals, not per-address counts: these figures cannot be joined to cholera_deaths.csv case by case, and the two files do not agree on a total because they count different things. Dated rows carry 571 attacks and 616 deaths between 1854-08-19 and 1854-09-30; one row carries 45 attacks of unknown date and no date value. Attacks peak on 1854-09-01 and deaths on 1854-09-02, which is why a series must state which kind of date it uses. The underlying table is from an 1855 publication; the retrieval route is recorded for provenance rather than as a licence claim over historical facts."
     }
   ],
   "transforms": [
     "CSV FID prefixed for stable point IDs; original attributes retained; coordinates unchanged",
-    "GraphML directed edges retain endpoints, length and WKT geometry; other tags omitted"
+    "GraphML directed edges retain endpoints, length and WKT geometry; other tags omitted",
+    "snow_dates.csv is bundled exactly as retrieved, so its digest matches the source. Its final row has an empty date, which a keyed table cannot represent, so a workflow importing it excludes that row and states the 45 attacks of unknown date that are therefore absent."
   ],
   "notice": "NOTICE.txt"
 }

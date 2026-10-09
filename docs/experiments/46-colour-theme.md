@@ -116,3 +116,19 @@ assertion at 390 pixels, now fixed by hiding the label below 850 pixels.
 
 Not established: readability for colour-vision deficiency, dark-theme legibility
 of raster value ramps, non-text contrast, and Firefox or WebKit rendering.
+
+## Addendum, 2026-10-09: an amber palette icon measures 2.83:1
+
+Adding **Cases by period** in amber pushed the light-theme ratchet from 46 distinct failing pairs to
+47. The new pair is `rgb(182,140,72)` on `rgb(251,245,232)` at **2.83:1** — the palette icon of an
+amber widget on its own wash, well under the 4.5:1 required for small text.
+
+This is a **pre-existing defect the widget surfaced**, not one it introduced: `alert` is already
+amber, and the only reason the pair had never been measured is that no amber widget appears in the
+node library of the workspace the contrast test exercises. The widget was given the Summaries group's
+teal instead, which passes, and the amber icon colour is left unchanged here because altering a
+released token is a design decision with its own pixel-identity consequences — recorded for that
+decision rather than made as a side effect of adding a widget.
+
+The ratchet behaved exactly as intended: it refused a regression it had never seen before, caused by
+a colour that was already in the codebase.

@@ -1,0 +1,333 @@
+{
+  "schema": "fieldwork/workflow/1",
+  "name": "Snow epidemic curve",
+  "exampleId": "blank",
+  "nodes": [
+    {
+      "id": "dates",
+      "type": "table_input",
+      "x": 40,
+      "y": 40,
+      "params": {
+        "label": "Snow 1855 Table 1 · deaths by date",
+        "keys": [
+          "date"
+        ],
+        "valueField": "deaths",
+        "data": {
+          "kind": "data-table",
+          "keys": [
+            "date"
+          ],
+          "valueField": "deaths",
+          "rows": [
+            {
+              "key": {
+                "date": "1854-08-19"
+              },
+              "value": 1
+            },
+            {
+              "key": {
+                "date": "1854-08-20"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-08-21"
+              },
+              "value": 2
+            },
+            {
+              "key": {
+                "date": "1854-08-22"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-08-23"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-08-24"
+              },
+              "value": 2
+            },
+            {
+              "key": {
+                "date": "1854-08-25"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-08-26"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-08-27"
+              },
+              "value": 1
+            },
+            {
+              "key": {
+                "date": "1854-08-28"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-08-29"
+              },
+              "value": 1
+            },
+            {
+              "key": {
+                "date": "1854-08-30"
+              },
+              "value": 2
+            },
+            {
+              "key": {
+                "date": "1854-08-31"
+              },
+              "value": 3
+            },
+            {
+              "key": {
+                "date": "1854-09-01"
+              },
+              "value": 70
+            },
+            {
+              "key": {
+                "date": "1854-09-02"
+              },
+              "value": 127
+            },
+            {
+              "key": {
+                "date": "1854-09-03"
+              },
+              "value": 76
+            },
+            {
+              "key": {
+                "date": "1854-09-04"
+              },
+              "value": 71
+            },
+            {
+              "key": {
+                "date": "1854-09-05"
+              },
+              "value": 45
+            },
+            {
+              "key": {
+                "date": "1854-09-06"
+              },
+              "value": 37
+            },
+            {
+              "key": {
+                "date": "1854-09-07"
+              },
+              "value": 32
+            },
+            {
+              "key": {
+                "date": "1854-09-08"
+              },
+              "value": 30
+            },
+            {
+              "key": {
+                "date": "1854-09-09"
+              },
+              "value": 24
+            },
+            {
+              "key": {
+                "date": "1854-09-10"
+              },
+              "value": 18
+            },
+            {
+              "key": {
+                "date": "1854-09-11"
+              },
+              "value": 15
+            },
+            {
+              "key": {
+                "date": "1854-09-12"
+              },
+              "value": 6
+            },
+            {
+              "key": {
+                "date": "1854-09-13"
+              },
+              "value": 13
+            },
+            {
+              "key": {
+                "date": "1854-09-14"
+              },
+              "value": 6
+            },
+            {
+              "key": {
+                "date": "1854-09-15"
+              },
+              "value": 8
+            },
+            {
+              "key": {
+                "date": "1854-09-16"
+              },
+              "value": 6
+            },
+            {
+              "key": {
+                "date": "1854-09-17"
+              },
+              "value": 5
+            },
+            {
+              "key": {
+                "date": "1854-09-18"
+              },
+              "value": 2
+            },
+            {
+              "key": {
+                "date": "1854-09-19"
+              },
+              "value": 3
+            },
+            {
+              "key": {
+                "date": "1854-09-20"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-09-21"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-09-22"
+              },
+              "value": 2
+            },
+            {
+              "key": {
+                "date": "1854-09-23"
+              },
+              "value": 3
+            },
+            {
+              "key": {
+                "date": "1854-09-24"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-09-25"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-09-26"
+              },
+              "value": 2
+            },
+            {
+              "key": {
+                "date": "1854-09-27"
+              },
+              "value": 0
+            },
+            {
+              "key": {
+                "date": "1854-09-28"
+              },
+              "value": 2
+            },
+            {
+              "key": {
+                "date": "1854-09-29"
+              },
+              "value": 1
+            },
+            {
+              "key": {
+                "date": "1854-09-30"
+              },
+              "value": 0
+            }
+          ],
+          "rowCount": 43,
+          "missingValueCount": 0
+        },
+        "source": {
+          "filename": "snow_dates.csv",
+          "bytes": 828,
+          "sha256": "8510a5a9af820d8c6e4565562f87ed3f423a3a7826a2e363976590ff4323bb75",
+          "rows": 43
+        }
+      }
+    },
+    {
+      "id": "series",
+      "type": "case_series",
+      "x": 320,
+      "y": 40,
+      "params": {
+        "label": "Deaths by day",
+        "source": "table",
+        "dateField": "date",
+        "dateKind": "death",
+        "period": "day"
+      }
+    },
+    {
+      "id": "curve",
+      "type": "chart_output",
+      "x": 600,
+      "y": 40,
+      "params": {
+        "label": "Epidemic curve",
+        "inputMode": "series"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "dates",
+      "to": "series",
+      "port": "cases"
+    },
+    {
+      "id": "e2",
+      "from": "series",
+      "to": "curve",
+      "port": "series"
+    }
+  ],
+  "outputId": "curve"
+}

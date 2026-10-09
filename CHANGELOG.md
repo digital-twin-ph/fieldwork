@@ -5,6 +5,11 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Link the canvas to the Results panel: selecting an output node opens that node's result tab and
+  marks it, so the two panels agree about what is being looked at. A node that produced two tabs, as a
+  coverage check does, keeps whichever of its own is already open rather than jumping between them,
+  and selecting a node with no result leaves the open tab alone while clearing the mark.
+
 - Add **Rate with a denominator**, the first widget on the person axis: divides counted events by a
   declared population at risk, grouped by an attribute or by bands of a numeric one. The declarations
   are the point — what the denominator counts (people, houses, households, person-time), whether the

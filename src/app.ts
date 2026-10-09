@@ -85,6 +85,29 @@ const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='rast
 let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
 const activeOutput=()=>result?.outputs.find(o=>o.nodeId===activeOutputId)||result?.outputs[0];
+/** The result tabs a node produced. Coverage checks make two, suffixed -table and -map, so a node
+ *  can own more than one tab. */
+const outputsOf=(nodeId:string|null|undefined)=>nodeId
+  ?(result?.outputs??[]).filter(o=>o.nodeId===nodeId||o.nodeId.startsWith(nodeId+'-')):[];
+/** Selecting an output node shows its result, so the canvas and the Results panel agree about what
+ *  is being looked at. A node owning the tab already open keeps that tab rather than jumping. */
+/** Marks the tabs the selected node produced. Separate from rendering the results, because
+ *  selecting a node that produced none must still clear the previous marks. */
+function markLinkedTabs(){
+  const owned=new Set(outputsOf(selected).map(o=>o.nodeId));
+  $('#result-tabs').querySelectorAll<HTMLButtonElement>('[data-output]').forEach(tab=>{
+    const linked=owned.has(required(tab.dataset.output));
+    tab.classList.toggle('linked-to-selection',linked);
+    if(linked){tab.dataset.linked='true';tab.title='This result comes from the selected node';}
+    else{delete tab.dataset.linked;tab.removeAttribute('title');}
+  });
+}
+function revealResultFor(nodeId:string|null|undefined){
+  const owned=outputsOf(nodeId);
+  if(!owned.length)return false;
+  if(!owned.some(o=>o.nodeId===activeOutputId))activeOutputId=owned[0].nodeId;
+  return true;
+}
 const hiddenMapLayers=new Map<string,Set<string>>();
 function toast(message:string){$('#toast').textContent=message;$('#toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('visible'),5000);}
 try{const saved=localStorage.getItem(KEY);if(saved)workflow=validateWorkflow(JSON.parse(saved));}catch{toast('Saved workflow could not be loaded. The example is ready.');}
@@ -418,7 +441,8 @@ function renderResults(){
   if(output?.comparison&&!$('.work-area').classList.contains('results-expanded')){$('.work-area').classList.add('results-expanded');$('#expand-results').textContent='↙ Split view';$('#expand-results').setAttribute('aria-expanded','true');}
   $('#release-download').hidden=!(exampleKey(workflow)==='snow-geoprivacy'&&!!output&&output.nodeId.startsWith('after-'));
   $('.results-panel').classList.toggle('spatial-results',['spatial-map','spatial-coverage'].includes(output?.kind||''));
-  $('#result-tabs').innerHTML=(result?.outputs||[]).map(o=>`<button id="result-tab-${esc(o.nodeId)}" role="tab" aria-selected="${o.nodeId===activeOutputId}" tabindex="${o.nodeId===activeOutputId?0:-1}" aria-controls="${o.view}-panel" class="${o.nodeId===activeOutputId?'active':''}" data-output="${esc(o.nodeId)}">${o.view==='table'?'☷':o.view==='bars'?'▥':'◈'} ${esc(o.label)}</button>`).join('');
+  const ownedTabs=new Set(outputsOf(selected).map(o=>o.nodeId));
+  $('#result-tabs').innerHTML=(result?.outputs||[]).map(o=>`<button id="result-tab-${esc(o.nodeId)}" role="tab" aria-selected="${o.nodeId===activeOutputId}" tabindex="${o.nodeId===activeOutputId?0:-1}" aria-controls="${o.view}-panel" class="${o.nodeId===activeOutputId?'active':''}${ownedTabs.has(o.nodeId)?' linked-to-selection':''}" ${ownedTabs.has(o.nodeId)?'data-linked="true" title="This result comes from the selected node"':''} data-output="${esc(o.nodeId)}">${o.view==='table'?'☷':o.view==='bars'?'▥':'◈'} ${esc(o.label)}</button>`).join('');
   const tabs=[...$('#result-tabs').querySelectorAll<HTMLButtonElement>('[data-output]')];
   tabs.forEach((b,i)=>{b.onclick=()=>{activeOutputId=b.dataset.output!;if(selected?.startsWith('result:'))selected=null;renderResults();render();$(`#result-tab-${activeOutputId}`).focus();};b.onkeydown=e=>{let next;if(e.key==='ArrowRight')next=(i+1)%tabs.length;if(e.key==='ArrowLeft')next=(i+tabs.length-1)%tabs.length;if(e.key==='Home')next=0;if(e.key==='End')next=tabs.length-1;if(next!==undefined){e.preventDefault();tabs[next].click();}};});
   $('#map-panel').hidden=!output||output.view!=='map';$('#table-panel').hidden=!output||output.view!=='table';$('#bars-panel').hidden=!output||output.view!=='bars';
@@ -561,7 +585,7 @@ function wireThemeControl(){
 }
 function switchView(view:string){$('.work-area').classList.remove('results-expanded');$('#expand-results').textContent='⛶ Expand';$('#expand-results').setAttribute('aria-expanded','false');$('#workflow-view').hidden=view!=='workflow';$('#rules-view').hidden=view!=='rules';document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));}
 function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id===c.source),b=workflow.nodes.find(n=>n.id===c.target);return !!a&&!!b&&a.id!==b.id&&!!TYPES[a.type].output&&nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1]===TYPES[a.type].output;}
-mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},select(id){selected=id;$('#node-search').value='';render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
+mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},select(id){selected=id;$('#node-search').value='';if(revealResultFor(id))renderResults();markLinkedTabs();render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;markLinkedTabs();render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
 $('#run-button').onclick=run;$('#node-search').oninput=e=>renderLibrary(control(e).value);$('#zoom-in').onclick=()=>flow?.zoomIn();$('#zoom-out').onclick=()=>flow?.zoomOut();$('#fit-button').onclick=()=>flow?.fit();
 $('#undo-button').onclick=()=>{if(busy||!history.length)return;future.push(structuredClone(workflow));workflow=history.pop()!;dirty=true;statuses={};save();render();};
 $('#redo-button').onclick=()=>{if(busy||!future.length)return;history.push(structuredClone(workflow));workflow=future.pop()!;dirty=true;statuses={};save();render();};

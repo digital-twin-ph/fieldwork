@@ -36,3 +36,46 @@ Edges are directed; include a reverse edge for reverse travel. Optional edge `ge
 For a sized boundary, open Study area → **Select area on map** → **Configure a square or rectangle**. Set centre, width and height in metres, choose **Use sized boundary**, then **Apply study area**. You can also draw a free box or polygon, or enter explicit bounding coordinates. Ground dimensions are approximate at the centre. A separate buffer expands the acquisition geometry while preserving this reporting boundary.
 
 The saved Soho graph is a modern OSM snapshot of unknown extraction date, not reconstructed 1854 streets. Network corridors model reachability under assumptions; Voronoi models nearest-site allocation. Neither establishes actual pump use. See [design and validation boundaries](../experiments/32-john-snow-primitives.md) and [data attribution](../../examples/john-snow/NOTICE.txt).
+
+## Person, place and time in the Snow data — what exists and what does not
+
+A recurring question is whether a case-level Snow dataset exists carrying **both** a location and a
+date, which is what space-time analysis would need. Checked rather than assumed, 2026-10-09:
+
+**No such dataset exists.** The HistData documentation for `Snow.deaths` states plainly that the dates
+of the deaths are not individually recorded, and that this prevents analysis of the time course of the
+outbreak. The University of Chicago Center for Spatial Data Science compilation —
+[eight documented Snow datasets](https://geodacenter.github.io/data-and-lab//snow/), version 5 of
+September 2023 — carries no date field in any of them: its variables are counts, distances,
+coordinates and dummies.
+
+Three findings worth keeping, because each one is a trap:
+
+1. **The 578 "individual deaths" points are not individual locations.** Snow's 1855 map stacked
+   multiple deaths beside a house, like a histogram, so that deaths in one building stayed visible.
+   Tobler digitised those stacked positions, which means the points are displaced from the houses they
+   belong to. The Chicago team **removed that dataset** from later versions of their compilation as
+   misleading for spatial analysis, replacing it with deaths aggregated by building. Anyone reaching
+   for "case-level Snow data" will reach for those 578 points first.
+2. **What this project bundles is the aggregated form**, which is the sounder one:
+   `cholera_deaths.csv` is 250 buildings with death counts, shared by Wilson (2011) and the same data
+   as the Chicago compilation's `deaths_by_bldg`. Their overview table records its licence as
+   **unknown**, which is worth stating rather than assuming permissive.
+3. **A denominator exists, and we do not use it yet.** The Chicago team digitised the 1855 General
+   Board of Health map for the first time as `deaths_nd_by_house`: 1,852 houses with deaths of
+   residents, deaths of non-residents, total deaths and distances — that is, **deaths and non-deaths**.
+   It is the person axis in the form that matters, because it supports a mortality *rate* per house
+   rather than a count, and it is licensed GPL.
+
+**On space-time clustering.** The serious attempt is Shiode and colleagues,
+[*The mortality rates and the space-time patterns of John Snow's cholera epidemic map*](https://doi.org/10.1186/s12942-015-0011-y)
+(International Journal of Health Geographics, 2015), which reconstructed per-victim space and time by
+merging historical documents. It found high mortality rates close to the Broad Street pump and **no
+distinctive space-time pattern** in the victims' locations — which the authors read as consistent with
+waterborne rather than airborne transmission. So the one published reconstruction reports a negative
+result for clustering, and its merged dataset is not distributed with this project's examples.
+
+What this means for workflows here: the curve from `snow_dates.csv` and the maps from
+`cholera_deaths.csv` are both honest, and they cannot be joined case by case. A space-time cluster
+statistic on Snow's data would require assigning dates to addresses that the historical record does not
+assign, which would be fabrication with a citation attached.

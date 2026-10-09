@@ -105,3 +105,8 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 .tag.parity-agrees{color:var(--accent)}
 .tag.parity-partial{color:var(--warning)}
 .tag.parity-diverges,.tag.parity-unresolved{color:var(--danger)}
+
+/* A result tab belonging to the node selected on the canvas, so the two panels agree about what is
+   being looked at. Marked rather than only activated, because a node can own more than one tab. */
+#result-tabs button.linked-to-selection{box-shadow:inset 0 0 0 1px var(--accent);}
+#result-tabs button.linked-to-selection::before{content:"◆";margin-right:4px;color:var(--accent);font-size:8px;vertical-align:middle}

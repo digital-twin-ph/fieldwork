@@ -72,6 +72,11 @@ Add **Map** under Outputs to display a study polygon and point layers. Connect t
 
 Add **Table** under Outputs to display point coordinates and attributes in a named Results tab. Connect Input data to **Points 1**, or Check spatial coverage to **Or: Coverage result** to include review decisions and exclusion reasons. Direct point input needs no study area. Tables support multiple layers, search, row/attribute paging, record inspection, saved workflows and offline use. See the [point-table exercise](experiments/08-point-table-output.md).
 
+Selecting an output node on the canvas opens its result. The Results panel switches to that node's
+tab and marks it, so the two panels agree about what you are looking at; a node that produced two
+tabs, as a coverage check does, keeps whichever of its own tabs is already open rather than jumping.
+Selecting a node that produced no result leaves the open tab alone and clears the mark.
+
 Workflow and N3 & evidence are the main views. Each visual output node creates a named Results tab; choose Map, Table, or Bar chart in its inspector. Select a location in a map or table to inspect the inputs and assertions behind its result. Expand Results for a larger view or filter table rows by text.
 
 Use the worked-example selector to open **Old Naledi diagnostic access**, or visit `http://127.0.0.1:4173/?example=old-naledi`. Its widgets control sample spacing, facility search radius, minimum evidence, diagnostic-service pathway, speed proxy, and review threshold. The [worked-example guide](examples/old-naledi.md) explains the source data, assumptions, and three comparisons to try. Each example retains its own local edits when you switch.

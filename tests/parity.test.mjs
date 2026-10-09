@@ -10,7 +10,8 @@ const clone=()=>JSON.parse(JSON.stringify(parity));
 test('the recorded parity evidence is well formed and agrees with the registry', () => {
   const {problems,notes}=checkParity(parity,registry);
   assert.deepEqual(problems,[]);
-  assert.ok(notes.some(n=>n.includes('2 of 34 widgets')),notes.join('\n'));
+  const covered=new Set(parity.entries.map(e=>e.widget)).size;
+  assert.ok(notes.some(n=>n.includes(`${covered} of ${registry.widgets.length} widgets`)),notes.join('\n'));
   // A partial outcome must be surfaced, not averaged into a pass.
   assert.ok(notes.some(n=>n.includes('clip_raster')&&n.includes('partial')));
 });

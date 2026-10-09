@@ -5,6 +5,29 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Implement the sea-level pack's three contracts in the application, since the pack ships no code and
+  the application loads none: **Sea-level projection extract** declares an imported long-format table
+  as a bounded AR6 extract, requiring the full key of site, scenario, workflow, family, year and
+  quantile, metre units, the dataset and version, the baseline period, three obligatory citations and
+  which family value includes vertical land motion; **Assign projection site** gives each point its
+  nearest published site and keeps the distance, reporting unlocated points rather than dropping them;
+  and **Compare level to elevation** compares one fully keyed projected change against a
+  practitioner-supplied elevation on a stated datum, refusing to run without the datum, without a
+  named elevation attribute, or with a partial key, and treating equality as reaching the elevation.
+  The output uses the existing decisions port, so Map, Table and Chart present it unchanged and it
+  cannot reach a raster output that would resemble a flood map.
+  The pack's vocabulary stays authoritative: the host mints no sea-level term and vendors the pack's
+  two TTL files at the digests `widgets/packs.json` pins, which `validate:widgets` now verifies and a
+  negative test covers. The pack retires its widget declarations and records each deviation. Three
+  deviations were argued before the code, in
+  [experiment 58](docs/experiments/58-sea-level-widgets.md): a table input rather than a second CSV
+  reader, three inputs for site assignment because a table has no geometry, and the decisions output.
+  Validation: 11 new unit checks within 145, 2 Chromium scenarios within 74 with 1 skipped, receipts
+  conformant to the pack's own SHACL shapes with a negative case, registry valid at 37 widgets and 69
+  releases, catalog 0.2.0 verified at 5 pinned digests. Projections are **imported, never produced**,
+  and the worked example here uses synthetic values with the published key structure rather than AR6
+  numbers.
+
 - Show widget packs in the catalog, with the admission state, the pinned commit, each required
   review's state and the recorded reason — labelled as decisions read from this build's catalog
   rather than checks performed by the page. The view also states why no pack can be added here:

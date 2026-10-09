@@ -34,6 +34,7 @@ The version beside the header mark is the released application version; see the
 | Study area | Draw and label a bounding box or simple polygon; inspect its GeoSPARQL representation. |
 | Calculate area | Enrich the study area with a spherical area measurement; choose metric or imperial units. |
 | Input data | Generate synthetic points, import CSV/GeoPackage/GeoJSON, or place map pins with typed attributes, value sets and optional UUIDs. |
+| Sea-level projections | Declare an imported long-format AR6 extract with its dataset, version, baseline and three obligatory citations; assign each point its nearest published projection site with the distance kept; compare one fully keyed projected change against an elevation you supply on a datum you state. A comparison of two numbers, never an inundation model. |
 | Tabular data | Import a long-format CSV keyed by the columns you declare, with one value column and a unit you state. No geometry is claimed; connect a Table output to display it. |
 | Reproject input | Import a local CSV or GeoJSON in WGS84 UTM metres and convert it to CRS84 longitude/latitude for the other widgets. WGS84 zones only; no datum shift and no raster warping. |
 | Raster input and Clip raster | Acquire a bounded WGS84 GeoTIFF window, then crop and mask it with a study polygon. Preserve native values and metadata; display and download the result. |
@@ -102,7 +103,7 @@ at pixel-aligned cutlines — see
 
 ## Limits
 
-Not implemented: general reprojection beyond the UTM import path, NetCDF, a
+Not implemented: NetCDF acquisition or any sea-level model (projections are imported, never produced), general reprojection beyond the UTM import path, a
 GEOS-WASM geoprocessing executor, Logical English comparison, agent-based
 simulation, learning and scoring, publication products, GADM download widgets, a
 STAC browser or acquisition adapter, runtime widget-version pinning, widget
@@ -155,6 +156,7 @@ proposed capabilities from implemented behaviour. Start with:
 | [55 · Embedded provenance](docs/experiments/55-embedded-provenance.md) | Visible stamps, RDF in SVG and signed manifests compared; why steganography is refused, and the disclosure trap in embedding receipts |
 | [56 · The basis behind an identity](docs/experiments/56-basis-behind-identity.md) | A digest says which code ran, not what the method rests on: method provenance for widgets, and validation evidence a curator can cite |
 | [57 · Parity evidence](docs/experiments/57-parity-evidence.md) | Independent recomputation as the evidence this project can actually produce: two widgets measured, 32 named as unchecked |
+| [58 · Sea-level widgets](docs/experiments/58-sea-level-widgets.md) | Implementing a declaration-only pack in the host: why a pack that cannot ship code is a specification, and the three contract deviations |
 
 ## Repository contents
 

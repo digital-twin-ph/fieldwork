@@ -1,0 +1,63 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:slr_threshold_comparison",
+  "nodeType": "slr_threshold_comparison",
+  "version": "0.1.0",
+  "title": "Compare level to elevation",
+  "released": "2026-10-09",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['slr_threshold_comparison']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "assignments",
+        "type": "table"
+      }
+    ],
+    "output": "decisions",
+    "optionalInputs": [],
+    "note": "Outputs the host decisions port so existing Map, Table and Chart widgets present it unchanged, and so it cannot be connected to a raster output that would render something resembling a flood map."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#ThresholdComparison",
+        "file": "ontology/packs/sea-level.ttl"
+      }
+    ],
+    "note": "Maps to the sea-level pack's vocabulary, vendored into ontology/packs/sea-level.ttl at the digest widgets/packs.json pins. This widget mints no host term: the pack's namespace stays authoritative for the meaning. See docs/experiments/58-sea-level-widgets.md. The receipt is constrained by slr:ProjectionValueShape, slr:SiteAssignmentShape and slr:ThresholdComparisonShape in ontology/shapes/pack-sea-level.ttl, verified in tests; this registry version records application validation only, so the shapes are not referenced in a field."
+  },
+  "implementation": {
+    "files": [
+      "src/sea-level.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Compares one fully keyed projected change against a practitioner-supplied elevation on a stated vertical datum, classifying each point as reaching, staying below, or unknown. Refuses to run without a datum, without a named elevation attribute, or with a partial key."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks cover refusal of a missing datum, a missing elevation attribute and a partial key; exact behaviour at equality, where a projected change equal to the elevation counts as reaching it; and that a family swap changes the answer. The comparison represents no hydrodynamics, defences, drainage or wave action and is not an inundation model."
+  }
+}

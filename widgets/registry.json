@@ -569,6 +569,42 @@
           "sha256": "7ef06f9e35bce9922d0a600e75ae32eda723bded6413782180483f06ce0b793e"
         }
       ]
+    },
+    {
+      "id": "urn:fieldwork:widget:slr_extract_import",
+      "nodeType": "slr_extract_import",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/slr_extract_import/0.1.0.json",
+          "sha256": "d977da060716b4e03c17367a44324207388c222939cb49415485a29b9e65b7ec"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:slr_site_assignment",
+      "nodeType": "slr_site_assignment",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/slr_site_assignment/0.1.0.json",
+          "sha256": "ea5e6cabdb0c1209ba9fdbf4ce8dd18890ab14e1c5eb2e5b5baac75e3cdb33c8"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:slr_threshold_comparison",
+      "nodeType": "slr_threshold_comparison",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/slr_threshold_comparison/0.1.0.json",
+          "sha256": "b060a3977c3ada6fefa8991cdb3cb6dc09653b20cfd7eff5771a150a433a0277"
+        }
+      ]
     }
   ]
 }

@@ -1,4 +1,5 @@
 import {readFile, access} from 'node:fs/promises';
+import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {resolve, relative, isAbsolute} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
@@ -127,6 +128,28 @@ export function checkParity(parity,registryDoc){
   return {problems,notes};
 }
 
+
+// --- Vendored pack declarations -------------------------------------------------------------
+// The host carries copies of a pack's vocabulary and shapes so it can validate against them.
+// Vendoring is not forking: a copy that drifts from the digest the catalog pins is a failure.
+export function checkVendored(catalog,read){
+  const problems=[],checked=[];
+  const vendored={'ontology/sea-level.ttl':'ontology/packs/sea-level.ttl',
+                  'ontology/shapes/sea-level.ttl':'ontology/shapes/pack-sea-level.ttl'};
+  for(const pack of catalog.packs??[]){
+    for(const [packPath,hostPath] of Object.entries(vendored)){
+      const pinned=pack.files?.[packPath];
+      if(!pinned)continue;
+      const text=read(hostPath);
+      if(text===null){problems.push(`${hostPath} is vendored from ${pack.id} but missing`);continue;}
+      const digest=createHash('sha256').update(text).digest('hex');
+      if(digest!==pinned)problems.push(`${hostPath} digest ${digest.slice(0,12)} does not match the pinned ${pinned.slice(0,12)} for ${packPath}`);
+      else checked.push(hostPath);
+    }
+  }
+  return {problems,checked};
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{
     const result=await validateRegistry();
@@ -134,6 +157,10 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
     const registryDoc=JSON.parse(await readFile(localPath('widgets/registry.json'),'utf8'));
     const parityDoc=JSON.parse(await readFile(localPath('widgets/parity.json'),'utf8'));
     const parity=checkParity(parityDoc,registryDoc);
+    const catalogDoc=JSON.parse(await readFile(localPath('widgets/packs.json'),'utf8'));
+    const vendored=checkVendored(catalogDoc,path=>{try{return readFileSync(localPath(path),'utf8');}catch{return null;}});
+    for(const file of vendored.checked)console.log(`  vendored: ${file} matches the digest the catalog pins`);
+    if(vendored.problems.length){for(const problem of vendored.problems)console.error(`VENDOR PROBLEM: ${problem}`);process.exitCode=1;}
     for(const note of parity.notes)console.log(`  parity: ${note}`);
     if(parity.problems.length){for(const problem of parity.problems)console.error(`PARITY PROBLEM: ${problem}`);process.exitCode=1;}
   }

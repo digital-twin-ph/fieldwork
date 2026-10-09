@@ -70,7 +70,7 @@ for(const file of files){
   }
 
   const dates=substantiveDates(file);
-  if(!dates.length){problems.push(`${file}: not committed, so git cannot date it`);continue;}
+  if(!dates.length)dates.push(today);
   const stamp=`_Created ${dates[dates.length-1]} · Updated ${dates[0]}_`;
   if(at>=0){if(lines[at]===stamp)continue;lines[at]=stamp;}
   else lines.splice(heading+1,0,'',stamp);
@@ -78,7 +78,11 @@ for(const file of files){
   written++;
 }
 
-if(write)console.log(`Stamped ${written} of ${files.length} documentation files from git history.`);
+if(write){
+  for(const problem of problems)console.error(`DOC DATE: ${problem}`);
+  console.log(`Stamped ${written} of ${files.length} documentation files from git history.`);
+  if(problems.length)process.exitCode=1;
+}
 else if(problems.length){
   for(const problem of problems)console.error(`DOC DATE: ${problem}`);
   console.error(`\n${problems.length} problem(s). Run: npm run stamp:docs`);

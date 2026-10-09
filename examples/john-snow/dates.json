@@ -1,0 +1,231 @@
+{
+  "note": "Snow 1855 Table 1, parsed from snow_dates.csv in this directory for embedding in the worked example. Rows without a date are excluded because a keyed table cannot hold an empty key; their totals are recorded here so the exclusion is visible.",
+  "source": "examples/john-snow/snow_dates.csv",
+  "excludedUndated": {
+    "rows": 1,
+    "attacks": 45,
+    "deaths": 0
+  },
+  "totals": {
+    "datedRows": 43,
+    "attacks": 571,
+    "deaths": 616
+  },
+  "rows": [
+    {
+      "date": "1854-08-19",
+      "attacks": 1,
+      "deaths": 1
+    },
+    {
+      "date": "1854-08-20",
+      "attacks": 1,
+      "deaths": 0
+    },
+    {
+      "date": "1854-08-21",
+      "attacks": 1,
+      "deaths": 2
+    },
+    {
+      "date": "1854-08-22",
+      "attacks": 0,
+      "deaths": 0
+    },
+    {
+      "date": "1854-08-23",
+      "attacks": 1,
+      "deaths": 0
+    },
+    {
+      "date": "1854-08-24",
+      "attacks": 1,
+      "deaths": 2
+    },
+    {
+      "date": "1854-08-25",
+      "attacks": 0,
+      "deaths": 0
+    },
+    {
+      "date": "1854-08-26",
+      "attacks": 1,
+      "deaths": 0
+    },
+    {
+      "date": "1854-08-27",
+      "attacks": 1,
+      "deaths": 1
+    },
+    {
+      "date": "1854-08-28",
+      "attacks": 1,
+      "deaths": 0
+    },
+    {
+      "date": "1854-08-29",
+      "attacks": 1,
+      "deaths": 1
+    },
+    {
+      "date": "1854-08-30",
+      "attacks": 8,
+      "deaths": 2
+    },
+    {
+      "date": "1854-08-31",
+      "attacks": 56,
+      "deaths": 3
+    },
+    {
+      "date": "1854-09-01",
+      "attacks": 143,
+      "deaths": 70
+    },
+    {
+      "date": "1854-09-02",
+      "attacks": 116,
+      "deaths": 127
+    },
+    {
+      "date": "1854-09-03",
+      "attacks": 54,
+      "deaths": 76
+    },
+    {
+      "date": "1854-09-04",
+      "attacks": 46,
+      "deaths": 71
+    },
+    {
+      "date": "1854-09-05",
+      "attacks": 36,
+      "deaths": 45
+    },
+    {
+      "date": "1854-09-06",
+      "attacks": 20,
+      "deaths": 37
+    },
+    {
+      "date": "1854-09-07",
+      "attacks": 28,
+      "deaths": 32
+    },
+    {
+      "date": "1854-09-08",
+      "attacks": 12,
+      "deaths": 30
+    },
+    {
+      "date": "1854-09-09",
+      "attacks": 11,
+      "deaths": 24
+    },
+    {
+      "date": "1854-09-10",
+      "attacks": 5,
+      "deaths": 18
+    },
+    {
+      "date": "1854-09-11",
+      "attacks": 5,
+      "deaths": 15
+    },
+    {
+      "date": "1854-09-12",
+      "attacks": 1,
+      "deaths": 6
+    },
+    {
+      "date": "1854-09-13",
+      "attacks": 3,
+      "deaths": 13
+    },
+    {
+      "date": "1854-09-14",
+      "attacks": 0,
+      "deaths": 6
+    },
+    {
+      "date": "1854-09-15",
+      "attacks": 1,
+      "deaths": 8
+    },
+    {
+      "date": "1854-09-16",
+      "attacks": 4,
+      "deaths": 6
+    },
+    {
+      "date": "1854-09-17",
+      "attacks": 2,
+      "deaths": 5
+    },
+    {
+      "date": "1854-09-18",
+      "attacks": 3,
+      "deaths": 2
+    },
+    {
+      "date": "1854-09-19",
+      "attacks": 0,
+      "deaths": 3
+    },
+    {
+      "date": "1854-09-20",
+      "attacks": 0,
+      "deaths": 0
+    },
+    {
+      "date": "1854-09-21",
+      "attacks": 2,
+      "deaths": 0
+    },
+    {
+      "date": "1854-09-22",
+      "attacks": 1,
+      "deaths": 2
+    },
+    {
+      "date": "1854-09-23",
+      "attacks": 1,
+      "deaths": 3
+    },
+    {
+      "date": "1854-09-24",
+      "attacks": 1,
+      "deaths": 0
+    },
+    {
+      "date": "1854-09-25",
+      "attacks": 1,
+      "deaths": 0
+    },
+    {
+      "date": "1854-09-26",
+      "attacks": 1,
+      "deaths": 2
+    },
+    {
+      "date": "1854-09-27",
+      "attacks": 1,
+      "deaths": 0
+    },
+    {
+      "date": "1854-09-28",
+      "attacks": 0,
+      "deaths": 2
+    },
+    {
+      "date": "1854-09-29",
+      "attacks": 0,
+      "deaths": 1
+    },
+    {
+      "date": "1854-09-30",
+      "attacks": 0,
+      "deaths": 0
+    }
+  ]
+}

@@ -27,9 +27,11 @@ test('geoprivacy canvas shows before/after maps and tables with editable paramet
   await expect(page.locator('#comparison-map-host [data-mean]')).toHaveCount(2);
   await expect(page.locator('#comparison-map-host')).toContainText('Nearest pump:');
   await expect(page.locator('#release-download')).toBeHidden();
-  await expect(page.locator('#expand-results')).toHaveAttribute('aria-expanded','true');
+  await expect(page.locator('#expand-results')).toHaveAttribute('aria-expanded','false');
   await page.locator('#map-panel').screenshot({path:'test-results/geoprivacy-comparison.png'});
   const centerBefore=await page.locator('.comparison-summary strong').innerText();
+  await page.locator('#expand-results').click();
+  await expect(page.locator('#expand-results')).toHaveAttribute('aria-expanded','true');
   await page.locator('#expand-results').click();
   await page.locator('.react-flow__node[data-id="original-center"]').click();await expect(page.locator('#mean-center-zone')).toHaveValue('30');
   await page.locator('.react-flow__node[data-id="compare"]').click();await expect(page.locator('#comparison-zone')).toHaveValue('30');await expect(page.locator('#comparison-hemisphere')).toHaveValue('north');

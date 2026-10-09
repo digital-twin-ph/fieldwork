@@ -1,0 +1,33 @@
+{
+  "retrieved": "2026-10-09",
+  "source": "https://geodacenter.github.io/data-and-lab/data/snow.zip",
+  "sourceDigest": "119a287f582d22d1f2feb6562b02c15abf341c099920ccfb4daa0b37d802f41f",
+  "publisher": "Center for Spatial Data Science, University of Chicago",
+  "documentation": "Falcone, M., Koschinsky, J., Vinten-Johansen, P., Coleman, T. and Anselin, L., John Snow & the Cholera Epidemic in Mid-19th Century London: 8 Datasets With Documentation for Use in GeoDa, version 5, 20 September 2023.",
+  "originalSource": "General Board of Health, Medical Council (1855), Plan shewing the ascertained deaths from cholera in the part of the Parishes of St James, Westminster and St Anne, Soho, during the summer and autumn of 1854, in Appendix to Report of the Committee for Scientific Inquiries in Relation to the Cholera-Epidemic of 1854, London, HMSO, no. 14.",
+  "licence": {
+    "stated": "GPL",
+    "version": "not stated by the publisher",
+    "shippedWithData": false,
+    "note": "The documentation table records this dataset as GPL. No licence file ships inside the download, and no GPL version is named. Redistributed here verbatim, in its own directory, with attribution: the GPL permits redistribution, and a data file beside unrelated code is aggregation rather than a derived work, so it does not alter the Apache-2.0 licence of this repository. A reprojected, filtered or otherwise modified copy would be a modified work and would have to carry the GPL and be marked as modified; none is distributed here."
+  },
+  "files": [
+    {
+      "file": "deaths_nd_by_house.csv",
+      "sha256": "1767706cd333276e9530eec7a8454203470a5a3aa13b9e812410727e10a38b86",
+      "bytes": 236050
+    },
+    {
+      "file": "deaths_nd_by_house.prj",
+      "sha256": "a3e0e66c1fc8c6b4a7efb0c982e7514ad04ebea21738a810b0c1f5034668cacf",
+      "bytes": 405
+    }
+  ],
+  "contents": "1,852 houses from the 1855 General Board of Health map, including houses where nobody died, with deaths of residents (deaths_r, 661), deaths of non-residents (deaths_nr, 45), total deaths (706), distances in metres to the Broad Street pump, the former pest field and the nearest sewer grate, and projected coordinates.",
+  "limits": [
+    "Coordinates are OSGB 1936 / Airy 1830, not WGS84. Mapping them here would need a datum shift, which this application deliberately does not perform; the distance columns support the analysis without any geometry.",
+    "The denominator this file provides is houses, not people. No population per house exists in it, so a rate per house is defensible and a mortality rate per person is not.",
+    "The numerator is the 1854 outbreak and the denominator is an 1855 map, so the two do not describe the same moment.",
+    "The 45 deaths of non-residents are counted in houses whose residents are the exposed population, so deaths rather than deaths_r mixes a numerator that includes visitors with a denominator of dwellings."
+  ]
+}

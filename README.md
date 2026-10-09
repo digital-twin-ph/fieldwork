@@ -182,6 +182,8 @@ proposed capabilities from implemented behaviour. Start with:
 | `scripts/` | Validation, staging, source extraction and fixture export |
 | `docs/` | Usage guide, worked examples, design experiments and research notes |
 | `examples/old-naledi/` | Selected source data with provenance |
+| `examples/john-snow/` | Pump and death locations, Snow's 1855 daily table, and the street graph, with provenance |
+| `examples/snow-gboh/` | 1,852 houses with deaths and non-deaths, redistributed verbatim under its own licence; see its NOTICE |
 
 ## Publication and license
 

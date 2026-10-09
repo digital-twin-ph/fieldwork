@@ -1,6 +1,6 @@
 # GADM assets and jurisdiction study areas
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 6, 2026. Status: ontology and executable N3 examples; polygon ingestion, jurisdiction selection widgets and GADM retrieval are not yet implemented in the application.
 

@@ -28,6 +28,7 @@ The version beside the header mark is the released application version; see the
 | Component | What you can do now |
 | --- | --- |
 | Workflow canvas | Connect typed ports, edit nodes, undo/redo, save separate examples and import/export workflows. |
+| Widget catalog | Open Catalog beside the node library to see every definition in this build with its version, release digest, declared ports and whether an external implementation has independently recomputed it. The selected node shows the same identity in its inspector. |
 | Colour theme | Choose light, dark, or follow the device from the header. The choice is saved on this device; exported SVG and GeoTIFF artifacts stay light whichever theme is shown. |
 | Panel layout | Drag the library/inspector dividers and Workflow/N3–Results split on desktop. Sizes stay on this device. Keyboard arrows resize; Reset layout restores defaults. |
 | Study area | Draw and label a bounding box or simple polygon; inspect its GeoSPARQL representation. |

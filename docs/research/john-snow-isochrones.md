@@ -1,6 +1,6 @@
 # John Snow case study: isochrone workflow reuse
 
-_Created 2026-10-07 · Updated 2026-10-07_
+_Created 2026-10-07 · Updated 2026-10-08_
 
 Reviewed 2026-10-07. Source inspection only; notebooks were not executed. No source code or data files were copied into the Fieldwork runtime.
 

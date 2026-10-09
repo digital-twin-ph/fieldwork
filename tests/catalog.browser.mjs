@@ -1,0 +1,56 @@
+import {test,expect} from '@playwright/test';
+import {readFileSync} from 'node:fs';
+
+const registry=JSON.parse(readFileSync(new URL('../widgets/registry.json',import.meta.url),'utf8'));
+const parity=JSON.parse(readFileSync(new URL('../widgets/parity.json',import.meta.url),'utf8'));
+const identity=JSON.parse(readFileSync(new URL('../widgets/pack-catalog.json',import.meta.url),'utf8'));
+
+test('the widget catalog shows identities, digests and independent checks, and works offline',async({page,context})=>{
+  await page.goto('/?example=blank');
+  await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
+
+  await page.locator('#open-catalog').click();
+  const dialog=page.locator('#catalog-dialog');
+  await expect(dialog).toBeVisible();
+
+  // Every compiled definition appears, not only the ones this workspace offers in the palette.
+  await expect(dialog.locator('tbody tr')).toHaveCount(registry.widgets.length);
+  await expect(dialog).toContainText(`${registry.widgets.length} definitions`);
+  await expect(dialog).toContainText(`${identity.catalogVersion} ·`);
+  await expect(dialog).toContainText(`${identity.catalogDigest.slice(0,12)}`);
+
+  // A row carries the version and the first 12 characters of the release digest it was built from.
+  const reproject=registry.widgets.find(w=>w.nodeType==='reproject');
+  const row=dialog.locator('tr[data-widget="reproject"]');
+  await expect(row).toContainText(reproject.currentVersion);
+  await expect(row).toContainText(reproject.releases.find(r=>r.version===reproject.currentVersion).sha256.slice(0,12));
+  await expect(row.locator('.tag')).toHaveText('agrees');
+
+  // A partial result is shown as partial rather than rounded up to a pass.
+  await expect(dialog.locator('tr[data-widget="clip_raster"] .tag')).toHaveText('partial');
+  // An unchecked widget says so plainly.
+  await expect(dialog.locator('tr[data-widget="voronoi"] .tag')).toHaveText('not checked');
+  const checked=new Set(parity.entries.map(e=>e.widget)).size;
+  await expect(dialog).toContainText(`${checked} of ${registry.widgets.length} widgets`);
+  // The catalog must not imply anything is installable or certified.
+  await expect(dialog).toContainText('nothing is installable');
+  await expect(dialog).toContainText('no widget here is individually certified');
+
+  await dialog.locator('#catalog-close').click();
+  await expect(dialog).toBeHidden();
+
+  // The same identity is available where a practitioner is working: on the selected node.
+  await page.locator('[data-add="reproject"]').click();
+  await expect(page.locator('.inspector')).toContainText('Definition');
+  await expect(page.locator('.inspector')).toContainText(`reproject ${reproject.currentVersion}`);
+  await expect(page.locator('.inspector')).toContainText('Compiled into this build');
+  await page.locator('.inspector details', {hasText:'What was checked'}).first().click();
+  await expect(page.locator('.inspector')).toContainText('maximum separation');
+
+  await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
+  await context.setOffline(true);
+  await page.reload();
+  await page.locator('#open-catalog').click();
+  await expect(page.locator('#catalog-dialog')).toContainText(`${registry.widgets.length} definitions`);
+  await page.screenshot({path:'test-results/widget-catalog.png',fullPage:true});
+});

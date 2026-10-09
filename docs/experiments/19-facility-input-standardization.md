@@ -1,6 +1,6 @@
 # Separate facility data from radius selection
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 6, 2026. Status: second implementation slice of shared-widget standardization.
 

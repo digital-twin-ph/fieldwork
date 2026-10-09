@@ -5,6 +5,16 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Show the widget catalog in the application. **Catalog**, beside the node library, lists every
+  compiled definition with its version, release digest, declared ports and independent-check
+  outcome, together with the application version, the pack-catalog version and digest, and how
+  many widgets have parity evidence. The inspector shows the same identity for the selected node,
+  with the measured result of its check. Nothing is fetched and nothing is installable, which the
+  dialog states. Adding it tripped the light-theme contrast ratchet at 47 pairs against a baseline
+  of 46 — a "not checked" badge at 3.26:1 — which was fixed by differentiating outcomes through
+  the foreground only, since an invented light background had left dark mode light-on-light. See
+  [experiment 49](docs/experiments/49-catalog-in-the-interface.md).
+
 - Record the curated pack catalog in run provenance. A run asserts `fw:PackCatalog` with the
   catalog version and the SHA-256 of `widgets/packs.json` as built, and every node plan states
   `fw:widgetDefinitionSource "host-registry"`, which the runtime shape requires from a closed

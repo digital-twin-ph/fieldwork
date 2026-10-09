@@ -1,6 +1,6 @@
 # Shared semantics for maps, charts and tables
 
-_Created 2026-10-06 · Updated 2026-10-07_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 6, 2026. Status: proposed design specification. This document does not add an ontology, SHACL shapes, chart library or new UI behavior. Existing map, table and worked-example chart outputs remain the implementation baseline.
 

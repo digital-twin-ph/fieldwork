@@ -1,6 +1,6 @@
 # Node evidence references and provenance
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 6, 2026. Status: implemented locally; validation record below. This experiment extends Fieldwork's audit trail with PDF and URL references attached to individual workflow nodes. The motivating example is an annual census cited as the source of input data, alongside publications or notebook sections supporting processing methods and assumptions.
 

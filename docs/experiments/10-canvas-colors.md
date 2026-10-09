@@ -1,6 +1,6 @@
 # Canvas colors and persistent project controls
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 5, 2026. The user requested blue input ports, red output ports, gray input nodes, orange processing nodes and green output nodes. The canvas now uses these colors to make direction and role easier to distinguish.
 

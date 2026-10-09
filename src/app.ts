@@ -40,6 +40,7 @@ import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,downloadRaster} from './raster-ui.js';
 import {openReprojectEditor} from './reproject-ui.js';
 import {openTableEditor,dataTableMarkup} from './data-table-ui.js';
+import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview} from './raster-preview.js';
 import {rasterExample} from './raster-example.js';
@@ -240,6 +241,7 @@ function renderInspector(){
   if(n.type==='coverage_check'||((n.type==='map_output'||n.type==='table_output')&&(!n.params.inputMode||n.params.inputMode==='spatial')))content+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">${n.type==='table_output'?'No boundary required for point inputs':'One study boundary'} · up to 8 point layers and 2,000 records combined. Each added point port needs a source. Removing the last port also removes its connector; Undo restores it. Adding a point input switches a Map or Table from reviewed input to direct layers.</p>`;
   if(exampleKey(workflow)==='raster'&&(n.type==='raster_input'||n.type==='clip_raster'))content+='<div class="source-card"><span class="inspector-section">Raster workflow steps</span><p>Prepare your GeoTIFF and citation, preview the clip, then Run workflow to populate the map.</p><div class="inspector-actions">'+(['raster_input','clip_raster','map_output'] as NodeType[]).map((type,i)=>{const target=workflow.nodes.find(x=>x.type===type);return '<button class="button small" data-raster-step="'+esc(target?.id||'')+'" '+(!target?'disabled':'')+'>'+[ '1. Raster input','2. Clip parameters','3. Map'][i]+'</button>';}).join('')+'</div></div>';
   content+=evidenceInspector(n);
+  content+=identityMarkup(n.type,esc);
   const incoming=workflow.edges.filter(e=>e.to===n.id);content+=`<div class="inspector-divider"></div><span class="inspector-section">Connections</span>${incoming.map(e=>`<div class="detail-row"><span>${esc(e.port)}</span><strong>${esc(workflow.nodes.find(x=>x.id===e.from)?.params.label||TYPES[workflow.nodes.find(x=>x.id===e.from)!.type].title)}</strong></div>`).join('')||'<p class="muted">Source node · no incoming connections</p>'}<div class="inspector-actions"><button id="duplicate-node" class="button small">Duplicate</button><button id="delete-node" class="button small danger">Remove node</button></div>`;
   $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
   document.querySelectorAll<HTMLButtonElement>('[data-raster-step]').forEach(button=>button.onclick=()=>{selected=button.dataset.rasterStep;render();});
@@ -526,6 +528,7 @@ $('#fullscreen-workbench').onclick=()=>setPanelFocus(focusPanel==='workbench'?nu
 $('#fullscreen-results').onclick=()=>setPanelFocus(focusPanel==='results'?null:'results');
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&focusPanel){setPanelFocus(null);event.preventDefault();}});
 installCredentials(document.querySelector<HTMLButtonElement>('#credentials-button')!);
+$('#open-catalog').onclick=()=>{try{openCatalogDialog(esc);}catch(error){toast(errorMessage(error));}};
 $('#encrypted-export').onclick=()=>{try{openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow);}catch(error){toast(errorMessage(error));}};
 function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
 $('#export-button').onclick=async()=>{try{const exported=await workflowDocument(workflow);download(exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json':'fieldwork-workflow.json',JSON.stringify(exported,null,2));}catch(error){toast(errorMessage(error));}};$('#import-button').onclick=()=>$('#workflow-file').click();

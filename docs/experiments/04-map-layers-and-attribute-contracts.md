@@ -1,6 +1,6 @@
 # Developmental evaluation: maps, multiple input layers and attribute contracts
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 5, 2026. Continuation of [input data and spatial review](03-input-data-and-spatial-review.md). These are design feedback and functional experiments, not evidence of practitioner effectiveness.
 

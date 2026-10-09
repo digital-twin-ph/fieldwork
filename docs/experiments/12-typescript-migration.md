@@ -1,6 +1,6 @@
 # Developmental evaluation: TypeScript migration
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 5, 2026. Status: implemented locally; validation record below. This migration follows the user's request to adopt TypeScript before extending browser geoprocessing. It preserves the current worked examples and saved workflow schema.
 

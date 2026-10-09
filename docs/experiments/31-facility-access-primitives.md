@@ -1,6 +1,6 @@
 # Facility access composed from shared primitives
 
-_Created 2026-10-07 · Updated 2026-10-07_
+_Created 2026-10-07 · Updated 2026-10-08_
 
 Date: 2026-10-07. Status: design for the next standardization slices; no runtime behavior changed by this document.
 

@@ -1,6 +1,6 @@
 # Fieldwork semantic development checkpoints
 
-_Created 2026-10-07 · Updated 2026-10-07_
+_Created 2026-10-07 · Updated 2026-10-08_
 
 Before adding a primitive, perform the semantic admission review in
 [the ontology audit procedure](docs/ontology-audit.md): define the term and its

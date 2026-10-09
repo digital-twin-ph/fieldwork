@@ -1,6 +1,6 @@
 # Learning through workflow construction
 
-_Created 2026-10-06 · Updated 2026-10-07_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 6, 2026. Updated: October 7, 2026 (A96: worked examples packaged as games). Status: proposed design experiment. This document does not implement points, assessment, learner tracking, badges, new ontology terms or registry fields.
 

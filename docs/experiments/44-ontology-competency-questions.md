@@ -1,5 +1,7 @@
 # Experiment 44: ontology competency questions
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 Date: October 8, 2026. Status: question list with measured statuses, thirteen of
 them executable. No vocabulary term is changed by this document; it records what
 the ontology can and cannot answer, and why.

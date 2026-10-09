@@ -1,5 +1,7 @@
 # 56 · The basis behind an identity: method provenance and validation evidence
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 **Status:** audit, one implemented change, and a specification deliberately left unpopulated.
 
 Two gaps in [experiment 49](49-catalog-in-the-interface.md)'s table of who needs what turn

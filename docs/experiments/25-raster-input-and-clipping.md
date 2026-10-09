@@ -1,5 +1,7 @@
 # Raster input and polygon clipping: Old Naledi / WorldPop
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 6, 2026. Status: bounded local prototype.
 
 ## A80 Separate acquisition from clipping

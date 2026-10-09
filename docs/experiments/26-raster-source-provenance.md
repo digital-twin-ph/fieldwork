@@ -1,5 +1,7 @@
 # Raster source metadata and citation
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 6, 2026. Status: bounded local prototype.
 
 ## A83 Distinguish file metadata from source documentation

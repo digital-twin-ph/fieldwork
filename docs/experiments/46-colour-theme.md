@@ -1,5 +1,7 @@
 # Developmental evaluation: colour theme
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 Date: October 8, 2026. Status: implemented locally; validation record below. The
 interface now offers light, dark, or following the device, defaulting to the
 device. Nothing about workflows, computation or evidence changes.

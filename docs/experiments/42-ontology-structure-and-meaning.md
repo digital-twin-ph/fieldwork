@@ -1,5 +1,7 @@
 # Experiment 42: validating the ontology's structure and its meaning
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 Date: October 8, 2026. Status: measured findings and a recommendation. No
 ontology file, axiom or application behaviour is changed by this document.
 

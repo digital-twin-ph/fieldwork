@@ -1,5 +1,7 @@
 # Fieldwork
 
+_Created 2026-10-05 · Updated 2026-10-08_
+
 A browser prototype for semantic visual GIS workflows in public health. Build a
 workflow from typed widgets, compute spatial facts locally, and evaluate
 Notation3 rules with EYE-JS in WebAssembly. Nothing is sent to a server.
@@ -71,7 +73,10 @@ Run the full gate before accepting a functional change:
 
 That type-checks application, worker and compile-only sources, rebuilds, runs
 every `tests/*.test.mjs` unit test and every `tests/*.browser.mjs` scenario on
-its own server. There are no retries, and a focused `.only` fails the gate. Use
+its own server. It also verifies that every documentation file carries a
+date stamp under its heading; `npm run stamp:docs` refreshes those from git
+history, which is where the dates come from rather than from anyone typing
+them. There are no retries, and a focused `.only` fails the gate. Use
 `npm run validate:ontology` and `npm run validate:widgets` for the RDF and
 registry checks, which include the shape of recorded parity evidence.
 `npm run validate:parity` verifies that evidence against a Validation Lab

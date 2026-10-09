@@ -1,5 +1,7 @@
 # Widget registry
 
+_Created 2026-10-06 · Updated 2026-10-08_
+
 The [catalog](registry.json) tracks all 33 current node identities (including legacy import identities). Each widget has a stable `urn:fieldwork:widget:<nodeType>` identity, an independent current version, and a history of release files under `releases/<nodeType>/<version>.json`. The first `0.1.0` releases record the existing prototype on October 6, 2026; they do not reconstruct historical versions or claim a new implementation.
 
 This is a development registry, not an executable plugin loader. Workflow nodes still use the existing `fieldwork/workflow/1` format without widget version pins. Runtime version selection, general migrations and per-version implementation archives remain future work; the heat-source adapter is explicitly implemented. A historical release file describes a contract; it does not retain executable historical code. Use Git revisions to recover historical implementations.

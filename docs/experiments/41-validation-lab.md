@@ -1,5 +1,7 @@
 # Experiment 41: an accompanying Validation Lab
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 Date: October 7, 2026. Status: design specification and measured feasibility
 check. No lab exists, no notebook has run, and nothing in this prototype has
 been validated against a reference implementation yet.

@@ -1,5 +1,7 @@
 # Experiment 48: tabular input
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 Date: October 8, 2026. Status: semantic admission review, then implementation.
 This closes the host gap that [experiment 47](47-sea-level-pack.md) found: the
 sea-level pack could not be admitted because a projection is a keyed table and

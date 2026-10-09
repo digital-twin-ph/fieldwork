@@ -1,5 +1,7 @@
 # John Snow case study: Voronoi catchment workflow reuse
 
+_Created 2026-10-07 · Updated 2026-10-07_
+
 Reviewed 2026-10-07. Source inspection only; no notebooks executed or upstream implementations copied into Fieldwork.
 
 Repository: [PHI-Case-Studies/1854-Cholera-Outbreak-London-Advanced-2](https://github.com/PHI-Case-Studies/1854-Cholera-Outbreak-London-Advanced-2). Inspected master at commit `d1b56c135b0fab2f470b837a51e6777dfc20b286`. Notebook cell numbers below are zero-based JSON indices.

@@ -1,5 +1,7 @@
 # Study area developmental evaluation
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 5, 2026. This is the first developmental evaluation of Fieldwork as a visual workflow environment for public health digital twin simulations. The bounded task is to start with an empty canvas, define an area on an online map, and inspect the resulting geometry, N3 facts, rule, and conclusion. It does not test a disease simulation or establish practitioner usability.
 
 The subsequent discussion of computation nodes, reusable spatial scope, ontology, and browser resource constraints is recorded in [developmental evaluation notes 02](02-area-computation-and-resource-scope.md).

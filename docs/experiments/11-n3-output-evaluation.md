@@ -1,5 +1,7 @@
 # Design experiment for evaluating N3 workflow outputs
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 5, 2026. Status: proposed evaluation protocol, grounded in the current prototype and regression tests. Audience: Fieldwork developers, public health practitioners and domain reviewers.
 
 This experiment asks whether a visual GIS workflow produces the intended semantic representation and conclusions, and whether a practitioner can inspect, explain and challenge them. It begins with Study area, Calculate area, Input data and Check spatial coverage, followed by Map and Table outputs. Old Naledi provides geographic context for a later transfer exercise. Disease transmission, agent behavior and intervention effectiveness are outside this first experiment.

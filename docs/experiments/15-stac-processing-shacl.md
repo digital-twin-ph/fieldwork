@@ -1,5 +1,7 @@
 # STAC processing contracts and SHACL validation
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 6, 2026. Status: ontology, N3 routing examples, executable SHACL Core validation and regression checks. The STAC browser, acquisition adapters and processing dispatcher remain proposed application features.
 
 Fieldwork will offer Generic input and STAC input configurations that supply shared dataset contracts. STAC describes discovery; GADM describes provider conventions. Neither replaces a file format, geometry model or processing operation. This extension makes those distinctions explicit and adds validation to the [jurisdiction asset model](14-gadm-jurisdiction-assets.md).

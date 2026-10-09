@@ -1,5 +1,7 @@
 # 55 · Embedded provenance in exported artifacts
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 **Status:** design record with a recommendation and one refusal. Nothing implemented.
 
 [Experiment 54](54-degrees-of-reproducibility.md) identified the leak: a figure pasted

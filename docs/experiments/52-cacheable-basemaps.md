@@ -1,5 +1,7 @@
 # 52 · Cacheable basemaps: PMTiles and Natural Earth
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 **Status:** design record with measurements, covering two formats for two different
 jobs — PMTiles for interactive navigation, Natural Earth for static figures. Nothing
 implemented. The PMTiles integration cost is explicitly *not* established; the Natural

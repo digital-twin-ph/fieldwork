@@ -1,5 +1,7 @@
 # Developmental evaluation: saving, deleting and identifying pushpins
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 5, 2026. The user reported that entered key/value data did not persist and requested an explicit Save Edits button. They also requested a visible Delete Pin button, an option to generate UUIDs, and clarification of the Category/Notes fields.
 
 ## A33: one explicit persistence action

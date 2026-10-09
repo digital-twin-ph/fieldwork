@@ -1,5 +1,7 @@
 # Experiment 40: reprojection primitives
 
+_Created 2026-10-08 · Updated 2026-10-08_
+
 Date: October 7, 2026. Status: semantic admission review, with the vector slice
 implemented and the raster slice specified but not built. This closes part of the
 gap left by [A24 in the CRS decision record](05-coordinate-reference-systems.md)

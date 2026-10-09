@@ -1,5 +1,7 @@
 # Experiment 29: complete edge pixels with a visible clipping footprint
 
+_Created 2026-10-07 · Updated 2026-10-08_
+
 Date: 2026-10-06. Local developmental prototype, following [Experiment 28](28-raster-preview-and-adjustment.md).
 
 ## Practitioner question

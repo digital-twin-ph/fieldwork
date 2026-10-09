@@ -1,5 +1,7 @@
 # Encrypted project packages
 
+_Created 2026-10-06 · Updated 2026-10-06_
+
 Date: October 6, 2026. Status: design and bounded prototype; not a security certification.
 
 ## A77 Package binaries separately from workflow serialization

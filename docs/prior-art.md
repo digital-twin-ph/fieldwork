@@ -1,5 +1,7 @@
 # Prior art: concepts and tools to adapt and adopt
 
+_Created 2026-10-07 · Updated 2026-10-07_
+
 Date: 2026-10-06. Status: design specification and comparative research notes.
 
 ## Purpose and design position

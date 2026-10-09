@@ -1,5 +1,7 @@
 # Semantic admission and worked-example audit
 
+_Created 2026-10-07 · Updated 2026-10-08_
+
 If the vocabulary below is unfamiliar, start with
 [the glossary](#glossary-the-semantic-vocabulary-used-in-these-documents); the
 terms it defines are used throughout this procedure and the experiment records.

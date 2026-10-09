@@ -10,12 +10,14 @@
     "test": "npm run build && node scripts/test-unit.mjs",
     "test:browser": "playwright test",
     "test:report": "playwright show-report",
-    "check": "npm run build && node scripts/test-unit.mjs && npm run test:browser",
+    "check": "npm run build && npm run validate:docs && node scripts/test-unit.mjs && npm run test:browser",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.workers.json --noEmit",
     "validate:ontology": "node scripts/validate-ontology.mjs",
     "validate:widgets": "node scripts/validate-widgets.mjs",
     "validate:packs": "node scripts/validate-packs.mjs",
-    "validate:parity": "node scripts/validate-parity.mjs"
+    "validate:parity": "node scripts/validate-parity.mjs",
+    "stamp:docs": "node scripts/stamp-docs.mjs --write",
+    "validate:docs": "node scripts/stamp-docs.mjs"
   },
   "engines": {
     "node": ">=22"

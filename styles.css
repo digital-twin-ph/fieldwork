@@ -87,3 +87,16 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 :root[data-theme="dark"] .palette-node>span:last-child{color:var(--text-faint)}
 :root[data-theme="dark"] .eyebrow span{color:var(--text-faint)}
 
+
+/* Widget catalog: a reference table, readable at phone width by scrolling the table alone. */
+#catalog-dialog{max-width:min(72rem,94vw)}
+#catalog-dialog h3{margin:1.25rem 0 .35rem;font-size:.95rem;color:var(--text-muted)}
+.catalog-table{width:100%;border-collapse:collapse;font-size:.82rem;display:block;overflow-x:auto}
+.catalog-table th,.catalog-table td{text-align:left;padding:.3rem .5rem;border-bottom:1px solid var(--border-subtle);white-space:nowrap}
+.catalog-table thead th{color:var(--text-muted);font-weight:600}
+.catalog-table tbody th{font-weight:600}
+.catalog-table code{font-size:.78rem}
+.tag.parity-unchecked{color:var(--text-muted)}
+.tag.parity-agrees{color:var(--accent)}
+.tag.parity-partial{color:var(--warning)}
+.tag.parity-diverges,.tag.parity-unresolved{color:var(--danger)}

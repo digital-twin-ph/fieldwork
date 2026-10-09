@@ -1,6 +1,6 @@
 # STAC processing contracts and SHACL validation
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 6, 2026. Status: ontology, N3 routing examples, executable SHACL Core validation and regression checks. The STAC browser, acquisition adapters and processing dispatcher remain proposed application features.
 

@@ -1,6 +1,6 @@
 # John Snow case study: Voronoi catchment workflow reuse
 
-_Created 2026-10-07 · Updated 2026-10-07_
+_Created 2026-10-07 · Updated 2026-10-08_
 
 Reviewed 2026-10-07. Source inspection only; no notebooks executed or upstream implementations copied into Fieldwork.
 

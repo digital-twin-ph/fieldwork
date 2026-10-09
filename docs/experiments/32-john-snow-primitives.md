@@ -1,6 +1,6 @@
 # Experiment 32: John Snow workflows as shared catchment primitives
 
-_Created 2026-10-07 · Updated 2026-10-07_
+_Created 2026-10-07 · Updated 2026-10-08_
 
 Date: 2026-10-07. Status: local browser prototype. This implements a bounded translation of the two reviewed methods, not a numerically identical notebook replay. Source reviews: [Voronoi](../research/john-snow-voronoi.md), [isochrones](../research/john-snow-isochrones.md). Practitioner steps: [worked-example guide](../examples/john-snow.md).
 

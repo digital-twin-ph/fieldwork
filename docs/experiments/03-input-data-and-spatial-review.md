@@ -1,6 +1,6 @@
 # Developmental evaluation: input data and spatial exception review
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 5, 2026. Continuation of [area computation and resource scope](02-area-computation-and-resource-scope.md). These are design-feedback notes and a bounded functional experiment, not practitioner-effectiveness findings.
 

@@ -1,6 +1,6 @@
 # Communication layer: maps, charts, infographics and dashboards
 
-_Created 2026-10-07 · Updated 2026-10-07_
+_Created 2026-10-07 · Updated 2026-10-08_
 
 Date: October 7, 2026. Status: design specification. This document maps communication products to existing Fieldwork terms and candidate extensions; it does not add widgets, ontology declarations, SHACL shapes, renderers or exporters. It joins the [shared visualization design](16-semantic-visualization-design.md) and [publication-product design](17-workflow-publication-products.md).
 

@@ -1,6 +1,6 @@
 # Developmental evaluation: coordinate reference systems
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 5, 2026. The user asked how geographic nodes should carry a datum, default to WGS84 / EPSG:4326, and later support a Reproject node.
 

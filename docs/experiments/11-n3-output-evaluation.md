@@ -1,6 +1,6 @@
 # Design experiment for evaluating N3 workflow outputs
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 5, 2026. Status: proposed evaluation protocol, grounded in the current prototype and regression tests. Audience: Fieldwork developers, public health practitioners and domain reviewers.
 

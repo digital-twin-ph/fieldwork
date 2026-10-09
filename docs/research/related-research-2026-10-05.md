@@ -1,6 +1,6 @@
 # Notation3 geospatial reasoning for public health
 
-_Created 2026-10-05 · Updated 2026-10-05_
+_Created 2026-10-05 · Updated 2026-10-08_
 
 Research snapshot: 5 October 2026. This initial scoping review supports the repository's purpose: exploring Notation3 (N3) for geospatial reasoning in public health. It includes 15 selected research and technical sources, with older foundations retained where directly relevant.
 

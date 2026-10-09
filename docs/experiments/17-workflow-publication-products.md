@@ -1,6 +1,6 @@
 # Reports, story maps, infographics and dashboards
 
-_Created 2026-10-06 · Updated 2026-10-07_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 6, 2026. Status: future-work design experiment. No publication widgets, templates, export engines or new ontology terms are implemented by this document.
 

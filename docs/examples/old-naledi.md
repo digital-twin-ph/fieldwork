@@ -1,6 +1,6 @@
 # Old Naledi diagnostic access worked example
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 This example translates part of the Gaborone TB modeling pipeline into a visual Fieldwork workflow. It asks how facility evidence and service assumptions change apparent diagnostic access around Old Naledi. It demonstrates spatial computation feeding N3 reasoning and several linked outputs; it does not run the TB simulation.
 

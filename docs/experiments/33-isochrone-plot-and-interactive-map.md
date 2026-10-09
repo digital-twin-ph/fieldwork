@@ -1,6 +1,6 @@
 # Experiment 33: NB04-style isochrone outputs and primitive recognition
 
-_Created 2026-10-07 · Updated 2026-10-07_
+_Created 2026-10-07 · Updated 2026-10-08_
 
 Date: 2026-10-07. Status: local prototype. Extends [experiment 32](32-john-snow-primitives.md).
 

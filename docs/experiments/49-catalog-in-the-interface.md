@@ -259,7 +259,21 @@ A pack browser remains excluded. **A preparation view is now the recommended
 surface**, and it is where the catalog belongs: it is the one moment the
 practitioner is online on purpose, deciding something consequential, with the cost
 of being wrong deferred to a place where it cannot be fixed. Option B, receipt
-provenance, is **implemented**, recorded above. Option C, refusals,
+provenance, is **implemented**, recorded above — and so, as of 2026-10-09, is the practitioner
+half of it: a **widget catalog** in the interface.
+
+The distinction this record drew between a pack browser and provenance is what made that
+buildable. A pack browser was refused because it lists things that cannot be used; the widget
+catalog lists the definitions that **are** running, with the version and release digest a receipt
+cites, the declared ports, and whether an external implementation has independently recomputed
+the widget ([experiment 57](57-parity-evidence.md)). It is opened from beside the node library,
+states the application version and the pack-catalog version and digest, and says plainly that
+nothing is installable and no widget is individually certified. The same identity appears in the
+inspector for the selected node, which is where the question "which definition produced this"
+is actually asked.
+
+Two things it does not do, both deliberate: it shows no admission state for any pack, and it
+offers no way to add one. Option C, refusals,
 remains the open DE question.
 
 The two measured readiness findings above are **defects, not design options**, and

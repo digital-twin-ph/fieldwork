@@ -1,6 +1,6 @@
 # Developmental evaluation: area computation and resource scope
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 5, 2026. Continuation of the [study-area exercise](01-study-area.md). Evidence source: the user's design feedback during prototype development. These notes record requirements and architectural interpretations, not observed practitioner performance or a completed usability study.
 

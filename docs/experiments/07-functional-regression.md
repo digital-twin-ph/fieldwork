@@ -1,6 +1,6 @@
 # Developmental evaluation: preserving the functional baseline
 
-_Created 2026-10-06 · Updated 2026-10-06_
+_Created 2026-10-06 · Updated 2026-10-08_
 
 Date: October 5, 2026. Following the coverage-to-map connector fix, the user requested regression tests to retain the current functional level as the prototype grows.
 

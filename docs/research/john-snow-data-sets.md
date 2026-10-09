@@ -1,6 +1,6 @@
 # John Snow case study: what the surviving data sets can and cannot support
 
-_Created 2026-10-09 · Updated 2026-10-09_
+_Created 2026-10-08 · Updated 2026-10-08_
 
 Reviewed 2026-10-09. Source inspection and direct computation on the files named below. Figures in
 this note were computed here, not copied from the literature, except where a paper is cited.
@@ -16,7 +16,7 @@ specific and worth knowing before designing an exercise around it.
 | --- | --- | --- | --- | --- | --- |
 | `cholera_deaths.csv` (bundled) | a building, with a death count | counts only | WGS84 point | none | **unknown**, per the Chicago compilation |
 | `snow_dates.csv` (bundled) | a day of the outbreak | counts only | none | **date** | Snow 1855, public-domain source |
-| `deaths_nd_by_house` (not bundled) | a **house**, including houses with no deaths | counts, with a denominator of houses | OSGB36 point | none | GPL |
+| `deaths_nd_by_house` (not yet bundled) | a **house**, including houses with no deaths | counts, with a denominator of houses | OSGB36 point | none | GPL, per the documentation |
 | Tobler's 578 "individual deaths" | a death, **displaced** — see below | one row per death | distorted | none | — |
 
 ### What this project bundles
@@ -103,6 +103,35 @@ data set is not distributed with the files above.
 historical record does not assign.** That is fabrication with a citation attached, and this project
 will not do it.
 
+## The licence position, stated accurately
+
+An earlier draft of this note implied that the GPL prevents this project from redistributing
+`deaths_nd_by_house`. That is wrong, and the correction matters because the same reasoning will come
+up for every third-party data set:
+
+- **Using it locally is uncontroversial** and is what produced the table above. The file was
+  downloaded and read; nothing in the licence restricts that.
+- **The GPL permits redistribution** — that is its purpose. What it requires is that the licence and
+  attribution travel with the file and that the source form remains available, which for a CSV is the
+  file itself.
+- **Bundling it would not relicense Fieldwork.** Copyleft reaches works *based on* the licensed work.
+  A data file in its own directory beside unrelated code is mere aggregation, which the GPL
+  explicitly excludes from that reach.
+- **The real constraint is on derived copies.** A version reprojected to WGS84, filtered, or re-keyed
+  is plausibly a modified work, and would have to carry the GPL and be marked as modified. That is a
+  design consequence rather than an obstacle: the file can be bundled verbatim, and a converted form
+  cannot quietly become Apache-2.0.
+
+Two gaps worth closing before bundling. **No licence file ships with the data** — the GPL is asserted
+in a table inside the documentation PDF, and the download contains only `.csv`, `.dbf`, `.shp`,
+`.shx`, `.prj` and `.geojson`. And **the GPL version is not stated**, which matters if the file is
+ever combined with anything rather than aggregated beside it. Both are questions for the publisher
+rather than assumptions for us to make.
+
+Underneath the digitisation, the facts are from the General Board of Health's 1855 map, an HMSO
+publication; the copyrightable contribution is the Center for Spatial Data Science's work of
+digitising it, which is what the licence covers.
+
 ## A technical limit worth recording
 
 `deaths_nd_by_house` is projected in **OSGB 1936 / Airy 1830**, not WGS84. Bringing its points onto a
@@ -117,7 +146,7 @@ was computed.
 | --- | --- |
 | Deaths mapped by building; catchments; nearest-pump allocation | Yes, with the bundled file |
 | Epidemic curve by day or week, by a stated kind of date | Yes, with Snow's Table 1 |
-| Rate per house by distance from the pump, with a denominator | Yes, with the Chicago house file, downloaded by the practitioner |
+| Rate per house by distance from the pump, with a denominator | Yes, with the Chicago house file; redistributable under its licence if bundled with that licence and its attribution |
 | Mortality rate per person | **No** — no population denominator exists |
 | Case-level space-time clustering | **No** — no data set carries both, and the one reconstruction found no pattern |
 

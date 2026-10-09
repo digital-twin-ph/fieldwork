@@ -1,5 +1,6 @@
 import registry from '../widgets/registry.json';
 import parityRecord from '../widgets/parity.json';
+import packCatalog from '../widgets/packs.json';
 import appPackage from '../package.json';
 import {PACK_CATALOG} from './pack-catalog.js';
 import {TYPES} from './core.js';
@@ -55,6 +56,19 @@ export function openCatalogDialog(esc:Escape):void{
       +`<td>${badge(parity?.outcome,!!identity?.stale&&!identity?.parity)}</td></tr>`;
   }).join('');
   const checked=new Set((parityRecord.entries as ParityEntry[]).map(e=>e.widget)).size;
+  type Pack={id:string;name:string;version:string;commit:string;kind:string;repository:string;
+    admission:{status:string;reason:string;reviews:Record<string,{state:string}>};
+    stages:Record<string,string>;files:Record<string,string>;requiredHostCapabilities?:string[]};
+  const packs=(packCatalog.packs as unknown as Pack[]).map(pack=>{
+    const reviews=Object.entries(pack.admission.reviews).map(([name,review])=>`${esc(name)}: ${esc(review.state)}`).join(' · ');
+    const outstanding=pack.requiredHostCapabilities?.length?`Outstanding host capability: ${pack.requiredHostCapabilities.map(esc).join(', ')}.`:'No outstanding host capability.';
+    return `<tr><th scope="row">${esc(pack.name)}</th><td>${esc(pack.version)}</td>`
+      +`<td><code>${esc(pack.commit.slice(0,12))}</code></td><td>${esc(pack.kind)}</td>`
+      +`<td><span class="tag parity-${pack.admission.status==='admitted'?'agrees':'unchecked'}">${esc(pack.admission.status)}</span></td>`
+      +`<td>${reviews}</td></tr>`
+      +`<tr class="pack-detail"><td colspan="6"><p class="muted">${esc(pack.admission.reason)}</p>`
+      +`<p class="muted">${outstanding} ${esc(String(Object.keys(pack.files).length))} files pinned at that commit. Repository: ${esc(pack.repository)}</p></td></tr>`;
+  }).join('');
   dialog.innerHTML=`<h2 id="catalog-title">Widget catalog</h2>
     <p>Every definition in this build, with the version and release digest a run receipt cites. Nothing here is fetched and nothing is installable: these widgets are compiled in.</p>
     <div class="detail-row"><span>Application</span><strong>${esc(appPackage.version)}</strong></div>
@@ -63,6 +77,9 @@ export function openCatalogDialog(esc:Escape):void{
     <div class="detail-row"><span>Independently checked</span><strong>${checked} of ${registry.widgets.length} widgets</strong></div>
     <p class="muted">A release digest identifies the description of a widget, not a certificate: no widget here is individually certified. An independent check means an external implementation recomputed the same result under a stated criterion, recorded in widgets/parity.json.</p>
     ${groups.map(group=>`<h3>${esc(group)}</h3><table class="catalog-table"><thead><tr><th scope="col">Widget</th><th scope="col">Node type</th><th scope="col">Version</th><th scope="col">Digest</th><th scope="col">Ports</th><th scope="col">Independent check</th></tr></thead><tbody>${rows(group)}</tbody></table>`).join('')}
+    <h3>Widget packs</h3>
+    <table class="catalog-table" id="pack-table"><thead><tr><th scope="col">Pack</th><th scope="col">Version</th><th scope="col">Commit</th><th scope="col">Kind</th><th scope="col">Admission</th><th scope="col">Reviews</th></tr></thead><tbody>${packs}</tbody></table>
+    <div class="notice">A pack cannot be added here, and not because this view lacks a button. The application fetches and executes no pack: every widget above is compiled in, which is an admission rule rather than an omission. The sea-level pack is <strong>declaration-only</strong> — it carries vocabulary, shapes, widget contracts and a worked example, and no widget code, so there is nothing in it to run. Making its workflow runnable means implementing those three contracts in the application, as Tabular data was. Admission states shown here are read from this build's catalog; they are recorded decisions, not checks performed by this page.</div>
     <div class="package-actions"><button id="catalog-close" class="button primary">Close</button></div>`;
   document.body.append(dialog);
   dialog.querySelector<HTMLButtonElement>('#catalog-close')!.onclick=()=>dialog.close();

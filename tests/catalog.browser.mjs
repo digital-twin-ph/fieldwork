@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 const registry=JSON.parse(readFileSync(new URL('../widgets/registry.json',import.meta.url),'utf8'));
 const parity=JSON.parse(readFileSync(new URL('../widgets/parity.json',import.meta.url),'utf8'));
 const identity=JSON.parse(readFileSync(new URL('../widgets/pack-catalog.json',import.meta.url),'utf8'));
+const packs=JSON.parse(readFileSync(new URL('../widgets/packs.json',import.meta.url),'utf8'));
 
 test('the widget catalog shows identities, digests and independent checks, and works offline',async({page,context})=>{
   await page.goto('/?example=blank');
@@ -19,7 +20,7 @@ test('the widget catalog shows identities, digests and independent checks, and w
   await expect(dialog).toBeVisible();
 
   // Every compiled definition appears, not only the ones this workspace offers in the palette.
-  await expect(dialog.locator('tbody tr')).toHaveCount(registry.widgets.length);
+  await expect(dialog.locator('tr[data-widget]')).toHaveCount(registry.widgets.length);
   await expect(dialog).toContainText(`${registry.widgets.length} definitions`);
   await expect(dialog).toContainText(`${identity.catalogVersion} ·`);
   await expect(dialog).toContainText(`${identity.catalogDigest.slice(0,12)}`);
@@ -41,6 +42,17 @@ test('the widget catalog shows identities, digests and independent checks, and w
   await expect(dialog).toContainText('nothing is installable');
   await expect(dialog).toContainText('no widget here is individually certified');
 
+  // Packs are listed with their recorded admission state and why they are not admitted, and the
+  // view says plainly that nothing here can be added, with the reason.
+  const pack=packs.packs[0];
+  await expect(dialog.locator('#pack-table')).toContainText(pack.name);
+  await expect(dialog.locator('#pack-table')).toContainText(pack.commit.slice(0,12));
+  await expect(dialog.locator('#pack-table')).toContainText('not-admitted');
+  await expect(dialog.locator('#pack-table')).toContainText('declaration-only');
+  for(const review of Object.keys(pack.admission.reviews))await expect(dialog.locator('#pack-table')).toContainText(review);
+  await expect(dialog).toContainText('A pack cannot be added here');
+  await expect(dialog).toContainText('there is nothing in it to run');
+
   await dialog.locator('#catalog-close').click();
   await expect(dialog).toBeHidden();
 
@@ -55,7 +67,7 @@ test('the widget catalog shows identities, digests and independent checks, and w
   // A link can open it directly, so it can be pointed at rather than described.
   await page.goto('/?example=blank&catalog=1');
   await expect(page.locator('#catalog-dialog')).toBeVisible({timeout:45000});
-  await expect(page.locator('#catalog-dialog tbody tr')).toHaveCount(registry.widgets.length);
+  await expect(page.locator('#catalog-dialog tr[data-widget]')).toHaveCount(registry.widgets.length);
   await page.locator('#catalog-close').click();
 
   // At phone width the header cannot take another control, so the library link is the way in.
@@ -70,6 +82,6 @@ test('the widget catalog shows identities, digests and independent checks, and w
   await page.reload();
   // The deep link is still in the URL, so an offline reload reopens the catalog by itself.
   await expect(page.locator('#catalog-dialog')).toContainText(`${registry.widgets.length} definitions`);
-  await expect(page.locator('#catalog-dialog tbody tr')).toHaveCount(registry.widgets.length);
+  await expect(page.locator('#catalog-dialog tr[data-widget]')).toHaveCount(registry.widgets.length);
   await page.screenshot({path:'test-results/widget-catalog.png',fullPage:true});
 });

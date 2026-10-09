@@ -272,8 +272,21 @@ nothing is installable and no widget is individually certified. The same identit
 inspector for the selected node, which is where the question "which definition produced this"
 is actually asked.
 
-Two things it does not do, both deliberate: it shows no admission state for any pack, and it
-offers no way to add one. Option C, refusals,
+**Revised the same day.** The catalog now does show pack admission state, which this record had
+excluded. The owner's reaction to the first version — "I thought that the catalog will allow me to
+add the sea-level rise widget" — showed the exclusion had the opposite effect from the one
+intended: hiding governance did not prevent an expectation of installability, it left the
+expectation unanswered. The original objection was that a bare `admitted` badge is a trust claim
+the application cannot verify, and that still holds, so the view shows the state **with its
+basis**: the pinned commit, the three review states, the recorded reason, the count of pinned
+files, and an explicit note that these are decisions read from this build's catalog rather than
+checks performed by the page.
+
+It still offers no way to add a pack, and the view now says why rather than being silent: the
+application fetches and executes no pack, and the sea-level pack is declaration-only — vocabulary,
+shapes, widget contracts and a worked example, with `implementation: {files: [], definition: "not
+implemented"}` for all three of its widgets. There is nothing in it to run. A button could not have
+changed that. Option C, refusals,
 remains the open DE question.
 
 The two measured readiness findings above are **defects, not design options**, and

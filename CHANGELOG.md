@@ -5,6 +5,14 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Show widget packs in the catalog, with the admission state, the pinned commit, each required
+  review's state and the recorded reason — labelled as decisions read from this build's catalog
+  rather than checks performed by the page. The view also states why no pack can be added here:
+  nothing is fetched or executed at runtime, and the sea-level pack is declaration-only, carrying
+  no widget code. Experiment 49 had excluded admission state on the grounds that a bare badge is an
+  unverifiable trust claim; showing it with its basis keeps that objection satisfied while
+  answering the question the omission left hanging.
+
 - Show the widget catalog in the application, reachable three ways: **▤ Catalog** in the header,
   **Widget catalog ›** beside the node library, and `?catalog=1` for a direct link. The first
   version had only the library link, at 10px, which was too easy to miss. The header control is

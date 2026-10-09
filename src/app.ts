@@ -109,7 +109,17 @@ function revealResultFor(nodeId:string|null|undefined){
   return true;
 }
 const hiddenMapLayers=new Map<string,Set<string>>();
-function toast(message:string){$('#toast').textContent=message;$('#toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('visible'),5000);}
+function toast(message:string,options?:{action?:{label:string;run:()=>void}}){
+  const element=$('#toast');element.textContent=message;element.classList.add('visible');clearTimeout(toastTimer);
+  if(options?.action){
+    const button=document.createElement('button');button.className='button small';button.textContent=options.action.label;
+    button.style.marginLeft='10px';button.onclick=options.action.run;element.append(button);
+    const dismiss=document.createElement('button');dismiss.className='button small';dismiss.textContent='Later';
+    dismiss.style.marginLeft='6px';dismiss.onclick=()=>element.classList.remove('visible');element.append(dismiss);
+    return;
+  }
+  toastTimer=setTimeout(()=>element.classList.remove('visible'),5000);
+}
 try{const saved=localStorage.getItem(KEY);if(saved)workflow=validateWorkflow(JSON.parse(saved));}catch{toast('Saved workflow could not be loaded. The example is ready.');}
 if(!workflow.nodes.some(n=>n.id===selected))selected=exampleKey(workflow)==='raster'?'raster-input':exampleKey(workflow)==='old-naledi'?'access':workflow.nodes[0]?.id;
 function save(){
@@ -611,7 +621,7 @@ $('#fullscreen-workbench').onclick=()=>setPanelFocus(focusPanel==='workbench'?nu
 $('#fullscreen-results').onclick=()=>setPanelFocus(focusPanel==='results'?null:'results');
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&focusPanel){setPanelFocus(null);event.preventDefault();}});
 installCredentials(document.querySelector<HTMLButtonElement>('#credentials-button')!);
-const showCatalog=()=>{try{openCatalogDialog(esc);}catch(error){toast(errorMessage(error));}};
+const showCatalog=()=>{try{openCatalogDialog(esc,servingBuild);}catch(error){toast(errorMessage(error));}};
 $('#open-catalog').onclick=showCatalog;
 $('#header-catalog').onclick=showCatalog;
 // Deep link, so the catalog can be pointed at rather than described: ?catalog=1 or #catalog.
@@ -628,7 +638,31 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLower
 const requestedExample=new URLSearchParams(location.search).get('example');
 if(requestedExample&&['old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':requestedExample==='raster'?'raster-input':requestedExample==='old-naledi'?'access':'criteria';}
 wireThemeControl();renderLibrary();renderResults();save();render();mountPanelLayout();
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(async()=>{const ok=!!(await caches.match('./vendor/eye-21.1.24.js'));$('#offline-status').innerHTML=ok?'<i></i> Available offline':'<i></i> Offline setup incomplete';}).catch(()=>{$('#offline-status').textContent='Offline cache unavailable';});}else{$('#offline-status').textContent='Offline cache unsupported';}
+export let servingBuild='unknown';
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('message',event=>{
+    const data=event.data as {type?:string;build?:string}|null;
+    if(data?.type==='fieldwork-build'&&data.build){servingBuild=data.build;$('#offline-status').title=`Served by build ${data.build}`;}
+  });
+  const askBuild=()=>navigator.serviceWorker.controller?.postMessage({type:'fieldwork-build'});
+  navigator.serviceWorker.register('./sw.js').then(async registration=>{
+    await navigator.serviceWorker.ready;
+    askBuild();
+    // A page already running old code keeps running it until it is reloaded, and with
+    // content-hashed chunks it can ask for files the new cache no longer holds. So an update is
+    // announced rather than left to be discovered.
+    registration.addEventListener('updatefound',()=>{
+      const installing=registration.installing;
+      installing?.addEventListener('statechange',()=>{
+        if(installing.state==='installed'&&navigator.serviceWorker.controller)
+          toast('A newer version of Fieldwork is ready. Reload to use it.',{action:{label:'Reload',run:()=>location.reload()}});
+      });
+    });
+    const ok=!!(await caches.match('./vendor/eye-21.1.24.js'));
+    $('#offline-status').innerHTML=ok?'<i></i> Available offline':'<i></i> Offline setup incomplete';
+  }).catch(()=>{$('#offline-status').textContent='Offline cache unavailable';});
+  navigator.serviceWorker.addEventListener('controllerchange',askBuild);
+}else{$('#offline-status').textContent='Offline cache unsupported';}
 if(canAutoRun(workflow))setTimeout(run,350);
 
 setInterval(()=>{const button=document.querySelector<HTMLButtonElement>('#download-network'),message=document.querySelector<HTMLElement>('#network-download-status');if(!button||!message)return;const state=networkDownloadStatus();button.disabled=busy||state.inFlight||state.waitSeconds>0;message.textContent=state.inFlight?'One OSM request is in progress.':state.waitSeconds?'Next OSM download available in '+state.waitSeconds+' seconds. Saved graphs are available offline.':'Ready for one bounded OSM request; no automatic refresh.';},1000);

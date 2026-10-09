@@ -7,6 +7,13 @@ const CACHE=__CACHE_VERSION__;
 const ASSETS=__PRECACHE_ASSETS__;
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('fieldwork-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+// The page asks which build is serving it. Answered by the controlling worker, so the answer is
+// the build actually in use rather than the build the page was compiled from — which is the whole
+// point when a stale cache is the thing under suspicion.
+self.addEventListener('message',event=>{
+  if((event.data as {type?:string}|null)?.type!=='fieldwork-build')return;
+  (event.source as Client|null)?.postMessage({type:'fieldwork-build',build:CACHE});
+});
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;
   event.respondWith(caches.match(event.request,{ignoreSearch:event.request.mode==='navigate'}).then(hit=>hit||fetch(event.request)));

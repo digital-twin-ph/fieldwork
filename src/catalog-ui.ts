@@ -48,7 +48,7 @@ export function identityMarkup(nodeType:string,esc:Escape):string{
     +'<p class="muted">Compiled into this build. No widget is fetched at runtime.</p>';
 }
 
-export function openCatalogDialog(esc:Escape):void{
+export function openCatalogDialog(esc:Escape,servingBuild='unknown'):void{
   document.getElementById('catalog-dialog')?.remove();
   const dialog=document.createElement('dialog');dialog.id='catalog-dialog';dialog.setAttribute('aria-labelledby','catalog-title');
   const groups=['Sources','Spatial operations','Semantic reasoning','Summaries','Outputs'];
@@ -81,10 +81,12 @@ export function openCatalogDialog(esc:Escape):void{
   dialog.innerHTML=`<h2 id="catalog-title">Widget catalog</h2>
     <p>Every definition in this build, with the version and release digest a run receipt cites. Nothing here is fetched and nothing is installable: these widgets are compiled in.</p>
     <div class="detail-row"><span>Application</span><strong>${esc(appPackage.version)}</strong></div>
+    <div class="detail-row"><span>Serving this page</span><strong id="catalog-build">${esc(servingBuild)}</strong></div>
     <div class="detail-row"><span>Widgets</span><strong>${registry.widgets.length} definitions · ${registry.widgets.reduce((n,w)=>n+w.releases.length,0)} releases</strong></div>
     <div class="detail-row"><span>Standard and domain</span><strong>${classification.standardCount} standard, applying to any domain · ${classification.domainCount} belonging to a pack's domain</strong></div>
     <div class="detail-row"><span>Pack catalog</span><strong>${esc(PACK_CATALOG.version)} · <code>${esc(PACK_CATALOG.digest.slice(0,12))}</code></strong></div>
     <div class="detail-row"><span>Independently checked</span><strong>${checked} of ${registry.widgets.length} widgets</strong></div>
+    <p class="muted">"Serving this page" is the build the offline cache is answering from, reported by the service worker itself rather than by this page. If it differs from a freshly loaded copy, this tab is running an older build and a reload will replace it.</p>
     <p class="muted">Standard widgets are the components that ship with the application and apply to any domain. A domain widget belongs to a pack's domain and maps to that pack's vocabulary; the distinction is derived from those mappings, not declared, so one cannot be filed as the other by accident.</p>
     <p class="muted">A release digest identifies the description of a widget, not a certificate: no widget here is individually certified. An independent check means an external implementation recomputed the same result under a stated criterion, recorded in widgets/parity.json.</p>
     ${groups.map(group=>`<h3>${esc(group)}</h3><table class="catalog-table"><thead><tr><th scope="col">Widget</th><th scope="col">Node type</th><th scope="col">Version</th><th scope="col">Digest</th><th scope="col">Ports</th><th scope="col">Kind</th><th scope="col">Independent check</th></tr></thead><tbody>${rows(group)}</tbody></table>`).join('')}

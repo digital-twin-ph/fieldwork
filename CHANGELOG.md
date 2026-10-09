@@ -5,6 +5,15 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Make the running build identifiable, and announce updates. The service worker answers from its cache
+  first and never revalidates, so a tab keeps running old code until it is reloaded — which meant a
+  feature could be deployed, verified and still absent for the person looking at it, with no way to
+  distinguish that from a defect. The controlling worker now reports its own build identity, shown in
+  the catalog as **Serving this page**, and an installed update raises a notice with a **Reload**
+  action that stays until it is used or dismissed. The identity comes from the worker rather than from
+  the page, so it names the build actually answering. This also protects against a subtler failure: an
+  old page can request content-hashed chunks that the new cache no longer holds.
+
 - Link the canvas to the Results panel: selecting an output node opens that node's result tab and
   marks it, so the two panels agree about what is being looked at. A node that produced two tabs, as a
   coverage check does, keeps whichever of its own is already open rather than jumping between them,

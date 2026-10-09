@@ -40,6 +40,11 @@ test('the widget catalog shows identities, digests and independent checks, and w
   const checked=new Set(parity.entries.map(e=>e.widget)).size;
   await expect(dialog).toContainText(`${checked} of ${registry.widgets.length} widgets`);
   // The catalog must not imply anything is installable or certified.
+  // The build actually serving the page, reported by the service worker rather than by the page,
+  // so a stale cache can be told apart from a missing feature.
+  const build=readFileSync(new URL('../sw.js',import.meta.url),'utf8').match(/"(fieldwork-ts-[0-9a-f]+)"/)[1];
+  await expect(dialog.locator('#catalog-build')).toHaveText(build,{timeout:45000});
+  await expect(dialog).toContainText('running an older build');
   await expect(dialog).toContainText('nothing is installable');
   await expect(dialog).toContainText('no widget here is individually certified');
 

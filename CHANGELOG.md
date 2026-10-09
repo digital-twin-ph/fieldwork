@@ -5,7 +5,12 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
-- Show the widget catalog in the application. **Catalog**, beside the node library, lists every
+- Show the widget catalog in the application, reachable three ways: **▤ Catalog** in the header,
+  **Widget catalog ›** beside the node library, and `?catalog=1` for a direct link. The first
+  version had only the library link, at 10px, which was too easy to miss. The header control is
+  hidden below 850px because the header measures 395px wide with it at a 390px viewport and 390px
+  without, even reduced to its icon, so phone width keeps the labelled library entry instead. The
+  dialog, beside the node library, lists every
   compiled definition with its version, release digest, declared ports and independent-check
   outcome, together with the application version, the pack-catalog version and digest, and how
   many widgets have parity evidence. The inspector shows the same identity for the selected node,

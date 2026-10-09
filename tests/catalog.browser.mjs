@@ -9,8 +9,13 @@ test('the widget catalog shows identities, digests and independent checks, and w
   await page.goto('/?example=blank');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
 
-  await page.locator('#open-catalog').click();
+  // Two entry points on a desktop width: the header control and the node library link.
+  await expect(page.locator('#header-catalog')).toBeVisible();
+  await page.locator('#header-catalog').click();
   const dialog=page.locator('#catalog-dialog');
+  await expect(dialog).toBeVisible();
+  await dialog.locator('#catalog-close').click();
+  await page.locator('#open-catalog').click();
   await expect(dialog).toBeVisible();
 
   // Every compiled definition appears, not only the ones this workspace offers in the palette.
@@ -47,10 +52,24 @@ test('the widget catalog shows identities, digests and independent checks, and w
   await page.locator('.inspector details', {hasText:'What was checked'}).first().click();
   await expect(page.locator('.inspector')).toContainText('maximum separation');
 
+  // A link can open it directly, so it can be pointed at rather than described.
+  await page.goto('/?example=blank&catalog=1');
+  await expect(page.locator('#catalog-dialog')).toBeVisible({timeout:45000});
+  await expect(page.locator('#catalog-dialog tbody tr')).toHaveCount(registry.widgets.length);
+  await page.locator('#catalog-close').click();
+
+  // At phone width the header cannot take another control, so the library link is the way in.
+  await page.setViewportSize({width:390,height:844});
+  await expect(page.locator('#header-catalog')).toBeHidden();
+  await expect(page.locator('#open-catalog')).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
+  await page.setViewportSize({width:1600,height:1100});
+
   await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
   await context.setOffline(true);
   await page.reload();
-  await page.locator('#open-catalog').click();
+  // The deep link is still in the URL, so an offline reload reopens the catalog by itself.
   await expect(page.locator('#catalog-dialog')).toContainText(`${registry.widgets.length} definitions`);
+  await expect(page.locator('#catalog-dialog tbody tr')).toHaveCount(registry.widgets.length);
   await page.screenshot({path:'test-results/widget-catalog.png',fullPage:true});
 });

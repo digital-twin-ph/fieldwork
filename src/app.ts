@@ -528,7 +528,11 @@ $('#fullscreen-workbench').onclick=()=>setPanelFocus(focusPanel==='workbench'?nu
 $('#fullscreen-results').onclick=()=>setPanelFocus(focusPanel==='results'?null:'results');
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&focusPanel){setPanelFocus(null);event.preventDefault();}});
 installCredentials(document.querySelector<HTMLButtonElement>('#credentials-button')!);
-$('#open-catalog').onclick=()=>{try{openCatalogDialog(esc);}catch(error){toast(errorMessage(error));}};
+const showCatalog=()=>{try{openCatalogDialog(esc);}catch(error){toast(errorMessage(error));}};
+$('#open-catalog').onclick=showCatalog;
+$('#header-catalog').onclick=showCatalog;
+// Deep link, so the catalog can be pointed at rather than described: ?catalog=1 or #catalog.
+if(new URLSearchParams(location.search).get('catalog')==='1'||location.hash==='#catalog')showCatalog();
 $('#encrypted-export').onclick=()=>{try{openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow);}catch(error){toast(errorMessage(error));}};
 function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
 $('#export-button').onclick=async()=>{try{const exported=await workflowDocument(workflow);download(exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json':'fieldwork-workflow.json',JSON.stringify(exported,null,2));}catch(error){toast(errorMessage(error));}};$('#import-button').onclick=()=>$('#workflow-file').click();

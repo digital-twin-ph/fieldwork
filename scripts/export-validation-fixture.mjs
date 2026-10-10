@@ -4,7 +4,7 @@
 //
 // Usage: node scripts/export-validation-fixture.mjs <fixtureId> <outputDir>
 //        fixtureId: reproject-utm35s-001 | clip-all-touched-001 | measure-area-001 | mean-center-001
-//                   | reachability-soho-001
+//                   | reachability-soho-001 | corridor-soho-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84} from '../build/reproject.js';
@@ -14,6 +14,8 @@ import {computeMeanCenter} from '../build/mean-center.js';
 import {snapToNetwork} from '../build/network-snap.js';
 import {reachableNodes} from '../build/reachable-nodes.js';
 import {johnSnowExample} from '../build/john-snow.js';
+import {travelTimeBand} from '../build/travel-time-band.js';
+import {reachableCorridor} from '../build/reachable-corridor.js';
 
 const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -26,6 +28,44 @@ const base=(id,nodeType,label,implementation)=>({
 });
 
 const builders={
+  'corridor-soho-001'(){
+    // The five minute band's corridor. Edge geometry travels because the reference has to
+    // walk the same streets: a corridor cannot be recomputed from endpoints, since these
+    // streets curve and the buffer follows the curve.
+    const example=johnSnowExample('snow-isochrone');
+    const network=example.nodes.find(n=>n.type==='network_input').params.data;
+    const pumps=example.nodes.find(n=>n.id==='pumps').params.data;
+    const minutes=5,speedMPerMin=75,bufferM=25,direction='outbound';
+    const snapped=snapToNetwork(pumps,network,{id:'snap',type:'snap_to_network',x:0,y:0,
+      params:{label:'Snap to street network',zone:30,hemisphere:'north',maxSnapM:100}},'fixture','pumps');
+    const reached=reachableNodes(snapped.value,network,{id:'reach',type:'reachable_nodes',x:0,y:0,
+      params:{label:'Reachable junctions',minutes:15,speedMPerMin,direction,travelMode:'walking'}},'fixture','snap');
+    const banded=travelTimeBand(reached.value,{id:'band',type:'travel_time_band',x:0,y:0,
+      params:{label:`Within ${minutes} minutes`,minutes}},'fixture','reach');
+    const corridor=reachableCorridor(banded.value,network,{id:'corridor',type:'reachable_corridor',x:0,y:0,
+      params:{label:'Reachable corridor',bufferM,zone:30,hemisphere:'north'}},'fixture','band');
+    return {fixture:{
+      ...base('corridor-soho-001','reachable_corridor','Reachable corridor','src/reachable-corridor.ts#reachableCorridor'),
+      declaredParameters:{
+        bufferM,quadrantSegments:8,direction,metricCRS:'EPSG:32630',
+        truncationRule:'For each directed edge leaving a reached junction, take the first remainingM / lengthM of its length from that junction, dropping edges where nothing is left. Buffer the collected lines by bufferM and union them.',
+        bufferProjection:'Turf/JSTS local azimuthal equidistant, 8 segments per quadrant',
+        method:corridor.receipt.method,
+        semantics:'A corridor is the ground within bufferM of a street a traveller can enter within the budget. Interior holes are retained. The half-width is a claim that anywhere within it is reached.'
+      },
+      input:{
+        network:{source:network.source,
+          nodes:network.nodes.map(n=>({id:n.id,coordinates:n.coordinates})),
+          edges:network.edges.map(e=>({from:e.from,to:e.to,lengthM:e.lengthM,
+            ...(e.geometry?{geometry:e.geometry}:{})}))},
+        reached:banded.value.features.map(f=>({networkNodeId:f.properties.networkNodeId,
+          travelMetres:f.properties.travelMetres,remainingM:f.properties.remainingM}))
+      },
+      output:{corridor:corridor.value.features[0].geometry,
+        enteredSegmentCount:Number(/fw:enteredSegmentCount (\d+)/.exec(corridor.receipt.facts)[1]),
+        partialSegmentCount:Number(/fw:partialSegmentCount (\d+)/.exec(corridor.receipt.facts)[1])}
+    },files:{}};
+  },
   'reachability-soho-001'(){
     // The Soho network the John Snow example ships, at its own parameters. The network
     // travels in the fixture because the reference has to traverse it: a reachable set

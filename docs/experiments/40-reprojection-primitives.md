@@ -70,6 +70,55 @@ CRS84 collection, exactly as `network_input` stores its normalized graph and
 `raster_input` stores its retained window. Execution is then a deterministic
 pass-through that replays offline.
 
+## Why it only goes one way, and what that costs
+
+_Added 2026-10-10, after a practitioner observed that reprojection is useful in
+more than one direction and to more than one projection._
+
+The widget converts WGS84 UTM easting/northing to CRS84 longitude/latitude, at
+import, and nothing else. It cannot take a layer already in the workflow, it
+cannot produce a projected layer, and it cannot go from one UTM zone to another.
+
+The obstacle is not the widget. It is the type a layer uses to say where it is:
+
+```ts
+export interface SpatialReference {
+  datum:'WGS84'; geodeticCRS:'EPSG:4326'; geometryCRS:'OGC:CRS84';
+  axisOrder:'longitude-latitude'; units:'degree'
+}
+```
+
+Every field is a fixed literal, so **a layer cannot state that it is in anything
+but CRS84**. Reprojection can therefore only happen at the edge, on the way in,
+or temporarily inside a widget that projects, computes and projects back.
+
+That has a measurable cost. **Five widgets each ask the practitioner for a UTM
+zone** — `mean_center`, `compare_point_sets`, `reproject`, `voronoi`,
+`isochrone` — and `catchments.ts` keeps its own `metric(zone, hemisphere)`
+helper. The same question is asked five times because the data cannot answer it.
+
+This is the first time **D5** has fired: *does each qualifier live on the input
+rather than in each consumer?* The coordinate system is a property of the layer,
+and it is being carried as a parameter on every consumer instead. Recorded in
+[the rule audit](../audits/rule-audit.md), which had listed D5 as never applied.
+
+What a fix needs, in order:
+
+1. **A spatial reference that can describe more than one CRS.** Until the type can
+   say "UTM zone 51N, metres", no layer can be in it. This is a carrier change and
+   belongs with the port work in
+   [66](66-ports-as-schema-binding.md).
+2. **Reprojection as a process widget**, taking a layer and a target CRS and
+   producing a layer. Today's stage vocabulary puts it in Compute, not Input; the
+   current widget sits in Sources because it imports a file, which conflates two
+   stages in one node.
+3. **Metric widgets reading the CRS they are given**, and refusing a layer whose
+   units are degrees rather than silently assuming a zone.
+
+Not started. Two limits stay true whatever is built: a datum shift still needs a
+grid this prototype does not carry, and a clean conversion still does not confirm
+the declared zone was the right one.
+
 ## Validation evidence and its limits
 
 The unit checks assert **definitional invariants of the projection**, which are

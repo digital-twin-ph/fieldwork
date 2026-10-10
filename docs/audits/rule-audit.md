@@ -69,30 +69,64 @@ human sat down once and worked through 42 widgets.
 
 Prefer to mechanise. If a rule cannot be mechanised, say so and say why.
 
+## In vitro is not enforcement
+
+A rule can fire **in vitro** — inside the audit that proposed it — and enforce
+nothing. The firing looks like evidence and is not.
+
+Checked 2026-10-10, against the registry rather than from memory:
+
+| Rule | Findings | Changed |
+| --- | --- | --- |
+| Widget naming convention | 9 names | **0.** `xpert`, `policy`, `access_policy`, `access`, `alert`, `places`, `centers`, `facilities`, `nearest`, `output` are all still there |
+| D2, duplicate operations | 3 nearest-neighbour implementations | **0.** All three still in the registry |
+| D3, unenforced distinctions | 1, in a sample of 1 | 0 |
+| D5, qualifiers on consumers | 1, today | 0 |
+
+So the best-evidenced rule added this session is also the least enforced. It
+produced a table and the table produced nothing.
+
+What did enforce has one thing in common:
+
+| Rule | How it enforces | Result |
+| --- | --- | --- |
+| A widget nobody can add is invisible | code and two tests | 7 widgets made addable |
+| Only registry widgets in a workflow | `core.ts`, every load | every workflow, always |
+| Node 22 | the build fails | one diagnosis, permanently |
+| An exclusion counts only when the thing was possible | prose, applied by a person | the pack was corrected |
+
+**Mechanised rules enforce. Prose rules describe.** The exception proves it: the
+exclusion rule is prose and it did cause a correction, because a person applied
+it to a specific claim. One application by one person is not enforcement either —
+it is a good day.
+
 ## The rules
 
-| Rule | Source | Reviewed | Has it fired? | Status |
-| --- | --- | --- | --- | --- |
-| Widget naming convention | Human asked, agent drafted | Seen | **Yes, 9 times.** Across 39 widgets: one defect (`xpert`), eight names that would not be chosen today. *Design* | Earning its place |
-| An exclusion counts only when the thing was possible | Human | Directed | **Yes, once.** Caught the sea-level pack calling a decision an impossibility, 2026-10-10. *Evaluation* | Earning its place |
-| A widget nobody can add is invisible | Agent, mechanised | Seen | **Yes, 7 times.** Mechanised, so it keeps reporting. *Implementation* | Earning its place |
-| D2: does the operation already exist under another name? | Agent | Seen | **Yes.** Found two superseded duplicates and a near-duplicate. *Design* | Earning its place |
-| D10: does an example instantiate it? | Agent, mechanised | Seen | **Yes**, it reported three undemonstrated widgets. But it answers "has this been shown composing", not "was this necessary", and it was read as the second | Keep as **information**. **Do not make it a gate** — as a gate this week it would have blocked three widgets, two of which belong in increments not yet built |
-| D3: is every distinction enforced? | Agent | Seen | **Yes, once**, in a sample of one. *Design* | Provisional; needs a full pass |
-| D7: does the name state what was done? | Agent | Seen | **Yes, twice.** `xpert`, and `raster_input` titled "Acquire". *Design* | Earning its place |
-| Node 22 is required | Human | Directed | **Yes, once.** A build failure read as a broken dependency. *Development* | Earning its place. A fact, not a judgement |
-| Status lines and counts must be true of today | Agent | None | **Yes, once.** Experiment 47's stale header. *Evaluation* | Provisional |
-| Preserve the dated record; supersede rather than rewrite | Agent | Seen | **Yes, twice.** Experiment 47, then its 2026-10-10 correction. *Evaluation* | Earning its place |
-| Name enforcement as one of five kinds; do not say "refusal" | Human | Directed | Not yet, as a check. It did make the widget audit possible to write. *Design* | Provisional |
-| Do not report work as "validated" without naming the check | Agent | Seen | Not recorded | Provisional |
-| Write the experiment before adding a new primitive | Agent | None | Not as a catch. Followed 5 times, missed twice, in the session it was written | Provisional; narrowed to new primitives. **Binds** — it slows every primitive, and has caught nothing yet |
-| Do not treat `proposed` or `blocked` as a defect to fix | Agent | Seen | Not yet. The episode that prompted it came first | Provisional; no way yet to tell a real blocker from a recorded state |
-| **D5** | Agent | None | **Yes, once, 2026-10-10.** The coordinate system is a property of a layer and is carried as a parameter on five consumers instead, because `SpatialReference` admits only CRS84 ([40](../experiments/40-reprojection-primitives.md)) | Provisional, but it has now caught something |
-| D6, D8, D9 | Agent | None | **Never applied.** Written after all 42 widgets existed | Proposals, not gates |
-| Never let a passing suite stand in for practitioner understanding | Agent | None | Never | **Withdrawn.** Nothing to apply |
-| D9: a worked example's node count must not increase | Agent | None | Never | **Withdrawn.** The threshold was asserted, not measured |
-| "This project's *characteristic* defect" | Agent | None | Never counted | **Rewritten** to name the one instance on record |
-| A script that both prepares and checks data checks nothing | Agent | None | Never. It was wrong | **Withdrawn 2026-10-10** |
+**Fired** means it caught something. **Enforced** means something changed or was
+prevented. The gap between those columns is the finding.
+
+| Rule | Source | Reviewed | Fired | Enforced | Status |
+| --- | --- | --- | --- | --- | --- |
+| A widget nobody can add is invisible | Agent, mechanised | Seen | 7 | **7** | Earning its place |
+| Only registry widgets in a workflow | Agent, mechanised | Seen | every load | **every load** | Earning its place |
+| Node 22 is required | Human | Directed | 1 | **1** | Earning its place. A fact, not a judgement |
+| An exclusion counts only when the thing was possible | Human | Directed | 1 | **1** | Earning its place. Enforced by a person, not by code |
+| Preserve the dated record; supersede rather than rewrite | Agent | Seen | 2 | 2 | Earning its place |
+| Widget naming convention | Human asked, agent drafted | Seen | 9 | **0** | **Describes, does not govern.** Either mechanise the check or stop counting the findings as firings |
+| D2, does the operation already exist under another name? | Agent | Seen | 3 | **0** | Same. All three duplicates remain |
+| D7, does the name state what was done? | Agent | Seen | 2 | 1 | One title corrected, one name untouched |
+| D3, is every distinction enforced? | Agent | Seen | 1 | 0 | Provisional; needs a full pass |
+| D5, do qualifiers live on the input? | Agent | None | 1 | 0 | Fired today, in a document |
+| Status lines must be true of today | Agent | None | 1 | 1 | Provisional |
+| Name enforcement as one of five kinds | Human | Directed | 0 | 0 | Provisional. It made the audit writable, which is not the same |
+| Do not report work as "validated" without naming the check | Agent | Seen | 0 | 0 | Provisional |
+| D10, does an example instantiate it? | Agent, mechanised | Seen | 3 | 1 | Keep as **information**. **Not a gate** — this week it would have blocked three widgets |
+| Write the experiment before adding a new primitive | Agent | None | 0 | 0 | **Binds** and has caught nothing. Narrowed to new primitives |
+| Do not treat `proposed` or `blocked` as a defect | Agent | Seen | 0 | 0 | Provisional |
+| D6, D8, D9 | Agent | None | **never applied** | 0 | Proposals, not gates |
+| Never let a passing suite stand in for practitioner understanding | Agent | None | 0 | 0 | **Withdrawn** |
+| D9, a worked example's node count must not increase | Agent | None | 0 | 0 | **Withdrawn.** Would have blocked a worked example |
+| A script that both prepares and checks data checks nothing | Agent | None | 0 | 0 | **Withdrawn 2026-10-10.** It was wrong |
 
 ## The withdrawn one worth reading
 

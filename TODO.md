@@ -286,6 +286,45 @@ Philippines. The node correctly demanded a study area; supplying one was the pro
   around it assumes Gaborone. This is the same finding as the widget audit's example nodes, in the
   map rather than the palette: one demonstration's content presenting itself as the general case.
 
+## Three widgets built 2026-10-09, none demonstrated
+
+`npm run usage:widgets` after adding the Manila example:
+
+```
+never instantiated by any example (7):
+  buffer_point, centers, find_health_facilities, places, rate, reproject, sample_raster
+```
+
+The first, third and seventh were built that day. D1 passed for each — experiments
+67 and 68 argued the admission before the code, as the rule requires. **D10 fails
+for all three**, and the reasons differ.
+
+- **`sample_raster`** has no consumer anywhere. It was called "real blocker #1"
+  for reading elevation at facilities, and elevation is increment 2 of the
+  sea-level example, which is not built. It should be demonstrated there or not
+  kept.
+- **`buffer_point`** derives a study area from a named point in a layer. The
+  study-area editor gained a hand-drawn circle tool the same day. The two are not
+  duplicates — one is derived from data and reproducible, the other is drawn, and
+  the project already distinguishes drawn from derived areas — but the derived
+  one has never been used, so the distinction is asserted rather than shown.
+  Increment 2 would use it: a study area from the Manila gauge rather than a
+  hand-drawn box.
+- **`find_health_facilities`** is the awkward one, and it is not a scheduling
+  problem. **A retrieval widget cannot be demonstrated by a bundled example**,
+  because a bundled example must run offline with no account. The example ships
+  60 facilities as `observations` and says the widget retrieves the same data
+  live. So the widget's own motivating use case deliberately avoids it.
+
+That last one needs a decision, not a task. Either a worked example may require a
+network and is labelled as such, or retrieval widgets are demonstrated some other
+way and D10 does not apply to them. Choosing neither leaves a widget nobody has
+seen work inside a workflow.
+
+Also fixed: `scripts/widget-coverage.mjs` did not know about the Manila example,
+so D10's mechanised check was under-reporting. A check that silently misses an
+example is worse than no check for the widgets inside it.
+
 ## Gap: spatial statistics
 
 Named 2026-10-10 while decomposing the process stages. The studio computes the

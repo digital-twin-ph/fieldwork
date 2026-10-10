@@ -47,7 +47,7 @@ Decided: pack repositories are **owned, governed and curated by this project**
 rather than accepted from arbitrary authors. That is the primary risk control,
 and it is a real one — it removes the open-ecosystem problem of code arriving
 from strangers, and it makes the admission review in
-[the audit procedure](../ontology-audit.md) enforceable, because a pack cannot
+[the audit procedure](../audits/ontology-audit.md) enforceable, because a pack cannot
 reach a practitioner without passing through a review this project performs.
 
 It should be recorded precisely, because curation addresses the **trust** model
@@ -283,7 +283,7 @@ is a precondition for admitting packs from anyone outside this repository, not a
 later refinement.
 
 Admission for a pack is the existing
-[semantic admission review](../ontology-audit.md) applied to a group rather than
+[semantic admission review](../audits/ontology-audit.md) applied to a group rather than
 to a single primitive. A pack must:
 
 1. Mint terms **only** in its own namespace. `urn:fieldwork:` is not for packs.

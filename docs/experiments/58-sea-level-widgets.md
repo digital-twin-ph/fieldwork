@@ -65,6 +65,13 @@ carry sites, and the disjointness axiom that makes tables honest is what forbids
 
 ## Decision 3 — the comparison's refusals are implemented as refusals
 
+> **Revised by [experiment 62](62-workflow-traversal.md), 2026-10-09.** Requiring that a vertical
+> datum be *stated* does not make the comparison interpretable. A projected change and a supplied
+> elevation are commensurable only when the elevation is referenced to the projection's own baseline
+> sea surface; the implemented field is free text and checked only for non-emptiness, and the unit
+> fixtures satisfy the condition implicitly, so the suite cannot see a mismatch. The refusal belongs
+> on the input as an enumerated vertical reference, following [experiment 61](61-input-dimensions.md).
+
 The threshold comparison will not run unless:
 
 - a **vertical datum** is stated by the practitioner, because a comparison of a projected change

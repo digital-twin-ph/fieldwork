@@ -76,4 +76,4 @@ Practitioner evaluation should ask users to explain the difference between a sel
 
 ## Related projects
 
-See [Prior art: concepts and tools to adapt and adopt](../prior-art.md) for openEO, QGIS Processing Modeler, Geo Engine and APE, their architectural fit and proposed adoption experiments.
+See [Prior art: concepts and tools to adapt and adopt](../research/prior-art.md) for openEO, QGIS Processing Modeler, Geo Engine and APE, their architectural fit and proposed adoption experiments.

@@ -26,7 +26,7 @@ does not describe embedding it in a host application.
 Fieldwork is React 19 with `@xyflow/react`, bundled by esbuild into one offline
 PWA. Embedding STAC Browser would add a second framework, router and CSS
 baseline to that bundle and to the service-worker asset manifest. The
-[prior-art disposition](../prior-art.md) for the openEO Web Editor applies
+[prior-art disposition](../research/prior-art.md) for the openEO Web Editor applies
 unchanged: inspect its interaction patterns, do not replace the canvas.
 
 | Option | Disposition | Reason |
@@ -189,7 +189,7 @@ an incidental part of a STAC adapter.
 Because these declarations are machine-readable, the widget can refuse
 precisely: name the required scheme and the unsupported URI scheme instead of
 failing opaquely. A refusal that explains which condition failed is the stated
-goal of the compatibility contract in [prior art](../prior-art.md).
+goal of the compatibility contract in [prior art](../research/prior-art.md).
 
 **WorldPop.** The hub REST API returns direct file URLs; no STAC endpoint
 surfaced for it, and this slice should not assume one exists. The file the Old

@@ -56,6 +56,12 @@ application could reason over.
 > aggregated, as an ordinary attribute — so the dimensions are already in the input and what is absent
 > is a way to declare which column means what. That is a declaration on existing inputs, not a new type.
 
+> **Corrected by [experiment 62](62-workflow-traversal.md), 2026-10-09.** The Place row above reads
+> "built out". That holds for the horizontal dimension only. There is no vertical datum concept in
+> `src/`, and no primitive samples a raster at a point, so the place axis has two gaps that a
+> port-type inventory cannot report. Person and time remain the missing axes; place is not yet a
+> finished substrate for them.
+
 Because `PortType` is a closed union compiled into the application, adding a port type would be base work
 rather than pack work — which is exactly the engine
 [experiment 59](59-pattern-for-engineered-knowledge.md) described: a domain exercise reveals a missing

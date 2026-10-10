@@ -105,20 +105,66 @@ Five things, in the order they would have to be settled. None is written.
    Copernicus. Discovery would make the obstruction legible and early instead of
    opaque and late, which is worth something — but it is not access.
 
-## What has to be measured before any of it
+## Measured, 2026-10-10
 
-Each is a precondition, and none is measured:
+The preconditions this section listed as unmeasured were then measured against
+all 45 public STAC APIs in the STAC Index directory. Full results and method in
+[the catalog survey](../research/stac-catalog-survey-2026-10-10.md); the
+findings that change this note:
 
-| Question | Why it decides the matter |
-| --- | --- |
-| Does the STAC Index API send permissive CORS headers? | The catalog directory depends on it. Inferred from the browser's design; unverified here |
-| Which catalogs in that directory actually permit a browser origin? | The directory records `access: public`, which is about **data licensing, not CORS**. Conflating the two would ship a chooser full of endpoints that cannot be reached |
-| Is there any catalog whose assets clear **all four** gates at once — permissive CORS, no authentication, EPSG:4326, honoured `Range`? | 39 measured two candidates and found none. If the answer across the directory is still none, a discovery widget is decorative: it would browse to things Fieldwork cannot read |
+**Metadata is not the problem.** 40 of 45 catalogs send
+`Access-Control-Allow-Origin`, 33 answer `/collections` with `200`, and **none
+returns `401`**. The STAC Index API itself sends `*`, so a catalog directory can
+be refreshed from the browser — the question marked "inferred, unverified" above
+is answered yes.
 
-That last question is the one worth spending effort on, and it can be answered
-by measurement in the Validation Lab against the bundled catalog snapshot,
-before any Fieldwork code is written. It is also the honest order: find out
-whether anything is reachable before building a way to reach it.
+**A header being present is not the test.** The USGS Landsat API returns
+`access-control-allow-origin: https://landsatlook.usgs.gov/...` — a fixed origin
+that is not the caller's, which a browser rejects. Five others send nothing at
+all, including **both of Thailand's GISTDA catalogs**, the regionally nearest
+resources in the directory.
+
+**The four-gate question has an answer, and it is not "none".** Sentinel-2 C1
+L2A through Earth Search returns **`206` with `access-control-allow-origin: *`
+and an honoured `Range`** from its AWS S3 host. So a discovery widget is not
+decorative. One qualification: that response exposes no
+`Access-Control-Expose-Headers`, so JavaScript can read the bytes but not
+`Content-Range` or `Content-Length`, which a size-discovering reader needs
+another route to.
+
+**WorldPop is the split, exactly.** Its STAC API sends `*` and lists 248
+collections, mostly `CC-BY-4.0`; its assets send no CORS header and ignore
+`Range`, unchanged since 39 measured them. A practitioner can search it from
+Fieldwork and cannot download from it.
+
+**Credentials are not a discovery problem.** No catalog needed one. The
+credential manager's static-secret-per-origin model fits an API key and does not
+fit OIDC or request signing, so where assets are gated by authentication it
+cannot help — which is 39's conclusion, now known to be the general case rather
+than one catalog's.
+
+**Licensing cannot be gated automatically.** Across 2,763 collections, 969 say
+`proprietary`, which in STAC means "not a listed SPDX identifier" rather than
+"closed" — Earth Search labels openly licensed Sentinel-2 that way. About 250
+more say `other`, `Unknown`, `various` or nothing, four spellings of CC-BY-4.0
+appear, and fourteen put a URL where an identifier belongs. 53 collections carry
+non-commercial terms and 35 are share-alike, which bind **redistribution** — a
+bundled example or a cached download inside a saved workflow — not the
+Apache-2.0 tool.
+
+### What this does to the design
+
+The four classes in the survey replace the single question this note opened
+with. Automatic acquisition is possible and narrow; discovery-then-manual-
+download is the normal path for most of what a Philippine public-health workflow
+would want; and some catalogs cannot be listed at all.
+
+So a discovery widget earns its place by **refusing precisely**: naming the
+asset, its licence and the reason it cannot be fetched, and telling the
+practitioner to download it and import the file. That makes the pre-workflow
+step explicit instead of leaving a practitioner to find it out from a failure.
+It also means the widget's output is sometimes an instruction rather than data,
+which is a port design question this note does not settle.
 
 ## What this note does not establish
 

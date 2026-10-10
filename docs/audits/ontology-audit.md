@@ -312,6 +312,11 @@ author can read. And a block made inside a worked example must end up **in the b
 ontology-mapped, addable where it makes sense, and documented — otherwise it stays glued to
 its set, which is what an unmapped, example-only node type is.
 
+> **D5, D6, D8 and D9 have never been applied.** They govern how a primitive is designed
+> and were written after the 42 existing widgets were built, so the retrospective audit
+> could not run them. Treat them as proposals until one has been used on a real candidate.
+> See [the rule audit](rule-audit.md).
+
 **D5 · Does each qualifier live on the input rather than in each consumer?**
 *Evidence:* the declaration, its enumerated values, its unstated default, and the
 receipt assertion. *Fails if* a qualifier is free text checked only for non-emptiness,

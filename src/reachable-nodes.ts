@@ -129,6 +129,7 @@ export function reachableNodes(
       features.push({type:'Feature',id:`${origin.id}-${nodeId}`,
         properties:{name:`${origin.properties.name} → ${nodeId}`,
           originSiteId:String(origin.id),networkNodeId:nodeId,travelDirection:direction,
+          speedMPerMin,travelMode,
           travelMetres:Number(costM.toFixed(2)),
           travelMinutes:Number((costM/speedMPerMin).toFixed(2)),
           remainingM:Number((budgetM-costM).toFixed(2))},

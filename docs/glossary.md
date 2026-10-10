@@ -270,10 +270,16 @@ output port, and it carries the scope of the question.
 | **Review** | What does not belong, and why. Exclusions carry a reason | `coverage_check` |
 | **Derivation** | The same claim in a new shape — buffered, clipped, reprojected, sampled, joined | `buffer_point`, `sample_raster`, `slr_site_assignment` |
 | **Summary** | Fewer rows than it started with. The detail is gone and does not come back | `rate`, `case_series`, `hex_aggregate` |
-| **Judgement** | A decision against a criterion someone chose, which the result must state | `slr_threshold_comparison` |
+| **Classification** | Sorting records by a criterion the practitioner stated — a threshold, a rule, a case definition. The result records which criterion was applied | `slr_threshold_comparison` |
 
-These four are not a classification imposed afterwards. The application already
-types them apart: review produces `coverage-check`, judgement produces
+**Fieldwork does not judge.** It classifies against criteria someone else
+stated, and surfaces what does not fit. Whether the threshold is the right
+threshold, and what to do about the answer, stays with the practitioner. A
+comparison against an unstated vertical datum is refused for this reason: the
+software cannot supply the judgement the comparison needs.
+
+These four are not a grouping imposed afterwards. The application already types
+them apart: review produces `coverage-check`, classification produces
 `decisions`, derivation and summary produce data ports.
 
 ### Output — communicating the result

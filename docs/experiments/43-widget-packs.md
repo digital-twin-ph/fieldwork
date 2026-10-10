@@ -357,7 +357,7 @@ finished while its first step is undefined:
 | --- | --- | --- |
 | **Discovery** | A request naming a resolved location, never data | A widget, or an external procedure the pack documents |
 | **Acquisition** | Bytes with a digest and byte identity | Only possible where the format and transport allow it in a browser |
-| **Extraction** | A bounded artifact from something too large to read here | Outside the application, in the Validation Lab or a recorded procedure |
+| **Extraction** | The part of a larger dataset a workflow needs, with the selection recorded | Outside the application, in the Validation Lab or a recorded procedure |
 | **Import** | The artifact inside a project, with provenance | A widget, whose provenance duty is heavier than an acquisition's |
 | **Application** | A result computed from the artifact | A widget, which must not imply it produced the underlying science |
 | **Presentation** | A view | Base widgets, reused |
@@ -382,6 +382,17 @@ useful first test because the science is external and authoritative, the data is
 far too large to read in a browser, the result is easy to over-read, and the
 existing worked examples cannot host it — Gaborone is landlocked — so the pack
 must arrive with its own data and still compose with the base widgets.
+
+> **Corrected 2026-10-10.** "Far too large to read in a browser" is wrong, and the
+> reasoning above is left standing because it is how the pack's shape was argued.
+> Measured: Zenodo serves the archive with `access-control-allow-origin: *` and
+> honours Range, and the summary file for one scenario and family is 71.7 MB
+> deflated inside 9.24 GB. A store's size is not the bytes a reader transfers.
+> Extraction stays outside the application by **decision** — the selection needs
+> dataset-specific knowledge, and that belongs where a reader can re-run it — not
+> because the data cannot be reached. See [69](69-healthsites-acquisition.md) and
+> the pack's own corrected `stages.acquisition`.
+
 
 It also supplies a concrete answer to what a pack's refused connection looks
 like: a projected water level connected to a raster map would render something

@@ -1,0 +1,92 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:chart_output",
+ "version": "0.5.0",
+ "nodeType": "chart_output",
+ "title": "Chart",
+ "released": "2026-10-10",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['chart_output']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "decisions",
+    "type": "decisions"
+   }
+  ],
+  "output": null,
+  "polygonInput": {
+   "parameter": "inputMode",
+   "value": "polygons",
+   "inputs": [
+    {
+     "name": "polygons",
+     "type": "polygons"
+    }
+   ]
+  }
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:ChartView",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:CategoricalCount",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "configuration",
+    "iri": "urn:fieldwork:ChartSpecification",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined."
+ },
+ "implementation": {
+  "files": [
+   "src/chart-output.ts",
+   "src/chart-vega.ts",
+   "src/output-contract.ts",
+   "src/catchment-output.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "output",
+    "adapterVersion": "1",
+    "implementation": "src/output-contract.ts#migrateOutputNodes"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Adds a case-series mode: a Chart output connected to Cases by period draws an epidemic curve, with the period on the axis and the kind of date stated in the caption. A presentation of the series with no smoothing and no interpolation."
+  },
+  {
+   "kind": "added",
+   "description": "bandMeasure: 'difference' charts the difference between neighbouring nested bands instead of their cumulative counts, and does it with a Vega-Lite window/calculate transform in the specification rather than arithmetic in the application. Nested travel-time bands give cumulative counts -- a location one minute from a pump is inside all four rings -- while the case study's own bar chart subtracts as it walks outward (Advanced-1 NB04 cell 19). A prototype that deliberately departs from the house style of charting already computed bins: the whole spec is recorded as fw:rendererSpecification, so a declared transform is more inspectable in the provenance than the same subtraction in TypeScript. It requires the Vega-Lite renderer, renames the measure, says so in the caption, keeps the cumulative count in the tooltip, and asserts a distinct fw:chartMeasureKind of band-difference-of-<kind> with unit status location-memberships-differenced-between-bands. Refused unless every bin carries a distinct travel time and the counts actually increase outward, which proves nesting from the data rather than assuming it. See docs/experiments/87-declarative-chart-transforms.md."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

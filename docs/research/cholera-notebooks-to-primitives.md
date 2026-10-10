@@ -20,13 +20,43 @@ unmatched as a candidate derived from a real analysis.
 
 29 code cells against 76 of narrative in NB01. The teaching is most of the file.
 
+## The walking speed, and where it comes from
+
+`travel_speed = 4.5` km/h, Advanced-1 NB03 cell 10, commented `assume walking
+speed in km/hour`. It is 75 metres per minute, which is the number Fieldwork's
+`isochrone` has defaulted to since it was written, undocumented until now.
+
+The notebook scopes it. Cell 5 asks how far "Soho District residents can walk",
+and the learning objective names "walkability assumptions". It is an assumption
+about pedestrians in one London district in 1854 — not a general walking speed,
+and not a Philippine one. Carrying 75 into a facility catchment in Manila in
+2026 imports a Victorian assumption without saying so, which is why
+`reachable_nodes` makes the travel mode an explicit parameter and states in
+every result that a speed does not transfer between settings
+([83](../experiments/83-reachable-junctions.md)).
+
+**Correction, 2026-10-10.** This document first recorded NB03's order as
+"buffer the reached edges, convex hull, union", and a commit message then
+restated it as "buffers, hulls, then unions". Both are wrong. `make_iso_polys`
+buffers each reached edge and node, calls `unary_union` on all the buffers, and
+then, `if infill and isinstance(polygon, MultiPolygon)`, replaces that union
+with `polygon.convex_hull`. The hull is the infill mechanism, applied
+conditionally, not a stage in a pipeline.
+
+That also means Fieldwork's `fillHoles` and the notebook's `infill` are **not
+the same operation**. Fieldwork unions the outer rings and discards interior
+holes; the notebook replaces a multi-part result with its convex hull, which
+fills the gaps *between* the parts as well. Any parity check between the two has
+to account for that, and it is why `summarize_hull` and
+`summarize_combined_area` are separate primitives rather than one infill knob.
+
 ## Advanced-1 — street network and reachability
 
 | Notebook | What it does | Primitive |
 | --- | --- | --- |
 | NB01 OSM / NetworkX | Download the Soho street graph from OpenStreetMap | `network_input` |
 | NB02 OSM / NetworkX | Project the graph, snap points to nearest nodes, **shortest path between two points** | partly: snapping is inside `isochrone`; **routing has none** |
-| NB03 Isochrone map | Ego graph by travel time, buffer the reached edges, convex hull, union | `isochrone` |
+| NB03 Isochrone map | Ego graph by travel time, buffer the reached edges and nodes, union the buffers, and replace the union with its convex hull **only when it came out in pieces** | `isochrone` |
 | NB04 Isochrone map | Draw catchments over a basemap; point-in-polygon | `map_output`, `coverage_check` |
 
 ## Advanced-2 — Voronoi catchments

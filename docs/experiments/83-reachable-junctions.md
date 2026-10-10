@@ -70,11 +70,51 @@ lengths somebody else measured.
 | Distinction | Enforced as |
 | --- | --- |
 | Travel time is distance divided by one constant speed | **Limitation**, stated on every result. Nobody walks a hill at their speed on the flat, and the graph carries no gradient |
+| The speed means nothing without the kind of travel | **Parameter**, `travelMode`: walking, cycling, driving or other, asserted beside the number as `fw:travelMode` |
+| A mode and a speed can contradict each other | **Validation rule.** Each mode has a plausible band and a speed outside it is refused, naming both in m/min and km/h. 400 m/min labelled walking is 24 km/h and fails |
+| A speed belongs to a place and a period | **Limitation**, stated in every result. The mode records what kind of travel the number represents, not where the number came from |
+| Public transport is not a speed on a street graph | **Hard stop.** It is not an accepted mode, and the refusal says why: it follows routes and a timetable, not the street network. Supporting it needs a different input, not a different number |
 | The origin must already be on the network | **Validation rule**: `networkNodeId` is required and its absence names `snap_to_network` |
 | Reachability is directed | **Parameter**, `outbound` or `inbound`, with the result stating which. Reversing the edges answers a different question and one-way streets make the two differ |
 | The graph's edge truncates reachability | **Limitation.** A junction unreached because the download stopped looks the same as one unreached because it is too far |
 | The walk from the site to its junction is not charged | **Limitation**, inherited from `snap_to_network` and restated, because it is the first step of every distance reported here |
 | Street lengths are taken on trust | **Limitation**, with the network's own source named in the note and in the receipt. This widget re-measures nothing, which is why it needs no projection; the cost is that a wrong `lengthM` is believed |
+
+## The speed knob, and the 1854 assumption inside it
+
+Fieldwork has used 75 metres per minute everywhere since `isochrone` was
+written, with no recorded reason. It traces to Advanced-1 NB03 cell 10:
+`travel_speed = 4.5 # assume walking speed in km/hour`, which is 75 m/min
+exactly. The notebook scopes it to how far "Soho District residents can walk" —
+pedestrians, one London district, 1854.
+
+That number was then the silent default for every catchment anyone drew in this
+application, including Philippine ones. The problem is not that 4.5 km/h is a
+bad walking speed. It is that a speed is an assumption about a place and a
+period, it was being inherited rather than chosen, and nothing in the result
+said so.
+
+So the mode is a parameter and it is checked against the number:
+
+| Mode | Plausible band | In km/h |
+| --- | --- | --- |
+| `walking` | 30–110 m/min | 1.8–6.6 |
+| `cycling` | 100–400 m/min | 6.0–24.0 |
+| `driving` | 150–1200 m/min | 9.0–72.0 |
+| `other` | 1–1200 m/min | 0.1–72.0 |
+
+The bands are **conventions, not measurements**. They exist to refuse a receipt
+that asserts "walking" beside a number only a car could hold, and they certify
+nothing about any traveller. They overlap, because a fast cyclist and a slow
+driver really do move at the same speed. Nothing in them is a default: a speed
+still has to be chosen, and choosing badly inside a band remains possible.
+
+**Public transport is not offered.** It is not a speed on a street graph — it
+follows fixed routes between stops on a timetable, waits at them, and is
+unavailable at night. Modelling it needs route and schedule data, which is a
+different input and a different primitive, so the mode is refused with that
+reason rather than accepted as an average speed that would quietly produce a
+plausible, wrong answer.
 
 ## What this does not establish
 

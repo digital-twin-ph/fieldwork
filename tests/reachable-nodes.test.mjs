@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {reachableNodes,validateReachNode,costsWithin} from '../build/reachable-nodes.js';
+import {reachableNodes,validateReachNode,costsWithin,MODE_SPEED_BANDS} from '../build/reachable-nodes.js';
 
 const node=p=>({id:'r',type:'reachable_nodes',x:0,y:0,
-  params:{label:'Reachable junctions',minutes:2,speedMPerMin:100,direction:'outbound',...p}});
+  params:{label:'Reachable junctions',minutes:2,speedMPerMin:100,direction:'outbound',travelMode:'cycling',...p}});
 // Junction coordinates are never used for costs, only carried through to the output.
 const at=i=>[-0.14+i*0.001,51.51];
 const net=(ids,edges)=>({nodes:ids.map((id,i)=>({id,coordinates:at(i)})),
@@ -87,7 +87,7 @@ test('costsWithin never settles a node beyond the budget',()=>{
 
 test('an impossible budget, speed or direction is refused',()=>{
   assert.throws(()=>validateReachNode(node({minutes:0})),/travel time from 0\.1 to 60 minutes/);
-  assert.throws(()=>validateReachNode(node({speedMPerMin:0})),/speed from 1 to 200 metres per minute/);
+  assert.throws(()=>validateReachNode(node({speedMPerMin:NaN})),/speed in metres per minute/);
   assert.throws(()=>validateReachNode(node({direction:'sideways'})),/outbound travel from the site or inbound/);
   assert.throws(()=>validateReachNode(node({label:' '})),/Name the step/);
 });
@@ -104,7 +104,7 @@ test('snapping then reachability runs on the real Soho network',async()=>{
     params:{label:'Snap',zone:30,hemisphere:'north',maxSnapM:100}},'run','pumps');
   assert.equal(snapped.value.features.length,1);
   assert.ok(typeof snapped.value.features[0].properties.networkNodeId==='string');
-  const got=reachableNodes(snapped.value,network,node({minutes:5,speedMPerMin:75}),'run','snap');
+  const got=reachableNodes(snapped.value,network,node({minutes:5,speedMPerMin:75,travelMode:'walking'}),'run','snap');
   const reached=got.value.features.length;
   assert.ok(reached>1&&reached<network.nodes.length,
     `some but not all of 738 junctions are within 375 m of the Broad Street pump, got ${reached}`);
@@ -115,4 +115,35 @@ test('snapping then reachability runs on the real Soho network',async()=>{
     assert.equal(Number((f.properties.travelMetres+f.properties.remainingM).toFixed(2)),375,
       'travelled plus remaining is the budget, for every junction');
   console.log(`Soho: ${reached} of ${network.nodes.length} junctions within 5 min of the Broad Street pump`);
+});
+
+test('a speed only a car could hold is refused when the mode says walking',()=>{
+  // 400 m/min is 24 km/h. Labelling that "walking" would put a receipt into the record
+  // asserting a pedestrian assumption beside a number no pedestrian holds.
+  assert.throws(()=>validateReachNode(node({travelMode:'walking',speedMPerMin:400})),
+    /400 m\/min is 24\.0 km\/h, which is outside the plausible range for walking: 30 to 110 m\/min, or 1\.8 to 6\.6 km\/h\. Change the speed, or change the mode to match it\./);
+  assert.throws(()=>validateReachNode(node({travelMode:'driving',speedMPerMin:75})),
+    /outside the plausible range for driving/);
+});
+
+test('the 1854 Soho walking speed is inside the walking band, since that is where it came from',()=>{
+  // 75 m/min is 4.5 km/h, Advanced-1 NB03 cell 10.
+  assert.doesNotThrow(()=>validateReachNode(node({travelMode:'walking',speedMPerMin:75})));
+  assert.ok(75>=MODE_SPEED_BANDS.walking.minMPerMin&&75<=MODE_SPEED_BANDS.walking.maxMPerMin);
+});
+
+test('public transport is refused as a mode, with the reason',()=>{
+  assert.throws(()=>validateReachNode(node({travelMode:'public-transport'})),
+    /Public transport is not a mode here, because it does not follow the street network/);
+});
+
+test('the mode and the speed in km per hour travel in the notes and the receipt',()=>{
+  const network=net(['a','b'],[['a','b',100]]);
+  const got=reachableNodes(points(origin('s','a')),network,node({travelMode:'walking',speedMPerMin:75,minutes:5}),'run','src');
+  assert.match(got.receipt.facts,/fw:travelMode "walking"/);
+  assert.match(got.receipt.facts,/fw:assumedSpeedMetresPerMinute 75/);
+  const said=got.value.sourceInfo.notes.join(' ');
+  assert.match(said,/\(4\.5 km\/h, walking\)/,'the km per hour is stated, because that is how speeds are read');
+  assert.match(said,/A speed is an assumption about a particular place in a particular period/);
+  assert.match(got.receipt.method,/\(walking\)/);
 });

@@ -16,29 +16,49 @@ function openDatabase():Promise<IDBDatabase> {
     request.onblocked=()=>reject(new Error('Close other Fieldwork tabs and retry local PDF storage.'));
   });
 }
+// Stored as bytes, not as a Blob. Measured 2026-10-09: WebKit aborts any transaction that puts a
+// Blob or File into an object store — `UnknownError: Error preparing Blob/File data to be stored in
+// object store` — while a Uint8Array stores normally. Storing Blobs made every attached PDF and
+// every retained raster window fail in Safari, which is 11 of the 13 WebKit test failures and, more
+// to the point, the feature simply not working for Safari users. The media type is not stored
+// alongside, because every caller wants the bytes and reconstructs what it needs.
 export async function storePDFs(files:Map<string,Uint8Array<ArrayBuffer>>,refs?:Map<string,ProjectFile>):Promise<void> {
   if(!files.size)return;
   for(const [hash,bytes] of files){const ref=refs?.get(hash);if(ref)await verifyProjectFile(ref,bytes);else if(await pdfDigest(bytes)!==hash)throw new Error('PDF checksum mismatch.');}
   const db=await openDatabase();
   try{await new Promise<void>((resolve,reject)=>{
     const tx=db.transaction(STORE,'readwrite');
-    tx.oncomplete=()=>resolve();tx.onabort=()=>reject(new Error('PDF could not be saved locally. Storage may be full; your reference remains unsaved.'));tx.onerror=()=>{};
-    for(const [hash,bytes] of files)tx.objectStore(STORE).put(new Blob([bytes],{type:refs?.get(hash)?.mediaType||'application/pdf'}),hash);
+    tx.oncomplete=()=>resolve();
+    // The abort reason is reported rather than guessed at. The previous message asserted a full
+    // disk and discarded tx.error, which is how a browser refusing the value at all was mistaken
+    // for a quota problem for as long as it was.
+    tx.onabort=()=>reject(new Error(`Could not save the file locally: ${tx.error?`${tx.error.name}: ${tx.error.message}`:'the browser aborted the transaction without stating a reason'}. Your reference remains unsaved.`));
+    tx.onerror=()=>{};
+    for(const [hash,bytes] of files)tx.objectStore(STORE).put(bytes,hash);
   });}finally{db.close();}
 }
-export async function readPDF(hash:string):Promise<Blob|null> {
+/** Reads stored bytes. Accepts a Blob as well, because a database written by a version that
+ *  stored Blobs is still on the devices of everyone who used one, and their attachments must keep
+ *  opening. Nothing writes a Blob any more. */
+export async function readPDF(hash:string):Promise<Uint8Array<ArrayBuffer>|null> {
   const db=await openDatabase();
   try{return await new Promise((resolve,reject)=>{
     const tx=db.transaction(STORE,'readonly'),request=tx.objectStore(STORE).get(hash);
-    request.onsuccess=()=>{if(request.result===undefined)resolve(null);else if(request.result instanceof Blob)resolve(request.result);else reject(new Error('Invalid stored PDF. Reattach the original file.'));};
-    request.onerror=()=>reject(new Error('Could not read the locally stored PDF.'));
+    request.onsuccess=()=>{
+      const value=request.result as unknown;
+      if(value===undefined)resolve(null);
+      else if(value instanceof Uint8Array)resolve(value as Uint8Array<ArrayBuffer>);
+      else if(value instanceof ArrayBuffer)resolve(new Uint8Array(value));
+      else if(value instanceof Blob)value.arrayBuffer().then(buffer=>resolve(new Uint8Array(buffer)),()=>reject(new Error('Could not read the locally stored file. Reattach the original.')));
+      else reject(new Error('Invalid stored file. Reattach the original.'));
+    };
+    request.onerror=()=>reject(new Error('Could not read the locally stored file.'));
   });}finally{db.close();}
 }
 export async function verifiedPDF(ref:Extract<EvidenceReference,{kind:'pdf'}>):Promise<Uint8Array<ArrayBuffer>> {
-  const blob=await readPDF(ref.sha256);
-  if(!blob)throw new Error(`PDF unavailable on this device: ${ref.filename}. Edit the reference and attach the file, or import a bundle containing it.`);
-  if(blob.size!==ref.bytes)throw new Error(`Stored PDF size mismatch: ${ref.filename}. Reattach the original.`);
-  const bytes=new Uint8Array(await blob.arrayBuffer());
+  const bytes=await readPDF(ref.sha256);
+  if(!bytes)throw new Error(`PDF unavailable on this device: ${ref.filename}. Edit the reference and attach the file, or import a bundle containing it.`);
+  if(bytes.length!==ref.bytes)throw new Error(`Stored PDF size mismatch: ${ref.filename}. Reattach the original.`);
   if(await pdfDigest(bytes)!==ref.sha256)throw new Error(`Stored PDF checksum mismatch: ${ref.filename}. Reattach the original.`);
   return bytes;
 }
@@ -81,4 +101,4 @@ export async function importWorkflowDocument(raw:unknown,validate:(raw:unknown)=
   return workflow;
 }
 
-export async function verifiedProjectFile(ref:ProjectFile):Promise<Uint8Array<ArrayBuffer>>{const blob=await readPDF(ref.sha256);if(!blob)throw new Error((ref.mediaType==='application/pdf'?'PDF':'Raster')+' unavailable on this device: '+ref.filename+'. Import a complete package or reattach the source.');const bytes=new Uint8Array(await blob.arrayBuffer());await verifyProjectFile(ref,bytes);return bytes;}
+export async function verifiedProjectFile(ref:ProjectFile):Promise<Uint8Array<ArrayBuffer>>{const bytes=await readPDF(ref.sha256);if(!bytes)throw new Error((ref.mediaType==='application/pdf'?'PDF':'Raster')+' unavailable on this device: '+ref.filename+'. Import a complete package or reattach the source.');await verifyProjectFile(ref,bytes);return bytes;}

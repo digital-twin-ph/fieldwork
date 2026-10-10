@@ -16,13 +16,26 @@ fw:VoronoiComputation a owl:Class;
 fw:NetworkIsochrone a owl:Class;
   rdfs:label "Network isochrone computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Directed network reachability with explicit cost, snapping and corridor approximation.".
+fw:InteriorGapFill a owl:Class;
+  rdfs:label "Interior gap fill"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Each polygon replaced by its outer ring, so enclosed gaps become solid. This enlarges the polygon and the added ground was never computed as covered, so anything measuring the result afterwards measures ground nothing reached. What a gap means depends on the source: in a travel corridor it is ground no street reached, and in an administrative boundary it would be a real enclave.".
+fw:gapsFilled a owl:DatatypeProperty; rdfs:domain fw:InteriorGapFill; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Enclosed gaps filled".
+fw:areaBeforeSquareMetres a owl:DatatypeProperty; rdfs:domain fw:InteriorGapFill; rdfs:range xsd:decimal;
+  rdfs:label "Area before filling, in square metres".
+fw:areaAfterSquareMetres a owl:DatatypeProperty; rdfs:domain fw:InteriorGapFill; rdfs:range xsd:decimal;
+  rdfs:label "Area after filling, in square metres".
+fw:areaAddedSquareMetres a owl:DatatypeProperty; rdfs:domain fw:InteriorGapFill; rdfs:range xsd:decimal;
+  rdfs:label "Area claimed by filling that was not claimed before";
+  rdfs:comment "Emitted so the size of the assertion is a number. Measured at 4 to 5 per cent of the corridor area on the case study this was derived from.".
 fw:PolygonCollection a owl:Class;
   rdfs:label "Polygon collection"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Several polygon layers gathered into one with nothing merged, ordered largest first so smaller polygons draw on top. Unlike fw:CombinedArea it keeps what distinguished the parts, which is what lets a later summary count memberships per polygon.".
 fw:layerCount a owl:DatatypeProperty; rdfs:domain fw:PolygonCollection; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "Layers gathered".
-fw:polygonCount a owl:DatatypeProperty; rdfs:domain fw:PolygonCollection; rdfs:range xsd:nonNegativeInteger;
-  rdfs:label "Polygons in the collection".
+fw:polygonCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Polygons acted on";
+  rdfs:comment "No domain: asserted by fw:PolygonCollection and fw:InteriorGapFill.".
 fw:bandedPolygonCount a owl:DatatypeProperty; rdfs:domain fw:PolygonCollection; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "Polygons carrying a travel time";
   rdfs:comment "When every polygon carries one, the collection is a set of nested bands and a count per band is cumulative rather than disjoint.".

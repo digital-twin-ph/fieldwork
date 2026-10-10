@@ -277,6 +277,18 @@
    ]
   },
   {
+   "id": "urn:fieldwork:widget:fill_interior_gaps",
+   "nodeType": "fill_interior_gaps",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/fill_interior_gaps/0.1.0.json",
+     "sha256": "9cf806209f5b06fbeca07497757217fac6b57934f9dc5a4d9d5af922b97d3104"
+    }
+   ]
+  },
+  {
    "id": "urn:fieldwork:widget:find_health_facilities",
    "nodeType": "find_health_facilities",
    "currentVersion": "0.2.0",

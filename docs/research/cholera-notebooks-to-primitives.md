@@ -35,20 +35,36 @@ and not a Philippine one. Carrying 75 into a facility catchment in Manila in
 every result that a speed does not transfer between settings
 ([83](../experiments/83-reachable-junctions.md)).
 
-**Correction, 2026-10-10.** This document first recorded NB03's order as
-"buffer the reached edges, convex hull, union", and a commit message then
-restated it as "buffers, hulls, then unions". Both are wrong. `make_iso_polys`
-buffers each reached edge and node, calls `unary_union` on all the buffers, and
-then, `if infill and isinstance(polygon, MultiPolygon)`, replaces that union
-with `polygon.convex_hull`. The hull is the infill mechanism, applied
-conditionally, not a stage in a pipeline.
+**Correction, 2026-10-10, twice over.** This document first recorded NB03's
+order as "buffer the reached edges, convex hull, union". A commit then restated
+it as "buffers, hulls, then unions", and a second correction said the hull is a
+conditional infill applied to multipart unions, concluding that Fieldwork's
+`fillHoles` and the notebook's `infill` are different operations.
 
-That also means Fieldwork's `fillHoles` and the notebook's `infill` are **not
-the same operation**. Fieldwork unions the outer rings and discards interior
-holes; the notebook replaces a multi-part result with its convex hull, which
-fills the gaps *between* the parts as well. Any parity check between the two has
-to account for that, and it is why `summarize_hull` and
-`summarize_combined_area` are separate primitives rather than one infill knob.
+That second correction was also wrong, and wrong from reading dead code.
+`make_iso_polys` is **defined at cell 64**, called once at cell 67, and
+**redefined at cell 94** with the `convex_hull` form — which is never called
+again. The `poly_gdf_dict` built at cells 71–80 and written to
+`outputs/isopoly_*.shp` at cells 99–105, the shapefiles NB04 reads, all come
+from the cell-64 definition:
+
+```python
+new_iso = gpd.GeoSeries(all_gs).unary_union
+if infill:
+    new_iso = Polygon(new_iso.exterior)
+```
+
+So the operative order is: buffer each reached edge and node, union the buffers,
+and take the exterior ring when infill is on. That is **exactly** Fieldwork's
+`fillHoles`, now extracted as `fill_interior_gaps`
+([88](../experiments/88-filling-interior-gaps.md)), which agrees with the
+monolith to within 0.01%. The convex-hull variant at cell 94 is unreached code
+and should not be treated as the method.
+
+The lesson is the one about dependencies from earlier in the day, in a different
+costume: a redefinition later in a notebook is not the version that produced the
+outputs, and the call order has to be checked rather than the last definition
+read.
 
 ## Advanced-1 — street network and reachability
 

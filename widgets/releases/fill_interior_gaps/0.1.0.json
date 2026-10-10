@@ -1,0 +1,61 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:fill_interior_gaps",
+ "version": "0.1.0",
+ "nodeType": "fill_interior_gaps",
+ "title": "Fill interior gaps",
+ "released": "2026-10-10",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['fill_interior_gaps']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "polygons",
+    "type": "polygons"
+   }
+  ],
+  "output": "polygons"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:InteriorGapFill",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Emits an fw:InteriorGapFill activity carrying fw:polygonCount, fw:gapsFilled, fw:areaBeforeSquareMetres, fw:areaAfterSquareMetres, fw:areaAddedSquareMetres and fw:metricCRS, and prov:used the polygon source. Both areas and their difference are asserted because the operation's whole effect is to claim ground that was not claimed before, and the size of that claim should be a number rather than an inference. Publishing this moved the domain off fw:polygonCount, which now describes two activity classes."
+ },
+ "implementation": {
+  "files": [
+   "src/fill-interior-gaps.ts",
+   "src/core.ts",
+   "src/palette.ts"
+  ],
+  "definition": "src/fill-interior-gaps.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "Each polygon replaced by its outer ring, so enclosed gaps become solid. This is isochrone's fillHoles as a step of its own, and it is what Advanced-1 NB03 does: Polygon(new_iso.exterior) at cell 64, the definition that produced the shapefiles NB04 reads. Cell 94 redefines the function to take a convex hull of multipart results and never calls it, which had earlier been mistaken for the operative infill. Takes no UTM zone, unlike the nine widgets that do: the input states the metric CRS its upstream used and this reads it, because a zone asked for twice can be answered twice. Gaps between separate polygons are untouched -- it fills enclosed space and does not join things up. The dangerous case governs itself through the port type: donut_geomask, where a hole is the privacy mechanism, emits points and cannot reach a polygons input. See docs/experiments/88-filling-interior-gaps.md."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Eight unit checks cover an enclosed gap becoming solid with the added area reported; polygons with nothing enclosed left alone and saying so; gaps between separate polygons left untouched; per-feature identity surviving; the metric basis being read from the input and a non-UTM CRS refused; and the warning that later measurement counts the filled ground travelling in every result. Two run on the case study. The first fills 0, 11, 58 and 81 gaps across the four bands, growing them by 0.0, 5.4, 3.8 and 4.2 per cent, and agrees with isochrone's own fillHoles within 0.01 per cent -- which is the same agreement the unfilled chain already had, so filling introduces no divergence of its own. The second measures what that does to the analysis: nothing. All four band counts of the 250 recorded deaths are identical filled and unfilled, because those deaths front the streets and were already inside the 25 m corridor while the filled ground is the inside of blocks. That is a property of these records and not a guarantee: points set back from a street would move between the two."
+ }
+}

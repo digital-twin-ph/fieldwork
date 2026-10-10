@@ -397,19 +397,54 @@ case for it. Those should have been somebody's saved composition.
 It also dissolves the teaching tension above without a tier scheme: one node for
 whoever wants the answer, an open graph for whoever wants to learn.
 
-Four things it has to get right, and none is cosmetic:
+### Governance is inherited, because a composition is closed over the registry
 
-- **Receipts.** Every step in this application produces one. A composition must
-  produce the receipts of its members, or the evidence chain breaks exactly where
-  the work got interesting.
-- **Ports.** A composition's inputs and outputs are the unconnected ports of its
-  members. Derivable, but it is a contract and belongs with
-  [66](docs/experiments/66-ports-as-schema-binding.md).
-- **Naming.** Node types are governed by a convention. A private composition can
-  be called anything; a shared one read as equivalent to a shipped widget cannot.
-  `xpert` is what happens when a name is chosen without that discipline.
-- **Sharing.** A shared composition is pack-shaped — it needs a version, a digest
-  and an owner, or it is an unreviewable artifact that looks like a reviewed one.
+A composition may contain **only widgets in the registry**. That single rule
+makes most of the governance free rather than new.
+
+The application already enforces it. `core.ts` rejects any node whose type is not
+in `TYPES`, so every workflow is already closed over the registry and a
+composition built as a workflow fragment inherits the check without new code.
+
+What that closure buys:
+
+| Property | Where it comes from |
+| --- | --- |
+| Every member is versioned and digested | the widget registry |
+| Every member passed the design audit | D1–D10, at admission |
+| Every member emits a receipt | the execution contract |
+| Every edge type-checks | `validateWorkflow` already does this |
+
+So a composition needs no audit of its parts. What is genuinely new to govern is
+small: its **name**, its **public parameter set**, and its **claim** — what it
+says it does, which is where D7 applies and where a composition can mislead.
+
+### Levels of governance, which already exist at both ends
+
+A **widget** has a registry entry, a version, a digest, a release file and an
+audit. A **pack** has a repository, a commit SHA, an admission status, named
+reviews and a curated owner. A composition sits between them and can move up:
+
+1. **Private.** Saved in one browser. Governed by nothing, which is correct —
+   nobody else is relying on it.
+2. **Shared.** Exported and sent to a colleague. Needs a name that does not claim
+   more than it does, and the versions it was built against.
+3. **Published.** In a composition repository. Pack-shaped: owner, commit, review
+   state, admission.
+
+The naming convention for compositions is the one piece with no prior art. The
+widget convention governs node types the project controls. A practitioner naming
+their own routine primitive is not bound by it, and should not be while the
+composition is private — but a published one read as equivalent to a reviewed
+widget is exactly the `xpert` problem with more authors.
+
+### The one new problem: version drift
+
+A composition pins the widget versions it was built against, or it floats. Pinned
+goes stale and eventually refers to releases nobody ships. Floating can silently
+change meaning when a member widget changes what it does. Packs already face this
+and answer it by pinning a commit and vendoring files at recorded digests; a
+composition should probably do the same and say when a pinned member has moved.
 
 Not started.
 

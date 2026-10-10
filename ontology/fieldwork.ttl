@@ -433,10 +433,58 @@ fw:SpatialCoverageCheck a owl:Class;
   fw:implementationStatus "implemented".
 fw:checkedRecord a owl:ObjectProperty;
   rdfs:domain fw:SpatialCoverageCheck; rdfs:range geo:Feature.
-fw:spatialRelation a owl:ObjectProperty;
-  rdfs:comment "Application classification: Inside, Boundary, Outside, or MissingLocation. Geometric relations also use GeoSPARQL predicates when coordinates exist.".
-fw:coverageDecision a owl:ObjectProperty;
-  rdfs:comment "Application policy outcome: Accept, Review, or Excluded.".
+fw:spatialRelation a owl:ObjectProperty; rdfs:range fw:SpatialRelationValue;
+  rdfs:comment "Application classification of a record against a boundary. Geometric relations also use GeoSPARQL predicates when coordinates exist.".
+fw:coverageDecision a owl:ObjectProperty; rdfs:range fw:CoverageDecisionValue;
+  rdfs:comment "Application policy outcome of a coverage check.".
+
+# Value sets declared 2026-10-10. Both properties above named their values in a prose
+# comment and nothing declared them, which is the pattern the widget/ontology coupling
+# check exists to end: a reasoner meeting fw:Inside found nothing saying what it is.
+fw:SpatialRelationValue a owl:Class; rdfs:label "Spatial relation value";
+  rdfs:comment "Where a record falls against a boundary. MissingLocation is not a place: it records that the question could not be asked of that record.".
+fw:Inside a owl:NamedIndividual, fw:SpatialRelationValue; rdfs:label "Inside the boundary".
+fw:Boundary a owl:NamedIndividual, fw:SpatialRelationValue; rdfs:label "On the boundary";
+  rdfs:comment "Kept distinct from Inside because whether an edge counts is a decision the check states rather than assumes.".
+fw:Outside a owl:NamedIndividual, fw:SpatialRelationValue; rdfs:label "Outside the boundary".
+fw:MissingLocation a owl:NamedIndividual, fw:SpatialRelationValue; rdfs:label "No coordinates to place".
+
+fw:CoverageDecisionValue a owl:Class; rdfs:label "Coverage decision value";
+  rdfs:comment "What a coverage check concluded about a record. Excluded is a practitioner's direction in the current check, never deletion of the input.".
+fw:Accept a owl:NamedIndividual, fw:CoverageDecisionValue; rdfs:label "Accepted into the analysis".
+fw:Excluded a owl:NamedIndividual, fw:CoverageDecisionValue; rdfs:label "Excluded from the analysis".
+
+fw:AccessDecisionValue a owl:Class; rdfs:label "Access policy decision value";
+  rdfs:comment "What the access rules concluded about a place. Unknown is a result, not a failure: missing evidence stays unknown rather than defaulting to no flag.".
+fw:NoFlag a owl:NamedIndividual, fw:AccessDecisionValue; rdfs:label "Not flagged".
+fw:Unknown a owl:NamedIndividual, fw:AccessDecisionValue; rdfs:label "Not determinable from the evidence given".
+fw:Review a owl:NamedIndividual, fw:CoverageDecisionValue, fw:AccessDecisionValue;
+  rdfs:label "Needs a human to look";
+  rdfs:comment "One individual in two value sets, deliberately: a coverage check and the access rules both end in the same place, which is a person deciding.".
+fw:decision a owl:ObjectProperty; rdfs:range fw:AccessDecisionValue;
+  rdfs:label "Decision the rules reached".
+
+# The heat-outreach reasoning vocabulary. These appear in the N3 rules the reasoner runs,
+# not only in receipts, so they were the least declared and the most load-bearing terms
+# in the application.
+fw:distanceKnown a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "Whether a distance could be computed for this place";
+  rdfs:comment "Asserted separately from the distance so that an absent distance is a stated fact rather than a missing triple.".
+fw:distanceKm a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:label "Distance to the nearest centre, in kilometres".
+fw:alertKnown a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "Whether an alert state was supplied".
+fw:heatAlert a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "Whether a heat alert is in force".
+
+fw:sourceFile a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "Name of the file a table was read from".
+fw:sourceDigest a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "SHA-256 of the file as read";
+  rdfs:comment "Recorded so a table can be shown to be the one the analysis used, rather than a file with the same name.".
+fw:requestOrigin a owl:ObjectProperty;
+  rdfs:label "Origin a network request was sent to";
+  rdfs:comment "The scheme and host actually contacted, which is what a reader needs to judge whether a retrieval left the device and where to.".
 fw:requiresReview a owl:DatatypeProperty; rdfs:range xsd:boolean.
 fw:excluded a owl:DatatypeProperty; rdfs:range xsd:boolean;
   rdfs:comment "User-directed exclusion in the current check, never automatic deletion of the input record.".

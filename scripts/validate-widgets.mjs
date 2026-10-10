@@ -5,6 +5,7 @@ import {resolve, relative, isAbsolute} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 import {Parser} from 'n3';
+import {emittedTerms,emitsFor} from './ontology-coupling.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const semver=/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
@@ -47,6 +48,21 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
       check(release.configuration.typescriptType===`ParamsByType['${entry.nodeType}']`,'Invalid parameter binding');
       check(release.configuration.validationStatus==='application-only'&&Array.isArray(release.configuration.shaclShapes)&&release.configuration.shaclShapes.length===0,'This registry version supports application validation only');
       check(['partial','gap'].includes(release.ontology?.status)&&Array.isArray(release.ontology.mappings),'Invalid ontology mapping status');
+      // `emits` records the fw: terms this widget's module asserts, so a change to them
+      // forces a release and therefore a drift signal for any composition pinning the old
+      // one. Required for releases published after the coupling was mechanised; earlier
+      // release files are immutable and cannot be backfilled.
+      if(release.ontology.emits!==undefined){
+        const definition=release.implementation?.definition?.replace(/^src\//,'');
+        const expected=emitsFor(await emittedTerms(),definition);
+        check(Array.isArray(release.ontology.emits.classes)&&Array.isArray(release.ontology.emits.properties),
+          'Invalid ontology emits declaration');
+        for(const kind of ['classes','properties'])
+          check(release.ontology.emits[kind].join(',')===expected[kind].join(','),
+            `Declared ${kind} do not match what ${definition} asserts: declared `
+            +`[${release.ontology.emits[kind].join(', ')}], asserts [${expected[kind].join(', ')}]`);
+      } else check(release.released<='2026-10-10',
+        'A release published after 2026-10-10 declares ontology.emits');
       check((release.ontology.status==='gap')===(release.ontology.mappings.length===0),'Ontology status contradicts mappings');
       for(const mapping of release.ontology.mappings){
         check(['entity','activity','configuration'].includes(mapping.role),'Invalid mapping role');

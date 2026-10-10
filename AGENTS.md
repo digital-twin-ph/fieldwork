@@ -111,11 +111,27 @@ Length is not rigour. A long document is harder to check and easier to leave
 wrong, and an unreadable document is not governance — nobody follows what they
 cannot get through.
 
-Before adding a rule to this file, to [the glossary](docs/glossary.md) or to
-`docs/audits/`, read [the rule audit](docs/audits/rule-audit.md). A statement
-belongs in a governance file when it has more than one incident behind it, or a
-test for when it applies. Otherwise it is a finding, and findings go in
-`docs/experiments/` with their date and measurement.
+## Rules
+
+Every rule here is provisional. A rule earns its place by **firing** — by
+catching something that would otherwise have gone through — and until it has
+fired it stays provisional, however sensible it sounds. A rule that has never
+fired is like a screening test that flags nothing: either the problem is absent
+or the test does not work, and you cannot tell by reading it.
+
+When a rule fires, record it: what it caught, and whether the gap was in design,
+development, implementation or evaluation. Put that in the experiment that
+reports the catch, and update [the rule audit](docs/audits/rule-audit.md).
+
+Prefer to mechanise. A rule in code with a test reports its own firings; a rule
+in prose fires silently. "A widget nobody can add is invisible" lives in
+`src/palette.ts` and caught seven; the design checks live in prose and fired only
+when someone ran an audit by hand.
+
+Before adding a rule, read [the rule audit](docs/audits/rule-audit.md). Avoid
+rules a reader can only agree with, rules whose only evidence is the argument
+that produced them, and rules nobody can act on. If it is not a rule yet, it is a
+finding, and findings go in `docs/experiments/` with their date and measurement.
 
 ## Toolchain
 

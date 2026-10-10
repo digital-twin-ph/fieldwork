@@ -7,14 +7,31 @@ and 2026-10-10.
 
 ## Every rule is provisional
 
-A rule earns its place by **firing** — by catching something that would otherwise
-have gone through. Until it has fired enough times to show it addresses a real
-gap, it stays provisional, however sensible it sounds.
+This is a developmental evaluation. The framework does not exist yet in settled
+form, so rules cannot be written for it in advance. What can be done rigorously is
+to **discover which rules are useful enough not to put the application in a
+straitjacket**.
+
+That gives two tests, and a rule has to pass both.
+
+**Does it fire?** A rule earns its place by catching something that would
+otherwise have gone through. Until it has, it stays provisional, however sensible
+it sounds.
+
+**Does it bind?** A rule can fire reliably and still be harmful, by preventing the
+framework from moving. Those are the dangerous ones, because firing looks like
+evidence of worth.
 
 Think of a rule as a screening test. A test that flags nothing either means the
 condition is absent or the test does not work, and you cannot tell which by
 reading the test. You find out by checking the cases it passed. A rule that has
 never fired is in the same position.
+
+The binding test has no such metaphor, and it is the harder one. The question is
+what a rule would have **stopped**, not what it caught. Two from 2026-10-10: D9's
+node-count threshold would have fired cleanly and blocked adding a worked example,
+and "a retrieval widget cannot be demonstrated by a bundled example" would have
+stopped a widget from ever being demonstrated — and it was false besides.
 
 A gap can be in **design**, **development**, **implementation** or
 **evaluation**. Record which one, because a rule that keeps firing in design and
@@ -60,6 +77,7 @@ Prefer to mechanise. If a rule cannot be mechanised, say so and say why.
 | An exclusion counts only when the thing was possible | Human | Directed | **Yes, once.** Caught the sea-level pack calling a decision an impossibility, 2026-10-10. *Evaluation* | Earning its place |
 | A widget nobody can add is invisible | Agent, mechanised | Seen | **Yes, 7 times.** Mechanised, so it keeps reporting. *Implementation* | Earning its place |
 | D2: does the operation already exist under another name? | Agent | Seen | **Yes.** Found two superseded duplicates and a near-duplicate. *Design* | Earning its place |
+| D10: does an example instantiate it? | Agent, mechanised | Seen | **Yes**, it reported three undemonstrated widgets. But it answers "has this been shown composing", not "was this necessary", and it was read as the second | Keep as **information**. **Do not make it a gate** — as a gate this week it would have blocked three widgets, two of which belong in increments not yet built |
 | D3: is every distinction enforced? | Agent | Seen | **Yes, once**, in a sample of one. *Design* | Provisional; needs a full pass |
 | D7: does the name state what was done? | Agent | Seen | **Yes, twice.** `xpert`, and `raster_input` titled "Acquire". *Design* | Earning its place |
 | Node 22 is required | Human | Directed | **Yes, once.** A build failure read as a broken dependency. *Development* | Earning its place. A fact, not a judgement |
@@ -67,7 +85,7 @@ Prefer to mechanise. If a rule cannot be mechanised, say so and say why.
 | Preserve the dated record; supersede rather than rewrite | Agent | Seen | **Yes, twice.** Experiment 47, then its 2026-10-10 correction. *Evaluation* | Earning its place |
 | Name enforcement as one of five kinds; do not say "refusal" | Human | Directed | Not yet, as a check. It did make the widget audit possible to write. *Design* | Provisional |
 | Do not report work as "validated" without naming the check | Agent | Seen | Not recorded | Provisional |
-| Write the experiment before adding a new primitive | Agent | None | Not as a catch. Followed 5 times, missed twice, in the session it was written | Provisional; narrowed to new primitives |
+| Write the experiment before adding a new primitive | Agent | None | Not as a catch. Followed 5 times, missed twice, in the session it was written | Provisional; narrowed to new primitives. **Binds** — it slows every primitive, and has caught nothing yet |
 | Do not treat `proposed` or `blocked` as a defect to fix | Agent | Seen | Not yet. The episode that prompted it came first | Provisional; no way yet to tell a real blocker from a recorded state |
 | **D5** | Agent | None | **Yes, once, 2026-10-10.** The coordinate system is a property of a layer and is carried as a parameter on five consumers instead, because `SpatialReference` admits only CRS84 ([40](../experiments/40-reprojection-primitives.md)) | Provisional, but it has now caught something |
 | D6, D8, D9 | Agent | None | **Never applied.** Written after all 42 widgets existed | Proposals, not gates |

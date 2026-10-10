@@ -525,14 +525,31 @@
    ]
   },
   {
+   "id": "urn:fieldwork:widget:reachable_corridor",
+   "nodeType": "reachable_corridor",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/reachable_corridor/0.1.0.json",
+     "sha256": "ea2e1a05f7f3d06105aaec00452d999a0b6de830f63f979446d59eedd3ced260"
+    }
+   ]
+  },
+  {
    "id": "urn:fieldwork:widget:reachable_nodes",
    "nodeType": "reachable_nodes",
-   "currentVersion": "0.1.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
      "path": "widgets/releases/reachable_nodes/0.1.0.json",
      "sha256": "d63621dab55e19eb23ba453dd16d3fc0e929e08c534471c80f7e6efbd41740b6"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/reachable_nodes/0.2.0.json",
+     "sha256": "08126d2196dec1b42ab197e30993b260f1b8d2a66c9ffd6f93af46f60ccdfae3"
     }
    ]
   },

@@ -8,6 +8,7 @@ import type {Boundary,PointCollection,PointFeature,Position,WorkflowNode,NodeDef
 import type {Receipt} from './results.js';
 import {geometryBounds} from './study-area.js';
 import {pointRelation} from './spatial-predicates.js';
+import {partial,prepareEdges} from './network-edges.js';
 
 export interface Network {nodes:{id:string;coordinates:Position}[];edges:{from:string;to:string;lengthM:number;geometry?:Position[]}[];source:string;provenance?:Record<string,unknown>}
 export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;minutes?:number;count?:number;total?:number;missingValues?:number}
@@ -65,11 +66,10 @@ const multi=(b:Boundary)=>b.type==='Polygon'?[b.coordinates]:b.coordinates;
 export function clipPolygons(input:Polygons,boundary:Boundary):Polygons{
   return {...structuredClone(input),boundary:structuredClone(boundary),features:input.features.flatMap(f=>{const coordinates=polygonClipping.intersection(multi(f.geometry) as ClipMultiPolygon,multi(boundary) as ClipMultiPolygon);return coordinates.length?[{...f,geometry:{type:'MultiPolygon' as const,coordinates}}]:[];}),notes:[...input.notes,'Clipped in CRS84 coordinate space; empty intersections omitted.']};
 }
-function partial(line:Position[],fraction:number){const lengths=line.slice(1).map((p,i)=>dist(p,line[i])),total=lengths.reduce((a,b)=>a+b,0),out=[line[0]];let remaining=total*fraction;for(let i=0;i<lengths.length;i++){if(remaining>=lengths[i]){out.push(line[i+1]);remaining-=lengths[i];}else{if(lengths[i]>0){const t=remaining/lengths[i];out.push([line[i][0]+t*(line[i+1][0]-line[i][0]),line[i][1]+t*(line[i+1][1]-line[i][1])]);}break;}}return out;}
 export function isochrone(input:PointCollection,network:Network,params:WorkflowNode<'isochrone'>['params']):Polygons{
   if(params.thresholds?.length){validateCatchmentNode({id:'check',type:'isochrone',params,x:0,y:0});const results=params.thresholds.map(minutes=>isochrone(input,network,{...params,minutes,thresholds:undefined}));return {...results[0],features:results.flatMap(p=>p.features.map(f=>({...f,id:f.siteId+'-t'+f.minutes}))),method:'Cumulative network isochrones: '+params.thresholds.join(', ')+' minutes; '+params.speedMPerMin+' m/min; '+params.bufferM+' m corridor; '+params.direction,notes:[...results[0].notes,'Nested thresholds are cumulative, not disjoint time bands.']};}
   validateNetwork(network);validateCatchmentNode({id:'check',type:'isochrone',params,x:0,y:0});const fs=sites(input,10),m=metric(params.zone,params.hemisphere),coords=new Map(network.nodes.map(n=>[n.id,m.forward(n.coordinates)]));
-  const edges=network.edges.map(e=>{const start=coords.get(e.from)!,end=coords.get(e.to)!;let line=e.geometry?e.geometry.map(m.forward):[start,end];if(dist(line[0],start)>dist(line.at(-1)!,start))line=line.toReversed();if(dist(line[0],start)>2||dist(line.at(-1)!,end)>2)throw new Error('Network edge geometry does not match its endpoints within 2 metres.');return params.direction==='inbound'?{from:e.to,to:e.from,lengthM:e.lengthM,line:line.toReversed()}:{...e,line};});
+  const edges=prepareEdges(network,params.direction,m.forward);
   const adjacency=new Map<string,typeof edges>();for(const e of edges){const list=adjacency.get(e.from)||[];list.push(e);adjacency.set(e.from,list);}
   const snaps:NonNullable<Polygons['snaps']>=[],notes=['Turf/JSTS corridor buffer in a local azimuthal equidistant projection, 8 quadrant segments. Approximate corridor polygons, not exact travel-time surfaces. Edge time uses supplied length / constant speed. No off-network connectors; snap distance is reported but not charged. Graph extent can truncate reachability. OSM snapshot is not an 1854 street reconstruction.'];
   const features=fs.map(f=>{const origin=m.forward(f.geometry!.coordinates),snap=network.nodes.reduce((a,b)=>dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b),snapDistance=dist(coords.get(snap.id)!,origin);if(snapDistance>params.maxSnapM)throw new Error(`${f.properties.name}: nearest network node is ${Math.round(snapDistance)} m away, beyond the snap limit.`);snaps.push({siteId:f.id,nodeId:snap.id,distanceM:snapDistance});

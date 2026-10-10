@@ -32,6 +32,7 @@ export interface ParamsByType {
   summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south'};
   snap_to_network:{label:string;zone:number;hemisphere:'north'|'south';maxSnapM:number};
   reachable_nodes:{label:string;minutes:number;speedMPerMin:number;direction:'outbound'|'inbound';travelMode:'walking'|'cycling'|'driving'|'other'};
+  reachable_corridor:{label:string;bufferM:number;zone:number;hemisphere:'north'|'south'};
   summarize_hull:{label:string;zone:number;hemisphere:'north'|'south'};
   find_health_facilities:{label:string;source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';kinds:string[];requireName:boolean;country:string;minConfidence:number;data:PointCollection|null;retrieved:{source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';sourceLabel:string;licence:string;licenceIRI:string;sourceIRI:string;attribution:string;origin:string;kept:number;dropped:{kind:number;coordinates:number;name:number};at:string;scope:string;filename?:string;sha256?:string;bytes?:number;release?:string;belowConfidence?:number;unmappedCategory?:number;minConfidence?:number}|null};
   buffer_point:{label:string;pointId:string;distanceM:number};

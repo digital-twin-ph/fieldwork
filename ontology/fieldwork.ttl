@@ -16,11 +16,25 @@ fw:VoronoiComputation a owl:Class;
 fw:NetworkIsochrone a owl:Class;
   rdfs:label "Network isochrone computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Directed network reachability with explicit cost, snapping and corridor approximation.".
+fw:ReachableCorridor a owl:Class;
+  rdfs:label "Reachable corridor computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "A buffer around the street segments a traveller can enter within a budget, truncated where the budget runs out mid-block. The half-width is a claim that anywhere within it is reached, which includes the insides of buildings and the far side of walls.".
+fw:corridorCount a owl:DatatypeProperty; rdfs:domain fw:ReachableCorridor; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Corridors produced, one per origin".
+fw:enteredSegmentCount a owl:DatatypeProperty; rdfs:domain fw:ReachableCorridor; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Street segments entered at all".
+fw:partialSegmentCount a owl:DatatypeProperty; rdfs:domain fw:ReachableCorridor; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Street segments entered only part-way";
+  rdfs:comment "Where the budget ran out mid-block. This is what places the edge of the travel time between junctions rather than at them.".
+fw:corridorHalfWidthMetres a owl:DatatypeProperty; rdfs:domain fw:ReachableCorridor; rdfs:range xsd:decimal;
+  rdfs:label "Distance either side of a street counted as reached";
+  rdfs:comment "25 metres in the case study this was derived from, passed as edge_buff with no reason recorded. Emitted because the reached area scales with it.".
 fw:NetworkReachability a owl:Class;
   rdfs:label "Network reachability computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Cheapest-path traversal of a street network from an origin up to a travel budget, emitting the reached junctions with the budget left at each. Cost is supplied street length over one constant speed: a geometry of the graph, not a geography of access.".
-fw:originCount a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:nonNegativeInteger;
-  rdfs:label "Number of origins traversed from".
+fw:originCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Number of origins traversed from";
+  rdfs:comment "No domain: asserted by both fw:NetworkReachability and fw:ReachableCorridor. Keeping the reachability domain would have made every corridor an inferred traversal, which it is not.".
 fw:reachedNodeCount a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "Reached junctions, summed over the origins".
 fw:travelBudgetMetres a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:decimal;
@@ -34,8 +48,9 @@ fw:assumedSpeedMetresPerMinute a owl:DatatypeProperty; rdfs:domain fw:NetworkRea
 fw:travelMode a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:string;
   rdfs:label "Kind of travel the speed is meant to represent";
   rdfs:comment "One of walking, cycling, driving or other, checked against the speed so that a mode and a number cannot contradict each other. Public transport is not among them: it follows routes and a timetable rather than the street network.".
-fw:travelDirection a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:string;
-  rdfs:label "Whether travel was outbound from the origin or inbound to it".
+fw:travelDirection a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "Whether travel was outbound from the origin or inbound to it";
+  rdfs:comment "No domain, for the reason fw:originCount states. A corridor restates the direction it was given rather than choosing one.".
 fw:edgeLengthSource a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:string;
   rdfs:label "Where the street lengths came from";
   rdfs:comment "This activity re-measures no geometry, so it needs no projected CRS and takes the lengths on trust. Naming the source is the only check available to a reader.".

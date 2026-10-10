@@ -475,6 +475,26 @@ practitioner should be told when it happens, which can now be argued from a case
 rather than from a hypothetical. The tests record today's behaviour; if loud
 failure is introduced, they fail, and the change becomes visible.
 
+## Label the worked examples with their public health scenario
+
+Smallest step toward [79](docs/experiments/79-emergent-palette-slicing.md), and
+the only one needed before the rest can be computed rather than argued.
+
+Worked examples are named for their case — "heat outreach", "old naledi access",
+"snow voronoi" — not for the kind of work they are. Adding one field, the public
+health scenario, makes widget-to-scenario a computation over data that already
+exists, the same way `usage:widgets` computes widget-to-example.
+
+The structure is already visible without it. Measured across seven examples:
+`observations`, `map_output`, `table_output` and `area` appear in six or seven;
+`clip_polygons` and `summarize_polygons` appear together in the two catchment
+cases and nowhere else. Nobody declared those four core. They emerged.
+
+Two cautions, both recorded in 79. "Appears once" conflates scenario-specific
+with newly added — `voronoi` and `find_health_facilities` are both at one, for
+opposite reasons. And a filter that hides rarely used widgets is a quiet deletion:
+the least used may carry the hardest-won distinction.
+
 ## GIS workflows 101: is there a teaching tier in the palette?
 
 Raised 2026-10-10. Voronoi and isochrone hide their steps deliberately, because

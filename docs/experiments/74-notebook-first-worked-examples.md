@@ -74,6 +74,47 @@ hull and buffer "should not be hidden inside Voronoi" — and the method re-deri
 it without being pointed there. That is weak evidence the method works, and it is
 the first evidence of any kind.
 
+## A third axis D1 does not have: can a learner take it apart?
+
+Raised by the practitioner after the mapping above. Voronoi and isochrone hide
+their steps **on purpose**, because composing them from parts asks a non-GIS
+public health professional to make too many leaps at once. The opposite argument
+is equally real: taking a workflow apart is how someone's skill advances. Both
+are true, which makes it a developmental-evaluation question rather than a design
+error.
+
+The audit cannot express the tension. `voronoi` and `isochrone` are classified
+**Primitive** — "residual knowledge, enforced, asked for by name" — and that is
+correct on D1's two axes, reuse and use. Neither axis asks whether a learner
+should be able to see inside. By that third question the same widgets are
+composites: Advanced-2 does `convex_hull → buffer → Voronoi → clip → spatial
+join`, and Fieldwork collapses it to one node.
+
+**The three gaps found above are all steps the notebooks teach and the palette
+collapses.** Weighted mean centre is the Basic study's second computation. Convex
+hull is how Advanced-2 derives a boundary. Routing is Advanced-1's first network
+operation. That is what you would predict if a palette were optimised for getting
+an answer and not for learning how the answer is made — so it is weak evidence
+the tension is real and not theoretical.
+
+`classification.json` carries two values, `standard` and `domain`. There is no
+notion of a teaching tier, and the primitive-versus-composite judgement lives in
+an audit document that the application never shows anybody.
+
+What would settle it, and neither is done:
+
+- **Does a learner who only ever used composites go on to compose something
+  new?** Experiment 27 already has a progression vocabulary — attempted,
+  practised — and an exercise sequence for Old Naledi. That is where this could
+  be observed rather than argued.
+- **Does showing the decomposition reduce the leaps or add to them?** A composite
+  could state the steps it stands for without requiring anyone to wire them.
+  Untested, and the obvious risk is that it makes the palette look harder.
+
+Recorded as a tension, not a plan. The temptation is to invent a tier and sort 42
+widgets into it this afternoon; the project has enough rules written in one
+sitting.
+
 ## Sea level: the notebook will be written, not found
 
 The organisation has no repository about sea level, tide gauges or coastal

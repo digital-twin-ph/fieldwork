@@ -305,8 +305,10 @@ Worth settling before building any of it:
   cluster of reports is not a cluster of cases — reporting effort varies by
   place. This is the same shape as the sea-level limitation, and a statistic that
   arrives without it will be over-read faster than a map is.
-- **Whether it needs a new carrier.** A statistic over a layer is a value with a
-  significance, not a point layer, and nothing today carries that.
+- **Whether it needs a new carrier.** A global statistic over a layer is a value
+  with a significance, not a point layer, and nothing today carries that. A local
+  statistic gives every feature its own score and fits the existing points
+  carrier, so the two are not one piece of work.
 - **The zone problem.** Any cell- or area-based statistic changes with the
   zoning. The glossary now warns about this for summaries; a statistic makes it
   sharper, because the number looks more authoritative.

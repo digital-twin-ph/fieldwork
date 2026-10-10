@@ -69,24 +69,47 @@ human sat down once and worked through 42 widgets.
 
 Prefer to mechanise. If a rule cannot be mechanised, say so and say why.
 
-## In vitro is not enforcement
+## A rule has stages, and enforcement is the last one
 
-A rule can fire **in vitro** — inside the audit that proposed it — and enforce
-nothing. The firing looks like evidence and is not.
+A rule can be thought through, written down and **tried** long before it enforces
+anything. That is not a failed rule; it is a rule being evaluated, which is what
+this project does with everything else.
 
-Checked 2026-10-10, against the registry rather than from memory:
+| Stage | What happens | What you learn |
+| --- | --- | --- |
+| **Proposed** | written down | nothing yet |
+| **Observed** | applied in an audit, against what exists | what it would catch, and how often |
+| **Tried** | used in a worked example or a real scenario | how it behaves when somebody is doing the work |
+| **Enforced** | mechanised; changes or prevents things | whether it holds under load |
+
+**The missing stage is "tried".** This project jumps from writing a rule to
+either forgetting it or enforcing it. The place to try one is a worked example or
+a real case, where the behaviour can be watched without committing the whole
+codebase to it.
+
+### Observed, and not yet tried
+
+Checked 2026-10-10 against the registry rather than from memory:
 
 | Rule | Findings | Changed |
 | --- | --- | --- |
-| Widget naming convention | 9 names | **0.** `xpert`, `policy`, `access_policy`, `access`, `alert`, `places`, `centers`, `facilities`, `nearest`, `output` are all still there |
-| D2, duplicate operations | 3 nearest-neighbour implementations | **0.** All three still in the registry |
+| Widget naming convention | 9 names | 0 |
+| D2, duplicate operations | 3 nearest-neighbour implementations | 0 |
 | D3, unenforced distinctions | 1, in a sample of 1 | 0 |
 | D5, qualifiers on consumers | 1, today | 0 |
 
-So the best-evidenced rule added this session is also the least enforced. It
-produced a table and the table produced nothing.
+The zero column is not a verdict against them. **Enforcing the naming convention
+today would mean nine renames, nine migrations and every saved workflow holding
+one of those types rewritten** — for names that are confusing on paper and have
+obstructed nobody. That is the straitjacket, arriving as diligence.
 
-What did enforce has one thing in common:
+What those four need is the stage they skipped. The naming convention can be tried
+on the *next* widget rather than retroactively on forty-two: if it helps name one
+new thing well, that is evidence, and it costs nothing. D2 can be tried by
+building the shared nearest-neighbour join behind one of the three, leaving the
+other two alone, and seeing whether anything is worse.
+
+### What enforcement looks like when it comes
 
 | Rule | How it enforces | Result |
 | --- | --- | --- |
@@ -95,10 +118,9 @@ What did enforce has one thing in common:
 | Node 22 | the build fails | one diagnosis, permanently |
 | An exclusion counts only when the thing was possible | prose, applied by a person | the pack was corrected |
 
-**Mechanised rules enforce. Prose rules describe.** The exception proves it: the
-exclusion rule is prose and it did cause a correction, because a person applied
-it to a specific claim. One application by one person is not enforcement either —
-it is a good day.
+All but the last are mechanised, and the last enforced once because a person
+applied it to a specific claim. **Mechanised rules enforce; prose rules describe**
+— and a prose rule that has only been observed is still at stage two, not failing.
 
 ## The rules
 
@@ -112,11 +134,11 @@ prevented. The gap between those columns is the finding.
 | Node 22 is required | Human | Directed | 1 | **1** | Earning its place. A fact, not a judgement |
 | An exclusion counts only when the thing was possible | Human | Directed | 1 | **1** | Earning its place. Enforced by a person, not by code |
 | Preserve the dated record; supersede rather than rewrite | Agent | Seen | 2 | 2 | Earning its place |
-| Widget naming convention | Human asked, agent drafted | Seen | 9 | **0** | **Describes, does not govern.** Either mechanise the check or stop counting the findings as firings |
-| D2, does the operation already exist under another name? | Agent | Seen | 3 | **0** | Same. All three duplicates remain |
+| Widget naming convention | Human asked, agent drafted | Seen | 9 | 0 | **Observed.** Try it on the next new widget, not retroactively on 42 |
+| D2, does the operation already exist under another name? | Agent | Seen | 3 | 0 | **Observed.** Try it by factoring one of the three, leaving the others |
 | D7, does the name state what was done? | Agent | Seen | 2 | 1 | One title corrected, one name untouched |
-| D3, is every distinction enforced? | Agent | Seen | 1 | 0 | Provisional; needs a full pass |
-| D5, do qualifiers live on the input? | Agent | None | 1 | 0 | Fired today, in a document |
+| D3, is every distinction enforced? | Agent | Seen | 1 | 0 | **Observed** in a sample of one; needs a full pass |
+| D5, do qualifiers live on the input? | Agent | None | 1 | 0 | **Observed** today. The scenario that would try it is reprojection ([40](../experiments/40-reprojection-primitives.md)) |
 | Status lines must be true of today | Agent | None | 1 | 1 | Provisional |
 | Name enforcement as one of five kinds | Human | Directed | 0 | 0 | Provisional. It made the audit writable, which is not the same |
 | Do not report work as "validated" without naming the check | Agent | Seen | 0 | 0 | Provisional |

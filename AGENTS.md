@@ -120,11 +120,16 @@ straitjacket**.
 
 Every rule here is provisional, and has to pass two tests.
 
-**Does it fire, and does it enforce?** A rule earns its place by catching
-something that would otherwise have gone through. But a rule can fire **in
-vitro** — inside the audit that proposed it — and change nothing. The naming
-convention produced nine findings and not one rename. Count what changed, not
-what was noticed.
+**Has it been tried?** A rule can be proposed, then **observed** by applying it
+to what exists, then **tried** in a worked example or a real case, and only then
+enforced. The middle stage is usually skipped here: a rule gets written and then
+either forgotten or enforced. Try it in a scenario first, where its behaviour can
+be watched without committing the codebase to it.
+
+Enforcing early is its own straitjacket. The naming convention has nine findings
+and no renames, and acting on them today would mean nine migrations and every
+saved workflow holding those types rewritten, for names that have obstructed
+nobody.
 
 **Does it bind?** A rule can fire reliably and still be harmful, by stopping the
 framework from moving. Ask what it would have prevented, not only what it caught.

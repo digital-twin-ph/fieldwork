@@ -84,6 +84,31 @@ one somebody sent you. A published composition carries its author's claim, not t
 project's ([76](76-composition-governance.md)), and a palette that shows both as
 "Micro-workflows" has lost that.
 
+## Order becomes something you can test
+
+A widget fixes the order of its steps, and a practitioner cannot tell whether the
+order mattered. A composition exposes the steps, so **ordering becomes an
+experimental variable**: run it one way, run it the other, compare the outputs.
+
+That is a capability, not only transparency. Some orderings change the answer, and
+the project already contains the cases:
+
+| Pair | Why the order matters |
+| --- | --- |
+| Reproject, then measure — or measure, then reproject | A distance in degrees is not a distance in metres. This is the classic error, and it is why five widgets each demand a UTM zone |
+| Clip to the boundary, then aggregate — or aggregate, then clip | Counts at the edge differ. A cell straddling the boundary is counted whole, in part, or not at all |
+| Mask points, then aggregate — or aggregate, then perturb | Entirely different disclosure properties. `donut_geomask` and `hex_aggregate` compose both ways and the privacy claim is not the same |
+| Buffer, then union — or union, then buffer | For a fixed radius these agree, which is worth knowing too: a pair that **does not** matter is a finding a practitioner can rely on |
+
+The last row is the useful control. Not every order matters, and a composition
+that lets someone check costs less than an argument about it.
+
+**This belongs in the documentation as a possibility.** A composition's
+description should say which of its steps can be reordered, which cannot, and
+where the order encodes a methodological choice rather than a convenience. An
+order that changes the answer is an assumption, and an assumption nobody can see
+is the thing this project keeps finding at the bottom of its defects.
+
 ## Design checks
 
 D1 and D7 are about primitives. A composition is not one, and saying so matters:

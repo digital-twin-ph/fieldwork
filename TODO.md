@@ -286,7 +286,7 @@ Philippines. The node correctly demanded a study area; supplying one was the pro
   around it assumes Gaborone. This is the same finding as the widget audit's example nodes, in the
   map rather than the palette: one demonstration's content presenting itself as the general case.
 
-## Three widgets built 2026-10-09, none demonstrated
+## Three widgets built 2026-10-09, none in a worked example
 
 `npm run usage:widgets` after adding the Manila example:
 
@@ -296,8 +296,20 @@ never instantiated by any example (7):
 ```
 
 The first, third and seventh were built that day. D1 passed for each — experiments
-67 and 68 argued the admission before the code, as the rule requires. **D10 fails
-for all three**, and the reasons differ.
+67 and 68 argued the admission before the code, as the rule requires. D10 fails
+for all three.
+
+**D10 does not measure whether a widget was necessary, and it was read as if it
+did.** The audit says what it measures: a widget no example instantiates "has
+never been *shown composing* with the rest". It is a question about demonstration
+to a newcomer. The practitioner used `buffer_point` and
+`find_health_facilities` from a blank canvas on the day they were built — real
+use, invisible to a check that only reads the shipped examples and frozen
+fixtures. Reporting "zero instantiated" as "were they necessary" was an
+over-claim from a tool that answers a narrower question.
+
+The reasons the three are absent from examples still differ, and are worth
+keeping.
 
 - **`sample_raster`** has no consumer anywhere. It was called "real blocker #1"
   for reading elevation at facilities, and elevation is increment 2 of the
@@ -310,20 +322,49 @@ for all three**, and the reasons differ.
   one has never been used, so the distinction is asserted rather than shown.
   Increment 2 would use it: a study area from the Manila gauge rather than a
   hand-drawn box.
-- **`find_health_facilities`** is the awkward one, and it is not a scheduling
-  problem. **A retrieval widget cannot be demonstrated by a bundled example**,
-  because a bundled example must run offline with no account. The example ships
-  60 facilities as `observations` and says the widget retrieves the same data
-  live. So the widget's own motivating use case deliberately avoids it.
+- **`find_health_facilities`** was listed here too, with the claim that a
+  retrieval widget *cannot* be demonstrated by a bundled example because such an
+  example must run offline. **That was wrong and is fixed.** A bundled example can
+  hold a network-dependent widget carrying what it retrieved, which is exactly the
+  state a workflow is in after one online retrieval. What it cannot do is reach
+  the network when it runs. The Manila example now holds the widget with 194
+  facilities and its own retrieval record, fetched through the widget's retrieval
+  path so the provenance is real, and `npm run usage:widgets` no longer lists it.
 
-That last one needs a decision, not a task. Either a worked example may require a
-network and is labelled as such, or retrieval widgets are demonstrated some other
-way and D10 does not apply to them. Choosing neither leaves a widget nobody has
-seen work inside a workflow.
+  The mistake was reaching for an absolute instead of looking at the online-to-
+  offline model already implemented and already covered by a passing test named
+  "a stored retrieval replays with the network off, and asks no source for
+  anything".
 
 Also fixed: `scripts/widget-coverage.mjs` did not know about the Manila example,
 so D10's mechanised check was under-reporting. A check that silently misses an
 example is worse than no check for the widgets inside it.
+
+## Widget use tracking
+
+Proposed by the practitioner during the widget audit, raised again on 2026-10-10,
+and not recorded until now — which is itself the kind of lapse experiment 73
+describes.
+
+`npm run usage:widgets` counts nodes across shipped examples and frozen fixtures.
+It cannot see a widget a practitioner adds to a blank canvas, so a widget in daily
+use and a widget nobody has ever added look identical to it. That is the evidence
+missing when asking whether a widget earns its place.
+
+What would need deciding first:
+
+- **What is counted.** Adding a node is not using it; a node that never runs is
+  not evidence. The existing vocabulary already separates these — a **widget** is
+  the contract, a **node** an instance, a **workflow step** one execution — so
+  the count should say which it means.
+- **Where it is kept.** Workflows are in browser `localStorage` and nothing is
+  sent anywhere. Any count stays local, and should be readable by the practitioner
+  rather than only by the project.
+- **What it must not become.** A usage count is not a quality measure. The least
+  used widget may be the one that carries the hardest-won distinction, and a
+  number that invites pruning by popularity would delete exactly those.
+
+Not started.
 
 ## Gap: spatial statistics
 

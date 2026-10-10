@@ -373,6 +373,35 @@ both already stated in the widget and worth keeping stated.
 
 Full reasoning in [40](docs/experiments/40-reprojection-primitives.md).
 
+## GIS workflows 101: is there a teaching tier in the palette?
+
+Raised 2026-10-10. Voronoi and isochrone hide their steps deliberately, because
+composing them from parts asks a non-GIS public health professional to make too
+many leaps at once. Taking a workflow apart is also how skill advances. Both are
+true, so this is a question to observe rather than settle by argument.
+
+The audit cannot express it. Both widgets are classified **Primitive** on D1's
+axes — residual knowledge, asked for by name — and D1 has no axis for whether a
+learner should see inside. `classification.json` has two values, `standard` and
+`domain`, and no notion of a tier; the primitive-versus-composite judgement sits
+in an audit the application never shows anyone.
+
+Suggestive: **the three gaps the cholera notebooks exposed are all steps those
+notebooks teach and the palette collapses** — weighted mean centre, convex hull,
+routing. That is what you would expect if the palette were optimised for reaching
+an answer rather than for learning how it is made.
+
+Two things would settle it, and both are observations rather than designs:
+
+- Does a learner who only used composites later compose something new?
+  [27](docs/experiments/27-workflow-learning-and-gamification.md) already has the
+  progression vocabulary and an exercise sequence; that is where to look.
+- Does showing a composite's steps, without requiring anyone to wire them, reduce
+  the leaps or add to them? The obvious risk is a palette that looks harder.
+
+Not started, and deliberately not turned into a tier scheme. Reasoning in
+[74](docs/experiments/74-notebook-first-worked-examples.md).
+
 ## Three primitives the cholera notebooks ask for
 
 Derived 2026-10-10 by reading eleven notebooks across the Basic, Advanced-1 and

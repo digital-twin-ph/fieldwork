@@ -7,7 +7,7 @@ them executable. No vocabulary term is changed by this document; it records what
 the ontology can and cannot answer, and why.
 
 A competency question is a question the ontology exists to answer. This list is
-the **relevance** dimension of [the audit procedure](../ontology-audit.md):
+the **relevance** dimension of [the audit procedure](../audits/ontology-audit.md):
 structure asks whether a graph is well formed, semantics asks whether it means
 what we say, and relevance asks whether it answers anything a practitioner needs.
 A vocabulary can pass the first two and still be useless, which is why relevance

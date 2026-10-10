@@ -83,7 +83,7 @@ map figure becomes citable.
    otherwise would be worse than naming it.
 
 All four need vocabulary terms, which means they go through
-[the semantic audit](../ontology-audit.md) before being declared — the same discipline
+[the semantic audit](../audits/ontology-audit.md) before being declared — the same discipline
 `fw:DataTable` went through in [experiment 48](48-tabular-input.md), including a
 disjointness question worth asking early: a basemap is not a dataset the workflow used
 as evidence, and the vocabulary should make that hard to confuse.

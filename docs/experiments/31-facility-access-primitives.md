@@ -126,6 +126,6 @@ Candidate operation meanings include point-in-polygon selection, attribute filte
 
 Each slice needs source-identity/attribute preservation, parameter persistence, Undo, provenance, portable project and offline regression checks. Existing results are a compatibility baseline only for unchanged methods. Practitioner evaluation asks users to explain why an outside-neighborhood facility can still be relevant and why geographic proximity alone does not establish access to diagnostic services.
 
-Related records: [facility source split](19-facility-input-standardization.md), [shared origin points](20-shared-sample-points.md), [prior art](../prior-art.md), [credential files](30-local-credential-files.md), and [N3 evaluation](11-n3-output-evaluation.md).
+Related records: [facility source split](19-facility-input-standardization.md), [shared origin points](20-shared-sample-points.md), [prior art](../research/prior-art.md), [credential files](30-local-credential-files.md), and [N3 evaluation](11-n3-output-evaluation.md).
 
 Implementation follow-up: [Experiment 32](../experiments/32-john-snow-primitives.md) adds bounded shared catchment primitives and two runnable workspaces. Its methods and runtime evidence are separate from this source-inspection/design record.

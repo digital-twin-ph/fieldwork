@@ -6,7 +6,7 @@ Date: October 8, 2026. Status: measured findings and a recommendation. No
 ontology file, axiom or application behaviour is changed by this document.
 
 The vocabulary used below is defined in
-[the audit procedure's glossary](../ontology-audit.md#glossary-the-semantic-vocabulary-used-in-these-documents),
+[the audit procedure's glossary](../audits/ontology-audit.md#glossary-the-semantic-vocabulary-used-in-these-documents),
 including the distinction between a constraint and an entailment that this
 record turns on.
 
@@ -86,7 +86,7 @@ conclude the ontology constrains how properties are used. It does not.
 
 ## The conflation probe
 
-The ["terms that must remain distinct" table](../ontology-audit.md) is this
+The ["terms that must remain distinct" table](../audits/ontology-audit.md) is this
 project's central semantic discipline. The probe adds one individual per pair to
 the ontology graph, typed as both members of the pair, and asks the reasoner
 whether the result is consistent.
@@ -213,7 +213,7 @@ rather than a feature.
 
 The question that led here was which offline, browser-based ontology browser
 fits this prototype's architecture. Recorded for the
-[prior-art register](../prior-art.md), with the same policy: licence, version
+[prior-art register](../research/prior-art.md), with the same policy: licence, version
 and maintenance noted, nothing adopted by this document.
 
 | Tool | Architecture | Licence | Disposition |

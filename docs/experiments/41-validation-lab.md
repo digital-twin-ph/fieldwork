@@ -11,7 +11,7 @@ been validated against a reference implementation yet.
 The Validation Lab is a JupyterLite site whose notebooks **independently
 recompute** Fieldwork's spatial results in Python and report agreement or
 disagreement with a stated tolerance. It is a comparator, in the role
-[prior art](../prior-art.md) assigns to QGIS for clipping and area, with better
+[prior art](../research/prior-art.md) assigns to QGIS for clipping and area, with better
 reproducibility: the notebook is the recorded procedure, so a reviewer repeats
 it instead of trusting a screenshot.
 

@@ -89,7 +89,7 @@ flowchart LR
 
 Use SHACL for declared data/configuration constraints, N3 for explicit inference and explanations, and computational adapters for numerical operations. Passing SHACL does not establish numerical accuracy or validate a scientific assumption. Do not equate external process identifiers with Fieldwork ontology classes without an explicit mapping and tests.
 
-The [widget registry](../widgets/README.md), [STAC/processing and SHACL design](experiments/15-stac-processing-shacl.md), [N3 evaluation approach](experiments/11-n3-output-evaluation.md), and [learning design](experiments/27-workflow-learning-and-gamification.md) are the local integration points. Registry version pins and general migrations remain future work; cataloging a release does not yet select an executor at runtime.
+The [widget registry](../../widgets/README.md), [STAC/processing and SHACL design](../experiments/15-stac-processing-shacl.md), [N3 evaluation approach](../experiments/11-n3-output-evaluation.md), and [learning design](../experiments/27-workflow-learning-and-gamification.md) are the local integration points. Registry version pins and general migrations remain future work; cataloging a release does not yet select an executor at runtime.
 
 ## Candidate experiments and acceptance evidence
 
@@ -107,9 +107,9 @@ For usability, ask practitioners to construct the same small workflow, explain i
 
 ### John Snow isochrone case study
 
-The [pinned notebook review](research/john-snow-isochrones.md) examines the supplied PHI case study's NB03/NB04 network reachability, polygon construction, spatial counting and map/chart outputs. It maps those steps to Fieldwork primitives and records method differences, execution uncertainties and file-specific licensing questions before code reuse. This is a worked public-health workflow precedent, not evidence that the Python geospatial stack already runs offline in Fieldwork.
+The [pinned notebook review](john-snow-isochrones.md) examines the supplied PHI case study's NB03/NB04 network reachability, polygon construction, spatial counting and map/chart outputs. It maps those steps to Fieldwork primitives and records method differences, execution uncertainties and file-specific licensing questions before code reuse. This is a worked public-health workflow precedent, not evidence that the Python geospatial stack already runs offline in Fieldwork.
 
-The companion [Voronoi catchment review](research/john-snow-voronoi.md) examines Advanced Part 2: hull/buffer construction, Voronoi generation, clipping, point counts and building overlays. It identifies explicit projection, generator identity, boundary/tie handling and aggregation as reusable contracts, and distinguishes modeled catchments from observed service use.
+The companion [Voronoi catchment review](john-snow-voronoi.md) examines Advanced Part 2: hull/buffer construction, Voronoi generation, clipping, point counts and building overlays. It identifies explicit projection, generator identity, boundary/tie handling and aggregation as reusable contracts, and distinguishes modeled catchments from observed service use.
 
 Before selecting a concrete dependency, record its exact repository, release/commit, license/NOTICE and transitive dependencies, supported platforms, bundle/runtime cost, offline behavior, release history and issue responsiveness. Check whether more than one person or institution maintains the required component. Do not use stars or the existence of documentation as a substitute for a maintenance assessment.
 

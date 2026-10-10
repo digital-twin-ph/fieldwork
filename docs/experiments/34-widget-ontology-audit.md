@@ -29,7 +29,7 @@ it does not establish EYE correctness or real-world accessibility accuracy. Exis
 browser tests exercise real EYE separately. Registry mappings still explicitly retain
 legacy gaps. Shared structural conformance is not full semantic standardization.
 
-The [audit procedure](../ontology-audit.md) is now a required checkpoint before
+The [audit procedure](../audits/ontology-audit.md) is now a required checkpoint before
 adding primitives and after changing worked examples. Its current-limits section
 tracks what remains before universal operation-specific SHACL validation can be claimed.
 

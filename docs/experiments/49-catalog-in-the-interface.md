@@ -175,7 +175,7 @@ Stated positively rather than as an absence, so it can be checked:
 This adds no promise, survives staleness because it names its own vintage, and is
 falsifiable: if a pack definition ever does execute, the assertion fails loudly
 instead of the receipt quietly staying the same. It needs vocabulary terms, which
-means it is subject to the [semantic audit](../ontology-audit.md) before it is
+means it is subject to the [semantic audit](../audits/ontology-audit.md) before it is
 declared, not after.
 
 **Built.** A run now records the catalog it was built from, and every node states where its

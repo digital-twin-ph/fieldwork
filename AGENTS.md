@@ -1,14 +1,81 @@
 # Fieldwork semantic development checkpoints
 
-_Created 2026-10-07 · Updated 2026-10-08_
+_Created 2026-10-07 · Updated 2026-10-09_
+
+## Developmental evaluation
+
+This project is a developmental evaluation, not a build against a specification. The
+framework is being watched as it emerges, and `docs/experiments/` is the instrument of
+that evaluation rather than a byproduct of it: numbered records of what was designed,
+what was tried, what the trying revealed, and what remains unestablished. Treat the
+experiment as the unit of work. Before adding or changing a primitive, write the design
+and its admission review as an experiment record — as experiments 47, 48 and 58 did —
+so that the decisions are reviewable separately from the diff that implements them.
+
+Preserve the dated record. When a later finding supersedes an earlier analysis, add a
+dated supersession note and leave the original standing: experiment 47 keeps its
+blocked-on-the-host analysis "because it is how the gap was found", and rewriting it to
+match the present state would destroy the evidence of how the framework moved. This is
+the one place in the repository where retrospective consistency is the wrong goal. It is
+not licence for stale navigation. A document's status line, counts, digests and
+cross-references are what a reader meets first and must be true of today, so correct
+those and date the correction. A record that preserves its reasoning while misstating
+its own status is not a record; it misleads.
+
+A finding that invalidates a design is a result. Report it as one, with its date and
+what it took to find, rather than quietly correcting the design and leaving no trace.
+Negative results, refused connections, and capabilities deliberately not built are
+first-class content, as are the failures met along the way — a wrong locator, a name
+collision between two contracts — because those are what the next author needs. Do not
+treat a `proposed`, `blocked` or `not-admitted` status as a defect to fix on sight; it
+may be an accurate record of where the framework currently stands.
+
+An experiment carries creation and update dates, a status, the validation it commits to,
+a dated validation record with exact counts and the platforms covered, and an explicit
+statement of what it does not establish. Keep the practitioner observation that can come
+out badly — whether red is read as an error, whether someone can distinguish 250
+locations from 489 deaths — and write it before the result is known. Automated runtime
+evidence is distinct from evidence that a practitioner understands a result or finds it
+useful; never let a passing suite or a connected canvas stand in for either. When work
+lands, its competency questions go to
+[experiment 44](docs/experiments/44-ontology-competency-questions.md), including the ones
+the design refuses to answer.
+
+Do not declare the framework, or an experiment series, finished. Emergence is the object
+of study here.
+
+## Semantic admission and audit checkpoints
+
+To create a widget, follow [the adding-a-widget procedure](widgets/README.md), which
+lists every file the change touches, in order, and the gates to run before claiming it
+works. Pass the **primitive design audit** (D1–D9) in
+[the audit procedure](docs/audits/ontology-audit.md) first. D1 places the candidate on two
+axes — whether a distinction survives decomposition, and whether a practitioner would
+ask for the operation by name — because the unit of reuse is not the unit of use:
+factor a composite underneath while keeping its palette entry, and never make a
+practitioner wire three nodes to ask one question. D9 requires that the node count of
+each affected worked example not increase, and D10 that some example instantiate the
+widget — `npm run usage:widgets` reports which are at zero. Keep the three counted
+terms distinct in prose as well as in code: a **widget** is the versioned contract, a
+**node** is one instance of it in a workflow, a **workflow step** is one execution. Record the audit answers in
+the experiment record that proposes the primitive, and write that record before the
+implementation.
 
 Before adding a primitive, perform the semantic admission review in
-[the ontology audit procedure](docs/ontology-audit.md): define the term and its
+[the ontology audit procedure](docs/audits/ontology-audit.md): define the term and its
 limits, distinguish the widget/plan/activity/data roles, compare existing
 primitives and reusable vocabularies, and specify typed ports, units/CRS,
 provenance, missing-data policies and validation evidence. Prefer reuse when
 the operation has the same meaning. Do not equate similar labels with identical
 semantics or treat a declaration as an implemented capability.
+
+State each distinction the primitive carries — the knowledge, as a non-identity: *a
+table has no geometry*, *detection is not infection* — and name how each one is
+enforced: as a **hard stop**, a **validation rule**, a **run-time check**, a
+**limitation** or an **out-of-scope decision**. Do not use "refusal" as a category for these; the five are
+not interchangeable, and two of them prevent nothing. See
+[the audit procedure](docs/audits/ontology-audit.md). A distinction described as enforced
+while implemented as a limitation is this project's characteristic defect.
 
 After adding or changing a worked example, audit the connected workflow and its
 actual N3/evidence outputs against those contracts. Include positive and negative
@@ -19,6 +86,21 @@ explicitly; passing syntax or SHACL structure alone is not scientific validation
 
 Preserve existing user work and unrelated working-tree changes. These local audit
 checkpoints do not authorize publication or sending messages to other people.
+
+Do not report work as "validated" without naming which check passed.
+[Kinds of validation](docs/audits/validation.md) lists the seven and what each leaves
+open; a passing unit suite is not parity, and parity is not scientific suitability. Report
+unclosed gaps explicitly.
+
+## Toolchain
+
+This project requires **Node.js 22 or newer** (`engines: node >=22`; `.nvmrc` records 22).
+Run `nvm use` first. On Node 20 every script that typechecks fails with
+`ERR_UNKNOWN_FILE_EXTENSION` naming `node_modules/typescript/bin/tsc` — TypeScript 7 is
+ESM-only and its bin is extensionless. The error names typescript and reads like a broken
+dependency; it is the wrong Node version, and the project is not at fault. Do not
+diagnose it as a code or dependency problem, and do not report gates as failing until
+they have been run on Node 22.
 
 ## Versioning and release notes
 

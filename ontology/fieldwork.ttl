@@ -16,6 +16,37 @@ fw:VoronoiComputation a owl:Class;
 fw:NetworkIsochrone a owl:Class;
   rdfs:label "Network isochrone computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Directed network reachability with explicit cost, snapping and corridor approximation.".
+# Declared 2026-10-10 when the widget/ontology coupling was mechanised. These eleven
+# terms had been asserted into receipts by sample_raster and buffer_point with nothing
+# defining them: the release files described them in prose, and prose does not fail a build.
+fw:sampledAttribute a owl:DatatypeProperty; rdfs:domain fw:RasterPointSample; rdfs:range xsd:string;
+  rdfs:label "Raster attribute written onto each point".
+fw:sampledValueUnit a owl:DatatypeProperty; rdfs:domain fw:RasterPointSample; rdfs:range xsd:string;
+  rdfs:label "Unit of the sampled value, as stated by the practitioner";
+  rdfs:comment "Absent when none was stated, which fw:valueUnitStatus records separately. A raster does not carry its own unit.".
+fw:cellSizeX a owl:DatatypeProperty; rdfs:domain fw:RasterPointSample; rdfs:range xsd:decimal;
+  rdfs:label "Raster cell width in the raster's own coordinate system".
+fw:cellSizeY a owl:DatatypeProperty; rdfs:domain fw:RasterPointSample; rdfs:range xsd:decimal;
+  rdfs:label "Raster cell height in the raster's own coordinate system";
+  rdfs:comment "Emitted beside the width because a sampled value stands for the whole cell, so the cell's size is the resolution of the answer.".
+fw:sampleConvention a owl:DatatypeProperty; rdfs:domain fw:RasterPointSample; rdfs:range xsd:string;
+  rdfs:label "Rule by which a point takes a cell's value";
+  rdfs:comment "Containing cell under PixelIsArea, with no interpolation: the point takes the value of the cell it falls in and neighbouring cells do not contribute.".
+fw:sampledCount a owl:DatatypeProperty; rdfs:domain fw:RasterPointSample; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Points that took a value".
+fw:noDataCount a owl:DatatypeProperty; rdfs:domain fw:RasterPointSample; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Points falling on a no-data cell";
+  rdfs:comment "Inside the raster but unmeasured there, which is not the same as outside it.".
+fw:outsideRasterCount a owl:DatatypeProperty; rdfs:domain fw:RasterPointSample; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Points falling outside the raster's extent".
+fw:unlocatedCount a owl:DatatypeProperty; rdfs:domain fw:RasterPointSample; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Records with no coordinates, which could not be sampled";
+  rdfs:comment "Counted separately from no-data and outside, because the three have different remedies.".
+fw:sourcePoint a owl:DatatypeProperty; rdfs:domain fw:PointBuffer; rdfs:range xsd:string;
+  rdfs:label "Identifier of the point a circle was drawn around".
+fw:circleAreaFraction a owl:DatatypeProperty; rdfs:domain fw:PointBuffer; rdfs:range xsd:decimal;
+  rdfs:label "Fraction of the true circle's area the polygon covers";
+  rdfs:comment "A buffer is a polygon approximating a circle, so it is smaller than the circle it stands for. Emitted so the approximation is a number rather than a footnote.".
 fw:InteriorGapFill a owl:Class;
   rdfs:label "Interior gap fill"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Each polygon replaced by its outer ring, so enclosed gaps become solid. This enlarges the polygon and the added ground was never computed as covered, so anything measuring the result afterwards measures ground nothing reached. What a gap means depends on the source: in a travel corridor it is ground no street reached, and in an administrative boundary it would be a real enclave.".

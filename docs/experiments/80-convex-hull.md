@@ -32,7 +32,7 @@ the only one of the six that is unblocked today.
 | **D3** | A hull is not a density, a service area or a boundary anyone agreed to. Carried as a limitation on the node, since nothing can enforce how a shape is read |
 | **D4** | Ports only: points in, polygons out. No graph-level condition |
 | **D5** | **Fails the same way five widgets already fail.** It needs a metric CRS and must take a zone, because a layer cannot say what CRS it is in ([40](40-reprojection-primitives.md)). This makes six |
-| **D7** | `summarise_hull`. Summarise because many points become one shape, which is the test that separated computing from summarising |
+| **D7** | `summarize_hull`. Summarise because many points become one shape, which is the test that separated computing from summarising |
 | **D9** | Unmeasured |
 | **D10** | Not yet. The Snow examples would use it where they currently draw a rectangle |
 

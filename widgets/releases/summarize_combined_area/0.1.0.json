@@ -1,0 +1,61 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:summarize_combined_area",
+ "version": "0.1.0",
+ "nodeType": "summarize_combined_area",
+ "title": "Combined area",
+ "released": "2026-10-10",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['summarize_combined_area']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "polygons",
+    "type": "polygons"
+   }
+  ],
+  "output": "polygons"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:CombinedArea",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Emits an fw:CombinedArea activity carrying fw:partCount, fw:combinedPieceCount, fw:partsAreaSquareMetres, fw:combinedAreaSquareMetres and fw:metricCRS, and prov:used the polygon source. Both areas are emitted so overlap is a number rather than something a reader infers, and the piece count is emitted because areas that do not touch stay separate."
+ },
+ "implementation": {
+  "files": [
+   "src/combined-area.ts",
+   "src/core.ts",
+   "src/palette.ts"
+  ],
+  "definition": "src/combined-area.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "Overlapping and touching areas become one; separate areas stay separate. GIS calls it dissolve. Derived from the isochrone decomposition: Advanced-1 NB03 buffers the reachable segments, hulls them, then unions the result, and Fieldwork's isochrone already calls polygonClipping.union inside itself to fill holes, so the operation was in the codebase and never a widget. Second of six primitives an isochrone composition needs, taken second because the decomposition is built backwards from its output: summarize_hull emits polygons, which is what this takes. Takes a UTM zone to report an area, which makes seven widgets that each ask for one. See docs/experiments/81-combined-area.md."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Five unit checks cover two overlapping squares becoming one piece with the overlap reported (20,000 square metres of parts, 15,000 combined); disjoint areas staying separate and being counted, with the parts and the combination agreeing when nothing overlaps; one area combining to itself; refusal of empty input and of a bad zone; and the limitation travelling in both the notes and the receipt. One further check chains summarize_hull into this widget, which is the order NB03 uses, and asserts the combination is no smaller than the larger hull. Not established: that combining is appropriate. It answers whether anywhere is covered and not how well, and a practitioner wanting the second needs the parts."
+ }
+}

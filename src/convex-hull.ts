@@ -51,7 +51,7 @@ export function hullOf(projected:Position[]):Position[]|null{
   return [...ring,ring[0]];
 }
 
-export function validateHullNode(node:WorkflowNode<'summarise_hull'>):void{
+export function validateHullNode(node:WorkflowNode<'summarize_hull'>):void{
   const {zone,hemisphere}=node.params;
   if(!Number.isInteger(zone)||zone<1||zone>60||!['north','south'].includes(hemisphere))
     throw new Error('Choose a UTM zone from 1 to 60 and a hemisphere.');
@@ -60,7 +60,7 @@ export function validateHullNode(node:WorkflowNode<'summarise_hull'>):void{
 }
 
 export function convexHull(
-  input:PointCollection, node:WorkflowNode<'summarise_hull'>, runId:string, sourceNodeId:string,
+  input:PointCollection, node:WorkflowNode<'summarize_hull'>, runId:string, sourceNodeId:string,
 ):{value:Polygons;receipt:Receipt}{
   validateHullNode(node);
   const {zone,hemisphere}=node.params;

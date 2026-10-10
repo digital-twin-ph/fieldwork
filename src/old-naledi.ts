@@ -72,9 +72,26 @@ export function sampleLocations(geometry:Boundary,spacingM:number){
 }
 const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix math: <http://www.w3.org/2000/10/swap/math#>.\n';
 const refs={Direct:'Baik 2019; Mokomane 2024. Named Princess Marina Hospital evidence in NB06.',Contextual:'Mokomane 2024; Dickinson 2017. Hospital-type inference in NB06.',Inferential:'Dickinson 2017; Mokomane 2024. General clinic inference in NB06.',None:'No facility-specific or applicable type-based evidence in NB06.'};
+/** Facilities NB06 names individually, keyed by the registry's own identifier.
+ *
+ *  This is a claim added by this project from a published source, not part of the extracted
+ *  registry, so it is declared here rather than hidden in a comparison. **Interim:** these
+ *  claims belong on the facility records as a declared attribute, bound to a ruleset role, and
+ *  this table disappears when `xpert` is reconstituted as rule application over a declared
+ *  ruleset. It exists to remove the name-keyed match now, not to be the destination. It is keyed on `id`
+ *  — which `scripts/extract-old-naledi.mjs` takes from the source registry's `fid` — and never
+ *  on `name`: names repeat and are edited, so a name-keyed match finds the wrong record without
+ *  failing. `tests/old-naledi.test.mjs` asserts every id below resolves in the bundled
+ *  registry, so a regeneration that changes identifiers fails rather than silently
+ *  reclassifying a facility. See docs/experiments/65-ruleset-as-data.md. */
+export const NB06_NAMED_EVIDENCE:Record<string,'Marina'|'Broadhurst'>={
+  'facility-158':'Marina',      // Princess Marina Hospital
+  'facility-25':'Broadhurst',   // Broadhurst II Clinic
+};
+
 export function facilityN3(items:Facility[]){
   const facts=items.map(f=>{
-    const named=f.name==='Princess Marina Hospital'?'Marina':f.name==='Broadhurst II Clinic'?'Broadhurst':'None';
+    const named=NB06_NAMED_EVIDENCE[f.id]??'None';
     const kind=['Referral Hospital','District Hospital','Primary Hospital'].includes(f.serviceType)?'Hospital':['Poly Clinic','Clinic with Maternity','Clinic'].includes(f.serviceType)?'Clinic':f.serviceType==='Health Post'?'HealthPost':'Other';
     return `fw:${f.id} fw:namedRule fw:${named}; fw:government ${f.owner==='GOVERNMENT'}; fw:facilityKind fw:${kind}.`;
   }).join('\n');

@@ -190,6 +190,21 @@ fw:RasterClipping a owl:Class;
   rdfs:label "Raster polygon clipping";
   rdfs:comment "Implemented for bounded single-band WGS84 native GeoTIFF windows: cell-center or all-touched masking, optional native-pixel margin, independent cutline and tight crop. No resampling or global raster engine.";
   fw:implementationStatus "implemented".
+fw:RemoteAssetRequest a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Remote asset request";
+  rdfs:comment "Resolves a download location for a remote dataset and checks that a named credential is available. It yields a request, never bytes: this prototype cannot fetch a service that sends no cross-origin header, so the practitioner's own browser performs the download. It is therefore discovery and not acquisition, produces no fw:DownloadedAsset, records no digest, and cannot establish that a file later imported is the file it described. The licence of the requested dataset is carried as a dcterms:license IRI on a dcat:Dataset, because an obligation that travels only as prose does not travel. The credential is named by reference; the secret is never part of a request, a receipt or a run.";
+  fw:implementationStatus "implemented".
+fw:PointBuffer a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Point buffer";
+  rdfs:comment "Defines a study area as everything within a stated distance of one named point. The result is a scope like any other and is typed fw:StudyArea, but it is a derived construct rather than a surveyed boundary: its edge is a decision and its radius an assumption of the question, so the source point and the distance are recorded. One point only; several distant points are never combined, because a bounding box spanning them makes a raster window too coarse to sample. The polygon approximates the circle, and the fraction of the true circle area it covers is recorded rather than implied.";
+  fw:implementationStatus "implemented".
+fw:RasterPointSample a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Raster point sample";
+  rdfs:comment "Writes the value of the raster cell containing each point onto that point, under PixelIsArea at the raster's own resolution. A sampled value is the value of a cell, not a measurement at the point, and no interpolation is performed or claimed. Sampling creates no data missing from the source. No-data cells, points falling outside the raster and points without coordinates carry no value and are counted separately: a point outside is a question about coverage, a no-data cell is a statement by the source, and neither is zero.";
+  fw:implementationStatus "implemented".
 fw:CoverageSubsetting a owl:Class;
   rdfs:subClassOf fw:SpatialOperation;
   rdfs:label "Multidimensional coverage subsetting";

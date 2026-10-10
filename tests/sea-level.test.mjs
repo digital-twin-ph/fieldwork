@@ -3,22 +3,22 @@ import assert from 'node:assert/strict';
 import {Store,Parser} from 'n3';
 import {dataTable} from '../build/data-table.js';
 import {projectionExtract,projectionTable,readExtract,assignSites,assignmentTable,compareToElevation,
-  selectionDomains,extractReceipt,assignmentReceipt,comparisonReceipt} from '../build/sea-level.js';
+  selectionDomains,extractReceipt,assignmentReceipt,comparisonReceipt,validateSeaLevelNode,valueScale,projectedValue} from '../build/sea-level.js';
 import {validateGraph} from '../scripts/validate-ontology.mjs';
 
 // Synthetic values with the published key structure. These are NOT AR6 numbers: a real extract
 // comes from the pack's extraction script over the published store.
-const headers=['site_id','scenario','workflow','family','year','quantile','value_m'];
+const headers=['site_id','scenario','basis','family','year','quantile','value_m'];
 const rows=[
   ['145','ssp126','wf_1e','with_vlm','2050','0.5','0.21'],
   ['145','ssp585','wf_1e','with_vlm','2100','0.5','0.77'],
   ['145','ssp585','wf_1e','without_vlm','2100','0.5','0.63'],
   ['394','ssp585','wf_1e','with_vlm','2100','0.5','0.58'],
 ];
-const selection={keys:['site_id','scenario','workflow','family','year','quantile'],valueField:'value_m',unit:'metre'};
+const selection={keys:['site_id','scenario','basis','family','year','quantile'],valueField:'value_m',unit:'metre'};
 const table=()=>dataTable({headers,rows},selection);
 const provenance={datasetIRI:'https://doi.org/10.5281/zenodo.6382554',datasetVersion:'20210809',
-  baselinePeriod:'1995-2014',citations:['WG1 Chapter 9','FACTS model description','AR6 dataset 20210809'],
+  baselinePeriod:'1995-2014',basisKind:'workflow',citations:['WG1 Chapter 9','FACTS model description','AR6 dataset 20210809'],
   familyValues:{withVerticalLandMotion:'with_vlm',withoutVerticalLandMotion:'without_vlm'}};
 const sites={type:'FeatureCollection',features:[
   {type:'Feature',id:'s1',properties:{name:'MANILA',site_id:'145'},geometry:{type:'Point',coordinates:[120.97,14.58]}},
@@ -43,9 +43,14 @@ test('an extract is admissible only with the full key, the unit, the baseline an
   // A table whose reduced key is still unique reaches this widget, which then names what is absent.
   const unique=[rows[0],rows[1],rows[3]];
   const partial=dataTable({headers,rows:unique},{keys:['site_id','scenario','year','quantile'],valueField:'value_m',unit:'metre'});
-  assert.throws(()=>projectionExtract(partial,provenance),/missing key columns: workflow, family/);
-  assert.throws(()=>projectionExtract(dataTable({headers,rows},{...selection,unit:undefined}),provenance),/unit as metre/);
+  assert.throws(()=>projectionExtract(partial,provenance),/missing key columns: basis, family/);
+  assert.throws(()=>projectionExtract(dataTable({headers,rows},{...selection,unit:undefined}),provenance),/state metre or millimetre/);
   assert.throws(()=>projectionExtract(table(),{...provenance,citations:['one','two']}),/three citations obligatory/);
+  // A basis identifier without its kind cannot be interpreted: wf_1e is one workflow, "medium" is
+  // a p-box over several, and a p-box bound is not a quantile of one distribution.
+  assert.throws(()=>projectionExtract(table(),{...provenance,basisKind:''}),/Declare what the basis column names/);
+  assert.throws(()=>projectionExtract(table(),{...provenance,basisKind:'pbox'}),/Declare what the basis column names/);
+  assert.equal(projectionExtract(table(),{...provenance,basisKind:'confidence-pbox'}).provenance.basisKind,'confidence-pbox');
   assert.throws(()=>projectionExtract(table(),{...provenance,baselinePeriod:'recent'}),/baseline period/);
   assert.throws(()=>projectionExtract(table(),{...provenance,datasetVersion:''}),/dataset version/);
 });
@@ -85,8 +90,8 @@ test('a site layer unrelated to the extract is refused rather than matched by po
 
 test('the comparison refuses a missing datum, a missing field and a partial key', () => {
   const assignments=assignSites(points,sites,extract());
-  const base={selection:{scenario:'ssp585',workflow:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5'},
-    elevationField:'elevation_m',verticalDatum:'MSL 1995-2014'};
+  const base={selection:{scenario:'ssp585',basis:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5'},
+    elevationField:'elevation_m',verticalDatum:'MSL 1995-2014',elevationReference:'baseline-sea-surface'};
   assert.throws(()=>compareToElevation(assignments,{...base,verticalDatum:' '}),/vertical datum/);
   assert.throws(()=>compareToElevation(assignments,{...base,elevationField:''}),/derives no elevation/);
   assert.throws(()=>compareToElevation(assignments,{...base,selection:{...base.selection,family:''}}),/Choose one family/);
@@ -94,8 +99,8 @@ test('the comparison refuses a missing datum, a missing field and a partial key'
 
 test('equality counts as reaching the elevation, and unknowns stay unknown', () => {
   const assignments=assignSites(points,sites,extract());
-  const options={selection:{scenario:'ssp585',workflow:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5'},
-    elevationField:'elevation_m',verticalDatum:'MSL 1995-2014'};
+  const options={selection:{scenario:'ssp585',basis:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5'},
+    elevationField:'elevation_m',verticalDatum:'MSL 1995-2014',elevationReference:'baseline-sea-surface'};
   const result=compareToElevation(assignments,options);
   // Clinic A: 0.77 m projected against 0.90 m supplied -> stays below.
   assert.equal(result.rows[0].status,'NoFlag');
@@ -121,8 +126,8 @@ test('equality counts as reaching the elevation, and unknowns stay unknown', () 
 
 test('the receipts conform to the pack shapes vendored into this build', async () => {
   const ex=extract(),assignments=assignSites(points,sites,ex);
-  const comparison=compareToElevation(assignments,{selection:{scenario:'ssp585',workflow:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5'},
-    elevationField:'elevation_m',verticalDatum:'MSL 1995-2014'});
+  const comparison=compareToElevation(assignments,{selection:{scenario:'ssp585',basis:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5'},
+    elevationField:'elevation_m',verticalDatum:'MSL 1995-2014',elevationReference:'baseline-sea-surface'});
   const facts=extractReceipt({id:'x'},ex,'r1').facts
     +assignmentReceipt({id:'a'},assignments,'r1',{points:'p',sites:'s',projections:'x'}).facts
     +comparisonReceipt({id:'c'},comparison,assignments,'r1','a').facts;
@@ -136,8 +141,54 @@ test('the receipts conform to the pack shapes vendored into this build', async (
 
 test('a comparison missing its datum in the receipt would not conform', async () => {
   const ex=extract(),assignments=assignSites(points,sites,ex);
-  const comparison=compareToElevation(assignments,{selection:{scenario:'ssp585',workflow:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5'},
-    elevationField:'elevation_m',verticalDatum:'MSL 1995-2014'});
+  const comparison=compareToElevation(assignments,{selection:{scenario:'ssp585',basis:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5'},
+    elevationField:'elevation_m',verticalDatum:'MSL 1995-2014',elevationReference:'baseline-sea-surface'});
   const facts=comparisonReceipt({id:'c'},comparison,assignments,'r1','a').facts.replace(/slr:elevationDatum "[^"]*"; /g,'');
   assert.equal((await validateGraph(graph(facts))).conforms,false);
+});
+
+// A projected value is a change from the dataset's baseline sea surface. Stating a datum does
+// not make an elevation commensurable with it, so the reference is declared and checked.
+test('a comparison refuses an elevation whose reference is not the dataset baseline',()=>{
+  const assignments=assignSites(points,sites,extract());
+  const base={selection:{scenario:'ssp585',basis:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5'},
+    elevationField:'elevation_m',verticalDatum:'PRS92',elevationReference:'baseline-sea-surface'};
+  assert.throws(()=>compareToElevation(assignments,{...base,elevationReference:''}),
+    /Declare what the supplied elevations are measured from/,
+    'an undeclared reference refuses rather than comparing');
+  assert.throws(()=>compareToElevation(assignments,{...base,elevationReference:'other-datum'}),
+    /not commensurable/,
+    'elevations on another datum refuse rather than comparing incommensurable numbers');
+  const ok=compareToElevation(assignments,base);
+  assert.equal(ok.elevationReference,'baseline-sea-surface');
+  assert.match(ok.method,/measured from the dataset's baseline sea surface/);
+});
+
+// A workflow saved before the reference was required loads, and its comparison refuses until
+// the reference is declared, rather than silently producing an invalid comparison.
+test('a saved comparison without a declared reference refuses at validation',()=>{
+  const node={id:'c',type:'slr_threshold_comparison',x:0,y:0,params:{label:'Compare level to elevation',
+    scenario:'ssp585',basis:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5',
+    elevationField:'elevation_m',verticalDatum:'MSL 1995-2014'}};
+  assert.throws(()=>validateSeaLevelNode(node),/Declare what the elevations are measured from/);
+  node.params.elevationReference='baseline-sea-surface';
+  assert.doesNotThrow(()=>validateSeaLevelNode(node));
+});
+
+// AR6 publishes sea_level_change in millimetres; requiring metres was an unchecked assumption.
+// Both are admitted and the conversion to metres is explicit, because a supplied elevation is
+// in metres and the comparison is made there.
+test('an extract in millimetres is accepted and read in metres',()=>{
+  const mm=dataTable({headers,rows},{...selection,unit:'millimetre'});
+  const extract=projectionExtract(mm,provenance);
+  const pick={scenario:'ssp585',basis:'wf_1e',family:'with_vlm',year:'2100',quantile:'0.5'};
+  const metres=projectedValue(extract,'145',pick);
+  const published=mm.rows.find(r=>r.key.site_id==='145'&&r.key.scenario==='ssp585'
+    &&r.key.family==='with_vlm'&&r.key.year==='2100'&&r.key.quantile==='0.5').value;
+  assert.equal(metres,published*0.001,'a millimetre extract reads in metres');
+  assert.equal(valueScale(extract),0.001,'the conversion factor is reportable');
+  assert.equal(valueScale(projectionExtract(dataTable({headers,rows},selection),provenance)),1,
+    'a metre extract is unscaled');
+  assert.throws(()=>projectionExtract(dataTable({headers,rows},{...selection,unit:'furlong'}),provenance),
+    /state metre or millimetre/,'an uninterpretable unit is refused rather than guessed at');
 });

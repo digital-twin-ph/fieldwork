@@ -5,6 +5,51 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Add **Find health facilities**, one widget with three sources a browser can actually reach, none
+  needing an account: a live OpenStreetMap query through Overpass, the Humanitarian OpenStreetMap
+  Team country export published on HDX, and Overture Maps Places read directly from GeoParquet in
+  cloud storage. The study area bounds the query rather than filtering it afterwards. Retrieval
+  happens in the interface and never during a run, so a workflow runs from stored facilities with
+  the network off; `core.ts` imports the value and validation functions and deliberately not the
+  download function, and two checks hold that in place. Verified live: 47 facilities from
+  OpenStreetMap and 30 from the HDX export for the same Manila area, 488 from Overture.
+- **Overture Maps Places counts differently, and the widget says so.** It catalogues commercial
+  places, which is broader than a health facility: unfiltered it offered 1,120 health places in a
+  Manila study area where OpenStreetMap found 47, the extras including individually named doctors,
+  a wellness spa and a training course, and it reported 207 places under "hospital" where
+  OpenStreetMap returned 47 hospitals and clinics together. So it filters on the confidence it
+  states for each place, defaulting to 0.70, and its categories map onto facility kinds
+  conservatively with the vaguest three not mapped at all. Each facility keeps Overture's own
+  category and confidence, and the receipt states that counts are not comparable between sources.
+  Overture is CDLA Permissive 2.0 rather than share-alike, so the licence is read from what the
+  retrieval recorded instead of assumed.
+- Remove `healthsites_discovery`. It needed an API key and healthsites.io sends no cross-origin
+  header, so the application could never read its response and acquisition meant asking the
+  practitioner to download a file and hand it back. A saved workflow holding one migrates to the
+  OpenStreetMap source, carrying its facility kinds but not its data: relabelling a hand-back of a
+  file this application never saw as an OpenStreetMap retrieval would be a false provenance record.
+- **Attached PDFs and retained raster windows could not be stored in Safari at all.** Local storage
+  wrapped every value in a `Blob`, and WebKit aborts any IndexedDB transaction that puts a `Blob`
+  or `File` into an object store. Bytes are stored instead; a database written by the previous
+  version is still read. The failure was hidden because the abort handler asserted a full disk and
+  discarded the error that said otherwise — it now reports what it observed and claims no cause it
+  has not seen.
+- WebKit now passes the whole browser suite, 88 scenarios, the same as Chromium. It stood at 42
+  passed and 37 failed, unchanged since 0.5.x. Of the failures, 23 were one Playwright fault in
+  navigating while offline, fixed by the dependency bump; 11 were the Safari storage defect above;
+  and 2 were tests whose simulated network conditions silently did not apply, because a controlling
+  service worker hides requests from the harness in WebKit. Those two now assert the behaviour with
+  `setOffline`, which works in both engines, and the one test that substitutes a fixture blocks the
+  service worker rather than being skipped and counted as covered.
+- Add **Sample raster at points**, which reads raster values at point locations, and **Area around a
+  point**, which derives a study area from one named point and a radius. The study-area editor
+  gains a point-and-buffer mode with a draggable circle and an adjustable radius, replacing a
+  circle made of 128 draggable vertices.
+- Sea-level projection values are keyed on a declared `basis` with its `basisKind` rather than on a
+  workflow identifier. Measured 2026-10-09: the AR6 confidence output files carry no workflow
+  dimension and are p-boxes over several workflows, so a key component assuming one workflow could
+  not describe them. A p-box bound is not a quantile of one distribution.
+
 - Fix the results pane taking over the screen when a comparison result was opened. Expanding to full
   width was triggered on every render of a comparison, so selecting the comparison node — which now
   shows that node's result — expanded the window behind a click aimed at a node. It happens on the

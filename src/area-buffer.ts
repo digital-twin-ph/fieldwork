@@ -1,6 +1,6 @@
 import {buffer} from '@turf/buffer';
 import type {AreaValue,Receipt} from './results.js';
-import type {Boundary,WorkflowNode,Position} from './types.js';
+import type {Boundary,Polygon,WorkflowNode,Position} from './types.js';
 import {geometryWKT,CRS84,bboxPolygon,geometryBounds} from './study-area.js';
 export function validateBuffer(distanceM:number){if(!Number.isFinite(distanceM)||distanceM<0||distanceM>5000)throw new Error('Study-area buffer must be 0–5,000 metres.');}
 export function bufferedBoundary(boundary:Boundary,distanceM:number):Boundary{
@@ -13,6 +13,24 @@ export function bufferArea(node:WorkflowNode<'buffer_area'>,source:AreaValue,run
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix qudt: <http://qudt.org/schema/qudt/>.\n<${activity}> a fw:AreaBuffer, prov:Activity; fw:method "Turf/JSTS local azimuthal equidistant metre buffer; 8 quadrant segments"; prov:used <${source.areaId}>; fw:bufferDistance [ a qudt:QuantityValue; qudt:numericValue ${node.params.distanceM}; qudt:unit <http://qudt.org/vocab/unit/M> ].\n<${areaId}> a fw:StudyArea, geo:Feature; prov:wasGeneratedBy <${activity}>; prov:wasDerivedFrom <${source.areaId}>; geo:hasGeometry <${geometryId}>.\n<${geometryId}> a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(boundary))}^^geo:wktLiteral.\n`;
   return {value:{kind:'study-area',boundary,areaId,geometryId,label:node.params.label,bounds:geometryBounds(boundary),rows:[],centers:[],spatialReference:structuredClone(source.spatialReference)},receipt:{nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:'Turf/JSTS metre buffer using a local azimuthal equidistant projection, 8 quadrant segments; source reporting boundary unchanged.'}};
 }
+/** A circle of a stated radius around a centre, as a polygon.
+ *
+ *  The same construction `buffer_point` uses, and the same measured step count: Turf's `steps`
+ *  is per quadrant, and 32 gives 128 vertices covering 99.96% of the true circle, against 99.36%
+ *  at 8. A scope's edge decides membership, so the finer setting is used here too. */
+export function circleAround(centre:Position,radiusM:number):Polygon{
+  if(centre.length!==2||!centre.every(Number.isFinite)||Math.abs(centre[1])>80)
+    throw new Error('Use a centre below 80\u00b0 latitude.');
+  if(!Number.isFinite(radiusM)||radiusM<1||radiusM>50000)
+    throw new Error('Use a radius from 1 to 50,000 metres.');
+  const result=buffer({type:'Feature',properties:{},geometry:{type:'Point',coordinates:centre}},
+    radiusM,{units:'meters',steps:32});
+  if(!result||result.type!=='Feature')throw new Error('The radius did not produce a valid boundary.');
+  const geometry=result.geometry;
+  if(geometry.type!=='Polygon')throw new Error('A radius must produce a single polygon.');
+  return geometry;
+}
+
 /** Axis-aligned CRS84 box; dimensions approximate ground distances at its centre. */
 export function dimensionedBox(center:Position,widthM:number,heightM:number){
   if(center.length!==2||!center.every(Number.isFinite)||Math.abs(center[1])>80||![widthM,heightM].every(v=>Number.isFinite(v)&&v>=1&&v<=50000))throw new Error('Use a centre below 80° latitude and dimensions from 1 to 50,000 metres.');

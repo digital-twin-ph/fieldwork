@@ -1,4 +1,11 @@
-﻿import {computeIsochrone} from './catchment-executor.js';
+﻿import {sampleRaster,sampleReceipt,validateSampleNode} from './sample-raster.js';
+import {bufferPoint,validateBufferPointNode} from './buffer-point.js';
+import {facilitiesValue,migrateHealthsitesNodes,validateFindHealthFacilitiesNode} from './health-facilities.js';
+/** Resolves a named credential to its secret. No current widget needs one; the credential
+ *  manager stands on its own (experiment 30) and executeWorkflow still accepts a resolver so a
+ *  future authenticated source does not change this signature. */
+export type CredentialResolver=(ref:string,provider:string,origin:string)=>string;
+import {computeIsochrone} from './catchment-executor.js';
 import {moveDonut,aggregateHex,validatePrivacyNode,privacyReceipt} from './geoprivacy.js';
 import {comparePointSets,comparisonReceipt,comparisonMap,validatePointComparisonNode} from './point-comparison.js';
 import type {PointComparison} from './point-comparison.js';
@@ -52,9 +59,12 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   case_series:{title:'Cases by period',group:'Summaries',icon:'▦',color:'teal',description:'Count cases per day, week or month by a declared kind of date',inputs:[['points','points']],output:'table'},
   slr_extract_import:{title:'Sea-level projection extract',group:'Sources',icon:'≈',color:'blue',description:'Declare an imported long-format table as a bounded extract of published AR6 projections',inputs:[['projections','table']],output:'table'},
   slr_site_assignment:{title:'Assign projection site',group:'Spatial operations',icon:'⊕',color:'teal',description:'Assign each point its nearest published projection site and record the distance',inputs:[['points','points'],['sites','points'],['projections','table']],output:'table'},
-  slr_threshold_comparison:{title:'Compare level to elevation',group:'Semantic reasoning',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
+  slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
   reproject:{title:'Reproject input',group:'Sources',icon:'⇄',color:'blue',description:'Import projected UTM points and convert them to WGS84 longitude/latitude',inputs:[],output:'points'},
-  raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Acquire a GeoTIFF window around the study area',inputs:[['area','area']],output:'raster'},
+  raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
+  find_health_facilities:{title:'Find health facilities',group:'Sources',icon:'⌖',color:'blue',description:'Retrieve health facilities inside the study area from OpenStreetMap, an HDX country export, or a healthsites.io download',inputs:[['area','area']],output:'points'},
+  buffer_point:{title:'Area around a point',group:'Spatial operations',icon:'◍',color:'teal',description:'Define a study area as everything within a stated distance of one named point',inputs:[['points','points']],output:'area'},
+  sample_raster:{title:'Sample raster at points',group:'Spatial operations',icon:'◴',color:'teal',description:'Write the value of the raster cell containing each point onto that point',inputs:[['points','points'],['raster','raster']],output:'points'},
   clip_raster:{title:'Clip raster',group:'Spatial operations',icon:'✂',color:'teal',description:'Mask raster cells with a clipping boundary',inputs:[['area','area'],['raster','raster']],output:'raster'},
   places: {title:'Neighborhoods', group:'Sources', icon:'▦', color:'blue', description:'Local neighborhood locations', inputs:[], output:'points'},
   centers: {title:'Cooling centers', group:'Sources', icon:'⌂', color:'blue', description:'Local facility locations', inputs:[], output:'points'},
@@ -64,7 +74,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   ...OLD_TYPES,
   measure_area:{title:'Calculate area',group:'Spatial operations',icon:'▱',color:'teal',description:'Attach an area measurement to the study area',inputs:[['area','area']],output:'area'},
   observations:{title:'Input data',group:'Sources',icon:'▦',color:'blue',description:'Import point observations or generate synthetic records',inputs:[],output:'points'},
-  coverage_check:{title:'Check spatial coverage',group:'Semantic reasoning',icon:'◎',color:'purple',description:'Identify observations outside the study boundary',inputs:[['area','area'],['points','points']],output:'coverage-check'},
+  coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Identify observations outside the study boundary',inputs:[['area','area'],['points','points']],output:'coverage-check'},
   map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['coverage','coverage-check'],['raster','raster']],output:null},
   table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display point coordinates, attributes and available review decisions',inputs:[['points','points'],['coverage','coverage-check']],output:null},
   chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Count reasoning results by decision, access zone or evidence tier',inputs:[['decisions','decisions']],output:null},
@@ -122,6 +132,7 @@ export function validateWorkflow(raw:unknown):Workflow {
   // Normalize historical heat sources before validation to preserve scalar attributes.
   w.nodes=w.nodes.map(n=>n && (n.type==='places'||n.type==='centers')
     ? {...n,type:'observations',sourceMigration:{fromType:n.type,version:'1'}} : n);
+  migrateHealthsitesNodes(w);
   migrateFacilitySources(w);
   migrateOutputNodes(w);
   for (const n of w.nodes) {
@@ -135,6 +146,9 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (![n.x,n.y].every(Number.isFinite) || Math.abs(n.x)>10000 || Math.abs(n.y)>10000 || !n.params) throw new Error('Invalid node position or parameters.');
     if((n.type==='area'||n.type==='observations'||n.type==='places'||n.type==='centers')){n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
     if ((n.type==='places'||n.type==='centers'||n.type==='observations')) n.params.data=validateGeoJSON(n.params.data,{attributes:n.type==='observations'});
+    if(n.type==='find_health_facilities')validateFindHealthFacilitiesNode(n);
+    if(n.type==='buffer_point')validateBufferPointNode(n);
+    if(n.type==='sample_raster')validateSampleNode(n);
     validateSeaLevelNode(n);
     validateCaseSeriesNode(n);
     validateRateNode(n);
@@ -204,6 +218,8 @@ export function validateWorkflow(raw:unknown):Workflow {
   if(w.manifest)syncProjectManifest(w);
   return w;
 }
+/** Nodes the plan is built backwards from. A node with no output that nothing consumes is
+ *  invisible to the walk, so a terminal node must be named here or it never runs. */
 function resultNodes(w:Pick<Workflow,'nodes'>){return w.nodes.filter(n=>['output','measure_area','coverage_check','map_output','table_output','chart_output','comparison_map'].includes(n.type));}
 export function executionPlan(workflow:Workflow) {
   const w=validateWorkflow(workflow), outputs=resultNodes(w);
@@ -213,7 +229,10 @@ export function executionPlan(workflow:Workflow) {
   }
   for(const n of w.nodes)if(n.type==='area'&&n.params.source==='drawn'&&!n.params.geometry)throw new Error('Select a study area on the map before running.');
   const result:WorkflowNode[]=[], done=new Set<string>();
-  function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=['map_output','table_output'].includes(node.type)?(w.edges.some(e=>e.to===node.id&&e.port==='coverage')?[['coverage']]:nodeInputs(node).filter(([port])=>port!=='coverage'&&(port!=='raster'||node.type==='map_output'&&node.params.inputMode==='raster'))):nodeInputs(node);for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new Error(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));} done.add(node.id);result.push(node);}
+  function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=['map_output','table_output'].includes(node.type)?(w.edges.some(e=>e.to===node.id&&e.port==='coverage')?[['coverage']]:nodeInputs(node).filter(([port])=>port!=='coverage'&&(port!=='raster'||node.type==='map_output'&&node.params.inputMode==='raster'))):nodeInputs(node);for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;
+      // The area is optional here: a country names the scope instead. Required only when the
+      // practitioner has asked for the study area to bound the request.
+      const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new Error(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));} done.add(node.id);result.push(node);}
   outputs.forEach(visit);return result;
 }
 export function distanceKm(a:Position,b:Position) {
@@ -237,7 +256,7 @@ export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:n
   const rules=`# Missing evidence stays unknown. Threshold is illustrative.\n{ ?p fw:distanceKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:alertKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:distanceKm ?d; fw:heatAlert true. ?d math:greaterThan ${t}. } => { ?p fw:decision fw:Review. }.\n{ ?p fw:distanceKm ?d; fw:heatAlert true. ?d math:notGreaterThan ${t}. } => { ?p fw:decision fw:NoFlag. }.\n{ ?p fw:distanceKnown true; fw:heatAlert false. } => { ?p fw:decision fw:NoFlag. }.\n`;
   return {facts:prefix+facts+'\n',rules:prefix+rules,input:prefix+facts+'\n\n'+rules};
 }
-export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done')=>void=()=>{}):Promise<WorkflowRun> {
+export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done')=>void=()=>{},resolveCredential?:CredentialResolver):Promise<WorkflowRun> {
   workflow=validateWorkflow(workflow);
   const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[], receipts:Receipt[]=[],runId=crypto.randomUUID();
   for(const node of plan){
@@ -253,6 +272,17 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         value=node.type==='donut_geomask'?moveDonut(inputs.points,node.params):aggregateHex(inputs.points,node.params);
         receipts.push(privacyReceipt(node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from,inputs.points.features.length,value as PointCollection|Polygons));break;
       }
+      case 'find_health_facilities':{
+        const got=facilitiesValue(node,runId);value=got.value;receipts.push(got.receipt);break;
+      }
+      case 'buffer_point':{const made=bufferPoint(inputs.points,node,runId);value=made.value;receipts.push(made.receipt);break;}
+      case 'sample_raster':{
+        if(!inputs.raster)throw new Error('Connect a prepared Raster input or Clip raster to Sample raster.');
+        const sampled=sampleRaster(inputs.points,inputs.raster,node.params);value=sampled.value;
+        receipts.push(sampleReceipt(node,inputs.raster,sampled.counts,runId,{
+          points:workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from,
+          raster:workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from}));break;
+      }
       case 'buffer_area':{const buffered=bufferArea(node,inputs.area,runId);value=buffered.value;receipts.push(buffered.receipt);break;}
       case 'network_input':case 'voronoi':case 'isochrone':case 'clip_polygons':case 'summarize_polygons':{
         if(node.type==='network_input')validateNetwork(node.params.data);
@@ -267,9 +297,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'observations':value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:structuredClone(node.params.sourceInfo),spatialReference:structuredClone(node.params.spatialReference)};break;
       case 'rate':{const result=computeRate(fromPoints(inputs.records),node.params);value={...rateTable(result),chart:rateChart(result)} as unknown as DisplayValue;receipts.push(rateReceipt(node,result,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));break;}
       case 'case_series':{const series=node.params.source==='table'?caseSeriesFromTable(inputs.cases,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period}):caseSeries(inputs.points,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period,weightField:node.params.weightField});value={...seriesTable(series),chart:seriesChart(series)} as unknown as DisplayValue;receipts.push(seriesReceipt(node,series,runId,workflow.edges.find(e=>e.to===node.id&&(e.port==='points'||e.port==='cases'))!.from));break;}
-      case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,familyValues:node.params.familyValues});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}
+      case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,basisKind:node.params.basisKind,familyValues:node.params.familyValues});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}
       case 'slr_site_assignment':{const extract=readExtract(inputs.projections);const assignments=assignSites(inputs.points,inputs.sites,extract);value=assignmentTable(assignments) as unknown as DisplayValue;const edge=(port:string)=>workflow.edges.find(e=>e.to===node.id&&e.port===port)!.from;receipts.push(assignmentReceipt(node,assignments,runId,{points:edge('points'),sites:edge('sites'),projections:edge('projections')}));break;}
-      case 'slr_threshold_comparison':{const table=inputs.assignments;if(!table?.assignments)throw new Error('Connect Assign projection site: a comparison needs the assignments, not a plain table.');const comparison=compareToElevation(table.assignments,{selection:{scenario:node.params.scenario,workflow:node.params.workflow,family:node.params.family,year:node.params.year,quantile:node.params.quantile},elevationField:node.params.elevationField,verticalDatum:node.params.verticalDatum});value=comparison as unknown as DisplayValue;receipts.push(thresholdReceipt(node,comparison,table.assignments,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='assignments')!.from));break;}
+      case 'slr_threshold_comparison':{const table=inputs.assignments;if(!table?.assignments)throw new Error('Connect Assign projection site: a comparison needs the assignments, not a plain table.');const comparison=compareToElevation(table.assignments,{selection:{scenario:node.params.scenario,basis:node.params.basis,family:node.params.family,year:node.params.year,quantile:node.params.quantile},elevationField:node.params.elevationField,verticalDatum:node.params.verticalDatum,elevationReference:node.params.elevationReference});value=comparison as unknown as DisplayValue;receipts.push(thresholdReceipt(node,comparison,table.assignments,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='assignments')!.from));break;}
       case 'table_input':{if(!node.params.data.rows.length)throw new Error('Import a long-format table before running.');const imported=tableReceipt(node,node.params.data,runId);value=imported.value;receipts.push(imported.receipt);break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
       case 'reproject':{if(!node.params.data.features.length)throw new Error('Import a projected point file before running.');value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:{format:'reprojected-points',...structuredClone(node.params.provenance||{}),...structuredClone(node.params.source||{})},spatialReference:structuredClone(node.params.spatialReference)};break;}

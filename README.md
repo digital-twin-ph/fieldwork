@@ -65,16 +65,30 @@ without places.
 
 ## Run locally
 
-Node.js 22 or newer:
+Node.js 22 or newer — `package.json` declares `engines: node >=22`, CI pins 22, and
+`.nvmrc` records it so `nvm use` needs no argument:
 
+    nvm use                 # or: nvm install 22
     npm ci
     npm run build
     npm start
+
+**On Node 20 the build fails before reaching any project code**, with
+`ERR_UNKNOWN_FILE_EXTENSION: Unknown file extension "" for node_modules/typescript/bin/tsc`.
+TypeScript 7 is ESM-only and its `bin/tsc` is extensionless, which Node 20 refuses to load
+in a `"type":"module"` context. The message names typescript and looks like a dependency
+problem; it is a Node version problem. If `nvm use` is unavailable, invoke Node 22 directly,
+for example `export PATH="$HOME/.nvm/versions/node/v22.<patch>/bin:$PATH"` after
+`ls ~/.nvm/versions/node` to find the installed patch version.
 
 Open http://127.0.0.1:4173. The server listens on this machine only. Source is
 TypeScript under `src/`; rebuild after changing source or styles.
 
 ## Validation
+
+There are seven kinds of check here and each establishes something different;
+[kinds of validation](docs/audits/validation.md) says what each one does and does not
+establish, and how much of the widget set it covers. This section is how to run them.
 
 Run the full gate before accepting a functional change:
 
@@ -127,13 +141,37 @@ excluding holes, antimeridian crossings and polar areas. Browser storage is
 unencrypted, and clearing it removes local workflows, attachments and offline
 assets, so export anything worth keeping.
 
-Offline use means **prepare online, then work offline**: open the application while
-connected so it caches, and expect no network in the field. The offline cache covers
-this application and its bundled example data only. It does **not** cover anything
-from another origin, so basemap tiles, Overpass street-network download and remote
-raster acquisition all stop working offline — the study-area editor draws on an
-online map. The header's "Available offline" is inferred from a single cached
-asset and is not a readiness check; see
+This is **not an offline application**. It is an application that **can work offline
+under conditions you have to arrange**, and the conditions are getting narrower as it
+grows, not wider.
+
+What works offline: the application itself, the bundled EYE engine and the example
+data, once cached by a connected visit. Workflows built only from those parts run,
+save and reopen with no network.
+
+What does not, and cannot: anything from another origin at the moment it is
+needed. Basemap tiles, so the study-area editor draws on a blank map.
+
+But a widget that reaches a remote service is not the same as a workflow that
+cannot run offline, and the distinction is the whole design. **Retrieval and
+execution are separate.** Find health facilities and Street network download
+fetch their data when you press their button, while there is a network, and store
+it in the workflow. Running the workflow afterwards reads what was stored and
+makes no request at all, so an offline run produces the same result as an online
+one. This is enforced structurally rather than by good intentions: the executor
+does not import the download functions, and two checks hold it there — a unit
+test that runs a workflow with `fetch` replaced by a thrower, and a browser test
+that goes offline and asserts no request reaches any data source.
+
+What that leaves genuinely outside: data prepared outside the application
+altogether, as the sea-level extract is, and any retrieval you have not performed
+yet. A widget with nothing stored cannot invent it offline, and it says so rather
+than failing obscurely.
+
+So **prepare online, then work offline** remains the usable summary, with the caveat
+that "prepare" now includes acquiring any remote data your workflow needs, not only
+loading the application. The header's "Available offline" is inferred from a single
+cached asset and is not a readiness check; see
 [experiment 49](docs/experiments/49-catalog-in-the-interface.md).
 
 ## Design records
@@ -143,13 +181,13 @@ proposed capabilities from implemented behaviour. Start with:
 
 | Record | Subject |
 | --- | --- |
-| [Semantic audit procedure](docs/ontology-audit.md) | Admission review and worked-example checkpoints across three dimensions — structure, semantics and relevance — opening with a glossary so the work can be reviewed without a background in description logic |
+| [Semantic audit procedure](docs/audits/ontology-audit.md) | Admission review and worked-example checkpoints across three dimensions — structure, semantics and relevance — opening with a glossary so the work can be reviewed without a background in description logic |
 | [44 · Competency questions](docs/experiments/44-ontology-competency-questions.md) | The questions the ontology exists to answer, each with its status, and five it must refuse |
 | [47 · Sea-level pack](docs/experiments/47-sea-level-pack.md) | The first widget pack use case, over the IPCC AR6 projections: what a browser can honestly consume, and the inundation claim it must refuse |
 | [46 · Colour theme](docs/experiments/46-colour-theme.md) | Light, dark and device, and why the released light theme is pixel-identical |
 | [45 · Ontology viewer](docs/experiments/45-ontology-viewer.md) | Why the reading view replaced the graph editor, and what a green build does and does not establish |
 | [John Snow data sets](docs/research/john-snow-data-sets.md) | What the surviving 1854 data can and cannot support: the denominator that exists, the 578-point trap, and why case-level space-time is not available |
-| [Prior art](docs/prior-art.md) | openEO, QGIS, Geo Engine and APE: what to adapt, what to evaluate, and the limits of each comparison |
+| [Prior art](docs/research/prior-art.md) | openEO, QGIS, Geo Engine and APE: what to adapt, what to evaluate, and the limits of each comparison |
 | [Widget registry](widgets/README.md) | All 34 node identities with independent versions, port contracts and ontology mappings |
 | [39 · STAC discovery](docs/experiments/39-stac-discovery-and-remote-acquisition.md) | Measured catalog behaviour and a proposed acquisition adapter |
 | [40 · Reprojection](docs/experiments/40-reprojection-primitives.md) | The implemented UTM import path, and raster warping as specified but unbuilt |

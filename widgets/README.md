@@ -1,10 +1,69 @@
 # Widget registry
 
-_Created 2026-10-06 · Updated 2026-10-08_
+_Created 2026-10-06 · Updated 2026-10-09_
 
-The [catalog](registry.json) tracks all 33 current node identities (including legacy import identities). Each widget has a stable `urn:fieldwork:widget:<nodeType>` identity, an independent current version, and a history of release files under `releases/<nodeType>/<version>.json`. The first `0.1.0` releases record the existing prototype on October 6, 2026; they do not reconstruct historical versions or claim a new implementation.
+The [catalog](registry.json) tracks all 39 current node identities (including legacy import identities). Each widget has a stable `urn:fieldwork:widget:<nodeType>` identity, an independent current version, and a history of release files under `releases/<nodeType>/<version>.json`. The first `0.1.0` releases record the existing prototype on October 6, 2026; they do not reconstruct historical versions or claim a new implementation.
 
 This is a development registry, not an executable plugin loader. Workflow nodes still use the existing `fieldwork/workflow/1` format without widget version pins. Runtime version selection, general migrations and per-version implementation archives remain future work; the heat-source adapter is explicitly implemented. A historical release file describes a contract; it does not retain executable historical code. Use Git revisions to recover historical implementations.
+
+## Adding a widget
+
+Pass the **primitive design audit** (D1–D9) in
+[the semantic admission procedure](../docs/audits/ontology-audit.md) *before* writing code. D1
+places the candidate on two axes — whether a distinction survives decomposition, and
+whether a practitioner would ask for the operation by name — and the placement decides
+where it lives. A composite a practitioner *would* ask for keeps its palette entry under
+its intent name and is implemented over shared primitives; only a composite nobody would
+ask for becomes a worked example or template. The unit of reuse is not the unit of use. Record the audit answers in the experiment record that proposes it, and
+write that record before the implementation, as experiments 48, 58 and 61 did.
+
+Then the mechanics, in order. Nothing here is generated for you except the last item.
+
+| Step | File | What it needs |
+| --- | --- | --- |
+| 1 | `src/types.ts` | The `NodeType` member and its params interface. A new `PortType` member only if D4 says a wrong-producer condition needs a hard stop — the union is closed and compiled in, so adding to it is a base-contract change |
+| 2 | `src/core.ts` | The `TYPES` entry: `title`, `group`, `icon`, `color`, `description`, `inputs` as `[port, type]` pairs, `output`. Then the execution `case`, and any validation rule in `validateWorkflow` rather than inside the operation |
+| 3 | `src/<operation>.ts` | The operation and its receipt builder. Keep the receipt's `method` sentence truthful about what was not represented |
+| 4 | `src/app.ts` | The add-node default params in the palette chain, the Inspector panel, and a `describe()` case if the subtitle or detail should say more than the description |
+| 4a | `src/palette.ts` | **Add the node type to `ALWAYS_ADDABLE`, or it is unreachable.** The palette filters by this set, so a widget can build, validate, register and pass its own tests while nobody can add it. If a new group heading was introduced, add it to `PALETTE_GROUPS` too — a group missing there sorts to the front. `tests/palette.test.mjs` fails on both |
+| 5 | `ontology/fieldwork.ttl` | The class and property terms, with each distinction stated in the term's own `rdfs:comment` so a reader meets the limit where they meet the term |
+| 6 | `ontology/shapes/` | The shapes that make a distinction a validation rule rather than prose, with **both** a passing and a failing fixture |
+| 7 | `widgets/releases/<nodeType>/<version>.json` | The release contract. `validate:widgets` checks identity, version, parameter binding, ontology mapping status against declared mappings, migration declarations, change history and certification claims — it rejects a status that contradicts its own mappings |
+| 8 | `widgets/registry.json` | The `urn:fieldwork:widget:<nodeType>` identity and current version. Hand-maintained |
+| 9 | `tests/<name>.test.mjs`, `tests/<name>.browser.mjs` | Positive and negative cases per D8, including real data from both sources where the operation joins two independently sourced quantities |
+| 10 | `docs/experiments/NN-*.md`, `CHANGELOG.md` | The dated record and the user-visible change |
+| — | `widgets/classification.json` | **Derived — never hand-edit.** `build.mjs` regenerates it and `validate:widgets` fails if it is stale |
+
+**Terminology, because these are counted separately.** A **widget** is the versioned
+contract this registry lists; a **node** is one instance of a widget in one workflow; a
+**workflow step** is one execution of a node. Usage asks whether any example
+instantiates a widget; firing asks how many steps ran. They differ, because a shared
+upstream node executes once however many branches consume it.
+
+**Widget usage.** `npm run usage:widgets` counts nodes per widget across the shipped
+examples and the frozen fixtures, and lists the widgets no example instantiates. A widget
+at zero has never been shown composing with the rest — the one thing a worked example
+establishes that a unit test cannot — so either an example should exercise it or the
+record should say why not. The script reports a floor rather than a total when an example
+module fails to load, and says which.
+
+**A widget nobody can add still passes everything else.** `usage:widgets` counts worked
+examples, the registry checks paperwork, and the unit tests check the operation — none of
+them looks at whether the palette offers it. That is why step 4a has its own check.
+
+Gates before claiming it works: `npm run typecheck`, `npm test`, `npm run validate:ontology`,
+`npm run validate:widgets`, `npm run validate:docs`, and `npm run test:browser` for anything
+reaching the canvas. `npm run check` runs the sequence. A passing suite establishes structure
+and determinism only; it is not evidence that the operation is scientifically suitable, and the
+release file's `evidence` field should say which.
+
+Two cautions the record has earned. `classification.json` marks a widget `standard`, meaning
+"ships with the application", from its vocabulary namespace — this does **not** mean it applies
+to any domain, and several example-specific nodes are currently labelled that way
+([experiment 60](../docs/experiments/60-from-gis-studio-to-public-health-studio.md)). And a
+widget's `description` and Inspector notices are **limitations**: they prevent nothing. If a
+condition must not be violated, it belongs in a port type, a shape or a validation rule
+([the five enforcement levels](../docs/audits/ontology-audit.md)).
 
 ## Contents of a release
 

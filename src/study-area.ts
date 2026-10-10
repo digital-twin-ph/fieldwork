@@ -37,7 +37,7 @@ export function validateDrawnGeometry(raw:unknown):Polygon{
 }
 export function validateAreaParams(p:AreaParams){
   if(p.source!=='drawn')return;
-  if(!['bbox','polygon'].includes(p.selectionMode))throw new Error('Choose a bounding box or polygon.');
+  if(!['bbox','polygon','circle'].includes(p.selectionMode))throw new Error('Choose a bounding box, a polygon or a circle.');
   if(typeof p.label!=='string'||!p.label.trim()||p.label.length>100)throw new Error('Name the study area using 1 to 100 characters.');
   if(p.geometry!==null){
     validateDrawnGeometry(p.geometry);
@@ -57,7 +57,7 @@ export function studyAreaN3(node:Pick<WorkflowNode<'area'>,'id'|'params'>){
   const [west,south,east,north]=geometryBounds(p.geometry);
   const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n';
   const subject=`<urn:fieldwork:area:${node.id}>`,geometry=`<urn:fieldwork:geometry:${node.id}>`;
-  const facts=`${prefix}\n${subject} a geo:Feature, fw:StudyArea;\n  rdfs:label ${JSON.stringify(p.label)};\n  fw:selectionMode fw:${p.selectionMode==='bbox'?'BoundingBox':'Polygon'};\n  geo:hasGeometry ${geometry}.\n\n${geometry} a geo:Geometry;\n  geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(p.geometry))}^^geo:wktLiteral;\n  fw:geometryValidated true;\n  fw:west ${west.toFixed(9)}; fw:south ${south.toFixed(9)};\n  fw:east ${east.toFixed(9)}; fw:north ${north.toFixed(9)}.\n`;
+  const facts=`${prefix}\n${subject} a geo:Feature, fw:StudyArea;\n  rdfs:label ${JSON.stringify(p.label)};\n  fw:selectionMode fw:${p.selectionMode==='bbox'?'BoundingBox':p.selectionMode==='circle'?'Circle':'Polygon'};\n  geo:hasGeometry ${geometry}.\n\n${geometry} a geo:Geometry;\n  geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(p.geometry))}^^geo:wktLiteral;\n  fw:geometryValidated true;\n  fw:west ${west.toFixed(9)}; fw:south ${south.toFixed(9)};\n  fw:east ${east.toFixed(9)}; fw:north ${north.toFixed(9)}.\n`;
   const rules=`# Geometry checks run in the drawing widget. This rule consumes their explicit result.\n{ ?area a fw:StudyArea; geo:hasGeometry ?shape.\n  ?shape geo:asWKT ?wkt; fw:geometryValidated true.\n} => { ?area fw:readyForSpatialAnalysis true. }.\n`;
   return {facts,rules:prefix+rules,input:facts+'\n'+rules};
 }

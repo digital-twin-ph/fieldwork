@@ -527,12 +527,17 @@
   {
    "id": "urn:fieldwork:widget:reachable_corridor",
    "nodeType": "reachable_corridor",
-   "currentVersion": "0.1.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
      "path": "widgets/releases/reachable_corridor/0.1.0.json",
      "sha256": "ea2e1a05f7f3d06105aaec00452d999a0b6de830f63f979446d59eedd3ced260"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/reachable_corridor/0.2.0.json",
+     "sha256": "7b28cf9314de6a3e4c3594112c5197ebed1f30297be22306248ac00c0e73aa40"
     }
    ]
   },
@@ -648,6 +653,18 @@
    ]
   },
   {
+   "id": "urn:fieldwork:widget:stack_polygons",
+   "nodeType": "stack_polygons",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/stack_polygons/0.1.0.json",
+     "sha256": "50f6efb19833968a2272ede978a4b57a5a835cf0dabcc75a557eb6885773461e"
+    }
+   ]
+  },
+  {
    "id": "urn:fieldwork:widget:summarize_combined_area",
    "nodeType": "summarize_combined_area",
    "currentVersion": "0.1.0",
@@ -725,12 +742,17 @@
   {
    "id": "urn:fieldwork:widget:travel_time_band",
    "nodeType": "travel_time_band",
-   "currentVersion": "0.1.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
      "path": "widgets/releases/travel_time_band/0.1.0.json",
      "sha256": "8780215a29aed997885a5f4d8d9b534af2a63c3ebc11ba516d74e79403c09174"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/travel_time_band/0.2.0.json",
+     "sha256": "0f02e07a686c2bea72f600c2667f02940d9325bc26a56e71f5bb6980dd16fbee"
     }
    ]
   },

@@ -65,7 +65,7 @@ export function travelTimeBand(
   const features:PointFeature[]=input.features
     .filter(f=>(f.properties.travelMetres as number)<=bandBudgetM+BUDGET_TOLERANCE_M)
     .map(f=>({...f,id:`${f.id}-t${minutes}`,
-      properties:{...f.properties,
+      properties:{...f.properties,bandMinutes:minutes,
         remainingM:Number((bandBudgetM-(f.properties.travelMetres as number)).toFixed(2))}}));
   if(!features.length)
     throw new Error(`No junction is within ${minutes} minutes. The nearest is ${(Math.min(...input.features.map(f=>f.properties.travelMetres as number))/speedMPerMin).toFixed(1)} minutes away.`);

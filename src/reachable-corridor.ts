@@ -54,11 +54,16 @@ export function reachableCorridor(
   const fromNode=new Map<string,typeof edges>();
   for(const e of edges){const list=fromNode.get(e.from)||[];list.push(e);fromNode.set(e.from,list);}
   // One corridor per origin, so two clinics' catchments stay separable.
-  const origins=new Map<string,{remaining:Map<string,number>;name:string}>();
+  const origins=new Map<string,{remaining:Map<string,number>;name:string;minutes?:number}>();
+  // A band stamps its minutes on every junction it keeps. Carried onto the polygon so a
+  // map can colour by walking time and a chart can label by it, as the case study does.
+  const banded=new Set(input.features.map(f=>f.properties.bandMinutes));
+  if(banded.size>1)throw new Error('These junctions carry more than one travel time band. Give each band its own corridor.');
+  const bandMinutes=typeof [...banded][0]==='number'?[...banded][0] as number:undefined;
   for(const f of input.features){
     const originId=String(f.properties.originSiteId??'origin');
     const group=origins.get(originId)||{remaining:new Map<string,number>(),
-      name:String(f.properties.originSiteId??f.properties.name)};
+      name:String(f.properties.originSiteId??f.properties.name),minutes:bandMinutes};
     group.remaining.set(f.properties.networkNodeId as string,f.properties.remainingM as number);
     origins.set(originId,group);
   }
@@ -78,8 +83,10 @@ export function reachableCorridor(
     const buffered=turfBuffer({type:'MultiLineString',coordinates:lines},bufferM,
       {units:'meters',steps:BUFFER_QUADRANT_SEGMENTS});
     if(!buffered||buffered.type!=='Feature')throw new Error('The corridor buffer did not produce a polygon.');
-    features.push({id:`corridor-${originId}`,name:`${group.name} corridor`,siteId:originId,
-      geometry:buffered.geometry as Boundary});
+    features.push({id:bandMinutes===undefined?`corridor-${originId}`:`corridor-${originId}-t${bandMinutes}`,
+      name:bandMinutes===undefined?`${group.name} corridor`:`${group.name} within ${bandMinutes} min`,
+      siteId:originId,geometry:buffered.geometry as Boundary,
+      ...(bandMinutes===undefined?{}:{minutes:bandMinutes})});
   }
   if(!features.length)
     throw new Error('No street could be entered from any reachable junction, so there is no corridor. Every junction had nothing left of its budget.');
@@ -88,6 +95,7 @@ export function reachableCorridor(
     `${bufferM} m either side is a ${bufferM*2} m wide strip, and it is a claim: anywhere within it counts as reached. That includes the insides of buildings, locked yards and the far side of walls, none of which this knows about.`,
     `${trimmed} segment${trimmed===1?' was':'s were'} entered part-way, where the budget ran out mid-block. That is what puts the edge of the time between junctions rather than at them.`,
     `Travel was ${direction}. The budget and the direction came from the junctions themselves, so this corridor cannot disagree with the traversal that produced them.`,
+    ...(bandMinutes===undefined?[]:[`Drawn for the ${bandMinutes} minute band, which the junctions state. A band's corridor contains every shorter band's corridor: these are nested, not rings.`]),
     'Holes are kept. A gap inside a corridor is ground no street reaches, not an error, and filling it would assert reach where none was computed.',
     `Buffered with ${BUFFER_QUADRANT_SEGMENTS} segments per quadrant, so a corner is an eight-sided approximation of a curve, not a curve.`,
   ];

@@ -71,21 +71,55 @@ too many and it is the internal graph with extra steps.
 **A claim.** What the composition says it does. D7 applies here and nowhere else
 in a composition, because everything underneath already passed it.
 
-## Three levels, and the ends already exist
+## The palette is a curated surface
 
-| Level | Governed by | Who relies on it |
+A composition does not appear on the palette by being saved. **It appears by being
+admitted**, and admission requires assets and governance. Everything before that
+is private work, which is usable and ungoverned.
+
+| Level | Where it lives | Governed by | Who relies on it |
+| --- | --- | --- | --- |
+| **Private** | your workspace; usable in your own workflows | nothing | you |
+| **Shared** | exported and sent | a name that does not overclaim, and the versions it was built against | whoever received it |
+| **Admitted** | **the palette** | the assets below, plus review and an owner | anyone who opens the application |
+
+Private being ungoverned is deliberate. Governance costs effort, and imposing it
+on something nobody else relies on is how a tool stops being used. The cost
+arrives when the claim does.
+
+### What admission requires
+
+A widget release file already carries identity, ports, ontology mappings,
+implementation, compatibility, changes and evidence. A pack already carries an
+admission record with status, reason, named reviews, an approver and a date. An
+admitted composition needs both, plus one thing neither has.
+
+| Asset | Precedent | New? |
 | --- | --- | --- |
-| **Private** | nothing | one person, in one browser |
-| **Shared** | a name that does not overclaim; the member versions it was built against | whoever was sent it |
-| **Published** | owner, repository, commit, review state, admission — pack-shaped | anyone |
+| **Manifest** — id, version, title, author, released | widget release file | no |
+| **Dependencies** — every member at a pinned version and digest | none; widgets have no members | **yes** |
+| **Description** — what it does, and what it must not be read as | widget title and node notice | no |
+| **Ontology expansion** — its own terms and their mappings | `ontology.mappings` in a release file | no |
+| **Governance** — admission status, reviews, owner, approval | `widgets/packs.json` | no |
 
-A **widget** has a registry entry, version, digest, release file and audit. A
-**pack** has a repository, a commit SHA, an admission status, named reviews and a
-curated owner. A composition climbs between them, and the top rung is already
-modelled in `widgets/packs.json`.
+The dependency list is the new one, and it earns its place twice: it is what makes
+the composition reproducible, and it is what makes drift detectable
+([77](77-composition-drift-detection.md)). Without it a composition names its
+members and nothing more, which is the position every saved workflow is in today.
 
-Private being governed by nothing is deliberate. Governance costs effort, and
-imposing it on something nobody else relies on is how a tool stops being used.
+**Ontology expansion is the asset most easily skipped and least safely.** A
+composition that enters the palette is a term practitioners will use. If it adds
+no vocabulary it is claiming its meaning is fully given by its members, and that
+claim should be made explicitly rather than by omission.
+
+### Why the palette, specifically
+
+Appearing on the palette is a claim that somebody vouches for the thing. That is
+what keeps the surface readable: [75](75-compositions-as-nodes.md) records the
+risk that project widgets, your compositions and other people's would share one
+visual language and lose the distinction. If only admitted compositions appear,
+the palette stays vouched-for, and private work lives where private work belongs —
+in your workspace, where nobody mistakes it for something reviewed.
 
 ## Distinctions it must carry
 

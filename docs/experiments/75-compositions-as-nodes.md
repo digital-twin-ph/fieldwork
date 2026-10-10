@@ -41,8 +41,11 @@ A **worked example** is case-based: a whole analysis of one situation, loaded fr
 the workspace list — heat outreach, Old Naledi, John Snow, Manila coastal
 exposure. You open it instead of what you were doing.
 
-A **composition** is a node: you add it to the canvas you already have. It belongs
-in the palette, not the workspace list.
+A **composition** is a node: you add it to the canvas you already have. It is not
+a workspace, so it does not belong in that list — and it reaches the palette only
+by being admitted, with the assets and governance in
+[76](76-composition-governance.md). Until then it is private work, usable in your
+own workflows and visible nowhere else.
 
 | | Worked example | Composition |
 | --- | --- | --- |

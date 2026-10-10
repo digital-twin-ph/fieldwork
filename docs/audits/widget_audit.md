@@ -158,6 +158,30 @@ reasoning. **Semantic reasoning** currently holds two unlike kinds of thing:
 Calling a numeric comparison "semantic reasoning" overstates it in exactly the way the
 naming rule forbids, and it is the group a newcomer is most likely to misread.
 
+## D7 — a port name that claims more than the port carries
+
+_Added 2026-10-10._ Found while decomposing the workflow stages, after a
+practitioner pointed out that Fieldwork cannot judge.
+
+The output port of `slr_threshold_comparison` is called **`decisions`**. What it
+carries is records labelled against a criterion the practitioner supplied — the
+threshold, the vertical datum, the elevation field. The software compares two
+numbers and applies the label. Nobody decided anything.
+
+The name matters because it is the one a reader meets when wiring a workflow, and
+a port called `decisions` invites the reading that the application reached them.
+`classifications` would say what travels. The widget's own title is honest —
+"Compare level to elevation" — so the overclaim is in the port alone.
+
+**Not fixed.** Renaming a port type is a base-contract change, blocked on
+[66](../experiments/66-ports-as-schema-binding.md) along with the rest of the port
+work. Recorded here so the rename rides with that work rather than becoming a
+separate migration.
+
+The same reading applies to `policy`, already recorded below as a category noun.
+A widget typed `policy` that emits `decisions` reads as though the software set
+the policy and then decided. It applies a rule somebody wrote.
+
 ## D7, continued — the names, against the convention
 
 The [naming convention](ontology-audit.md) was written after this audit's first pass. Applied to

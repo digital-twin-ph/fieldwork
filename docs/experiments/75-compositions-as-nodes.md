@@ -35,6 +35,52 @@ stop being widgets.
 | Every node already emits a receipt | the execution contract |
 | The mechanism was specified twice and never built | [31](31-facility-access-primitives.md), [prior art](../research/prior-art.md) on the QGIS Model Designer |
 
+## Two surfaces, and they are not the same thing
+
+A **worked example** is case-based: a whole analysis of one situation, loaded from
+the workspace list — heat outreach, Old Naledi, John Snow, Manila coastal
+exposure. You open it instead of what you were doing.
+
+A **composition** is a node: you add it to the canvas you already have. It belongs
+in the palette, not the workspace list.
+
+| | Worked example | Composition |
+| --- | --- | --- |
+| Answers | one case, end to end | one step, reusable |
+| Where | workspace list | palette |
+| Opening it | replaces the canvas | adds a node |
+| Who makes it | the project, so far | the practitioner |
+
+The palette groups today are Sources, Spatial operations, Comparisons and checks,
+Semantic reasoning, Summaries and Outputs. A group such as **Micro-workflows**
+would hold compositions.
+
+### The tension that grouping creates
+
+Every existing group names **what an operation does**. A composition's defining
+feature is **what it is** — a workflow used as a node — and it could do anything.
+A composition that retrieves facilities is a source; one that ends in a map is an
+output. Grouping by form puts it in neither.
+
+Two ways, and the choice is not obvious:
+
+- **One group for compositions.** Easy to find your own work. Divorced from the
+  taxonomy a practitioner has already learned, and a composition that is plainly a
+  source sits away from Sources.
+- **Grouped by what they do, marked as compositions.** Consistent with the rest of
+  the palette, but your work is scattered through six groups.
+
+Whatever is chosen, **a composition must be distinguishable from a shipped
+widget.** That is not presentation. The audit's standing complaint about the nine
+example nodes is exactly that something demonstration-specific is indistinguishable
+from something the project maintains, and compositions would make that possible at
+scale and by many authors.
+
+A third distinction will be needed sooner than it looks: your own composition, and
+one somebody sent you. A published composition carries its author's claim, not the
+project's ([76](76-composition-governance.md)), and a palette that shows both as
+"Micro-workflows" has lost that.
+
 ## Design checks
 
 D1 and D7 are about primitives. A composition is not one, and saying so matters:

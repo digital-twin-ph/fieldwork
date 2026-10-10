@@ -4,12 +4,16 @@
 //
 // Usage: node scripts/export-validation-fixture.mjs <fixtureId> <outputDir>
 //        fixtureId: reproject-utm35s-001 | clip-all-touched-001 | measure-area-001 | mean-center-001
+//                   | reachability-soho-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84} from '../build/reproject.js';
 import {clipRaster,encodeRaster} from '../build/raster.js';
 import {calculateArea,AREA_METHOD} from '../build/area-computation.js';
 import {computeMeanCenter} from '../build/mean-center.js';
+import {snapToNetwork} from '../build/network-snap.js';
+import {reachableNodes} from '../build/reachable-nodes.js';
+import {johnSnowExample} from '../build/john-snow.js';
 
 const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -22,6 +26,44 @@ const base=(id,nodeType,label,implementation)=>({
 });
 
 const builders={
+  'reachability-soho-001'(){
+    // The Soho network the John Snow example ships, at its own parameters. The network
+    // travels in the fixture because the reference has to traverse it: a reachable set
+    // cannot be recomputed from a summary. Node coordinates are included but unused by
+    // the traversal, which runs on the stated edge lengths alone.
+    const example=johnSnowExample('snow-isochrone');
+    const network=example.nodes.find(n=>n.type==='network_input').params.data;
+    const pumps=example.nodes.find(n=>n.id==='pumps').params.data;
+    const minutes=5,speedMPerMin=75,direction='outbound',travelMode='walking';
+    const snapped=snapToNetwork(pumps,network,{id:'snap',type:'snap_to_network',x:0,y:0,
+      params:{label:'Snap to street network',zone:30,hemisphere:'north',maxSnapM:100}},'fixture','pumps');
+    const originNodeId=snapped.value.features[0].properties.networkNodeId;
+    const reached=reachableNodes(snapped.value,network,{id:'reach',type:'reachable_nodes',x:0,y:0,
+      params:{label:'Reachable junctions',minutes,speedMPerMin,direction,travelMode}},'fixture','snap');
+    return {fixture:{
+      ...base('reachability-soho-001','reachable_nodes','Reachable junctions','src/reachable-nodes.ts#reachableNodes'),
+      declaredParameters:{
+        originNodeId,minutes,speedMPerMin,travelMode,direction,
+        budgetMetres:minutes*speedMPerMin,
+        costAttribute:'lengthM',
+        edgeLengthSource:network.source,
+        method:reached.receipt.method,
+        semantics:'Cheapest-path traversal from the origin node over the stated edge lengths, keeping every node whose cost is at most the budget. The budget is the minutes multiplied by the speed. No geometry is measured and no projection is used: the lengths are taken as supplied. Edges are directed, and an inbound traversal would reverse them.'
+      },
+      input:{
+        network:{source:network.source,
+          nodes:network.nodes.map(n=>({id:n.id,coordinates:n.coordinates})),
+          edges:network.edges.map(e=>({from:e.from,to:e.to,lengthM:e.lengthM}))},
+        snappedFrom:{siteId:String(pumps.features[0].id),
+          name:pumps.features[0].properties.name,
+          coordinates:pumps.features[0].geometry.coordinates,
+          snapDistanceM:snapped.value.features[0].properties.snapDistanceM}
+      },
+      output:{reached:reached.value.features.map(f=>({
+        networkNodeId:f.properties.networkNodeId,travelMetres:f.properties.travelMetres,
+        remainingM:f.properties.remainingM}))}
+    },files:{}};
+  },
   'mean-center-001'(){
     // A Gaborone-area cluster with one outlier, so an unweighted mean is visibly pulled:
     // the point of the check is the projection and the average, not a robust statistic.

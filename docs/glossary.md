@@ -107,7 +107,7 @@ had only written the first ([62](experiments/62-workflow-traversal.md)).
 
 | Term | In plain words |
 | --- | --- |
-| **Distinction** | One piece of hard-won knowledge, written in the form *X is not Y*. *A quantile is not a worst case.* *Detection is not infection.* *A count per week is not a rate.* Working these out takes real expertise — sometimes days of reading — and they are the most valuable thing a widget carries ([59](experiments/59-pattern-for-engineered-knowledge.md)) |
+| **Distinction** | One piece of hard-won knowledge, written in the form *X is not Y*. *Detection is not infection.* *A count per week is not a rate.* Working these out takes real expertise — sometimes days of reading — and they are the most valuable thing a widget carries ([59](experiments/59-pattern-for-engineered-knowledge.md)) |
 | **Enforcement level** | What the software actually *does* about a distinction. There are five levels, listed below from strongest to weakest. Every distinction has to say which one it uses. Health informatics uses **hard stop** and **soft stop** the same way |
 
 The five, strongest first. The practical question is: **what would someone have to do to get
@@ -240,8 +240,8 @@ validation rule and behaves like a limitation, because any wrong answer typed in
 | **Unit status** | Whether an author stated a unit. Never inferred, and absence is recorded rather than assumed dimensionless | [48](experiments/48-tabular-input.md) |
 | **Vintage** | The edition and date of a denominator or boundary frame. A rate refuses when denominator year, frame vintage and numerator period disagree | [51](experiments/51-dataset-profiles.md) |
 | **Row meaning** | What one row stands for — `one-case`, `count-of-cases`, `not-cases` — with a case weight where aggregated. A count means nothing without it. And it only goes one way: once rows are totals, you cannot get back to individual cases | [61](experiments/61-input-dimensions.md) |
-| **Event date kind** | Which date a date column is: onset, report, death, specimen collection. A curve by report date is not one by onset date | [61](experiments/61-input-dimensions.md) |
-| **Baseline period** | The period a change is measured against. A projected change is not an absolute level | [47](experiments/47-sea-level-pack.md) |
+| **Event date kind** | Which date a date column is: onset, report, death, specimen collection. Report dates lag onset, so the same outbreak peaks later and looks flatter | [61](experiments/61-input-dimensions.md) |
+| **Baseline period** | The period a change is measured against. A projection of 442 mm means 442 mm higher than that period — not 442 mm of water | [47](experiments/47-sea-level-pack.md) |
 | **Dataset family** | Which published family a value came from — for sea level, whether vertical land motion is included. Values from different families are not comparable | [47](experiments/47-sea-level-pack.md) |
 | **Vertical reference** | *Proposed.* The datum an elevation is on, and whether it is a sea-surface baseline or a geodetic datum. Currently free text, which is why a comparison can be invalid while every check passes | [62](experiments/62-workflow-traversal.md) |
 

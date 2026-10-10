@@ -98,3 +98,9 @@ and has never fired, so it stays a finding and does not become a rule.
 - Record firings as they happen, in the experiment that reports the catch, so
   this table can be updated from evidence rather than memory.
 - Audit the rules written before 2026-10-09. This pass does not cover them.
+- **Where lessons land is itself unreliable.** Ten commits rewrote the workflow
+  vocabulary with no experiment record until one was asked for; the reasoning sat
+  in commit messages, which nobody greps. Recorded in
+  [73](../experiments/73-workflow-stage-vocabulary.md). Whether this needs a
+  mechanised check — a commit touching the glossary or an audit should name an
+  experiment — is one incident old, so it stays a finding.

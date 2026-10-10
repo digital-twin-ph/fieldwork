@@ -65,8 +65,17 @@ A private composition stays unbound by any of this. A published one read as
 equivalent to a reviewed widget is the `xpert` problem with more authors.
 
 **A public parameter set.** Which of the members' parameters the composition
-exposes. This is the only genuinely new design decision: too few and it is rigid,
-too many and it is the internal graph with extra steps.
+promotes to its own surface.
+
+**Promotion is not exposure**, and that is what makes this decision lower-stakes
+than a widget's. A widget's author decides once, for everyone, which decisions
+become knobs; anything left out is unreachable. A composition's author decides
+only which knobs are *convenient*, because every member knob stays reachable by
+opening the graph. Choosing too few makes a composition inconvenient, not rigid.
+
+Which leaves a real but smaller question: too many promoted parameters and the
+public surface is the internal graph with extra steps, and the composition has
+stopped standing for anything.
 
 **A claim.** What the composition says it does. D7 applies here and nowhere else
 in a composition, because everything underneath already passed it.

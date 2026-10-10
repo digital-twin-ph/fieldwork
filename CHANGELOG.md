@@ -5,6 +5,20 @@ shown in a local build is not a claim that it has been published.
 
 ## In development
 
+- Add the **Manila coastal exposure** worked example, the first increment of the sea-level work:
+  published IPCC AR6 projections for eight Philippine tide gauges against 60 real OpenStreetMap
+  health facilities, each assigned its nearest gauge with the distance recorded. It runs offline
+  and reaches no source. It stops deliberately short of comparing a projected level to an
+  elevation, because none has been supplied and a comparison against an invented one would look
+  exactly like a real result; tests assert that neither the threshold widget nor a raster output
+  appears.
+- Building it found two defects. Facility identifiers were minted as `node/3090641351`, which the
+  application's own point rule rejects — the widget stores points in its own parameters and never
+  met that validator, so the slash passed everywhere until the same points were put into an Input
+  data node. They are now `node-…`. And `exampleKey` fell through to Old Naledi for any workflow
+  holding a study area, so the new example was silently given Old Naledi's title, description and
+  licence note.
+
 - Add **Find health facilities**, one widget with three sources a browser can actually reach, none
   needing an account: a live OpenStreetMap query through Overpass, the Humanitarian OpenStreetMap
   Team country export published on HDX, and Overture Maps Places read directly from GeoParquet in

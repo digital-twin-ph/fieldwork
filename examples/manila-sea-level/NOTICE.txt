@@ -1,0 +1,44 @@
+Bundled data for the Manila coastal exposure example
+====================================================
+
+Two sources, two licences. Both travel with anything derived from them.
+
+1. Sea-level projections and the projection site list
+   IPCC AR6 Sea Level Projections, version 20210809
+   https://doi.org/10.5281/zenodo.5914709
+   Licence: CC BY 4.0
+
+   `projections.json` holds 288 values for 8 Philippine tide gauges, extracted by
+   validation-lab/scripts/extract_ar6_philippines.py. Values are in MILLIMETRES,
+   measured against the 1995-2014 baseline. `basis` is a confidence level, not a
+   workflow: the AR6 confidence output files are p-boxes over several workflows and
+   carry no workflow dimension at all.
+
+   The licence obliges three citations, and they are required by the widget that
+   declares the extract:
+
+   - Fox-Kemper, B., et al. 2021: Ocean, Cryosphere and Sea Level Change. In Climate
+     Change 2021: The Physical Science Basis. IPCC AR6 WG1, Chapter 9.
+     doi:10.1017/9781009157896.011
+   - Kopp, R. E., Garner, G. G., et al. 2023. The Framework for Assessing Changes To
+     Sea-Level (FACTS) v1.0. Geoscientific Model Development 16, 7461-7489.
+     doi:10.5194/gmd-16-7461-2023
+   - Garner, G. G., et al. 2021. IPCC AR6 Sea Level Projections. Version 20210809.
+     doi:10.5281/zenodo.5914709
+
+2. Health facilities
+   OpenStreetMap, via the Humanitarian OpenStreetMap Team country export on HDX
+   https://www.openstreetmap.org/copyright
+   Licence: ODbL 1.0
+   (c) OpenStreetMap contributors, Open Database License (ODbL) 1.0
+
+   `facilities.json` holds 60 named hospitals and clinics inside a Manila bounding
+   box, sampled evenly through the name-sorted list. ODbL is share-alike: a database
+   derived from this must be offered under the same licence with attribution intact.
+
+   This is a sample, not a facility register, and it is not complete. OpenStreetMap
+   states no completeness, so an absence here is not evidence of absence on the
+   ground. The Find health facilities widget retrieves the same data live.
+
+Rebuild with:
+  validation-lab/scripts/build_sea_level_example.py <hotosm_phl_health_facilities.geojson>

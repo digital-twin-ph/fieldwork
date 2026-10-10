@@ -71,8 +71,14 @@ function identityOf(record:Record<string,unknown>,tags:Record<string,unknown>,or
   const declared=String(record.osm_type??tags.osm_type??record.type??'').replace(/s$/,'');
   const type=(OSM_ELEMENT_KINDS as readonly string[]).includes(declared)?declared:'';
   const id=record.osm_id??tags.osm_id??record.id;
-  if(type&&id!==undefined&&id!==null)return `${type}/${id}`;
-  if(id!==undefined&&id!==null&&String(id).trim())return String(id);
+  // Joined with a hyphen, not the slash OpenStreetMap writes. A feature identifier must match the
+  // application's own rule — letters, digits, hyphen and underscore — or the layer cannot be moved
+  // into an Input data node, saved and reopened. Building the Manila example found this: the
+  // facilities widget stores to its own parameters and never met the shared point validator, so a
+  // slash passed everywhere until the same points were put somewhere else.
+  const clean=(value:unknown)=>String(value).replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,80);
+  if(type&&id!==undefined&&id!==null)return `${type}-${clean(id)}`;
+  if(id!==undefined&&id!==null&&String(id).trim())return clean(id);
   return `record-${ordinal}`;
 }
 

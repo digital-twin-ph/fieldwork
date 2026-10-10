@@ -124,9 +124,9 @@ test('a stored retrieval replays with the network off, and asks no source for an
   const stored=workflow();
   const target=stored.nodes.find(n=>n.id==='hf');
   target.params.data={type:'FeatureCollection',features:[
-    {type:'Feature',id:'node/11',properties:{name:'Ospital ng Maynila',kind:'hospital'},
+    {type:'Feature',id:'node-11',properties:{name:'Ospital ng Maynila',kind:'hospital'},
      geometry:{type:'Point',coordinates:[120.98,14.57]}},
-    {type:'Feature',id:'node/12',properties:{name:'Sampaloc Health Center',kind:'clinic'},
+    {type:'Feature',id:'node-12',properties:{name:'Sampaloc Health Center',kind:'clinic'},
      geometry:{type:'Point',coordinates:[120.99,14.58]}}]};
   target.params.retrieved={source:'openstreetmap-live',sourceLabel:'OpenStreetMap, live query',
     licence:'ODbL-1.0',attribution:'\u00a9 OpenStreetMap contributors, Open Database License (ODbL) 1.0',

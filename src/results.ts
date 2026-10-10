@@ -32,7 +32,9 @@ export interface DisplayRow {
   recordId?:string; sourceNodeId?:string; layerLabel?:string; attributeTypes?:Record<string,AttributeType>; attributes?:Record<string,Scalar>;
   relation?:SpatialRelation; decision?:CoverageRow['decision']; excluded?:boolean; exclusionReason?:string; signature?:string;
 }
-export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'period'; caption:string; total:number; bins:{key:string; label:string; count:number}[]}
+/** `order` places a bin on a scale its label does not carry — a band's travel time, so
+ *  far. Present on every bin or none: a partial order is refused rather than guessed. */
+export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'period'; caption:string; total:number; bins:{key:string; label:string; count:number; order?:number}[]}
 export interface DisplayValue {
   comparison?:import('./point-comparison.js').PointComparison;
   polygonPresentation?:'plot'|'interactive';

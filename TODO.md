@@ -375,6 +375,8 @@ Full reasoning in [40](docs/experiments/40-reprojection-primitives.md).
 
 ## Let practitioners compose their own routine primitives
 
+Three admission reviews, written before the code: [75](docs/experiments/75-compositions-as-nodes.md) proposes the mechanism, [76](docs/experiments/76-composition-governance.md) the governance, and [77](docs/experiments/77-composition-drift-detection.md) drift detection. The notes below are what they were built from.
+
 Proposed 2026-10-10. The project ships **core primitives**; a practitioner wires
 the sequence they keep repeating and saves it as a reusable node of their own —
 a routine primitive. A composite stays expandable, so opening it shows the steps.

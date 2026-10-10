@@ -16,6 +16,19 @@ fw:VoronoiComputation a owl:Class;
 fw:NetworkIsochrone a owl:Class;
   rdfs:label "Network isochrone computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Directed network reachability with explicit cost, snapping and corridor approximation.".
+fw:CombinedArea a owl:Class;
+  rdfs:label "Combined area computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Union of areas in a projected CRS. Answers whether anywhere is covered, not how well: two areas overlapping meant two things reached the same ground, and combining them discards that along with whatever distinguished the parts.".
+fw:partCount a owl:DatatypeProperty; rdfs:domain fw:CombinedArea; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Number of areas combined".
+fw:combinedPieceCount a owl:DatatypeProperty; rdfs:domain fw:CombinedArea; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Separate pieces in the result";
+  rdfs:comment "Areas that do not touch stay separate, so this is not always one.".
+fw:partsAreaSquareMetres a owl:DatatypeProperty; rdfs:domain fw:CombinedArea; rdfs:range xsd:decimal;
+  rdfs:label "Summed area of the parts, in square metres".
+fw:combinedAreaSquareMetres a owl:DatatypeProperty; rdfs:domain fw:CombinedArea; rdfs:range xsd:decimal;
+  rdfs:label "Area of the combination, in square metres";
+  rdfs:comment "Emitted beside the summed parts so that overlap is a number rather than something a reader infers.".
 fw:ConvexHull a owl:Class;
   rdfs:label "Convex hull computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "The smallest convex outline containing located points, computed in a projected CRS. An outline of what was observed, not a service area, a catchment or an agreed boundary. Convex: a distribution that is not is filled in, so the hull covers ground nothing was observed on.".

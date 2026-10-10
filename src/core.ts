@@ -2,6 +2,7 @@
 import {bufferPoint,validateBufferPointNode} from './buffer-point.js';
 import {facilitiesValue,migrateHealthsitesNodes,validateFindHealthFacilitiesNode} from './health-facilities.js';
 import {convexHull,validateHullNode} from './convex-hull.js';
+import {combinedArea,validateCombinedAreaNode} from './combined-area.js';
 /** Resolves a named credential to its secret. No current widget needs one; the credential
  *  manager stands on its own (experiment 30) and executeWorkflow still accepts a resolver so a
  *  future authenticated source does not change this signature. */
@@ -63,7 +64,8 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
   reproject:{title:'Reproject input',group:'Sources',icon:'⇄',color:'blue',description:'Import projected UTM points and convert them to WGS84 longitude/latitude',inputs:[],output:'points'},
   raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
-  summarise_hull:{title:'Convex hull',group:'Summaries',icon:'⬟',color:'teal',description:'The smallest convex outline containing a set of points, computed in metres',inputs:[['points','points']],output:'polygons'},
+  summarize_combined_area:{title:'Combined area',group:'Summaries',icon:'∪',color:'teal',description:'Overlapping and touching areas become one; separate areas stay separate',inputs:[['polygons','polygons']],output:'polygons'},
+  summarize_hull:{title:'Convex hull',group:'Summaries',icon:'⬟',color:'teal',description:'The smallest convex outline containing a set of points, computed in metres',inputs:[['points','points']],output:'polygons'},
   find_health_facilities:{title:'Find health facilities',group:'Sources',icon:'⌖',color:'blue',description:'Retrieve health facilities inside the study area from OpenStreetMap, an HDX country export, or a healthsites.io download',inputs:[['area','area']],output:'points'},
   buffer_point:{title:'Area around a point',group:'Spatial operations',icon:'◍',color:'teal',description:'Define a study area as everything within a stated distance of one named point',inputs:[['points','points']],output:'area'},
   sample_raster:{title:'Sample raster at points',group:'Spatial operations',icon:'◴',color:'teal',description:'Write the value of the raster cell containing each point onto that point',inputs:[['points','points'],['raster','raster']],output:'points'},
@@ -148,7 +150,8 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (![n.x,n.y].every(Number.isFinite) || Math.abs(n.x)>10000 || Math.abs(n.y)>10000 || !n.params) throw new Error('Invalid node position or parameters.');
     if((n.type==='area'||n.type==='observations'||n.type==='places'||n.type==='centers')){n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
     if ((n.type==='places'||n.type==='centers'||n.type==='observations')) n.params.data=validateGeoJSON(n.params.data,{attributes:n.type==='observations'});
-    if(n.type==='summarise_hull')validateHullNode(n);
+    if(n.type==='summarize_hull')validateHullNode(n);
+    if(n.type==='summarize_combined_area')validateCombinedAreaNode(n);
     if(n.type==='find_health_facilities')validateFindHealthFacilitiesNode(n);
     if(n.type==='buffer_point')validateBufferPointNode(n);
     if(n.type==='sample_raster')validateSampleNode(n);
@@ -275,7 +278,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         value=node.type==='donut_geomask'?moveDonut(inputs.points,node.params):aggregateHex(inputs.points,node.params);
         receipts.push(privacyReceipt(node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from,inputs.points.features.length,value as PointCollection|Polygons));break;
       }
-      case 'summarise_hull':{
+      case 'summarize_combined_area':{
+        const made=combinedArea(inputs.polygons,node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from);
+        value=made.value;receipts.push(made.receipt);break;
+      }
+      case 'summarize_hull':{
         const made=convexHull(inputs.points,node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from);
         value=made.value;receipts.push(made.receipt);break;
       }

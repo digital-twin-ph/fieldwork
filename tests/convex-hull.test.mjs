@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {hullOf,convexHull,validateHullNode,MIN_HULL_POINTS} from '../build/convex-hull.js';
 
-const node=p=>({id:'hull',type:'summarise_hull',x:0,y:0,
+const node=p=>({id:'hull',type:'summarize_hull',x:0,y:0,
   params:{label:'Area the cases cover',zone:30,hemisphere:'north',...p}});
 const layer=(...coords)=>({type:'FeatureCollection',
   features:coords.map((c,i)=>({type:'Feature',id:`p-${i+1}`,properties:{name:`P${i+1}`},

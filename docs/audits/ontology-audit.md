@@ -349,6 +349,7 @@ not a label adjusted later.
 | **Never a bare adjective or a category noun** | `nearest` is an adjective; `policy` and `access` name categories so broad they say nothing. Which policy? Access to what? |
 | **Prefer the operation to the method** — the method belongs in the receipt's `method` field, where it is already recorded | Two widgets called "clip" can differ in pixel selection and missing-data behaviour; the operation is the stable part. **Exception:** where the method name *is* the practitioner's term, as with `voronoi` and `isochrone`, keep it and say so |
 | **A domain block carries its domain as a prefix** | `slr_` does this. `xpert`, `access` and `access_policy` are equally domain-specific and do not, so nothing marks them as domain in the identifier a reader meets first |
+| **Spell a node type with `-ize`** | `summarize_polygons` was there first, and `summarise_hull` was added beside it on 2026-10-10 before anyone noticed. A public identifier a practitioner cannot guess the spelling of is a defect, whatever the prose does |
 | **The node type and the title must say the same thing** | `xpert` titled "Diagnostic evidence" forces a reader to learn a mapping that carries no information |
 | **Reserve the general word for the general case** | `output` is a superseded node while `map_output`, `table_output` and `chart_output` are the real ones. The plainest name should belong to the thing that deserves it |
 

@@ -602,14 +602,26 @@
    ]
   },
   {
-   "id": "urn:fieldwork:widget:summarise_hull",
-   "nodeType": "summarise_hull",
+   "id": "urn:fieldwork:widget:summarize_combined_area",
+   "nodeType": "summarize_combined_area",
    "currentVersion": "0.1.0",
    "releases": [
     {
      "version": "0.1.0",
-     "path": "widgets/releases/summarise_hull/0.1.0.json",
-     "sha256": "45d153b087dc1e62024169cae641314517aa6b4a38c50e1b04f7fbf5ffceff36"
+     "path": "widgets/releases/summarize_combined_area/0.1.0.json",
+     "sha256": "6b6f9b38367f289347b87e3799253af645fac9d45ed2ad04143e003a82867f1b"
+    }
+   ]
+  },
+  {
+   "id": "urn:fieldwork:widget:summarize_hull",
+   "nodeType": "summarize_hull",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/summarize_hull/0.1.0.json",
+     "sha256": "a0fc9ba3a62934b0f3513c1da1b2e2ce1b4f758088ae0abd8d84a184b1abb9f5"
     }
    ]
   },

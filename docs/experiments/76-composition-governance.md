@@ -35,9 +35,16 @@ Three things, none of them inherited.
 
 **A name that asserts where it belongs.** The widget naming convention says
 `verb_object` and leaves the verb free. For compositions the verb should come
-from a **closed set — the stage taxonomy**: check, compute, relate, summarise,
+from a **closed set — the stage taxonomy**: check, compute, relate, summarize,
 classify, and the input and output verbs. A composition called
 `relate_facilities_to_gauges` has declared its stage in its name.
+
+**Corrected 2026-10-10 when the set was implemented.** This first wrote
+`summarise`, which would have put compositions named `summarise_*` beside
+widgets named `summarize_*`. Node types in this project take `-ize`:
+`summarize_polygons` predates the convention and `summarize_hull` was renamed to
+match it the same day. The identifier is `summarize`; the stage is still
+"summarise" in prose and in the glossary.
 
 Three things follow.
 

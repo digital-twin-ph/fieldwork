@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.workers.json --noEmit",
     "validate:ontology": "node scripts/validate-ontology.mjs",
     "validate:widgets": "node scripts/validate-widgets.mjs",
+    "validate:compositions": "node scripts/validate-compositions.mjs",
     "validate:packs": "node scripts/validate-packs.mjs",
     "validate:parity": "node scripts/validate-parity.mjs",
     "stamp:docs": "node scripts/stamp-docs.mjs --write",

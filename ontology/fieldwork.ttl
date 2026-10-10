@@ -30,7 +30,10 @@ fw:travelBudgetMinutes a owl:DatatypeProperty; rdfs:domain fw:NetworkReachabilit
   rdfs:label "Travel budget as asked for, in minutes".
 fw:assumedSpeedMetresPerMinute a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:decimal;
   rdfs:label "Single speed assumed for every traveller and every street";
-  rdfs:comment "Emitted beside the minutes so a reader can divide back out to the metres that were really used.".
+  rdfs:comment "Emitted beside the minutes so a reader can divide back out to the metres that were really used. A speed is an assumption about a place in a period and does not transfer between settings: the 75 metres per minute this project long defaulted to is 4.5 km/h from a case study of pedestrians in Soho in 1854.".
+fw:travelMode a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:string;
+  rdfs:label "Kind of travel the speed is meant to represent";
+  rdfs:comment "One of walking, cycling, driving or other, checked against the speed so that a mode and a number cannot contradict each other. Public transport is not among them: it follows routes and a timetable rather than the street network.".
 fw:travelDirection a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:string;
   rdfs:label "Whether travel was outbound from the origin or inbound to it".
 fw:edgeLengthSource a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:string;

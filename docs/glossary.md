@@ -265,30 +265,43 @@ output port, and it carries the scope of the question.
 
 ### Process — working with the data
 
-What you do to an input: check it is fit, compute from it, summarise it, and
-classify against a criterion to get the answer.
+What you do to an input: check it is fit, compute from it, relate it to other
+data, summarise it, and classify against a criterion to get the answer.
 
-| Stage | What it does | Example |
+This is a GIS studio, so most inputs are spatial. The same five things are done
+to a table and to a layer, but spatial data changes what each one means.
+
+| Stage | On a table | On a layer |
 | --- | --- | --- |
-| **Check** | Is the data fit for the question? Duplicates, missing values, records outside the boundary. Exclusions carry a reason | `coverage_check`; duplicate keys refused on import; missing values counted, never filled |
-| **Compute** | Analytic computation. The same claim in a new shape — buffered, clipped, reprojected, sampled, joined to another layer | `buffer_point`, `sample_raster`, `slr_site_assignment`, `clip_raster` |
-| **Summarise** | Many records become fewer. The detail is gone and does not come back | `rate`, `case_series`, `hex_aggregate`, `mean_center` |
-| **Classify** | Sorting records by a criterion the practitioner stated — a threshold, a rule, a case definition. The result records which criterion was applied | `slr_threshold_comparison` |
+| **Check** | Duplicates, missing values, unique keys, stated units | Is the coordinate system stated? Is the geometry valid? What falls outside the study area, and why | 
+| **Compute** | Derive a value from values you have | Derive geometry: buffer, clip, catchment, reproject |
+| **Relate** | Join on a key. It matches or it does not | Join by location. **A measurement, not a match** — nearest within a distance, inside or outside, which cell — and the result records how good it was |
+| **Summarise** | Many rows become fewer, by category or period | The same, by zone — and **the zone is a choice that changes the answer** |
+| **Classify** | Sort by a stated criterion | The same, on a stated datum |
+
+Two things spatial work demands that tabular work does not.
+
+**A stated frame.** Every spatial operation needs its coordinate system, zone or
+vertical datum named, and the application refuses without one. A comparison
+against an unstated vertical datum is not a weaker comparison; it is not a
+comparison. Reprojection changes the frame and must not change the claim.
+
+**A record of how well things lined up.** `slr_site_assignment` keeps the
+distance to the gauge it assigned. `sample_raster` counts points sampled, with no
+data, outside the grid, and unlocated. A spatial relationship can be close,
+distant, or absent, and a result that hides which is overstating what it knows.
 
 **Fieldwork does not judge.** It classifies against criteria someone else
 stated, and surfaces what does not fit. Whether the threshold is the right
-threshold, and what to do about the answer, stays with the practitioner. A
-comparison against an unstated vertical datum is refused for this reason: the
-software cannot supply the judgement the comparison needs.
+threshold, and what to do about the answer, stays with the practitioner.
 
-These four are not a grouping imposed afterwards. The application already types
-them apart: checking produces `coverage-check`, classifying produces
-`decisions`, computing and summarising produce data ports.
+These five are not a grouping imposed afterwards. The application types them
+apart: checking produces `coverage-check`, classifying produces `decisions`,
+computing, relating and summarising produce data ports.
 
-"Produce results" is not listed as a stage of its own, because every stage above
-produces something and the name would not tell you which one you are in. What it
-points at is **Classify** — the step where a criterion is applied and an answer
-stated.
+"Produce results" is not a stage of its own, because every stage above produces
+something and the name would not tell you which one you are in. What it points at
+is **Classify** — where a criterion is applied and an answer follows.
 
 ### Output — communicating the result
 

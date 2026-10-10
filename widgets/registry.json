@@ -759,7 +759,7 @@
   {
    "id": "urn:fieldwork:widget:travel_time_band",
    "nodeType": "travel_time_band",
-   "currentVersion": "0.2.0",
+   "currentVersion": "0.3.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -770,6 +770,11 @@
      "version": "0.2.0",
      "path": "widgets/releases/travel_time_band/0.2.0.json",
      "sha256": "0f02e07a686c2bea72f600c2667f02940d9325bc26a56e71f5bb6980dd16fbee"
+    },
+    {
+     "version": "0.3.0",
+     "path": "widgets/releases/travel_time_band/0.3.0.json",
+     "sha256": "ec29b5c4bb40c3cad259fb98840b8efa64a8131b7a2e909f189c16f25521877b"
     }
    ]
   },

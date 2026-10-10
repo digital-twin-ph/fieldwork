@@ -63,11 +63,40 @@ The second direction matters more than it looks. A ratchet that only catches
 growth lets a paid debt sit in the list forever, and the list stops meaning
 anything.
 
-**Paid immediately:** `sample_raster`'s nine and `buffer_point`'s two
-(`sourcePoint`, `circleAreaFraction` — the latter being the fraction of a true
-circle a buffer polygon actually covers, which is worth a definition). Debt
-53 → **42**. The remaining 42 are 29 in `old-naledi.ts`, which is a worked
-example's own vocabulary, and 13 elsewhere.
+**All 53 were paid the same day**, in three groups, and the debt list is now
+empty with the test asserting it stays that way:
+
+| Group | Terms | Where declared |
+| --- | --- | --- |
+| `sample_raster` and `buffer_point` properties | 11 | `ontology/fieldwork.ttl` |
+| Core vocabulary: two prose-only value sets, the heat-outreach reasoning terms, table and request provenance | 13 | `ontology/fieldwork.ttl` |
+| The Old Naledi example's own domain terms | 29 | `ontology/examples/old-naledi.ttl` |
+
+Three things came out of doing it rather than planning it.
+
+**Two properties had their values declared only in prose.**
+`fw:spatialRelation` carried the comment *"Inside, Boundary, Outside, or
+MissingLocation"* and `fw:coverageDecision` *"Accept, Review, or Excluded"* —
+and not one of those seven individuals was declared anywhere. A reasoner meeting
+`fw:Inside` found nothing saying what it is. They are now classes with named
+individuals and the properties have ranges, so the prose has become checkable.
+
+**The most load-bearing terms were the least declared.** `fw:decision`,
+`fw:distanceKm`, `fw:distanceKnown`, `fw:alertKnown`, `fw:heatAlert` and the
+values `fw:NoFlag`, `fw:Review`, `fw:Unknown` appear in the **N3 rules the
+reasoner runs**, not only in receipts. The vocabulary the engine reasons over was
+undeclared.
+
+**One term meant something other than it looked.** `fw:zone` in Old Naledi is a
+*travel-time band* — Within5, Within15, Within30, Over30 — not a coordinate
+system zone, which the rest of the application carries as `fw:metricCRS`. Two
+different things sharing an everyday word, now pinned by a declaration that says
+so.
+
+The Old Naledi terms went to `ontology/examples/old-naledi.ttl` rather than the
+core ontology: Broadhurst and Marina are facilities in Gaborone, and a
+clinic-service classification is not a Fieldwork primitive. The core ontology
+should not absorb one study's subject matter.
 
 None of the eight primitives built today carries any debt, and a test asserts
 that specifically — it is the state the mechanism exists to hold everything else
@@ -102,9 +131,28 @@ since `fw:originCount` was *declared*, just declared with a domain that became
 false when a second widget used it. A term asserted by two activity classes whose
 declaration names one of them is still undetected.
 
-**That the release file is coupled.** The check reads source and ontology; the
-release file's prose note is still prose. Recording a widget's asserted terms in
-its release would make a change to them a visible release change, and so a
-composition drift signal — which is where this started. That needs a field in
-the release schema and cannot be backfilled, because release files are immutable
-once committed, so it applies to releases published from now on.
+**That every release is coupled yet.** `ontology.emits` now exists in the
+release schema, validated against what the module actually asserts, and required
+of any release published after 2026-10-10. But release files are immutable once
+committed, so the fifty already published cannot be backfilled: each gets its
+`emits` at its next release. Coverage today is one widget of fifty.
+
+## The cascade, demonstrated
+
+`travel_time_band` 0.3.0 was published for no reason other than to record the
+terms it asserts. That alone produced the chain the question asked for:
+
+```
+  drift: compute_walking_catchment 0.1.0 · band moved —
+  travel_time_band has moved from 0.2.0 to 0.3.0 since this composition pinned
+  it. Read that release's changes before trusting the result.
+```
+
+An ontology change became a release, and the release became a drift signal for a
+composition that pinned the old one. Ontology drift and widget drift are now one
+signal, which is what tightening the coupling was for.
+
+The composition was re-pinned as 0.2.0, and 0.1.0 kept as
+`tests/fixtures/drifted-composition-2026-10-10.json` so the drift report stays
+exercised by a test rather than becoming a story about something that happened
+once.

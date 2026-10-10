@@ -1,0 +1,71 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# The Old Naledi worked example's own vocabulary, declared 2026-10-10 when the coupling
+# between application and ontology was mechanised. These 29 terms were asserted into
+# receipts and into the N3 rules the reasoner runs, with nothing defining them.
+#
+# They live with the examples rather than in fieldwork.ttl because they are one study's
+# domain terms: Broadhurst and Marina are facilities in Gaborone, and a clinic-service
+# classification is not a Fieldwork primitive. The core ontology should not absorb one
+# example's subject matter.
+
+fw:FacilityKindValue a owl:Class; rdfs:label "Facility kind value";
+  rdfs:comment "How the study classified a facility. Other is used rather than guessing, and is not a residual to be ignored.".
+fw:Hospital a owl:NamedIndividual, fw:FacilityKindValue; rdfs:label "Hospital".
+fw:Clinic a owl:NamedIndividual, fw:FacilityKindValue; rdfs:label "Clinic".
+fw:HealthPost a owl:NamedIndividual, fw:FacilityKindValue; rdfs:label "Health post".
+fw:Other a owl:NamedIndividual, fw:FacilityKindValue; rdfs:label "Another kind of facility".
+fw:facilityKind a owl:ObjectProperty; rdfs:range fw:FacilityKindValue;
+  rdfs:label "Kind of facility, as the study classified it".
+
+fw:ServiceValue a owl:Class; rdfs:label "Service availability value";
+  rdfs:comment "What a facility was recorded as offering, not what it offers today: a worked example is a snapshot of one study's records.".
+fw:Onsite a owl:NamedIndividual, fw:ServiceValue; rdfs:label "Provided on site".
+fw:OnsiteOrReferral a owl:NamedIndividual, fw:ServiceValue; rdfs:label "Provided on site or by referral".
+fw:ReferralOnly a owl:NamedIndividual, fw:ServiceValue; rdfs:label "By referral only".
+fw:service a owl:ObjectProperty; rdfs:range fw:ServiceValue;
+  rdfs:label "How a service was recorded as available".
+
+fw:EvidenceLevelValue a owl:Class; rdfs:label "Evidence level value";
+  rdfs:comment "How directly the record supports the claim made from it. Contextual and Inferential are weaker than Direct and are kept distinct so a reader can discount them.".
+fw:Direct a owl:NamedIndividual, fw:EvidenceLevelValue; rdfs:label "Direct evidence".
+fw:Inferential a owl:NamedIndividual, fw:EvidenceLevelValue; rdfs:label "Inferred from other evidence".
+fw:Contextual a owl:NamedIndividual, fw:EvidenceLevelValue; rdfs:label "Context rather than evidence for the claim".
+fw:evidenceLevel a owl:ObjectProperty; rdfs:range fw:EvidenceLevelValue;
+  rdfs:label "How directly the record supports the claim".
+
+fw:AccessZoneValue a owl:Class; rdfs:label "Access time zone value";
+  rdfs:comment "A band of travel time, not a coordinate system zone. The application uses fw:zone for this and fw:metricCRS for a projected CRS, which are different things sharing an everyday word.".
+fw:Within5 a owl:NamedIndividual, fw:AccessZoneValue; rdfs:label "Within five minutes".
+fw:Within15 a owl:NamedIndividual, fw:AccessZoneValue; rdfs:label "Within fifteen minutes".
+fw:Within30 a owl:NamedIndividual, fw:AccessZoneValue; rdfs:label "Within thirty minutes".
+fw:Over30 a owl:NamedIndividual, fw:AccessZoneValue; rdfs:label "More than thirty minutes".
+fw:zone a owl:ObjectProperty; rdfs:range fw:AccessZoneValue;
+  rdfs:label "Travel time band a place falls in".
+fw:proxyMinutes a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:label "Travel time standing in for measured access, in minutes";
+  rdfs:comment "Named proxyMinutes rather than minutes because it is a substitute for a journey nobody timed.".
+
+fw:NamedRuleValue a owl:Class; rdfs:label "Named rule value";
+  rdfs:comment "Which named rule reached a conclusion, so that a decision can be traced to the rule rather than to the engine.".
+fw:Broadhurst a owl:NamedIndividual, fw:NamedRuleValue; rdfs:label "The Broadhurst rule".
+fw:Marina a owl:NamedIndividual, fw:NamedRuleValue; rdfs:label "The Marina rule".
+fw:namedRule a owl:ObjectProperty; rdfs:range fw:NamedRuleValue;
+  rdfs:label "Rule that reached this conclusion".
+
+# One individual standing for absence across three value sets. Declared once with three
+# types rather than as three IRIs, because "none" means the same thing in each: the study
+# recorded no service, no supporting evidence, and no rule firing.
+fw:None a owl:NamedIndividual, fw:ServiceValue, fw:EvidenceLevelValue, fw:NamedRuleValue;
+  rdfs:label "None recorded".
+# fw:Unknown is declared in fieldwork.ttl as an access decision; here it is also a zone,
+# because a place with no determinable travel time falls in no band.
+fw:Unknown a fw:AccessZoneValue.
+
+fw:accessKnown a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "Whether access could be determined for this place".
+fw:government a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "Whether the facility was recorded as government-run".

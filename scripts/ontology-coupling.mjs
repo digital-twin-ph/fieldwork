@@ -57,3 +57,18 @@ export function undeclared(emitted,declared){
     .map(term=>({term,kind:/^[A-Z]/.test(term)?'class-or-individual':'property',
       modules:[...emitted.get(term)].sort()}));
 }
+
+/** The fw: terms one module asserts, split by kind and sorted.
+ *
+ *  This is what a release file records as `ontology.emits`, so that a change to the terms
+ *  a widget asserts cannot happen without a new release — and therefore cannot happen
+ *  without a composition that pins the old one reporting drift. The derivation lives here
+ *  rather than in the validator so that the gate and the release author compute it the
+ *  same way. */
+export function emitsFor(emitted,module){
+  const terms=[...emitted].filter(([,modules])=>modules.has(module)).map(([term])=>term);
+  return {
+    classes:terms.filter(t=>/^[A-Z]/.test(t)).sort(),
+    properties:terms.filter(t=>/^[a-z]/.test(t)).sort(),
+  };
+}

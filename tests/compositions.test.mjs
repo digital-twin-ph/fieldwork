@@ -6,7 +6,7 @@ import {validateComposition,openInputs,detectDrift,expandComposition,STAGE_VERBS
 import {executeWorkflow} from '../build/core.js';
 
 const load=async()=>({
-  composition:JSON.parse(await readFile('compositions/compute_walking_catchment/0.1.0.json','utf8')),
+  composition:JSON.parse(await readFile('compositions/compute_walking_catchment/0.2.0.json','utf8')),
   registry:JSON.parse(await readFile('widgets/registry.json','utf8'))});
 const clone=o=>structuredClone(o);
 
@@ -90,11 +90,11 @@ test('drift is reported per member, naming where it moved',async()=>{
   // A member publishing a new version: pinned release still exists, but is no longer current.
   const moved=clone(registry);
   const band=moved.widgets.find(w=>w.nodeType==='travel_time_band');
-  band.releases.push({version:'0.3.0',path:'x',sha256:'1'.repeat(64)});
-  band.currentVersion='0.3.0';
+  band.releases.push({version:'0.4.0',path:'x',sha256:'1'.repeat(64)});
+  band.currentVersion='0.4.0';
   const afterMove=detectDrift(composition,moved).find(d=>d.node==='band');
   assert.equal(afterMove.state,'moved');
-  assert.match(afterMove.detail,/has moved from 0\.2\.0 to 0\.3\.0 since this composition pinned it/);
+  assert.match(afterMove.detail,/has moved from 0\.3\.0 to 0\.4\.0 since this composition pinned it/);
 
   // A published release edited underneath it.
   const rewritten=clone(registry);
@@ -163,4 +163,25 @@ test('run as one step it gives the hand-built chain, and one receipt per member'
   assert.match(band.facts,/fw:bandMinutes 5; fw:bandBudgetMetres 375\.00/);
   assert.match(band.facts,/fw:junctionsInBand 142/);
   assert.ok(run.outputs.length>=1,'the corridor reached a map');
+});
+
+test('a member publishing a new release makes a pinned composition report drift',async()=>{
+  // The cascade the ontology coupling exists to produce: travel_time_band 0.3.0 records
+  // the fw: terms it asserts, which is a release, which is drift for anything pinning
+  // 0.2.0. Kept as a fixture so the report stays exercised rather than remembered.
+  const drifted=JSON.parse(await readFile('tests/fixtures/drifted-composition-2026-10-10.json','utf8'));
+  const {registry}=await load();
+  validateComposition(drifted,registry);   // still valid: the pinned release still exists
+  const report=detectDrift(drifted,registry);
+  const band=report.find(d=>d.node==='band');
+  assert.equal(band.state,'moved');
+  assert.equal(band.pinnedVersion,'0.2.0');
+  assert.equal(band.currentVersion,'0.3.0');
+  assert.match(band.detail,/Read that release's changes before trusting the result/);
+  assert.deepEqual(report.filter(d=>d.state!=='unchanged').map(d=>d.node),['band'],
+    'only the member that moved');
+
+  // And the shipped version, re-pinned, reports none.
+  const current=JSON.parse(await readFile('compositions/compute_walking_catchment/0.2.0.json','utf8'));
+  assert.deepEqual(detectDrift(current,registry).filter(d=>d.state!=='unchanged'),[]);
 });

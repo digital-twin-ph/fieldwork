@@ -1,0 +1,905 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "id": "node-4519922789",
+   "properties": {
+    "name": "1301st Dental Dispensary",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0375236,
+     14.5350917
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-6554476250",
+   "properties": {
+    "name": "A.H. Lacson Health Center",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0136184,
+     14.5808462
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-5783078557",
+   "properties": {
+    "name": "Aesthetic Science",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0250811,
+     14.5631115
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-3233877596",
+   "properties": {
+    "name": "Aimee Aguilar-Teo M.D.",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0444794,
+     14.5522398
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-1279209740",
+   "properties": {
+    "name": "Amisola Maternity Hospital",
+    "kind": "hospital"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9781047,
+     14.6328532
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-7128394885",
+   "properties": {
+    "name": "Asia Pacific Medical and Diagnostic Services Inc.",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0033957,
+     14.5536493
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-7091095985",
+   "properties": {
+    "name": "Avs Medical Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9801602,
+     14.5777594
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-6547550854",
+   "properties": {
+    "name": "Balza-Antonio Medical Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.048062,
+     14.5815445
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-11943417445",
+   "properties": {
+    "name": "Beaufaces",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0235481,
+     14.6214127
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-11248508044",
+   "properties": {
+    "name": "Borough Lasik Center",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.981399,
+     14.5365674
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-3638341022",
+   "properties": {
+    "name": "CAH Medical Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0016973,
+     14.6334038
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-12193991210",
+   "properties": {
+    "name": "CSM Dental Clinic",
+    "kind": "hospital"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9525315,
+     14.6587471
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-4580287291",
+   "properties": {
+    "name": "Cangco medical clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0111653,
+     14.5618059
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-1123066928",
+   "properties": {
+    "name": "Centralle Medical",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9845103,
+     14.6459906
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-7328653085",
+   "properties": {
+    "name": "CliniKaya",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0463435,
+     14.5660041
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-4911917702",
+   "properties": {
+    "name": "Corazon de Jesus Health Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0315058,
+     14.6066514
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-944867878",
+   "properties": {
+    "name": "DermaClinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0018538,
+     14.6033182
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-9458588363",
+   "properties": {
+    "name": "Dilaysis Center",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9889662,
+     14.6569575
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-8436497517",
+   "properties": {
+    "name": "E. Perlas Diagnostics & Polyclinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9837216,
+     14.6754122
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-11993482304",
+   "properties": {
+    "name": "Family Health Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0487255,
+     14.6278597
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-4351593528",
+   "properties": {
+    "name": "HQ",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0045707,
+     14.6266283
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-7154387721",
+   "properties": {
+    "name": "Health Port",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0031491,
+     14.5588818
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-3076961798",
+   "properties": {
+    "name": "Herran Laboratory & Medical Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0126518,
+     14.5815026
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-13064762386",
+   "properties": {
+    "name": "Hyperbaric Medicine Facility and Wound Center",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.04556,
+     14.64683
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-7129025485",
+   "properties": {
+    "name": "Icon Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0449838,
+     14.6034191
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-5182908321",
+   "properties": {
+    "name": "JAPANESE Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0176171,
+     14.5613106
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-7128430286",
+   "properties": {
+    "name": "K Line Laboratory",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9883091,
+     14.531391
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-9748250949",
+   "properties": {
+    "name": "Kamiseta Skin Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.029616,
+     14.6351103
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-3233877636",
+   "properties": {
+    "name": "Le Clinique",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0450449,
+     14.5541682
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-6556682426",
+   "properties": {
+    "name": "Lord's Grace Medical Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0143299,
+     14.5720955
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-13304951867",
+   "properties": {
+    "name": "Malabon Polymedic Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9675196,
+     14.6686253
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-7303980773",
+   "properties": {
+    "name": "Mandaluyong Social Hygiene Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0272896,
+     14.580147
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-4491639392",
+   "properties": {
+    "name": "Marine medical and laboratory clinic inc.",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9934624,
+     14.5683398
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-2575086721",
+   "properties": {
+    "name": "Medicard",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0396629,
+     14.6418454
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-4885421324",
+   "properties": {
+    "name": "Merita Medical Center",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9916645,
+     14.5708763
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-255052495",
+   "properties": {
+    "name": "Miraculous Medal Hospital",
+    "kind": "hospital"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.992988,
+     14.553641
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-1255128645",
+   "properties": {
+    "name": "NSPI Dialysis Center",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.029599,
+     14.6527162
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-11546812443",
+   "properties": {
+    "name": "New World Diagnostics",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9870525,
+     14.5786793
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-255071879",
+   "properties": {
+    "name": "Our Lady Of Grace Hospital",
+    "kind": "hospital"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.981758,
+     14.64872
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-8345260775",
+   "properties": {
+    "name": "P. Bernardo Health Center",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0466538,
+     14.6279988
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-9583968134",
+   "properties": {
+    "name": "Philippine Gamma Knife Center",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0463877,
+     14.5972482
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-5109117922",
+   "properties": {
+    "name": "Philippine Orthopedic Institute",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0151211,
+     14.5586231
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-13256226056",
+   "properties": {
+    "name": "Premiere Eye Center",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9785985,
+     14.5790726
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-1590273133",
+   "properties": {
+    "name": "RITM Satellite Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9910052,
+     14.5733749
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-4574914890",
+   "properties": {
+    "name": "Rebmann 88",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0384521,
+     14.6338974
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-13304965973",
+   "properties": {
+    "name": "Renalink Nephrology Center",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9714346,
+     14.670223
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-7123670686",
+   "properties": {
+    "name": "San Juan City Social Hygiene Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0249169,
+     14.5983756
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-4185393902",
+   "properties": {
+    "name": "Skin Station",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9765325,
+     14.5971965
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-3074418266",
+   "properties": {
+    "name": "St. Anne Orthopedic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0132327,
+     14.5807824
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-4177404041",
+   "properties": {
+    "name": "St. John of God",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9879385,
+     14.5989587
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-5563317021",
+   "properties": {
+    "name": "St. Martin Polyclinic. Inc",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.9880553,
+     14.5781026
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-7128774885",
+   "properties": {
+    "name": "Sto. Domingo Diagnostic and Medical Center Corp.",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0119716,
+     14.6273788
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-13452895418",
+   "properties": {
+    "name": "Teknomed",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0412063,
+     14.624549
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-6192293400",
+   "properties": {
+    "name": "The Medical City",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0180008,
+     14.6041571
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-11548142899",
+   "properties": {
+    "name": "The Medical City Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0182246,
+     14.5419615
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-9222802752",
+   "properties": {
+    "name": "The Medical City Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0341989,
+     14.604274
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-3233877664",
+   "properties": {
+    "name": "Tomatis",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0437295,
+     14.5530709
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-11082277450",
+   "properties": {
+    "name": "Unciano Paramedical General Hospital",
+    "kind": "hospital"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.016232,
+     14.600722
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-13055974772",
+   "properties": {
+    "name": "Venancio T. Campued Medical Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0338041,
+     14.6768656
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "node-1157622554",
+   "properties": {
+    "name": "Westmed Diagnostic Clinic",
+    "kind": "clinic"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.0293825,
+     14.653576
+    ]
+   }
+  }
+ ]
+}

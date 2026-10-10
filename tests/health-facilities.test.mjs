@@ -57,7 +57,7 @@ test('the Overpass element shape and a GeoJSON FeatureCollection parse the same 
   const fromOverpass=parseFacilityRecords(facilityRecordsIn(overpass),{kinds:['hospital','clinic']});
   assert.equal(fromOverpass.kept,2,'a node carries lat/lon and a way carries a center');
   assert.deepEqual(fromOverpass.collection.features[0].geometry.coordinates,[120.98,14.57]);
-  assert.equal(fromOverpass.collection.features[1].id,'way/2','OSM identity is kept, not an index');
+  assert.equal(fromOverpass.collection.features[1].id,'way-2','OSM identity is kept, not an index');
 
   // The HOT export's shape, nulls included, exactly as measured on 2026-10-09.
   const hot={type:'FeatureCollection',features:[{type:'Feature',
@@ -66,7 +66,7 @@ test('the Overpass element shape and a GeoJSON FeatureCollection parse the same 
     geometry:{type:'Point',coordinates:[122.48,11.06]}}]};
   const fromHot=parseFacilityRecords(facilityRecordsIn(hot),{kinds:['doctors']});
   assert.equal(fromHot.kept,1);
-  assert.equal(fromHot.collection.features[0].id,'node/3090641351','osm_type is plural in this export');
+  assert.equal(fromHot.collection.features[0].id,'node-3090641351','osm_type is plural in this export');
   assert.equal(fromHot.collection.features[0].properties.kind,'doctors',
     'amenity stands in when healthcare is null');
 });

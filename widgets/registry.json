@@ -602,6 +602,18 @@
    ]
   },
   {
+   "id": "urn:fieldwork:widget:summarise_hull",
+   "nodeType": "summarise_hull",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/summarise_hull/0.1.0.json",
+     "sha256": "45d153b087dc1e62024169cae641314517aa6b4a38c50e1b04f7fbf5ffceff36"
+    }
+   ]
+  },
+  {
    "id": "urn:fieldwork:widget:summarize_polygons",
    "nodeType": "summarize_polygons",
    "currentVersion": "0.1.0",

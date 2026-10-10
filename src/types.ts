@@ -29,6 +29,7 @@ export interface ParamsByType {
   table_input:{label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;source?:import('./data-table.js').DataTableSource};
   rate:{label:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
+  summarise_hull:{label:string;zone:number;hemisphere:'north'|'south'};
   find_health_facilities:{label:string;source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';kinds:string[];requireName:boolean;country:string;minConfidence:number;data:PointCollection|null;retrieved:{source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';sourceLabel:string;licence:string;licenceIRI:string;sourceIRI:string;attribution:string;origin:string;kept:number;dropped:{kind:number;coordinates:number;name:number};at:string;scope:string;filename?:string;sha256?:string;bytes?:number;release?:string;belowConfidence?:number;unmappedCategory?:number;minConfidence?:number}|null};
   buffer_point:{label:string;pointId:string;distanceM:number};
   sample_raster:{label:string;attribute:string;valueUnit:string};

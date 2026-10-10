@@ -274,9 +274,9 @@ to a table and to a layer, but spatial data changes what each one means.
 | Stage | On a table | On a layer |
 | --- | --- | --- |
 | **Check** | Duplicates, missing values, unique keys, stated units | Is the coordinate system stated? Is the geometry valid? What falls outside the study area, and why | 
-| **Compute** | Derive a value from values you have; descriptive statistics | Derive geometry — buffer, clip, catchment, reproject — and **spatial statistics**: where points centre, how far they spread, whether they cluster |
+| **Compute** | Derive a value for each row from values you have | Derive geometry for each feature — buffer, clip, catchment, reproject, sample a raster onto points — and **local** statistics, one value per feature |
 | **Relate** | Join on a key. It matches or it does not | Join by location. **A measurement, not a match** — nearest within a distance, inside or outside, which cell — and the result records how good it was |
-| **Summarise** | Many rows become fewer, by category or period | The same, by zone — and **the zone is a choice that changes the answer** |
+| **Summarise** | Many rows become fewer: counts, rates, and descriptive statistics — mean, median, spread | The same, by zone, plus **global** statistics describing a whole layer: where it centres, how far it spreads, whether it clusters. And **the zone is a choice that changes the answer** |
 | **Classify** | Sort by a stated criterion | The same, on a stated datum |
 
 Two things spatial work demands that tabular work does not.
@@ -291,11 +291,19 @@ distance to the gauge it assigned. `sample_raster` counts points sampled, with n
 data, outside the grid, and unlocated. A spatial relationship can be close,
 distant, or absent, and a result that hides which is overstating what it knows.
 
+**Compute or summarise? Count the rows.** One result per record is computing;
+many records becoming fewer is summarising. Descriptive statistics are therefore
+summaries, whether the data is spatial or not. The test happens to match the
+split spatial statisticians already draw: **global** statistics describe a whole
+layer in one number and are summaries, **local** statistics give every feature
+its own value and are computations.
+
 **Spatial statistics is thin.** Today it is the mean centre and a comparison of
-two of them — `mean_center`, `compare_point_sets`. There is no clustering, no
-spatial autocorrelation, no kernel density and no hot-spot detection. For a
-studio serving public health that is a conspicuous absence, and it is recorded
-here so nobody reads "spatial statistics" above as a claim that they exist.
+two of them — `mean_center`, `compare_point_sets` — both global. There is no
+clustering, no spatial autocorrelation, no kernel density and no hot-spot
+detection, local or global. For a studio serving public health that is a
+conspicuous absence, and it is recorded here so nobody reads "statistics" above
+as a claim that they exist.
 
 **Fieldwork does not judge.** It classifies against criteria someone else
 stated, and surfaces what does not fit. Whether the threshold is the right

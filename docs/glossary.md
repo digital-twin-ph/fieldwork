@@ -265,12 +265,15 @@ output port, and it carries the scope of the question.
 
 ### Process — working with the data
 
-| Stage | What it produces | Example |
+What you do to an input: check it is fit, compute from it, summarise it, and
+classify against a criterion to get the answer.
+
+| Stage | What it does | Example |
 | --- | --- | --- |
-| **Review** | What does not belong, and why. Exclusions carry a reason | `coverage_check` |
-| **Derivation** | The same claim in a new shape — buffered, clipped, reprojected, sampled, joined | `buffer_point`, `sample_raster`, `slr_site_assignment` |
-| **Summary** | Fewer rows than it started with. The detail is gone and does not come back | `rate`, `case_series`, `hex_aggregate` |
-| **Classification** | Sorting records by a criterion the practitioner stated — a threshold, a rule, a case definition. The result records which criterion was applied | `slr_threshold_comparison` |
+| **Check** | Is the data fit for the question? Duplicates, missing values, records outside the boundary. Exclusions carry a reason | `coverage_check`; duplicate keys refused on import; missing values counted, never filled |
+| **Compute** | Analytic computation. The same claim in a new shape — buffered, clipped, reprojected, sampled, joined to another layer | `buffer_point`, `sample_raster`, `slr_site_assignment`, `clip_raster` |
+| **Summarise** | Many records become fewer. The detail is gone and does not come back | `rate`, `case_series`, `hex_aggregate`, `mean_center` |
+| **Classify** | Sorting records by a criterion the practitioner stated — a threshold, a rule, a case definition. The result records which criterion was applied | `slr_threshold_comparison` |
 
 **Fieldwork does not judge.** It classifies against criteria someone else
 stated, and surfaces what does not fit. Whether the threshold is the right
@@ -279,8 +282,13 @@ comparison against an unstated vertical datum is refused for this reason: the
 software cannot supply the judgement the comparison needs.
 
 These four are not a grouping imposed afterwards. The application already types
-them apart: review produces `coverage-check`, classification produces
-`decisions`, derivation and summary produce data ports.
+them apart: checking produces `coverage-check`, classifying produces
+`decisions`, computing and summarising produce data ports.
+
+"Produce results" is not listed as a stage of its own, because every stage above
+produces something and the name would not tell you which one you are in. What it
+points at is **Classify** — the step where a criterion is applied and an answer
+stated.
 
 ### Output — communicating the result
 

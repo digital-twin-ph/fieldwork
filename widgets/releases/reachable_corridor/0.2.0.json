@@ -1,0 +1,70 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:reachable_corridor",
+ "version": "0.2.0",
+ "nodeType": "reachable_corridor",
+ "title": "Reachable corridor",
+ "released": "2026-10-10",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['reachable_corridor']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "reached",
+    "type": "points"
+   },
+   {
+    "name": "network",
+    "type": "network"
+   }
+  ],
+  "output": "polygons"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:ReachableCorridor",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Emits an fw:ReachableCorridor activity carrying fw:originCount, fw:corridorCount, fw:enteredSegmentCount, fw:partialSegmentCount, fw:corridorHalfWidthMetres, fw:travelDirection and fw:metricCRS, and prov:used the junction source. The partial-segment count is emitted because entering streets part-way is what places the edge of the travel time between junctions rather than at them. Publishing this moved the domains off fw:originCount and fw:travelDirection, which now describe two activity classes; keeping the reachability domain would have made every corridor an inferred traversal."
+ },
+ "implementation": {
+  "files": [
+   "src/reachable-corridor.ts",
+   "src/network-edges.ts",
+   "src/core.ts",
+   "src/palette.ts"
+  ],
+  "definition": "src/reachable-corridor.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "The second half of isochrone: walks each street leaving a reached junction as far as the budget left there allows, and buffers the result. Fifth of six primitives an isochrone composition needs, and the one that makes the chain produce a polygon. Restates nothing -- remainingM and travelDirection arrive on the junctions, so the corridor cannot disagree with the traversal that produced them, and junctions from two traversals are refused rather than mixed. Extracting it moved the edge-orientation check and the part-way truncation into src/network-edges.ts, which isochrone now imports too, so the 2 metre endpoint tolerance exists once rather than twice. Takes a UTM zone because buffering in degrees is wrong, which makes nine widgets that each ask for one. See docs/experiments/84-reachable-corridor.md."
+  },
+  {
+   "kind": "added",
+   "description": "A corridor drawn from banded junctions now carries that band's minutes on the polygon, names the feature by it, and says in its notes that a band's corridor contains every shorter band's. Junctions from more than one band in a single corridor are refused, since one polygon cannot stand for two travel times. The minutes attribute already travels into receipts as fw:travelTimeMinutes, which isochrone has always set. Additive: unbanded input behaves as before."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Eight unit checks cover a street entered part-way stopping where the budget ran out, measured against the area of a 40 m strip plus its two end caps; a junction with nothing left entering no street; one corridor per origin; refusal of points that are not reachable junctions and of an empty input, each naming the step to add; refusal of junctions carrying two different travel directions; the width being reported as a claim with holes kept; and refusal of an impossible width or zone. The eighth is an internal consistency check, not parity: it runs the whole chain -- snap, reachable junctions, corridor -- against isochrone itself on the 738-node Soho network at the John Snow example's own parameters, and the areas agree to 3.8 parts per million: 198,432 against 198,433 square metres. The residual is remainingM being rounded to two decimals on the way between widgets. Agreement with isochrone is agreement with another widget in this repository, not with an external implementation: no parity entry is claimed, and OSMnx remains unchecked. Not established: that a 25 m half-width is right for anywhere, or that the corridor is a service area."
+ }
+}

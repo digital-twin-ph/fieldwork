@@ -16,6 +16,18 @@ fw:VoronoiComputation a owl:Class;
 fw:NetworkIsochrone a owl:Class;
   rdfs:label "Network isochrone computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Directed network reachability with explicit cost, snapping and corridor approximation.".
+fw:PolygonCollection a owl:Class;
+  rdfs:label "Polygon collection"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Several polygon layers gathered into one with nothing merged, ordered largest first so smaller polygons draw on top. Unlike fw:CombinedArea it keeps what distinguished the parts, which is what lets a later summary count memberships per polygon.".
+fw:layerCount a owl:DatatypeProperty; rdfs:domain fw:PolygonCollection; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Layers gathered".
+fw:polygonCount a owl:DatatypeProperty; rdfs:domain fw:PolygonCollection; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Polygons in the collection".
+fw:bandedPolygonCount a owl:DatatypeProperty; rdfs:domain fw:PolygonCollection; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Polygons carrying a travel time";
+  rdfs:comment "When every polygon carries one, the collection is a set of nested bands and a count per band is cumulative rather than disjoint.".
+fw:drawOrder a owl:DatatypeProperty; rdfs:domain fw:PolygonCollection; rdfs:range xsd:string;
+  rdfs:label "Order the polygons are given in, for drawing".
 fw:TravelTimeBand a owl:Class;
   rdfs:label "Travel time band"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Narrows a reachable set to a shorter travel time and recomputes the budget left at each junction against it. Bands from one traversal are cumulative, not disjoint: a five minute band contains the one minute band.".

@@ -67,6 +67,13 @@ Written now so they can be wrong.
    operations, whether the buffer precedes or follows the union, the hull method.
    Those are candidates for something undocumented, and they are a smaller and
    more specific target than the first draft claimed.
+
+   And the composition can **test** them rather than only expose them. Reorder the
+   members, run both, compare. For isochrone the pair worth trying first is
+   projection against buffering — buffering in degrees and buffering in metres do
+   not agree, and the widget settles that silently by projecting first. If a pair
+   turns out not to matter, that is a finding a practitioner can rely on. See the
+   ordering section of [75](75-compositions-as-nodes.md).
 3. **The metric CRS will surface as "which node owns the zone?"** A chain of six
    nodes each asking for a UTM zone is absurd in a way a single widget concealed,
    so the trial should force the D5 question into the open.

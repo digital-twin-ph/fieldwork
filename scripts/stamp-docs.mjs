@@ -26,7 +26,9 @@ const STAMP=/^_Created (\d{4}-\d{2}-\d{2}) · Updated (\d{4}-\d{2}-\d{2})_$/;
 
 function markdownFiles(dir,found=[]){
   for(const entry of readdirSync(dir)){
-    if(['node_modules','.git','build','test-results','_output'].includes(entry))continue;
+    // Generated output, all of it gitignored. playwright-report holds error-context.md files the
+    // HTML reporter writes per failure, which are not documentation and carry no stamp.
+    if(['node_modules','.git','build','test-results','playwright-report','_output'].includes(entry))continue;
     const path=join(dir,entry);
     if(statSync(path).isDirectory())markdownFiles(path,found);
     else if(entry.endsWith('.md')&&!SKIP.has(entry))found.push(relative(root,path));

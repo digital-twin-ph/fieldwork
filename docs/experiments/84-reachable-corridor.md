@@ -28,10 +28,21 @@ widgets, which moves a truncation point by at most 5 mm.
 
 **This is consistency, not parity.** Both numbers come from this repository, so
 the check establishes that the decomposition did not change the answer — not
-that either answer is right. Parity needs an external implementation. The
-traversal half of the chain now has one — Validation Lab check 07 against
-NetworkX agrees exactly on the reached set — but the buffer half does not, and
-Shapely would supply it.
+that either answer is right.
+
+Parity came later, and both halves of the chain now have it. Lab check 07
+compares the traversal against NetworkX, which the case study itself used, and
+agrees exactly on the reached set. Lab check 08 rebuilds the corridor from this
+widget's written rule with GEOS through Shapely: the street selection is
+identical, 301 entered and 45 cut part-way in both, and the areas are 0.116%
+apart — two engines approximating a 25 m radius in two different projections.
+The symmetric difference is the same 0.116%, which says the residual is spread
+around the boundary rather than a missing piece of corridor.
+
+That notebook also measures what the half-width carries: the same corridor is
+0.51x its area at 10 m and 1.53x at 60 m. The figure the case study uses records
+no reason, and it moves the answer more than the method does — the same shape of
+finding as the walking speed in [83](83-reachable-junctions.md).
 
 This is the first measured answer to the question [78](78-trying-compositions-on-isochrone.md)
 asked: whether a composition of visible steps can do what the monolith does.
@@ -51,7 +62,7 @@ is the claim that matters and still needs a practitioner, not a test.
 | **D4a** | A block with the same honest coupling as [83](83-reachable-junctions.md): the points must carry `networkNodeId`, `remainingM` and `travelDirection`. Output is ordinary polygons, so `map_output`, `clip_polygons`, `summarize_combined_area` and `summarize_polygons` all take it with no adapter |
 | **D5** | Needs a metric CRS to buffer, because buffering in degrees is wrong by the cosine of the latitude. **That makes nine** |
 | **D7** | `reachable_corridor`. Spatial operation |
-| **D9** | **Internally measured, not parity-checked.** 3.8 parts per million against `isochrone` on a real network — but that is agreement with another widget in this repository, which is consistency, not independent evidence. `widgets/parity.json` requires a named external implementation and a result file in the validation lab, so no entry is claimed for this widget. The traversal feeding it is now checked against NetworkX as lab check 07; the buffer itself would need Shapely, and that is undone |
+| **D9** | **Parity-checked.** Lab check 08 rebuilds the corridor from the stated rule with GEOS through Shapely: street selection identical, 301 entered and 45 cut part-way in both, areas 0.116% apart with a symmetric difference of the same size. Recorded in `widgets/parity.json` against release 0.2.0. Separately 3.8 ppm against `isochrone`, which is consistency rather than evidence. Covers the five minute band, outbound |
 | **D10** | Not yet in a worked example. The Soho example still uses the monolith, and replacing it is the next question, not a side effect of this |
 
 ## Distinctions

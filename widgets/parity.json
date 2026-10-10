@@ -3,7 +3,7 @@
  "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
  "lab": {
   "repository": "https://github.com/digital-twin-ph/validation-lab",
-  "commit": "25190c8518af51bdc4dc62b3e9dde7c8293a8c89"
+  "commit": "971c6516f60f5139d0338684183f05714aca489b"
  },
  "outcomes": {
   "agrees": "Every case met the stated criterion.",
@@ -92,6 +92,23 @@
    "measured": "reached sets identical over 738 junctions, 142 each with none reached by only one implementation; worst cost difference 5.000e-03 m and worst remaining-budget difference 5.000e-03 m",
    "ranAt": "2026-10-10T20:32:38.419776+00:00",
    "note": "Compared against the implementation the original case study used: Advanced-1 NB03 reaches its isochrones with nx.ego_graph. The 5 mm residual is exactly the half-step of the two decimal places Fieldwork publishes, so the only disagreement is its rounding. Both traversals run on the edge lengths the fixture states and neither measures a street, so a wrong network passes in both. Covers outbound travel from one origin on one network; inbound is unexercised. Re-run against 0.3.0 after that release added speedMPerMin and travelMode to each junction: the parity validator refused evidence covering 0.2.0 while 0.3.0 was current, and the change being additive was not grounds for carrying the old result forward."
+  },
+  {
+   "widget": "urn:fieldwork:widget:reachable_corridor",
+   "coversRelease": "0.2.0",
+   "check": "08-corridor",
+   "result": "content/results/check-08-corridor.json",
+   "sha256": "688ced600d6e51f4dc32b0823d2bc2f405597d87ef1bc8e02af7de68a9127c62",
+   "external": [
+    "shapely 2.2.0",
+    "GEOS 3.14.1",
+    "pyproj 3.8.0"
+   ],
+   "criterion": "entered and partial segment counts exactly, area within 1%, and symmetric difference at most 2% of the reported area",
+   "outcome": "agrees",
+   "measured": "street selection identical -- 301 entered and 45 cut part-way in both; area 199210 against 198980 square metres, 0.116% apart, with a symmetric difference of 0.116%",
+   "ranAt": "2026-10-10T21:46:16.184488+00:00",
+   "note": "The corridor is rebuilt from the widget's stated rule with GEOS, not compared feature by feature, so the selection arithmetic is reproduced independently. The 0.116% residual is two engines approximating a 25 m radius at 8 segments per quadrant in two different projections, and the symmetric difference being the same size says it is spread around the boundary rather than a missing piece. Covers the five minute band of one corridor, outbound. Both implementations trust the same street lengths and geometry, so a wrong network passes in both. The notebook beside it measures the corridor's area at 0.51x for a 10 m half-width and 1.53x at 60 m, against a 25 m figure the case study records no reason for."
   }
  ]
 }

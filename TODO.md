@@ -373,6 +373,33 @@ both already stated in the widget and worth keeping stated.
 
 Full reasoning in [40](docs/experiments/40-reprojection-primitives.md).
 
+## Three primitives the cholera notebooks ask for
+
+Derived 2026-10-10 by reading eleven notebooks across the Basic, Advanced-1 and
+Advanced-2 case studies and mapping each operation to the palette. Full table in
+[cholera-notebooks-to-primitives.md](docs/research/cholera-notebooks-to-primitives.md),
+method in [74](docs/experiments/74-notebook-first-worked-examples.md).
+
+These are wanted because an analysis performs them, not because they seemed like
+good ideas.
+
+- **Weighted mean centre.** `mean_center` records its method as "Unweighted
+  arithmetic". Snow's data is 250 locations carrying 489 deaths; the centre of
+  the locations is not the centre of the deaths, and one of this project's own
+  practitioner questions is whether a reader can tell those apart. `case_series`
+  already takes a weight field, so the concept exists and this widget lacks it.
+  Smallest of the three, and it sharpens a distinction already being taught.
+- **Convex hull.** Both Advanced studies derive a boundary from the data rather
+  than drawing one. Already recorded in `docs/research/john-snow-voronoi.md` —
+  hull and buffer "should not be hidden inside Voronoi" — and still hidden.
+- **Routing between two points.** Advanced-1 NB02 computes a shortest path.
+  `isochrone` answers what is reachable within a time, which is a different
+  question from how to get from here to there and how far it is.
+
+Before building any of them, write the notebook in the lab. That is the point of
+the method: the notebook is the evidence the primitive is needed, and three
+widgets were built this week without one.
+
 ## Widget use tracking
 
 Proposed by the practitioner during the widget audit, raised again on 2026-10-10,

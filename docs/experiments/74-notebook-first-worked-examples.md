@@ -53,6 +53,27 @@ existing research notes state the rule: *source inspection only; no notebooks
 executed or upstream implementations copied into Fieldwork*. **Inspect, map,
 adapt — do not copy.** The GPL adaptations make that more than hygiene.
 
+## First full application: the three cholera studies
+
+Done 2026-10-10, notebook by notebook, in
+[cholera-notebooks-to-primitives.md](../research/cholera-notebooks-to-primitives.md).
+Eleven notebooks across Basic, Advanced-1 and Advanced-2, read and mapped against
+the palette.
+
+It produced three candidate primitives, each derived from an operation a notebook
+performs and the palette cannot express:
+
+| Gap | Where | Why it matters |
+| --- | --- | --- |
+| **Weighted mean centre** | Basic NB02 | `mean_center` is unweighted. 250 locations carry 489 deaths, so the two centres differ |
+| **Convex hull** | Advanced-2 NB02, Advanced-1 NB03 | A boundary derived from the data instead of drawn |
+| **Routing between two points** | Advanced-1 NB02 | `isochrone` answers reachability, not "how far from here to there" |
+
+The hull was already recorded in this repository — `john-snow-voronoi.md` says
+hull and buffer "should not be hidden inside Voronoi" — and the method re-derived
+it without being pointed there. That is weak evidence the method works, and it is
+the first evidence of any kind.
+
 ## Sea level: the notebook will be written, not found
 
 The organisation has no repository about sea level, tide gauges or coastal

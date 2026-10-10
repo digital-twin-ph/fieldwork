@@ -286,6 +286,33 @@ Philippines. The node correctly demanded a study area; supplying one was the pro
   around it assumes Gaborone. This is the same finding as the widget audit's example nodes, in the
   map rather than the palette: one demonstration's content presenting itself as the general case.
 
+## Gap: spatial statistics
+
+Named 2026-10-10 while decomposing the process stages. The studio computes the
+mean centre of a point layer and compares two of them. That is the whole of its
+spatial statistics.
+
+Absent: clustering, spatial autocorrelation, kernel density, hot-spot detection,
+nearest-neighbour index. For a GIS studio serving public health, hot spots are
+the obvious one — "where is this concentrated, and more than chance would
+explain" is a question practitioners ask constantly and this cannot answer.
+
+Worth settling before building any of it:
+
+- **What question each answers, in a practitioner's words.** `mean_center` passed
+  that test; a Moran's I widget that reports a coefficient and a p-value may not.
+- **What the result must not be read as.** A hot spot is not an outbreak, and a
+  cluster of reports is not a cluster of cases — reporting effort varies by
+  place. This is the same shape as the sea-level limitation, and a statistic that
+  arrives without it will be over-read faster than a map is.
+- **Whether it needs a new carrier.** A statistic over a layer is a value with a
+  significance, not a point layer, and nothing today carries that.
+- **The zone problem.** Any cell- or area-based statistic changes with the
+  zoning. The glossary now warns about this for summaries; a statistic makes it
+  sharper, because the number looks more authoritative.
+
+Not started.
+
 ## Proposed: a data quality widget, with an editable table
 
 Asked for 2026-10-10. One widget that reports on the quality of whatever is connected to it —

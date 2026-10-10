@@ -274,7 +274,7 @@ to a table and to a layer, but spatial data changes what each one means.
 | Stage | On a table | On a layer |
 | --- | --- | --- |
 | **Check** | Duplicates, missing values, unique keys, stated units | Is the coordinate system stated? Is the geometry valid? What falls outside the study area, and why | 
-| **Compute** | Derive a value from values you have | Derive geometry: buffer, clip, catchment, reproject |
+| **Compute** | Derive a value from values you have; descriptive statistics | Derive geometry — buffer, clip, catchment, reproject — and **spatial statistics**: where points centre, how far they spread, whether they cluster |
 | **Relate** | Join on a key. It matches or it does not | Join by location. **A measurement, not a match** — nearest within a distance, inside or outside, which cell — and the result records how good it was |
 | **Summarise** | Many rows become fewer, by category or period | The same, by zone — and **the zone is a choice that changes the answer** |
 | **Classify** | Sort by a stated criterion | The same, on a stated datum |
@@ -290,6 +290,12 @@ comparison. Reprojection changes the frame and must not change the claim.
 distance to the gauge it assigned. `sample_raster` counts points sampled, with no
 data, outside the grid, and unlocated. A spatial relationship can be close,
 distant, or absent, and a result that hides which is overstating what it knows.
+
+**Spatial statistics is thin.** Today it is the mean centre and a comparison of
+two of them — `mean_center`, `compare_point_sets`. There is no clustering, no
+spatial autocorrelation, no kernel density and no hot-spot detection. For a
+studio serving public health that is a conspicuous absence, and it is recorded
+here so nobody reads "spatial statistics" above as a claim that they exist.
 
 **Fieldwork does not judge.** It classifies against criteria someone else
 stated, and surfaces what does not fit. Whether the threshold is the right

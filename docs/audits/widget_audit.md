@@ -158,6 +158,40 @@ reasoning. **Semantic reasoning** currently holds two unlike kinds of thing:
 Calling a numeric comparison "semantic reasoning" overstates it in exactly the way the
 naming rule forbids, and it is the group a newcomer is most likely to misread.
 
+## D2, sharpened — what is left of `slr_site_assignment`
+
+_Added 2026-10-10, after a practitioner asked what the essence of this widget is
+and whether it is a one-off._
+
+It is a one-off of **nearest-neighbour with distance**, which the table above
+already records as having three implementations. This entry says what remains
+when that operation is taken away.
+
+The widget has three inputs: `points`, `sites`, `projections`. The third is used
+in one place — `const known=new Set(extract.siteIds)` — to drop sites the extract
+carries no values for, and to refuse when none match. Nothing else about the
+operation is sea-level-specific. The distance is computed the same way `nearest`
+and `access` compute it.
+
+So the residue is a single validity rule: **do not offer an assignment to a site
+the extract cannot answer for.** That rule can also be satisfied by the data. The
+Manila example restricts its site layer to the eight gauges the extract covers,
+for exactly this reason, and with that restriction the third input does nothing.
+
+Which leaves a choice rather than an obvious answer:
+
+- **Keep the input** and the widget enforces the rule itself, so a practitioner
+  cannot assemble a wrong workflow. The widget stays domain-specific.
+- **Drop the input** and the rule moves to the data, where it is satisfied by
+  preparing the site layer. The widget becomes a general nearest join, and the
+  rule becomes a convention nothing enforces.
+
+The classification above already answers the composite question: keep the palette
+entry, because a practitioner asks for "assign each facility its nearest gauge" by
+name, and build it over a shared join. That is item 5 of this audit's plan and has
+not been done. What is new here is that the sharing is cheaper than it looked —
+the domain part is one filter, not an algorithm.
+
 ## D7 — a port name that claims more than the port carries
 
 _Added 2026-10-10._ Found while decomposing the workflow stages, after a

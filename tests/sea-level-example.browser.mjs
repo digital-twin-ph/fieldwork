@@ -15,12 +15,12 @@ test('the Manila coastal exposure example loads, runs and shows assigned gauges'
   await expect(page.locator('#example-note')).toContainText(/inundation model/);
 
   // The map first: switching tabs removes it from the page, so count while it is there.
-  await expect(page.locator('#map [data-place]')).toHaveCount(68,
-    {message:'60 facilities and 8 projection gauges are drawn together'});
+  await expect(page.locator('#map [data-place]')).toHaveCount(202,
+    {message:'194 facilities and 8 projection gauges are drawn together'});
 
   await page.locator('.react-flow__node[data-id="table"]').click();
   await page.locator('#result-tabs').getByText('Facility, assigned gauge, distance').click();
-  await expect(page.locator('#result-metrics')).toContainText('60 rows');
+  await expect(page.locator('#result-metrics')).toContainText('194 rows');
   await expect(page.locator('#result-metrics')).toContainText('value in metre');
   // Site 145 is Manila: every facility in the box takes the Manila gauge, and the distance
   // to it travels with the assignment rather than being discarded.
@@ -43,6 +43,6 @@ test('the example replays offline, having asked no source for anything',async({p
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
-  await expect(page.locator('#map [data-place]')).toHaveCount(68);
+  await expect(page.locator('#map [data-place]')).toHaveCount(202);
   assert.deepEqual(reached,[],'every byte this example needs is bundled');
 });

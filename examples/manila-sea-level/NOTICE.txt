@@ -32,13 +32,16 @@ Two sources, two licences. Both travel with anything derived from them.
    Licence: ODbL 1.0
    (c) OpenStreetMap contributors, Open Database License (ODbL) 1.0
 
-   `facilities.json` holds 60 named hospitals and clinics inside a Manila bounding
-   box, sampled evenly through the name-sorted list. ODbL is share-alike: a database
-   derived from this must be offered under the same licence with attribution intact.
+   `facilities.json` holds 194 named hospitals and clinics inside a Manila bounding
+   box, together with the retrieval record that produced them. They were fetched by
+   the Find health facilities widget's own retrieval path against the published
+   export, so the provenance stored in the example is the widget's own. ODbL is
+   share-alike: a database derived from this must be offered under the same licence
+   with attribution intact.
 
-   This is a sample, not a facility register, and it is not complete. OpenStreetMap
-   states no completeness, so an absence here is not evidence of absence on the
-   ground. The Find health facilities widget retrieves the same data live.
+   This is what the source records, not a facility register, and it is not complete.
+   OpenStreetMap states no completeness, so an absence here is not evidence of
+   absence on the ground. Pressing Retrieve in the example refreshes it.
 
 Rebuild with:
   validation-lab/scripts/build_sea_level_example.py <hotosm_phl_health_facilities.geojson>

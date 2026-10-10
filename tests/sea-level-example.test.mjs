@@ -53,10 +53,22 @@ test('the site layer carries no gauge the extract cannot answer for',()=>{
   assert.equal(sites.length,covered.size);
 });
 
+// The retrieval widget appears in the example carrying what it retrieved, which is the state a
+// workflow is in after one online retrieval. A bundled example can hold a network-dependent widget;
+// what it cannot do is reach the network when it runs.
+test('the facilities come from the retrieval widget, with its own provenance',()=>{
+  const node=seaLevelExample().nodes.find(n=>n.id==='facilities');
+  assert.equal(node.type,'find_health_facilities');
+  assert.equal(node.params.retrieved.source,'hdx-hot-export');
+  assert.equal(node.params.retrieved.licence,'ODbL-1.0');
+  assert.equal(node.params.retrieved.kept,node.params.data.features.length);
+  assert.match(node.params.retrieved.scope,/clipped to the study area/);
+});
+
 test('it runs, and assigns every facility a gauge with a distance',async()=>{
   const run=await executeWorkflow(seaLevelExample(),ready);
   const table=run.outputs.find(o=>o.nodeId==='table');
-  assert.equal(table.rows.length,60);
+  assert.equal(table.rows.length,194);
   // Every facility is in the Manila box, so every one should land on the Manila gauge.
   assert.deepEqual([...new Set(table.rows.map(r=>r.key.projection_site))],['145']);
   for(const row of table.rows)

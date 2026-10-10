@@ -31,14 +31,20 @@ export function seaLevelExample():Workflow{
       selectionMode:'bbox',geometry:{type:'Polygon',coordinates:[[
         [120.93,14.52],[121.05,14.52],[121.05,14.68],[120.93,14.68],[120.93,14.52]]]}}},
 
-    {id:'facilities',type:'observations',x:20,y:250,
-      params:{label:`${facilities.features.length} Manila health facilities`,
-        data:structuredClone(facilities) as PointCollection,
-        sourceInfo:{format:'GeoJSON',source:provenance.facilities.source,
-          licence:provenance.facilities.licence}},
+    // The facilities node is the retrieval widget itself, carrying what it retrieved. This is
+    // the state a practitioner's workflow is in after pressing Retrieve once while online: the
+    // data is stored, the run reaches no source, and the example works offline without pretending
+    // the widget is not there. The stored provenance is the widget's own, produced by running its
+    // retrieval path against the published export, not a relabelling of something else.
+    {id:'facilities',type:'find_health_facilities',x:20,y:250,
+      params:{label:`${facilities.collection.features.length} Manila health facilities`,
+        source:'hdx-hot-export',kinds:['hospital','clinic'],requireName:true,country:'PHL',
+        minConfidence:0.7,
+        data:structuredClone(facilities.collection) as unknown as PointCollection,
+        retrieved:structuredClone(facilities.retrieval) as never},
       references:[cite('osm-facilities','OpenStreetMap health facilities, HOT country export',
         'https://www.openstreetmap.org/copyright','data',
-        `${provenance.facilities.attribution}. ${provenance.facilities.note} Replaceable by the Find health facilities widget, which retrieves the same data live.`)]},
+        `${facilities.retrieval.attribution}. A sample of what the source records, not a facility register: OpenStreetMap states no completeness, so an absence here is not evidence of absence on the ground. Press Retrieve to refresh it from the published export.`)]},
 
     // The eight published tide gauges the extract covers. A site is where a projection exists,
     // not a place of interest, and the distance to one is part of the result rather than a
@@ -77,6 +83,7 @@ export function seaLevelExample():Workflow{
   ];
   return {schema:'fieldwork/workflow/1',name:'Manila coastal exposure · sea-level projections',
     exampleId:'sea-level',nodes,edges:[
+      {id:'e-area-facilities',from:'area',to:'facilities',port:'area'},
       {id:'e-area-map',from:'area',to:'map',port:'area'},
       {id:'e-facilities-map',from:'facilities',to:'map',port:'points'},
       {id:'e-sites-map',from:'sites',to:'map',port:'points_2'},

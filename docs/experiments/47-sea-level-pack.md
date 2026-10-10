@@ -96,7 +96,22 @@ appears with no record of why that file.
 
 **Stage 2, acquisition: assumed to exist, and it does not.** Nothing here can read
 zarr, and the smallest relevant store is 38.42 GB. So whatever enters the
-application is not acquired by it. Experiment 39 drew exactly this line —
+application is not acquired by it.
+
+> **Corrected 2026-10-10.** The observation above is right that nothing is acquired,
+> and wrong about why. It reads as an impossibility and was carried into the pack as
+> one. Measured: Zenodo serves this record with `access-control-allow-origin: *`,
+> honours Range with `206 PARTIAL_CONTENT`, and the summary file for one scenario and
+> family is 71.7 MB deflated inside the 9.24 GB archive — reachable from a browser by
+> reading the zip central directory from a tail range. The 38.42 GB figure is the size
+> of a store, not the bytes a reader transfers; chunked formats hand over what is
+> asked for, as taking 55,649 rows of 81,455,423 from 11 GB of Overture GeoParquet
+> showed. Whether that zarr store is reachable cross-origin has not been measured, and
+> no URL for it was ever recorded here, which is itself part of how the claim went
+> unchecked. Acquisition remains out of scope **by decision**: extraction carries
+> dataset-specific knowledge that belongs where a reader can re-run it. See
+> [71](71-health-facility-sources.md) and the pack commit that corrects its own
+> `stages.acquisition`. Experiment 39 drew exactly this line —
 discovery yields a request, acquisition yields bytes with a digest — and a pack
 must not blur it. Calling a widget an acquisition widget when it reads a file
 somebody else produced would repeat the naming error experiment 39 corrected when

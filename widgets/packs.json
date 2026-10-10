@@ -41,7 +41,7 @@
    "name": "Sea-level rise (IPCC AR6)",
    "version": "0.2.0",
    "repository": "https://github.com/digital-twin-ph/widget-pack-sea-level-rise",
-   "commit": "421f3b20b7a62ca35a098a53b9665dc739d8734b",
+   "commit": "cd19da239def2ac33daf5109c8563df4d83d32f8",
    "namespace": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#",
    "kind": "declaration-only",
    "admission": {

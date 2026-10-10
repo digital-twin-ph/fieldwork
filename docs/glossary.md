@@ -121,13 +121,27 @@ the wrong answer anyway?**
 | **Limitation** | It tells you. Nothing stops you | "This accounts for no drainage, defences or waves." True, necessary, and it prevents nothing — someone can read it and carry on |
 | **Out of scope** | The capability could have been built and was deliberately not, with the reason on the record | Boundary data could easily be bundled from GADM, and is not: its licence forbids redistribution, and a pack publishes its data. geoBoundaries is used instead. Practitioners may still use GADM on their own machine ([47](experiments/47-sea-level-pack.md)) |
 
-A out of scope only counts when the thing was **possible**. "We cannot read 38 GB of
-data in a browser" is a limit of the environment, not a decision, and calling it an
-exclusion makes the category meaningless — nobody chose it and nobody could choose
-otherwise. Record that as a capability limit instead. The test is whether a reasonable
-project could have decided the other way: bundling GADM, adopting a CSVW mapping, or
-adding a chart mode for keyed tables were all available and all declined for stated
-reasons ([48](experiments/48-tabular-input.md)).
+Out of scope only counts when the thing was **possible**. If nobody could have chosen
+otherwise, nobody chose, and calling it an exclusion makes the category meaningless.
+Record that as a capability limit instead. The test is whether a reasonable project
+could have decided the other way: bundling GADM, adopting a CSVW mapping, or adding a
+chart mode for keyed tables were all available and all declined for stated reasons
+([48](experiments/48-tabular-input.md)).
+
+**This paragraph used to illustrate the rule with "we cannot read 38 GB of data in a
+browser", and that example was wrong** — corrected 2026-10-10, and worth keeping as a
+warning rather than quietly deleting. It confused the size of a store with the bytes a
+reader transfers. Chunked formats hand over what you ask for: a study area took 55,649
+rows of 81,455,423 from 11 GB of Overture GeoParquet, and one AR6 summary file is 71.7
+MB inside a 9.24 GB archive on a host that sends `access-control-allow-origin: *` and
+honours Range. So the sea-level pack's "impossible in a browser" was a decision wearing
+an impossibility's clothes, and the rule this paragraph states is exactly what should
+have caught it ([71](experiments/71-health-facility-sources.md)).
+
+A capability limit is a real category — a browser genuinely cannot read a response from
+a host that sends no cross-origin header, however small it is. The difference is that
+one is a property of the environment and the other is a judgement someone made. Before
+writing either, measure.
 
 The first two cannot be worked around without changing the code. The third depends on the
 data reaching that step. **The last two depend entirely on the reader.** So a distinction

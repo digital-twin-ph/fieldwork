@@ -441,9 +441,17 @@ recorded selection — travels as provenance in the extract, which
 - Correct the stale navigation in [47](docs/experiments/47-sea-level-pack.md): its header
   still says the host lacks the tabular port, and it claims eight pinned file digests where
   the catalog pins five.
-- Split the pack manifest's `excluded` stage status into a decision and a capability limit.
-  Discovery is "out of scope by decision" and acquisition is "impossible in a browser";
-  both are recorded as `excluded`, so the difference survives only in prose.
+- **Done 2026-10-10**, and the answer was not the one this item expected. The pack manifest's
+  two `excluded` stages were to be split into a decision and a capability limit. Measuring the
+  capability limit showed there wasn't one: Zenodo sends `access-control-allow-origin: *`,
+  honours Range, and one AR6 summary file is 71.7 MB inside the 9.24 GB archive. Both stages are
+  decisions, and acquisition is now recorded as `out-of-scope` with the measurement attached.
+  The general lesson is cheap and was skipped: this item asked for a *category* to be applied to
+  a claim nobody had tested. Measure first, then classify.
+- The same conflation sat in the glossary, where "we cannot read 38 GB of data in a browser" was
+  the worked example of a capability limit. A store's size is not the bytes a reader transfers.
+  Corrected in place rather than deleted, because a rule that failed on its own illustration is
+  worth keeping visible.
 - **Decision:** rename `parity` to `concordance`. In public health, parity is the number of
   births a woman has had. Touches [57](docs/experiments/57-parity-evidence.md) and
   `validate-widgets.mjs` output.

@@ -18,6 +18,7 @@ Our working position is to adapt established workflow concepts first, adopt inte
 | QGIS Processing Modeler | Graphical chains of parameterized GIS algorithms | Explicit inputs/outputs, reusable models, model help and validation | QGIS as an independent desktop comparator for selected operations | Adapt interaction patterns and use for validation; no embedded runtime selected |
 | Geo Engine | Raster/vector stream processing with spatial and temporal parameters | Query scope, bounded execution and separation of processing from display | API descriptions and clients for a possible external executor | Adapt resource-planning concepts; defer server integration |
 | Automated Pipeline Explorer (APE) | Ontology-informed workflow synthesis | Semantic port compatibility, constrained suggestions and tool annotations | APE CLI/API as a research comparator; ontology/tool-annotation export | Adapt semantic descriptions; test synthesis separately from execution |
+| JupyterLite STAC Browser | Browser-only STAC catalog discovery, search and export | A public catalog directory with recorded provenance; one explicit spatial mode per search; assets as links | Its `stac_browser.py` Pyodide helper for the Validation Lab; its catalog snapshot format | **To review.** Read at README and architecture level on 2026-10-10; no code read and nothing run |
 
 The entries below supply the sources and limitations behind this comparison. None establishes browser-local WASM equivalence with Fieldwork.
 
@@ -60,6 +61,61 @@ This is especially relevant to the Botswana raster: request or decode a bounded 
 **Adoption candidate.** Export a small widget subset as APE tool annotations and compare its candidate workflows with Fieldwork's N3 routing approach. Run this as a separate research exercise; Java execution is not part of the offline browser runtime. Translate results back into reviewable proposed graphs rather than executing them automatically.
 
 APE's synthesis and Fieldwork's N3 evidence reasoning serve different roles. Finding a compatible chain does not establish that its data are reliable, its assumptions justified, or its public-health interpretation valid. Practitioner review and run evidence remain necessary.
+
+## 5. JupyterLite STAC Browser: catalog discovery Fieldwork does not have
+
+**Status: a review item, added 2026-10-10 at the user's request.** What follows
+comes from the repository's README and `book/architecture.md`. No source was
+read, nothing was run, and no claim here is verified against behaviour.
+
+**The gap it speaks to.** Fieldwork's STAC support is semantic only.
+`ontology/stac.ttl` describes a STAC acquisition and
+`ontology/rules/processing-routing.n3` routes one to a reader, which
+`tests/stac-routing.browser.mjs` exercises through the EYE reasoner. Nothing in
+the application *finds* a catalog, searches it, or lets a practitioner choose a
+collection and an item. A workflow can describe a STAC acquisition it has no way
+to discover.
+
+**Evidence.** [jltobias/JupyterLite-STAC-Browser](https://github.com/jltobias/JupyterLite-STAC-Browser),
+MIT licensed, Python and JavaScript, actively pushed. A static GitHub Pages
+deployment with three parts: a plain-JavaScript map explorer with vendored
+Leaflet and Leaflet-Geoman, a JupyterLite kernel with notebooks for launching a
+map, searching WorldPop and exporting from other catalogs, and a Jupyter Book.
+It carries a `CITATION.cff`, so it can be cited rather than only linked.
+
+**Why it is worth reviewing rather than just noting.** Its stated discipline is
+close to this project's, in ways that are specific rather than atmospheric:
+
+| Its rule | The same rule here |
+| --- | --- |
+| No web application, proxy, token or account; browser `fetch` only | Fieldwork runs locally and precaches; the healthsites CORS work this month concluded the same thing — there is no client-side bypass |
+| Bounded requests: 20-second timeout, 1–100 items a page, 500 items, 1,000 collections, 100 static links | `network_input` caps OSM downloads at 2 MB, 2,000 nodes and 5,000 edges |
+| "Dataset assets are links and are never fetched automatically" | Raster provenance keeps the asset reference separate from retrieved bytes |
+| Exactly one of `bbox`, `intersects`, or neither, serialized explicitly, with **no silent spatial fallback** | The project's recurring finding: an operation that changes the answer must be visible, not a fallback |
+| Untrusted provider metadata rendered as text; only HTTP(S) shown; credential-bearing endpoints inspectable but unable to connect | Fieldwork treats downloaded data as untrusted and records `fw:requestOrigin` |
+| A catalog snapshot recording its official source, API and retrieval date | Fieldwork's `reference(...)` provenance on every acquisition node |
+
+**Two distinct adoption candidates, which should not be confused.**
+
+1. **The Validation Lab, directly.** The lab is already JupyterLite, and its
+   purpose includes off-fieldwork data download and extraction. `stac_browser.py`
+   uses `pyodide.http.pyfetch` in the browser with a standard-library adapter
+   outside it for deterministic testing — the same dual-environment split the
+   lab's checks already make between Pyodide and CPython. This is the cheaper
+   and more likely adoption.
+2. **A Fieldwork discovery widget.** A `discover_*` source node that searches a
+   catalog and emits an acquisition the existing STAC routing already
+   understands. This is a larger question than a widget, because discovery is
+   interactive and the palette's sources are configured rather than browsed.
+
+**What a review has to establish before anything is adopted.** Whether the
+geometry contract matches: it validates "one simple closed 2D ring, 3–500
+vertices, no holes, no MultiPolygons, no date-line edges", and Fieldwork's study
+areas are drawn polygons and bounding boxes with their own rules. Whether its
+bounded limits suit a Philippine workflow. What `THIRD_PARTY_NOTICES.md`
+obligates for the vendored Leaflet and Geoman. And whether a public catalog
+directory sourced from STAC Index is a dependency this project wants, given that
+every other acquisition source here is pinned by name and digest.
 
 ## Shared architecture and ontology mapping
 

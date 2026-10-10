@@ -174,6 +174,37 @@ nothing installed. Recorded so that the question is not reopened from memory, an
 because it is a genuine upgrade path rather than the dead end the proxy question
 turned out to be.
 
+## It was never discovery either
+
+Added 2026-10-10, prompted by a practitioner's question: how do you know you
+discovered something when you never see the thing you are discovering?
+
+The node was called `healthsites_discovery` and **made no network call at all**.
+It built a URL from the country or extent, checked that a named credential
+existed, and returned that URL as a result. It could not fail. A misspelled
+country produced an equally confident request, and so would a service that had
+been switched off a year earlier.
+
+Set beside what the other sources return before any data moves:
+
+| Source | Learned before transferring anything |
+| --- | --- |
+| Zenodo | the member's name, that it is 71.7 MB deflated inside a 9.24 GB archive, and how it is compressed |
+| Overture | that 3 row groups of 4,864 cover the study area, holding 55,649 of 81,455,423 rows |
+| HDX | four files with their sizes, the licence `cc-by-4.0`, the version `20210809` |
+
+Each of those can disagree with what was expected, so each can be checked. The
+healthsites node could only agree with itself.
+
+So discovery is **learning enough about data to decide whether to fetch it**, and
+the test is whether it can fail. By that test the node was not discovery and not
+acquisition: it was a constructed address with a licence notice attached. The
+name claimed a stage it never reached, which is the same defect the naming
+convention exists to catch, arrived at from a different direction.
+
+This is recorded as a finding, not a new rule. It has fired once, here,
+retrospectively.
+
 ## Consequence for the design
 
 The node is one node, and acquisition happens in the one place that is allowed

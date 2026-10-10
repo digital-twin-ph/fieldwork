@@ -253,12 +253,12 @@ out of scope ([43](experiments/43-widget-packs.md), [47](experiments/47-sea-leve
 
 | Stage | Produces |
 | --- | --- |
-| **Discovery** | A request naming a resolved location — never data |
+| **Discovery** | Learning enough about data to decide whether to fetch it — where it is, what it covers, how big it is, its format and licence — without transferring it. If it cannot fail, it is a guess at an address rather than a discovery |
 | **Acquisition** | Bytes with a digest and byte identity |
 | **Extraction** | A bounded artifact from something too large to read here; outside the application |
 | **Import** | The artifact inside a project, with provenance. **An import is not an acquisition**: an acquisition replays from its request, an import can only be trusted if it records where it came from |
 | **Application** | A result computed from the artifact. **A consumer is not a model**: a widget applying published results must never imply it produced them |
-| **Presentation** | A view of existing results, not new inference |
+| **Presentation** | A view of results already computed |
 
 ## Packaging
 

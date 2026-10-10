@@ -1,6 +1,6 @@
 {
   "name": "fieldwork-semantic-gis",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
@@ -17,7 +17,8 @@
     "validate:packs": "node scripts/validate-packs.mjs",
     "validate:parity": "node scripts/validate-parity.mjs",
     "stamp:docs": "node scripts/stamp-docs.mjs --write",
-    "validate:docs": "node scripts/stamp-docs.mjs"
+    "validate:docs": "node scripts/stamp-docs.mjs",
+    "usage:widgets": "node scripts/widget-coverage.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -30,6 +31,8 @@
     "@zip.js/zip.js": "2.23.0",
     "geotiff": "3.0.5",
     "h3-js": "4.5.0",
+    "hyparquet": "^1.31.3",
+    "hyparquet-compressors": "^1.1.2",
     "leaflet": "^1.9.4",
     "polyclip-ts": "0.16.8",
     "proj4": "2.19.10",
@@ -41,7 +44,7 @@
     "vega-lite": "6.4.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.0",
     "@types/geojson": "7946.0.16",
     "@types/leaflet": "1.9.22",
     "@types/node": "26.6.4",

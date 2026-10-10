@@ -1,0 +1,61 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:summarise_hull",
+ "version": "0.1.0",
+ "nodeType": "summarise_hull",
+ "title": "Convex hull",
+ "released": "2026-10-10",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['summarise_hull']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "polygons"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:ConvexHull",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Emits an fw:ConvexHull activity carrying fw:recordCount, fw:hullVertexCount, fw:hullAreaSquareMetres, fw:hullSpanMetres and fw:metricCRS, and prov:used the point source. The area and span are emitted rather than a threshold applied: points lying on one meridian are collinear in degrees and not in metres, so they yield a correct hull of a few square metres spanning kilometres, and a cutoff would also refuse a genuinely thin distribution."
+ },
+ "implementation": {
+  "files": [
+   "src/convex-hull.ts",
+   "src/core.ts",
+   "src/palette.ts"
+  ],
+  "definition": "src/convex-hull.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "The smallest convex outline containing a set of points, computed in a metric CRS. Derived from the PHI case studies rather than proposed: Advanced-2 NB02 hulls its death locations to bound a Voronoi diagram and Advanced-1 NB03 hulls the reached network, and docs/research/john-snow-voronoi.md recorded that hull and buffer should not be hidden inside Voronoi. It is also the first of six primitives an isochrone composition needs, and the only one unblocked today. Refuses fewer than three located points and refuses collinear ones, because a line encloses nothing. Takes a UTM zone for the same reason five other widgets do — a layer cannot state the coordinate system it is in, which is D5's finding in experiment 40 and this makes six. Named with a stage verb under the taxonomy proposed in experiment 76: many points become one shape, which is summarising. See docs/experiments/80-convex-hull.md."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Seven unit checks cover the monotone chain keeping corners and dropping interior and on-edge points; refusal of two points, of duplicates and of collinear input; refusal of a layer with fewer than three located points, naming how many it had; unlocated records taking no part and being reported; computation in a projected CRS with coordinates returned as longitude and latitude; the stated area and span for a near-collinear layer, measured at 3.6 square metres across 2,225 metres; and the limitation travelling in both the notes and the receipt. Not established: that a hull is the right boundary for anything. It is the smallest convex one, which is a mathematical property and not a claim that the phenomenon is convex."
+ }
+}

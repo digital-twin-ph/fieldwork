@@ -43,8 +43,13 @@ if(snow){add('snow-voronoi',()=>snow.johnSnowExample('snow-voronoi'));add('snow-
 if(geo)add('snow-geoprivacy',()=>geo.geoprivacyExample());
 
 // Frozen fixtures are worked examples too: they are what the browser suite replays.
+// Except the ones whose whole purpose is to hold something invalid. A fixture that
+// deliberately carries a removed widget is a test of what happens when a workflow
+// outlives a widget, not a demonstration of anything, and counting it reports a
+// missing registry entry that is the point of the fixture.
+const DELIBERATELY_BROKEN=/^removed-widget-/;
 const dir=new URL('../tests/fixtures/',import.meta.url);
-for(const file of (await readdir(dir)).filter(f=>f.endsWith('.json'))){
+for(const file of (await readdir(dir)).filter(f=>f.endsWith('.json')&&!DELIBERATELY_BROKEN.test(f))){
   const doc=JSON.parse(await readFile(new URL(file,dir),'utf8'));
   const w=doc?.nodes?doc:doc?.workflow?.nodes?doc.workflow:null;
   if(w)examples.push([`fixture: ${file.replace(/\.json$/,'')}`,w]);

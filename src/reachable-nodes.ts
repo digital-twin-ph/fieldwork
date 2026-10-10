@@ -128,7 +128,7 @@ export function reachableNodes(
     for(const [nodeId,costM] of [...costs].sort((a,b)=>a[1]-b[1]||a[0].localeCompare(b[0]))){
       features.push({type:'Feature',id:`${origin.id}-${nodeId}`,
         properties:{name:`${origin.properties.name} → ${nodeId}`,
-          originSiteId:String(origin.id),networkNodeId:nodeId,
+          originSiteId:String(origin.id),networkNodeId:nodeId,travelDirection:direction,
           travelMetres:Number(costM.toFixed(2)),
           travelMinutes:Number((costM/speedMPerMin).toFixed(2)),
           remainingM:Number((budgetM-costM).toFixed(2))},
@@ -140,7 +140,7 @@ export function reachableNodes(
     `${features.length} reachable junction${features.length===1?'':'s'} from ${origins.length} origin${origins.length===1?'':'s'} within ${minutes} minute${minutes===1?'':'s'} ${direction==='inbound'?'inbound to':'outbound from'} each, measured along the network.`,
     `Budget ${budgetM.toFixed(0)} m, derived as ${minutes} minutes × ${speedMPerMin} m per minute (${kmh(speedMPerMin)} km/h, ${travelMode}). Every time reported here is a street length divided by that one speed: there is no gradient, no crossing, no waiting and no difference between travellers in this graph.`,
     'A speed is an assumption about a particular place in a particular period. It does not transfer between settings, and the mode above records only what kind of travel the number is meant to represent, not where the number came from.',
-    'Each junction carries remainingM, the budget left on arrival. That is what fixes where the edge of the time falls between junctions.',
+    'Each junction carries remainingM, the budget left on arrival, and travelDirection. Those are what fix where the edge of the time falls between junctions, so a corridor drawn from these points cannot disagree with the budget or the direction used here.',
     origins.length===1?`This origin reached ${most} junction${most===1?'':'s'}.`:`Origins reached between ${fewest} and ${most} junctions each.`,
     'A junction can be unreached because it is too far or because the downloaded network stops short of it. The two look the same here.',
     'The walk from the site to its own junction was not charged, so every distance here starts from the road and not from the site.',

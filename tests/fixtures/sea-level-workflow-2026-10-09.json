@@ -13,7 +13,7 @@
         "keys": [
           "site_id",
           "scenario",
-          "workflow",
+          "basis",
           "family",
           "year",
           "quantile"
@@ -25,7 +25,7 @@
           "keys": [
             "site_id",
             "scenario",
-            "workflow",
+            "basis",
             "family",
             "year",
             "quantile"
@@ -37,10 +37,10 @@
               "key": {
                 "site_id": "145",
                 "scenario": "ssp126",
-                "workflow": "wf_1e",
                 "family": "with_vlm",
                 "year": "2050",
-                "quantile": "0.5"
+                "quantile": "0.5",
+                "basis": "wf_1e"
               },
               "value": 0.21
             },
@@ -48,10 +48,10 @@
               "key": {
                 "site_id": "145",
                 "scenario": "ssp585",
-                "workflow": "wf_1e",
                 "family": "with_vlm",
                 "year": "2100",
-                "quantile": "0.5"
+                "quantile": "0.5",
+                "basis": "wf_1e"
               },
               "value": 0.77
             },
@@ -59,10 +59,10 @@
               "key": {
                 "site_id": "145",
                 "scenario": "ssp585",
-                "workflow": "wf_1e",
                 "family": "without_vlm",
                 "year": "2100",
-                "quantile": "0.5"
+                "quantile": "0.5",
+                "basis": "wf_1e"
               },
               "value": 0.63
             },
@@ -70,10 +70,10 @@
               "key": {
                 "site_id": "394",
                 "scenario": "ssp585",
-                "workflow": "wf_1e",
                 "family": "with_vlm",
                 "year": "2100",
-                "quantile": "0.5"
+                "quantile": "0.5",
+                "basis": "wf_1e"
               },
               "value": 0.58
             }
@@ -113,7 +113,8 @@
         "familyValues": {
           "withVerticalLandMotion": "with_vlm",
           "withoutVerticalLandMotion": "without_vlm"
-        }
+        },
+        "basisKind": "workflow"
       }
     },
     {
@@ -250,12 +251,13 @@
       "params": {
         "label": "Compare level to elevation",
         "scenario": "ssp585",
-        "workflow": "wf_1e",
         "family": "with_vlm",
         "year": "2100",
         "quantile": "0.5",
         "elevationField": "elevation_m",
-        "verticalDatum": "MSL 1995-2014 (synthetic)"
+        "verticalDatum": "MSL 1995-2014 (synthetic)",
+        "elevationReference": "baseline-sea-surface",
+        "basis": "wf_1e"
       }
     },
     {

@@ -51,7 +51,7 @@ export function identityMarkup(nodeType:string,esc:Escape):string{
 export function openCatalogDialog(esc:Escape,servingBuild='unknown'):void{
   document.getElementById('catalog-dialog')?.remove();
   const dialog=document.createElement('dialog');dialog.id='catalog-dialog';dialog.setAttribute('aria-labelledby','catalog-title');
-  const groups=['Sources','Spatial operations','Semantic reasoning','Summaries','Outputs'];
+  const groups=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Summaries','Outputs'];
   const rows=(group:string)=>Object.keys(TYPES).filter(type=>TYPES[type as NodeType].group===group).map(type=>{
     const definition=TYPES[type as NodeType],identity=widgetIdentity(type);
     const ports=definition.inputs.map(([port])=>port).join(', ')||'none';

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {inBoundary,sampleLocations,oldNalediWorkflow,DATASET} from '../build/old-naledi.js';
+import {inBoundary,sampleLocations,oldNalediWorkflow,DATASET,NB06_NAMED_EVIDENCE,facilityN3} from '../build/old-naledi.js';
 import {boundary,facilities} from '../examples/old-naledi/data.js';
 import {validateWorkflow,executionPlan} from '../build/core.js';
 
@@ -32,4 +32,28 @@ test('workflow supports four outputs, shared inference, and pinned dataset valid
   assert.throws(()=>validateWorkflow(w),/speedMPerMin/);
   w.nodes.find(n=>n.type==='access').params.speedMPerMin=70;
   w.nodes.find(n=>n.type==='area').params.dataset='unknown';assert.throws(()=>validateWorkflow(w),/dataset version/);
+});
+
+// The NB06 named-evidence claims are keyed on the registry's own identifiers. A regeneration
+// that changes an identifier must fail here rather than silently demoting a named facility to
+// the general branch, which is what a name-keyed match did before.
+test('every NB06 named-evidence claim resolves to a facility in the bundled registry',()=>{
+  const byId=new Map(facilities.map(f=>[f.id,f]));
+  const expected={'facility-158':'Princess Marina Hospital','facility-25':'Broadhurst II Clinic'};
+  for(const id of Object.keys(NB06_NAMED_EVIDENCE)){
+    const facility=byId.get(id);
+    assert.ok(facility,`NB06 claim names ${id}, which is not in the registry`);
+    assert.equal(facility.name,expected[id],
+      `${id} is now "${facility.name}"; the NB06 claim was recorded for "${expected[id]}"`);
+  }
+});
+
+test('named evidence follows the identifier, not the facility name',()=>{
+  const marina=facilities.find(f=>f.id==='facility-158');
+  const renamed={...marina,name:'Marina Referral Hospital (renamed)'};
+  assert.match(facilityN3([renamed]).facts,/fw:facility-158 fw:namedRule fw:Marina/,
+    'a renamed facility keeps its named evidence');
+  const impostor={...marina,id:'facility-999',name:'Princess Marina Hospital'};
+  assert.match(facilityN3([impostor]).facts,/fw:facility-999 fw:namedRule fw:None/,
+    'a different facility sharing the name does not inherit named evidence');
 });

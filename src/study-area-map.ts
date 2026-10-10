@@ -2,7 +2,7 @@ import type {WorkflowNode,AreaParams,Boundary,Polygon,Position} from './types.js
 import {element} from './dom.js';
 import {errorMessage} from './guards.js';
 type DrawnParams=Extract<AreaParams,{source:'drawn'}>;
-type DrawTool='pan'|'bbox'|'polygon';
+type DrawTool='pan'|'bbox'|'polygon'|'circle';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {bboxPolygon,validateDrawnGeometry,geometryBounds,studyAreaN3,geometryWKT,CRS84} from './study-area.js';
@@ -10,13 +10,13 @@ import type {RasterGrid} from './raster.js';
 import {clipRaster} from './raster.js';
 import {rasterImage} from './raster-ui.js';
 import type {RasterClipOptions,RasterMaskMethod} from './raster-mask.js';
-import {dimensionedBox} from './area-buffer.js';
+import {dimensionedBox,circleAround} from './area-buffer.js';
 
 export function openStudyAreaEditor(node:WorkflowNode<'area'>,onApply:(params:DrawnParams,options?:RasterClipOptions)=>void|boolean,context:{boundary?:Boundary;point?:{coordinates:Position|null;name:string};raster?:RasterGrid;clip?:boolean;clipOptions?:RasterClipOptions}={}){
   const clipOptions:RasterClipOptions={method:context.clipOptions?.method||'cell-center',marginPixels:context.clipOptions?.marginPixels||0};
   const dialog=element('#area-dialog'),$=<S extends string>(s:S)=>element(s,dialog);
   let geometry:Polygon|null=node.params.source==='drawn'&&node.params.geometry?structuredClone(node.params.geometry):null,selectionMode:DrawnParams['selectionMode']=node.params.source==='drawn'?node.params.selectionMode:'polygon';
-  let tool:DrawTool='pan',vertices:Position[]=[],firstCorner:Position|null=null,down:L.LeafletMouseEvent|null=null,ignoreClickUntil=0,map:L.Map,loaded=0,failed=0;
+  let tool:DrawTool='pan',centre:Position|null=null,vertices:Position[]=[],firstCorner:Position|null=null,down:L.LeafletMouseEvent|null=null,ignoreClickUntil=0,map:L.Map,loaded=0,failed=0;
   const name=$('#area-name');name.value=node.params.label||'My study area';
   const nameLabel=dialog.querySelector('label[for="area-name"]')!,eyebrow=dialog.querySelector('.eyebrow')!,draftLabel=dialog.querySelector('.area-draft .inspector-section')!;
   const originalLabels=[nameLabel.textContent,eyebrow.textContent,draftLabel.textContent];
@@ -30,7 +30,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'area'>,onApply:(params:Dr
   L.control.scale({imperial:false}).addTo(map);
   const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,noWrap:true,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'});
   const shapes=L.layerGroup().addTo(map),handles=L.layerGroup().addTo(map);
-  const boxControls=document.createElement('details');boxControls.id='area-sized-box';boxControls.innerHTML='<summary>Configure a square or rectangle</summary><label for="area-box-shape">Shape</label><select id="area-box-shape"><option value="square">Square</option><option value="rectangle">Rectangle</option></select><label for="area-box-lon">Centre longitude</label><input id="area-box-lon" type="number" step="any"><label for="area-box-lat">Centre latitude</label><input id="area-box-lat" type="number" step="any"><label for="area-box-width">Width (metres)</label><input id="area-box-width" type="number" min="1" max="50000" value="1000"><label for="area-box-height">Height (metres)</label><input id="area-box-height" type="number" min="1" max="50000" value="1000" disabled><button id="area-box-center" type="button" class="button small">Use map centre</button><button id="area-box-create" type="button" class="button small">Use sized boundary</button><p>North-aligned bounding box. Ground dimensions are approximate at the centre, not equal degree spans. Resizing map corners afterward creates a free rectangle. Applying keeps the resulting geometry.</p>';
+  const boxControls=document.createElement('details');boxControls.id='area-sized-box';boxControls.innerHTML='<summary>Set a shape by centre coordinates</summary><label for="area-box-shape">Shape</label><select id="area-box-shape"><option value="square">Square</option><option value="rectangle">Rectangle</option><option value="circle">Circle around the centre</option></select><label for="area-box-lon">Centre longitude</label><input id="area-box-lon" type="number" step="any"><label for="area-box-lat">Centre latitude</label><input id="area-box-lat" type="number" step="any"><label for="area-box-radius">Radius (metres)</label><input id="area-box-radius" type="number" min="1" max="50000" value="5000"><label for="area-box-width">Width (metres)</label><input id="area-box-width" type="number" min="1" max="50000" value="1000"><label for="area-box-height">Height (metres)</label><input id="area-box-height" type="number" min="1" max="50000" value="1000" disabled><button id="area-box-center" type="button" class="button small">Use map centre</button><button id="area-box-create" type="button" class="button small">Use sized boundary</button><p>North-aligned bounding box. Ground dimensions are approximate at the centre, not equal degree spans. Resizing map corners afterward creates a free rectangle. Applying keeps the resulting geometry.</p>';
   boundsDetails.after(boxControls);
   const boxInput=(id:string)=>boxControls.querySelector<HTMLInputElement>('#area-box-'+id)!;
   const currentBounds=geometry?geometryBounds(geometry):null;
@@ -40,7 +40,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'area'>,onApply:(params:Dr
   boxShape.onchange=()=>{boxInput('height').disabled=boxShape.value==='square';if(boxShape.value==='square')boxInput('height').value=boxInput('width').value;};
   boxInput('width').oninput=()=>{if(boxShape.value==='square')boxInput('height').value=boxInput('width').value;};
   boxControls.querySelector<HTMLButtonElement>('#area-box-center')!.onclick=()=>{const c=map.getCenter();boxInput('lon').value=String(c.lng);boxInput('lat').value=String(c.lat);};
-  boxControls.querySelector<HTMLButtonElement>('#area-box-create')!.onclick=()=>{try{const number=(id:string)=>boxInput(id).value.trim()?Number(boxInput(id).value):NaN;geometry=dimensionedBox([number('lon'),number('lat')],number('width'),boxShape.value==='square'?number('width'):number('height'));selectionMode='bbox';setTool('pan');refresh();fit();}catch(e){message(errorMessage(e));$('#area-feedback').setAttribute('role','alert');}};
+  boxControls.querySelector<HTMLButtonElement>('#area-box-create')!.onclick=()=>{try{const number=(id:string)=>boxInput(id).value.trim()?Number(boxInput(id).value):NaN;geometry=boxShape.value==='circle'?circleAround([number('lon'),number('lat')],number('radius')):dimensionedBox([number('lon'),number('lat')],number('width'),boxShape.value==='square'?number('width'):number('height'));selectionMode=boxShape.value==='circle'?'circle':'bbox';setTool('pan');refresh();fit();}catch(e){message(errorMessage(e));$('#area-feedback').setAttribute('role','alert');}};
   let rasterControls:HTMLElement|undefined,previewStatus:HTMLElement|undefined;
   const validateClip=()=>{if(context.raster&&geometry){const clipped=clipRaster(context.raster,geometry,clipOptions);if(previewStatus)previewStatus.textContent=`Preview: ${clipped.metadata.width} × ${clipped.metadata.height} cells; ${clipped.mask!.inside} ${clipOptions.method==='all-touched'?'cells selected':'centers inside'}, ${clipped.mask!.valid} with data, ${clipped.mask!.outside} outside. ${clipOptions.method}; margin ${clipOptions.marginPixels} px; native resolution; no resampling.`;}};
   if(context.raster){
@@ -71,7 +71,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'area'>,onApply:(params:Dr
   $('#area-online').onchange=()=>{if($('#area-online').checked){loaded=0;failed=0;tiles.addTo(map);}else map.removeLayer(tiles);tileStatus();};
   $('#area-online').dispatchEvent(new Event('change'));
   const ll=(p:Position)=>L.latLng(p[1],p[0]);
-  function setTool(next:DrawTool){tool=next;map.dragging[next==='pan'?'enable':'disable']();$('#area-map').classList.toggle('drawing',next!=='pan');dialog.querySelectorAll<HTMLButtonElement>('[data-draw]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.draw===next)));}
+  function setTool(next:DrawTool){tool=next;const radiusControl=dialog.querySelector<HTMLElement>('#area-radius-control');if(radiusControl)radiusControl.hidden=next!=='circle';map.dragging[next==='pan'?'enable':'disable']();$('#area-map').classList.toggle('drawing',next!=='pan');dialog.querySelectorAll<HTMLButtonElement>('[data-draw]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.draw===next)));}
   function currentParams():DrawnParams{return {source:'drawn',label:name.value.trim(),selectionMode,geometry};}
   function refresh(){
     $('#area-feedback').classList.remove('clip-preview-error');$('#area-feedback').setAttribute('role','status');if(previewStatus)previewStatus.textContent='Draw a valid boundary to preview the clip.';
@@ -85,30 +85,79 @@ export function openStudyAreaEditor(node:WorkflowNode<'area'>,onApply:(params:Dr
       const b=geometryBounds(geometry);['west','south','east','north'].forEach((key,i)=>( $('#area-'+key) as HTMLInputElement).value=b[i].toFixed(7));
       try{validateDrawnGeometry(geometry);validateClip();const n3=studyAreaN3({id:node.id,params:currentParams()});$('#area-n3').textContent=context.clip?'@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<urn:fieldwork:cutline:'+node.id+'> a geo:Geometry; geo:asWKT '+JSON.stringify('<'+CRS84+'> '+geometryWKT(geometry))+'^^geo:wktLiteral.':n3.input;$('#area-summary').textContent=`${selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometry.coordinates[0].length-1} vertices · longitude, latitude`;message(context.raster?`${previewStatus?.textContent} Apply the clip parameters, then rerun to update results.`:'Shape is valid. Apply it to the node, then run to evaluate the N3 rule.');valid=true;}
       catch(e){message(errorMessage(e));$('#area-feedback').classList.add('clip-preview-error');$('#area-feedback').setAttribute('role','alert');if(previewStatus)previewStatus.textContent=errorMessage(e);$('#area-n3').textContent='The draft must be valid and named before N3 is generated.';$('#area-summary').textContent='Draft needs correction';}
-      const ring=geometry.coordinates[0],points=selectionMode==='bbox'?[ring[0],ring[2]]:ring.slice(0,-1);
+      const ring=geometry.coordinates[0];
+      // A circle is a polygon, but it must not be edited as one: dragging one of its 128
+      // vertices would deform it into something that is no longer a radius around a centre.
+      // It gets two handles instead — move the whole circle, or change the radius.
+      if(selectionMode==='circle'){circleHandles(ring);}
+      else{
+      const points=selectionMode==='bbox'?[ring[0],ring[2]]:ring.slice(0,-1);
       points.forEach((p,i)=>{
         const marker=L.marker(ll(p),{draggable:true,icon:L.divIcon({className:'area-vertex',iconSize:[12,12],iconAnchor:[6,6]}),title:`Move ${selectionMode==='bbox'?'corner':'vertex'} ${i+1}`,keyboard:true}).addTo(handles);
         marker.on('dragstart',()=>setTool('pan'));
         marker.on('dragend',()=>{const v=marker.getLatLng(),next=[v.lng,v.lat];if(selectionMode==='bbox'){const other=points[1-i];geometry={type:'Polygon',coordinates:[[[Math.min(next[0],other[0]),Math.min(next[1],other[1])],[Math.max(next[0],other[0]),Math.min(next[1],other[1])],[Math.max(next[0],other[0]),Math.max(next[1],other[1])],[Math.min(next[0],other[0]),Math.max(next[1],other[1])],[Math.min(next[0],other[0]),Math.min(next[1],other[1])]]]};}else{const r=ring.slice(0,-1);r[i]=next;geometry={type:'Polygon',coordinates:[[...r,r[0]]]};}refresh();});
       });
+      }
     }else{
       const draft=tool==='bbox'&&firstCorner?[firstCorner]:vertices;
       if(draft.length)L.polyline(draft.map(ll),{color:'#176b59',dashArray:'5 5'}).addTo(shapes);
       draft.forEach(p=>L.circleMarker(ll(p),{radius:4,color:'#176b59'}).addTo(shapes));
       $('#area-summary').textContent=draft.length?`${draft.length} draft ${draft.length===1?'point':'points'}`:'No area selected';
       $('#area-n3').textContent='Draw a bounding box or finish a polygon to preview the N3 facts and rule.';
-      message(tool==='bbox'?'Click two opposite corners, or drag a rectangle.':tool==='polygon'?'Click each vertex, then choose Finish polygon.':'Pan and zoom to your study area, then choose Bounding box or Polygon.');
+      message(tool==='bbox'?'Click two opposite corners, or drag a rectangle.':tool==='polygon'?'Click each vertex, then choose Finish polygon.':tool==='circle'?(centre?'Adjust the radius, then apply. Click again to move the centre.':'Click the centre of your study area.'):'Pan and zoom to your study area, then choose Bounding box or Polygon.');
     }
     $('#area-apply').disabled=!valid;
   }
+  const radiusInput=()=>dialog.querySelector<HTMLInputElement>('#area-radius');
+  function drawCircle(){
+    if(!centre)return;
+    const metres=Number(radiusInput()?.value||5000);
+    const output=dialog.querySelector<HTMLOutputElement>('#area-radius-value');
+    if(output)output.textContent=`${metres.toLocaleString()} m`;
+    try{geometry=circleAround(centre,metres);selectionMode='circle';refresh();}
+    catch(error){message(errorMessage(error));}
+  }
+  /** Centre and radius of a circle, read back from its ring so a reopened node is editable. */
+  function circleOf(ring:Position[]){
+    const b=geometryBounds({type:'Polygon',coordinates:[ring]});
+    const c:Position=[(b[0]+b[2])/2,(b[1]+b[3])/2];
+    return {centre:c,radiusM:Math.max(1,Math.round((b[3]-b[1])/2*111195))};
+  }
+  /** Ground distance in metres, as the circle itself is constructed: adequate at these radii. */
+  function metresBetween(a:Position,b:Position){
+    const dy=(b[1]-a[1])*111195,dx=(b[0]-a[0])*111195*Math.cos(a[1]*Math.PI/180);
+    return Math.sqrt(dx*dx+dy*dy);
+  }
+  function circleHandles(ring:Position[]){
+    const {centre:c,radiusM}=circleOf(ring);
+    centre=c;
+    const slider=radiusInput();
+    if(slider&&Number(slider.value)!==radiusM)slider.value=String(radiusM);
+    const output=dialog.querySelector<HTMLOutputElement>('#area-radius-value');
+    if(output)output.textContent=`${radiusM.toLocaleString()} m`;
+    const move=L.marker(ll(c),{draggable:true,icon:L.divIcon({className:'area-vertex area-centre',iconSize:[14,14],iconAnchor:[7,7]}),title:'Move the circle',keyboard:true}).addTo(handles);
+    move.on('dragstart',()=>setTool('pan'));
+    move.on('dragend',()=>{const v=move.getLatLng();centre=[v.lng,v.lat];drawCircle();});
+    // Due east of the centre, so there is one unambiguous place to grab for size.
+    const edge:Position=[c[0]+(radiusM/(111195*Math.cos(c[1]*Math.PI/180))),c[1]];
+    const size=L.marker(ll(edge),{draggable:true,icon:L.divIcon({className:'area-vertex area-radius-handle',iconSize:[12,12],iconAnchor:[6,6]}),title:'Change the radius',keyboard:true}).addTo(handles);
+    size.on('dragstart',()=>setTool('pan'));
+    size.on('dragend',()=>{
+      const v=size.getLatLng(),next=Math.round(metresBetween(c,[v.lng,v.lat]));
+      const slider=radiusInput();
+      if(slider){slider.value=String(Math.min(Number(slider.max),Math.max(Number(slider.min),next)));}
+      drawCircle();
+    });
+  }
   function makeBox(a:Position,b:Position){geometry={type:'Polygon',coordinates:[[[Math.min(a[0],b[0]),Math.min(a[1],b[1])],[Math.max(a[0],b[0]),Math.min(a[1],b[1])],[Math.max(a[0],b[0]),Math.max(a[1],b[1])],[Math.min(a[0],b[0]),Math.max(a[1],b[1])],[Math.min(a[0],b[0]),Math.min(a[1],b[1])]]]};selectionMode='bbox';firstCorner=null;setTool('pan');refresh();}
   dialog.querySelectorAll<HTMLButtonElement>('[data-draw]').forEach(b=>b.onclick=()=>{const next=b.dataset.draw as DrawTool;setTool(next);if(next!=='pan'){geometry=null;vertices=[];firstCorner=null;selectionMode=next;}refresh();});
-  map.on('click',e=>{if(Date.now()<ignoreClickUntil)return;const p=[e.latlng.lng,e.latlng.lat];if(tool==='bbox'){if(firstCorner)makeBox(firstCorner,p);else{firstCorner=p;refresh();}}else if(tool==='polygon'){if(vertices.length>=200){message('Use at most 200 vertices.');return;}vertices.push(p);refresh();}});
+  map.on('click',e=>{if(Date.now()<ignoreClickUntil)return;const p=[e.latlng.lng,e.latlng.lat];if(tool==='circle'){centre=p;drawCircle();return;}if(tool==='bbox'){if(firstCorner)makeBox(firstCorner,p);else{firstCorner=p;refresh();}}else if(tool==='polygon'){if(vertices.length>=200){message('Use at most 200 vertices.');return;}vertices.push(p);refresh();}});
   map.on('mousedown',e=>{if(tool==='bbox')down=e;});
   map.on('mouseup',e=>{if(tool==='bbox'&&down&&e.containerPoint.distanceTo(down.containerPoint)>8){makeBox([down.latlng.lng,down.latlng.lat],[e.latlng.lng,e.latlng.lat]);ignoreClickUntil=Date.now()+300;}down=null;});
   $('#area-finish').onclick=()=>{if(vertices.length<3)return;geometry={type:'Polygon',coordinates:[[...vertices,vertices[0]]]};vertices=[];setTool('pan');refresh();};
   $('#area-undo-point').onclick=()=>{if(firstCorner)firstCorner=null;else vertices.pop();refresh();};
-  $('#area-clear').onclick=()=>{geometry=null;vertices=[];firstCorner=null;setTool('pan');refresh();};
+  radiusInput()?.addEventListener('input',drawCircle);
+  $('#area-clear').onclick=()=>{geometry=null;vertices=[];firstCorner=null;centre=null;setTool('pan');refresh();};
   $('#area-use-bounds').onclick=()=>{try{const values=['west','south','east','north'].map(k=>( $('#area-'+k) as HTMLInputElement).value.trim()===''?NaN:Number(( $('#area-'+k) as HTMLInputElement).value));geometry=bboxPolygon(values[0],values[1],values[2],values[3]);selectionMode='bbox';setTool('pan');refresh();fit();}catch(e){message(errorMessage(e));}};
   for(const key of ['west','south','east','north'])($('#area-'+key) as HTMLInputElement).oninput=()=>{$('#area-apply').disabled=true;message('Choose Use these bounds to replace the polygon with this rectangle before applying.');};
   function fit(){const scope=geometry||context.boundary;if(scope){const b=geometryBounds(scope),bounds:L.LatLngTuple[]=[[b[1],b[0]],[b[3],b[2]]];if(context.point?.coordinates)bounds.push([context.point.coordinates[1],context.point.coordinates[0]]);map.fitBounds(bounds,{padding:[35,35],maxZoom:17});}}

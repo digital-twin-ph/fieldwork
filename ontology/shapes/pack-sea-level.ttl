@@ -7,7 +7,11 @@
 # A value without its full key is not interpretable, so every key component is required.
 slr:ProjectionValueShape a sh:NodeShape; sh:targetClass slr:ProjectionValue;
   sh:property [ sh:path slr:scenario; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
-  sh:property [ sh:path slr:workflow; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path slr:basis; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1;
+                sh:description "Which published derivation this value came from. Required: a value whose derivation is unknown cannot be compared with another." ];
+  sh:property [ sh:path slr:basisKind; sh:minCount 1; sh:maxCount 1;
+                sh:in ( "workflow" "confidence-pbox" );
+                sh:description "What slr:basis names. A p-box bound and a single-workflow quantile are different objects, so the kind is required rather than inferred from the identifier's spelling." ];
   sh:property [ sh:path slr:datasetFamily; sh:minCount 1; sh:maxCount 1;
                 sh:in ( slr:WithVerticalLandMotion slr:WithoutVerticalLandMotion ) ];
   sh:property [ sh:path slr:targetYear; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:gYear ];

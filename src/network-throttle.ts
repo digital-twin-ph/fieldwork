@@ -4,6 +4,11 @@ const key='fieldwork-osm-next-request-at';
 let nextAllowed=0,inFlight=false;
 function readDeadline(){try{const saved=Number(localStorage.getItem(key));if(Number.isFinite(saved))nextAllowed=Math.max(nextAllowed,saved);}catch{/* Node tests and unavailable storage use this session's guard. */}return nextAllowed;}
 function writeDeadline(value:number){nextAllowed=Math.max(readDeadline(),value);try{localStorage.setItem(key,String(nextAllowed));}catch{/* Session pacing still applies. */}}
+/** Clears the pacing deadline. Exists so that automated checks are independent of each other:
+ *  without it, the first test to make a paced request decides whether the next one is allowed to
+ *  run, and a suite would pass or fail on its own ordering. Not reachable from the interface,
+ *  because waiting is the point of the pacing. */
+export function resetNetworkPacing(){nextAllowed=0;inFlight=false;try{localStorage.removeItem(key);}catch{/* Nothing stored to clear. */}}
 export function networkDownloadStatus(now=Date.now()){return {inFlight,waitSeconds:Math.max(0,Math.ceil((readDeadline()-now)/1000))};}
 export function deferNetworkDownload(retryAfter:string|null,now=Date.now()){
   const seconds=retryAfter!==null&&/^\d+$/.test(retryAfter)?Number(retryAfter):NaN,date=retryAfter?Date.parse(retryAfter):NaN;

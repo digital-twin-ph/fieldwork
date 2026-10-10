@@ -59,7 +59,8 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         const heat=entry.nodeType==='observations'&&['places','centers'].includes(migration.nodeType)&&migration.implementation==='src/core.ts#validateWorkflow';
         const facilities=entry.nodeType==='facilities'&&migration.nodeType==='facilities'&&migration.implementation==='src/old-naledi.ts#migrateFacilitySources';
         const output=['map_output','table_output','chart_output'].includes(entry.nodeType)&&migration.nodeType==='output'&&migration.implementation==='src/output-contract.ts#migrateOutputNodes';
-        check((heat||facilities||output)&&migration.adapterVersion==='1','Unknown migration adapter');
+        const facilitySources=entry.nodeType==='find_health_facilities'&&migration.nodeType==='healthsites_discovery'&&migration.implementation==='src/health-facilities.ts#migrateHealthsitesNodes';
+        check((heat||facilities||output||facilitySources)&&migration.adapterVersion==='1','Unknown migration adapter');
       }
       check(Array.isArray(release.changes)&&release.changes.length>0&&release.changes.every(c=>typeof c.description==='string'&&c.description.length>0),'Missing change history');
       check(release.evidence?.status==='not-individually-certified','Unsupported certification claim');

@@ -1,0 +1,69 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:find_health_facilities",
+ "version": "0.1.0",
+ "nodeType": "find_health_facilities",
+ "title": "Find health facilities",
+ "released": "2026-10-09",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['find_health_facilities']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "points"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:PointDataset",
+    "file": "ontology/runtime.ttl"
+   }
+  ],
+  "note": "Emits an fw:PointDataset carrying fw:recordCount, fw:requestOrigin and, for a file-backed source, fw:filename and fw:byteSize, together with dcterms:license <https://opendatacommons.org/licenses/odbl/1-0/>, dcterms:source <https://www.openstreetmap.org/copyright> and the attribution as dcterms:rights, and prov:wasDerivedFrom a dcat:Dataset for the source. The licence is an IRI rather than a label so it resolves and can be compared: ODbL is share-alike and the obligation attaches to the data, not only to the act of requesting it. Reuses the host's existing file-metadata properties rather than minting source-specific ones."
+ },
+ "implementation": {
+  "files": [
+   "src/health-facilities.ts",
+   "src/facility-records.ts",
+   "src/core.ts",
+   "src/app.ts",
+   "src/palette.ts"
+  ],
+  "definition": "src/health-facilities.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "healthsites_discovery",
+    "adapterVersion": "1",
+    "implementation": "src/health-facilities.ts#migrateHealthsitesNodes"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "One operation, two sources, both reachable from a browser with no account. Measured 2026-10-09: Overpass answers with access-control-allow-origin: * and the Humanitarian OpenStreetMap Team country export on HDX is served from S3 with the same header, 452 KB compressed for 12,776 Philippine facilities of which 11,877 are named. The study area bounds the query rather than filtering it afterwards, so the area is the scope of the question; the country export is clipped to that area because it is not bounded at source, while the live query is not clipped again because doing so would only mask a bounding-box error. Both sources are OpenStreetMap-derived and both are ODbL. Retrieval happens in the interface and never in the executor, so a workflow runs from stored data with the network off; core.ts imports the value and validation functions from this module and deliberately not the download function. Supersedes healthsites_discovery, which was excluded because healthsites.io sends no cross-origin header and could not be fetched at all; see docs/experiments/69-healthsites-acquisition.md and 71-health-facility-sources.md."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit checks cover the Overpass bounding-box order, which is south-west-north-east and not the order used elsewhere; the query built from requested kinds; parsing of the Overpass element shape and of a GeoJSON FeatureCollection; the clip of a country export to the study area; the drop counts by reason; refusal of a non-ISO country code, of an empty kind list and of an area with no width; the receipt carrying the licence as a resolvable IRI; and that a run with stored facilities issues no network request. Not established: completeness. OpenStreetMap coverage is uneven and states none, so an absence in the output is not evidence of absence on the ground, and no parity check against an official facility register has been run."
+ }
+}

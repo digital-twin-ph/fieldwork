@@ -1,84 +1,84 @@
 {
-  "schema": "fieldwork/pack-catalog/1",
-  "catalogVersion": "0.2.0",
-  "updated": "2026-10-08",
-  "description": "Curated widget packs. This file is the trust root: digest pinning is only as strong as the review of the file that holds the digests. A pack is admitted only at a full commit SHA, only from a curated owner, and only with a complete review record naming the host versions it was verified against. Nothing here is loaded by the application at run time; the catalog is checked by development tooling with npm run validate:packs.",
-  "governance": {
-    "curatedOwners": [
-      "digital-twin-ph"
-    ],
-    "requiredReviews": [
-      "semantic",
-      "security",
-      "regression"
-    ],
-    "reviewStates": [
-      "not-started",
-      "in-review",
-      "passed",
-      "failed"
-    ],
-    "admissionStates": [
-      "not-admitted",
-      "admitted",
-      "withdrawn"
-    ],
-    "rules": [
-      "A pack may be admitted only from a curated owner.",
-      "A pack may be admitted only at a full 40-character commit SHA; a branch or tag is not an approval.",
-      "A pack may not be admitted while it declares a missing host capability.",
-      "A pack may not be admitted until all required reviews have passed and name the host version.",
-      "A withdrawn pack keeps its entry, so runs that recorded its digest remain traceable.",
-      "The catalog's list of outstanding host capabilities must agree with the pack's own manifest, so neither can declare a pack unblocked alone.",
-      "A host capability a pack declares present must name host widgets and versions the host registry actually releases.",
-      "The stage statuses in a catalog entry must match the pack manifest's own, so the catalog cannot describe a pipeline the pack does not declare.",
-      "A pack that ships no executable code is a specification: the host implements its contracts, and the pack retires the widget declarations so no node type has two definitions."
-    ]
-  },
-  "packs": [
-    {
-      "id": "urn:fieldwork:pack:sea-level-rise",
-      "name": "Sea-level rise (IPCC AR6)",
-      "version": "0.1.0",
-      "repository": "https://github.com/digital-twin-ph/widget-pack-sea-level-rise",
-      "commit": "b9d466f705a2816684963f0158a415fcff5c0459",
-      "namespace": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#",
-      "kind": "declaration-only",
-      "admission": {
-        "status": "not-admitted",
-        "reason": "Not reviewed. The three widget contracts are implemented in the host (slr_extract_import, slr_site_assignment, slr_threshold_comparison at 0.1.0), and this pack now supplies the vocabulary, the shapes and the worked example, which the host vendors at these pinned digests. Admission turns on the three required reviews.",
-        "reviews": {
-          "semantic": {
-            "state": "not-started"
-          },
-          "security": {
-            "state": "not-started"
-          },
-          "regression": {
-            "state": "not-started"
-          }
-        },
-        "verifiedAgainstHostVersions": [],
-        "approvedBy": null,
-        "approvedAt": null,
-        "integrationReport": null
-      },
-      "stages": {
-        "discovery": "excluded",
-        "acquisition": "excluded",
-        "extraction": "external",
-        "import": "implemented-in-host",
-        "application": "implemented-in-host",
-        "presentation": "reuses-base"
-      },
-      "requiredHostCapabilities": [],
-      "files": {
-        "pack.json": "040d290e702258c50dee403b80940675e90b586e68d78e432f9c5691bb987c12",
-        "ontology/sea-level.ttl": "5ec4208706159c503334854048ece409dfc2eccbb86283c51e631b4615f760c8",
-        "ontology/shapes/sea-level.ttl": "ed935b2eb371ff8c37e9c9114b5fb56aa638ed658fa491e41f942a2917567864",
-        "examples/manila-coastal-exposure/projection-sites-ph.csv": "1fc8c902bd98ec061cd538e028bbc74f6381781457bdf1c36d7ba62fa71a87a8",
-        "scripts/extract-projection.py": "bbda69524862be31b796c757c1aca759747b88ef3e4859b753804d3964832451"
-      }
-    }
+ "schema": "fieldwork/pack-catalog/1",
+ "catalogVersion": "0.2.0",
+ "updated": "2026-10-08",
+ "description": "Curated widget packs. This file is the trust root: digest pinning is only as strong as the review of the file that holds the digests. A pack is admitted only at a full commit SHA, only from a curated owner, and only with a complete review record naming the host versions it was verified against. Nothing here is loaded by the application at run time; the catalog is checked by development tooling with npm run validate:packs.",
+ "governance": {
+  "curatedOwners": [
+   "digital-twin-ph"
+  ],
+  "requiredReviews": [
+   "semantic",
+   "security",
+   "regression"
+  ],
+  "reviewStates": [
+   "not-started",
+   "in-review",
+   "passed",
+   "failed"
+  ],
+  "admissionStates": [
+   "not-admitted",
+   "admitted",
+   "withdrawn"
+  ],
+  "rules": [
+   "A pack may be admitted only from a curated owner.",
+   "A pack may be admitted only at a full 40-character commit SHA; a branch or tag is not an approval.",
+   "A pack may not be admitted while it declares a missing host capability.",
+   "A pack may not be admitted until all required reviews have passed and name the host version.",
+   "A withdrawn pack keeps its entry, so runs that recorded its digest remain traceable.",
+   "The catalog's list of outstanding host capabilities must agree with the pack's own manifest, so neither can declare a pack unblocked alone.",
+   "A host capability a pack declares present must name host widgets and versions the host registry actually releases.",
+   "The stage statuses in a catalog entry must match the pack manifest's own, so the catalog cannot describe a pipeline the pack does not declare.",
+   "A pack that ships no executable code is a specification: the host implements its contracts, and the pack retires the widget declarations so no node type has two definitions."
   ]
+ },
+ "packs": [
+  {
+   "id": "urn:fieldwork:pack:sea-level-rise",
+   "name": "Sea-level rise (IPCC AR6)",
+   "version": "0.2.0",
+   "repository": "https://github.com/digital-twin-ph/widget-pack-sea-level-rise",
+   "commit": "421f3b20b7a62ca35a098a53b9665dc739d8734b",
+   "namespace": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#",
+   "kind": "declaration-only",
+   "admission": {
+    "status": "not-admitted",
+    "reason": "Not reviewed. Pack 0.2.0 replaces the workflow key component with a declared basis plus basisKind, because the AR6 confidence output files are p-boxes over several workflows and carry no workflow dimension \u2014 measured 2026-10-09. The three widget contracts are implemented in the host, and this pack supplies the vocabulary, the shapes and the worked example, which the host vendors at these pinned digests. Admission turns on the three required reviews.",
+    "reviews": {
+     "semantic": {
+      "state": "not-started"
+     },
+     "security": {
+      "state": "not-started"
+     },
+     "regression": {
+      "state": "not-started"
+     }
+    },
+    "verifiedAgainstHostVersions": [],
+    "approvedBy": null,
+    "approvedAt": null,
+    "integrationReport": null
+   },
+   "stages": {
+    "discovery": "excluded",
+    "acquisition": "excluded",
+    "extraction": "external",
+    "import": "implemented-in-host",
+    "application": "implemented-in-host",
+    "presentation": "reuses-base"
+   },
+   "requiredHostCapabilities": [],
+   "files": {
+    "pack.json": "325d6ee477f95e0c376818976fc639cc7c1488d98b74d4496f004e861bcbb4fa",
+    "ontology/sea-level.ttl": "bdbdfc4a6ca781db8e547cd6509ed70915feac69e6af09245b4aeb1a1463b306",
+    "ontology/shapes/sea-level.ttl": "e5e8d66323d27906dce85040832766f9ca4c5bb6e1cac5384771dd1cd44a1fd8",
+    "examples/manila-coastal-exposure/projection-sites-ph.csv": "1fc8c902bd98ec061cd538e028bbc74f6381781457bdf1c36d7ba62fa71a87a8",
+    "scripts/extract-projection.py": "bbda69524862be31b796c757c1aca759747b88ef3e4859b753804d3964832451"
+   }
+  }
+ ]
 }

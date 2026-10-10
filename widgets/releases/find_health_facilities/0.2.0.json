@@ -1,0 +1,74 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:find_health_facilities",
+ "version": "0.2.0",
+ "nodeType": "find_health_facilities",
+ "title": "Find health facilities",
+ "released": "2026-10-09",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['find_health_facilities']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "points"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:PointDataset",
+    "file": "ontology/runtime.ttl"
+   }
+  ],
+  "note": "Emits an fw:PointDataset carrying fw:recordCount, fw:requestOrigin and, where the source is file-backed, fw:filename and fw:byteSize, or dcterms:hasVersion for a released dataset, together with dcterms:license, dcterms:source and the attribution as dcterms:rights, and prov:wasDerivedFrom a dcat:Dataset for the source. The licence is read from what the retrieval recorded and never assumed: two sources are ODbL and share-alike, Overture Places is CDLA Permissive 2.0 and is not, so a receipt asserting one licence for every source would be wrong for whichever it was not describing. It is emitted as an IRI rather than a label so it resolves and can be compared. Reuses the host's existing file-metadata properties rather than minting source-specific ones."
+ },
+ "implementation": {
+  "files": [
+   "src/health-facilities.ts",
+   "src/overture-places.ts",
+   "src/facility-records.ts",
+   "src/core.ts",
+   "src/app.ts",
+   "src/palette.ts"
+  ],
+  "definition": "src/health-facilities.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "healthsites_discovery",
+    "adapterVersion": "1",
+    "implementation": "src/health-facilities.ts#migrateHealthsitesNodes"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "One operation, two sources, both reachable from a browser with no account. Measured 2026-10-09: Overpass answers with access-control-allow-origin: * and the Humanitarian OpenStreetMap Team country export on HDX is served from S3 with the same header, 452 KB compressed for 12,776 Philippine facilities of which 11,877 are named. The study area bounds the query rather than filtering it afterwards, so the area is the scope of the question; the country export is clipped to that area because it is not bounded at source, while the live query is not clipped again because doing so would only mask a bounding-box error. Both sources are OpenStreetMap-derived and both are ODbL. Retrieval happens in the interface and never in the executor, so a workflow runs from stored data with the network off; core.ts imports the value and validation functions from this module and deliberately not the download function. Supersedes healthsites_discovery, which was excluded because healthsites.io sends no cross-origin header and could not be fetched at all; see docs/experiments/69-healthsites-acquisition.md and 71-health-facility-sources.md."
+  },
+  {
+   "kind": "feature",
+   "description": "0.2.0 adds Overture Maps Places as a third source, read directly from GeoParquet on S3. It is the first source here that is not OpenStreetMap-derived, so it can corroborate rather than echo; it is CDLA Permissive 2.0 rather than share-alike; and it states a confidence for each place, which is the only numeric quality signal any of these sources offer. Measured 2026-10-10 against release 2026-09-23.1: 16 parts, 4,864 row groups, 81,455,423 rows, 11.0 GB, of which a Manila study area selected 3 row groups in 1 part, 55,649 rows, read in about 1.5 seconds; the 16 footers are read concurrently because sequentially they took 22 seconds. The release is discovered rather than pinned and recorded in the receipt, so a default that moves does not make a past run unreadable. A truncated bucket listing is refused rather than silently dropping files, because a missing file looks like an empty study area and an empty study area looks like a true absence. Overture's bbox columns are 32-bit and bracket the coordinate rather than equal it (measured: only 0.12% degenerate), so they select row groups and the geometry supplies the coordinates. Overture's categories are mapped onto this application's facility kinds as a declared equivalence, deliberately conservative: the generic buckets health_care, medical_service and specialized_health_care are not mapped at all, because measured in a Manila study area they carried a wellness spa, individually named doctors and a training course, and Overture reported 207 places under hospital where a live OpenStreetMap query returned 47 hospitals and clinics together. Counts from this source are not comparable with the OpenStreetMap sources and the receipt says so. See docs/experiments/71-health-facility-sources.md."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit checks cover the Overpass bounding-box order, which is south-west-north-east and not the order used elsewhere; the query built from requested kinds and that nothing typed into the kinds field can alter the statement sent; parsing of the Overpass element shape, a GeoJSON FeatureCollection and an adapter-resolved kind; the clip of a country export to the study area; the drop counts by reason; refusal of a non-ISO country code, an empty kind list, an area with no width and a confidence threshold outside 0 to 1; Overture release discovery and the refusal of a truncated listing; that every mapped Overture category lands on an offered facility kind and that the three generic categories stay unmapped; that the receipt carries the licence as a resolvable IRI and distinguishes share-alike from not; and that a run with stored facilities issues no network request. The live Overture read is covered by a recorded measurement rather than an automated test, because its input is 11 GB of GeoParquet that cannot honestly be mocked: measured 2026-10-10 in a browser, 488 facilities kept from release 2026-09-23.1 with 400 below the confidence threshold and 220 of an unmapped health category. Not established: completeness. No source here states it, coverage is uneven, and no parity check against an official register has been run, so an absence in the output is not evidence of absence on the ground."
+ }
+}

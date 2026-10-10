@@ -9,7 +9,7 @@
 
 <https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns> a owl:Ontology;
   dcterms:title "Sea-level rise pack vocabulary";
-  owl:versionInfo "0.1 proposed, 2026-10-08";
+  owl:versionInfo "0.2, 2026-10-09";
   rdfs:comment "Terms for applying published IPCC AR6 relative sea-level projections to coastal point data. This vocabulary describes projections that FACTS produced and AR6 published; nothing here models sea level. It mints no urn:fieldwork: term and reuses the host's GeoSPARQL, PROV-O, QUDT and Dublin Core alignments.".
 
 slr:ProjectionExtract a owl:Class;
@@ -46,7 +46,18 @@ slr:ProjectionValue a owl:Class;
 slr:scenario a owl:DatatypeProperty; rdfs:domain slr:ProjectionValue; rdfs:range xsd:string;
   rdfs:label "Scenario"; rdfs:comment "The published scenario identifier, such as ssp245. A scenario is a conditional pathway and carries no likelihood of occurrence.".
 slr:workflow a owl:DatatypeProperty; rdfs:domain slr:ProjectionValue; rdfs:range xsd:string;
-  rdfs:label "Workflow"; rdfs:comment "The published workflow identifier, such as wf_1e. Workflows differ in how they characterise confidence, and values from different workflows are not interchangeable.".
+  rdfs:label "Workflow"; rdfs:comment "The published workflow identifier, such as wf_1e. Workflows differ in how they characterise confidence, and values from different workflows are not interchangeable. Superseded as a key component by slr:basis with slr:basisKind, because not every published value has a single workflow: the AR6 confidence output files are p-boxes over several. Retained for a value that genuinely came from one workflow.".
+
+# Measured on 2026-10-09 from total_ssp245_medium_confidence_values.nc: the confidence output
+# files carry no workflow dimension, and their source attribute names the workflow p-boxes they
+# combine. A key component that assumed one workflow could not describe them, so the identifier
+# and the kind of identifier are declared separately.
+slr:basis a owl:DatatypeProperty; rdfs:domain slr:ProjectionValue; rdfs:range xsd:string;
+  rdfs:label "Derivation basis";
+  rdfs:comment "The published identifier of the derivation this value came from: a workflow identifier such as wf_1e, or a confidence level such as medium whose file is a p-box over several workflows. Uninterpretable without slr:basisKind, which says which of those it is.".
+slr:basisKind a owl:DatatypeProperty; rdfs:domain slr:ProjectionValue; rdfs:range xsd:string;
+  rdfs:label "Kind of derivation basis";
+  rdfs:comment "What slr:basis names: 'workflow' for a value from a single published workflow, or 'confidence-pbox' for a value read from a confidence output file, which is a p-box combining workflow p-boxes. A p-box bound is not a quantile of one distribution, so the two kinds are not interchangeable and a value must say which it is.".
 slr:datasetFamily a owl:ObjectProperty; rdfs:domain slr:ProjectionValue; rdfs:range slr:DatasetFamily;
   rdfs:label "Dataset family".
 slr:targetYear a owl:DatatypeProperty; rdfs:domain slr:ProjectionValue; rdfs:range xsd:gYear; rdfs:label "Target year".

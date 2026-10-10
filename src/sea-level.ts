@@ -11,29 +11,57 @@ import {distanceKm} from './core.js';
  *  Nothing here models sea level. It selects published values, joins them to points by distance,
  *  and compares two numbers. */
 const SLR='https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#';
-export const PROJECTION_KEYS=['site_id','scenario','workflow','family','year','quantile'] as const;
+/** The key a projected value needs to be interpretable. `basis` names which published derivation
+ *  the value came from and `basisKind` says what that name is — a single workflow, or a
+ *  confidence level whose file is a p-box over several. Measured 2026-10-09: the AR6 confidence
+ *  output files carry no workflow dimension, so a key assuming one could not describe them. */
+export const PROJECTION_KEYS=['site_id','scenario','basis','family','year','quantile'] as const;
+export const BASIS_KINDS=['workflow','confidence-pbox'] as const;
+export type BasisKind=''|typeof BASIS_KINDS[number];
 
 export interface FamilyValues {withVerticalLandMotion:string; withoutVerticalLandMotion:string}
 export interface ExtractProvenance {
   datasetIRI:string; datasetVersion:string; baselinePeriod:string; citations:string[]; familyValues:FamilyValues;
+  basisKind:BasisKind;
 }
 export interface ProjectionExtract {
   kind:'projection-extract'; table:DataTable; provenance:ExtractProvenance; siteIds:string[];
 }
-export interface ProjectionSelection {scenario:string; workflow:string; family:string; year:string; quantile:string}
+export interface ProjectionSelection {scenario:string; basis:string; family:string; year:string; quantile:string}
 
 const text=(value:unknown)=>typeof value==='string'?value.trim():'';
 
 /** An extract is admissible only with the whole key and the obligatory citations: a projected value
  *  without its scenario, workflow, family, year and quantile cannot be interpreted at all. */
+/** Units a projection extract may state, and the factor that brings each to metres. A
+ *  comparison is made in metres because a supplied elevation is; the factor travels into the
+ *  receipt so a reader can tell a converted value from an as-published one. */
+export const VALUE_UNITS:Record<string,number>={metre:1,millimetre:0.001};
+const UNIT_IRIS:Record<string,string>={metre:'http://qudt.org/vocab/unit/M',millimetre:'http://qudt.org/vocab/unit/MilliM'};
+
 export function projectionExtract(table:DataTable,provenance:ExtractProvenance):ProjectionExtract{
   if(table?.kind!=='data-table')throw new Error('Import a long-format projection extract first.');
   const missing=PROJECTION_KEYS.filter(key=>!table.keys.includes(key));
   if(missing.length)throw new Error(`The extract is missing key columns: ${missing.join(', ')}. A projected value without its full key cannot be interpreted.`);
-  if(table.unit!=='metre')throw new Error('State the value unit as metre: a projection is a change in relative sea level in metres.');
+  // AR6 publishes sea_level_change in millimetres: the confidence output files carry
+  // units: 'mm'. Measured 2026-10-09 from total_ssp245_medium_confidence_values.nc. Requiring
+  // metres here was an assumption nobody had checked, so both are admitted and the conversion
+  // to metres is recorded rather than performed silently. Anything else is refused: a unit this
+  // widget cannot interpret is not a unit it should guess at.
+  if(!Object.hasOwn(VALUE_UNITS,table.unit as string))
+    throw new Error(`The extract states its values are in "${table.unit??'an unstated unit'}". `
+      +`Sea-level projections are published in millimetres and compared in metres, so state `
+      +`${Object.keys(VALUE_UNITS).join(' or ')}.`);
   if(!text(provenance.datasetIRI))throw new Error('Name the published dataset this extract came from.');
   if(!text(provenance.datasetVersion))throw new Error('State the dataset version: values are not comparable across versions.');
   if(!/\d{4}/.test(text(provenance.baselinePeriod)))throw new Error('State the baseline period the change is measured against; it is read from the dataset documentation and never assumed.');
+  // A basis identifier is uninterpretable without the kind of identifier it is: wf_1e is one
+  // workflow, "medium" is a p-box over several, and a p-box bound is not a quantile of one
+  // distribution. The kind is declared rather than guessed from the identifier's spelling.
+  if(!(BASIS_KINDS as readonly string[]).includes(text(provenance.basisKind)))
+    throw new Error('Declare what the basis column names: "workflow" for values from one published '
+      +'workflow, or "confidence-pbox" for values read from a confidence output file, which is a '
+      +'p-box combining workflow p-boxes.');
   const citations=(provenance.citations||[]).map(text).filter(Boolean);
   if(citations.length<3)throw new Error('The licence makes three citations obligatory: the chapter, the FACTS paper and the dataset version.');
   const {withVerticalLandMotion:withVLM,withoutVerticalLandMotion:withoutVLM}=provenance.familyValues;
@@ -74,10 +102,15 @@ export function selectionDomains(extract:ProjectionExtract):Record<string,string
 
 export function projectedValue(extract:ProjectionExtract,siteId:string,selection:ProjectionSelection):number|null{
   const row=extract.table.rows.find(r=>r.key.site_id===siteId&&r.key.scenario===selection.scenario
-    &&r.key.workflow===selection.workflow&&r.key.family===selection.family
+    &&r.key.basis===selection.basis&&r.key.family===selection.family
     &&r.key.year===selection.year&&r.key.quantile===selection.quantile);
-  return row?row.value:null;
+  // A missing value stays unknown; it is never scaled into a number.
+  if(!row||row.value===null||!Number.isFinite(row.value))return null;
+  return row.value*(VALUE_UNITS[extract.table.unit as string]??1);
 }
+
+/** The factor applied to published values to reach metres, for the receipt. */
+export const valueScale=(extract:ProjectionExtract):number=>VALUE_UNITS[extract.table.unit as string]??1;
 
 export interface AssignmentRow {
   id:string; name:string; coordinates:Position|null; attributes:Record<string,Scalar>;
@@ -111,18 +144,31 @@ export function assignSites(points:PointCollection,sites:PointCollection,extract
     maxDistanceM:assigned.reduce((max,row)=>Math.max(max,row.distanceM??0),0)};
 }
 
-export interface ComparisonOptions {selection:ProjectionSelection; elevationField:string; verticalDatum:string}
+export type ElevationReference=''|'baseline-sea-surface'|'other-datum';
+export interface ComparisonOptions {selection:ProjectionSelection; elevationField:string; verticalDatum:string; elevationReference:ElevationReference}
 export interface Comparison {kind:undefined|'spatial-map'; rows:DisplayRow[]; centers:never[]; method:string;
-  selection:ProjectionSelection; verticalDatum:string; elevationField:string; exceeded:number; below:number; unknown:number}
+  selection:ProjectionSelection; verticalDatum:string; elevationField:string; elevationReference:ElevationReference;
+  exceeded:number; below:number; unknown:number}
 
 /** A comparison of two numbers. It accounts for no hydrodynamics, defences, drainage or waves, and
  *  equality is stated rather than assumed: a projected change equal to the elevation counts as
  *  reaching it. */
 export function compareToElevation(assignments:Assignments,options:ComparisonOptions):Comparison{
-  const {selection,elevationField,verticalDatum}=options;
+  const {selection,elevationField,verticalDatum,elevationReference}=options;
   if(!text(verticalDatum))throw new Error('State the vertical datum of the supplied elevations. A comparison against an unstated datum is not interpretable.');
+  // A projected value is a CHANGE measured from the dataset's baseline sea surface. Comparing it
+  // to an elevation is meaningful only when that elevation is measured from the same surface.
+  // Stating a datum does not establish that; the reference has to be declared.
+  if(!text(elevationReference))throw new Error(
+    'Declare what the supplied elevations are measured from. A projected value is a change from the '
+    +`dataset's baseline (${text(assignments.extract.provenance.baselinePeriod)||'unstated'}), so it can only be `
+    +'compared with an elevation measured from that same sea surface.');
+  if(elevationReference!=='baseline-sea-surface')throw new Error(
+    'These elevations are on a geodetic or other datum, so the comparison is refused: a change from a '
+    +'baseline sea surface and a height above another datum are not commensurable. Relating the two '
+    +'needs the local mean sea level on that datum, which this widget does not derive.');
   if(!text(elevationField))throw new Error('Name the point attribute holding the supplied elevation. This widget derives no elevation and reads no terrain model.');
-  for(const key of ['scenario','workflow','family','year','quantile'] as const)
+  for(const key of ['scenario','basis','family','year','quantile'] as const)
     if(!text(selection[key]))throw new Error(`Choose one ${key}: a projected value without its full key cannot be compared.`);
   const rows=assignments.rows.map((row):DisplayRow=>{
     const level=row.siteId?projectedValue(assignments.extract,row.siteId,selection):null;
@@ -140,8 +186,8 @@ export function compareToElevation(assignments:Assignments,options:ComparisonOpt
         vertical_datum:verticalDatum},
       distanceKm:row.distanceM===null?null:row.distanceM/1000,center:null};
   });
-  return {kind:undefined,rows,centers:[],selection,verticalDatum,elevationField,
-    method:`Projected relative sea-level change compared with a supplied elevation on ${verticalDatum}. Equality counts as reaching the elevation. No hydrodynamics, defences, drainage or wave action are represented.`,
+  return {kind:undefined,rows,centers:[],selection,verticalDatum,elevationField,elevationReference,
+    method:`Projected relative sea-level change compared with a supplied elevation on ${verticalDatum}, declared as measured from the dataset's baseline sea surface. Equality counts as reaching the elevation. No hydrodynamics, defences, drainage or wave action are represented.`,
     exceeded:rows.filter(r=>r.status==='Review').length,below:rows.filter(r=>r.status==='NoFlag').length,
     unknown:rows.filter(r=>r.status==='Unknown').length};
 }
@@ -154,6 +200,11 @@ export function extractReceipt(node:{id:string},extract:ProjectionExtract,runId:
   const facts=prefixes
     +`${entity} a slr:ProjectionExtract, prov:Entity; slr:sourceDataset <${extract.provenance.datasetIRI}>; `
     +`slr:baselinePeriod ${quote(extract.provenance.baselinePeriod)}; dcterms:hasVersion ${quote(extract.provenance.datasetVersion)}; `
+    // The published unit and its factor to metres are not sea-level concepts, and experiment 58
+    // settled that the host mints no sea-level term, so QUDT carries them: the pack's vocabulary
+    // is vendored at a pinned digest and cannot gain terms here.
+    +`qudt:unit <${UNIT_IRIS[String(extract.table.unit)]??'http://qudt.org/vocab/unit/UNITLESS'}>; `
+    +`qudt:conversionMultiplier "${valueScale(extract)}"^^xsd:decimal; `
     +extract.provenance.citations.map(citation=>`dcterms:bibliographicCitation ${quote(citation)}`).join('; ')
     +`; slr:projectionSiteCount "${extract.siteIds.length}"^^xsd:integer.\n`;
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
@@ -186,7 +237,8 @@ export function comparisonReceipt(node:{id:string},comparison:Comparison,assignm
     const site=`<${base}output:${source}:site:${encodeURIComponent(siteId)}>`;
     facts+=`<${base}output:${node.id}:value:${encodeURIComponent(siteId)}> a slr:ProjectionValue, qudt:QuantityValue; `
       +`qudt:numericValue "${level}"^^xsd:decimal; qudt:unit <http://qudt.org/vocab/unit/M>; `
-      +`slr:scenario ${quote(comparison.selection.scenario)}; slr:workflow ${quote(comparison.selection.workflow)}; `
+      +`slr:scenario ${quote(comparison.selection.scenario)}; `
+      +`slr:basis ${quote(comparison.selection.basis)}; slr:basisKind ${quote(assignments.extract.provenance.basisKind)}; `
       +`slr:datasetFamily slr:${family}; slr:targetYear "${comparison.selection.year}"^^xsd:gYear; `
       +`slr:quantile "${comparison.selection.quantile}"^^xsd:decimal; slr:projectionSite ${site}.\n`;
   }
@@ -215,5 +267,6 @@ export function validateSeaLevelNode(node:WorkflowNode):void{
     const p=node.params;
     if(!text(p.verticalDatum))throw new Error('State the vertical datum for Compare level to elevation.');
     if(!text(p.elevationField))throw new Error('Name the elevation attribute for Compare level to elevation.');
+    if(!text(p.elevationReference))throw new Error('Declare what the elevations are measured from for Compare level to elevation: the dataset baseline sea surface, or another datum.');
   }
 }

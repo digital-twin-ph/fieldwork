@@ -76,3 +76,21 @@ test('hulls combine, which is the order NB03 uses',()=>{
   assert.ok(area>90000,`the combination is no smaller than either hull, got ${area}`);
   assert.ok(area<180000,`and smaller than the two added together, got ${area}`);
 });
+
+test('a hole is not overlap: one area cannot overlap itself',()=>{
+  // Found 2026-10-10 by the isochrone chain, whose corridors keep their holes.
+  // Outer rings alone were summed for the parts and holes subtracted from the
+  // combination, so a lone hole-bearing area reported its hole as doubly covered.
+  const hole=[[75,75],[75,125],[125,125],[125,75],[75,75]]
+    .map(([x,y])=>m.inverse([m.forward([-0.14,51.51])[0]+x,m.forward([-0.14,51.51])[1]+y]));
+  const outer=square(0,200);
+  const holed={...outer,geometry:{type:'Polygon',coordinates:[outer.geometry.coordinates[0],hole]}};
+  const got=combinedArea(polys(holed),node(),'r','src');
+  const parts=Number(/fw:partsAreaSquareMetres ([\d.]+)/.exec(got.receipt.facts)[1]);
+  const combined=Number(/fw:combinedAreaSquareMetres ([\d.]+)/.exec(got.receipt.facts)[1]);
+  assert.equal(Math.round(parts),37500,'the parts are net of the hole, not gross');
+  assert.equal(Math.round(combined),37500);
+  assert.equal(Math.round(parts-combined),0,'nothing is covered more than once');
+  assert.ok(!/covered more than once/.test(got.value.notes.join(' ')),
+    `no overlap should be claimed, got: ${got.value.notes.join(' ')}`);
+});

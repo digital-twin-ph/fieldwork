@@ -3,7 +3,7 @@
  "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
  "lab": {
   "repository": "https://github.com/digital-twin-ph/validation-lab",
-  "commit": "10ee36fb5b94833b629e7adb00a8996be416daf4"
+  "commit": "25190c8518af51bdc4dc62b3e9dde7c8293a8c89"
  },
  "outcomes": {
   "agrees": "Every case met the stated criterion.",
@@ -80,18 +80,18 @@
   },
   {
    "widget": "urn:fieldwork:widget:reachable_nodes",
-   "coversRelease": "0.2.0",
+   "coversRelease": "0.3.0",
    "check": "07-reachability",
    "result": "content/results/check-07-reachability.json",
-   "sha256": "43a4f0b3a4ae68036730a186b185f388e54fc4ae447cf38972ba918295dd4fb2",
+   "sha256": "7afb231c5a0130d83d87f5dee982ab25beb1a0e98fe851d786f9c1fbc69b55e3",
    "external": [
     "networkx 3.6"
    ],
    "criterion": "the same set of reached nodes exactly, every cost within 0.01 m, and every remaining budget within 0.01 m of the budget less the cost",
    "outcome": "agrees",
    "measured": "reached sets identical over 738 junctions, 142 each with none reached by only one implementation; worst cost difference 5.000e-03 m and worst remaining-budget difference 5.000e-03 m",
-   "ranAt": "2026-10-10T20:15:00.712353+00:00",
-   "note": "Compared against the implementation the original case study used: Advanced-1 NB03 reaches its isochrones with nx.ego_graph. The 5 mm residual is exactly the half-step of the two decimal places Fieldwork publishes, so the only disagreement is its rounding. Both traversals run on the edge lengths the fixture states and neither measures a street, so a wrong network passes in both. Covers outbound travel from one origin on one network; inbound is unexercised."
+   "ranAt": "2026-10-10T20:32:38.419776+00:00",
+   "note": "Compared against the implementation the original case study used: Advanced-1 NB03 reaches its isochrones with nx.ego_graph. The 5 mm residual is exactly the half-step of the two decimal places Fieldwork publishes, so the only disagreement is its rounding. Both traversals run on the edge lengths the fixture states and neither measures a street, so a wrong network passes in both. Covers outbound travel from one origin on one network; inbound is unexercised. Re-run against 0.3.0 after that release added speedMPerMin and travelMode to each junction: the parity validator refused evidence covering 0.2.0 while 0.3.0 was current, and the change being additive was not grounds for carrying the old result forward."
   }
  ]
 }

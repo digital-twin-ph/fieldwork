@@ -1,0 +1,61 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:travel_time_band",
+ "version": "0.1.0",
+ "nodeType": "travel_time_band",
+ "title": "Travel time band",
+ "released": "2026-10-10",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['travel_time_band']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "reached",
+    "type": "points"
+   }
+  ],
+  "output": "points"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:TravelTimeBand",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Emits an fw:TravelTimeBand activity carrying fw:bandMinutes, fw:bandBudgetMetres, fw:traversalBudgetMetres, fw:assumedSpeedMetresPerMinute, fw:junctionsOffered and fw:junctionsInBand, and prov:used the junction source. The traversal budget is asserted beside the band budget so a reader can see the band narrowed rather than widened. Publishing this moved the domain off fw:assumedSpeedMetresPerMinute, which now describes two activity classes."
+ },
+ "implementation": {
+  "files": [
+   "src/travel-time-band.ts",
+   "src/core.ts",
+   "src/palette.ts"
+  ],
+  "definition": "src/travel-time-band.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "Narrows reachable junctions to a shorter travel time, recomputing the budget left at each against the band. The rings of an isochrone map -- 1, 5, 10 and 15 minutes in the case study -- are not four traversals: a cumulative band is a subset, and the notebook's own note says nested thresholds are cumulative rather than disjoint. isochrone recomputes the whole Dijkstra per threshold including the snap, four times over for the Soho example, where one traversal banded four ways gives the same answer. Not a generic attribute filter, and deliberately: reachable_corridor truncates streets by remainingM over lengthM, so keeping a five minute subset of a fifteen minute traversal without recomputing remainingM would leave the longer budget's leftovers in place and draw corridors past the band, silently. The filter and the recomputation have to happen together. Takes no zone and no speed: the speed arrives on the junctions and the traversal's budget is recovered from them."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Eight unit checks cover near junctions kept and far ones dropped; the budget left being recomputed against the band rather than inherited, which is the defect the primitive exists to prevent; refusal of a band wider than its traversal, naming both times; refusal of junctions that do not share one budget or one speed; refusal of points that are not reachable junctions and of an empty input; a band nothing reaches reporting how far the nearest junction is; and refusal of an impossible band. The eighth is an internal consistency check, not parity: one 15 minute traversal of the 738-junction Soho network, banded at 1, 5, 10 and 15 minutes with each band feeding its own corridor, against isochrone's own four thresholds. Areas agree at 34.9, 3.8, 1.3 and 0.0 parts per million, the largest drift being the smallest ring where the two-decimal rounding of remainingM weighs most. Not established: that cumulative bands are the right presentation -- disjoint rings would need subtraction, which this does not do."
+ }
+}

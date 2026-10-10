@@ -40,15 +40,24 @@ export function combinedArea(
   const projected=parts.flatMap(f=>ringsOf(f.geometry).map(project));
   const combined=(projected.length===1?[projected[0]]
     :polygonClipping.union(projected[0],...projected.slice(1))) as ClipPolygon[];
-  const partsArea=projected.reduce((total,rings)=>total+ringAreaM2(rings[0]),0);
-  const combinedAreaM2=combined.reduce((total,rings)=>
-    total+rings.reduce((net,ring,i)=>net+(i===0?ringAreaM2(ring):-ringAreaM2(ring)),0),0);
+  // Net of holes, as the combined area is. Summing only outer rings here reported a
+  // single hole-bearing area as overlapping itself: a 200 m square with a 50 m hole came
+  // out as 40,000 m² of parts against 37,500 m² combined, and 2,500 m² "covered more than
+  // once" with nothing to overlap. Reachable corridors keep their holes, so the isochrone
+  // chain hit this on its union step.
+  const netArea=(rings:Position[][]):number=>
+    rings.reduce((net,ring,i)=>net+(i===0?ringAreaM2(ring):-ringAreaM2(ring)),0);
+  const partsArea=projected.reduce((total,rings)=>total+netArea(rings),0);
+  const combinedAreaM2=combined.reduce((total,rings)=>total+netArea(rings),0);
   const geometry:Boundary={type:'MultiPolygon',
     coordinates:combined.map(rings=>rings.map(r=>r.map(p=>projection.inverse(p))))};
   const overlapM2=partsArea-combinedAreaM2;
   const notes=[
     `${parts.length} area${parts.length===1?'':'s'} combined into ${combined.length} separate piece${combined.length===1?'':'s'}, in ${projection.crs}.`,
-    `The parts cover ${partsArea.toFixed(0)} m² between them and ${combinedAreaM2.toFixed(0)} m² once combined; ${Math.max(0,overlapM2).toFixed(0)} m² was covered more than once.`,
+    `The parts cover ${partsArea.toFixed(0)} m² between them and ${combinedAreaM2.toFixed(0)} m² once combined.`
+      // Said only when there is something to say: "0 m² was covered more than once" is noise
+      // on the common case, and both areas are already stated for anyone subtracting.
+      +(overlapM2>=1?` ${overlapM2.toFixed(0)} m² was covered more than once.`:''),
     'Combining answers whether anywhere is covered, not how well. Two areas overlapping meant two things reached the same ground, and that is now gone.',
     'What distinguished the parts — which facility, which site — is discarded. That is the operation, not a defect.',
   ];

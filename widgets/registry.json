@@ -539,7 +539,7 @@
   {
    "id": "urn:fieldwork:widget:reachable_nodes",
    "nodeType": "reachable_nodes",
-   "currentVersion": "0.2.0",
+   "currentVersion": "0.3.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -550,6 +550,11 @@
      "version": "0.2.0",
      "path": "widgets/releases/reachable_nodes/0.2.0.json",
      "sha256": "08126d2196dec1b42ab197e30993b260f1b8d2a66c9ffd6f93af46f60ccdfae3"
+    },
+    {
+     "version": "0.3.0",
+     "path": "widgets/releases/reachable_nodes/0.3.0.json",
+     "sha256": "ebc8cbce694b41677bddc93beb24e1e850d57e50e325f0fa9945ad3ac660b057"
     }
    ]
   },
@@ -714,6 +719,18 @@
      "version": "0.4.0",
      "path": "widgets/releases/table_output/0.4.0.json",
      "sha256": "3eba13d48d016fa88371b84e0601d43b6b7ab4d134a7af6609326654f2564bd0"
+    }
+   ]
+  },
+  {
+   "id": "urn:fieldwork:widget:travel_time_band",
+   "nodeType": "travel_time_band",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/travel_time_band/0.1.0.json",
+     "sha256": "8780215a29aed997885a5f4d8d9b534af2a63c3ebc11ba516d74e79403c09174"
     }
    ]
   },

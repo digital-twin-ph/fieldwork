@@ -16,6 +16,20 @@ fw:VoronoiComputation a owl:Class;
 fw:NetworkIsochrone a owl:Class;
   rdfs:label "Network isochrone computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Directed network reachability with explicit cost, snapping and corridor approximation.".
+fw:TravelTimeBand a owl:Class;
+  rdfs:label "Travel time band"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Narrows a reachable set to a shorter travel time and recomputes the budget left at each junction against it. Bands from one traversal are cumulative, not disjoint: a five minute band contains the one minute band.".
+fw:bandMinutes a owl:DatatypeProperty; rdfs:domain fw:TravelTimeBand; rdfs:range xsd:decimal;
+  rdfs:label "Travel time this band keeps, in minutes".
+fw:bandBudgetMetres a owl:DatatypeProperty; rdfs:domain fw:TravelTimeBand; rdfs:range xsd:decimal;
+  rdfs:label "Band budget, in metres".
+fw:traversalBudgetMetres a owl:DatatypeProperty; rdfs:domain fw:TravelTimeBand; rdfs:range xsd:decimal;
+  rdfs:label "Budget of the traversal being narrowed, in metres";
+  rdfs:comment "Recovered from the junctions themselves rather than restated, and emitted so that a band can be seen to narrow rather than widen.".
+fw:junctionsOffered a owl:DatatypeProperty; rdfs:domain fw:TravelTimeBand; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Junctions the traversal offered".
+fw:junctionsInBand a owl:DatatypeProperty; rdfs:domain fw:TravelTimeBand; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Junctions within this band".
 fw:ReachableCorridor a owl:Class;
   rdfs:label "Reachable corridor computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "A buffer around the street segments a traveller can enter within a budget, truncated where the budget runs out mid-block. The half-width is a claim that anywhere within it is reached, which includes the insides of buildings and the far side of walls.".
@@ -42,9 +56,9 @@ fw:travelBudgetMetres a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability
   rdfs:comment "The quantity actually traversed on. The minutes are this divided by the assumed speed.".
 fw:travelBudgetMinutes a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:decimal;
   rdfs:label "Travel budget as asked for, in minutes".
-fw:assumedSpeedMetresPerMinute a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:decimal;
+fw:assumedSpeedMetresPerMinute a owl:DatatypeProperty; rdfs:range xsd:decimal;
   rdfs:label "Single speed assumed for every traveller and every street";
-  rdfs:comment "Emitted beside the minutes so a reader can divide back out to the metres that were really used. A speed is an assumption about a place in a period and does not transfer between settings: the 75 metres per minute this project long defaulted to is 4.5 km/h from a case study of pedestrians in Soho in 1854.".
+  rdfs:comment "No domain: asserted by fw:NetworkReachability and by fw:TravelTimeBand, which restates the speed it was given rather than choosing one. Emitted beside the minutes so a reader can divide back out to the metres that were really used. A speed is an assumption about a place in a period and does not transfer between settings: the 75 metres per minute this project long defaulted to is 4.5 km/h from a case study of pedestrians in Soho in 1854.".
 fw:travelMode a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:string;
   rdfs:label "Kind of travel the speed is meant to represent";
   rdfs:comment "One of walking, cycling, driving or other, checked against the speed so that a mode and a number cannot contradict each other. Public transport is not among them: it follows routes and a timetable rather than the street network.".

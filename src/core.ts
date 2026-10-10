@@ -6,6 +6,7 @@ import {combinedArea,validateCombinedAreaNode} from './combined-area.js';
 import {snapToNetwork,validateSnapNode} from './network-snap.js';
 import {reachableNodes,validateReachNode} from './reachable-nodes.js';
 import {reachableCorridor,validateCorridorNode} from './reachable-corridor.js';
+import {travelTimeBand,validateBandNode} from './travel-time-band.js';
 /** Resolves a named credential to its secret. No current widget needs one; the credential
  *  manager stands on its own (experiment 30) and executeWorkflow still accepts a resolver so a
  *  future authenticated source does not change this signature. */
@@ -67,6 +68,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
   reproject:{title:'Reproject input',group:'Sources',icon:'⇄',color:'blue',description:'Import projected UTM points and convert them to WGS84 longitude/latitude',inputs:[],output:'points'},
   raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
+  travel_time_band:{title:'Travel time band',group:'Spatial operations',icon:'◔',color:'teal',description:'Narrow reachable junctions to a shorter time, recomputing the budget left at each',inputs:[['reached','points']],output:'points'},
   reachable_corridor:{title:'Reachable corridor',group:'Spatial operations',icon:'▦',color:'teal',description:'The strip of ground along the streets a traveller can get down within the budget',inputs:[['reached','points'],['network','network']],output:'polygons'},
   reachable_nodes:{title:'Reachable junctions',group:'Spatial operations',icon:'◴',color:'teal',description:'Street junctions within a travel time, each carrying the budget left on arrival',inputs:[['sites','points'],['network','network']],output:'points'},
   snap_to_network:{title:'Snap to street network',group:'Spatial operations',icon:'⇥',color:'teal',description:'Attach each site to its nearest network node, carrying how far it moved',inputs:[['sites','points'],['network','network']],output:'points'},
@@ -161,6 +163,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='snap_to_network')validateSnapNode(n);
     if(n.type==='reachable_nodes')validateReachNode(n);
     if(n.type==='reachable_corridor')validateCorridorNode(n);
+    if(n.type==='travel_time_band')validateBandNode(n);
     if(n.type==='find_health_facilities')validateFindHealthFacilitiesNode(n);
     if(n.type==='buffer_point')validateBufferPointNode(n);
     if(n.type==='sample_raster')validateSampleNode(n);
@@ -286,6 +289,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'donut_geomask':case 'hex_aggregate':{
         value=node.type==='donut_geomask'?moveDonut(inputs.points,node.params):aggregateHex(inputs.points,node.params);
         receipts.push(privacyReceipt(node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from,inputs.points.features.length,value as PointCollection|Polygons));break;
+      }
+      case 'travel_time_band':{
+        const made=travelTimeBand(inputs.reached,node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='reached')!.from);
+        value=made.value;receipts.push(made.receipt);break;
       }
       case 'reachable_corridor':{
         const made=reachableCorridor(inputs.reached,inputs.network,node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='reached')!.from);

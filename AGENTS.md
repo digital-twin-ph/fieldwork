@@ -113,11 +113,21 @@ cannot get through.
 
 ## Rules
 
-Every rule here is provisional. A rule earns its place by **firing** — by
-catching something that would otherwise have gone through — and until it has
-fired it stays provisional, however sensible it sounds. A rule that has never
-fired is like a screening test that flags nothing: either the problem is absent
-or the test does not work, and you cannot tell by reading it.
+This is a developmental evaluation. The framework does not exist yet in settled
+form, so rules cannot be written for it in advance. What can be done rigorously
+is to discover which rules are useful enough **not to put the application in a
+straitjacket**.
+
+Every rule here is provisional, and has to pass two tests.
+
+**Does it fire?** A rule earns its place by catching something that would
+otherwise have gone through. A rule that has never fired is like a screening test
+that flags nothing: either the problem is absent or the test does not work, and
+you cannot tell by reading it.
+
+**Does it bind?** A rule can fire reliably and still be harmful, by stopping the
+framework from moving. Ask what it would have prevented, not only what it caught.
+These are the dangerous ones, because firing looks like evidence of worth.
 
 When a rule fires, record it: what it caught, and whether the gap was in design,
 development, implementation or evaluation. Put that in the experiment that

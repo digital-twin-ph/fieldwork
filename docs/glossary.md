@@ -245,20 +245,64 @@ validation rule and behaves like a limitation, because any wrong answer typed in
 | **Dataset family** | Which published family a value came from — for sea level, whether vertical land motion is included. Values from different families are not comparable | [47](experiments/47-sea-level-pack.md) |
 | **Vertical reference** | *Proposed.* The datum an elevation is on, and whether it is a sea-surface baseline or a geodetic datum. Currently free text, which is why a comparison can be invalid while every check passes | [62](experiments/62-workflow-traversal.md) |
 
-## Pipeline stages
+## Workflow stages
 
-_For working with external data, and for saying honestly what a widget does and does not do._
-A pack or a widget states, per stage, whether it supplies it, assumes it, or declares it
-out of scope ([43](experiments/43-widget-packs.md), [47](experiments/47-sea-level-pack.md)).
+_A workflow has three stages: **input**, **process**, **output**. Everything below
+decomposes one of them. If a stage does not map to one of the three, it is not a
+stage._
 
-| Stage | Produces |
+### Input — getting the data
+
+| Stage | What it produces |
 | --- | --- |
 | **Discovery** | Learning enough about data to decide whether to fetch it — where it is, what it covers, how big it is, its format and licence — without transferring it. If it cannot fail, it is a guess at an address rather than a discovery |
 | **Acquisition** | Bytes with a digest and byte identity |
 | **Extraction** | Taking the part of a larger dataset a workflow needs, and recording which part it was |
 | **Import** | The artifact inside a project, with provenance. **An import is not an acquisition**: an acquisition replays from its request, an import can only be trusted if it records where it came from |
-| **Application** | A result computed from the artifact. **A consumer is not a model**: a widget applying published results must never imply it produced them |
-| **Presentation** | A view of results already computed |
+
+The study area is an input, not a stage of its own: it is a source node with an
+output port, and it carries the scope of the question.
+
+### Process — working with the data
+
+| Stage | What it produces | Example |
+| --- | --- | --- |
+| **Review** | What does not belong, and why. Exclusions carry a reason | `coverage_check` |
+| **Derivation** | The same claim in a new shape — buffered, clipped, reprojected, sampled, joined | `buffer_point`, `sample_raster`, `slr_site_assignment` |
+| **Summary** | Fewer rows than it started with. The detail is gone and does not come back | `rate`, `case_series`, `hex_aggregate` |
+| **Judgement** | A decision against a criterion someone chose, which the result must state | `slr_threshold_comparison` |
+
+These four are not a classification imposed afterwards. The application already
+types them apart: review produces `coverage-check`, judgement produces
+`decisions`, derivation and summary produce data ports.
+
+### Output — communicating the result
+
+| Stage | What it produces | Status |
+| --- | --- | --- |
+| **View** | One map, chart or table of a result. A view presents a result and must not create one | Built |
+| **Composition** | Several views and text as one product: a field report, story map, infographic or dashboard | **Designed, not built** ([17](experiments/17-workflow-publication-products.md), [36](experiments/36-communication-layer.md)). Output nodes are terminal today, so composition needs an output contract that is not |
+
+Output ends at the export. **Releasing — publishing, sharing, redistributing — is
+outside Fieldwork**, and the application should not claim a stage it does not
+perform. What is Fieldwork's responsibility is that the export carries what the
+next person needs: provenance, the licence and its obligations, and a snapshot a
+later run cannot silently change.
+
+### The six pack stages are an input taxonomy
+
+A pack declares, per stage, whether it supplies it, assumes it or rules it out
+([43](experiments/43-widget-packs.md), [47](experiments/47-sea-level-pack.md)).
+Its six are discovery, acquisition, extraction, import, application and
+presentation — **four of them input**, because a pack supplies data and
+vocabulary and little else. That taxonomy is correct for packs and was reused as
+the workflow vocabulary, which is why process and output stayed undecomposed for
+so long.
+
+**Application** is not a workflow stage. In the pack contract it is a claim about
+whose science a result rests on: *a consumer is not a model — a widget applying
+published results must not imply it produced them.* That is a property of a
+widget, not a step in a workflow.
 
 ## Packaging
 

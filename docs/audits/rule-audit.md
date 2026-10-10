@@ -69,7 +69,8 @@ Prefer to mechanise. If a rule cannot be mechanised, say so and say why.
 | Do not report work as "validated" without naming the check | Agent | Seen | Not recorded | Provisional |
 | Write the experiment before adding a new primitive | Agent | None | Not as a catch. Followed 5 times, missed twice, in the session it was written | Provisional; narrowed to new primitives |
 | Do not treat `proposed` or `blocked` as a defect to fix | Agent | Seen | Not yet. The episode that prompted it came first | Provisional; no way yet to tell a real blocker from a recorded state |
-| D5, D6, D8, D9 | Agent | None | **Never applied.** Written after all 42 widgets existed | Proposals, not gates |
+| **D5** | Agent | None | **Yes, once, 2026-10-10.** The coordinate system is a property of a layer and is carried as a parameter on five consumers instead, because `SpatialReference` admits only CRS84 ([40](../experiments/40-reprojection-primitives.md)) | Provisional, but it has now caught something |
+| D6, D8, D9 | Agent | None | **Never applied.** Written after all 42 widgets existed | Proposals, not gates |
 | Never let a passing suite stand in for practitioner understanding | Agent | None | Never | **Withdrawn.** Nothing to apply |
 | D9: a worked example's node count must not increase | Agent | None | Never | **Withdrawn.** The threshold was asserted, not measured |
 | "This project's *characteristic* defect" | Agent | None | Never counted | **Rewritten** to name the one instance on record |

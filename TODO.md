@@ -340,6 +340,39 @@ Also fixed: `scripts/widget-coverage.mjs` did not know about the Manila example,
 so D10's mechanised check was under-reporting. A check that silently misses an
 example is worse than no check for the widgets inside it.
 
+## Reprojection goes one way only, because a layer cannot say where it is
+
+Raised 2026-10-10 from the Inspector: reprojection is useful in more than one
+direction and to more than one projection. The widget does WGS84 UTM to CRS84, at
+import, and nothing else.
+
+The obstacle is the carrier. `SpatialReference` is a type whose every field is a
+fixed literal — datum `WGS84`, geometry CRS `OGC:CRS84`, units `degree` — so a
+layer cannot state that it is in anything else. Reprojection can only happen on
+the way in, or temporarily inside a widget.
+
+The cost is countable: **five widgets each ask the practitioner for a UTM zone**
+(`mean_center`, `compare_point_sets`, `reproject`, `voronoi`, `isochrone`), and
+`catchments.ts` carries its own `metric()` helper. The same question is asked
+five times because the data cannot answer it. That is D5 firing for the first
+time — a qualifier living in every consumer instead of on the input.
+
+Three steps, in order, and the first is a carrier change:
+
+1. A spatial reference that can describe a projected CRS. Belongs with the port
+   work in [66](docs/experiments/66-ports-as-schema-binding.md).
+2. Reprojection as a Compute widget: a layer in, a layer out, a stated target.
+   The present node sits in Sources because it reads a file, conflating input
+   with process.
+3. Metric widgets reading the CRS of the layer they are given, and refusing one
+   in degrees rather than assuming a zone.
+
+Two limits stay whatever is built. A datum shift needs a grid this prototype does
+not carry, and a clean conversion does not confirm the declared zone was right —
+both already stated in the widget and worth keeping stated.
+
+Full reasoning in [40](docs/experiments/40-reprojection-primitives.md).
+
 ## Widget use tracking
 
 Proposed by the practitioner during the widget audit, raised again on 2026-10-10,

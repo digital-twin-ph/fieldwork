@@ -17,8 +17,9 @@ const load=async name=>{
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
 const widgets=registry.widgets.map(w=>w.nodeType);
 
-const [core,snow,geo,raster,naledi,study,coverage]=await Promise.all(
-  ['core.js','john-snow.js','geoprivacy-example.js','raster-example.js','old-naledi.js','study-area.js','spatial-coverage.js'].map(load));
+const [core,snow,geo,raster,naledi,study,coverage,sealevel]=await Promise.all(
+  ['core.js','john-snow.js','geoprivacy-example.js','raster-example.js','old-naledi.js','study-area.js','spatial-coverage.js',
+   'sea-level-example.js'].map(load));
 
 const examples=[];
 const add=(name,build)=>{try{const w=build();if(w?.nodes)examples.push([name,w]);}catch(error){skipped.push(`${name} (${error.message})`);}};
@@ -37,6 +38,7 @@ else{
     skipped.splice(skipped.findIndex(s=>s.startsWith('raster-example.js')),1);
   }
 }
+if(sealevel)add('manila sea-level',()=>sealevel.seaLevelExample());
 if(snow){add('snow-voronoi',()=>snow.johnSnowExample('snow-voronoi'));add('snow-isochrone',()=>snow.johnSnowExample('snow-isochrone'));}
 if(geo)add('snow-geoprivacy',()=>geo.geoprivacyExample());
 

@@ -33,10 +33,36 @@ audited whole.
 
 Three things, none of them inherited.
 
-**A name.** The widget naming convention governs node types the project controls.
-A practitioner naming their own routine primitive is not bound by it and should
-not be while it is private. A published one read as equivalent to a reviewed
-widget is the `xpert` problem with more authors.
+**A name that asserts where it belongs.** The widget naming convention says
+`verb_object` and leaves the verb free. For compositions the verb should come
+from a **closed set — the stage taxonomy**: check, compute, relate, summarise,
+classify, and the input and output verbs. A composition called
+`relate_facilities_to_gauges` has declared its stage in its name.
+
+Three things follow.
+
+**It can be tried without renaming anything.** Measured 2026-10-10: of 42
+widgets, **one** starts with a stage verb and sixteen are single words with no
+verb at all. Applying this to what exists would be forty-one migrations for names
+that have obstructed nobody. Compositions are all new, so every one can follow it
+from birth, and after a dozen there is evidence instead of an argument.
+
+**The palette tension dissolves.** [75](75-compositions-as-nodes.md) records a
+choice between grouping compositions by form — one "Micro-workflows" group — and
+by what they do, which scatters a practitioner's own work. If the name asserts the
+stage, the group is derived from the name and the choice disappears. What still
+needs marking is **authorship**, which is a different axis: project widget, your
+composition, somebody else's.
+
+**The assertion can be checked against the graph.** A composition named
+`summarise_*` whose members do not reduce rows is claiming something its contents
+contradict. A terminal member emitting `decisions` is a classification whatever
+the name says. How far the stage is derivable from the members is untested — the
+ends look clear and the middle may not be — but it is the difference between a
+style guide and a rule that can catch something.
+
+A private composition stays unbound by any of this. A published one read as
+equivalent to a reviewed widget is the `xpert` problem with more authors.
 
 **A public parameter set.** Which of the members' parameters the composition
 exposes. This is the only genuinely new design decision: too few and it is rigid,

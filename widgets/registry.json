@@ -602,6 +602,18 @@
    ]
   },
   {
+   "id": "urn:fieldwork:widget:snap_to_network",
+   "nodeType": "snap_to_network",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/snap_to_network/0.1.0.json",
+     "sha256": "51332a8c55a6dd1365ca048272bf9af44cf0580045e4c85527e07a8353901998"
+    }
+   ]
+  },
+  {
    "id": "urn:fieldwork:widget:summarize_combined_area",
    "nodeType": "summarize_combined_area",
    "currentVersion": "0.1.0",

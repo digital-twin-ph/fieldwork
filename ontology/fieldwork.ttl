@@ -16,6 +16,18 @@ fw:VoronoiComputation a owl:Class;
 fw:NetworkIsochrone a owl:Class;
   rdfs:label "Network isochrone computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Directed network reachability with explicit cost, snapping and corridor approximation.".
+fw:NetworkSnap a owl:Class;
+  rdfs:label "Network snap computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Attaches each site to its nearest network node by straight-line distance in a projected CRS. The distance is recorded and not charged to any later travel time, so a site set back from the road is treated as if it were on it.".
+fw:siteCount a owl:DatatypeProperty; rdfs:domain fw:NetworkSnap; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Number of sites snapped".
+fw:snappedNodeCount a owl:DatatypeProperty; rdfs:domain fw:NetworkSnap; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Distinct network nodes the sites snapped to";
+  rdfs:comment "Fewer than the site count means sites share a node and are indistinguishable to anything routed from there.".
+fw:greatestSnapDistanceMetres a owl:DatatypeProperty; rdfs:domain fw:NetworkSnap; rdfs:range xsd:decimal;
+  rdfs:label "Furthest any site moved to reach the network, in metres".
+fw:snapLimitMetres a owl:DatatypeProperty; rdfs:domain fw:NetworkSnap; rdfs:range xsd:decimal;
+  rdfs:label "Distance beyond which a site is refused rather than snapped".
 fw:CombinedArea a owl:Class;
   rdfs:label "Combined area computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Union of areas in a projected CRS. Answers whether anywhere is covered, not how well: two areas overlapping meant two things reached the same ground, and combining them discards that along with whatever distinguished the parts.".

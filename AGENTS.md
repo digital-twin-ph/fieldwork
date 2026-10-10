@@ -120,10 +120,11 @@ straitjacket**.
 
 Every rule here is provisional, and has to pass two tests.
 
-**Does it fire?** A rule earns its place by catching something that would
-otherwise have gone through. A rule that has never fired is like a screening test
-that flags nothing: either the problem is absent or the test does not work, and
-you cannot tell by reading it.
+**Does it fire, and does it enforce?** A rule earns its place by catching
+something that would otherwise have gone through. But a rule can fire **in
+vitro** — inside the audit that proposed it — and change nothing. The naming
+convention produced nine findings and not one rename. Count what changed, not
+what was noticed.
 
 **Does it bind?** A rule can fire reliably and still be harmful, by stopping the
 framework from moving. Ask what it would have prevented, not only what it caught.
@@ -133,10 +134,10 @@ When a rule fires, record it: what it caught, and whether the gap was in design,
 development, implementation or evaluation. Put that in the experiment that
 reports the catch, and update [the rule audit](docs/audits/rule-audit.md).
 
-Prefer to mechanise. A rule in code with a test reports its own firings; a rule
-in prose fires silently. "A widget nobody can add is invisible" lives in
-`src/palette.ts` and caught seven; the design checks live in prose and fired only
-when someone ran an audit by hand.
+Prefer to mechanise. **Mechanised rules enforce; prose rules describe.** "A
+widget nobody can add is invisible" lives in `src/palette.ts` with two tests and
+made seven widgets addable. The naming convention lives in a document, found nine
+names, and changed none of them.
 
 Before adding a rule, read [the rule audit](docs/audits/rule-audit.md). Avoid
 rules a reader can only agree with, rules whose only evidence is the argument

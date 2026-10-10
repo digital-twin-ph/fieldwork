@@ -102,6 +102,12 @@ wrote the code. Clarity and accessibility come first.
 - Be concise. Cut a sentence that adds no fact, and a clause that only adds
   emphasis.
 - Say the thing, then stop. Do not restate a point in three ways.
+- Write a sentence because it is worth saying, not because a passage needs an
+  ending. **Closing lines are where this fails here**: the analysis is sound, and
+  then a final sentence generalises past the evidence to round it off. Four
+  instances on 2026-10-10 alone, each caught by a reader rather than by the
+  author. If a closing sentence states no fact and names no consequence, delete
+  it and end on the last thing that did.
 - Define a term where it is first used, or link [the glossary](docs/glossary.md).
 - State what is not established as plainly as what is.
 - Prefer a table or a short list to a paragraph, where the content is a set of

@@ -373,6 +373,46 @@ both already stated in the widget and worth keeping stated.
 
 Full reasoning in [40](docs/experiments/40-reprojection-primitives.md).
 
+## Let practitioners compose their own routine primitives
+
+Proposed 2026-10-10. The project ships **core primitives**; a practitioner wires
+the sequence they keep repeating and saves it as a reusable node of their own —
+a routine primitive. A composite stays expandable, so opening it shows the steps.
+
+Already specified twice and never built:
+
+- [31](docs/experiments/31-facility-access-primitives.md): "Common tasks may be
+  presented as a reusable subworkflow with an expandable internal graph, rather
+  than requiring a beginner to configure every step."
+- [prior art](docs/research/prior-art.md), on the QGIS Model Designer: "Future
+  reusable subworkflows should expose a small public parameter set and retain the
+  internal graph."
+
+What is new in this proposal is **who composes**. The prior art reads as though
+the project ships the subworkflows. If practitioners make them, the project can
+stop guessing which composites are worth shipping — and the audit's nine example
+nodes, which bake one demonstration's specifics into a palette entry, are the
+case for it. Those should have been somebody's saved composition.
+
+It also dissolves the teaching tension above without a tier scheme: one node for
+whoever wants the answer, an open graph for whoever wants to learn.
+
+Four things it has to get right, and none is cosmetic:
+
+- **Receipts.** Every step in this application produces one. A composition must
+  produce the receipts of its members, or the evidence chain breaks exactly where
+  the work got interesting.
+- **Ports.** A composition's inputs and outputs are the unconnected ports of its
+  members. Derivable, but it is a contract and belongs with
+  [66](docs/experiments/66-ports-as-schema-binding.md).
+- **Naming.** Node types are governed by a convention. A private composition can
+  be called anything; a shared one read as equivalent to a shipped widget cannot.
+  `xpert` is what happens when a name is chosen without that discipline.
+- **Sharing.** A shared composition is pack-shaped — it needs a version, a digest
+  and an owner, or it is an unreviewable artifact that looks like a reviewed one.
+
+Not started.
+
 ## GIS workflows 101: is there a teaching tier in the palette?
 
 Raised 2026-10-10. Voronoi and isochrone hide their steps deliberately, because

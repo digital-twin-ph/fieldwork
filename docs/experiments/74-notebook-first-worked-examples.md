@@ -111,9 +111,34 @@ What would settle it, and neither is done:
   could state the steps it stands for without requiring anyone to wire them.
   Untested, and the obvious risk is that it makes the palette look harder.
 
-Recorded as a tension, not a plan. The temptation is to invent a tier and sort 42
-widgets into it this afternoon; the project has enough rules written in one
-sitting.
+### The mechanism that would hold both sides is already specified
+
+Twice, and unbuilt.
+
+[31](31-facility-access-primitives.md): "Common tasks may be presented as a
+**reusable subworkflow with an expandable internal graph**, rather than requiring
+a beginner to configure every step."
+
+[prior-art](../research/prior-art.md), on the QGIS Model Designer: "Future
+reusable subworkflows should **expose a small public parameter set and retain the
+internal graph**."
+
+An expandable composite is not a compromise between the two sides; it is both of
+them. A practitioner who wants the answer uses one node. A practitioner who wants
+to learn opens it and sees the steps. Nobody has to choose on anyone else's
+behalf, which is what a tier scheme would do.
+
+The practitioner's addition goes further than the prior art: **the compositions
+are made by users, not shipped.** The project supplies core primitives; a
+practitioner wires the ones they repeat and keeps that as their own routine
+primitive. That changes who decides what a composite is — and the audit's nine
+"example nodes", which bake one demonstration's specifics into a shipped widget,
+are the strongest argument for it. Those should have been somebody's saved
+composition, not a palette entry.
+
+Recorded as a tension with a candidate mechanism, not a plan. The temptation is
+to invent a tier and sort 42 widgets into it this afternoon; the project has
+enough rules written in one sitting.
 
 ## Sea level: the notebook will be written, not found
 

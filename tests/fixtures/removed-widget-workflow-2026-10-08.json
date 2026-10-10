@@ -1,0 +1,27 @@
+{
+  "schema": "fieldwork/workflow/1",
+  "name": "Facilities from a widget that no longer exists",
+  "exampleId": "blank",
+  "nodes": [
+    {"id": "area", "type": "area", "x": 20, "y": 40,
+     "params": {"source": "drawn", "label": "Manila study area", "selectionMode": "bbox",
+       "geometry": {"type": "Polygon", "coordinates": [[[120.93,14.52],[121.05,14.52],[121.05,14.68],[120.93,14.68],[120.93,14.52]]]}}},
+    {"id": "hs", "type": "healthsites_discovery", "x": 320, "y": 40,
+     "params": {"label": "Find healthsites facilities", "credentialRef": "healthsites-personal",
+       "country": "Philippines", "useArea": true, "kinds": ["hospital", "clinic"],
+       "data": {"type": "FeatureCollection", "features": [
+         {"type": "Feature", "id": "facility-1",
+          "properties": {"name": "Ospital ng Maynila", "kind": "hospital"},
+          "geometry": {"type": "Point", "coordinates": [120.98, 14.57]}}]},
+       "retrieved": {"filename": "healthsites-manila.geojson",
+         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         "bytes": 4096, "kept": 1, "dropped": {"kind": 0, "coordinates": 0, "name": 0},
+         "at": "2026-10-08T00:00:00.000Z"}}},
+    {"id": "map", "type": "map_output", "x": 620, "y": 40,
+     "params": {"label": "Facilities", "inputMode": "spatial"}}
+  ],
+  "edges": [
+    {"id": "e1", "from": "area", "to": "hs", "port": "area"},
+    {"id": "e2", "from": "area", "to": "map", "port": "area"}
+  ]
+}

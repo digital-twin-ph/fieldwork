@@ -438,15 +438,40 @@ their own routine primitive is not bound by it, and should not be while the
 composition is private — but a published one read as equivalent to a reviewed
 widget is exactly the `xpert` problem with more authors.
 
-### The one new problem: version drift
+### Version drift is not hypothetical. It already happens, silently
 
-A composition pins the widget versions it was built against, or it floats. Pinned
-goes stale and eventually refers to releases nobody ships. Floating can silently
-change meaning when a member widget changes what it does. Packs already face this
-and answer it by pinning a commit and vendoring files at recorded digests; a
-composition should probably do the same and say when a pinned member has moved.
+Not designed for. Forced instead, and measured, on 2026-10-10 —
+`tests/composition-drift.test.mjs` with a fixture holding a widget removed the day
+before.
 
-Not started.
+**Fieldwork already floats.** A saved workflow names widget *types*, never
+versions: every node is `id, params, type, x, y`, and all 76 release files declare
+`versionPersistence: "not-yet-persisted"`. There is no field in which a version
+could be recorded, so nothing can be compared and nothing can go stale. A workflow
+opened after a widget changes gets the new widget, whatever it now does.
+
+What a workflow saved on 2026-10-08 does today, when the widget it used was
+removed on the 9th:
+
+| | |
+| --- | --- |
+| Does it open? | Yes |
+| Is the node rewritten? | Yes, to `find_health_facilities` |
+| Is the practitioner told? | **No.** No warning, no note on the node, nothing in a receipt |
+| Does any trace of the old type survive? | No |
+| Its stored facilities? | Dropped, correctly — their provenance could not be carried — and **silently** |
+| `country: "Philippines"` | Became `"PHL"`, a value nobody typed |
+
+The dropping is right: that data's provenance was a hand-back of a file this
+application never saw, and relabelling it would be a false record. The finding is
+not the drop. It is that **everything above happens with no notification at all**,
+and a practitioner reopening the workflow would see a configured node, a changed
+country and no facilities, with nothing to explain any of it.
+
+So the question for compositions is not how to prevent drift. It is what a
+practitioner should be told when it happens, which can now be argued from a case
+rather than from a hypothetical. The tests record today's behaviour; if loud
+failure is introduced, they fail, and the change becomes visible.
 
 ## GIS workflows 101: is there a teaching tier in the palette?
 

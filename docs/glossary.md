@@ -249,7 +249,8 @@ validation rule and behaves like a limitation, because any wrong answer typed in
 
 _A workflow has three stages: **input**, **process**, **output**. Everything below
 decomposes one of them. If a stage does not map to one of the three, it is not a
-stage._
+stage._ How these replaced an earlier six, and what was wrong with them, is in
+[73](experiments/73-workflow-stage-vocabulary.md).
 
 ### Input — getting the data
 

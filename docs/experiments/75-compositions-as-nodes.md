@@ -103,11 +103,20 @@ the project already contains the cases:
 The last row is the useful control. Not every order matters, and a composition
 that lets someone check costs less than an argument about it.
 
-**This belongs in the documentation as a possibility.** A composition's
-description should say which of its steps can be reordered, which cannot, and
-where the order encodes a methodological choice rather than a convenience. An
-order that changes the answer is an assumption, and an assumption nobody can see
-is the thing this project keeps finding at the bottom of its defects.
+**This belongs in the documentation as a possibility.** When an order changes the
+answer it is one of three things, and a reader cannot tell which by looking:
+
+- **Required.** Projecting before measuring is not a choice. The other order is
+  wrong, and a composition that permits it should refuse or warn.
+- **A methodological choice.** Masking before aggregating and aggregating before
+  perturbing are both defensible and make different disclosure claims. The
+  composition should say which it made.
+- **Immaterial.** Buffer and union agree for a fixed radius. Worth stating, so
+  nobody spends an afternoon on it.
+
+A composition's description should say which of the three each reorderable pair
+is. That is the documentation this makes possible, and it is more specific than
+saying the order matters.
 
 ## Design checks
 

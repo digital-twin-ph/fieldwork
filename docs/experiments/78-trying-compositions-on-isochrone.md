@@ -47,11 +47,26 @@ setback: it is the notebook-first method producing its bill of materials.
 Written now so they can be wrong.
 
 1. **Most of the work is the missing primitives**, not the composition machinery.
-2. **The composition will not reproduce the widget exactly.** The widget makes
-   decisions the notebook does not — hole filling, a snap distance limit — and
-   either the composition needs them as parameters or the widget hides a choice
-   nobody documented. Either outcome is a finding, and the second is the more
-   valuable.
+2. **The knobs will not distribute evenly, and that is the test.** An earlier
+   draft of this prediction said the widget hides decisions the notebook does not
+   make, naming hole filling and the snap limit. That was wrong: `isochrone`
+   exposes nine parameters — `zone`, `hemisphere`, `minutes`, `thresholds`,
+   `fillHoles`, `speedMPerMin`, `bufferM`, `maxSnapM`, `direction` — and those two
+   are among them. Nothing is hidden.
+
+   The real question is what happens to nine knobs spread across six members.
+   `maxSnapM` belongs to the snapping step, `bufferM` to the buffer, `fillHoles`
+   to the union, `zone` to the projection. A composition has to choose which to
+   expose, which is [76](76-composition-governance.md)'s public parameter set with
+   a concrete case. **So the comparison is not hidden against visible but bundled
+   against distributed**: does one node with nine knobs help, because everything is
+   tuned in one place, or obscure, because you cannot tell which step a knob
+   acts on?
+
+   Decisions genuinely without a knob are the ones to look for: the order of
+   operations, whether the buffer precedes or follows the union, the hull method.
+   Those are candidates for something undocumented, and they are a smaller and
+   more specific target than the first draft claimed.
 3. **The metric CRS will surface as "which node owns the zone?"** A chain of six
    nodes each asking for a UTM zone is absurd in a way a single widget concealed,
    so the trial should force the D5 question into the open.

@@ -28,9 +28,10 @@ widgets, which moves a truncation point by at most 5 mm.
 
 **This is consistency, not parity.** Both numbers come from this repository, so
 the check establishes that the decomposition did not change the answer — not
-that either answer is right. Parity needs an external implementation, which
-`widgets/parity.json` requires and which OSMnx would supply; that is still
-undone.
+that either answer is right. Parity needs an external implementation. The
+traversal half of the chain now has one — Validation Lab check 07 against
+NetworkX agrees exactly on the reached set — but the buffer half does not, and
+Shapely would supply it.
 
 This is the first measured answer to the question [78](78-trying-compositions-on-isochrone.md)
 asked: whether a composition of visible steps can do what the monolith does.
@@ -50,7 +51,7 @@ is the claim that matters and still needs a practitioner, not a test.
 | **D4a** | A block with the same honest coupling as [83](83-reachable-junctions.md): the points must carry `networkNodeId`, `remainingM` and `travelDirection`. Output is ordinary polygons, so `map_output`, `clip_polygons`, `summarize_combined_area` and `summarize_polygons` all take it with no adapter |
 | **D5** | Needs a metric CRS to buffer, because buffering in degrees is wrong by the cosine of the latitude. **That makes nine** |
 | **D7** | `reachable_corridor`. Spatial operation |
-| **D9** | **Internally measured, not parity-checked.** 3.8 parts per million against `isochrone` on a real network — but that is agreement with another widget in this repository, which is consistency, not independent evidence. `widgets/parity.json` requires a named external implementation and a result file in the validation lab, so no entry is claimed. OSMnx remains unchecked |
+| **D9** | **Internally measured, not parity-checked.** 3.8 parts per million against `isochrone` on a real network — but that is agreement with another widget in this repository, which is consistency, not independent evidence. `widgets/parity.json` requires a named external implementation and a result file in the validation lab, so no entry is claimed for this widget. The traversal feeding it is now checked against NetworkX as lab check 07; the buffer itself would need Shapely, and that is undone |
 | **D10** | Not yet in a worked example. The Soho example still uses the monolith, and replacing it is the next question, not a side effect of this |
 
 ## Distinctions

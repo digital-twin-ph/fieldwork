@@ -62,7 +62,7 @@ lengths somebody else measured.
 | **D4a** | A block, with one honest coupling. The sites input must carry `networkNodeId`, which today only `snap_to_network` produces. The alternative is snapping inside, which is the monolith's mistake and would snap twice in any composition. A missing attribute fails with a message naming the step to add |
 | **D5** | **Takes no zone**, unlike the other eight metric widgets. Written with one, then removed: the projection was computed and never used. Dijkstra costs are the network's own `lengthM` values and nothing here re-measures geometry. The qualifier that does matter travels on the input — the network states its own source, and that is asserted in the receipt as `fw:edgeLengthSource` |
 | **D7** | `reachable_nodes`. Spatial operation. Not a summary: the row count changes because the question is "which of these", not "what do these add up to" |
-| **D9** | Unmeasured. Parity against NetworkX `ego_graph` with `distance='length'` is the obvious check and is not done |
+| **D9** | **Measured.** Validation Lab check 07 against NetworkX, the implementation the case study itself used. Reached sets identical over 738 junctions, 142 each; worst cost difference 5.000e-03 m, which is the half-step of the two decimals Fieldwork publishes. Recorded in `widgets/parity.json` against release 0.2.0. Covers outbound from one origin; inbound is unexercised |
 | **D10** | Not yet. It is demonstrable on the Soho network once the corridor step exists |
 
 ## Distinctions
@@ -115,6 +115,24 @@ unavailable at night. Modelling it needs route and schedule data, which is a
 different input and a different primitive, so the mode is refused with that
 reason rather than accepted as an average speed that would quietly produce a
 plausible, wrong answer.
+
+## How far the answer travels with the assumption
+
+The lab notebook runs the same graph and origin at a range of walking speeds.
+The budget scales linearly, the reached set does not:
+
+| Speed | Budget | Junctions reached |
+| --- | --- | --- |
+| 3.0 km/h | 250 m | 69 |
+| 4.0 km/h | 333 m | 114 |
+| **4.5 km/h** | **375 m** | **142** ← the case study's assumption |
+| 5.0 km/h | 417 m | 177 |
+| 6.0 km/h | 500 m | 246 |
+
+Nearly a fourfold range across speeds a reasonable person might choose, on one
+graph from one origin. The assumption is not a detail of the method; it is most
+of the answer. That is the case for the mode being a declared parameter checked
+against the number, rather than a default nobody is asked about.
 
 ## What this does not establish
 

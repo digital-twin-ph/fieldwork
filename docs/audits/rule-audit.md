@@ -87,6 +87,11 @@ either forgetting it or enforcing it. The place to try one is a worked example o
 a real case, where the behaviour can be watched without committing the whole
 codebase to it.
 
+The first instance is [78](../experiments/78-trying-compositions-on-isochrone.md):
+the composition rules tried on the isochrone case, which has a control — the same
+analysis exists as one shipped widget and as a sequence in the PHI Advanced-1
+notebooks.
+
 ### Observed, and not yet tried
 
 Checked 2026-10-10 against the registry rather than from memory:

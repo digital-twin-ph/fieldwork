@@ -8,7 +8,7 @@ This project is a developmental evaluation, not a build against a specification.
 framework is being watched as it emerges, and `docs/experiments/` is the instrument of
 that evaluation rather than a byproduct of it: numbered records of what was designed,
 what was tried, what the trying revealed, and what remains unestablished. Treat the
-experiment as the unit of work. Before adding or changing a primitive, write the design
+experiment as the unit of work. Before adding a new primitive, write the design
 and its admission review as an experiment record — as experiments 47, 48 and 58 did —
 so that the decisions are reviewable separately from the diff that implements them.
 
@@ -36,7 +36,7 @@ statement of what it does not establish. Keep the practitioner observation that 
 out badly — whether red is read as an error, whether someone can distinguish 250
 locations from 489 deaths — and write it before the result is known. Automated runtime
 evidence is distinct from evidence that a practitioner understands a result or finds it
-useful; never let a passing suite or a connected canvas stand in for either. When work
+useful. When work
 lands, its competency questions go to
 [experiment 44](docs/experiments/44-ontology-competency-questions.md), including the ones
 the design refuses to answer.
@@ -53,9 +53,9 @@ works. Pass the **primitive design audit** (D1–D9) in
 axes — whether a distinction survives decomposition, and whether a practitioner would
 ask for the operation by name — because the unit of reuse is not the unit of use:
 factor a composite underneath while keeping its palette entry, and never make a
-practitioner wire three nodes to ask one question. D9 requires that the node count of
-each affected worked example not increase, and D10 that some example instantiate the
-widget — `npm run usage:widgets` reports which are at zero. Keep the three counted
+practitioner wire three nodes to ask one question. D10 requires that some example instantiate the
+widget — `npm run usage:widgets` reports which are at zero. D5, D6, D8 and D9 have
+never been applied and are proposals, not gates ([the rule audit](docs/audits/rule-audit.md)). Keep the three counted
 terms distinct in prose as well as in code: a **widget** is the versioned contract, a
 **node** is one instance of it in a workflow, a **workflow step** is one execution. Record the audit answers in
 the experiment record that proposes the primitive, and write that record before the
@@ -75,7 +75,8 @@ enforced: as a **hard stop**, a **validation rule**, a **run-time check**, a
 **limitation** or an **out-of-scope decision**. Do not use "refusal" as a category for these; the five are
 not interchangeable, and two of them prevent nothing. See
 [the audit procedure](docs/audits/ontology-audit.md). A distinction described as enforced
-while implemented as a limitation is this project's characteristic defect.
+while implemented as a limitation is a defect; one is recorded, `fw:AcquisitionBoundary`
+in [the widget audit](docs/audits/widget_audit.md).
 
 After adding or changing a worked example, audit the connected workflow and its
 actual N3/evidence outputs against those contracts. Include positive and negative
@@ -91,6 +92,30 @@ Do not report work as "validated" without naming which check passed.
 [Kinds of validation](docs/audits/validation.md) lists the seven and what each leaves
 open; a passing unit suite is not parity, and parity is not scientific suitability. Report
 unclosed gaps explicitly.
+
+## Writing
+
+Markdown here is read by public health practitioners, not only by the people who
+wrote the code. Clarity and accessibility come first.
+
+- Write plainly. Prefer the word a practitioner already uses.
+- Be concise. Cut a sentence that adds no fact, and a clause that only adds
+  emphasis.
+- Say the thing, then stop. Do not restate a point in three ways.
+- Define a term where it is first used, or link [the glossary](docs/glossary.md).
+- State what is not established as plainly as what is.
+- Prefer a table or a short list to a paragraph, where the content is a set of
+  items.
+
+Length is not rigour. A long document is harder to check and easier to leave
+wrong, and an unreadable document is not governance — nobody follows what they
+cannot get through.
+
+Before adding a rule to this file, to [the glossary](docs/glossary.md) or to
+`docs/audits/`, read [the rule audit](docs/audits/rule-audit.md). A statement
+belongs in a governance file when it has more than one incident behind it, or a
+test for when it applies. Otherwise it is a finding, and findings go in
+`docs/experiments/` with their date and measurement.
 
 ## Toolchain
 

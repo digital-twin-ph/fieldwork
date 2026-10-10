@@ -82,9 +82,15 @@ meaning and a reported value, and that is as far as the evidence goes.
 One judgment in the notebook is worth recording, because it bears on the
 decomposition. Cell 62: *"plot isochrones as buffers to get more faithful
 isochrones than convex hulls can offer"*. The authors hold the buffered corridor
-to be the faithful product and the hull to be the coarser fallback, used only as
-infill when the union comes out in pieces. That is why the corridor is the fifth
-primitive and `summarize_hull` is not on the critical path.
+to be the faithful product and the hull to be the coarser alternative. That is
+why the corridor is on the critical path and `summarize_hull` is not.
+
+**Corrected 2026-10-10.** This section originally added that the hull is the
+notebook's infill mechanism, applied when the union comes out in pieces. It is
+not: that form of `make_iso_polys` is a redefinition at cell 94 which is never
+called. The infill that produced the shapefiles takes the exterior ring, which
+is Fieldwork's `fillHoles`, now `fill_interior_gaps`
+([88](88-filling-interior-gaps.md)). See the research note for the call order.
 
 ## What this does not establish
 

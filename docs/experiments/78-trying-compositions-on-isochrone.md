@@ -54,14 +54,16 @@ Written now so they can be wrong.
    `fillHoles`, `speedMPerMin`, `bufferM`, `maxSnapM`, `direction` — and those two
    are among them. Nothing is hidden.
 
-   The real question is what happens to nine knobs spread across six members.
-   `maxSnapM` belongs to the snapping step, `bufferM` to the buffer, `fillHoles`
-   to the union, `zone` to the projection. A composition has to choose which to
-   expose, which is [76](76-composition-governance.md)'s public parameter set with
-   a concrete case. **So the comparison is not hidden against visible but bundled
-   against distributed**: does one node with nine knobs help, because everything is
-   tuned in one place, or obscure, because you cannot tell which step a knob
-   acts on?
+   The second draft then posed a false choice — bundled against distributed, one
+   node with nine knobs against six nodes with their own. A composition is not
+   one or the other. The **public parameter set** is the bundled view, one place
+   to tune, and **opening the graph** shows each knob on the step it belongs to:
+   `maxSnapM` on the snapping node, `bufferM` on the buffer, `fillHoles` on the
+   union, `zone` on the projection. Both views, from one artifact.
+
+   So what the trial actually compares is a widget's nine knobs, where the
+   attachment of a knob to a step is something a practitioner must infer, against
+   a composition's nine knobs, where it is observable.
 
    Decisions genuinely without a knob are the ones to look for: the order of
    operations, whether the buffer precedes or follows the union, the hull method.

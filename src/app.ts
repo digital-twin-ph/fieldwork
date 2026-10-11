@@ -1,4 +1,5 @@
-﻿import {canvasN3} from './canvas-semantics.js';
+﻿import widgetRegistry from '../widgets/registry.json';
+import {canvasN3} from './canvas-semantics.js';
 import appPackage from '../package.json';
 import {networkDownloadStatus} from './network-throttle.js';
 import {downloadOSM,importNetwork} from './street-network.js';
@@ -13,8 +14,8 @@ import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {installCredentials} from './credentials-ui.js';
 import type {CredentialAccess} from './credentials-ui.js';
 import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_COMPOSITION} from './palette.js';
-import {compositionEntry} from './compositions.js';
-import {bundledCompositions} from './composition-registry.js';
+import {compositionEntry,explodeMicroWorkflow,detectDrift} from './compositions.js';
+import {bundledCompositions,resolveComposition} from './composition-registry.js';
 import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
 import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,requireRunnableFindHealthFacilities} from './health-facilities.js';
@@ -235,6 +236,30 @@ function renderInspector(){
   if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><span class="inspector-section">Developmental evaluation · step 1</span><h2>Define the study area</h2><p class="description">Add Study area, then select the node to draw a bounding box or polygon on an online map.</p><div class="rule-preview">Predict what the selection will produce, inspect the N3 facts, then run the readiness rule.</div><p class="muted">Your other worked examples remain saved separately.</p></div>';return;}
   const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><h2>Your analysis, connected.</h2><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p><div class="notice">${exampleKey(workflow).startsWith('snow-')?'Historical case-study locations; modeled catchments. Inspect a processing node to compare its assumptions.':exampleKey(workflow)==='old-naledi'?'Real source boundary and historical facilities; generated sample locations. Select Facility access to explore the assumptions.':'The heat example uses synthetic neighborhoods and illustrative screening criteria.'}</div></div>`;return;}
   let content=title(n)+`<p class="description">${esc(n.type==='map_output'&&n.params.inputMode==='raster'?'Display native raster cells and the clipping boundary':TYPES[n.type].description)}. ${n.type==='policy'?'Turn computed spatial evidence into explicit, inspectable conclusions.':''}</p>`;
+  if(n.type==='micro_workflow'){
+    const pin=n.params.composition;
+    const found=bundledCompositions().find(c=>c.id===pin.id&&c.version===pin.version);
+    const drift=found?detectDrift(found,widgetRegistry).filter(d=>d.state!=='unchanged'):[];
+    content+=`<div class="notice">${esc(found?found.description:'')}</div>`
+      +`<dl class="facts"><dt>Composition</dt><dd><code>${esc(pin.nodeType)}</code> ${esc(pin.version)}</dd>`
+      +`<dt>Stage</dt><dd>${esc(pin.stage)}</dd>`
+      +`<dt>Governance</dt><dd>${esc(found?found.governance.status:'unknown')}`
+      +`${found&&found.governance.status!=='admitted'?' · not reviewed by a human':''}</dd>`
+      +`<dt>Steps</dt><dd>${found?found.members.map(m=>esc(m.type)).join(' → '):'unavailable in this build'}</dd></dl>`
+      +(found?'':`<div class="notice warn">This build does not carry ${esc(pin.id)} ${esc(pin.version)}, so this step cannot run or be exploded.</div>`)
+      +(drift.length?`<div class="notice warn">${drift.map(d=>esc(d.detail)).join(' ')}</div>`:'')
+      +(found?found.parameters.map(parameter=>{
+        const value=n.params.parameters[parameter.name];
+        const member=parameter.members.map(m=>m.node).join(', ');
+        return `<label class="field-label" for="micro-${esc(parameter.name)}">${esc(parameter.title)}`
+          +`<small> · ${esc(member)}</small></label>`
+          +(typeof parameter.default==='number'
+            ?`<input id="micro-${esc(parameter.name)}" type="number" data-micro-param="${esc(parameter.name)}" value="${esc(String(value))}">`
+            :`<input id="micro-${esc(parameter.name)}" data-micro-param="${esc(parameter.name)}" value="${esc(String(value))}">`);
+      }).join(''):'')
+      +(found?`<button class="button" id="micro-explode">Explode into ${found.members.length} steps</button>`
+        +`<p class="muted">Exploding replaces this node with its primitives so each can be inspected and changed. It cannot be reassembled; Undo is the way back, because once a member's parameter changes the nodes are no longer this composition at this version.</p>`:'');
+  }
   if(n.type==='mean_center'){
     content+=`<div class="notice">Unweighted mean of projected point locations. The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><label class="field-label" for="mean-center-points">Point input</label><select id="mean-center-points" data-map-port="points"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='points'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`;
   }else if(n.type==='compare_point_sets'||n.type==='comparison_map'){
@@ -437,6 +462,24 @@ function renderInspector(){
   for(const key of ['innerM','outerM','seed','resolution','minOccupancy'])optionalElement(`#privacy-${key}`)?.addEventListener('change',e=>change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>)[key]=control(e).value===''?NaN:Number(control(e).value);}));
   optionalElement('#comparison-zone')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'compare_point_sets').params.zone=control(e).value===''?NaN:Number(control(e).value)));
   optionalElement('#comparison-hemisphere')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'compare_point_sets').params.hemisphere=control(e).value as 'north'|'south'));
+  document.querySelectorAll<HTMLInputElement>('[data-micro-param]').forEach(el=>el.onchange=()=>change(w=>{
+    const target=getNode(w,n.id,'micro_workflow');
+    const name=required(el.dataset.microParam);
+    const found=bundledCompositions().find(c=>c.id===target.params.composition.id
+      &&c.version===target.params.composition.version);
+    const declared=found?.parameters.find(p=>p.name===name);
+    target.params.parameters[name]=typeof declared?.default==='number'
+      ?(el.value===''?NaN:Number(el.value)):el.value;
+  }));
+  optionalElement('#micro-explode')?.addEventListener('click',()=>{
+    const exploded=change(w=>{
+      const next=explodeMicroWorkflow(w,n.id,resolveComposition);
+      w.nodes=next.nodes;w.edges=next.edges;selected=next.nodes.find(x=>x.id.startsWith(`${n.id}-`))?.id??selected;
+    });
+    if(exploded===false)return;
+    flow?.fit();
+    toast('Exploded into its primitives. Undo to put it back as one step.');
+  });
   optionalElement('#mean-center-zone')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'mean_center').params.zone=control(e).value===''?NaN:Number(control(e).value)));
   optionalElement('#mean-center-hemisphere')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'mean_center').params.hemisphere=control(e).value as 'north'|'south'));
   optionalElement('#catchment-output-mode')?.addEventListener('change',e=>change(w=>{const target=required(w.nodes.find(x=>x.id===n.id));(target.params as unknown as Record<string,unknown>).inputMode=control(e).value;w.edges=w.edges.filter(edge=>edge.to!==n.id);}));

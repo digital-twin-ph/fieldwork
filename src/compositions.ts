@@ -352,3 +352,38 @@ export function compositionEntry(composition:Composition){
     },
   };
 }
+
+/** Replaces one micro-workflow node with its members, in place, on the authored canvas.
+ *
+ *  The same rewiring the executor does, made permanent and visible. Exploding is how a
+ *  practitioner reads a composition: it stops being one step and becomes the steps, each
+ *  with its own parameters to inspect and change.
+ *
+ *  It is one-way. The members are ordinary nodes afterwards and nothing records that they
+ *  were a composition, so Undo is the way back rather than a reassemble action — which is
+ *  honest, because once a parameter is changed on a member the nodes are no longer that
+ *  composition at that version.
+ *
+ *  Members are laid out in a row from the host's position. They will overlap whatever was to
+ *  the right; the canvas can be dragged, and pretending to solve layout here would be worse
+ *  than leaving it visible. */
+export function explodeMicroWorkflow(
+  workflow:Workflow, hostId:string, resolve:(id:string,version:string)=>Composition,
+):Workflow{
+  const host=workflow.nodes.find(n=>n.id===hostId);
+  if(!host||host.type!=='micro_workflow')throw new Error('That node is not a micro-workflow.');
+  const params=(host as WorkflowNode<'micro_workflow'>).params;
+  const composition=resolve(params.composition.id,params.composition.version);
+  const expanded=expandComposition(composition,hostId,params.parameters,{x:host.x,y:host.y});
+  const nodes:WorkflowNode[]=workflow.nodes.filter(n=>n.id!==hostId);
+  nodes.push(...expanded.nodes);
+  const edges=workflow.edges.filter(e=>e.from!==hostId&&e.to!==hostId);
+  edges.push(...expanded.edges);
+  for(const edge of workflow.edges){
+    if(edge.to===hostId)
+      for(const target of expanded.inputs.filter(i=>i.port===edge.port))
+        edges.push({id:`${edge.id}-${target.node}`,from:edge.from,to:target.node,port:target.memberPort});
+    if(edge.from===hostId)edges.push({...edge,from:expanded.output});
+  }
+  return {...workflow,nodes,edges};
+}

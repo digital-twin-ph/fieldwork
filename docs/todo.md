@@ -144,15 +144,23 @@ follows. If the count sits still for a month, that is the finding.
 
 ## Known and recorded, not yet scheduled
 
-**No automated UTM selector, and the zone guard is a zone too wide.** Nine widgets take
-`zone` and `hemisphere` by hand, defaulted to Soho's 30/north. The guard in `metric()` allows
-±6° from the central meridian where a zone spans ±3°, so an off-by-one zone passes silently —
-costing +0.17% in distance at London's latitude and **+0.47% at 15°N**, which is where the
-Philippines is. Separately, several widgets convert metres to an angle on a mean sphere while
-every projection is on the WGS84 ellipsoid, which is a direction-dependent 0.06–0.32% at 51.5°N
-and 25 times larger than the scale factor. Measured, with four options and none chosen, in
-[100](experiments/100-choosing-the-metric-crs.md). Raised by the practitioner asking whether a
-selector existed.
+**The zone guard is still a zone too wide.** Fixed 2026-10-11: the palette default is now
+derived from the workflow's own data, and a disagreeing zone is reported in the Inspector with
+its measured cost and a button that applies the suggestion
+([100](experiments/100-choosing-the-metric-crs.md)). What remains is the guard itself —
+`metric()` allows ±6° from the central meridian where a zone spans ±3°, so an off-by-one zone
+still passes, costing +0.17% at London's latitude and **+0.47% at 15°N**, which is where the
+Philippines is. Tightening it to ±3° is one character and would start refusing workflows that
+run today, so it needs checking against the shipped examples first.
+
+**Metres are converted to angles on a sphere, and projected on an ellipsoid.** Several widgets
+— `buffer_point`, `donut_geomask`, `circleAround` — convert a distance to an angle using a mean
+Earth radius of 6,371,008.8 m, while every projection is on the WGS84 ellipsoid, whose local
+radius at 51.5°N is 6,374,604 m along the meridian and 6,391,253 m across it. The result is a
+direction-dependent 0.06–0.32% there, **25 times larger than the UTM scale factor at the same
+place**, and it is why a 500 m buffer measures up to 501.6 m and a 50–125 m donut reads
+50.8–125.2 m. Measured in checks 17 and in the donut card; nothing audits the remaining
+widgets for the same route. Recorded in [100](experiments/100-choosing-the-metric-crs.md).
 
 
 

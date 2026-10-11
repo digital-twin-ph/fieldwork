@@ -20,6 +20,14 @@ test('a micro-workflow is offered, added as one step, and explodes into its prim
   await entry.click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(before+1);
 
+  // It has ports on the canvas. The node's output type comes from the composition it
+  // carries, so a canvas drawing handles from the static type table gives it inputs and no
+  // output at all -- which is how this was found.
+  const node=page.locator('.react-flow__node').filter({hasText:'Walking catchment'}).first();
+  await expect(node.locator('.react-flow__handle-left')).toHaveCount(2);
+  await expect(node.locator('.react-flow__handle-right')).toHaveCount(1);
+  await expect(node.locator('.react-flow__handle-right')).toHaveAttribute('title','polygons output');
+
   // The Inspector states what it is pinned to, and its parameters are the composition's.
   const inspector=page.locator('#inspector-content');
   await expect(inspector).toContainText('compute_walking_catchment');

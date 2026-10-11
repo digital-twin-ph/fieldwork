@@ -109,6 +109,24 @@
    "measured": "street selection identical -- 301 entered and 45 cut part-way in both; area 199210 against 198980 square metres, 0.116% apart, with a symmetric difference of 0.116%",
    "ranAt": "2026-10-11T15:31:46.610399+00:00",
    "note": "The corridor is rebuilt from the widget's stated rule with GEOS, not compared feature by feature, so the selection arithmetic is reproduced independently. The 0.116% residual is two engines approximating a 25 m radius at 8 segments per quadrant in two different projections, and the symmetric difference being the same size says it is spread around the boundary rather than a missing piece. Covers the five minute band of one corridor, outbound. Both implementations trust the same street lengths and geometry, so a wrong network passes in both. The notebook beside it measures the corridor's area at 0.51x for a 10 m half-width and 1.53x at 60 m, against a 25 m figure the case study records no reason for."
+  },
+  {
+   "widget": "urn:fieldwork:widget:summarize_hull",
+   "coversRelease": "0.1.0",
+   "check": "10-hull",
+   "result": "content/results/check-10-hull.json",
+   "sha256": "166368f3fc8ef68136901a03038443022fe372f04c62cb3368f3fb310aa65e31",
+   "external": [
+    "shapely 2.2.0",
+    "GEOS 3.14.1",
+    "pyproj 3.8.0",
+    "PROJ 9.8.1"
+   ],
+   "criterion": "the same number of hull vertices, every vertex within 0.001 m of one in the reference hull and vice versa, planar area within 0.05 m2, span within 0.1 m, and the located-point count unchanged",
+   "outcome": "agrees",
+   "measured": "11 hull vertices on both sides, worst vertex separation 1.95e-09 m, area difference 0.004 m2, span difference 0.018 m, over 250 located points",
+   "ranAt": "2026-10-11T20:27:47.774876+00:00",
+   "note": "A convex hull is exact, so there is no approximation to allow for and a disagreement would be real. The reference projects the points itself with pyproj rather than using Fieldwork's projected metres, so the projection and the hull are checked together. The area compared is the planar area of the ring in EPSG:32630, which is what the widget claims, and not a geodesic area. Agreement says nothing about whether a convex hull is a sensible summary: it fills in ground the outbreak did not cross, and both implementations fill it in identically."
   }
  ]
 }

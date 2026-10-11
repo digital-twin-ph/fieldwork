@@ -44,23 +44,26 @@ not a practitioner in the field.
 
 ## Urgent
 
-**1 · The 26 computing widgets with no lab check, and no Dive Deeper material.**
-31 widgets compute something; 5 have a check. Plan and test the work, do not
-simply start writing notebooks: a coverage ratchet like
-`ontology/coupling-debt.json` should come first so the number is visible in
-every run and can only fall. Notebook CI came before this one, because adding 26 unexecuted
-notebooks adds 26 unverified files. That is done as of 2026-10-11, so this is
-now first.
+**1 · The 25 computing widgets still with no lab check.**
+32 widgets owe an independent check and 7 have one, counted by
+`validate:check-coverage` and visible in every run.
+[widgets/check-coverage.json](../widgets/check-coverage.json) declares what each of the 51
+owes, with a reason for every exemption; the awaiting count can only fall.
+Record: [98](experiments/98-the-coverage-ratchet.md), which groups the remaining 25 by the
+external implementation that would check them, because the cost is the reference and the
+fixture rather than the widget.
 
-Each notebook now has two jobs, not one ([94](experiments/94-where-explanation-belongs.md)).
-A **parity** section recomputes independently for a reviewer. A **Dive Deeper**
-section varies the assumption the widget inherits and shows what it does to the
-answer — which is where a practitioner comes to understand what the widget
-actually does, since the canvas cannot carry an explanation. Checks 07 and 08
-already do this without having named it: the walking speed taking the reached
-set from 69 junctions to 246, and the corridor half-width taking the area from
-0.51× to 1.53×. That is the pattern to follow, and it raises what each of the 26
-is worth writing.
+Each notebook has two parts, not one ([94](experiments/94-where-explanation-belongs.md)).
+**Parity** recomputes independently for a reviewer. **Dive deeper** varies the assumption the
+widget inherits and shows what it does to the answer. `10-hull` is the worked instance of
+both, and its Dive Deeper reported a *small* consequence honestly, which is a case the
+section has to be able to make.
+
+Two constraints on the grouping, both learned rather than designed:
+`sample_raster` needs its own notebook, because requesting `rasterio` beside `pyproj` kills
+the kernel ([97](experiments/97-the-browser-kernel-gate.md)); and `buffer_area` and
+`buffer_point` will not agree exactly with shapely, so their criterion must state an area
+tolerance with the quadrant count declared rather than claim an agreement that is not there.
 
 **2 · There is no user manual.**
 [docs/usage.md](usage.md) is a reference for what the application does, written
@@ -81,6 +84,16 @@ Not urgent against the items above, and recorded now because it has been
 implied twice in two days and never written down.
 
 ## Done
+
+**The lab check coverage ratchet exists, and the first of the 26 is done.** Done
+2026-10-11. The classification could not be derived — `implementation.definition` names
+`src/core.ts#TYPES` for 39 of 51 widgets, so the registry does not record where most
+widgets are implemented — so it is declared and reviewed instead, and the validator
+enforces completeness and the ratchet rather than the judgement. Verified by breaking it
+four ways. `summarize_hull` now has check `10-hull`: 11 hull vertices on both sides, worst
+vertex separation 1.95e-9 m, area difference 0.0038 m2 of 139,230 m2. Awaiting fell 26 → 25.
+
+
 
 **Notebook CI is complete, in both environments.** Done 2026-10-11.
 `scripts/run_notebooks.py` executes all seven under CPython in 6.3 s and

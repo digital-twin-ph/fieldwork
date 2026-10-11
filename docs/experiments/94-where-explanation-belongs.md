@@ -43,6 +43,34 @@ None of that needed the comprehension claim, and all of it survives without it.
 The honest summary is that compositions are a **reuse and governance
 mechanism**, and were mistaken for a teaching one.
 
+## What survives: composing is the skill, not reading
+
+Retiring the comprehension claim does not retire micro-workflows as a learning
+idea. It relocates it.
+
+The claim that failed was about **reading** a composition: that four visible
+steps explain themselves better than one node. The claim still standing is about
+**building** one. Breaking a problem into parts that can be named, reused and
+connected is the skill, and it is exercised by the person doing the breaking,
+not by the person looking at the result. [75](75-compositions-as-nodes.md)
+said this from the start — "breaking a problem into parts becomes something you
+do on the canvas" — and then listed the teaching claim among what it does not
+establish, which was right.
+
+That has a consequence for where it is taught. A practitioner does not discover
+how to decompose a problem by being shown a decomposition; they learn it by
+being asked to make one, with something to make it out of. That is manual
+material — worked instruction with an exercise — and
+[docs/usage.md](../usage.md) is a reference for what the application does, not
+a manual that teaches a method. There is no user manual, and this is the second
+thing that has now been found to belong in one.
+
+It also has a measure, which [93](93-gamification-spike.md) records: a
+composition placed on a canvas is **one** widget, not four. A practitioner who
+builds a micro-workflow and reuses it reaches the same output with fewer steps,
+which is the skill showing up in a number without anyone having to assert that
+it is a skill.
+
 ## Exploding is for inspection, not explanation
 
 Exploding stays. Its use is seeing which step refused, what a member was given,

@@ -13,6 +13,37 @@ in a way that **improves the analysis** rather than the number?
 Asked as an architectural spike because the hard parts turn out to be
 architecture and measurement, not interface.
 
+## This is not the first attempt, and I did not look
+
+[27](27-workflow-learning-and-gamification.md), written 2026-10-06, already
+proposes most of the architecture below. Found only after this spike was
+committed, by following a citation in [75](75-compositions-as-nodes.md).
+
+| 27 already proposes | This spike "found" |
+| --- | --- |
+| **A87** Separate scientific work from learning evidence | "A workflow must not carry a score" |
+| **A89** Points follow milestones, not clicks — with a trial rubric awarding 10 points for documenting a source | "Score the evidence, not the activity" |
+| **A92** Local storage, one browser user, no account or roster; scientific export omits learner history | "Fieldwork has no notion of a person, and the honest default is not to introduce one" |
+| **A90** A GIS learning ontology, with an illustrative RDF mapping | "Derivable from receipts, auditable like everything else" |
+| **A93** Pilot and developmental evaluation | "The scoring rule is a rule and stays provisional" |
+| **A96** Worked examples packaged as games | — |
+
+So three of the four architectural findings below were already settled, and the
+spike re-derived them. The failure is mine and worth recording as a pattern:
+the request said to build on what the experiments already discuss, and I
+searched for the words I expected — compositions, palette, skill — and not for
+the thing itself. Ninety-four experiment records are past the point where
+reading titles suffices.
+
+**What is actually new here**, against 27:
+
+- the hazard from [79](79-emergent-palette-slicing.md), which postdates 27: a
+  frequency measure cannot tell "specific to a question" from "added last week"
+- parsimony as the measure, below, which 27's milestone rubric does not contain
+- the refusal of unlocking as distinct from progressive disclosure
+- the correction in [94](94-where-explanation-belongs.md) that node count has no
+  reliable direction
+
 ## What is already here to build on
 
 | Already exists | What it gives a scheme |
@@ -47,7 +78,51 @@ incentive to it.
 So the first question is not how to count. It is **what behaviour the project
 wants more of**, and whether a number can stand for it.
 
-## The idea worth spiking: score the evidence, not the activity
+## The better measure: the fewest widgets that produce the output
+
+The sharper question is not which widgets were used but **how economically the
+output was reached**. Not "how many widgets did you touch" but "how few did this
+answer need".
+
+That inverts the incentive the hazard above describes. A counter of widget use
+rewards adding; a measure of parsimony rewards removing, and removing a step
+that was not doing anything is a real skill.
+
+It also makes compositions valuable for a reason that survives
+[94](94-where-explanation-belongs.md). A practitioner who places one
+`compute_walking_catchment` node has used **one** widget, not four: the members
+are an implementation detail of a step they placed once. So building and reusing
+a micro-workflow improves the measure directly, which is the skill-building case
+for compositions made in a currency that can be counted — and it is an argument
+for compositions that has nothing to do with whether four nodes read more
+clearly than one.
+
+**Parsimony alone is not enough, and would be dangerous alone.** The cheapest
+canvas is one that skips the study area, attaches no reference, keeps every
+inherited default and uses a monolith that hides its assumptions. That is fewer
+nodes and worse work. So the measure has to be a pair:
+
+> **the fewest widgets that produce the output _with its provenance complete_.**
+
+Neither half works without the other. Provenance completeness alone rewards
+ceremony; parsimony alone rewards hiding. Together they describe the workflow
+this project has been arguing for all day: few steps, each one stating what it
+assumed.
+
+Open questions a spike would have to answer, none of them cosmetic:
+
+- **Against what baseline?** "Fewest" needs a reference. The same output has no
+  canonical minimum, and a per-workspace best-known solution is a leaderboard by
+  another name, which [27](27-workflow-learning-and-gamification.md) A92's
+  single local user cannot support.
+- **What counts as the same output?** Two workflows agreeing to 3.8 parts per
+  million are the same answer; two differing by a filled gap are not. The
+  project has receipts precise enough to tell, which is unusual and useful.
+- **Does it penalise exploration?** A practitioner who explodes a composition to
+  see what it did has four nodes where they had one. Inspection must not cost
+  points, which means the measure is over a *finished* workflow, not a session.
+
+## The earlier idea, which the pair above subsumes: score the evidence
 
 Everything this application does well, it does by refusing precisely and
 recording assumptions. Today alone: the travel mode is checked against the

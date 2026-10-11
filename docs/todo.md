@@ -38,6 +38,21 @@ set from 69 junctions to 246, and the corridor half-width taking the area from
 0.51× to 1.53×. That is the pattern to follow, and it raises what each of the 26
 is worth writing.
 
+**3 · There is no user manual.**
+[docs/usage.md](usage.md) is a reference for what the application does, written
+when the practitioner detail moved out of the README. It is not a manual that
+teaches a method, and two things have now been found to need one:
+
+- **Composing micro-workflows as problem decomposition.** The skill is in
+  building one, not reading one ([94](experiments/94-where-explanation-belongs.md)),
+  so it needs instruction and an exercise rather than a feature description.
+- **What a widget actually does**, at the level a practitioner needs before
+  choosing it. The Dive Deeper notebooks carry the depth; a manual has to carry
+  the route to them.
+
+Not urgent against items 1 and 2, and recorded now because it has been implied
+twice in two days and never written down.
+
 ## Known and recorded, not yet scheduled
 
 **Four widgets cannot be added from the palette as drafts.**

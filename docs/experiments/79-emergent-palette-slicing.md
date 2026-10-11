@@ -12,6 +12,14 @@ The palette can be filtered by **purpose**, and purpose has at least two axes:
 - **Public health scenario** — outbreak investigation, epidemiological study,
   surveillance, service access, climate exposure.
 
+**Split across surfaces, 2026-10-11.** These looked like one feature with two
+parameters and are two features for two places. Scenario is field work and
+stays in the browser application; skill level is learning and moves to the
+desktop build, with the reasoning in
+[desktop and browser for learning](../research/desktop-and-browser-for-learning.md).
+The emergence argument below applies to both and is unaffected by where each
+runs.
+
 Neither can be assigned at the outset. **Which widgets belong to which scenario is
 not knowable in advance; it emerges from what people actually build.** So the
 mechanism has to collect the classification rather than declare it.

@@ -70,6 +70,16 @@ The model updates and the field does not. Affects every numeric parameter, not
 one panel; measured on `mean-center-zone`, which predates the micro-workflow
 work. Recorded in [92](experiments/92-micro-workflow-on-the-canvas.md).
 
+**A desktop build now has a settled rationale and no plan.**
+Three reasons converge on it: acquisition no browser will permit
+([69](experiments/69-healthsites-acquisition.md)), STAC assets behind CORS or
+authentication ([91](experiments/91-stac-browser-integration.md)), and a
+durable learning record, which as of 2026-10-11 is where learning belongs at all
+([desktop and browser for learning](research/desktop-and-browser-for-learning.md)).
+Nothing is scheduled, nothing is designed, and the WebKit gate below comes
+first. Recorded so that "the desktop app will do it" stops being a way of
+agreeing with an idea without doing it.
+
 **The documented gate is Chromium only.**
 `playwright.config.mjs` says so, and both suites have in fact run at parity all
 day at 94 checks each. [70](experiments/70-webkit-parity.md) requires a WebKit

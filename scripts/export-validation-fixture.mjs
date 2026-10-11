@@ -23,6 +23,8 @@ import {voronoi,clipPolygons,summarizePolygons} from '../build/catchments.js';
 import {stackPolygons} from '../build/stack-polygons.js';
 import {bufferPoint,BUFFER_POINT_STEPS} from '../build/buffer-point.js';
 import {bufferedBoundary} from '../build/area-buffer.js';
+import {aggregateHex} from '../build/geoprivacy.js';
+import {caseSeriesFromTable} from '../build/case-series.js';
 
 const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -92,6 +94,70 @@ const sohoVoronoiChain=()=>{
 };
 
 const builders={
+  'hex-soho-001'(){
+    // The 250 death locations grouped into H3 cells, which is what the geoprivacy example does.
+    // Two things are checked and only one is arithmetic: the cell each point lands in, which is
+    // h3's own indexing, and the sparse-cell rule, which is Fieldwork's.
+    //
+    // Two resolutions, because the example's own setting does not exercise the rule it depends
+    // on. At resolution 9 all 250 deaths fall into five cells, every one of them above the
+    // minimum, so nothing is dropped and the sparse rule is never reached. Resolution 11 splits
+    // them far enough to produce single-point cells, which is the case that makes points vanish
+    // from the output -- and the case worth checking.
+    const deaths=johnSnowExample('snow-voronoi').nodes.find(n=>n.id==='locations').params.data;
+    const minOccupancy=2;
+    const cases=[9,11].map(resolution=>{
+      const hexed=aggregateHex(deaths,{label:'H3 cell aggregation',resolution,minOccupancy});
+      return {options:{resolution,minOccupancy},
+        cells:hexed.features.map(f=>({h3:f.id,count:f.count,
+          boundary:f.geometry.coordinates[0],centre:hexed.sites.find(s=>s.id===f.id).geometry.coordinates})),
+        cellsKept:hexed.features.length,
+        summary:hexed.summary,
+        note:hexed.notes[0]};
+    });
+    return {fixture:{
+      ...base('hex-soho-001','hex_aggregate','Group points in H3 cells','src/geoprivacy.ts#aggregateHex'),
+      declaredParameters:{
+        computationCRS:'OGC:CRS84',minOccupancy,resolutions:[9,11],
+        indexRule:'Each located point is indexed to the H3 cell containing it at the stated resolution, by latitude and longitude. The cell boundary returned is h3\u2019s own boundary for that cell.',
+        sparseRule:`A cell holding fewer than ${minOccupancy} points is omitted from the output entirely rather than returned with a small count, so its points are not represented at all. The number of omitted cells is reported.`,
+        orderRule:'Kept cells are ordered by their H3 index as a string.',
+        semantics:'Occupancy is not an anonymity guarantee. A minimum of two means no cell in the output holds exactly one point; it does not mean an individual cannot be identified from a cell plus anything else a reader knows.'
+      },
+      input:{points:deaths.features.map(f=>({id:String(f.id),
+        coordinates:f.geometry?f.geometry.coordinates:null}))},
+      output:{cases},
+      note:'For each case, index every point to its H3 cell with h3-py, count per cell, apply the minimum-occupancy rule, and compare the cells kept, their counts, boundaries and centres, and how many points the rule dropped.'
+    },files:{}};
+  },
+  'case-series-soho-001'(){
+    // Snow 1855 Table 1: deaths by date, 43 daily rows, which the epidemic curve in the John
+    // Snow example renders. The widget bins a weighted table by period, and the three periods
+    // are checked because they are three different calendar rules -- a day key, a month key,
+    // and the Monday of the ISO week -- and the week is the one most likely to be wrong.
+    const table=johnSnowExample('snow-voronoi').nodes.find(n=>n.id==='dates').params.data;
+    const dateField='date',dateKind='death';
+    const byPeriod=Object.fromEntries(['day','week','month'].map(period=>{
+      const series=caseSeriesFromTable(table,{dateField,dateKind,period});
+      return [period,{bins:series.bins.map(b=>({key:b.key,count:b.count})),total:series.total,
+        datedRecords:series.datedRecords,undatedRecords:series.undatedRecords}];
+    }));
+    return {fixture:{
+      ...base('case-series-soho-001','case_series','Cases by period','src/case-series.ts#caseSeries'),
+      declaredParameters:{
+        dateField,dateKind,weightField:table.valueField,
+        periods:['day','week','month'],
+        dateRule:'A date is read only as ISO yyyy-mm-dd and is checked against the calendar, so 2024-02-30 is undated rather than rolled forward. Anything unparseable is counted as an undated record and reported, never guessed.',
+        keyRule:'A day is keyed yyyy-mm-dd, a month yyyy-mm, and a week by the Monday of its ISO week as yyyy-mm-dd, so the key\u2019s order is the period\u2019s order.',
+        weightRule:'Each row contributes its value in the weight field, not 1. A weight that is not a number of at least zero is refused rather than treated as zero.',
+        fillRule:'Every period between the first and the last is present, including those with no cases. An epidemic curve with gaps omitted misreads as continuous.',
+        semantics:`The declared kind of date is part of the result: a curve by date of ${dateKind} is not a curve by date of onset, and the widget carries the kind so a chart cannot relabel it.`
+      },
+      input:{rows:table.rows.map(r=>({date:r.key[dateField],deaths:r.value}))},
+      output:byPeriod,
+      note:'Bin the same rows by day, week and month with pandas, weighting by the deaths column, filling empty periods, and compare every bin key and count, the totals, and the dated and undated record counts.'
+    },files:{}};
+  },
   'snap-soho-001'(){
     // The pumps snapped to the Soho street network, which is the first step of the isochrone
     // chain. A snap is a nearest-neighbour search and a distance, both exact: there is no

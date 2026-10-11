@@ -9,8 +9,8 @@
  "measuredAt": "2026-10-11",
  "counts": {
   "widgets": 51,
-  "covered": 17,
-  "awaiting": 15,
+  "covered": 19,
+  "awaiting": 13,
   "none": 18,
   "blocked": 1
  },
@@ -49,8 +49,7 @@
   {
    "nodeType": "case_series",
    "expectation": "parity",
-   "check": null,
-   "computes": "Bins dated records into periods and counts them, keeping empty periods."
+   "check": "22-case-series"
   },
   {
    "nodeType": "centers",
@@ -119,8 +118,7 @@
   {
    "nodeType": "hex_aggregate",
    "expectation": "parity",
-   "check": null,
-   "computes": "Assigns points to H3 cells at a resolution and counts them."
+   "check": "21-hex"
   },
   {
    "nodeType": "isochrone",

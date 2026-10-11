@@ -3,10 +3,10 @@
 _Created 2026-10-11 · Updated 2026-10-11_
 
 **Status:** tried — the ratchet is built, gated and verified against four failure modes, and
-eleven of the twenty-six widgets now have one, and the whole isochrone decomposition is among
-them. The plan for the other fifteen is written and only partly tested, and two checks have
-failed on their first run against criteria that turned out to be wrong — which is the plan
-working, not the plan failing.
+thirteen of the twenty-six widgets now have one, including the whole isochrone decomposition,
+and two from reference libraries the first eleven did not touch. Three checks have failed on
+their first run against criteria that turned out to be wrong — which is the plan working, not
+the plan failing.
 
 ## The question asked
 
@@ -54,8 +54,8 @@ a fixture until a response is frozen. Counting it as exempt would have hidden it
 
 | | |
 | --- | --- |
-| Checked | 6 → **17** |
-| Awaiting | 26 → **15** |
+| Checked | 6 → **19** |
+| Awaiting | 26 → **13** |
 | Nothing to recompute | 18 |
 | Blocked | 1 |
 | Total | 51 |
@@ -65,7 +65,7 @@ from the file, an exemption with no reason, a check claimed that `parity.json` d
 record, and a count left stale. The stale-count message distinguishes the two ways it can
 happen, because lowering a count without doing the work claims progress not made.
 
-**Eleven checks are in**, all agreeing, chosen to get progressively less comfortable rather
+**Thirteen checks are in**, all agreeing, chosen to get progressively less comfortable rather
 than to pile up easy wins. Three of them recompute what the John Snow example actually does —
 the pump cells, their clip to the reporting rectangle, and the deaths counted inside them — so
 **that example is now independently recomputed end to end**.
@@ -160,16 +160,27 @@ decomposition — which this lab's own founding rule forbids. All three were cau
 to **read** something: a line of source, a widget's own output, an experiment written in
 October. None was caught by thinking harder about it.
 
-**Two checks failed on their first run, both because the criterion was wrong, and both failures
-were worth more than the passes.**
+**Three checks have now failed on their first run, all because the criterion was wrong rather
+than the widget, and the third is the one that should be most uncomfortable.**
 
-The second was simpler and is the more embarrassing: `19-snap` asked for the snap distance to
-within 1 mm and got 3.7 mm. The widget reports `snapDistanceM` as `Number(d.toFixed(2))` — it
-computes in full precision and *publishes centimetres*. 5 mm is half of its last reported digit.
-The criterion had not read what the widget says it reports, which took one line of source to
-check and was not checked.
+`22-case-series` names the week as the rule most likely to be wrong, in its own docstring,
+before the code. The check then got it wrong: it used pandas `W-SUN` with a left label, whose
+label is the preceding **Sunday**, where Fieldwork keys the **Monday** of the ISO week. Every
+week key came out one day early and **every count stayed plausible** — 7 bins, total 616, the
+peak in the right week. Nothing about the curve's shape looked wrong. Only comparing the keys
+caught it.
 
-The first is the one with a finding in it. `buffer_point` draws a 500 m circle; the criterion, fixed in advance,
+**Naming a hazard in advance did not prevent walking into it.** That is the finding, and it is
+about this process rather than about pandas: the protection came from comparing a thing the
+error would change, not from knowing where the error would be.
+
+`19-snap` asked for the snap distance to within 1 mm and got 3.7 mm. The widget reports
+`snapDistanceM` as `Number(d.toFixed(2))` — full precision internally, centimetres published.
+5 mm is half its last reported digit. One line of source would have said so.
+
+The first failure is the one with a finding in it.
+
+ `buffer_point` draws a 500 m circle; the criterion, fixed in advance,
 asked that every vertex be within 1 m of 500 m measured as a geodesic distance on the WGS84
 ellipsoid. The worst was **1.589 m**.
 
@@ -232,6 +243,29 @@ the junctions* rather than from a parameter of its own. It also checks the part 
 be got wrong: a junction's remaining budget is recomputed against the band, not carried over.
 Here the traversal was 1,125 m and the band 375 m, so carrying it over would put fifteen
 minutes of reach at the edge of a five-minute corridor.
+
+**Two checks have now left the shapely group, which is what the scaling claim needed.**
+`21-hex` goes against h3-py and `22-case-series` against pandas — neither reusing a reference
+library or a fixture helper from the first eleven. They cost more and both found something.
+
+`21-hex` is **weaker than the others and says so in its own docstring**. Fieldwork indexes with
+`h3-js` and the reference with `h3-py`: two bindings of the same C library, so the indexing is
+not independently verified at all. What is verified is that Fieldwork calls it correctly, orders
+as it claims, and applies its own sparse-cell rule. Recording that distinction mattered more
+than the result, because a reader counting checks would otherwise count this one as equal to
+the Voronoi comparison, where the two methods share nothing.
+
+It also needed **two** resolutions, because the example's own setting does not exercise the rule
+the widget depends on. At resolution 9 all 250 deaths fall into five cells above the minimum and
+nothing is dropped. At resolution 11 the rule withholds 13 cells and **13 of 250 deaths vanish
+from the output** — not shown as a small count, not shown as zero, absent. That is the same
+shape of finding as `14-summarize-polygons`: the fixture a widget's own example provides may not
+contain the case the widget's rule is for.
+
+`22-case-series` is the most independent check in the lab after `12-combined-area`: Fieldwork's
+own calendar arithmetic against pandas `resample`, sharing no code. All three periods agree
+exactly — 43 day bins with 12 empty, 7 weeks, 2 months, every key in order and every weighted
+count, totalling 616.
 
 A convex hull was chosen first because it is **exact** — no tolerance to pick, no curve to
 approximate, no iteration to converge — so a disagreement would have been real rather than a
@@ -318,13 +352,14 @@ the right answer in it.
 
 ## What this does not establish
 
-**That the method scales.** Eleven of the twenty-six are written. Seven came out of the same
+**That the method scales.** Thirteen of the twenty-six are written. Seven came out of the same
 shapely group, reusing two fixture helpers — one for the Soho corridors and one for the
 Voronoi chain. The cheap part was cheap because they shared a reference library and a data
-source with each other. The groups that have neither — `case_series` against pandas,
-`donut_geomask` against a distribution — will not go at this rate, and `isochrone` remains the
-monolith whose parity is a harder claim than any primitive's, even with its primitives
-checked.
+source with each other. Two have now left that group — `21-hex` against h3-py and
+`22-case-series` against pandas — which cost more per check and is the better evidence that the
+method travels. `donut_geomask` against a seeded distribution is still a kind nothing here has
+met, and `isochrone` remains the monolith whose parity is a harder claim than any primitive's,
+even with its primitives checked.
 
 **That zero symmetric difference means more than it does.** It means the two unions covered
 the same ground to the precision shapely reports, on this input. It is strong evidence about
@@ -337,6 +372,6 @@ be argued with, and the validator will not defend them.
 criterion. `10-hull` agrees to 10⁻⁹ m on a hull that fills in ground the 1854 outbreak never
 crossed — both implementations assert that area identically, and the notebook says so twice.
 
-**And nothing about the 15 that remain.** They are now counted, named and grouped, which is
-not the same as done. If the number sits at 15 in a month, the ratchet will say so, and that
+**And nothing about the 13 that remain.** They are now counted, named and grouped, which is
+not the same as done. If the number sits at 13 in a month, the ratchet will say so, and that
 is the point of it.

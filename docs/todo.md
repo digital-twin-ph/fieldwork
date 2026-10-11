@@ -181,7 +181,13 @@ gate before any desktop packaging decision, and
 one. Making WebKit part of the documented gate is small and unblocks that
 question.
 
-**The Validation Lab has no gate at all.**
-`_output` is a committed artifact that nothing checks against `content/`, which
-is how it fell three notebooks behind. Item 1 should fix this as a side effect
-rather than leave it separate.
+**The Validation Lab had no execution gate.** Fixed 2026-10-11:
+`scripts/run_notebooks.py` executes every notebook and fails on any error cell,
+and the Pages workflow runs it before building the site, so a broken notebook
+blocks publishing. CPython only; the browser kernel is still unchecked, which is
+the remaining half of item 2.
+
+An earlier version of this entry said `_output` was "a committed artifact that
+nothing checks". That was wrong — it is gitignored, and CI builds the site fresh
+from `content/` on every push, so the published site was never stale. What was
+three notebooks behind was a local build directory, which matters to nobody.

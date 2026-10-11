@@ -97,6 +97,19 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
 };
 const point = (id:string,name:string,coordinates:Position|null|undefined):PointFeature => ({type:'Feature',id,properties:{name},geometry: coordinates ? {type:'Point',coordinates} : null});
+/** The port type a node emits.
+ *
+ *  For a widget this is decided by its type, and this function is that lookup. It exists as
+ *  a function because a micro-workflow node's output is decided by the composition it
+ *  carries rather than by its node type, and edge validation has to ask the node.
+ *
+ *  The counterpart of `nodeInputs`, which has been node-dependent since `map_output` gained
+ *  input modes. Inside a composition the static lookup is still correct: members are
+ *  registry widgets, never compositions, so nothing nests. */
+export function outputOf(node:WorkflowNode):PortType|null{
+  return TYPES[node.type].output;
+}
+
 export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   if(node.type==='compare_point_sets'&&node.params.centers)return [...TYPES.compare_point_sets.inputs,['originalCenter','mean-center'],['movedCenter','mean-center']];
   if(node.type==='chart_output'&&node.params.inputMode==='series')return [['series','table']];
@@ -224,7 +237,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (typeof e.id!=='string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(e.id) || edgeIds.has(e.id)) throw new Error('Invalid or duplicate connector ID.');
     edgeIds.add(e.id);
     const a=w.nodes.find(n=>n.id===e.from),b=w.nodes.find(n=>n.id===e.to);
-    if (!a || !b || a.id===b.id || !TYPES[a.type].output || nodeInputs(b).find(([p])=>p===e.port)?.[1] !== TYPES[a.type].output) throw new Error('Incompatible node connection.');
+    if (!a || !b || a.id===b.id || !outputOf(a) || nodeInputs(b).find(([p])=>p===e.port)?.[1] !== outputOf(a)) throw new Error('Incompatible node connection.');
     const key=`${e.to}:${e.port}`;
     if (ports.has(key)) throw new Error('Each input port accepts one connection.');
     ports.add(key);

@@ -8,7 +8,58 @@ sitting here for weeks is visible as a choice.
 
 ## Urgent
 
-**1 · Notebook CI: plan it, then test it.**
+**1 · Standardise the experiment document, because it is the DE instrument.**
+Placed first, which is a change from how these were listed on 2026-10-10: the
+other two items produce work that has to be written down, and this decides how.
+Say so if that ordering is wrong.
+
+A reader — a contributor, a reviewer, or one of us in a week — should be able to
+answer five questions from any experiment document without reading all of it:
+
+1. **What question did we ask?**
+2. **How did we try to answer it?**
+3. **What happened?**
+4. **What did we decide?**
+5. **How did that shape the architecture or the framework?**
+
+**Most of the structure already exists and is unnamed.** Measured 2026-10-11
+across 94 documents, the recurring second-level headings are:
+
+| Heading | Documents |
+| --- | --- |
+| "What this does not establish" / "What this cannot establish" | 18 + 8 |
+| "Competency question(s)" | 10 + 6 |
+| "Practitioner exercise" | 9 |
+| "Design checks" | 8 |
+| "Distinctions" | 7 |
+| "Validation this commits to" / "Validation record" | 6 + 3 |
+| "Evaluation" / "Developmental evaluation" | 6 + 5 |
+
+So the strongest convention in the corpus — stating what a document does **not**
+establish — appears 26 times under two different spellings, and the question
+heading 16 times under two more. The work is mostly naming what is already
+there and closing the splits, not inventing a form.
+
+**It also needs a status**, because 46 of 94 documents have one and those 46 use
+free prose: `asked`, `tried`, `validated`, `retired`, as proposed in
+[the rule audit](audits/rule-audit.md). Half the corpus currently gives a reader
+no way to tell a proposal from a finding, which is how a spike re-derived
+experiment 27 five days after it was written.
+
+**One element to consider adding, which nothing currently has.** This project
+records the provenance of data obsessively and the provenance of its own
+decisions not at all. Several of the best findings this week came from a
+correction — the 1854 walking speed, parsimony as the measure, "no baseline
+until a problem recurs", known against validated — and a reader cannot see which
+claims survived challenge and which were never tested by one. A short **what
+changed our minds** element would make the evaluation visible in the record
+rather than only in the commit messages.
+
+Apply it the way `ontology.emits` was applied: require it of new documents, add
+it to existing ones as they are touched, keep the count visible. Do not migrate
+94 documents in one pass.
+
+**2 · Notebook CI: plan it, then test it.**
 The Validation Lab's notebooks are the instrument that checks Fieldwork's
 computations, and nothing executes them. On 2026-10-11 all seven were run end to
 end for the first time, by hand, in CPython; all passed. The published site was
@@ -21,11 +72,11 @@ reportedly what happened to `01-reproject-vs-pyproj`, unreproduced so far.
 Whatever is built has to fail the build on an error cell, in both.
 Design record: [41](experiments/41-validation-lab.md).
 
-**2 · The 26 computing widgets with no lab check, and no Dive Deeper material.**
+**3 · The 26 computing widgets with no lab check, and no Dive Deeper material.**
 31 widgets compute something; 5 have a check. Plan and test the work, do not
 simply start writing notebooks: a coverage ratchet like
 `ontology/coupling-debt.json` should come first so the number is visible in
-every run and can only fall. Item 1 comes before this one, because adding 26
+every run and can only fall. Item 2 comes before this one, because adding 26
 unexecuted notebooks adds 26 unverified files.
 
 Each notebook now has two jobs, not one ([94](experiments/94-where-explanation-belongs.md)).
@@ -38,7 +89,7 @@ set from 69 junctions to 246, and the corridor half-width taking the area from
 0.51× to 1.53×. That is the pattern to follow, and it raises what each of the 26
 is worth writing.
 
-**3 · There is no user manual.**
+**4 · There is no user manual.**
 [docs/usage.md](usage.md) is a reference for what the application does, written
 when the practitioner detail moved out of the README. It is not a manual that
 teaches a method, and two things have now been found to need one:
@@ -53,8 +104,8 @@ teaches a method, and two things have now been found to need one:
   choosing it. The Dive Deeper notebooks carry the depth; a manual has to carry
   the route to them.
 
-Not urgent against items 1 and 2, and recorded now because it has been implied
-twice in two days and never written down.
+Not urgent against the items above, and recorded now because it has been
+implied twice in two days and never written down.
 
 ## Known and recorded, not yet scheduled
 
@@ -69,15 +120,6 @@ comment referred to this list before it existed.
 The model updates and the field does not. Affects every numeric parameter, not
 one panel; measured on `mean-center-zone`, which predates the micro-workflow
 work. Recorded in [92](experiments/92-micro-workflow-on-the-canvas.md).
-
-**Experiment documents do not say whether they are questions or answers.**
-94 documents, 46 with an explicit status line, and those 46 use free prose with
-two values repeating. A reader cannot tell a proposal from a finding without
-reading the whole thing, and that is how a spike re-derived experiment 27 five
-days after it was written. A closed vocabulary — asked, tried, validated,
-retired — is proposed in [the rule audit](audits/rule-audit.md); applying it to
-94 documents is a migration, so require it of new ones and add it to existing
-ones as they are touched.
 
 **A desktop build now has a settled rationale and no plan.**
 Three reasons converge on it: acquisition no browser will permit

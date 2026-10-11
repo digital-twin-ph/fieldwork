@@ -44,22 +44,22 @@ not a practitioner in the field.
 
 ## Urgent
 
-**1 · The 23 computing widgets still with no lab check.**
-32 widgets owe an independent check and 9 have one, counted by
+**1 · The 21 computing widgets still with no lab check.**
+32 widgets owe an independent check and 11 have one, counted by
 `validate:check-coverage` and visible in every run.
 [widgets/check-coverage.json](../widgets/check-coverage.json) declares what each of the 51
 owes, with a reason for every exemption; the awaiting count can only fall.
-Record: [98](experiments/98-the-coverage-ratchet.md), which groups the remaining 23 by the
+Record: [98](experiments/98-the-coverage-ratchet.md), which groups the remaining 21 by the
 external implementation that would check them, because the cost is the reference and the
-fixture rather than the widget. The three done so far came from one group and shared a
-fixture helper, so they were cheaper than the groups that share nothing will be.
+fixture rather than the widget. The five done so far all came from the shapely group and
+shared two fixture helpers, so they were cheaper than the groups that share nothing will be.
 
 Each notebook has two parts, not one ([94](experiments/94-where-explanation-belongs.md)).
 **Parity** recomputes independently for a reviewer. **Dive deeper** varies the assumption the
-widget inherits and shows what it does to the answer. `10-hull`, `11-fill-gaps` and
-`12-combined-area` are the worked instances, and two of them reported a consequence that
-argued against the warning the section was written to make, which is a case it has to be
-able to make.
+widget inherits and shows what it does to the answer. `10-hull` through `14-summarize-polygons` are the
+worked instances. Two reported a consequence that argued against the warning the section was
+written to make, and one found that its own fixture does not contain the hard case at all —
+no location on a polygon edge — so the notebook constructs it. Expect that to recur.
 
 Two constraints on the grouping, both learned rather than designed:
 `sample_raster` needs its own notebook, because requesting `rasterio` beside `pyproj` kills
@@ -92,10 +92,9 @@ implied twice in two days and never written down.
 `src/core.ts#TYPES` for 39 of 51 widgets, so the registry does not record where most
 widgets are implemented — so it is declared and reviewed instead, and the validator
 enforces completeness and the ratchet rather than the judgement. Verified by breaking it
-four ways. Three widgets now have checks: `summarize_hull` (11 vertices
-both sides, worst separation 1.95e-9 m), `fill_interior_gaps` (69 rings dropped both sides,
-zero symmetric difference) and `summarize_combined_area` (701,662.61 m2 both sides, zero
-symmetric difference between polyclip-ts and GEOS). Awaiting fell 26 → 23.
+four ways. Five widgets now have checks: `summarize_hull`, `fill_interior_gaps`,
+`summarize_combined_area`, `clip_polygons` and `summarize_polygons` — all agreeing, two of
+them recomputing what the John Snow example itself does. Awaiting fell 26 → 21.
 
 
 

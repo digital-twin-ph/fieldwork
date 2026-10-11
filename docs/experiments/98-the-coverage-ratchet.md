@@ -3,9 +3,9 @@
 _Created 2026-10-11 · Updated 2026-10-11_
 
 **Status:** tried — the ratchet is built, gated and verified against four failure modes, and
-three of the twenty-six widgets now have one. The plan for the other twenty-three is written
-and only partly tested: three checks from one group, sharing a reference library and a
-fixture helper, do not establish that the groups with neither will go the same way.
+five of the twenty-six widgets now have one. The plan for the other twenty-one is written and
+only partly tested: five checks from one group, sharing a reference library and two fixture
+helpers, do not establish that the groups with neither will go the same way.
 
 ## The question asked
 
@@ -53,8 +53,8 @@ a fixture until a response is frozen. Counting it as exempt would have hidden it
 
 | | |
 | --- | --- |
-| Checked | 6 → **9** |
-| Awaiting | 26 → **23** |
+| Checked | 6 → **11** |
+| Awaiting | 26 → **21** |
 | Nothing to recompute | 18 |
 | Blocked | 1 |
 | Total | 51 |
@@ -64,8 +64,11 @@ from the file, an exemption with no reason, a check claimed that `parity.json` d
 record, and a count left stale. The stale-count message distinguishes the two ways it can
 happen, because lowering a count without doing the work claims progress not made.
 
-**Three checks are in**, all three agreeing, and they were chosen to get progressively less
-comfortable rather than to pile up easy wins.
+**Five checks are in**, all agreeing, chosen to get progressively less comfortable rather
+than to pile up easy wins. Two of them are checks of what the John Snow example actually
+does — clipping the pump cells to the reporting rectangle, and counting deaths inside them —
+so the example a practitioner opens is now independently recomputed end to end apart from the
+Voronoi step itself.
 
 `summarize_hull` against shapely:
 
@@ -100,6 +103,27 @@ this project carrying interior holes:
 with GEOS. A union is where two libraries most plausibly differ, because it is where
 coincident edges and near-degenerate intersections get decided — and the symmetric
 difference is zero.
+
+`clip_polygons` and `summarize_polygons` against shapely, on the example's own chain:
+
+| | |
+| --- | --- |
+| Polygons surviving the clip | 8 of 8 on both sides, none escaping the boundary |
+| Worst symmetric difference | 5.8 × 10⁻¹⁸ square degrees |
+| Per-polygon counts and totals | **exact** over 250 locations in 8 polygons |
+| Summary: records, matched, unmatched, unlocated, multiple | exact |
+
+**And the second of those found a gap in its own fixture.** No location in the data lies on a
+polygon edge and none belongs to two polygons, so the `include`/`exclude` boundary policy —
+GEOS `covers` against `contains`, the part of this widget most likely to be got wrong — is
+declared and **not exercised** by the comparison. A green result would have implied otherwise.
+The notebook constructs the missing case: two cells meeting on a line, with a location
+exactly on it, where `include` counts it for *both* cells and `exclude` for *neither*.
+
+That is a shape of finding worth naming, because it will recur across the remaining twenty-one:
+**a parity check passes on the data it was given, and the data may not contain the hard case.**
+Reporting the count of boundary-lying and multiply-assigned locations, zero though both are
+here, is what makes that visible instead of invisible.
 
 A convex hull was chosen first because it is **exact** — no tolerance to pick, no curve to
 approximate, no iteration to converge — so a disagreement would have been real rather than a
@@ -168,15 +192,27 @@ nobody observed. **91% of the hull is within 25 m of an observed death**: the de
 fill their own hull, and the warning, while true in general, is not what is happening here.
 
 Worse, this project's first write-up of that cell asserted 23% without having read the
-output — a number that fitted the lesson and was invented. It was caught by going back to
-check a figure before standing behind it, which is the only reason it is a correction rather
-than a published claim. The notebook now states the measured 91% and says that a lower
-number would have read better and been no more true.
+output — a number that fitted the lesson and was invented. The notebook now states the
+measured 91% and says that a lower number would have read better and been no more true.
+
+**And it happened again two checks later**, which makes it a pattern rather than a slip. The
+parity note for `13-clip-polygons` claimed that clipping in degrees and in metres agree to
+1e-7 relative. The measured figure is **5.9e-5** — 59 parts per million, three orders of
+magnitude larger, still small enough for the conclusion to stand and not the number that was
+written. Both were caught the same way: by going back to read the output before letting the
+claim stand.
+
+The rule this produces, and it is about writing rather than about geometry: **a number in
+prose is a measurement or it is nothing.** Where a notebook computes a figure, the prose
+around it should name what the figure means and let the cell print the value, rather than
+restating a value from memory. Both errors were in hand-written prose beside a cell that had
+the right answer in it.
 
 ## What this does not establish
 
-**That the method scales.** Three of the twenty-six are written, and all three came out of
-the same shapely group, reusing one fixture helper for the Soho corridors. The cheap part was
+**That the method scales.** Five of the twenty-six are written, and all five came out of the
+same shapely group, reusing two fixture helpers — one for the Soho corridors and one for the
+Voronoi chain. The cheap part was
 cheap because the second and third checks shared a reference library and a data source with
 the first. The groups that have neither — `case_series` against pandas, `donut_geomask`
 against a distribution, `isochrone` as a whole — will not be three in an afternoon, and
@@ -193,6 +229,6 @@ be argued with, and the validator will not defend them.
 criterion. `10-hull` agrees to 10⁻⁹ m on a hull that fills in ground the 1854 outbreak never
 crossed — both implementations assert that area identically, and the notebook says so twice.
 
-**And nothing about the 23 that remain.** They are now counted, named and grouped, which is
+**And nothing about the 21 that remain.** They are now counted, named and grouped, which is
 not the same as done. If the number sits at 25 in a month, the ratchet will say so, and that
 is the point of it.

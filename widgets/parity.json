@@ -163,6 +163,38 @@
    "measured": "combined area 701662.61 m2 against 701662.61 m2, a difference of 3.4e-03 m2, with a zero symmetric difference and the summed parts agreeing to 1.4e-03 m2 over 3 nested parts whose overlap is 240717 m2",
    "ranAt": "2026-10-11T20:48:38.645737+00:00",
    "note": "The most independent check in the lab so far: Fieldwork unions with polyclip-ts and measures with a shoelace sum, the reference unions with GEOS and measures with GEOS. A union is where two libraries most plausibly differ. The parts are three nested bands, so they overlap heavily and the union is not trivially the sum. Parts are summed net of their holes, which is the defect Fieldwork's own comment records finding on the isochrone chain: summing outer rings alone reported a hole-bearing area as overlapping itself."
+  },
+  {
+   "widget": "urn:fieldwork:widget:clip_polygons",
+   "coversRelease": "0.1.0",
+   "check": "13-clip-polygons",
+   "result": "content/results/check-13-clip-polygons.json",
+   "sha256": "48b7d913a12842707279084b4067914c6889c47dca6ad97a4c9733a867c82b93",
+   "external": [
+    "shapely 2.2.0",
+    "GEOS 3.14.1"
+   ],
+   "criterion": "the same polygons surviving the clip, each within 1e-13 square degrees of shapely's intersection by symmetric difference, and no output polygon extending beyond the boundary",
+   "outcome": "agrees",
+   "measured": "all 8 of 8 polygons survived on both sides, worst symmetric difference 5.8e-18 square degrees, and none escaped the boundary",
+   "ranAt": "2026-10-11T21:05:45.351537+00:00",
+   "note": "polyclip-ts against GEOS on the John Snow chain: nearest-pump cells clipped to the reporting rectangle, which extend past it, so the clip does real work. Compared in square degrees because the widget intersects on longitude and latitude without projecting, which is declared rather than hidden. The notebook measures the cost of that: clipping in degrees and clipping in metres agree to 5.9e-5 relative at worst over a rectangle 1.4 km across -- 59 parts per million, about 6 m2 of 100,000 -- and the simplification would not hold for a continental boundary."
+  },
+  {
+   "widget": "urn:fieldwork:widget:summarize_polygons",
+   "coversRelease": "0.1.0",
+   "check": "14-summarize-polygons",
+   "result": "content/results/check-14-summarize-polygons.json",
+   "sha256": "9ad17eec6874fc02f3c72e8ca3801211b434189cdbefcfb9f1e8ea8426d58c85",
+   "external": [
+    "shapely 2.2.0",
+    "GEOS 3.14.1"
+   ],
+   "criterion": "every per-polygon count, numeric total and missing-value count exact, and the summary of records, matched, unmatched, unlocated and multiply-assigned locations exact, with boundary policy 'include' read as GEOS covers",
+   "outcome": "agrees",
+   "measured": "every per-polygon count and total exact over 250 locations in 8 polygons, summary exact, worst total difference 0",
+   "ranAt": "2026-10-11T21:06:17.277525+00:00",
+   "note": "Fieldwork's own point-in-polygon test against GEOS predicates, with the boundary policy mapped explicitly: include is covers, exclude is contains. The fixture contains no location on a polygon edge and none in two polygons, so that mapping is declared and NOT exercised by the comparison -- the notebook constructs the missing case to show that include counts an edge location for both cells and exclude for neither. Agreement says nothing about whether nearest-pump assignment models which pump anybody drank from."
   }
  ]
 }

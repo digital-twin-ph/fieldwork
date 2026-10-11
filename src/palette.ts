@@ -8,7 +8,7 @@
 
 /** Group headings, in the order the palette shows them. A group missing here sorts to the front,
  *  which is how "Comparisons and checks" briefly jumped the queue. */
-export const PALETTE_GROUPS=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Summaries','Outputs'] as const;
+export const PALETTE_GROUPS=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Summaries','Micro-workflows','Outputs'] as const;
 
 /** Offered whatever example is loaded, because they apply to any workflow. Adding a general
  *  widget means adding it here; forgetting is what makes one invisible. */

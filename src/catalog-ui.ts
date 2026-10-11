@@ -1,3 +1,4 @@
+import {PALETTE_GROUPS} from './palette.js';
 import registry from '../widgets/registry.json';
 import parityRecord from '../widgets/parity.json';
 import packCatalog from '../widgets/packs.json';
@@ -51,7 +52,10 @@ export function identityMarkup(nodeType:string,esc:Escape):string{
 export function openCatalogDialog(esc:Escape,servingBuild='unknown'):void{
   document.getElementById('catalog-dialog')?.remove();
   const dialog=document.createElement('dialog');dialog.id='catalog-dialog';dialog.setAttribute('aria-labelledby','catalog-title');
-  const groups=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Summaries','Outputs'];
+  // The palette's ordering, not a second copy of it. This line held its own list until
+  // adding a group left one widget out of the catalogue entirely and a browser check caught
+  // it: two lists that must agree will not.
+  const groups=PALETTE_GROUPS;
   const rows=(group:string)=>Object.keys(TYPES).filter(type=>TYPES[type as NodeType].group===group).map(type=>{
     const definition=TYPES[type as NodeType],identity=widgetIdentity(type);
     const ports=definition.inputs.map(([port])=>port).join(', ')||'none';

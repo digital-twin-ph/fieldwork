@@ -1,4 +1,4 @@
-import type {NodeType,WorkflowNode,PortType} from './types.js';
+import type {NodeType,Workflow,WorkflowNode,PortType} from './types.js';
 import {TYPES,nodeInputs} from './core.js';
 
 /** A composition is a saved subgraph that behaves as one step.
@@ -226,4 +226,42 @@ export function expandComposition(
   const inputs=composition.ports.inputs.flatMap(port=>
     port.members.map(target=>({port:port.name,node:local(target.node),memberPort:target.port})));
   return {nodes,edges,inputs,output:local(composition.ports.output.node)};
+}
+
+/** Replaces every micro-workflow node with its members, rewiring the edges that reached its
+ *  public ports.
+ *
+ *  This is how a composition runs: expansion happens after the authored workflow is
+ *  validated, so the canvas keeps one node while the executor sees ordinary ones and emits
+ *  one receipt each. There is no composition branch in the executor at all, which is the
+ *  point — a composition is not a new kind of execution, it is an arrangement of the
+ *  existing kind.
+ *
+ *  An external edge into a public port fans out to every member port that port serves, so
+ *  one connection can feed three steps. Edges leaving the node come from the terminal
+ *  member. */
+export function expandMicroWorkflows(
+  workflow:Workflow, resolve:(id:string,version:string)=>Composition,
+):Workflow{
+  const hosts=workflow.nodes.filter(n=>n.type==='micro_workflow');
+  if(!hosts.length)return workflow;
+  // Annotated, because the predicate narrows the result to exclude micro-workflow nodes
+  // and the members being pushed back are ordinary ones of any type.
+  const nodes:WorkflowNode[]=workflow.nodes.filter(n=>n.type!=='micro_workflow');
+  const edges=workflow.edges.filter(e=>!hosts.some(h=>h.id===e.from||h.id===e.to));
+  for(const host of hosts){
+    const params=(host as WorkflowNode<'micro_workflow'>).params;
+    const composition=resolve(params.composition.id,params.composition.version);
+    const expanded=expandComposition(composition,host.id,params.parameters,{x:host.x,y:host.y});
+    nodes.push(...expanded.nodes);
+    edges.push(...expanded.edges);
+    for(const edge of workflow.edges){
+      if(edge.to===host.id)
+        for(const target of expanded.inputs.filter(i=>i.port===edge.port))
+          edges.push({id:`${edge.id}-${target.node}`,from:edge.from,to:target.node,port:target.memberPort});
+      if(edge.from===host.id)
+        edges.push({...edge,from:expanded.output});
+    }
+  }
+  return {...workflow,nodes,edges};
 }

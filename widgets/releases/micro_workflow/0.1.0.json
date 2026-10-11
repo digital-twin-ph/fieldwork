@@ -1,0 +1,50 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:micro_workflow",
+ "version": "0.1.0",
+ "nodeType": "micro_workflow",
+ "title": "Micro-workflow",
+ "released": "2026-10-10",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['micro_workflow']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [],
+  "output": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "Declared a gap rather than partial, and the gap is stated rather than deferred. This node expands into its members before execution, so it emits no activity of its own and the ports above are empty because the real ones are pinned per node in params.composition.inputs. The consequence is a provenance gap: a run's receipts show four member activities and nothing recording that they came from one composition at one version. Closing it needs an expansion activity asserting the composition id, version and member node ids -- which is not a receipt claiming the members' work, so it does not contradict experiment 75's requirement that a composition must not claim what its members did."
+ },
+ "implementation": {
+  "files": [
+   "src/compositions.ts",
+   "src/composition-registry.ts",
+   "src/core.ts"
+  ],
+  "definition": "src/compositions.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "A composition used as one step. One node type serves every composition: the node pins the composition's id, version, title, stage, ports and output type, so nodeInputs and outputOf read the contract from the node rather than the type table, and a saved workflow validates and reports drift without the composition file being present. Runs by expansion after the authored workflow is validated, so the executor has no composition branch and one receipt per member falls out of running ordinary nodes. Not addable from the palette yet: the palette offers admitted compositions, and none is admitted. Its params are the first thing in a saved workflow to record a version, against the not-yet-persisted claim every other release makes -- which is deliberate, because without a version there is nothing for drift detection to check when the file is reopened."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Covered by tests/compositions.test.mjs, which runs the shipped composition as one node and checks four member receipts with the numbers the Validation Lab checked against NetworkX and GEOS. Not established: that a practitioner finds one node easier to follow than four, which is the claim compositions exist for and still needs a person. Not implemented: exploding the node on the canvas, and the expansion provenance named above."
+ }
+}

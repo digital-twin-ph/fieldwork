@@ -105,6 +105,9 @@ export interface SelectorElements {
   '#pin-field-values':HTMLTextAreaElement;
   '#pin-pair-values':HTMLTextAreaElement;
   '#pin-pair-value':HTMLTextAreaElement;
+  '#reset-example':HTMLButtonElement;
+  '#tidy-button':HTMLButtonElement;
+  '#series-orientation':HTMLSelectElement;
 }
 export type Selected<S extends string>=S extends keyof SelectorElements?SelectorElements[S]:HTMLElement;
 export function element<S extends string>(selector:S,root:ParentNode=document):Selected<S> {return required(root.querySelector(selector),'Missing element: '+selector) as Selected<S>;}

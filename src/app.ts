@@ -15,6 +15,7 @@ import {installCredentials} from './credentials-ui.js';
 import type {CredentialAccess} from './credentials-ui.js';
 import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_COMPOSITION} from './palette.js';
 import {compositionEntry,explodeMicroWorkflow,detectDrift} from './compositions.js';
+import {tidyLayout,alreadyTidy} from './layout.js';
 import {bundledCompositions,resolveComposition} from './composition-registry.js';
 import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
@@ -45,6 +46,7 @@ import {coverageTable,coverageEvidence} from './coverage-ui.js';
 import {openInputDataEditor} from './input-data-ui.js';
 import {boundary as oldNalediBoundary} from '../examples/old-naledi/data.js';
 import {chartMarkup} from './chart-output.js';
+import {chartOrientation} from './chart-vega.js';
 import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,downloadRaster} from './raster-ui.js';
 import {openReprojectEditor} from './reproject-ui.js';
@@ -175,7 +177,7 @@ function render(){
   $('#run-summary').textContent=result?(dirty?'Previous run · settings have changed':`${result.outputs.length} outputs · ${Math.round(result.trace.reduce((a,t)=>a+t.milliseconds,0))} ms`):'Run the workflow to see results';
   if(exampleKey(workflow)==='snow-geoprivacy')$('#run-summary').textContent=result?'Private project and run evidence contain original coordinates. Derived tabs are educational; review before sharing.':'Private source coordinates are included in this workflow.';
   $('#example-select').disabled=busy;document.body.classList.toggle('busy',busy);flow?.setBusy(busy);renderInspector();
-  $('#run-button').disabled=busy||!workflow.nodes.length;$('#new-workflow').disabled=busy;
+  $('#run-button').disabled=busy||!workflow.nodes.length;$('#new-workflow').disabled=busy;$('#reset-example').disabled=busy||!workflow.nodes.length;$('#tidy-button').disabled=busy||workflow.nodes.length<2;
   if(!workflow.nodes.length)$('#workflow-state').textContent='Add Study area to begin';
   renderN3();
   renderCoverageAlert();
@@ -329,7 +331,10 @@ function renderInspector(){
   }else if(n.type==='chart_output'&&n.params.inputMode==='series'){
     content+=`<div class="field"><label class="field-label" for="series-source">Case series</label><select id="series-source" data-map-port="series"><option value="">Select input</option>${workflow.nodes.filter(x=>x.type==='case_series').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||'Cases by period')}</option>`).join('')}</select></div>`
       +`<div class="field"><label class="field-label" for="chart-label">Results tab name</label><input id="chart-label" maxlength="60" value="${esc(n.params.label)}"></div>`
-      +'<div class="notice">An epidemic curve: cases per period, in order, labelled with the kind of date the series was built from. A presentation of the series, with no smoothing, no interpolation and no new inference.</div>';
+      +`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
+      +`<select id="series-orientation"><option value="vertical" ${chartOrientation(n.params)==='vertical'?'selected':''}>Vertical · periods along the bottom</option>`
+      +`<option value="horizontal" ${chartOrientation(n.params)==='horizontal'?'selected':''}>Horizontal · periods down the side</option></select></div>`
+      +'<div class="notice">An epidemic curve: cases per period, in order, labelled with the kind of date the series was built from. A presentation of the series, with no smoothing, no interpolation and no new inference. Vertical by default, because that is how an outbreak report draws one.</div>';
   }else if(n.type==='slr_extract_import'){
     const p=n.params;
     content+='<p class="description">Declares an imported long-format table as a bounded extract of published AR6 projections. It imports and declares; it acquires nothing and produces no projection.</p>'
@@ -480,6 +485,9 @@ function renderInspector(){
     flow?.fit();
     toast('Exploded into its primitives. Undo to put it back as one step.');
   });
+  optionalElement('#series-orientation')?.addEventListener('change',e=>change(w=>{
+    getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical';
+  },{spatial:false}));
   optionalElement('#mean-center-zone')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'mean_center').params.zone=control(e).value===''?NaN:Number(control(e).value)));
   optionalElement('#mean-center-hemisphere')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'mean_center').params.hemisphere=control(e).value as 'north'|'south'));
   optionalElement('#catchment-output-mode')?.addEventListener('change',e=>change(w=>{const target=required(w.nodes.find(x=>x.id===n.id));(target.params as unknown as Record<string,unknown>).inputMode=control(e).value;w.edges=w.edges.filter(edge=>edge.to!==n.id);}));
@@ -664,7 +672,7 @@ function renderResults(){
     const spec=chartVegaSpec(output.chart,chartNode.params,chartContext);
     $('#bars-panel').innerHTML=`<p class="muted">${esc(output.chart.caption)} · ${output.chart.total} input records · grouping: ${esc(output.chart.field)}</p>${output.chart.field==='total'?'<p class="notice">The chart source does not declare a physical unit for this numeric total. Check the source and method before interpreting it.</p>':''}<div id="vega-chart" role="img" aria-label="${esc(output.chart.caption)}"></div><details><summary>Underlying chart values</summary><table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>${output.chart.bins.map(b=>`<tr><td>${esc(b.label)}</td><td>${b.count}</td></tr>`).join('')}</tbody></table></details><details><summary>Vega-Lite specification</summary><pre>${esc(JSON.stringify(spec,null,2))}</pre></details>`;
     const host=$('#vega-chart');void renderVegaChart(host,output.chart,chartNode.params,chartContext).catch(e=>{if(host.isConnected)host.textContent=`Chart could not render: ${errorMessage(e)}. Underlying values remain available below.`;});
-  }else $('#bars-panel').innerHTML=output?.chart?chartMarkup(output.chart,esc):'';
+  }else $('#bars-panel').innerHTML=output?.chart?chartMarkup(output.chart,esc,chartOrientation(chartNode?.params??{})):'';
   $('#facility-legend').textContent=output?.kind?'Qualifying facility':'Cooling center';$('#map-note').textContent=output?.kind==='facility-evidence'?'Historical facilities · evidence tiers':output?.kind==='access'?`${output.locationSource?.kind==='input-points'?'Input locations':'Generated samples'} \u00b7 source boundary`:'Local locations · no external map tiles';
   $('#review-legend').textContent=output?.kind==='facility-evidence'?'Contextual / inferential':'Review';$('#clear-legend').textContent=output?.kind==='facility-evidence'?'Direct':'No flag';$('#unknown-legend').textContent=output?.kind==='facility-evidence'?'No evidence':'Unknown';$('#facility-legend').parentElement!.hidden=output?.kind==='facility-evidence';
   $('.map-legend').hidden=output?.kind==='study-area';
@@ -782,6 +790,33 @@ function switchView(view:string){$('.work-area').classList.remove('results-expan
 function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id===c.source),b=workflow.nodes.find(n=>n.id===c.target);return !!a&&!!b&&a.id!==b.id&&!!outputOf(a)&&nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1]===outputOf(a);}
 mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},select(id){selected=id;$('#node-search').value='';if(revealResultFor(id))renderResults();markLinkedTabs();render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;markLinkedTabs();render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
 $('#run-button').onclick=run;$('#node-search').oninput=e=>renderLibrary(control(e).value);$('#zoom-in').onclick=()=>flow?.zoomIn();$('#zoom-out').onclick=()=>flow?.zoomOut();$('#fit-button').onclick=()=>flow?.fit();
+// Columns in the order the work happens. Offered rather than applied: a canvas somebody has
+// arranged is theirs, and exploding a micro-workflow is the moment it stops being readable.
+$('#tidy-button').onclick=()=>{
+  if(busy)return;
+  if(alreadyTidy(workflow)){toast('Already laid out in order.');return;}
+  const moved=change(w=>{const at=tidyLayout(w);for(const node of w.nodes){
+    const position=at.get(node.id);if(position){node.x=position.x;node.y=position.y;}}},{spatial:false});
+  if(moved===false)return;
+  flow?.fit();
+  toast('Laid out in columns, left to right in the order the work happens. Undo to put it back.');
+};
+// A worked example is published work, and editing it should not mean losing it. The saved
+// workspace is kept when the dropdown is used, so this is the way back to the published one.
+$('#reset-example').onclick=()=>{
+  if(busy)return;
+  const key=exampleKey(workflow);
+  if(!confirm('Discard your edits to this workspace and reload it as published? This cannot be undone.'))return;
+  // Not loadExample: that saves the workspace you are leaving before loading, which would
+  // write the edited version straight back over the one being discarded. Replacing in place
+  // lets the ordinary save put the published template where the edit was.
+  const replaced=change(w=>{replaceWorkflow(w,template(key));selected=null;});
+  if(replaced===false)return;
+  result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};
+  renderResults();renderLibrary($('#node-search').value);render();
+  setTimeout(()=>flow?.fit(),80);
+  toast('Reloaded as published.');
+};
 $('#undo-button').onclick=()=>{if(busy||!history.length)return;future.push(structuredClone(workflow));workflow=history.pop()!;dirty=true;statuses={};save();render();};
 $('#redo-button').onclick=()=>{if(busy||!future.length)return;history.push(structuredClone(workflow));workflow=future.pop()!;dirty=true;statuses={};save();render();};
 $('#reset-button').onclick=()=>{change(w=>{const key=exampleKey(w);replaceWorkflow(w,template(key));selected=key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';});renderLibrary();flow?.fit();};

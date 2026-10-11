@@ -7,6 +7,17 @@ type VegaChart={finalize:()=>void};
 let current:VegaChart|null=null;
 let generation=0;
 const colors=['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc949','#af7aa1','#ff9da7'];
+/** Which way the bars run, and what decides it when nobody has said.
+ *
+ *  A case series is an epidemic curve: periods run along the bottom and counts rise, which
+ *  is how every outbreak report draws one, so reading it the other way is work a
+ *  practitioner should not have to do. Categorical bars stay horizontal, where a long
+ *  category label has room to be read.
+ *
+ *  It is a default and not a rule: the Inspector offers both for either kind. */
+export const chartOrientation=(params:{orientation?:'horizontal'|'vertical';inputMode?:string}):'horizontal'|'vertical'=>
+  params.orientation??(params.inputMode==='series'?'vertical':'horizontal');
+
 export function chartSourceNote(params:ChartParams,sourceId?:string,runId?:string){
   return params.sourceNote?.trim()||`Source: ${sourceId||'connected workflow result'}${runId?` · run ${runId}`:''}`;
 }
@@ -30,7 +41,7 @@ export function chartSourceNote(params:ChartParams,sourceId?:string,runId?:strin
  *  receipt carries a distinct `fw:chartMeasureKind`. */
 export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string}={}){
   if(params.renderer!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
-  const mark=params.mark||'bar',orientation=params.orientation||'horizontal';
+  const mark=params.mark||'bar',orientation=chartOrientation(params);
   if(!['bar','point'].includes(mark)||!['horizontal','vertical'].includes(orientation))throw new Error('Unsupported chart encoding.');
   if(!Array.isArray(chart.bins)||chart.bins.length>100||chart.bins.some(b=>!Number.isFinite(b.count)||b.count<0||typeof b.label!=='string'||typeof b.key!=='string'))throw new Error('Chart requires at most 100 nonnegative, finite bins.');
   if(new Set(chart.bins.map(b=>b.key)).size!==chart.bins.length)throw new Error('Chart categories require unique stable keys.');

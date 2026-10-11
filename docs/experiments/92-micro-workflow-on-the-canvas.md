@@ -62,6 +62,13 @@ Recorded rather than fixed here, because it affects every numeric parameter in
 the application and belongs in its own change. The browser check asserts the
 saved workflow rather than the field, and says why in the test.
 
+It has a second consequence worth writing down. Because a re-render can replace
+the input at any moment, a test that fills the field and *then* dispatches the
+change event leaves a window in which the typed value is lost. That passed in
+Chromium and alone in WebKit, and failed inside the full WebKit suite — which is
+the shape of a race, not of a browser difference. Setting the value and
+dispatching in one step closes it.
+
 ## What this still does not establish
 
 That a composition is easier to follow than one node with nine knobs. It is now

@@ -26,6 +26,20 @@ unmatched as a candidate derived from a real analysis.
 speed in km/hour`. It is 75 metres per minute, which is the number Fieldwork's
 `isochrone` has defaulted to since it was written, undocumented until now.
 
+**Corrected 2026-10-11, by one of the notebook's authors.** "Undocumented" was
+unfair, and the distinction matters. The figure was not assumed: it was
+**estimated**, in a back-and-forth between the two co-authors, from period
+evidence — photographs of 1854 London, what residents wore, what the streets
+were like underfoot. Reasoning was done. What survived into the artifact was
+`travel_speed = 4.5 # assume walking speed in km/hour`, and the comment's word
+"assume" understates its own provenance.
+
+So the gap here is not between a reasoned number and an unreasoned one. It is
+between reasoning **done** and reasoning **recorded**, and the most expensive
+thinking is the kind that leaves no trace. A later reader — this project, five
+days ago — met a bare constant and treated it as arbitrary, because nothing
+distinguished it from one.
+
 The notebook scopes it. Cell 5 asks how far "Soho District residents can walk",
 and the learning objective names "walkability assumptions". It is an assumption
 about pedestrians in one London district in 1854 — not a general walking speed,

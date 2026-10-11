@@ -83,7 +83,12 @@ lengths somebody else measured.
 ## The speed knob, and the 1854 assumption inside it
 
 Fieldwork has used 75 metres per minute everywhere since `isochrone` was
-written, with no recorded reason. It traces to Advanced-1 NB03 cell 10:
+written, with no reason recorded **in the artifact** — which is not the same as
+no reason. Corrected 2026-10-11 by one of the notebook's authors: the figure was
+estimated between two co-authors from period evidence, including photographs of
+1854 London, how residents were dressed and what the streets were like. The
+reasoning happened and did not survive into the code, where the surviving
+comment calls it an assumption. It traces to Advanced-1 NB03 cell 10:
 `travel_speed = 4.5 # assume walking speed in km/hour`, which is 75 m/min
 exactly. The notebook scopes it to how far "Soho District residents can walk" —
 pedestrians, one London district, 1854.
@@ -133,6 +138,42 @@ Nearly a fourfold range across speeds a reasonable person might choose, on one
 graph from one origin. The assumption is not a detail of the method; it is most
 of the answer. That is the case for the mode being a declared parameter checked
 against the number, rather than a default nobody is asked about.
+
+## The lesson, after the correction
+
+This was first written as "a number with no recorded reason". That was wrong
+about the number and right about the artifact, and the corrected version is
+more useful.
+
+**The expensive thing was the thinking, and the thinking is what was lost.**
+Two authors examined period photographs, clothing and street conditions and
+argued their way to 4.5 km/h. What reached the next reader was a bare constant
+and the word "assume". Five days ago this project read that constant, could not
+distinguish it from an arbitrary one, and said so in print.
+
+Four things follow.
+
+**Provenance of judgements, not only of data.** This repository records where
+every dataset came from, with digests and licences, and had nothing at all for
+where its numbers came from. A judgement with its basis recorded can be
+revisited, disagreed with and transferred to another setting. The same judgement
+without it is a magic number, however carefully it was reached.
+
+**"Assume" was the wrong word, and words in comments carry weight.** Calling an
+estimate an assumption invited a later reader to treat it as arbitrary, which is
+exactly what happened.
+
+**Scope travels with the number or the number does not travel.** "4.5 km/h" is
+incomplete. "4.5 km/h for pedestrians in Soho in 1854, estimated from period
+photographs" is the datum, and only the second form tells a reader in Manila
+in 2026 what they have to redo.
+
+**And the derivation is better teaching material than the parameter.** How two
+people reasoned from photographs of a street to a walking speed is what a
+practitioner needs in order to choose a speed for their own setting. That is
+Dive Deeper material in the sense [94](94-where-explanation-belongs.md) means,
+and it is stronger than the sensitivity table beside it: the table shows that
+the assumption matters, and the derivation shows how to make one.
 
 ## What this does not establish
 

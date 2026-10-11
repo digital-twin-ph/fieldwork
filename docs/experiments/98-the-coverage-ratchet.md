@@ -3,9 +3,9 @@
 _Created 2026-10-11 · Updated 2026-10-11_
 
 **Status:** tried — the ratchet is built, gated and verified against four failure modes, and
-seven of the twenty-six widgets now have one. The plan for the other nineteen is written and
-only partly tested: seven checks from one group, sharing a reference library and two fixture
-helpers, do not establish that the groups with neither will go the same way.
+nine of the twenty-six widgets now have one. The plan for the other seventeen is written and
+only partly tested, and the ninth check failed on its first run against a criterion that
+turned out to be wrong — which is the plan working, not the plan failing.
 
 ## The question asked
 
@@ -53,8 +53,8 @@ a fixture until a response is frozen. Counting it as exempt would have hidden it
 
 | | |
 | --- | --- |
-| Checked | 6 → **13** |
-| Awaiting | 26 → **19** |
+| Checked | 6 → **15** |
+| Awaiting | 26 → **17** |
 | Nothing to recompute | 18 |
 | Blocked | 1 |
 | Total | 51 |
@@ -64,7 +64,7 @@ from the file, an exemption with no reason, a check claimed that `parity.json` d
 record, and a count left stale. The stale-count message distinguishes the two ways it can
 happen, because lowering a count without doing the work claims progress not made.
 
-**Seven checks are in**, all agreeing, chosen to get progressively less comfortable rather
+**Nine checks are in**, all agreeing, chosen to get progressively less comfortable rather
 than to pile up easy wins. Three of them recompute what the John Snow example actually does —
 the pump cells, their clip to the reporting rectangle, and the deaths counted inside them — so
 **that example is now independently recomputed end to end**.
@@ -152,6 +152,35 @@ the check would still pass while the drawn output varied between runs. There are
 which is why the expected order is the only order — and that is a fact about the data, not
 about the widget.
 
+**And the ninth check failed on its first run, which is the most useful thing that has
+happened in this item.** `buffer_point` draws a 500 m circle; the criterion, fixed in advance,
+asked that every vertex be within 1 m of 500 m measured as a geodesic distance on the WGS84
+ellipsoid. The worst was **1.589 m**.
+
+Investigating instead of widening the tolerance found that **Turf buffers on a sphere of
+radius 6,371,008.8 m, and does so exactly** — the measured spread of vertex distances on that
+sphere is **0.0000 m**. On the ellipsoid the same ring runs 500.28 to 501.59 m from the centre,
+varying with direction. The widget was right and the criterion had the wrong earth model.
+
+So a 500 m buffer is 500 m on a sphere and **up to 1.59 m more on the ground** — 0.32%, about
+16 m on a 5 km scope. Nothing in this project recorded that before, and it was found only
+because a criterion fixed in advance failed and was investigated rather than relaxed. A
+tolerance chosen after seeing the answer would have been 2 m, would have passed, and would
+have found nothing.
+
+The two buffer widgets are also the first that **cannot** agree exactly with a reference, and
+their criteria say so: Turf buffers in a local azimuthal equidistant projection and a
+reference buffers in UTM, so the area comparison is relative at 0.5% with the quadrant count
+declared. What *can* be checked exactly is the approximation itself, against the closed form
+for a regular polygon inscribed in a circle — `(n/2π)·sin(2π/n)`, which reproduces the 0.99359
+and 0.99960 this project had measured by hand at 32 and 128 vertices.
+
+**`validate:parity` also caught a mistake in how the evidence was filed.** Both widgets were
+first recorded against a single combined result, and the validator refused it: a parity result
+declares the operation it recomputed, and one result cannot name two widgets. Split into
+`17-buffer-point` and `18-buffer-area`. That is the ratchet working on the person operating
+it, which is what it is for.
+
 A convex hull was chosen first because it is **exact** — no tolerance to pick, no curve to
 approximate, no iteration to converge — so a disagreement would have been real rather than a
 question about allowances. The reference projects the points itself with pyproj instead of
@@ -237,8 +266,8 @@ the right answer in it.
 
 ## What this does not establish
 
-**That the method scales.** Seven of the twenty-six are written, and all seven came out of the
-same shapely group, reusing two fixture helpers — one for the Soho corridors and one for the
+**That the method scales.** Nine of the twenty-six are written. Seven came out of the same
+shapely group, reusing two fixture helpers — one for the Soho corridors and one for the
 Voronoi chain. The cheap part was
 cheap because the second and third checks shared a reference library and a data source with
 the first. The groups that have neither — `case_series` against pandas, `donut_geomask`
@@ -256,6 +285,6 @@ be argued with, and the validator will not defend them.
 criterion. `10-hull` agrees to 10⁻⁹ m on a hull that fills in ground the 1854 outbreak never
 crossed — both implementations assert that area identically, and the notebook says so twice.
 
-**And nothing about the 19 that remain.** They are now counted, named and grouped, which is
+**And nothing about the 17 that remain.** They are now counted, named and grouped, which is
 not the same as done. If the number sits at 25 in a month, the ratchet will say so, and that
 is the point of it.

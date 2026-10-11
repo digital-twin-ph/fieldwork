@@ -34,8 +34,11 @@ test('a micro-workflow is offered, added as one step, and explodes into its prim
   // value after a change while the model updates correctly -- verified the same way on the
   // pre-existing mean-center-zone field, so it is the app's behaviour and not this panel's.
   // Recorded in docs/experiments/92-micro-workflow-on-the-canvas.md.
-  await page.locator('[data-micro-param="minutes"]').fill('10');
-  await page.locator('[data-micro-param="minutes"]').dispatchEvent('change');
+  // Set and dispatch in one step. Filling and then dispatching leaves a window in which a
+  // re-render can replace the input and drop the typed value, which is why this passed alone
+  // and failed inside the full WebKit suite.
+  await page.locator('[data-micro-param="minutes"]').evaluate(el=>{
+    el.value='10';el.dispatchEvent(new Event('change',{bubbles:true}));});
   await expect.poll(async()=>await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
     return (w.nodes||[]).find(n=>n.type==='micro_workflow')?.params?.parameters?.minutes;

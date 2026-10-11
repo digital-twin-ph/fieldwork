@@ -70,6 +70,15 @@ The model updates and the field does not. Affects every numeric parameter, not
 one panel; measured on `mean-center-zone`, which predates the micro-workflow
 work. Recorded in [92](experiments/92-micro-workflow-on-the-canvas.md).
 
+**Experiment documents do not say whether they are questions or answers.**
+94 documents, 46 with an explicit status line, and those 46 use free prose with
+two values repeating. A reader cannot tell a proposal from a finding without
+reading the whole thing, and that is how a spike re-derived experiment 27 five
+days after it was written. A closed vocabulary — asked, tried, validated,
+retired — is proposed in [the rule audit](audits/rule-audit.md); applying it to
+94 documents is a migration, so require it of new ones and add it to existing
+ones as they are touched.
+
 **A desktop build now has a settled rationale and no plan.**
 Three reasons converge on it: acquisition no browser will permit
 ([69](experiments/69-healthsites-acquisition.md)), STAC assets behind CORS or

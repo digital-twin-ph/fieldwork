@@ -107,12 +107,60 @@ look identical in a commit and are not the same thing:
   rule in advance.
 - **Unread.** Experiment 27 proposed most of the gamification architecture on
   2026-10-06 and a spike re-derived it on 2026-10-11 without citing it. That
-  path had been travelled, written down and indexed; it simply was not read.
+  path had been written down and indexed; it simply was not read.
 
 The first is what developmental evaluation is for. The second is a failure that
 DE language can be used to excuse, and the distinction has to be stated every
 time, or "we could not have known" becomes available for things that were
 already known.
+
+## Known and validated are different, and the corpus does not say which is which
+
+Corrected 2026-10-11. The section above called experiment 27 a path "already
+travelled". It was not. **27 asked a question; it did not answer one.** Its
+A87 to A96 are proposals, and nothing in them has been built, fired or
+measured.
+
+That distinction runs through everything here. An experiment document exists to
+**ask** — to write a question down precisely enough that code can answer it, and
+then to record what the code and the use of it taught. Writing something down
+makes it asked, not known; building it makes it tried; and only a measurement
+against something independent makes it validated. The rule lifecycle below
+already says this for rules, and it is equally true of the documents.
+
+Two consequences for the failure recorded above. Not citing 27 was still a
+failure of reading, and it still wasted a morning. But the overlap is not two
+answers to a settled question: it is two independent attempts at an open one,
+which is weak evidence for the architecture they agree on and worth saying so.
+
+**And the corpus cannot currently be read this way.** Measured 2026-10-11:
+
+| | |
+| --- | --- |
+| Experiment documents | 94 |
+| With an explicit `**Status:**` line | 46 |
+| Status values that repeat | 2, out of 46 |
+
+So half say nothing about whether they are a question or an answer, and the
+half that do say it in free prose, each one different. A reader — including a
+later contributor, including me five days on — cannot tell a proposal from a
+finding without reading the whole document, and confident prose reads the same
+either way. That is the shape D5 warns about: a declaration that is free text is
+a limitation wearing a declaration's costume.
+
+**A closed vocabulary would fix it**, mapped to the lifecycle below:
+
+| Status | Means |
+| --- | --- |
+| `asked` | A question, with nothing built. Most of 27 |
+| `tried` | Built, with a measurement of its own |
+| `validated` | Measured against something independent, or fired in real use |
+| `retired` | Answered no, or superseded, with the successor named |
+
+Not applied here. Ninety-four documents is a migration, and the honest increment
+is the one used for `ontology.emits`: require it of new documents, add it to
+existing ones as they are touched, and let the count be visible. Recorded in
+[docs/todo.md](../todo.md) rather than done in passing.
 
 ## A rule has stages, and enforcement is the last one
 

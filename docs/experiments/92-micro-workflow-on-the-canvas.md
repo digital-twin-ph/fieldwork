@@ -47,6 +47,30 @@ Members are laid out in a row from the host's position and will overlap whatever
 was to the right. That is visible and draggable; pretending to solve graph
 layout here would have been worse than leaving it plain.
 
+## The output port, and where the seam was not carried through
+
+Reported by the user: the node had no output port on the canvas.
+
+`describe()` built the canvas definition as `{...TYPES[n.type], inputs:nodeInputs(n)}`.
+Inputs were already node-aware, because `map_output` changes its ports by
+parameter. Output was not, so the canvas drew its handle from the static table,
+where `micro_workflow` declares `null`. The node therefore appeared with its two
+inputs and nothing to connect onward.
+
+The `outputOf` seam existed and this one call site did not use it. Sixteen
+others did: edge validation, `validConnection`, every Inspector source list. The
+model was right the whole time, which is why the unit test that runs a
+composition into a map passed — the defect was only in what a practitioner could
+see and click.
+
+Two lessons, both about how this was missed. A seam added for one caller is not
+a seam until every caller that needs it uses it, and a grep for
+`TYPES[x.type].output` found the call sites that *looked* like lookups while
+missing the one that spread the whole definition. And the unit tests exercised
+the model where only a browser test could have shown the missing handle; the
+browser check now asserts two input handles, one output handle, and that it is
+titled `polygons output`.
+
 ## A pre-existing defect, found by testing this
 
 Every numeric field in the Inspector **visually reverts** after a change while

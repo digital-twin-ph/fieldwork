@@ -92,6 +92,90 @@ const sohoVoronoiChain=()=>{
 };
 
 const builders={
+  'snap-soho-001'(){
+    // The pumps snapped to the Soho street network, which is the first step of the isochrone
+    // chain. A snap is a nearest-neighbour search and a distance, both exact: there is no
+    // tolerance to argue about and a disagreement would be a disagreement about the projection
+    // or about which node is nearest.
+    //
+    // The network travels in full because a nearest node cannot be recomputed from a summary.
+    // Node coordinates are what the search uses; edges travel so a reader can see the graph the
+    // later steps traverse, and are unused here.
+    // Eight pumps rather than the isochrone example's one: a nearest-node search over a single
+    // site exercises almost nothing, and the Voronoi example carries the full set from the same
+    // source. The network comes from the isochrone example, which is the only one that has one.
+    const example=johnSnowExample('snow-isochrone');
+    const network=example.nodes.find(n=>n.type==='network_input').params.data;
+    const pumps=johnSnowExample('snow-voronoi').nodes.find(n=>n.id==='pumps').params.data;
+    const zone=30,hemisphere='north',maxSnapM=150;
+    const snapped=snapToNetwork(pumps,network,{id:'snap',type:'snap_to_network',x:0,y:0,
+      params:{label:'Snap to street network',zone,hemisphere,maxSnapM}},'fixture','pumps');
+    const facts=snapped.receipt.facts,number=name=>Number(new RegExp(`fw:${name} (-?[0-9.]+)`).exec(facts)[1]);
+    return {fixture:{
+      ...base('snap-soho-001','snap_to_network','Snap sites to the network','src/network-snap.ts#snapToNetwork'),
+      declaredParameters:{
+        zone,hemisphere,metricCRS:'EPSG:32630',maxSnapM,
+        rule:'For each site, the network node at the smallest Euclidean distance in the metric CRS. A site further than maxSnapM from every node is refused rather than snapped.',
+        semantics:'Snapping moves the site. Everything downstream starts from the junction, not from where the site actually is, and the distance moved is reported for that reason: a pump 40 m from the nearest junction is being modelled as if it stood at the junction.',
+        tieNote:'Two nodes exactly equidistant would make the choice arbitrary. Whether that occurs in this fixture is part of the check.'
+      },
+      input:{
+        sites:pumps.features.map(f=>({id:String(f.id),name:f.properties.name,
+          coordinates:f.geometry.coordinates})),
+        network:{source:network.source,
+          nodes:network.nodes.map(n=>({id:n.id,coordinates:n.coordinates})),
+          edges:network.edges.map(e=>({from:e.from,to:e.to,lengthM:e.lengthM}))}},
+      output:{
+        snapped:snapped.value.features.map(f=>({id:String(f.id),
+          networkNodeId:f.properties.networkNodeId,
+          snapDistanceM:f.properties.snapDistanceM,
+          coordinates:f.geometry.coordinates})),
+        siteCount:number('siteCount'),
+        snappedNodeCount:number('snappedNodeCount'),
+        greatestSnapDistanceMetres:number('greatestSnapDistanceMetres')},
+      note:'Project the sites and the network nodes, find each site\u2019s nearest node, and compare the node chosen, the distance moved, and the returned position.'
+    },files:{}};
+  },
+  'band-soho-001'(){
+    // The five minute band taken from a fifteen minute traversal. Selecting the junctions whose
+    // remaining budget falls in a band is an exact threshold test, so what is really being
+    // checked is whether the widget computes the band budget from the speed the junctions
+    // carry -- it restates neither the speed nor the direction, which is the design claim.
+    const example=johnSnowExample('snow-isochrone');
+    const network=example.nodes.find(n=>n.type==='network_input').params.data;
+    const pumps=example.nodes.find(n=>n.id==='pumps').params.data;
+    const zone=30,hemisphere='north',speedMPerMin=75,minutes=5,traversalMinutes=15;
+    const snapped=snapToNetwork(pumps,network,{id:'snap',type:'snap_to_network',x:0,y:0,
+      params:{label:'Snap to street network',zone,hemisphere,maxSnapM:100}},'fixture','pumps');
+    const reached=reachableNodes(snapped.value,network,{id:'reach',type:'reachable_nodes',x:0,y:0,
+      params:{label:'Reachable junctions',minutes:traversalMinutes,speedMPerMin,direction:'outbound',
+        travelMode:'walking'}},'fixture','snap');
+    const banded=travelTimeBand(reached.value,{id:'band',type:'travel_time_band',x:0,y:0,
+      params:{label:`Within ${minutes} minutes`,minutes}},'fixture','reach');
+    const facts=banded.receipt.facts,number=name=>Number(new RegExp(`fw:${name} (-?[0-9.]+)`).exec(facts)[1]);
+    return {fixture:{
+      ...base('band-soho-001','travel_time_band','Travel time band','src/travel-time-band.ts#travelTimeBand'),
+      declaredParameters:{
+        bandMinutes:minutes,traversalMinutes,speedMPerMin,
+        rule:'The band budget is minutes x speed. A junction is in the band when the distance already travelled to it is at most that budget. Its remaining budget is recomputed against the band, not carried over from the traversal.',
+        inheritanceRule:'The speed and the direction are read from the junctions, not restated as parameters, so a band cannot disagree with the traversal that produced it.',
+        semantics:'A band is nested, not a ring: the five minute band contains everything within five minutes, including everything within two.'
+      },
+      input:{
+        junctions:reached.value.features.map(f=>({networkNodeId:f.properties.networkNodeId,
+          travelMetres:f.properties.travelMetres,remainingM:f.properties.remainingM,
+          assumedSpeedMetresPerMinute:f.properties.assumedSpeedMetresPerMinute??speedMPerMin,
+          travelDirection:f.properties.travelDirection}))},
+      output:{
+        inBand:banded.value.features.map(f=>({networkNodeId:f.properties.networkNodeId,
+          remainingM:f.properties.remainingM,bandMinutes:f.properties.bandMinutes})),
+        bandBudgetMetres:number('bandBudgetMetres'),
+        traversalBudgetMetres:number('traversalBudgetMetres'),
+        junctionsOffered:number('junctionsOffered'),
+        junctionsInBand:number('junctionsInBand')},
+      note:'Recompute the band budget from the speed the junctions carry, select the junctions within it, and compare the selection, each junction\u2019s recomputed remaining budget, and the counts.'
+    },files:{}};
+  },
   'buffer-point-soho-001'(){
     // 32 segments per quadrant, because this widget's edge decides membership.
     //

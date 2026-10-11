@@ -3,9 +3,10 @@
 _Created 2026-10-11 · Updated 2026-10-11_
 
 **Status:** tried — the ratchet is built, gated and verified against four failure modes, and
-nine of the twenty-six widgets now have one. The plan for the other seventeen is written and
-only partly tested, and the ninth check failed on its first run against a criterion that
-turned out to be wrong — which is the plan working, not the plan failing.
+eleven of the twenty-six widgets now have one, and the whole isochrone decomposition is among
+them. The plan for the other fifteen is written and only partly tested, and two checks have
+failed on their first run against criteria that turned out to be wrong — which is the plan
+working, not the plan failing.
 
 ## The question asked
 
@@ -53,8 +54,8 @@ a fixture until a response is frozen. Counting it as exempt would have hidden it
 
 | | |
 | --- | --- |
-| Checked | 6 → **15** |
-| Awaiting | 26 → **17** |
+| Checked | 6 → **17** |
+| Awaiting | 26 → **15** |
 | Nothing to recompute | 18 |
 | Blocked | 1 |
 | Total | 51 |
@@ -64,7 +65,7 @@ from the file, an exemption with no reason, a check claimed that `parity.json` d
 record, and a count left stale. The stale-count message distinguishes the two ways it can
 happen, because lowering a count without doing the work claims progress not made.
 
-**Nine checks are in**, all agreeing, chosen to get progressively less comfortable rather
+**Eleven checks are in**, all agreeing, chosen to get progressively less comfortable rather
 than to pile up easy wins. Three of them recompute what the John Snow example actually does —
 the pump cells, their clip to the reporting rectangle, and the deaths counted inside them — so
 **that example is now independently recomputed end to end**.
@@ -152,8 +153,16 @@ the check would still pass while the drawn output varied between runs. There are
 which is why the expected order is the only order — and that is a fact about the data, not
 about the widget.
 
-**And the ninth check failed on its first run, which is the most useful thing that has
-happened in this item.** `buffer_point` draws a 500 m circle; the criterion, fixed in advance,
+**Two checks have now failed on their first run, both because the criterion was wrong rather
+than the widget, and both failures were worth more than the passes.**
+
+The second was simpler and is the more embarrassing: `19-snap` asked for the snap distance to
+within 1 mm and got 3.7 mm. The widget reports `snapDistanceM` as `Number(d.toFixed(2))` — it
+computes in full precision and *publishes centimetres*. 5 mm is half of its last reported digit.
+The criterion had not read what the widget says it reports, which took one line of source to
+check and was not checked.
+
+The first is the one with a finding in it. `buffer_point` draws a 500 m circle; the criterion, fixed in advance,
 asked that every vertex be within 1 m of 500 m measured as a geodesic distance on the WGS84
 ellipsoid. The worst was **1.589 m**.
 
@@ -180,6 +189,28 @@ first recorded against a single combined result, and the validator refused it: a
 declares the operation it recomputed, and one result cannot name two widgets. Split into
 `17-buffer-point` and `18-buffer-area`. That is the ratchet working on the person operating
 it, which is what it is for.
+
+**The whole isochrone decomposition is now checked**, which was not a stated goal and is the
+most useful structural consequence so far. `snap_to_network`, `reachable_nodes`,
+`travel_time_band` and `reachable_corridor` each have an independent check, so the four steps
+[80](80-network-snap.md)–[84](84-reachable-corridor.md) built out of the monolith are verified
+separately. That makes `isochrone` itself checkable **against its own decomposition** rather
+than against a new reference, which is a cheaper and stronger comparison than the plan assumed.
+
+Those two checks also each found something the parity result alone would not have said.
+
+**`19-snap` reports the margin to the second-nearest node, and one site's is 0.43 m.** No tie,
+so the answer is unambiguous — but the choice is decided by less than a pavement's width, and a
+different datum or node position would flip it. A check reporting only "the nodes agree" would
+imply a robustness this data does not have.
+
+**`20-band` tests a design claim rather than arithmetic.** The widget restates neither the
+speed nor the direction, reading both from the junctions, so a band cannot disagree with the
+traversal that produced it — and the reference recomputes the budget from the speed *carried on
+the junctions* rather than from a parameter of its own. It also checks the part most likely to
+be got wrong: a junction's remaining budget is recomputed against the band, not carried over.
+Here the traversal was 1,125 m and the band 375 m, so carrying it over would put fifteen
+minutes of reach at the edge of a five-minute corridor.
 
 A convex hull was chosen first because it is **exact** — no tolerance to pick, no curve to
 approximate, no iteration to converge — so a disagreement would have been real rather than a
@@ -266,7 +297,7 @@ the right answer in it.
 
 ## What this does not establish
 
-**That the method scales.** Nine of the twenty-six are written. Seven came out of the same
+**That the method scales.** Eleven of the twenty-six are written. Seven came out of the same
 shapely group, reusing two fixture helpers — one for the Soho corridors and one for the
 Voronoi chain. The cheap part was
 cheap because the second and third checks shared a reference library and a data source with
@@ -285,6 +316,6 @@ be argued with, and the validator will not defend them.
 criterion. `10-hull` agrees to 10⁻⁹ m on a hull that fills in ground the 1854 outbreak never
 crossed — both implementations assert that area identically, and the notebook says so twice.
 
-**And nothing about the 17 that remain.** They are now counted, named and grouped, which is
+**And nothing about the 15 that remain.** They are now counted, named and grouped, which is
 not the same as done. If the number sits at 25 in a month, the ratchet will say so, and that
 is the point of it.

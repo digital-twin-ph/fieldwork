@@ -9,8 +9,8 @@
  "measuredAt": "2026-10-11",
  "counts": {
   "widgets": 51,
-  "covered": 15,
-  "awaiting": 17,
+  "covered": 17,
+  "awaiting": 15,
   "none": 18,
   "blocked": 1
  },
@@ -238,8 +238,7 @@
   {
    "nodeType": "snap_to_network",
    "expectation": "parity",
-   "check": null,
-   "computes": "Finds the nearest network node to each site and reports the distance."
+   "check": "19-snap"
   },
   {
    "nodeType": "stack_polygons",
@@ -274,8 +273,7 @@
   {
    "nodeType": "travel_time_band",
    "expectation": "parity",
-   "check": null,
-   "computes": "Selects the junctions whose remaining budget falls in a band."
+   "check": "20-band"
   },
   {
    "nodeType": "voronoi",

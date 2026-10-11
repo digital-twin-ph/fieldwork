@@ -70,6 +70,14 @@ The model updates and the field does not. Affects every numeric parameter, not
 one panel; measured on `mean-center-zone`, which predates the micro-workflow
 work. Recorded in [92](experiments/92-micro-workflow-on-the-canvas.md).
 
+**The documented gate is Chromium only.**
+`playwright.config.mjs` says so, and both suites have in fact run at parity all
+day at 94 checks each. [70](experiments/70-webkit-parity.md) requires a WebKit
+gate before any desktop packaging decision, and
+[93](experiments/93-gamification-spike.md) now gives a second reason to want
+one. Making WebKit part of the documented gate is small and unblocks that
+question.
+
 **The Validation Lab has no gate at all.**
 `_output` is a committed artifact that nothing checks against `content/`, which
 is how it fell three notebooks behind. Item 1 should fix this as a side effect

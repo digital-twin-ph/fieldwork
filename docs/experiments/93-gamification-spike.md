@@ -246,6 +246,61 @@ catchment with a speed you chose for your setting" is a fact in a receipt.
 "Isochrone expert" is a competence claim this project cannot back, and the same
 discipline that stopped `evidence.status` saying `parity-checked` applies.
 
+## The browser is the wrong place to keep a learning record
+
+A browser is a good place to *compute* a measure and a poor place to *keep* one.
+
+`localStorage` is per-origin and per-device. It is cleared when site data is
+cleared, it does not survive a move to another machine, and the application
+already treats it as fallible: `save()` returns whether it persisted, and
+`change()` takes a `requirePersistence` option precisely because a write can
+fail. That handling is right for a workflow and insufficient for a history.
+
+The asymmetry is the argument. **A lost workflow is recoverable** — it can be
+re-authored, or it was exported, and in the worst case the analysis is done
+again. **A lost learning record is not.** It is an account of what somebody did
+over months, and nothing reconstructs it. Keeping an irreplaceable record in the
+most erasable store the platform offers is the wrong way round.
+
+A desktop build changes that in two ways that matter here. There is a real file
+the practitioner owns, can back up and can move between machines. And there is
+an operating-system user, which is the identity this application otherwise
+lacks entirely — the gap recorded above, where a score has no owner.
+
+### Three reasons now point the same way, and one constraint
+
+| Reason | Recorded |
+| --- | --- |
+| Cross-origin acquisition that no browser will permit | [69](69-healthsites-acquisition.md), as an optional upgrade, "not planned" |
+| STAC assets behind CORS or authentication | [91](91-stac-browser-integration.md) |
+| A durable learning record | here |
+
+The constraint is [70](70-webkit-parity.md): Tauri on macOS runs WKWebView, and
+before the WebKit work, every attached PDF and retained raster would have failed
+there while a Chromium-only gate reported green. **A desktop packaging decision
+follows a WebKit gate rather than preceding it.** That gate now exists in
+practice — both suites have run at parity all day — though the documented gate
+is still Chromium only, which is a gap worth closing before anyone packages
+anything.
+
+### What this does not license
+
+Deferring the whole idea to a version that does not exist is how features are
+quietly never built, and saying "that belongs in the desktop app" about work
+nobody has scheduled is a way of agreeing with it without doing it.
+
+The split that avoids that is already visible in the design above:
+
+- **Measurement is stateless.** Parsimony and provenance completeness are
+  computed from the workflow in hand and its receipts. Nothing is accumulated,
+  nothing is stored, and the browser can do all of it today.
+- **History is stateful.** A record of what somebody did over months needs a
+  file, and that is what waits for a desktop build.
+
+So the first cut stays in the browser and is honest about being a measurement
+rather than a record. The record is the part that waits, and it waits for a
+reason rather than for a version number.
+
 ## What a minimal spike would build
 
 Enough to learn, and no more:

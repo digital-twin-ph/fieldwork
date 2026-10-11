@@ -8,7 +8,7 @@ import type {Boundary,PointCollection,PointFeature,Position,WorkflowNode,NodeDef
 import type {Receipt} from './results.js';
 import {geometryBounds} from './study-area.js';
 import {pointRelation} from './spatial-predicates.js';
-import {partial,prepareEdges} from './network-edges.js';
+import {partial,prepareEdges,reachedStreets} from './network-edges.js';
 
 export interface Network {nodes:{id:string;coordinates:Position}[];edges:{from:string;to:string;lengthM:number;geometry?:Position[]}[];source:string;provenance?:Record<string,unknown>}
 export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;minutes?:number;count?:number;total?:number;missingValues?:number}
@@ -75,7 +75,8 @@ export function isochrone(input:PointCollection,network:Network,params:WorkflowN
   const features=fs.map(f=>{const origin=m.forward(f.geometry!.coordinates),snap=network.nodes.reduce((a,b)=>dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b),snapDistance=dist(coords.get(snap.id)!,origin);if(snapDistance>params.maxSnapM)throw new Error(`${f.properties.name}: nearest network node is ${Math.round(snapDistance)} m away, beyond the snap limit.`);snaps.push({siteId:f.id,nodeId:snap.id,distanceM:snapDistance});
     const budget=params.minutes*params.speedMPerMin,distances=new Map<string,number>([[snap.id,0]]),settled=new Set<string>();
     for(;;){let current:string|undefined,best=Infinity;for(const [id,d] of distances)if(!settled.has(id)&&d<best){current=id;best=d;}if(!current||best>budget)break;settled.add(current);for(const e of adjacency.get(current)||[]){const cost=best+e.lengthM;if(cost<(distances.get(e.to)??Infinity))distances.set(e.to,cost);}}
-    const lines:Position[][]=[];for(const e of edges){const d=distances.get(e.from)??Infinity;if(d<budget){const line=partial(e.line,Math.min(1,(budget-d)/e.lengthM));if(line.length>1)lines.push(line.map(m.inverse));}}
+    const reached:{line:Position[];fraction:number}[]=[];for(const e of edges){const d=distances.get(e.from)??Infinity;if(d<budget)reached.push({line:e.line,fraction:Math.min(1,(budget-d)/e.lengthM)});}
+    const lines=reachedStreets(reached).map(line=>line.map(m.inverse));
     const buffered=turfBuffer(lines.length?{type:'MultiLineString',coordinates:lines}:{type:'Point',coordinates:snap.coordinates},params.bufferM,{units:'meters',steps:8});
     if(!buffered||buffered.type!=='Feature')throw new Error('Network buffer did not produce a polygon.');
     const filled=multi(buffered.geometry).map(p=>[p[0]]) as ClipPolygon[];

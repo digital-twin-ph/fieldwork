@@ -70,3 +70,12 @@ A narrower move is available and is not studied here: compiling only what is
 slow — a buffer-and-union kernel rather than all of GEOS — which would keep the
 bundle small, and would still collapse the parity comparison for exactly those
 operations.
+
+**Followed up 2026-10-11.** Before changing engines, this asked whether the
+engine was being given work it did not need. It was: the corridor is 99.8% one
+buffer call, the buffer's input was half duplicate streets, and the buffer is
+strongly super-linear in its input. Pooling them made the same operation 3.5×
+faster with no bundle cost and parity still agreeing
+([95](../experiments/95-the-duplicate-street.md)). That is a larger saving than
+switching engines would have been, and it does not change the conclusion above
+— JSTS remains 3.2× slower than WASM GEOS — only the order to do things in.

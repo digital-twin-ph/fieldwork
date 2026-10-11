@@ -13,6 +13,14 @@ export interface PointComparison {
   centerShiftM:number;
   originalNearestPump:{id:string;name:string;distanceM:number};
   movedNearestPump:{id:string;name:string;distanceM:number};
+  /** How far each point moved, paired by position. Measured here and nowhere else.
+   *
+   *  The moved layer carries a name and nothing else, deliberately: a `sourceId` or a
+   *  `displacementM` on it would let anyone holding the shareable file walk the mask
+   *  backwards. The displacement exists only in this comparison, which the geoprivacy
+   *  example already labels as retaining original coordinates. */
+  displacements:{index:number;metres:number}[];
+  displacementBandM:{minimum:number;median:number;maximum:number};
   crs:string;
   method:string;
 }
@@ -33,7 +41,17 @@ export function comparePointSets(original:PointCollection,moved:PointCollection,
   if(first.crs!==projection.crs||second.crs!==projection.crs||first.count!==original.features.length||second.count!==moved.features.length)throw new Error('Mean center CRS and source counts must match the compared point sets.');
   const a=first.projected,b=second.projected,pumpXY=pumps.features.map(f=>({feature:f,coordinates:projection.forward(f.geometry!.coordinates)}));
   const nearest=(center:Position)=>pumpXY.map(({feature,coordinates})=>({id:feature.id,name:feature.properties.name,distanceM:Math.hypot(center[0]-coordinates[0],center[1]-coordinates[1])})).sort((x,y)=>x.distanceM-y.distanceM||x.id.localeCompare(y.id))[0];
-  return {original:structuredClone(original),moved:structuredClone(moved),pumps:structuredClone(pumps),originalMean:first.coordinates,movedMean:second.coordinates,centerShiftM:Math.hypot(a[0]-b[0],a[1]-b[1]),originalNearestPump:nearest(a),movedNearestPump:nearest(b),crs:projection.crs,method:(params.centers?'Compare supplied':'Compute and compare legacy')+' unweighted mean centers with Euclidean distances in metres. Pump layer is contextual, not evidence of historical pump use.'};
+  // Paired by position, which is the only pairing available: the moved layer deliberately
+  // carries no pointer back to its source. The equal-length check above is what makes it sound.
+  const displacements=original.features.map((feature,index)=>{
+    const from=projection.forward(feature.geometry!.coordinates);
+    const to=projection.forward(moved.features[index].geometry!.coordinates);
+    return {index,metres:Math.hypot(from[0]-to[0],from[1]-to[1])};
+  });
+  const sorted=displacements.map(d=>d.metres).sort((x,y)=>x-y);
+  const displacementBandM={minimum:sorted[0],
+    median:sorted[(sorted.length-1)>>1],maximum:sorted[sorted.length-1]};
+  return {original:structuredClone(original),moved:structuredClone(moved),pumps:structuredClone(pumps),originalMean:first.coordinates,movedMean:second.coordinates,centerShiftM:Math.hypot(a[0]-b[0],a[1]-b[1]),originalNearestPump:nearest(a),movedNearestPump:nearest(b),displacements,displacementBandM,crs:projection.crs,method:(params.centers?'Compare supplied':'Compute and compare legacy')+' unweighted mean centers with Euclidean distances in metres, and the per-point displacement band measured by pairing the two sets in order. Pump layer is contextual, not evidence of historical pump use.'};
 }
 
 const quantity=(metres:number)=>`[ a qudt:QuantityValue; qudt:numericValue ${metres.toFixed(9)}; qudt:unit <http://qudt.org/vocab/unit/M> ]`;
@@ -41,7 +59,7 @@ export function comparisonReceipt(node:WorkflowNode<'compare_point_sets'>,value:
   const activity=`urn:fieldwork:run:${runId}:output:${node.id}:activity`,entity=`urn:fieldwork:run:${runId}:output:${node.id}`;
   const center=(which:'original'|'moved',coords:Position)=>`<${entity}:${which}-mean> a geo:Geometry; geo:asWKT ${JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT ('+coords.join(' ')+')')}^^geo:wktLiteral.\n`;
   const used=[sources.original,sources.moved,sources.pumps,sources.originalCenter,sources.movedCenter].filter(Boolean).map(id=>`<urn:fieldwork:run:${runId}:output:${id}>`).join(', ');
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix qudt: <http://qudt.org/schema/qudt/>.\n<${activity}> a fw:PointSetComparison, prov:Activity; prov:used ${used}; fw:computationCRS ${JSON.stringify(value.crs)}; fw:inputCount ${value.original.features.length}; fw:referenceCount ${value.pumps.features.length}; fw:centerShift ${quantity(value.centerShiftM)}; fw:originalNearestPumpDistance ${quantity(value.originalNearestPump.distanceM)}; fw:movedNearestPumpDistance ${quantity(value.movedNearestPump.distanceM)}.\n<${entity}> a fw:PointComparisonResult, prov:Entity; prov:wasGeneratedBy <${activity}>; fw:originalMeanCenter <${entity}:original-mean>; fw:movedMeanCenter <${entity}:moved-mean>; fw:originalNearestPumpId ${JSON.stringify(value.originalNearestPump.id)}; fw:movedNearestPumpId ${JSON.stringify(value.movedNearestPump.id)}.\n${center('original',value.originalMean)}${center('moved',value.movedMean)}`;
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix qudt: <http://qudt.org/schema/qudt/>.\n<${activity}> a fw:PointSetComparison, prov:Activity; prov:used ${used}; fw:computationCRS ${JSON.stringify(value.crs)}; fw:inputCount ${value.original.features.length}; fw:referenceCount ${value.pumps.features.length}; fw:centerShift ${quantity(value.centerShiftM)}; fw:originalNearestPumpDistance ${quantity(value.originalNearestPump.distanceM)}; fw:movedNearestPumpDistance ${quantity(value.movedNearestPump.distanceM)}; fw:displacementMinimum ${quantity(value.displacementBandM.minimum)}; fw:displacementMedian ${quantity(value.displacementBandM.median)}; fw:displacementMaximum ${quantity(value.displacementBandM.maximum)}.\n<${entity}> a fw:PointComparisonResult, prov:Entity; prov:wasGeneratedBy <${activity}>; fw:originalMeanCenter <${entity}:original-mean>; fw:movedMeanCenter <${entity}:moved-mean>; fw:originalNearestPumpId ${JSON.stringify(value.originalNearestPump.id)}; fw:movedNearestPumpId ${JSON.stringify(value.movedNearestPump.id)}.\n${center('original',value.originalMean)}${center('moved',value.movedMean)}`;
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:value.method};
 }
 

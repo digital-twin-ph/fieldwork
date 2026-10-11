@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const registry=JSON.parse(readFileSync(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -35,8 +36,13 @@ test('the widget catalog shows identities, digests and independent checks, and w
 
   // A partial result is shown as partial rather than rounded up to a pass.
   await expect(dialog.locator('tr[data-widget="clip_raster"] [data-parity]')).toHaveText('partial');
-  // An unchecked widget says so plainly.
-  await expect(dialog.locator('tr[data-widget="voronoi"] [data-parity]')).toHaveText('not checked');
+  // An unchecked widget says so plainly. The widget is chosen from parity.json at run time
+  // rather than named here: this assertion was written against `voronoi` and went stale the day
+  // voronoi gained a check, failing on a coverage increase rather than on a defect.
+  const unchecked=registry.widgets.map(w=>w.nodeType)
+    .find(nodeType=>!parity.entries.some(e=>e.widget.endsWith(`:${nodeType}`)));
+  assert.ok(unchecked,'every widget now has parity evidence; this assertion has nothing left to test');
+  await expect(dialog.locator(`tr[data-widget="${unchecked}"] [data-parity]`)).toHaveText('not checked');
   const checked=new Set(parity.entries.map(e=>e.widget)).size;
   await expect(dialog).toContainText(`${checked} of ${registry.widgets.length} widgets`);
   // The catalog must not imply anything is installable or certified.

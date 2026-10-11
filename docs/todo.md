@@ -80,9 +80,11 @@ Nothing is scheduled, nothing is designed, and the WebKit gate below comes
 first. Recorded so that "the desktop app will do it" stops being a way of
 agreeing with an idea without doing it.
 
-**The documented gate is Chromium only.**
-`playwright.config.mjs` says so, and both suites have in fact run at parity all
-day at 94 checks each. [70](experiments/70-webkit-parity.md) requires a WebKit
+**The documented gate is Chromium only, and so is CI.**
+`playwright.config.mjs` says so, and `.github/workflows/pages.yml` runs
+`npx playwright install --with-deps chromium`, so the WebKit suite runs only on
+a developer's machine by hand. Both suites have in fact run at parity all day at
+94 checks each. [70](experiments/70-webkit-parity.md) requires a WebKit
 gate before any desktop packaging decision, and
 [93](experiments/93-gamification-spike.md) now gives a second reason to want
 one. Making WebKit part of the documented gate is small and unblocks that

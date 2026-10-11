@@ -144,6 +144,87 @@ invisible to a Chromium-only gate.
 increases engine variance rather than removing it, which is why that experiment
 requires a WebKit gate before any packaging decision.
 
+## Four objections, and what they change
+
+Raised 2026-10-11. Two revise rows of the table below; two do not.
+
+### Cohort divergence is a drift problem, and this project has a drift answer
+
+The table says desktop cohorts diverge. That is true of the *binary* and need
+not be true of the *material*. Teaching content can be governed exactly as
+everything else here is: a widget release is pinned by version and digest, a
+composition pins every member and reports drift when one moves, and a pack
+catalog carries a digest the build recomputes. Teaching material could declare
+the application version and widget versions it was written against, and say so
+when they differ — which is the composition drift report in another costume.
+
+That does not make the binary uniform. A facilitator still cannot assume
+everyone installed the same build. What it does is make the divergence
+**visible and specific** instead of mysterious, which is the difference between
+"it doesn't work on mine" and "this exercise was written for 0.7.0 and you have
+0.6.2". **Row revised: desktop cohorts diverge, and the divergence can be
+reported rather than discovered.**
+
+### A shared machine: durability and attribution are different properties
+
+The objection is right and my row conflated two things.
+
+- **Durability** improves unconditionally on the desktop. A file survives a
+  cleared cache, a different browser and a move between machines. A shared
+  login does not make a file less durable.
+- **Attribution** does not follow. If three nurses share one Windows login, the
+  operating-system user identifies the desk, not the person.
+
+They are separable, and the separation suggests the answer: a **local profile
+chooser** inside the application — pick who you are when you sit down, with no
+server, no roster and no account in any networked sense. That is not what
+[27](../experiments/27-workflow-learning-and-gamification.md) A92 refuses; A92
+refuses accounts and rosters as infrastructure, and a local name on a local file
+is neither. **Row revised: desktop is decisively better for durability, and
+attribution needs a local profile, which is a small feature and not an account
+system.**
+
+### Tauri does not reduce engine variance, but it may not add much either
+
+Measured against [Tauri's own reference](https://v2.tauri.app/reference/webview-versions/):
+Windows uses WebView2, which is Chromium and self-updating; macOS uses
+WKWebView; Linux uses webkit2gtk 4.1; Android uses the system WebView, which is
+Chromium.
+
+So the engine **families** are exactly the two already gated here: Chromium and
+WebKit. A documented two-engine gate covers the families a Tauri build would
+run on, which is better than the original row implied.
+
+What changes is **who controls the version**. A browser auto-updates, so users
+converge on recent engines. WKWebView is tied to the macOS version and cannot be
+updated independently; webkit2gtk is tied to distribution packaging. For a
+managed fleet that is more predictable; for an unmanaged one it means older
+engines persist. And Playwright's WebKit is a build of WebKit rather than
+WKWebView or webkit2gtk, so the gate approximates those targets rather than
+being them.
+
+**Row revised: desktop does not multiply engine families beyond the two already
+tested, and the real difference is version control and currency, not variety.**
+
+### CI already carries most of the governance
+
+Checked rather than assumed. Every validator has a corresponding unit test —
+`ontology-shacl`, `widget-registry`, `compositions`, `pack-catalog`, `parity`,
+`ontology-coupling` — and `npm run check`, which the Pages workflow runs on
+every push, executes the whole unit suite plus the documentation and coupling
+validators and the browser tests. So the registry, ontology, composition and
+parity rules are enforced by machine, not by memory.
+
+**The gap is engines, not rules.** The workflow installs Chromium only
+(`npx playwright install --with-deps chromium`), so the WebKit suite that has
+run at parity all day runs only here, by hand. Adding WebKit to CI is a
+one-line change and is the thing that makes the gate real.
+
+**So yes: CI minimises the governance work, and it already does for everything
+it runs.** It does not reduce the work of deciding what a rule should be, and a
+rule outside CI is a rule somebody has to remember — which is what the WebKit
+suite currently is.
+
 ## Summary
 
 | Dimension | Browser | Desktop |

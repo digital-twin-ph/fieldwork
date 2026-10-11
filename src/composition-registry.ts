@@ -1,4 +1,4 @@
-import walkingCatchment from '../compositions/compute_walking_catchment/0.2.0.json';
+import walkingCatchment from '../compositions/compute_walking_catchment/0.3.0.json';
 import type {Composition} from './compositions.js';
 
 /** The compositions this build carries, by id and version.

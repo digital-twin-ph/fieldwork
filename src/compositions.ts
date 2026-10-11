@@ -1,5 +1,6 @@
 import type {NodeType,Workflow,WorkflowNode,PortType} from './types.js';
 import {TYPES,nodeInputs} from './core.js';
+import type {Receipt} from './results.js';
 
 /** A composition is a saved subgraph that behaves as one step.
  *
@@ -57,10 +58,18 @@ export interface CompositionEdge {from:string; to:string; port:string}
 export interface CompositionPort {name:string; type:PortType; members:{node:string; port:string}[]}
 export interface CompositionParameter {
   name:string; title:string;
+  /** The value a new node starts with. Required, because a composition added to a canvas
+   *  with no values has no ports it can run and nothing a practitioner can correct. A
+   *  default is still an assumption: the walking catchment's speed defaults to the case
+   *  study's 1854 figure, which is why every result it produces says so. */
+  default:string|number|boolean;
   members:{node:string; param:string}[];
 }
 export interface Composition {
-  schema:'fieldwork/composition/1';
+  /** Schema 2 added a required default to every public parameter. Both are accepted, and
+   *  the requirement applies only from 2 — a field added later must not invalidate a file
+   *  written earlier, which a drift fixture written the same afternoon proved by failing. */
+  schema:'fieldwork/composition/1'|'fieldwork/composition/2';
   id:string; nodeType:string; version:string; title:string; author:string; released:string;
   stage:StageVerb;
   description:string;
@@ -89,7 +98,7 @@ export function openInputs(composition:Composition):{node:string; port:string; t
 }
 
 export function validateComposition(composition:Composition,registry:{widgets:{nodeType:string; currentVersion:string; releases:{version:string; sha256:string}[]}[]}):void{
-  if(composition.schema!=='fieldwork/composition/1')throw new Error(`Unknown composition schema ${composition.schema}.`);
+  if(!['fieldwork/composition/1','fieldwork/composition/2'].includes(composition.schema))throw new Error(`Unknown composition schema ${composition.schema}.`);
   const name=NAME.exec(composition.nodeType);
   if(!name)throw new Error(`A composition is named verb_object in lower case with underscores; ${composition.nodeType} is not.`);
   if(Object.hasOwn(TYPES,composition.nodeType))
@@ -154,6 +163,8 @@ export function validateComposition(composition:Composition,registry:{widgets:{n
   const exposed=new Map<string,string>();
   for(const parameter of composition.parameters){
     if(!parameter.members.length)throw new Error(`Public parameter ${parameter.name} sets nothing.`);
+    if(composition.schema==='fieldwork/composition/2'&&!['string','number','boolean'].includes(typeof parameter.default))
+      throw new Error(`Public parameter ${parameter.name} states no default, so a new node could not run.`);
     for(const target of parameter.members){
       const member=composition.members.find(m=>m.node===target.node);
       if(!member)throw new Error(`Public parameter ${parameter.name} names ${target.node}, which is not a member.`);
@@ -241,10 +252,11 @@ export function expandComposition(
  *  one connection can feed three steps. Edges leaving the node come from the terminal
  *  member. */
 export function expandMicroWorkflows(
-  workflow:Workflow, resolve:(id:string,version:string)=>Composition,
-):Workflow{
+  workflow:Workflow, resolve:(id:string,version:string)=>Composition, runId='plan',
+):{workflow:Workflow;receipts:Receipt[]}{
   const hosts=workflow.nodes.filter(n=>n.type==='micro_workflow');
-  if(!hosts.length)return workflow;
+  if(!hosts.length)return {workflow,receipts:[]};
+  const receipts:Receipt[]=[];
   // Annotated, because the predicate narrows the result to exclude micro-workflow nodes
   // and the members being pushed back are ordinary ones of any type.
   const nodes:WorkflowNode[]=workflow.nodes.filter(n=>n.type!=='micro_workflow');
@@ -262,6 +274,81 @@ export function expandMicroWorkflows(
       if(edge.from===host.id)
         edges.push({...edge,from:expanded.output});
     }
+    receipts.push(expansionReceipt(composition,host.id,params.parameters,expanded,runId));
   }
-  return {...workflow,nodes,edges};
+  return {workflow:{...workflow,nodes,edges},receipts};
+}
+
+/** One record of the arrangement, beside the members' own receipts.
+ *
+ *  The members' receipts are untouched: a run of a composition reads exactly as a run of
+ *  the primitives, which is what it is. What that alone cannot say is that four activities
+ *  came from one composition at one version, so this asserts the association and nothing
+ *  else — it claims no computation, which is why it does not contradict
+ *  [75](../docs/experiments/75-compositions-as-nodes.md)'s requirement that a composition
+ *  must not emit a receipt claiming its members' work.
+ *
+ *  Modelled as PROV association rather than invented vocabulary: the composition is a
+ *  `prov:Plan`, and each member node is associated with it. A reader asking "where did this
+ *  step come from" follows `prov:hadPlan` to a pinned version. */
+export function expansionReceipt(
+  composition:Composition, hostId:string, parameters:Record<string,unknown>,
+  expanded:{nodes:WorkflowNode[];output:string}, runId:string,
+):Receipt{
+  const plan=`<urn:fieldwork:composition:${composition.nodeType}:${composition.version}>`;
+  const activity=`<urn:fieldwork:run:${runId}:${hostId}:expansion>`;
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+    +`${plan} a prov:Plan, fw:MicroWorkflow; `
+    +`fw:compositionId ${JSON.stringify(composition.id)}; `
+    +`fw:compositionVersion ${JSON.stringify(composition.version)}; `
+    +`fw:compositionStage ${JSON.stringify(composition.stage)}; `
+    +`fw:governanceStatus ${JSON.stringify(composition.governance.status)}.\n`
+    +`${activity} a fw:MicroWorkflowExpansion, prov:Activity; `
+    +`prov:qualifiedAssociation [ a prov:Association; prov:hadPlan ${plan} ]; `
+    +`fw:memberCount ${composition.members.length}; `
+    +`fw:claimsNoComputation true.\n`
+    +expanded.nodes.map(node=>
+      `<urn:fieldwork:run:${runId}:member:${encodeURIComponent(node.id)}> a prov:Activity; `
+      +`prov:qualifiedAssociation [ a prov:Association; prov:hadPlan ${plan} ]; `
+      +`fw:memberOf ${plan}; fw:memberNode ${JSON.stringify(node.id)}.\n`).join('')
+    +Object.entries(parameters).map(([name,value])=>
+      `${activity} fw:compositionParameter [ fw:parameterName ${JSON.stringify(name)}; `
+      +`fw:parameterValue ${JSON.stringify(String(value))} ].\n`).join('');
+  return {nodeId:hostId,kind:'computation',facts,input:facts,rules:'',conclusions:[],
+    method:`Expanded the ${composition.title} micro-workflow, version ${composition.version}, `
+      +`into ${composition.members.length} members. This record states the association only; `
+      +`each member reports its own work, and the run reads as a run of the primitives.`};
+}
+
+/** A composition as the palette offers it, and as a node when one is added.
+ *
+ *  The governance status travels onto the entry rather than deciding whether there is an
+ *  entry. Experiment 76 gates the *palette* on admission, which this read too strictly: a
+ *  rule that stops a composition being tried stops the learning it was written to protect.
+ *  So every bundled composition is offered, and an unreviewed one says so where a
+ *  practitioner sees it. */
+export function compositionEntry(composition:Composition){
+  return {
+    key:`${composition.id}@${composition.version}`,
+    nodeType:composition.nodeType,
+    title:composition.title,
+    stage:composition.stage,
+    status:composition.governance.status,
+    description:composition.description,
+    params:{
+      label:composition.title,
+      composition:{id:composition.id,nodeType:composition.nodeType,version:composition.version,
+        title:composition.title,stage:composition.stage,
+        inputs:composition.ports.inputs.map(p=>[p.name,p.type] as [string,PortType]),
+        output:composition.ports.output.type},
+      // A schema 1 composition states no defaults, so it can be inspected and run from a
+      // saved workflow but not added fresh from the palette. Said here rather than producing
+      // a node with undefined parameters.
+      parameters:Object.fromEntries(composition.parameters.map(p=>{
+        if(p.default===undefined)
+          throw new Error(`${composition.title} ${composition.version} states no default for ${p.name}, so it cannot be added from the palette. Republish it against composition schema 2.`);
+        return [p.name,p.default];
+      })),
+    },
+  };
 }

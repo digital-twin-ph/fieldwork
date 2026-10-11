@@ -1,0 +1,84 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:micro_workflow",
+ "version": "0.2.0",
+ "nodeType": "micro_workflow",
+ "title": "Micro-workflow",
+ "released": "2026-10-10",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['micro_workflow']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [],
+  "output": null
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:MicroWorkflowExpansion",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "configuration",
+    "iri": "urn:fieldwork:MicroWorkflow",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "emits": {
+   "classes": [
+    "MicroWorkflow",
+    "MicroWorkflowExpansion"
+   ],
+   "properties": [
+    "claimsNoComputation",
+    "compositionId",
+    "compositionParameter",
+    "compositionStage",
+    "compositionVersion",
+    "governanceStatus",
+    "memberCount",
+    "memberNode",
+    "memberOf",
+    "parameterName",
+    "parameterValue"
+   ]
+  },
+  "note": "Emits an fw:MicroWorkflowExpansion activity recording the association between the members and the composition, which is declared an fw:MicroWorkflow and a prov:Plan. It asserts fw:claimsNoComputation so a reader counting activities does not credit the arrangement with the work, and carries fw:compositionVersion and fw:governanceStatus so a result produced with an unreviewed composition says so. Each member node is associated with the plan through prov:qualifiedAssociation and fw:memberOf, and the public parameter values are recorded as names and text. The members report their own work untouched, so a run of a composition reads as a run of the primitives, with one additional record of what arranged them."
+ },
+ "implementation": {
+  "files": [
+   "src/compositions.ts",
+   "src/composition-registry.ts",
+   "src/core.ts"
+  ],
+  "definition": "src/compositions.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "A composition used as one step. One node type serves every composition: the node pins the composition's id, version, title, stage, ports and output type, so nodeInputs and outputOf read the contract from the node rather than the type table, and a saved workflow validates and reports drift without the composition file being present. Runs by expansion after the authored workflow is validated, so the executor has no composition branch and one receipt per member falls out of running ordinary nodes. Not addable from the palette yet: the palette offers admitted compositions, and none is admitted. Its params are the first thing in a saved workflow to record a version, against the not-yet-persisted claim every other release makes -- which is deliberate, because without a version there is nothing for drift detection to check when the file is reopened."
+  },
+  {
+   "kind": "added",
+   "description": "Records the arrangement. 0.1.0 declared an ontology gap: the node expanded before execution and emitted nothing, so a run showed four member activities with nothing saying they came from one composition at one version. Now the expansion emits a PROV association rather than invented vocabulary -- the composition is a prov:Plan and each member is associated with it -- and the members' receipts are unchanged, which is the other half of the requirement: a run of a composition must read as a run of the primitives. Also makes the node addable: the palette offers one entry per bundled composition with its governance status on the entry, replacing the reading that only an admitted composition may be added at all. That reading gated trying on review, and so gated the learning the review exists to protect."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Covered by tests/compositions.test.mjs, which runs the shipped composition as one node and checks four member receipts with the numbers the Validation Lab checked against NetworkX and GEOS. Not established: that a practitioner finds one node easier to follow than four, which is the claim compositions exist for and still needs a person. Not implemented: exploding the node on the canvas, and the expansion provenance named above."
+ }
+}

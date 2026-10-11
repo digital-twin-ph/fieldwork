@@ -63,7 +63,7 @@ test('the provenance a composition produces stays within a recorded size',async(
   const {validateComposition,expandComposition}=await import('../build/compositions.js');
   const {executeWorkflow}=await import('../build/core.js');
   const {johnSnowExample}=await import('../build/john-snow.js');
-  const composition=JSON.parse(await readFile('compositions/compute_walking_catchment/0.2.0.json','utf8'));
+  const composition=JSON.parse(await readFile('compositions/compute_walking_catchment/0.3.0.json','utf8'));
   validateComposition(composition,JSON.parse(await readFile('widgets/registry.json','utf8')));
   const example=johnSnowExample('snow-isochrone');
   const pumps=example.nodes.find(n=>n.id==='pumps'),network=example.nodes.find(n=>n.type==='network_input');

@@ -1,8 +1,8 @@
 {
- "schema": "fieldwork/composition/1",
+ "schema": "fieldwork/composition/2",
  "id": "urn:fieldwork:composition:compute_walking_catchment",
  "nodeType": "compute_walking_catchment",
- "version": "0.2.0",
+ "version": "0.3.0",
  "title": "Walking catchment",
  "author": "Fieldwork project",
  "released": "2026-10-10",
@@ -22,6 +22,11 @@
     "at": "2026-10-10",
     "by": "agent, unreviewed by a human",
     "outcome": "Re-pinned after travel_time_band published 0.3.0, which records the ontology terms it asserts. Version 0.1.0 is kept as tests/fixtures/drifted-composition-2026-10-10.json so the drift report it produces stays exercised rather than becoming a story about the past."
+   },
+   {
+    "at": "2026-10-10",
+    "by": "agent, unreviewed by a human",
+    "outcome": "Added a default for each public parameter, so that adding this to a canvas gives a node that can run and be corrected rather than one with no ports. The speed defaults to 75 metres per minute, which is the case study's 1854 Soho walking assumption -- a default, not a recommendation, and every result it produces says a speed does not transfer between settings. Version 0.2.0 was removed rather than kept, because requiring a default retroactively would have invalidated it: it was hours old, nothing depended on it, and branching the composition schema for a field added the same afternoon would have been ceremony. A version anything had depended on would have needed the schema bump instead."
    }
   ]
  },
@@ -117,7 +122,8 @@
      "node": "corridor",
      "param": "zone"
     }
-   ]
+   ],
+   "default": 30
   },
   {
    "name": "hemisphere",
@@ -131,7 +137,8 @@
      "node": "corridor",
      "param": "hemisphere"
     }
-   ]
+   ],
+   "default": "north"
   },
   {
    "name": "maxSnapM",
@@ -141,7 +148,8 @@
      "node": "snap",
      "param": "maxSnapM"
     }
-   ]
+   ],
+   "default": 100
   },
   {
    "name": "travelMode",
@@ -151,7 +159,8 @@
      "node": "reach",
      "param": "travelMode"
     }
-   ]
+   ],
+   "default": "walking"
   },
   {
    "name": "speedMPerMin",
@@ -161,7 +170,8 @@
      "node": "reach",
      "param": "speedMPerMin"
     }
-   ]
+   ],
+   "default": 75
   },
   {
    "name": "direction",
@@ -171,7 +181,8 @@
      "node": "reach",
      "param": "direction"
     }
-   ]
+   ],
+   "default": "outbound"
   },
   {
    "name": "traversalMinutes",
@@ -181,7 +192,8 @@
      "node": "reach",
      "param": "minutes"
     }
-   ]
+   ],
+   "default": 15
   },
   {
    "name": "minutes",
@@ -191,7 +203,8 @@
      "node": "band",
      "param": "minutes"
     }
-   ]
+   ],
+   "default": 5
   },
   {
    "name": "bufferM",
@@ -201,7 +214,8 @@
      "node": "corridor",
      "param": "bufferM"
     }
-   ]
+   ],
+   "default": 25
   }
  ]
 }

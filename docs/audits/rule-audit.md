@@ -69,6 +69,51 @@ human sat down once and worked through 42 widgets.
 
 Prefer to mechanise. If a rule cannot be mechanised, say so and say why.
 
+## A gate is a fossil record of the paths already travelled
+
+Added 2026-10-11, and it is the reason this is a developmental evaluation
+rather than a project with a specification.
+
+Nearly every mechanised rule here was written **after** the defect it now
+prevents, and the record says so in each case:
+
+| Rule in CI | The defect that produced it |
+| --- | --- |
+| `palette-add.browser.mjs` | Three widgets added on 2026-10-09 repeated a defect experiment 48 had already recorded |
+| `validate:ontology-coupling` | Four properties lost an `rdfs:domain` by hand in one afternoon, and 53 terms turned out to be asserted with nothing defining them |
+| The provenance-size ratchet | Added because ontology growth has a cost nobody was watching |
+| The composition manifest fix | A run stopped with a manifest error that no hand-built test workflow could produce |
+| Dynamic `outputOf` | A node reached the canvas with no output port |
+
+So a gate protects against the class of mistake somebody has already made. It
+cannot protect against the class nobody has met yet, and the gaps in it are
+mostly **unexplored map** rather than negligence. That is precisely why the
+criteria could not have been written at the start: we know what we know from
+the paths travelled, and the shape of the whole journey has not emerged yet.
+
+**Two things follow, and the second is the one that keeps this honest.**
+
+**Every mechanised rule should name the defect that produced it.** Most already
+do, in a comment beside the assertion. That turns the gate from a list of
+constraints into a legible history, and a reader who disagrees with a rule can
+read what it cost to learn before arguing with it.
+
+**"The picture is emergent" is not a defence for not looking.** Two kinds of gap
+look identical in a commit and are not the same thing:
+
+- **Unexplored.** `executionPlan` validating a second time, so an expanded
+  composition met the authored project's manifest, was discoverable only by
+  running a composition in a real workspace. Nobody could have written that
+  rule in advance.
+- **Unread.** Experiment 27 proposed most of the gamification architecture on
+  2026-10-06 and a spike re-derived it on 2026-10-11 without citing it. That
+  path had been travelled, written down and indexed; it simply was not read.
+
+The first is what developmental evaluation is for. The second is a failure that
+DE language can be used to excuse, and the distinction has to be stated every
+time, or "we could not have known" becomes available for things that were
+already known.
+
 ## A rule has stages, and enforcement is the last one
 
 A rule can be thought through, written down and **tried** long before it enforces

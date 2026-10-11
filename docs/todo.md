@@ -21,12 +21,22 @@ reportedly what happened to `01-reproject-vs-pyproj`, unreproduced so far.
 Whatever is built has to fail the build on an error cell, in both.
 Design record: [41](experiments/41-validation-lab.md).
 
-**2 · The 26 computing widgets with no lab check.**
+**2 · The 26 computing widgets with no lab check, and no Dive Deeper material.**
 31 widgets compute something; 5 have a check. Plan and test the work, do not
 simply start writing notebooks: a coverage ratchet like
 `ontology/coupling-debt.json` should come first so the number is visible in
 every run and can only fall. Item 1 comes before this one, because adding 26
 unexecuted notebooks adds 26 unverified files.
+
+Each notebook now has two jobs, not one ([94](experiments/94-where-explanation-belongs.md)).
+A **parity** section recomputes independently for a reviewer. A **Dive Deeper**
+section varies the assumption the widget inherits and shows what it does to the
+answer — which is where a practitioner comes to understand what the widget
+actually does, since the canvas cannot carry an explanation. Checks 07 and 08
+already do this without having named it: the walking speed taking the reached
+set from 69 junctions to 246, and the corridor half-width taking the area from
+0.51× to 1.53×. That is the pattern to follow, and it raises what each of the 26
+is worth writing.
 
 ## Known and recorded, not yet scheduled
 

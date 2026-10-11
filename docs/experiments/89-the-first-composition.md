@@ -100,6 +100,13 @@ reviewed it.
 
 **And the claim that matters is still untested.** Whether four visible steps are
 easier for a public health practitioner to understand than one node with nine
-knobs is the whole point of compositions, and nothing here measures it. The
-decomposition agrees with the monolith to 3.8 parts per million; that is a
-statement about arithmetic, not about comprehension.
+knobs is nothing this measures. The decomposition agrees with the monolith to
+3.8 parts per million; that is a statement about arithmetic, not comprehension.
+
+**Corrected 2026-10-11.** This called comprehension "the whole point of
+compositions", which [94](94-where-explanation-belongs.md) retires. Four nodes
+carry their own cognitive load, and explanation was put in the wrong place: it
+belongs in the Validation Lab notebooks, not in more canvas nodes. What this
+experiment actually demonstrated — reuse, pinned governance, drift detection and
+one receipt per member — stands without the comprehension claim, and is the
+better case for compositions.

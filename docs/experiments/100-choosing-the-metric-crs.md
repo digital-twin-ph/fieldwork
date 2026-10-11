@@ -2,8 +2,13 @@
 
 _Created 2026-10-11 · Updated 2026-10-11_
 
-**Status:** asked — the gap is measured and nothing is built. Prompted by the practitioner
-asking whether there is an automated UTM selector based on location. There is not.
+**Status:** tried — the defaults are now derived from the workflow's own data and a disagreeing
+zone is reported with what it costs, both built and tested on 2026-10-11. The guard is
+untouched, and whether reporting changes anybody's choice is unmeasured, so this is not
+`validated`.
+
+Prompted by the practitioner asking whether there is an automated UTM selector based on
+location. There was not.
 
 ## The question asked
 
@@ -75,25 +80,53 @@ took one line. Corrected the same day in the card, in the browser test's comment
 So a 500 m buffer is 500 m on a sphere and up to 501.6 m on the ground; a 50–125 m donut reads
 50.8–125.2 m. Small, direction-dependent, and nowhere stated before these two checks.
 
-## What was decided
+## What was built
 
-**Nothing is built.** The gap is now measured and the options are visible:
+Two of the four options below, chosen because they are the two that do not refuse anything a
+practitioner can do today.
+
+**The palette default is derived.** `suggestUTM` reads every coordinate the workflow already
+holds — point layers, network nodes, drawn boundaries — and takes the zone of their **mean
+longitude**, so a study area straddling a boundary lands on the side holding most of it. A
+widget added to Old Naledi now arrives as **35S** where it used to arrive as 30N. The parameter
+stays: a straddling area has no single right zone and the practitioner has to choose a side.
+
+**A disagreeing zone is reported, with its cost.** One note serves all nine widgets, appended
+once rather than written into each of the five places a zone field is rendered. It states the
+zone the data is in, the measured worst-case stretch at the chosen zone as a percentage, and —
+when the data spans more than one zone — that no single answer is right. It offers a button
+that sets the zone **and the hemisphere** together, because a zone without its hemisphere is
+half an answer and the two defaults were wrong together.
+
+`utmScaleFactor` is in the same module, so the percentage shown is computed rather than
+asserted, and `tests/utm.test.mjs` pins the +0.17% and +0.47% figures this document records.
+
+**What was not built, and why.** Tightening the guard from ±6° to ±3° is one character and
+would start refusing workflows that run today, including a legitimate choice near a boundary.
+It needs a check against the shipped examples first, and reporting is the cheaper half of the
+same protection.
+
+## The options as they stood
 
 | | |
 | --- | --- |
-| **Suggest a zone from the connected layer** | `Math.floor((longitude+180)/6)+1` and the hemisphere from the latitude, offered as the default when a widget is added or an input connects. Cheap, and it needs the widget to see its input at configuration time, which the Inspector does not currently do |
+| **Suggest a zone from the connected layer** | **Done.** Derived from every coordinate the workflow holds, not only from a connected input, which avoids needing the widget to see its input at configuration time |
 | **Tighten the guard to ±3°** | One character, and it would start refusing workflows that run today — including, possibly, legitimate ones near a zone boundary where a practitioner deliberately chose one side. Needs a check against the shipped examples before it could be called safe |
-| **Warn rather than refuse** | Accept the zone, state the scale factor at the data's actual position in the receipt, and let a reader judge. Fits this project's habit of stating a claim rather than hiding it |
-| **Say nothing** | What happens now |
+| **Warn rather than refuse** | **Done**, in the Inspector rather than the receipt: a practitioner choosing a zone is the person who needs it, and the receipt is read afterwards |
+| **Say nothing** | What happened until 2026-10-11 |
 
-The second and third are not exclusive and are probably both right: refuse what is certainly
-wrong, and report the cost of what is merely imperfect.
+The second and third are not exclusive. The third is done; the second is still open.
 
 ## What this does not establish
 
-**That the defaults cause errors in practice.** Nobody has used this application outside the
-two worked examples, whose defaults are correct for them. The claim here is that the defaults
-are wrong *for anywhere else* and that nothing tells a practitioner so.
+**That the defaults caused errors in practice.** Nobody has used this application outside the
+two worked examples, whose old defaults were correct for one of them. The claim was that the
+defaults were wrong *for anywhere else* and that nothing said so; both halves are now
+addressed, and neither is evidence that anybody was ever misled.
+
+**That reporting changes a decision.** The note states a percentage. Whether a practitioner
+reads it, believes it, or acts on it is unmeasured, and the button exists because stating a
+cost without offering the fix would be the cheaper half of the job.
 
 **That a derived zone is always right.** A study area straddling a zone boundary has no correct
 single zone, and a suggestion would have to be overridable — which is an argument for keeping

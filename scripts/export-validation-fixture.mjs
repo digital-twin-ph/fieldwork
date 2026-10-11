@@ -16,6 +16,7 @@ import {reachableNodes} from '../build/reachable-nodes.js';
 import {johnSnowExample} from '../build/john-snow.js';
 import {travelTimeBand} from '../build/travel-time-band.js';
 import {reachableCorridor} from '../build/reachable-corridor.js';
+import {convexHull} from '../build/convex-hull.js';
 
 const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -46,6 +47,41 @@ const base=(id,nodeType,label,implementation)=>({
 });
 
 const builders={
+  'hull-soho-001'(){
+    // The 1854 cholera deaths, which is the layer a practitioner would hull: 250 located points
+    // in Soho. A hull is exact -- no tolerance, no approximation, no projection of
+    // a curve -- so any disagreement with shapely is a real disagreement, which makes this
+    // the cheapest honest check of the set.
+    //
+    // Points travel in full because a hull cannot be recomputed from a summary, and the
+    // projected metres do not travel: the reference projects them itself with pyproj, so
+    // the check tests the projection and the hull together rather than taking ours on trust.
+    const deaths=johnSnowExample('snow-voronoi').nodes.find(n=>n.id==='locations').params.data;
+    const zone=30,hemisphere='north';
+    const hull=convexHull(deaths,{id:'hull',type:'summarize_hull',x:0,y:0,
+      params:{label:'Area the points cover',zone,hemisphere}},'fixture','locations');
+    const facts=hull.receipt.facts,number=name=>Number(new RegExp(`fw:${name} ([0-9.]+)`).exec(facts)[1]);
+    return {fixture:{
+      ...base('hull-soho-001','summarize_hull','Convex hull','src/convex-hull.ts#convexHull'),
+      declaredParameters:{
+        zone,hemisphere,metricCRS:'EPSG:32630',
+        algorithm:'Monotone chain, O(n log n), computed on projected metres and returned as longitude and latitude.',
+        collinearRule:'Points lying on a hull edge are dropped, so the ring carries corners only. A ring is closed, counter-clockwise.',
+        areaRule:'Shoelace area of the closed projected ring, in square metres. Not a geodesic area: it is the area of the ring in EPSG:32630.',
+        spanRule:'The greatest distance between any two hull vertices, in projected metres.',
+        method:hull.receipt.method,
+        semantics:'A hull is an outline of what was observed, not a service area or a boundary anyone agreed to. It is convex, so a distribution that is not -- cases along a river -- is filled in, and the hull asserts area where nothing was observed.'
+      },
+      input:{points:deaths.features.map(f=>({id:String(f.id),coordinates:f.geometry?f.geometry.coordinates:null}))},
+      output:{
+        ring:hull.value.features[0].geometry.coordinates[0],
+        recordCount:number('recordCount'),
+        hullVertexCount:number('hullVertexCount'),
+        hullAreaSquareMetres:number('hullAreaSquareMetres'),
+        hullSpanMetres:number('hullSpanMetres')},
+      note:'Project the points to the declared CRS, take their convex hull, and compare the ring, its vertex count, its shoelace area and its widest span. The ring is returned in longitude and latitude; compare it in projected metres or allow for the round trip.'
+    },files:{}};
+  },
   'corridor-soho-001'(){
     // The five minute band's corridor. Edge geometry travels because the reference has to
     // walk the same streets: a corridor cannot be recomputed from endpoints, since these

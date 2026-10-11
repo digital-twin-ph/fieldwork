@@ -144,6 +144,18 @@ follows. If the count sits still for a month, that is the finding.
 
 ## Known and recorded, not yet scheduled
 
+**No automated UTM selector, and the zone guard is a zone too wide.** Nine widgets take
+`zone` and `hemisphere` by hand, defaulted to Soho's 30/north. The guard in `metric()` allows
+±6° from the central meridian where a zone spans ±3°, so an off-by-one zone passes silently —
+costing +0.17% in distance at London's latitude and **+0.47% at 15°N**, which is where the
+Philippines is. Separately, several widgets convert metres to an angle on a mean sphere while
+every projection is on the WGS84 ellipsoid, which is a direction-dependent 0.06–0.32% at 51.5°N
+and 25 times larger than the scale factor. Measured, with four options and none chosen, in
+[100](experiments/100-choosing-the-metric-crs.md). Raised by the practitioner asking whether a
+selector existed.
+
+
+
 **Four widgets cannot be added from the palette as drafts.**
 `slr_extract_import`, `slr_threshold_comparison`, `rate` and `case_series`
 validate their full contract on every edit, so `change()` rolls back and the

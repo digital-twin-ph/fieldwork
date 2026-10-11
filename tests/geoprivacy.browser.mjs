@@ -40,20 +40,26 @@ test('geoprivacy canvas shows before/after maps and tables with editable paramet
   // The band is measured from the pairing, not read from the widget's parameters.
   //
   // It is NOT expected to sit exactly inside the declared 50-125 m donut, and the first version
-  // of this test wrongly required that: it failed at 125.2 m. The mask displaces along a great
-  // circle on a sphere of radius 6,371,008.8 m, and this comparison measures in UTM, whose grid
-  // stretches ground distance by its scale factor -- about 1.0020 here, Soho being some 3 degrees
-  // from zone 30's central meridian. Measured on that sphere the displacements are 50.64-124.95 m,
-  // inside the donut. So the criterion is the declared bounds widened by the scale factor, and
-  // the card states the reason rather than leaving a reader to wonder at 125.2 against a 125.
+  // of this test wrongly required that: it failed at 125.2 m.
+  //
+  // The cause was then also stated wrongly, as the UTM scale factor. That is 1.000081 at Soho --
+  // 0.008%, twenty-five times too small. The real mechanism is the one check 17 found in
+  // buffer_point: moveDonut converts metres to an angle on a sphere of radius 6,371,008.8 m,
+  // while the WGS84 ellipsoid at 51.5N has local radii of 6,374,604 m along the meridian and
+  // 6,391,253 m across it. The same angle therefore covers 0.06% more ground north-south and
+  // 0.32% more east-west, and the measured ratios run 1.000651 to 1.003263 -- bracketed by
+  // exactly those two numbers, which is what identifies the cause. Measured on that sphere the
+  // displacements are 50.64-124.95 m, inside the donut.
+  //
+  // So the criterion is the declared bounds widened by the larger of the two ratios.
   const band=await donuts.locator('p').first().textContent();
   const [,minimum,maximum]=band.match(/between ([\d.]+) m.*?and ([\d.]+) m/s).map(Number);
-  const stretch=1.0025;
-  assert.ok(minimum>=50&&maximum<=125*stretch,
-    `observed band ${minimum}-${maximum} m is outside a 50-125 m donut even allowing the UTM scale factor`);
-  assert.ok(maximum>125,'the band no longer exceeds 125 m, so the scale-factor caveat on the card is stale');
+  const ellipsoidStretch=1.0032;   // N/R at 51.5N, the east-west worst case
+  assert.ok(minimum>=50&&maximum<=125*ellipsoidStretch,
+    `observed band ${minimum}-${maximum} m is outside a 50-125 m donut even allowing the ellipsoid ratio`);
+  assert.ok(maximum>125,'the band no longer exceeds 125 m, so the ellipsoid caveat on the card is stale');
   assert.ok(maximum-minimum>10,'a band this narrow suggests the pairing is wrong');
-  await expect(donuts).toContainText('scale factor');
+  await expect(donuts).toContainText('6,371,008.8 m');
   await expect(donuts).toContainText('observed band');
   await expect(donuts).toContainText('8 of 250 pairs shown');
   // Still private, and the caveat now names the donut card specifically.

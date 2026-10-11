@@ -294,6 +294,36 @@
    "measured": "142 of 706 junctions selected, band budget 375.00 m against 375.00 m recomputed from the speed on the junctions, worst remaining-budget error 5.7e-14 m, nested rather than a ring",
    "ranAt": "2026-10-11T22:08:17.123562+00:00",
    "note": "The arithmetic is a threshold and is not what this check is for. The design claim is that the widget restates neither the speed nor the direction, reading both from the junctions, so a band cannot disagree with the traversal that produced it -- and the reference tests exactly that, recomputing the budget from the speed carried on the junctions rather than from a parameter of its own. It also checks the part most likely to be got wrong: a junction's remaining budget is recomputed against the band, not carried over from the traversal. Here the traversal was 1,125 m and the band 375 m, so carrying it over would put fifteen minutes of reach at the edge of a five-minute corridor. The notebook measures the sensitivity to the walking speed, which is an estimate from photographs of 1854 London rather than a measurement: at 50 m/min 69 junctions are in the band, at 75 m/min 142, at 100 m/min 246. Walking 20% slower keeps about two thirds; a third slower halves it."
+  },
+  {
+   "widget": "urn:fieldwork:widget:hex_aggregate",
+   "coversRelease": "0.1.0",
+   "check": "21-hex",
+   "result": "content/results/check-21-hex.json",
+   "sha256": "1463c8aeacb9278d82ef79c8bfef773416a99c5eb23fdd506079420d87682447",
+   "external": [
+    "h3-py 4.5.0"
+   ],
+   "criterion": "per resolution: the same cells kept, the same count in each, each boundary and centre within 1e-09 degrees of h3-py's, the cells ordered by H3 index, and the matched and dropped point counts exact",
+   "outcome": "agrees",
+   "measured": "at resolution 9, 5 cells kept and nothing dropped; at resolution 11, 52 cells kept, 13 withheld and 13 of 250 deaths removed from the output; cells, counts and order exact and every boundary and centre within 3.6e-14 degrees",
+   "ranAt": "2026-10-11T22:41:29.311283+00:00",
+   "note": "WEAKER THAN IT LOOKS, and the check says so: Fieldwork indexes with h3-js and the reference with h3-py, two bindings of the same C library, so the indexing is not independently verified. What is verified is that Fieldwork calls it correctly, orders by H3 index as declared, and applies its own sparse-cell rule. Two resolutions are used because the example's own setting does not exercise that rule: at resolution 9 all 250 deaths fall into five cells above the minimum and nothing is dropped, so resolution 11 is included to reach the case where points vanish. Agreement says nothing about whether aggregating to cells protects anybody; occupancy is not an anonymity guarantee, and at resolution 11 the rule silently removes 13 deaths rather than disclosing them."
+  },
+  {
+   "widget": "urn:fieldwork:widget:case_series",
+   "coversRelease": "0.1.0",
+   "check": "22-case-series",
+   "result": "content/results/check-22-case-series.json",
+   "sha256": "71032af43663d951b7dd3dd924b6fd81df45598961477d72e481e5c8e6136a08",
+   "external": [
+    "pandas 2.3.3"
+   ],
+   "criterion": "per period: every bin key in order exactly, every weighted count exactly, the total exactly, every period between the first and last present including empty ones, and the dated and undated record counts exact",
+   "outcome": "agrees",
+   "measured": "over 43 rows of Snow 1855 Table 1, all three periods exact: 43 day bins (12 with no deaths), 7 week bins, 2 month bins, every key in order, every weighted count and all three totals of 616",
+   "ranAt": "2026-10-11T22:42:46.665061+00:00",
+   "note": "Genuinely independent: Fieldwork bins with its own calendar arithmetic and pandas with resample, a different implementation of a different design, sharing no code -- unlike check 21 next door where both sides call the same C library. The week mapping was wrong on the first attempt, which is worth recording because the check's own docstring had already named the week as the dangerous case. Fieldwork keys a week by the Monday of its ISO week; the check used W-SUN with a left label, whose label is the preceding Sunday, so every key came out a day early while every count stayed plausible -- 7 bins, total 616, the peak in the right week. Only comparing the keys caught it. The correct mapping is W-MON with label and closed both left, and it is now spelled out rather than left implicit in a frequency string. Agreement says nothing about whether a curve by date of death says what a reader will take it to say: the shape by date of onset would be shifted earlier, and nobody recorded onset dates."
   }
  ]
 }

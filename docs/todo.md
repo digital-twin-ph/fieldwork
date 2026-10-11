@@ -44,21 +44,23 @@ not a practitioner in the field.
 
 ## Urgent
 
-**1 · The 15 computing widgets still with no lab check.**
-32 widgets owe an independent check and 17 have one, counted by
+**1 · The 13 computing widgets still with no lab check.**
+32 widgets owe an independent check and 19 have one, counted by
 `validate:check-coverage` and visible in every run.
 [widgets/check-coverage.json](../widgets/check-coverage.json) declares what each of the 51
 owes, with a reason for every exemption; the awaiting count can only fall.
-Record: [98](experiments/98-the-coverage-ratchet.md), which groups the remaining 15 by the
+Record: [98](experiments/98-the-coverage-ratchet.md), which groups the remaining 13 by the
 external implementation that would check them, because the cost is the reference and the
-fixture rather than the widget. Seven of the nine done came from the shapely group and shared
-two fixture helpers, so they were cheaper than the groups that share nothing will be. The two
-buffer widgets, which could not agree exactly and had to be checked against theory, cost more
-and found more.
+fixture rather than the widget. Seven of the thirteen done came from the shapely group and
+shared two fixture helpers, so they were cheaper than the rest. The two buffer widgets, checked
+against theory because nothing equivalent exists to compare them with, and the two that left
+the group entirely — `21-hex` against h3-py, `22-case-series` against pandas — cost more per
+check and found more.
 
 Each notebook has two parts, not one ([94](experiments/94-where-explanation-belongs.md)).
 **Parity** recomputes independently for a reviewer. **Dive deeper** varies the assumption the
-widget inherits and shows what it does to the answer. `10-hull` through `20-band` are the worked instances. Two reported a consequence that argued against the warning the section was
+widget inherits and shows what it does to the answer. `10-hull` through `22-case-series` are the worked
+instances. Two reported a consequence that argued against the warning the section was
 written to make, and one found that its own fixture does not contain the hard case at all —
 no location on a polygon edge — so the notebook constructs it. Expect that to recur.
 
@@ -88,27 +90,27 @@ implied twice in two days and never written down.
 
 ## Done
 
-**The lab check coverage ratchet exists, and the first of the 26 is done.** Done
+**The lab check coverage ratchet exists, and thirteen of the 26 are done.** Done
 2026-10-11. The classification could not be derived — `implementation.definition` names
 `src/core.ts#TYPES` for 39 of 51 widgets, so the registry does not record where most
 widgets are implemented — so it is declared and reviewed instead, and the validator
 enforces completeness and the ratchet rather than the judgement. Verified by breaking it
-four ways. Eleven widgets now have checks, all agreeing. Three recompute the
+four ways. Thirteen widgets now have checks, all agreeing. Three recompute the
 John Snow Voronoi example, which is independently verified end to end, and the four primitives
 of the isochrone decomposition are now all checked. (An earlier version of this entry said
 `isochrone` could therefore be compared against its own decomposition. That is wrong and
 [41](experiments/41-validation-lab.md) forbids it — both sides would be Fieldwork. What is
 cheaper is that the reference code in checks 07 and 08 composes into a reference for the
-monolith.) Two checks failed on their first
-run and in both cases the criterion was wrong, not the widget: `buffer_point` because Turf
-buffers on a sphere (so 500 m is 500 m on a sphere and up to 1.59 m more on the ground), and
-`19-snap` because the widget publishes centimetres while the criterion asked for millimetres.
-Awaiting fell 26 → 15.
+monolith.) Three checks failed on their first run and in every case the
+criterion was wrong, not the widget — most instructively `22-case-series`, whose own docstring
+named the week as the dangerous rule before the code got that rule wrong. Awaiting fell
+26 → 13.
 
 
 
 **Notebook CI is complete, in both environments.** Done 2026-10-11.
-`scripts/run_notebooks.py` executes all seven under CPython in 6.3 s and
+`scripts/run_notebooks.py` executes every notebook under CPython -- 20 of them as of
+2026-10-11, in 14 s -- and
 `node/check_09_notebooks_browser.mjs` executes them in the browser kernel in
 58 s; both fail on any error cell and **both block publication**. The browser
 half was the open item, blocked on `02-clip-vs-rasterio` not completing in

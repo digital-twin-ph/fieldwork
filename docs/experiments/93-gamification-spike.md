@@ -109,6 +109,46 @@ ceremony; parsimony alone rewards hiding. Together they describe the workflow
 this project has been arguing for all day: few steps, each one stating what it
 assumed.
 
+### There is no baseline, until there is
+
+The obvious objection is that "fewest" needs a reference, and none exists:
+**every GIS problem is unique — until it isn't.**
+
+Both halves matter. For a problem nobody has solved before there is no minimum
+to compare against, no canonical decomposition, and no way to know whether four
+steps was economical or wasteful. A score there would be invented. The right
+behaviour is for the measure to be **silent**, and silence on a novel problem is
+not a gap in the design; it is the design being honest about a case it cannot
+judge.
+
+What changes is recurrence. A problem stops being unique when it has been solved
+enough times for a shape to show, and at that point a baseline **emerges from
+the corpus** rather than being set by anyone — which is exactly what
+[79](79-emergent-palette-slicing.md) measured for widgets, where four turned out
+to be core because every case needed them and nobody decided it.
+
+**And this project already has the artifact that marks the transition.** A
+micro-workflow is what somebody makes when a sub-problem has recurred often
+enough to be worth naming, pinning and reusing. So a composition is not merely
+a thing that improves the parsimony count by collapsing four steps into one: it
+is the **evidence that a baseline can exist at all** for that part of the
+problem. Before anyone composed `compute_walking_catchment`, "snap, traverse,
+band, draw" was four steps somebody worked out; afterwards it is one step with a
+name, and the next person's workflow can be compared against it.
+
+Which gives the measure its shape without a leaderboard:
+
+| Situation | What the measure says |
+| --- | --- |
+| A problem solved once | Nothing. There is no minimum and inventing one would be a fiction |
+| A recurring problem with no composition yet | Compare a workflow against the practitioner's own earlier solutions to the same output. Self-comparative, which [27](27-workflow-learning-and-gamification.md) A92's single local user supports and a leaderboard is not |
+| A recurring problem with a composition | The composed form is the baseline, and it is a real artifact with a version and a digest rather than a score somebody holds |
+
+Two questions this does not answer: how many recurrences make a shape, and who
+notices. Both are the admission question from
+[76](76-composition-governance.md) in different clothing, which suggests they
+should not be answered twice.
+
 ### Why this measure and not a faster one
 
 In problem solving the time that pays is spent understanding the problem, not
@@ -143,10 +183,6 @@ of speed, duration, session count or construction rate, derived or direct.
 
 Open questions a spike would have to answer, none of them cosmetic:
 
-- **Against what baseline?** "Fewest" needs a reference. The same output has no
-  canonical minimum, and a per-workspace best-known solution is a leaderboard by
-  another name, which [27](27-workflow-learning-and-gamification.md) A92's
-  single local user cannot support.
 - **What counts as the same output?** Two workflows agreeing to 3.8 parts per
   million are the same answer; two differing by a filled gap are not. The
   project has receipts precise enough to tell, which is unusual and useful.

@@ -263,6 +263,37 @@
    "measured": "12248049 m2 against 12235014 m2 from a EPSG:32630 buffer at the same 8 segments per quadrant, a relative difference of 1.1e-03, and the result contains the original boundary",
    "ranAt": "2026-10-11T21:48:18.678187+00:00",
    "note": "Exact agreement is not available and is not claimed: Turf buffers in a local azimuthal equidistant projection and the reference buffers in UTM, so the criterion is a relative area difference with the quadrant count declared. 8 segments per quadrant leaves 0.64% of an ideal circle outside the polygon against 0.04% at the 32 buffer_point uses, which is deliberate: this widget expands a boundary that already exists, so its edge decides nothing, while buffer_point's edge decides membership. The notebook measures where the approximation can even apply -- the corners are 13.4% of what this buffer adds and the sides are the rest, so the polygon approximation costs 0.086% of the addition."
+  },
+  {
+   "widget": "urn:fieldwork:widget:snap_to_network",
+   "coversRelease": "0.1.0",
+   "check": "19-snap",
+   "result": "content/results/check-19-snap.json",
+   "sha256": "133d00fea977964c5c62350ec30b9eb559a02df81a1a49777367614b940bd240",
+   "external": [
+    "pyproj 3.8.0",
+    "PROJ 9.8.1"
+   ],
+   "criterion": "the same node chosen for every site, the distance moved within 0.005 m -- half of the centimetre the widget reports it to -- the returned position being the node's and not the site's, the site and distinct-node counts exact, and no site beyond the 150 m limit",
+   "outcome": "agrees",
+   "measured": "the same node chosen for all 8 sites against 738 nodes, worst distance error 3.7e-03 m against a reported precision of 0.01 m, every returned position being the node's, 0 equidistant ties, smallest margin to the second-nearest node 0.43 m",
+   "ranAt": "2026-10-11T22:07:42.204889+00:00",
+   "note": "A nearest-neighbour search and a distance, both exact. Eight pumps rather than the isochrone example's one, because a search over a single site exercises almost nothing. The criterion is 5 mm rather than 1 mm, and the reason is worth stating: the widget reports snapDistanceM as Number(d.toFixed(2)), so it computes in full precision and publishes centimetres, and 5 mm is half of its last reported digit rather than a statement about its accuracy. The first version of this check asked for 1 mm and failed at 3.7 mm, which was rounding and nothing else. The margin to the second-nearest node is reported because one site's is 0.43 m: no tie, so the answer is unambiguous, but the choice is decided by less than a pavement's width and a different datum would flip it. Agreement says nothing about whether snapping is harmless -- it moves the pumps 2.2 to 20.9 m, up to 5.6% of the five-minute band budget, and both implementations move them identically."
+  },
+  {
+   "widget": "urn:fieldwork:widget:travel_time_band",
+   "coversRelease": "0.3.0",
+   "check": "20-band",
+   "result": "content/results/check-20-band.json",
+   "sha256": "d3a49abc01c08560b4ac606d433a781ac8354e5b44a7a0c97f1aa14ba423ff37",
+   "external": [
+    "none: a band is a threshold on distances the junctions carry"
+   ],
+   "criterion": "the band budget within 0.005 m of minutes x the speed carried on the junctions, the same junctions selected, every remaining budget recomputed against the band to within 0.005 m, the counts exact, every kept junction stamped with the band, and the band nested rather than a ring",
+   "outcome": "agrees",
+   "measured": "142 of 706 junctions selected, band budget 375.00 m against 375.00 m recomputed from the speed on the junctions, worst remaining-budget error 5.7e-14 m, nested rather than a ring",
+   "ranAt": "2026-10-11T22:08:17.123562+00:00",
+   "note": "The arithmetic is a threshold and is not what this check is for. The design claim is that the widget restates neither the speed nor the direction, reading both from the junctions, so a band cannot disagree with the traversal that produced it -- and the reference tests exactly that, recomputing the budget from the speed carried on the junctions rather than from a parameter of its own. It also checks the part most likely to be got wrong: a junction's remaining budget is recomputed against the band, not carried over from the traversal. Here the traversal was 1,125 m and the band 375 m, so carrying it over would put fifteen minutes of reach at the edge of a five-minute corridor. The notebook measures the sensitivity to the walking speed, which is an estimate from photographs of 1854 London rather than a measurement: at 50 m/min 69 junctions are in the band, at 75 m/min 142, at 100 m/min 246. Walking 20% slower keeps about two thirds; a third slower halves it."
   }
  ]
 }

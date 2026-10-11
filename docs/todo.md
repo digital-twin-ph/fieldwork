@@ -44,12 +44,12 @@ not a practitioner in the field.
 
 ## Urgent
 
-**1 · The 17 computing widgets still with no lab check.**
-32 widgets owe an independent check and 15 have one, counted by
+**1 · The 15 computing widgets still with no lab check.**
+32 widgets owe an independent check and 17 have one, counted by
 `validate:check-coverage` and visible in every run.
 [widgets/check-coverage.json](../widgets/check-coverage.json) declares what each of the 51
 owes, with a reason for every exemption; the awaiting count can only fall.
-Record: [98](experiments/98-the-coverage-ratchet.md), which groups the remaining 17 by the
+Record: [98](experiments/98-the-coverage-ratchet.md), which groups the remaining 15 by the
 external implementation that would check them, because the cost is the reference and the
 fixture rather than the widget. Seven of the nine done came from the shapely group and shared
 two fixture helpers, so they were cheaper than the groups that share nothing will be. The two
@@ -58,8 +58,7 @@ and found more.
 
 Each notebook has two parts, not one ([94](experiments/94-where-explanation-belongs.md)).
 **Parity** recomputes independently for a reviewer. **Dive deeper** varies the assumption the
-widget inherits and shows what it does to the answer. `10-hull` through `18-buffer-area` are the worked
-instances. Two reported a consequence that argued against the warning the section was
+widget inherits and shows what it does to the answer. `10-hull` through `20-band` are the worked instances. Two reported a consequence that argued against the warning the section was
 written to make, and one found that its own fixture does not contain the hard case at all —
 no location on a polygon edge — so the notebook constructs it. Expect that to recur.
 
@@ -94,11 +93,14 @@ implied twice in two days and never written down.
 `src/core.ts#TYPES` for 39 of 51 widgets, so the registry does not record where most
 widgets are implemented — so it is declared and reviewed instead, and the validator
 enforces completeness and the ratchet rather than the judgement. Verified by breaking it
-four ways. Nine widgets now have checks, all agreeing. Three recompute the
-John Snow Voronoi example, which is independently verified end to end. The ninth,
-`buffer_point`, failed on its first run and the fault was the criterion: Turf buffers on a
-sphere, exactly, so a 500 m buffer is 500 m on a sphere and up to 1.59 m more on the ground.
-Awaiting fell 26 → 17.
+four ways. Eleven widgets now have checks, all agreeing. Three recompute the
+John Snow Voronoi example, which is independently verified end to end, and the four primitives
+of the isochrone decomposition are now all checked — so `isochrone` can be compared against
+its own decomposition rather than against a new reference. Two checks failed on their first
+run and in both cases the criterion was wrong, not the widget: `buffer_point` because Turf
+buffers on a sphere (so 500 m is 500 m on a sphere and up to 1.59 m more on the ground), and
+`19-snap` because the widget publishes centimetres while the criterion asked for millimetres.
+Awaiting fell 26 → 15.
 
 
 

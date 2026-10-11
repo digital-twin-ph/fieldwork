@@ -2,7 +2,7 @@
 
 _Created 2026-10-11 · Updated 2026-10-11_
 
-**Status:** spike. Nothing is built, and the purpose is to find out what would
+**Status:** asked — a spike. Nothing is built, and the purpose is to find out what would
 have to be true before anything is.
 
 ## The question
@@ -331,6 +331,39 @@ and it stays provisional until it has fired on real use.
 3. **The hard part will be deciding what not to score**, not computing anything.
 4. Practitioners will ask for a leaderboard, and a local-first tool with no
    identity cannot provide one without becoming a different product.
+
+## What changed our minds
+
+Four corrections landed on this document the day it was written, all from the
+practitioner, and none of them is visible in the proposal above without this
+section.
+
+**Decomposition is not automatically clarity.** The spike leaned on "the walking
+catchment is better as four steps than nine knobs". Adding nodes to explain a
+micro-workflow carries its own cognitive load and does not make the workflow more
+efficient; the place to dig deeper is the accompanying notebooks, not the canvas
+([94](94-where-explanation-belongs.md)).
+
+**Reusable micro-workflows are still worth having, for a different reason** —
+they build skill in problem decomposition, which belongs in a user manual this
+project does not have.
+
+**The thing worth measuring is not widget use.** It is whether an output was
+reached with as few widgets as possible, because in problem solving the time pays
+in planning and understanding before building. And then, immediately:
+**there is no baseline for fewest**, because every GIS problem is unique until it
+isn't — which removes parsimony as a score while leaving it as a value.
+
+**And the browser is the wrong place for any of it.** A browser-only app cannot
+hold a learner record; the desktop version can, and
+[the comparison](../research/desktop-and-browser-for-learning.md) settled that
+Fieldwork in the browser stays focused on field work, with learning as the
+desktop's dimension.
+
+Written down here also because this document **re-derived
+[27](27-workflow-learning-and-gamification.md)** without knowing it existed,
+five days after it was written, and found it only through a citation in
+[75](75-compositions-as-nodes.md).
 
 ## What this does not establish
 

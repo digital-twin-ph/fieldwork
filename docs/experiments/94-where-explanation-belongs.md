@@ -2,8 +2,10 @@
 
 _Created 2026-10-11 · Updated 2026-10-11_
 
-**Status:** a finding from having built the thing, which retires a claim three
-earlier experiments were carrying.
+**Status:** asked — a finding that retires a claim three earlier experiments were
+carrying, and replaces it with a better question. The replacement answer — that
+explanation belongs in the Dive Deeper notebooks — is **not** built and not
+validated, which is why this is `asked` and not `validated`.
 
 ## The claim being retired
 

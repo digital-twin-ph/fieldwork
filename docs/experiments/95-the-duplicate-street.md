@@ -120,6 +120,18 @@ did not happen.
 This is recorded here rather than left implicit, because the opposite reading is
 defensible: the geometry *did* change in its last few significant digits.
 
+## What changed our minds
+
+The first implementation pooled by the two junctions, which is the obvious key
+and is wrong. It passed all 331 unit tests and the parity check while silently
+deleting reach — 39 ppm of area at 5 minutes, 380 ppm at 20. Only a
+before-and-after area caught it, and the cause was six reverse pairs carrying
+different geometry in their two directions and three junction pairs carrying more
+than one street.
+
+What that changed is not the key. It is what a dedup has to be checked against:
+not that the tests still pass, but that the answer did not move.
+
 ## What this does not settle
 
 **It is one shape of work.** Pooling helps because a street network is directed

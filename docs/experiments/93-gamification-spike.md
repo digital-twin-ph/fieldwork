@@ -109,6 +109,38 @@ ceremony; parsimony alone rewards hiding. Together they describe the workflow
 this project has been arguing for all day: few steps, each one stating what it
 assumed.
 
+### Why this measure and not a faster one
+
+In problem solving the time that pays is spent understanding the problem, not
+building the answer. A practitioner who reads the question for twenty minutes
+and then places four nodes has done better work than one who places twenty nodes
+in twenty minutes, and the elegant workflow is the product of the thinking, not
+a substitute for it.
+
+That is an argument about **what must not be measured**. Planning is invisible
+to instrumentation: a canvas with nothing happening on it looks identical
+whether someone is thinking or has walked away. Any measure taken over a
+*session* therefore rewards construction over comprehension, and rewards it
+precisely in the moments where comprehension is what is wanted.
+
+Parsimony survives this because it is a property of the **finished artifact**.
+It cannot be improved by working faster, only by understanding the problem
+better before building — which is the behaviour in question, measured by its
+result rather than by watching for it.
+
+[27](27-workflow-learning-and-gamification.md) is already aligned with this in
+two ways, and it is worth noticing because they were arrived at separately. Its
+exercise loop begins with **predict** — planning before connecting anything —
+and it states that mistakes incur "no negative points, time penalties or broken
+streaks".
+
+**One guard it does not state.** A `LearningEvent` carries a local timestamp and
+a sequence number, so even with time penalties refused, elapsed time and
+construction rate remain *derivable* from the journal. A design that records
+timestamps should say what may never be computed from them, because the data
+being present is an invitation. The honest form is a stated non-goal: no measure
+of speed, duration, session count or construction rate, derived or direct.
+
 Open questions a spike would have to answer, none of them cosmetic:
 
 - **Against what baseline?** "Fewest" needs a reference. The same output has no

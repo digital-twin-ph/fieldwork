@@ -45,7 +45,10 @@ teaches a method, and two things have now been found to need one:
 
 - **Composing micro-workflows as problem decomposition.** The skill is in
   building one, not reading one ([94](experiments/94-where-explanation-belongs.md)),
-  so it needs instruction and an exercise rather than a feature description.
+  so it needs instruction and an exercise rather than a feature description. The
+  exercise should start away from the canvas: understanding the problem is where
+  the time pays, and a manual that opens by placing nodes teaches the opposite
+  ([93](experiments/93-gamification-spike.md)).
 - **What a widget actually does**, at the level a practitioner needs before
   choosing it. The Dive Deeper notebooks carry the depth; a manual has to carry
   the route to them.

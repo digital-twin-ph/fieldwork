@@ -123,8 +123,15 @@ dispatching in one step closes it.
 
 That a composition is easier to follow than one node with nine knobs. It is now
 *possible* to find out — a practitioner can open `snow-isochrone`, add the
-walking catchment beside the monolith, run both and explode one. Nothing in this
-experiment measures which they understand, and no test can.
+walking catchment beside the monolith, run both and explode one. Nothing here
+measures which they understand, and no test can.
+
+**And that is no longer the question being asked.**
+[94](94-where-explanation-belongs.md) records why: four nodes are four labels,
+four parameter sets and three connections, which is cognitive load of its own.
+Exploding remains useful for **inspection** — seeing which step refused, or what
+a member was given — and that is a different job from explaining what a widget
+does. Explanation belongs in the notebooks.
 
 The John Snow example still uses `isochrone`. Replacing it is the next decision
 and a real one: the monolith is a shipped widget and the example teaches it.

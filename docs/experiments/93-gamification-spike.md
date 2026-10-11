@@ -27,10 +27,16 @@ architecture and measurement, not interface.
 ## The hazard, stated first
 
 **Points for widget use reward using more widgets.** Good analysis uses fewer,
-better-chosen steps. A scheme that counts nodes rewards the thing the project
-spent today arguing against: the walking catchment is *better* as four steps
-than nine knobs, but a seven-step version of a four-step answer is worse, and no
-counter can tell those apart.
+better-chosen steps, and a counter cannot tell a necessary step from a
+redundant one.
+
+This first read "the walking catchment is *better* as four steps than nine
+knobs", which was an assertion dressed as a premise and is corrected in
+[94](94-where-explanation-belongs.md). Four nodes are not self-evidently
+clearer than one: they are four labels, four parameter sets and three
+connections to hold in mind. Whatever compositions are for, it is not that more
+nodes explain themselves — which makes the counting hazard worse, not better,
+because there is no direction in which node count reliably points.
 
 [79](79-emergent-palette-slicing.md) already found the same shape in a different
 measure: `voronoi` appears in one example because it is specific; 

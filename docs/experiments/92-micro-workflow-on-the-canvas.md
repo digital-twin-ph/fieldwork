@@ -2,7 +2,7 @@
 
 _Created 2026-10-10 · Updated 2026-10-10_
 
-**Status:** built. The composition can be added, inspected, run and exploded, so
+**Status:** validated — the composition can be added, inspected, run and exploded, so
 the claim [89](89-the-first-composition.md) could not test is now testable by a
 person.
 

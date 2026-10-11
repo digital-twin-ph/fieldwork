@@ -2,7 +2,15 @@
 
 _Created 2026-10-06 · Updated 2026-10-08_
 
-Date: October 6, 2026. Updated: October 7, 2026 (A96: worked examples packaged as games). Status: proposed design experiment. This document does not implement points, assessment, learner tracking, badges, new ontology terms or registry fields.
+**Status:** asked — a proposed design experiment, carrying its own update of
+2026-10-07 (worked examples packaged as games). It implements no points,
+assessment, learner tracking, badges, ontology terms or registry fields.
+
+The word matters here more than anywhere. This document **asked** a question and
+nothing on its face said so, and on 2026-10-11 a gamification spike re-derived it
+from scratch five days later; the spike found it only through a citation in
+[75](75-compositions-as-nodes.md). That is the case the status vocabulary in
+[the standard](README.md) exists to prevent.
 
 ## Purpose and first boundary
 

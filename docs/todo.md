@@ -37,66 +37,22 @@ which both caches what the kernel needs and surfaces any failure while there is
 still a network to fix it with. Offline availability becomes a setup step a
 learner performs deliberately rather than a property they discover they lack.
 
-**Serves us, not them.** Item 1 is an internal instrument. Worth doing, and
-worth being honest that its beneficiary is the project.
+**Serves us, not them.** The experiment-document standard, done 2026-10-11, was
+an internal instrument, and [96](experiments/96-the-experiment-document.md) says
+so in its own closing section: its beneficiaries are us and future contributors,
+not a practitioner in the field.
 
 ## Urgent
 
-**1 · Standardise the experiment document, because it is the DE instrument.**
-Placed first, which is a change from how these were listed on 2026-10-10: the
-other two items produce work that has to be written down, and this decides how.
-Say so if that ordering is wrong.
-
-A reader — a contributor, a reviewer, or one of us in a week — should be able to
-answer five questions from any experiment document without reading all of it:
-
-1. **What question did we ask?**
-2. **How did we try to answer it?**
-3. **What happened?**
-4. **What did we decide?**
-5. **How did that shape the architecture or the framework?**
-
-**Most of the structure already exists and is unnamed.** Measured 2026-10-11
-across 94 documents, the recurring second-level headings are:
-
-| Heading | Documents |
-| --- | --- |
-| "What this does not establish" / "What this cannot establish" | 18 + 8 |
-| "Competency question(s)" | 10 + 6 |
-| "Practitioner exercise" | 9 |
-| "Design checks" | 8 |
-| "Distinctions" | 7 |
-| "Validation this commits to" / "Validation record" | 6 + 3 |
-| "Evaluation" / "Developmental evaluation" | 6 + 5 |
-
-So the strongest convention in the corpus — stating what a document does **not**
-establish — appears 26 times under two different spellings, and the question
-heading 16 times under two more. The work is mostly naming what is already
-there and closing the splits, not inventing a form.
-
-**It also needs a status**, because 46 of 94 documents have one and those 46 use
-free prose: `asked`, `tried`, `validated`, `retired`, as proposed in
-[the rule audit](audits/rule-audit.md). Half the corpus currently gives a reader
-no way to tell a proposal from a finding, which is how a spike re-derived
-experiment 27 five days after it was written.
-
-**One element to consider adding, which nothing currently has.** This project
-records the provenance of data obsessively and the provenance of its own
-decisions not at all. Several of the best findings this week came from a
-correction — the 1854 walking speed, parsimony as the measure, "no baseline
-until a problem recurs", known against validated — and a reader cannot see which
-claims survived challenge and which were never tested by one. A short **what
-changed our minds** element would make the evaluation visible in the record
-rather than only in the commit messages.
-
-Apply it the way `ontology.emits` was applied: require it of new documents, add
-it to existing ones as they are touched, keep the count visible. Do not migrate
-94 documents in one pass.
-
-**2 · Notebook CI: plan it, then test it.**
+**1 · Notebook CI: plan it, then test it.**
 The Validation Lab's notebooks are the instrument that checks Fieldwork's
-computations, and nothing executes them. On 2026-10-11 all seven were run end to
-end for the first time, by hand, in CPython; all passed. The published site was
+computations. On 2026-10-11 all seven were run end to end for the first time, by
+hand, in CPython; all passed, and `scripts/run_notebooks.py` now does it in CI
+and fails the build on an error cell. **The browser half is the remaining work**:
+it runs in CI but with `continue-on-error`, because `02-clip-vs-rasterio` does
+not complete in Pyodide within twelve minutes and the cause is not established,
+and notebooks 05–08 are unverified in the browser since the fixture integrity
+fix of 2026-10-11. The published site was
 three notebooks out of date until it was rebuilt the same day.
 
 Two environments matter and only one is easy. CPython execution is a few lines
@@ -112,11 +68,11 @@ visit. In CI it fails the build; in the browser it warms the kernel, caches what
 Pyodide needs and tells a learner what works before they lose the network.
 Build it so both callers can use it rather than twice.
 
-**3 · The 26 computing widgets with no lab check, and no Dive Deeper material.**
+**2 · The 26 computing widgets with no lab check, and no Dive Deeper material.**
 31 widgets compute something; 5 have a check. Plan and test the work, do not
 simply start writing notebooks: a coverage ratchet like
 `ontology/coupling-debt.json` should come first so the number is visible in
-every run and can only fall. Item 2 comes before this one, because adding 26
+every run and can only fall. Item 1 comes before this one, because adding 26
 unexecuted notebooks adds 26 unverified files.
 
 Each notebook now has two jobs, not one ([94](experiments/94-where-explanation-belongs.md)).
@@ -129,7 +85,7 @@ set from 69 junctions to 246, and the corridor half-width taking the area from
 0.51× to 1.53×. That is the pattern to follow, and it raises what each of the 26
 is worth writing.
 
-**4 · There is no user manual.**
+**3 · There is no user manual.**
 [docs/usage.md](usage.md) is a reference for what the application does, written
 when the practitioner detail moved out of the README. It is not a manual that
 teaches a method, and two things have now been found to need one:
@@ -146,6 +102,23 @@ teaches a method, and two things have now been found to need one:
 
 Not urgent against the items above, and recorded now because it has been
 implied twice in two days and never written down.
+
+## Done
+
+**The experiment document is standardised.** Done 2026-10-11:
+[docs/experiments/README.md](experiments/README.md) states the form,
+`validate:experiments` gates the two parts a machine can honestly read, and it
+runs inside `npm run check` and so in CI. The five questions are deliberately
+**not** enforced — they are a reading test, and a validator demanding
+`## What happened` would have produced 96 conforming documents and no better
+reading. 9 of 96 conform; 87 are recorded in
+[standard-debt.json](experiments/standard-debt.json) and the list only shrinks.
+Record: [96](experiments/96-the-experiment-document.md).
+
+The new **what changed our minds** element is in place on four documents and
+counted in every run. It is not required, because not every document had its
+mind changed; it is counted so that it does not quietly become a rule nobody
+follows. If the count sits still for a month, that is the finding.
 
 ## Known and recorded, not yet scheduled
 
@@ -185,7 +158,7 @@ question.
 `scripts/run_notebooks.py` executes every notebook and fails on any error cell,
 and the Pages workflow runs it before building the site, so a broken notebook
 blocks publishing. CPython only; the browser kernel is still unchecked, which is
-the remaining half of item 2.
+the remaining half of item 1.
 
 An earlier version of this entry said `_output` was "a committed artifact that
 nothing checks". That was wrong — it is gitignored, and CI builds the site fresh

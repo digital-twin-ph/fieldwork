@@ -2,9 +2,15 @@
 
 _Created 2026-10-08 · Updated 2026-10-08_
 
-Date: October 7, 2026. Status: design specification and measured feasibility
-check. No lab exists, no notebook has run, and nothing in this prototype has
-been validated against a reference implementation yet.
+**Status:** validated — the lab exists, every notebook executes in CI and fails
+the build on an error cell, and six widgets' results agree with an independent
+implementation. The original status line, kept here because it dates the
+distance travelled, read: *design specification and measured feasibility check.
+No lab exists, no notebook has run, and nothing in this prototype has been
+validated against a reference implementation yet.*
+
+What is **not** validated is named at the end: the browser kernel is checked but
+not blocking, and 26 computing widgets still have no check at all.
 
 ## What it is, and what it must not become
 

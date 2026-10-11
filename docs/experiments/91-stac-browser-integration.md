@@ -2,7 +2,7 @@
 
 _Created 2026-10-10 · Updated 2026-10-10_
 
-**Status:** research note. No code, and nothing proposed for the palette yet.
+**Status:** asked — a research note. No code, and nothing proposed for the palette yet.
 Asked for after [jltobias/JupyterLite-STAC-Browser](https://github.com/jltobias/JupyterLite-STAC-Browser)
 was added to [prior art](../research/prior-art.md).
 

@@ -2,7 +2,7 @@
 
 _Created 2026-10-10 · Updated 2026-10-10_
 
-**Status:** built and run. The artifact [75](75-compositions-as-nodes.md),
+**Status:** tried — built and run. The artifact [75](75-compositions-as-nodes.md),
 [76](76-composition-governance.md) and [77](77-composition-drift-detection.md)
 specified, with one of its rules only half-enforceable and said so below.
 
@@ -83,6 +83,16 @@ relate, **summarise**, classify". Implementing that put compositions named
 all of this, and `summarize_hull` was renamed to match it the same day. The
 identifier is `summarize`; the stage is still "summarise" in prose and in the
 glossary. Experiment 76 is corrected.
+
+## What changed our minds
+
+The comprehension claim, which this document called "the claim that matters".
+[94](94-where-explanation-belongs.md) retired it: four nodes carry their own
+cognitive load, and explanation was being put in the wrong place. What this
+experiment actually demonstrated — reuse, pinned governance, drift detection and
+one receipt per member — stands without it, and is the better case for
+compositions. The correction is recorded at the end of this document as well,
+where the retired claim used to be.
 
 ## What this does not establish
 

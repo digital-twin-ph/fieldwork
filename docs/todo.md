@@ -6,6 +6,37 @@ What is committed to and not yet done. Items leave this list by being done or by
 being recorded as decided against, not by being forgotten. Dated so that an item
 sitting here for weeks is visible as a choice.
 
+## The goal this list is answerable to
+
+To empower public health practitioners in the practical use of GIS in field
+workflows — where it matters, and where resources and connectivity may be
+scarce. Not to get everything working perfectly.
+
+Read against that, the items below do not all serve the same people, and two
+tensions are worth seeing before choosing what to do next.
+
+**Reaches a practitioner in the field, offline.** Fieldwork itself precaches and
+reports *Available offline*. A user manual shipped with it would too. Widget
+correctness reaches them indirectly and certainly: they rely on the widget being
+right and will never run the notebook that checks it.
+
+**Does not reach them.** The Validation Lab loads Pyodide from a CDN and
+**needs network access on first use**, which its own README records. So the Dive
+Deeper material — the thing [94](experiments/94-where-explanation-belongs.md)
+made the explanation surface — is least available precisely where the goal
+points. Its parity half still serves the goal, because a correct widget travels
+to the field even when the notebook cannot. Its teaching half serves reviewers
+and connected learners, which is a smaller and better-resourced audience than
+the one named above.
+
+**Serves us, not them.** Item 1 is an internal instrument. Worth doing, and
+worth being honest that its beneficiary is the project.
+
+Neither tension says stop. They say: when item 3 is planned, the parity half and
+the Dive Deeper half have different audiences *and* different availability, and
+bundling the lab's packages rather than fetching them is the change that would
+put the teaching material in reach of the people this is for.
+
 ## Urgent
 
 **1 · Standardise the experiment document, because it is the DE instrument.**

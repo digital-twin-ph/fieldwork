@@ -75,7 +75,7 @@ Data crosses in one direction only: Fieldwork exports, the lab reads.
 | Requirement | Rule |
 | --- | --- |
 | Fixture content | An exported run receipt, GeoJSON or GeoTIFF, carrying the operation's declared parameters and its SHA-256 |
-| Identity | The notebook records the fixture's hash and fails if it does not match the hash it was given |
+| Identity | The notebook records the fixture's digest and fails if it does not match the one the fixture declares. **Revised 2026-10-11**: the digest is over a canonical form — the fixture with its `integrity` field removed, object keys sorted, no whitespace — and not over the file's bytes. Byte identity is unsatisfiable in the browser the lab publishes to, which serves a `.json` as parsed JSON and hands the kernel a re-serialised copy: 2,724 bytes on disk arrived as 1,926. The weaker claim is that the content is unaltered, which is the strongest this transport permits |
 | Recomputation | From declared parameters only; Fieldwork's own outputs are the comparison target, never an input to the computation |
 | Versions | The notebook reports the Pyodide distribution and every package version it used |
 | Tolerance | Stated before the comparison runs, with its unit, not chosen after seeing the result |

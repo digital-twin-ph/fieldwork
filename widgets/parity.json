@@ -1,9 +1,9 @@
 {
  "schema": "fieldwork/parity-evidence/1",
- "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
+ "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
  "lab": {
   "repository": "https://github.com/digital-twin-ph/validation-lab",
-  "commit": "971c6516f60f5139d0338684183f05714aca489b"
+  "commit": "c924eb3960db53715004df5b9323ed422192e3fa"
  },
  "outcomes": {
   "agrees": "Every case met the stated criterion.",
@@ -17,7 +17,7 @@
    "coversRelease": "0.1.0",
    "check": "01-reproject",
    "result": "content/results/check-01-reproject.json",
-   "sha256": "2036a28dfdf36f4ffbf2a3e28639558347f22c9a9dd2d481f7c07e2942da41d4",
+   "sha256": "bc9d75e83b7b31e9b5da28ff36e74ff8bbceaa56868432af73da1118eb4e9e73",
    "external": [
     "pyproj 3.8.0",
     "PROJ 9.8.1"
@@ -25,7 +25,7 @@
    "criterion": "maximum separation below 0.001 m over the fixture points",
    "outcome": "agrees",
    "measured": "maximum separation 6.70e-5 m over 9 points",
-   "ranAt": "2026-10-08T09:33:44Z",
+   "ranAt": "2026-10-11T15:31:45.181390+00:00",
    "note": "Recomputed from the declared PROJ definition rather than the source EPSG code, so the comparison tests what the widget says it did. Covers a projection change on one datum; no datum shift is exercised."
   },
   {
@@ -33,7 +33,7 @@
    "coversRelease": "1.0.0",
    "check": "02-clip",
    "result": "content/results/check-02-clip.json",
-   "sha256": "f35ba681754375a68d349afa4447979846ee49f59564c777ae2dbf31d0f978b5",
+   "sha256": "29db912713596fb55b68f05de59a1f62deb3cb6b7ba5935a8e1f14e7b98d9e6c",
    "external": [
     "rasterio 1.5.2",
     "GDAL 3.12.2",
@@ -43,7 +43,7 @@
    "criterion": "identical opened window, included-cell set and retained values, per case",
    "outcome": "partial",
    "measured": "Cell-centre: agrees, 0 of 132 cells differ and retained values are identical. All-touched at a pixel-aligned cutline: 2 cells differ, both beside the alignment. All-touched with a one-pixel margin: the window differs and 61 cells differ, where the reference models the margin as a 3x3 binary dilation, which is not this widget's rule.",
-   "ranAt": "2026-10-08T13:16:49Z",
+   "ranAt": "2026-10-11T15:31:45.775888+00:00",
    "note": "Recorded per case rather than as one verdict. The two residual all-touched cells are what remains after adopting GDAL's positive-area rule, down from 35; see docs/experiments/29-raster-edge-inclusion.md. The margin case is an unresolved comparison, not an established defect: the reference and the widget define the margin differently."
   },
   {
@@ -51,7 +51,7 @@
    "coversRelease": "0.1.0",
    "check": "05-area",
    "result": "content/results/check-05-area.json",
-   "sha256": "0f780ffd0c709147211685170d38e8d3d1100de642d9688918a79d75b3616a55",
+   "sha256": "06bf4df80c623e923592a6a5937d858c73ce90baaa4b47c3363fc2d9044dd149",
    "external": [
     "pyproj 3.8.0 / GeographicLib geodesic areas",
     "an independent closed-form spherical area"
@@ -59,7 +59,7 @@
    "criterion": "relative difference at most 1e-9 against an independent expression of the declared spherical formula, over five boundaries including one with a hole",
    "outcome": "agrees",
    "measured": "Implementation: relative difference at most 4.78e-14. Reported separately as method context, not as failures — against a geodesic area with great-circle edges on the same sphere, boxes differ by under 0.01 % and a mid-latitude triangle with oblique edges by 0.30 %; against WGS84 the declared spherical approximation runs +0.45 % at the equator to -0.56 % at 60 N, so its sign changes with latitude.",
-   "ranAt": "2026-10-08T23:00:00Z",
+   "ranAt": "2026-10-11T15:31:45.916652+00:00",
    "note": "Three questions kept apart: whether the widget computes the formula it declares, how far that formula is from a great-circle-edged geodesic area, and how far from an ellipsoidal one. Only the first is a criterion; the other two quantify the approximation the widget already discloses when it calls its result approximate."
   },
   {
@@ -67,7 +67,7 @@
    "coversRelease": "0.1.0",
    "check": "06-mean-center",
    "result": "content/results/check-06-mean-center.json",
-   "sha256": "7021098cab3dfc1ad44c2862ed75d5ef7e96fa98d333449367378b4b5b1dd9ea",
+   "sha256": "68155f46d0701db75f515e19337ee2990196fcd0c7901e0448df914ba765456b",
    "external": [
     "pyproj 3.8.0",
     "PROJ 9.8.1"
@@ -75,7 +75,7 @@
    "criterion": "projected mean within 1e-3 m on both axes, returned position within 1e-3 m ground separation, and the input count unchanged",
    "outcome": "agrees",
    "measured": "Easting exact, northing 9.31e-10 m, returned position 4.09e-10 m ground separation over 6 points.",
-   "ranAt": "2026-10-08T23:20:00Z",
+   "ranAt": "2026-10-11T15:31:46.053251+00:00",
    "note": "Establishes that proj4js and PROJ agree on this UTM transform and that the average is unweighted as declared. It establishes nothing about whether a mean centre is an appropriate summary: the fixture includes an outlier 25 km from the cluster, and both implementations are pulled by it identically."
   },
   {
@@ -83,14 +83,14 @@
    "coversRelease": "0.3.0",
    "check": "07-reachability",
    "result": "content/results/check-07-reachability.json",
-   "sha256": "7afb231c5a0130d83d87f5dee982ab25beb1a0e98fe851d786f9c1fbc69b55e3",
+   "sha256": "78c84fc5e8e7ddc93de91baf3ba65c1bef4046b10b7f9ef74a88e4ebdc50fde5",
    "external": [
     "networkx 3.6"
    ],
    "criterion": "the same set of reached nodes exactly, every cost within 0.01 m, and every remaining budget within 0.01 m of the budget less the cost",
    "outcome": "agrees",
    "measured": "reached sets identical over 738 junctions, 142 each with none reached by only one implementation; worst cost difference 5.000e-03 m and worst remaining-budget difference 5.000e-03 m",
-   "ranAt": "2026-10-10T20:32:38.419776+00:00",
+   "ranAt": "2026-10-11T15:31:46.251974+00:00",
    "note": "Compared against the implementation the original case study used: Advanced-1 NB03 reaches its isochrones with nx.ego_graph. The 5 mm residual is exactly the half-step of the two decimal places Fieldwork publishes, so the only disagreement is its rounding. Both traversals run on the edge lengths the fixture states and neither measures a street, so a wrong network passes in both. Covers outbound travel from one origin on one network; inbound is unexercised. Re-run against 0.3.0 after that release added speedMPerMin and travelMode to each junction: the parity validator refused evidence covering 0.2.0 while 0.3.0 was current, and the change being additive was not grounds for carrying the old result forward."
   },
   {
@@ -98,7 +98,7 @@
    "coversRelease": "0.2.0",
    "check": "08-corridor",
    "result": "content/results/check-08-corridor.json",
-   "sha256": "688ced600d6e51f4dc32b0823d2bc2f405597d87ef1bc8e02af7de68a9127c62",
+   "sha256": "514a741350403a2afa7aa1bfd3edc2062cb3182481f06d8e4e5f30475ad699c8",
    "external": [
     "shapely 2.2.0",
     "GEOS 3.14.1",
@@ -107,7 +107,7 @@
    "criterion": "entered and partial segment counts exactly, area within 1%, and symmetric difference at most 2% of the reported area",
    "outcome": "agrees",
    "measured": "street selection identical -- 301 entered and 45 cut part-way in both; area 199210 against 198980 square metres, 0.116% apart, with a symmetric difference of 0.116%",
-   "ranAt": "2026-10-10T21:46:16.184488+00:00",
+   "ranAt": "2026-10-11T15:31:46.610399+00:00",
    "note": "The corridor is rebuilt from the widget's stated rule with GEOS, not compared feature by feature, so the selection arithmetic is reproduced independently. The 0.116% residual is two engines approximating a 25 m radius at 8 segments per quadrant in two different projections, and the symmetric difference being the same size says it is spread around the boundary rather than a missing piece. Covers the five minute band of one corridor, outbound. Both implementations trust the same street lengths and geometry, so a wrong network passes in both. The notebook beside it measures the corridor's area at 0.51x for a 10 m half-width and 1.53x at 60 m, against a 25 m figure the case study records no reason for."
   }
  ]

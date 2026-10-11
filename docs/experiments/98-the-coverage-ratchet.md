@@ -153,8 +153,15 @@ the check would still pass while the drawn output varied between runs. There are
 which is why the expected order is the only order — and that is a fact about the data, not
 about the widget.
 
-**Two checks have now failed on their first run, both because the criterion was wrong rather
-than the widget, and both failures were worth more than the passes.**
+**Three mistakes of mine have now been caught by this work, and the pattern in them is worth
+more than the checks.** Two were criteria that were wrong rather than widgets that were wrong.
+The third was a claim in this document — that the monolith could be checked against its own
+decomposition — which this lab's own founding rule forbids. All three were caught by going back
+to **read** something: a line of source, a widget's own output, an experiment written in
+October. None was caught by thinking harder about it.
+
+**Two checks failed on their first run, both because the criterion was wrong, and both failures
+were worth more than the passes.**
 
 The second was simpler and is the more embarrassing: `19-snap` asked for the snap distance to
 within 1 mm and got 3.7 mm. The widget reports `snapDistanceM` as `Number(d.toFixed(2))` — it
@@ -194,8 +201,22 @@ it, which is what it is for.
 most useful structural consequence so far. `snap_to_network`, `reachable_nodes`,
 `travel_time_band` and `reachable_corridor` each have an independent check, so the four steps
 [80](80-network-snap.md)–[84](84-reachable-corridor.md) built out of the monolith are verified
-separately. That makes `isochrone` itself checkable **against its own decomposition** rather
-than against a new reference, which is a cheaper and stronger comparison than the plan assumed.
+separately.
+
+**Corrected the same day.** This first said that `isochrone` could therefore be checked
+"against its own decomposition rather than against a new reference, which is a cheaper and
+stronger comparison". That is wrong, and wrong against this lab's founding rule:
+[41](41-validation-lab.md) prohibits exactly it — *"neither side shares a numerical module with
+the other. A notebook that reuses the implementation under test measures nothing."* Monolith
+against primitives is Fieldwork against Fieldwork. It is **internal consistency**, which
+[84](84-reachable-corridor.md) already measured at 3.8 ppm, and calling it parity would have
+put a tautology in the coverage count.
+
+What is actually cheaper is narrower and still worth having: the **reference** implementations
+already written for checks 07 and 08 — networkx Dijkstra and a shapely corridor — compose into
+a reference for the whole monolith, so `isochrone`'s check reuses reference *code* rather than
+reference *results*. The comparison remains Fieldwork against Python, as every check here must
+be.
 
 Those two checks also each found something the parity result alone would not have said.
 
@@ -299,11 +320,11 @@ the right answer in it.
 
 **That the method scales.** Eleven of the twenty-six are written. Seven came out of the same
 shapely group, reusing two fixture helpers — one for the Soho corridors and one for the
-Voronoi chain. The cheap part was
-cheap because the second and third checks shared a reference library and a data source with
-the first. The groups that have neither — `case_series` against pandas, `donut_geomask`
-against a distribution, `isochrone` as a whole — will not be three in an afternoon, and
-`isochrone` is the monolith whose parity is a harder claim than any primitive's.
+Voronoi chain. The cheap part was cheap because they shared a reference library and a data
+source with each other. The groups that have neither — `case_series` against pandas,
+`donut_geomask` against a distribution — will not go at this rate, and `isochrone` remains the
+monolith whose parity is a harder claim than any primitive's, even with its primitives
+checked.
 
 **That zero symmetric difference means more than it does.** It means the two unions covered
 the same ground to the precision shapely reports, on this input. It is strong evidence about
@@ -317,5 +338,5 @@ criterion. `10-hull` agrees to 10⁻⁹ m on a hull that fills in ground the 185
 crossed — both implementations assert that area identically, and the notebook says so twice.
 
 **And nothing about the 15 that remain.** They are now counted, named and grouped, which is
-not the same as done. If the number sits at 25 in a month, the ratchet will say so, and that
+not the same as done. If the number sits at 15 in a month, the ratchet will say so, and that
 is the point of it.

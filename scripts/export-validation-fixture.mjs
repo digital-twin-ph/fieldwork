@@ -21,6 +21,24 @@ const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
 const widgetOf=nodeType=>registry.widgets.find(w=>w.nodeType===nodeType);
 const sha256=data=>createHash('sha256').update(data).digest('hex');
+
+/** JSON with every object's keys sorted and no whitespace.
+ *
+ *  The fixture's integrity is taken over this rather than over the file's bytes, because
+ *  byte identity does not survive the transport the lab actually uses: JupyterLite serves a
+ *  `.json` as parsed JSON and the kernel reads a re-serialised form — 2,724 bytes on disk
+ *  arrived as 1,926 — so a digest of the file could never match. Measured 2026-10-11, when
+ *  six of seven notebooks were found to fail in the browser for this reason and for the
+ *  sidecar it depended on.
+ *
+ *  Python's `json.dumps(obj, sort_keys=True, separators=(',', ':'), ensure_ascii=False)`
+ *  produces the same string, which is what the lab recomputes. Arrays keep their order:
+ *  only object keys are sorted. */
+const canonical=value=>JSON.stringify(value,(_key,inner)=>
+  inner&&typeof inner==='object'&&!Array.isArray(inner)
+    ?Object.fromEntries(Object.keys(inner).sort().map(key=>[key,inner[key]]))
+    :inner);
+const canonicalDigest=value=>sha256(Buffer.from(canonical(value),'utf8'));
 const base=(id,nodeType,label,implementation)=>({
   schema:'fieldwork/validation-fixture/1',fixtureId:id,exportedAt:new Date().toISOString(),
   application:{name:'Fieldwork',version},
@@ -216,11 +234,18 @@ const builders={
 const [id,outputDir]=process.argv.slice(2);
 if(!builders[id]||!outputDir)throw new Error(`Usage: node scripts/export-validation-fixture.mjs <${Object.keys(builders).join('|')}> <outputDir>`);
 const {fixture,files}=builders[id]();
-for(const [name,bytes] of Object.entries(files)){
-  await writeFile(`${outputDir}/${name}`,bytes);
-  await writeFile(`${outputDir}/${name}.sha256`,`${sha256(bytes)}  ${name}\n`);
-}
+// Binary assets travel with their digest declared inside the fixture. A sidecar cannot be
+// read from the lab's browser kernel at all, which is the other half of the 2026-10-11
+// finding, so nothing beside the file is written any more.
+fixture.assets=Object.fromEntries(Object.entries(files).map(([name,bytes])=>
+  [name,{sha256:sha256(bytes),bytes:bytes.length}]));
+for(const [name,bytes] of Object.entries(files))await writeFile(`${outputDir}/${name}`,bytes);
+// The integrity covers the fixture with this field absent, so it can state its own digest
+// without containing it.
+fixture.integrity={algorithm:'sha256-canonical-json',
+  note:'SHA-256 of this fixture with the integrity field removed, serialised with object keys sorted, no whitespace and UTF-8. Not the file\'s bytes: the lab reads fixtures through a transport that re-serialises JSON.',
+  value:canonicalDigest(fixture)};
 const json=JSON.stringify(fixture,null,2)+'\n';
 await writeFile(`${outputDir}/${id}.json`,json);
-await writeFile(`${outputDir}/${id}.json.sha256`,`${sha256(json)}  ${id}.json\n`);
-console.log(`Wrote ${id}.json${Object.keys(files).length?' and '+Object.keys(files).join(', '):''} with SHA-256 sidecars to ${outputDir}`);
+console.log(`Wrote ${id}.json${Object.keys(files).length?' and '+Object.keys(files).join(', '):''} to ${outputDir}`);
+console.log(`  integrity ${fixture.integrity.value.slice(0,16)} over canonical JSON; no sidecar`);

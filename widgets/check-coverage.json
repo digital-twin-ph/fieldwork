@@ -9,8 +9,8 @@
  "measuredAt": "2026-10-11",
  "counts": {
   "widgets": 51,
-  "covered": 9,
-  "awaiting": 23,
+  "covered": 11,
+  "awaiting": 21,
   "none": 18,
   "blocked": 1
  },
@@ -67,8 +67,7 @@
   {
    "nodeType": "clip_polygons",
    "expectation": "parity",
-   "check": null,
-   "computes": "Intersects polygons with a boundary."
+   "check": "13-clip-polygons"
   },
   {
    "nodeType": "clip_raster",
@@ -263,8 +262,7 @@
   {
    "nodeType": "summarize_polygons",
    "expectation": "parity",
-   "check": null,
-   "computes": "Counts point memberships per polygon, with an explicit boundary policy."
+   "check": "14-summarize-polygons"
   },
   {
    "nodeType": "table_input",

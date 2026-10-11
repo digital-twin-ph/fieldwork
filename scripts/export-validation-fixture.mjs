@@ -19,6 +19,7 @@ import {reachableCorridor} from '../build/reachable-corridor.js';
 import {convexHull} from '../build/convex-hull.js';
 import {fillInteriorGaps} from '../build/fill-interior-gaps.js';
 import {combinedArea} from '../build/combined-area.js';
+import {voronoi,clipPolygons,summarizePolygons} from '../build/catchments.js';
 
 const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -71,7 +72,75 @@ const sohoCorridors=minutesList=>{
     })};
 };
 
+/** The John Snow Voronoi chain as the example runs it: nearest-pump cells, clipped to the
+ *  reporting rectangle, then the death locations counted inside them. Two widgets are checked
+ *  from this one chain, and both receive exactly what a practitioner opening the example sees. */
+const sohoVoronoiChain=()=>{
+  const example=johnSnowExample('snow-voronoi');
+  const node=id=>example.nodes.find(n=>n.id===id);
+  const pumps=node('pumps').params.data,deaths=node('locations').params.data;
+  const boundary=node('study').params.geometry;
+  const zone=30,hemisphere='north';
+  const cells=voronoi(pumps,boundary,zone,hemisphere);
+  const clipped=clipPolygons(cells,boundary);
+  const summarised=summarizePolygons(clipped,deaths,node('summary').params);
+  return {pumps,deaths,boundary,zone,hemisphere,cells,clipped,summarised,
+    summaryParams:node('summary').params};
+};
+
 const builders={
+  'clip-polygons-soho-001'(){
+    // The Voronoi cells clipped to the reporting rectangle, which is what the John Snow
+    // example does between computing catchments and counting deaths in them. Cells are
+    // computed in a finite envelope and extend past the rectangle, so the clip is doing real
+    // work: an unclipped cell would claim ground the report does not cover.
+    const {pumps,boundary,cells,clipped}=sohoVoronoiChain();
+    return {fixture:{
+      ...base('clip-polygons-soho-001','clip_polygons','Clip polygons','src/catchments.ts#clipPolygons'),
+      declaredParameters:{
+        computationCRS:'OGC:CRS84',
+        rule:'Intersect every polygon with the boundary in CRS84 coordinate space. A polygon whose intersection is empty is omitted from the output rather than returned empty.',
+        semantics:'Clipping changes what a polygon claims. A cell clipped to a reporting rectangle is the part of that catchment the report covers, not the catchment.',
+        note:'Intersection is computed on longitude and latitude directly, not in a metric projection. For a 1.4 km rectangle at 51.5 degrees north the difference is not visible; for a continental boundary it would be.'
+      },
+      input:{
+        boundary,
+        polygons:cells.features.map(f=>({id:f.id,siteId:f.siteId,geometry:f.geometry}))},
+      output:{
+        polygons:clipped.features.map(f=>({id:f.id,siteId:f.siteId,geometry:f.geometry})),
+        polygonCountIn:cells.features.length,
+        polygonCountOut:clipped.features.length},
+      note:'Intersect each input polygon with the boundary and compare the resulting geometry, polygon for polygon, and the count that survived.'
+    },files:{}};
+  },
+  'summarize-polygons-soho-001'(){
+    // 250 death locations counted into the clipped pump catchments, carrying a DEATHS value
+    // per location -- the example's real question, which is how many deaths fall nearest each
+    // pump. The boundary policy is "include", so a location exactly on a cell edge counts for
+    // both cells it touches, and the fixture reports the multiple-membership count because
+    // that is what makes the per-cell totals unsafe to add.
+    const {deaths,clipped,summarised,summaryParams}=sohoVoronoiChain();
+    return {fixture:{
+      ...base('summarize-polygons-soho-001','summarize_polygons','Summarize points in polygons','src/catchments.ts#summarizePolygons'),
+      declaredParameters:{
+        computationCRS:'OGC:CRS84',
+        boundary:summaryParams.boundary,
+        valueField:summaryParams.valueField,
+        rule:'A location belongs to a polygon when it is strictly inside it, or on its boundary when the boundary policy is include. Every membership is retained: a location inside two polygons counts for both.',
+        semantics:'Per-polygon counts and totals must not be added to a grand total, because overlapping memberships are counted more than once. The number of multiple memberships is reported for that reason.',
+        valueRule:'The numeric total per polygon sums the named field over the locations in it. A location whose field is absent or non-numeric is counted in missingValueCount and contributes nothing.'
+      },
+      input:{
+        polygons:clipped.features.map(f=>({id:f.id,siteId:f.siteId,geometry:f.geometry})),
+        points:deaths.features.map(f=>({id:String(f.id),coordinates:f.geometry?f.geometry.coordinates:null,
+          value:f.properties[summaryParams.valueField]??null}))},
+      output:{
+        perPolygon:summarised.features.map(f=>({id:f.id,count:f.count,total:f.total,
+          missingValues:f.missingValues})),
+        summary:summarised.summary},
+      note:'Decide each location\u2019s membership of each polygon under the declared boundary policy, then compare the per-polygon counts and totals and the summary of matched, unmatched, unlocated and multiply-assigned locations.'
+    },files:{}};
+  },
   'fill-gaps-soho-001'(){
     // The five and ten minute corridors, which are the one layer in this project that carries
     // interior holes: ground no street reaches, enclosed by streets that are reachable.

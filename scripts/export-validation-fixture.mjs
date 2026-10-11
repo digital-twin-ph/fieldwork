@@ -17,6 +17,8 @@ import {johnSnowExample} from '../build/john-snow.js';
 import {travelTimeBand} from '../build/travel-time-band.js';
 import {reachableCorridor} from '../build/reachable-corridor.js';
 import {convexHull} from '../build/convex-hull.js';
+import {fillInteriorGaps} from '../build/fill-interior-gaps.js';
+import {combinedArea} from '../build/combined-area.js';
 
 const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -46,7 +48,94 @@ const base=(id,nodeType,label,implementation)=>({
   operation:{widget:widgetOf(nodeType).id,release:widgetOf(nodeType).currentVersion,label,implementation}
 });
 
+
+/** The Soho corridors the isochrone chain produces, per band, which is the layer the two
+ *  summarising widgets below actually receive in the John Snow example. Corridors retain
+ *  their interior holes, so this is the only layer in the project that exercises a hole. */
+const sohoCorridors=minutesList=>{
+  const example=johnSnowExample('snow-isochrone');
+  const network=example.nodes.find(n=>n.type==='network_input').params.data;
+  const pumps=example.nodes.find(n=>n.id==='pumps').params.data;
+  const zone=30,hemisphere='north',speedMPerMin=75,bufferM=25,direction='outbound';
+  const snapped=snapToNetwork(pumps,network,{id:'snap',type:'snap_to_network',x:0,y:0,
+    params:{label:'Snap to street network',zone,hemisphere,maxSnapM:100}},'fixture','pumps');
+  const reached=reachableNodes(snapped.value,network,{id:'reach',type:'reachable_nodes',x:0,y:0,
+    params:{label:'Reachable junctions',minutes:Math.max(...minutesList),speedMPerMin,direction,
+      travelMode:'walking'}},'fixture','snap');
+  return {zone,hemisphere,bufferM,speedMPerMin,direction,
+    layers:minutesList.map(minutes=>{
+      const banded=travelTimeBand(reached.value,{id:'band',type:'travel_time_band',x:0,y:0,
+        params:{label:`Within ${minutes} minutes`,minutes}},'fixture','reach');
+      return reachableCorridor(banded.value,network,{id:'corridor',type:'reachable_corridor',x:0,y:0,
+        params:{label:`Reachable corridor ${minutes} min`,bufferM,zone,hemisphere}},'fixture','band').value;
+    })};
+};
+
 const builders={
+  'fill-gaps-soho-001'(){
+    // The five and ten minute corridors, which are the one layer in this project that carries
+    // interior holes: ground no street reaches, enclosed by streets that are reachable.
+    // Filling them asserts the opposite of what the traversal computed, so the figure that
+    // matters is how much area the fill adds.
+    //
+    // Two bands rather than one, so the fixture exercises the rule that separate parts stay
+    // separate. The example has a single pump -- Broad Street -- so one band is one polygon,
+    // and a one-part fixture could not tell filling from joining up.
+    const {zone,hemisphere,bufferM,layers}=sohoCorridors([5,10]);
+    const corridors={...layers[0],features:layers.flatMap(l=>l.features)};
+    const filled=fillInteriorGaps(corridors,{id:'fill',type:'fill_interior_gaps',x:0,y:0,
+      params:{label:'Filled gaps'}},'fixture','corridor');
+    const facts=filled.receipt.facts,number=name=>Number(new RegExp(`fw:${name} (-?[0-9.]+)`).exec(facts)[1]);
+    return {fixture:{
+      ...base('fill-gaps-soho-001','fill_interior_gaps','Fill interior gaps','src/fill-interior-gaps.ts#fillInteriorGaps'),
+      declaredParameters:{
+        zone,hemisphere,metricCRS:'EPSG:32630',corridorHalfWidthMetres:bufferM,
+        rule:'For every polygon part, keep the outer ring and discard every interior ring. Separate parts stay separate: this fills enclosed space and does not join things up.',
+        areaRule:'Shoelace areas of the projected rings. Before is the outer ring less its holes; after is the outer ring alone.',
+        semantics:'The added ground was never computed as covered. Whatever the gaps meant upstream, filling asserts the opposite of it.',
+        method:filled.receipt.method
+      },
+      input:{polygons:corridors.features.map(f=>({id:f.id,geometry:f.geometry}))},
+      output:{
+        polygons:filled.value.features.map(f=>({id:f.id,geometry:f.geometry})),
+        polygonCount:number('polygonCount'),
+        gapsFilled:number('gapsFilled'),
+        areaBeforeSquareMetres:number('areaBeforeSquareMetres'),
+        areaAfterSquareMetres:number('areaAfterSquareMetres'),
+        areaAddedSquareMetres:number('areaAddedSquareMetres')},
+      note:'Project each input polygon to the declared CRS, drop its interior rings, and compare the ring count, the areas before and after, and the area the fill added.'
+    },files:{}};
+  },
+  'combined-area-soho-001'(){
+    // Three nested bands' corridors, collected into one layer and then combined. Nested is
+    // the point: a shorter band's corridor lies inside a longer one's, so parts overlap
+    // heavily and the combined area is far smaller than their sum. The parts area is taken
+    // net of holes, because a single hole-bearing corridor otherwise reads as overlapping
+    // itself.
+    const {zone,hemisphere,bufferM,layers}=sohoCorridors([2,5,10]);
+    const stacked={...layers[0],features:layers.flatMap(l=>l.features)};
+    const combined=combinedArea(stacked,{id:'combine',type:'summarize_combined_area',x:0,y:0,
+      params:{label:'Combined area',zone,hemisphere}},'fixture','stack');
+    const facts=combined.receipt.facts,number=name=>Number(new RegExp(`fw:${name} (-?[0-9.]+)`).exec(facts)[1]);
+    return {fixture:{
+      ...base('combined-area-soho-001','summarize_combined_area','Combined area','src/combined-area.ts#combinedArea'),
+      declaredParameters:{
+        zone,hemisphere,metricCRS:'EPSG:32630',corridorHalfWidthMetres:bufferM,
+        rule:'Union every ring of every part in the declared CRS, then measure the result. Ground covered twice is counted once.',
+        partsAreaRule:'Sum of each part net of its holes, so a hole-bearing part does not read as overlapping itself.',
+        semantics:'The combined area is how much distinct ground the parts cover. It is not the sum of the parts, and the difference is the overlap.',
+        method:combined.receipt.method
+      },
+      input:{polygons:stacked.features.map(f=>({id:f.id,minutes:f.minutes??null,geometry:f.geometry}))},
+      output:{
+        geometry:combined.value.features[0].geometry,
+        partCount:number('partCount'),
+        combinedPieceCount:number('combinedPieceCount'),
+        partsAreaSquareMetres:number('partsAreaSquareMetres'),
+        combinedAreaSquareMetres:number('combinedAreaSquareMetres')},
+      note:'Project every part to the declared CRS, union them, and compare the combined area, the piece count, and the summed area of the parts net of holes.'
+    },files:{}};
+  },
   'hull-soho-001'(){
     // The 1854 cholera deaths, which is the layer a practitioner would hull: 250 located points
     // in Soho. A hull is exact -- no tolerance, no approximation, no projection of

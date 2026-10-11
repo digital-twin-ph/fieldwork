@@ -127,6 +127,42 @@
    "measured": "11 hull vertices on both sides, worst vertex separation 1.95e-09 m, area difference 0.004 m2, span difference 0.018 m, over 250 located points",
    "ranAt": "2026-10-11T20:27:47.774876+00:00",
    "note": "A convex hull is exact, so there is no approximation to allow for and a disagreement would be real. The reference projects the points itself with pyproj rather than using Fieldwork's projected metres, so the projection and the hull are checked together. The area compared is the planar area of the ring in EPSG:32630, which is what the widget claims, and not a geodesic area. Agreement says nothing about whether a convex hull is a sensible summary: it fills in ground the outbreak did not cross, and both implementations fill it in identically."
+  },
+  {
+   "widget": "urn:fieldwork:widget:fill_interior_gaps",
+   "coversRelease": "0.1.0",
+   "check": "11-fill-gaps",
+   "result": "content/results/check-11-fill-gaps.json",
+   "sha256": "9d88147af0dbc4985a2657b44752da5812a70582f8b7260d8525da1ff3ba9d85",
+   "external": [
+    "shapely 2.2.0",
+    "GEOS 3.14.1",
+    "pyproj 3.8.0",
+    "PROJ 9.8.1"
+   ],
+   "criterion": "the same number of gaps filled, no interior ring left in the output, the filled geometry within 0.05 m2 by symmetric difference, and the areas before, after and added each within 0.05 m2",
+   "outcome": "agrees",
+   "measured": "69 interior rings dropped on both sides, zero rings left, symmetric difference 0.0e+00 m2, and the areas before, after and added agreeing to 3.5e-03 m2. The fill added 37293 m2 of 938166 m2",
+   "ranAt": "2026-10-11T20:48:38.525152+00:00",
+   "note": "Dropping interior rings is exact, so this checks the bookkeeping rather than a tolerance: the gap count, the area net of holes before, the outer rings after, and the difference. Two bands are used because the example has one pump, and a one-part fixture could not distinguish filling from joining up. Agreement says nothing about whether filling is right: the added ground was never computed as reachable, and the reference asserts it identically because it is the same operation."
+  },
+  {
+   "widget": "urn:fieldwork:widget:summarize_combined_area",
+   "coversRelease": "0.1.0",
+   "check": "12-combined-area",
+   "result": "content/results/check-12-combined-area.json",
+   "sha256": "0c7d0be488f8f7810887e4ecc711adee59586b23b1f8fa95d3bc8bd9b92575ef",
+   "external": [
+    "shapely 2.2.0",
+    "GEOS 3.14.1",
+    "pyproj 3.8.0",
+    "PROJ 9.8.1"
+   ],
+   "criterion": "the combined geometry within 1 m2 by symmetric difference, the combined area and the summed parts area each within 1 m2, and the part and piece counts unchanged",
+   "outcome": "agrees",
+   "measured": "combined area 701662.61 m2 against 701662.61 m2, a difference of 3.4e-03 m2, with a zero symmetric difference and the summed parts agreeing to 1.4e-03 m2 over 3 nested parts whose overlap is 240717 m2",
+   "ranAt": "2026-10-11T20:48:38.645737+00:00",
+   "note": "The most independent check in the lab so far: Fieldwork unions with polyclip-ts and measures with a shoelace sum, the reference unions with GEOS and measures with GEOS. A union is where two libraries most plausibly differ. The parts are three nested bands, so they overlap heavily and the union is not trivially the sum. Parts are summed net of their holes, which is the defect Fieldwork's own comment records finding on the isochrone chain: summing outer rings alone reported a hole-bearing area as overlapping itself."
   }
  ]
 }

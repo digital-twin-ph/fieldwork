@@ -3,8 +3,9 @@
 _Created 2026-10-11 · Updated 2026-10-11_
 
 **Status:** tried — the ratchet is built, gated and verified against four failure modes, and
-one of the twenty-six widgets now has a check. The plan for the other twenty-five is written
-and untested; calling it `validated` would claim a method that has run once.
+three of the twenty-six widgets now have one. The plan for the other twenty-three is written
+and only partly tested: three checks from one group, sharing a reference library and a
+fixture helper, do not establish that the groups with neither will go the same way.
 
 ## The question asked
 
@@ -52,8 +53,8 @@ a fixture until a response is frozen. Counting it as exempt would have hidden it
 
 | | |
 | --- | --- |
-| Checked | 6 → **7** |
-| Awaiting | 26 → **25** |
+| Checked | 6 → **9** |
+| Awaiting | 26 → **23** |
 | Nothing to recompute | 18 |
 | Blocked | 1 |
 | Total | 51 |
@@ -63,7 +64,10 @@ from the file, an exemption with no reason, a check claimed that `parity.json` d
 record, and a count left stale. The stale-count message distinguishes the two ways it can
 happen, because lowering a count without doing the work claims progress not made.
 
-**And the first check is in.** `summarize_hull` against shapely:
+**Three checks are in**, all three agreeing, and they were chosen to get progressively less
+comfortable rather than to pile up easy wins.
+
+`summarize_hull` against shapely:
 
 | | |
 | --- | --- |
@@ -71,6 +75,31 @@ happen, because lowering a count without doing the work claims progress not made
 | Worst vertex separation | 1.95 × 10⁻⁹ m |
 | Area difference | 0.0038 m² of 139,230 m² |
 | Span difference | 0.018 m of 498 m |
+
+`fill_interior_gaps` against shapely, on the 5 and 10 minute corridors — the only layer in
+this project carrying interior holes:
+
+| | |
+| --- | --- |
+| Interior rings dropped | 69 on both sides, none left in the output |
+| Symmetric difference of the filled geometry | **0.0 m²** |
+| Areas before, after, added | agreeing to 3.5 × 10⁻³ m² |
+| What the fill claimed | 37,293 m² of 938,166 m² |
+
+`summarize_combined_area` against shapely, on three nested bands:
+
+| | |
+| --- | --- |
+| Combined area | 701,662.61 m² against 701,662.61 m², a difference of 3.4 × 10⁻³ m² |
+| Symmetric difference of the union | **0.0 m²** |
+| Summed parts, net of holes | agreeing to 1.4 × 10⁻³ m² |
+| Overlap not double counted | 240,717 m², 26% of the sum |
+
+**That third one is the most independent check in the lab.** Fieldwork unions with
+`polyclip-ts` and measures with a shoelace sum; the reference unions with GEOS and measures
+with GEOS. A union is where two libraries most plausibly differ, because it is where
+coincident edges and near-degenerate intersections get decided — and the symmetric
+difference is zero.
 
 A convex hull was chosen first because it is **exact** — no tolerance to pick, no curve to
 approximate, no iteration to converge — so a disagreement would have been real rather than a
@@ -146,10 +175,16 @@ number would have read better and been no more true.
 
 ## What this does not establish
 
-**That the method scales.** One check of the twenty-six is written, and it was deliberately
-the easiest: exact, two-dimensional, no tolerance to argue about. The next eight are shapely
-geometry with real approximation questions, and `isochrone` is the monolith whose parity is a
-harder claim than any primitive's.
+**That the method scales.** Three of the twenty-six are written, and all three came out of
+the same shapely group, reusing one fixture helper for the Soho corridors. The cheap part was
+cheap because the second and third checks shared a reference library and a data source with
+the first. The groups that have neither — `case_series` against pandas, `donut_geomask`
+against a distribution, `isochrone` as a whole — will not be three in an afternoon, and
+`isochrone` is the monolith whose parity is a harder claim than any primitive's.
+
+**That zero symmetric difference means more than it does.** It means the two unions covered
+the same ground to the precision shapely reports, on this input. It is strong evidence about
+`polyclip-ts` against GEOS here and not a general statement about either.
 
 **That the 18 exemptions are right.** They are reasoned, not proven. The reasons are there to
 be argued with, and the validator will not defend them.
@@ -158,6 +193,6 @@ be argued with, and the validator will not defend them.
 criterion. `10-hull` agrees to 10⁻⁹ m on a hull that fills in ground the 1854 outbreak never
 crossed — both implementations assert that area identically, and the notebook says so twice.
 
-**And nothing about the 25 that remain.** They are now counted, named and grouped, which is
+**And nothing about the 23 that remain.** They are now counted, named and grouped, which is
 not the same as done. If the number sits at 25 in a month, the ratchet will say so, and that
 is the point of it.

@@ -9,8 +9,8 @@
  "measuredAt": "2026-10-11",
  "counts": {
   "widgets": 51,
-  "covered": 7,
-  "awaiting": 25,
+  "covered": 9,
+  "awaiting": 23,
   "none": 18,
   "blocked": 1
  },
@@ -112,8 +112,7 @@
   {
    "nodeType": "fill_interior_gaps",
    "expectation": "parity",
-   "check": null,
-   "computes": "Removes interior rings from polygons."
+   "check": "11-fill-gaps"
   },
   {
    "nodeType": "find_health_facilities",
@@ -254,8 +253,7 @@
   {
    "nodeType": "summarize_combined_area",
    "expectation": "parity",
-   "check": null,
-   "computes": "Unions polygons and measures the combined area."
+   "check": "12-combined-area"
   },
   {
    "nodeType": "summarize_hull",

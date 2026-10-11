@@ -224,6 +224,15 @@ fw:referenceCount a owl:DatatypeProperty.
 fw:centerShift a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
 fw:originalNearestPumpDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
 fw:movedNearestPumpDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+# How far the individual points moved, measured by pairing the two layers in order. Recorded on
+# the comparison rather than on the moved layer: a displacement published beside a moved point
+# would let anyone holding the shareable file walk the mask backwards.
+fw:displacementMinimum a owl:ObjectProperty; rdfs:range qudt:QuantityValue;
+  rdfs:comment "Smallest distance any point moved, in the stated computation CRS.".
+fw:displacementMedian a owl:ObjectProperty; rdfs:range qudt:QuantityValue;
+  rdfs:comment "Median distance moved. Reported with the extremes because a band is not a distribution.".
+fw:displacementMaximum a owl:ObjectProperty; rdfs:range qudt:QuantityValue;
+  rdfs:comment "Largest distance any point moved. With the minimum it is the observed band a donut view draws, which is measured and not read from the masking widget's parameters.".
 fw:originalMeanCenter a owl:ObjectProperty; rdfs:range geo:Geometry.
 fw:movedMeanCenter a owl:ObjectProperty; rdfs:range geo:Geometry.
 fw:originalNearestPumpId a owl:DatatypeProperty.

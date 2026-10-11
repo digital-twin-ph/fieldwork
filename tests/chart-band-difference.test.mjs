@@ -83,3 +83,30 @@ test('a set that is not actually nested is refused, rather than drawn negative',
   assert.throws(()=>chartVegaSpec(chart(notNested),params({bandMeasure:'difference'}),{}),
     /These bands are not nested: within 5 min holds fewer records \(20\) than within 1 min \(50\), so differences between them would be negative\./);
 });
+
+test('an epidemic curve runs vertically unless asked otherwise',async()=>{
+  const {chartOrientation}=await import('../build/chart-vega.js');
+  const {chartMarkup}=await import('../build/chart-output.js');
+  // A case series is an epidemic curve: periods along the bottom, counts rising.
+  assert.equal(chartOrientation({inputMode:'series'}),'vertical');
+  assert.equal(chartOrientation({inputMode:'decisions'}),'horizontal','categories keep their room to read');
+  assert.equal(chartOrientation({inputMode:'polygons'}),'horizontal');
+  // A default, not a rule: either kind can be asked for either way.
+  assert.equal(chartOrientation({inputMode:'series',orientation:'horizontal'}),'horizontal');
+  assert.equal(chartOrientation({inputMode:'polygons',orientation:'vertical'}),'vertical');
+
+  const series={field:'period',caption:'Deaths by day',total:6,
+    bins:[{key:'d1',label:'31 Aug',count:1},{key:'d2',label:'1 Sep',count:4},{key:'d3',label:'2 Sep',count:1}]};
+  const esc=t=>String(t);
+  const vertical=chartMarkup(series,esc,'vertical');
+  assert.match(vertical,/bar-columns/);
+  assert.match(vertical,/height:100%/,'the tallest period fills the column');
+  assert.match(vertical,/height:25%/,'and the rest are drawn against it');
+  assert.ok(!/bar-track/.test(vertical),'no horizontal track in a vertical chart');
+  const horizontal=chartMarkup(series,esc,'horizontal');
+  assert.match(horizontal,/bar-track/);
+  assert.match(horizontal,/width:100%/);
+  // Same numbers either way: the orientation changes the reading, not the measure.
+  for(const markup of [vertical,horizontal])
+    for(const bin of series.bins)assert.match(markup,new RegExp(`${bin.label}`));
+});

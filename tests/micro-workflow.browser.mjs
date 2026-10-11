@@ -4,9 +4,32 @@ import {test,expect} from '@playwright/test';
 // and exploded into the primitives it arranges. Experiment 89 claimed a composition is
 // easier to follow than one node with nine knobs and nothing had put it in front of anyone,
 // because until now it could not be added to a canvas at all.
+
+/** The node count once the canvas has stopped drawing.
+ *
+ *  Reading it straight after a navigation undercounts in WebKit, which renders the graph
+ *  progressively: a test that captured 16 then asserted 17 saw 20, because the first number
+ *  was taken mid-render rather than because three nodes appeared. Two matching reads.
+ */
+async function settledNodes(page){
+  let previous=-1;
+  for(let attempt=0;attempt<40;attempt++){
+    const count=await page.locator('.react-flow__node').count();
+    if(count===previous&&count>0)return count;
+    previous=count;
+    await page.waitForTimeout(100);
+  }
+  return previous;
+}
+
 test('a micro-workflow is offered, added as one step, and explodes into its primitives',async({page})=>{
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
+  // Fieldwork saves each workspace to localStorage, so a test that edits snow-isochrone
+  // leaves it edited for the next one. Cleared first: this file adds and explodes a
+  // composition three times over, and the counts only mean something from a known start.
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=snow-isochrone');
 
   // Offered under its own palette group, marked with the governance it has.
@@ -16,7 +39,7 @@ test('a micro-workflow is offered, added as one step, and explodes into its prim
   await expect(entry).toContainText('private, unreviewed');
   await expect(entry).toContainText('4 steps');
 
-  const before=await page.locator('.react-flow__node').count();
+  const before=await settledNodes(page);
   await entry.click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(before+1);
 
@@ -86,6 +109,11 @@ test('a micro-workflow is offered, added as one step, and explodes into its prim
 test('a composition runs inside a worked example, which carries a project manifest',async({page})=>{
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
+  // Fieldwork saves each workspace to localStorage, so a test that edits snow-isochrone
+  // leaves it edited for the next one. Cleared first: this file adds and explodes a
+  // composition three times over, and the counts only mean something from a known start.
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#node-library [data-composition]').first()).toBeVisible();
   const added=await page.evaluate(()=>{
@@ -123,5 +151,52 @@ test('a composition runs inside a worked example, which carries a project manife
   await page.locator('#run-workflow, [data-action="run"], button:has-text("Run")').first().click();
   // The run either completes or reports a real reason; it must not stop on the manifest.
   await expect(page.locator('body')).not.toContainText('Project manifest does not match',{timeout:20000});
+  expect(errors).toEqual([]);
+});
+
+// Both reported after using the feature: an edited worked example stayed edited with no way
+// back, and an exploded composition left the canvas unreadable with no way to tidy it.
+test('a worked example can be reset, and an exploded canvas can be laid out',async({page})=>{
+  const errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  page.on('dialog',d=>d.accept());
+  // Fieldwork saves each workspace to localStorage, so a test that edits snow-isochrone
+  // leaves it edited for the next one. Cleared first: this file adds and explodes a
+  // composition three times over, and the counts only mean something from a known start.
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=snow-isochrone');
+  const original=await settledNodes(page);
+
+  // Edit it: add the composition, then explode it.
+  await page.locator('#node-library [data-composition]').first().click();
+  await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original+1);
+  await page.locator('#micro-explode').click();
+  await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original+4);
+
+  // Tidy: every node lands on the column grid, and nothing is lost.
+  await page.locator('#tidy-button').click();
+  await expect.poll(async()=>await page.evaluate(()=>{
+    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
+    return (w.nodes||[]).every(n=>(n.x-40)%300===0&&(n.y-40)%150===0);
+  })).toBe(true);
+  expect(await page.locator('.react-flow__node').count()).toBe(original+4);
+
+  // A second tidy says so rather than appearing to do nothing.
+  await page.locator('#tidy-button').click();
+  await expect(page.locator('body')).toContainText('Already laid out in order');
+
+  // Reselecting the workspace keeps the edit, which is why a reset exists.
+  await page.selectOption('#example-select','snow-voronoi');
+  await page.selectOption('#example-select','snow-isochrone');
+  await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original+4);
+
+  // Reset returns it to the published example.
+  await page.locator('#reset-example').click();
+  await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original);
+  expect(await page.evaluate(()=>{
+    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
+    return (w.nodes||[]).some(n=>n.type==='micro_workflow');
+  })).toBe(false);
   expect(errors).toEqual([]);
 });

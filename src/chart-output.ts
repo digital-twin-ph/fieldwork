@@ -29,8 +29,19 @@ export function chartOutput(node:WorkflowNode<'chart_output'>,input:DisplayValue
   return {value:{...structuredClone(input),chart},receipt:{nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:'Categorical frequency: count every input row once; retain zero-count categories and report missing or unrecognized categories separately. No population weighting, filtering or new inference.'}};
 }
 
-export function chartMarkup(chart:ChartSummary,esc:(text:string)=>string):string{
+/** Bars without a charting library, in either direction.
+ *
+ *  Vertical is for a series, where the x axis is time and a reader follows it left to
+ *  right; horizontal is for categories, where the label needs room. Both render the same
+ *  numbers from the same bins: the orientation changes the reading, not the measure. */
+export function chartMarkup(chart:ChartSummary,esc:(text:string)=>string,
+  orientation:'horizontal'|'vertical'='horizontal'):string{
   const maximum=Math.max(1,...chart.bins.map(bin=>bin.count));
-  return `<p class="muted">${esc(chart.caption)} · ${chart.total} records · grouping: ${esc(chart.field)}</p>`+
-    chart.bins.map(bin=>`<div class="bar-row"><span>${esc(bin.label)}</span><div class="bar-track" aria-hidden="true"><div style="width:${bin.count/maximum*100}%"></div></div><b>${bin.count}</b></div>`).join('');
+  const caption=`<p class="muted">${esc(chart.caption)} · ${chart.total} records · grouping: ${esc(chart.field)}</p>`;
+  if(orientation==='vertical')
+    return caption+`<div class="bar-columns" role="img" aria-label="${esc(chart.caption)}">`
+      +chart.bins.map(bin=>`<div class="bar-column"><b>${bin.count}</b>`
+        +`<div class="bar-stack" aria-hidden="true"><div style="height:${bin.count/maximum*100}%"></div></div>`
+        +`<span>${esc(bin.label)}</span></div>`).join('')+`</div>`;
+  return caption+chart.bins.map(bin=>`<div class="bar-row"><span>${esc(bin.label)}</span><div class="bar-track" aria-hidden="true"><div style="width:${bin.count/maximum*100}%"></div></div><b>${bin.count}</b></div>`).join('');
 }

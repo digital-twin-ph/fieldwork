@@ -327,8 +327,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // A composition runs by becoming its members, after the authored graph has been validated
   // as authored. The executor below has no composition branch: one receipt per member falls
   // out of running ordinary nodes, which is what experiment 75 requires of it.
-  workflow=expandMicroWorkflows(workflow,resolveComposition);
-  const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[], receipts:Receipt[]=[],runId=crypto.randomUUID();
+  const runId=crypto.randomUUID(), receipts:Receipt[]=[];
+  const expansion=expandMicroWorkflows(workflow,resolveComposition,runId);
+  workflow=expansion.workflow;receipts.push(...expansion.receipts);
+  const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];
   for(const node of plan){
     onProgress(node.id,'running');const begin=performance.now();
     const inputs=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>[e.port,values.get(e.from)])) as unknown as ExecutionInputs;

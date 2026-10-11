@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {addableTypes,PALETTE_GROUPS,RETIRED_FROM_PALETTE} from '../build/palette.js';
+import {addableTypes,PALETTE_GROUPS,RETIRED_FROM_PALETTE,ADDABLE_VIA_COMPOSITION} from '../build/palette.js';
 import {TYPES,exampleWorkflow} from '../build/core.js';
 import {oldNalediWorkflow} from '../build/old-naledi.js';
 import {johnSnowExample} from '../build/john-snow.js';
@@ -28,10 +28,9 @@ const reachable=()=>{
 test('every node type is addable from some example, or deliberately is not',()=>{
   // Legacy identities that normalise through the experiment 18 adapter, plus the superseded
   // generic output. Each stays executable so saved work still runs; none is offered again.
-  // micro_workflow is added by choosing a composition rather than by choosing the type, and
-  // the palette offers admitted compositions only. None is admitted yet, so it is reachable
-  // from nothing: this entry records that, and moves out when the first one is admitted.
-  const deliberate=new Set([...RETIRED_FROM_PALETTE,'places','centers','micro_workflow']);
+  // micro_workflow is reachable, but through a composition entry rather than its own: the
+  // palette lists one per bundled composition and each adds the node already configured.
+  const deliberate=new Set([...RETIRED_FROM_PALETTE,'places','centers',...ADDABLE_VIA_COMPOSITION]);
   const unreachable=Object.keys(TYPES).filter(type=>!reachable().has(type)&&!deliberate.has(type));
   assert.deepEqual(unreachable,[],
     `these node types are registered but cannot be added from any example: ${unreachable.join(', ')}`);

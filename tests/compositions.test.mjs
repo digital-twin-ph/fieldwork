@@ -6,7 +6,7 @@ import {validateComposition,openInputs,detectDrift,expandComposition,STAGE_VERBS
 import {executeWorkflow} from '../build/core.js';
 
 const load=async()=>({
-  composition:JSON.parse(await readFile('compositions/compute_walking_catchment/0.2.0.json','utf8')),
+  composition:JSON.parse(await readFile('compositions/compute_walking_catchment/0.3.0.json','utf8')),
   registry:JSON.parse(await readFile('widgets/registry.json','utf8'))});
 const clone=o=>structuredClone(o);
 
@@ -182,7 +182,7 @@ test('a member publishing a new release makes a pinned composition report drift'
     'only the member that moved');
 
   // And the shipped version, re-pinned, reports none.
-  const current=JSON.parse(await readFile('compositions/compute_walking_catchment/0.2.0.json','utf8'));
+  const current=JSON.parse(await readFile('compositions/compute_walking_catchment/0.3.0.json','utf8'));
   assert.deepEqual(detectDrift(current,registry).filter(d=>d.state!=='unchanged'),[]);
 });
 
@@ -218,14 +218,28 @@ test('as one node on a canvas it runs, and still emits one receipt per member',a
   assert.equal(outputOf(host),'polygons');
 
   // Expansion turns it into the members, fanning the network out to three of them.
-  const expanded=expandMicroWorkflows(structuredClone(authored),resolveComposition);
+  const {workflow:expanded,receipts:arrangement}=expandMicroWorkflows(
+    structuredClone(authored),resolveComposition,'run');
   assert.equal(expanded.nodes.length,7,'two sources, four members, one map');
   assert.equal(expanded.edges.filter(e=>e.from===network.id).length,3,'the network feeds three steps');
   assert.ok(!expanded.nodes.some(n=>n.type==='micro_workflow'),'no composition node survives');
+  // One record of the arrangement, which claims no computation.
+  assert.equal(arrangement.length,1);
+  assert.match(arrangement[0].facts,/a prov:Plan, fw:MicroWorkflow/);
+  assert.match(arrangement[0].facts,/fw:compositionVersion "0\.3\.0"/);
+  assert.match(arrangement[0].facts,/fw:claimsNoComputation true/);
+  assert.match(arrangement[0].facts,/fw:governanceStatus "private"/);
+  assert.equal((arrangement[0].facts.match(/fw:memberOf/g)||[]).length,4,'each member is associated');
 
   const run=await executeWorkflow(structuredClone(authored),async()=>[]);
   const members=run.receipts.filter(r=>r.nodeId.startsWith('catchment-'));
   assert.equal(members.length,4,'one receipt per member, not one for the composition');
+  // And the arrangement, which is a fifth receipt about the plan rather than the work.
+  const plan=run.receipts.find(r=>r.nodeId==='catchment');
+  assert.ok(plan,'the expansion is recorded');
+  assert.match(plan.facts,/fw:compositionId "urn:fieldwork:composition:compute_walking_catchment"/);
+  assert.match(plan.facts,/fw:parameterValue "75"/,'the speed it was run with');
+  assert.match(plan.method,/states the association only/);
   const corridor=members.find(r=>r.nodeId==='catchment-corridor');
   assert.match(corridor.facts,/fw:enteredSegmentCount 301/);
   assert.match(corridor.facts,/fw:partialSegmentCount 45/);
@@ -241,11 +255,11 @@ test('a pinned composition this build does not carry fails by name',async()=>{
     composition:{id:composition.id,nodeType:composition.nodeType,version,title:composition.title,
       stage:composition.stage,inputs:[['sites','points']],output:'polygons'},parameters:{}}});
   assert.throws(()=>expandMicroWorkflows({schema:'fieldwork/workflow/1',nodes:[host('9.9.9')],edges:[]},
-    resolveComposition),/version 9\.9\.9, and this build carries 0\.2\.0/);
+    resolveComposition,'run'),/version 9\.9\.9, and this build carries 0\.3\.0/);
   const absent={...host('0.2.0')};
   absent.params.composition.id='urn:fieldwork:composition:summarize_nothing';
   assert.throws(()=>expandMicroWorkflows({schema:'fieldwork/workflow/1',nodes:[absent],edges:[]},
-    resolveComposition),/which this build does not carry\. Nothing it did can be reproduced here\./);
+    resolveComposition,'run'),/which this build does not carry\. Nothing it did can be reproduced here\./);
 });
 
 test('an unconfigured micro-workflow has no ports, and a malformed pin is refused',async()=>{

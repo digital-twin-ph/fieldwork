@@ -413,12 +413,17 @@
   {
    "id": "urn:fieldwork:widget:micro_workflow",
    "nodeType": "micro_workflow",
-   "currentVersion": "0.1.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
      "path": "widgets/releases/micro_workflow/0.1.0.json",
      "sha256": "3a19bad2d2d21d859b3bc1bc0e24cc11ec5e16d75fb4ffa762ac37bf15dfdf45"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/micro_workflow/0.2.0.json",
+     "sha256": "9bd40c164c6010294e45dcbbebba91d1b5e9fdd52cd47d7058cd981a4a4a8046"
     }
    ]
   },

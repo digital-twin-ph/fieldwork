@@ -47,6 +47,39 @@ fw:sourcePoint a owl:DatatypeProperty; rdfs:domain fw:PointBuffer; rdfs:range xs
 fw:circleAreaFraction a owl:DatatypeProperty; rdfs:domain fw:PointBuffer; rdfs:range xsd:decimal;
   rdfs:label "Fraction of the true circle's area the polygon covers";
   rdfs:comment "A buffer is a polygon approximating a circle, so it is smaller than the circle it stands for. Emitted so the approximation is a number rather than a footnote.".
+fw:MicroWorkflow a owl:Class;
+  rdfs:label "Micro-workflow"; fw:implementationStatus "implemented"; rdfs:subClassOf prov:Plan;
+  rdfs:comment "A composition of registry widgets used as one step. A plan rather than an operation: it computes nothing itself, and the members it arranges report their own work. Pinned by version, because what it arranged is only reproducible against the versions it named.".
+fw:MicroWorkflowExpansion a owl:Class;
+  rdfs:label "Micro-workflow expansion"; fw:implementationStatus "implemented"; rdfs:subClassOf prov:Activity;
+  rdfs:comment "The act of replacing one composition node with its members before a run. It states the association between the members and the plan and asserts fw:claimsNoComputation, because a composition must not take credit for what its members did. Without it a run's receipts read as unrelated primitives, which is true but incomplete.".
+fw:compositionId a owl:DatatypeProperty; rdfs:domain fw:MicroWorkflow; rdfs:range xsd:string;
+  rdfs:label "Identifier of the composition".
+fw:compositionVersion a owl:DatatypeProperty; rdfs:domain fw:MicroWorkflow; rdfs:range xsd:string;
+  rdfs:label "Version of the composition as pinned";
+  rdfs:comment "The version the workflow named, not the newest available. Drift is the difference between the two.".
+fw:compositionStage a owl:DatatypeProperty; rdfs:domain fw:MicroWorkflow; rdfs:range xsd:string;
+  rdfs:label "Workflow stage the composition's name asserts".
+fw:governanceStatus a owl:DatatypeProperty; rdfs:domain fw:MicroWorkflow; rdfs:range xsd:string;
+  rdfs:label "Whether the composition is private, shared or admitted";
+  rdfs:comment "Carried into the run so that a result produced with an unreviewed composition says so, rather than a reader having to go and look.".
+fw:memberCount a owl:DatatypeProperty; rdfs:domain fw:MicroWorkflowExpansion; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Members the composition arranged".
+fw:claimsNoComputation a owl:DatatypeProperty; rdfs:domain fw:MicroWorkflowExpansion; rdfs:range xsd:boolean;
+  rdfs:label "States that this activity performed no computation";
+  rdfs:comment "Asserted rather than left to inference, so that a reader counting activities does not credit the arrangement with the work.".
+fw:memberOf a owl:ObjectProperty; rdfs:range fw:MicroWorkflow;
+  rdfs:label "Plan a member node belongs to".
+fw:memberNode a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "Identifier of a member node within the run".
+fw:compositionParameter a owl:ObjectProperty; rdfs:domain fw:MicroWorkflowExpansion;
+  rdfs:label "A public parameter the composition was run with";
+  rdfs:comment "Recorded as a name and a value because the composition's parameters are what a practitioner chose, while its members' parameters are derived from them.".
+fw:parameterName a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "Name of a composition parameter".
+fw:parameterValue a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "Value a composition parameter was given, as text";
+  rdfs:comment "As text, deliberately: these are the values a practitioner typed, and preserving the form they were given in is more useful than a typed guess.".
 fw:InteriorGapFill a owl:Class;
   rdfs:label "Interior gap fill"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Each polygon replaced by its outer ring, so enclosed gaps become solid. This enlarges the polygon and the added ground was never computed as covered, so anything measuring the result afterwards measures ground nothing reached. What a gap means depends on the source: in a travel corridor it is ground no street reached, and in an administrative boundary it would be a real enclave.".

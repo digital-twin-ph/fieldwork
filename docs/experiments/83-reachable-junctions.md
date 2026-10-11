@@ -151,7 +151,20 @@ argued their way to 4.5 km/h. What reached the next reader was a bare constant
 and the word "assume". Five days ago this project read that constant, could not
 distinguish it from an arbitrary one, and said so in print.
 
-Four things follow.
+**And the estimate was deliberately bounded.** The authors did not want to get
+stuck researching walking speed: the goal was representing the John Snow event
+in notebooks, and the speed was a means to it. That is proportion, not
+sloppiness. A team that had spent a week on pedestrian velocity would have
+produced a worse notebook.
+
+So the failure is narrower than it first looked, and more interesting. Not that
+the number was rough — it should have been rough — but that **its roughness
+left no trace either**. A comment saying "estimated from period images; not
+researched further, the notebook was the goal" would have told a later reader
+everything: that the figure is soft, that nobody defended it to the last
+decimal, and that it is the first thing to reconsider in another setting.
+
+Five things follow.
 
 **Provenance of judgements, not only of data.** This repository records where
 every dataset came from, with digests and licences, and had nothing at all for
@@ -167,6 +180,18 @@ exactly what happened.
 incomplete. "4.5 km/h for pedestrians in Soho in 1854, estimated from period
 photographs" is the datum, and only the second form tells a reader in Manila
 in 2026 what they have to redo.
+
+**A soft parameter with high leverage is the one most worth labelling.** This is
+the inversion worth keeping. Effort naturally goes into documenting the numbers
+people argued hardest about, and those are the safest ones. The speed was
+settled quickly *and* moves the answer from 69 junctions to 246 across a
+plausible range. Low confidence and high leverage is the combination that
+deserves a note, and it is the combination least likely to get one.
+
+Fieldwork states the scope of a speed in every result and does not state how
+firm it is. A basis declaration beside `fw:assumedSpeedMetresPerMinute` —
+estimated, measured locally, taken from a cited study — would carry that, and
+is small. Not built; recorded here as the design consequence.
 
 **And the derivation is better teaching material than the parameter.** How two
 people reasoned from photographs of a street to a walking speed is what a

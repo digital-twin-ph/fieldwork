@@ -185,3 +185,85 @@ test('a member publishing a new release makes a pinned composition report drift'
   const current=JSON.parse(await readFile('compositions/compute_walking_catchment/0.2.0.json','utf8'));
   assert.deepEqual(detectDrift(current,registry).filter(d=>d.state!=='unchanged'),[]);
 });
+
+test('as one node on a canvas it runs, and still emits one receipt per member',async()=>{
+  // The whole point: the canvas holds one node, the executor sees four, and the numbers are
+  // the ones the Validation Lab checked against NetworkX and GEOS.
+  const {expandMicroWorkflows}=await import('../build/compositions.js');
+  const {resolveComposition}=await import('../build/composition-registry.js');
+  const {executeWorkflow,validateWorkflow,nodeInputs,outputOf}=await import('../build/core.js');
+  const {johnSnowExample}=await import('../build/john-snow.js');
+  const {composition}=await load();
+
+  const example=johnSnowExample('snow-isochrone');
+  const pumps=example.nodes.find(n=>n.id==='pumps'),network=example.nodes.find(n=>n.type==='network_input');
+  const host={id:'catchment',type:'micro_workflow',x:400,y:40,params:{
+    label:'Walking catchment',
+    composition:{id:composition.id,nodeType:composition.nodeType,version:composition.version,
+      title:composition.title,stage:composition.stage,
+      inputs:composition.ports.inputs.map(p=>[p.name,p.type]),output:composition.ports.output.type},
+    parameters:{zone:30,hemisphere:'north',maxSnapM:100,travelMode:'walking',speedMPerMin:75,
+      direction:'outbound',traversalMinutes:15,minutes:5,bufferM:25}}};
+  const map={id:'map',type:'map_output',x:700,y:40,params:{label:'Catchment',inputMode:'polygons'}};
+  const authored={schema:'fieldwork/workflow/1',
+    nodes:[structuredClone(pumps),structuredClone(network),host,map],
+    edges:[{id:'p',from:pumps.id,to:host.id,port:'sites'},
+      {id:'n',from:network.id,to:host.id,port:'network'},
+      {id:'m',from:host.id,to:map.id,port:'polygons'}]};
+
+  // The authored graph is four nodes, and its ports come from the pinned contract.
+  const valid=validateWorkflow(structuredClone(authored));
+  assert.equal(valid.nodes.length,4,'the canvas holds one node for the composition');
+  assert.deepEqual(nodeInputs(host).map(([p])=>p),['sites','network']);
+  assert.equal(outputOf(host),'polygons');
+
+  // Expansion turns it into the members, fanning the network out to three of them.
+  const expanded=expandMicroWorkflows(structuredClone(authored),resolveComposition);
+  assert.equal(expanded.nodes.length,7,'two sources, four members, one map');
+  assert.equal(expanded.edges.filter(e=>e.from===network.id).length,3,'the network feeds three steps');
+  assert.ok(!expanded.nodes.some(n=>n.type==='micro_workflow'),'no composition node survives');
+
+  const run=await executeWorkflow(structuredClone(authored),async()=>[]);
+  const members=run.receipts.filter(r=>r.nodeId.startsWith('catchment-'));
+  assert.equal(members.length,4,'one receipt per member, not one for the composition');
+  const corridor=members.find(r=>r.nodeId==='catchment-corridor');
+  assert.match(corridor.facts,/fw:enteredSegmentCount 301/);
+  assert.match(corridor.facts,/fw:partialSegmentCount 45/);
+  assert.match(members.find(r=>r.nodeId==='catchment-band').facts,/fw:junctionsInBand 142/);
+  assert.ok(run.outputs.length>=1,'the result reached the map');
+});
+
+test('a pinned composition this build does not carry fails by name',async()=>{
+  const {expandMicroWorkflows}=await import('../build/compositions.js');
+  const {resolveComposition}=await import('../build/composition-registry.js');
+  const {composition}=await load();
+  const host=version=>({id:'h',type:'micro_workflow',x:0,y:0,params:{label:'x',
+    composition:{id:composition.id,nodeType:composition.nodeType,version,title:composition.title,
+      stage:composition.stage,inputs:[['sites','points']],output:'polygons'},parameters:{}}});
+  assert.throws(()=>expandMicroWorkflows({schema:'fieldwork/workflow/1',nodes:[host('9.9.9')],edges:[]},
+    resolveComposition),/version 9\.9\.9, and this build carries 0\.2\.0/);
+  const absent={...host('0.2.0')};
+  absent.params.composition.id='urn:fieldwork:composition:summarize_nothing';
+  assert.throws(()=>expandMicroWorkflows({schema:'fieldwork/workflow/1',nodes:[absent],edges:[]},
+    resolveComposition),/which this build does not carry\. Nothing it did can be reproduced here\./);
+});
+
+test('an unconfigured micro-workflow has no ports, and a malformed pin is refused',async()=>{
+  const {validateWorkflow,nodeInputs,outputOf}=await import('../build/core.js');
+  const bare={id:'h',type:'micro_workflow',x:0,y:0,params:{label:'Unconfigured'}};
+  assert.deepEqual(nodeInputs(bare),[]);
+  assert.equal(outputOf(bare),null);
+  const workflow=p=>({schema:'fieldwork/workflow/1',
+    nodes:[{id:'h',type:'micro_workflow',x:0,y:0,params:{label:'x',...p}},
+      {id:'m',type:'map_output',x:1,y:1,params:{label:'m',inputMode:'polygons'}}],edges:[]});
+  assert.throws(()=>validateWorkflow(workflow({composition:{id:'not-a-urn',version:'0.2.0'},parameters:{}})),
+    /names a composition by id and version/);
+  assert.throws(()=>validateWorkflow(workflow({
+    composition:{id:'urn:fieldwork:composition:compute_walking_catchment',nodeType:'x',version:'0.2.0',
+      title:'T',stage:'compute',inputs:[],output:'polygons'},parameters:{}})),
+    /pins no ports, so nothing could connect to it/);
+  assert.throws(()=>validateWorkflow(workflow({
+    composition:{id:'urn:fieldwork:composition:compute_walking_catchment',nodeType:'x',version:'0.2.0',
+      title:'T',stage:'compute',inputs:[['sites','points']],output:'polygons'},
+    parameters:{zone:{nested:true}}})),/zone must be a single value/);
+});

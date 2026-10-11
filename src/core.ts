@@ -9,6 +9,8 @@ import {reachableCorridor,validateCorridorNode} from './reachable-corridor.js';
 import {travelTimeBand,validateBandNode} from './travel-time-band.js';
 import {stackPolygons,validateStackNode,isPolygonPort,polygonPort,MAX_POLYGON_LAYERS} from './stack-polygons.js';
 import {fillInteriorGaps,validateFillNode} from './fill-interior-gaps.js';
+import {expandMicroWorkflows} from './compositions.js';
+import {resolveComposition} from './composition-registry.js';
 /** Resolves a named credential to its secret. No current widget needs one; the credential
  *  manager stands on its own (experiment 30) and executeWorkflow still accepts a resolver so a
  *  future authenticated source does not change this signature. */
@@ -70,6 +72,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
   reproject:{title:'Reproject input',group:'Sources',icon:'⇄',color:'blue',description:'Import projected UTM points and convert them to WGS84 longitude/latitude',inputs:[],output:'points'},
   raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
+  micro_workflow:{title:'Micro-workflow',group:'Micro-workflows',icon:'⧈',color:'indigo',
+    description:'A saved composition used as one step, which can be exploded into its primitives',
+    inputs:[],output:null},
   fill_interior_gaps:{title:'Fill interior gaps',group:'Spatial operations',icon:'◍',color:'teal',description:'Make each polygon solid by dropping its interior gaps, which enlarges it',inputs:[['polygons','polygons']],output:'polygons'},
   stack_polygons:{title:'Collect polygon layers',group:'Spatial operations',icon:'▤',color:'teal',description:'Gather several polygon layers into one without merging them, largest first',inputs:[['polygons','polygons'],['polygons_2','polygons'],['polygons_3','polygons'],['polygons_4','polygons'],['polygons_5','polygons'],['polygons_6','polygons']],output:'polygons'},
   travel_time_band:{title:'Travel time band',group:'Spatial operations',icon:'◔',color:'teal',description:'Narrow reachable junctions to a shorter time, recomputing the budget left at each',inputs:[['reached','points']],output:'points'},
@@ -107,10 +112,16 @@ const point = (id:string,name:string,coordinates:Position|null|undefined):PointF
  *  input modes. Inside a composition the static lookup is still correct: members are
  *  registry widgets, never compositions, so nothing nests. */
 export function outputOf(node:WorkflowNode):PortType|null{
+  if(node.type==='micro_workflow')return node.params.composition?.output??null;
   return TYPES[node.type].output;
 }
 
 export function nodeInputs(node:WorkflowNode):[string,PortType][]{
+  // One node type serves every composition, so the ports are the composition's, pinned in
+  // the node rather than looked up: a saved workflow validates without the file present.
+  // An unconfigured one has no ports, which is the honest answer for a node on a canvas
+  // whose composition has not been chosen yet.
+  if(node.type==='micro_workflow')return structuredClone(node.params.composition?.inputs??[]);
   if(node.type==='compare_point_sets'&&node.params.centers)return [...TYPES.compare_point_sets.inputs,['originalCenter','mean-center'],['movedCenter','mean-center']];
   if(node.type==='chart_output'&&node.params.inputMode==='series')return [['series','table']];
   if(node.type==='case_series')return node.params.source==='table'?[['cases','table']]:[['points','points']];
@@ -183,6 +194,21 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='travel_time_band')validateBandNode(n);
     if(n.type==='stack_polygons')validateStackNode(n);
     if(n.type==='fill_interior_gaps')validateFillNode(n);
+    if(n.type==='micro_workflow'){
+      const c=n.params.composition;
+      if(!c||typeof c.id!=='string'||!/^urn:fieldwork:composition:[a-z][a-z_]*$/.test(c.id)
+        ||!/^\d+\.\d+\.\d+$/.test(c.version||'')||typeof c.nodeType!=='string'||typeof c.title!=='string')
+        throw new Error('A micro-workflow names a composition by id and version.');
+      if(!Array.isArray(c.inputs)||!c.inputs.length||!c.output)
+        throw new Error(`${c.title||c.nodeType} pins no ports, so nothing could connect to it.`);
+      if(new Set(c.inputs.map(([port])=>port)).size!==c.inputs.length)
+        throw new Error(`${c.title} pins the same port twice.`);
+      if(!n.params.parameters||typeof n.params.parameters!=='object')
+        throw new Error(`${c.title} needs its parameter values.`);
+      for(const [key,value] of Object.entries(n.params.parameters))
+        if(!['string','number','boolean'].includes(typeof value))
+          throw new Error(`${c.title}: ${key} must be a single value.`);
+    }
     if(n.type==='find_health_facilities')validateFindHealthFacilitiesNode(n);
     if(n.type==='buffer_point')validateBufferPointNode(n);
     if(n.type==='sample_raster')validateSampleNode(n);
@@ -298,6 +324,10 @@ export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:n
 }
 export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done')=>void=()=>{},resolveCredential?:CredentialResolver):Promise<WorkflowRun> {
   workflow=validateWorkflow(workflow);
+  // A composition runs by becoming its members, after the authored graph has been validated
+  // as authored. The executor below has no composition branch: one receipt per member falls
+  // out of running ordinary nodes, which is what experiment 75 requires of it.
+  workflow=expandMicroWorkflows(workflow,resolveComposition);
   const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[], receipts:Receipt[]=[],runId=crypto.randomUUID();
   for(const node of plan){
     onProgress(node.id,'running');const begin=performance.now();

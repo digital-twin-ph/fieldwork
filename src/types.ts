@@ -36,6 +36,14 @@ export interface ParamsByType {
   travel_time_band:{label:string;minutes:number};
   stack_polygons:{label:string};
   fill_interior_gaps:{label:string};
+  /** A composition used as one step. The contract is pinned in the node -- ports, output
+   *  type, version -- so a saved workflow validates and reports drift without the
+   *  composition file being present, and `parameters` holds the public values it was run
+   *  with. The first thing in a saved workflow to record a version. */
+  micro_workflow:{label:string;
+    composition:{id:string;nodeType:string;version:string;title:string;stage:string;
+      inputs:[string,PortType][];output:PortType};
+    parameters:Record<string,string|number|boolean>};
   summarize_hull:{label:string;zone:number;hemisphere:'north'|'south'};
   find_health_facilities:{label:string;source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';kinds:string[];requireName:boolean;country:string;minConfidence:number;data:PointCollection|null;retrieved:{source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';sourceLabel:string;licence:string;licenceIRI:string;sourceIRI:string;attribution:string;origin:string;kept:number;dropped:{kind:number;coordinates:number;name:number};at:string;scope:string;filename?:string;sha256?:string;bytes?:number;release?:string;belowConfidence?:number;unmappedCategory?:number;minConfidence?:number}|null};
   buffer_point:{label:string;pointId:string;distanceM:number};

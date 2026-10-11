@@ -20,22 +20,25 @@ reports *Available offline*. A user manual shipped with it would too. Widget
 correctness reaches them indirectly and certainly: they rely on the widget being
 right and will never run the notebook that checks it.
 
-**Does not reach them.** The Validation Lab loads Pyodide from a CDN and
-**needs network access on first use**, which its own README records. So the Dive
-Deeper material — the thing [94](experiments/94-where-explanation-belongs.md)
-made the explanation surface — is least available precisely where the goal
-points. Its parity half still serves the goal, because a correct widget travels
-to the field even when the notebook cannot. Its teaching half serves reviewers
-and connected learners, which is a smaller and better-resourced audience than
-the one named above.
+**Written for people with connectivity, and that is correct.** The Validation
+Lab is for Fieldwork developers and contributors, who work where there is a
+network. Its need for connectivity on first use is a property of its audience,
+not a defect — the earlier version of this section treated it as a failure
+against the goal, which was wrong. What it does need is to **say so**: a
+practitioner who wants to review a check offline has to learn the prerequisite
+before they are in the field, not after.
+
+**The Dive Deeper material is a different audience and a different problem.**
+Learners are not contributors, and the material is the explanation surface
+[94](experiments/94-where-explanation-belongs.md) assigned to the lab. They
+reach the page while online — that is unavoidable, it is how they get it — so
+the answer is to use that moment: **run every notebook once while connected**,
+which both caches what the kernel needs and surfaces any failure while there is
+still a network to fix it with. Offline availability becomes a setup step a
+learner performs deliberately rather than a property they discover they lack.
 
 **Serves us, not them.** Item 1 is an internal instrument. Worth doing, and
 worth being honest that its beneficiary is the project.
-
-Neither tension says stop. They say: when item 3 is planned, the parity half and
-the Dive Deeper half have different audiences *and* different availability, and
-bundling the lab's packages rather than fetching them is the change that would
-put the teaching material in reach of the people this is for.
 
 ## Urgent
 
@@ -97,11 +100,17 @@ end for the first time, by hand, in CPython; all passed. The published site was
 three notebooks out of date until it was rebuilt the same day.
 
 Two environments matter and only one is easy. CPython execution is a few lines
-with `nbclient`. The browser kernel is the environment practitioners actually
-use, and a notebook can pass in CPython while failing in Pyodide — which is
+with `nbclient`. The browser kernel is the environment learners actually use,
+and a notebook can pass in CPython while failing in Pyodide — which is
 reportedly what happened to `01-reproject-vs-pyproj`, unreproduced so far.
 Whatever is built has to fail the build on an error cell, in both.
 Design record: [41](experiments/41-validation-lab.md).
+
+**One mechanism, two uses.** "Run every notebook and report any error cell" is
+the same operation whether it runs in CI or in a learner's browser on the setup
+visit. In CI it fails the build; in the browser it warms the kernel, caches what
+Pyodide needs and tells a learner what works before they lose the network.
+Build it so both callers can use it rather than twice.
 
 **3 · The 26 computing widgets with no lab check, and no Dive Deeper material.**
 31 widgets compute something; 5 have a check. Plan and test the work, do not

@@ -2,7 +2,7 @@ import {buffer as turfBuffer} from '@turf/buffer';
 import type {Boundary,PointCollection,Position,WorkflowNode} from './types.js';
 import type {Catchment,Network,Polygons} from './catchments.js';
 import {metric,validateNetwork} from './catchments.js';
-import {partial,prepareEdges} from './network-edges.js';
+import {partial,prepareEdges,reachedStreets} from './network-edges.js';
 import type {Receipt} from './results.js';
 
 /** The strip of ground along the streets a traveller can actually get down.
@@ -70,15 +70,19 @@ export function reachableCorridor(
   const features:Catchment[]=[];
   let entered=0,trimmed=0,unreachedJunctions=0;
   for(const [originId,group] of origins){
-    const lines:Position[][]=[];
+    const reached:{line:Position[];fraction:number}[]=[];
     for(const [nodeId,remainingM] of group.remaining)
       for(const e of fromNode.get(nodeId)||[]){
         if(remainingM<=0)continue;
         const fraction=Math.min(1,remainingM/e.lengthM);
         if(fraction<1)trimmed++;
-        const line=partial(e.line,fraction);
-        if(line.length>1){lines.push(line.map(projection.inverse));entered++;}
+        if(partial(e.line,fraction).length<=1)continue;
+        entered++;
+        reached.push({line:e.line,fraction});
       }
+    // Counted per directed street entered, which is what the Validation Lab's notebook
+    // counts. Pooling below changes only the geometry the buffer is given, not the reach.
+    const lines=reachedStreets(reached).map(line=>line.map(projection.inverse));
     if(!lines.length){unreachedJunctions++;continue;}
     const buffered=turfBuffer({type:'MultiLineString',coordinates:lines},bufferM,
       {units:'meters',steps:BUFFER_QUADRANT_SEGMENTS});

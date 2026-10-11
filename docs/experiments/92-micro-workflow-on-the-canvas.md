@@ -71,6 +71,32 @@ the model where only a browser test could have shown the missing handle; the
 browser check now asserts two input handles, one output handle, and that it is
 titled `polygons output`.
 
+## The run that stopped, and why no test caught it
+
+Reported by the user: running a workflow containing the composition stopped with
+*"Project manifest does not match its nodes, connections, records or references.
+Import a complete project."*
+
+`executionPlan` validates the workflow a **second** time, after
+`executeWorkflow` already did. The expansion happens between those two calls, so
+the authored project's manifest — an inventory of four nodes — was asserted
+against the expanded seven-node graph.
+
+The expanded graph is a run-time arrangement, not the project anybody authored,
+so it now carries no manifest at all. The manifest describes what a practitioner
+saved; expansion is what the executor does with it.
+
+**No test caught this because every test built its workflow by hand**, and a
+hand-built workflow has no manifest, so `assertProjectManifest` returned early
+every time. The unit suite ran the composition repeatedly and could not have
+seen it. The browser check now runs a composition inside `snow-isochrone`, which
+carries a real manifest, and it was verified by reverting the fix and watching
+it fail.
+
+That is the second defect in this feature found by a practitioner rather than by
+the suite, after the missing output port. Both were in the gap between a model
+that was correct and an application that a person actually touches.
+
 ## A pre-existing defect, found by testing this
 
 Every numeric field in the Inspector **visually reverts** after a change while

@@ -276,7 +276,13 @@ export function expandMicroWorkflows(
     }
     receipts.push(expansionReceipt(composition,host.id,params.parameters,expanded,runId));
   }
-  return {workflow:{...workflow,nodes,edges},receipts};
+  // The expanded graph is a run-time arrangement, not the project a practitioner authored,
+  // so it carries no manifest. The manifest inventories the authored nodes and connections,
+  // and executionPlan validates again before planning: leaving it attached asserted a
+  // four-node inventory against a seven-node graph and stopped the run with "Project
+  // manifest does not match its nodes, connections, records or references".
+  const {manifest:_authored,...rest}=workflow;
+  return {workflow:{...rest,nodes,edges},receipts};
 }
 
 /** One record of the arrangement, beside the members' own receipts.

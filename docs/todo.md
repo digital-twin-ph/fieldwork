@@ -44,36 +44,13 @@ not a practitioner in the field.
 
 ## Urgent
 
-**1 · Notebook CI: plan it, then test it.**
-The Validation Lab's notebooks are the instrument that checks Fieldwork's
-computations. On 2026-10-11 all seven were run end to end for the first time, by
-hand, in CPython; all passed, and `scripts/run_notebooks.py` now does it in CI
-and fails the build on an error cell. **The browser half is the remaining work**:
-it runs in CI but with `continue-on-error`, because `02-clip-vs-rasterio` does
-not complete in Pyodide within twelve minutes and the cause is not established,
-and notebooks 05–08 are unverified in the browser since the fixture integrity
-fix of 2026-10-11. The published site was
-three notebooks out of date until it was rebuilt the same day.
-
-Two environments matter and only one is easy. CPython execution is a few lines
-with `nbclient`. The browser kernel is the environment learners actually use,
-and a notebook can pass in CPython while failing in Pyodide — which is
-reportedly what happened to `01-reproject-vs-pyproj`, unreproduced so far.
-Whatever is built has to fail the build on an error cell, in both.
-Design record: [41](experiments/41-validation-lab.md).
-
-**One mechanism, two uses.** "Run every notebook and report any error cell" is
-the same operation whether it runs in CI or in a learner's browser on the setup
-visit. In CI it fails the build; in the browser it warms the kernel, caches what
-Pyodide needs and tells a learner what works before they lose the network.
-Build it so both callers can use it rather than twice.
-
-**2 · The 26 computing widgets with no lab check, and no Dive Deeper material.**
+**1 · The 26 computing widgets with no lab check, and no Dive Deeper material.**
 31 widgets compute something; 5 have a check. Plan and test the work, do not
 simply start writing notebooks: a coverage ratchet like
 `ontology/coupling-debt.json` should come first so the number is visible in
-every run and can only fall. Item 1 comes before this one, because adding 26
-unexecuted notebooks adds 26 unverified files.
+every run and can only fall. Notebook CI came before this one, because adding 26 unexecuted
+notebooks adds 26 unverified files. That is done as of 2026-10-11, so this is
+now first.
 
 Each notebook now has two jobs, not one ([94](experiments/94-where-explanation-belongs.md)).
 A **parity** section recomputes independently for a reviewer. A **Dive Deeper**
@@ -85,7 +62,7 @@ set from 69 junctions to 246, and the corridor half-width taking the area from
 0.51× to 1.53×. That is the pattern to follow, and it raises what each of the 26
 is worth writing.
 
-**3 · There is no user manual.**
+**2 · There is no user manual.**
 [docs/usage.md](usage.md) is a reference for what the application does, written
 when the practitioner detail moved out of the README. It is not a manual that
 teaches a method, and two things have now been found to need one:
@@ -104,6 +81,24 @@ Not urgent against the items above, and recorded now because it has been
 implied twice in two days and never written down.
 
 ## Done
+
+**Notebook CI is complete, in both environments.** Done 2026-10-11.
+`scripts/run_notebooks.py` executes all seven under CPython in 6.3 s and
+`node/check_09_notebooks_browser.mjs` executes them in the browser kernel in
+58 s; both fail on any error cell and **both block publication**. The browser
+half was the open item, blocked on `02-clip-vs-rasterio` not completing in
+twelve minutes. Cause: requesting `pyproj` alongside `rasterio` makes
+`rasterio.open` kill the kernel outright, and a fatal kernel error produces no
+error cell, so the runner waited for an execution count that could never arrive.
+Each notebook now requests what it imports, and the runner races cell completion
+against kernel death. Record: [97](experiments/97-the-browser-kernel-gate.md).
+
+Two things that followed and are **not** resolved: the Pyodide distribution is
+loaded from a CDN pinned by nothing in the lab, so an upgrade would be found out
+by the gate failing; and the crash is an unexplained upstream defect with a
+two-package reproduction that has not been filed.
+
+
 
 **The experiment document is standardised.** Done 2026-10-11:
 [docs/experiments/README.md](experiments/README.md) states the form,

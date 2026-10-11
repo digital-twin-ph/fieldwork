@@ -297,9 +297,17 @@ The split that avoids that is already visible in the design above:
 - **History is stateful.** A record of what somebody did over months needs a
   file, and that is what waits for a desktop build.
 
-So the first cut stays in the browser and is honest about being a measurement
-rather than a record. The record is the part that waits, and it waits for a
-reason rather than for a version number.
+So the first cut *could* stay in the browser, honest about being a measurement
+rather than a record.
+
+**Superseded 2026-10-11.** It could, and it should not. The browser application
+stays focused on field work and learning moves to the desktop build, recorded in
+[desktop and browser for learning](../research/desktop-and-browser-for-learning.md).
+The argument above was about what is technically separable, and the decision is
+about what belongs where: a tool used during an outbreak should not have points
+on the screen, which holds whatever the storage can do. The split between
+stateless measurement and stateful record remains the right engineering shape;
+both halves now live on the same surface.
 
 ## What a minimal spike would build
 

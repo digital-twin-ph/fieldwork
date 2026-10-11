@@ -14,6 +14,43 @@ the better application.
 this tool. What follows reasons from properties that have been measured, and
 says which is which.
 
+## Decision, 2026-10-11
+
+**The browser application stays focused on field work. Learning belongs to the
+desktop build, along with acquisition that no browser will permit.**
+
+This is a positioning decision rather than a conclusion drawn from the table
+below, and it resolves the table's split verdict by declining the premise that
+one surface must serve both. Three surfaces, each with one job:
+
+| Surface | Job |
+| --- | --- |
+| **Fieldwork in a browser** | Field work. Offline, sandboxed, nothing to install, one version for everyone |
+| **Validation Lab** | Independent recomputation, and the Dive Deeper materials that explain what a widget does ([94](../experiments/94-where-explanation-belongs.md)) |
+| **Fieldwork on the desktop** | Field work, plus a durable learning record, plus acquisition free of CORS |
+
+The reason is stronger than storage. A tool used during an outbreak should not
+have points on the screen. Attention during fieldwork belongs to the work, and
+a progress indicator competes with it — which is a sufficient argument on its
+own, and holds even where `localStorage` would have been durable enough.
+
+It also supersedes the recommendation in
+[93](../experiments/93-gamification-spike.md) that the stateless half of the
+measurement could ship in the browser because it accumulates nothing. It could
+have; it should not. "This can go here" is not "this belongs here", and the
+split that argument proposed was a way of avoiding a deferral rather than a
+reason to put learning in a field tool.
+
+### What it changes elsewhere
+
+[79](79-emergent-palette-slicing.md) proposes filtering the palette on two axes,
+and the decision separates them. **Scenario** — outbreak investigation,
+surveillance, service access — is field work and stays in the browser.
+**Skill level** is learning and moves to the desktop build. They looked like
+one feature with two parameters and they are two features for two surfaces.
+
+
+
 ## The dimensions that actually differ
 
 ### Getting started
@@ -131,10 +168,10 @@ two acquisition reasons already recorded, and that convergence is the case. A
 desktop build whose only job is to remember points would be a large amount of
 platform work for a feature nobody has yet shown helps.
 
-**And the measurement does not have to wait.** Parsimony and provenance
-completeness are computed from the workflow in hand; only accumulation needs a
-file ([93](../experiments/93-gamification-spike.md)). The browser can carry the
-whole first cut.
+**The measurement waits too, and not for a technical reason.** Parsimony and
+provenance completeness could be computed in the browser from the workflow in
+hand, since they accumulate nothing. The decision above says they should not
+be: a field tool keeps the field's attention.
 
 ## What would settle it
 

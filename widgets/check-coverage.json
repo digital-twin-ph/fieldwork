@@ -9,8 +9,8 @@
  "measuredAt": "2026-10-11",
  "counts": {
   "widgets": 51,
-  "covered": 11,
-  "awaiting": 21,
+  "covered": 13,
+  "awaiting": 19,
   "none": 18,
   "blocked": 1
  },
@@ -246,8 +246,7 @@
   {
    "nodeType": "stack_polygons",
    "expectation": "parity",
-   "check": null,
-   "computes": "Collects polygon layers and orders them by area, which is an area computation."
+   "check": "16-stack-polygons"
   },
   {
    "nodeType": "summarize_combined_area",
@@ -283,8 +282,7 @@
   {
    "nodeType": "voronoi",
    "expectation": "parity",
-   "check": null,
-   "computes": "Computes Euclidean half-plane Voronoi cells within a finite envelope."
+   "check": "15-voronoi"
   },
   {
    "nodeType": "xpert",

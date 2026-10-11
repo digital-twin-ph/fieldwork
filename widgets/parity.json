@@ -195,6 +195,40 @@
    "measured": "every per-polygon count and total exact over 250 locations in 8 polygons, summary exact, worst total difference 0",
    "ranAt": "2026-10-11T21:06:17.277525+00:00",
    "note": "Fieldwork's own point-in-polygon test against GEOS predicates, with the boundary policy mapped explicitly: include is covers, exclude is contains. The fixture contains no location on a polygon edge and none in two polygons, so that mapping is declared and NOT exercised by the comparison -- the notebook constructs the missing case to show that include counts an edge location for both cells and exclude for neither. Agreement says nothing about whether nearest-pump assignment models which pump anybody drank from."
+  },
+  {
+   "widget": "urn:fieldwork:widget:voronoi",
+   "coversRelease": "0.1.0",
+   "check": "15-voronoi",
+   "result": "content/results/check-15-voronoi.json",
+   "sha256": "1ff1442142b2418cf8856ea4cfd3a4f7fdaa20432e46c353ecd1d75b10eade91",
+   "external": [
+    "shapely 2.2.0",
+    "GEOS 3.14.1",
+    "pyproj 3.8.0",
+    "PROJ 9.8.1"
+   ],
+   "criterion": "each cell within 1 m2 of GEOS's Voronoi region for the same site by symmetric difference, the cells tiling the recomputed envelope to within 1 m2 with no overlap, and every cell containing its own site",
+   "outcome": "agrees",
+   "measured": "all 8 cells within 2.5e-06 m2 of GEOS's region for the same site, union against the recomputed envelope 2.1e-06 m2, pairwise overlap 6.0e-07 m2, every cell holding its own site",
+   "ranAt": "2026-10-11T21:25:23.644223+00:00",
+   "note": "Two unrelated algorithms for the same partition: Fieldwork clips a rectangle with one half-plane per other site, the reference asks GEOS for the Voronoi diagram of the same projected points. Neither method informs the other. The envelope is recomputed from the boundary by the declared rule rather than taken from the fixture, so that derivation is checked too. This completes the John Snow Voronoi chain: cells, clip and count are all now independently recomputed. Agreement says nothing about whether a nearest-pump cell models which pump anybody drank from -- the notebook measures that 138,081 m2 of the ground reachable on foot in five minutes falls outside the cell, and the two answer different questions."
+  },
+  {
+   "widget": "urn:fieldwork:widget:stack_polygons",
+   "coversRelease": "0.1.0",
+   "check": "16-stack-polygons",
+   "result": "content/results/check-16-stack-polygons.json",
+   "sha256": "9fe3f955cec8f0437dcdd34f8783cb607de7825d712efad0e88929fc9ce72173",
+   "external": [
+    "shapely 2.2.0",
+    "GEOS 3.14.1"
+   ],
+   "criterion": "the order of identifiers exactly as the declared extent rule gives it, the same multiset of identifiers in and out, and the layer, polygon and banded-polygon counts exact",
+   "outcome": "agrees",
+   "measured": "the order of all 3 identifiers exact, the same polygons in and out, the layer, polygon and banded counts exact, and 0 ties in extent",
+   "ranAt": "2026-10-11T21:25:52.043065+00:00",
+   "note": "A check of a rule rather than of arithmetic: this widget concatenates layers and sorts by extent, and has no geometry to compare. Extent is deliberately crude and is declared in full -- the sum of every ring's absolute shoelace area in SQUARE DEGREES, unprojected, holes added not subtracted -- because it is a sort key and not a measurement. The notebook measures the gap on the real bands: extent exceeds the net area by 0.6%, 10.8% and 7.6% for the 2, 5 and 10 minute corridors. Ties are reported because a tie would leave the order ambiguous while this check still passed; there are none here."
   }
  ]
 }

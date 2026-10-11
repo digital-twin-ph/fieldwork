@@ -3,8 +3,8 @@
 _Created 2026-10-11 · Updated 2026-10-11_
 
 **Status:** tried — the ratchet is built, gated and verified against four failure modes, and
-five of the twenty-six widgets now have one. The plan for the other twenty-one is written and
-only partly tested: five checks from one group, sharing a reference library and two fixture
+seven of the twenty-six widgets now have one. The plan for the other nineteen is written and
+only partly tested: seven checks from one group, sharing a reference library and two fixture
 helpers, do not establish that the groups with neither will go the same way.
 
 ## The question asked
@@ -53,8 +53,8 @@ a fixture until a response is frozen. Counting it as exempt would have hidden it
 
 | | |
 | --- | --- |
-| Checked | 6 → **11** |
-| Awaiting | 26 → **21** |
+| Checked | 6 → **13** |
+| Awaiting | 26 → **19** |
 | Nothing to recompute | 18 |
 | Blocked | 1 |
 | Total | 51 |
@@ -64,11 +64,10 @@ from the file, an exemption with no reason, a check claimed that `parity.json` d
 record, and a count left stale. The stale-count message distinguishes the two ways it can
 happen, because lowering a count without doing the work claims progress not made.
 
-**Five checks are in**, all agreeing, chosen to get progressively less comfortable rather
-than to pile up easy wins. Two of them are checks of what the John Snow example actually
-does — clipping the pump cells to the reporting rectangle, and counting deaths inside them —
-so the example a practitioner opens is now independently recomputed end to end apart from the
-Voronoi step itself.
+**Seven checks are in**, all agreeing, chosen to get progressively less comfortable rather
+than to pile up easy wins. Three of them recompute what the John Snow example actually does —
+the pump cells, their clip to the reporting rectangle, and the deaths counted inside them — so
+**that example is now independently recomputed end to end**.
 
 `summarize_hull` against shapely:
 
@@ -124,6 +123,34 @@ That is a shape of finding worth naming, because it will recur across the remain
 **a parity check passes on the data it was given, and the data may not contain the hard case.**
 Reporting the count of boundary-lying and multiply-assigned locations, zero though both are
 here, is what makes that visible instead of invisible.
+
+`voronoi` against shapely is the strongest comparison the lab has made, because the two
+methods share nothing: Fieldwork clips a rectangle with one half-plane per other site, and the
+reference asks GEOS for the Voronoi diagram of the same projected points.
+
+| | |
+| --- | --- |
+| Worst cell, by symmetric difference | 2.5 × 10⁻⁶ m² over 8 cells |
+| Cells tiling the recomputed envelope | to 2.1 × 10⁻⁶ m² |
+| Pairwise overlap | 6.0 × 10⁻⁷ m² |
+| Every cell holding its own site | yes |
+
+Its envelope is recomputed from the boundary by the declared rule rather than read from the
+fixture, so the derivation is checked and not assumed.
+
+`stack_polygons` against an independent sort is the opposite kind of check, and it is worth
+naming as a kind: **there is no geometry to compare at all.** The widget concatenates layers
+and orders them, so what is checked is a *rule*. Pinning that rule down was the work — extent
+is the sum of every ring's absolute shoelace area in **square degrees**, unprojected, with
+holes added rather than subtracted. It is a sort key and not a measurement, and the notebook
+measures the gap on the real bands: extent exceeds the net area by 0.6%, 10.8% and 7.6% for
+the 2, 5 and 10 minute corridors.
+
+That check also reports something a passing result would otherwise hide: **ties.** Two
+polygons of equal extent leave the order ambiguous, a sort is not required to be stable, and
+the check would still pass while the drawn output varied between runs. There are none here,
+which is why the expected order is the only order — and that is a fact about the data, not
+about the widget.
 
 A convex hull was chosen first because it is **exact** — no tolerance to pick, no curve to
 approximate, no iteration to converge — so a disagreement would have been real rather than a
@@ -210,7 +237,7 @@ the right answer in it.
 
 ## What this does not establish
 
-**That the method scales.** Five of the twenty-six are written, and all five came out of the
+**That the method scales.** Seven of the twenty-six are written, and all seven came out of the
 same shapely group, reusing two fixture helpers — one for the Soho corridors and one for the
 Voronoi chain. The cheap part was
 cheap because the second and third checks shared a reference library and a data source with
@@ -229,6 +256,6 @@ be argued with, and the validator will not defend them.
 criterion. `10-hull` agrees to 10⁻⁹ m on a hull that fills in ground the 1854 outbreak never
 crossed — both implementations assert that area identically, and the notebook says so twice.
 
-**And nothing about the 21 that remain.** They are now counted, named and grouped, which is
+**And nothing about the 19 that remain.** They are now counted, named and grouped, which is
 not the same as done. If the number sits at 25 in a month, the ratchet will say so, and that
 is the point of it.

@@ -20,6 +20,7 @@ import {convexHull} from '../build/convex-hull.js';
 import {fillInteriorGaps} from '../build/fill-interior-gaps.js';
 import {combinedArea} from '../build/combined-area.js';
 import {voronoi,clipPolygons,summarizePolygons} from '../build/catchments.js';
+import {stackPolygons} from '../build/stack-polygons.js';
 
 const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -89,6 +90,64 @@ const sohoVoronoiChain=()=>{
 };
 
 const builders={
+  'voronoi-soho-001'(){
+    // The eight pumps' nearest-pump cells, which is the first step of the John Snow example
+    // and the one step of its chain that had no check. Fieldwork computes them by clipping a
+    // rectangle with one half-plane per other site, in projected metres; the reference uses
+    // GEOS. Two unrelated algorithms for the same partition.
+    //
+    // The envelope travels as a rule rather than as coordinates, so the check recomputes it:
+    // the projected bounds of the reporting area, expanded by 100 m on each side. Handing over
+    // the envelope would have left that derivation untested.
+    const {pumps,boundary,zone,hemisphere,cells}=sohoVoronoiChain();
+    return {fixture:{
+      ...base('voronoi-soho-001','voronoi','Voronoi catchments','src/catchments.ts#voronoi'),
+      declaredParameters:{
+        zone,hemisphere,metricCRS:'EPSG:32630',
+        envelopeRule:'Project the reporting area\u2019s bounding box corners into the metric CRS, then take the minimum and maximum easting and northing of those four points and expand by 100 m on every side.',
+        algorithm:'Start from the envelope rectangle and clip it with one half-plane per other site: the set of points at least as close to this site as to that one. Euclidean distance in projected metres.',
+        semantics:'A cell is the ground nearer this pump than any other, by straight-line distance in the projection. It is a model of proximity, not of which pump anybody used, and it ignores streets, walls and the river entirely.',
+        envelopeNote:'Cells are finite because the envelope is. They extend past the reporting area and are clipped separately by clip_polygons.'
+      },
+      input:{
+        boundary,
+        sites:pumps.features.map(f=>({id:String(f.id),name:f.properties.name,
+          coordinates:f.geometry.coordinates}))},
+      output:{cells:cells.features.map(f=>({id:f.id,siteId:f.siteId,geometry:f.geometry}))},
+      note:'Recompute the envelope from the boundary, partition it by nearest site, and compare each cell with the one Fieldwork reports for the same site.'
+    },files:{}};
+  },
+  'stack-polygons-soho-001'(){
+    // Three bands' corridors collected into one layer. The widget does one thing -- order the
+    // polygons largest extent first, so a smaller band draws on top of a larger one -- and the
+    // rule is deliberately crude: the sum of every ring's absolute shoelace area in SQUARE
+    // DEGREES, holes added rather than subtracted, with no projection. It decides draw order
+    // and nothing else, which is why it takes no zone, and the fixture says so explicitly so
+    // that a reader does not mistake the extent for an area.
+    const {layers}=sohoCorridors([2,5,10]);
+    const node={id:'stack',type:'stack_polygons',x:0,y:0,params:{label:'Collected bands'}};
+    const stacked=stackPolygons(layers,node,'fixture',['a','b','c']);
+    const facts=stacked.receipt.facts,number=name=>Number(new RegExp(`fw:${name} (-?[0-9.]+)`).exec(facts)[1]);
+    return {fixture:{
+      ...base('stack-polygons-soho-001','stack_polygons','Collect polygon layers','src/stack-polygons.ts#stackPolygons'),
+      declaredParameters:{
+        computationCRS:'OGC:CRS84',
+        rule:'Concatenate the layers, then sort the polygons by extent, largest first. Nothing is merged, clipped or reprojected, and no polygon is dropped.',
+        extentRule:'Extent is the sum over every ring of a polygon -- outer and interior alike -- of the absolute shoelace area of that ring, in square degrees. Holes are added, not subtracted.',
+        semantics:'Extent is a sort key, not an area. It is unprojected and it counts holes positively, so it must never be read as a measurement of ground. summarize_combined_area and summarize_hull report areas; this widget does not, which is why it takes no UTM zone.',
+        identityRule:'Two polygons sharing an identifier are refused, because once collected they cannot be told apart.'
+      },
+      input:{layers:layers.map((layer,index)=>({layer:index+1,
+        polygons:layer.features.map(f=>({id:f.id,minutes:f.minutes??null,geometry:f.geometry}))}))},
+      output:{
+        order:stacked.value.features.map(f=>f.id),
+        polygons:stacked.value.features.map(f=>({id:f.id,minutes:f.minutes??null})),
+        layerCount:number('layerCount'),
+        polygonCount:number('polygonCount'),
+        bandedPolygonCount:number('bandedPolygonCount')},
+      note:'Concatenate the layers, compute each polygon\u2019s extent by the declared rule, sort descending, and compare the resulting order of identifiers exactly.'
+    },files:{}};
+  },
   'clip-polygons-soho-001'(){
     // The Voronoi cells clipped to the reporting rectangle, which is what the John Snow
     // example does between computing catchments and counting deaths in them. Cells are

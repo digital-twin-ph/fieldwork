@@ -21,6 +21,8 @@ import {fillInteriorGaps} from '../build/fill-interior-gaps.js';
 import {combinedArea} from '../build/combined-area.js';
 import {voronoi,clipPolygons,summarizePolygons} from '../build/catchments.js';
 import {stackPolygons} from '../build/stack-polygons.js';
+import {bufferPoint,BUFFER_POINT_STEPS} from '../build/buffer-point.js';
+import {bufferedBoundary} from '../build/area-buffer.js';
 
 const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -90,6 +92,60 @@ const sohoVoronoiChain=()=>{
 };
 
 const builders={
+  'buffer-point-soho-001'(){
+    // 32 segments per quadrant, because this widget's edge decides membership.
+    //
+    // The first widget in the lab that CANNOT agree exactly with a reference, and the fixture
+    // says so. What can be checked exactly is the approximation: a circle buffered with `steps`
+    // segments per quadrant is a polygon of 4 x steps vertices inscribed in it, whose area is
+    // (n / 2pi) sin(2pi / n) of the circle's -- theory, not a second implementation.
+    const example=johnSnowExample('snow-isochrone');
+    const pumps=example.nodes.find(n=>n.id==='pumps').params.data;
+    const pointId=String(pumps.features[0].id),radiusM=500;
+    const point=bufferPoint(pumps,{id:'scope',type:'buffer_point',x:0,y:0,
+      params:{label:'Area around a point',pointId,distanceM:radiusM}},'fixture');
+    const fraction=Number(/fw:circleAreaFraction "([0-9.]+)"/.exec(point.receipt.facts)[1]);
+    return {fixture:{
+      ...base('buffer-point-soho-001','buffer_point','Area around a point','src/buffer-point.ts#bufferPoint'),
+      declaredParameters:{
+        computationCRS:'OGC:CRS84',
+        projection:'Turf/JSTS local azimuthal equidistant, metres',
+        stepsPerQuadrant:BUFFER_POINT_STEPS,
+        radiusMetres:radiusM,
+        circleRule:`A circle is approximated by a polygon of 4 x steps vertices inscribed in it. The area of such a polygon is (n / 2\u03c0) sin(2\u03c0 / n) of the circle\u2019s, which is ${(128/(2*Math.PI)*Math.sin(2*Math.PI/128)).toFixed(5)} at ${BUFFER_POINT_STEPS*4} vertices.`,
+        fractionRule:'circleAreaFraction is the polygon\u2019s area divided by \u03c0r\u00b2, so it measures the approximation and not the projection.',
+        semantics:'A buffered scope is a decision, not a surveyed boundary: the radius is an assumption of the question and the edge decides membership.'
+      },
+      input:{point:{id:pointId,name:pumps.features[0].properties.name,
+        coordinates:pumps.features[0].geometry.coordinates}},
+      output:{boundary:point.value.boundary,
+        vertexCount:point.value.boundary.coordinates[0].length-1,
+        circleAreaFraction:fraction},
+      note:'Check the vertex count against 4 x steps, the reported circle-area fraction against the closed form for an inscribed polygon, and every vertex against the stated radius.'
+    },files:{}};
+  },
+  'buffer-area-soho-001'(){
+    // 8 segments per quadrant, because this widget expands a boundary that already exists
+    // rather than deciding membership at an edge.
+    const example=johnSnowExample('snow-isochrone');
+    const boundary=example.nodes.find(n=>n.id==='study').params.geometry;
+    const distanceM=500;
+    const buffered=bufferedBoundary(boundary,distanceM);
+    return {fixture:{
+      ...base('buffer-area-soho-001','buffer_area','Buffer study area','src/area-buffer.ts#bufferedBoundary'),
+      declaredParameters:{
+        computationCRS:'OGC:CRS84',
+        projection:'Turf/JSTS local azimuthal equidistant, metres',
+        stepsPerQuadrant:8,
+        distanceMetres:distanceM,
+        semantics:'The buffered boundary is the acquisition extent, not the reporting extent. It exists so that a network or raster fetched for the study area reaches past its edge.',
+        toleranceNote:'An exact match is not available. Turf buffers in a local azimuthal equidistant projection and a reference buffering in UTM uses a different one, so areas are compared relatively and the quadrant count is declared.'
+      },
+      input:{boundary},
+      output:{boundary:buffered},
+      note:'Buffer the same boundary by the same distance at the same quadrant count in a metric projection and compare the areas relatively, and check that the result contains the original.'
+    },files:{}};
+  },
   'voronoi-soho-001'(){
     // The eight pumps' nearest-pump cells, which is the first step of the John Snow example
     // and the one step of its chain that had no check. Fieldwork computes them by clipping a

@@ -9,8 +9,8 @@
  "measuredAt": "2026-10-11",
  "counts": {
   "widgets": 51,
-  "covered": 13,
-  "awaiting": 19,
+  "covered": 15,
+  "awaiting": 17,
   "none": 18,
   "blocked": 1
  },
@@ -39,14 +39,12 @@
   {
    "nodeType": "buffer_area",
    "expectation": "parity",
-   "check": null,
-   "computes": "Offsets a study-area boundary by a distance in metres."
+   "check": "18-buffer-area"
   },
   {
    "nodeType": "buffer_point",
    "expectation": "parity",
-   "check": null,
-   "computes": "Offsets a point by a distance in metres and returns the area."
+   "check": "17-buffer-point"
   },
   {
    "nodeType": "case_series",

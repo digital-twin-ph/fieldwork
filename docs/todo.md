@@ -95,8 +95,11 @@ widgets are implemented — so it is declared and reviewed instead, and the vali
 enforces completeness and the ratchet rather than the judgement. Verified by breaking it
 four ways. Eleven widgets now have checks, all agreeing. Three recompute the
 John Snow Voronoi example, which is independently verified end to end, and the four primitives
-of the isochrone decomposition are now all checked — so `isochrone` can be compared against
-its own decomposition rather than against a new reference. Two checks failed on their first
+of the isochrone decomposition are now all checked. (An earlier version of this entry said
+`isochrone` could therefore be compared against its own decomposition. That is wrong and
+[41](experiments/41-validation-lab.md) forbids it — both sides would be Fieldwork. What is
+cheaper is that the reference code in checks 07 and 08 composes into a reference for the
+monolith.) Two checks failed on their first
 run and in both cases the criterion was wrong, not the widget: `buffer_point` because Turf
 buffers on a sphere (so 500 m is 500 m on a sphere and up to 1.59 m more on the ground), and
 `19-snap` because the widget publishes centimetres while the criterion asked for millimetres.

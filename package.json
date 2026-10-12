@@ -22,7 +22,8 @@
     "stamp:docs": "node scripts/stamp-docs.mjs --write",
     "validate:docs": "node scripts/stamp-docs.mjs",
     "validate:experiments": "node scripts/validate-experiments.mjs",
-    "usage:widgets": "node scripts/widget-coverage.mjs"
+    "usage:widgets": "node scripts/widget-coverage.mjs",
+    "audit:metres": "node scripts/audit-metre-conversions.mjs"
   },
   "engines": {
     "node": ">=22"

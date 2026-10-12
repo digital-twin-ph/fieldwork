@@ -30,13 +30,15 @@ Three nested things, and deliberately no more:
 
     condition  = { field, comparator, value }
     group      = { all: [condition, ...] }                          // AND
-    rule       = { any: [group, ...], then: {predicate, value} }    // OR of AND groups
+    rule       = { any: [group, ...], then: [{predicate, value}, ...] }   // OR of AND groups
     ruleset    = { rules: [rule, ...] }
 
 `field` is a **bound role**, not a column name — the binding is 65's, and the dropdown lists
 only fields whose declared type and unit can satisfy the role. `value` is a literal of the
 field's type or a term from a declared value set. `then` draws from the declared output
-vocabulary.
+vocabulary, and is a **list**: `accessN3` concludes `fw:decision` and `fw:zone` from one rule, and
+`facilityN3` concludes `fw:evidenceLevel` and `fw:service` from every rule. The first draft of this
+form had a single conclusion, which the rulesets that exist refute.
 
 The contribution of this shape is that it is **disjunctive normal form by construction**.
 That is what makes compilation total: every authored ruleset has an N3 image, and no authored
@@ -67,6 +69,65 @@ One consequence of 65's absence-as-fact rule is worth stating because it is a tr
 a restatement: a subject with **no `*Known` fact at all** must conclude *nothing*. Reporting it
 as "not recorded" would be the silence inference arriving by the back door, through the very
 mechanism built to exclude it. Test B4 exists for exactly this.
+
+## Measured against the three rulesets that exist
+
+Read on 2026-10-12, after the practitioner said that whether the rulesets collapse into one is
+itself part of the merge rather than a question to be assumed away.
+
+| | Rules | Subjects | Conditions used | Concludes |
+| --- | --- | --- | --- | --- |
+| `makeN3` → `policy` | 5 | places | `*Known` booleans, a boolean flag, `>` and `≤` against one threshold in km | `fw:decision` ∈ 3 |
+| `accessN3` → `access_policy` | 7 | facilities | an `*Known` boolean, `>` and `≤`, and one **two-sided interval** (`> 5` and `≤ 15` in one antecedent) against a threshold in minutes | `fw:decision` ∈ 3 **and** `fw:zone` ∈ 5 |
+| `facilityN3` → `xpert` | 7 | facilities | categorical equality, boolean equality | `fw:evidenceLevel` ∈ 4 **and** `fw:service` ∈ 4 |
+
+**All 19 rules fit the authored form above**, once `then` is a list. Every antecedent is a
+conjunction of categorical equality, boolean equality, or a numeric comparison — the first rows of
+the comparator table. None uses negation, recursion or aggregation, which is the subset claim now
+measured over the whole corpus rather than counted as builtin occurrences.
+
+Two details worth seeing. The two-sided interval needs no new operator: it is two comparisons in
+one `all`. And `facilityN3`'s last two rules conclude the same pair from different antecedents,
+which is **an OR already hand-compiled** — the practitioner who wrote it did by hand exactly what
+this record proposes the compiler do.
+
+### So can the three be represented as one?
+
+Two senses, with different answers.
+
+**One form — yes, demonstrably.** 19 of 19 rules are instances of a single shape. That is what
+lets **one widget** host all three, which is the merge: three widgets become one.
+
+**One ruleset — no, and the reason is in the table.** They classify disjoint subject kinds against
+three output vocabularies, and two carry thresholds in **different units**, kilometres and minutes.
+A single ruleset firing on anything would also forfeit the refusal
+[65](65-ruleset-as-data.md) wants, where a ruleset declares which input kinds it applies to so a
+nonsensical connection is refused rather than quietly concluding nothing.
+
+The near-miss is worth recording because it looks like a further reduction and is not. `policy`
+and `access_policy` are both "a numeric measure against one threshold → Review, NoFlag, or Unknown
+when unknown". But `policy` carries an **extra gate** the other lacks — the alert boolean, in three
+of its five rules — so collapsing them would mean parameterising the *number of conditions*, which
+is not a parameter. Two rulesets in one form, not one ruleset.
+
+### A fourth rule application that was not one
+
+This table said four widgets over three rulesets for most of 2026-10-12, counting `facility_audit`
+because its output port is `decisions`. Reading its executor settled it: it calls no reasoner and
+generates no N3. Its entire body is one projection over values `xpert` already derived —
+`tier==='Direct'?'NoFlag':tier==='None'?'Unknown':'Review'` — plus a restatement of `f.reference`
+as the explanation. Its own `check-coverage.json` entry had said so all along: *"it selects and
+presents; it derives no value."* [65](65-ruleset-as-data.md)'s original count of three was right.
+
+**An output port type is not evidence of what a widget does.** The fourth rule application was
+found by reading a port name and removed by reading code, which is the same failure D7 names one
+level down.
+
+It is not innocent either. That ternary is a decision rule written in TypeScript, outside any
+ruleset and outside the reasoner, and the only place in `src/` that maps a tier to a status. So
+`facility_audit` is a presentation widget with rule-like logic hidden inside it — which makes it
+the first concrete instance of the practitioner's hypothesis that a **decision class** is its own
+declared thing, and moves it to the presentation-stage disposition rather than this merge.
 
 ## Test cases
 

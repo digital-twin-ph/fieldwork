@@ -1,4 +1,5 @@
 import {containsPoint,boundaryExtent,gridPoints,GRID_METHOD} from './point-grid.js';
+import {resolveRuleset,bindParameters} from './rulesets.js';
 import type {Boundary,Position,Workflow,WorkflowNode,NodeDefinition,NodeType,ParamsByType,PointFeature,PointCollection,SourceInfo} from './types.js';
 import type {Facility,GradedFacility,AreaValue,SamplesValue,RegistryValue,GradedRegistryValue,AccessValue,Receipt,AccessRow} from './results.js';
 import type {Reasoner,ReasonerQuad} from './worker-types.js';
@@ -89,15 +90,7 @@ export function facilityN3(items:Facility[]){
     const kind=['Referral Hospital','District Hospital','Primary Hospital'].includes(f.serviceType)?'Hospital':['Poly Clinic','Clinic with Maternity','Clinic'].includes(f.serviceType)?'Clinic':f.serviceType==='Health Post'?'HealthPost':'Other';
     return `fw:${f.id} fw:namedRule fw:${named}; fw:government ${f.owner==='GOVERNMENT'}; fw:facilityKind fw:${kind}.`;
   }).join('\n');
-  const rules=`# NB06 hierarchy: named evidence, then government facility type, then unknown.
-{ ?f fw:namedRule fw:Marina. } => { ?f fw:evidenceLevel fw:Direct; fw:service fw:Onsite. }.
-{ ?f fw:namedRule fw:Broadhurst. } => { ?f fw:evidenceLevel fw:Contextual; fw:service fw:OnsiteOrReferral. }.
-{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Hospital. } => { ?f fw:evidenceLevel fw:Contextual; fw:service fw:Onsite. }.
-{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Clinic. } => { ?f fw:evidenceLevel fw:Inferential; fw:service fw:OnsiteOrReferral. }.
-{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:HealthPost. } => { ?f fw:evidenceLevel fw:Inferential; fw:service fw:ReferralOnly. }.
-{ ?f fw:namedRule fw:None; fw:government false. } => { ?f fw:evidenceLevel fw:None; fw:service fw:Unknown. }.
-{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Other. } => { ?f fw:evidenceLevel fw:None; fw:service fw:Unknown. }.
-`;
+  const rules=bindParameters(resolveRuleset('urn:fieldwork:ruleset:nb06-evidence','1.0.0'),{});
   return {facts:prefix+facts,rules:prefix+rules,input:prefix+facts+'\n'+rules};
 }
 function assertion<T extends string>(quads:ReasonerQuad[],id:string,predicate:string,allowed:readonly T[]):T{
@@ -110,15 +103,8 @@ export const serviceLabel=(t:string)=>(({Onsite:'Onsite',OnsiteOrReferral:'Onsit
 export const zoneLabel=(z:string)=>(({Within5:'≤ 5 min',Within15:'5–15 min',Within30:'15–30 min',Over30:'> 30 min',Unknown:'Unknown'} as Record<string,string>)[z]||z);
 export function accessN3(rows:AccessRow[],threshold:number){
   const facts=rows.map(r=>`fw:${r.id} fw:accessKnown ${r.minutes!==null}.${r.minutes===null?'':`\nfw:${r.id} fw:proxyMinutes ${r.minutes.toFixed(9)}.`}`).join('\n');
-  const rules=`# Proxy access review; not a clinical recommendation or routed travel time.
-{ ?p fw:accessKnown false. } => { ?p fw:decision fw:Unknown; fw:zone fw:Unknown. }.
-{ ?p fw:proxyMinutes ?m. ?m math:greaterThan ${threshold.toFixed(9)}. } => { ?p fw:decision fw:Review. }.
-{ ?p fw:proxyMinutes ?m. ?m math:notGreaterThan ${threshold.toFixed(9)}. } => { ?p fw:decision fw:NoFlag. }.
-{ ?p fw:proxyMinutes ?m. ?m math:notGreaterThan 5. } => { ?p fw:zone fw:Within5. }.
-{ ?p fw:proxyMinutes ?m. ?m math:greaterThan 5; math:notGreaterThan 15. } => { ?p fw:zone fw:Within15. }.
-{ ?p fw:proxyMinutes ?m. ?m math:greaterThan 15; math:notGreaterThan 30. } => { ?p fw:zone fw:Within30. }.
-{ ?p fw:proxyMinutes ?m. ?m math:greaterThan 30. } => { ?p fw:zone fw:Over30. }.
-`;
+  const ruleset=resolveRuleset('urn:fieldwork:ruleset:access-review','1.0.0');
+  const rules=bindParameters(ruleset,{threshold:Number(threshold.toFixed(9))});
   return {facts:prefix+facts,rules:prefix+rules,input:prefix+facts+'\n'+rules};
 }
 export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner:Reasoner,receipts:Receipt[],distanceKm:(a:Position,b:Position)=>number,runId=crypto.randomUUID()){

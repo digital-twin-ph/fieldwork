@@ -1,4 +1,5 @@
 import type {NodeSpec,WorkflowNode,PointInput,Escape,SpatialRelation} from './types.js';
+import {GEOSPARQL_PREDICATE} from './spatial-predicates.js';
 import type {AreaValue,CoverageValue,MapValue,MapRow,Receipt} from './results.js';
 export type MapInputs={coverage:CoverageValue;area?:never;points?:never}|{coverage?:undefined;area:AreaValue;points:PointInput};
 import {pointRelation,relationLabel} from './spatial-coverage.js';
@@ -17,7 +18,7 @@ export function mapOutput(node:WorkflowNode<'map_output'>,inputs:MapInputs,runId
     `<${area.areaId}> a geo:Feature; geo:hasGeometry <${area.geometryId}>.\n<${area.geometryId}> a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(area.boundary))}^^geo:wktLiteral.\n`;
   for(const row of rows){const record=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}>`,shape=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}:geometry>`;
     facts+=`${record} a geo:Feature; <http://purl.org/dc/terms/isPartOf> <urn:fieldwork:source:${row.sourceNodeId}>; fw:spatialRelation fw:${row.relation}.\n`;
-    if(row.coordinates)facts+=`${record} geo:hasGeometry ${shape}; geo:${{Inside:'sfWithin',Boundary:'sfTouches',Outside:'sfDisjoint'}[row.relation as Exclude<SpatialRelation,'MissingLocation'>]} <${area.areaId}>.\n${shape} a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> POINT ('+row.coordinates.join(' ')+')')}^^geo:wktLiteral.\n`;
+    if(row.coordinates)facts+=`${record} geo:hasGeometry ${shape}; geo:${GEOSPARQL_PREDICATE[row.relation as Exclude<SpatialRelation,'MissingLocation'>]} <${area.areaId}>.\n${shape} a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> POINT ('+row.coordinates.join(' ')+')')}^^geo:wktLiteral.\n`;
   }
   return {value:{...structuredClone(area),kind:'spatial-map',rows,centers:[],pointLayers:layerSummary(layers),sourceNodeId:layers.length===1?layers[0].sourceNodeId:null},receipt:{nodeId:node.id,kind:'computation',input:facts,facts,rules:'',conclusions:[],method:'Turf point-in-polygon for display; no acceptance or exclusion decision'}};
 }

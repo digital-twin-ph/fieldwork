@@ -22,6 +22,7 @@ import {readFileSync} from 'node:fs';
 const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');
 const read=path=>JSON.parse(readFileSync(`${root}/${path}`,'utf8'));
 const budget=read('widgets/budget.json');
+const problems=[];
 const registry=read('widgets/registry.json');
 
 // Two numbers, not one. A widget costs code, a release file, a lab check, an audit sweep against
@@ -32,11 +33,53 @@ const registry=read('widgets/registry.json');
 // number, what a practitioner can actually put on a canvas, and a reduction must move the first
 // without silently growing the second.
 const release=w=>read(`widgets/releases/${w.nodeType}/${w.currentVersion}.json`);
-const live=registry.widgets.filter(w=>release(w).implementationStatus!=='retired');
-const retired=registry.widgets.length-live.length;
+const statusOf=w=>release(w).implementationStatus;
+// A pending widget does not count. The practitioner's rule of 2026-10-12: a widget that is
+// pending because of merge activity -- not developed, not used -- is exempt precisely because it
+// is emergent. We do not yet know whether it deserves to be a tree in the forest, nor whether it
+// fills a value gap in the inventory, and counting a candidate against a target for the
+// committed set makes the number mean two things at once.
+//
+// `proposed` has been a permitted implementationStatus since the format was written, read by one
+// line: the one checking the value is permitted. Same inert state `retired` was in this morning.
+const pending=registry.widgets.filter(w=>statusOf(w)==='proposed');
+const live=registry.widgets.filter(w=>statusOf(w)==='implemented');
+const retired=registry.widgets.filter(w=>statusOf(w)==='retired').length;
 const actual=live.length;
+
+const declaredPending=new Map((budget.pending??[]).map(entry=>[entry.nodeType,entry]));
+const clockDays=budget.pendingRule?.clockDays??14;
+const measured=new Date(budget.measuredAt);
+for(const widget of pending){
+  const entry=declaredPending.get(widget.nodeType);
+  if(!entry){
+    problems.push(`\`${widget.nodeType}\` declares implementationStatus "proposed" and is not in `
+      +`budget.pending. A pending widget is exempt from the count, so the exemption is where it must `
+      +`be written down: name what it replaces, why it is pending, and when it was proposed.`);
+    continue;
+  }
+  if(!(entry.replaces??[]).length)
+    problems.push(`\`${widget.nodeType}\` is pending and names nothing it replaces. The exemption `
+      +`exists for a widget arriving through a merge; without a replaces list it is a way to add `
+      +`capability for free, which is the failure the budget exists to stop.`);
+  for(const replaced of entry.replaces??[])
+    if(!registry.widgets.some(w=>w.nodeType===replaced))
+      problems.push(`\`${widget.nodeType}\` says it replaces \`${replaced}\`, which is not a registered widget.`);
+  if(!entry.pendingBecause?.trim()||!entry.proposedAt)
+    problems.push(`\`${widget.nodeType}\` is pending and must say why, and when it was proposed.`);
+  else if(Math.round((measured-new Date(entry.proposedAt))/86400000)>clockDays)
+    problems.push(`\`${widget.nodeType}\` has been pending since ${entry.proposedAt}, longer than the `
+      +`${clockDays}-day window. ${budget.pendingRule?.clockBasis??''} Develop it, or withdraw it and `
+      +`say so — an exemption with no end is a parking lot.`);
+}
+for(const [nodeType] of declaredPending)
+  if(!pending.some(w=>w.nodeType===nodeType))
+    problems.push(`budget.pending lists \`${nodeType}\`, whose release does not declare `
+      +`implementationStatus "proposed". Either it was developed — remove the entry, raise `
+      +`counts.widgets, and retire what it replaced in the same commit — or the states disagree.`);
+if((budget.counts.pending??0)!==pending.length)
+  problems.push(`counts.pending records ${budget.counts.pending} and ${pending.length} release(s) declare "proposed".`);
 const recorded=budget.counts.widgets;
-const problems=[];
 
 if(actual>recorded)
   problems.push(`The registry holds ${actual} widgets and widgets/budget.json records ${recorded}. `
@@ -61,6 +104,7 @@ if(budget.counts.addable!==undefined&&budget.counts.addable!==addable)
 
 const distance=actual-budget.target.widgets;
 console.log(`Widget budget: ${actual} live widgets`+(retired?` (${retired} retired)`:'')
+  +(pending.length?` (${pending.length} pending, exempt)`:'')
   +` — ${budget.counts.primitive} primitive, `
   +`${budget.counts.composite} composite, ${compositions} bundled composition`+(compositions===1?'':'s')
   +`. Target ${budget.target.widgets}`

@@ -1,0 +1,582 @@
+{
+ "schema": "fieldwork/widget-evidence/1",
+ "measuredAt": "2026-10-12",
+ "examplesShipped": [
+  "geoprivacy",
+  "heat",
+  "old-naledi",
+  "raster",
+  "sea-level",
+  "snow-epidemic-curve",
+  "snow-geoprivacy",
+  "snow-isochrone",
+  "snow-voronoi"
+ ],
+ "ladder": [
+  "declared only",
+  "example only",
+  "parity only",
+  "example, lab not applicable",
+  "example+parity",
+  "field use — nothing has this yet"
+ ],
+ "weakest": "exampleUseCount 0 and a lab check still owed. That is the bottom of the ladder and the population the pending exemption is about.",
+ "note": "Derived by scripts/widget-evidence.mjs from the shipped example workflows and widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a micro_workflow node is its members. Field use is declared and empty: an empty top rung is a measurement, a missing one is a flattering omission.",
+ "counts": {
+  "declared only": 4,
+  "example only": 10,
+  "parity only": 11,
+  "example, lab not applicable": 11,
+  "example+parity": 11,
+  "neither applies": 1
+ },
+ "compositionsUsedByNoExample": [
+  "compute_walking_catchment"
+ ],
+ "widgets": [
+  {
+   "nodeType": "access",
+   "exampleUses": [
+    "old-naledi"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "access_policy",
+   "exampleUses": [
+    "old-naledi"
+   ],
+   "exampleUseCount": 1,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
+   "nodeType": "alert",
+   "exampleUses": [
+    "heat"
+   ],
+   "exampleUseCount": 1,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "area",
+   "exampleUses": [
+    "geoprivacy",
+    "old-naledi",
+    "raster",
+    "sea-level",
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 8,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "buffer_area",
+   "exampleUses": [
+    "snow-isochrone"
+   ],
+   "exampleUseCount": 1,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
+   "nodeType": "buffer_point",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "case_series",
+   "exampleUses": [
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 4,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
+   "nodeType": "chart_output",
+   "exampleUses": [
+    "old-naledi",
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 5,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "clip_polygons",
+   "exampleUses": [
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 4,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
+   "nodeType": "clip_raster",
+   "exampleUses": [
+    "raster"
+   ],
+   "exampleUseCount": 1,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
+   "nodeType": "compare_point_sets",
+   "exampleUses": [
+    "geoprivacy"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "comparison_map",
+   "exampleUses": [
+    "geoprivacy"
+   ],
+   "exampleUseCount": 1,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "coverage_check",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "declared only"
+  },
+  {
+   "nodeType": "donut_geomask",
+   "exampleUses": [
+    "geoprivacy"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "facilities",
+   "exampleUses": [
+    "old-naledi"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "facility_audit",
+   "exampleUses": [
+    "old-naledi"
+   ],
+   "exampleUseCount": 1,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "fill_interior_gaps",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "find_health_facilities",
+   "exampleUses": [
+    "sea-level"
+   ],
+   "exampleUseCount": 1,
+   "lab": "blocked",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "hex_aggregate",
+   "exampleUses": [
+    "geoprivacy"
+   ],
+   "exampleUseCount": 1,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
+   "nodeType": "isochrone",
+   "exampleUses": [
+    "snow-isochrone"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "map_output",
+   "exampleUses": [
+    "geoprivacy",
+    "heat",
+    "old-naledi",
+    "raster",
+    "sea-level",
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 9,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "mean_center",
+   "exampleUses": [
+    "geoprivacy"
+   ],
+   "exampleUseCount": 1,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
+   "nodeType": "measure_area",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "micro_workflow",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "neither applies"
+  },
+  {
+   "nodeType": "nearest",
+   "exampleUses": [
+    "heat"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "network_input",
+   "exampleUses": [
+    "snow-isochrone"
+   ],
+   "exampleUseCount": 1,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "observations",
+   "exampleUses": [
+    "geoprivacy",
+    "heat",
+    "old-naledi",
+    "sea-level",
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 8,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "policy",
+   "exampleUses": [
+    "heat"
+   ],
+   "exampleUseCount": 1,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
+   "nodeType": "raster_input",
+   "exampleUses": [
+    "raster"
+   ],
+   "exampleUseCount": 1,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "rate",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "declared only"
+  },
+  {
+   "nodeType": "reachable_corridor",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "reachable_nodes",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "reproject",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "sample_raster",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "declared only"
+  },
+  {
+   "nodeType": "samples",
+   "exampleUses": [
+    "old-naledi"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "slr_extract_import",
+   "exampleUses": [
+    "sea-level"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "slr_site_assignment",
+   "exampleUses": [
+    "sea-level"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "slr_threshold_comparison",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "declared only"
+  },
+  {
+   "nodeType": "snap_to_network",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "stack_polygons",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "summarize_combined_area",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "summarize_hull",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "summarize_polygons",
+   "exampleUses": [
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 4,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
+   "nodeType": "table_input",
+   "exampleUses": [
+    "sea-level",
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 5,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "table_output",
+   "exampleUses": [
+    "geoprivacy",
+    "heat",
+    "old-naledi",
+    "sea-level",
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 8,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "travel_time_band",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "voronoi",
+   "exampleUses": [
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 3,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
+   "nodeType": "xpert",
+   "exampleUses": [
+    "old-naledi"
+   ],
+   "exampleUseCount": 1,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  }
+ ]
+}

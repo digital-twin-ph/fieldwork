@@ -129,7 +129,7 @@
    "blocks": [],
    "recorded": "2026-10-12",
    "lastRevisited": "2026-10-12",
-   "status": "standing",
+   "status": "withdrawn",
    "twoPopulations": [
     "(a) An imported record whose coordinates were absent in the source. src/input-data.ts writes geometry:null when they are. This is a data-quality fact about a row, it is legitimate to report rather than reject -- experiment 48 found that validating unconditionally made a node impossible to add -- and it belongs at the IMPORT boundary as a reported exclusion, which facilities already does with missingLocationCount.",
     "(b) Something with no location at all. src/case-series.ts builds a FeatureCollection whose every feature has geometry:null from a table, and casts it `as unknown as PointCollection` to reuse the point-based path. The double cast is the admission: the code had to lie to the type system to put non-points in a point collection."
@@ -137,7 +137,26 @@
    "consequence": "src/spatial-predicates.ts returns MissingLocation for both, so one relation value means 'the source omitted a location' and 'this thing has no location'. Those are different facts and only the first is about data quality.",
    "liftTest": "PointFeature requires a geometry; records without coordinates are reported and excluded at the import boundary; non-spatial tables travel as `table`; and SpatialRelation is three-valued.",
    "whyItMatters": "This is D7 one level above port names -- a carrier whose name claims more than it carries. D7 swept port NAMES on 2026-10-12 and found four encoding a use; it did not ask whether a port TYPE admits what its name says. The four-valued relation, and my own argument defending it, are both downstream of this.",
-   "record": "docs/audits/ontology-audit.md (D7), docs/experiments/03-input-data-and-spatial-review.md"
+   "record": "docs/audits/ontology-audit.md (D7), docs/experiments/03-input-data-and-spatial-review.md",
+   "whatChanged": "Withdrawn within the hour, on the practitioner's pandas/geopandas framing. A GeoDataFrame is a table with a geometry column, and that column MAY be missing per row -- geopandas supports it and tracks missing-ness separately from any predicate, via isna and is_empty. So PointFeature declaring geometry as Point|null is the GeoDataFrame model, not a type lie, and the blocker was wrong about its central claim. The carrier is a geo-table whose geometry column holds points, which is what `points` reasonably names. Escalating it to 'D7 one level above port names' was overreach.",
+   "whatSurvives": "Two narrower things, both moved to table-to-points-conversion-missing. The relation modelling: a missing geometry is not a spatial relation, so MissingLocation does not belong in SpatialRelation. And case_series's cast, which is a workaround for a missing conversion rather than a type lie -- in geopandas you would keep the DataFrame rather than manufacture a GeoDataFrame with every geometry null."
+  },
+  {
+   "id": "table-to-points-conversion-missing",
+   "claim": "Nothing converts a table into points. No widget takes `table` and outputs `points`, and no widget anywhere names which columns hold coordinates -- there is no latField, lonField or equivalent in src/. So a practitioner who imports a CSV with latitude and longitude columns cannot make it spatial.",
+   "blocks": [],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "theModel": "The practitioner's framing, and it is the right one. `table` is a pandas DataFrame: records with columns, no geometry. `points` is a geopandas GeoDataFrame: records with a geometry column, which may be missing per row. The conversion between them is explicit in geopandas and names the coordinate columns -- GeoDataFrame(df, geometry=points_from_xy(df.lon, df.lat)) -- and that explicit naming is the step Fieldwork has no widget for.",
+   "measured": "Three widgets consume `table` -- slr_extract_import, slr_site_assignment, slr_threshold_comparison -- and all three emit a table or decisions. The only ways to obtain points are observations (a data editor), samples (generates a grid) and find_health_facilities (fetches from a source). None converts.",
+   "twoConsequences": [
+    "case_series builds a FeatureCollection whose every feature has geometry:null from a table and casts it `as unknown as PointCollection` to reuse the point-based path. That is a workaround for the missing conversion, not a type lie: in geopandas you would keep the DataFrame.",
+    "MissingLocation sits in SpatialRelation alongside Inside, Boundary and Outside. A missing geometry is not a spatial relation. geopandas tracks missing-ness separately from any predicate, and the relation should be three-valued with rows lacking geometry counted rather than related."
+   ],
+   "liftTest": "A widget takes a table and a declared binding of which columns are longitude and latitude, with a CRS, and outputs points; SpatialRelation is three-valued; and case_series consumes the table directly instead of casting.",
+   "relatedWork": "This is experiment 61's problem exactly -- 'the ability to say which column means what' -- and the same role-binding mechanism experiment 65 needs for rulesets. Whichever lands first should be built so the other can use it, which 65 already says.",
+   "record": "docs/experiments/61-input-dimensions.md, 48-tabular-input.md, 65-ruleset-as-data.md"
   }
  ]
 }

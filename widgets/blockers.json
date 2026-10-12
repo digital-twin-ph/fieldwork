@@ -82,17 +82,19 @@
    "record": "docs/experiments/65-ruleset-as-data.md"
   },
   {
-   "id": "facilities-carrier",
-   "claim": "The `facilities` port type is a producer-named carrier that only this widget emits and that the nb06-evidence ruleset declares as its input, so decomposing the widget into buffer_point plus a point selection requires deciding what that ruleset consumes instead.",
+   "id": "no-points-within-area-selection",
+   "claim": "No widget takes an area and a point layer and outputs the points inside it. coverage_check does the geometry and emits a review carrier consumed only by map_output and table_output, so a spatial selection cannot be chained into anything.",
    "blocks": [
     "facilities"
    ],
    "recorded": "2026-10-12",
    "lastRevisited": "2026-10-12",
    "status": "standing",
-   "liftTest": "nb06-evidence declares a general points input with a declared attribute schema rather than the `facilities` carrier, and the Old Naledi example produces that input from buffer_point plus a selection with no result moving.",
-   "narrowedTo": "This is D4a's custom-stud question for one port, not the whole of experiment 66. It is narrower than the carrier question that blocks access, which is about two implementations of one operation.",
-   "record": "docs/audits/ontology-audit.md (D4a), docs/experiments/66-ports-as-schema-binding.md"
+   "liftTest": "A primitive takes (area, points) and outputs points, and the Old Naledi example produces its facility set from buffer_area plus that selection, with the difference from the shipped selection stated rather than discovered.",
+   "measured": "Measured 2026-10-12. The Old Naledi boundary's bounding-box diagonal is 2.55 km. The shipped widget selects 122 of 214 facilities with a 6 km circle at that bounding box's centre. buffer_area at its 5,000 m ceiling, applied to the actual boundary and then selecting the points inside, selects 122 as well, agreeing on 121 of them -- one differs each way, at the margin where a circle and a buffered polygon part company. So the 6 km radius encodes '5 km beyond the boundary' plus the boundary's own half-width of 1.27 km: a number compensating for an operation that was missing.",
+   "alsoFound": "buffer_area caps at 5,000 m and this example's own radius is 6 km, so the study-area primitive that would replace the widget cannot currently express what the widget does. The cap is why the measurement above had to be taken at 5 km.",
+   "narrowedTo": "Replaces `facilities-carrier`, recorded an hour earlier, which framed this as a producer-named stud question. It is not: the carrier is downstream of the real gap, which is that the selection has nowhere to come from.",
+   "record": "docs/experiments/103-duplicates-should-merge.md"
   }
  ]
 }

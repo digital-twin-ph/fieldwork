@@ -91,6 +91,38 @@ one `all`. And `facilityN3`'s last two rules conclude the same pair from differe
 which is **an OR already hand-compiled** — the practitioner who wrote it did by hand exactly what
 this record proposes the compiler do.
 
+### A fourth ruleset, found by looking somewhere else
+
+Added 2026-10-12, while thinking about what a spatial selection widget should output.
+`coverage_check` carries **six** N3 rules as a template literal in `src/spatial-coverage.ts`:
+
+    { ?r fw:excluded true. }                                  => { ?r fw:coverageDecision fw:Excluded. }.
+    { ?r fw:excluded false; fw:spatialRelation fw:Inside. }    => { ?r fw:coverageDecision fw:Accept. }.
+    { ?r fw:excluded false; fw:spatialRelation fw:Boundary. }  => { ?r fw:coverageDecision fw:Accept. }.
+    { ?r fw:excluded false; fw:spatialRelation fw:Outside. }   => { ?r fw:coverageDecision fw:Review. }.
+    { ?r fw:excluded false; fw:spatialRelation fw:MissingLocation. } => { ?r fw:coverageDecision fw:Review. }.
+    { ?activity fw:checkedRecord ?r. ?r fw:coverageDecision fw:Review. } => { ?activity fw:requiresReview true. }.
+
+So the corpus is **four** rulesets, not three, and the one found last was never a candidate for the
+merge: `coverage_check` declares itself `shared` and is not example-bound, so the exemption ratchet
+cannot see it. **A hidden ruleset is a different failure from an example-bound widget**, and nothing
+in this project was looking for the first.
+
+Three things it adds to this record:
+
+- **A third hand-compiled OR.** Rules 2 and 3 conclude the same decision from different antecedents,
+  after `facilityN3`'s last two. Three instances now, all written by hand, all doing what a
+  compiler would do.
+- **A policy hidden in a comment.** The rules open with *"Boundary points are included by policy"*,
+  and rules 4 and 5 map **different** relations to the **same** decision: `Outside` → Review and
+  `MissingLocation` → Review. That collapses outside-ness and unknown-ness, which is exactly the
+  distinction the four-valued `SpatialRelation` upstream exists to preserve. Declaring the ruleset
+  makes the collapse visible and contestable. A template literal does not.
+- **A conclusion about the activity, not a subject.** The last rule concludes `?activity
+  fw:requiresReview true`. The authored form above concludes per subject only, so hosting this
+  ruleset needs **set-level conclusions** — a real extension to the form, found by a ruleset nobody
+  had counted rather than by designing.
+
 ### So can the three be represented as one?
 
 Two senses, with different answers.

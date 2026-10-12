@@ -1,5 +1,6 @@
 import {containsPoint,boundaryExtent,gridPoints,GRID_METHOD} from './point-grid.js';
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
+import {pinnedRuleset} from './rule-application.js';
 import type {Boundary,Position,Workflow,WorkflowNode,NodeDefinition,NodeType,ParamsByType,PointFeature,PointCollection,SourceInfo} from './types.js';
 import type {Facility,GradedFacility,AreaValue,SamplesValue,RegistryValue,GradedRegistryValue,AccessValue,Receipt,AccessRow} from './results.js';
 import type {Reasoner,ReasonerQuad} from './worker-types.js';
@@ -40,8 +41,16 @@ export function oldNalediWorkflow():Workflow{
   const edges=[['facility-data','facilities','points'],['area','samples','area'],['area','facilities','area'],['facilities','xpert','facilities'],['samples','access','samples'],['xpert','access','facilities'],['access','review','access'],['xpert','audit','facilities'],['review','access-map','decisions'],['review','access-table','decisions'],['review','access-chart','decisions'],['audit','evidence-table','decisions']].map(([from,to,port],i)=>({id:`old-e${i}`,from,to,port}));
   return {schema:'fieldwork/workflow/1',exampleId:'old-naledi',name:'Old Naledi · diagnostic access',nodes:[
     facilityInput('facility-data'),node('area','area',25,140,{dataset:DATASET}),node('samples','samples',255,30,{spacingM:250}),node('facilities','facilities',255,265,{dataset:DATASET,radiusKm:6,sourceMode:'connected'}),
-    node('xpert','xpert',485,265,{}),node('access','access',715,30,{minimumEvidence:'contextual',service:'onsite',speedMPerMin:70}),
-    node('review','access_policy',945,30,{thresholdMin:30}),node('audit','facility_audit',715,300,{}),
+    // `xpert` and `access_policy` were retired into apply_ruleset on 2026-10-12: both were a set of
+    // rules and nothing else. The template names their rulesets so this example does not depend on
+    // a migration running. `facility_audit` stays -- it runs no reasoner and is a presentation
+    // widget, which is why it was not part of that merge.
+    node('xpert','apply_ruleset',485,265,{label:'Diagnostic evidence',
+      ruleset:pinnedRuleset('urn:fieldwork:ruleset:nb06-evidence','1.0.0'),parameters:{}}),
+    node('access','access',715,30,{minimumEvidence:'contextual',service:'onsite',speedMPerMin:70}),
+    node('review','apply_ruleset',945,30,{label:'Access review',
+      ruleset:pinnedRuleset('urn:fieldwork:ruleset:access-review','1.0.0'),parameters:{threshold:30}}),
+    node('audit','facility_audit',715,300,{}),
     node('access-map','map_output',1175,0,{label:'Access map',inputMode:'decisions'}),node('access-table','table_output',1175,150,{label:'Access table',inputMode:'decisions'}),
     node('access-chart','chart_output',1175,300,{label:'Access zones'}),node('evidence-table','table_output',945,300,{label:'Facility evidence',inputMode:'decisions'})
   ],edges};
@@ -108,6 +117,32 @@ export function accessN3(rows:AccessRow[],threshold:number){
   const rules=bindParameters(ruleset,{threshold:Number(threshold.toFixed(9))});
   return {facts:prefix+facts,rules:prefix+rules,input:prefix+facts+'\n'+rules,ruleset:rulesetCitation(ruleset)};
 }
+/** `nb06-evidence` applied: grade each facility's evidence level and expected service.
+ *
+ *  Lifted out of the `xpert` case on 2026-10-12 so one implementation serves both that node type
+ *  and the general `apply_ruleset` host while the migration is verifiable. Nothing here changed. */
+export async function applyFacilityGrading(facilities:GradedRegistryValue,reasoner:Reasoner){
+  const n3=facilityN3(facilities.facilities),conclusions=await reasoner(n3.input);
+  return {
+    receipt:{source:SOURCE+'06-Gaborone-Health-Facilities.ipynb',...n3,conclusions},
+    value:{...facilities,facilities:facilities.facilities.map(f=>{
+      const tier=assertion(conclusions,f.id,'evidenceLevel',['Direct','Contextual','Inferential','None']);
+      const service=assertion(conclusions,f.id,'service',['Onsite','OnsiteOrReferral','ReferralOnly','Unknown']);
+      return {...f,tier,service,reference:f.name==='Broadhurst II Clinic'?'Hamda 2020. Named contextual evidence in NB06.':f.serviceType==='Health Post'?'NB06 assumption: expected specimen referral; no facility-specific evidence.':refs[tier]};
+    })}};
+}
+
+/** `access-review` applied: a decision and a travel-time zone per sampled location. */
+export async function applyAccessReview(access:AccessValue,thresholdMin:number,reasoner:Reasoner){
+  const n3=accessN3(access.rows,thresholdMin),conclusions=await reasoner(n3.input);
+  return {
+    receipt:{...n3,conclusions},
+    value:{...access,thresholdMin,rows:access.rows.map(r=>{
+      const status=assertion(conclusions,r.id,'decision',['Review','NoFlag','Unknown']),zone=assertion(conclusions,r.id,'zone',['Within5','Within15','Within30','Over30','Unknown']);
+      return {...r,status,zone,explanation:!r.coordinates?'Input location has no coordinates. Access remains unknown.':r.minutes===null?'No facility meets the selected evidence and service criteria within the candidate search area. Access remains unknown.':`${r.center!.name}: ${r.distanceKm!.toFixed(2)} km straight-line, or ${r.minutes.toFixed(1)} proxy minutes at ${access.filters.speedMPerMin} m/min. ${tierLabel(r.center!.tier)} evidence; ${serviceLabel(r.center!.service).toLowerCase()}. Review threshold: ${thresholdMin} minutes.`};
+    })}};
+}
+
 export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner:Reasoner,receipts:Receipt[],distanceKm:(a:Position,b:Position)=>number,runId=crypto.randomUUID()){
   switch(node.type){
     case 'area':return {boundary:structuredClone(boundary),dataset:DATASET,provenance:structuredClone(provenance)};
@@ -133,13 +168,9 @@ export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner
       return value;
     }
     case 'xpert':{
-      const n3=facilityN3(inputs.facilities.facilities),conclusions=await reasoner(n3.input);
-      receipts.push({nodeId:node.id,source:SOURCE+'06-Gaborone-Health-Facilities.ipynb',...n3,conclusions});
-      return {...inputs.facilities,facilities:inputs.facilities.facilities.map(f=>{
-        const tier=assertion(conclusions,f.id,'evidenceLevel',['Direct','Contextual','Inferential','None']);
-        const service=assertion(conclusions,f.id,'service',['Onsite','OnsiteOrReferral','ReferralOnly','Unknown']);
-        return {...f,tier,service,reference:f.name==='Broadhurst II Clinic'?'Hamda 2020. Named contextual evidence in NB06.':f.serviceType==='Health Post'?'NB06 assumption: expected specimen referral; no facility-specific evidence.':refs[tier]};
-      })};
+      const applied=await applyFacilityGrading(inputs.facilities,reasoner);
+      receipts.push({nodeId:node.id,...applied.receipt});
+      return applied.value;
     }
     case 'access':{
       const rank={Direct:3,Contextual:2,Inferential:1,None:0},minimum={direct:3,contextual:2,inferential:1}[node.params.minimumEvidence];
@@ -157,11 +188,9 @@ export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner
       return {...inputs.samples,boundary:inputs.facilities.boundary,locationSource:{nodeId:inputs.samples.sourceNodeId,kind:inputs.samples.sourceKind==='generated-grid'?'generated-grid':'input-points'},kind:'access' as const,rows,eligibleCount:eligible.length,candidateCount:inputs.facilities.facilities.length,facilitySource:inputs.facilities.facilitySource,filters:{...node.params},centers:eligible.map((f):PointFeature=>({type:'Feature',id:f.id,properties:{name:f.name},geometry:{type:'Point',coordinates:f.coordinates}})),method:'Straight-line distance / walking speed; not street routing',source:SOURCE,dataset:DATASET};
     }
     case 'access_policy':{
-      const n3=accessN3(inputs.access.rows,node.params.thresholdMin),conclusions=await reasoner(n3.input);receipts.push({nodeId:node.id,...n3,conclusions});
-      return {...inputs.access,thresholdMin:node.params.thresholdMin,rows:inputs.access.rows.map(r=>{
-        const status=assertion(conclusions,r.id,'decision',['Review','NoFlag','Unknown']),zone=assertion(conclusions,r.id,'zone',['Within5','Within15','Within30','Over30','Unknown']);
-        return {...r,status,zone,explanation:!r.coordinates?'Input location has no coordinates. Access remains unknown.':r.minutes===null?'No facility meets the selected evidence and service criteria within the candidate search area. Access remains unknown.':`${r.center!.name}: ${r.distanceKm!.toFixed(2)} km straight-line, or ${r.minutes.toFixed(1)} proxy minutes at ${inputs.access.filters.speedMPerMin} m/min. ${tierLabel(r.center!.tier)} evidence; ${serviceLabel(r.center!.service).toLowerCase()}. Review threshold: ${node.params.thresholdMin} minutes.`};
-      })};
+      const applied=await applyAccessReview(inputs.access,node.params.thresholdMin,reasoner);
+      receipts.push({nodeId:node.id,...applied.receipt});
+      return applied.value;
     }
     case 'facility_audit':return {kind:'facility-evidence' as const,facilitySource:inputs.facilities.facilitySource,boundary:inputs.facilities.boundary,dataset:DATASET,provenance:structuredClone(provenance),source:SOURCE,centers:[],rows:inputs.facilities.facilities.map(f=>({...f,status:f.tier==='Direct'?'NoFlag' as const:f.tier==='None'?'Unknown' as const:'Review' as const,distanceKm:null,explanation:f.reference}))};
     default:throw new Error('Unsupported Old Naledi node.');

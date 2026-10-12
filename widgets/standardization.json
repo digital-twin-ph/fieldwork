@@ -2,14 +2,14 @@
  "schema": "fieldwork/widget-standardization/1",
  "note": "A widget may not be name-attached to a worked example. That is the practitioner's rule of 2026-10-12, and the striking thing is that the shipped files already agree: twelve of the 51 release files declare standardization: 'example-specific' about themselves. Nothing read that declaration, so twelve self-reported failed admissions sat in the palette and in the count. This file is the ratchet that reads it. Every example-specific widget must appear below with the record that will remove it, and the exemption count may fall freely and may never rise. Retiring twelve widgets once would be undone by widget 52; a constraint that fails the build is what makes the reduction permanent. The reduction plan is docs/experiments/64-widget-streamlining.md as amended 2026-10-12, and the direction is its Stage 1: essentiality decided on its own terms, with example impact as the output. Gates name a blocker id in widgets/blockers.json, not a document path: a gate pointing at a design record names no claim and carries no clock, and scripts/validate-blockers.mjs refuses one that does.",
  "measuredAt": "2026-10-12",
- "exemptionCeiling": 7,
+ "exemptionCeiling": 4,
  "disagreementFound": "The widget audit's prose listed nine example-bound widgets and named comparison_map, which declares itself 'shared'. The release files list twelve and do not include it. The files are what ship, so the files are what this ratchet reads; the audit's prose is corrected rather than the declarations.",
  "exempt": [
   {
    "nodeType": "alert",
    "disposition": "rename",
    "reason": "Declaring an external condition and the date it applies to is irreducible -- nothing in the application derives it -- so the kind is right and the name bakes in 'heat'. Recorded as ungated on 2026-10-12 and corrected the same day: its output predicate is fw:heatAlert, which policy's rules read by name, and its port type 'alert' is consumed as a bound role once the ruleset widget exists. Renaming the widget without the predicate leaves a general widget asserting a domain term; renaming both before 65 means doing it twice, which is the duplicated-work failure this project has already named.",
-   "gatedOn": "ruleset-as-declared-data",
+   "gatedOn": "outreach-predicates-name-a-domain",
    "record": "docs/experiments/65-ruleset-as-data.md"
   },
   {
@@ -27,32 +27,11 @@
    "record": "docs/experiments/66-ports-as-schema-binding.md"
   },
   {
-   "nodeType": "policy",
-   "disposition": "merge",
-   "reason": "A rule application. Its rules are data; the widget arranges a reasoner call. Ruleset generator: makeN3.",
-   "gatedOn": "ruleset-as-declared-data",
-   "record": "docs/experiments/65-ruleset-as-data.md"
-  },
-  {
-   "nodeType": "access_policy",
-   "disposition": "merge",
-   "reason": "A rule application. Ruleset generator: accessN3.",
-   "gatedOn": "ruleset-as-declared-data",
-   "record": "docs/experiments/65-ruleset-as-data.md"
-  },
-  {
    "nodeType": "facility_audit",
    "disposition": "composition",
    "reason": "Reclassified 2026-10-12. Listed as a rule application to be merged, on the strength of its 'decisions' output port. It runs no reasoner: its body is one projection over values xpert already derived. It belongs with comparison_map in a communication, visualization and presentation stage, not in the ruleset merge. Its tier-to-status ternary is rule-like logic that has to go somewhere when that move happens -- a decision class, on the practitioner's hypothesis.",
    "gatedOn": "presentation-stage",
    "record": "no experiment yet"
-  },
-  {
-   "nodeType": "xpert",
-   "disposition": "merge",
-   "reason": "A rule application whose name is a product's and whose hierarchy is NB06's. Its fact generation matches two facilities by name string, which is the silent defect 65 records. Ruleset generator: facilityN3.",
-   "gatedOn": "ruleset-as-declared-data",
-   "record": "docs/experiments/65-ruleset-as-data.md"
   }
  ],
  "retiredSoFar": [
@@ -81,6 +60,30 @@
     "observations"
    ],
    "note": "One example's cooling centres. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today."
+  },
+  {
+   "nodeType": "policy",
+   "retiredAt": "2026-10-12",
+   "replacedBy": [
+    "apply_ruleset"
+   ],
+   "note": "Its rules became rulesets/outreach-criteria/1.0.0.json; the widget was the arrangement around them."
+  },
+  {
+   "nodeType": "access_policy",
+   "retiredAt": "2026-10-12",
+   "replacedBy": [
+    "apply_ruleset"
+   ],
+   "note": "Its rules became rulesets/access-review/1.0.0.json."
+  },
+  {
+   "nodeType": "xpert",
+   "retiredAt": "2026-10-12",
+   "replacedBy": [
+    "apply_ruleset"
+   ],
+   "note": "Its rules became rulesets/nb06-evidence/1.0.0.json. The name was a product's and the hierarchy is NB06's."
   }
  ],
  "generalisedSoFar": [

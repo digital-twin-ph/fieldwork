@@ -369,6 +369,21 @@
    "measured": "exhaustive, not sampled. 12 cells for outreach-criteria, 10 for access-review, 24 for nb06-evidence -- the complete space of each. All 46 agree on conclusions and on receipt. 0 cells with no rule firing, 0 with two conclusions for one predicate. 19 rules in total across the three rulesets, using exactly two builtins, math:greaterThan and math:notGreaterThan, with no negation, recursion or aggregation anywhere. The boundary cell where the value equals the threshold is included in each table, which is what separates math:notGreaterThan from math:lessThan and what a sample would miss.",
    "ranAt": "2026-10-12T15:44:44.436232+00:00",
    "note": "The exemption this replaces said the decision is the reasoner's, which was a claim that no independent check was possible. Each ruleset's input space is finite, so the lab enumerates it completely. Two claims are recorded separately because they fail differently: a right answer nobody can audit, against a well-formed receipt for the wrong conclusion. Neither claim says any threshold is right; one ruleset claims a published basis and none of the three carries evidence a reader can open."
+  },
+  {
+   "widget": "urn:fieldwork:widget:apply_ruleset",
+   "coversRelease": "0.1.0",
+   "check": "23-rulesets",
+   "result": "content/results/check-23-rulesets.json",
+   "sha256": "eb0cb85d9015ed1f652ac44045ff6fd205a9356abea09b9537ab0573b40bd031",
+   "external": [
+    "none -- a Python decision table derived from each ruleset's description, and a local N3 subset reader; no RDF library and no Fieldwork code"
+   ],
+   "criterion": "two separate claims over the complete input space of each ruleset, 46 cells in all: every conclusion of the real EYE reasoner reproduced by a decision table written in Python from the ruleset's prose description, and the emitted receipt parsed and checked -- every asserted predicate declared by the input contract and no others, nine decimals on every bound number, one subject per cell, no dataset instance named in a rule, no unbound placeholder, and only math: builtins",
+   "outcome": "agrees",
+   "measured": "exhaustive, not sampled. 12 cells for outreach-criteria, 10 for access-review, 24 for nb06-evidence -- the complete space of each. All 46 agree on conclusions and on receipt. 0 cells with no rule firing, 0 with two conclusions for one predicate. 19 rules in total across the three rulesets, using exactly two builtins, math:greaterThan and math:notGreaterThan, with no negation, recursion or aggregation anywhere. The boundary cell where the value equals the threshold is included in each table, which is what separates math:notGreaterThan from math:lessThan and what a sample would miss.",
+   "ranAt": "2026-10-12T15:44:44.436232+00:00",
+   "note": "The widget that now hosts all three rulesets. The three entries beside this one cover policy, access_policy and xpert at the releases they were retired at, which is why they remain: parity covers a release, and those releases ran. This entry covers the host, and the check is the same check because the rulesets are the same rulesets -- the assembled rule text was proved byte-identical when they became data."
   }
  ]
 }

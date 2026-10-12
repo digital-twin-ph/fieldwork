@@ -32,18 +32,15 @@
   {
    "id": "ruleset-as-declared-data",
    "claim": "No widget applies a ruleset that is declared data rather than a template literal in the execution path, so three widgets exist whose only difference is which rules they run.",
-   "blocks": [
-    "alert",
-    "policy",
-    "access_policy",
-    "xpert"
-   ],
+   "blocks": [],
    "recorded": "2026-10-09",
    "lastRevisited": "2026-10-12",
-   "status": "standing",
+   "status": "lifted",
    "liftTest": "One widget hosts the three rulesets as declared, versioned, digested data, and every frozen fixture and Old Naledi classification replays identically -- experiment 106's B1.",
    "narrowedTo": "The merge needs ruleset-as-data and the existing fact generators. It does not need generic role binding; see typed-field-schema. Narrowed again the same day: facility_audit was listed among what this blocks and runs no reasoner, so it is a presentation widget and not a rule application. Three widgets, not four.",
-   "record": "docs/experiments/65-ruleset-as-data.md, docs/experiments/106-rule-builder-ui.md"
+   "record": "docs/experiments/65-ruleset-as-data.md, docs/experiments/106-rule-builder-ui.md",
+   "liftedBy": "apply_ruleset 0.1.0, hosting outreach-criteria, access-review and nb06-evidence as declared versioned rulesets. policy, access_policy and xpert retired at 0.2.0.",
+   "whatChanged": "The liftTest was met in full: one widget hosts the three rulesets as declared, versioned data, and every frozen fixture and Old Naledi classification replays identically -- 356 unit tests and 97 browser tests. Worth recording that the liftTest named the Old Naledi classifications as the oracle, and the practitioner has since said that example is incomplete and was never revisited, so that oracle is weaker than this blocker assumed when it was written."
   },
   {
    "id": "one-output-carrier-for-nearest",
@@ -71,6 +68,19 @@
    "status": "standing",
    "liftTest": "A presentation-stage composition exists and comparison_map is expressed as one.",
    "record": "no experiment yet -- the practitioner's direction of 2026-10-12, recorded in widgets/standardization.json under deferred"
+  },
+  {
+   "id": "outreach-predicates-name-a-domain",
+   "claim": "outreach-criteria 1.0.0 asserts fw:heatAlert and fw:distanceKm. One names a domain and the other welds a unit into a predicate name, and the rules read both by name, so the alert widget cannot be generalised without a ruleset 2.0.0.",
+   "blocks": [
+    "alert"
+   ],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "liftTest": "A ruleset 2.0.0 exists whose predicates name no domain and carry no unit in their names, with the unit on the declaration, and 1.0.0 is kept because it is what reproduces the shipped conclusions.",
+   "narrowedTo": "What replaced ruleset-as-declared-data for alert alone. Declaring a condition and the date it applies to is irreducible, so alert survives as a primitive; only its name and its predicate are domain, and the predicate is now in a versioned artefact rather than in a template literal, which is what makes this a version bump rather than a code change.",
+   "record": "docs/experiments/65-ruleset-as-data.md"
   }
  ]
 }

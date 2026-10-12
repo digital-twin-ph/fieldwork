@@ -18,7 +18,8 @@
       "default": 20,
       "decimals": 9,
       "placeholder": "{{threshold}}",
-      "meaning": "Proxy travel time above which a location is flagged for review."
+      "meaning": "Proxy travel time above which a location is flagged for review.",
+      "unitLabel": "min"
     }
   ],
   "inputContract": {
@@ -34,7 +35,21 @@
         "type": "number",
         "unit": "http://qudt.org/vocab/unit/MIN"
       }
-    ]
+    ],
+    "ports": {
+      "inputs": [
+        [
+          "access",
+          "access"
+        ]
+      ],
+      "output": "decisions"
+    },
+    "projection": "access-review",
+    "parameterFrom": {
+      "threshold": "thresholdMin"
+    },
+    "portsNote": "Declared so one widget can host every ruleset with the ruleset's own ports, pinned in the node as a micro_workflow pins its composition's. src/core.ts nodeInputs and outputOf already vary per node, so the mechanism is the one compositions use rather than a new one."
   },
   "outputVocabulary": {
     "predicates": [

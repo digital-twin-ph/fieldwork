@@ -1,0 +1,71 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:apply_ruleset",
+ "version": "0.1.0",
+ "nodeType": "apply_ruleset",
+ "title": "Apply ruleset",
+ "released": "2026-10-12",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['apply_ruleset']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [],
+  "output": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "The semantic contract belongs to the ruleset, which declares its own output vocabulary and basis; do not infer one from this widget.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/rule-application.ts",
+   "src/rulesets.ts",
+   "src/core.ts",
+   "src/old-naledi.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "policy",
+    "adapterVersion": "1",
+    "implementation": "src/core.ts#validateWorkflow"
+   },
+   {
+    "nodeType": "access_policy",
+    "adapterVersion": "1",
+    "implementation": "src/core.ts#validateWorkflow"
+   },
+   {
+    "nodeType": "xpert",
+    "adapterVersion": "1",
+    "implementation": "src/core.ts#validateWorkflow"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "baseline",
+   "description": "One widget for every declared ruleset, replacing policy, access_policy and xpert, which differed only in which rules they ran. All three carried their rules as template literals inside their executors while policy described itself as 'Apply N3 rules with EYE-JS', as though rules were an input; they were not. The rules became declared, versioned, digested artefacts earlier on 2026-10-12 with byte-identical output, and this is the node type that hosts them. What this merge does: it collapses three palette entries to one and three widget contracts to one. What it does not do: collapse the three projections. Each ruleset still assembles a different carrier for whatever consumes it, and that code is dispatched here by declared data rather than deleted -- a merge that claimed to remove code and only moved it would be worse than no merge. A saved workflow holding any of the three is rewritten with its ruleset pinned at the version that produced its results, and stamped so the Inspector names the replacement. Ports are declared empty here and pinned per node from the ruleset, which is exactly how micro_workflow declares a composition's: src/core.ts nodeInputs and outputOf already vary per node, so this reuses the mechanism compositions established rather than inventing one."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists, and the Validation Lab checks this widget exhaustively rather than by sample -- check 23 enumerates the complete input space of all three bundled rulesets, 46 cells, reproducing every conclusion with an independent decision table and verifying the emitted receipt. That is evidence about the rulesets and about this widget's four stages; it does not certify the widget independently, and it says nothing about whether any threshold is right."
+ }
+}

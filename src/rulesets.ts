@@ -20,6 +20,7 @@
  *  execution path kept the difference invisible.
  */
 import type {EvidenceReference} from './evidence.js';
+import type {PortType} from './types.js';
 import outreachCriteria from '../rulesets/outreach-criteria/1.0.0.json' with {type:'json'};
 import accessReview from '../rulesets/access-review/1.0.0.json' with {type:'json'};
 import nb06Evidence from '../rulesets/nb06-evidence/1.0.0.json' with {type:'json'};
@@ -27,12 +28,28 @@ import nb06Evidence from '../rulesets/nb06-evidence/1.0.0.json' with {type:'json
 export interface RulesetParameter {
   name:string; role:string; type:string; unit?:string; min?:number; max?:number;
   default?:number; decimals?:number; placeholder:string; meaning:string;
+  /** How the unit reads on screen. The IRI is the identity; this is the label beside the input,
+   *  declared rather than derived because deriving 'km' from a QUDT IRI is a guess. */
+  unitLabel?:string;
 }
 export interface Ruleset {
   schema:string; id:string; version:string; title:string; released:string;
   description:string; mustNotBeReadAs:string; rules:string;
   parameters:RulesetParameter[];
-  inputContract:{factGenerator:string; subjectKind:string; expects:unknown[]; note?:string; knownDefect?:string};
+  inputContract:{
+    factGenerator:string; subjectKind:string; expects:unknown[]; note?:string; knownDefect?:string;
+    /** The ruleset's own ports, pinned into a node that hosts it. Declared here because the three
+     *  rulesets have three different input sets and two different output carriers, which is what
+     *  made one widget hosting all three look like a base-contract change. */
+    ports:{inputs:[string,PortType][]; output:PortType};
+    /** Which carrier the classification is assembled into. Each ruleset's consumer expects a
+     *  different shape, so the merge collapses the palette and not these. */
+    projection:string;
+    /** Which parameter of the node this ruleset was extracted from supplies which declared
+     *  parameter. `thresholdKm` and `thresholdMin` were one kind of thing in two units with the
+     *  unit buried in the name; the ruleset declares one parameter with its unit attached. */
+    parameterFrom:Record<string,string>;
+    portsNote?:string};
   outputVocabulary:Record<string,unknown>;
   basis:RulesetBasis;
 }

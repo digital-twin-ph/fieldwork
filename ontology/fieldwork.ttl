@@ -69,7 +69,9 @@ fw:claimsNoComputation a owl:DatatypeProperty; rdfs:domain fw:MicroWorkflowExpan
   rdfs:label "States that this activity performed no computation";
   rdfs:comment "Asserted rather than left to inference, so that a reader counting activities does not credit the arrangement with the work.".
 fw:memberOf a owl:ObjectProperty; rdfs:range fw:MicroWorkflow;
-  rdfs:label "Plan a member node belongs to".
+  rdfs:label "Plan a member node belongs to";
+  rdfs:subPropertyOf dcterms:isPartOf;
+  rdfs:comment "A sub-property of dcterms:isPartOf rather than equivalent to it: this one is narrower, since its range is a micro-workflow plan and part-hood in general is not. src/spatial-coverage.ts already emits dcterms:isPartOf directly for a record belonging to a source, so the project was using the standard term in one place and its own in another for the same kind of relation.".
 fw:memberNode a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "Identifier of a member node within the run".
 fw:compositionParameter a owl:ObjectProperty; rdfs:domain fw:MicroWorkflowExpansion;
@@ -260,7 +262,9 @@ fw:bufferDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
 fw:parameters a owl:DatatypeProperty.
 fw:computationCRS a owl:DatatypeProperty.
 fw:caveats a owl:DatatypeProperty.
-fw:member a owl:ObjectProperty.
+fw:member a owl:ObjectProperty;
+  owl:equivalentProperty rdfs:member;
+  rdfs:comment "Membership of a collection, which rdfs:member already names. Aligned rather than renamed.".
 fw:siteId a owl:DatatypeProperty.
 fw:numericTotal a owl:DatatypeProperty.
 fw:missingValueCount a owl:DatatypeProperty.
@@ -303,7 +307,9 @@ fw:ContextReference a prov:Role; rdfs:label "Background context reference".
 fw:locator a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "A page, table, section or other locator supplied by the author.".
 fw:sha256 a owl:DatatypeProperty; rdfs:range xsd:string.
-fw:byteSize a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:byteSize a owl:DatatypeProperty; rdfs:range xsd:integer;
+  owl:equivalentProperty dcat:byteSize;
+  rdfs:comment "The same property DCAT names dcat:byteSize. Aligned rather than renamed on 2026-10-12: an equivalence axiom costs no migration and no saved workflow, and a reader or a reasoner can substitute one for the other. Worth recording how this was found -- the dcat: prefix was already declared in this file and already used for dcat:Dataset, so a standard that had been imported was sitting beside a local term minted for the same thing.".
 fw:filename a owl:DatatypeProperty; rdfs:range xsd:string.
 
 fw:ontology a owl:Ontology;

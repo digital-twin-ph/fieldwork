@@ -264,6 +264,46 @@ Three things that would decide it, none of them done:
 Related: the explanation gap named in [65](experiments/65-ruleset-as-data.md) may belong to the
 decision class too — a class that owns its values is the natural owner of how each value reads.
 
+**Old Naledi is an incomplete example that was never revisited**, and a slice of the Gaborone TB
+ABM notebooks is the way to raise it. The practitioner's point, 2026-10-12. Not scheduled.
+
+Measured the same day, per worked example, from `widgets/evidence.json`:
+
+| Example | Widgets | Lab-checked | Check owed |
+| --- | --- | --- | --- |
+| snow-voronoi, snow-geoprivacy, snow-epidemic-curve | 10 each | **4** each | 0 |
+| snow-isochrone | 12 | **4** | 1 (`isochrone`) |
+| **old-naledi** | 10 | **1** | 3 — `access`, `facilities`, `samples` |
+| sea-level | 8 | **0** | 3 |
+| heat | 6 | 1 | 1 |
+
+So the claim holds and is sharper than "incomplete". The four snow examples carry four
+independently checked widgets each; Old Naledi carries one of ten. Sea-level is weaker still and
+its weakness is **owned** — all pack work is deliberately postponed and the record says so. Old
+Naledi's was not owned by anything until now.
+
+Three things follow, and the first is a correction to today's own work:
+
+- **It was being used as an oracle.** The blocker `ruleset-as-declared-data` named "every frozen
+  fixture and Old Naledi classification replays identically" as its liftTest, and that test passed,
+  and the lift is recorded. But an incomplete example's frozen expectations are weaker evidence
+  than that liftTest implied. The merge is not thereby wrong — 356 unit and 97 browser tests pass,
+  and check 23 verifies the rulesets exhaustively and independently — but the Old Naledi half of
+  that argument should be read for what it is.
+- **It is where the example-bound widgets live.** Of the widgets still declaring themselves
+  example-specific, `access`, `facilities` and `alert` are Old Naledi's or the heat demo's, and
+  `facility_audit` is Old Naledi's presentation widget with a decision rule hidden in a ternary.
+  An example nobody revisited is where widgets accumulate that nobody generalised.
+- **A real slice beats a synthetic one.** Its sample locations are a generated grid with
+  Old Naledi's spacing, and `NB06_NAMED_EVIDENCE` carries two facilities keyed by registry id
+  after a name-string match was found and fixed. A slice from the Gaborone TB ABM notebooks would
+  replace generated demonstration points with real structure, which is also what would let
+  `samples`, `access` and `facilities` be checked against something.
+
+What would settle the size of the slice: the smallest one that exercises the same four stages the
+example claims to teach — a boundary, a facility registry, an access proxy, and a classification
+with its basis — without needing a widget that does not exist.
+
 ## Known and recorded, not yet scheduled
 
 **Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**

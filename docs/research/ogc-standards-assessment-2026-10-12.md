@@ -2,7 +2,8 @@
 
 _Created 2026-10-12 · Updated 2026-10-12_
 
-A set of recommendations was brought in from an external assistant: adopt OGC Simple Feature
+A set of recommendations was brought in from an external assistant, pitched at **Epi Info AI**,
+which the practitioner says is close in structure to this project: adopt OGC Simple Feature
 Access as the normative operation contract, ISO 19107 as the conceptual model, GeoSPARQL as the
 semantic interface, DE-9IM as the predicate foundation, and build a Rust/WASM geometry kernel on
 `geo`/`geos`/`proj` reusable across several projects.
@@ -37,12 +38,35 @@ in one Pyodide kernel produce a **fatal** `RuntimeError: null function` in GDAL'
 both orders, 5 times out of 5, with no error cell to show the practitioner. Heavy geospatial WASM
 in a browser is not a neutral choice here.
 
-**Why this matters more for Fieldwork than the recommendation assumes.** The advice is scoped to a
-portfolio — it names Camper AI, Epi Info AI and AntennaForge alongside this — and a shared kernel
-across several projects is a reasonable thing to want. Fieldwork's constraint is narrower and was
-stated by the practitioner as the project's purpose: *field users with limited resources should get
-all the boost they need*. Tens of megabytes of kernel is the opposite of that, and the measured
-alternative was to give the existing engine less work.
+**Corrected on the practitioner's clarification.** This note first read the advice as pitched at a
+portfolio and treated that as a scope mismatch. It is pitched at **Epi Info AI**, which the
+practitioner says is close in structure to this project. That makes the advice aimed at a sibling
+rather than mis-aimed, and it inverts what this section is for: Fieldwork's measurements are not an
+objection to the recommendation, they are **evidence available to it**, already paid for.
+
+Four findings transfer, with numbers rather than opinions:
+
+| Finding | Number |
+| --- | --- |
+| WASM GEOS against a JavaScript engine | 3.2× faster, tens of megabytes against a few hundred kilobytes |
+| Giving the existing engine less work instead | 3.5×, at no bundle cost, by removing duplicate input |
+| `pyproj` + `rasterio` in one Pyodide kernel | fatal GDAL wasm crash, both orders, 5 of 5, no error cell |
+| Spherical radius against the WGS84 ellipsoid | 0.06–0.32% at 51.5°N, direction-dependent, 25× the UTM scale factor there |
+
+And if the two projects are structurally close, the **shared kernel argument gets stronger, not
+weaker**, because a narrow kernel — buffer and union, not all of GEOS — would amortise across two
+callers. That is a better case for it than this note first gave.
+
+**What decides it is a question about the sibling, not about the standards.** Fieldwork's constraint
+is the practitioner's own statement of its purpose: *field users with limited resources should get
+all the boost they need*, which makes tens of megabytes the wrong trade **here**. Whether it is the
+wrong trade for Epi Info AI depends on how its users receive it — bandwidth, offline requirement,
+first-load budget — and this note cannot answer that.
+
+**The cheapest thing to copy is not the kernel.** It is the discipline: emitting GeoSPARQL in
+receipts, declaring each measurement's earth model in the receipt that carries the measurement, and
+treating a unit as part of a value rather than a label. That is vocabulary and habit, it costs no
+bundle, and it is what makes the rest of this note possible to write at all.
 
 The narrower move the research note already identified stands: compile only what is slow — a
 buffer-and-union kernel rather than all of GEOS — which keeps the bundle small and would still

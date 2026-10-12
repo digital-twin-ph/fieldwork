@@ -144,6 +144,20 @@ follows. If the count sits still for a month, that is the finding.
 
 ## Known and recorded, not yet scheduled
 
+**Eleven widgets are named after a worked example, and one is named after a product.**
+Raised by the practitioner about the sea-level widgets and audited across all 51 on
+2026-10-12: the three `slr_*` are attached to a *pack*, which is deliberate, but `alert`,
+`centers`, `places`, `policy`, `nearest`, `access`, `access_policy`, `facilities`,
+`facility_audit`, `samples` and **`xpert`** — GeneXpert — carry a worked example's story in the
+contract's name. `places` and `centers` already have migrations into `observations`, so both the
+principle and the mechanism are established in this codebase; what is missing is having applied
+them consistently. Three scopes are set out in
+[102](experiments/102-widget-names-and-worked-examples.md) and none is chosen, because a rename
+is a breaking change to saved workflows and "a name so general it says nothing" is a worse
+failure than the present one.
+
+
+
 **The zone guard is still a zone too wide.** Fixed 2026-10-11: the palette default is now
 derived from the workflow's own data, and a disagreeing zone is reported in the Inspector with
 its measured cost and a button that applies the suggestion

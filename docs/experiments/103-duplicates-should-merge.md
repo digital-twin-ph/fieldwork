@@ -158,9 +158,26 @@ outputs `points`. `coverage_check` does that geometry and emits a review carrier
 Two widgets take an area and produce points — `samples` generates a grid, `find_health_facilities`
 fetches from a source — and neither selects.
 
-And `buffer_area` **caps at 5,000 m** while this example's own radius is 6 km, so the primitive that
-would replace the widget cannot currently express what the widget does. That cap is why the
-measurement above had to be taken at 5 km rather than 6.
+**The cap was a knob, and it was not the obstacle.** `validateBuffer` capped at 5,000 m with no
+stated reason, while the geometry helpers in the same module accept 50,000 — and
+`validateBufferPointNode` delegates to the same function, so one number governed both buffer
+widgets. It is 50,000 now, on the practitioner's point that it is a knob.
+
+But raising it refuted the claim it was raised for. Measured across distances:
+
+| Boundary widened by | Selected | Agrees with the shipped 122 | Shipped only | Widened only |
+| --- | --- | --- | --- | --- |
+| 4,000 m | 93 | 93 | 29 | 0 |
+| 4,500 m | 109 | 109 | 13 | 0 |
+| **5,000 m** | **122** | **121** | **1** | **1** |
+| 5,500 m | 139 | 122 | 0 | 17 |
+| 6,000 m | 150 | 122 | 0 | 28 |
+
+6,000 m **over-selects by 28**. The closest equivalent to the shipped selection is a 5,000 m margin,
+which was inside the old cap all along — so the cap never stood in the way of the replacement, and
+the sentence that said it did was wrong within the hour. Reaching for the cap was reaching for an
+explanation before measuring, which is the third time in one day that a one-line reading needed
+code or numbers to correct it.
 
 The disposition is net **zero** on the widget count: one general primitive added, one
 example-specific widget retired. The count is not the point. It converts a widget that bakes in one

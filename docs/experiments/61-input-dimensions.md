@@ -95,6 +95,89 @@ A browser check configures the Snow locations as `count-of-cases` weighted by `D
 existing catchment workflow, and asserts the summary still reports 489 while a count-based widget now
 reports 489 or refuses — with the receipt stating which.
 
+## Place becomes place at one gate, and the gate had no CRS
+
+_Added 2026-10-12. Written after the code, which is unusual for this record and is the point: this
+section reports a thread the practitioner drove, where each step corrected the step before._
+
+**The frame is pandas and geopandas**, and it is the practitioner's: coordinates can be columns in
+a DataFrame, and are a geometry in a GeoDataFrame, and geopandas converts one into the other by
+naming which columns hold them. Mapped onto this project, `table` is the DataFrame and `points` is
+the GeoDataFrame — records with a geometry column, which **may be missing per row**, which
+geopandas supports and tracks separately from any predicate.
+
+So `PointFeature.geometry: Point|null` is the GeoDataFrame model, not a defect. And
+`points_from_xy` is **the gate by which table values become GIS coordinates** — the one boundary
+where this record's "place" stops being a column and starts being a location.
+
+### What the gate was
+
+`csvPoints` in `src/input-data.ts` is that gate, and it declared no CRS at all. It is called from
+two places, with the same two slots meaning different things:
+
+| Caller | `longitude` slot | `latitude` slot |
+| --- | --- | --- |
+| the ordinary CSV import | longitude, in degrees | latitude, in degrees |
+| `reproject-ui` | **easting, in metres** | **northing, in metres** |
+
+The unit lived in what the caller did next — `reproject-ui` converts immediately — and nothing in
+the signature or the data carried it. geopandas refuses to build a GeoDataFrame without a CRS and
+complains loudly when one is missing; this gate had no notion of one.
+
+Two changes followed. The slots are **`x` and `y`**, because the explicit mapping is *longitude is
+x, latitude is y* and the same ordering holds for projected metres where x is easting — the
+ordering was always right and only the names were true of one caller. And **`units` is required
+with no default**, so neither gate can omit it.
+
+### What it still cannot see, measured
+
+A swap is undetectable by range whenever |longitude| ≤ 90, because the swapped pair is a valid
+coordinate pair somewhere else entirely:
+
+| | Swapped | |
+| --- | --- | --- |
+| Manila (120.97, 14.58) | **refused** | latitude out of range |
+| Soho pump (−0.1366, 51.5135) | accepted | lands off Somalia |
+| Gaborone (25.91, −24.65) | accepted | lands in Algeria |
+
+**Both worked examples this project ships are in the second category.** What catches a swap is the
+study area: every record reads Outside and `coverage_check`'s `canProceed` goes false. The gate
+cannot, and `tests/input-coverage.test.mjs` records that rather than implying otherwise.
+
+### Three corrections, which are the substance of the thread
+
+- **"A point with no coordinates is unknown, not outside"** — withdrawn. That came from the code's
+  `MissingLocation` relation, not from GIS, and restating a data-quality state as a claim about
+  points is a category error: a point *is* coordinates. What survives is narrower — a missing
+  geometry is not a spatial *relation*, so `MissingLocation` does not belong in `SpatialRelation`
+  beside Inside, Boundary and Outside. With that removed the relation is three-valued, which is
+  also what makes a set-level boolean expressible.
+- **"UTM metres are accepted silently"** — withdrawn as stated. That was `csvPoints` in isolation;
+  the import path already refused at `core.ts`, which checks |x| ≤ 180 and |y| ≤ 90 and whose
+  message already said *"Use longitude, latitude in CRS84"*. The guard existed. What the gate adds
+  is an earlier refusal naming Reproject as the fix, and a guard on the metre path, which
+  reprojects before anything validates.
+- **The cast that hid a break.** `input-data-ui` built its mapping with
+  `Object.fromEntries(...) as unknown as CSVMapping`. When the interface gained `x`, `y` and a
+  required `units`, that cast kept it typechecking while producing a mapping with none of them —
+  the ordinary CSV import would have failed at run time with `tsc` satisfied. The mapping is
+  written out at the call site now. Second `as unknown as` to conceal a real defect in one day,
+  after `case_series`.
+
+### What this means for the proposal above
+
+**This record's binding mechanism now has a second caller, and it arrived first in practice.**
+Declaring which column means what is proposed here for person, place and time; the gate needs
+exactly that for x, y and a unit; and [65](65-ruleset-as-data.md) needs it again for binding
+ruleset roles. Three callers, one mechanism, and the only one with working code today is the gate —
+reachable from two file dialogs and from no workflow.
+
+Which is the gap worth naming: **nothing converts a `table` already in the graph into `points`.**
+Three widgets consume `table` and all three emit a table or decisions, and the only sources of
+`points` are `observations`, `samples` and `find_health_facilities`. A practitioner who imports
+their own CSV with latitude and longitude columns cannot make it spatial. That is a new widget, so
+it is recorded in `docs/todo.md` rather than built, with the contract this thread settled.
+
 ## What this cannot establish
 
 That the declaration is true. Nothing in the application can know whether `DEATHS` counts people, and

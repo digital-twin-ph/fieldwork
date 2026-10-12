@@ -178,3 +178,11 @@ cannot download an asset is not helped by finding it faster, and the gates in
 refusal is better than an opaque late failure — which is a claim about
 practitioner experience, and like the composition legibility claim in
 [89](89-the-first-composition.md), it needs a person rather than a test.
+
+## What would close it
+
+Either a STAC browse-and-fetch path built against one of the 40 CORS-enabled catalogues the
+[survey](../research/stac-catalog-survey-2026-10-10.md) found, with its credential handling
+decided — which moves this to **tried** — or a decision that acquisition belongs to the desktop
+build, which moves it to **retired**. The survey answered what is possible; nothing has decided
+what to do.

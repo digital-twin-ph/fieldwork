@@ -21,13 +21,17 @@ const STATUS=['asked','tried','validated','retired'];
 const CANONICAL='What this does not establish';
 const SPLIT='What this cannot establish';
 const CHANGED_OUR_MINDS=/^## What changed our minds\b/m;
+// An `asked` or `tried` document is an open position. Without a stated closing condition it sits
+// open while the thing it half-did gets re-derived -- which is how 93 re-derived 27 and 102
+// re-derived the widget audit. Counted, not yet gated, because 87 documents predate the standard.
+const WOULD_CLOSE=/^## (What would close (it|this)|What would close)\b/m;
 
 const documents=readdirSync(dir).filter(f=>/^\d+-.+\.md$/.test(f)).sort();
 const debt=JSON.parse(readFileSync(DEBT,'utf8'));
 const listed=new Set(debt.documents);
 
 const problems=[],fixed=[];
-let withStatus=0,withCanonical=0,withSplit=0,withMinds=0;
+let withStatus=0,withCanonical=0,withSplit=0,withMinds=0,open=0,openWithClosing=0;
 
 for(const file of documents){
   const text=readFileSync(join(dir,file),'utf8');
@@ -41,6 +45,7 @@ for(const file of documents){
   if(new RegExp(`^## ${CANONICAL}\\b`,'m').test(text))withCanonical++;
   if(usesSplit)withSplit++;
   if(CHANGED_OUR_MINDS.test(text))withMinds++;
+  if(word==='asked'||word==='tried'){open++;if(WOULD_CLOSE.test(text))openWithClosing++;}
 
   if(conforms&&listed.has(file))fixed.push(file);
   if(conforms||listed.has(file))continue;
@@ -60,4 +65,5 @@ console.log(`  status in the closed vocabulary   ${withStatus}`);
 console.log(`  "${CANONICAL}"   ${withCanonical}`);
 console.log(`  "${SPLIT}" (to close)   ${withSplit}`);
 console.log(`  "What changed our minds"   ${withMinds}`);
+console.log(`  open (asked or tried)   ${open}, of which ${openWithClosing} say what would close them`);
 if(problems.length){console.error('\n'+problems.join('\n'));process.exit(1);}

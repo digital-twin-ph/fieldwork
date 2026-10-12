@@ -350,6 +350,14 @@ around it should name what the figure means and let the cell print the value, ra
 restating a value from memory. Both errors were in hand-written prose beside a cell that had
 the right answer in it.
 
+## What would close it
+
+The awaiting count reaching zero, or every remaining widget being either checked or retired —
+and after 2026-10-12 the second is the likelier route, since the practitioner has directed that
+the widget merges and refactors come before any further validation work. Several of the thirteen
+awaiting a check are retirement candidates, so this may close by the backlog being retired
+rather than written.
+
 ## What this does not establish
 
 **That the method scales.** Thirteen of the twenty-six are written. Seven came out of the same

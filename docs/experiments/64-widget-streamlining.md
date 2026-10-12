@@ -120,9 +120,36 @@ Neighborhoods and Cooling centers into Input data through an adapter recorded in
 releases, and `places` and `centers` survive only as legacy import identities. That is the
 precedent to follow, and its terms are the ones to keep:
 
+**Retirement means archived, corrected 2026-10-12.** The practitioner: *"retired should be
+archived and not visible, not just not addable"*, because *"when it's retired and visible it
+adds to clutter"*. The definition below said "no longer addable", which is not enough. A widget that
+disappears from the add-palette but stays in the catalogue, in the counts and in search is still
+occupying a practitioner's attention, and the point of the refactor is to stop it doing that.
+
+So retirement has to be defined per surface, and the surfaces are:
+
+| Surface | A retired widget |
+| --- | --- |
+| Add-palette and node search | **absent** |
+| Widget catalogue dialog | **absent from the list**, and the registry count it reports excludes it. Reachable only under a deliberate "show retired" if anybody asks for one, which nobody has |
+| `widgets/classification.json` counts | excluded from `standardCount` and `domainCount` |
+| `widgets/check-coverage.json` | excluded, so a retired widget stops owing a Validation Lab check and leaves the awaiting count rather than sitting in it forever |
+| `docs/usage.md` | moved to a retired section, not deleted: a practitioner opening an old workflow needs to be able to look it up |
+| **The Inspector, for a node in a saved workflow** | **present, and says so.** This is the one surface where it must remain visible, because the node still runs and a practitioner is looking at it. It carries the retirement notice and what replaces it |
+
+That last row is the cost of archiving rather than deleting, and it is the right cost: a node
+that executes but cannot be explained anywhere is worse than one that is labelled retired.
+
+**And the state already exists while nothing honours it.** `scripts/validate-widgets.mjs` has
+accepted `implementationStatus: 'retired'` since the registry format was written; no release
+uses it, and **no file in `src/` reads the field at all**. So the lifecycle state is declarable
+and inert. Phase 2's first task is therefore not retiring a widget — it is making the
+application respect a status it already permits.
+
 - A retired node type stays **executable**, so every saved workflow and every frozen
   fixture runs unchanged and produces the same result.
-- It is no longer **addable**, so no new workflow acquires one.
+- It is no longer **addable**, so no new workflow acquires one — and, per the correction
+  above, no longer **visible** anywhere a practitioner is choosing or counting widgets.
 - Its release file records the retirement and what replaces it, rather than being deleted.
 - The frozen fixtures in `tests/fixtures/` are the test: they replay saved work, which is
   precisely what this phase risks.

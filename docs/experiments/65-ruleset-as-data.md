@@ -1,6 +1,6 @@
 # 65 · A ruleset as declared data, and where its knobs live
 
-_Created 2026-10-09 · Updated 2026-10-09_
+_Created 2026-10-09 · Updated 2026-10-12_
 
 **Status:** admission review. Written before the code, as experiments 48, 58, 61, 63 and 64
 were. Proposes one widget replacing three node types, and one new declared artifact — a
@@ -142,7 +142,8 @@ for widgets and the catalog uses for packs:
 
 - **Identity and version** — `urn:fieldwork:ruleset:<name>`, versioned independently of the
   widget, because a rule change changes results and must be visible as a version change.
-- **The rules**, as N3 text, containing no instance data.
+- **The rules**, authored as structured conditions and **compiled** to N3, containing no
+  instance data. Amended 2026-10-12; see [the authoring surface](#the-authoring-surface-structured-entry-compiled-to-n3).
 - **Declared parameters**, each with unit, type, range, default and meaning.
 - **A declared input contract** — which predicates the rules expect, so stage 1 can be
   general and a mismatch is refused rather than silently producing no conclusions.
@@ -226,11 +227,116 @@ A sketch of the emitted shape, in the form the receipts already use:
       fw:boundParameter [ fw:parameter "threshold"; qudt:numericValue 5.0;
                           qudt:unit <http://qudt.org/vocab/unit/KM> ] .
 
+## The authoring surface: structured entry, compiled to N3
+
+_Amendment, 2026-10-12, on the user's direction: "It's better to make the widget do
+structured UI mediated rules entry than hand written N3. The receipt though should show
+valid N3." This supersedes the bare "rules, as N3 text" above._
+
+A practitioner builds a rule from dropdowns — a field, a comparator, a value, combined with
+AND and OR, concluding one value from the ruleset's declared vocabulary. N3 is then the
+**compiled** form, not the authored one. The receipt shows the compiled N3 alongside the
+structured form it came from: the N3 because that is what the engine ran and what the
+conclusion is attributable to, the structured form because that is what a practitioner
+wrote and can be asked to defend. The ruleset digest is taken over the compiled N3, since
+two structured forms that compile identically are the same rules.
+
+### Why this is stronger than a text box, not weaker
+
+The whole codebase uses exactly **two** builtins — `math:greaterThan` and
+`math:notGreaterThan`, five occurrences each — with conjunction and nothing else. No
+negation, no recursion, no aggregation. That subset is currently honoured by the author's
+restraint and checked by nothing.
+
+A text box would admit the rest of N3, and this project cannot validate what it would
+admit: deciding whether a hand-written ruleset terminates, or stays monotonic, is not a
+check anyone writes. A builder that can only emit the subset makes the guarantee
+**structural**. Two of the validation rules this record proposes stop being checks and
+become impossibilities: a ruleset cannot contain an instance IRI because the builder offers
+fields and values, never subjects; and it cannot use negation-as-failure because the
+comparator list does not contain it.
+
+So the gain is not convenience. It is that the subset becomes a property of the authoring
+surface rather than a claim about the author.
+
+### Comparators, and the two kinds of negation
+
+Negating a **comparison** is safe. The complement of `math:greaterThan` is
+`math:notGreaterThan`, which the rules already use; the pair is total over numbers, and
+swapping one for the other keeps the rule monotonic. A numeric comparator dropdown with
+greater-than, not-greater-than, less-than and not-less-than, and a categorical one with
+term equality by unification and `log:notEqualTo`, all stay inside the subset. These are the
+negators to offer.
+
+Negating **existence** is not safe, and is the trap the dropdown must not open. "No alert
+recorded" asks the engine to conclude from the absence of a fact, which is negation-as-
+failure: non-monotonic, so adding a fact *retracts* a conclusion, and flatly against the
+open-world reading [the audit procedure](../audits/ontology-audit.md) records. All three
+current rulesets avoid it deliberately, and the evidence is in the code: `fw:alertKnown`,
+`fw:distanceKnown` and `fw:accessKnown` are pre-asserted booleans, so absence is a
+**measured fact in the facts** rather than an inference from silence. That pattern becomes
+the rule. Stage 1 asserts a `*Known` boolean per bound role for every subject, and the
+builder offers "is not recorded" as an ordinary comparison against that boolean. The
+practitioner gets the condition they wanted; the engine never reasons from silence.
+
+### AND is native; OR multiplies rules
+
+AND is conjunction in the antecedent — one rule, several conditions, which is what the three
+existing rulesets already are.
+
+OR is **not an N3 feature**. It compiles to rule multiplication: one rule per disjunct,
+each asserting the same conclusion. This is worth stating because it is visible in the
+receipt: a practitioner who writes one rule with two ORs of two will see four rules in the
+N3, and should, because four rules is what runs. It also means the compiler expands to
+disjunctive normal form, which grows multiplicatively, so the builder states a rule-count
+ceiling and refuses past it rather than emitting a receipt nobody can read.
+
+### What OR makes reachable, and what it does not
+
+**Correction to an earlier reading in this session:** I had recorded that two rules
+asserting different conclusions for one subject would silently overwrite each other. They
+do not. Both extraction sites already refuse:
+
+    if(decisions.has(id)&&decisions.get(id)!==decision)
+      throw new Error('Reasoner returned conflicting decisions.');   // src/core.ts, policy
+
+    if(terms.length!==1||!allowed.some(t=>t===terms[0]))
+      throw new Error(`Missing or conflicting ${predicate} assertion for ${id}.`);
+                                                        // src/old-naledi.ts, assertion()
+
+So OR introduces no silent wrong answer. What it introduces is a **reachable run-time
+failure with no authoring-time guidance**: a practitioner can build two groups whose
+conditions overlap and whose conclusions differ, and get "Reasoner returned conflicting
+decisions" that names neither group.
+
+The familiar escape — an ordered list where the first matching rule wins — is **not
+available in this subset**, because first-match requires negating the earlier conditions,
+which is the non-monotonic operator just excluded. Choosing structured entry therefore
+forces the honest option: conclusions must be **mutually exclusive by construction**, and
+the builder checks exclusivity before it will compile, on numeric ranges and on categorical
+value sets, where both are decidable. A ruleset whose groups overlap is refused at
+authoring time, naming the two rows, instead of at run time naming nothing.
+
+This is a constraint the dropdown surface imposes on the ruleset design, not a limitation of
+the dropdown. It is also the first place where the open-world discipline costs a familiar
+convenience, and that is worth watching: if practitioners keep reaching for first-match
+ordering, the finding is about the subset, not about them.
+
+### What this still cannot establish
+
+That a practitioner can author a correct rule from dropdowns, or read the compiled N3 and
+recognise their own intent in it. Both are observations for the runbook work in
+[experiment 63](63-worked-example-runbooks.md), and neither is settled by the compiler
+being correct.
+
 ## Distinctions, and how each is enforced
 
 | Distinction | Enforcement |
 | --- | --- |
 | A ruleset classifies; it does not enumerate instances | **Validation rule**: a ruleset whose rules contain an instance IRI from a dataset is refused. This is the check that would have caught the Marina match |
+| The authored form is structured; N3 is compiled | **Structural**: the builder emits only the subset, so instance IRIs and negation-as-failure are unreachable rather than checked. The receipt shows both forms, and the digest is over the compiled N3 |
+| Negating a comparison is safe; negating existence is not | **Hard stop**: the comparator list contains complementary numeric builtins and `log:notEqualTo`, and no scoped negation. Absence is expressed against a pre-asserted `*Known` boolean, as the three current rulesets already do |
+| Two conclusions for one subject is an error, not a precedence | **Precondition**: the builder refuses overlapping groups with differing conclusions at authoring time, naming the rows. Both extraction sites already refuse at run time, so this is guidance, not a correctness fix. First-match ordering is unavailable in the monotonic subset |
 | A threshold without its unit is not a threshold | **Validation rule**: a numeric parameter must declare a unit |
 | An unknown is not a negative | **Validation rule**: the declared output vocabulary must include an unknown value, and missing input must map to it. The existing rules already honour this — "Missing evidence stays unknown" — and the check makes it binding on every future ruleset |
 | Applying a published hierarchy is not the same as the hierarchy | **Limitation**, stated in the ruleset's own provenance, plus required citations |

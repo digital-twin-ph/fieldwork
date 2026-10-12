@@ -8,10 +8,10 @@
  },
  "measuredAt": "2026-10-12",
  "counts": {
-  "widgets": 50,
+  "widgets": 48,
   "covered": 19,
   "awaiting": 13,
-  "none": 17,
+  "none": 15,
   "blocked": 1
  },
  "widgets": [
@@ -50,11 +50,6 @@
    "nodeType": "case_series",
    "expectation": "parity",
    "check": "22-case-series"
-  },
-  {
-   "nodeType": "centers",
-   "expectation": "none",
-   "reason": "Bundled demonstration points."
   },
   {
    "nodeType": "chart_output",
@@ -161,11 +156,6 @@
    "nodeType": "observations",
    "expectation": "none",
    "reason": "Supplied point data."
-  },
-  {
-   "nodeType": "places",
-   "expectation": "none",
-   "reason": "Bundled demonstration points."
   },
   {
    "nodeType": "policy",

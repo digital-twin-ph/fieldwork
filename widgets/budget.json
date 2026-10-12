@@ -3,12 +3,12 @@
  "note": "The size of the widget set, as a number somebody has to sign for. Admission has always been per-widget -- D1 and D2 are asked of one candidate at a time -- and nothing owned the total, so the set grew from 39 to 51 in three days while a refactor to shrink it sat unexecuted. Every one of those twelve passed its own review honestly. That is the failure this file exists to stop: not a bad widget, but a total nobody was accountable for. It is a ratchet in the pattern ontology/coupling-debt.json and widgets/check-coverage.json already use: the count may fall freely and may not rise unless this file is updated in the same commit, with the admission review that justifies the addition named. Raising it is allowed. Raising it silently is not. Split into two numbers on 2026-10-12: a widget costs code, a release, a lab check and an audit sweep against twelve criteria, while a retired widget costs none of that and a bundled composition costs a JSON file whose members already carry all of it. 'widgets' is the maintenance number -- live and unretired -- and 'addable' is the attention number a practitioner experiences. Reduction must move the first without growing the second, which is the difference between reduction and relabelling.",
  "measuredAt": "2026-10-12",
  "counts": {
-  "widgets": 50,
+  "widgets": 48,
   "primitive": 31,
-  "composite": 19,
-  "retired": 1,
+  "composite": 17,
+  "retired": 3,
   "compositions": 1,
-  "addable": 51
+  "addable": 49
  },
  "target": {
   "widgets": 41,
@@ -43,8 +43,8 @@
   },
   {
    "measuredAt": "2026-10-12",
-   "widgets": 50,
-   "note": "output retired, the first widget this project has ever actually retired. Its 0.1.2 release had already recorded that it was superseded and off the palette; what changed is that implementationStatus 'retired' now has an effect, where before it was a permitted value no file in src/ read."
+   "widgets": 48,
+   "note": "output, places and centers retired -- the first three this project has retired. All three were already superseded with working adapters; what was missing is that implementationStatus 'retired' had no effect anywhere."
   }
  ]
 }

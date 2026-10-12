@@ -1,4 +1,4 @@
-import type {WorkflowNode,Escape,Position} from './types.js';
+import type {WorkflowNode,Escape,Position,DistanceUnit} from './types.js';
 import type {DisplayValue,DisplayRow} from './results.js';
 import {SOURCE,tierLabel,serviceLabel,zoneLabel} from './old-naledi.js';
 const numeric=(key:string,label:string,value:number,min:number,max:number,step:number,help:string)=>`<div class="field"><label class="field-label" for="param-${key}">${label}</label><input id="param-${key}" data-param="${key}" type="number" value="${value}" min="${min}" max="${max}" step="${step}"><small>${help}</small></div>`;
@@ -19,15 +19,22 @@ export function oldInspector(n:WorkflowNode){
 export function oldEvidence(output:DisplayValue,row:DisplayRow,esc:Escape){
   const entries=output.kind==='facility-evidence'?[
     ['Ownership',row.owner],['Source facility type',row.serviceType],['Service assignment',serviceLabel(row.service||'Unknown')],['Evidence tier',tierLabel(row.tier||'Unknown')],['Source reference',row.reference]
-  ]:[['Location basis',output.locationSource?.kind==='input-points'?'Connected input point':'Generated grid location'],['Nearest qualifying facility',row.center?.name||'None'],['Straight-line distance',row.distanceKm===null?'Unknown':row.distanceKm!.toFixed(3)+' km'],['Proxy access time',row.minutes===null?'Unknown':row.minutes!.toFixed(2)+' min'],['Review threshold',output.thresholdMin+' min'],['Access zone',zoneLabel(row.zone||'Unknown')],['Evidence tier',row.center?tierLabel(row.center.tier||'None'):'Unknown'],['Service assignment',row.center?serviceLabel(row.center.service||'Unknown'):'Unknown'],['Source reference',row.center?.reference||'No qualifying facility'],['Eligible facilities',`${output.eligibleCount} of ${output.candidateCount}`]];
+  ]:[['Location basis',output.locationSource?.kind==='input-points'?'Connected input point':'Generated grid location'],['Nearest qualifying facility',row.center?.name||'None'],['Straight-line distance',distanceText(row)],['Proxy access time',row.minutes===null?'Unknown':row.minutes!.toFixed(2)+' min'],['Review threshold',output.thresholdMin+' min'],['Access zone',zoneLabel(row.zone||'Unknown')],['Evidence tier',row.center?tierLabel(row.center.tier||'None'):'Unknown'],['Service assignment',row.center?serviceLabel(row.center.service||'Unknown'):'Unknown'],['Source reference',row.center?.reference||'No qualifying facility'],['Eligible facilities',`${output.eligibleCount} of ${output.candidateCount}`]];
   if(output.facilitySource)entries.push(['Facility input',output.facilitySource.nodeId||'Connected data'],['Input records',String(output.facilitySource.inputCount)],['Missing facility locations',String(output.facilitySource.missingLocationCount)]);
   return `<h2>${esc(row.name)}</h2><p class="description">${esc(row.explanation)}</p>${entries.map(([k,v])=>`<div class="detail-row"><span>${k}</span><strong>${esc(v)}</strong></div>`).join('')}<div class="rule-preview">Historical facility evidence applies to the connected locations. Spatial proximity alone does not establish diagnostic availability.</div><a class="source-link" href="${SOURCE}06-Gaborone-Health-Facilities.ipynb" target="_blank" rel="noopener">Pinned source notebook ↗</a><div class="inspector-actions"><button id="inspect-rules" class="button small">View N3 & evidence ↗</button></div>`;
 }
+/** A distance reads in the unit it was measured in. `nearest` carries a unit knob, so the column
+ *  cannot say "km": a metres reading labelled km is wrong by a factor of a thousand on screen. */
+export function distanceText(row:{distance?:number|null; unit?:DistanceUnit},absent='Unknown'):string{
+  if(row.distance===null||row.distance===undefined)return absent;
+  return row.unit==='metres'?`${row.distance.toFixed(1)} m`:`${row.distance.toFixed(2)} km`;
+}
+
 export function resultTable(output:DisplayValue|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string){
   const rows=output?.rows||[],audit=output?.kind==='facility-evidence',access=output?.kind==='access';
   const columns=audit?['Facility','Service assignment','Evidence','Reference']:access?['Sample','Qualifying facility','Proxy minutes','Decision']:['Neighborhood','Nearest center','Distance','Decision'];
   const body=rows.map(r=>{
-    const cells=audit?[r.name,serviceLabel(r.service||'Unknown'),tierLabel(r.tier||'Unknown'),r.reference]:[r.name,r.center?.name||'—',access?(r.minutes===null?'Unknown':r.minutes!.toFixed(1)+' min'):(r.distanceKm===null?'—':r.distanceKm!.toFixed(2)+' km'),statusLabel(r.status)];
+    const cells=audit?[r.name,serviceLabel(r.service||'Unknown'),tierLabel(r.tier||'Unknown'),r.reference]:[r.name,r.center?.name||'—',access?(r.minutes===null?'Unknown':r.minutes!.toFixed(1)+' min'):distanceText(r,'—'),statusLabel(r.status)];
     return `<tr tabindex="0" data-place="${esc(r.id)}">${cells.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`;
   }).join('');
   return {head:columns.map(c=>`<th>${c}</th>`).join(''),body};

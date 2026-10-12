@@ -113,6 +113,30 @@ Application assets and the bundled EYE engine are cached after the first success
 
 After updating the application, reload to install the updated service worker, then reload again if the old interface remains visible.
 
+## Retired widgets, and what replaced them
+
+Six widgets were retired on 2026-10-12. **A retired widget never runs**, so a saved workflow holding
+one is rewritten when it loads and the Inspector names the replacement on the node itself. This
+table is here so a name in an old file, a screenshot or a migration notice can still be looked up.
+
+| Was | Did | Replaced by |
+| --- | --- | --- |
+| **Neighborhoods** (`places`) | Loaded one demonstration's neighbourhood points | **Input data** (`observations`), which edits any point layer |
+| **Cooling centers** (`centers`) | Loaded one demonstration's cooling-centre points | **Input data** (`observations`) |
+| **Visual output** (`output`) | One display node with a view setting for map, table or bar chart | **Map**, **Table** or **Chart**, chosen from the view the node had saved |
+| **Outreach criteria** (`policy`) | Flagged a location when an alert was active and its distance exceeded a threshold | **Apply ruleset** (`apply_ruleset`) with the *Outreach criteria* ruleset |
+| **Access review** (`access_policy`) | Flagged a location whose proxy travel time exceeded a threshold, and banded it into a zone | **Apply ruleset** with the *Access review* ruleset |
+| **Diagnostic evidence** (`xpert`) | Graded a facility's evidence level and expected service against a published hierarchy | **Apply ruleset** with the *Diagnostic evidence grading* ruleset |
+
+The last three were one widget each for one set of rules. Their rules are now **declared artifacts**
+with an identity, a version and a stated basis, and one widget applies any of them — so what was
+three node types is one node type and three rulesets you can read. Each migrated node pins the
+ruleset at the version that produced that widget's results, because a change to a rule changes a
+result.
+
+**Nothing was lost in any of the six.** Every one is fully replaceable, and each of their release
+files names the widget that replaces it, so a saved workflow migrates rather than refusing to open.
+
 ## References and provenance
 
 **08 · Manila coastal exposure** is the worked example for sea-level projections. It holds 60 OpenStreetMap health facilities in a Manila bounding box, the eight published AR6 tide gauges for the Philippines, and the 288-value projection extract, and it assigns each facility its nearest gauge with the distance. It runs offline; everything is bundled. Two licences apply and both travel with anything you derive: the projections are CC BY 4.0 and oblige three citations, the facilities are ODbL and share-alike.

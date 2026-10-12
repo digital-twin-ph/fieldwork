@@ -33,7 +33,7 @@ test('workflow reference limits count unique PDFs and reject conflicting metadat
 });
 
 test('run evidence snapshots citations and records lineage without injecting citations into rule premises',async()=>{
-  const w=exampleWorkflow();w.nodes[0].references=[reference({title:'Census "quote"\nnew line'})];w.nodes.find(n=>n.type==='policy').references=[reference({id:'method',role:'method'})];
+  const w=exampleWorkflow();w.nodes[0].references=[reference({title:'Census "quote"\nnew line'})];w.nodes.find(n=>n.type==='apply_ruleset').references=[reference({id:'method',role:'method'})];
   const inputs=[];
   const result=await executeWorkflow(w,async input=>{inputs.push(input);return w.nodes[0].params.data.features.map(f=>({subject:'urn:fieldwork:place:'+f.id,predicate:'urn:fieldwork:decision',object:'urn:fieldwork:Unknown'}));});
   assert.equal(result.evidence.length,2);assert.equal(result.receipts[0].references[0].role,'method');

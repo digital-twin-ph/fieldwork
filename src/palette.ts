@@ -46,6 +46,12 @@ export const RETIRED_FROM_PALETTE:readonly string[]=
  *  has no ports and cannot run, so the type is kept out of `ALWAYS_ADDABLE` on purpose. */
 export const ADDABLE_VIA_COMPOSITION=['micro_workflow'] as const;
 
+/** Addable, but not by choosing the type: the palette shows one entry per bundled ruleset and each
+ *  adds an `apply_ruleset` node already carrying that ruleset's pinned ports and declared
+ *  parameters. The same reasoning as compositions above — a generic entry would add a node with no
+ *  ruleset, which has no ports and cannot run. */
+export const ADDABLE_VIA_RULESET=['apply_ruleset'] as const;
+
 export function addableTypes(options:{
   exampleKey:string; templateTypes:readonly string[]; workflowTypes:readonly string[];
   catchmentTypes:readonly string[];

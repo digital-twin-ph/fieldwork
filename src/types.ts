@@ -40,6 +40,13 @@ export interface ParamsByType {
    *  type, version -- so a saved workflow validates and reports drift without the
    *  composition file being present, and `parameters` holds the public values it was run
    *  with. The first thing in a saved workflow to record a version. */
+  /** One widget for every declared ruleset. The ports are the ruleset's, pinned here rather than
+   *  looked up, so a saved workflow validates without the ruleset file being present — the same
+   *  reason a micro_workflow pins its composition's ports. */
+  apply_ruleset:{label:string;
+    ruleset:{id:string;version:string;title:string;
+      inputs:[string,PortType][];output:PortType};
+    parameters:Record<string,number>};
   micro_workflow:{label:string;
     composition:{id:string;nodeType:string;version:string;title:string;stage:string;
       inputs:[string,PortType][];output:PortType};
@@ -81,7 +88,7 @@ export type NodeType = keyof ParamsByType;
 export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:ParamsByType[T] & {label?:string}}}[K];
 /** The node types a saved workflow may still name and no canvas may still hold. A retired widget
  *  never runs, so loading one is a rewrite that must say so, or a refusal that names it. */
-export type RetiredNodeType='places'|'centers'|'output';
+export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert';
 
 export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType; version:'1'}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}

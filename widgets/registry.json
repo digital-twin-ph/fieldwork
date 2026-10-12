@@ -22,12 +22,17 @@
   {
    "id": "urn:fieldwork:widget:access_policy",
    "nodeType": "access_policy",
-   "currentVersion": "0.1.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
      "path": "widgets/releases/access_policy/0.1.0.json",
      "sha256": "e4ebf9a29a240fbe950e2b44c17197ae7d38d2b3840cd5c2b9ed7f97d66717af"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/access_policy/0.2.0.json",
+     "sha256": "234ad8cfe6d0089efd2138679c7071668ce90ff2ee4f991c55562d6cca854d36"
     }
    ]
   },
@@ -40,6 +45,18 @@
      "version": "0.1.0",
      "path": "widgets/releases/alert/0.1.0.json",
      "sha256": "324e8ecc76c4f5eb086308dcbdfed2d56bd997068c939bc455e4003aa7b510bd"
+    }
+   ]
+  },
+  {
+   "id": "urn:fieldwork:widget:apply_ruleset",
+   "nodeType": "apply_ruleset",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/apply_ruleset/0.1.0.json",
+     "sha256": "addf81a11b0b3971d16b8c2b5b365a0e50b9a9573f3fd75d8aa7ce504a7913a9"
     }
    ]
   },
@@ -530,12 +547,17 @@
   {
    "id": "urn:fieldwork:widget:policy",
    "nodeType": "policy",
-   "currentVersion": "0.1.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
      "path": "widgets/releases/policy/0.1.0.json",
      "sha256": "4c4bc7457d998d87904c4487380c156a8e52babb279089802c99f138ac4710e2"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/policy/0.2.0.json",
+     "sha256": "7829254c42ab5f0463f61c77e0addcd6a71cbe01691d708cd940a2786da06589"
     }
    ]
   },
@@ -835,12 +857,17 @@
   {
    "id": "urn:fieldwork:widget:xpert",
    "nodeType": "xpert",
-   "currentVersion": "0.1.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
      "path": "widgets/releases/xpert/0.1.0.json",
      "sha256": "4d8dda9091a8135633c782e61e2aaf41b8e27f2460073f4d3041ae53bb600088"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/xpert/0.2.0.json",
+     "sha256": "a71343fb9fd814d35bc8ec1c76f5031e02a69734e9e76bfed2500d0e2573e095"
     }
    ]
   }

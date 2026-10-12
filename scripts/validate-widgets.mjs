@@ -76,7 +76,13 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         const facilities=entry.nodeType==='facilities'&&migration.nodeType==='facilities'&&migration.implementation==='src/old-naledi.ts#migrateFacilitySources';
         const output=['map_output','table_output','chart_output'].includes(entry.nodeType)&&migration.nodeType==='output'&&migration.implementation==='src/output-contract.ts#migrateOutputNodes';
         const facilitySources=entry.nodeType==='find_health_facilities'&&migration.nodeType==='healthsites_discovery'&&migration.implementation==='src/health-facilities.ts#migrateHealthsitesNodes';
-        check((heat||facilities||output||facilitySources)&&migration.adapterVersion==='1','Unknown migration adapter');
+        // Three widgets that differed only in which rules they ran, collapsed into one that hosts
+        // a declared ruleset. The adapter pins each one's ruleset at the version that produced its
+        // results, because a rule change changes results.
+        const rulesets=entry.nodeType==='apply_ruleset'
+          &&['policy','access_policy','xpert'].includes(migration.nodeType)
+          &&migration.implementation==='src/core.ts#validateWorkflow';
+        check((heat||facilities||output||facilitySources||rulesets)&&migration.adapterVersion==='1','Unknown migration adapter');
       }
       check(Array.isArray(release.changes)&&release.changes.length>0&&release.changes.every(c=>typeof c.description==='string'&&c.description.length>0),'Missing change history');
       check(release.evidence?.status==='not-individually-certified','Unsupported certification claim');

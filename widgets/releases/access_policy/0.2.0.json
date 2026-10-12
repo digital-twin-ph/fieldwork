@@ -1,0 +1,59 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:access_policy",
+ "version": "0.2.0",
+ "nodeType": "access_policy",
+ "title": "Access review",
+ "released": "2026-10-12",
+ "implementationStatus": "retired",
+ "standardization": "example-specific",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['access_policy']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "access",
+    "type": "access"
+   }
+  ],
+  "output": "decisions",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/old-naledi.ts",
+   "src/old-naledi-ui.ts"
+  ],
+  "definition": "src/old-naledi.ts#OLD_TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Retired. Superseded by apply_ruleset, which hosts this widget's rules as a declared, versioned ruleset. This widget and two others differed only in which rules they ran, and all three carried those rules as template literals inside their executors. The rules became declared artefacts earlier on 2026-10-12, with the assembled text proved byte-identical to what the literals produced, and the implementation this widget used is now shared with the host rather than duplicated. A saved workflow holding this node is rewritten by src/core.ts#validateWorkflow into an apply_ruleset node with the ruleset pinned at the version that produced this widget's results, and stamped with sourceMigration so the Inspector names the replacement instead of rewriting saved work in silence. Fully replaceable, so no workflow refuses to open."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

@@ -8,8 +8,8 @@
  },
  "measuredAt": "2026-10-12",
  "counts": {
-  "widgets": 48,
-  "covered": 22,
+  "widgets": 46,
+  "covered": 20,
   "awaiting": 13,
   "none": 12,
   "blocked": 1
@@ -22,16 +22,16 @@
    "computes": "Derives a straight-line proxy travel time per facility from a speed, and grades service against it."
   },
   {
-   "nodeType": "access_policy",
-   "expectation": "parity",
-   "reason": "Was 'none', on the stated grounds that the decision is the reasoner's. That exemption was a claim that no independent check was possible, and it was wrong: each ruleset has a finite input space, so the lab enumerates it completely and reproduces every conclusion without a rule engine. Corrected 2026-10-12.",
-   "check": "23-rulesets",
-   "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter, evaluates N3, and extracts a classification."
-  },
-  {
    "nodeType": "alert",
    "expectation": "none",
    "reason": "A declared status. Nothing is derived from anything."
+  },
+  {
+   "nodeType": "apply_ruleset",
+   "expectation": "parity",
+   "check": "23-rulesets",
+   "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter with its unit, evaluates N3, and extracts a classification against the ruleset's declared vocabulary.",
+   "reason": "Checked by the Lab exhaustively rather than by sample: all three rulesets have finite input spaces, 46 cells in total, and check 23 reproduces every conclusion with a Python decision table and verifies the emitted receipt."
   },
   {
    "nodeType": "area",
@@ -160,13 +160,6 @@
    "reason": "Supplied point data."
   },
   {
-   "nodeType": "policy",
-   "expectation": "parity",
-   "reason": "Was 'none', on the stated grounds that the decision is the reasoner's. That exemption was a claim that no independent check was possible, and it was wrong: each ruleset has a finite input space, so the lab enumerates it completely and reproduces every conclusion without a rule engine. Corrected 2026-10-12.",
-   "check": "23-rulesets",
-   "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter, evaluates N3, and extracts a classification."
-  },
-  {
    "nodeType": "raster_input",
    "expectation": "none",
    "reason": "A supplied GeoTIFF, retained as given."
@@ -266,13 +259,6 @@
    "nodeType": "voronoi",
    "expectation": "parity",
    "check": "15-voronoi"
-  },
-  {
-   "nodeType": "xpert",
-   "expectation": "parity",
-   "reason": "Was 'none', on the stated grounds that the decision is the reasoner's. That exemption was a claim that no independent check was possible, and it was wrong: each ruleset has a finite input space, so the lab enumerates it completely and reproduces every conclusion without a rule engine. Corrected 2026-10-12.",
-   "check": "23-rulesets",
-   "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter, evaluates N3, and extracts a classification."
   }
  ]
 }

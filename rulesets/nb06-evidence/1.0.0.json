@@ -36,7 +36,19 @@
         ]
       }
     ],
-    "knownDefect": "fw:namedRule is derived by matching facility NAMES against two string literals in src/old-naledi.ts. A name-keyed match finds the wrong record without failing, and a renamed facility drops to the None branch, which changes its evidence level and then its access decision with nothing reported. The rules here enumerate no instance, which is why this defect sits in fact generation rather than in the ruleset -- and it is the reason the ruleset had to come out first."
+    "knownDefect": "fw:namedRule is derived by matching facility NAMES against two string literals in src/old-naledi.ts. A name-keyed match finds the wrong record without failing, and a renamed facility drops to the None branch, which changes its evidence level and then its access decision with nothing reported. The rules here enumerate no instance, which is why this defect sits in fact generation rather than in the ruleset -- and it is the reason the ruleset had to come out first.",
+    "ports": {
+      "inputs": [
+        [
+          "facilities",
+          "facilities"
+        ]
+      ],
+      "output": "gradedFacilities"
+    },
+    "projection": "facility-grading",
+    "parameterFrom": {},
+    "portsNote": "Declared so one widget can host every ruleset with the ruleset's own ports, pinned in the node as a micro_workflow pins its composition's. src/core.ts nodeInputs and outputOf already vary per node, so the mechanism is the one compositions use rather than a new one."
   },
   "outputVocabulary": {
     "predicates": [

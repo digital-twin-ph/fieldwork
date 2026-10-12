@@ -3,13 +3,12 @@
  "note": "The size of the widget set, as a number somebody has to sign for. Admission has always been per-widget -- D1 and D2 are asked of one candidate at a time -- and nothing owned the total, so the set grew from 39 to 51 in three days while a refactor to shrink it sat unexecuted. Every one of those twelve passed its own review honestly. That is the failure this file exists to stop: not a bad widget, but a total nobody was accountable for. It is a ratchet in the pattern ontology/coupling-debt.json and widgets/check-coverage.json already use: the count may fall freely and may not rise unless this file is updated in the same commit, with the admission review that justifies the addition named. Raising it is allowed. Raising it silently is not. Split into two numbers on 2026-10-12: a widget costs code, a release, a lab check and an audit sweep against twelve criteria, while a retired widget costs none of that and a bundled composition costs a JSON file whose members already carry all of it. 'widgets' is the maintenance number -- live and unretired -- and 'addable' is the attention number a practitioner experiences. Reduction must move the first without growing the second, which is the difference between reduction and relabelling.\n\nPENDING WIDGETS ARE EXEMPT, 2026-10-12, on the practitioner's rule. A widget that is pending because of merge activity -- not developed, not used -- does not count, precisely because it is emergent: we do not yet know whether it deserves to be a tree in that forest (above and below), nor whether it fills a value gap in the inventory (sideways). Counting a candidate against a target for the committed set makes the number mean two things at once.\n\nThe state already existed and was inert. implementationStatus 'proposed' has been a permitted value since the release format was written and exactly one line read it -- the line checking that the value is permitted. This is the same pattern 'retired' was in until it was made to take effect earlier today.\n\nWhat stops this being a parking lot: a pending widget must name what it REPLACES, so it cannot be a way to add capability for free; the exemption ends when the widget is developed and an example uses it, which is the practitioner's own two-part condition; and it carries a clock, because 'in flight' is a transient state and nine of the twelve widgets added between 2026-10-09 and 2026-10-12 went from added to independently checked within three days. A merge in flight for a fortnight is not in flight.\n\nThree populations were measured before choosing this one, and the two obvious readings were both wrong. Exempting widgets with no lab check would have exempted isochrone, nearest, access and facilities -- the untested set is the OLDEST widgets, five first released 2026-10-06, and isochrone is the centre of the John Snow example. It is untested because an independent check is hard, not because its value is in doubt. Exempting widgets no example exercises would have exempted measure_area and reproject. Neither predicate picks out what 'emergent' means.",
  "measuredAt": "2026-10-12",
  "counts": {
-  "widgets": 48,
+  "widgets": 46,
   "primitive": 31,
-  "composite": 17,
-  "retired": 3,
+  "composite": 15,
+  "retired": 6,
   "compositions": 1,
-  "addable": 49,
-  "pending": 0
+  "addable": 47
  },
  "target": {
   "widgets": 41,
@@ -46,6 +45,11 @@
    "measuredAt": "2026-10-12",
    "widgets": 48,
    "note": "output, places and centers retired -- the first three this project has retired. All three were already superseded with working adapters; what was missing is that implementationStatus 'retired' had no effect anywhere."
+  },
+  {
+   "measuredAt": "2026-10-12",
+   "widgets": 46,
+   "note": "policy, access_policy and xpert retired into apply_ruleset, which hosts their rules as declared versioned rulesets. Three palette entries and three widget contracts become one; the three projections remain and are dispatched by declared data, which the release says plainly rather than claiming code was deleted. Six widgets retired in one day, from a set that had never retired one."
   }
  ],
  "pendingRule": {

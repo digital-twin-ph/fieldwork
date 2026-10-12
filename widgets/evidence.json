@@ -27,7 +27,7 @@
   "example only": 10,
   "parity only": 11,
   "example, lab not applicable": 11,
-  "example+parity": 11,
+  "example+parity": 9,
   "neither applies": 1
  },
  "compositionsUsedByNoExample": [
@@ -46,17 +46,6 @@
    "rung": "example only"
   },
   {
-   "nodeType": "access_policy",
-   "exampleUses": [
-    "old-naledi"
-   ],
-   "exampleUseCount": 1,
-   "lab": "parity",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example+parity"
-  },
-  {
    "nodeType": "alert",
    "exampleUses": [
     "heat"
@@ -66,6 +55,18 @@
    "labOwed": false,
    "fieldUse": [],
    "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "apply_ruleset",
+   "exampleUses": [
+    "heat",
+    "old-naledi"
+   ],
+   "exampleUseCount": 2,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
   },
   {
    "nodeType": "area",
@@ -354,17 +355,6 @@
    "rung": "example, lab not applicable"
   },
   {
-   "nodeType": "policy",
-   "exampleUses": [
-    "heat"
-   ],
-   "exampleUseCount": 1,
-   "lab": "parity",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example+parity"
-  },
-  {
    "nodeType": "raster_input",
    "exampleUses": [
     "raster"
@@ -562,17 +552,6 @@
     "snow-voronoi"
    ],
    "exampleUseCount": 3,
-   "lab": "parity",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example+parity"
-  },
-  {
-   "nodeType": "xpert",
-   "exampleUses": [
-    "old-naledi"
-   ],
-   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

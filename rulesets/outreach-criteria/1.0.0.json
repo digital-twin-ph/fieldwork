@@ -18,7 +18,8 @@
       "default": 5,
       "decimals": 9,
       "placeholder": "{{threshold}}",
-      "meaning": "Distance above which an alerted location is flagged for review."
+      "meaning": "Distance above which an alerted location is flagged for review.",
+      "unitLabel": "km"
     }
   ],
   "inputContract": {
@@ -43,7 +44,25 @@
         "type": "boolean"
       }
     ],
-    "note": "fw:distanceKm welds a unit into a predicate name. It is kept at 1.0.0 because changing it changes the rules and this version must reproduce the shipped conclusions exactly; a unit-free predicate with a declared unit is the 2.0.0 change."
+    "note": "fw:distanceKm welds a unit into a predicate name. It is kept at 1.0.0 because changing it changes the rules and this version must reproduce the shipped conclusions exactly; a unit-free predicate with a declared unit is the 2.0.0 change.",
+    "ports": {
+      "inputs": [
+        [
+          "distances",
+          "distances"
+        ],
+        [
+          "alert",
+          "alert"
+        ]
+      ],
+      "output": "decisions"
+    },
+    "projection": "outreach",
+    "parameterFrom": {
+      "threshold": "thresholdKm"
+    },
+    "portsNote": "Declared so one widget can host every ruleset with the ruleset's own ports, pinned in the node as a micro_workflow pins its composition's. src/core.ts nodeInputs and outputOf already vary per node, so the mechanism is the one compositions use rather than a new one."
   },
   "outputVocabulary": {
     "predicate": "fw:decision",

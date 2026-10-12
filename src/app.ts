@@ -31,6 +31,7 @@ import type {Connection,Edge} from '@xyflow/react';
 import type {ReasonerQuad,ReasoningRequest,ReasoningResponse} from './worker-types.js';
 import {element as $,optionalElement,control} from './dom.js';
 import {errorMessage,required} from './guards.js';
+import {resolveRuleset} from './rulesets.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
@@ -463,6 +464,29 @@ function renderInspector(){
     const input=workflow.edges.find(e=>e.to===n.id&&e.port==='area'),output=result?.outputs.find(o=>o.nodeId===n.id);
     content+=`<div class="field"><label class="field-label" for="measure-area-source">Boundary input</label><select id="measure-area-source"><option value="">Select a Study area</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='area').map(x=>`<option value="${esc(x.id)}" ${input?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select><small>Selecting an area adds its connector to the canvas.</small><label class="field-label" for="area-unit">Area unit</label><select id="area-unit" data-param="unit">${areaUnitOptions(n.params.unit)}</select></div><div class="source-card"><span class="inspector-section">${dirty?'Run to calculate or update':'Calculated area'}</span><h3>${!dirty&&output?.measurement?esc(formatArea(output.measurement)):'—'}</h3><p>Approximate surface area on a sphere.</p></div><p class="description">Outputs the same study area with its calculated area attached. Connect it to a Study area input, such as Check spatial coverage. Square metres are retained as the canonical value; the selected unit controls display.</p><div class="notice">This calculation uses the polygon itself, including its shape, rather than its bounding box. It does not measure terrain surface area.</div>`;
   }else if(Object.hasOwn(OLD_TYPES,n.type)){content+=oldInspector(n);
+  }else if(n.type==='apply_ruleset'){
+    // Generated from the ruleset's declaration rather than hardcoded, which is what the declared
+    // parameters are for: each one carries its unit, its range and what it means, so the control,
+    // the label and the hint all come from the ruleset instead of being written per widget. This
+    // is the UI that three widgets used to have three copies of.
+    const pinned=n.params.ruleset,ruleset=resolveRuleset(pinned.id,pinned.version);
+    const basis={published:'Published basis',"practitioner-agreed":'Practitioner-agreed basis',
+      illustrative:'Illustrative — no source',proxy:'Proxy — no source'}[ruleset.basis.status]||ruleset.basis.status;
+    content+=`<span class="inspector-section">Ruleset</span><div class="detail-row"><span>${esc(ruleset.title)}</span><strong>${esc(ruleset.version)}</strong></div>`
+      +`<p class="description">${esc(ruleset.description)}</p>`;
+    if(ruleset.parameters.length){
+      content+='<span class="inspector-section">Rule settings</span>';
+      for(const parameter of ruleset.parameters)
+        content+=`<div class="field"><label class="field-label" for="ruleset-${esc(parameter.name)}">${esc(parameter.meaning.split('.')[0])}</label>`
+          +`<div class="input-unit"><input id="ruleset-${esc(parameter.name)}" type="number" min="${parameter.min}" max="${parameter.max}" step="0.5" value="${n.params.parameters[parameter.name]}">`
+          +`<span>${esc(parameter.unitLabel||'')}</span></div><small>${esc(parameter.meaning)}</small></div>`;
+    }
+    content+=`<div class="inspector-divider"></div><span class="inspector-section">Basis</span>`
+      +`<div class="detail-row"><span>${esc(basis)}</span><strong>${ruleset.basis.evidence.length} reference${ruleset.basis.evidence.length===1?'':'s'}</strong></div>`;
+    if(ruleset.basis.unresolvedCitations.length)
+      content+=`<p class="description">Cites ${ruleset.basis.unresolvedCitations.map(c=>esc(c.citation)).join(', ')}, which this build cannot resolve to anything you can open.</p>`;
+    content+=`<span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div>`
+      +`<div class="notice">${esc(ruleset.mustNotBeReadAs)}</div>`;
   }else if(n.type==='policy'){
     content+=`<span class="inspector-section">Rule settings</span><div class="field"><label class="field-label" for="threshold">Distance threshold</label><div class="input-unit"><input id="threshold" type="number" min="0" max="1000" step="0.5" value="${n.params.thresholdKm}"><span>km</span></div><small>Flag distances strictly greater than this value.</small></div><div class="rule-preview">When the heat alert is <b>active</b><br>and the nearest center is <b>more than ${n.params.thresholdKm} km away</b>,<br>flag the neighborhood for review.</div><span class="inspector-section">Missing evidence</span><p class="description">Missing coordinates, missing centers, or an unknown alert produce “Insufficient data”.</p><div class="inspector-divider"></div><span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div><div class="notice">Illustrative screening criteria. A flag is a reason to review evidence, not a risk estimate or an intervention order.</div>`;
   }else if(n.type==='alert'){
@@ -649,6 +673,12 @@ function renderInspector(){
   optionalElement('#edit-study-area')?.addEventListener('click',()=>openStudyAreaEditor(getNode(workflow,n.id,'area'),params=>change(w=>getNode(w,n.id,'area').params=params)));
   optionalElement('#area-view-n3')?.addEventListener('click',()=>{renderN3();switchView('rules');});
   $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('[data-param]').forEach(el=>el.addEventListener('change',()=>change(w=>updateParam(w,n.id,required(el.dataset.param),el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value))));
+  if(n.type==='apply_ruleset')
+    for(const parameter of resolveRuleset(n.params.ruleset.id,n.params.ruleset.version).parameters)
+      optionalElement(`#ruleset-${parameter.name}`)?.addEventListener('change',e=>{
+        const value=control(e).value===''?NaN:Number(control(e).value);
+        change(w=>{getNode(w,n.id,'apply_ruleset').params.parameters[parameter.name]=value;});
+      });
   optionalElement('#threshold')?.addEventListener('change',e=>{const value=control(e).value===''?NaN:Number(control(e).value);change(w=>getNode(w,n.id,'policy').params.thresholdKm=value);});
   optionalElement('#alert-state')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'alert').params.active=JSON.parse(control(e).value)));
   optionalElement('#assessment-date')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'alert').params.date=control(e).value));

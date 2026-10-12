@@ -35,14 +35,15 @@ import {mapSpecificationFacts} from './map-communication.js';
 import {assertProjectManifest,syncProjectManifest} from './project-manifest.js';
 import {migrateOutputNodes,decisionPresentation} from './output-contract.js';
 import {referencedPDFs,evidenceProvenance} from './evidence.js';
-import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit} from './types.js';
+import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType} from './types.js';
 import type {Reasoner} from './worker-types.js';
 import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status} from './results.js';
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
 interface ExecutionInputs extends OldInputs {polygons:Polygons;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection;original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
-import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources} from './old-naledi.js';
+import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading} from './old-naledi.js';
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
+import {outreachProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
 import {measureArea,validateAreaUnit} from './area-measurement.js';
 import {checkCoverage,validateCoverageParams} from './spatial-coverage.js';
@@ -74,6 +75,12 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
   reproject:{title:'Reproject input',group:'Sources',icon:'⇄',color:'blue',description:'Import projected UTM points and convert them to WGS84 longitude/latitude',inputs:[],output:'points'},
   raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
+  // One entry for every declared ruleset, replacing policy, access_policy and xpert, which
+  // differed only in which rules they ran. Ports are the ruleset's and are pinned per node, so
+  // inputs is empty and output is null here, exactly as micro_workflow declares them.
+  apply_ruleset:{title:'Apply ruleset',group:'Semantic reasoning',icon:'⋈',color:'purple',
+    description:'Apply a declared, versioned ruleset to classify an input',
+    inputs:[],output:null},
   micro_workflow:{title:'Micro-workflow',group:'Micro-workflows',icon:'⧈',color:'indigo',
     description:'A saved composition used as one step, which can be exploded into its primitives',
     inputs:[],output:null},
@@ -123,6 +130,7 @@ const point = (id:string,name:string,coordinates:Position|null|undefined):PointF
  *  input modes. Inside a composition the static lookup is still correct: members are
  *  registry widgets, never compositions, so nothing nests. */
 export function outputOf(node:WorkflowNode):PortType|null{
+  if(node.type==='apply_ruleset')return node.params.ruleset?.output??null;
   if(node.type==='micro_workflow')return node.params.composition?.output??null;
   return TYPES[node.type].output;
 }
@@ -132,6 +140,7 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // the node rather than looked up: a saved workflow validates without the file present.
   // An unconfigured one has no ports, which is the honest answer for a node on a canvas
   // whose composition has not been chosen yet.
+  if(node.type==='apply_ruleset')return structuredClone(node.params.ruleset?.inputs??[]);
   if(node.type==='micro_workflow')return structuredClone(node.params.composition?.inputs??[]);
   if(node.type==='compare_point_sets'&&node.params.centers)return [...TYPES.compare_point_sets.inputs,['originalCenter','mean-center'],['movedCenter','mean-center']];
   if(node.type==='chart_output'&&node.params.inputMode==='series')return [['series','table']];
@@ -149,7 +158,11 @@ export function exampleWorkflow():Workflow {
     {id:'centers',type:'observations',x:35,y:229,params:{label:'Cooling centers',data:{type:'FeatureCollection',features:[point('library','Central Library',[-84.367,33.79]),point('community','West Community Hall',[-84.426,33.823])]}}},
     {id:'nearest',type:'nearest',x:323,y:90,params:{unit:'kilometres'}},
     {id:'alert',type:'alert',x:323,y:284,params:{active:true,date:'2026-07-15'}},
-    {id:'criteria',type:'policy',x:605,y:151,params:{thresholdKm:5}},
+    // The template names the ruleset rather than the retired `policy` type, so the shipped example
+    // does not depend on a migration running. The threshold is the ruleset's declared parameter now,
+    // with its unit on the declaration instead of buried in a field name.
+    {id:'criteria',type:'apply_ruleset',x:605,y:151,params:{label:'Outreach criteria',
+      ruleset:pinnedRuleset('urn:fieldwork:ruleset:outreach-criteria','1.0.0'),parameters:{threshold:5}}},
     {id:'map',type:'map_output',x:879,y:70,params:{label:'Outreach map',inputMode:'decisions'}},
     {id:'table',type:'table_output',x:879,y:249,params:{label:'Decision table',inputMode:'decisions'}}
   ],edges:[
@@ -190,6 +203,18 @@ export function validateWorkflow(raw:unknown):Workflow {
   for(const edge of w.edges)
     if(edge&&nearestNodes.has(edge.to)&&(edge.port==='places'||edge.port==='centers'))
       edge.port=edge.port==='places'?'points':'candidates';
+  // policy, access_policy and xpert differed only in which rules they ran, and the rules are
+  // declared data now, so all three become one apply_ruleset node with their ruleset pinned at the
+  // version that produced their results. Stamped, because a retirement that silently rewrites a
+  // practitioner's saved work is the thing retirement was supposed to make visible.
+  w.nodes=w.nodes.map(n=>{
+    const pin=n&&RULESET_FOR_NODE_TYPE[n.type as string];
+    if(!pin)return n;
+    return {...n,type:'apply_ruleset',sourceMigration:{fromType:n.type as RetiredNodeType,version:'1'},
+      params:{label:(n.params as {label?:string}).label||TYPES[n.type].title,
+        ruleset:pinnedRuleset(pin.id,pin.version),
+        parameters:parametersFor(pin.id,pin.version,n.params as Record<string,unknown>)}};
+  }) as typeof w.nodes;
   migrateHealthsitesNodes(w);
   migrateFacilitySources(w);
   migrateOutputNodes(w);
@@ -212,6 +237,22 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='travel_time_band')validateBandNode(n);
     if(n.type==='stack_polygons')validateStackNode(n);
     if(n.type==='fill_interior_gaps')validateFillNode(n);
+    if(n.type==='apply_ruleset'){
+      const r=n.params.ruleset;
+      if(!r||!/^urn:fieldwork:ruleset:[a-z0-9-]+$/.test(r.id||'')||!/^\d+\.\d+\.\d+$/.test(r.version||''))
+        throw new Error('A rule application names a ruleset by id and version. A rule change changes results, so the version is pinned.');
+      if(!Array.isArray(r.inputs)||!r.inputs.length||!r.output)
+        throw new Error(`${r.title||r.id} pins no ports, so nothing could connect to it.`);
+      // Resolving it here is what makes a workflow naming a ruleset this build does not carry
+      // refuse to open, by name, rather than failing somewhere inside the executor.
+      const ruleset=resolveRuleset(r.id,r.version);
+      for(const parameter of ruleset.parameters){
+        const value=n.params.parameters?.[parameter.name];
+        if(!Number.isFinite(value))throw new Error(`${ruleset.title} needs a value for ${parameter.name}: ${parameter.meaning}`);
+        if((parameter.min!==undefined&&value<parameter.min)||(parameter.max!==undefined&&value>parameter.max))
+          throw new Error(`${parameter.name} must be between ${parameter.min} and ${parameter.max}.`);
+      }
+    }
     if(n.type==='micro_workflow'){
       const c=n.params.composition;
       if(!c||typeof c.id!=='string'||!/^urn:fieldwork:composition:[a-z][a-z_]*$/.test(c.id)
@@ -452,6 +493,31 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'reproject':{if(!node.params.data.features.length)throw new Error('Import a projected point file before running.');value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:{format:'reprojected-points',...structuredClone(node.params.provenance||{}),...structuredClone(node.params.source||{})},spatialReference:structuredClone(node.params.spatialReference)};break;}
       case 'alert':value=node.params;break;
       case 'nearest':value={rows:nearestPlaces(inputs.points,inputs.candidates,node.params.unit),centers:inputs.candidates.features,method:`Haversine; sphere radius 6371.0088 km; CRS84 longitude/latitude; distances in ${node.params.unit}`};break;
+      case 'apply_ruleset':{
+        // The merge: three widgets differed only in which rules they ran. The projection is the
+        // ruleset's own declaration, and each still assembles a different carrier for whatever
+        // consumes it -- so this collapses the palette and the contract, not the three projections.
+        const pinned=node.params.ruleset,bound=node.params.parameters;
+        switch(projectionOf(pinned.id,pinned.version)){
+          case 'outreach':{
+            const n3=makeN3(inputs.distances.rows,inputs.alert,bound.threshold);
+            const conclusions=await reasoner(n3.input);
+            value=outreachProjection(inputs.distances,inputs.alert,bound.threshold,conclusions);
+            receipts.push({nodeId:node.id,...n3,conclusions});break;
+          }
+          case 'access-review':{
+            const applied=await applyAccessReview(inputs.access,bound.threshold,reasoner);
+            value=applied.value;receipts.push({nodeId:node.id,...applied.receipt});break;
+          }
+          case 'facility-grading':{
+            const applied=await applyFacilityGrading(inputs.facilities,reasoner);
+            value=applied.value as unknown as DisplayValue;
+            receipts.push({nodeId:node.id,...applied.receipt});break;
+          }
+          default:throw new Error(`This build carries no projection for ${pinned.title}.`);
+        }
+        break;
+      }
       case 'policy':{
         const {rows,centers,method}=inputs.distances,alert=inputs.alert,threshold=node.params.thresholdKm;
         const n3=makeN3(rows,alert,threshold);const conclusions=await reasoner(n3.input);

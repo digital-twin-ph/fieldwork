@@ -304,6 +304,40 @@ What would settle the size of the slice: the smallest one that exercises the sam
 example claims to teach — a boundary, a facility registry, an access proxy, and a classification
 with its basis — without needing a widget that does not exist.
 
+**Audit the worked examples for their exact derivation and source.** The practitioner's
+request, 2026-10-12. Not scheduled. What is already known, measured the same day, is enough to say
+the audit will find something:
+
+Nine example variants ship. **Four** carry a `provenance.json`, and the four use **four different
+schemas** — no shared key beyond `files`:
+
+| Example data | Declares |
+| --- | --- |
+| `john-snow` | `retrieved`, `pointsRevision`, `networkRevision`, `files`, `transforms`, `notice` |
+| `snow-gboh` | `retrieved`, `source`, `sourceDigest`, `publisher`, `documentation`, `originalSource`, `licence`, `files` |
+| `manila-sea-level` | `builtAt`, `builtBy`, `environment`, `projections`, `sites`, `facilities` |
+| `old-naledi` | `repository`, `commit`, `files`, `notes` |
+
+So only one of the four declares a **licence** and a **publisher**, and only one declares an
+`originalSource` distinct from where the file was fetched from. Nothing validates any of this,
+because there is no shape to validate against — which is the same failure the widget releases had
+before `validate:widgets`, one level out.
+
+And the heat demo, the geoprivacy example and the raster example have **no data directory at all**:
+they are synthetic, built in code. That is legitimate and it is not declared anywhere a reader or a
+script can see. "Synthetic, authored for this demonstration" is a provenance claim, and an absent
+file is not that claim — it is indistinguishable from an omission.
+
+What the audit should answer per example, which is the shape the four files between them already
+half-declare: what the original source is, who published it, under what licence, what was retrieved
+and when, what digest it had, what transforms were applied, what is synthetic, and what a reader may
+not conclude from it. `snow-gboh` is the closest thing to a model.
+
+Why it matters beyond tidiness: [56](experiments/56-basis-behind-identity.md) is about the basis
+behind an identity, and the ruleset work of 2026-10-12 found that the one ruleset claiming a
+*published* basis cites three papers that resolve to nothing a reader can open. The examples are the
+other half of that question, and nothing has asked it of them yet.
+
 ## Known and recorded, not yet scheduled
 
 **Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**

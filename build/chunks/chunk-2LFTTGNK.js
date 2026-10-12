@@ -1,0 +1,2 @@
+function c(o,e){let t=s=>s*Math.PI/180,a=t(e[1]-o[1]),n=t(e[0]-o[0]),i=Math.sin(a/2)**2+Math.cos(t(o[1]))*Math.cos(t(e[1]))*Math.sin(n/2)**2;return 6371.0088*2*Math.asin(Math.sqrt(Math.min(1,Math.max(0,i))))}function l(o,e,t,a=c){let n=null;for(let i of e){let s=t(i);if(!s)continue;let r=a(o,s);(!n||r<n.kilometres)&&(n={candidate:i,kilometres:r})}return n}export{c as a,l as b};
+//# sourceMappingURL=chunk-2LFTTGNK.js.map

@@ -5,6 +5,7 @@ const boundary=sourceBoundary as Boundary;
 export interface OldInputs {points:PointCollection & {sourceNodeId?:string; sourceInfo?:SourceInfo}; area:AreaValue; facilities:GradedRegistryValue; samples:PointCollection & Partial<SamplesValue> & {sourceNodeId?:string; sourceKind?:string}; access:AccessValue}
 import {boundary as sourceBoundary,facilities,provenance} from '../examples/old-naledi/data.js';
 import {validateAreaParams} from './study-area.js';
+import {nearestOf} from './nearest-neighbour.js';
 export const SOURCE='https://git.cdc.gov/digital-twin/Gaborone-TB-Agent-Based-Modeling/-/blob/7f183843075a6534b6699cd107cc74def1315bcd/';
 export const DATASET='gaborone-7f183843';
 export const OLD_TYPES:Record<'area'|'facilities'|'samples'|'xpert'|'access'|'access_policy'|'facility_audit',NodeDefinition>={
@@ -165,7 +166,12 @@ export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner
       const eligible=inputs.facilities.facilities.filter(f=>rank[f.tier]>=minimum&&(node.params.service==='onsite'?f.service==='Onsite':f.service!=='Unknown'));
       const rows=inputs.samples.features.map((feature):AccessRow=>{
         const point={id:feature.id,name:feature.properties.name,coordinates:feature.geometry?.coordinates??null,attributes:{...feature.properties}};
-        let center:GradedFacility|null=null,distance:number|null=null;for(const f of eligible){if(!point.coordinates)continue;const d=distanceKm(point.coordinates,f.coordinates);if(distance===null||d<distance){center=f;distance=d;}}
+        // One shared search, three callers: see src/nearest-neighbour.ts. What stays here is the
+        // domain -- `eligible` is already narrowed by the evidence threshold, and the proxy
+        // minutes below are this widget's own addition. The injected distance function is passed
+        // through so the executor keeps its one dependency seam.
+        const match=point.coordinates?nearestOf(point.coordinates,eligible,f=>f.coordinates,distanceKm):null;
+        const center:GradedFacility|null=match?match.candidate:null,distance:number|null=match?match.kilometres:null;
         return {...point,center,distanceKm:distance,minutes:distance===null?null:distance*1000/node.params.speedMPerMin};
       });
       return {...inputs.samples,boundary:inputs.facilities.boundary,locationSource:{nodeId:inputs.samples.sourceNodeId,kind:inputs.samples.sourceKind==='generated-grid'?'generated-grid':'input-points'},kind:'access' as const,rows,eligibleCount:eligible.length,candidateCount:inputs.facilities.facilities.length,facilitySource:inputs.facilities.facilitySource,filters:{...node.params},centers:eligible.map((f):PointFeature=>({type:'Feature',id:f.id,properties:{name:f.name},geometry:{type:'Point',coordinates:f.coordinates}})),method:'Straight-line distance / walking speed; not street routing',source:SOURCE,dataset:DATASET};

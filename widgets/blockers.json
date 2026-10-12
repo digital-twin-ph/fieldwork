@@ -104,9 +104,11 @@
      "3 - set-level boolean and counts. An aggregate over the decision. canProceed is three conditions over two counts: rows.length>0 && reviewCount===0 && rows.length>excludedCount.",
      "4 - the filter: relation or decision to points. This is the only genuinely missing piece, and it is what facilities needs."
     ],
-    "whyNotABooleanPerPoint": "It would destroy MissingLocation. A point with no coordinates is not outside; it is unknown, and this project's standing rule is that absence is not a negative. The four-valued relation is how that is kept, and a boolean cannot carry it.",
+    "whyNotABooleanPerPoint": "WITHDRAWN. It argued that a boolean destroys MissingLocation, which was defending an artefact. If the input is genuinely points the relation is THREE-valued -- Inside, Boundary, Outside -- and the fourth value exists only because the carrier admits non-points. The fix belongs at the carrier, not in the relation vocabulary.",
     "whyNotABooleanOutput": "'All points belong' is not a predicate over the relation -- it is a policy applied to it. coverage_check's own rules say so in a comment: 'Boundary points are included by policy.' So the boolean belongs downstream of a ruleset, not as an output mode of a geometry widget. Giving a selection widget output modes would fuse policy back into geometry, which is exactly what coverage_check did.",
-    "alsoFound": "coverage_check's retainedData filters on `excluded`, NOT on relation, so the points it retains INCLUDE Outside ones. It is not the inside-set selection facilities needs, which I had half-assumed it was."
+    "alsoFound": "coverage_check's retainedData filters on `excluded`, NOT on relation, so the points it retains INCLUDE Outside ones. It is not the inside-set selection facilities needs, which I had half-assumed it was.",
+    "correction": "Withdrawn 2026-10-12, challenged by the practitioner: 'This is a GIS studio, and a point is essentially x and y, lat, long coordinates. Where did this reasoning come from?' It came from the code -- src/spatial-predicates.ts returns 'MissingLocation' when coordinates are absent, and experiment 03 distinguishes four relations -- and I restated a project-specific data-quality state as a claim about points. That is a category error. A point IS coordinates; a PointFeature with geometry:null is not a point with an unknown location, it is not a point.",
+    "whatStands": "The boundary-policy argument, which is independent: Inside and Boundary both concluding Accept is a policy stated in a code comment, so a set-level boolean is a policy applied to the relation rather than a reading of it, and belongs downstream of a ruleset either way."
    }
   },
   {
@@ -120,6 +122,22 @@
    "whyItMatters": "Its policy is stated in a code comment -- 'Boundary points are included by policy' -- and two of its rules map DIFFERENT relations to the SAME decision: Outside to Review and MissingLocation to Review. So the policy collapses outside-ness and unknown-ness, which is the distinction the four-valued relation upstream exists to preserve. Declaring the ruleset makes that choice visible and contestable; a template literal does not. It is also the second OR compiled by hand -- Inside and Boundary both conclude Accept -- after facilityN3's last two rules.",
    "formExtension": "One rule concludes about the ACTIVITY rather than a subject: '{ ?activity fw:checkedRecord ?r. ?r fw:coverageDecision fw:Review. } => { ?activity fw:requiresReview true. }'. Experiment 106's authored form concludes per subject only, so hosting this ruleset needs set-level conclusions, which is a real extension and not a detail.",
    "record": "docs/experiments/65-ruleset-as-data.md, 106-rule-builder-ui.md"
+  },
+  {
+   "id": "points-carrier-admits-non-points",
+   "claim": "PointFeature declares geometry as Point|null, so the `points` carrier admits features that are not points. Two unrelated populations arrive through it and one relation value conflates them.",
+   "blocks": [],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "twoPopulations": [
+    "(a) An imported record whose coordinates were absent in the source. src/input-data.ts writes geometry:null when they are. This is a data-quality fact about a row, it is legitimate to report rather than reject -- experiment 48 found that validating unconditionally made a node impossible to add -- and it belongs at the IMPORT boundary as a reported exclusion, which facilities already does with missingLocationCount.",
+    "(b) Something with no location at all. src/case-series.ts builds a FeatureCollection whose every feature has geometry:null from a table, and casts it `as unknown as PointCollection` to reuse the point-based path. The double cast is the admission: the code had to lie to the type system to put non-points in a point collection."
+   ],
+   "consequence": "src/spatial-predicates.ts returns MissingLocation for both, so one relation value means 'the source omitted a location' and 'this thing has no location'. Those are different facts and only the first is about data quality.",
+   "liftTest": "PointFeature requires a geometry; records without coordinates are reported and excluded at the import boundary; non-spatial tables travel as `table`; and SpatialRelation is three-valued.",
+   "whyItMatters": "This is D7 one level above port names -- a carrier whose name claims more than it carries. D7 swept port NAMES on 2026-10-12 and found four encoding a use; it did not ask whether a port TYPE admits what its name says. The four-valued relation, and my own argument defending it, are both downstream of this.",
+   "record": "docs/audits/ontology-audit.md (D7), docs/experiments/03-input-data-and-spatial-review.md"
   }
  ]
 }

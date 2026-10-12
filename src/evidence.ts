@@ -78,13 +78,42 @@ export function evidenceProvenance(nodes:WorkflowNode[],edges:Workflow['edges'],
     facts+=`${plan} a prov:Plan; dcterms:identifier ${literal(node.id)}.\n${step} a prov:Activity; fw:workflowNode ${plan}.\n${output} a prov:Entity.\n`;
     facts+=runtimeBindingN3(node,runId,receipts);
     for(const edge of edges.filter(e=>e.to===node.id&&ids.has(e.from)))facts+=`${step} prov:used ${iri('output:'+edge.from)}.\n`;
-    for(const ref of node.references||[]){
-      const citation=iri('reference:'+node.id+':'+ref.id),role={data:'DataSourceReference',method:'MethodReference',assumption:'AssumptionReference',context:'ContextReference'}[ref.role];
-      facts+=`${plan} dcterms:references ${citation}.\n${citation} a fw:EvidenceReference, prov:Entity; dcterms:title ${literal(ref.title)}; fw:referenceRole fw:${role}; dcterms:created ${literal(ref.addedAt)}^^xsd:dateTime; dcterms:modified ${literal(ref.modifiedAt)}^^xsd:dateTime.\n`;
-      for(const [predicate,value] of [['dc:creator',ref.authors],['dcterms:issued',ref.published],['fw:locator',ref.locator],['dcterms:description',ref.notes]])if(value)facts+=`${citation} ${predicate} ${literal(value)}.\n`;
-      if(ref.kind==='url')facts+=`${citation} dcterms:source <${referenceURL(ref.url)}> .\n`;
-      else facts+=`${citation} dcterms:source <urn:sha256:${ref.sha256}>; dcterms:format "application/pdf"; fw:sha256 ${literal(ref.sha256)}; fw:byteSize ${ref.bytes}; fw:filename ${literal(ref.filename)}.\n`;
-    }
+    for(const ref of node.references||[])facts+=referenceN3(iri('reference:'+node.id+':'+ref.id),plan,ref,literal);
+  }
+  // A ruleset's basis, from the receipts of the runs that applied it. Attached to the **ruleset**
+  // as a prov:Plan rather than to the node, because the authority belongs to the rules and not to
+  // the practitioner who placed a widget — and because the same ruleset applied by two nodes is
+  // one basis, not two.
+  //
+  // Emitted here, into provenance, and never into `facts` or `rules`. A citation in a rule premise
+  // would let the reasoner draw conclusions from a bibliography, which the test beside this file
+  // has asserted against for node references since before rulesets existed.
+  const seen=new Set<string>();
+  for(const receipt of receipts){
+    const ruleset=receipt.ruleset;
+    if(!ruleset||seen.has(ruleset.id+'@'+ruleset.version))continue;
+    seen.add(ruleset.id+'@'+ruleset.version);
+    const entity=`<${ruleset.id}>`;
+    facts+=`${entity} a fw:Ruleset, prov:Plan; dcterms:hasVersion ${literal(ruleset.version)}; `
+      +`dcterms:title ${literal(ruleset.title)}; fw:basisStatus fw:${ruleset.basis.status.replace(/(^|-)([a-z])/g,(_,d,c)=>c.toUpperCase())}.\n`;
+    facts+=`${iri('plan:'+receipt.nodeId)} prov:hadPlan ${entity}.\n`;
+    for(const ref of ruleset.basis.evidence)
+      facts+=referenceN3(iri('ruleset:'+ruleset.id.split(':').pop()+':'+ref.id),entity,ref,literal);
+    // An unresolved citation is recorded as unresolved rather than as a reference. A bibliography
+    // entry nobody can open is not evidence, and emitting it as one would overstate the basis in
+    // exactly the place a reader goes to check it.
+    for(const unresolved of ruleset.basis.unresolvedCitations)
+      facts+=`${entity} fw:unresolvedCitation ${literal(unresolved.citation)}.\n`;
   }
   return {evidence,provenanceN3:facts};
+}
+
+/** One emitter for both node references and ruleset evidence, so the two cannot drift apart. */
+function referenceN3(citation:string,subject:string,ref:EvidenceReference,literal:(text:string)=>string):string{
+  const role={data:'DataSourceReference',method:'MethodReference',assumption:'AssumptionReference',context:'ContextReference'}[ref.role];
+  let facts=`${subject} dcterms:references ${citation}.\n${citation} a fw:EvidenceReference, prov:Entity; dcterms:title ${literal(ref.title)}; fw:referenceRole fw:${role}; dcterms:created ${literal(ref.addedAt)}^^xsd:dateTime; dcterms:modified ${literal(ref.modifiedAt)}^^xsd:dateTime.\n`;
+  for(const [predicate,value] of [['dc:creator',ref.authors],['dcterms:issued',ref.published],['fw:locator',ref.locator],['dcterms:description',ref.notes]])if(value)facts+=`${citation} ${predicate} ${literal(value)}.\n`;
+  if(ref.kind==='url')facts+=`${citation} dcterms:source <${referenceURL(ref.url)}> .\n`;
+  else facts+=`${citation} dcterms:source <urn:sha256:${ref.sha256}>; dcterms:format "application/pdf"; fw:sha256 ${literal(ref.sha256)}; fw:byteSize ${ref.bytes}; fw:filename ${literal(ref.filename)}.\n`;
+  return facts;
 }

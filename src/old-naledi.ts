@@ -1,5 +1,5 @@
 import {containsPoint,boundaryExtent,gridPoints,GRID_METHOD} from './point-grid.js';
-import {resolveRuleset,bindParameters} from './rulesets.js';
+import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
 import type {Boundary,Position,Workflow,WorkflowNode,NodeDefinition,NodeType,ParamsByType,PointFeature,PointCollection,SourceInfo} from './types.js';
 import type {Facility,GradedFacility,AreaValue,SamplesValue,RegistryValue,GradedRegistryValue,AccessValue,Receipt,AccessRow} from './results.js';
 import type {Reasoner,ReasonerQuad} from './worker-types.js';
@@ -90,8 +90,9 @@ export function facilityN3(items:Facility[]){
     const kind=['Referral Hospital','District Hospital','Primary Hospital'].includes(f.serviceType)?'Hospital':['Poly Clinic','Clinic with Maternity','Clinic'].includes(f.serviceType)?'Clinic':f.serviceType==='Health Post'?'HealthPost':'Other';
     return `fw:${f.id} fw:namedRule fw:${named}; fw:government ${f.owner==='GOVERNMENT'}; fw:facilityKind fw:${kind}.`;
   }).join('\n');
-  const rules=bindParameters(resolveRuleset('urn:fieldwork:ruleset:nb06-evidence','1.0.0'),{});
-  return {facts:prefix+facts,rules:prefix+rules,input:prefix+facts+'\n'+rules};
+  const nb06=resolveRuleset('urn:fieldwork:ruleset:nb06-evidence','1.0.0');
+  const rules=bindParameters(nb06,{});
+  return {facts:prefix+facts,rules:prefix+rules,input:prefix+facts+'\n'+rules,ruleset:rulesetCitation(nb06)};
 }
 function assertion<T extends string>(quads:ReasonerQuad[],id:string,predicate:string,allowed:readonly T[]):T{
   const terms=[...new Set(quads.filter(q=>q.subject==='urn:fieldwork:'+id&&q.predicate==='urn:fieldwork:'+predicate).map(q=>q.object.replace('urn:fieldwork:','')))];
@@ -105,7 +106,7 @@ export function accessN3(rows:AccessRow[],threshold:number){
   const facts=rows.map(r=>`fw:${r.id} fw:accessKnown ${r.minutes!==null}.${r.minutes===null?'':`\nfw:${r.id} fw:proxyMinutes ${r.minutes.toFixed(9)}.`}`).join('\n');
   const ruleset=resolveRuleset('urn:fieldwork:ruleset:access-review','1.0.0');
   const rules=bindParameters(ruleset,{threshold:Number(threshold.toFixed(9))});
-  return {facts:prefix+facts,rules:prefix+rules,input:prefix+facts+'\n'+rules};
+  return {facts:prefix+facts,rules:prefix+rules,input:prefix+facts+'\n'+rules,ruleset:rulesetCitation(ruleset)};
 }
 export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner:Reasoner,receipts:Receipt[],distanceKm:(a:Position,b:Position)=>number,runId=crypto.randomUUID()){
   switch(node.type){

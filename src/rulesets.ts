@@ -19,6 +19,7 @@
  *  travel time". Those are honest and they are not citations, and a template literal in an
  *  execution path kept the difference invisible.
  */
+import type {EvidenceReference} from './evidence.js';
 import outreachCriteria from '../rulesets/outreach-criteria/1.0.0.json' with {type:'json'};
 import accessReview from '../rulesets/access-review/1.0.0.json' with {type:'json'};
 import nb06Evidence from '../rulesets/nb06-evidence/1.0.0.json' with {type:'json'};
@@ -33,8 +34,34 @@ export interface Ruleset {
   parameters:RulesetParameter[];
   inputContract:{factGenerator:string; subjectKind:string; expects:unknown[]; note?:string; knownDefect?:string};
   outputVocabulary:Record<string,unknown>;
-  basis:{status:string; citations:string[]; statedBy:string; note?:string};
+  basis:RulesetBasis;
 }
+
+/** A ruleset's authority, and whether a reader can get to it.
+ *
+ *  `evidence` reuses `EvidenceReference` unchanged — the same url-or-pdf-with-digest union that
+ *  node references use, so a cited PDF is verified by hash rather than trusted by filename, and
+ *  the provenance emitter already knows how to write it.
+ *
+ *  `unresolvedCitations` exists because restructuring this field found the gap it names. The one
+ *  ruleset recorded as having a cited basis cites three papers as author-year strings, which
+ *  resolve to nothing a reader can open. No locator was invented to close that; the gap is
+ *  recorded, and the ratchet counts resolvable evidence rather than citation strings. */
+export interface RulesetBasis {
+  status:'published'|'practitioner-agreed'|'illustrative'|'proxy';
+  statedBy:string;
+  evidence:EvidenceReference[];
+  unresolvedCitations:{citation:string; supports?:string; whatWouldResolveIt:string}[];
+  note?:string;
+}
+
+/** What a run records about the ruleset it applied. Carried on the receipt and emitted into
+ *  provenance — never into the facts or the rules. A citation in a rule premise would let the
+ *  reasoner draw conclusions from a bibliography, which `tests/evidence.test.mjs` has asserted
+ *  against for node references since before rulesets existed. */
+export interface RulesetCitation {id:string; version:string; title:string; basis:RulesetBasis}
+export const rulesetCitation=(ruleset:Ruleset):RulesetCitation=>
+  ({id:ruleset.id,version:ruleset.version,title:ruleset.title,basis:structuredClone(ruleset.basis)});
 
 const BUNDLED=[outreachCriteria,accessReview,nb06Evidence] as unknown as Ruleset[];
 export const rulesetKey=(id:string,version:string)=>`${id}@${version}`;

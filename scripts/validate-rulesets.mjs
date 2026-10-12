@@ -42,8 +42,22 @@ for(const {path,doc} of sets){
     problems.push(`${at}: basis.status must be one of ${[...BASIS].join(', ')}.`);
   if(!doc.basis?.statedBy?.trim())
     problems.push(`${at}: basis.statedBy must name who or what states the basis.`);
-  if(doc.basis?.status==='published'&&!(doc.basis.citations??[]).length)
-    problems.push(`${at} claims a published basis and cites nothing.`);
+  if(!Array.isArray(doc.basis?.evidence)||!Array.isArray(doc.basis?.unresolvedCitations))
+    problems.push(`${at}: basis must declare evidence and unresolvedCitations, each an array, even when empty.`);
+  if(doc.basis?.status==='published'&&!(doc.basis.evidence??[]).length&&!(doc.basis.unresolvedCitations??[]).length)
+    problems.push(`${at} claims a published basis and names nothing at all.`);
+  for(const ref of doc.basis?.evidence??[]){
+    if(!['url','pdf'].includes(ref.kind))
+      problems.push(`${at}: evidence must be kind "url" or "pdf" — the same reference shape nodes use, so a cited PDF is verified by digest rather than trusted by filename.`);
+    if(ref.kind==='url'&&!/^https?:\/\//.test(ref.url??''))problems.push(`${at}: ${ref.id} is a url reference without an http or https URL.`);
+    if(ref.kind==='pdf'&&!/^[0-9a-f]{64}$/.test(ref.sha256??''))problems.push(`${at}: ${ref.id} is a pdf reference without a SHA-256.`);
+    for(const field of ['id','title','role','addedAt','modifiedAt'])
+      if(!ref[field])problems.push(`${at}: evidence ${ref.id??'(no id)'} is missing ${field}.`);
+  }
+  for(const unresolved of doc.basis?.unresolvedCitations??[])
+    if(!unresolved.citation?.trim()||!unresolved.whatWouldResolveIt?.trim())
+      problems.push(`${at}: an unresolved citation must name itself and say what would resolve it. `
+        +`"We cite three papers" and "a reader can open three papers" are different claims.`);
   // An unknown value is required, because absence of a fact already means unknown: asserting it is
   // a different and stronger statement, and a vocabulary without one cannot make that statement.
   const vocabularies=doc.outputVocabulary?.predicates??(doc.outputVocabulary?.predicate?[doc.outputVocabulary]:[]);
@@ -74,7 +88,10 @@ for(const {path,doc} of sets){
         +`the reasoner as literal text and match nothing.`);
 }
 
-const uncited=sets.filter(s=>!(s.doc.basis?.citations??[]).length);
+// Resolvable evidence, not citation strings. Restructuring the basis to carry url-or-pdf
+// references is what showed the difference: the one ruleset recorded as having a cited basis cites
+// three papers as author-year text, which resolve to nothing a reader can open.
+const uncited=sets.filter(s=>!(s.doc.basis?.evidence??[]).length);
 if(uncited.length>ledger.uncitedCeiling)
   problems.push(`${uncited.length} rulesets carry no citation and rulesets/ledger.json sets uncitedCeiling `
     +`to ${ledger.uncitedCeiling}: ${uncited.map(s=>s.doc.id).join(', ')}. A ruleset must be sourced. `
@@ -95,6 +112,8 @@ if(problems.length){
   for(const p of problems)console.error(`  • ${p}\n`);
   process.exit(1);
 }
-console.log(`Rulesets: ${sets.length} declared, ${sets.length-uncited.length} cited, ${uncited.length} uncited `
-  +`against a ceiling of ${ledger.uncitedCeiling}.`);
-if(uncited.length)console.log(`  uncited: ${uncited.map(s=>`${s.doc.id.split(':').pop()} (${s.doc.basis.status})`).join(', ')}`);
+const unresolved=sets.reduce((n,s)=>n+(s.doc.basis?.unresolvedCitations??[]).length,0);
+console.log(`Rulesets: ${sets.length} declared, ${sets.length-uncited.length} with resolvable evidence, `
+  +`${uncited.length} without, against a ceiling of ${ledger.uncitedCeiling}. `
+  +`${unresolved} citation${unresolved===1?'':'s'} named but not resolvable.`);
+if(uncited.length)console.log(`  no resolvable evidence: ${uncited.map(s=>`${s.doc.id.split(':').pop()} (${s.doc.basis.status})`).join(', ')}`);

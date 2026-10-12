@@ -16,18 +16,27 @@ tasks say so, and name the record that would settle them.
 
 ## What is actually blocked
 
-Two things. Everything else in this file is waiting on one of them, or is a defect that
-nothing is waiting on.
+Everything else in this file is waiting on one of these, or is a defect that nothing is waiting on.
 
-1. **No widget can put a raster value onto a point.** This blocks completing the sea-level
-   worked example with real facility elevations, which blocks the pack's three reviews, which
-   blocks admission. Designed in
-   [67](docs/experiments/67-sample-raster-at-points.md); not built.
-2. **There is no typed field schema beyond point attributes.** This blocks the ruleset widget
-   ([65](docs/experiments/65-ruleset-as-data.md)), the `xpert` reconstitution, and the port
-   contracts ([66](docs/experiments/66-ports-as-schema-binding.md)), all three of which need to
-   ask an input what fields it has and what they mean. `src/attribute-schema.ts` does this for
-   `PointCollection` only; table, raster and network have nothing.
+**Both of the two blockers recorded here were wrong when re-derived on 2026-10-12**, which is
+why they now live in `widgets/blockers.json` with a liftTest and a revisit clock rather than in
+prose. The practitioner's rule: even blockers are not permanent, and each should be revisited in
+DE mode.
+
+1. ~~**No widget can put a raster value onto a point.**~~ **Lifted.** `sample_raster` 0.1.0 is
+   registered, implemented and executable — points + raster → points — and has been since
+   2026-10-12. This entry still read "Designed in
+   [67](docs/experiments/67-sample-raster-at-points.md); not built" while `docs/todo.md` had
+   already noted "now done" in the middle of a paragraph about something else, so the project
+   held the stale claim and its refutation at the same time.
+2. **There is no typed field schema beyond point attributes.** True, and **narrowed**: it was
+   recorded as blocking the ruleset widget outright and it blocks only the *general* form of it,
+   where any field of any input binds to a declared role. It does not block the merge that
+   reduces the widget count, because the three fact generators take typed carriers rather than
+   attribute tables — `makeN3(NearestRow[])`, `accessN3(AccessRow[])`, `facilityN3(Facility[])`.
+   A blocker stated one size too large had been stopping work it did not block.
+   `src/attribute-schema.ts` still covers `PointCollection` only; table, raster and network have
+   nothing, and that is what remains true.
 
 ## Known defects, not blocking
 

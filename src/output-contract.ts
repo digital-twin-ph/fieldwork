@@ -8,8 +8,11 @@ export function migrateOutputNodes(workflow:Workflow):void{
     const view=node.params.view??'map';
     if(!['map','table','bars'].includes(view))throw new Error('Visual outputs must use a map, table, or bar chart.');
     if(node.params.label!==undefined&&(typeof node.params.label!=='string'||node.params.label.length>60))throw new Error('Output names must be text of at most 60 characters.');
-    if(view==='bars')return {...node,type:'chart_output',params:{label:node.params.label||`Chart · ${node.id}`.slice(0,60)}};
-    return {...node,type:view==='map'?'map_output':'table_output',params:{label:node.params.label||`${view==='map'?'Map':'Table'} · ${node.id}`.slice(0,60),inputMode:'decisions'}};
+    // Stamped, so the rewrite is reportable. `output` is retired, and a retirement that silently
+    // rewrites a practitioner's saved work is the thing retirement was supposed to make visible.
+    const migration={fromType:'output',version:'1'} as const;
+    if(view==='bars')return {...node,type:'chart_output',sourceMigration:migration,params:{label:node.params.label||`Chart · ${node.id}`.slice(0,60)}};
+    return {...node,type:view==='map'?'map_output':'table_output',sourceMigration:migration,params:{label:node.params.label||`${view==='map'?'Map':'Table'} · ${node.id}`.slice(0,60),inputMode:'decisions'}};
   });
 }
 

@@ -104,8 +104,16 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
       if(nodeInputs)for(const count of [1,8])check(nodeInputs({type:entry.nodeType,params:{pointInputCount:count}}).filter(([,type])=>type==='points').length===count,'Dynamic port expansion drift');
     }
     for(const path of [current.configuration.typescriptFile,...current.implementation.files,current.implementation.definition.split('#')[0]])await access(localPath(path));
+    // One replacement, or several. The field held a single IRI, which assumed a retired widget
+    // maps onto exactly one successor. `output` broke that on 2026-10-12: it is replaceable by
+    // map_output, table_output or chart_output, and which one is chosen per node from the view
+    // that node saved. Naming only one would have been false, and naming none would have read as
+    // "not replaceable" -- the state that makes a saved workflow refuse to open.
     const replacement=current.compatibility.replacementCandidate;
-    check(replacement===null||catalog.widgets.some(w=>w.id===replacement&&w.id!==entry.id),'Unknown replacement candidate');
+    const candidates=replacement===null?[]:Array.isArray(replacement)?replacement:[replacement];
+    check(replacement===null||candidates.length>0,'An empty replacement list is not the same as no replacement: use null');
+    for(const candidate of candidates)
+      check(catalog.widgets.some(w=>w.id===candidate&&w.id!==entry.id),`Unknown replacement candidate: ${candidate}`);
   }
   check(Object.keys(definitions).every(type=>types.has(type)),'Unregistered implementation widget');
   return {widgets:ids.size,releases:releaseCount};
@@ -189,11 +197,17 @@ export function classifyWidgets(releases,catalog){
       problems.push(`${nodeType} maps to ${owner.slice(8)}, which is neither a host vocabulary nor a namespace of any catalogued pack`);
     if(owners.length>1)problems.push(`${nodeType} maps to more than one domain: ${owners.join(', ')}. A widget belongs to one domain or to none.`);
     const pack=owners.length===1&&!owners[0].startsWith('unknown:')?owners[0]:null;
-    widgets.push({nodeType,classification:foreign.length?'domain':'standard',...(pack?{pack}:{})});
+    // A retired widget is archived, not merely unaddable: it leaves the palette, the counts and
+    // the coverage ledger. `implementationStatus` has been a valid field since this format was
+    // written and no file read it, so a declared retirement had no effect anywhere.
+    const retired=release.implementationStatus==='retired';
+    widgets.push({nodeType,classification:foreign.length?'domain':'standard',...(pack?{pack}:{}),...(retired?{retired:true}:{})});
   }
-  const domain=widgets.filter(w=>w.classification==='domain');
+  const live=widgets.filter(w=>!w.retired);
+  const domain=live.filter(w=>w.classification==='domain');
   return {problems,widgets:widgets.sort((a,b)=>a.nodeType.localeCompare(b.nodeType)),
-    standardCount:widgets.length-domain.length,domainCount:domain.length,
+    retiredCount:widgets.length-live.length,
+    standardCount:live.length-domain.length,domainCount:domain.length,
     byPack:Object.fromEntries(packs.map(pack=>[pack.id,domain.filter(w=>w.pack===pack.id).map(w=>w.nodeType)]))};
 }
 

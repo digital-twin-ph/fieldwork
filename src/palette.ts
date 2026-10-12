@@ -6,6 +6,8 @@
  *  test beside this file asserts that every node type is either addable or deliberately not.
  */
 
+import classification from '../widgets/classification.json' with {type:'json'};
+
 /** Group headings, in the order the palette shows them. A group missing here sorts to the front,
  *  which is how "Comparisons and checks" briefly jumped the queue. */
 export const PALETTE_GROUPS=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Summaries','Micro-workflows','Outputs'] as const;
@@ -24,9 +26,18 @@ export const ALWAYS_ADDABLE=[
 /** Offered on the two teaching canvases, which start with almost nothing. */
 export const STARTER_TYPES=['area','observations','measure_area','coverage_check','map_output'] as const;
 
-/** Superseded by map_output, table_output and chart_output; kept executable for saved work but
- *  never offered again. */
-export const RETIRED_FROM_PALETTE=['output'] as const;
+/** Derived from each widget's declared `implementationStatus`, not hand-maintained.
+ *
+ *  This was an array with `output` typed into it, and `implementationStatus: 'retired'` was a
+ *  value the release format had permitted since it was written that **no file in `src/` read**.
+ *  So retirement was declarable and inert, and the one widget actually off the palette was off it
+ *  for an unrelated reason. Reading the declaration is what makes a retirement take effect
+ *  everywhere at once — palette, node search, the catalogue and its counts — which is the
+ *  practitioner's rule that retired means archived and not merely unaddable.
+ *
+ *  A retired widget never runs, so this list is also what the workflow loader refuses on. */
+export const RETIRED_FROM_PALETTE:readonly string[]=
+  (classification.widgets as {nodeType:string; retired?:boolean}[]).filter(w=>w.retired).map(w=>w.nodeType);
 
 /** Addable, but not by choosing the type: the palette shows one entry per bundled
  *  composition and each adds a `micro_workflow` node already carrying that composition's

@@ -22,7 +22,13 @@ const parity=read('widgets/parity.json');
 
 const EXPECTATIONS=new Set(Object.keys(coverage.expectations));
 const declared=new Map(coverage.widgets.map(w=>[w.nodeType,w]));
-const known=new Set(registry.widgets.map(w=>w.nodeType));
+// Live widgets only. A retired widget stops owing a lab check, because it never runs: keeping it
+// here would be a row in the ledger and a line in the count for something no canvas can hold.
+// That is the practitioner's rule of 2026-10-12 -- retired means archived, not merely unaddable.
+const retired=new Set(registry.widgets.filter(w=>
+  read(`widgets/releases/${w.nodeType}/${w.currentVersion}.json`).implementationStatus==='retired')
+  .map(w=>w.nodeType));
+const known=new Set(registry.widgets.map(w=>w.nodeType).filter(t=>!retired.has(t)));
 const checked=new Map(parity.entries.map(e=>[e.widget.split(':').pop(),e.check]));
 const problems=[];
 
@@ -31,6 +37,8 @@ for(const nodeType of known)
   if(!declared.has(nodeType))
     problems.push(`${nodeType} is in the registry and not in check-coverage.json. Declare what it owes, with a reason.`);
 for(const [nodeType,entry] of declared){
+  if(retired.has(nodeType)){problems.push(`check-coverage.json declares ${nodeType}, which is retired. `
+    +`A retired widget never runs, so it owes no check: remove the entry and lower counts.widgets to ${declared.size-1}.`);continue;}
   if(!known.has(nodeType)){problems.push(`check-coverage.json declares ${nodeType}, which is not a registered widget.`);continue;}
   if(!EXPECTATIONS.has(entry.expectation))
     problems.push(`${nodeType}: expectation "${entry.expectation}" is not one of ${[...EXPECTATIONS].join(', ')}.`);

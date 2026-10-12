@@ -1,98 +1,145 @@
-# 105 · Five directions, and which ones this project can see in
+# 105 · Five directions
 
 _Created 2026-10-12 · Updated 2026-10-12_
 
-**Status:** tried — the five directions are recorded as the method, and this project's own
-machinery is audited against them. Two directions have no mechanism and one of those cannot have
-one, which is a finding rather than a backlog item.
+**Status:** tried — the five directions are recorded as the method and each has been pointed at
+this project once. Four produced findings; the fifth, forward, produced a direction that nothing
+has yet tested.
 
 Searched `docs/` first, per [the standard](README.md): the prior statement is the glossary's
-**Developmental evaluation** entry, which describes the stance — *"the framework is watched as it
-emerges rather than built to a specification"* — and names no directions. Nothing else states a
-method. This extends that entry rather than restating it.
+**Developmental evaluation** entry, which gives the stance and names no directions.
 
 ## The question asked
 
-The practitioner, after a day of findings that each arrived from a different angle: *"In a DE
-project, we look back, we look forward, we look sideways, above and below."*
+The practitioner: *"In a DE project, we look back, we look forward, we look sideways, above and
+below."*
 
-Taken as a method rather than a mood, that is testable against the project itself: **which of the
-five can this project actually see in, and with what?**
+This document first recorded that as five mechanisms and got three of the five wrong. The
+corrections are the practitioner's own and they are what make the method usable:
 
-## What happened
-
-| Direction | The question it asks | Mechanism | State |
-| --- | --- | --- | --- |
-| **Back** | Does what we already built still pass what we now know? | `validate:admission` — each criterion's last change against its last sweep; and *what changed our minds* in every document | **Mechanised**, 2026-10-12 |
-| **Forward** | What would close this, and what is it heading for? | *What would close it* on every open document; `widgets/budget.json`'s target of 41 | **Mechanised**, 2026-10-12 |
-| **Sideways** | Does this already exist, under another name or in another document? | D2 and its follow-through; `grep -ril docs/` before a new document | **Half** — the criterion is enforced, the search is discipline |
-| **Above** | Does it serve the goal? | the goal statement at the head of [the TODO](../todo.md), read by a person | **None, and should stay that way** |
-| **Below** | Does the implementation do what the declaration says? | nothing | **None** |
-
-**Four of the five got their mechanism today**, which is less impressive than it sounds: the two
-that did not are the two where this week's worst findings came from.
-
-### Sideways is where both duplicate failures happened
-
-[93](93-gamification-spike.md) re-derived [27](27-workflow-learning-and-gamification.md).
-[102](102-widget-names-and-worked-examples.md) re-derived
-[the widget audit](../audits/widget_audit.md), less accurately, two days after that audit had
-answered the same practitioner's question. D2 recorded three implementations of one operation and
-attached no disposition, so three survived.
-
-The criterion half is now enforced. The search half is a sentence in a standard, and a sentence is
-what failed twice. Recorded as a known limit rather than solved, because the obvious
-mechanisation — an index of what each document settled — is worth building after a third
-instance, not in anticipation of one.
-
-### Above cannot be mechanised, and pretending otherwise would be worse
-
-The goal is to empower public health practitioners in the practical use of GIS in field
-workflows, where resources and connectivity may be scarce. Nothing can check an item against
-that. What can be done is to keep saying who benefits, and this project does, sometimes
-uncomfortably: [96](96-the-experiment-document.md) states that the experiment standard's
-beneficiaries are *"us and future contributors, not a public health practitioner in the field"*,
-and [the TODO](../todo.md) separates its items by who they reach.
-
-Measured honestly for 2026-10-12: a long day's work produced **two changes a field practitioner
-would notice** — the run timer with the per-widget glow, and the donut card — against an
-experiment standard, three ratchets, a criteria clock, two audits and eleven lab checks, all of
-which serve the project. That is defensible for a framework still emerging. It is not defensible
-indefinitely, and only a person reading the goal will ever say so.
-
-### Below is the gap with the most evidence
-
-Three findings today came from reading code against what the registry claims, each by hand:
-
-| Found | The declaration said |
+| Direction | What it actually asks |
 | --- | --- |
-| `implementationStatus: 'retired'` is accepted by the validator and **read by no file in `src/`** | that retirement is a supported lifecycle state |
-| Eight sites convert metres to angles through a constant, with a −0.56% to +0.32% error | nothing; no release mentions it |
-| Four port names encode a use, in `TYPES` | release `ports` list types, which are all correct; the names are not in the release at all |
+| **Backward** | Does what was already admitted still pass what we now know? |
+| **Sideways** | **The present inventory**: duplicates, connections, gaps, value in what we have *now* |
+| **Above** | **The forest**: what does the emerging framework look like? |
+| **Below** | **A tree**: what does this one thing uniquely contribute to the forest? |
+| **Forward** | **The synthesis**: given backward, sideways, above and below, what does that mean for the future — the direction of emergence? |
 
-Each was found because somebody looked, and the third only because a criterion was extended the
-same day. A release file is a claim about an implementation and nothing compares the two.
+My first reading had sideways as "has this been asked before", above as "does it serve the goal",
+below as "does the code match the declaration", and forward as "what would close this". The first
+three were adjacent concerns, and the fourth was follow-through, which belongs to backward. Forward
+is not a per-document field. **It is the only direction that is derived rather than observed.**
+
+## Sideways · the inventory, and what it found
+
+Pointed at the port-type union, which is where this project's inventory actually lives: 51 widgets
+exchange data through what was **16 carriers**, and `PortType` is a closed union, so this is the
+whole of it. Counted from the built definitions — a first pass by regex got two rows wrong and is
+the reason this is now a test rather than a reading.
+
+| | Carriers | |
+| --- | --- | --- |
+| **General** | `points`, `polygons`, `area`, `table`, `raster`, `network` | `points` alone has 11 producers and 27 consumers; these six carry **79%** of all connections |
+| **Private pipes** — one producer, one consumer | `alert`, `distances`, `facilities`, `access`, `mean-center`, `point-comparison` | each a private channel between two named widgets, declared as though it were a type |
+| **Shared** | `decisions`, `gradedFacilities`, `coverage-check` | |
+| **Dead** | ~~`samples`~~ | appeared in the union and **nowhere else**. **Removed 2026-10-12**, and `tests/port-inventory.test.mjs` now refuses a dead member and holds the private-pipe count at six |
+
+Six carriers do the work. Six more are private pipes. One was dead, and is gone.
+
+**And this is why the nearest-neighbour merge is blocked.** The three implementations emit
+`distances`, `access` and `table` — two of them private pipes invented by the widget that emits
+them. The port problem is not abstract and it is not about renaming a shared type: it is that each
+implementation built its own channel, so three widgets doing one thing produce three
+incommensurable outputs.
+
+## Above · the forest
+
+Nobody had described the shape, so: **51 widgets, 31 primitive and 20 composite**, exchanging data
+over 6 general carriers with a fringe of 10 specific ones. 19 of the 32 that compute have an
+independent check. The ontology types 560 terms with nothing undeclared. One composition mechanism
+exists and holds one composition.
+
+Three regions, which is the useful part of the view:
+
+- **A real core** — the isochrone chain, the summarising primitives, the clipping and buffering
+  and projection widgets. General carriers, admitted individually, 19 with independent checks.
+- **Two scaffolding regions** — the heat demo and Old Naledi, which between them account for
+  **nine of the nine** example-bound widgets, five of the six private pipes, and the dead carrier.
+  They predate the real case studies and are where almost every structural defect lives.
+- **A domain pack region** — the three `slr_*` widgets, attached to a pack whose programme is
+  postponed.
+
+The forest is mostly one healthy stand, with a large patch of scaffolding that has started to
+look like trees.
+
+## Below · one tree's unique contribution
+
+For a primitive this is D1's residual distinction, and for a composite it is "nothing residual,
+but asked for by name" — which makes convenience the contribution, legitimate only while a
+practitioner does ask. Applied to the three that prompted all this:
+
+| | Unique contribution |
+| --- | --- |
+| `nearest` | the search itself: nearest candidate, distance, and an explicit unmatched-with-reason |
+| `access` | a speed, turning distance into proxy minutes, and an evidence grading |
+| `slr_site_assignment` | one validity rule: do not assign a site the extract cannot answer for |
+
+Looked at from below, two of the three contribute **a parameter and a filter**. That is not a
+widget's worth of contribution, and it is the same conclusion D2's follow-through reached from
+sideways — which is the method working: two directions, one answer.
+
+## Forward · the direction this implies
+
+Not a closing condition. The synthesis of the four above, and the first time this project has
+written one:
+
+**The framework is converging on general carriers, primitives, and composition.** Everything that
+has gone well this week sits in that pattern — eight primitives over `points` and `polygons`, a
+composition that expands to its members, parity evidence that follows the carrier rather than the
+widget. Everything that resists sits outside it: private-pipe carriers, demo-shaped widgets, and
+rule-carrying widgets with no general form.
+
+So the direction of emergence is **fewer widgets over fewer carriers, with domain expressed as
+parameters, prepared inputs, and rules-as-data rather than as widget types** — and that gives an
+order the retirement-first plan did not have:
+
+1. **Collapse the private pipes.** Six carriers exist to connect two widgets each. Removing them
+   is what turns the blocked merges into renames.
+2. **Then the merges happen almost for free** — `access` and `slr_site_assignment` become
+   `nearest` plus a parameter and a prepared input.
+3. **Then the example-bound widgets lose their carriers**, and the two scaffolding regions have
+   nothing holding them up.
+4. **A general rule-carrier** replaces `policy`, `access_policy` and `xpert` and absorbs `alert`:
+   four widgets and two private pipes out, one widget in.
+
+That is a prediction and it is falsifiable: if collapsing one private pipe does not make its merge
+cheaper, the direction is wrong.
 
 ## What would close it
 
-A mechanism for **below**: a check that each release's declared fields are honoured by the code —
-beginning with the narrowest case, that a declared `implementationStatus` has an effect. And a
-decision on **sideways**, which is whether the search stays a discipline. This moves to
-`validated` when below has a mechanism and the sideways decision is recorded either way.
+Each direction pointed at this project a second time, with the first pass's findings in hand — and
+in particular the forward prediction tested by collapsing one private pipe and seeing whether the
+merge it blocks becomes a rename. This moves to `validated` if it does, and to `retired` if the
+synthesis turns out to be a description of what already happened rather than a direction.
 
 ## What changed our minds
 
-**The five directions are not equally hard, and the easy ones got done first — today, by
-accident.** Back and forward were mechanised within an hour of each being named, because both are
-questions about *records*: when was this swept, what would close this. Below is a question about
-*code against claims*, which is harder and has no file to ratchet. Above is a question about
-*people*, and has no mechanism at all.
+**A number in this document was wrong for the sixth time today.** The sideways table first claimed
+the general carriers handle 86% of connections. The measured figure is **79%** — asserted in prose,
+caught only because the accompanying test computed it and failed. This is the rule
+[98](98-the-coverage-ratchet.md) already records, broken again in the document arguing for
+measurement over counting, which is as good an illustration of the practitioner's point as the
+argument itself: the stance is not what we count, it is what we do, and what I did was write a
+number down.
 
-So the order the mechanisms arrived in is the inverse of the order the findings arrive in. Today's
-substantive discoveries — the metre conversions, the inert retirement status, the port names, the
-three duplicate implementations — were all **below** and **sideways**. The two directions with
-machinery produced no findings today; they produced *confidence about* findings already made.
+**Three of five directions were wrong on the first attempt, and the wrongness had a pattern.** I
+read every one as a *mechanism this project could install* — a check, a counter, a required
+field — because that is what the previous day had rewarded. Sideways became "search before
+writing", forward became "say what would close it", below became "compare the declaration to the
+code". All three are real practices and none is the direction.
 
-That is worth holding onto: **a ratchet records a lesson, it does not find one.** Every finding
-this week came from reading something — a line of source, a widget's own output, an October
-document — and the machinery's job is only to stop the finding being lost or re-derived.
+The directions are **ways of looking**, and the first thing each needs is to be *used*, not
+mechanised. Pointing sideways at the inventory for twenty minutes found a dead carrier and six
+private pipes, and explained why a merge nobody could schedule had been blocked for three days. No
+ratchet would have found that, because a ratchet records a lesson and does not find one — which
+this document already said about the other four directions and had not yet applied to itself.

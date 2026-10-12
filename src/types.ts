@@ -60,7 +60,14 @@ export interface ParamsByType {
   raster_input:{label:string;asset?:import('./raster.js').RasterAsset};
   clip_raster:{label:string;method:'cell-center'|'all-touched';marginPixels?:number;cutline?:{geometry:Polygon;selectionMode:'bbox'|'polygon'|'circle'}};
   places:PointParams; centers:PointParams; observations:ObservationParams; area:AreaParams;
-  alert:{active:boolean|null; date:string}; nearest:Record<string,never>; policy:{thresholdKm:number};
+  alert:{active:boolean|null; date:string};
+  // The unit is a knob because baking one in is how three widgets came to implement one
+  // operation: `nearest` returned kilometres, `slr_site_assignment` metres, `access` minutes.
+  // Metres and kilometres are the same measurement stated differently; minutes needs a speed and
+  // stays with `access`. The unit travels on the output, because a distance without its unit is
+  // not interpretable and `policy` compares it against a threshold.
+  nearest:{unit:DistanceUnit};
+  policy:{thresholdKm:number};
   measure_area:{unit:AreaUnit}; coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
   map_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'raster'|'polygons';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:'none'|'osm'|'topo'}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'};
   chart_output:{label:string;inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference'};
@@ -79,6 +86,7 @@ export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId
 // nothing and consumed by nothing. Found by surveying the inventory sideways
 // (docs/experiments/105-five-directions.md), and removed rather than counted, because a closed
 // union with a dead member is a contract that claims a carrier the application does not have.
+export type DistanceUnit = 'metres'|'kilometres';
 export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'polygons'|'network'|'mean-center'|'point-comparison';
 export interface NodeDefinition {title:string; group:string; icon:string; color:string; description:string; inputs:[string,PortType][]; output:PortType|null}
 export type Escape = (value:unknown)=>string;

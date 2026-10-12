@@ -1,5 +1,5 @@
 import type {NodeEvidence,EvidenceReference} from './evidence.js';
-import type {Boundary,Bounds,Exclusion,Measurement,ParamsByType,PointFeature,PointCollection,Position,Scalar,SpatialReference,SpatialRelation,AttributeType} from './types.js';
+import type {Boundary,Bounds,Exclusion,Measurement,ParamsByType,PointFeature,PointCollection,Position,Scalar,SpatialReference,SpatialRelation,AttributeType,DistanceUnit} from './types.js';
 import type {ReasonerQuad} from './worker-types.js';
 export type Status='Review'|'NoFlag'|'Unknown';
 export type Tier='Direct'|'Contextual'|'Inferential'|'None';
@@ -8,7 +8,10 @@ export type Zone='Within5'|'Within15'|'Within30'|'Over30'|'Unknown';
 export interface Facility {id:string; name:string; coordinates:Position; owner:string; serviceType:string; attributes?:Record<string,Scalar>}
 export interface GradedFacility extends Facility {tier:Tier; service:Service; reference:string}
 export interface Sample {id:string; name:string; coordinates:Position}
-export interface NearestRow {id:string; name:string; coordinates:Position|null; distanceKm:number|null; center:Sample|null; reason?:string}
+// `distance` with its `unit`, not `distanceKm`: the unit is a parameter of `nearest`, so a row
+// that did not carry it would leave every consumer guessing. `policy` refuses a unit its
+// threshold is not stated in rather than converting silently.
+export interface NearestRow {id:string; name:string; coordinates:Position|null; distance:number|null; unit:DistanceUnit; center:Sample|null; reason?:string}
 export interface HeatRow extends NearestRow {status:Status; explanation:string}
 export interface AccessRow extends Omit<Sample,'coordinates'> {coordinates:Position|null; attributes?:Record<string,Scalar>;distanceKm:number|null; minutes:number|null; center:GradedFacility|null; status?:Status; zone?:Zone; explanation?:string}
 export interface LayerSummary {sourceNodeId:string; label:string; count:number}
@@ -27,7 +30,7 @@ export interface AccessValue {kind:'access'; boundary:Boundary; rows:AccessRow[]
 /** Presentation fields shared by heterogeneous result tabs. Calculations use the narrower contracts above. */
 export interface DisplayRow {
   id:string; name:string; coordinates:Position|null; status?:Status; explanation?:string;
-  distanceKm?:number|null; minutes?:number|null; center?:Sample & Partial<GradedFacility>|null;
+  distance?:number|null; unit?:DistanceUnit; distanceKm?:number|null; minutes?:number|null; center?:Sample & Partial<GradedFacility>|null;
   owner?:string; serviceType?:string; service?:Service; tier?:Tier; reference?:string; zone?:Zone;
   recordId?:string; sourceNodeId?:string; layerLabel?:string; attributeTypes?:Record<string,AttributeType>; attributes?:Record<string,Scalar>;
   relation?:SpatialRelation; decision?:CoverageRow['decision']; excluded?:boolean; exclusionReason?:string; signature?:string;

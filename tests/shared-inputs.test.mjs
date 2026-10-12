@@ -23,8 +23,11 @@ test('heat sources share Input data and legacy normalization preserves identity,
   const before=nearestPlaces(original.nodes[0].params.data,original.nodes[1].params.data);
   assert.deepEqual(rows,before);
   assert.deepEqual(makeN3(rows,{active:true,date:'2026-07-15'},5),makeN3(before,{active:true,date:'2026-07-15'},5));
-  assert.equal(rows.length,8);assert.equal(rows.filter(r=>r.distanceKm>5).length,5);
-  assert.equal(rows.at(-1).distanceKm,null);
+  // `distanceKm` became `distance` with a stated `unit` when the unit became a knob: three
+  // widgets implemented one operation partly because each baked a different unit in.
+  assert.equal(rows.length,8);assert.equal(rows.filter(r=>r.distance>5).length,5);
+  assert.equal(rows.at(-1).distance,null);
+  assert.ok(rows.every(r=>r.unit==='kilometres'),'the threshold below is in kilometres, so these must be');
 });
 
 test('legacy sources use shared scalar and coordinate validation without silently losing unsupported data',()=>{

@@ -35,7 +35,7 @@ import {mapSpecificationFacts} from './map-communication.js';
 import {assertProjectManifest,syncProjectManifest} from './project-manifest.js';
 import {migrateOutputNodes,decisionPresentation} from './output-contract.js';
 import {referencedPDFs,evidenceProvenance} from './evidence.js';
-import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar} from './types.js';
+import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit} from './types.js';
 import type {Reasoner} from './worker-types.js';
 import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status} from './results.js';
 import type {OldInputs} from './old-naledi.js';
@@ -137,7 +137,7 @@ export function exampleWorkflow():Workflow {
   return {schema:'fieldwork/workflow/1',name:'Heat outreach screening',nodes:[
     {id:'neighborhoods',type:'observations',x:35,y:52,params:{label:'Neighborhoods',data:{type:'FeatureCollection',features:[point('oakwood','Oakwood',[-84.455,33.873]),point('northgate','Northgate',[-84.337,33.875]),point('riverside','Riverside',[-84.438,33.812]),point('midtown','Midtown',[-84.37,33.79]),point('eastfield','Eastfield',[-84.277,33.795]),point('brookside','Brookside',[-84.421,33.734]),point('southpark','South Park',[-84.34,33.72]),point('cedar','Cedar Heights',null)]}}},
     {id:'centers',type:'observations',x:35,y:229,params:{label:'Cooling centers',data:{type:'FeatureCollection',features:[point('library','Central Library',[-84.367,33.79]),point('community','West Community Hall',[-84.426,33.823])]}}},
-    {id:'nearest',type:'nearest',x:323,y:90,params:{}},
+    {id:'nearest',type:'nearest',x:323,y:90,params:{unit:'kilometres'}},
     {id:'alert',type:'alert',x:323,y:284,params:{active:true,date:'2026-07-15'}},
     {id:'criteria',type:'policy',x:605,y:151,params:{thresholdKm:5}},
     {id:'map',type:'map_output',x:879,y:70,params:{label:'Outreach map',inputMode:'decisions'}},
@@ -305,19 +305,37 @@ export function executionPlan(workflow:Workflow) {
 // Moved to src/nearest-neighbour.ts, beside the search that uses it, and re-exported so every
 // existing caller is unaffected. See that file for what a sphere costs against an ellipsoid.
 export {distanceKm};
-export function nearestPlaces(places:PointCollection,centers:PointCollection):NearestRow[] {
+/** The distance from each point to the nearest of a set of candidates, in the stated unit.
+ *
+ *  Given a point and a set of points, the distance to the nearest candidate: that is the whole
+ *  operation, and the unit is a parameter because baking one in is how three widgets came to
+ *  implement it separately. A point with no coordinates, or an empty candidate set, returns a
+ *  null distance **and a reason** -- which is what lets `policy` answer Unknown rather than
+ *  defaulting, so it is part of the contract and not an error path. */
+export function nearestPlaces(places:PointCollection,centers:PointCollection,unit:DistanceUnit='kilometres'):NearestRow[] {
   const valid=centers.features.filter(f=>f.geometry);
+  const inUnit=(kilometres:number)=>unit==='metres'?kilometres*1000:kilometres;
   return places.features.map(place=>{
-    if (!place.geometry || !valid.length) return {id:place.id,name:place.properties.name,coordinates:place.geometry?.coordinates ?? null,distanceKm:null,center:null,reason:!place.geometry?'Neighborhood location is missing.':'No cooling center with valid coordinates is available.'};
+    if (!place.geometry || !valid.length) return {id:place.id,name:place.properties.name,coordinates:place.geometry?.coordinates ?? null,distance:null,unit,center:null,reason:!place.geometry?'Neighborhood location is missing.':'No cooling center with valid coordinates is available.'};
     // One shared search, three callers: see src/nearest-neighbour.ts.
     const match=nearestOf(place.geometry.coordinates,valid,center=>center.geometry?.coordinates);
     const best=match!.candidate,distance=match!.kilometres;
-    return {id:place.id,name:place.properties.name,coordinates:place.geometry.coordinates,distanceKm:distance,center:{id:best!.id,name:best!.properties.name,coordinates:best!.geometry!.coordinates}};
+    return {id:place.id,name:place.properties.name,coordinates:place.geometry.coordinates,distance:inUnit(distance),unit,center:{id:best!.id,name:best!.properties.name,coordinates:best!.geometry!.coordinates}};
   });
 }
 export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:number) {
+  // `nearest` states its unit, and this threshold is in kilometres, so a metres input would be
+  // compared against a kilometre number and every decision would be wrong by a factor of a
+  // thousand with nothing raised. Refused rather than converted: the threshold is a practitioner's
+  // judgement in a stated unit, and silently reinterpreting it would change what they decided.
+  const units=new Set(rows.map(row=>row.unit));
+  if(units.size>1)throw new Error('These distances carry more than one unit, so one threshold cannot apply to them.');
+  const unit=[...units][0]??'kilometres';
+  if(unit!=='kilometres')
+    throw new Error(`Outreach criteria compares a threshold in kilometres, and these distances are in ${unit}. `
+      +`Set Nearest point to kilometres, or state the threshold in ${unit}.`);
   const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix math: <http://www.w3.org/2000/10/swap/math#>.\n';
-  const facts=rows.map(r=>`<urn:fieldwork:place:${r.id}> fw:distanceKnown ${r.distanceKm!==null}; fw:alertKnown ${alert.active!==null}.${r.distanceKm!==null?`\n<urn:fieldwork:place:${r.id}> fw:distanceKm ${r.distanceKm!.toFixed(9)}.`:''}${alert.active!==null?`\n<urn:fieldwork:place:${r.id}> fw:heatAlert ${alert.active}.`:''}`).join('\n');
+  const facts=rows.map(r=>`<urn:fieldwork:place:${r.id}> fw:distanceKnown ${r.distance!==null}; fw:alertKnown ${alert.active!==null}.${r.distance!==null?`\n<urn:fieldwork:place:${r.id}> fw:distanceKm ${r.distance!.toFixed(9)}.`:''}${alert.active!==null?`\n<urn:fieldwork:place:${r.id}> fw:heatAlert ${alert.active}.`:''}`).join('\n');
   const t=Number(threshold).toFixed(9);
   const rules=`# Missing evidence stays unknown. Threshold is illustrative.\n{ ?p fw:distanceKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:alertKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:distanceKm ?d; fw:heatAlert true. ?d math:greaterThan ${t}. } => { ?p fw:decision fw:Review. }.\n{ ?p fw:distanceKm ?d; fw:heatAlert true. ?d math:notGreaterThan ${t}. } => { ?p fw:decision fw:NoFlag. }.\n{ ?p fw:distanceKnown true; fw:heatAlert false. } => { ?p fw:decision fw:NoFlag. }.\n`;
   return {facts:prefix+facts+'\n',rules:prefix+rules,input:prefix+facts+'\n\n'+rules};
@@ -417,7 +435,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const n3=makeN3(rows,alert,threshold);const conclusions=await reasoner(n3.input);
         const decisions=new Map<string,Status>();
         for(const q of conclusions){if(q.predicate===NS+'decision'){const id=q.subject.slice((NS+'place:').length);const decision=q.object.slice(NS.length);if(!['Review','NoFlag','Unknown'].includes(decision))throw new Error('Reasoner returned an unknown decision.');if(decisions.has(id)&&decisions.get(id)!==decision)throw new Error('Reasoner returned conflicting decisions.');decisions.set(id,decision as Status);}}
-        value={rows:rows.map(r=>{const status=decisions.get(r.id);if(!status)throw new Error(`Reasoner did not classify ${r.name}.`);return {...r,status,explanation: status==='Unknown' ? (r.reason || 'Heat alert status is missing.') : `Nearest center: ${r.center!.name}. Distance ${r.distanceKm!.toFixed(2)} km ${r.distanceKm!>threshold?'>':'≤'} ${threshold} km. Heat alert ${alert.active?'active':'inactive'} on ${alert.date}.`};}),centers,method,threshold,alert};
+        value={rows:rows.map(r=>{const status=decisions.get(r.id);if(!status)throw new Error(`Reasoner did not classify ${r.name}.`);return {...r,status,explanation: status==='Unknown' ? (r.reason || 'Heat alert status is missing.') : `Nearest center: ${r.center!.name}. Distance ${r.distance!.toFixed(2)} km ${r.distance!>threshold?'>':'≤'} ${threshold} km. Heat alert ${alert.active?'active':'inactive'} on ${alert.date}.`};}),centers,method,threshold,alert};
         receipts.push({nodeId:node.id,...n3,conclusions});break;
       }
       case 'chart_output':{if(node.params.inputMode==='series'){const table=inputs.series;if(!table?.series)throw new Error('Connect Cases by period: a series chart needs the series, not a plain table.');const chart=seriesChart(table.series);const source=workflow.edges.find(e=>e.to===node.id&&e.port==='series')!.from;const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:ChartView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; fw:groupingField "period"; fw:eventDateKind ${JSON.stringify(table.series.dateKind)}.\n`+chartSpecificationFacts(node,runId,source,chart,table.series.weightField?'numeric-total':'record-count');value={...structuredClone(table) as unknown as DisplayValue,chart,rows:[],centers:[]};receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:chart.caption});break;}

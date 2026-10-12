@@ -2,7 +2,11 @@
 
 _Created 2026-10-09 · Updated 2026-10-09_
 
-**Status:** admission review for a refactor. Written before the code, as experiments 48,
+**Status:** tried — Phase 1 is done and Phases 2 to 6 are not. Confirmed as the direction by
+the practitioner on 2026-10-12, three days and twelve widgets later; see *what the delay cost*
+at the end.
+
+Originally: admission review for a refactor. Written before the code, as experiments 48,
 58, 61 and 63 were. Proposes no new widget and no new vocabulary. Sequences the work the
 [widget design audit](../audits/widget_audit.md) found, ordered by **risk to saved work**
 rather than by value, because the only irreversible mistake available here is breaking a
@@ -225,3 +229,35 @@ honest, which is an argument rather than evidence, and only the observation in
 [experiment 63](63-worked-example-runbooks.md) would test it. And nothing about the
 correctness of any computation; this changes where operations live, not what they compute,
 and a phase that changes a result has gone wrong.
+
+## What the delay cost
+
+_Added 2026-10-12, when the practitioner restated the direction: too many widgets, and the
+duplicates and composites should be retired._
+
+This was written against **39** widgets and opened by saying that thirty-nine "is the point at
+which this is still tractable", that the findings "get more expensive as the set grows", and
+that three of them "are already being copied by each new widget that follows the existing
+pattern".
+
+There are now **51**. Phase 1 was done. Nothing from Phase 2 onward was.
+
+| | 2026-10-09 | 2026-10-12 |
+| --- | --- | --- |
+| Widgets | 39 | **51** |
+| Through D1 in the audit's table | 39 | 39 |
+| Example-bound on the palette | 9 | 9, of which 2 already migrate |
+| Nearest-with-distance implementations | 3 | 3 |
+
+**What the delay did not cost** is worth recording too, because the sequencing worked. D9 held:
+every worked example's node count is unchanged from the baseline pinned above — heat 7,
+old-naledi 12, spatial coverage 3, snow-voronoi 12, snow-isochrone 16, snow-geoprivacy 15,
+raster 4, blank 0. No saved workflow was broken, because the risky phases are the ones that were
+not attempted. Ordering by risk to saved work meant the part that got skipped was the part that
+could have done damage.
+
+**And the twelve new widgets are not the refactor's failure.** Eight of them are the isochrone
+decomposition and its summarising primitives, which [80](80-network-snap.md)–[88](88-combined-area.md)
+each admitted through D1 individually. The set grew because the work grew, not because nothing
+was watching. What was not watched is this table: the audit's counts were never brought forward,
+which is why the growth was invisible until someone asked.

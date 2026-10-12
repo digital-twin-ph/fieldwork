@@ -44,7 +44,45 @@ not a practitioner in the field.
 
 ## Urgent
 
-**1 · The 13 computing widgets still with no lab check.**
+**1 · Shrink the widget set. The plan exists and was never executed.**
+Confirmed as the direction by the practitioner on 2026-10-12: *"as the framework emerges we
+should respect the outcome of the emergence direction. Right now we have too many widgets that
+should be retired because they are duplicates or composites."*
+
+[64](experiments/64-widget-streamlining.md) is that refactor, sequenced by risk to saved work
+and written on 2026-10-09 against 39 widgets. **Phase 1 is done** — `raster_input`'s
+description was corrected and the release records it. **Phases 2 to 6 are not**, and the set
+has since grown to **51**, which is the thing 64 warned about in its own opening: every finding
+"gets more expensive as the set grows", and three of them "are already being copied by each new
+widget that follows the existing pattern". Twelve widgets were added without going through D1
+in the audit's table.
+
+The retirement mechanism is already designed, in Phase 2, and is the reason this is safe: a
+retired node type **stays executable**, so every saved workflow and every frozen fixture still
+runs; it is **no longer addable**, so no new workflow acquires one; and its release file
+**records the retirement and what replaces it** rather than being deleted.
+
+What is retirable without contradicting D1:
+
+| | |
+| --- | --- |
+| **Duplicates** | `nearest`, `access`, `slr_site_assignment` are three implementations of nearest-neighbour-with-distance — collapse to one general nearest join. `output` is a generic display against three typed ones. `summarize_polygons`, `hex_aggregate`, `case_series` are one group-and-aggregate over three keys, but each is asked for by name, so that is code factoring and not a palette retirement |
+| **Example-bound** | `places`, `centers`, `alert`, `facilities`, `samples`, `xpert`, `policy`, `access_policy`, `comparison_map`. `places` and `centers` already migrate into `observations`, so seven remain |
+
+Roughly ten palette retirements, taking 51 to about 41, plus code-level factoring that changes
+no palette entry.
+
+**One fork needs deciding before the work starts.** 64 states flatly that **no composite leaves
+the palette**, and D1 agrees: a composite asked for by name stays, because factoring it on the
+canvas makes a practitioner wire three nodes to ask one question. That is also what
+[94](experiments/94-where-explanation-belongs.md) concluded about cognitive load and what
+[93](experiments/93-gamification-spike.md) recorded as the practitioner's own measure — fewest
+widgets to reach an output. So "retire composites" has two readings: the narrow one above
+(duplicates, and composites nobody asks for by name), or retiring all 19 composites, which
+would shrink the palette and grow every workflow. The narrow reading is the one the record
+supports; the wide one is a reversal and would need saying so explicitly.
+
+**2 · The 13 computing widgets still with no lab check.**
 32 widgets owe an independent check and 19 have one, counted by
 `validate:check-coverage` and visible in every run.
 [widgets/check-coverage.json](../widgets/check-coverage.json) declares what each of the 51
@@ -70,7 +108,7 @@ the kernel ([97](experiments/97-the-browser-kernel-gate.md)); and `buffer_area` 
 `buffer_point` will not agree exactly with shapely, so their criterion must state an area
 tolerance with the quadrant count declared rather than claim an agreement that is not there.
 
-**2 · There is no user manual.**
+**3 · There is no user manual.**
 [docs/usage.md](usage.md) is a reference for what the application does, written
 when the practitioner detail moved out of the README. It is not a manual that
 teaches a method, and two things have now been found to need one:

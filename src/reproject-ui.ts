@@ -37,7 +37,8 @@ export function openReprojectEditor(onSave:(result:ReprojectResult)=>boolean,exi
       let collection:PointCollection;
       if(table){
         const pick=(id:string)=>Number(dialog.querySelector<HTMLSelectElement>('#'+id)!.value);
-        collection=csvPoints(table,{longitude:pick('reproject-easting'),latitude:pick('reproject-northing'),id:pick('reproject-id'),name:pick('reproject-name')});
+        // Easting is x and northing is y, which is the same ordering the geographic gate uses.
+        collection=csvPoints(table,{x:pick('reproject-easting'),y:pick('reproject-northing'),id:pick('reproject-id'),name:pick('reproject-name'),units:'metre'});
       }else collection=projectedGeoJSONPoints(JSON.parse(text));
       const converted=reprojectToCRS84(collection,zone(),hemisphere());
       const sample=converted.collection.features.filter(f=>f.geometry).slice(0,3).map(f=>({id:f.id,name:f.properties.name,longitude:f.geometry!.coordinates[0],latitude:f.geometry!.coordinates[1]}));

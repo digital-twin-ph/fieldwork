@@ -2,7 +2,27 @@
 import type {Database,SqlJsStatic,SqlValue} from 'sql.js';
 import type {Boundary,Position,PointFeature,PointCollection,Scalar} from './types.js';
 export interface CSVTable {headers:string[]; rows:string[][]}
-export interface CSVMapping {longitude:number; latitude:number; id:number; name:number}
+/** Which columns hold the axes, and in which unit.
+ *
+ *  The axes are **x and y**, not longitude and latitude, and the explicit mapping is the
+ *  practitioner's: longitude is x, latitude is y. That holds for degrees, and the same ordering
+ *  holds for projected metres, where x is easting and y is northing. It is why one gate can read
+ *  both — and why naming the slots `longitude` and `latitude` was wrong, because `reproject-ui`
+ *  passes easting into the longitude slot and northing into the latitude slot. The ordering was
+ *  always right; only the names were true of one caller.
+ *
+ *  `units` is required and has no default. The practitioner's point: geopandas will not build a
+ *  GeoDataFrame without a CRS and complains loudly when one is missing, and this function had no
+ *  notion of one at all. It is called from two places with the same two slots meaning different
+ *  things — the ordinary import reads degrees, and `reproject-ui` reads UTM **easting and
+ *  northing in metres** into the `longitude` and `latitude` fields and converts afterwards. So the
+ *  unit lived in what the caller did next, and nothing in the data or the signature carried it.
+ *
+ *  Measured before the fix: a CSV of UTM metres imported through the ordinary path produced
+ *  `[500000, 7800000]` as a longitude and latitude, with no error. Downstream nothing catches it —
+ *  every point reads as Outside the study area, which is a finding about geography rather than an
+ *  error, and haversine on metres-read-as-degrees returns a finite nonsense distance. */
+export interface CSVMapping {x:number; y:number; id:number; name:number; units:'degree'|'metre'}
 export interface GeoPackageLayer {table_name:string; column_name:string; srs_id:number}
 
 import {geometryBounds} from './study-area.js';
@@ -21,10 +41,24 @@ export function parseCSV(text:string):CSVTable{
   if(rows.some(r=>r.length!==headers.length))throw new Error('Every CSV row must have the same number of fields as the header.');
   return {headers,rows};
 }
+/** The loud complaint. Degrees are bounded and metres are not, so the check that matters is the
+ *  one that catches a projected file read as geographic — and it names the widget that reads
+ *  projected files, because "out of range" without that is a dead end for a practitioner. */
+function checkRange(x:number,y:number,units:'degree'|'metre',record:number):void{
+  if(units==='degree'){
+    if(Math.abs(x)>180||Math.abs(y)>90)
+      throw new Error(`CSV record ${record} has coordinates (${x}, ${y}) outside the longitude and `
+        +`latitude range. If this file holds projected coordinates in metres, import it with `
+        +`Reproject, which asks for the UTM zone and converts.`);
+  }else if(Math.abs(x)>10000000||Math.abs(y)>10000000)
+    throw new Error(`CSV record ${record} has coordinates (${x}, ${y}) too large to be UTM metres.`);
+}
+
 export function csvPoints(table:CSVTable,mapping:CSVMapping):PointCollection{
-  const {longitude,latitude,id,name}=mapping;
-  if(!Number.isInteger(longitude)||!Number.isInteger(latitude)||longitude===latitude||![longitude,latitude].every(i=>i>=0&&i<table.headers.length))throw new Error('Select distinct longitude and latitude columns.');
-  return {type:'FeatureCollection',features:table.rows.map((r,i)=>{const lon=r[longitude].trim(),lat=r[latitude].trim();if(lon&&lat&&![Number(lon),Number(lat)].every(Number.isFinite))throw new Error(`CSV record ${i+1} has nonnumeric coordinates.`);const f=feature(id>=0?r[id].trim():`row-${i+1}`,name>=0?r[name]:`Record ${i+1}`,lon&&lat?[Number(lon),Number(lat)]:null);f.properties={...Object.fromEntries(table.headers.map((h,j)=>[h,r[j]])),name:f.properties.name};return f;})};
+  const {x:xColumn,y:yColumn,id,name}=mapping;
+  if(!Number.isInteger(xColumn)||!Number.isInteger(yColumn)||xColumn===yColumn||![xColumn,yColumn].every(i=>i>=0&&i<table.headers.length))throw new Error('Select distinct longitude and latitude columns.');
+  return {type:'FeatureCollection',features:table.rows.map((r,i)=>{const lon=r[xColumn].trim(),lat=r[yColumn].trim();if(lon&&lat&&![Number(lon),Number(lat)].every(Number.isFinite))throw new Error(`CSV record ${i+1} has nonnumeric coordinates.`);
+    if(lon&&lat)checkRange(Number(lon),Number(lat),mapping.units,i+1);const f=feature(id>=0?r[id].trim():`row-${i+1}`,name>=0?r[name]:`Record ${i+1}`,lon&&lat?[Number(lon),Number(lat)]:null);f.properties={...Object.fromEntries(table.headers.map((h,j)=>[h,r[j]])),name:f.properties.name};return f;})};
 }
 export function syntheticPoints(boundary:Boundary,{inside=20,outside=2,seed=42}={}):PointCollection{
   if(![inside,outside,seed].every(Number.isInteger)||inside<1||outside<0||inside+outside>2000||seed<0||seed>4294967295)throw new Error('Use 1–2,000 total points and an integer seed from 0 to 4294967295.');

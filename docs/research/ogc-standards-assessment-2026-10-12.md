@@ -75,6 +75,88 @@ collapse the parity comparison for those operations. That has not been studied.
 **OGC API — Features is out of scope by design**, not by omission. Fieldwork precaches and runs
 offline; serving features over HTTP with server-side spatial filtering is the opposite constraint.
 
+## The point that matters most: the vocabulary is already written
+
+The practitioner's reading of why the recommendation is worth having: **we do not have to reinvent
+the wheel as far as terminology and vocabulary are concerned.** That is the strongest claim in it,
+and this project supplies its own evidence.
+
+`SpatialRelation` is `'Inside' | 'Boundary' | 'Outside' | 'MissingLocation'`. Three of those four
+already have standard names — `within`, `touches`, `disjoint` — and the project knows it, because
+the dictionary between them is **written twice**:
+
+    const relation = {Inside:'sfWithin', Boundary:'sfTouches', Outside:'sfDisjoint'}[r.relation];
+    // src/spatial-coverage.ts:34  and  src/map-output.ts:20
+
+So one fact travels in two vocabularies: `fw:spatialRelation fw:Inside` in the facts the rules read,
+and `geo:sfWithin` in the provenance a reader audits. A translation table duplicated across two
+files is the cost of having invented a parallel name, and it is exactly the cost the recommendation
+says is avoidable.
+
+### Why the parallel vocabulary exists, which is not laziness
+
+The standard form is a **binary relation** — `?record geo:sfWithin ?area` — and the invented form is
+a **subject attribute** — `?record fw:spatialRelation fw:Inside`. The rule builder's authored
+condition is `{field, comparator, value}` over one subject
+([106](../experiments/106-rule-builder-ui.md)), which cannot express a relation to another feature.
+
+**So the invented vocabulary is downstream of the authoring form's shape.** Adopting the standard
+predicate in the premises needs the form to admit relational conditions — and that makes three
+extensions now required of it, each found by examining something nobody had counted:
+
+| Extension | Found by |
+| --- | --- |
+| set-level conclusions | `coverage_check` concluding `?activity fw:requiresReview true` |
+| field-to-field comparison | `slr_threshold_comparison` comparing a projection against each row's own elevation |
+| **relational conditions** | the standard spatial predicates being binary |
+
+### Especially the operations, where the standard name is already in the code
+
+The practitioner sharpened the point to **geospatial geometry operations**, and that is where the
+evidence is strongest: for three operations the implementation and the receipt already use the
+standard name, and only the widget does not.
+
+| Widget | Implementation calls | Receipt says | OGC Simple Features |
+| --- | --- | --- | --- |
+| `clip_polygons` | `polygonClipping.intersection` | *"Polygon **intersection** in CRS84"* | `intersection` |
+| `summarize_combined_area` | `polygonClipping.union` | *"**Union** of N areas in {crs}"* | `union` |
+| `summarize_hull` | `convexHull(…)` | — | `convexHull` |
+
+So a practitioner places a node called **Clip polygons**, and the receipt they audit says
+*intersection*. One operation, two names, and the standard one was written first — in the library
+call and in the provenance. "Clip" is an ArcGIS and QGIS idiom, not an OGC operation; `summarize_`
+is this project's own grouping prefix.
+
+**The exception proves the rule is being applied with judgement.** `mean_center` is *not* called
+`centroid`, and should not be: it is the mean of point coordinates, which is a different operation
+from a polygon's centroid. Declining a standard name because the operation is not the standard
+operation is the correct move, and it is the opposite error from inventing a name for one that is.
+
+**What this buys the housecleaning.** [107](../experiments/107-set-operations-and-the-ruleset.md)
+proposes one two-layer set-operations widget with an operation knob. If the knob's values are the
+Simple Features names — intersection, union, difference, symmetric difference — then `clip_polygons`
+and `summarize_combined_area` become *modes* of it, which is a reduction and a standardisation in
+one move. That argument is independent of the carrier question that record leaves open, and
+stronger than the case it made.
+
+Renaming is still a migration, with D7 and saved workflows in scope. But the names should be the
+standard's whether or not the merge happens, and that is cheap.
+
+### Where this applies beyond geometry
+
+The same test — *is there already a name for this?* — is worth running on the project's other
+invented terms, and the answers differ. `fw:distanceKm` welds a unit into a predicate where QUDT
+supplies units and GeoSPARQL 1.1 supplies `geof:distance`; that one is a reinvention, and a ruleset
+2.0.0 is already recorded as what fixes it. `fw:GridSampleGeneration` and
+`fw:SpatialCoverageCheck` are PROV activity classes describing what *this application* did, and no
+standard names those; they are not reinventions. `geo:hasMetricArea` is already the GeoSPARQL term
+and is already used.
+
+The distinction worth keeping: **a standard names the domain, and the project names its own
+conduct.** Geometry, relations, units and coordinate reference systems are the domain, and inventing
+there costs a dictionary. Activities, plans and receipts are the project's conduct, and naming
+there is the work.
+
 ## The gaps that are real
 
 | Gap | Why it matters here |

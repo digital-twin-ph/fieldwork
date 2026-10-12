@@ -190,6 +190,24 @@ the other three**: `coverage_check` and `slr_threshold_comparison` declare `shar
 rule is a different failure from an example-bound widget, and nothing in this project was looking
 for the first kind until it was tripped over twice in one afternoon.
 
+### A third extension: relational conditions
+
+The authored form's condition is `{field, comparator, value}` over one subject. The standard spatial
+predicates are **binary** — `?record geo:sfWithin ?area` — so a spatial premise cannot be written in
+this form at all.
+
+That is why `coverage_check` asserts `fw:spatialRelation fw:Inside` as a subject *attribute* rather
+than using the GeoSPARQL predicate directly, and why the dictionary between the two vocabularies is
+written twice, in `src/spatial-coverage.ts` and `src/map-output.ts`
+(`docs/research/ogc-standards-assessment-2026-10-12.md`). **The invented vocabulary is downstream of
+this form's shape**, not an oversight — and the cost of keeping it is a translation table that has
+already been duplicated once.
+
+So the form needs conditions whose right-hand side is another *feature*, not only a literal, a bound
+parameter, or another field of the same subject. Three extensions are now required of it, and all
+three were found by examining rule applications or vocabulary nobody had counted rather than by
+designing: set-level conclusions, field-to-field comparison, and this.
+
 ### What it needs that this record's form does not have
 
 The comparison is **field to field**. `level` is the projected change for the row's assigned site,

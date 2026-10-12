@@ -44,7 +44,21 @@ not a practitioner in the field.
 
 ## Urgent
 
-**1 · Shrink the widget set. The plan exists and was never executed.**
+**1 · Sweep the four criteria that have never reached the existing set.**
+`npm run validate:admission` reports 8 of 12 criteria swept since they last changed and 3 across
+the whole set of 51. Outstanding: **D3 and D4 sampled at 6 of 39 rather than applied** — the
+audit's own "separate task", named in October and never scheduled — **D4a partial** with the
+custom-stud port types enumerated and undispositioned, and **D5, D8, D8a, D6 never swept**. D5
+and D8 are recorded as contestable: whether a qualifier sits on the input, and whether a test
+exercises a distinction, are both readable off built code, so calling them design-time only was
+quicker than true. Record: [104](experiments/104-admission-is-not-permanent.md).
+
+This comes before the merges because it may change what merges. D1, D2 and D7 were swept on
+2026-10-12 and each sweep found something: two kinds not four, a merge D2 had recorded without
+deciding, and four port names encoding a use. Four unswept criteria across 51 widgets is the
+larger remaining unknown.
+
+**2 · Shrink the widget set. The plan exists and was never executed.**
 Confirmed as the direction by the practitioner on 2026-10-12: *"as the framework emerges we
 should respect the outcome of the emergence direction. Right now we have too many widgets that
 should be retired because they are duplicates or composites."*
@@ -112,7 +126,7 @@ widgets to reach an output. So "retire composites" has two readings: the narrow 
 would shrink the palette and grow every workflow. The narrow reading is the one the record
 supports; the wide one is a reversal and would need saying so explicitly.
 
-**2 · The 13 computing widgets still with no lab check.**
+**3 · The 13 computing widgets still with no lab check.**
 32 widgets owe an independent check and 19 have one, counted by
 `validate:check-coverage` and visible in every run.
 [widgets/check-coverage.json](../widgets/check-coverage.json) declares what each of the 51
@@ -138,7 +152,7 @@ the kernel ([97](experiments/97-the-browser-kernel-gate.md)); and `buffer_area` 
 `buffer_point` will not agree exactly with shapely, so their criterion must state an area
 tolerance with the quadrant count declared rather than claim an agreement that is not there.
 
-**3 · There is no user manual.**
+**4 · There is no user manual.**
 [docs/usage.md](usage.md) is a reference for what the application does, written
 when the practitioner detail moved out of the README. It is not a manual that
 teaches a method, and two things have now been found to need one:

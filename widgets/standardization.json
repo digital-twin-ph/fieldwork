@@ -1,6 +1,6 @@
 {
  "schema": "fieldwork/widget-standardization/1",
- "note": "A widget may not be name-attached to a worked example. That is the practitioner's rule of 2026-10-12, and the striking thing is that the shipped files already agree: twelve of the 51 release files declare standardization: 'example-specific' about themselves. Nothing read that declaration, so twelve self-reported failed admissions sat in the palette and in the count. This file is the ratchet that reads it. Every example-specific widget must appear below with the record that will remove it, and the exemption count may fall freely and may never rise. Retiring twelve widgets once would be undone by widget 52; a constraint that fails the build is what makes the reduction permanent. The reduction plan is docs/experiments/64-widget-streamlining.md as amended 2026-10-12, and the direction is its Stage 1: essentiality decided on its own terms, with example impact as the output.",
+ "note": "A widget may not be name-attached to a worked example. That is the practitioner's rule of 2026-10-12, and the striking thing is that the shipped files already agree: twelve of the 51 release files declare standardization: 'example-specific' about themselves. Nothing read that declaration, so twelve self-reported failed admissions sat in the palette and in the count. This file is the ratchet that reads it. Every example-specific widget must appear below with the record that will remove it, and the exemption count may fall freely and may never rise. Retiring twelve widgets once would be undone by widget 52; a constraint that fails the build is what makes the reduction permanent. The reduction plan is docs/experiments/64-widget-streamlining.md as amended 2026-10-12, and the direction is its Stage 1: essentiality decided on its own terms, with example impact as the output. Gates name a blocker id in widgets/blockers.json, not a document path: a gate pointing at a design record names no claim and carries no clock, and scripts/validate-blockers.mjs refuses one that does.",
  "measuredAt": "2026-10-12",
  "exemptionCeiling": 7,
  "disagreementFound": "The widget audit's prose listed nine example-bound widgets and named comparison_map, which declares itself 'shared'. The release files list twelve and do not include it. The files are what ship, so the files are what this ratchet reads; the audit's prose is corrected rather than the declarations.",
@@ -9,43 +9,50 @@
    "nodeType": "alert",
    "disposition": "rename",
    "reason": "Declaring an external condition and the date it applies to is irreducible -- nothing in the application derives it -- so the kind is right and the name bakes in 'heat'. Recorded as ungated on 2026-10-12 and corrected the same day: its output predicate is fw:heatAlert, which policy's rules read by name, and its port type 'alert' is consumed as a bound role once the ruleset widget exists. Renaming the widget without the predicate leaves a general widget asserting a domain term; renaming both before 65 means doing it twice, which is the duplicated-work failure this project has already named.",
-   "gatedOn": "docs/experiments/65-ruleset-as-data.md"
+   "gatedOn": "ruleset-as-declared-data",
+   "record": "docs/experiments/65-ruleset-as-data.md"
   },
   {
    "nodeType": "access",
    "disposition": "merge",
    "reason": "Nearest-neighbour-with-distance plus a speed and a service grading. What it adds is domain, so it merges into the general one (103).",
-   "gatedOn": "docs/experiments/66-ports-as-schema-binding.md"
+   "gatedOn": "one-output-carrier-for-nearest",
+   "record": "docs/experiments/66-ports-as-schema-binding.md"
   },
   {
    "nodeType": "facilities",
    "disposition": "merge",
    "reason": "A radius filter over a bundled registry: nearest-neighbour-with-distance plus data.",
-   "gatedOn": "docs/experiments/66-ports-as-schema-binding.md"
+   "gatedOn": "one-output-carrier-for-nearest",
+   "record": "docs/experiments/66-ports-as-schema-binding.md"
   },
   {
    "nodeType": "policy",
    "disposition": "merge",
    "reason": "A rule application. Its rules are data; the widget arranges a reasoner call. Ruleset generator: makeN3.",
-   "gatedOn": "docs/experiments/65-ruleset-as-data.md"
+   "gatedOn": "ruleset-as-declared-data",
+   "record": "docs/experiments/65-ruleset-as-data.md"
   },
   {
    "nodeType": "access_policy",
    "disposition": "merge",
    "reason": "A rule application. Ruleset generator: accessN3.",
-   "gatedOn": "docs/experiments/65-ruleset-as-data.md"
+   "gatedOn": "ruleset-as-declared-data",
+   "record": "docs/experiments/65-ruleset-as-data.md"
   },
   {
    "nodeType": "facility_audit",
    "disposition": "merge",
    "reason": "A rule application, and the one experiment 65 missed: it takes a classification and emits decisions exactly as policy and access_policy do. Ruleset generator: facilityN3. So 65 replaces four widgets over three rulesets, not three over three.",
-   "gatedOn": "docs/experiments/65-ruleset-as-data.md"
+   "gatedOn": "ruleset-as-declared-data",
+   "record": "docs/experiments/65-ruleset-as-data.md"
   },
   {
    "nodeType": "xpert",
    "disposition": "merge",
    "reason": "A rule application whose name is a product's and whose hierarchy is NB06's. Its fact generation matches two facilities by name string, which is the silent defect 65 records. Ruleset generator: facilityN3.",
-   "gatedOn": "docs/experiments/65-ruleset-as-data.md"
+   "gatedOn": "ruleset-as-declared-data",
+   "record": "docs/experiments/65-ruleset-as-data.md"
   }
  ],
  "retiredSoFar": [
@@ -86,6 +93,22 @@
    "nodeType": "nearest",
    "generalisedAt": "2026-10-12",
    "note": "Title, two port names and a unit-bearing field name were the example attachment; the computation never was. The merge of access and facilities into it is separate and still gated on experiment 66, because three implementations carry three different output carriers and choosing one is a base-contract change."
+  }
+ ],
+ "rulesetMerge": {
+  "measuredAt": "2026-10-12",
+  "finding": "Four widgets, three rulesets, one form. policy (makeN3), access_policy (accessN3), xpert and facility_audit (both facilityN3) are 19 rules in total, and all 19 are a conjunction of categorical equality, boolean equality or a numeric comparison concluding one or more predicate/value pairs. No negation, recursion or aggregation anywhere. So one widget can host all three, and the merge is 4 to 1 rather than the 3 to 1 experiment 65 assumed.",
+  "canTheRulesetsBeOne": "No, and the reason is measured rather than assumed, which is what the practitioner asked for. The three classify disjoint subject kinds against three output vocabularies, and two carry thresholds in different units -- kilometres and minutes. policy also carries a gate access_policy lacks (the alert boolean, in three of its five rules), so collapsing those two would mean parameterising the number of conditions, which is not a parameter. One form, three ruleset instances, one widget.",
+  "alsoFound": "The authored form in experiment 106 had a single conclusion per rule. Two of the three rulesets conclude two predicates at once -- decision with zone, evidenceLevel with service -- so the form takes a list. And facilityN3's last two rules already conclude the same pair from different antecedents, which is an OR compiled by hand.",
+  "record": "docs/experiments/106-rule-builder-ui.md, docs/experiments/65-ruleset-as-data.md"
+ },
+ "deferred": [
+  {
+   "nodeType": "comparison_map",
+   "disposition": "composition",
+   "reason": "The practitioner's direction of 2026-10-12: comparison_map belongs in a communication, visualization and presentation stage as a composition, not as a widget. That stage does not exist yet. Note it declares standardization 'shared', so the exemption ratchet does not cover it; the widget audit's prose had listed it as example-bound, which the declaration contradicts.",
+   "gatedOn": "presentation-stage",
+   "record": "no experiment yet"
   }
  ]
 }

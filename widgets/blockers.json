@@ -1,0 +1,62 @@
+{
+ "schema": "fieldwork/blockers/1",
+ "note": "A blocker is a dated claim, not a property of the world. The practitioner's rule of 2026-10-12: even blockers are not permanent, and each should be revisited in DE mode. This file exists because the two blockers recorded in TODO.md went unexamined and both were wrong when finally re-derived on the day this file was written -- one had been lifted by a widget that shipped, and the other was half true and had been stopping work it did not actually block. A blocker nobody re-derives does the same damage as an admission nobody re-reviews: it looks like a fact and acts like a decision. Every entry must therefore carry a liftTest -- the check that would show it has gone -- because a blocker with no stated lift test cannot be falsified and is only a mood. The ratchet is the revisit window: scripts/validate-blockers.mjs fails when a standing blocker has not been revisited within it.",
+ "measuredAt": "2026-10-12",
+ "revisitWindowDays": 7,
+ "windowBasis": "This project adds and retires widgets in days, not months: twelve widgets arrived in three days and three were retired in one. A blocker older than a week has outlived the conditions it was recorded under.",
+ "blockers": [
+  {
+   "id": "raster-value-onto-point",
+   "claim": "No widget can put a raster value onto a point.",
+   "blocks": [],
+   "recorded": "2026-10-09",
+   "lastRevisited": "2026-10-12",
+   "status": "lifted",
+   "liftTest": "A registered, implemented widget takes a raster and points and outputs points.",
+   "liftedBy": "sample_raster 0.1.0, designed in docs/experiments/67-sample-raster-at-points.md and executed at src/core.ts case 'sample_raster'. Ports: points + raster -> points.",
+   "whatChanged": "The widget was built on 2026-10-12 and TODO.md still read 'Designed in 67; not built' when this file was written. docs/todo.md had already noted 'now done' in passing, in the middle of a paragraph about something else, so the project held both the stale claim and its refutation at once."
+  },
+  {
+   "id": "typed-field-schema",
+   "claim": "There is no typed field schema beyond point attributes. src/attribute-schema.ts declares one for PointCollection only; table, raster and network have nothing.",
+   "blocks": ["generic role binding in docs/experiments/65-ruleset-as-data.md", "the port contracts in docs/experiments/66-ports-as-schema-binding.md"],
+   "recorded": "2026-10-11",
+   "lastRevisited": "2026-10-12",
+   "status": "narrowed",
+   "liftTest": "A declared field schema exists for table, raster and network inputs, with per-field type and unit, and a role binding can be offered against it.",
+   "whatChanged": "The claim was true and its scope was not. It was recorded as blocking the ruleset widget outright, and it does block the general form -- binding any field of any input to a declared role. It does not block the merge that reduces the widget count, because the three existing fact generators take typed carriers and not arbitrary attribute tables: makeN3(NearestRow[]), accessN3(AccessRow[]), facilityN3(Facility[]). So one widget can host the three rulesets as declared data with their existing fact generation, which is 4 widgets to 1, while generic binding waits for the schema. A blocker stated one size too large had been stopping work it did not block."
+  },
+  {
+   "id": "ruleset-as-declared-data",
+   "claim": "No widget applies a ruleset that is declared data rather than a template literal in the execution path, so four widgets exist whose only difference is which rules they run.",
+   "blocks": ["alert", "policy", "access_policy", "facility_audit", "xpert"],
+   "recorded": "2026-10-09",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "liftTest": "One widget hosts the three rulesets as declared, versioned, digested data, and every frozen fixture and Old Naledi classification replays identically -- experiment 106's B1.",
+   "narrowedTo": "The merge needs ruleset-as-data and the existing fact generators. It does not need generic role binding; see typed-field-schema.",
+   "record": "docs/experiments/65-ruleset-as-data.md, docs/experiments/106-rule-builder-ui.md"
+  },
+  {
+   "id": "one-output-carrier-for-nearest",
+   "claim": "Three nearest-neighbour implementations carry three different output carriers, so merging them is a base-contract change and not a rename.",
+   "blocks": ["access", "facilities"],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "liftTest": "One output carrier is declared for nearest-neighbour-with-distance, and access and facilities produce it with no result in any example moving.",
+   "narrowedTo": "It did not block generalising nearest itself. Its ports, title and unit were renamed on 2026-10-12 without touching the carrier, and nearest now declares standardization 'shared'. The blocker covers the merge of the other two, which is less than it was recorded as covering.",
+   "record": "docs/experiments/66-ports-as-schema-binding.md, docs/experiments/103-duplicates-should-merge.md"
+  },
+  {
+   "id": "presentation-stage",
+   "claim": "There is no communication, visualization and presentation stage, so a display-only widget has nowhere to go but the palette.",
+   "blocks": ["comparison_map"],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "liftTest": "A presentation-stage composition exists and comparison_map is expressed as one.",
+   "record": "no experiment yet -- the practitioner's direction of 2026-10-12, recorded in widgets/standardization.json under deferred"
+  }
+ ]
+}

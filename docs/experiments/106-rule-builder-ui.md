@@ -161,6 +161,78 @@ ruleset and outside the reasoner, and the only place in `src/` that maps a tier 
 the first concrete instance of the practitioner's hypothesis that a **decision class** is its own
 declared thing, and moves it to the presentation-stage disposition rather than this merge.
 
+## Six rule applications, three kinds, and the ratchet sees one
+
+_Added 2026-10-12, after the practitioner asked whether `slr_threshold_comparison` is a
+ruleset-based widget and noted that geospatial rulesets do not exist yet._
+
+**It is one**, and it is the sixth. Counting rule applications by what they do rather than by how
+they are written gives three kinds:
+
+| Kind | Widgets | How the rules are written |
+| --- | --- | --- |
+| **Declared ruleset** | `policy`, `access_policy`, `xpert` → now `apply_ruleset` | `rulesets/*/1.0.0.json`, versioned, digested, with a basis |
+| **N3 in a template literal** | `coverage_check` | six rules inside `src/spatial-coverage.ts` |
+| **A TypeScript ternary** | `facility_audit`, `slr_threshold_comparison` | one expression, no reasoner at all |
+
+`slr_threshold_comparison`'s whole classification is one line:
+
+    const status:Status = level===null||!elevationKnown ? 'Unknown'
+                        : level>=elevation! ? 'Review' : 'NoFlag';
+
+Three conclusions over the project's own `fw:decision` vocabulary, with the unknown branch first —
+which is the `*Known` discipline the declared rulesets implement by pre-asserting booleans, here
+done in TypeScript instead. `src/sea-level.ts` calls no reasoner and contains no N3.
+
+So **three of six rule applications are declared, and the standardization ratchet can see none of
+the other three**: `coverage_check` and `slr_threshold_comparison` declare `shared`, and
+`facility_audit` was removed from the ruleset merge once it turned out to run no reasoner. A hidden
+rule is a different failure from an example-bound widget, and nothing in this project was looking
+for the first kind until it was tripped over twice in one afternoon.
+
+### What it needs that this record's form does not have
+
+The comparison is **field to field**. `level` is the projected change for the row's assigned site,
+read from the AR6 extract; `elevation` is the row's own attribute. Neither is a parameter, and
+there is no threshold knob at all. The authored form above is
+
+    condition = { field, comparator, value }
+
+where `value` is a literal or a bound parameter. This needs `value` to admit **another field of the
+same subject**, which is a real extension and not a detail: it is the difference between "compare
+every subject against one number the practitioner chose" and "compare each subject against its
+own".
+
+And the comparator is `>=`, so equality counts as reaching the elevation — the widget's method
+string says so. That is a policy sitting in a comparator, which is what test B5 exists for, and the
+third instance today after `coverage_check`'s boundary-points rule and `makeN3`'s
+`math:notGreaterThan`.
+
+### It is not a geospatial ruleset, and the architecture says none is needed
+
+`level >= elevation` is a scalar comparison between two numbers. There is no geometry in the rule.
+The widget sits in a geospatial pipeline; its rule is arithmetic.
+
+Which answers the larger question the practitioner raised. A genuinely geospatial rule would want
+spatial predicates as premises, and EYE provides none — but **`coverage_check` already shows the
+shape that works without them**: the geometry is computed in TypeScript, the *relation* is asserted
+as a fact —
+
+    <record> fw:spatialRelation fw:Inside .
+
+— and the rules reason over the asserted relation, never over the geometry. Its own comment says it:
+*"Point relations are computed locally."* So a geospatial ruleset needs no spatial builtins; it
+needs the relation asserted as a fact, and that pattern ships today. What is missing is not
+capability but declaration: the one instance of it is a template literal.
+
+### And the naming problem dissolves
+
+The practitioner's starting point was that `slr_threshold_comparison` carries an example label. It
+does — `slr_` names a pack, not an operation. If it becomes a **ruleset**, that stops being a
+problem rather than needing a fix: a widget must be general and a ruleset must be particular, which
+is the division `validate-rulesets.mjs` enforces. Sea-level-specific knowledge in a ruleset named
+for sea level is correct; the same knowledge in a widget name is not.
+
 ## Test cases
 
 Grouped by what each group can establish, because they are not interchangeable. **Group A

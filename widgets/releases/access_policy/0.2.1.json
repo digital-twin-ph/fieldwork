@@ -1,0 +1,59 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:access_policy",
+ "version": "0.2.1",
+ "nodeType": "access_policy",
+ "title": "Access review",
+ "released": "2026-10-12",
+ "implementationStatus": "retired",
+ "standardization": "example-specific",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['access_policy']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "access",
+    "type": "access"
+   }
+  ],
+  "output": "decisions",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/old-naledi.ts",
+   "src/old-naledi-ui.ts"
+  ],
+  "definition": "src/old-naledi.ts#OLD_TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
+ },
+ "changes": [
+  {
+   "kind": "patch",
+   "description": "Names its replacement. The 0.2.0 retirement carried replacementCandidate forward as null from 0.1.0, and null is not a neutral value here: by this project's own rule it reads as NOT REPLACEABLE, which is the state that makes a saved workflow refuse to open rather than migrate. This widget is fully replaceable -- apply_ruleset declares a migrationFrom adapter for it at src/core.ts#validateWorkflow, pinning the ruleset at the version that produced this widget's results -- so the field said the opposite of what the adapter does. Found by building the retired-widget lookup in docs/usage.md, which is what reading a declared field rather than the prose beside it is for."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

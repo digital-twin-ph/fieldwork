@@ -380,6 +380,40 @@ path; with a real conversion it consumes the table directly and the cast goes.
 [65](experiments/65-ruleset-as-data.md) needs for rulesets is the same mechanism. 65 already says
 whichever lands first should be built so the other can use it; this is the second caller arriving.
 
+**Finish aligning the vocabulary to standards.** Started 2026-10-12 and parked deliberately, so
+housecleaning is not displaced by it. The ledger is `ontology/vocabulary-basis.json`.
+
+Where it stands: **3 of 263** declared `fw:` terms carry an alignment, up from **0**. The three are
+`fw:byteSize` ≡ `dcat:byteSize`, `fw:member` ≡ `rdfs:member`, and `fw:memberOf` ⊑
+`dcterms:isPartOf`. SHACL conforms.
+
+**The decision is settled and makes this cheap: align, do not rename.** An axiom is data — no
+migration, no saved workflow touched, receipts byte-identical — so this can be done a term at a
+time with no big-bang. That is why it can wait.
+
+What remains, in the order it should be done:
+
+- **Read three specifications.** The candidates were *recalled*, not searched, and the ledger says
+  so: **CiTO** for `fw:referenceRole`'s four citation roles, **ADMS** for
+  `fw:implementationStatus`, and **VoID** for the roughly fifteen count properties. Partial
+  coverage is the interesting answer — two roles aligned and two not would be a more useful result
+  than either extreme.
+- **Search the ten likely-conduct terms** rather than assume them cleared. `fw:claimsNoComputation`,
+  `fw:valueUnitStatus`, `fw:basisStatus` and the rest are recorded as **unsearched**, which is not
+  the same as none-found.
+- **Then the ratchet**, in the shape `rulesets/ledger.json` already uses: a departed count that may
+  fall and never rise, and every *none-found* entry carrying which standards were checked and on
+  what date. That last part is the practitioner's point that the DE work is the discovery — a
+  negative search result is a dated claim like any other, and a term cleared in October may not be
+  cleared in November.
+
+**One limit, recorded so its absence is not misread.** Equivalence and disjointness need a
+counterpart of the same kind, property against property or class against class. The distinction most
+worth asserting here is that `fw:MeanCenterResult` is **not** a centroid — `mean_center` is the mean
+of point coordinates, and the names invite the confusion — but GeoSPARQL exposes centroid as a
+*function*, so there is no class to be disjoint with. That one stays in an `rdfs:comment`, and the
+missing axiom does not mean the question went unasked.
+
 ## Known and recorded, not yet scheduled
 
 **Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**

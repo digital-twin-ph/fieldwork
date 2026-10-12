@@ -18,6 +18,7 @@ export const ALWAYS_ADDABLE=[
   'buffer_area','buffer_point','reproject','table_input','raster_input','clip_raster','sample_raster',
   'find_health_facilities','summarize_hull','summarize_combined_area','snap_to_network','reachable_nodes','travel_time_band','reachable_corridor','stack_polygons','fill_interior_gaps',
 
+  'samples',
   'rate','case_series','slr_extract_import','slr_site_assignment',
   'slr_threshold_comparison','donut_geomask','hex_aggregate','mean_center','compare_point_sets',
   'comparison_map','chart_output','map_output','table_output',

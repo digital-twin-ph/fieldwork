@@ -99,6 +99,27 @@ whether an `area` can present itself as a one-polygon layer, which is the carrie
 | A knob may change an operation, never a contract | **Precondition**: all modes share one port set and one output carrier, which is what separates this from a selection widget with output modes |
 | Difference exists at one level and not the other | **Limitation**, stated: at the subject level it is a union over a total relation, not a negation |
 
+## Where DE-9IM enters
+
+_Added 2026-10-12, after OGC and ISO geometry standards were assessed against this project
+(`docs/research/ogc-standards-assessment-2026-10-12.md`)._
+
+The project emits three DE-9IM predicates — `geo:sfWithin`, `geo:sfTouches`, `geo:sfDisjoint` — and
+those are **exactly the three that are non-trivial for a point against a polygon**. A point cannot
+overlap, cross or contain one, so the vocabulary is complete for the geometry the project holds, and
+adopting the rest today would add terms nothing could assert.
+
+**The two-layer set operations proposed above are what makes the rest meaningful.** Between two
+polygons, `sfIntersects`, `sfOverlaps`, `sfContains` and `sfCrosses` are all distinct and all
+assertable, and none is emitted anywhere. So this record is where DE-9IM stops being a reference
+and becomes a requirement: a widget that intersects two layers should assert *which* relation each
+pair stands in, not only hand back the resulting geometry.
+
+That also sharpens the membership rule above. For points the relation is total over three values
+because three is all there are. For polygons it is total over a larger closed set, and the same
+argument applies unchanged: difference stays expressible without negation only while every pair
+carries a relation from the declared set.
+
 ## What would close this
 
 A two-layer set-operations widget with the four operations, and a decision on whether `area`

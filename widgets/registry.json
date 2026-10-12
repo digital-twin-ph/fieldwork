@@ -639,7 +639,7 @@
   {
    "id": "urn:fieldwork:widget:samples",
    "nodeType": "samples",
-   "currentVersion": "1.0.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -650,6 +650,11 @@
      "version": "1.0.0",
      "path": "widgets/releases/samples/1.0.0.json",
      "sha256": "c9639e3c496f8b096ee35f695f668f55327df722e9514a0ed814cfed56433dcb"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/samples/0.2.0.json",
+     "sha256": "627c451e3023c579542648639019a5588345ec6ad486f716c41025cabd5d3e06"
     }
    ]
   },

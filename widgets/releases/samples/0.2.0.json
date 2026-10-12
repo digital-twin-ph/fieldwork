@@ -1,0 +1,65 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:samples",
+ "version": "0.2.0",
+ "nodeType": "samples",
+ "title": "Point grid",
+ "released": "2026-10-12",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['samples']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "points",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:GridSampleGeneration",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Generation emits a computation receipt and GeoSPARQL point feature collection; full port SHACL remains future work.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/point-grid.ts",
+   "src/old-naledi.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Generalised in place. The computation was always general -- a bounding extent, a metre spacing converted to degrees at the extent's mid-latitude, and an even-odd containment test -- but the widget declared itself example-specific and earned it three ways: it was titled 'Sample locations', described as generating 'demonstration points', and defined inside one worked example's module in OLD_TYPES. It also stamped samplingBasis 'demonstration-grid' onto every point it produced, which is a claim about a demonstration rather than about a grid. The operation now lives in src/point-grid.ts with no default geometry, the title is 'Point grid', the stamp reads 'regular-grid', and the widget is on the shared palette instead of one example's template. No new node type and no migration: a saved workflow holding this node loads unchanged and no example's node count moves. The spacing range check moved to src/core.ts with it, because validateOldNode only runs for OLD_TYPES members and leaving it behind would have silently stopped enforcing 150-1000 m."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

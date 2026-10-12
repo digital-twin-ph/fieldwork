@@ -2,20 +2,14 @@
  "schema": "fieldwork/widget-standardization/1",
  "note": "A widget may not be name-attached to a worked example. That is the practitioner's rule of 2026-10-12, and the striking thing is that the shipped files already agree: twelve of the 51 release files declare standardization: 'example-specific' about themselves. Nothing read that declaration, so twelve self-reported failed admissions sat in the palette and in the count. This file is the ratchet that reads it. Every example-specific widget must appear below with the record that will remove it, and the exemption count may fall freely and may never rise. Retiring twelve widgets once would be undone by widget 52; a constraint that fails the build is what makes the reduction permanent. The reduction plan is docs/experiments/64-widget-streamlining.md as amended 2026-10-12, and the direction is its Stage 1: essentiality decided on its own terms, with example impact as the output.",
  "measuredAt": "2026-10-12",
- "exemptionCeiling": 9,
+ "exemptionCeiling": 8,
  "disagreementFound": "The widget audit's prose listed nine example-bound widgets and named comparison_map, which declares itself 'shared'. The release files list twelve and do not include it. The files are what ship, so the files are what this ratchet reads; the audit's prose is corrected rather than the declarations.",
  "exempt": [
   {
    "nodeType": "alert",
    "disposition": "rename",
-   "reason": "Declaring an external condition and the date it applies to is irreducible -- nothing in the application derives it -- so the kind is right and the name bakes in 'heat'. This is a naming problem, and a general 'declared condition' primitive replaces it.",
-   "gatedOn": null
-  },
-  {
-   "nodeType": "samples",
-   "disposition": "rename",
-   "reason": "Generating a regular grid at a stated spacing is residual. Its defaults are Old Naledi's, which is data, not operation.",
-   "gatedOn": null
+   "reason": "Declaring an external condition and the date it applies to is irreducible -- nothing in the application derives it -- so the kind is right and the name bakes in 'heat'. Recorded as ungated on 2026-10-12 and corrected the same day: its output predicate is fw:heatAlert, which policy's rules read by name, and its port type 'alert' is consumed as a bound role once the ruleset widget exists. Renaming the widget without the predicate leaves a general widget asserting a domain term; renaming both before 65 means doing it twice, which is the duplicated-work failure this project has already named.",
+   "gatedOn": "docs/experiments/65-ruleset-as-data.md"
   },
   {
    "nodeType": "nearest",
@@ -86,6 +80,13 @@
     "observations"
    ],
    "note": "One example's cooling centres. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today."
+  }
+ ],
+ "generalisedSoFar": [
+  {
+   "nodeType": "samples",
+   "generalisedAt": "2026-10-12",
+   "note": "Title, description, module and output stamp were the example attachment, not the node type -- so this was a generalisation in place, with no new widget, no migration and no change to any example's node count. standardization went from example-specific to shared, which is what ticks this ratchet down."
   }
  ]
 }

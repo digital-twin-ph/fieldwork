@@ -1,3 +1,4 @@
+import {containsPoint,boundaryExtent,gridPoints,GRID_METHOD} from './point-grid.js';
 import type {Boundary,Position,Workflow,WorkflowNode,NodeDefinition,NodeType,ParamsByType,PointFeature,PointCollection,SourceInfo} from './types.js';
 import type {Facility,GradedFacility,AreaValue,SamplesValue,RegistryValue,GradedRegistryValue,AccessValue,Receipt,AccessRow} from './results.js';
 import type {Reasoner,ReasonerQuad} from './worker-types.js';
@@ -8,10 +9,9 @@ import {validateAreaParams} from './study-area.js';
 import {nearestOf} from './nearest-neighbour.js';
 export const SOURCE='https://git.cdc.gov/digital-twin/Gaborone-TB-Agent-Based-Modeling/-/blob/7f183843075a6534b6699cd107cc74def1315bcd/';
 export const DATASET='gaborone-7f183843';
-export const OLD_TYPES:Record<'area'|'facilities'|'samples'|'xpert'|'access'|'access_policy'|'facility_audit',NodeDefinition>={
+export const OLD_TYPES:Record<'area'|'facilities'|'xpert'|'access'|'access_policy'|'facility_audit',NodeDefinition>={
   area:{title:'Study area',group:'Sources',icon:'⬡',color:'blue',description:'Define the geographic extent used by your workflow',inputs:[],output:'area'},
   facilities:{title:'Select nearby facilities',group:'Spatial operations',icon:'⌂',color:'blue',description:'Select facility points within a radius of the study-area center',inputs:[['area','area'],['points','points']],output:'facilities'},
-  samples:{title:'Sample locations',group:'Spatial operations',icon:'▦',color:'teal',description:'Generate demonstration points inside the study boundary',inputs:[['area','area']],output:'points'},
   xpert:{title:'Diagnostic evidence',group:'Semantic reasoning',icon:'⋈',color:'purple',description:'Apply the NB06 evidence hierarchy with N3',inputs:[['facilities','facilities']],output:'gradedFacilities'},
   access:{title:'Facility access',group:'Spatial operations',icon:'⌁',color:'teal',description:'Find the nearest facility meeting your evidence criteria',inputs:[['samples','points'],['facilities','gradedFacilities']],output:'access'},
   access_policy:{title:'Access review',group:'Semantic reasoning',icon:'⋈',color:'purple',description:'Classify access proxies and explicit missing evidence with N3',inputs:[['access','access']],output:'decisions'},
@@ -50,27 +50,20 @@ export function validateOldNode(n:WorkflowNode){
   if(n.type==='area'&&n.params.source==='drawn')validateAreaParams(n.params);
   else if((n.type==='area'||n.type==='facilities')&&(!('dataset' in n.params)||n.params.dataset!==DATASET))throw new Error('Unknown Old Naledi dataset version.');
   if(n.type==='facilities'){range('radiusKm',n.params.radiusKm,1,15);if(n.params.sourceMode!=='connected')throw new Error('Facility selection needs connected input data.');}
-  if(n.type==='samples')range('spacingM',n.params.spacingM,150,1000);
   if(n.type==='access_policy')range('thresholdMin',n.params.thresholdMin,0,120);
   if(n.type==='access'){
     range('speedMPerMin',n.params.speedMPerMin,30,120);
     if(!['direct','contextual','inferential'].includes(n.params.minimumEvidence)||!['onsite','anyKnown'].includes(n.params.service))throw new Error('Invalid facility evidence or service filter.');
   }
 }
-export function inBoundary(point:Position,geometry:Boundary=boundary){
-  const ringContains=(ring:Position[])=>{let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){
-    const a=ring[i],b=ring[j];if((a[1]>point[1])!==(b[1]>point[1])&&point[0]<(b[0]-a[0])*(point[1]-a[1])/(b[1]-a[1])+a[0])inside=!inside;
-  }return inside;};
-  const polygons=geometry.type==='Polygon'?[geometry.coordinates]:geometry.coordinates;
-  return polygons.some(rings=>ringContains(rings[0])&&!rings.slice(1).some(ringContains));
-}
-function extent(g:Boundary){const pts=g.type==='MultiPolygon'?g.coordinates.flat(2):g.coordinates.flat();return [Math.min(...pts.map(p=>p[0])),Math.min(...pts.map(p=>p[1])),Math.max(...pts.map(p=>p[0])),Math.max(...pts.map(p=>p[1]))];}
-export function sampleLocations(geometry:Boundary,spacingM:number){
-  const [x0,y0,x1,y1]=extent(geometry),dy=spacingM/111195,dx=dy/Math.cos((y0+y1)/2*Math.PI/180),points=[];
-  if(Math.ceil((x1-x0)/dx)*Math.ceil((y1-y0)/dy)>10000)throw new Error('This study area needs too many grid cells. Reduce its extent or increase sample spacing.');
-  for(let y=y0+dy/2;y<y1;y+=dy)for(let x=x0+dx/2;x<x1;x+=dx){if(inBoundary([x,y],geometry)){if(points.length>=2000)throw new Error('At most 2,000 sample locations are supported. Increase sample spacing.');points.push({id:`sample-${points.length+1}`,name:`Sample ${points.length+1}`,coordinates:[x,y]});}}
-  return points;
-}
+/** This example's own boundary is the default, which is why the general containment test lives in
+ *  `point-grid.ts` without one. Kept exported: it is how this example asks "is this inside Old
+ *  Naledi?" and the default is the example's, not the operation's. */
+export const inBoundary=(point:Position,geometry:Boundary=boundary)=>containsPoint(point,geometry);
+const extent=boundaryExtent;
+/** Re-exported under its historical name because tests and this module's own facility selection
+ *  call it. The grid itself is general and no longer lives here. */
+export const sampleLocations=gridPoints;
 const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix math: <http://www.w3.org/2000/10/swap/math#>.\n';
 const refs={Direct:'Baik 2019; Mokomane 2024. Named Princess Marina Hospital evidence in NB06.',Contextual:'Mokomane 2024; Dickinson 2017. Hospital-type inference in NB06.',Inferential:'Dickinson 2017; Mokomane 2024. General clinic inference in NB06.',None:'No facility-specific or applicable type-based evidence in NB06.'};
 /** Facilities NB06 names individually, keyed by the registry's own identifier.
@@ -133,11 +126,11 @@ export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner
     case 'area':return {boundary:structuredClone(boundary),dataset:DATASET,provenance:structuredClone(provenance)};
     case 'samples':{
       const rows=sampleLocations(inputs.area.boundary,node.params.spacingM);
-      const features:PointFeature[]=rows.map(p=>({type:'Feature',id:p.id,properties:{name:p.name,samplingBasis:'demonstration-grid'},geometry:{type:'Point',coordinates:[...p.coordinates]}}));
+      const features:PointFeature[]=rows.map(p=>({type:'Feature',id:p.id,properties:{name:p.name,samplingBasis:'regular-grid'},geometry:{type:'Point',coordinates:[...p.coordinates]}}));
       const step='<urn:fieldwork:run:'+runId+':grid:'+node.id+'>',dataset='<urn:fieldwork:run:'+runId+':output:'+node.id+'>';
       let facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n'+step+' a fw:GridSampleGeneration; prov:used <'+inputs.area.areaId+'>; fw:spacingMetres '+node.params.spacingM+'; fw:generatedRecordCount '+rows.length+'.\n'+dataset+' a geo:FeatureCollection, prov:Entity; prov:wasGeneratedBy '+step+'.\n';
       for(const point of rows){const feature='<urn:fieldwork:run:'+runId+':grid:'+node.id+':'+point.id+'>';facts+=dataset+' rdfs:member '+feature+'.\n'+feature+' a geo:Feature; geo:hasGeometry [ a geo:Geometry; geo:asWKT '+JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT ('+point.coordinates.join(' ')+')')+'^^geo:wktLiteral ].\n';}
-      receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:'Regular demonstration grid using local geographic spacing approximation and boundary containment; not households or population.'});
+      receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:GRID_METHOD});
       return {...inputs.area,type:'FeatureCollection' as const,features,rows,sourceNodeId:node.id,sourceKind:'generated-grid',spacingM:node.params.spacingM};
     }
     case 'facilities':{

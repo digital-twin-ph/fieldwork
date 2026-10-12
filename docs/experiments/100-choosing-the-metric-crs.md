@@ -135,3 +135,8 @@ the parameter and improving its default, not for removing it.
 **And nothing about the sphere-to-ellipsoid conversions.** They are measured in two widgets and
 unexamined in the rest. `circleAround`, used by study-area circles, takes the same route;
 whether anything else does has not been audited.
+
+**Audited 2026-10-12** in [101](101-metres-into-angles.md), which found eight sites sharing one
+error, and found that the figure recorded in this document — 0.06–0.32% at 51.5°N — is the
+**best** case of the four latitudes measured, not the typical one. At the equator it is −0.56%
+to +0.11%, and at Manila's latitude −0.49% to +0.13%.

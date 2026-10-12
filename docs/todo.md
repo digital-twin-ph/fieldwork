@@ -153,14 +153,18 @@ still passes, costing +0.17% at London's latitude and **+0.47% at 15°N**, which
 Philippines is. Tightening it to ±3° is one character and would start refusing workflows that
 run today, so it needs checking against the shipped examples first.
 
-**Metres are converted to angles on a sphere, and projected on an ellipsoid.** Several widgets
-— `buffer_point`, `donut_geomask`, `circleAround` — convert a distance to an angle using a mean
-Earth radius of 6,371,008.8 m, while every projection is on the WGS84 ellipsoid, whose local
-radius at 51.5°N is 6,374,604 m along the meridian and 6,391,253 m across it. The result is a
-direction-dependent 0.06–0.32% there, **25 times larger than the UTM scale factor at the same
-place**, and it is why a 500 m buffer measures up to 501.6 m and a 50–125 m donut reads
-50.8–125.2 m. Measured in checks 17 and in the donut card; nothing audits the remaining
-widgets for the same route. Recorded in [100](experiments/100-choosing-the-metric-crs.md).
+**Metres are converted to angles through a constant, in eight places, with the same error.**
+Audited 2026-10-12 by `npm run audit:metres`, which measures every site against a Vincenty
+geodesic: `buffer_point`, `buffer_area`, `area` (both the circle and the box dimensions),
+`donut_geomask`, `samples`, `network_input` and `measure_area`. Three conversion methods that
+look unrelated — a Turf buffer, a great circle on a mean radius, a flat 111,195 m per degree —
+give the **same** answer to two decimals, because they are one approximation written three
+ways. The error is directional and latitude-dependent: **−0.56% to +0.11% at the equator**,
+−0.49% to +0.13% at Manila, 0.06% to 0.32% at Soho. So it is worst in the tropics, which is
+where this project is aimed: a 500 m buffer in Manila is 497.6 m north–south and 500.7 m
+east–west, and a 5 km scope spans 31 m. Nothing is corrected, because correcting it changes
+every one of those outputs and means re-pinning the Lab's parity for the buffer widgets and
+everything downstream. Record: [101](experiments/101-metres-into-angles.md).
 
 
 

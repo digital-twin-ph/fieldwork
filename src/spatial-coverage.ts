@@ -1,4 +1,5 @@
 import type {WorkflowNode,NodeSpec,Workflow,PointInput,PointFeature,Position,SpatialRelation,ParamsByType} from './types.js';
+import {GEOSPARQL_PREDICATE} from './spatial-predicates.js';
 import type {AreaValue,CoverageValue,CoverageRow,Receipt} from './results.js';
 import type {Reasoner} from './worker-types.js';
 import {pointRelation} from './spatial-predicates.js';
@@ -31,7 +32,7 @@ export function coverageFacts(node:WorkflowNode<'coverage_check'>,area:AreaValue
     facts+=`${activity} fw:checkedRecord ${iri}.\n${iri} a geo:Feature; rdfs:label ${JSON.stringify(r.name)}; <http://purl.org/dc/terms/isPartOf> <urn:fieldwork:source:${r.sourceNodeId}>; fw:spatialRelation fw:${r.relation}; fw:excluded ${r.excluded}.\n`;
     if(r.excluded)facts+=`${iri} fw:exclusionReason ${JSON.stringify(r.exclusionReason)}.\n`;
     for(const [key,value] of Object.entries(r.attributes)){if(key==='name')continue;facts+=`${iri} fw:attribute [ fw:fieldKey ${JSON.stringify(key)}; ${value===null?'fw:missingValue true':'<http://www.w3.org/1999/02/22-rdf-syntax-ns#value> '+attributeLiteral(value,r.attributeTypes[key])} ].\n`;}
-    if(r.coordinates){const shape=`<${r.iri}:geometry>`,relation={Inside:'sfWithin',Boundary:'sfTouches',Outside:'sfDisjoint'}[r.relation as Exclude<SpatialRelation,'MissingLocation'>];facts+=`${iri} geo:hasGeometry ${shape}; geo:${relation} <${area.areaId}>.\n${shape} a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> POINT ('+r.coordinates.join(' ')+')')}^^geo:wktLiteral.\n`;}
+    if(r.coordinates){const shape=`<${r.iri}:geometry>`,relation=GEOSPARQL_PREDICATE[r.relation as Exclude<SpatialRelation,'MissingLocation'>];facts+=`${iri} geo:hasGeometry ${shape}; geo:${relation} <${area.areaId}>.\n${shape} a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> POINT ('+r.coordinates.join(' ')+')')}^^geo:wktLiteral.\n`;}
   }
   const rules=`# Point relations are computed locally. Boundary points are included by policy.\n{ ?r fw:excluded true. } => { ?r fw:coverageDecision fw:Excluded. }.\n{ ?r fw:excluded false; fw:spatialRelation fw:Inside. } => { ?r fw:coverageDecision fw:Accept. }.\n{ ?r fw:excluded false; fw:spatialRelation fw:Boundary. } => { ?r fw:coverageDecision fw:Accept. }.\n{ ?r fw:excluded false; fw:spatialRelation fw:Outside. } => { ?r fw:coverageDecision fw:Review. }.\n{ ?r fw:excluded false; fw:spatialRelation fw:MissingLocation. } => { ?r fw:coverageDecision fw:Review. }.\n{ ?activity fw:checkedRecord ?r. ?r fw:coverageDecision fw:Review. } => { ?activity fw:requiresReview true. }.\n`;
   facts=(area.areaFacts||'')+facts;

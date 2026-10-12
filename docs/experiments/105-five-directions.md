@@ -115,6 +115,96 @@ order the retirement-first plan did not have:
 That is a prediction and it is falsifiable: if collapsing one private pipe does not make its merge
 cheaper, the direction is wrong.
 
+## Second run · pointed at vocabulary, 2026-10-12 evening
+
+_On the practitioner's instruction to remember that nothing from the past is permanent, and to run
+the five stances — including over conclusions reached an hour earlier. The occasion was the point
+that because this is an ontology-based project, **names should come from existing standards,
+because those standards are curated and have been argued over, and that is where to look for
+validated inputs.**_
+
+### Backward · is what was admitted still admissible?
+
+Two of today's own conclusions failed review within the hour.
+
+**Overstated.** I wrote that three operations hide their standard name behind an invented one.
+Measured against the release titles, it is **two**: `clip_polygons` is called *"Clip polygons"* and
+`summarize_combined_area` is called *"Combined area"*, while `summarize_hull`'s title is already
+*"Convex hull"* — only its **nodeType** carries this project's `summarize_` prefix.
+
+That distinction is worth more than the correction. A **nodeType** is an internal identifier a saved
+workflow pins; a **title** is what a practitioner reads. `buffer_point` is titled *"Area around a
+point"* rather than *"Buffer"*, which departs from the standard **deliberately and defensibly** for
+an audience that does not think in GIS operations. So the rule is not "use the standard name
+everywhere": an identifier departing from a standard costs a dictionary and a translation; a title
+departing from one may be a kindness.
+
+**And the reason my first reading was wrong is the same reason three other things were wrong
+today** — I read a one-line description or a name instead of the artifact. That is now four:
+`facility_audit`'s port, `facilities`' description, the buffer cap, and this.
+
+### Sideways · the inventory
+
+| | Count |
+| --- | --- |
+| Declared `fw:` terms in the ontology | **263** |
+| Of those, carrying an alignment to a standard — `owl:equivalentProperty`, `owl:equivalentClass`, `skos:exactMatch`, `rdfs:seeAlso` | **0** |
+| External namespaces the project does use for what it says — `geo:`, `prov:`, `qudt:`, `dcat:`, `dcterms:` | 5 |
+| Operations whose practitioner-facing title hides a standard operation name | 2 |
+| Dictionaries translating this project's relation names into DE-9IM | **was 2, now 1** |
+
+So the project borrows standard vocabularies fluently for the things it *says*, and has never
+declared, for a single one of its own 263 terms, whether a standard already names that thing.
+
+**Done, not just counted:** the duplicated dictionary is now one `GEOSPARQL_PREDICATE` in
+`src/spatial-predicates.ts`, with a test that keeps it there and asserts `MissingLocation` acquires
+no standard predicate — because DE-9IM has none for an absent geometry, which is independent
+evidence for what was argued separately today.
+
+### Above · the forest
+
+The framework has three layers — primitives, compositions, declared knowledge — and this adds an
+axis across all of them: **whose vocabulary is it?** With a rule that holds at every layer:
+
+> A standard names **the domain**. The project names **its own conduct**.
+
+Geometry, relations, units and coordinate reference systems are the domain; inventing there costs a
+dictionary. Activities, plans, receipts, admission and retirement are this project's conduct, and
+naming there *is* the work. `fw:GridSampleGeneration` is not a reinvention of anything; `fw:Inside`
+is.
+
+### Below · one tree
+
+`clip_polygons`. Its unique contribution to the forest is **a name and no operation**. It calls
+`polygonClipping.intersection`, its receipt says *"Polygon intersection in CRS84"*, and the only
+thing it adds over the standard operation is the word *clip* — an ArcGIS and QGIS idiom. A widget
+whose residual is a name is the definition of something that should be a **mode** and not a node,
+which is what [107](107-set-operations-and-the-ruleset.md) proposes independently.
+
+### Forward · the direction
+
+**A standard is a validated input, and vocabulary is the one basis this project has never
+ratcheted.** The parallel is exact and the gap is the third row:
+
+| Layer | Its basis | Ratchet | Today |
+| --- | --- | --- | --- |
+| Computation | an independent recomputation | `parity.json`, the Lab | 23 of 52 |
+| Knowledge | a citation a reader can open | `validate-rulesets.mjs` | 0 of 3 resolvable |
+| **Vocabulary** | **a standard that curated the term** | **none** | **0 of 263 aligned** |
+
+The action is the same discipline one layer over, and it must not be "every term aligns", which
+would be false — most of the 263 describe this project's conduct and no standard names them. It is
+the shape `rulesets/ledger.json` already uses for citations: every declared term says which of
+three it is.
+
+1. **Aligned** — a standard names this, and the term is used as the standard defines it.
+2. **No standard names this** — with the standards actually checked, named, so the claim is
+   falsifiable rather than a shrug.
+3. **A standard exists and we departed** — the debt, with the reason and the cost. `fw:Inside` is
+   here, and the cost was a dictionary written twice.
+
+Only the third is debt, and only the third needs a ceiling that may fall and never rise.
+
 ## What would close it
 
 Each direction pointed at this project a second time, with the first pass's findings in hand — and

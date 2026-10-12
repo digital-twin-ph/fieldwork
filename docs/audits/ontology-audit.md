@@ -277,6 +277,30 @@ label. *Fails if* an existing widget performs the same operation. Three implemen
 of nearest-neighbour-with-distance exist today — `nearest`, `access` and
 `slr_site_assignment` — so the registry does not catch this.
 
+**D2 follow-through, added 2026-10-12.** D2 as written is a gate for admitting something new,
+and it had no procedure for the case it actually found: *N implementations already exist.*
+Recording "three implementations" is a fact with no consequence attached, and that is how three
+survived a passing audit. When a duplicate operation is found among existing widgets, the audit
+must answer three further questions:
+
+1. **Which implementation is the general one?** The one whose operation carries no domain — not
+   the oldest, not the most used.
+2. **What does each other one add?** Named precisely, as an operation or as domain.
+3. **If what it adds is domain rather than operation, it merges into the general one** and its
+   domain becomes a parameter, a prepared input, or a separate widget that consumes the general
+   output. Only an addition that is itself a distinct *operation* justifies a separate widget.
+
+*Fails if* a duplicate is recorded without naming the general implementation and the disposition
+of each other one.
+
+Worked, for the case that prompted this: **`nearest` is the general one** — for each point in A,
+the nearest in B, with the distance and an explicit unknown-with-reason when either is missing.
+`access` adds a speed, turning distance into a proxy travel time, and a service grading: domain.
+`slr_site_assignment` adds one validity rule — do not assign a site the extract cannot answer
+for — which [the widget audit](widget_audit.md) already found is satisfiable by preparing the
+site layer: domain. So both merge, and what blocks it is not the operation but `nearest`'s
+example-bound wrapping, below.
+
 **D3 · Is every distinction enforced, and is the enforcement level named?**
 *Evidence:* a table of distinction → enforcement, using hard stop, validation rule,
 run-time check, limitation or out of scope as defined above. *Fails if* any is unstated,
@@ -371,7 +395,18 @@ Renaming an existing node type is a migration and uses the adapter pattern recor
 resolving, saved workflows keep running, and the release file records the rename. A name is
 cheap to choose and expensive to change.
 
-**D7 · Does the name state what was done?**
+**D7 · Does the name state what was done? — and that includes the port names.**
+*Extended 2026-10-12.* D7 was applied to titles and descriptions, and to one port name
+opportunistically when a practitioner noticed `decisions` overclaiming on
+`slr_threshold_comparison`. It was never applied to port names systematically, and it missed a
+worse case than the one it caught: `nearest` declares
+`inputs:[['places','points'],['centers','points']]`. Both carry the general type `points`; the
+**names** are the heat demo's vocabulary, so one worked example's story sits in a general
+widget's contract, where a practitioner wiring a gauge layer must connect "places" to "centers".
+A port name is read every time somebody wires the node, which makes it a stronger claim than a
+description nobody opens.
+
+*Fails if* a port name encodes a use rather than what the port carries.
 *Evidence:* the name against the operation. An import is not an acquisition, a consumer
 of published results is not a model, a presentation is not a computation. *Fails if* the
 name claims more than the operation performs

@@ -135,10 +135,48 @@ So retirement has to be defined per surface, and the surfaces are:
 | `widgets/classification.json` counts | excluded from `standardCount` and `domainCount` |
 | `widgets/check-coverage.json` | excluded, so a retired widget stops owing a Validation Lab check and leaves the awaiting count rather than sitting in it forever |
 | `docs/usage.md` | moved to a retired section, not deleted: a practitioner opening an old workflow needs to be able to look it up |
-| **The Inspector, for a node in a saved workflow** | **present, and says so.** This is the one surface where it must remain visible, because the node still runs and a practitioner is looking at it. It carries the retirement notice and what replaces it |
+| **The Inspector** | **absent too** — see the correction below, which removes the exception this row used to carry |
 
-That last row is the cost of archiving rather than deleting, and it is the right cost: a node
-that executes but cannot be explained anywhere is worse than one that is labelled retired.
+**The exception is withdrawn, 2026-10-12.** This table first kept one surface where a retired
+widget stayed visible: the Inspector, for a node in a saved workflow that still ran. The
+practitioner removed it with a question — *"if it's retired and it's in a saved workflow, by
+whom?"* — and a rule: *that workflow should cease to work unless the retired widget can be
+replaced by an existing one.*
+
+**The question is the harder half.** This refactor was sequenced by "risk to saved work, because
+the only irreversible mistake available here is breaking a workflow somebody saved". There is no
+somebody. The saved workflows are the seven shipped examples and the frozen fixtures in
+`tests/fixtures/`, all of which this project owns and can migrate deliberately, plus whatever
+sits in a developer's `localStorage`. The ordering was weighted for owners who do not exist, and
+that weighting is what left a retired widget executable.
+
+So the rule replaces the exception, and it has two branches:
+
+| | |
+| --- | --- |
+| **Retired and replaceable** — a migration adapter exists | The workflow opens, the node is rewritten, **and it says so**. Silence is the defect [the removed-widget tests](../../tests/composition-drift.test.mjs) already record |
+| **Retired and not replaceable** | The workflow **refuses to open**, naming the widget and that it was retired |
+
+A retired widget therefore never runs, which is why it needs no Inspector surface and why
+archiving can be total.
+
+**Half of this already works.** Measured 2026-10-12 against `validateWorkflow`:
+
+| Saved node type | What happens today |
+| --- | --- |
+| `healthsites_discovery` | opens, becomes `find_health_facilities` — **silently** |
+| `output` | opens, becomes `map_output` — **silently** |
+| `places`, `centers` | open, become `observations` — **silently** |
+| `a_type_that_never_existed` | **refused**: *"Invalid or duplicate node."* |
+
+So the not-replaceable branch is already loud, and the replaceable branch already migrates. What
+is missing is narrow: the migrations do not announce themselves, and the refusal message names
+neither the widget nor retirement as the cause. Those two are the work, not the mechanism.
+
+And the removed-widget tests were written for this: *"These tests record what actually happens
+today. They are not a specification of what should happen; if loud failure is introduced later,
+they will fail, and that is the point."* They are the tripwire, and they should fail when the
+migrations start speaking.
 
 **And the state already exists while nothing honours it.** `scripts/validate-widgets.mjs` has
 accepted `implementationStatus: 'retired'` since the registry format was written; no release

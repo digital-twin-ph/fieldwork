@@ -62,13 +62,23 @@ retired node type **stays executable**, so every saved workflow and every frozen
 runs; and its release file **records the retirement and what replaces it** rather than being
 deleted.
 
+**A retired widget never runs**, which is the practitioner's rule of 2026-10-12: a saved
+workflow holding one should cease to work unless the widget can be replaced by an existing one.
+Replaceable means the adapter rewrites the node *and says so*; not replaceable means the
+workflow refuses to open, naming the widget. Half of this already works —
+`healthsites_discovery`, `output`, `places` and `centers` all migrate today, and an unknown type
+is already refused — but the migrations are **silent** and the refusal says only "Invalid or
+duplicate node". Those two are the work. It also answers *"by whom?"*: there are no external
+owners, only the seven shipped examples and the frozen fixtures this project owns, so the
+"risk to saved work" that sequenced [64](experiments/64-widget-streamlining.md) was weighted for
+owners who do not exist.
+
 **Retired means archived, not merely unaddable** — the practitioner's correction of 2026-10-12:
 a widget absent from the add-palette but still in the catalogue, the counts and search is still
 occupying attention. It must be absent from the palette, from node search, from the catalogue
 list and its count, from `classification.json`'s counts and from `check-coverage.json` — so a
-retired widget stops owing a lab check — and present in exactly one place: the Inspector, for a
-node in a saved workflow, carrying the retirement notice and its replacement. `docs/usage.md`
-keeps it in a retired section so an old workflow can still be looked up.
+retired widget stops owing a lab check — and absent from the Inspector too, since a retired widget never
+runs. `docs/usage.md` keeps it in a retired section so an old workflow can still be looked up.
 
 **And Phase 2's first task is not retiring anything.** `implementationStatus: 'retired'` has
 been a valid value since the registry format was written, no release uses it, and **no file in

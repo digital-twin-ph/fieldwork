@@ -19,7 +19,10 @@
   {
    "id": "typed-field-schema",
    "claim": "There is no typed field schema beyond point attributes. src/attribute-schema.ts declares one for PointCollection only; table, raster and network have nothing.",
-   "blocks": ["generic role binding in docs/experiments/65-ruleset-as-data.md", "the port contracts in docs/experiments/66-ports-as-schema-binding.md"],
+   "blocks": [
+    "generic role binding in docs/experiments/65-ruleset-as-data.md",
+    "the port contracts in docs/experiments/66-ports-as-schema-binding.md"
+   ],
    "recorded": "2026-10-11",
    "lastRevisited": "2026-10-12",
    "status": "narrowed",
@@ -28,19 +31,27 @@
   },
   {
    "id": "ruleset-as-declared-data",
-   "claim": "No widget applies a ruleset that is declared data rather than a template literal in the execution path, so four widgets exist whose only difference is which rules they run.",
-   "blocks": ["alert", "policy", "access_policy", "facility_audit", "xpert"],
+   "claim": "No widget applies a ruleset that is declared data rather than a template literal in the execution path, so three widgets exist whose only difference is which rules they run.",
+   "blocks": [
+    "alert",
+    "policy",
+    "access_policy",
+    "xpert"
+   ],
    "recorded": "2026-10-09",
    "lastRevisited": "2026-10-12",
    "status": "standing",
    "liftTest": "One widget hosts the three rulesets as declared, versioned, digested data, and every frozen fixture and Old Naledi classification replays identically -- experiment 106's B1.",
-   "narrowedTo": "The merge needs ruleset-as-data and the existing fact generators. It does not need generic role binding; see typed-field-schema.",
+   "narrowedTo": "The merge needs ruleset-as-data and the existing fact generators. It does not need generic role binding; see typed-field-schema. Narrowed again the same day: facility_audit was listed among what this blocks and runs no reasoner, so it is a presentation widget and not a rule application. Three widgets, not four.",
    "record": "docs/experiments/65-ruleset-as-data.md, docs/experiments/106-rule-builder-ui.md"
   },
   {
    "id": "one-output-carrier-for-nearest",
    "claim": "Three nearest-neighbour implementations carry three different output carriers, so merging them is a base-contract change and not a rename.",
-   "blocks": ["access", "facilities"],
+   "blocks": [
+    "access",
+    "facilities"
+   ],
    "recorded": "2026-10-12",
    "lastRevisited": "2026-10-12",
    "status": "standing",
@@ -50,8 +61,11 @@
   },
   {
    "id": "presentation-stage",
-   "claim": "There is no communication, visualization and presentation stage, so a display-only widget has nowhere to go but the palette.",
-   "blocks": ["comparison_map"],
+   "claim": "There is no communication, visualization and presentation stage, so a display-only widget has nowhere to go but the palette -- and logic that belongs in a decision class stays hidden in one, as facility_audit's tier-to-status ternary does.",
+   "blocks": [
+    "comparison_map",
+    "facility_audit"
+   ],
    "recorded": "2026-10-12",
    "lastRevisited": "2026-10-12",
    "status": "standing",

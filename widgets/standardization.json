@@ -42,10 +42,10 @@
   },
   {
    "nodeType": "facility_audit",
-   "disposition": "merge",
-   "reason": "A rule application, and the one experiment 65 missed: it takes a classification and emits decisions exactly as policy and access_policy do. Ruleset generator: facilityN3. So 65 replaces four widgets over three rulesets, not three over three.",
-   "gatedOn": "ruleset-as-declared-data",
-   "record": "docs/experiments/65-ruleset-as-data.md"
+   "disposition": "composition",
+   "reason": "Reclassified 2026-10-12. Listed as a rule application to be merged, on the strength of its 'decisions' output port. It runs no reasoner: its body is one projection over values xpert already derived. It belongs with comparison_map in a communication, visualization and presentation stage, not in the ruleset merge. Its tier-to-status ternary is rule-like logic that has to go somewhere when that move happens -- a decision class, on the practitioner's hypothesis.",
+   "gatedOn": "presentation-stage",
+   "record": "no experiment yet"
   },
   {
    "nodeType": "xpert",
@@ -97,10 +97,12 @@
  ],
  "rulesetMerge": {
   "measuredAt": "2026-10-12",
-  "finding": "Four widgets, three rulesets, one form. policy (makeN3), access_policy (accessN3), xpert and facility_audit (both facilityN3) are 19 rules in total, and all 19 are a conjunction of categorical equality, boolean equality or a numeric comparison concluding one or more predicate/value pairs. No negation, recursion or aggregation anywhere. So one widget can host all three, and the merge is 4 to 1 rather than the 3 to 1 experiment 65 assumed.",
+  "finding": "Three widgets, three rulesets, one form. policy (makeN3), access_policy (accessN3) and xpert (facilityN3) are 19 rules in total, and all 19 are a conjunction of categorical equality, boolean equality or a numeric comparison concluding one or more predicate/value pairs. No negation, recursion or aggregation anywhere. So one widget can host all three, and the merge is 3 to 1.",
   "canTheRulesetsBeOne": "No, and the reason is measured rather than assumed, which is what the practitioner asked for. The three classify disjoint subject kinds against three output vocabularies, and two carry thresholds in different units -- kilometres and minutes. policy also carries a gate access_policy lacks (the alert boolean, in three of its five rules), so collapsing those two would mean parameterising the number of conditions, which is not a parameter. One form, three ruleset instances, one widget.",
   "alsoFound": "The authored form in experiment 106 had a single conclusion per rule. Two of the three rulesets conclude two predicates at once -- decision with zone, evidenceLevel with service -- so the form takes a list. And facilityN3's last two rules already conclude the same pair from different antecedents, which is an OR compiled by hand.",
-  "record": "docs/experiments/106-rule-builder-ui.md, docs/experiments/65-ruleset-as-data.md"
+  "record": "docs/experiments/106-rule-builder-ui.md, docs/experiments/65-ruleset-as-data.md",
+  "correctionMade": "Recorded earlier on 2026-10-12 as four widgets over three rulesets, counting facility_audit because its output port is 'decisions'. That was wrong and reading the executor showed it: facility_audit calls no reasoner and generates no N3. Its whole body is one projection -- tier==='Direct'?'NoFlag':tier==='None'?'Unknown':'Review' -- over values xpert already derived, plus a restatement of f.reference as the explanation. Its own check-coverage entry had said so all along: 'it selects and presents; it derives no value.' Experiment 65's original count of three was right and the correction to four was not. An output port type is not evidence of what a widget does.",
+  "butFacilityAuditStillHasLogic": "The tier-to-status mapping is a decision rule written as a TypeScript ternary, outside any ruleset and outside the reasoner, and it is the only place in src/ that maps a tier to a status. So facility_audit is not part of the ruleset merge and it is not innocent either: it is rule-like logic hidden in a presentation widget. Under the practitioner's decision-class hypothesis that mapping is a decision class, which is the first concrete instance that hypothesis has."
  },
  "deferred": [
   {

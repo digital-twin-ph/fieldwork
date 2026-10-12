@@ -271,6 +271,21 @@ fw:networkMetadata a owl:DatatypeProperty.
 fw:networkNodeCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:networkEdgeCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 
+fw:Ruleset a owl:Class;
+  rdfs:subClassOf prov:Plan;
+  rdfs:label "Declared ruleset";
+  rdfs:comment "A versioned set of rules applied to facts projected from an input, together with its parameters, input contract, output vocabulary and the basis it rests on. It is a plan and not a computation: the widget projects, binds and extracts, and the engine derives. It is also not the published standard it may implement -- applying a hierarchy is not the hierarchy.";
+  fw:implementationStatus "implemented".
+fw:basisStatus a owl:ObjectProperty;
+  rdfs:domain fw:Ruleset;
+  rdfs:label "Status of the basis a ruleset rests on";
+  rdfs:comment "One of published, practitioner-agreed, illustrative or proxy. Recorded so a reader can tell a ruleset with a source from one with a disclaimer; of the three rulesets shipped on 2026-10-12, one claims a published basis and none carries resolvable evidence for it.";
+  fw:implementationStatus "implemented".
+fw:unresolvedCitation a owl:DatatypeProperty;
+  rdfs:domain fw:Ruleset;
+  rdfs:label "Citation a reader cannot resolve";
+  rdfs:comment "A bibliography entry held only as text, with no URL and no digested file. Emitted as unresolved rather than as an fw:EvidenceReference, because an entry nobody can open is not evidence and presenting it as one would overstate the basis in the place a reader goes to check it.";
+  fw:implementationStatus "implemented".
 fw:EvidenceReference a owl:Class;
   rdfs:subClassOf prov:Entity;
   rdfs:label "Evidence reference supplied by the workflow author";

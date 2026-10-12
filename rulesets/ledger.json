@@ -1,29 +1,38 @@
 {
  "schema": "fieldwork/ruleset-ledger/1",
- "note": "The widget set grew from 39 to 51 in three days because nothing owned the total, and every one of the twelve passed its own admission review honestly. Rulesets will grow faster: they are data, so adding one costs no code, no release build and no lab check. The same failure is therefore available one layer down, and this file is here before the layer is finished rather than after.\n\nBut the constraint must be a different one, and copying the widget rule would be a mistake. A widget must be GENERAL -- that is what widgets/standardization.json enforces, and it is why twelve example-specific widgets were a problem. A ruleset must be PARTICULAR: knowledge about a place, a disease, a published hierarchy, is exactly what this layer exists to hold, and refusing an example-specific ruleset would refuse the point of it.\n\nWhat a ruleset can be wrong about is its authority. So the ratchet counts rulesets with no cited basis. Declaring the three shipped rulesets as data is what made that countable: two of three carry a disclaimer where a citation would go -- 'Threshold is illustrative', 'not a clinical recommendation or routed travel time'. Both are honest. Neither is a source. The count may fall freely and may never rise.",
+ "note": "The widget set grew from 39 to 51 in three days because nothing owned the total, and every one of the twelve passed its own admission review honestly. Rulesets will grow faster: they are data, so adding one costs no code, no release build and no lab check. The same failure is therefore available one layer down, and this file is here before the layer is finished rather than after.\n\nBut the constraint must be a different one, and copying the widget rule would be a mistake. A widget must be GENERAL -- that is what widgets/standardization.json enforces, and it is why twelve example-specific widgets were a problem. A ruleset must be PARTICULAR: knowledge about a place, a disease, a published hierarchy, is exactly what this layer exists to hold, and refusing an example-specific ruleset would refuse the point of it.\n\nWhat a ruleset can be wrong about is its authority. So the ratchet counts rulesets with no cited basis. Declaring the three shipped rulesets as data is what made that countable: two of three carry a disclaimer where a citation would go -- 'Threshold is illustrative', 'not a clinical recommendation or routed travel time'. Both are honest. Neither is a source. The count may fall freely and may never rise.\n\nRestructured 2026-10-12, on the practitioner's rule that each ruleset-based widget must be able to map to evidence and provenance -- a PDF or a URL. A ruleset's basis now carries EvidenceReference values of the same url-or-pdf-with-digest shape node references use, so a cited PDF is verified by hash rather than trusted by filename, and the provenance emitter already knew how to write it. That change immediately weakened the earlier count: the one ruleset recorded as having a cited basis cites three papers as author-year strings, which resolve to nothing a reader can open. So the ratchet counts rulesets with no RESOLVABLE evidence, which is three of three, not one of three. No locator was invented to close the gap -- the gap is recorded, with what would resolve each entry.",
  "measuredAt": "2026-10-12",
  "counts": {
   "rulesets": 3,
-  "cited": 1,
-  "uncited": 2
+  "withResolvableEvidence": 0,
+  "withoutResolvableEvidence": 3,
+  "citationsNamedButUnresolvable": 3
  },
- "uncitedCeiling": 2,
+ "uncitedCeiling": 3,
  "uncited": [
   {
    "id": "urn:fieldwork:ruleset:outreach-criteria",
    "basisStatus": "illustrative",
    "statedBy": "The ruleset text itself: \"Threshold is illustrative.\"",
-   "whatWouldCiteIt": "A published or practitioner-agreed distance threshold for outreach review, with the population and setting it was derived for. Until one exists the threshold is a knob with a default and no authority, which the receipt should say rather than imply by silence."
+   "whatWouldResolveIt": "A published or practitioner-agreed distance threshold for outreach review, with the population and setting it was derived for, added as a url or pdf evidence reference. Nothing is named at all today, resolvable or otherwise."
   },
   {
    "id": "urn:fieldwork:ruleset:access-review",
    "basisStatus": "proxy",
    "statedBy": "The ruleset text itself: \"not a clinical recommendation or routed travel time.\"",
-   "whatWouldCiteIt": "A source for the review threshold in minutes, and a source for the 5, 15 and 30 minute zone bounds, which are literals in the rules rather than parameters because they are the ruleset's own banding. Three uncited numbers, not one."
+   "whatWouldResolveIt": "Sources for the review threshold in minutes and for the 5, 15 and 30 minute zone bounds. Three uncited numbers, not one: the bounds are literals in the rules rather than parameters, because they are this rulesets own banding."
+  },
+  {
+   "id": "urn:fieldwork:ruleset:nb06-evidence",
+   "basisStatus": "published",
+   "statedBy": "NB06, with per-evidence-level references in src/old-naledi.ts#refs",
+   "whatWouldResolveIt": "A DOI, publisher URL or digested PDF for each of Baik 2019, Mokomane 2024 and Dickinson 2017. This is the ruleset that looked cited and is not: three author-year strings are what the project holds, and they open nothing."
   }
  ],
  "requiredOfEveryRuleset": [
   "a basis with a status and who states it",
+  "evidence as url or pdf references of the same shape node references use, verified by digest when a file",
+  "any citation it cannot resolve recorded as unresolved, with what would resolve it",
   "what it must not be read as",
   "an output vocabulary including a value for unknown",
   "no instance IRI in the rules"

@@ -29,7 +29,7 @@ test('declared rulesets assemble byte-identical rule text',()=>{
   assert.equal(facilityN3([{id:'f1',name:'X',serviceType:'Clinic',owner:'GOVERNMENT'}]).rules,golden.facility);
 });
 
-test('a ruleset declares its basis, and one of three has a citation',()=>{
+test('a ruleset declares its basis, and none of three carries resolvable evidence',()=>{
   const sets=bundledRulesets();
   assert.equal(sets.length,3);
   for(const set of sets){
@@ -40,9 +40,22 @@ test('a ruleset declares its basis, and one of three has a citation',()=>{
     // caught the two facility names, and it passes because that match is in fact generation.
     assert.ok(!/urn:fieldwork:(place|facility):/.test(set.rules),`${set.id} must not name an instance`);
   }
-  const cited=sets.filter(s=>s.basis.citations.length>0);
-  assert.deepEqual(cited.map(s=>s.id),['urn:fieldwork:ruleset:nb06-evidence'],
-    'Declaring rulesets as data is what made this countable: two of three carry a disclaimer where a citation would go.');
+  for(const set of sets){
+    assert.ok(Array.isArray(set.basis.evidence),set.id+' must declare an evidence array');
+    assert.ok(Array.isArray(set.basis.unresolvedCitations),set.id+' must declare unresolved citations, even if empty');
+    for(const unresolved of set.basis.unresolvedCitations)
+      assert.ok(unresolved.whatWouldResolveIt?.trim(),set.id+': say what would resolve '+unresolved.citation);
+  }
+  // The number that matters is resolvable evidence, not citation strings. Restructuring the basis
+  // to carry url-or-pdf references showed that the one ruleset recorded as "cited" cites three
+  // papers as author-year text, which resolve to nothing a reader can open. No locator was
+  // invented to close that gap; it is counted instead, and may only fall.
+  const resolvable=sets.filter(s=>s.basis.evidence.length>0);
+  assert.deepEqual(resolvable.map(s=>s.id),[],
+    'None of the three carries a URL or a digested PDF. If one now does, lower uncitedCeiling in rulesets/ledger.json.');
+  const nb06=sets.find(s=>s.id==='urn:fieldwork:ruleset:nb06-evidence');
+  assert.equal(nb06.basis.status,'published');
+  assert.equal(nb06.basis.unresolvedCitations.length,3,'a published basis with three unopenable citations');
 });
 
 test('binding refuses what would silently conclude nothing',()=>{
@@ -54,4 +67,25 @@ test('binding refuses what would silently conclude nothing',()=>{
   assert.throws(()=>bindParameters({...set,parameters:[]},{}),/left \{\{threshold\}\} unbound/);
   assert.throws(()=>resolveRuleset('urn:fieldwork:ruleset:outreach-criteria','9.9.9'),/carries .* at 1\.0\.0 and not 9\.9\.9/);
   assert.throws(()=>resolveRuleset('urn:fieldwork:ruleset:nope','1.0.0'),/carries no ruleset/);
+});
+
+test('ruleset basis reaches provenance and never a rule premise',async()=>{
+  const {exampleWorkflow,executeWorkflow}=await import('../build/core.js');
+  const w=exampleWorkflow();
+  const inputs=[];
+  const result=await executeWorkflow(w,async input=>{
+    inputs.push(input);
+    return w.nodes[0].params.data.features.map(f=>({subject:'urn:fieldwork:place:'+f.id,predicate:'urn:fieldwork:decision',object:'urn:fieldwork:Unknown'}));
+  });
+  const applied=result.receipts.find(r=>r.ruleset);
+  assert.equal(applied.ruleset.id,'urn:fieldwork:ruleset:outreach-criteria');
+  assert.equal(applied.ruleset.version,'1.0.0');
+  assert.match(result.provenanceN3,/<urn:fieldwork:ruleset:outreach-criteria> a fw:Ruleset, prov:Plan/);
+  assert.match(result.provenanceN3,/fw:basisStatus fw:Illustrative/);
+  assert.match(result.provenanceN3,/prov:hadPlan <urn:fieldwork:ruleset:outreach-criteria>/);
+  // The constraint that predates rulesets: a citation in a premise would let the reasoner draw
+  // conclusions from a bibliography.
+  assert.ok(inputs.every(input=>!input.includes('basisStatus')&&!input.includes('dcterms:references')
+    &&!input.includes('unresolvedCitation')&&!input.includes('fw:Ruleset')),
+    'the ruleset basis must not reach the reasoner');
 });

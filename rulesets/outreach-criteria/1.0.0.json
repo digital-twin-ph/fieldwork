@@ -1,64 +1,65 @@
 {
- "schema": "fieldwork/ruleset/1",
- "id": "urn:fieldwork:ruleset:outreach-criteria",
- "version": "1.0.0",
- "title": "Outreach criteria",
- "released": "2026-10-12",
- "description": "Flags a location for outreach review when an external alert is active and its distance to the nearest service point exceeds a threshold. Missing evidence is concluded unknown rather than negative.",
- "mustNotBeReadAs": "A recommendation to visit or not visit anywhere. The threshold is a practitioner judgement, and this ruleset as shipped has no published basis for any particular value.",
- "rules": "# Missing evidence stays unknown. Threshold is illustrative.\n{ ?p fw:distanceKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:alertKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:distanceKm ?d; fw:heatAlert true. ?d math:greaterThan {{threshold}}. } => { ?p fw:decision fw:Review. }.\n{ ?p fw:distanceKm ?d; fw:heatAlert true. ?d math:notGreaterThan {{threshold}}. } => { ?p fw:decision fw:NoFlag. }.\n{ ?p fw:distanceKnown true; fw:heatAlert false. } => { ?p fw:decision fw:NoFlag. }.\n",
- "parameters": [
-  {
-   "name": "threshold",
-   "role": "distance",
-   "type": "number",
-   "unit": "http://qudt.org/vocab/unit/KM",
-   "min": 0,
-   "max": 1000,
-   "default": 5,
-   "decimals": 9,
-   "placeholder": "{{threshold}}",
-   "meaning": "Distance above which an alerted location is flagged for review."
+  "schema": "fieldwork/ruleset/1",
+  "id": "urn:fieldwork:ruleset:outreach-criteria",
+  "version": "1.0.0",
+  "title": "Outreach criteria",
+  "released": "2026-10-12",
+  "description": "Flags a location for outreach review when an external alert is active and its distance to the nearest service point exceeds a threshold. Missing evidence is concluded unknown rather than negative.",
+  "mustNotBeReadAs": "A recommendation to visit or not visit anywhere. The threshold is a practitioner judgement, and this ruleset as shipped has no published basis for any particular value.",
+  "rules": "# Missing evidence stays unknown. Threshold is illustrative.\n{ ?p fw:distanceKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:alertKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:distanceKm ?d; fw:heatAlert true. ?d math:greaterThan {{threshold}}. } => { ?p fw:decision fw:Review. }.\n{ ?p fw:distanceKm ?d; fw:heatAlert true. ?d math:notGreaterThan {{threshold}}. } => { ?p fw:decision fw:NoFlag. }.\n{ ?p fw:distanceKnown true; fw:heatAlert false. } => { ?p fw:decision fw:NoFlag. }.\n",
+  "parameters": [
+    {
+      "name": "threshold",
+      "role": "distance",
+      "type": "number",
+      "unit": "http://qudt.org/vocab/unit/KM",
+      "min": 0,
+      "max": 1000,
+      "default": 5,
+      "decimals": 9,
+      "placeholder": "{{threshold}}",
+      "meaning": "Distance above which an alerted location is flagged for review."
+    }
+  ],
+  "inputContract": {
+    "factGenerator": "src/core.ts#makeN3",
+    "subjectKind": "places",
+    "expects": [
+      {
+        "predicate": "fw:distanceKnown",
+        "type": "boolean"
+      },
+      {
+        "predicate": "fw:alertKnown",
+        "type": "boolean"
+      },
+      {
+        "predicate": "fw:distanceKm",
+        "type": "number",
+        "unit": "http://qudt.org/vocab/unit/KM"
+      },
+      {
+        "predicate": "fw:heatAlert",
+        "type": "boolean"
+      }
+    ],
+    "note": "fw:distanceKm welds a unit into a predicate name. It is kept at 1.0.0 because changing it changes the rules and this version must reproduce the shipped conclusions exactly; a unit-free predicate with a declared unit is the 2.0.0 change."
+  },
+  "outputVocabulary": {
+    "predicate": "fw:decision",
+    "values": [
+      "Review",
+      "NoFlag",
+      "Unknown"
+    ],
+    "unknownValue": "Unknown",
+    "unmatchedSubjectsExpected": false
+  },
+  "basis": {
+    "status": "illustrative",
+    "statedBy": "The ruleset text itself: \"Threshold is illustrative.\"",
+    "evidence": [],
+    "unresolvedCitations": [],
+    "note": "No citation of any kind, resolvable or otherwise. The threshold is a knob with a default and no authority, and the receipt now says so rather than implying it by silence."
   }
- ],
- "inputContract": {
-  "factGenerator": "src/core.ts#makeN3",
-  "subjectKind": "places",
-  "expects": [
-   {
-    "predicate": "fw:distanceKnown",
-    "type": "boolean"
-   },
-   {
-    "predicate": "fw:alertKnown",
-    "type": "boolean"
-   },
-   {
-    "predicate": "fw:distanceKm",
-    "type": "number",
-    "unit": "http://qudt.org/vocab/unit/KM"
-   },
-   {
-    "predicate": "fw:heatAlert",
-    "type": "boolean"
-   }
-  ],
-  "note": "fw:distanceKm welds a unit into a predicate name. It is kept at 1.0.0 because changing it changes the rules and this version must reproduce the shipped conclusions exactly; a unit-free predicate with a declared unit is the 2.0.0 change."
- },
- "outputVocabulary": {
-  "predicate": "fw:decision",
-  "values": [
-   "Review",
-   "NoFlag",
-   "Unknown"
-  ],
-  "unknownValue": "Unknown",
-  "unmatchedSubjectsExpected": false
- },
- "basis": {
-  "status": "illustrative",
-  "citations": [],
-  "statedBy": "The ruleset text itself: \"Threshold is illustrative.\"",
-  "note": "Declaring this ruleset as data is what exposed that it has no source. The rule set is structurally sound and its threshold is unsourced, and those are different claims that a template literal inside an execution path kept indistinguishable."
- }
 }

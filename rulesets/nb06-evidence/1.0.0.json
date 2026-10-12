@@ -1,76 +1,89 @@
 {
- "schema": "fieldwork/ruleset/1",
- "id": "urn:fieldwork:ruleset:nb06-evidence",
- "version": "1.0.0",
- "title": "Diagnostic evidence grading",
- "released": "2026-10-12",
- "description": "Grades a facility evidence level and expected service from named evidence first, then from government facility type, and otherwise concludes no evidence and unknown service.",
- "mustNotBeReadAs": "The NB06 hierarchy itself. This applies a published hierarchy; applying it is not the same as being it.",
- "rules": "# NB06 hierarchy: named evidence, then government facility type, then unknown.\n{ ?f fw:namedRule fw:Marina. } => { ?f fw:evidenceLevel fw:Direct; fw:service fw:Onsite. }.\n{ ?f fw:namedRule fw:Broadhurst. } => { ?f fw:evidenceLevel fw:Contextual; fw:service fw:OnsiteOrReferral. }.\n{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Hospital. } => { ?f fw:evidenceLevel fw:Contextual; fw:service fw:Onsite. }.\n{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Clinic. } => { ?f fw:evidenceLevel fw:Inferential; fw:service fw:OnsiteOrReferral. }.\n{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:HealthPost. } => { ?f fw:evidenceLevel fw:Inferential; fw:service fw:ReferralOnly. }.\n{ ?f fw:namedRule fw:None; fw:government false. } => { ?f fw:evidenceLevel fw:None; fw:service fw:Unknown. }.\n{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Other. } => { ?f fw:evidenceLevel fw:None; fw:service fw:Unknown. }.\n",
- "parameters": [],
- "inputContract": {
-  "factGenerator": "src/old-naledi.ts#facilityN3",
-  "subjectKind": "facilities",
-  "expects": [
-   {
-    "predicate": "fw:namedRule",
-    "type": "category",
-    "values": [
-     "Marina",
-     "Broadhurst",
-     "None"
-    ]
-   },
-   {
-    "predicate": "fw:government",
-    "type": "boolean"
-   },
-   {
-    "predicate": "fw:facilityKind",
-    "type": "category",
-    "values": [
-     "Hospital",
-     "Clinic",
-     "HealthPost",
-     "Other"
-    ]
-   }
-  ],
-  "knownDefect": "fw:namedRule is derived by matching facility NAMES against two string literals in src/old-naledi.ts. A name-keyed match finds the wrong record without failing, and a renamed facility drops to the None branch, which changes its evidence level and then its access decision with nothing reported. The rules here enumerate no instance, which is why this defect sits in fact generation rather than in the ruleset -- and it is the reason the ruleset had to come out first."
- },
- "outputVocabulary": {
-  "predicates": [
-   {
-    "predicate": "fw:evidenceLevel",
-    "values": [
-     "Direct",
-     "Contextual",
-     "Inferential",
-     "None"
+  "schema": "fieldwork/ruleset/1",
+  "id": "urn:fieldwork:ruleset:nb06-evidence",
+  "version": "1.0.0",
+  "title": "Diagnostic evidence grading",
+  "released": "2026-10-12",
+  "description": "Grades a facility evidence level and expected service from named evidence first, then from government facility type, and otherwise concludes no evidence and unknown service.",
+  "mustNotBeReadAs": "The NB06 hierarchy itself. This applies a published hierarchy; applying it is not the same as being it.",
+  "rules": "# NB06 hierarchy: named evidence, then government facility type, then unknown.\n{ ?f fw:namedRule fw:Marina. } => { ?f fw:evidenceLevel fw:Direct; fw:service fw:Onsite. }.\n{ ?f fw:namedRule fw:Broadhurst. } => { ?f fw:evidenceLevel fw:Contextual; fw:service fw:OnsiteOrReferral. }.\n{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Hospital. } => { ?f fw:evidenceLevel fw:Contextual; fw:service fw:Onsite. }.\n{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Clinic. } => { ?f fw:evidenceLevel fw:Inferential; fw:service fw:OnsiteOrReferral. }.\n{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:HealthPost. } => { ?f fw:evidenceLevel fw:Inferential; fw:service fw:ReferralOnly. }.\n{ ?f fw:namedRule fw:None; fw:government false. } => { ?f fw:evidenceLevel fw:None; fw:service fw:Unknown. }.\n{ ?f fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Other. } => { ?f fw:evidenceLevel fw:None; fw:service fw:Unknown. }.\n",
+  "parameters": [],
+  "inputContract": {
+    "factGenerator": "src/old-naledi.ts#facilityN3",
+    "subjectKind": "facilities",
+    "expects": [
+      {
+        "predicate": "fw:namedRule",
+        "type": "category",
+        "values": [
+          "Marina",
+          "Broadhurst",
+          "None"
+        ]
+      },
+      {
+        "predicate": "fw:government",
+        "type": "boolean"
+      },
+      {
+        "predicate": "fw:facilityKind",
+        "type": "category",
+        "values": [
+          "Hospital",
+          "Clinic",
+          "HealthPost",
+          "Other"
+        ]
+      }
     ],
-    "unknownValue": "None"
-   },
-   {
-    "predicate": "fw:service",
-    "values": [
-     "Onsite",
-     "OnsiteOrReferral",
-     "ReferralOnly",
-     "Unknown"
+    "knownDefect": "fw:namedRule is derived by matching facility NAMES against two string literals in src/old-naledi.ts. A name-keyed match finds the wrong record without failing, and a renamed facility drops to the None branch, which changes its evidence level and then its access decision with nothing reported. The rules here enumerate no instance, which is why this defect sits in fact generation rather than in the ruleset -- and it is the reason the ruleset had to come out first."
+  },
+  "outputVocabulary": {
+    "predicates": [
+      {
+        "predicate": "fw:evidenceLevel",
+        "values": [
+          "Direct",
+          "Contextual",
+          "Inferential",
+          "None"
+        ],
+        "unknownValue": "None"
+      },
+      {
+        "predicate": "fw:service",
+        "values": [
+          "Onsite",
+          "OnsiteOrReferral",
+          "ReferralOnly",
+          "Unknown"
+        ],
+        "unknownValue": "Unknown"
+      }
     ],
-    "unknownValue": "Unknown"
-   }
-  ],
-  "unmatchedSubjectsExpected": false
- },
- "basis": {
-  "status": "published",
-  "citations": [
-   "Baik 2019",
-   "Mokomane 2024",
-   "Dickinson 2017"
-  ],
-  "statedBy": "NB06, with per-evidence-level references in src/old-naledi.ts#refs",
-  "note": "The only one of the three rulesets with a cited basis. Promoting all three to declared artefacts is what made that countable."
- }
+    "unmatchedSubjectsExpected": false
+  },
+  "basis": {
+    "status": "published",
+    "statedBy": "NB06, with per-evidence-level references in src/old-naledi.ts#refs",
+    "evidence": [],
+    "unresolvedCitations": [
+      {
+        "citation": "Baik 2019",
+        "supports": "Named Princess Marina Hospital evidence in NB06 (Direct)",
+        "whatWouldResolveIt": "A DOI or publisher URL, or the PDF with its SHA-256, added as an evidence reference of kind url or pdf. The author-year string is what this project holds and it resolves to nothing."
+      },
+      {
+        "citation": "Mokomane 2024",
+        "supports": "Direct, Contextual and Inferential levels in NB06",
+        "whatWouldResolveIt": "A DOI or publisher URL, or the PDF with its SHA-256."
+      },
+      {
+        "citation": "Dickinson 2017",
+        "supports": "Hospital-type and general clinic inference in NB06 (Contextual, Inferential)",
+        "whatWouldResolveIt": "A DOI or publisher URL, or the PDF with its SHA-256."
+      }
+    ],
+    "note": "This was recorded as the one ruleset with a cited basis, and restructuring the basis to carry resolvable evidence showed the claim was weaker than it looked. Three author-year strings resolve to nothing a reader can open. No locator has been invented to close the gap; the gap is recorded instead."
+  }
 }

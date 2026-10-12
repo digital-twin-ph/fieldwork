@@ -42,7 +42,7 @@ import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
 interface ExecutionInputs extends OldInputs {polygons:Polygons;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection;original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources} from './old-naledi.js';
-import {resolveRuleset,bindParameters} from './rulesets.js';
+import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
 import {measureArea,validateAreaUnit} from './area-measurement.js';
 import {checkCoverage,validateCoverageParams} from './spatial-coverage.js';
@@ -360,7 +360,7 @@ export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:n
   // test in tests/rulesets.test.mjs depends on reproducing exactly that.
   const ruleset=resolveRuleset('urn:fieldwork:ruleset:outreach-criteria','1.0.0');
   const rules=bindParameters(ruleset,{threshold:Number(t)});
-  return {facts:prefix+facts+'\n',rules:prefix+rules,input:prefix+facts+'\n\n'+rules};
+  return {facts:prefix+facts+'\n',rules:prefix+rules,input:prefix+facts+'\n\n'+rules,ruleset:rulesetCitation(ruleset)};
 }
 export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done')=>void=()=>{},resolveCredential?:CredentialResolver):Promise<WorkflowRun> {
   workflow=validateWorkflow(workflow);

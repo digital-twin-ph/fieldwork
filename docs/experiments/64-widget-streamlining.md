@@ -326,3 +326,10 @@ decomposition and its summarising primitives, which [80](80-network-snap.md)–[
 each admitted through D1 individually. The set grew because the work grew, not because nothing
 was watching. What was not watched is this table: the audit's counts were never brought forward,
 which is why the growth was invisible until someone asked.
+
+## What would close it
+
+Phases 2 to 6 executed, or each remaining phase explicitly withdrawn with a reason. Phase 1 is
+done. The practitioner directed on 2026-10-12 that this work precedes any further validation, so
+the closing condition is now the project's stated next step rather than a someday — and
+`widgets/budget.json` reports the distance to the target in every run.

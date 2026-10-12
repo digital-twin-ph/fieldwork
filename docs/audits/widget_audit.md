@@ -63,12 +63,81 @@ lookup:
 | `comparison_map` | composite | Displays a comparison another widget computed |
 | `output`, `chart_output` | composite | Presentation, and superseded |
 
-**This audit covers 39 of 51 widgets.** Twelve have been added since it ran on 2026-10-09 and
+**Completed to 51 on 2026-10-12**, after the practitioner directed that the audit work finish
+before any validation work. The twelve added since 2026-10-09 each stated a kind in their own
+admission review, so this is a transcription and not a fresh judgement:
+
+| Widget | Kind | Stated in |
+| --- | --- | --- |
+| `summarize_hull` | primitive | [80](../experiments/80-convex-hull.md) |
+| `summarize_combined_area` | primitive | [81](../experiments/81-combined-area.md) |
+| `snap_to_network` | primitive | [82](../experiments/82-snap-to-network.md) |
+| `reachable_nodes` | primitive | [83](../experiments/83-reachable-junctions.md) |
+| `reachable_corridor` | primitive | [84](../experiments/84-reachable-corridor.md) |
+| `travel_time_band` | primitive | [85](../experiments/85-travel-time-bands.md) |
+| `stack_polygons` | primitive | [86](../experiments/86-isochrone-output-stage.md) |
+| `fill_interior_gaps` | primitive | [88](../experiments/88-filling-interior-gaps.md) |
+| `buffer_point` | primitive | [68](../experiments/68-area-around-a-point.md) |
+| `sample_raster` | primitive | [67](../experiments/67-sample-raster-at-points.md) |
+| `find_health_facilities` | primitive | its admission review |
+| **`micro_workflow`** | **composite** | see below |
+
+`micro_workflow` is the one that needed deciding rather than transcribing.
+[75](../experiments/75-compositions-as-nodes.md) says *"D1 and D7 are about primitives. A
+composition is not one"* — true, and under the two-kind rule it still has a kind. A
+micro-workflow **is** its members arranged, with nothing residual, and it asserts
+`fw:claimsNoComputation` in every run's provenance to say so. That is the definition of a
+composite, and the purest instance in the registry.
+
+**So the current counts are 31 primitive and 20 composite, of 51.** The placement problems are
+unchanged: nine example-bound, two superseded.
+
+### D7, swept across all 51 — four port names encode a use
+
+_Added 2026-10-12. D7 had been applied to titles and descriptions, and to one port name
+opportunistically. This is the first sweep of every declared port._
+
+| Widget | Port | Carries | |
+| --- | --- | --- | --- |
+| `nearest` | `places` | `points` | the heat demo's vocabulary in a general contract |
+| `nearest` | `centers` | `points` | likewise — and these two are why the merge in the next section was not obvious |
+| `access` | `samples` | `points` | named after the widget that happens to feed it in Old Naledi |
+| `compare_point_sets` | `pumps` | `points` | named after John Snow's pumps; it carries any context layer |
+
+Everything else passes, and two patterns are worth recording as passing deliberately. **Role
+names are not uses**: `original`/`moved` on `compare_point_sets`, `reached` on
+`travel_time_band` and `reachable_corridor`, `sites` on `snap_to_network` — each distinguishes
+same-typed inputs by the part they play, which is what a port name is for. And **numbered
+inputs** — `polygons_2` to `polygons_6` on `stack_polygons` — carry no claim at all.
+
+The separate problem is **port types** that are custom studs: `gradedFacilities`, `access`,
+`distances`, `alert`, `facilities`, `point-comparison`, `coverage-check`. Those are D4a, not D7,
+and they are the reason the three nearest-neighbour implementations cannot merge by rename.
+
+### D2 followed through on the second duplicate — and it does not merge
+
+The table above records a second duplicate: **count into groups**, implemented by
+`summarize_polygons`, `hex_aggregate` and `case_series`. Run through the follow-through
+[103](../experiments/103-duplicates-should-merge.md) added:
+
+1. **Which is general?** **None of them.** The shared operation is "group records by a key and
+   aggregate", and not one of the three implements it generically — each *is* a grouping key.
+2. **What does each add?** `summarize_polygons` adds spatial containment with a boundary policy;
+   `hex_aggregate` adds H3 indexing at a resolution plus a sparse-cell rule; `case_series` adds
+   calendar binning with empty periods retained and a declared date kind.
+3. **Operation or domain?** **Operation, all three.** Containment, hex indexing and calendar
+   arithmetic are different computations, not different subject matter.
+
+So they stay. This is the follow-through working as intended rather than failing to fire: it is
+not a merge machine, and its value is that it now produces a *reasoned* no as readily as a yes.
+What remains is the Phase 3 code factoring — one group-and-aggregate implementation behind three
+keys — which changes no palette entry.
+
+**This audit covered 39 of 51 widgets when it ran.** Twelve have been added since it ran on 2026-10-09 and
 have never been through D1: `buffer_point`, `fill_interior_gaps`, `find_health_facilities`,
 `micro_workflow`, `reachable_corridor`, `reachable_nodes`, `sample_raster`, `snap_to_network`,
-`stack_polygons`, `summarize_combined_area`, `summarize_hull`, `travel_time_band`. Each had an
-admission review at the time, which states a kind, so the gap is in this table and not in the
-record — but the counts above are of 39 and should not be read as current.
+`stack_polygons`, `summarize_combined_area`, `summarize_hull`, `travel_time_band`. Each had an admission review at the time stating a
+kind, so the gap was in this table and not in the record.
 
 The nine with a placement problem are all classified `standard` in `classification.json`, which means
 *ships with the application* and is read as *applies to any domain*. `xpert` applies the

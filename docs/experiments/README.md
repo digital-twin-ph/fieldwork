@@ -54,6 +54,42 @@ the code exists and says nothing about whether the claim survived a check. That
 distinction is the whole point of the vocabulary, and it is the user's:
 *what is known and what is validated are two different things.*
 
+## Before writing one: search
+
+**An experiment that re-derives existing work is worse than no experiment**, because it adds a
+second account to disagree with the first. This has happened twice.
+[93](93-gamification-spike.md) re-derived [27](27-workflow-learning-and-gamification.md) and
+found out through a citation. [102](102-widget-names-and-worked-examples.md) re-derived
+[the widget design audit](../audits/widget_audit.md) — less accurately, and two days after that
+audit had already answered the same practitioner's question.
+
+So the first act of a new document is a search, not a sentence:
+
+```
+grep -ril "<the subject>" docs/
+```
+
+`docs/` is not only `docs/experiments/`. It holds `docs/audits/`, which is where both
+re-derivations found their prior work, and `docs/research/`. A document records what the search
+found, even when the answer is nothing — *"searched `docs/` for X, Y and Z; nothing prior"* is one
+line and it is the line that makes the next person's search unnecessary.
+
+## What would close it
+
+**A status of `asked` or `tried` is an open position, and an open position has to say what would
+close it.** Without that, a document sits in `tried` indefinitely while the thing it half-did
+gets re-derived by somebody who could not tell it was unfinished.
+
+That is the same failure as a criterion that detects without deciding
+([103](103-duplicates-should-merge.md)): D2 found three implementations of one operation,
+recorded it truthfully, and attached no disposition — so three widgets survived a passing audit.
+An experiment with no closing condition is that, in prose.
+
+So `asked` and `tried` documents name the condition: what measurement, what code, what decision
+would move this to `validated` or `retired`. `validated` and `retired` need none — they are
+closed. The count of open documents without one is reported by `validate:experiments`, so it
+cannot drift quietly.
+
 ## One heading spelling
 
 **"What this does not establish."** It is the strongest convention in the corpus

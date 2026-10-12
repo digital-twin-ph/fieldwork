@@ -94,6 +94,13 @@ one receipt per member — stands without it, and is the better case for
 compositions. The correction is recorded at the end of this document as well,
 where the retired claim used to be.
 
+## What would close it
+
+A second composition, assembled by somebody other than its designer, that reuses a member
+already pinned by the first. Until then this establishes that one composition can be built and
+run, which is not the same as establishing that compositions are reusable. Alternatively it
+closes as **retired** if the micro-workflow is withdrawn from the palette.
+
 ## What this does not establish
 
 **It is not on the canvas.** A composition runs by expansion: its members become

@@ -365,6 +365,13 @@ Written down here also because this document **re-derived
 five days after it was written, and found it only through a citation in
 [75](75-compositions-as-nodes.md).
 
+## What would close it
+
+The four predictions above, run against the receipts of the seven worked examples. Prediction 1
+— that the receipts already contain enough — is answerable today with no new code, and
+prediction 2 needs the parsimony measure the practitioner later showed has no baseline. If
+prediction 1 fails, this is **retired** and nothing further is needed.
+
 ## What this does not establish
 
 That gamification helps at all. The case for it is about motivation and learning

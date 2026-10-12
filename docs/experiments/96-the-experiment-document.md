@@ -122,6 +122,13 @@ The original proposal also had the ordering wrong. It assumed the work was
 inventing a form. The measurement said otherwise: most of the form was present
 and unnamed, and the work was closing splits and naming what was there.
 
+## What would close it
+
+The debt count falling. 87 documents predate the standard and the mechanism is "backfill as
+touched"; this is **validated** when the count has fallen materially without a bulk migration,
+which is the only evidence that the standard is being used rather than merely enforced on new
+work. If it sits at 87 for a month, that is the finding the document already predicted.
+
 ## What this does not establish
 
 **That the five questions are answerable from any given document.** The validator

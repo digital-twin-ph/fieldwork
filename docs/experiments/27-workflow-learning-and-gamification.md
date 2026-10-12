@@ -427,3 +427,12 @@ Extend A93's developmental evaluation with guided and independent tasks of compa
 **Slice 4:** explicitly requested encrypted learner-record portability and tested CASE/xAPI adapters. Adaptive sequencing and portable credentials require separate design decisions and evidence.
 
 Before implementation, choose the initial competency wording and explanation rubric, identify a reference assessor for the pilot, and settle the minimum evidence retained for replay. Trial point weights remain adjustable through versioned policies. Do not use these choices to block writing or testing the first challenge definition.
+
+## What would close it
+
+A decision on whether Fieldwork tracks learning at all, which
+[the desktop and browser comparison](../research/desktop-and-browser-for-learning.md) has
+already half-made: the browser app stays focused on field work, and learning is the desktop's
+dimension. This moves to **retired** if that holds and nothing here is built in the browser, or
+to **tried** if a desktop learner record is attempted. It does not need points or badges to
+close — it needs the question answered.

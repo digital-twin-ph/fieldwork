@@ -117,6 +117,13 @@ same protection.
 
 The second and third are not exclusive. The third is done; the second is still open.
 
+## What would close it
+
+The guard. Tightening `metric()` from ±6° to ±3° is one character and would start refusing
+workflows that run today, so it needs a check against the shipped examples first. This moves to
+**validated** when the guard matches the zone it names, or to a recorded refusal if the examples
+show that a boundary-straddling area legitimately needs the wider tolerance.
+
 ## What this does not establish
 
 **That the defaults caused errors in practice.** Nobody has used this application outside the

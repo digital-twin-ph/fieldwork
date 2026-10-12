@@ -121,6 +121,14 @@ bad measure partly because fewer steps are better. The real reason is stronger â
 node count has no reliable direction at all, so no counter built on it can mean
 anything.
 
+## What would close it
+
+A Dive Deeper section in the Validation Lab that a practitioner has read and can act on. Ten
+notebooks now carry one ([98](98-the-coverage-ratchet.md)), which is the mechanism; what is
+missing is any evidence that the explanation lands. This moves to **validated** when one
+practitioner who did not write it reports what they learned from one, and to **retired** if the
+notebooks turn out to be the wrong surface after all.
+
 ## What this does not establish
 
 That the notebooks teach either. They are long, they require a kernel, and

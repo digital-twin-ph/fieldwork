@@ -85,6 +85,14 @@ obviously right:
 Choosing between them is a product decision, not a measurement, and recording it unresolved is
 the honest state.
 
+## What would close it
+
+A decision among the three options recorded above — a declared purpose parameter, a resolution
+derived from the connected study area, or guidance only. Guidance is what exists, so this is
+already at the weakest of the three; it moves to **tried** if either of the other two is built,
+and to **validated** if a practitioner chooses a resolution using the guidance and the choice
+holds up.
+
 ## What this does not establish
 
 **That ten cells across is right.** It is a rule of thumb from one study area, one point count

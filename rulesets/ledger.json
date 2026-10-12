@@ -1,0 +1,31 @@
+{
+ "schema": "fieldwork/ruleset-ledger/1",
+ "note": "The widget set grew from 39 to 51 in three days because nothing owned the total, and every one of the twelve passed its own admission review honestly. Rulesets will grow faster: they are data, so adding one costs no code, no release build and no lab check. The same failure is therefore available one layer down, and this file is here before the layer is finished rather than after.\n\nBut the constraint must be a different one, and copying the widget rule would be a mistake. A widget must be GENERAL -- that is what widgets/standardization.json enforces, and it is why twelve example-specific widgets were a problem. A ruleset must be PARTICULAR: knowledge about a place, a disease, a published hierarchy, is exactly what this layer exists to hold, and refusing an example-specific ruleset would refuse the point of it.\n\nWhat a ruleset can be wrong about is its authority. So the ratchet counts rulesets with no cited basis. Declaring the three shipped rulesets as data is what made that countable: two of three carry a disclaimer where a citation would go -- 'Threshold is illustrative', 'not a clinical recommendation or routed travel time'. Both are honest. Neither is a source. The count may fall freely and may never rise.",
+ "measuredAt": "2026-10-12",
+ "counts": {
+  "rulesets": 3,
+  "cited": 1,
+  "uncited": 2
+ },
+ "uncitedCeiling": 2,
+ "uncited": [
+  {
+   "id": "urn:fieldwork:ruleset:outreach-criteria",
+   "basisStatus": "illustrative",
+   "statedBy": "The ruleset text itself: \"Threshold is illustrative.\"",
+   "whatWouldCiteIt": "A published or practitioner-agreed distance threshold for outreach review, with the population and setting it was derived for. Until one exists the threshold is a knob with a default and no authority, which the receipt should say rather than imply by silence."
+  },
+  {
+   "id": "urn:fieldwork:ruleset:access-review",
+   "basisStatus": "proxy",
+   "statedBy": "The ruleset text itself: \"not a clinical recommendation or routed travel time.\"",
+   "whatWouldCiteIt": "A source for the review threshold in minutes, and a source for the 5, 15 and 30 minute zone bounds, which are literals in the rules rather than parameters because they are the ruleset's own banding. Three uncited numbers, not one."
+  }
+ ],
+ "requiredOfEveryRuleset": [
+  "a basis with a status and who states it",
+  "what it must not be read as",
+  "an output vocabulary including a value for unknown",
+  "no instance IRI in the rules"
+ ]
+}

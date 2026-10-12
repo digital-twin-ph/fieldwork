@@ -329,11 +329,113 @@ recognise their own intent in it. Both are observations for the runbook work in
 [experiment 63](63-worked-example-runbooks.md), and neither is settled by the compiler
 being correct.
 
+## The merge, half done — and what below, above and forward say about it
+
+_2026-10-12. The rules are now declared data and the assembled text is byte-identical to what the
+template literals produced (`tests/rulesets.test.mjs`). The four widgets still exist. This section
+is the three stances the practitioner asked for, applied to `policy`, because it is the widget
+this record is mostly about and the one whose residual decides the shape of the merge._
+
+### Below · one tree: what is `policy`'s unique contribution to the forest?
+
+Its executor, stage by stage, with the ruleset already extracted:
+
+| Stage | What `policy` does | General? |
+| --- | --- | --- |
+| Read inputs | `inputs.distances`, `inputs.alert`, `node.params.thresholdKm` | general, given declared ports |
+| Facts and binding | `makeN3(rows, alert, threshold)` | general now — the ruleset declares the contract and the parameter |
+| Evaluation | `await reasoner(n3.input)` | already shared |
+| Extraction | read `fw:decision`, check it is in the vocabulary, **refuse a conflict**, refuse an unclassified subject | general, given a declared vocabulary |
+| **Explanation** | `` `Nearest center: ${r.center.name}. Distance ${r.distance.toFixed(2)} km ${r.distance>threshold?'>':'≤'} ${threshold} km. Heat alert ${alert.active?'active':'inactive'} on ${alert.date}.` `` | **no** |
+
+So the residual is one sentence. Everything else is one of four general stages plus declared data.
+
+That sentence is not trivial, which is the finding. It is the **evidence surface** — what a
+practitioner reads in order to challenge a decision, and the thing
+[94](94-where-explanation-belongs.md) is about. And it is *ruleset knowledge written in widget
+code*: it restates the ruleset's own conditions in English, naming its roles, its comparison and
+its unit.
+
+Three concrete consequences, all of them things this record did not say:
+
+- **The ruleset format needs an explanation section**, declared per conclusion value, or the merge
+  either loses the evidence surface or keeps four widgets' worth of prose in the host. This record
+  specifies identity, rules, parameters, input contract, output vocabulary and provenance, and
+  **not this**. That is a gap, found by looking at one tree.
+- **The explanation hardcodes the unit a third time.** `nearest` carries a unit knob as of
+  2026-10-12; three display readers were fixed that day for saying "km" regardless; this is a
+  fourth site, inside a sentence. A declared template would take the unit from the bound role.
+- **Its unknown wording is example-specific**: `'Heat alert status is missing.'` is the fallback
+  for every unknown this widget produces. A declared ruleset should say why its own unknowns
+  happen, since it is the thing that knows.
+
+A fourth, smaller: `fw:distanceKm` is a **predicate** with a unit welded into its name. The
+1.0.0 ruleset keeps it, because this version must reproduce the shipped conclusions exactly; a
+unit-free predicate with a declared unit is what 2.0.0 is for.
+
+### Above · the forest: two bodies, one artefact kind
+
+The framework emerging has three layers, and the second and third are **converging on one shape**.
+Measured by comparing the one shipped composition against a shipped ruleset:
+
+| | |
+| --- | --- |
+| Shared core, 8 fields | `schema`, `id`, `version`, `title`, `released`, `description`, `mustNotBeReadAs`, `parameters` |
+| Composition only | `nodeType`, `stage`, `author`, `governance`, `members`, `edges`, `ports` |
+| Ruleset only | `rules`, `inputContract`, `outputVocabulary`, `basis` |
+
+So there is one **declared artefact** emerging with two bodies: an arrangement, or a rule set.
+Both are data, versioned, digested, offline-bundled, and carrying a statement of what they must
+not be read as. The forest is not "a GIS with widgets". It is **an engine plus a catalogue of
+declared knowledge**, and the widget count falling is the symptom, not the goal: knowledge is
+moving to the layer where it can carry a version, a digest and a citation.
+
+Two gaps fall straight out of the table, and each is the other's mirror:
+
+- A **ruleset has no `author` or `governance`**, which a composition has. Nobody owns a ruleset,
+  and a ruleset is exactly the kind of artefact that needs an owner.
+- A **composition has no `basis`**, which a ruleset now has. A composition asserting
+  `fw:claimsNoComputation` still arranges things for a reason, and that reason is uncited.
+
+And the consequence for the target: `widgets/budget.json` aims at 41 because 64 counted planned
+retirements. Above says 41 is not a destination — the right number is *however many irreducible
+operations there are*, which nobody has counted. The target is a direction, and it should stop
+being read as an arrival.
+
+### Forward · what this means for emergence
+
+The widget set grew 39 → 51 in three days because **nothing owned the total**, and every one of
+the twelve passed its own admission review honestly. A ruleset is cheaper to add than a widget —
+data, no code, no release build, no lab check — so the same failure is available one layer down
+and will arrive faster.
+
+**But the constraint must be a different one, and copying the widget rule would be the error.**
+A widget must be **general**: that is what `widgets/standardization.json` enforces, and why twelve
+example-specific widgets were a problem. A ruleset must be **particular** — knowledge about a
+place, a disease, a published hierarchy is precisely what the layer exists to hold. Refusing an
+example-specific ruleset would refuse the point of it.
+
+What a ruleset can be wrong about is its **authority**. So the ratchet counts rulesets with no
+cited basis, and `scripts/validate-rulesets.mjs` is that ratchet, written before the layer is
+finished rather than after. It also makes four things required of every ruleset that the three
+shipped ones happened to have: a basis with a status and who states it, what it must not be read
+as, an unknown value in every output vocabulary, and no instance IRI in the rules.
+
+Today it reports **2 of 3 uncited**, which is a number that did not exist yesterday:
+`nb06-evidence` carries NB06 and three papers; `outreach-criteria` says "Threshold is
+illustrative"; `access-review` says "not a clinical recommendation or routed travel time". Both of
+those are honest and neither is a source. Extracting the rules is what made the difference
+countable, and `rulesets/ledger.json` records what would cite each — including that `access-review`
+has **three** uncited numbers, not one, because its 5, 15 and 30 minute zone bounds are literals
+in the rules rather than parameters.
+
 ## Distinctions, and how each is enforced
 
 | Distinction | Enforcement |
 | --- | --- |
 | A ruleset classifies; it does not enumerate instances | **Validation rule**: a ruleset whose rules contain an instance IRI from a dataset is refused. This is the check that would have caught the Marina match |
+| A widget must be general; a ruleset must be sourced | **Two ratchets, deliberately different**: `validate-standardization.mjs` refuses an example-specific widget, and `validate-rulesets.mjs` does **not** — it counts uncited bases instead. Copying the widget rule to this layer would refuse the knowledge the layer exists to hold |
+| An explanation is the ruleset's, not the widget's | **Open**: `policy`'s explanation sentence is its only residual, and this record does not specify where it goes. Named here rather than discovered during the merge |
 | The authored form is structured; N3 is compiled | **Structural**: the builder emits only the subset, so instance IRIs and negation-as-failure are unreachable rather than checked. The receipt shows both forms, and the digest is over the compiled N3 |
 | Negating a comparison is safe; negating existence is not | **Hard stop**: the comparator list contains complementary numeric builtins and `log:notEqualTo`, and no scoped negation. Absence is expressed against a pre-asserted `*Known` boolean, as the three current rulesets already do |
 | Two conclusions for one subject is an error, not a precedence | **Precondition**: the builder refuses overlapping groups with differing conclusions at authoring time, naming the rows. Both extraction sites already refuse at run time, so this is guidance, not a correctness fix. First-match ordering is unavailable in the monotonic subset |

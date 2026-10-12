@@ -1,6 +1,6 @@
 # 64 · Streamlining the widget set: a sequenced refactor
 
-_Created 2026-10-09 · Updated 2026-10-09_
+_Created 2026-10-09 · Updated 2026-10-12_
 
 **Status:** tried — Phase 1 is done and Phases 2 to 6 are not. Confirmed as the direction by
 the practitioner on 2026-10-12, three days and twelve widgets later; see *what the delay cost*
@@ -11,6 +11,8 @@ Originally: admission review for a refactor. Written before the code, as experim
 [widget design audit](../audits/widget_audit.md) found, ordered by **risk to saved work**
 rather than by value, because the only irreversible mistake available here is breaking a
 workflow somebody saved.
+**Overruled 2026-10-12**: essentiality is decided first and example impact is its output, not
+its input. See the amendment below.
 
 Thirty-nine widgets is the point at which this is still tractable. The audit's findings are
 not individually urgent; what makes them urgent together is that every one of them gets
@@ -44,7 +46,9 @@ for an example node on the strength of the criterion above.
 
 ## Two things this refactor must not do
 
-**No composite leaves the palette.** Eleven composites decompose into a join and an
+**No composite leaves the palette.** _Overruled in part on 2026-10-12 as a
+statement about widgets; see [the amendment](#amendment-2026-10-12--derive-the-essential-set-first-example-impact-is-not-an-input). The palette entry is
+what this protects, and a composition keeps it._ Eleven composites decompose into a join and an
 aggregate, and factoring them *in the code* is the point. Factoring them *on the canvas*
 would make a practitioner wire three nodes to ask one question, which is a worse tool. The
 unit of reuse is not the unit of use ([the audit](../audits/ontology-audit.md), D1).
@@ -64,6 +68,131 @@ The baseline, pinned here from `npm run usage:widgets` on 2026-10-09:
 A rise in any of these is a regression, and is allowed only where a distinction requires it
 and the record names the distinction — as [experiment 58](58-sea-level-widgets.md) argued
 when site assignment needed three inputs rather than two, because a table has no geometry.
+
+## Amendment, 2026-10-12 — derive the essential set first; example impact is not an input
+
+The practitioner: *"I want to tackle reducing the number of widgets to only those that are
+essential / real primitives or example compositions, example agnostic. Regardless of whether
+they impact examples. THEN, I want to know how to adapt the examples to the emerged set of
+reduced number of widgets and example compositions."*
+
+This is a change of **method**, and it overrules two things in this document by name.
+
+**It overrules the ordering principle.** This refactor was sequenced "by risk to saved work
+rather than by value". That weighting was already found to be for owners who do not exist —
+there are no external owners, only the examples and fixtures this project owns. The direction
+now is the other way round: decide what is essential on its own terms, then find out what the
+examples cost. Example impact is an *output* of Stage 1, not an input to it.
+
+**It overrules "No composite leaves the palette"** — as a statement about widgets. The reason
+given still holds: factoring composites onto the canvas would make a practitioner wire three
+nodes to ask one question, and the unit of reuse is not the unit of use. But that argument
+protects the **palette entry**, not the **widget**. A composite can keep its single node and
+stop being a widget, because this project already built the vehicle.
+
+### The vehicle exists and ships exactly one instance
+
+`src/composition-registry.ts` bundles compositions, pins each member by `sha256`, declares the
+composition's own ports and parameters, detects drift when a member moves, and asserts
+`fw:claimsNoComputation` in every run's provenance to say it adds nothing
+([75](75-compositions-as-nodes.md), [these are its mechanics](../../src/compositions.ts)).
+`compositions/compute_walking_catchment/0.3.0.json` is the one shipped instance: four pinned
+members, two declared inputs, one output.
+
+So a composite has somewhere to go. One canvas node, no residual knowledge claimed, members
+already released and already lab-checked. That is what "example compositions" names, and it is
+why this reduction is affordable rather than a capability loss.
+
+### Stage 1 · The essentiality test, applied to all 51
+
+Three questions per widget, in order. **Example usage is not among them.**
+
+1. **Is it irreducible?** Does a distinction remain that does not follow from its parts? This
+   is D1's primitive test, already applied to all 51 by
+   [the audit](../audits/widget_audit.md) — 31 primitive, 20 composite.
+2. **Is it example-agnostic?** Would a practitioner in another country, with another disease
+   and another dataset, ask for this *by this name, with these defaults*? A widget whose name,
+   defaults or bundled data belong to one demonstration fails this **whatever its kind** — the
+   audit records nine such, and this is the test that acts on them rather than noting them.
+3. **Is it reachable as a composition of survivors?** For anything not irreducible: can it be
+   expressed as pinned members with declared ports?
+
+Which gives **four dispositions**, and the fourth is the one that must not be discovered
+later:
+
+| Disposition | Test | What it is |
+| --- | --- | --- |
+| **Primitive widget** | irreducible ∧ agnostic | Stays. Code, a release, a lab check, an audit sweep |
+| **Bundled composition** | reducible ∧ agnostic ∧ asked for by name | One palette node, zero widgets. Data, not code |
+| **Example-internal** | reducible ∧ example-specific | Its members, inside that example's own workflow. Not addable, not searchable, not counted |
+| **Lost** | none of the above | A capability that disappears. **Named here, not found by a practitioner** |
+
+The nine example-bound widgets are candidates for the third row, not the second: shipping them
+as bundled compositions would leave the palette the same size and reduce nothing. That is the
+distinction between relabelling and reduction.
+
+### This splits the budget into two numbers
+
+`widgets/budget.json` counts 51 against a target of 41, and after this it is counting two
+unlike things. A widget costs code, a release file, a lab check, an audit sweep against twelve
+criteria, and a line in every future sweep. A composition costs a JSON file whose members
+already carry all of that. They cannot share a ceiling.
+
+So the budget becomes **widgets** — the maintenance number, which is what 51 was shame about —
+and **addable entries**, the attention number a practitioner actually experiences. Reduction
+has to move the first; it must not silently grow the second.
+
+### Stage 2 · Adapting the examples, once Stage 1 has an answer
+
+Strictly downstream, and it inherits an invariant that is stronger than the one this document
+pinned. The baseline table above fixes each example's node count, which D9 forbids raising.
+Compositions largely preserve it for free — a composition is one node on the canvas, so a
+composite becoming a composition changes the count by zero. The constraint that does the work
+is the other one:
+
+**The examples' results must not change.** That is the only available evidence that reduction
+preserved capability, and it is already instrumented: the frozen fixtures in `tests/fixtures/`,
+Old Naledi's classifications in the browser suite, and the pinned numbers — 250 locations and
+489 deaths for Voronoi, 216 and 433 for the five-minute corridor.
+
+Where a result *must* change, the change belongs to the **data**, not to the computation. The
+worked case is `xpert`, which matches two facilities by name string: extracting the ruleset
+makes those matches an attribute of the example's own records, which is
+[65](65-ruleset-as-data.md)'s migration, and the frozen expectation is what proves the results
+survived it.
+
+Two questions Stage 2 must answer that Stage 1 cannot:
+
+- For each example, which nodes are rewritten, by what adapter, and does it **say so** — the
+  existing migrations are silent, and a silent rewrite of a practitioner's saved work is the
+  thing retirement was supposed to make visible.
+- Which retirements are **available now** and which are gated. `nearest` is gated on port work
+  ([66](66-ports-as-schema-binding.md)); the three rule widgets are gated on a typed field
+  schema beyond point attributes. A plan that does not separate these two will stall on the
+  gated half and deliver none of the free half.
+
+### What would close each stage
+
+**Stage 1** closes with a disposition table covering all 51, each row naming its test outcome,
+with the *Lost* row empty or its entries justified — and with `budget.json` carrying two
+numbers. It does not close by being argued; the audit's own lesson is that a criterion which
+detects without deciding produces a true record and no change
+([103](103-duplicates-should-merge.md)).
+
+**Stage 2** closes when every example runs on the reduced set with every frozen fixture
+replaying identically and every pinned number holding, and when each rewritten node reports
+its rewrite.
+
+### What this amendment cannot establish
+
+That the essentiality test is decidable without judgement. Question 2 in particular — would a
+practitioner elsewhere ask for this by this name — is a judgement, and it is the one that
+retires nine widgets, so it is the one most worth contesting. The test makes the judgement
+explicit and dated rather than removing it, which is all
+[104](104-admission-is-not-permanent.md) claims for any criterion.
+
+And that reduction helps anyone. A shorter palette is an argument, not evidence; only the
+observation in [63](63-worked-example-runbooks.md) would test it.
 
 ## Phases, ordered by risk
 

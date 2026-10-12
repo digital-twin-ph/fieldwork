@@ -1,0 +1,54 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:centers",
+ "version": "0.2.0",
+ "nodeType": "centers",
+ "title": "Cooling centers",
+ "released": "2026-10-12",
+ "implementationStatus": "retired",
+ "standardization": "example-specific",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['centers']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [],
+  "output": "points",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts",
+   "src/app.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": "urn:fieldwork:widget:observations"
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Retired. Superseded by observations, exactly as places is: the same adapter in src/core.ts#validateWorkflow migrates every saved centers node, keeping its label, records and connections, and stamps sourceMigration so the Inspector names the replacement. One worked example's cooling centres, declared 'example-specific' by this widget about itself."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Shared-input unit and Chromium regressions cover migration, data preservation, editor saving and offline EYE results; repository gate remains authoritative."
+ }
+}

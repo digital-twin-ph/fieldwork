@@ -2,21 +2,9 @@
  "schema": "fieldwork/widget-standardization/1",
  "note": "A widget may not be name-attached to a worked example. That is the practitioner's rule of 2026-10-12, and the striking thing is that the shipped files already agree: twelve of the 51 release files declare standardization: 'example-specific' about themselves. Nothing read that declaration, so twelve self-reported failed admissions sat in the palette and in the count. This file is the ratchet that reads it. Every example-specific widget must appear below with the record that will remove it, and the exemption count may fall freely and may never rise. Retiring twelve widgets once would be undone by widget 52; a constraint that fails the build is what makes the reduction permanent. The reduction plan is docs/experiments/64-widget-streamlining.md as amended 2026-10-12, and the direction is its Stage 1: essentiality decided on its own terms, with example impact as the output.",
  "measuredAt": "2026-10-12",
- "exemptionCeiling": 11,
+ "exemptionCeiling": 9,
  "disagreementFound": "The widget audit's prose listed nine example-bound widgets and named comparison_map, which declares itself 'shared'. The release files list twelve and do not include it. The files are what ship, so the files are what this ratchet reads; the audit's prose is corrected rather than the declarations.",
  "exempt": [
-  {
-   "nodeType": "places",
-   "disposition": "retire",
-   "reason": "One example's neighbourhoods. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today.",
-   "gatedOn": null
-  },
-  {
-   "nodeType": "centers",
-   "disposition": "retire",
-   "reason": "One example's cooling centres. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today.",
-   "gatedOn": null
-  },
   {
    "nodeType": "alert",
    "disposition": "rename",
@@ -82,6 +70,22 @@
     "chart_output"
    ],
    "note": "The first widget this project has retired. Its own 0.1.2 release already said it was superseded and off the palette; the retirement took effect when implementationStatus began to be read."
+  },
+  {
+   "nodeType": "places",
+   "retiredAt": "2026-10-12",
+   "replacedBy": [
+    "observations"
+   ],
+   "note": "One example's neighbourhoods. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today."
+  },
+  {
+   "nodeType": "centers",
+   "retiredAt": "2026-10-12",
+   "replacedBy": [
+    "observations"
+   ],
+   "note": "One example's cooling centres. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today."
   }
  ]
 }

@@ -30,7 +30,11 @@ export interface AccessValue {kind:'access'; boundary:Boundary; rows:AccessRow[]
 /** Presentation fields shared by heterogeneous result tabs. Calculations use the narrower contracts above. */
 export interface DisplayRow {
   id:string; name:string; coordinates:Position|null; status?:Status; explanation?:string;
-  distance?:number|null; unit?:DistanceUnit; distanceKm?:number|null; minutes?:number|null; center?:Sample & Partial<GradedFacility>|null;
+  // `distanceKm` was removed on 2026-10-12. It sat here beside `distance` and `unit` after the
+  // rename, so three display readers kept reading a field nothing wrote any more, typechecked
+  // against this declaration, and got undefined — which threw on `.toFixed` and emptied the
+  // decision table. A unit welded into a field name has to leave the type when it leaves the data.
+  distance?:number|null; unit?:DistanceUnit; minutes?:number|null; center?:Sample & Partial<GradedFacility>|null;
   owner?:string; serviceType?:string; service?:Service; tier?:Tier; reference?:string; zone?:Zone;
   recordId?:string; sourceNodeId?:string; layerLabel?:string; attributeTypes?:Record<string,AttributeType>; attributes?:Record<string,Scalar>;
   relation?:SpatialRelation; decision?:CoverageRow['decision']; excluded?:boolean; exclusionReason?:string; signature?:string;

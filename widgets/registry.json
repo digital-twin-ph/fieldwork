@@ -99,7 +99,7 @@
   {
    "id": "urn:fieldwork:widget:centers",
    "nodeType": "centers",
-   "currentVersion": "0.1.1",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -110,6 +110,11 @@
      "version": "0.1.1",
      "path": "widgets/releases/centers/0.1.1.json",
      "sha256": "b798fcf7b79c29e246d9ab946229363ea5a653fcae272c8f7418412b1c6d0c5c"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/centers/0.2.0.json",
+     "sha256": "b40f3259d4e2067fd9b92577a98d09fac982097e01472bab84629c638d78f9cf"
     }
    ]
   },
@@ -498,7 +503,7 @@
   {
    "id": "urn:fieldwork:widget:places",
    "nodeType": "places",
-   "currentVersion": "0.1.1",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -509,6 +514,11 @@
      "version": "0.1.1",
      "path": "widgets/releases/places/0.1.1.json",
      "sha256": "ad9334a29e62ed865e9f03901decce4d17d269ecd053fac370d18ed2a6915778"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/places/0.2.0.json",
+     "sha256": "b9c0e07d025b1368eabbb3d5e4094631ae3ff1ae9da50d8d6149c112cdffdc46"
     }
    ]
   },

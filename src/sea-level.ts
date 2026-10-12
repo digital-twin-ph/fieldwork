@@ -183,7 +183,7 @@ export function compareToElevation(assignments:Assignments,options:ComparisonOpt
       attributes:{...row.attributes,projection_site:row.siteId??'none',site_distance_m:row.distanceM??'unknown',
         projected_change_m:level??'unknown',supplied_elevation_m:elevationKnown?elevation!:'unknown',
         vertical_datum:verticalDatum},
-      distanceKm:row.distanceM===null?null:row.distanceM/1000,center:null};
+      distance:row.distanceM===null?null:row.distanceM/1000,unit:'kilometres',center:null};
   });
   return {kind:undefined,rows,centers:[],selection,verticalDatum,elevationField,elevationReference,
     method:`Projected relative sea-level change compared with a supplied elevation on ${verticalDatum}, declared as measured from the dataset's baseline sea surface. Equality counts as reaching the elevation. No hydrodynamics, defences, drainage or wave action are represented.`,

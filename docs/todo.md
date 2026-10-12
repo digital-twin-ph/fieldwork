@@ -338,6 +338,48 @@ behind an identity, and the ruleset work of 2026-10-12 found that the one rulese
 *published* basis cites three papers that resolve to nothing a reader can open. The examples are the
 other half of that question, and nothing has asked it of them yet.
 
+**A `table` → `points` widget: the gate by which table values become GIS coordinates.**
+The practitioner's framing, 2026-10-12, and recorded rather than built because it is a **new
+widget** — plus one against a target of 41 at 46 — and that trade should be made deliberately.
+
+**It would be the first addition where adding is clearly right.** The budget is answerable to
+empowering practitioners in field workflows, and today a practitioner who imports their own CSV
+with latitude and longitude columns **cannot make it spatial inside a workflow**. Measured: three
+widgets consume `table` and all three emit a table or decisions; the only ways to obtain `points`
+are `observations` (edits data), `samples` (generates a grid) and `find_health_facilities`
+(fetches from a source). None converts.
+
+**The conversion already exists in code and is unreachable from the graph.** `csvPoints` in
+`src/input-data.ts` is exactly `points_from_xy`: it names the x and y columns and declares the
+unit. It is called from two **file-import dialogs** only — the ordinary import, which reads
+degrees, and `reproject-ui`, which reads UTM metres and converts. So the capability exists for a
+*file* and not for a `table` already in the workflow.
+
+The contract, which the 2026-10-12 work already settled:
+
+- in `table`, out `points`
+- the x column and the y column, chosen by the practitioner, with the explicit mapping longitude
+  is x and latitude is y
+- `units`, required and undefaulted — `'degree'` or `'metre'`, because geopandas will not build a
+  GeoDataFrame without a CRS and this project's one CRS is an invariant, not an absence
+- for metres, the UTM zone and hemisphere, reusing `reprojectToCRS84`, since a projected CSV is
+  the case `reproject` exists for
+
+**What it must say it cannot do.** An axis swap is undetectable by range whenever |longitude| ≤ 90,
+which includes both worked examples this project ships: a swapped Soho pump lands off Somalia and a
+swapped Gaborone facility lands in Algeria, both as perfectly valid coordinate pairs. What catches a
+swap is the study area — every record reads Outside and `coverage_check`'s `canProceed` goes false.
+The widget should not imply otherwise.
+
+**What it unlocks beyond the obvious.** `case_series` builds a FeatureCollection with every
+geometry null from a table and casts it `as unknown as PointCollection` to reuse the point-based
+path; with a real conversion it consumes the table directly and the cast goes.
+
+**Shared mechanism, not a second one.** Choosing which column means what is
+[61](experiments/61-input-dimensions.md)'s problem, and the role binding
+[65](experiments/65-ruleset-as-data.md) needs for rulesets is the same mechanism. 65 already says
+whichever lands first should be built so the other can use it; this is the second caller arriving.
+
 ## Known and recorded, not yet scheduled
 
 **Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**

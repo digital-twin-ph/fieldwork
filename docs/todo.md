@@ -153,18 +153,22 @@ still passes, costing +0.17% at London's latitude and **+0.47% at 15°N**, which
 Philippines is. Tightening it to ±3° is one character and would start refusing workflows that
 run today, so it needs checking against the shipped examples first.
 
-**Metres are converted to angles through a constant, in eight places, with the same error.**
+**Metres and angles are related through a constant, in nine places, with the same error.**
 Audited 2026-10-12 by `npm run audit:metres`, which measures every site against a Vincenty
-geodesic: `buffer_point`, `buffer_area`, `area` (both the circle and the box dimensions),
-`donut_geomask`, `samples`, `network_input` and `measure_area`. Three conversion methods that
+geodesic, in both directions. Metres into angles: `buffer_point`, `buffer_area`, `area` (circle
+and box dimensions), `donut_geomask`, `samples`, `network_input`, `measure_area`. Angles into
+metres, via the shared `distanceKm` haversine: `nearest`, `access`, `facilities`,
+`slr_site_assignment` — the same magnitudes with the sign reversed. Three conversion methods that
 look unrelated — a Turf buffer, a great circle on a mean radius, a flat 111,195 m per degree —
 give the **same** answer to two decimals, because they are one approximation written three
 ways. The error is directional and latitude-dependent: **−0.56% to +0.11% at the equator**,
 −0.49% to +0.13% at Manila, 0.06% to 0.32% at Soho. So it is worst in the tropics, which is
 where this project is aimed: a 500 m buffer in Manila is 497.6 m north–south and 500.7 m
-east–west, and a 5 km scope spans 31 m. Nothing is corrected, because correcting it changes
-every one of those outputs and means re-pinning the Lab's parity for the buffer widgets and
-everything downstream. Record: [101](experiments/101-metres-into-angles.md).
+east–west, and a 5 km scope spans 31 m. The two directions differ in consequence: a reported
+distance that is 0.5% out is a reporting error, while `facilities` uses a radius as a
+**membership** test, where a facility on the boundary can fall either side. Nothing is
+corrected, because correcting it changes every one of those outputs and means re-pinning the
+Lab's parity for the buffer widgets and everything downstream. Record: [101](experiments/101-metres-into-angles.md).
 
 
 

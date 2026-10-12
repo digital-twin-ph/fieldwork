@@ -14,6 +14,12 @@
  * It reports. It does not gate: the errors are small, a practitioner may not care, and deciding
  * which of them matter is a judgement that belongs in a document and not in an exit code.
  *
+ * Two directions, because the first version of this audit only had one and that was a
+ * categorical gap rather than a missed grep. Converting metres INTO an angle is what a buffer
+ * does; measuring a distance BETWEEN two angles is what every nearest-neighbour search does, and
+ * it is the same approximation run backwards. `distanceKm` is a haversine on a mean sphere and
+ * four widgets rest on it.
+ *
  * Usage: node scripts/audit-metre-conversions.mjs [--json]
  */
 import {circleAround,bufferedBoundary,dimensionedBox} from '../build/area-buffer.js';
@@ -22,6 +28,7 @@ import {moveDonut} from '../build/geoprivacy.js';
 import {sampleLocations} from '../build/old-naledi.js';
 import {osmQuery} from '../build/street-network.js';
 import {calculateArea} from '../build/area-computation.js';
+import {distanceKm} from '../build/core.js';
 
 /** Vincenty inverse on WGS84: the reference, accurate to a millimetre over these distances. */
 function geodesic([lon1,lat1],[lon2,lat2]){
@@ -152,6 +159,25 @@ const sites=[
    }},
 ];
 
+/** Measuring a distance between two positions: the inverse conversion, angles into metres. */
+const measurers=[
+  {widget:'nearest, access, facilities, slr_site_assignment',where:'src/core.ts#distanceKm',
+   how:'haversine, mean radius 6371008.8 m',
+   measure(centre){
+     // 1 km due north and due east of the centre, by geodesic construction, then measured back.
+     const pairs=[];
+     for(const metres of [1000,5000]){
+       // Walk north and east in degrees until the geodesic distance matches, so the TRUTH is
+       // the construction and the function under test is the thing being judged.
+       const north=[centre[0],centre[1]+metres/111132];
+       const east=[centre[0]+metres/(111320*Math.cos(centre[1]*Math.PI/180)),centre[1]];
+       for(const target of [north,east])
+         pairs.push([geodesic(centre,target),distanceKm(centre,target)*1000]);
+     }
+     return pairs;
+   }},
+];
+
 const rows=[];
 for(const site of sites){
   const perPlace={};
@@ -162,9 +188,20 @@ for(const site of sites){
   rows.push({...site,perPlace});
 }
 
+const measured=[];
+for(const site of measurers){
+  const perPlace={};
+  for(const place of places){
+    try{perPlace[place.name]=spread(site.measure(place.centre));}
+    catch(error){perPlace[place.name]=null;}
+  }
+  measured.push({...site,perPlace});
+}
+
 if(process.argv.includes('--json')){
   console.log(JSON.stringify({measuredAt:new Date().toISOString().slice(0,10),places:places.map(p=>p.name),
-    sites:rows.map(({widget,where,how,perPlace})=>({widget,where,how,relativeError:perPlace}))},null,1));
+    metresIntoAngles:rows.map(({widget,where,how,perPlace})=>({widget,where,how,relativeError:perPlace})),
+    anglesIntoMetres:measured.map(({widget,where,how,perPlace})=>({widget,where,how,relativeError:perPlace}))},null,1));
 }else{
   const pad=(s,n)=>String(s).padEnd(n);
   console.log('Relative error against a WGS84 geodesic, by site and latitude.');
@@ -177,5 +214,13 @@ if(process.argv.includes('--json')){
         return (v===null?'refused'
           :Math.abs(v.high-v.low)<5e-6?(v.high*100).toFixed(3)+'%'
           :`${(v.low*100).toFixed(2)} to ${(v.high*100).toFixed(2)}%`).padStart(20);}).join(''));
-  console.log('\nSites measured: '+rows.length+'. Reference: Vincenty inverse on WGS84, which shares no code with any of them.');
+  console.log('\nAnd the inverse: measuring a distance between two positions, angles into metres.\n');
+  console.log(pad('widget',24)+pad('conversion',38)+places.map(p=>p.name.padStart(20)).join(''));
+  for(const row of measured)
+    console.log(pad(row.widget.length>23?'nearest, access, +2':row.widget,24)+pad(row.how,38)
+      +places.map(p=>{const v=row.perPlace[p.name];
+        return (v===null?'refused'
+          :Math.abs(v.high-v.low)<5e-6?(v.high*100).toFixed(3)+'%'
+          :`${(v.low*100).toFixed(2)} to ${(v.high*100).toFixed(2)}%`).padStart(20);}).join(''));
+  console.log('\nSites measured: '+(rows.length+measured.length)+'. Reference: Vincenty inverse on WGS84, which shares no code with any of them.');
 }

@@ -2,8 +2,8 @@
 
 _Created 2026-10-12 · Updated 2026-10-12_
 
-**Status:** validated — every site that converts a distance in metres into an angle is now
-found, measured against an independent geodesic, and re-measurable by
+**Status:** validated — every site that converts between metres and angles, in both directions,
+is now found, measured against an independent geodesic, and re-measurable by
 `npm run audit:metres`. What to do about it is not decided, and the errors are not fixed.
 
 ## The question asked
@@ -25,8 +25,13 @@ sites by grep — three constants (`6371008.8`, `111195`, `111320`) and every Tu
 latitudes, and measures the result against a **Vincenty inverse on WGS84**, accurate to
 millimetres and sharing no code with anything being measured.
 
-Eight sites were found. The error is reported as a **range**, not a worst case, because it is
-directional.
+Nine sites were found, in **two directions**. Converting metres *into* an angle is what a buffer
+does. Measuring a distance *between* two angles is what every nearest-neighbour search does, and
+it is the same approximation run backwards. The error is reported as a **range**, not a worst
+case, because it is directional.
+
+The second direction was missing from the first version of this audit, which is recorded under
+*what changed our minds* because it was a categorical gap and not a missed grep.
 
 ## What happened
 
@@ -42,7 +47,20 @@ area (box dimensions)   flat 111195 m per degree     -0.56 to 0.11%   -0.49 to 0
 measure_area            Turf spherical area                  0.449%           0.364%        -0.373%
 ```
 
-**It is one defect with seven faces.** Three conversion methods that look unrelated — a Turf
+And the inverse, `distanceKm` — a haversine on the same mean sphere, which `nearest`, `access`,
+`facilities` and `slr_site_assignment` all rest on:
+
+```
+widget                             conversion                    equator      Manila 14.6°N   Soho 51.5°N
+nearest, access, facilities,       haversine, mean radius  -0.11 to 0.56%  -0.13 to 0.50%  -0.32 to -0.06%
+  slr_site_assignment
+```
+
+**Exactly mirrored**: the same magnitudes with the sign reversed, which is what an inverse
+conversion of the same approximation must look like and is the strongest evidence that it is one
+approximation rather than two.
+
+**It is one defect with eight faces.** Three conversion methods that look unrelated — a Turf
 buffer, a great circle on a mean radius, and a flat 111,195 m per degree — produce the *same*
 error to two decimal places at every latitude. They agree because they are the same
 approximation written three ways: all of them treat a degree as a constant.
@@ -58,7 +76,14 @@ The true figures, computed independently and matching the audit to three decimal
 
 A degree of latitude is 110,574 m at the equator and 111,694 m at the pole, because the
 ellipsoid's meridian curvature varies; a degree of longitude needs the prime-vertical radius,
-not the same constant. So the error is largest **north–south near the equator** and largest
+not the same constant.
+
+**And the two directions are not equally consequential.** For a reported distance, 0.5% is a
+reporting error: a facility 5 km from a tide gauge is really 4,972 to 5,028 m away at Manila's
+latitude, and nobody acts differently. For a **threshold** it is a membership decision —
+`facilities` keeps what falls within a radius, and a facility sitting on the boundary can fall
+either side of it. The same number means different things depending on whether it is being
+reported or compared. So the error is largest **north–south near the equator** and largest
 **east–west at high latitude**, and in between it passes through zero — which is why
 `measure_area` changes sign between Old Naledi and Soho.
 
@@ -99,6 +124,17 @@ They are the same answer. That reframes the work: not seven sites to fix one at 
 decision — whether this application relates metres to degrees through a projection or through a
 constant — with seven call sites downstream of it.
 
+**The first version of this audit measured one direction and called itself complete.** It
+covered metres becoming an angle — buffers, grids, boxes — and said nothing about angles
+becoming metres, which is `distanceKm` and four more widgets. The omission was not a grep that
+missed a file: it was not having asked whether the conversion runs both ways. It was found by
+reading `slr_site_assignment` while planning its parity check, one commit after this document
+claimed the audit was done.
+
+What makes that worth recording is that the document already carried a caveat about
+completeness — *"nothing proves the list is closed"* — and that caveat was about the wrong risk.
+It anticipated a conversion written in an unusual way, not a whole category.
+
 **And the magnitude recorded in [100](100-choosing-the-metric-crs.md) was the best case, not the
 typical one.** It came from Soho because Soho is where the accident happened. Four latitudes
 cost one more line of script and nearly doubled the number.
@@ -109,10 +145,11 @@ cost one more line of script and nearly doubled the number.
 practitioner deciding who is within walking distance of a clinic cares is a question about use,
 and nobody has used this outside two worked examples.
 
-**That the eight sites are all of them.** They were found by grepping for three constants and
-for Turf's `units:'meters'`. A conversion written some other way — a hard-coded degree offset, a
-radius in an example's data — would not have been caught, and nothing proves the list is
-closed.
+**That the nine sites are all of them.** The first version of this audit had eight and was
+missing an entire direction — every distance *measurement* in the application — which is a worse
+kind of gap than a missed grep and is recorded above. The sites were found by grepping three
+constants, Turf's `units:'meters'`, and the shared `distanceKm`. A conversion written some other
+way would still not be caught, and nothing proves the list is closed now either.
 
 **That projecting properly would be better in every case.** `metric()` refuses coordinates
 outside its zone, so a study area spanning two zones cannot use it as these sites are used now.

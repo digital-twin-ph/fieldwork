@@ -89,6 +89,29 @@ two-layer intersection subsumes `clip_polygons`, and a general union may subsume
 whether an `area` can present itself as a one-polygon layer, which is the carrier question
 [66](66-ports-as-schema-binding.md) owns.
 
+## The knob's values are already named, and two widgets are already modes
+
+_Added 2026-10-12, on the practitioner's point that the standards remove any need to reinvent
+terminology — especially for geometry operations._
+
+The two operations that exist here already carry their standard names **in the implementation and
+in the receipt**, and only the widget hides them: `clip_polygons` calls
+`polygonClipping.intersection` and its receipt says *"Polygon intersection in CRS84"*, while
+`summarize_combined_area` calls `polygonClipping.union` and its receipt says *"Union of N areas"*.
+A practitioner places a node called **Clip polygons** and audits a receipt that says *intersection*.
+
+So the widget proposed above does not need a vocabulary invented for it. Its knob takes the Simple
+Features names — `intersection`, `union`, `difference`, `symmetricDifference` — and the two existing
+widgets become **modes** of it rather than neighbours of it.
+
+That is a better case than this record made. It argued the widget *might* be net negative depending
+on whether an `area` can present as a one-polygon layer, which [66](66-ports-as-schema-binding.md)
+owns. The naming argument does not depend on that question at all: whatever the carrier decision,
+the operations should be called what the standard calls them, and today two of them are not.
+
+What it does not remove is the migration. Renaming a node type touches saved workflows and D7, and
+the retirement machinery built on 2026-10-12 is what makes it safe rather than cheap.
+
 ## Distinctions, and how each would be enforced
 
 | Distinction | Enforcement |

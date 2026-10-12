@@ -124,6 +124,48 @@ follow-through asks what each duplicate *adds*; it does not ask whether the thin
 all, and that is the gap this correction exposes. **A duplicate claim needs the operation stated,
 not the inputs compared.**
 
+### Sharpened again — it is a study-area problem
+
+The practitioner, on being shown the correction above: *"Facilities looks like a study area widget
+related problem."* That is right, and it is sharper than "a composition of `buffer_point` plus a
+selection".
+
+The widget declares an **`area`** input and uses only its **bounding-box centre**:
+`extent(boundary)`, midpoint, then a radius test per facility. The boundary's shape is discarded
+entirely. A widget that says it needs an area needs a point.
+
+**Measured, 2026-10-12.** The Old Naledi boundary's bounding-box diagonal is 2.55 km.
+
+| Selection | Facilities, of 214 |
+| --- | --- |
+| Shipped: 6 km circle at the bounding-box centre | 122 |
+| `buffer_area` at its 5,000 m ceiling, then the points inside | 122 |
+| Agreeing | **121** |
+
+One differs each way, at the margin where a circle and a buffered polygon part company. So the 6 km
+radius encodes *5 km beyond the boundary* plus the boundary's own half-width of 1.27 km — **a
+number compensating for an operation that was missing**. The study-area primitive reproduces the
+widget to one facility in 122, using the geometry the widget threw away.
+
+So the decomposition is `buffer_area` plus a selection, not `buffer_point` plus a selection.
+`buffer_point` was extracted *from* this widget, which is why it looked like the answer, and reaching
+for it repeats the same mistake one level down: substituting a circle for a boundary that was
+available all along.
+
+**What is actually missing is the selection.** Nothing in the registry takes `(area, points)` and
+outputs `points`. `coverage_check` does that geometry and emits a review carrier that only
+`map_output` and `table_output` consume, so a spatial selection cannot be chained into anything.
+Two widgets take an area and produce points — `samples` generates a grid, `find_health_facilities`
+fetches from a source — and neither selects.
+
+And `buffer_area` **caps at 5,000 m** while this example's own radius is 6 km, so the primitive that
+would replace the widget cannot currently express what the widget does. That cap is why the
+measurement above had to be taken at 5 km rather than 6.
+
+The disposition is net **zero** on the widget count: one general primitive added, one
+example-specific widget retired. The count is not the point. It converts a widget that bakes in one
+example's reference point and one registry's attribute vocabulary into two that bake in neither.
+
 ## What this does not establish
 
 **That the merge is safe.** It is blocked on the same port work as everything else —

@@ -234,6 +234,36 @@ counted in every run. It is not required, because not every document had its
 mind changed; it is counted so that it does not quietly become a rule nobody
 follows. If the count sits still for a month, that is the finding.
 
+**Hypothesis, the practitioner's, 2026-10-12: a decision class is its own widget.**
+Not scheduled, and recorded so it is not re-derived. The claim: *"the policy widget after all may
+be just a ruleset based widget that emits a decision class which can be defined externally within
+a decision class widget."*
+
+What makes it worth an experiment rather than a note is that today's work points the same way
+without having set out to. With its ruleset extracted, `policy`'s only residual is an explanation
+sentence, and that sentence restates the ruleset's conditions in prose — so the widget is already
+close to "a ruleset-based widget and nothing else". The part the hypothesis adds is where the
+**output vocabulary** lives. Today each ruleset declares its own: `fw:decision` over
+Review/NoFlag/Unknown, `fw:zone` over five values, `fw:evidenceLevel` and `fw:service` over four
+each. Under the hypothesis those are not ruleset-internal — they are a declared artefact of their
+own that a ruleset *targets*, and that a practitioner can define.
+
+Three things that would decide it, none of them done:
+
+- **Do two rulesets ever target the same class?** `outreach-criteria` and `access-review` both
+  conclude `fw:decision` over the same three values, which is evidence for the hypothesis: one
+  class, two rulesets. `nb06-evidence` concludes two predicates nothing else uses, which is
+  evidence against, or evidence that a class can be private to one ruleset.
+- **Would it collapse widgets or add one?** A decision-class widget is a new palette entry, so it
+  must retire more than it adds or it is the failure this project spent 2026-10-12 undoing.
+  Against: the four rule widgets are already collapsing to one.
+- **Where does the unknown value belong?** Every vocabulary must include one
+  ([65](experiments/65-ruleset-as-data.md)), and if the class is external then the class owns that
+  rule rather than each ruleset repeating it.
+
+Related: the explanation gap named in [65](experiments/65-ruleset-as-data.md) may belong to the
+decision class too — a class that owns its values is the natural owner of how each value reads.
+
 ## Known and recorded, not yet scheduled
 
 **Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**

@@ -1,6 +1,6 @@
 {
  "schema": "fieldwork/parity-evidence/1",
- "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
+ "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file\u2019s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
  "lab": {
   "repository": "https://github.com/digital-twin-ph/validation-lab",
   "commit": "c924eb3960db53715004df5b9323ed422192e3fa"
@@ -58,7 +58,7 @@
    ],
    "criterion": "relative difference at most 1e-9 against an independent expression of the declared spherical formula, over five boundaries including one with a hole",
    "outcome": "agrees",
-   "measured": "Implementation: relative difference at most 4.78e-14. Reported separately as method context, not as failures — against a geodesic area with great-circle edges on the same sphere, boxes differ by under 0.01 % and a mid-latitude triangle with oblique edges by 0.30 %; against WGS84 the declared spherical approximation runs +0.45 % at the equator to -0.56 % at 60 N, so its sign changes with latitude.",
+   "measured": "Implementation: relative difference at most 4.78e-14. Reported separately as method context, not as failures \u2014 against a geodesic area with great-circle edges on the same sphere, boxes differ by under 0.01 % and a mid-latitude triangle with oblique edges by 0.30 %; against WGS84 the declared spherical approximation runs +0.45 % at the equator to -0.56 % at 60 N, so its sign changes with latitude.",
    "ranAt": "2026-10-11T15:31:45.916652+00:00",
    "note": "Three questions kept apart: whether the widget computes the formula it declares, how far that formula is from a great-circle-edged geodesic area, and how far from an ellipsoidal one. Only the first is a criterion; the other two quantify the approximation the widget already discloses when it calls its result approximate."
   },
@@ -324,6 +324,51 @@
    "measured": "over 43 rows of Snow 1855 Table 1, all three periods exact: 43 day bins (12 with no deaths), 7 week bins, 2 month bins, every key in order, every weighted count and all three totals of 616",
    "ranAt": "2026-10-11T22:42:46.665061+00:00",
    "note": "Genuinely independent: Fieldwork bins with its own calendar arithmetic and pandas with resample, a different implementation of a different design, sharing no code -- unlike check 21 next door where both sides call the same C library. The week mapping was wrong on the first attempt, which is worth recording because the check's own docstring had already named the week as the dangerous case. Fieldwork keys a week by the Monday of its ISO week; the check used W-SUN with a left label, whose label is the preceding Sunday, so every key came out a day early while every count stayed plausible -- 7 bins, total 616, the peak in the right week. Only comparing the keys caught it. The correct mapping is W-MON with label and closed both left, and it is now spelled out rather than left implicit in a frequency string. Agreement says nothing about whether a curve by date of death says what a reader will take it to say: the shape by date of onset would be shifted earlier, and nobody recorded onset dates."
+  },
+  {
+   "widget": "urn:fieldwork:widget:policy",
+   "coversRelease": "0.1.0",
+   "check": "23-rulesets",
+   "result": "content/results/check-23-rulesets.json",
+   "sha256": "eb0cb85d9015ed1f652ac44045ff6fd205a9356abea09b9537ab0573b40bd031",
+   "external": [
+    "none -- a Python decision table derived from each ruleset's description, and a local N3 subset reader; no RDF library and no Fieldwork code"
+   ],
+   "criterion": "two separate claims over the complete input space of each ruleset, 46 cells in all: every conclusion of the real EYE reasoner reproduced by a decision table written in Python from the ruleset's prose description, and the emitted receipt parsed and checked -- every asserted predicate declared by the input contract and no others, nine decimals on every bound number, one subject per cell, no dataset instance named in a rule, no unbound placeholder, and only math: builtins",
+   "outcome": "agrees",
+   "measured": "exhaustive, not sampled. 12 cells for outreach-criteria, 10 for access-review, 24 for nb06-evidence -- the complete space of each. All 46 agree on conclusions and on receipt. 0 cells with no rule firing, 0 with two conclusions for one predicate. 19 rules in total across the three rulesets, using exactly two builtins, math:greaterThan and math:notGreaterThan, with no negation, recursion or aggregation anywhere. The boundary cell where the value equals the threshold is included in each table, which is what separates math:notGreaterThan from math:lessThan and what a sample would miss.",
+   "ranAt": "2026-10-12T15:44:44.436232+00:00",
+   "note": "The exemption this replaces said the decision is the reasoner's, which was a claim that no independent check was possible. Each ruleset's input space is finite, so the lab enumerates it completely. Two claims are recorded separately because they fail differently: a right answer nobody can audit, against a well-formed receipt for the wrong conclusion. Neither claim says any threshold is right; one ruleset claims a published basis and none of the three carries evidence a reader can open."
+  },
+  {
+   "widget": "urn:fieldwork:widget:access_policy",
+   "coversRelease": "0.1.0",
+   "check": "23-rulesets",
+   "result": "content/results/check-23-rulesets.json",
+   "sha256": "eb0cb85d9015ed1f652ac44045ff6fd205a9356abea09b9537ab0573b40bd031",
+   "external": [
+    "none -- a Python decision table derived from each ruleset's description, and a local N3 subset reader; no RDF library and no Fieldwork code"
+   ],
+   "criterion": "two separate claims over the complete input space of each ruleset, 46 cells in all: every conclusion of the real EYE reasoner reproduced by a decision table written in Python from the ruleset's prose description, and the emitted receipt parsed and checked -- every asserted predicate declared by the input contract and no others, nine decimals on every bound number, one subject per cell, no dataset instance named in a rule, no unbound placeholder, and only math: builtins",
+   "outcome": "agrees",
+   "measured": "exhaustive, not sampled. 12 cells for outreach-criteria, 10 for access-review, 24 for nb06-evidence -- the complete space of each. All 46 agree on conclusions and on receipt. 0 cells with no rule firing, 0 with two conclusions for one predicate. 19 rules in total across the three rulesets, using exactly two builtins, math:greaterThan and math:notGreaterThan, with no negation, recursion or aggregation anywhere. The boundary cell where the value equals the threshold is included in each table, which is what separates math:notGreaterThan from math:lessThan and what a sample would miss.",
+   "ranAt": "2026-10-12T15:44:44.436232+00:00",
+   "note": "The exemption this replaces said the decision is the reasoner's, which was a claim that no independent check was possible. Each ruleset's input space is finite, so the lab enumerates it completely. Two claims are recorded separately because they fail differently: a right answer nobody can audit, against a well-formed receipt for the wrong conclusion. Neither claim says any threshold is right; one ruleset claims a published basis and none of the three carries evidence a reader can open."
+  },
+  {
+   "widget": "urn:fieldwork:widget:xpert",
+   "coversRelease": "0.1.0",
+   "check": "23-rulesets",
+   "result": "content/results/check-23-rulesets.json",
+   "sha256": "eb0cb85d9015ed1f652ac44045ff6fd205a9356abea09b9537ab0573b40bd031",
+   "external": [
+    "none -- a Python decision table derived from each ruleset's description, and a local N3 subset reader; no RDF library and no Fieldwork code"
+   ],
+   "criterion": "two separate claims over the complete input space of each ruleset, 46 cells in all: every conclusion of the real EYE reasoner reproduced by a decision table written in Python from the ruleset's prose description, and the emitted receipt parsed and checked -- every asserted predicate declared by the input contract and no others, nine decimals on every bound number, one subject per cell, no dataset instance named in a rule, no unbound placeholder, and only math: builtins",
+   "outcome": "agrees",
+   "measured": "exhaustive, not sampled. 12 cells for outreach-criteria, 10 for access-review, 24 for nb06-evidence -- the complete space of each. All 46 agree on conclusions and on receipt. 0 cells with no rule firing, 0 with two conclusions for one predicate. 19 rules in total across the three rulesets, using exactly two builtins, math:greaterThan and math:notGreaterThan, with no negation, recursion or aggregation anywhere. The boundary cell where the value equals the threshold is included in each table, which is what separates math:notGreaterThan from math:lessThan and what a sample would miss.",
+   "ranAt": "2026-10-12T15:44:44.436232+00:00",
+   "note": "The exemption this replaces said the decision is the reasoner's, which was a claim that no independent check was possible. Each ruleset's input space is finite, so the lab enumerates it completely. Two claims are recorded separately because they fail differently: a right answer nobody can audit, against a well-formed receipt for the wrong conclusion. Neither claim says any threshold is right; one ruleset claims a published basis and none of the three carries evidence a reader can open."
   }
  ]
 }

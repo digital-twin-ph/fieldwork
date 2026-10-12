@@ -9,9 +9,9 @@
  "measuredAt": "2026-10-12",
  "counts": {
   "widgets": 48,
-  "covered": 19,
+  "covered": 22,
   "awaiting": 13,
-  "none": 15,
+  "none": 12,
   "blocked": 1
  },
  "widgets": [
@@ -23,8 +23,10 @@
   },
   {
    "nodeType": "access_policy",
-   "expectation": "none",
-   "reason": "Rule node: its conclusions come from the reasoner, not from arithmetic here. The rules and the ontology are checked by checks 03 and 04."
+   "expectation": "parity",
+   "reason": "Was 'none', on the stated grounds that the decision is the reasoner's. That exemption was a claim that no independent check was possible, and it was wrong: each ruleset has a finite input space, so the lab enumerates it completely and reproduces every conclusion without a rule engine. Corrected 2026-10-12.",
+   "check": "23-rulesets",
+   "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter, evaluates N3, and extracts a classification."
   },
   {
    "nodeType": "alert",
@@ -159,8 +161,10 @@
   },
   {
    "nodeType": "policy",
-   "expectation": "none",
-   "reason": "Rule node: the screening decision is the reasoner's."
+   "expectation": "parity",
+   "reason": "Was 'none', on the stated grounds that the decision is the reasoner's. That exemption was a claim that no independent check was possible, and it was wrong: each ruleset has a finite input space, so the lab enumerates it completely and reproduces every conclusion without a rule engine. Corrected 2026-10-12.",
+   "check": "23-rulesets",
+   "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter, evaluates N3, and extracts a classification."
   },
   {
    "nodeType": "raster_input",
@@ -265,8 +269,10 @@
   },
   {
    "nodeType": "xpert",
-   "expectation": "none",
-   "reason": "Rule node: the evidence hierarchy is N3 the reasoner runs."
+   "expectation": "parity",
+   "reason": "Was 'none', on the stated grounds that the decision is the reasoner's. That exemption was a claim that no independent check was possible, and it was wrong: each ruleset has a finite input space, so the lab enumerates it completely and reproduces every conclusion without a rule engine. Corrected 2026-10-12.",
+   "check": "23-rulesets",
+   "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter, evaluates N3, and extracts a classification."
   }
  ]
 }

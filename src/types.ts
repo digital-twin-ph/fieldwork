@@ -75,7 +75,11 @@ export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:
 export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:'places'|'centers'; version:'1'}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}
 export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'|'raster'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'sea-level'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
-export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'samples'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'polygons'|'network'|'mean-center'|'point-comparison';
+// 'samples' was removed on 2026-10-12: it sat in this union and nowhere else, produced by
+// nothing and consumed by nothing. Found by surveying the inventory sideways
+// (docs/experiments/105-five-directions.md), and removed rather than counted, because a closed
+// union with a dead member is a contract that claims a carrier the application does not have.
+export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'polygons'|'network'|'mean-center'|'point-comparison';
 export interface NodeDefinition {title:string; group:string; icon:string; color:string; description:string; inputs:[string,PortType][]; output:PortType|null}
 export type Escape = (value:unknown)=>string;
 export type SpatialRelation = 'Inside'|'Boundary'|'Outside'|'MissingLocation';

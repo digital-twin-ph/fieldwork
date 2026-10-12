@@ -44,6 +44,16 @@ not a practitioner in the field.
 
 ## Urgent
 
+**A mechanism for "below": nothing compares a release's claims to its code.**
+The practitioner's method is to look back, forward, sideways, above and below
+([105](experiments/105-five-directions.md)). Back and forward were mechanised on 2026-10-12;
+sideways is half-mechanised; above cannot be and should not be. **Below has nothing**, and it is
+where today's substantive findings came from: `implementationStatus: 'retired'` is a declared
+state no file in `src/` reads; eight sites convert metres through a constant that no release
+mentions; four port names encode a use and port names are not in the release files at all. Each
+was found by hand. The narrowest useful start is a check that a declared `implementationStatus`
+has an effect — which Phase 2 of the shrink needs anyway.
+
 **1 · Sweep the four criteria that have never reached the existing set.**
 `npm run validate:admission` reports 8 of 12 criteria swept since they last changed and 3 across
 the whole set of 51. Outstanding: **D3 and D4 sampled at 6 of 39 rather than applied** — the

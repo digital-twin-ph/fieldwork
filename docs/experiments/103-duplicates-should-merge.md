@@ -93,6 +93,37 @@ generalising. Five of this audit's findings are recorded as facts with no dispos
 A criterion that detects without deciding produces exactly this: a true record, a passing run,
 and no change.
 
+## Correction, later the same day — `facilities` is not one of the duplicates
+
+This record worked D2's new follow-through on three widgets and got one of them wrong. It said:
+
+> `facilities` adds a radius filter over a bundled registry: nearest-neighbour-with-distance plus
+> data: **domain**. Both merge.
+
+Reading the executor settled it. `facilities` keeps **every** point within a radius of the study
+boundary's bounding-box centre. That returns a set; nearest-neighbour returns one match. The two
+share `distanceKm` and share no operation, and sharing a distance function is code reuse that had
+already been done. So `facilities` was queued behind the output-carrier blocker that the real
+duplicate needs, and that blocker never applied to it.
+
+**What it actually is**, and the evidence was already in the registry: `buffer_point`'s own release
+says it *"previously existed only welded inside Select nearby facilities"* — it was extracted from
+this widget. So `facilities` is `buffer_point`, a circle around a reference point, plus a selection
+of the points inside that area, which `coverage_check` already does and already retains. A
+composition of two shipped primitives, one of which came out of it.
+
+Two things in it remain domain rather than operation, and they are the reason it is not simply a
+composition today: the reference point is the **bounding-box centre** of a boundary, which is
+neither the centroid nor the boundary itself and is one example's choice; and it requires every
+record to carry text `owner` and `serviceType` attributes, which is NB06's vocabulary.
+
+**What this cost.** The merge plan carried two widgets behind a blocker for three days when one of
+them was never blocked, and the wrong classification came from reading a one-line description
+instead of the code — the same way a fourth rule application was found by reading a port name. D2's
+follow-through asks what each duplicate *adds*; it does not ask whether the thing is a duplicate at
+all, and that is the gap this correction exposes. **A duplicate claim needs the operation stated,
+not the inputs compared.**
+
 ## What this does not establish
 
 **That the merge is safe.** It is blocked on the same port work as everything else —

@@ -21,10 +21,10 @@
   },
   {
    "nodeType": "facilities",
-   "disposition": "merge",
-   "reason": "A radius filter over a bundled registry: nearest-neighbour-with-distance plus data.",
-   "gatedOn": "one-output-carrier-for-nearest",
-   "record": "docs/experiments/66-ports-as-schema-binding.md"
+   "disposition": "composition",
+   "reason": "Reclassified 2026-10-12. Experiment 103 called it 'a radius filter over a bundled registry: nearest-neighbour-with-distance plus data' and merged it into nearest on that basis. Reading the executor settled it: it keeps every point within a radius of the study boundary's BOUNDING-BOX CENTRE, which returns a set, where nearest-neighbour returns one match. It shares distanceKm with nearest and shares no operation with it, and sharing a distance function is code reuse that was already done. So it was never gated on the output-carrier question and should not have been queued behind it.\n\nWhat it actually is: buffer_point (a circle around a reference point) plus a selection of the points inside that area, plus a requirement that every record carry text owner and serviceType attributes. Both primitives ship -- and buffer_point's own release says it 'previously existed only welded inside Select nearby facilities', so it was extracted from this widget. coverage_check takes area plus points and retains the points inside. So this is a composition of two primitives, one of which came out of it.\n\nTwo things remain domain rather than operation: the reference point is the bounding-box centre of a boundary, which is neither the centroid nor the boundary itself and is one example's choice; and the attribute requirement is NB06's vocabulary.",
+   "gatedOn": "facilities-carrier",
+   "record": "docs/experiments/103-duplicates-should-merge.md (corrected), 68-area-around-a-point.md"
   },
   {
    "nodeType": "facility_audit",

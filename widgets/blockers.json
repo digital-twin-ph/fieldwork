@@ -44,16 +44,15 @@
   },
   {
    "id": "one-output-carrier-for-nearest",
-   "claim": "Three nearest-neighbour implementations carry three different output carriers, so merging them is a base-contract change and not a rename.",
+   "claim": "access and nearest are two implementations of nearest-neighbour-with-distance carrying different output carriers, so merging them is a base-contract change and not a rename.",
    "blocks": [
-    "access",
-    "facilities"
+    "access"
    ],
    "recorded": "2026-10-12",
    "lastRevisited": "2026-10-12",
    "status": "standing",
    "liftTest": "One output carrier is declared for nearest-neighbour-with-distance, and access and facilities produce it with no result in any example moving.",
-   "narrowedTo": "It did not block generalising nearest itself. Its ports, title and unit were renamed on 2026-10-12 without touching the carrier, and nearest now declares standardization 'shared'. The blocker covers the merge of the other two, which is less than it was recorded as covering.",
+   "narrowedTo": "It did not block generalising nearest itself. Its ports, title and unit were renamed on 2026-10-12 without touching the carrier, and nearest now declares standardization 'shared'. The blocker covers the merge of the other two, which is less than it was recorded as covering. Narrowed again the same day, and this is the second time revisiting it shrank it. It was recorded as blocking access AND facilities. facilities is a radius selection and not nearest-neighbour at all, so it was queued behind a blocker that never applied to it. One widget, not two.",
    "record": "docs/experiments/66-ports-as-schema-binding.md, docs/experiments/103-duplicates-should-merge.md"
   },
   {
@@ -81,6 +80,19 @@
    "liftTest": "A ruleset 2.0.0 exists whose predicates name no domain and carry no unit in their names, with the unit on the declaration, and 1.0.0 is kept because it is what reproduces the shipped conclusions.",
    "narrowedTo": "What replaced ruleset-as-declared-data for alert alone. Declaring a condition and the date it applies to is irreducible, so alert survives as a primitive; only its name and its predicate are domain, and the predicate is now in a versioned artefact rather than in a template literal, which is what makes this a version bump rather than a code change.",
    "record": "docs/experiments/65-ruleset-as-data.md"
+  },
+  {
+   "id": "facilities-carrier",
+   "claim": "The `facilities` port type is a producer-named carrier that only this widget emits and that the nb06-evidence ruleset declares as its input, so decomposing the widget into buffer_point plus a point selection requires deciding what that ruleset consumes instead.",
+   "blocks": [
+    "facilities"
+   ],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "liftTest": "nb06-evidence declares a general points input with a declared attribute schema rather than the `facilities` carrier, and the Old Naledi example produces that input from buffer_point plus a selection with no result moving.",
+   "narrowedTo": "This is D4a's custom-stud question for one port, not the whole of experiment 66. It is narrower than the carrier question that blocks access, which is about two implementations of one operation.",
+   "record": "docs/audits/ontology-audit.md (D4a), docs/experiments/66-ports-as-schema-binding.md"
   }
  ]
 }

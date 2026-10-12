@@ -2,7 +2,7 @@
  "schema": "fieldwork/admission-state/1",
  "note": "Admission is a claim made at a point in time against a stated standard, not a permanent property. This is a developmental evaluation: the criteria change as lessons are learned, so what passed D1 at widget 20 may fail the D1 of widget 51. Treating admission as permanent is what left three implementations of one operation, nine example-bound widgets and four port names encoding a use in a registry whose every member had passed its own review honestly. The widget audit's own Method section is where the permanence came from: D3 and D4 were sampled because 'doing it retroactively for all of them is a separate task', and D5, D6, D8 and D9 were declared 'not applicable retroactively'. That separate task was never scheduled. So each criterion now records when it last CHANGED and when the set was last SWEPT against it. A criterion changed after its last sweep is a re-admission debt: validate:admission fails, and the only ways to clear it are to sweep or to record why the change does not reach the existing set.",
  "measuredAt": "2026-10-12",
- "widgets": 51,
+ "widgets": 52,
  "criteria": [
   {
    "id": "D1",
@@ -55,9 +55,10 @@
    "id": "D5",
    "asks": "Does each qualifier live on the input rather than in each consumer?",
    "changed": "2026-10-09",
-   "swept": null,
+   "swept": "2026-10-12",
    "coverage": "never",
-   "note": "The audit called D5 not applicable retroactively because it governs design. That is contestable: whether a qualifier sits on the input or in each consumer is a structural property of built code and can be read off it."
+   "note": "Swept 2026-10-12, and the sweep refuted the reason it had never been swept. The audit called D5 not applicable retroactively because it governs design; the contestability note said whether a qualifier sits on the input or in each consumer is a structural property of built code. The note was right: it took one pass.\n\n82 parameters are bare strings; most are labels, titles and notes, which are free text by design. Eight are genuine qualifiers.\n\nFAILS -- free text checked only for non-emptiness, with no enumeration anywhere: rate.numeratorPeriod, rate.denominatorVintage, slr_threshold_comparison.verticalDatum. The first two even carry messages explaining why they matter ('a rate joins two things measured at different times') while checking nothing but that something was typed.\n\nWEAK PASS: slr_extract_import.baselinePeriod, validated by the pattern /\\d{4}/.\n\nPASSES AT THE CONSUMER, NOT THE INPUT: table_input.unit is unvalidated where it is declared, and slr_extract_import refuses any unit it cannot interpret, naming metre or millimetre. That is the project's recorded stance -- declaring a unit does not verify it -- but only that one consumer enumerates, so another consumer of a table could accept anything.\n\nDECLARATION WITH NO CONSEQUENCE: sample_raster.valueUnit is recorded as stated or unstated and never interpreted or scaled by.\n\nBEST CASE, and the one D5 actually describes: slr_threshold_comparison's scenario, basis, family, year and quantile take their values from the key columns of the connected projection table, so the enumeration lives on the input exactly as the criterion asks.\n\nBut that best case carries a silent failure found while sweeping it. A selection matching NO ROW returns null, which flows on as unknown and is indistinguishable from genuinely missing data. The comment says 'A missing value stays unknown; it is never scaled into a number', which is right for a missing value and wrong for a missing row: no row means the selection matched nothing, which is a configuration error, not a data gap. This is the distinction experiment 65 names for unmatched subjects, one layer down -- an unmatched subject is a gap in the ruleset, not a finding about the data.",
+   "sweptScope": "all-qualifiers (8 of 82 string parameters)"
   },
   {
    "id": "D6",
@@ -81,9 +82,10 @@
    "id": "D8",
    "asks": "Does the evidence test the distinction, not only the arithmetic?",
    "changed": "2026-10-09",
-   "swept": null,
+   "swept": "2026-10-12",
    "coverage": "never",
-   "note": "Called not applicable retroactively. Also contestable: whether a test exercises a widget's distinction is readable from the test."
+   "note": "Swept partially 2026-10-12, and the sweep's own result is why it had never been swept: the obvious mechanisation under-detects exactly the cases the criterion is about.\n\nTHE PORT-BASED PASS. 15 live widgets declare two or more inputs of distinct carrier kinds. Two of those are presentation -- map_output and table_output -- where D8 does not apply. Of the remaining 13, seven carry lab parity, and five of those seven join two genuinely real sources: the John Snow checks (voronoi, clip_polygons, summarize_polygons, reachable_nodes, reachable_corridor, snap_to_network) take published 1854 point data and a real OSM street network, so a case exists using real data from both. Those pass. Six computing joiners have no independent case at all and fail by default: access, coverage_check, facilities, isochrone, sample_raster, slr_site_assignment.\n\nWHY THAT IS NOT A SWEEP. The two widgets D8 most clearly applies to are invisible to it. slr_threshold_comparison declares ONE input port, assignments:table, and joins a projected sea-level change from the AR6 dataset with a supplied elevation from facility records on an unchecked datum -- it is the audit's own worked example of a D8 failure. rate declares ONE input port, records:points, and its whole purpose is joining a numerator and a denominator measured at different times from different sources; numeratorPeriod and denominatorVintage exist because the sources differ.\n\nSo a join is a property of the COMPUTATION, not of the port signature, and D8 as written -- 'any computation joining two independently sourced quantities' -- gives the audit procedure no way to enumerate its own subjects. Completing D8 means reading each widget's computation rather than its contract. That is recorded as a stated limit rather than left as a silent gap, and it is a finding about the criterion as much as about the widgets.",
+   "sweptScope": "partial -- port-based pass over all 46 live widgets, and the method under-detects"
   },
   {
    "id": "D8a",
@@ -110,5 +112,12 @@
    "sweptCount": 51,
    "note": "Mechanical, via npm run usage:widgets."
   }
- ]
+ ],
+ "setChanged": {
+  "at": "2026-10-12",
+  "registry": 52,
+  "live": 46,
+  "retired": 6,
+  "note": "Six widgets retired and one added on 2026-10-12: output, places, centers, policy, access_policy and xpert retired; apply_ruleset added to host the three rulesets the last three carried as template literals. A changed set is a reason to re-sweep, and the criteria swept that day -- D1, D2, D7, D5 -- were swept against it."
+ }
 }

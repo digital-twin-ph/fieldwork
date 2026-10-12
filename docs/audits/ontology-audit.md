@@ -361,6 +361,21 @@ its set, which is what an unmapped, example-only node type is.
 > could not run them. Treat them as proposals until one has been used on a real candidate.
 > See [the rule audit](rule-audit.md).
 
+_Swept 2026-10-12, which refuted the reason it had not been. The audit had called D5 not
+applicable retroactively because it governs design; the contestability note said whether a
+qualifier sits on the input or in each consumer is readable off built code. It is, and it took one
+pass. 82 parameters are bare strings, most of them labels and titles; **eight are qualifiers**.
+Three fail — `rate.numeratorPeriod`, `rate.denominatorVintage` and
+`slr_threshold_comparison.verticalDatum` are free text checked only for non-emptiness, and the
+first two carry messages explaining why they matter while checking nothing but that something was
+typed. The best case is the one D5 describes: `slr_threshold_comparison`'s scenario, basis, family,
+year and quantile take their values from the connected table's key columns, so the enumeration
+lives on the input. That case carries a silent failure found while sweeping it — a selection
+matching **no row** returns null, which flows on as unknown and cannot be told apart from
+genuinely missing data. No row means the selection matched nothing, which is a configuration error
+and not a data gap, the same distinction [65](../experiments/65-ruleset-as-data.md) draws for
+unmatched subjects. Full result in `widgets/admission.json`._
+
 **D5 · Does each qualifier live on the input rather than in each consumer?**
 *Evidence:* the declaration, its enumerated values, its unstated default, and the
 receipt assertion. *Fails if* a qualifier is free text checked only for non-emptiness,
@@ -422,6 +437,17 @@ of published results is not a model, a presentation is not a computation. *Fails
 name claims more than the operation performs
 ([39](../experiments/39-stac-discovery-and-remote-acquisition.md),
 [47](../experiments/47-sea-level-pack.md)).
+
+_Swept partially 2026-10-12, and the sweep's result is why it had never been swept. A port-based
+pass finds 15 live widgets with two or more inputs of distinct carriers; two are presentation, five
+of the remaining thirteen pass on the John Snow checks, which join published 1854 point data with a
+real OSM network, and six fail by having no independent case at all. **But the two widgets D8 most
+clearly applies to declare one input port each.** `slr_threshold_comparison` joins an AR6 projected
+change with a supplied elevation behind a single `assignments:table` port — it is this criterion's
+own worked example — and `rate` joins a numerator and a denominator measured at different times
+behind a single `records:points` port. A join is a property of the computation, not of the port
+signature, so D8 as written gives the procedure no way to enumerate its own subjects. Completing it
+means reading computations rather than contracts._
 
 **D8 · Does the evidence test the distinction, not only the arithmetic?**
 *Evidence:* the positive and negative cases, and for any computation joining two

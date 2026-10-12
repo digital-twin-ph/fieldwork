@@ -158,6 +158,45 @@ reasoning. **Semantic reasoning** currently holds two unlike kinds of thing:
 Calling a numeric comparison "semantic reasoning" overstates it in exactly the way the
 naming rule forbids, and it is the group a newcomer is most likely to misread.
 
+## The way out is already paved
+
+_Added 2026-10-12, after the practitioner restated the principle: no widget should be
+name-attached to a worked example._
+
+The nine example nodes above are a naming problem with a known remedy, and this codebase has
+already applied it. Six widgets carry `migrationFrom` adapters that rename a node type and
+migrate saved workflows across it:
+
+| From | To |
+| --- | --- |
+| `places`, `centers` | `observations` |
+| `output` | `map_output`, `table_output`, `chart_output` |
+| `healthsites_discovery` | `find_health_facilities` |
+| `facilities` | itself, for a source change |
+
+So two of the nine — `places` and `centers` — have *already* been superseded by a general name,
+with a migration. The principle and the mechanism are both established; what is missing is
+having applied them to the other seven.
+
+What a rename costs, recorded so the scope is a choice and not a surprise: `type` is persisted
+in saved workflows and needs an adapter; `urn:fieldwork:widget:<nodeType>` is identity, so a
+rename supersedes rather than edits and release files stay immutable; `widgets/parity.json` keys
+on that IRI, and of the nine example nodes only `samples` is awaiting a check and none has one,
+so renaming them costs no evidence; compositions pin a `nodeType`, and
+`compute_walking_catchment` pins none of them.
+
+The cheapest order is therefore the nine example nodes first: no parity evidence to re-point, no
+composition pins to update, and two of them already done.
+
+**And the sea-level three are a separate decision**, not a fourth group. Pack work is postponed
+([67](../experiments/67-sample-raster-at-points.md) — the missing raster-sampling primitive "is
+the gap that postpones the pack work rather than the other way round"), so their `domain`
+classification is not an active programme. Their genericity differs:
+`slr_site_assignment` is a one-off of nearest-neighbour-with-distance, as the next section
+establishes; `slr_extract_import` is general in shape while its keys and its three obligatory
+citations are AR6's; and `slr_threshold_comparison` is genuinely domain-bound, because refusing
+an elevation not measured from the baseline sea surface is the knowledge it exists to carry.
+
 ## D2, sharpened — what is left of `slr_site_assignment`
 
 _Added 2026-10-10, after a practitioner asked what the essence of this widget is

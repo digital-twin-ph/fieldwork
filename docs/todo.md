@@ -144,17 +144,18 @@ follows. If the count sits still for a month, that is the finding.
 
 ## Known and recorded, not yet scheduled
 
-**Eleven widgets are named after a worked example, and one is named after a product.**
-Raised by the practitioner about the sea-level widgets and audited across all 51 on
-2026-10-12: the three `slr_*` are attached to a *pack*, which is deliberate, but `alert`,
-`centers`, `places`, `policy`, `nearest`, `access`, `access_policy`, `facilities`,
-`facility_audit`, `samples` and **`xpert`** — GeneXpert — carry a worked example's story in the
-contract's name. `places` and `centers` already have migrations into `observations`, so both the
-principle and the mechanism are established in this codebase; what is missing is having applied
-them consistently. Three scopes are set out in
-[102](experiments/102-widget-names-and-worked-examples.md) and none is chosen, because a rename
-is a breaking change to saved workflows and "a name so general it says nothing" is a worse
-failure than the present one.
+**Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**
+Found by [the widget design audit](audits/widget_audit.md) on 2026-10-09 and restated by the
+practitioner on 2026-10-12: `places`, `centers`, `alert`, `facilities`, `samples`, `xpert`
+(a product name — GeneXpert), `policy`, `access_policy`, `comparison_map`. `places` and
+`centers` already carry `migrationFrom` adapters into `observations`, so the principle and the
+mechanism are both established; seven remain. None of the nine has parity evidence and none is
+pinned by a composition, so renaming them costs only the adapters — which makes them the
+cheapest group to do first. The sea-level three are a separate decision: pack work is postponed
+([67](experiments/67-sample-raster-at-points.md)), `slr_site_assignment` is a one-off of
+nearest-neighbour-with-distance, and `slr_threshold_comparison` is genuinely domain-bound.
+Scope not chosen, because "a name so general it says nothing" is a worse failure than the
+present one.
 
 
 

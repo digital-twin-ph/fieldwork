@@ -2,109 +2,78 @@
 
 _Created 2026-10-12 · Updated 2026-10-12_
 
-**Status:** asked — the principle is the practitioner's, the audit against it is done, and
-nothing is renamed. A rename is a breaking change to saved workflows and the scope is a decision
-this document exists to put in front of someone.
+**Status:** retired — this re-derived an audit that already existed, less accurately, and is
+kept only to record that and to carry the two things in it that were new. The live record is
+[the widget design audit](../audits/widget_audit.md).
 
-## The question asked
+## What this document got wrong
 
-Raised by the practitioner, about the sea-level widgets: *no widget should be name-attached to a
-worked example. Widgets should be worked example agnostic.*
+The practitioner observed that no widget should be name-attached to a worked example, raising it
+about the sea-level widgets. This document audited all 51 against that principle and reported
+eleven example-attached widgets as a finding.
 
-A widget is the versioned contract; a worked example is one arrangement of widgets telling one
-story. A name that encodes the story makes the contract smaller than it is: a practitioner
-wanting to assign points to their nearest reference station should not have to reach for
-something called sea-level rise, and one counting cases by neighbourhood should not have to
-reach for a widget called `places`.
+**That audit already existed and was run on 2026-10-09.**
+[`docs/audits/widget_audit.md`](../audits/widget_audit.md) classifies every widget into four
+quadrants, one of which is *"**Example node** — bakes in one demonstration's specifics. Belongs
+in a template"*, with nine members: `places`, `centers`, `alert`, `facilities`, `samples`,
+`xpert`, `policy`, `access_policy`, `comparison_map`.
 
-## How it was tried
+The existing audit is better in three ways.
 
-By checking the principle against all 51 widgets rather than the three it was raised about.
+**Its list is right and this one was not.** It puts `nearest`, `access` and `facility_audit` in
+**Composite** — "nothing residual, but asked for by name" — which is a different and more
+accurate judgement than example-attachment, and it catches `comparison_map`, which this document
+missed.
 
-**The three `slr_*` widgets are not what the principle is aimed at, or not only that.** They are
-classified `domain`, not `standard`: `widgets/classification.json` records that *"a domain widget
-maps to a pack namespace and belongs to that pack"*, and their ontology terms are
-`widget-pack-sea-level-rise/ns#` IRIs, not `fw:` ones. They are attached to a **pack**, which is
-a deliberate design, and the pack is not a worked example.
+**It had already answered the sea-level question, for this practitioner, two days earlier.** A
+section added 2026-10-10 — *"after a practitioner asked what the essence of this widget is and
+whether it is a one-off"* — concludes that `slr_site_assignment` **is** a one-off of
+nearest-neighbour-with-distance, that nothing about the operation is sea-level-specific, that the
+distance is computed exactly as `nearest` and `access` compute it, and that the residue is a
+single validity rule which the Manila example already satisfies by restricting its site layer —
+so the third input does nothing. That is a sharper answer than this document's "fully generic".
 
-**Eleven standard widgets are attached to a worked example**, which is the principle's actual
-reach:
+**And it already counts the duplication.** *"Nearest-neighbour with distance | `nearest`,
+`access`, `slr_site_assignment` | Three. One is labelled a domain widget, two are standard."*
 
-| Widget | Title | Attached to |
-| --- | --- | --- |
-| `alert` | Heat alert | the heat demo |
-| `centers` | Cooling centers | the heat demo |
-| `places` | Neighborhoods | the heat demo |
-| `policy` | Outreach criteria | the heat demo |
-| `nearest` | Nearest center | the heat demo — "center" is a cooling centre |
-| `access` | Facility access | Old Naledi |
-| `access_policy` | Access review | Old Naledi |
-| `facilities` | Select nearby facilities | Old Naledi |
-| `facility_audit` | Evidence register | Old Naledi |
-| **`xpert`** | Diagnostic evidence | Old Naledi — and it is a **product name**, GeneXpert |
-| `samples` | Sample locations | Old Naledi's generated grid |
+This document also offered a defence the record does not support: that the `slr_*` names are
+protected because they belong to a pack. **Pack work is postponed** —
+[67](67-sample-raster-at-points.md) says the missing raster-sampling primitive *"is the gap that
+postpones the pack work rather than the other way round"* — so a pack namespace is not an active
+programme those names can shelter behind.
 
-**And the refactor has already been done twice.** `places` and `centers` both carry
-`migrationFrom` adapters into `observations`, so a worked-example name has already been replaced
-by a general one, with a migration, in this codebase. The principle and the mechanism are both
-established; what is missing is having applied them consistently.
+## The two things here that were new
 
-## How generic the sea-level three actually are
+**The rename mechanism is already in use.** `places` and `centers` both carry `migrationFrom`
+adapters into `observations`, as do `output` → the three output widgets, `facilities`, and
+`healthsites_discovery` → `find_health_facilities`. A worked-example name has already been
+replaced by a general one, with a migration, in this codebase. The audit records the problem;
+this records that the path out of it is paved.
 
-Worth separating, because "rename it" is not one answer for all three.
+**The three sea-level widgets are not equally generic**, where the audit examined only
+`slr_site_assignment`:
 
-| Widget | What it does | Generic? |
-| --- | --- | --- |
-| `slr_site_assignment` | Assigns each point its nearest site from a reference layer, reports the distance, refuses a site absent from the extract | **Fully.** Nearest-site assignment with a keyed join. Nothing in the operation is about sea level |
-| `slr_extract_import` | Declares a long-format keyed extract: dataset IRI, version, baseline period, units, three citations | **Mostly.** The shape is general; the required keys (`scenario`, `basis`, `family`, `year`, `quantile`) and the three obligatory citations are AR6's |
-| `slr_threshold_comparison` | Compares a projected value with a point's elevation, refusing any elevation not measured from the baseline sea surface | **No.** The datum refusal is real domain knowledge: a change from a baseline sea surface and a height on a geodetic datum are not commensurable, and the widget exists partly to say so |
-
-So the principle lands hardest on `slr_site_assignment`, which is a general capability wearing a
-domain name, and barely at all on `slr_threshold_comparison`, whose domain is the point.
-
-## What renaming costs
-
-Not an argument against it — a statement of what the change is.
-
-| | |
+| Widget | Generic? |
 | --- | --- |
-| **Saved workflows** | `type` is persisted. A rename needs a `migrationFrom` adapter, as `observations`, `chart_output`, `map_output`, `table_output`, `facilities` and `find_health_facilities` already have |
-| **Widget identity** | `urn:fieldwork:widget:<nodeType>`. A new name is a new widget, so the old one is superseded rather than edited, and release files are immutable |
-| **Parity evidence** | `widgets/parity.json` keys on the widget IRI. Nineteen widgets have evidence; `access`, `facilities`, `nearest`, `samples` and the three `slr_*` are among the thirteen that do not, so renaming those costs nothing in evidence — and renaming a checked one means re-pointing it |
-| **Ontology** | `fw:` terms and the pack IRIs are per-widget. The `slr_*` mappings point at a pack namespace this repository does not own |
-| **Compositions** | pinned members name a `nodeType`. `compute_walking_catchment` pins four, none of them on this list |
+| `slr_site_assignment` | Fully — and the audit says so at more length |
+| `slr_extract_import` | Mostly. The shape is general; the required keys (`scenario`, `basis`, `family`, `year`, `quantile`) and the three obligatory citations are AR6's |
+| `slr_threshold_comparison` | **No.** Refusing an elevation not measured from the baseline sea surface is real domain knowledge, and saying so is part of why the widget exists |
 
-The cheapest order is therefore: rename the unchecked, example-named widgets first, because the
-only cost is the migration adapter.
+So the principle lands hard on one of the three, partly on the second, and barely on the third.
+"Rename the sea-level widgets" is not one decision.
 
-## What was decided
+## Why this happened, which is the useful part
 
-**Nothing yet, deliberately.** Three scopes are available and they are not the same decision:
+The audit lives in `docs/audits/`, the experiments in `docs/experiments/`, and this project's
+habit is to reach for an experiment. Nothing checked whether the question had been asked before,
+and `docs/audits/widget_audit.md` is referenced from the TODO's sibling `rule-audit.md` entry but
+not from anything about naming.
 
-1. **The three `slr_*` only**, as asked. Smallest, and it leaves `xpert` — a product name — in
-   place, which is harder to defend than anything in the sea-level pack.
-2. **Every example-attached standard widget**, eleven of them. Consistent with the principle as
-   stated, a breaking change for eleven node types, and it needs a general name per widget that
-   is not merely vaguer: `nearest` → nearest what, from which layer?
-3. **The principle written down and enforced on new widgets**, with the eleven as recorded debt
-   and renamed as touched — which is how `ontology.emits` and the experiment-document standard
-   were applied, and the only approach in this project that has actually worked.
+**It is the second time this has happened.** [93](93-gamification-spike.md) re-derived
+[27](27-workflow-learning-and-gamification.md) and found out through a citation. The status
+vocabulary in [the experiment standard](README.md) was added in direct response to that, and it
+would not have prevented this one: 27 was mis-read as an answer when it was a question, whereas
+here the prior work was in a different directory and was never looked for.
 
-The third is what the project's own history suggests, and it is not obviously right here: a name
-is a public contract, and a debt list of eleven misleading names is a different thing from a
-debt list of eleven missing declarations.
-
-## What this does not establish
-
-**That the general names are obvious.** `xpert` → `graded_evidence`? `nearest` →
-`nearest_point`? `alert` → `declared_condition`? Each is a naming decision with a worse failure
-mode than the current one: a name so general it says nothing. The audit found the problem; it
-does not supply the answers.
-
-**That `domain` classification is the right home for the sea-level three.** It may be exactly
-right — a pack is how a domain ships without the host learning its vocabulary — or the
-classification may be doing the work a better name would do. Nothing here tests that.
-
-**And nothing about whether this has misled anybody.** No practitioner has used this application
-outside the worked examples, so the cost of the names is inferred from what they say, not
-observed.
+What would have prevented it is one grep of `docs/` for the widget names before writing. That is
+cheaper than the document it would have replaced.

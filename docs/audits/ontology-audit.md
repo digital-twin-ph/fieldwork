@@ -235,6 +235,16 @@ is a failure, not a deferral. Record the answers in the experiment record that
 proposes the primitive. Every check cites the record that found it, so a reviewer can
 re-read the reasoning rather than take it on trust.
 
+**Admission is dated, not permanent.** This is a developmental evaluation and these criteria
+change as lessons are learned, so a widget admitted under one version of D1 has not been tested
+against a later one. `widgets/admission.json` records when each criterion last changed and when
+the set was last swept against it, and `validate:admission` fails when a criterion changed after
+its last sweep. Clearing that debt means sweeping, or recording why the change does not reach the
+existing set — the second being a decision somebody signs for. See
+[104](../experiments/104-admission-is-not-permanent.md); the permanence came from this audit's own
+Method section, which deferred two criteria as "a separate task" and declared four "not applicable
+retroactively".
+
 **D1 · What is it, on two axes?**
 Decompose the candidate into existing primitives and ask two separate questions: does a
 distinction remain that does not follow from the parts, and **is this an operation a

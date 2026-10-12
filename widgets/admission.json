@@ -1,0 +1,114 @@
+{
+ "schema": "fieldwork/admission-state/1",
+ "note": "Admission is a claim made at a point in time against a stated standard, not a permanent property. This is a developmental evaluation: the criteria change as lessons are learned, so what passed D1 at widget 20 may fail the D1 of widget 51. Treating admission as permanent is what left three implementations of one operation, nine example-bound widgets and four port names encoding a use in a registry whose every member had passed its own review honestly. The widget audit's own Method section is where the permanence came from: D3 and D4 were sampled because 'doing it retroactively for all of them is a separate task', and D5, D6, D8 and D9 were declared 'not applicable retroactively'. That separate task was never scheduled. So each criterion now records when it last CHANGED and when the set was last SWEPT against it. A criterion changed after its last sweep is a re-admission debt: validate:admission fails, and the only ways to clear it are to sweep or to record why the change does not reach the existing set.",
+ "measuredAt": "2026-10-12",
+ "widgets": 51,
+ "criteria": [
+  {
+   "id": "D1",
+   "asks": "What is it: primitive or composite, and where does it belong?",
+   "changed": "2026-10-12",
+   "changeNote": "Two kinds, not four: the second axis decides placement, not kind.",
+   "swept": "2026-10-12",
+   "coverage": "all",
+   "sweptCount": 51,
+   "where": "docs/audits/widget_audit.md#d1--what-the-39-actually-are"
+  },
+  {
+   "id": "D2",
+   "asks": "Does the operation already exist under another name?",
+   "changed": "2026-10-12",
+   "changeNote": "Follow-through added: name the general implementation and each other one's disposition.",
+   "swept": "2026-10-12",
+   "coverage": "all-known-duplicates",
+   "sweptCount": 6,
+   "where": "docs/audits/widget_audit.md",
+   "note": "Both recorded duplicates run through the follow-through: nearest-with-distance merges, count-into-groups does not."
+  },
+  {
+   "id": "D3",
+   "asks": "Is every distinction enforced, and is the enforcement level named?",
+   "changed": "2026-10-09",
+   "swept": "2026-10-09",
+   "coverage": "sampled",
+   "sweptCount": 6,
+   "note": "Sampled because naming each distinction in every release file is the author's work at the time. The retroactive pass was called a separate task and never scheduled."
+  },
+  {
+   "id": "D4",
+   "asks": "Are the port-level and graph-level conditions in the right places?",
+   "changed": "2026-10-09",
+   "swept": "2026-10-09",
+   "coverage": "sampled",
+   "sweptCount": 6
+  },
+  {
+   "id": "D4a",
+   "asks": "Standard studs: is this a block or a pre-glued assembly?",
+   "changed": "2026-10-09",
+   "swept": "2026-10-09",
+   "coverage": "partial",
+   "sweptCount": 51,
+   "note": "The custom-stud port types are enumerated -- gradedFacilities, access, distances, alert, facilities, point-comparison, coverage-check -- but no disposition is attached to them."
+  },
+  {
+   "id": "D5",
+   "asks": "Does each qualifier live on the input rather than in each consumer?",
+   "changed": "2026-10-09",
+   "swept": null,
+   "coverage": "never",
+   "note": "The audit called D5 not applicable retroactively because it governs design. That is contestable: whether a qualifier sits on the input or in each consumer is a structural property of built code and can be read off it."
+  },
+  {
+   "id": "D6",
+   "asks": "Has the practitioner's workflow been traced end to end?",
+   "changed": "2026-10-09",
+   "swept": null,
+   "coverage": "never",
+   "note": "Genuinely a design-time act, and experiment 62 traced one workflow. Not re-applicable per widget."
+  },
+  {
+   "id": "D7",
+   "asks": "Does the name state what was done -- including the port names?",
+   "changed": "2026-10-12",
+   "changeNote": "Extended to port names, with a stated failure.",
+   "swept": "2026-10-12",
+   "coverage": "all",
+   "sweptCount": 51,
+   "note": "First sweep of every declared port. Four port names encode a use."
+  },
+  {
+   "id": "D8",
+   "asks": "Does the evidence test the distinction, not only the arithmetic?",
+   "changed": "2026-10-09",
+   "swept": null,
+   "coverage": "never",
+   "note": "Called not applicable retroactively. Also contestable: whether a test exercises a widget's distinction is readable from the test."
+  },
+  {
+   "id": "D8a",
+   "asks": "Are the port cases covered, at all three levels?",
+   "changed": "2026-10-09",
+   "swept": null,
+   "coverage": "never"
+  },
+  {
+   "id": "D9",
+   "asks": "Does it lower the practitioner's effort, measured?",
+   "changed": "2026-10-09",
+   "swept": "2026-10-12",
+   "coverage": "all-examples",
+   "sweptCount": 13,
+   "note": "Held as a non-regression rather than a per-widget check: every worked example's node count is unchanged from the baseline pinned in experiment 64."
+  },
+  {
+   "id": "D10",
+   "asks": "Does a worked example instantiate it?",
+   "changed": "2026-10-09",
+   "swept": "2026-10-12",
+   "coverage": "all",
+   "sweptCount": 51,
+   "note": "Mechanical, via npm run usage:widgets."
+  }
+ ]
+}

@@ -79,7 +79,11 @@ export interface ParamsByType {
 }
 export type NodeType = keyof ParamsByType;
 export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:ParamsByType[T] & {label?:string}}}[K];
-export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:'places'|'centers'; version:'1'}};
+/** The node types a saved workflow may still name and no canvas may still hold. A retired widget
+ *  never runs, so loading one is a rewrite that must say so, or a refusal that names it. */
+export type RetiredNodeType='places'|'centers'|'output';
+
+export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType; version:'1'}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}
 export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'|'raster'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'sea-level'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
 // 'samples' was removed on 2026-10-12: it sat in this union and nowhere else, produced by

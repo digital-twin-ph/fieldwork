@@ -1,0 +1,64 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:output",
+ "version": "0.2.0",
+ "nodeType": "output",
+ "title": "Visual output",
+ "released": "2026-10-12",
+ "implementationStatus": "retired",
+ "standardization": "example-specific",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['output']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "decisions",
+    "type": "decisions"
+   }
+  ],
+  "output": null,
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts",
+   "src/app.ts",
+   "src/output-contract.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": [
+   "urn:fieldwork:widget:map_output",
+   "urn:fieldwork:widget:table_output",
+   "urn:fieldwork:widget:chart_output"
+  ]
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Retired. Superseded by map_output, table_output and chart_output, which this widget's own 0.1.2 note already recorded -- it was removed from the palette and kept as an import compatibility identity. What changed on 2026-10-12 is that the declaration now has an effect: implementationStatus 'retired' had been a permitted value since this format was written and no file in src/ read it, so src/palette.ts carried a hand-typed array instead and the widget still held a row in the counts. src/palette.ts now derives retirement from this field. A retired widget never runs: src/output-contract.ts#migrateOutputNodes rewrites every saved output node to the output type matching the view it saved, and stamps sourceMigration so the Inspector names the replacement rather than rewriting the practitioner's work in silence. Fully replaceable, so no saved workflow refuses to open."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

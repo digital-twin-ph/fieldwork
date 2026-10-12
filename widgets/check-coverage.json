@@ -6,12 +6,12 @@
   "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
   "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
  },
- "measuredAt": "2026-10-11",
+ "measuredAt": "2026-10-12",
  "counts": {
-  "widgets": 51,
+  "widgets": 50,
   "covered": 19,
   "awaiting": 13,
-  "none": 18,
+  "none": 17,
   "blocked": 1
  },
  "widgets": [
@@ -161,11 +161,6 @@
    "nodeType": "observations",
    "expectation": "none",
    "reason": "Supplied point data."
-  },
-  {
-   "nodeType": "output",
-   "expectation": "none",
-   "reason": "Draws what it is given and derives no value."
   },
   {
    "nodeType": "places",

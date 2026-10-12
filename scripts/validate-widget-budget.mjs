@@ -24,7 +24,17 @@ const read=path=>JSON.parse(readFileSync(`${root}/${path}`,'utf8'));
 const budget=read('widgets/budget.json');
 const registry=read('widgets/registry.json');
 
-const actual=registry.widgets.length;
+// Two numbers, not one. A widget costs code, a release file, a lab check, an audit sweep against
+// twelve criteria, and a line in every future sweep. A retired widget costs none of that, and a
+// composition costs a JSON file whose members already carry all of it. Counting them together is
+// what let "51" mean one thing to the budget and another to a practitioner looking at a palette.
+// `widgets` is the maintenance number -- live, unretired widgets. `addable` is the attention
+// number, what a practitioner can actually put on a canvas, and a reduction must move the first
+// without silently growing the second.
+const release=w=>read(`widgets/releases/${w.nodeType}/${w.currentVersion}.json`);
+const live=registry.widgets.filter(w=>release(w).implementationStatus!=='retired');
+const retired=registry.widgets.length-live.length;
+const actual=live.length;
 const recorded=budget.counts.widgets;
 const problems=[];
 
@@ -42,9 +52,18 @@ const latest=budget.additionsSince?.at(-1);
 if(latest&&latest.widgets!==recorded)
   problems.push(`additionsSince ends at ${latest.widgets} widgets and counts.widgets says ${recorded}.`);
 
+const compositions=budget.counts.compositions??0;
+const addable=actual+compositions;
+if(budget.counts.addable!==undefined&&budget.counts.addable!==addable)
+  problems.push(`counts.addable says ${budget.counts.addable} and ${actual} live widgets plus `
+    +`${compositions} bundled compositions is ${addable}. Reduction must move the widget count `
+    +`without growing what a practitioner has to read.`);
+
 const distance=actual-budget.target.widgets;
-console.log(`Widget budget: ${actual} widgets — ${budget.counts.primitive} primitive, `
-  +`${budget.counts.composite} composite. Target ${budget.target.widgets}`
+console.log(`Widget budget: ${actual} live widgets`+(retired?` (${retired} retired)`:'')
+  +` — ${budget.counts.primitive} primitive, `
+  +`${budget.counts.composite} composite, ${compositions} bundled composition`+(compositions===1?'':'s')
+  +`. Target ${budget.target.widgets}`
   +(distance>0?`, which is ${distance} away.`:distance<0?`, which is ${-distance} below.`:`, which is met.`));
 if(distance>0)console.log(`  ${budget.target.basis}`);
 if(problems.length){console.error('\n'+problems.join('\n\n'));process.exit(1);}

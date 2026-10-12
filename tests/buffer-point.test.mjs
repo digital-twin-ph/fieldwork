@@ -48,9 +48,13 @@ test('an unknown, blank or unlocated point is refused, and points are never unio
 });
 
 test('the distance bound is enforced',()=>{
-  for(const distanceM of [-1,5001,Number.NaN])
-    assert.throws(()=>validateBufferPointNode(node({distanceM})),/0–5,000 metres/);
+  // Raised from 5,000 to 50,000 on 2026-10-12. One knob, shared: validateBufferPointNode delegates
+  // to validateBuffer, so buffer_point and buffer_area have always had the same range, and the old
+  // ceiling sat below the 50,000 the geometry helpers in the same module already accepted.
+  for(const distanceM of [-1,50001,Number.NaN])
+    assert.throws(()=>validateBufferPointNode(node({distanceM})),/0–50,000 metres/);
   assert.doesNotThrow(()=>validateBufferPointNode(node({distanceM:0})));
+  assert.doesNotThrow(()=>validateBufferPointNode(node({distanceM:6000})),'the 6 km the Old Naledi facility selection needs');
 });
 
 import {circleAround} from '../build/area-buffer.js';

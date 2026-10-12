@@ -2,7 +2,18 @@ import {buffer} from '@turf/buffer';
 import type {AreaValue,Receipt} from './results.js';
 import type {Boundary,Polygon,WorkflowNode,Position} from './types.js';
 import {geometryWKT,CRS84,bboxPolygon,geometryBounds} from './study-area.js';
-export function validateBuffer(distanceM:number){if(!Number.isFinite(distanceM)||distanceM<0||distanceM>5000)throw new Error('Study-area buffer must be 0–5,000 metres.');}
+/** The buffer distance is a knob, and its range was a second number with no reason behind it.
+ *
+ *  It capped at 5,000 m while the geometry helpers in this same module accept 50,000 — `circleAround`
+ *  and the bbox dimensions both say 1 to 50,000 metres. So a practitioner could ask for a 50 km
+ *  circle around a point and not a 6 km margin around a boundary, and nothing explained the
+ *  difference. The substantive guards are separate and unchanged: a boundary spanning at most one
+ *  degree, below 80° latitude, checked in `bufferedBoundary` below.
+ *
+ *  Raised to 50,000 on 2026-10-12 after the Old Naledi facility selection turned out to need 6 km.
+ *  That selection is a 6 km circle at the boundary's bounding-box centre, and a 6 km margin around
+ *  the boundary itself is what it was approximating — which this cap made impossible to express. */
+export function validateBuffer(distanceM:number){if(!Number.isFinite(distanceM)||distanceM<0||distanceM>50000)throw new Error('Study-area buffer must be 0–50,000 metres.');}
 export function bufferedBoundary(boundary:Boundary,distanceM:number):Boundary{
   validateBuffer(distanceM);if(!distanceM)return structuredClone(boundary);
   const bounds=geometryBounds(boundary);if(bounds[2]-bounds[0]>1||bounds[3]-bounds[1]>1||Math.abs(bounds[1])>80||Math.abs(bounds[3])>80)throw new Error('Buffer prototype supports local study areas spanning at most one degree, below 80 degrees latitude.');

@@ -1,0 +1,63 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:nearest",
+ "version": "0.3.0",
+ "nodeType": "nearest",
+ "title": "Nearest point",
+ "released": "2026-10-12",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['nearest']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   },
+   {
+    "name": "candidates",
+    "type": "points"
+   }
+  ],
+  "output": "distances",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts",
+   "src/app.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Generalised. The operation was always general -- given a point and a set of points, report the distance to the nearest member of the set -- and three things made it read as one worked example's: the title 'Nearest center', the input ports 'places' and 'centers', and a distance field whose name welded in its unit. D7 names the port failure: a port name that encodes a use rather than what the port carries. Ports are now 'points' and 'candidates', the title is 'Nearest point', and NearestRow carries distance with a declared unit. A saved workflow naming the old ports is rewritten in src/core.ts#validateWorkflow rather than refused, because an edge whose port no longer exists cannot be connected. Also fixed here: the unit knob added earlier the same day never reached the computation -- nearestPlaces was called with two arguments, so every run reported kilometres whatever the node declared. What this release does NOT do is merge access and facilities into it. Those two are nearest-neighbour-with-distance plus domain, and merging them means deciding one output carrier where there are now three, which is a base-contract change belonging to experiment 66."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

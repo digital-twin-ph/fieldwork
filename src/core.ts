@@ -40,7 +40,7 @@ import type {Reasoner} from './worker-types.js';
 import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status} from './results.js';
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
-interface ExecutionInputs extends OldInputs {polygons:Polygons;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection;original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;places:PointCollection;centers:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
+interface ExecutionInputs extends OldInputs {polygons:Polygons;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection;original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources} from './old-naledi.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
 import {measureArea,validateAreaUnit} from './area-measurement.js';
@@ -91,7 +91,12 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   places: {title:'Neighborhoods', group:'Sources', icon:'▦', color:'blue', description:'Local neighborhood locations', inputs:[], output:'points'},
   centers: {title:'Cooling centers', group:'Sources', icon:'⌂', color:'blue', description:'Local facility locations', inputs:[], output:'points'},
   alert: {title:'Heat alert', group:'Sources', icon:'☀', color:'amber', description:'Assessment context', inputs:[], output:'alert'},
-  nearest: {title:'Nearest center', group:'Spatial operations', icon:'⌁', color:'teal', description:'Calculate straight-line distance', inputs:[['places','points'],['centers','points']], output:'distances'},
+  // Ports renamed 2026-10-12. They were `places` and `centers`, which is the heat demo's
+  // vocabulary on a general operation: given a point and a set of points, report the distance to
+  // the nearest member of the set. D7 names this failure -- a port name that encodes a use rather
+  // than what the port carries -- and it is why this widget read as example-specific while its
+  // computation never was. The unit knob landed earlier the same day.
+  nearest: {title:'Nearest point', group:'Spatial operations', icon:'⌁', color:'teal', description:'For each point, the straight-line distance to the nearest of a set of candidate points', inputs:[['points','points'],['candidates','points']], output:'distances'},
   policy: {title:'Outreach criteria', group:'Semantic reasoning', icon:'⋈', color:'purple', description:'Apply N3 rules with EYE-JS', inputs:[['distances','distances'],['alert','alert']], output:'decisions'},
   ...OLD_TYPES,
   // Generalised in place on 2026-10-12, out of OLD_TYPES and into the shared palette. The grid
@@ -147,7 +152,7 @@ export function exampleWorkflow():Workflow {
     {id:'map',type:'map_output',x:879,y:70,params:{label:'Outreach map',inputMode:'decisions'}},
     {id:'table',type:'table_output',x:879,y:249,params:{label:'Decision table',inputMode:'decisions'}}
   ],edges:[
-    {id:'e1',from:'neighborhoods',to:'nearest',port:'places'}, {id:'e2',from:'centers',to:'nearest',port:'centers'},
+    {id:'e1',from:'neighborhoods',to:'nearest',port:'points'}, {id:'e2',from:'centers',to:'nearest',port:'candidates'},
     {id:'e3',from:'nearest',to:'criteria',port:'distances'}, {id:'e4',from:'alert',to:'criteria',port:'alert'},
     {id:'e5',from:'criteria',to:'map',port:'decisions'},
     {id:'e6',from:'criteria',to:'table',port:'decisions'}]};
@@ -177,6 +182,13 @@ export function validateWorkflow(raw:unknown):Workflow {
   // Normalize historical heat sources before validation to preserve scalar attributes.
   w.nodes=w.nodes.map(n=>n && (n.type==='places'||n.type==='centers')
     ? {...n,type:'observations',sourceMigration:{fromType:n.type,version:'1'}} : n);
+  // `nearest`'s input ports were renamed from the heat demo's `places`/`centers` to the general
+  // `points`/`candidates`. A saved workflow still names the old ones, and an edge whose port no
+  // longer exists is refused, so it is rewritten here rather than failing to open.
+  const nearestNodes=new Set(w.nodes.filter(n=>n&&n.type==='nearest').map(n=>n.id));
+  for(const edge of w.edges)
+    if(edge&&nearestNodes.has(edge.to)&&(edge.port==='places'||edge.port==='centers'))
+      edge.port=edge.port==='places'?'points':'candidates';
   migrateHealthsitesNodes(w);
   migrateFacilitySources(w);
   migrateOutputNodes(w);
@@ -434,7 +446,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
       case 'reproject':{if(!node.params.data.features.length)throw new Error('Import a projected point file before running.');value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:{format:'reprojected-points',...structuredClone(node.params.provenance||{}),...structuredClone(node.params.source||{})},spatialReference:structuredClone(node.params.spatialReference)};break;}
       case 'alert':value=node.params;break;
-      case 'nearest':value={rows:nearestPlaces(inputs.places,inputs.centers),centers:inputs.centers.features,method:'Haversine; sphere radius 6371.0088 km; CRS84 longitude/latitude'};break;
+      case 'nearest':value={rows:nearestPlaces(inputs.points,inputs.candidates,node.params.unit),centers:inputs.candidates.features,method:`Haversine; sphere radius 6371.0088 km; CRS84 longitude/latitude; distances in ${node.params.unit}`};break;
       case 'policy':{
         const {rows,centers,method}=inputs.distances,alert=inputs.alert,threshold=node.params.thresholdKm;
         const n3=makeN3(rows,alert,threshold);const conclusions=await reasoner(n3.input);

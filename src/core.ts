@@ -55,6 +55,7 @@ import {dataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
 import {computeRate,fromPoints,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
 import {caseSeries,caseSeriesFromTable,seriesTable,seriesChart,seriesReceipt,validateCaseSeriesNode} from './case-series.js';
 import {projectionExtract,projectionTable,readExtract,assignSites,assignmentTable,compareToElevation,extractReceipt,assignmentReceipt,comparisonReceipt as thresholdReceipt,validateSeaLevelNode} from './sea-level.js';
+import {distanceKm,nearestOf} from './nearest-neighbour.js';
 export const NS = 'urn:fieldwork:';
 export const TYPES:Record<NodeType,NodeDefinition> = {
   mean_center:{title:'Mean center',group:'Spatial operations',icon:'⊙',color:'teal',description:'Compute the unweighted center of point locations in a metric CRS',inputs:[['points','points']],output:'mean-center'},
@@ -301,17 +302,16 @@ export function executionPlan(workflow:Workflow) {
       const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new Error(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));} done.add(node.id);result.push(node);}
   outputs.forEach(visit);return result;
 }
-export function distanceKm(a:Position,b:Position) {
-  const rad=(x:number)=>x*Math.PI/180, dlat=rad(b[1]-a[1]),dlon=rad(b[0]-a[0]);
-  const h=Math.sin(dlat/2)**2+Math.cos(rad(a[1]))*Math.cos(rad(b[1]))*Math.sin(dlon/2)**2;
-  return 6371.0088*2*Math.asin(Math.sqrt(Math.min(1,Math.max(0,h))));
-}
+// Moved to src/nearest-neighbour.ts, beside the search that uses it, and re-exported so every
+// existing caller is unaffected. See that file for what a sphere costs against an ellipsoid.
+export {distanceKm};
 export function nearestPlaces(places:PointCollection,centers:PointCollection):NearestRow[] {
   const valid=centers.features.filter(f=>f.geometry);
   return places.features.map(place=>{
     if (!place.geometry || !valid.length) return {id:place.id,name:place.properties.name,coordinates:place.geometry?.coordinates ?? null,distanceKm:null,center:null,reason:!place.geometry?'Neighborhood location is missing.':'No cooling center with valid coordinates is available.'};
-    let best:PointFeature|null=null,distance=Infinity;
-    for(const center of valid){const value=distanceKm(place.geometry.coordinates,center.geometry!.coordinates);if(value<distance){best=center;distance=value;}}
+    // One shared search, three callers: see src/nearest-neighbour.ts.
+    const match=nearestOf(place.geometry.coordinates,valid,center=>center.geometry?.coordinates);
+    const best=match!.candidate,distance=match!.kilometres;
     return {id:place.id,name:place.properties.name,coordinates:place.geometry.coordinates,distanceKm:distance,center:{id:best!.id,name:best!.properties.name,coordinates:best!.geometry!.coordinates}};
   });
 }

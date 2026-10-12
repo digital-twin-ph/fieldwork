@@ -1,7 +1,7 @@
 import type {DataTable} from './data-table.js';
 import type {PointCollection,Position,Scalar,WorkflowNode} from './types.js';
 import type {DisplayRow,Receipt,Status} from './results.js';
-import {distanceKm} from './core.js';
+import {nearestOf} from './nearest-neighbour.js';
 
 /** Sea-level projections, implemented in the host from the declaration-only pack at
  *  widget-pack-sea-level-rise. The vocabulary stays the pack's: this file mints no term and maps to
@@ -131,11 +131,10 @@ export function assignSites(points:PointCollection,sites:PointCollection,extract
     const base={id:String(feature.id),name:feature.properties.name,attributes:{...feature.properties} as Record<string,Scalar>};
     if(!feature.geometry)return {...base,coordinates:null,siteId:null,siteName:null,distanceM:null,reason:'No coordinates, so no site can be assigned.'};
     const coordinates=feature.geometry.coordinates as Position;
-    let best=usable[0],bestKm=distanceKm(coordinates,usable[0].geometry!.coordinates as Position);
-    for(const site of usable.slice(1)){
-      const km=distanceKm(coordinates,site.geometry!.coordinates as Position);
-      if(km<bestKm){best=site;bestKm=km;}
-    }
+    // One shared search, three callers: see src/nearest-neighbour.ts. What stays here is the
+    // domain -- `usable` is already narrowed to sites the extract can answer for.
+    const match=nearestOf(coordinates,usable,site=>site.geometry?.coordinates as Position|undefined)!;
+    const best=match.candidate,bestKm=match.kilometres;
     return {...base,coordinates,siteId:siteId(best.properties),siteName:text(best.properties.name)||siteId(best.properties),
       distanceM:Math.round(bestKm*1000)};
   });

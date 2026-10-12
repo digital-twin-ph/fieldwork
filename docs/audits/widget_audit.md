@@ -234,6 +234,40 @@ establishes; `slr_extract_import` is general in shape while its keys and its thr
 citations are AR6's; and `slr_threshold_comparison` is genuinely domain-bound, because refusing
 an elevation not measured from the baseline sea surface is the knowledge it exists to carry.
 
+## D2, followed through — `nearest` is the general one
+
+_Added 2026-10-12, after the practitioner observed that this audit should have found the merge
+and did not. The procedure gap is recorded in
+[103](../experiments/103-duplicates-should-merge.md) and D2 now requires this follow-through._
+
+The table above records three implementations of nearest-neighbour-with-distance and stops. Under
+the extended D2 it has to name which is general and what each other adds:
+
+| | |
+| --- | --- |
+| **`nearest` — the general one** | For each point in A, the nearest in B: the distance, which one won, and `distanceKm: null` with a stated reason when a point has no geometry or B is empty. That last part is load-bearing — it is what lets `policy` answer `Unknown` instead of defaulting |
+| `access` | Adds a speed, turning distance into a proxy travel time, plus a service and evidence grading. **Domain** |
+| `slr_site_assignment` | Adds one validity rule — do not assign a site the extract cannot answer for — which the next section shows is satisfiable by preparing the site layer. **Domain** |
+
+Both additions are domain rather than operation, so **both merge into `nearest`**.
+
+**What blocks it is not the operation.** `nearest` is general inside and example-bound outside:
+
+```
+inputs: [['places','points'], ['centers','points']]
+output: 'distances'
+```
+
+Both inputs carry the general type `points`; the **names** are the heat demo's, so wiring a
+facility layer to a tide-gauge layer means connecting "places" to "centers". And the three
+implementations carry three different carriers out — `distances`, `access`, `table` — so
+collapsing them is a base-contract change, blocked on
+[66](../experiments/66-ports-as-schema-binding.md) with the rest of the port work, not a rename.
+
+So the order is: make `nearest` general first — port names, title, and the ontology mapping
+Phase 1 flagged it as missing — and the other two then have something to merge into. A
+retirement-first plan has this dependency inverted.
+
 ## D2, sharpened — what is left of `slr_site_assignment`
 
 _Added 2026-10-10, after a practitioner asked what the essence of this widget is

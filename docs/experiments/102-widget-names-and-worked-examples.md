@@ -13,10 +13,12 @@ about the sea-level widgets. This document audited all 51 against that principle
 eleven example-attached widgets as a finding.
 
 **That audit already existed and was run on 2026-10-09.**
-[`docs/audits/widget_audit.md`](../audits/widget_audit.md) classifies every widget into four
-quadrants, one of which is *"**Example node** — bakes in one demonstration's specifics. Belongs
-in a template"*, with nine members: `places`, `centers`, `alert`, `facilities`, `samples`,
-`xpert`, `policy`, `access_policy`, `comparison_map`.
+[`docs/audits/widget_audit.md`](../audits/widget_audit.md) already recorded the nine widgets
+that bake in one demonstration's specifics: `places`, `centers`, `alert`, `facilities`,
+`samples`, `xpert`, `policy`, `access_policy`, `comparison_map`. (It recorded them as a
+quadrant called "Example node". The practitioner later corrected that too — there are two kinds
+of widget, primitive and composite, and example-boundness is a placement problem rather than a
+kind — so the audit's table was restructured on 2026-10-12.)
 
 The existing audit is better in three ways.
 

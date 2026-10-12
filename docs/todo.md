@@ -145,6 +145,9 @@ follows. If the count sits still for a month, that is the finding.
 ## Known and recorded, not yet scheduled
 
 **Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**
+The kind/placement distinction behind this was corrected on 2026-10-12: there are two kinds of
+widget, primitive and composite, and being example-bound is a placement problem rather than a
+kind. D1 and the audit's table both said four kinds and now say two.
 Found by [the widget design audit](audits/widget_audit.md) on 2026-10-09 and restated by the
 practitioner on 2026-10-12: `places`, `centers`, `alert`, `facilities`, `samples`, `xpert`
 (a product name — GeneXpert), `policy`, `access_policy`, `comparison_map`. `places` and
@@ -208,6 +211,14 @@ durable learning record, which as of 2026-10-11 is where learning belongs at all
 Nothing is scheduled, nothing is designed, and the WebKit gate below comes
 first. Recorded so that "the desktop app will do it" stops being a way of
 agreeing with an idea without doing it.
+
+**The widget audit covers 39 of 51 widgets.** It ran on 2026-10-09 and twelve widgets have
+been added since without going through D1 in that table: `buffer_point`, `fill_interior_gaps`,
+`find_health_facilities`, `micro_workflow`, `reachable_corridor`, `reachable_nodes`,
+`sample_raster`, `snap_to_network`, `stack_polygons`, `summarize_combined_area`,
+`summarize_hull`, `travel_time_band`. Each had an admission review at the time, which states a
+kind, so the gap is in the audit's counts rather than in the record — but the counts should not
+be read as current. Noted 2026-10-12 while restructuring the table.
 
 **The documented gate is Chromium only, and so is CI.**
 `playwright.config.mjs` says so, and `.github/workflows/pages.yml` runs

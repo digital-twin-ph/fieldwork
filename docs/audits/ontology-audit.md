@@ -241,14 +241,24 @@ distinction remain that does not follow from the parts, and **is this an operati
 practitioner would ask for by name?** The answers place it, and the placement decides
 where it lives — not whether it may exist.
 
-| | Practitioner would ask for it | Would not |
+**There are two kinds of widget: primitive and composite.** The first axis decides which, and
+nothing else does. The second axis decides *where it belongs*, which is a separate question with
+a separate answer, and the two were conflated here until 2026-10-12, when the practitioner
+pointed out that the cells below were being read as four kinds.
+
+| Kind | Decided by | Placement, decided separately |
 | --- | --- | --- |
-| **Residual distinction** | **Primitive**, on the palette | **Internal primitive**: real and reusable, but not a node — a keyed join is the example |
-| **No residual distinction** | **Composite worth shipping**: keep it on the palette under its intent name, and implement it over shared primitives rather than its own copy of them | **Example node**: belongs in a worked example or template, not in `TYPES` |
+| **Primitive** | a distinction remains that does not follow from its parts | **on the palette** when a practitioner asks for it by name; **internal** when they would not — real and reusable, but not a node. A keyed join is the example |
+| **Composite** | no residual distinction; it is its parts arranged | **on the palette** under its intent name when a practitioner asks for it, implemented over shared primitives and not its own copy of them; **in a worked example or template**, not in `TYPES`, when they would not |
+
+So "internal primitive" and "example node" are not kinds. They are a primitive and a composite
+in the wrong place, which is why both are fixable by moving something rather than by rebuilding
+it. "Superseded" is not a kind either: it is a lifecycle state, and a superseded widget still has
+a kind.
 
 *Evidence:* the decomposition written out, the residual distinction named or explicitly
-absent, and the quadrant stated.
-*Fails if* the quadrant is unstated, or if a composite is implemented over its own
+absent, and **both** the kind and the placement stated.
+*Fails if* either is unstated, or if a composite is implemented over its own
 private copy of an operation another widget already performs.
 
 **The unit of reuse is not the unit of use.** Factoring is an implementation criterion

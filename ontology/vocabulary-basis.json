@@ -1,0 +1,77 @@
+{
+ "schema": "fieldwork/vocabulary-basis/1",
+ "note": "A standard is a validated input. The practitioner's point, 2026-10-12: because this project is ontology-based, names should come from existing standards, since those standards are curated and have been argued over -- and that is where to look for validated inputs. Which makes vocabulary the third basis, beside a computation's independent recomputation and a ruleset's citation, and the only one with no ratchet. Measured the same day: 263 declared fw: terms and ZERO carrying an alignment to any standard -- no owl:equivalentProperty, owl:equivalentClass, skos:exactMatch or rdfs:seeAlso -- while five external namespaces are used fluently for the things the project says.\n\nAND THE DE PART IS DISCOVERING THE STANDARDS. That is the practitioner's sharpening and it changes the shape of this file. 'No standard names this' is not a default, it is a claim produced by a search, so it carries the standards that were checked and the date they were checked on -- the same discipline as a blocker's lastRevisited and an admission's sweep date. A term classified 'no standard names this' in October may be wrong in November because the searcher learned more or a standard was published. Nothing from the past is permanent, including a negative search result.\n\nThree states, and only the third is debt.\n\nALIGN, DO NOT RENAME. The practitioner's decision, 2026-10-12: we may not need to change the terms right away, but should establish equivalence or disjointness for those where standards exist. That is better than renaming on every count that matters -- an axiom is data, it costs no migration and no saved workflow, it leaves the receipts byte-identical, and a reader or a reasoner can substitute one term for the other. Renaming a term that a saved workflow or a frozen fixture names is a migration; declaring it equivalent is a line in a .ttl file.\n\nAnd disjointness carries its own weight. Where a standard has a similar-sounding term that means something DIFFERENT, asserting disjointness records the distinction positively instead of leaving a silence for someone to misread later -- which is this project's habit everywhere else: assert the absence as a fact rather than omitting it.",
+ "measuredAt": "2026-10-12",
+ "states": {
+  "aligned": "A standard names this and the term is used as the standard defines it.",
+  "none-found": "No standard names this -- with the standards actually checked, named, and dated, so the claim is falsifiable rather than a shrug.",
+  "departed": "A standard exists and this project minted its own term. Resolved by an ALIGNMENT AXIOM rather than a rename: owl:equivalentProperty where the meanings match, rdfs:subPropertyOf where this project's term is narrower, owl:propertyDisjointWith or owl:disjointWith where a similar-sounding standard term means something else."
+ },
+ "declaredTerms": 263,
+ "aligned": 3,
+ "departedCeiling": 2,
+ "howThisWasFound": "By listing every declared fw: term and reading the list, which is the cheapest form of the search and found five candidates in one pass. It is not a substitute for reading the specifications: the two entries below marked verifiedInRepo were checked against this repository, and the three marked recall are RECALLED rather than searched. Recall is a hypothesis and a specification is evidence, which is exactly the distinction this file exists to enforce, so they are recorded as candidates and not as debt until checked.",
+ "departed": [
+  {
+   "term": "fw:byteSize",
+   "standard": "dcat:byteSize",
+   "standardName": "W3C Data Catalog Vocabulary (DCAT)",
+   "evidence": "verifiedInRepo",
+   "cost": "The dcat: prefix is ALREADY DECLARED in ontology/fieldwork.ttl and used for dcat:Dataset four times. So the standard was imported and a parallel term minted beside it. This is the cleanest instance available: the vocabulary was already in the file.",
+   "whatWouldFixIt": "Use dcat:byteSize, or declare owl:equivalentProperty to it and say why a local term is kept.",
+   "resolved": "2026-10-12, owl:equivalentProperty dcat:byteSize"
+  },
+  {
+   "term": "fw:member, fw:memberOf",
+   "standard": "rdfs:member, dcterms:isPartOf",
+   "standardName": "RDF Schema; DCMI Metadata Terms",
+   "evidence": "verifiedInRepo",
+   "cost": "dcterms:isPartOf is already emitted by src/spatial-coverage.ts, so the project uses the standard term in one place and its own in another for the same relation.",
+   "whatWouldFixIt": "One of the two, consistently, with the choice stated.",
+   "resolved": "2026-10-12. fw:member owl:equivalentProperty rdfs:member. fw:memberOf rdfs:subPropertyOf dcterms:isPartOf rather than equivalent, because this project's term is NARROWER -- its range is a micro-workflow plan, and part-hood in general is not. Choosing sub-property over equivalence is the judgement the axiom forces you to make, and is why aligning is not merely bookkeeping."
+  }
+ ],
+ "candidates": [
+  {
+   "term": "fw:referenceRole (DataSourceReference, MethodReference, AssumptionReference, ContextReference)",
+   "possibleStandard": "CiTO, the Citation Typing Ontology",
+   "evidence": "recall",
+   "why": "CiTO is a curated vocabulary for the ROLE a citation plays, and is recalled as having terms including citesAsDataSource and usesMethodIn, which would cover two of these four directly.",
+   "checkBy": "Read the CiTO specification and determine whether all four roles have terms, some, or none. Partial coverage is the interesting answer: it would make two aligned and two none-found."
+  },
+  {
+   "term": "fw:implementationStatus (implemented, proposed, retired)",
+   "possibleStandard": "adms:status, ADMS",
+   "evidence": "recall",
+   "why": "ADMS is recalled as providing a status property with a controlled vocabulary for asset lifecycle, including terms for under-development, completed and withdrawn. A widget's lifecycle is an asset lifecycle.",
+   "checkBy": "Read the ADMS specification and its status vocabulary. If the terms map, this is debt; if the vocabulary is about datasets rather than software components, it is none-found and worth recording as checked."
+  },
+  {
+   "term": "the count properties -- fw:recordCount, fw:inputRecordCount, fw:outputCount, fw:memberCount, fw:polygonCount, fw:siteCount, fw:layerCount, fw:partCount, fw:tableRowCount and others",
+   "possibleStandard": "void:entities, VoID",
+   "evidence": "recall",
+   "why": "VoID is recalled as the curated vocabulary for dataset statistics, with a property for the number of entities in a dataset. Roughly fifteen fw: terms count things.",
+   "checkBy": "Read the VoID specification. Note that a per-operation count in a receipt may not be a dataset statistic at all, in which case these are the project's own conduct and none-found is the right answer."
+  }
+ ],
+ "likelyProjectConduct": {
+  "note": "Recorded so the division is visible rather than assumed, and so these are not re-searched without reason. A standard names the DOMAIN; this project names its own CONDUCT.",
+  "terms": [
+   "fw:claimsNoComputation",
+   "fw:valueUnitStatus",
+   "fw:chartUnitStatus",
+   "fw:basisStatus",
+   "fw:unresolvedCitation",
+   "fw:requiresReview",
+   "fw:excluded",
+   "fw:exclusionReason",
+   "fw:resourceBudget",
+   "fw:resourceEstimate"
+  ],
+  "whyNotSearched": "Each describes a decision this application takes or a status it records about its own work, not a thing in the world. They are candidates for none-found, and none has been searched -- which this file states rather than implying they were cleared."
+ },
+ "disjointnessNeedsACounterpart": {
+  "note": "Found while doing this. Equivalence and disjointness both need a counterpart term OF THE SAME KIND -- property against property, class against class. The clearest distinction this project wants to assert is that fw:MeanCenterResult is NOT a centroid, because mean_center is the mean of point coordinates and a centroid is not, and the names invite exactly that confusion. But GeoSPARQL exposes centroid as a FUNCTION, geof:centroid, and there is no class to be disjoint with.",
+  "consequence": "So some distinctions cannot be axiomatised and have to stay in an rdfs:comment. That is a limit of the approach rather than of this project, and recording it stops the next reader assuming the absence of a disjointness axiom means the question was never asked."
+ }
+}

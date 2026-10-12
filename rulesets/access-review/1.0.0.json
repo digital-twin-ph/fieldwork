@@ -1,0 +1,71 @@
+{
+ "schema": "fieldwork/ruleset/1",
+ "id": "urn:fieldwork:ruleset:access-review",
+ "version": "1.0.0",
+ "title": "Access review",
+ "released": "2026-10-12",
+ "description": "Flags a location for review when its straight-line proxy travel time to a qualifying facility exceeds a threshold, and bands every location into a travel-time zone.",
+ "mustNotBeReadAs": "A clinical recommendation, or a routed travel time. The minutes are a straight-line proxy at a stated walking speed.",
+ "rules": "# Proxy access review; not a clinical recommendation or routed travel time.\n{ ?p fw:accessKnown false. } => { ?p fw:decision fw:Unknown; fw:zone fw:Unknown. }.\n{ ?p fw:proxyMinutes ?m. ?m math:greaterThan {{threshold}}. } => { ?p fw:decision fw:Review. }.\n{ ?p fw:proxyMinutes ?m. ?m math:notGreaterThan {{threshold}}. } => { ?p fw:decision fw:NoFlag. }.\n{ ?p fw:proxyMinutes ?m. ?m math:notGreaterThan 5. } => { ?p fw:zone fw:Within5. }.\n{ ?p fw:proxyMinutes ?m. ?m math:greaterThan 5; math:notGreaterThan 15. } => { ?p fw:zone fw:Within15. }.\n{ ?p fw:proxyMinutes ?m. ?m math:greaterThan 15; math:notGreaterThan 30. } => { ?p fw:zone fw:Within30. }.\n{ ?p fw:proxyMinutes ?m. ?m math:greaterThan 30. } => { ?p fw:zone fw:Over30. }.\n",
+ "parameters": [
+  {
+   "name": "threshold",
+   "role": "proxyMinutes",
+   "type": "number",
+   "unit": "http://qudt.org/vocab/unit/MIN",
+   "min": 0,
+   "max": 120,
+   "default": 20,
+   "decimals": 9,
+   "placeholder": "{{threshold}}",
+   "meaning": "Proxy travel time above which a location is flagged for review."
+  }
+ ],
+ "inputContract": {
+  "factGenerator": "src/old-naledi.ts#accessN3",
+  "subjectKind": "sampled locations",
+  "expects": [
+   {
+    "predicate": "fw:accessKnown",
+    "type": "boolean"
+   },
+   {
+    "predicate": "fw:proxyMinutes",
+    "type": "number",
+    "unit": "http://qudt.org/vocab/unit/MIN"
+   }
+  ]
+ },
+ "outputVocabulary": {
+  "predicates": [
+   {
+    "predicate": "fw:decision",
+    "values": [
+     "Review",
+     "NoFlag",
+     "Unknown"
+    ],
+    "unknownValue": "Unknown"
+   },
+   {
+    "predicate": "fw:zone",
+    "values": [
+     "Within5",
+     "Within15",
+     "Within30",
+     "Over30",
+     "Unknown"
+    ],
+    "unknownValue": "Unknown"
+   }
+  ],
+  "unmatchedSubjectsExpected": false,
+  "note": "Two predicates from one ruleset, and one rule concludes both. This is why a rule form with a single conclusion was refuted by the rulesets that exist."
+ },
+ "basis": {
+  "status": "proxy",
+  "citations": [],
+  "statedBy": "The ruleset text itself: \"not a clinical recommendation or routed travel time.\"",
+  "note": "The 5, 15 and 30 minute zone bounds are literals in the rules and not parameters, deliberately: they are this rulesets own banding, not a practitioner knob. They are also uncited."
+ }
+}

@@ -8,12 +8,18 @@ import {OLD_TYPES} from '../build/old-naledi.js';
 // claims a carrier the application does not have. `samples` sat in it and nowhere else until
 // 2026-10-12, found by surveying the inventory rather than by any check.
 //
-// This is the check that was missing. It counts producers and consumers per carrier from the
-// declarations themselves, and refuses a dead one. It does NOT refuse a private pipe -- one
-// producer and one consumer -- because six of those exist today and removing them is the port
-// work in docs/experiments/105-five-directions.md. It reports them, so the number cannot drift
-// upward unnoticed while that work is pending.
-const PRIVATE_PIPES_TODAY=6;
+// This is the check that was missing. It counts producers and consumers per port type from the
+// declarations themselves, and refuses a dead one.
+//
+// It does NOT refuse a CUSTOM STUD -- D4a's term for a port type that fits only one other block,
+// measured here as at most one producer and at most one consumer. Six exist today and removing
+// them is the port work in docs/experiments/105-five-directions.md. They are counted so the
+// number cannot drift upward unnoticed while that work is pending.
+//
+// D4a's vocabulary is used deliberately. An earlier version of this file called them "private
+// pipes", which named nothing: the canvas has nodes, ports and connectors, and a single-producer
+// single-consumer relationship is a property of a port type rather than a new kind of object.
+const CUSTOM_STUDS_TODAY=6;
 
 const definitions={...TYPES,...OLD_TYPES};
 const union=[...new Set(readFileSync(new URL('../src/types.ts',import.meta.url),'utf8')
@@ -40,21 +46,21 @@ test('every carrier is either produced or consumed, and says which',()=>{
       `${carrier} is in PortType and nothing touches it`);
 });
 
-test('the number of private pipes does not grow unnoticed',()=>{
-  const pipes=union.filter(c=>producers[c].length<=1&&consumers[c].length<=1);
-  assert.ok(pipes.length<=PRIVATE_PIPES_TODAY,
-    `private pipes rose to ${pipes.length} (${pipes.join(', ')}). A carrier connecting one `
-    +`producer to one consumer is a private channel declared as a type; collapsing them is what `
-    +`turns the blocked merges into renames. Adding one is allowed and must be deliberate: `
-    +`update PRIVATE_PIPES_TODAY and say why in the commit.`);
-  if(pipes.length<PRIVATE_PIPES_TODAY)
-    assert.fail(`private pipes fell to ${pipes.length}, which is the direction this is for — `
-      +`lower PRIVATE_PIPES_TODAY to ${pipes.length} so the number keeps meaning something.`);
+test('the number of custom studs does not grow unnoticed',()=>{
+  const studs=union.filter(c=>producers[c].length<=1&&consumers[c].length<=1);
+  assert.ok(studs.length<=CUSTOM_STUDS_TODAY,
+    `custom studs rose to ${studs.length} (${studs.join(', ')}). D4a: a block with a connector `
+    +`that fits only one other block is not a block, it is two things glued together and shipped `
+    +`as one. Collapsing them is what turns the blocked merges into renames. Adding one is `
+    +`allowed and must be deliberate: update CUSTOM_STUDS_TODAY and say why in the commit.`);
+  if(studs.length<CUSTOM_STUDS_TODAY)
+    assert.fail(`custom studs fell to ${studs.length}, which is the direction this is for — `
+      +`lower CUSTOM_STUDS_TODAY to ${studs.length} so the number keeps meaning something.`);
 });
 
 test('the six general carriers carry most of the traffic',()=>{
-  // The shape this project is converging on: a few carriers used by many widgets, rather than a
-  // carrier per widget. Asserted so that a drift back toward per-widget carriers shows up here.
+  // The shape this project is converging on: a few port types used by many widgets, rather than a
+  // port type per widget. Asserted so that a drift back toward per-widget carriers shows up here.
   const general=['points','polygons','area','table','raster','network'];
   for(const carrier of general)
     assert.ok(producers[carrier].length+consumers[carrier].length>=4,

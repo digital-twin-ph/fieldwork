@@ -57,6 +57,21 @@ test('nearestPlaces is unchanged by the merge: same winner, same distance, same 
   assert.equal(rows[1].center.id,'far');
   // An unlocated place keeps its null distance and its stated reason, which is what lets the
   // policy rules answer Unknown instead of defaulting.
-  assert.equal(rows[2].distanceKm,null);
+  assert.equal(rows[2].distance,null);
   assert.ok(rows[2].reason,'an unlocated place says why');
+  // And every row states its unit, because a distance without one is not interpretable.
+  assert.ok(rows.every(r=>r.unit==='kilometres'),'the default unit is stated on every row');
+});
+
+// The unit is a knob, and the knob is why three widgets could become one: `nearest` returned
+// kilometres, `slr_site_assignment` metres. Both are the same measurement stated differently.
+test('the unit is a parameter, and metres is a thousand times kilometres',()=>{
+  const collection=features=>({type:'FeatureCollection',features});
+  const point=(id,coordinates)=>({type:'Feature',id,properties:{name:id},geometry:{type:'Point',coordinates}});
+  const places=collection([point('a',[0,0])]),centres=collection([point('near',[0.1,0])]);
+  const km=nearestPlaces(places,centres,'kilometres')[0];
+  const m=nearestPlaces(places,centres,'metres')[0];
+  assert.equal(km.unit,'kilometres');
+  assert.equal(m.unit,'metres');
+  assert.ok(Math.abs(m.distance-km.distance*1000)<1e-6,`${m.distance} vs ${km.distance}*1000`);
 });

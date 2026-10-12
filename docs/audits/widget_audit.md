@@ -26,14 +26,51 @@ on a sample, it says so.
 
 ## D1 — what the 39 actually are
 
-| Quadrant | Count | Widgets |
-| --- | --- | --- |
-| **Primitive** — residual knowledge, enforced, asked for by name | 17 | `area`, `observations`, `table_input`, `raster_input`, `network_input`, `reproject`, `clip_raster`, `voronoi`, `isochrone`, `mean_center`, `donut_geomask`, `hex_aggregate`, `measure_area`, `rate`, `slr_extract_import`, `map_output`, `table_output` |
-| **Composite** — nothing residual, but asked for by name. Keep on the palette, build over shared parts | 11 | `summarize_polygons`, `case_series`, `slr_site_assignment`, `nearest`, `access`, `clip_polygons`, `buffer_area`, `compare_point_sets`, `coverage_check`, `facility_audit`, `slr_threshold_comparison` |
-| **Example node** — bakes in one demonstration's specifics. Belongs in a template | 9 | `places`, `centers`, `alert`, `facilities`, `samples`, `xpert`, `policy`, `access_policy`, `comparison_map` |
-| **Superseded** — a duplicate kept for compatibility | 2 | `output`, `chart_output` (see D2) |
+_Restructured 2026-10-12, after the practitioner said there should only be two kinds of widget:
+primitive and composite._
 
-The nine example nodes are all classified `standard` in `classification.json`, which means
+That is right, and the earlier version of this table had it wrong. It listed four quadrants as
+four kinds, where [D1](ontology-audit.md) actually has **two axes**: one decides the kind, the
+other decides where the widget belongs. "Example node" and "internal primitive" are not kinds —
+they are a composite or a primitive in the wrong place. "Superseded" is a lifecycle state, and a
+superseded widget still has a kind.
+
+So the kind is one of two, and placement is reported beside it.
+
+| Kind | Count | Widgets |
+| --- | --- | --- |
+| **Primitive** — a distinction remains that does not follow from its parts | 20 | `area`, `observations`, `table_input`, `raster_input`, `network_input`, `reproject`, `clip_raster`, `voronoi`, `isochrone`, `mean_center`, `donut_geomask`, `hex_aggregate`, `measure_area`, `rate`, `slr_extract_import`, `map_output`, `table_output`, `alert`, `samples`, `xpert` |
+| **Composite** — no residual distinction; it is its parts arranged | 19 | `summarize_polygons`, `case_series`, `slr_site_assignment`, `nearest`, `access`, `clip_polygons`, `buffer_area`, `compare_point_sets`, `coverage_check`, `facility_audit`, `slr_threshold_comparison`, `places`, `centers`, `facilities`, `policy`, `access_policy`, `comparison_map`, `output`, `chart_output` |
+
+And the placements that are wrong, which is what the old "example node" row was really reporting:
+
+| Placement problem | Widgets | What it is |
+| --- | --- | --- |
+| **Bakes in one demonstration's specifics** | `places`, `centers`, `alert`, `facilities`, `samples`, `xpert`, `policy`, `access_policy`, `comparison_map` | Nine widgets whose *kind* is fine and whose *name or data* belongs to a worked example. Two — `places`, `centers` — already migrate into `observations` |
+| **Superseded, kept for compatibility** | `output`, `chart_output` | A lifecycle state, not a kind. Both are composites |
+
+**Where the eleven went, and why**, since assigning a kind to them is a judgement and not a
+lookup:
+
+| Widget | Kind | Reasoning |
+| --- | --- | --- |
+| `alert` | primitive | Declaring an external condition and the date it applies to is irreducible: nothing in the application derives it. The name bakes in "heat", which is a naming problem, not a kind problem |
+| `samples` | primitive | Generating a regular grid at a stated spacing is residual. Its defaults are Old Naledi's |
+| `xpert` | primitive | Grading evidence against a declared hierarchy is residual knowledge the reasoner applies; the hierarchy is NB06's and the name is a product's |
+| `places`, `centers` | composite | `observations` with one example's data baked in. Already superseded by it, with adapters |
+| `facilities` | composite | A radius filter over a bundled registry: nearest-neighbour-with-distance plus data |
+| `policy`, `access_policy` | composite | Rule applications. The rules are data; the widget arranges a reasoner call |
+| `comparison_map` | composite | Displays a comparison another widget computed |
+| `output`, `chart_output` | composite | Presentation, and superseded |
+
+**This audit covers 39 of 51 widgets.** Twelve have been added since it ran on 2026-10-09 and
+have never been through D1: `buffer_point`, `fill_interior_gaps`, `find_health_facilities`,
+`micro_workflow`, `reachable_corridor`, `reachable_nodes`, `sample_raster`, `snap_to_network`,
+`stack_polygons`, `summarize_combined_area`, `summarize_hull`, `travel_time_band`. Each had an
+admission review at the time, which states a kind, so the gap is in this table and not in the
+record — but the counts above are of 39 and should not be read as current.
+
+The nine with a placement problem are all classified `standard` in `classification.json`, which means
 *ships with the application* and is read as *applies to any domain*. `xpert` applies the
 NB06 evidence hierarchy; `facilities` selects from a 214-point historical registry; `alert`
 is a heat alert. That is the labelling problem
@@ -163,7 +200,7 @@ naming rule forbids, and it is the group a newcomer is most likely to misread.
 _Added 2026-10-12, after the practitioner restated the principle: no widget should be
 name-attached to a worked example._
 
-The nine example nodes above are a naming problem with a known remedy, and this codebase has
+The nine example-bound widgets above are a naming problem with a known remedy, and this codebase has
 already applied it. Six widgets carry `migrationFrom` adapters that rename a node type and
 migrate saved workflows across it:
 
@@ -181,11 +218,11 @@ having applied them to the other seven.
 What a rename costs, recorded so the scope is a choice and not a surprise: `type` is persisted
 in saved workflows and needs an adapter; `urn:fieldwork:widget:<nodeType>` is identity, so a
 rename supersedes rather than edits and release files stay immutable; `widgets/parity.json` keys
-on that IRI, and of the nine example nodes only `samples` is awaiting a check and none has one,
+on that IRI, and of the nine example-bound widgets only `samples` is awaiting a check and none has one,
 so renaming them costs no evidence; compositions pin a `nodeType`, and
 `compute_walking_catchment` pins none of them.
 
-The cheapest order is therefore the nine example nodes first: no parity evidence to re-point, no
+The cheapest order is therefore the nine example-bound widgets first: no parity evidence to re-point, no
 composition pins to update, and two of them already done.
 
 **And the sea-level three are a separate decision**, not a fourth group. Pack work is postponed
@@ -297,7 +334,7 @@ field.
    high-value item here.
 2. **Correct the `raster_input` description.** One word, and it is the project's own rule.
 3. **Split the Semantic reasoning group**, separating rule application from plain predicates.
-4. **Move the nine example nodes to templates.** Shrinks the palette and stops them reading
+4. **Move the nine example-bound widgets to templates.** Shrinks the palette and stops them reading
    as general tools. Needs a migration path, since saved workflows reference them.
 5. **Factor the keyed join**, replacing three nearest implementations, with the composites
    keeping their palette entries and no worked example growing a node (D9).
@@ -305,9 +342,9 @@ field.
 
 ## What this cannot establish
 
-That the D1 quadrants are right: each is a judgment from declared ports and a one-line
+That the D1 kinds and placements are right: each is a judgment from declared ports and a one-line
 description, and an author who knows a widget's history may reclassify it — the audit asks
-the author to state the quadrant for exactly that reason. That the unsampled 33 release
+the author to state both for exactly that reason. That the unsampled 33 release
 files pass D3, since they were not read. That any of this improves a practitioner's
 experience, which only the observation in
 [experiment 63](../experiments/63-worked-example-runbooks.md) and a usability review would show. And it

@@ -66,7 +66,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   compare_point_sets:{title:'Compare point sets',group:'Spatial operations',icon:'⊕',color:'teal',description:'Compare two mean centers and locate them against reference pumps',inputs:[['original','points'],['moved','points'],['pumps','points']],output:'point-comparison'},
   comparison_map:{title:'Comparison map',group:'Outputs',icon:'◈',color:'green',description:'Show original and moved locations side by side with their mean centers and pumps',inputs:[['comparison','point-comparison']],output:null},
   donut_geomask:{title:'Move points in a donut',group:'Spatial operations',icon:'◎',color:'teal',description:'Shift points within a configured distance band; educational preview, not a privacy guarantee',inputs:[['points','points']],output:'points'},
-  hex_aggregate:{title:'Group points in H3 cells',group:'Spatial operations',icon:'⬡',color:'teal',description:'Count points in hexagonal cells and omit sparse cells',inputs:[['points','points']],output:'polygons'},
+  hex_aggregate:{title:'Aggregate points in hexagons',group:'Spatial operations',icon:'⬡',color:'teal',description:'Count points in hexagonal cells and omit sparse cells',inputs:[['points','points']],output:'polygons'},
   buffer_area:{title:'Buffer study area',group:'Spatial operations',icon:'◎',color:'teal',description:'Expand an acquisition boundary without changing the reporting area',inputs:[['area','area']],output:'area'},
   ...CATCHMENT_TYPES,
   table_input:{title:'Tabular data',group:'Sources',icon:'▤',color:'blue',description:'Import a long-format table keyed by declared columns; no geometry',inputs:[],output:'table'},

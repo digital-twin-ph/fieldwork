@@ -1,0 +1,68 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:hex_aggregate",
+  "nodeType": "hex_aggregate",
+  "version": "0.1.1",
+  "title": "Aggregate points in hexagons",
+  "released": "2026-10-13",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['hex_aggregate']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      }
+    ],
+    "output": "polygons"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:HexAggregation",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "PROV computation activity with typed SHACL runtime receipt; configuration and privacy effectiveness require separate validation.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/geoprivacy.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "patch",
+      "description": "Retitled from \"Group points in H3 cells\". The node type names hexagonal aggregation and the title named the indexing method instead, so the two shared no word and a reader had to know that H3 cells are hexagons to connect them. Flagged by the naming ratchet added 2026-10-13 under title-type-agreement; the convention's own rule is that the node type and the title must say the same thing. No contract change: ports, output, parameters and behaviour are identical, which is why this is a patch."
+    },
+    {
+      "kind": "initial",
+      "description": "Bounded geoprivacy worked example; see docs/experiments/35-cholera-geoprivacy-workflow.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Structural and deterministic checks only. No privacy guarantee or independent scientific certification."
+  }
+}

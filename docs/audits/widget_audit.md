@@ -163,7 +163,7 @@ examples that do not already use them**:
 | snow-voronoi | 21 of 39 | the above, plus `measure_area`, `coverage_check` |
 | snow-geoprivacy | 24 of 39 | `measure_area`, `coverage_check`, `chart_output` |
 
-A practitioner on Old Naledi cannot add Mean center or Group points in H3 cells; one on the
+A practitioner on Old Naledi cannot add Mean center or Aggregate points in hexagons; one on the
 heat example cannot add a Study area or a Chart. Nothing marks these as unavailable — they
 are simply absent. This is the same defect
 [experiment 60](../experiments/60-from-gis-studio-to-public-health-studio.md) named one level

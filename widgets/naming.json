@@ -5,7 +5,7 @@
   "domainPrefixes": {
     "urn:fieldwork:pack:sea-level-rise": "slr"
   },
-  "maxKnownViolations": 14,
+  "maxKnownViolations": 13,
   "knownViolations": [
     {
       "nodeType": "reproject",
@@ -82,12 +82,6 @@
       "reason": "Titled 'Evidence register' against the type `facility_audit`. Neither says the other, and the widget runs no reasoner despite its decisions port.",
       "gatedOn": "presentation-stage",
       "clearedBy": "Decided with the presentation stage, which is where this widget is expected to land."
-    },
-    {
-      "nodeType": "hex_aggregate",
-      "rule": "title-type-agreement",
-      "reason": "Titled 'Group points in H3 cells'. H3 cells are hexagons, so the title is accurate for a practitioner who knows H3 and shares no stem with the identifier. The mildest entry here and arguably a false positive; kept rather than exempted so the rule is not weakened for the cases it exists to catch.",
-      "clearedBy": "Retitle to name the hexagon, or accept and retire this entry with a recorded decision."
     },
     {
       "nodeType": "slr_extract_import",

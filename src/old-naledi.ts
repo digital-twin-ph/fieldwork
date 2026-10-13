@@ -42,7 +42,7 @@ export function oldNalediWorkflow():Workflow{
   const node=<K extends NodeType>(id:string,type:K,x:number,y:number,params:ParamsByType[K])=>({id,type,x,y,params}) as WorkflowNode<K>;
   const edges=[['facility-data','facilities','points'],['area','samples','area'],['area','facilities','area'],['facilities','xpert','facilities'],['samples','access','points'],['xpert','access','candidates'],['access','minutes','distances'],['minutes','review','distances'],['xpert','audit','points'],['review','access-map','decisions'],['review','access-table','decisions'],['review','access-chart','decisions'],['audit','evidence-table','decisions']].map(([from,to,port],i)=>({id:`old-e${i}`,from,to,port}));
   return {schema:'fieldwork/workflow/1',exampleId:'old-naledi',name:'Old Naledi · diagnostic access',nodes:[
-    facilityInput('facility-data'),node('area','area',25,140,{dataset:DATASET}),node('samples','samples',255,30,{spacingM:250}),node('facilities','facilities',255,265,{dataset:DATASET,radiusKm:6,sourceMode:'connected'}),
+    facilityInput('facility-data'),node('area','area',25,140,{dataset:DATASET}),node('samples','point_grid',255,30,{spacingM:250}),node('facilities','facilities',255,265,{dataset:DATASET,radiusKm:6,sourceMode:'connected'}),
     // `xpert` and `access_policy` were retired into apply_ruleset on 2026-10-12: both were a set of
     // rules and nothing else. The template names their rulesets so this example does not depend on
     // a migration running. `facility_audit` stays -- it runs no reasoner and is a presentation
@@ -213,7 +213,7 @@ export async function applyAccessReview(access:AccessValue,thresholdMin:number,r
 export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner:Reasoner,receipts:Receipt[],distanceKm:(a:Position,b:Position)=>number,runId=crypto.randomUUID()){
   switch(node.type){
     case 'area':return {boundary:structuredClone(boundary),dataset:DATASET,provenance:structuredClone(provenance)};
-    case 'samples':{
+    case 'point_grid':{
       const rows=sampleLocations(inputs.area.boundary,node.params.spacingM);
       const features:PointFeature[]=rows.map(p=>({type:'Feature',id:p.id,properties:{name:p.name,samplingBasis:'regular-grid'},geometry:{type:'Point',coordinates:[...p.coordinates]}}));
       const step='<urn:fieldwork:run:'+runId+':grid:'+node.id+'>',dataset='<urn:fieldwork:run:'+runId+':output:'+node.id+'>';

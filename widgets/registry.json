@@ -694,25 +694,33 @@
       ]
     },
     {
-      "id": "urn:fieldwork:widget:samples",
-      "nodeType": "samples",
-      "currentVersion": "0.2.0",
+      "id": "urn:fieldwork:widget:point_grid",
+      "nodeType": "point_grid",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
-          "path": "widgets/releases/samples/0.1.0.json",
+          "path": "widgets/releases/point_grid/0.1.0.json",
           "sha256": "e3ba8b6b62fe650ef620c560d266be500008daced8f6b335e325bd2d6cc64a8f"
         },
         {
           "version": "1.0.0",
-          "path": "widgets/releases/samples/1.0.0.json",
+          "path": "widgets/releases/point_grid/1.0.0.json",
           "sha256": "c9639e3c496f8b096ee35f695f668f55327df722e9514a0ed814cfed56433dcb"
         },
         {
           "version": "0.2.0",
-          "path": "widgets/releases/samples/0.2.0.json",
+          "path": "widgets/releases/point_grid/0.2.0.json",
           "sha256": "627c451e3023c579542648639019a5588345ec6ad486f716c41025cabd5d3e06"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/point_grid/0.3.0.json",
+          "sha256": "e77ef8452e2f84331a925f7b531d31900e7ada9374eb55fb369bb0fa2b82e598"
         }
+      ],
+      "previousNodeTypes": [
+        "samples"
       ]
     },
     {

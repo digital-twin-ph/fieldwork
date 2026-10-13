@@ -135,6 +135,10 @@
       "retired": true
     },
     {
+      "nodeType": "point_grid",
+      "classification": "standard"
+    },
+    {
       "nodeType": "policy",
       "classification": "standard",
       "retired": true
@@ -161,10 +165,6 @@
     },
     {
       "nodeType": "sample_raster",
-      "classification": "standard"
-    },
-    {
-      "nodeType": "samples",
       "classification": "standard"
     },
     {

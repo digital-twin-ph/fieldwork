@@ -5,7 +5,7 @@
   "domainPrefixes": {
     "urn:fieldwork:pack:sea-level-rise": "slr"
   },
-  "maxKnownViolations": 13,
+  "maxKnownViolations": 11,
   "knownViolations": [
     {
       "nodeType": "reproject",
@@ -63,18 +63,6 @@
       "reason": "Names the content of one demonstration. It is a radius filter, not a facility list.",
       "gatedOn": "no-points-within-area-selection",
       "clearedBy": "Replace with a points-within-area selection honouring totality, then retire."
-    },
-    {
-      "nodeType": "samples",
-      "rule": "audited-name",
-      "reason": "Names the content of one demonstration rather than the operation, which is generating a point grid.",
-      "clearedBy": "Rename to `point_grid`, matching its own title."
-    },
-    {
-      "nodeType": "samples",
-      "rule": "title-type-agreement",
-      "reason": "Titled 'Point grid' against the type `samples`; the title is the better name and the type has not caught up.",
-      "clearedBy": "Same rename, which clears both entries at once."
     },
     {
       "nodeType": "facility_audit",

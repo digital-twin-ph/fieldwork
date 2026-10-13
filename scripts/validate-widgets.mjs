@@ -20,11 +20,11 @@ export async function sourceDefinitions(){
   // Bundle current TypeScript in memory, not a potentially stale build/core.js.
   const result=await build({absWorkingDir:root,entryPoints:['src/core.ts'],bundle:true,write:false,platform:'node',format:'esm'});
   const module=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
-  return {definitions:module.TYPES,nodeInputs:module.nodeInputs};
+  return {definitions:module.TYPES,nodeInputs:module.nodeInputs,renamed:module.RENAMED_NODE_TYPES};
 }
-export async function validateRegistry({catalog,read=path=>readFile(localPath(path),'utf8'),definitions,nodeInputs}={}){
+export async function validateRegistry({catalog,read=path=>readFile(localPath(path),'utf8'),definitions,nodeInputs,renamed}={}){
   catalog??=JSON.parse(await read('widgets/registry.json'));
-  if(!definitions)({definitions,nodeInputs}=await sourceDefinitions());
+  if(!definitions)({definitions,nodeInputs,renamed}=await sourceDefinitions());
   check(catalog.schema==='fieldwork/widget-registry/1'&&Array.isArray(catalog.widgets),'Invalid registry schema');
   const ids=new Set(),types=new Set();let releaseCount=0;
   for(const entry of catalog.widgets){
@@ -40,12 +40,28 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
       const bytes=await read(ref.path);
       check(createHash('sha256').update(bytes).digest('hex')===ref.sha256,`Release digest mismatch: ${ref.path}`);
       const release=JSON.parse(bytes);releaseCount++;
-      check(release.schema==='fieldwork/widget-release/1'&&release.id===entry.id&&release.nodeType===entry.nodeType&&release.version===ref.version,'Release identity mismatch');
+      // A renamed widget's historical releases carry the identifier they were published under.
+      // Release files are immutable, so the entry declares what it used to be called instead, and
+      // the old name is recorded in the registry rather than erased from it.
+      const names=[entry.nodeType,...(entry.previousNodeTypes??[])];
+      check(release.schema==='fieldwork/widget-release/1'&&names.includes(release.nodeType)
+        &&release.id===`urn:fieldwork:widget:${release.nodeType}`&&release.version===ref.version,
+        `Release identity mismatch: ${ref.path} declares ${release.nodeType} / ${release.id}, and `
+        +`this widget is ${names.join(' or ')}`);
+      // Only the current version may still carry an old name if nothing migrates it; a declared
+      // rename that the application does not perform would leave saved workflows unopenable while
+      // the registry claimed otherwise.
+      if(ref.version===entry.currentVersion)
+        check(release.nodeType===entry.nodeType,
+          `The current release of ${entry.nodeType} still declares ${release.nodeType}`);
       check(typeof release.title==='string'&&release.title.length>0&&/^\d{4}-\d{2}-\d{2}$/.test(release.released),'Missing release metadata');
       check(['implemented','proposed','retired'].includes(release.implementationStatus),'Invalid implementation status');
       check(['shared','example-specific'].includes(release.standardization),'Invalid standardization status');
       check(release.configuration?.planClass==='http://www.w3.org/ns/prov#Plan','Missing plan mapping');
-      check(release.configuration.typescriptType===`ParamsByType['${entry.nodeType}']`,'Invalid parameter binding');
+      // Read against the name the release was published under, not the widget's current name: a
+      // release file is immutable, so after a rename its binding legitimately names the old type.
+      check(release.configuration.typescriptType===`ParamsByType['${release.nodeType}']`,
+        `Invalid parameter binding in ${ref.path}: ${release.configuration.typescriptType}`);
       check(release.configuration.validationStatus==='application-only'&&Array.isArray(release.configuration.shaclShapes)&&release.configuration.shaclShapes.length===0,'This registry version supports application validation only');
       check(['partial','gap'].includes(release.ontology?.status)&&Array.isArray(release.ontology.mappings),'Invalid ontology mapping status');
       // `emits` records the fw: terms this widget's module asserts, so a change to them
@@ -96,6 +112,12 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
       if(ref.version===entry.currentVersion)current=release;
     }
     check(current,'Current version has no release');
+    for(const previous of entry.previousNodeTypes??[])
+      check(renamed?.[previous]===entry.nodeType,
+        `widgets/registry.json says ${entry.nodeType} was once \`${previous}\`, but `
+        +`RENAMED_NODE_TYPES in src/types.ts does not map it there. A declared rename the `
+        +`application does not perform leaves saved workflows unopenable while the registry `
+        +`claims otherwise.`);
     const def=definitions[entry.nodeType];
     check(current.title===def.title,'Widget title drift');
     check(JSON.stringify(current.ports.inputs)===JSON.stringify(def.inputs.map(([name,type])=>({name,type})))&&current.ports.output===def.output,`Port contract drift: ${entry.nodeType}`);

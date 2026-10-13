@@ -35,7 +35,11 @@ import {mapSpecificationFacts} from './map-communication.js';
 import {assertProjectManifest,syncProjectManifest} from './project-manifest.js';
 import {migrateOutputNodes,decisionPresentation} from './output-contract.js';
 import {referencedPDFs,evidenceProvenance} from './evidence.js';
-import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,CandidateCondition} from './types.js';
+import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,RenamedNodeType,CandidateCondition} from './types.js';
+import {RENAMED_NODE_TYPES} from './types.js';
+// Re-exported so the registry validator can cross-check a declared rename against the one the
+// application actually performs, from the same bundle it already reads TYPES out of.
+export {RENAMED_NODE_TYPES};
 import type {Reasoner} from './worker-types.js';
 import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status} from './results.js';
 import type {OldInputs} from './old-naledi.js';
@@ -119,7 +123,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // Generalised in place on 2026-10-12, out of OLD_TYPES and into the shared palette. The grid
   // was always a general operation; its title said "Sample locations", its description promised
   // "demonstration points", and it lived in one example's module. src/point-grid.ts holds it now.
-  samples:{title:'Point grid',group:'Spatial operations',icon:'▦',color:'teal',description:'Generate a regular grid of points inside a boundary at a stated spacing',inputs:[['area','area']],output:'points'},
+  point_grid:{title:'Point grid',group:'Spatial operations',icon:'▦',color:'teal',description:'Generate a regular grid of points inside a boundary at a stated spacing',inputs:[['area','area']],output:'points'},
   measure_area:{title:'Calculate area',group:'Spatial operations',icon:'▱',color:'teal',description:'Attach an area measurement to the study area',inputs:[['area','area']],output:'area'},
   observations:{title:'Input data',group:'Sources',icon:'▦',color:'blue',description:'Import point observations or generate synthetic records',inputs:[],output:'points'},
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Identify observations outside the study boundary',inputs:[['area','area'],['points','points']],output:'coverage-check'},
@@ -223,6 +227,13 @@ export function validateWorkflow(raw:unknown):Workflow {
       params:{label:(n.params as {label?:string}).label||TYPES[n.type].title,
         ruleset:pinnedRuleset(pin.id,pin.version),
         parameters:parametersFor(pin.id,pin.version,n.params as Record<string,unknown>)}};
+  }) as typeof w.nodes;
+  // A rename is not a retirement: the operation is unchanged, so the old identifier keeps
+  // resolving and a saved workflow opens and runs rather than being refused. Stamped like every
+  // other migration, so a practitioner can see that the file was rewritten on open.
+  w.nodes=w.nodes.map(n=>{
+    const renamed=n&&RENAMED_NODE_TYPES[n.type as RenamedNodeType];
+    return renamed?{...n,type:renamed,sourceMigration:{fromType:n.type as RenamedNodeType,version:'1' as const}}:n;
   }) as typeof w.nodes;
   migrateHealthsitesNodes(w);
   migrateFacilitySources(w);
@@ -330,7 +341,7 @@ export function validateWorkflow(raw:unknown):Workflow {
       if (n.params.label !== undefined && (typeof n.params.label!=='string' || n.params.label.length>60)) throw new Error('Output names must be text of at most 60 characters.');
     }
     if (n.type==='travel_time') validateTravelTime(n.params.speedMPerMin);
-    if (n.type==='samples' && (!Number.isFinite(n.params.spacingM) || n.params.spacingM<150 || n.params.spacingM>1000)) throw new Error('spacingM must be between 150 and 1000.');
+    if (n.type==='point_grid' && (!Number.isFinite(n.params.spacingM) || n.params.spacingM<150 || n.params.spacingM>1000)) throw new Error('spacingM must be between 150 and 1000.');
     if (n.type==='policy' && (!Number.isFinite(n.params.thresholdKm) || n.params.thresholdKm<0 || n.params.thresholdKm>1000)) throw new Error('Distance threshold must be between 0 and 1,000 km.');
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
     if(Object.hasOwn(OLD_TYPES,n.type))validateOldNode(n);

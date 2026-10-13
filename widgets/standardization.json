@@ -96,7 +96,7 @@
   ],
   "generalisedSoFar": [
     {
-      "nodeType": "samples",
+      "nodeType": "point_grid",
       "generalisedAt": "2026-10-12",
       "note": "Title, description, module and output stamp were the example attachment, not the node type -- so this was a generalisation in place, with no new widget, no migration and no change to any example's node count. standardization went from example-specific to shared, which is what ticks this ratchet down."
     },

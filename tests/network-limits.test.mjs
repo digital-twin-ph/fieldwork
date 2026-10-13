@@ -65,9 +65,11 @@ test('the walking filter is one list, used for the request and the response', ()
   for(const value of sn.WALKABLE_HIGHWAYS)assert.ok(q.includes(value),`${value} must be requested`);
   assert.ok(q.includes('out skel qt'),'plain nodes are fetched as skeletons');
   assert.ok(q.includes('node._["barrier"]'),'barrier tags are still fetched, because the filter reads them');
-  // The ceiling now follows the graph knob, so the default is the 2,000,000 the client accepts.
-  assert.ok(q.includes('maxsize:2000000'),'the request must not ask for more than the client accepts');
-  assert.ok(!q.includes('maxsize:16777216'));
+  // No maxsize at all. It was set to this client's byte cap on 2026-10-13 and withdrawn the same
+  // day: Overpass's maxsize is the memory budget for EXECUTING the query on the server, not the size
+  // of the response, and 2 MB made the Soho isochrone example fail with "would need at least 3 MB of
+  // RAM to continue" for an answer that fits well inside 2 MB.
+  assert.ok(!q.includes('maxsize'),'the service decides its own memory budget');
 });
 
 test('a node carrying tags and no coordinates does not become a hole in the geometry', ()=>{
@@ -226,11 +228,14 @@ test('raising the graph knob widens the download enough for the measured cost', 
   assert.ok(cm.FEATURES_PER_NODE>1.87*2);
 });
 
-test('the request tells the service the same ceiling the client enforces', ()=>{
+test('the request does not dictate the service\'s memory budget', ()=>{
+  // The byte cap is enforced on arrival, where it is a limit on a real quantity. Telling the server
+  // its execution budget was a category error, and it broke a shipped example.
   const area={type:'Polygon',coordinates:[[[-0.142,51.509],[-0.128,51.509],[-0.128,51.517],[-0.142,51.517],[-0.142,51.509]]]};
-  assert.ok(sn.osmQuery(area,0).query.includes('maxsize:2000000'));
-  assert.ok(sn.osmQuery(area,0,27181).query.includes(`maxsize:${cm.downloadLimits(27181).maxBytes}`),
-    'a raised knob must widen what the service is asked for too, or it refuses first');
+  for(const maxNodes of [undefined,2000,27181,50000])
+    assert.ok(!sn.osmQuery(area,0,maxNodes).query.includes('maxsize'),
+      'no graph limit may put a maxsize back into the query');
+  assert.ok(sn.osmQuery(area,0).query.includes('[timeout:25]'),'the time budget is still stated');
 });
 
 test('a pause is recommended for a given response size, never shorter than the charge', ()=>{

@@ -10,6 +10,8 @@ export interface SelectorElements {
   '#undo-button':HTMLButtonElement;
   '#redo-button':HTMLButtonElement;
   '#blank-add':HTMLButtonElement;
+  '#chart-download-svg':HTMLButtonElement;
+  '#chart-communication':HTMLElement;
   '#zoom-out':HTMLButtonElement;
   '#zoom-in':HTMLButtonElement;
   '#fit-button':HTMLButtonElement;

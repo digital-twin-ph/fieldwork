@@ -22,7 +22,9 @@ export async function sourceDefinitions(){
   const module=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
   return {definitions:module.TYPES,nodeInputs:module.nodeInputs,renamed:module.RENAMED_NODE_TYPES};
 }
-export async function validateRegistry({catalog,read=path=>readFile(localPath(path),'utf8'),definitions,nodeInputs,renamed}={}){
+export async function validateRegistry({catalog,read=path=>readFile(localPath(path),'utf8'),definitions,nodeInputs,renamed,appDependencies,defaultRenderer}={}){
+  appDependencies??=JSON.parse(readFileSync(localPath('package.json'),'utf8')).dependencies??{};
+  defaultRenderer??='vega-lite';
   catalog??=JSON.parse(await read('widgets/registry.json'));
   if(!definitions)({definitions,nodeInputs,renamed}=await sourceDefinitions());
   check(catalog.schema==='fieldwork/widget-registry/1'&&Array.isArray(catalog.widgets),'Invalid registry schema');
@@ -91,7 +93,21 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         const quads=new Parser().parse(await read(mapping.file));
         check(quads.some(q=>q.subject.value===mapping.iri&&q.predicate.value==='http://www.w3.org/1999/02/22-rdf-syntax-ns#type'&&q.object.value==='http://www.w3.org/2002/07/owl#Class'),`Undeclared ontology class: ${mapping.iri}`);
       }
-      check(release.compatibility?.workflowSchema==='fieldwork/workflow/1'&&release.compatibility.versionPersistence==='not-yet-persisted','Unsupported workflow compatibility claim');
+      // A widget that renders through a library pins which one. Without this the release digest can
+    // stay identical while the engine that draws every figure changes underneath it, which is the
+    // same defect as a composition pinning no version.
+    if(release.renderers){
+      const pinned=release.renderers['vega-lite']?.libraries??{};
+      check(Object.keys(pinned).length>0,`${ref.path} declares renderers with no pinned libraries`);
+      for(const [library,version] of Object.entries(pinned))
+        check(appDependencies[library]===version,
+          `${ref.path} pins ${library}@${version}, and package.json has `
+          +`${appDependencies[library]??'no such dependency'}. Bumping a renderer forces a new release.`);
+      check(release.renderers.defaultRenderer===defaultRenderer,
+        `${ref.path} declares ${release.renderers.defaultRenderer} as the default renderer, and the `
+        +`application resolves ${defaultRenderer}.`);
+    }
+    check(release.compatibility?.workflowSchema==='fieldwork/workflow/1'&&release.compatibility.versionPersistence==='not-yet-persisted','Unsupported workflow compatibility claim');
       check(Array.isArray(release.compatibility.migrationFrom),'Missing migration declarations');
       for(const migration of release.compatibility.migrationFrom){
         const heat=entry.nodeType==='point_input'&&['places','centers'].includes(migration.nodeType)&&migration.implementation==='src/core.ts#validateWorkflow';

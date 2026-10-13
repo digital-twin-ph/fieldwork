@@ -7,13 +7,20 @@ import {mapPresentation,standaloneMapSvg} from '../build/map-communication.js';
 import {chartVegaSpec} from '../build/chart-vega.js';
 import {johnSnowExample} from '../build/john-snow.js';
 
-test('the palette is the published colour-blind-safe one, and every colour is distinct', ()=>{
-  // Okabe--Ito. Asserted literally because the point of choosing a published palette is that it is
-  // not quietly replaced by colours that looked right to somebody.
+test('the palette is the validated six, in the validated order', ()=>{
+  // Six hues from Okabe--Ito, in the order a palette validator passed on 2026-10-13. Asserted
+  // literally, and the ORDER is part of the assertion: the check that failed first was adjacent-pair
+  // separation under deuteranopia, so swapping two entries can break the palette without changing
+  // which colours are in it. The yellow and the black were dropped for falling outside the usable
+  // lightness band.
   assert.deepEqual([...FIGURE_PALETTE],
-    ['#0072B2','#D55E00','#009E73','#CC79A7','#E69F00','#56B4E9','#F0E442','#000000']);
+    ['#0072B2','#D55E00','#009E73','#E69F00','#CC79A7','#56B4E9']);
   assert.equal(new Set(FIGURE_PALETTE).size,FIGURE_PALETTE.length);
   for(const hex of FIGURE_PALETTE)assert.match(hex,/^#[0-9A-F]{6}$/,'uppercase six-digit hex');
+  // The green and the purple must never sit next to each other: that pair is ΔE 7.6 under
+  // deuteranopia, inside the band that needs a second encoding.
+  const green=FIGURE_PALETTE.indexOf('#009E73'),purple=FIGURE_PALETTE.indexOf('#CC79A7');
+  assert.ok(Math.abs(green-purple)>1,'the green and the purple must not be adjacent');
 });
 
 test('absence of data is not given a hue', ()=>{

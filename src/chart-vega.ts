@@ -71,7 +71,7 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
   if(!['bar','point'].includes(mark)||!['horizontal','vertical'].includes(orientation))throw new Error('Unsupported chart encoding.');
   if(!Array.isArray(chart.bins)||chart.bins.length>100||chart.bins.some(b=>!Number.isFinite(b.count)||b.count<0||typeof b.label!=='string'||typeof b.key!=='string'))throw new Error('Chart requires at most 100 nonnegative, finite bins.');
   if(new Set(chart.bins.map(b=>b.key)).size!==chart.bins.length)throw new Error('Chart categories require unique stable keys.');
-  if(params.colorByCategory&&chart.bins.length>colors.length)throw new Error('Category legend supports at most eight distinct categories; turn off the legend or reduce categories upstream.');
+  if(params.colorByCategory&&chart.bins.length>colors.length)throw new Error(`Category legend supports at most ${colors.length} distinct categories, and this chart has ${chart.bins.length}. The palette is six validated hues rather than eight, because the yellow and the black fell outside the usable lightness band; past six the honest move is to group the tail upstream rather than invent a seventh hue. Turn off the legend, or reduce the categories.`);
   const labels=chart.bins.map(b=>b.label),duplicateLabels=new Set(labels).size!==labels.length;
   const difference=params.bandMeasure==='difference';
   const ordered=[...chart.bins].sort((a,b)=>(a.order??0)-(b.order??0));
@@ -143,7 +143,15 @@ export function chartSpecificationFacts(node:WorkflowNode<'chart_output'>,runId:
   const rendererSpec=chartRenderer(node.params)==='vega-lite'?JSON.stringify(chartVegaSpec(chart,node.params,{sourceId,runId})):null;
   return `@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`+
     `${spec} a fw:ChartSpecification, prov:Plan; dcterms:title ${JSON.stringify(title)}; fw:chartRenderer ${JSON.stringify(chartRenderer(node.params))}; fw:chartMark ${JSON.stringify(node.params.mark||'bar')}; fw:chartOrientation ${JSON.stringify(chartOrientation(node.params))}; fw:chartField ${JSON.stringify(chart.field)}; fw:chartMeasureKind ${JSON.stringify(banded?`band-difference-of-${measureKind}`:measureKind)}; fw:chartUnitStatus ${JSON.stringify(unitStatus)}; fw:chartLegend ${!!node.params.colorByCategory}; fw:chartSourceNote ${JSON.stringify(sourceNote)}; prov:wasDerivedFrom <urn:fieldwork:run:${runId}:output:${sourceId}>.\n`+
-    (rendererSpec?`${spec} fw:rendererSpecification ${JSON.stringify(rendererSpec)}; fw:chartRendererVersion ${JSON.stringify(`vega-lite@${appPackage.dependencies['vega-lite']}; vega-embed@${appPackage.dependencies['vega-embed']}`)}.\n`:'')+
+    // The version is recorded for EITHER renderer. It used to be written only beside a Vega-Lite
+    // specification, so a receipt from the classic bars said which renderer drew the figure without
+    // saying which version of it -- and the classic bars are this project's own code, so the answer
+    // is the application's version rather than a library's. A receipt that names a renderer and not
+    // its version cannot be used to redraw anything.
+    `${spec} fw:chartRendererVersion ${JSON.stringify(chartRenderer(node.params)==='vega-lite'
+      ?`vega-lite@${appPackage.dependencies['vega-lite']}; vega-embed@${appPackage.dependencies['vega-embed']}`
+      :`fieldwork@${appPackage.version} src/chart-output.ts#chartMarkup`)}.\n`+
+    (rendererSpec?`${spec} fw:rendererSpecification ${JSON.stringify(rendererSpec)}.\n`:'')+
     (node.params.subtitle?.trim()?`${spec} dcterms:description ${JSON.stringify(node.params.subtitle.trim())}.\n`:'')+
     (node.params.xAxisTitle?.trim()?`${spec} fw:chartXAxisTitle ${JSON.stringify(node.params.xAxisTitle.trim())}.\n`:'')+
     (node.params.yAxisTitle?.trim()?`${spec} fw:chartYAxisTitle ${JSON.stringify(node.params.yAxisTitle.trim())}.\n`:'')+

@@ -11,24 +11,37 @@
  *  decision, no number moves because a colour did.
  */
 
-/** The Okabe--Ito qualitative palette, chosen because it is designed to stay distinguishable for
- *  the common forms of colour blindness and is published for exactly this use, rather than being a
- *  set of colours that looked right to whoever typed them.
+/** The categorical palette: six hues from Okabe--Ito, in an order that passes validation.
  *
- *  Ordered so that the first three carry the most weight in a figure: a reader who can separate
- *  only two hues still separates the first two.
+ *  Okabe--Ito is published for exactly this purpose -- designed to stay distinguishable for the
+ *  common forms of colour blindness -- and the eight-hue set was adopted on that authority alone on
+ *  2026-10-13. Run through a palette validator the same day, the eight FAILED:
  *
- *  Reference: Okabe M, Ito K, "Color Universal Design", 2008.
- *  https://jfly.uni-koeln.de/color/ */
+ *  - the yellow `#F0E442` (L 0.90) and the black `#000000` (L 0) fall outside the usable lightness
+ *    band, and the black also reads as grey on the chroma floor, so it competes with the colour
+ *    this project reserves for "no data";
+ *  - and in the order they were written, the purple and the green sat ADJACENT at ΔE 7.6 under
+ *    deuteranopia -- inside the 6-8 band that is only legal with a second encoding.
+ *
+ *  Both are properties of the set and the ordering rather than of the research. Dropping the two
+ *  out-of-band slots and separating the purple from the green with the orange gives six hues that
+ *  pass every check, with the worst adjacent pair at ΔE 9.6 (deuteranopia), above the target of 8.
+ *
+ *  Six is also enough: the chart builder refuses a legend beyond this many categories, and the
+ *  honest answer past six is to group the tail rather than invent a seventh hue.
+ *
+ *  One warning stands and is not dismissable: `#E69F00`, `#CC79A7` and `#56B4E9` fall below 3:1
+ *  against a white surface, which obliges visible labels or a table view. Both are present -- every
+ *  chart ships beside a Table output, and the exported figure labels its bars directly.
+ *
+ *  References: Okabe M, Ito K, "Color Universal Design", 2008, https://jfly.uni-koeln.de/color/ */
 export const FIGURE_PALETTE=[
   '#0072B2', // blue
   '#D55E00', // vermillion
   '#009E73', // bluish green
-  '#CC79A7', // reddish purple
   '#E69F00', // orange
+  '#CC79A7', // reddish purple
   '#56B4E9', // sky blue
-  '#F0E442', // yellow
-  '#000000', // black
 ] as const;
 
 /** Roles, so a legend and a chart agree about what a colour MEANS and not merely which colours
@@ -38,8 +51,8 @@ export const FIGURE_ROLE={
   primary:FIGURE_PALETTE[0],
   attention:FIGURE_PALETTE[1],
   agreement:FIGURE_PALETTE[2],
-  secondary:FIGURE_PALETTE[3],
-  site:FIGURE_PALETTE[4],
+  site:FIGURE_PALETTE[3],
+  secondary:FIGURE_PALETTE[4],
   context:FIGURE_PALETTE[5],
   /** Not a hue. Absence of data is not a category and must not compete with one. */
   unknown:'#8C8C8C',

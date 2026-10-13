@@ -29,11 +29,17 @@ export function osmQuery(boundary:Boundary,marginM:number,maxNodes?:number){
   // which is the cheaper ordering for the service. Named-set output -- `.ways out body;` -- parses
   // on some Overpass versions and not on overpass-api.de 0.7.62, which refuses it, so the default
   // set is used throughout.
+  //
+  // **No `maxsize`.** It was set to this client's byte cap on 2026-10-13, on the reasoning that the
+  // service should refuse early rather than build a result that would be discarded. That reasoning
+  // rested on a mistake: Overpass's `maxsize` is the MEMORY BUDGET FOR EXECUTING THE QUERY on the
+  // server, not the size of the response. Setting it to 2 MB made the Soho isochrone example fail
+  // with "Query ran out of memory in 'query' at line 1. It would need at least 3 MB of RAM to
+  // continue" -- a query whose answer is well inside 2 MB still needs more than that to compute.
+  // The service's own default is the right budget; what protects this client is the streaming byte
+  // cap below, which is a real limit on a real quantity.
   const highways=WALKABLE_HIGHWAYS.join('|');
-  // The service is told the same ceiling the client enforces, so it refuses early rather than
-  // building a result that would be discarded on arrival.
-  const {maxBytes}=downloadLimits(maxNodes);
-  const query=`[out:json][timeout:25][maxsize:${maxBytes}];way["highway"~"^(${highways})$"]`
+  const query=`[out:json][timeout:25];way["highway"~"^(${highways})$"]`
     +`(${s.toFixed(7)},${w.toFixed(7)},${n.toFixed(7)},${e.toFixed(7)});out body qt;>;out skel qt;`
     +`node._["barrier"];out tags qt;`;
   return {query,bounds,marginM};

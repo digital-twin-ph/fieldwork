@@ -50,6 +50,7 @@ import {openInputDataEditor} from './input-data-ui.js';
 import {boundary as oldNalediBoundary} from '../examples/old-naledi/data.js';
 import {chartMarkup} from './chart-output.js';
 import {chartOrientation,chartRenderer} from './chart-vega.js';
+import {standaloneChartSvg} from './chart-figure.js';
 import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,downloadRaster} from './raster-ui.js';
 import {openReprojectEditor} from './reproject-ui.js';
@@ -810,6 +811,18 @@ function renderResults(){
     $('#bars-panel').innerHTML=`<p class="muted">${esc(output.chart.caption)} · ${output.chart.total} input records · grouping: ${esc(output.chart.field)}</p>${output.chart.field==='total'?'<p class="notice">The chart source does not declare a physical unit for this numeric total. Check the source and method before interpreting it.</p>':''}<div id="vega-chart" role="img" aria-label="${esc(output.chart.caption)}"></div><details><summary>Underlying chart values</summary><table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>${output.chart.bins.map(b=>`<tr><td>${esc(b.label)}</td><td>${b.count}</td></tr>`).join('')}</tbody></table></details><details><summary>Vega-Lite specification</summary><pre>${esc(JSON.stringify(spec,null,2))}</pre></details>`;
     const host=$('#vega-chart');void renderVegaChart(host,output.chart,chartNode.params,chartContext).catch(e=>{if(host.isConnected)host.textContent=`Chart could not render: ${errorMessage(e)}. Underlying values remain available below.`;});
   }else $('#bars-panel').innerHTML=output?.chart?chartMarkup(output.chart,esc,chartOrientation(chartNode?.params??{})):'';
+  // The figure is drawn from the bins, not scraped from the panel, so it is the same file whichever
+  // renderer is on screen -- and it exists at all for the classic bars, which are divs and have no
+  // SVG to take.
+  const exportable=!!output?.chart&&!!chartNode;
+  $('#chart-communication').hidden=!exportable;
+  if(exportable)$('#chart-download-svg').onclick=()=>{
+    try{
+      const svg=standaloneChartSvg(output!.chart!,chartNode!.params,
+        {sourceId:runWorkflow?.edges.find(e=>e.to===output!.nodeId)?.from,runId:result?.runId});
+      download(`${output!.nodeId}-chart.svg`,svg,'image/svg+xml');
+    }catch(error){toast(errorMessage(error));}
+  };
   $('#facility-legend').textContent=output?.kind?'Qualifying facility':'Cooling center';$('#map-note').textContent=output?.kind==='facility-evidence'?'Historical facilities · evidence tiers':output?.kind==='access'?`${output.locationSource?.kind==='input-points'?'Input locations':'Generated samples'} \u00b7 source boundary`:'Local locations · no external map tiles';
   $('#review-legend').textContent=output?.kind==='facility-evidence'?'Contextual / inferential':'Review';$('#clear-legend').textContent=output?.kind==='facility-evidence'?'Direct':'No flag';$('#unknown-legend').textContent=output?.kind==='facility-evidence'?'No evidence':'Unknown';$('#facility-legend').parentElement!.hidden=output?.kind==='facility-evidence';
   $('.map-legend').hidden=output?.kind==='study-area';

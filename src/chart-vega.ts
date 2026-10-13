@@ -25,6 +25,22 @@ const colors=FIGURE_PALETTE;
  *
  *  It remains a default and not a rule: the Inspector offers both for either kind, and a long
  *  category label is the case to switch for. */
+/** Which renderer draws a chart when nobody has said.
+ *
+ *  **Vega-Lite, from 2026-10-13**, on the practitioner's instruction. The classic HTML bars remain
+ *  and remain selectable; they are no longer what a practitioner meets first.
+ *
+ *  The reason is not that one is prettier. The HTML bars ignore every presentation field -- no
+ *  title, no subtitle, no axis titles, no source note -- and have no figure export, so a chart
+ *  drawn on them cannot be handed to anybody or leave the application the way a map can. Defaulting
+ *  to them meant the presentation stage was off by default.
+ *
+ *  It also makes the receipt complete by default: `fw:rendererSpecification` is written only for a
+ *  Vega-Lite chart, so before this a default chart's receipt recorded that a chart existed without
+ *  recording what it drew. */
+export const chartRenderer=(params:{renderer?:'html'|'vega-lite'}):'html'|'vega-lite'=>
+  params.renderer??'vega-lite';
+
 export const chartOrientation=(params:{orientation?:'horizontal'|'vertical';inputMode?:string}):'horizontal'|'vertical'=>
   params.orientation??'vertical';
 
@@ -50,7 +66,7 @@ export function chartSourceNote(params:ChartParams,sourceId?:string,runId?:strin
  *  It never changes the axis quietly. The measure is renamed, the caption says so, and the
  *  receipt carries a distinct `fw:chartMeasureKind`. */
 export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string}={}){
-  if(params.renderer!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
+  if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
   const mark=params.mark||'bar',orientation=chartOrientation(params);
   if(!['bar','point'].includes(mark)||!['horizontal','vertical'].includes(orientation))throw new Error('Unsupported chart encoding.');
   if(!Array.isArray(chart.bins)||chart.bins.length>100||chart.bins.some(b=>!Number.isFinite(b.count)||b.count<0||typeof b.label!=='string'||typeof b.key!=='string'))throw new Error('Chart requires at most 100 nonnegative, finite bins.');
@@ -124,9 +140,9 @@ export function chartSpecificationFacts(node:WorkflowNode<'chart_output'>,runId:
     :measureKind==='record-count'?'records':measureKind==='location-membership-count'?'location-memberships':'source-unit-not-specified';
   const title=node.params.chartTitle?.trim()||chart.caption;
   const sourceNote=chartSourceNote(node.params,sourceId,runId);
-  const rendererSpec=node.params.renderer==='vega-lite'?JSON.stringify(chartVegaSpec(chart,node.params,{sourceId,runId})):null;
+  const rendererSpec=chartRenderer(node.params)==='vega-lite'?JSON.stringify(chartVegaSpec(chart,node.params,{sourceId,runId})):null;
   return `@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`+
-    `${spec} a fw:ChartSpecification, prov:Plan; dcterms:title ${JSON.stringify(title)}; fw:chartRenderer ${JSON.stringify(node.params.renderer||'html')}; fw:chartMark ${JSON.stringify(node.params.mark||'bar')}; fw:chartOrientation ${JSON.stringify(node.params.orientation||'horizontal')}; fw:chartField ${JSON.stringify(chart.field)}; fw:chartMeasureKind ${JSON.stringify(banded?`band-difference-of-${measureKind}`:measureKind)}; fw:chartUnitStatus ${JSON.stringify(unitStatus)}; fw:chartLegend ${!!node.params.colorByCategory}; fw:chartSourceNote ${JSON.stringify(sourceNote)}; prov:wasDerivedFrom <urn:fieldwork:run:${runId}:output:${sourceId}>.\n`+
+    `${spec} a fw:ChartSpecification, prov:Plan; dcterms:title ${JSON.stringify(title)}; fw:chartRenderer ${JSON.stringify(chartRenderer(node.params))}; fw:chartMark ${JSON.stringify(node.params.mark||'bar')}; fw:chartOrientation ${JSON.stringify(chartOrientation(node.params))}; fw:chartField ${JSON.stringify(chart.field)}; fw:chartMeasureKind ${JSON.stringify(banded?`band-difference-of-${measureKind}`:measureKind)}; fw:chartUnitStatus ${JSON.stringify(unitStatus)}; fw:chartLegend ${!!node.params.colorByCategory}; fw:chartSourceNote ${JSON.stringify(sourceNote)}; prov:wasDerivedFrom <urn:fieldwork:run:${runId}:output:${sourceId}>.\n`+
     (rendererSpec?`${spec} fw:rendererSpecification ${JSON.stringify(rendererSpec)}; fw:chartRendererVersion ${JSON.stringify(`vega-lite@${appPackage.dependencies['vega-lite']}; vega-embed@${appPackage.dependencies['vega-embed']}`)}.\n`:'')+
     (node.params.subtitle?.trim()?`${spec} dcterms:description ${JSON.stringify(node.params.subtitle.trim())}.\n`:'')+
     (node.params.xAxisTitle?.trim()?`${spec} fw:chartXAxisTitle ${JSON.stringify(node.params.xAxisTitle.trim())}.\n`:'')+

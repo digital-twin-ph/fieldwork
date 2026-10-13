@@ -207,3 +207,25 @@ fw:DataTableShape a sh:NodeShape; sh:targetClass fw:DataTable;
   sh:property [ sh:path fw:tableRowCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 1 ];
   sh:property [ sh:path fw:tableMissingValueCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
   sh:property [ sh:path prov:wasGeneratedBy; sh:minCount 1; sh:maxCount 1; sh:class fw:TabularInput ].
+
+# Every declared port type a run asserts is a real one.
+#
+# Written 2026-10-12, after an audit found that ten of twelve per-node outputs in one run asserted
+# nothing about themselves beyond prov:Entity, so a reader had to fetch the widget's release file to
+# learn what a value was. That audit also withdrew a proposed fw:Carrier class, and this is the
+# check that class was going to justify -- written without it, using only PROV and the fifteen
+# declared port types.
+#
+# **What this shape does not do, and why.** It does not require every node output to declare a port
+# type, because SHACL cannot identify a node output. There is no marker that distinguishes one: both
+# fw:workflowNode and prov:generated are also asserted by widget-internal activities --
+# runtime-semantics.ts puts fw:workflowNode on every receipt activity, and three widgets emit
+# prov:generated for entities of their own. Minting a marker to make the target work is exactly the
+# fw:Carrier class that D11 rejected, so completeness is checked where the plan is known, in
+# tests/evidence.test.mjs, and the shape checks only the shape of the claim.
+fw:PortTypeClaimShape a sh:NodeShape;
+  sh:targetSubjectsOf fw:portType;
+  sh:class prov:Entity;
+  sh:property [ sh:path fw:portType; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI;
+    sh:class fw:PortType;
+    sh:description "Exactly one, and a declared one: sh:class fw:PortType is what makes an undeclared port type a violation rather than a silent string." ].

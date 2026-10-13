@@ -66,7 +66,17 @@ export function decodeFile(text:unknown):Uint8Array<ArrayBuffer> {
 }
 
 /** References document the plan. PDF/link contents are not computation inputs or EYE premises. */
-export function evidenceProvenance(nodes:WorkflowNode[],edges:Workflow['edges'],runId:string,receipts:Receipt[]=[]):{evidence:NodeEvidence[];provenanceN3:string} {
+/** The term for a port type, derived rather than tabulated.
+ *
+ *  Every port type's ontology individual is its name in upper camel case with `Port` appended, so
+ *  `coverage-check` is `fw:CoverageCheckPort`. Derived so a new port type cannot be added with its
+ *  term silently missing -- there is no table to forget to update -- and `tests/evidence.test.mjs`
+ *  asserts that every member of the union has an individual declared. */
+export const portTypeTerm=(portType:string):string=>
+  'fw:'+portType.split('-').map(part=>part[0].toUpperCase()+part.slice(1)).join('')+'Port';
+
+export function evidenceProvenance(nodes:WorkflowNode[],edges:Workflow['edges'],runId:string,receipts:Receipt[]=[],
+  portTypes:Record<string,string|null>={}):{evidence:NodeEvidence[];provenanceN3:string} {
   const evidence=nodes.filter(n=>n.references?.length).map(n=>({nodeId:n.id,references:structuredClone(n.references!)}));
   const iri=(part:string)=>`<urn:fieldwork:run:${runId}:${part}>`,literal=(text:string)=>JSON.stringify(text);
   let facts='@prefix dc: <http://purl.org/dc/elements/1.1/>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix fw: <urn:fieldwork:>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n# Citation metadata supplied by the workflow author; not independently verified evidence.\n';
@@ -75,7 +85,7 @@ export function evidenceProvenance(nodes:WorkflowNode[],edges:Workflow['edges'],
   const ids=new Set(nodes.map(n=>n.id));
   for(const node of nodes){
     const step=iri('step:'+node.id),plan=iri('plan:'+node.id),output=iri('output:'+node.id);
-    facts+=`${plan} a prov:Plan; dcterms:identifier ${literal(node.id)}.\n${step} a prov:Activity; fw:workflowNode ${plan}.\n${output} a prov:Entity.\n`;
+    facts+=`${plan} a prov:Plan; dcterms:identifier ${literal(node.id)}.\n${step} a prov:Activity; fw:workflowNode ${plan}; prov:generated ${output}.\n${output} a prov:Entity${portTypes[node.id]?`; fw:portType ${portTypeTerm(portTypes[node.id]!)}`:''}.\n`;
     facts+=runtimeBindingN3(node,runId,receipts);
     for(const edge of edges.filter(e=>e.to===node.id&&ids.has(e.from)))facts+=`${step} prov:used ${iri('output:'+edge.from)}.\n`;
     for(const ref of node.references||[])facts+=referenceN3(iri('reference:'+node.id+':'+ref.id),plan,ref,literal);

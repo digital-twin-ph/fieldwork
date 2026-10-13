@@ -52,3 +52,42 @@ test('bundles reject altered, missing, duplicate and unreferenced PDFs before op
   for(const attachments of [[],[attachment,attachment],[{...attachment,sha256:'b'.repeat(64)}],[{...attachment,dataBase64:encodeFile(changed)}]])await assert.rejects(importWorkflowDocument({schema:'fieldwork/bundle/1',workflow:w,attachments},validateWorkflow),/PDF|checksum/);
   assert.equal((await importWorkflowDocument(exampleWorkflow(),validateWorkflow)).schema,'fieldwork/workflow/1');
 });
+
+/** Every node's output says what it travelled as, and every port type has a declared term.
+ *
+ *  The completeness half of `fw:PortTypeClaimShape`. SHACL checks that a port type a run asserts is
+ *  a declared one; it cannot check that every node output asserts one, because nothing in the graph
+ *  distinguishes a node output -- `fw:workflowNode` sits on every receipt activity and three widgets
+ *  emit `prov:generated` for entities of their own. Minting a marker to make a SHACL target work is
+ *  the `fw:Carrier` class that D11 rejected, so the check lives here, where the plan is known.
+ *
+ *  Before 2026-10-12 ten of twelve per-node outputs asserted nothing about themselves beyond
+ *  `prov:Entity`, and a reader had to fetch the widget's release file to learn what a value was.
+ */
+test('every node output declares its port type, and every port type has an ontology term',async()=>{
+  const {TYPES,outputOf}=await import('../build/core.js');
+  const {portTypeTerm}=await import('../build/evidence.js');
+  const {readFileSync}=await import('node:fs');
+
+  // Derived, not tabulated: a new port type cannot arrive with its term silently missing.
+  const ontology=readFileSync(new URL('../ontology/fieldwork.ttl',import.meta.url),'utf8');
+  const declared=new Set([...ontology.matchAll(/^(fw:[A-Za-z]+Port) a fw:PortType/gm)].map(m=>m[1]));
+  const portTypes=new Set(Object.values(TYPES).map(d=>d.output).filter(Boolean));
+  for(const portType of portTypes)
+    assert.ok(declared.has(portTypeTerm(portType)),
+      `${portType} has no ${portTypeTerm(portType)} declared in ontology/fieldwork.ttl`);
+
+  const w=exampleWorkflow();
+  const result=await executeWorkflow(w,async()=>w.nodes[0].params.data.features.map(f=>
+    ({subject:'urn:fieldwork:place:'+f.id,predicate:'urn:fieldwork:decision',object:'urn:fieldwork:Unknown'})));
+  for(const node of w.nodes){
+    const expected=outputOf(node);
+    if(!expected)continue;
+    const line=new RegExp(`output:${node.id}> a prov:Entity; fw:portType ${portTypeTerm(expected)}\\.`);
+    assert.match(result.provenanceN3,line,`${node.id} (${node.type}) does not declare it carried ${expected}`);
+  }
+  // And the step says it produced that value, which the shared emitter did not say before.
+  for(const node of w.nodes)
+    assert.match(result.provenanceN3,new RegExp(`step:${node.id}> a prov:Activity; fw:workflowNode <[^>]*plan:${node.id}>; prov:generated`),
+      `${node.id} does not link its step to the value it produced`);
+});

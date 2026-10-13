@@ -1,0 +1,439 @@
+{
+  "schema": "fieldwork/widget-name-review/1",
+  "note": "The human half of the naming gate. scripts/validate-naming.mjs checks the six mechanical rules; this records a practitioner's judgement on the rule that cannot be mechanised -- whether the name is what someone would say to ask for the operation. Review docs/widget-names.md, which is generated, and record verdicts here. A verdict is pinned to the digest of (nodeType, title, group): change any of the three and the review goes stale rather than carrying over.",
+  "stampedAt": "2026-10-13",
+  "reviewer": "practitioner",
+  "pendingCeiling": 46,
+  "ceilingRule": "pendingCeiling may be lowered freely and never raised. A widget added after 2026-10-13 has no entry here, which fails the build until one is written, so the pending list can only shrink.",
+  "verdicts": {
+    "accepted": "The name is what a practitioner would say to ask for this operation.",
+    "flagged": "Raised in review; carries a note and appears in every build until resolved.",
+    "pending": "Not yet reviewed. Seeded for the widgets that existed when this gate was added."
+  },
+  "reviews": [
+    {
+      "nodeType": "alert",
+      "title": "Heat alert",
+      "group": "Sources",
+      "fingerprint": "9bfc8e32e7bf",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+    },
+    {
+      "nodeType": "area",
+      "title": "Study area",
+      "group": "Sources",
+      "fingerprint": "3072f9008d4d",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+    },
+    {
+      "nodeType": "find_health_facilities",
+      "title": "Find health facilities",
+      "group": "Sources",
+      "fingerprint": "b239f0bd9433",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "network_input",
+      "title": "Street network",
+      "group": "Sources",
+      "fingerprint": "8a50b03b1cba",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "observations",
+      "title": "Input data",
+      "group": "Sources",
+      "fingerprint": "7d2c4b12e0c0",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+    },
+    {
+      "nodeType": "raster_input",
+      "title": "Raster input",
+      "group": "Sources",
+      "fingerprint": "4fe81b5361ac",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "reproject",
+      "title": "Reproject input",
+      "group": "Sources",
+      "fingerprint": "92978ef26028",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+    },
+    {
+      "nodeType": "slr_extract_import",
+      "title": "Sea-level projection extract",
+      "group": "Sources",
+      "fingerprint": "15bb332b6ed8",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+    },
+    {
+      "nodeType": "table_input",
+      "title": "Tabular data",
+      "group": "Sources",
+      "fingerprint": "139e1d3526c1",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "buffer_area",
+      "title": "Buffer study area",
+      "group": "Spatial operations",
+      "fingerprint": "71f44412b2ea",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "buffer_point",
+      "title": "Area around a point",
+      "group": "Spatial operations",
+      "fingerprint": "3005fd279e14",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "clip_polygons",
+      "title": "Clip polygons",
+      "group": "Spatial operations",
+      "fingerprint": "69ed2e99d3b8",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "clip_raster",
+      "title": "Clip raster",
+      "group": "Spatial operations",
+      "fingerprint": "077bde7c10c4",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "compare_point_sets",
+      "title": "Compare point sets",
+      "group": "Spatial operations",
+      "fingerprint": "3342491e3fec",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "donut_geomask",
+      "title": "Move points in a donut",
+      "group": "Spatial operations",
+      "fingerprint": "cce78d165c70",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "facilities",
+      "title": "Select nearby facilities",
+      "group": "Spatial operations",
+      "fingerprint": "052a7f2ea52f",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+    },
+    {
+      "nodeType": "fill_interior_gaps",
+      "title": "Fill interior gaps",
+      "group": "Spatial operations",
+      "fingerprint": "572a68ab0ee6",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "hex_aggregate",
+      "title": "Group points in H3 cells",
+      "group": "Spatial operations",
+      "fingerprint": "461ea4f9efb7",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+    },
+    {
+      "nodeType": "isochrone",
+      "title": "Network isochrone",
+      "group": "Spatial operations",
+      "fingerprint": "81ecde16de25",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "mean_center",
+      "title": "Mean center",
+      "group": "Spatial operations",
+      "fingerprint": "1b17a23f9180",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "measure_area",
+      "title": "Calculate area",
+      "group": "Spatial operations",
+      "fingerprint": "9ce9cec4e8c2",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "nearest",
+      "title": "Nearest point",
+      "group": "Spatial operations",
+      "fingerprint": "499a24daa900",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+    },
+    {
+      "nodeType": "reachable_corridor",
+      "title": "Reachable corridor",
+      "group": "Spatial operations",
+      "fingerprint": "e3f6a1f3e66b",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "reachable_nodes",
+      "title": "Reachable junctions",
+      "group": "Spatial operations",
+      "fingerprint": "338c7de1440b",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "sample_raster",
+      "title": "Sample raster at points",
+      "group": "Spatial operations",
+      "fingerprint": "47a5e83a0391",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "samples",
+      "title": "Point grid",
+      "group": "Spatial operations",
+      "fingerprint": "be96722534d1",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+    },
+    {
+      "nodeType": "slr_site_assignment",
+      "title": "Assign projection site",
+      "group": "Spatial operations",
+      "fingerprint": "ecb55da38088",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "snap_to_network",
+      "title": "Snap to street network",
+      "group": "Spatial operations",
+      "fingerprint": "61882642cc42",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "stack_polygons",
+      "title": "Collect polygon layers",
+      "group": "Spatial operations",
+      "fingerprint": "3d9e5ec883c0",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "travel_time",
+      "title": "Travel time from distance",
+      "group": "Spatial operations",
+      "fingerprint": "815247bbea2f",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "travel_time_band",
+      "title": "Travel time band",
+      "group": "Spatial operations",
+      "fingerprint": "cf220573a25a",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "voronoi",
+      "title": "Voronoi catchments",
+      "group": "Spatial operations",
+      "fingerprint": "ea377e7899f3",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "coverage_check",
+      "title": "Check spatial coverage",
+      "group": "Comparisons and checks",
+      "fingerprint": "318b29094c61",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "slr_threshold_comparison",
+      "title": "Compare level to elevation",
+      "group": "Comparisons and checks",
+      "fingerprint": "4c389a09b00e",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "apply_ruleset",
+      "title": "Apply ruleset",
+      "group": "Semantic reasoning",
+      "fingerprint": "271a02e20aa5",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "case_series",
+      "title": "Cases by period",
+      "group": "Summaries",
+      "fingerprint": "842d3ba3a182",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "facility_audit",
+      "title": "Evidence register",
+      "group": "Summaries",
+      "fingerprint": "783d2a6aaaf7",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+    },
+    {
+      "nodeType": "rate",
+      "title": "Rate with a denominator",
+      "group": "Summaries",
+      "fingerprint": "c314cf6a9dc1",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "summarize_combined_area",
+      "title": "Combined area",
+      "group": "Summaries",
+      "fingerprint": "b6944c9e7541",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "summarize_hull",
+      "title": "Convex hull",
+      "group": "Summaries",
+      "fingerprint": "8204cdb51897",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "summarize_polygons",
+      "title": "Summarize points in polygons",
+      "group": "Summaries",
+      "fingerprint": "38a744165846",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "micro_workflow",
+      "title": "Micro-workflow",
+      "group": "Micro-workflows",
+      "fingerprint": "102c1f1a5f37",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "chart_output",
+      "title": "Chart",
+      "group": "Outputs",
+      "fingerprint": "b725f6ecc432",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "comparison_map",
+      "title": "Comparison map",
+      "group": "Outputs",
+      "fingerprint": "88bab83947ac",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "map_output",
+      "title": "Map",
+      "group": "Outputs",
+      "fingerprint": "86ca10007463",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "table_output",
+      "title": "Table",
+      "group": "Outputs",
+      "fingerprint": "61fab00f2451",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    }
+  ]
+}

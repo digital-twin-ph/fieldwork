@@ -110,6 +110,57 @@ export function clipPolygons(input:Polygons,boundary:Boundary):Polygons{
  *  during it and only a call from within the computation can. It cannot prove liveness within a
  *  single site, which is the case that exhausts memory -- that needs the search broken into steps,
  *  recorded as the blocker `isochrone-does-not-scale`. */
+/** Lines buffered in small batches and unioned in a balanced tree, rather than handed to the
+ *  buffer engine all at once.
+ *
+ *  A buffer distributes over a union, so the strip around a set of streets is the union of the
+ *  strips around each -- which means the batch size is free to choose and the answer does not
+ *  change with it. Measured 2026-10-13 on a real 10-minute walk over central London (3,925
+ *  streets):
+ *
+ *  | all at once (shipped) | 17,175 ms | +4,599 MB |
+ *  | batches of 400        |  3,083 ms |   +195 MB |
+ *  | batches of 100        |  2,635 ms |    +82 MB |
+ *  | **batches of 25**     |  **2,532 ms** | **+21 MB** |
+ *  | batches of 1          |  6,416 ms |    +36 MB |
+ *
+ *  So 25 is the floor on both axes: below it the per-call overhead of the buffer engine dominates,
+ *  above it the engine's own cost grows faster than the saving. The resulting area differs from the
+ *  shipped geometry by 0.000006% -- 1 m² in 987,859 -- which is union ordering in floating point.
+ *
+ *  This is what made a 1 km square of central London exhaust a 4 GB heap: not the search, which
+ *  takes 82 ms, but one buffer call over every reached street at once.
+ *
+ *  The union is a balanced pairwise reduction, not a left fold: folding re-walks the whole
+ *  accumulated polygon on every step, which is the same quadratic shape in a different place. */
+export const BUFFER_BATCH=25;
+export function bufferedCorridor(lines:Position[][],bufferM:number,fallback:Position):Boundary{
+  if(!lines.length){
+    const point=turfBuffer({type:'Point',coordinates:fallback},bufferM,{units:'meters',steps:8});
+    if(!point||point.type!=='Feature')throw new Error('Network buffer did not produce a polygon.');
+    return point.geometry as Boundary;
+  }
+  const parts:ClipPolygon[]=[];
+  for(let i=0;i<lines.length;i+=BUFFER_BATCH){
+    const batch=turfBuffer({type:'MultiLineString',coordinates:lines.slice(i,i+BUFFER_BATCH)},
+      bufferM,{units:'meters',steps:8});
+    if(!batch||batch.type!=='Feature')throw new Error('Network buffer did not produce a polygon.');
+    parts.push(...(multi(batch.geometry) as ClipPolygon[]));
+  }
+  let level:ClipMultiPolygon[]=parts.map(p=>[p]);
+  while(level.length>1){
+    const next:ClipMultiPolygon[]=[];
+    for(let i=0;i<level.length;i+=2)
+      next.push(i+1<level.length?polygonClipping.union(level[i],level[i+1]):level[i]);
+    level=next;
+  }
+  const polygons=level[0];
+  // One polygon is returned as a Polygon, as the single buffer call did, so receipts and
+  // downstream readers see the same geometry type for the same shape.
+  return polygons.length===1
+    ?{type:'Polygon',coordinates:polygons[0] as Position[][]}
+    :{type:'MultiPolygon',coordinates:polygons as Position[][][]};
+}
 export function isochrone(input:PointCollection,network:Network,params:WorkflowNode<'isochrone'>['params'],onProgress?:(done:number,total:number)=>void):Polygons{
   if(params.thresholds?.length){validateCatchmentNode({id:'check',type:'isochrone',params,x:0,y:0});const results=params.thresholds.map((minutes,i)=>{onProgress?.(i,params.thresholds!.length);return isochrone(input,network,{...params,minutes,thresholds:undefined},onProgress);});return {...results[0],features:results.flatMap(p=>p.features.map(f=>({...f,id:f.siteId+'-t'+f.minutes}))),method:'Cumulative network isochrones: '+params.thresholds.join(', ')+' minutes; '+params.speedMPerMin+' m/min; '+params.bufferM+' m corridor; '+params.direction,notes:[...results[0].notes,'Nested thresholds are cumulative, not disjoint time bands.']};}
   validateNetwork(network);validateCatchmentNode({id:'check',type:'isochrone',params,x:0,y:0});const fs=sites(input,10),m=metric(params.zone,params.hemisphere),coords=new Map(network.nodes.map(n=>[n.id,m.forward(n.coordinates)]));
@@ -121,10 +172,21 @@ export function isochrone(input:PointCollection,network:Network,params:WorkflowN
     for(;;){let current:string|undefined,best=Infinity;for(const [id,d] of distances)if(!settled.has(id)&&d<best){current=id;best=d;}if(!current||best>budget)break;settled.add(current);for(const e of adjacency.get(current)||[]){const cost=best+e.lengthM;if(cost<(distances.get(e.to)??Infinity))distances.set(e.to,cost);}}
     const reached:{line:Position[];fraction:number}[]=[];for(const e of edges){const d=distances.get(e.from)??Infinity;if(d<budget)reached.push({line:e.line,fraction:Math.min(1,(budget-d)/e.lengthM)});}
     const lines=reachedStreets(reached).map(line=>line.map(m.inverse));
-    const buffered=turfBuffer(lines.length?{type:'MultiLineString',coordinates:lines}:{type:'Point',coordinates:snap.coordinates},params.bufferM,{units:'meters',steps:8});
-    if(!buffered||buffered.type!=='Feature')throw new Error('Network buffer did not produce a polygon.');
-    const filled=multi(buffered.geometry).map(p=>[p[0]]) as ClipPolygon[];
-    const geometry:Boundary=params.fillHoles?{type:'MultiPolygon',coordinates:polygonClipping.union(filled[0],...filled.slice(1))}:buffered.geometry;
+    const corridor=bufferedCorridor(lines,params.bufferM,snap.coordinates);
+    // Infill keeps each polygon's outer ring and drops its holes. The union was a spread of every
+    // ring into one call, which on a large corridor passes thousands of arguments; a balanced
+    // reduction does the same work without that.
+    let geometry:Boundary=corridor;
+    if(params.fillHoles){
+      let level:ClipMultiPolygon[]=(multi(corridor) as ClipPolygon[]).map(p=>[[p[0]]] as unknown as ClipMultiPolygon);
+      while(level.length>1){
+        const next:ClipMultiPolygon[]=[];
+        for(let i=0;i<level.length;i+=2)
+          next.push(i+1<level.length?polygonClipping.union(level[i],level[i+1]):level[i]);
+        level=next;
+      }
+      geometry={type:'MultiPolygon',coordinates:level[0] as Position[][][]};
+    }
     return {id:f.id,siteId:f.id,minutes:params.minutes,name:`${f.properties.name} - ${params.minutes} min`,geometry};
   });notes.push(params.fillHoles?'Infill enabled: interior holes are filled for illustrative regions; this can include unreachable off-network locations.':'Infill disabled: corridor holes are retained.');return {features,sites:structuredClone(fs),crs:m.crs,method:`Dijkstra ${params.direction}; ${params.minutes} min; ${params.speedMPerMin} m/min; partial edges; ${params.bufferM} m corridor`,notes,snaps};
 }

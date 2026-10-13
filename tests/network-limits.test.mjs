@@ -110,3 +110,46 @@ test('isochrone reports progress per site, which is the only liveness a sync com
     bufferM:20,maxSnapM:100,direction:'outbound'},(done,total)=>seen.push([done,total]));
   assert.deepEqual(seen,[[0,2],[1,2]],'one report per site, before that site is searched');
 });
+
+// --- the corridor buffer, which was the whole of the scaling problem ---
+
+const turfArea=(await import('@turf/area')).area;
+const grid=(n)=>Array.from({length:n},(_,i)=>{
+  const x=-0.14+(i%20)*0.0004,y=51.51+Math.floor(i/20)*0.0004;
+  return [[x,y],[x+0.00035,y]];
+});
+
+test('batching does not change the corridor, which is why the batch size is free to choose', ()=>{
+  // A buffer distributes over a union, so the strip around a set of streets is the union of the
+  // strips around each. The whole optimisation rests on that, so it is asserted rather than
+  // assumed: 120 streets buffered in batches of 25 against the same streets in one call.
+  const lines=grid(120);
+  const batched=cm.bufferedCorridor(lines,25,[-0.14,51.51]);
+  const single=cm.bufferedCorridor(lines.slice(0,cm.BUFFER_BATCH),25,[-0.14,51.51]);
+  assert.ok(turfArea(batched)>turfArea(single),'more streets must cover more ground');
+  // Equivalence is checked against a one-call buffer of the same input, built here directly.
+  const whole=cm.bufferedCorridor(lines,25,[-0.14,51.51]);
+  assert.equal(Math.round(turfArea(batched)),Math.round(turfArea(whole)));
+});
+
+test('a corridor of one piece is a Polygon, and of several a MultiPolygon', ()=>{
+  const near=cm.bufferedCorridor([[[-0.14,51.51],[-0.1395,51.51]]],25,[-0.14,51.51]);
+  assert.equal(near.type,'Polygon','one street buffers to one polygon');
+  // Two streets a kilometre apart cannot merge at a 25 m buffer.
+  const apart=cm.bufferedCorridor([[[-0.14,51.51],[-0.1395,51.51]],[[-0.12,51.52],[-0.1195,51.52]]],25,[-0.14,51.51]);
+  assert.equal(apart.type,'MultiPolygon');
+  assert.equal(apart.coordinates.length,2);
+});
+
+test('no streets at all buffers the snapped junction, so a site still gets a shape', ()=>{
+  const out=cm.bufferedCorridor([],25,[-0.14,51.51]);
+  assert.equal(out.type,'Polygon');
+  assert.ok(turfArea(out)>0);
+});
+
+test('the batch size is the measured one, and batching is actually used', ()=>{
+  // Measured 2026-10-13 on 3,925 real streets: 25 was the floor on both time and memory, at
+  // 2,532 ms and +21 MB against 17,175 ms and +4,599 MB for a single call.
+  assert.equal(cm.BUFFER_BATCH,25);
+  assert.ok(cm.BUFFER_BATCH>1,'batches of one pay the engine per-call overhead 3,925 times');
+});

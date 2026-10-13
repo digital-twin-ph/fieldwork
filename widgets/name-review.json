@@ -50,14 +50,13 @@
       "reviewedBy": null
     },
     {
-      "nodeType": "observations",
-      "title": "Input data",
+      "nodeType": "point_input",
+      "title": "Point data",
       "group": "Sources",
-      "fingerprint": "7d2c4b12e0c0",
+      "fingerprint": "ec45be738aa6",
       "verdict": "pending",
       "reviewed": null,
-      "reviewedBy": null,
-      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+      "reviewedBy": null
     },
     {
       "nodeType": "raster_input",

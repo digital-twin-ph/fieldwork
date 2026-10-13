@@ -42,7 +42,7 @@
       "nodeType": "places",
       "retiredAt": "2026-10-12",
       "replacedBy": [
-        "observations"
+        "point_input"
       ],
       "note": "One example's neighbourhoods. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today."
     },
@@ -50,7 +50,7 @@
       "nodeType": "centers",
       "retiredAt": "2026-10-12",
       "replacedBy": [
-        "observations"
+        "point_input"
       ],
       "note": "One example's cooling centres. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today."
     },

@@ -121,10 +121,6 @@
       "classification": "standard"
     },
     {
-      "nodeType": "observations",
-      "classification": "standard"
-    },
-    {
       "nodeType": "output",
       "classification": "standard",
       "retired": true
@@ -136,6 +132,10 @@
     },
     {
       "nodeType": "point_grid",
+      "classification": "standard"
+    },
+    {
+      "nodeType": "point_input",
       "classification": "standard"
     },
     {

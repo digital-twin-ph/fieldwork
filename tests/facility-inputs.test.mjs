@@ -27,7 +27,7 @@ test('a workflow holding a non-replaceable retired widget refuses to open, namin
  *  registry splits once into a connected Input data source, and splits idempotently. */
 test('the legacy registry splits once into a shared source, and only once',()=>{
   const w=validateWorkflow(oldNalediWorkflow());
-  const source=w.nodes.find(n=>n.type==='observations'&&n.params.data?.features?.length===214);
+  const source=w.nodes.find(n=>n.type==='point_input'&&n.params.data?.features?.length===214);
   assert.ok(source,'the 214 bundled facility records arrive on a shared Input data node');
   assert.equal(source.params.sourceInfo.commit,'7f183843075a6534b6699cd107cc74def1315bcd');
   assert.deepEqual(validateWorkflow(w),w,'splitting is idempotent');

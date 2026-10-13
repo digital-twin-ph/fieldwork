@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {tidyLayout,depths,alreadyTidy,COLUMN_WIDTH,ROW_HEIGHT,ORIGIN} from '../build/layout.js';
 
 const graph=(nodes,edges)=>({schema:'fieldwork/workflow/1',
-  nodes:nodes.map(([id,x=0,y=0])=>({id,type:'observations',x,y,params:{label:id}})),
+  nodes:nodes.map(([id,x=0,y=0])=>({id,type:'point_input',x,y,params:{label:id}})),
   edges:edges.map(([from,to],i)=>({id:`e${i}`,from,to,port:'points'}))});
 
 test('a node never sits left of something that feeds it',()=>{

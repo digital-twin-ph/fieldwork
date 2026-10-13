@@ -74,7 +74,7 @@ export interface ParamsByType {
   summarize_polygons:{label:string;boundary:'include'|'exclude';valueField:string};
   raster_input:{label:string;asset?:import('./raster.js').RasterAsset};
   clip_raster:{label:string;method:'cell-center'|'all-touched';marginPixels?:number;cutline?:{geometry:Polygon;selectionMode:'bbox'|'polygon'|'circle'}};
-  places:PointParams; centers:PointParams; observations:ObservationParams; area:AreaParams;
+  places:PointParams; centers:PointParams; point_input:ObservationParams; area:AreaParams;
   alert:{active:boolean|null; date:string};
   // The unit is a knob because baking one in is how three widgets came to implement one
   // operation: `nearest` returned kilometres, `slr_site_assignment` metres, `access` minutes.
@@ -117,8 +117,8 @@ export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'
  *  which refuses. Each entry is a public identifier that can never be removed, only kept
  *  resolving -- which is why the naming convention treats a name as a commitment made at D1 time
  *  and not a label adjusted later. */
-export type RenamedNodeType='samples'|'nearest';
-export const RENAMED_NODE_TYPES:Record<RenamedNodeType,NodeType>={samples:'point_grid',nearest:'measure_distance'};
+export type RenamedNodeType='samples'|'nearest'|'observations';
+export const RENAMED_NODE_TYPES:Record<RenamedNodeType,NodeType>={samples:'point_grid',nearest:'measure_distance',observations:'point_input'};
 
 export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType|RenamedNodeType; version:'1'}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}

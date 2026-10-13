@@ -21,7 +21,7 @@ const wrongReply:ReasoningResponse={id:1,quads:'not quads'};
 const wrongGeometry:PointCollection={type:'FeatureCollection',features:[{type:'Feature',id:'p1',properties:{name:'Pin'},geometry:{type:'Polygon',coordinates:[]}}]};
 
 declare const node:WorkflowNode;
-if(node.type==='observations'){
+if(node.type==='point_input'){
   node.params.data.features[0]?.properties.name.toUpperCase();
   // @ts-expect-error A point source has no area unit setting.
   node.params.unit;

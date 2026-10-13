@@ -125,7 +125,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // "demonstration points", and it lived in one example's module. src/point-grid.ts holds it now.
   point_grid:{title:'Point grid',group:'Spatial operations',icon:'▦',color:'teal',description:'Generate a regular grid of points inside a boundary at a stated spacing',inputs:[['area','area']],output:'points'},
   measure_area:{title:'Calculate area',group:'Spatial operations',icon:'▱',color:'teal',description:'Attach an area measurement to the study area',inputs:[['area','area']],output:'area'},
-  observations:{title:'Input data',group:'Sources',icon:'▦',color:'blue',description:'Import point observations or generate synthetic records',inputs:[],output:'points'},
+  point_input:{title:'Point data',group:'Sources',icon:'▦',color:'blue',description:'Import point observations or generate synthetic records',inputs:[],output:'points'},
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Identify observations outside the study boundary',inputs:[['area','area'],['points','points']],output:'coverage-check'},
   map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['coverage','coverage-check'],['raster','raster']],output:null},
   table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display point coordinates, attributes and available review decisions',inputs:[['points','points'],['coverage','coverage-check']],output:null},
@@ -167,8 +167,8 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
 }
 export function exampleWorkflow():Workflow {
   return {schema:'fieldwork/workflow/1',name:'Heat outreach screening',nodes:[
-    {id:'neighborhoods',type:'observations',x:35,y:52,params:{label:'Neighborhoods',data:{type:'FeatureCollection',features:[point('oakwood','Oakwood',[-84.455,33.873]),point('northgate','Northgate',[-84.337,33.875]),point('riverside','Riverside',[-84.438,33.812]),point('midtown','Midtown',[-84.37,33.79]),point('eastfield','Eastfield',[-84.277,33.795]),point('brookside','Brookside',[-84.421,33.734]),point('southpark','South Park',[-84.34,33.72]),point('cedar','Cedar Heights',null)]}}},
-    {id:'centers',type:'observations',x:35,y:229,params:{label:'Cooling centers',data:{type:'FeatureCollection',features:[point('library','Central Library',[-84.367,33.79]),point('community','West Community Hall',[-84.426,33.823])]}}},
+    {id:'neighborhoods',type:'point_input',x:35,y:52,params:{label:'Neighborhoods',data:{type:'FeatureCollection',features:[point('oakwood','Oakwood',[-84.455,33.873]),point('northgate','Northgate',[-84.337,33.875]),point('riverside','Riverside',[-84.438,33.812]),point('midtown','Midtown',[-84.37,33.79]),point('eastfield','Eastfield',[-84.277,33.795]),point('brookside','Brookside',[-84.421,33.734]),point('southpark','South Park',[-84.34,33.72]),point('cedar','Cedar Heights',null)]}}},
+    {id:'centers',type:'point_input',x:35,y:229,params:{label:'Cooling centers',data:{type:'FeatureCollection',features:[point('library','Central Library',[-84.367,33.79]),point('community','West Community Hall',[-84.426,33.823])]}}},
     {id:'nearest',type:'measure_distance',x:323,y:90,params:{unit:'kilometres'}},
     {id:'alert',type:'alert',x:323,y:284,params:{active:true,date:'2026-07-15'}},
     // The template names the ruleset rather than the retired `policy` type, so the shipped example
@@ -208,7 +208,7 @@ export function validateWorkflow(raw:unknown):Workflow {
   assertProjectManifest(w);
   // Normalize historical heat sources before validation to preserve scalar attributes.
   w.nodes=w.nodes.map(n=>n && (n.type==='places'||n.type==='centers')
-    ? {...n,type:'observations',sourceMigration:{fromType:n.type,version:'1'}} : n);
+    ? {...n,type:'point_input',sourceMigration:{fromType:n.type,version:'1'}} : n);
   // `nearest`'s input ports were renamed from the heat demo's `places`/`centers` to the general
   // `points`/`candidates`. A saved workflow still names the old ones, and an edge whose port no
   // longer exists is refused, so it is rewritten here rather than failing to open.
@@ -258,8 +258,8 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (!Object.hasOwn(TYPES,n.type) || !/^[a-zA-Z0-9_-]{1,80}$/.test(n.id) || ids.has(n.id)) throw new Error('Invalid or duplicate node.');
     ids.add(n.id);
     if (![n.x,n.y].every(Number.isFinite) || Math.abs(n.x)>10000 || Math.abs(n.y)>10000 || !n.params) throw new Error('Invalid node position or parameters.');
-    if((n.type==='area'||n.type==='observations'||n.type==='places'||n.type==='centers')){n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
-    if ((n.type==='places'||n.type==='centers'||n.type==='observations')) n.params.data=validateGeoJSON(n.params.data,{attributes:n.type==='observations'});
+    if((n.type==='area'||n.type==='point_input'||n.type==='places'||n.type==='centers')){n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
+    if ((n.type==='places'||n.type==='centers'||n.type==='point_input')) n.params.data=validateGeoJSON(n.params.data,{attributes:n.type==='point_input'});
     if(n.type==='summarize_hull')validateHullNode(n);
     if(n.type==='summarize_combined_area')validateCombinedAreaNode(n);
     if(n.type==='snap_to_network')validateSnapNode(n);
@@ -319,7 +319,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     }
     // Reproject stores the already-converted CRS84 collection, so it is validated as geographic here.
     if(n.type==='reproject'){utmDefinition(n.params.zone,n.params.hemisphere);n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);n.params.data=validateGeoJSON(n.params.data,{attributes:true});}
-    if(n.type==='observations'){validateAttributeSchema(n.params.data,n.params.fields,n.params.attributeRules);if(n.params.pinIdStrategy!==undefined&&!['sequential','uuid'].includes(n.params.pinIdStrategy))throw new Error('Choose sequential or UUID identifiers for new pins.');}
+    if(n.type==='point_input'){validateAttributeSchema(n.params.data,n.params.fields,n.params.attributeRules);if(n.params.pinIdStrategy!==undefined&&!['sequential','uuid'].includes(n.params.pinIdStrategy))throw new Error('Choose sequential or UUID identifiers for new pins.');}
     if((n.type==='map_output'||n.type==='table_output')&&n.params.inputMode!==undefined&&!(n.type==='map_output'?['spatial','decisions','raster','polygons']:['spatial','decisions','polygons','table']).includes(n.params.inputMode))throw new Error('Choose spatial inputs or reasoning results.');
     if(n.type==='map_output'&&((n.params.presentation!==undefined&&!['plot','interactive'].includes(n.params.presentation))||(n.params.contextPoints!==undefined&&typeof n.params.contextPoints!=='boolean')))throw new Error('Invalid polygon map presentation.');
     if(n.type==='map_output'&&((n.params.showLegend!==undefined&&typeof n.params.showLegend!=='boolean')||(n.params.basemap!==undefined&&!['none','osm','topo'].includes(n.params.basemap))||(['mapTitle','mapSubtitle','mapSourceNote'] as const).some(key=>n.params[key]!==undefined&&(typeof n.params[key]!=='string'||n.params[key]!.length>({mapTitle:120,mapSubtitle:160,mapSourceNote:240}[key])))))throw new Error('Invalid map presentation settings.');
@@ -521,7 +521,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'raster_input':{if(!node.params.asset)throw new Error('Prepare the raster window before running.');const grid=await loadRaster(node.params.asset,inputs.area);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId));break;}
       case 'clip_raster':{const grid=clipRaster(inputs.raster,node.params.cutline?.geometry||inputs.area.boundary,node.params);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from));break;}
       case 'places':case 'centers':value={...node.params.data,spatialReference:structuredClone(node.params.spatialReference)};break;
-      case 'observations':value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:structuredClone(node.params.sourceInfo),spatialReference:structuredClone(node.params.spatialReference)};break;
+      case 'point_input':value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:structuredClone(node.params.sourceInfo),spatialReference:structuredClone(node.params.spatialReference)};break;
       case 'rate':{const result=computeRate(fromPoints(inputs.records),node.params);value={...rateTable(result),chart:rateChart(result)} as unknown as DisplayValue;receipts.push(rateReceipt(node,result,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));break;}
       case 'case_series':{const series=node.params.source==='table'?caseSeriesFromTable(inputs.cases,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period}):caseSeries(inputs.points,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period,weightField:node.params.weightField});value={...seriesTable(series),chart:seriesChart(series)} as unknown as DisplayValue;receipts.push(seriesReceipt(node,series,runId,workflow.edges.find(e=>e.to===node.id&&(e.port==='points'||e.port==='cases'))!.from));break;}
       case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,basisKind:node.params.basisKind,familyValues:node.params.familyValues});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}

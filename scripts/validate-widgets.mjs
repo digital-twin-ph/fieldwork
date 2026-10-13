@@ -94,7 +94,7 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
       check(release.compatibility?.workflowSchema==='fieldwork/workflow/1'&&release.compatibility.versionPersistence==='not-yet-persisted','Unsupported workflow compatibility claim');
       check(Array.isArray(release.compatibility.migrationFrom),'Missing migration declarations');
       for(const migration of release.compatibility.migrationFrom){
-        const heat=entry.nodeType==='observations'&&['places','centers'].includes(migration.nodeType)&&migration.implementation==='src/core.ts#validateWorkflow';
+        const heat=entry.nodeType==='point_input'&&['places','centers'].includes(migration.nodeType)&&migration.implementation==='src/core.ts#validateWorkflow';
         const facilities=entry.nodeType==='facilities'&&migration.nodeType==='facilities'&&migration.implementation==='src/old-naledi.ts#migrateFacilitySources';
         const output=['map_output','table_output','chart_output'].includes(entry.nodeType)&&migration.nodeType==='output'&&migration.implementation==='src/output-contract.ts#migrateOutputNodes';
         const facilitySources=entry.nodeType==='find_health_facilities'&&migration.nodeType==='healthsites_discovery'&&migration.implementation==='src/health-facilities.ts#migrateHealthsitesNodes';
@@ -104,7 +104,15 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         const rulesets=entry.nodeType==='apply_ruleset'
           &&['policy','access_policy','xpert'].includes(migration.nodeType)
           &&migration.implementation==='src/core.ts#validateWorkflow';
-        check((heat||facilities||output||facilitySources||rulesets)&&migration.adapterVersion==='1','Unknown migration adapter');
+        // A rename is an adapter too, and a declared one: the entry names the old identifier in
+        // previousNodeTypes, validateWorkflow rewrites it, and the cross-check above refuses a
+        // declaration the application does not perform. Listing each rename here by hand would be
+        // a fourth place to keep in step.
+        const rename=(entry.previousNodeTypes??[]).includes(migration.nodeType)
+          &&migration.implementation==='src/core.ts#validateWorkflow';
+        check((heat||facilities||output||facilitySources||rulesets||rename)&&migration.adapterVersion==='1',
+          `Unknown migration adapter: ${entry.nodeType} claims to migrate ${migration.nodeType} `
+          +`via ${migration.implementation}`);
       }
       check(Array.isArray(release.changes)&&release.changes.length>0&&release.changes.every(c=>typeof c.description==='string'&&c.description.length>0),'Missing change history');
       check(release.evidence?.status==='not-individually-certified','Unsupported certification claim');
@@ -150,8 +158,19 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
     const replacement=current.compatibility.replacementCandidate;
     const candidates=replacement===null?[]:Array.isArray(replacement)?replacement:[replacement];
     check(replacement===null||candidates.length>0,'An empty replacement list is not the same as no replacement: use null');
+    // A candidate is resolved through renames as well as current names. `places` and `centers` were
+    // retired on 2026-10-12 naming `observations` as their replacement, and `observations` was
+    // renamed to `point_input` on 2026-10-13 -- so the IRI in those immutable release files is an
+    // archived name, and refusing it would force a choice between editing published releases and
+    // never renaming a widget anything retired points at.
+    const resolves=candidate=>catalog.widgets.some(w=>{
+      if(w.id===entry.id)return false;
+      if(w.id===candidate)return true;
+      return (w.previousNodeTypes??[]).some(previous=>`urn:fieldwork:widget:${previous}`===candidate);
+    });
     for(const candidate of candidates)
-      check(catalog.widgets.some(w=>w.id===candidate&&w.id!==entry.id),`Unknown replacement candidate: ${candidate}`);
+      check(resolves(candidate),`Unknown replacement candidate: ${candidate}. If it is a widget that `
+        +`was renamed, the entry that replaced it must declare the old name in previousNodeTypes.`);
   }
   check(Object.keys(definitions).every(type=>types.has(type)),'Unregistered implementation widget');
   return {widgets:ids.size,releases:releaseCount};

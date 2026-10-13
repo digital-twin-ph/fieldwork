@@ -11,7 +11,7 @@ test('legacy heat inputs use shared editors, preserve labels and save attributes
   await expect(page.locator('#result-metrics .review b')).toHaveText('5');
   await expect(page.locator('[data-add="places"]')).toHaveCount(0);
   await expect(page.locator('[data-add="centers"]')).toHaveCount(0);
-  await expect(page.locator('[data-add="observations"]')).toHaveCount(1);
+  await expect(page.locator('[data-add="point_input"]')).toHaveCount(1);
   for(const [id,record] of [['neighborhoods','oakwood'],['centers','library']]){
     await page.locator(`.react-flow__node[data-id="${id}"]`).click();
     await page.locator('#edit-input-data').click();
@@ -25,7 +25,7 @@ test('legacy heat inputs use shared editors, preserve labels and save attributes
     await expect(page.locator('#input-dialog')).not.toBeVisible();
   }
   const w=await saved(page);
-  assert.deepEqual(w.nodes.slice(0,2).map(n=>[n.type,n.params.label,n.params.data.features[0].properties.review_note]),[['observations','Neighborhoods','Retained'],['observations','Cooling centers','Retained']]);
+  assert.deepEqual(w.nodes.slice(0,2).map(n=>[n.type,n.params.label,n.params.data.features[0].properties.review_note]),[['point_input','Neighborhoods','Retained'],['point_input','Cooling centers','Retained']]);
   assert.deepEqual(w.edges,legacy.edges);
   await expect(page.locator('#offline-status')).toContainText('Available offline');
   await context.setOffline(true);await page.reload();

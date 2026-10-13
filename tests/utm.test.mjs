@@ -60,7 +60,7 @@ test('a workflow with no coordinates suggests nothing rather than guessing',()=>
 });
 
 test('data spanning two zones says so instead of picking silently',()=>{
-  const straddling={schema:'fieldwork/workflow/1',name:'two zones',edges:[],nodes:[{id:'p',type:'observations',x:0,y:0,
+  const straddling={schema:'fieldwork/workflow/1',name:'two zones',edges:[],nodes:[{id:'p',type:'point_input',x:0,y:0,
     params:{label:'Across a boundary',data:{type:'FeatureCollection',features:[
       {type:'Feature',id:'a',properties:{name:'west'},geometry:{type:'Point',coordinates:[-1,51]}},
       {type:'Feature',id:'b',properties:{name:'east'},geometry:{type:'Point',coordinates:[1,51]}}]}}}]};

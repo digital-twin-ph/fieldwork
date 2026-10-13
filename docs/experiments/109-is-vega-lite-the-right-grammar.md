@@ -1,0 +1,100 @@
+# 109 — Is Vega-Lite the right grammar?
+
+_Created 2026-10-13 · Updated 2026-10-13_
+
+**Status:** validated
+
+Asked by the practitioner on 2026-10-13: *we were testing Vega-Lite for its
+declarative language, but is it the most versatile, ontology friendly, and does it
+produce more visualizations?*
+
+Three questions, and they do not have the same answer.
+
+## Versatility: no, and that is the point
+
+Measured against the installed copy, `vega-lite@6.4.3`:
+
+| | |
+| --- | --- |
+| Marks | **14** — arc, area, bar, image, line, point, rect, rule, text, tick, trail, circle, square, geoshape |
+| Transform kinds | 20 |
+| Schema | 1.9 MB of JSON Schema |
+
+For comparison, Apache ECharts ships on the order of twenty series types including
+3D and GL, and Plotly around forty trace types. On breadth of chart kinds,
+**Vega-Lite loses to both**, and anyone shopping for "the most visualizations"
+should not pick it.
+
+It is the most **declarative** of the serious options rather than the most
+capable: Vega-Lite and Observable Plot implement a grammar of graphics, where a
+specification says which field maps to which channel, while Plotly's API is
+trace-based and D3 is imperative.
+
+## Ontology friendliness: yes, and for a reason that is not "it is JSON"
+
+ECharts and Plotly take JSON configuration too, so JSON is not the distinction.
+Three things are:
+
+**A grammar names the data, not the picture.** A Vega-Lite specification says
+`{field: 'count', type: 'quantitative'}` — it states which column carries which
+role. A trace-based configuration says "this is a bar chart" and leaves the
+mapping implicit. The first can be read against an ontology's terms; the second
+cannot, because there is nothing in it that corresponds to a term.
+
+**Marks can dereference.** Vega-Lite has `href` and image encoding channels, so a
+bar can link to the IRI of the thing it counts. This is the reason given by the
+closest published precedent to this project's architecture:
+[FAIR and Interactive Data Graphics from a Scientific Knowledge Graph](https://pmc.ncbi.nlm.nih.gov/articles/PMC9142568/)
+(Sci Data, 2022), which models a chart as **a SPARQL query for the semantic
+context and a Vega-Lite specification for the visual context**, both stored as
+literals in the knowledge graph beside Dublin Core and schema.org metadata.
+
+**That is what this project already does.** `chartSpecificationFacts` writes
+`fw:rendererSpecification` into the receipt as a literal, beside
+`fw:chartMeasureKind` and `fw:chartUnitStatus`. The architecture the paper
+proposes is the one already shipped, arrived at independently. It is the strongest
+external evidence this choice has.
+
+## More visualisations: no, and the escape hatch is not another library
+
+If a figure needs something outside the fourteen marks, the next step is **Vega**,
+which Vega-Lite compiles to and which is already a bundled dependency — not a
+second charting library with a second provenance story. Adding ECharts or Plotly
+would mean a renderer whose configuration cannot be read against the vocabulary,
+which would make `fw:rendererSpecification` a lie for half the charts.
+
+## What this does not establish
+
+That the current chart surface is adequate. It establishes that the grammar is the
+right kind of thing, not that fourteen marks are enough — nobody has yet wanted a
+chart this cannot draw, and the first time somebody does, the answer is Vega and
+the experiment is whether a Vega specification stays as inspectable in a receipt.
+
+It also does not establish that the renderer is in good order. Three defects found
+on 2026-10-13 while configuring the Snow figures are recorded in the commit that
+made them standalone: the mounted chart is not disposed when a practitioner
+switches back to the classic bars, a series chart had no presentation controls at
+all, and the classic bars have no figure export, so a chart drawn on the default
+renderer cannot leave the application the way a map can.
+
+And the paper's three limitations apply here, not only there:
+
+- **Portability.** Their interactive charts travel badly. This project's maps have
+  `standaloneMapSvg`; its charts rely on the renderer's own SVG export, and the
+  classic renderer has none.
+- **Persistence.** They report specifications breaking when ontology terms moved
+  namespace. This project renamed four node types the same day, and a stored
+  `fw:rendererSpecification` from before that rename names the old field keys. No
+  check reads a stored specification back.
+- **Performance.** Theirs is query runtime. Ours would be bins: the builder
+  already refuses more than 100.
+
+## What changed our minds
+
+Nothing — the choice stands. What changed is the *reason* on record. Before this,
+the choice rested on "declarative is more inspectable", which is true and is also
+what a Plotly advocate would say about JSON configuration. The reason that
+survives comparison is narrower and stronger: a grammar states the mapping from
+data to channel, and a mark can carry the IRI of what it represents. Those two are
+why a specification can be read against a vocabulary, and neither is a property of
+being configured in JSON.

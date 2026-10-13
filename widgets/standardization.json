@@ -1,128 +1,135 @@
 {
- "schema": "fieldwork/widget-standardization/1",
- "note": "A widget may not be name-attached to a worked example. That is the practitioner's rule of 2026-10-12, and the striking thing is that the shipped files already agree: twelve of the 51 release files declare standardization: 'example-specific' about themselves. Nothing read that declaration, so twelve self-reported failed admissions sat in the palette and in the count. This file is the ratchet that reads it. Every example-specific widget must appear below with the record that will remove it, and the exemption count may fall freely and may never rise. Retiring twelve widgets once would be undone by widget 52; a constraint that fails the build is what makes the reduction permanent. The reduction plan is docs/experiments/64-widget-streamlining.md as amended 2026-10-12, and the direction is its Stage 1: essentiality decided on its own terms, with example impact as the output. Gates name a blocker id in widgets/blockers.json, not a document path: a gate pointing at a design record names no claim and carries no clock, and scripts/validate-blockers.mjs refuses one that does.",
- "measuredAt": "2026-10-12",
- "exemptionCeiling": 3,
- "disagreementFound": "The widget audit's prose listed nine example-bound widgets and named comparison_map, which declares itself 'shared'. The release files list twelve and do not include it. The files are what ship, so the files are what this ratchet reads; the audit's prose is corrected rather than the declarations.",
- "exempt": [
-  {
-   "nodeType": "alert",
-   "disposition": "rename",
-   "reason": "Declaring an external condition and the date it applies to is irreducible -- nothing in the application derives it -- so the kind is right and the name bakes in 'heat'. Recorded as ungated on 2026-10-12 and corrected the same day: its output predicate is fw:heatAlert, which policy's rules read by name, and its port type 'alert' is consumed as a bound role once the ruleset widget exists. Renaming the widget without the predicate leaves a general widget asserting a domain term; renaming both before 65 means doing it twice, which is the duplicated-work failure this project has already named.",
-   "gatedOn": "outreach-predicates-name-a-domain",
-   "record": "docs/experiments/65-ruleset-as-data.md"
-  },
-  {
-   "nodeType": "facilities",
-   "disposition": "composition",
-   "reason": "A study-area problem, which is the practitioner's reading of 2026-10-12 and it is right. The widget declares an `area` input and uses only its BOUNDING-BOX CENTRE: extent(boundary), midpoint, then a radius test. The boundary's shape is discarded entirely, so a widget that says it needs an area needs a point.\n\nMeasured 2026-10-12. The Old Naledi boundary's bounding-box diagonal is 2.55 km. The shipped widget selects 122 of 214 facilities with a 6 km circle at that bounding box's centre. buffer_area at its 5,000 m ceiling, applied to the actual boundary and then selecting the points inside, selects 122 as well, agreeing on 121 of them -- one differs each way, at the margin where a circle and a buffered polygon part company. So the 6 km radius encodes '5 km beyond the boundary' plus the boundary's own half-width of 1.27 km: a number compensating for an operation that was missing.\n\nThe decomposition is therefore buffer_area plus a selection of the points inside the result -- not buffer_point plus a selection, which was yesterday's reading and used a circle where the boundary was available all along. buffer_point was extracted from this widget, which is why it looked like the answer; it is the same mistake one level down.\n\nWhat is missing is the selection. Nothing in the registry takes (area, points) and outputs points. coverage_check does the geometry and emits a review carrier that only map_output and table_output consume. So this disposition is net zero on the widget count -- one general primitive added, one example-specific widget retired -- and the point is not the count: it converts a widget that bakes in one example's reference point and attribute vocabulary into two that bake in neither.",
-   "gatedOn": "no-points-within-area-selection",
-   "record": "docs/experiments/103-duplicates-should-merge.md (corrected), 68-area-around-a-point.md"
-  },
-  {
-   "nodeType": "facility_audit",
-   "disposition": "composition",
-   "reason": "Reclassified 2026-10-12. Listed as a rule application to be merged, on the strength of its 'decisions' output port. It runs no reasoner: its body is one projection over values xpert already derived. It belongs with comparison_map in a communication, visualization and presentation stage, not in the ruleset merge. Its tier-to-status ternary is rule-like logic that has to go somewhere when that move happens -- a decision class, on the practitioner's hypothesis.",
-   "gatedOn": "presentation-stage",
-   "record": "no experiment yet"
-  }
- ],
- "retiredSoFar": [
-  {
-   "nodeType": "output",
-   "retiredAt": "2026-10-12",
-   "replacedBy": [
-    "map_output",
-    "table_output",
-    "chart_output"
-   ],
-   "note": "The first widget this project has retired. Its own 0.1.2 release already said it was superseded and off the palette; the retirement took effect when implementationStatus began to be read."
-  },
-  {
-   "nodeType": "places",
-   "retiredAt": "2026-10-12",
-   "replacedBy": [
-    "observations"
-   ],
-   "note": "One example's neighbourhoods. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today."
-  },
-  {
-   "nodeType": "centers",
-   "retiredAt": "2026-10-12",
-   "replacedBy": [
-    "observations"
-   ],
-   "note": "One example's cooling centres. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today."
-  },
-  {
-   "nodeType": "policy",
-   "retiredAt": "2026-10-12",
-   "replacedBy": [
-    "apply_ruleset"
-   ],
-   "note": "Its rules became rulesets/outreach-criteria/1.0.0.json; the widget was the arrangement around them."
-  },
-  {
-   "nodeType": "access_policy",
-   "retiredAt": "2026-10-12",
-   "replacedBy": [
-    "apply_ruleset"
-   ],
-   "note": "Its rules became rulesets/access-review/1.0.0.json."
-  },
-  {
-   "nodeType": "xpert",
-   "retiredAt": "2026-10-12",
-   "replacedBy": [
-    "apply_ruleset"
-   ],
-   "note": "Its rules became rulesets/nb06-evidence/1.0.0.json. The name was a product's and the hierarchy is NB06's."
-  },
-  {
-   "nodeType": "access",
-   "retiredAt": "2026-10-12",
-   "replacedBy": [],
-   "note": "Nearest-neighbour-with-distance plus a speed and a service grading. What it adds is domain, so it merges into the general one (103)."
-  },
-  {
-   "nodeType": "access",
-   "retiredAt": "2026-10-12",
-   "replacedBy": [
-    "nearest",
-    "travel_time"
-   ],
-   "note": "Decomposed rather than replaced: a candidate filter knob on nearest, the shared nearest-neighbour search, and the travel_time primitive. Not replaceable by one widget, so a saved workflow holding it now refuses to open naming it -- which is the practitioner's rule, and the 2026-10-06 frozen fixture is what proves it."
-  }
- ],
- "generalisedSoFar": [
-  {
-   "nodeType": "samples",
-   "generalisedAt": "2026-10-12",
-   "note": "Title, description, module and output stamp were the example attachment, not the node type -- so this was a generalisation in place, with no new widget, no migration and no change to any example's node count. standardization went from example-specific to shared, which is what ticks this ratchet down."
-  },
-  {
-   "nodeType": "nearest",
-   "generalisedAt": "2026-10-12",
-   "note": "Title, two port names and a unit-bearing field name were the example attachment; the computation never was. The merge of access and facilities into it is separate and still gated on experiment 66, because three implementations carry three different output carriers and choosing one is a base-contract change."
-  }
- ],
- "rulesetMerge": {
+  "schema": "fieldwork/widget-standardization/1",
+  "note": "A widget may not be name-attached to a worked example. That is the practitioner's rule of 2026-10-12, and the striking thing is that the shipped files already agree: twelve of the 51 release files declare standardization: 'example-specific' about themselves. Nothing read that declaration, so twelve self-reported failed admissions sat in the palette and in the count. This file is the ratchet that reads it. Every example-specific widget must appear below with the record that will remove it, and the exemption count may fall freely and may never rise. Retiring twelve widgets once would be undone by widget 52; a constraint that fails the build is what makes the reduction permanent. The reduction plan is docs/experiments/64-widget-streamlining.md as amended 2026-10-12, and the direction is its Stage 1: essentiality decided on its own terms, with example impact as the output. Gates name a blocker id in widgets/blockers.json, not a document path: a gate pointing at a design record names no claim and carries no clock, and scripts/validate-blockers.mjs refuses one that does.",
   "measuredAt": "2026-10-12",
-  "finding": "Three widgets, three rulesets, one form. policy (makeN3), access_policy (accessN3) and xpert (facilityN3) are 19 rules in total, and all 19 are a conjunction of categorical equality, boolean equality or a numeric comparison concluding one or more predicate/value pairs. No negation, recursion or aggregation anywhere. So one widget can host all three, and the merge is 3 to 1.",
-  "canTheRulesetsBeOne": "No, and the reason is measured rather than assumed, which is what the practitioner asked for. The three classify disjoint subject kinds against three output vocabularies, and two carry thresholds in different units -- kilometres and minutes. policy also carries a gate access_policy lacks (the alert boolean, in three of its five rules), so collapsing those two would mean parameterising the number of conditions, which is not a parameter. One form, three ruleset instances, one widget.",
-  "alsoFound": "The authored form in experiment 106 had a single conclusion per rule. Two of the three rulesets conclude two predicates at once -- decision with zone, evidenceLevel with service -- so the form takes a list. And facilityN3's last two rules already conclude the same pair from different antecedents, which is an OR compiled by hand.",
-  "record": "docs/experiments/106-rule-builder-ui.md, docs/experiments/65-ruleset-as-data.md",
-  "correctionMade": "Recorded earlier on 2026-10-12 as four widgets over three rulesets, counting facility_audit because its output port is 'decisions'. That was wrong and reading the executor showed it: facility_audit calls no reasoner and generates no N3. Its whole body is one projection -- tier==='Direct'?'NoFlag':tier==='None'?'Unknown':'Review' -- over values xpert already derived, plus a restatement of f.reference as the explanation. Its own check-coverage entry had said so all along: 'it selects and presents; it derives no value.' Experiment 65's original count of three was right and the correction to four was not. An output port type is not evidence of what a widget does.",
-  "butFacilityAuditStillHasLogic": "The tier-to-status mapping is a decision rule written as a TypeScript ternary, outside any ruleset and outside the reasoner, and it is the only place in src/ that maps a tier to a status. So facility_audit is not part of the ruleset merge and it is not innocent either: it is rule-like logic hidden in a presentation widget. Under the practitioner's decision-class hypothesis that mapping is a decision class, which is the first concrete instance that hypothesis has.",
-  "fourthRulesetFound": "2026-10-12, while thinking about spatial selection outputs. coverage_check carries six N3 rules as a template literal, concluding fw:coverageDecision over Accept, Review and Excluded. So the corpus is FOUR rulesets, not three, and the one found last is the one nobody was looking for -- it was never a candidate for the merge because coverage_check declares itself 'shared' and is not example-bound. A hidden ruleset is a different failure from an example-bound widget, and the exemption ratchet cannot see it. Recorded as its own blocker: coverage-check-ruleset-undeclared."
- },
- "deferred": [
-  {
-   "nodeType": "comparison_map",
-   "disposition": "composition",
-   "reason": "The practitioner's direction of 2026-10-12: comparison_map belongs in a communication, visualization and presentation stage as a composition, not as a widget. That stage does not exist yet. Note it declares standardization 'shared', so the exemption ratchet does not cover it; the widget audit's prose had listed it as example-bound, which the declaration contradicts.",
-   "gatedOn": "presentation-stage",
-   "record": "no experiment yet"
-  }
- ]
+  "exemptionCeiling": 3,
+  "disagreementFound": "The widget audit's prose listed nine example-bound widgets and named comparison_map, which declares itself 'shared'. The release files list twelve and do not include it. The files are what ship, so the files are what this ratchet reads; the audit's prose is corrected rather than the declarations.",
+  "exempt": [
+    {
+      "nodeType": "alert",
+      "disposition": "rename",
+      "reason": "Declaring an external condition and the date it applies to is irreducible -- nothing in the application derives it -- so the kind is right and the name bakes in 'heat'. Recorded as ungated on 2026-10-12 and corrected the same day: its output predicate is fw:heatAlert, which policy's rules read by name, and its port type 'alert' is consumed as a bound role once the ruleset widget exists. Renaming the widget without the predicate leaves a general widget asserting a domain term; renaming both before 65 means doing it twice, which is the duplicated-work failure this project has already named.",
+      "gatedOn": "outreach-predicates-name-a-domain",
+      "record": "docs/experiments/65-ruleset-as-data.md"
+    },
+    {
+      "nodeType": "facilities",
+      "disposition": "composition",
+      "reason": "A study-area problem, which is the practitioner's reading of 2026-10-12 and it is right. The widget declares an `area` input and uses only its BOUNDING-BOX CENTRE: extent(boundary), midpoint, then a radius test. The boundary's shape is discarded entirely, so a widget that says it needs an area needs a point.\n\nMeasured 2026-10-12. The Old Naledi boundary's bounding-box diagonal is 2.55 km. The shipped widget selects 122 of 214 facilities with a 6 km circle at that bounding box's centre. buffer_area at its 5,000 m ceiling, applied to the actual boundary and then selecting the points inside, selects 122 as well, agreeing on 121 of them -- one differs each way, at the margin where a circle and a buffered polygon part company. So the 6 km radius encodes '5 km beyond the boundary' plus the boundary's own half-width of 1.27 km: a number compensating for an operation that was missing.\n\nThe decomposition is therefore buffer_area plus a selection of the points inside the result -- not buffer_point plus a selection, which was yesterday's reading and used a circle where the boundary was available all along. buffer_point was extracted from this widget, which is why it looked like the answer; it is the same mistake one level down.\n\nWhat is missing is the selection. Nothing in the registry takes (area, points) and outputs points. coverage_check does the geometry and emits a review carrier that only map_output and table_output consume. So this disposition is net zero on the widget count -- one general primitive added, one example-specific widget retired -- and the point is not the count: it converts a widget that bakes in one example's reference point and attribute vocabulary into two that bake in neither.",
+      "gatedOn": "no-points-within-area-selection",
+      "record": "docs/experiments/103-duplicates-should-merge.md (corrected), 68-area-around-a-point.md"
+    },
+    {
+      "nodeType": "facility_audit",
+      "disposition": "composition",
+      "reason": "Reclassified 2026-10-12. Listed as a rule application to be merged, on the strength of its 'decisions' output port. It runs no reasoner: its body is one projection over values xpert already derived. It belongs with comparison_map in a communication, visualization and presentation stage, not in the ruleset merge. Its tier-to-status ternary is rule-like logic that has to go somewhere when that move happens -- a decision class, on the practitioner's hypothesis.",
+      "gatedOn": "presentation-stage",
+      "record": "no experiment yet"
+    }
+  ],
+  "retiredSoFar": [
+    {
+      "nodeType": "output",
+      "retiredAt": "2026-10-12",
+      "replacedBy": [
+        "map_output",
+        "table_output",
+        "chart_output"
+      ],
+      "note": "The first widget this project has retired. Its own 0.1.2 release already said it was superseded and off the palette; the retirement took effect when implementationStatus began to be read."
+    },
+    {
+      "nodeType": "places",
+      "retiredAt": "2026-10-12",
+      "replacedBy": [
+        "observations"
+      ],
+      "note": "One example's neighbourhoods. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today."
+    },
+    {
+      "nodeType": "centers",
+      "retiredAt": "2026-10-12",
+      "replacedBy": [
+        "observations"
+      ],
+      "note": "One example's cooling centres. Already carries replacementCandidate urn:fieldwork:widget:observations and migrates today."
+    },
+    {
+      "nodeType": "policy",
+      "retiredAt": "2026-10-12",
+      "replacedBy": [
+        "apply_ruleset"
+      ],
+      "note": "Its rules became rulesets/outreach-criteria/1.0.0.json; the widget was the arrangement around them."
+    },
+    {
+      "nodeType": "access_policy",
+      "retiredAt": "2026-10-12",
+      "replacedBy": [
+        "apply_ruleset"
+      ],
+      "note": "Its rules became rulesets/access-review/1.0.0.json."
+    },
+    {
+      "nodeType": "xpert",
+      "retiredAt": "2026-10-12",
+      "replacedBy": [
+        "apply_ruleset"
+      ],
+      "note": "Its rules became rulesets/nb06-evidence/1.0.0.json. The name was a product's and the hierarchy is NB06's."
+    },
+    {
+      "nodeType": "access",
+      "retiredAt": "2026-10-12",
+      "replacedBy": [],
+      "note": "Nearest-neighbour-with-distance plus a speed and a service grading. What it adds is domain, so it merges into the general one (103)."
+    },
+    {
+      "nodeType": "access",
+      "retiredAt": "2026-10-12",
+      "replacedBy": [
+        "nearest",
+        "travel_time"
+      ],
+      "note": "Decomposed rather than replaced: a candidate filter knob on nearest, the shared nearest-neighbour search, and the travel_time primitive. Not replaceable by one widget, so a saved workflow holding it now refuses to open naming it -- which is the practitioner's rule, and the 2026-10-06 frozen fixture is what proves it."
+    }
+  ],
+  "generalisedSoFar": [
+    {
+      "nodeType": "samples",
+      "generalisedAt": "2026-10-12",
+      "note": "Title, description, module and output stamp were the example attachment, not the node type -- so this was a generalisation in place, with no new widget, no migration and no change to any example's node count. standardization went from example-specific to shared, which is what ticks this ratchet down."
+    },
+    {
+      "nodeType": "nearest",
+      "generalisedAt": "2026-10-12",
+      "note": "Title, two port names and a unit-bearing field name were the example attachment; the computation never was. The merge of access and facilities into it is separate and still gated on experiment 66, because three implementations carry three different output carriers and choosing one is a base-contract change."
+    }
+  ],
+  "rulesetMerge": {
+    "measuredAt": "2026-10-12",
+    "finding": "Three widgets, three rulesets, one form. policy (makeN3), access_policy (accessN3) and xpert (facilityN3) are 19 rules in total, and all 19 are a conjunction of categorical equality, boolean equality or a numeric comparison concluding one or more predicate/value pairs. No negation, recursion or aggregation anywhere. So one widget can host all three, and the merge is 3 to 1.",
+    "canTheRulesetsBeOne": "No, and the reason is measured rather than assumed, which is what the practitioner asked for. The three classify disjoint subject kinds against three output vocabularies, and two carry thresholds in different units -- kilometres and minutes. policy also carries a gate access_policy lacks (the alert boolean, in three of its five rules), so collapsing those two would mean parameterising the number of conditions, which is not a parameter. One form, three ruleset instances, one widget.",
+    "alsoFound": "The authored form in experiment 106 had a single conclusion per rule. Two of the three rulesets conclude two predicates at once -- decision with zone, evidenceLevel with service -- so the form takes a list. And facilityN3's last two rules already conclude the same pair from different antecedents, which is an OR compiled by hand.",
+    "record": "docs/experiments/106-rule-builder-ui.md, docs/experiments/65-ruleset-as-data.md",
+    "correctionMade": "Recorded earlier on 2026-10-12 as four widgets over three rulesets, counting facility_audit because its output port is 'decisions'. That was wrong and reading the executor showed it: facility_audit calls no reasoner and generates no N3. Its whole body is one projection -- tier==='Direct'?'NoFlag':tier==='None'?'Unknown':'Review' -- over values xpert already derived, plus a restatement of f.reference as the explanation. Its own check-coverage entry had said so all along: 'it selects and presents; it derives no value.' Experiment 65's original count of three was right and the correction to four was not. An output port type is not evidence of what a widget does.",
+    "butFacilityAuditStillHasLogic": "The tier-to-status mapping is a decision rule written as a TypeScript ternary, outside any ruleset and outside the reasoner, and it is the only place in src/ that maps a tier to a status. So facility_audit is not part of the ruleset merge and it is not innocent either: it is rule-like logic hidden in a presentation widget. Under the practitioner's decision-class hypothesis that mapping is a decision class, which is the first concrete instance that hypothesis has.",
+    "fourthRulesetFound": "2026-10-12, while thinking about spatial selection outputs. coverage_check carries six N3 rules as a template literal, concluding fw:coverageDecision over Accept, Review and Excluded. So the corpus is FOUR rulesets, not three, and the one found last is the one nobody was looking for -- it was never a candidate for the merge because coverage_check declares itself 'shared' and is not example-bound. A hidden ruleset is a different failure from an example-bound widget, and the exemption ratchet cannot see it. Recorded as its own blocker: coverage-check-ruleset-undeclared."
+  },
+  "deferred": [
+    {
+      "nodeType": "comparison_map",
+      "disposition": "composition",
+      "reason": "The practitioner's direction of 2026-10-12: comparison_map belongs in a communication, visualization and presentation stage as a composition, not as a widget. That stage does not exist yet. Note it declares standardization 'shared', so the exemption ratchet does not cover it; the widget audit's prose had listed it as example-bound, which the declaration contradicts.",
+      "gatedOn": "presentation-stage",
+      "record": "no experiment yet"
+    },
+    {
+      "nodeType": "slr_site_assignment",
+      "disposition": "retire into `nearest`",
+      "reason": "Audited 2026-10-13. The operation is already the shared nearest-neighbour search -- assignSites calls nearestOf from src/nearest-neighbour.ts -- and the whole domain residue is one membership filter over the extract's site ids, which is the shape of the candidateFilter knob `nearest` gained on 2026-10-12. Measured against the one worked example, that filter excludes nothing: the extract's eight site ids and the site layer's eight are the identical set. The merge is blocked only because the filter's values must come from a connected port rather than be authored by hand; authoring them would duplicate the extract and go stale against it silently.",
+      "gatedOn": "filter-values-from-a-connected-port",
+      "record": "docs/audits/widget_audit.md"
+    }
+  ]
 }

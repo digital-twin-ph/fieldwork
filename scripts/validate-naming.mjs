@@ -21,6 +21,10 @@ export const TRANSFORM_VERBS=['reproject','buffer','clip','summarize','snap','sa
   'stack','fill','move','compare','assign','apply','group','calculate','select','aggregate','travel'];
 export const ACQUISITION_VERBS=['find','fetch','import','load','acquire','read','observe'];
 
+/** Port types a source may legitimately consume: they state WHERE to acquire, not WHAT to
+ *  transform. An `area` scopes a raster window and an OSM query; neither is data under analysis. */
+export const SCOPE_PORT_TYPES=['area'];
+
 /** Names the 2026-10-09 audit judged against the convention and that are still live. Each is a
  *  category noun, a bare adjective, or the content of one demonstration. */
 export const AUDITED_NAMES={
@@ -63,6 +67,17 @@ export function violations({definitions,classification,domainPrefixes={}}){
     // promises a translation and the contract imports its own data.
     if(group==='Sources'&&TRANSFORM_VERBS.includes(tokens[0])&&!ACQUISITION_VERBS.includes(tokens[0]))
       add(nodeType,'transform-in-sources',`"${nodeType}" opens with the transform verb "${tokens[0]}" but is grouped under Sources`);
+
+    // A widget grouped under Sources must acquire. It may take a SCOPE -- `raster_input` and
+    // `find_health_facilities` both take an `area`, which says where to acquire from -- but not a
+    // data carrier, because consuming data already in the workflow is a transform whatever the
+    // group says. This catches `slr_extract_import`, which takes a `table` on an input port and
+    // only validates and annotates it. The transform-verb rule above missed it: that rule keys on
+    // the verb a name opens with, and a verb list is never complete, while a contract can be read.
+    if(group==='Sources')
+      for(const [port,portType] of definition.inputs??[])
+        if(!SCOPE_PORT_TYPES.includes(portType))
+          add(nodeType,'source-consumes-data',`Grouped under Sources but consumes "${portType}" on port "${port}". A source may take a scope (${SCOPE_PORT_TYPES.join(', ')}), not data already in the workflow.`);
 
     // A domain widget carries its domain in the identifier a reader meets first. The prefix is an
     // abbreviation a person chooses -- `slr_` for sea-level rise -- and is not derivable from the

@@ -694,6 +694,18 @@ fw:chartXAxisTitle a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rd
 fw:chartYAxisTitle a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
 fw:chartSourceNote a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string;
   rdfs:comment "Authored source/method label or fallback result/run identifier shown with the chart. Not a verified citation.".
+# A street network drawn as itself, rather than routed over. Declared 2026-10-13 when the Map
+# gained a network input: four widgets consumed a network and none was an output, so a downloaded
+# graph could not be looked at.
+fw:networkJunctionCount a owl:DatatypeProperty; rdfs:domain fw:MapView; rdfs:range xsd:integer;
+  rdfs:label "Junctions in the network drawn";
+  rdfs:comment "Nodes in the street graph this view drew. A count of the graph, not of anything observed on the ground.";
+  fw:implementationStatus "implemented".
+fw:networkSegmentCount a owl:DatatypeProperty; rdfs:domain fw:MapView; rdfs:range xsd:integer;
+  rdfs:label "Directed segments in the network drawn";
+  rdfs:comment "Directed edges in the street graph this view drew. A walkable street is normally present twice, once in each direction, so this is about twice the number of streets.";
+  fw:implementationStatus "implemented".
+
 fw:rendererSpecification a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string;
   rdfs:comment "Exact generated renderer JSON for the bounded, executable view; data values are inline from the recorded count bins.".
 fw:chartRendererVersion a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.

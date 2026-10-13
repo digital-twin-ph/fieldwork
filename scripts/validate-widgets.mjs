@@ -149,7 +149,11 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
     const def=definitions[entry.nodeType];
     check(current.title===def.title,'Widget title drift');
     check(JSON.stringify(current.ports.inputs)===JSON.stringify(def.inputs.map(([name,type])=>({name,type})))&&current.ports.output===def.output,`Port contract drift: ${entry.nodeType}`);
-    if(entry.nodeType==='map_output'){check(current.ports.rasterInput?.value==='raster','Missing raster input mode');if(nodeInputs)check(JSON.stringify(nodeInputs({type:'map_output',params:{inputMode:'raster'}}))===JSON.stringify([['raster','raster']]),'Raster port contract drift');}
+    if(entry.nodeType==='map_output'){check(current.ports.rasterInput?.value==='raster','Missing raster input mode');
+      // Declared as well as implemented: a mode the application offers and the release does not
+      // name is a capability nobody reading the registry can find.
+      check(current.ports.networkInput?.value==='network','Missing network input mode');
+      if(nodeInputs)check(JSON.stringify(nodeInputs({type:'map_output',params:{inputMode:'network'}}))===JSON.stringify([['network','network']]),'Network port contract drift');if(nodeInputs)check(JSON.stringify(nodeInputs({type:'map_output',params:{inputMode:'raster'}}))===JSON.stringify([['raster','raster']]),'Raster port contract drift');}
     if(['map_output','table_output','chart_output'].includes(entry.nodeType)){
       check(current.ports.polygonInput?.value==='polygons','Missing polygon input mode');
       if(nodeInputs)check(JSON.stringify(nodeInputs({type:entry.nodeType,params:{inputMode:'polygons'}}))===JSON.stringify([['polygons','polygons']]),'Polygon port contract drift');

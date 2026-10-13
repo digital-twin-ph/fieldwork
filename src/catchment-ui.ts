@@ -1,7 +1,21 @@
 import type {WorkflowNode,Escape} from './types.js';
 import {CATCHMENT_TYPES,downloadLimits} from './catchments.js';
 import {recommendedPauseSeconds} from './network-throttle.js';
-export function catchmentInspector(n:WorkflowNode,esc:Escape):string{
+import {networkPreviewSvg,networkPreviewCaption,networkCoverage,PREVIEW_SCALE_NOTE} from './network-preview.js';
+import type {Boundary} from './types.js';
+/** The picture, its measurement, and -- when it matters -- the sentence saying the download did not
+ *  reach the ground it was asked for. */
+function networkPreview(data:{nodes:unknown[];edges:unknown[]},boundary:Boundary|undefined,esc:Escape):string{
+  const network=data as Parameters<typeof networkCoverage>[0];
+  if(!network.nodes.length)return '';
+  const coverage=networkCoverage(network,boundary);
+  const short=coverage.boundaryCovered!==null&&coverage.boundaryCovered<0.999;
+  return `<div class="network-preview-frame">${networkPreviewSvg(network,boundary)}</div>`
+    +`<p class="muted">${esc(networkPreviewCaption(coverage))}</p>`
+    +(boundary?`<p class="${short?'notice':'muted'}">${esc(PREVIEW_SCALE_NOTE(coverage))}</p>`:'');
+}
+
+export function catchmentInspector(n:WorkflowNode,esc:Escape,boundary?:Boundary):string{
   if(!Object.hasOwn(CATCHMENT_TYPES,n.type))return '';
   let html=`<label class="field-label" for="catchment-label">Node label</label><input id="catchment-label" data-catchment-param="label" maxlength="100" value="${esc(n.params.label||'')}"><div class="notice">Local computation. Parameters and source links appear in N3 & evidence. Outputs are modeled catchments, not observed facility use.</div>`;
   const number=(key:string,label:string,value:number,min:number,max:number,step=1)=>`<div class="field"><label class="field-label" for="catchment-${key}">${label}</label><input id="catchment-${key}" data-catchment-param="${key}" type="number" min="${min}" max="${max}" step="${step}" value="${value}"></div>`;
@@ -15,6 +29,7 @@ export function catchmentInspector(n:WorkflowNode,esc:Escape):string{
     +`</tbody></table><p class="muted">The pause a download earns is applied whether or not the knob is set this high; setting it means knowing the wait before it happens rather than after.</p></details>`
     +`<button class="button primary" id="download-network">Download and save OSM network</button><p>Uses the connected Study area's bounding box plus margin (up to 6 km across). Whole ways may extend beyond it. Sends those bounds to overpass-api.de; no key required. Retains topology rather than cutting edges at the polygon. The response and feature limits follow the graph limit below: at 2,000 junctions they are 2 MB and 15,000 features.</p>`:'')+number('maxNodes','Graph limit (junctions); segments allowed at 2.5x this',n.params.maxNodes??2000,500,50000)
     +`<p class="muted">2,000 is the measured default. A 1 km square of central London needs about 5,250, and at that size isochrone construction exhausted a 4 GB heap when measured on 2026-10-13 — so above roughly 3,000 this is untested rather than merely slower. Raising it is safe to try: the isochrone runs in a worker with a 45-second timeout, so too large a graph fails that one step rather than the tab.</p>`
+    +networkPreview(n.params.data,boundary,esc)
     +`<p>${n.params.data.nodes.length} nodes · ${n.params.data.edges.length} directed edges</p><p>${esc(n.params.data.source)}</p><label class="field-label" for="network-upload">Upload GraphML or JSON</label><input id="network-upload" type="file" accept=".json,.graphml"><p>Files retain their existing network extent. Attach a URL or PDF reference below for citation.</p><details><summary>Edit bounded network JSON</summary><label class="field-label" for="network-json">Network JSON: nodes, edges, source</label><textarea id="network-json" rows="10">${esc(JSON.stringify(n.params.data,null,2))}</textarea><button class="button" id="save-network">Save network edits</button><label class="field-label" for="network-file">Upload GraphML / JSON (up to 2 MB)</label><input id="network-file" type="file" accept=".json,.graphml,application/json,application/xml"><p>Directed edges require from, to, lengthM and optional CRS84 geometry. Reverse travel requires a reverse edge. Full contract: worked-example guide.</p></details>`;
   if(n.type==='network_input')html+='<p id="network-download-status" role="status"></p><p class="muted">One OSM request at a time; at least 60 seconds between attempts. No automatic retries. Saved networks remain usable offline. Changing the boundary or buffer does not expand a saved graph.</p>';
   return html;

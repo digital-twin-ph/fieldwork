@@ -1,0 +1,124 @@
+import type {Network} from './catchments.js';
+import type {Boundary,Position} from './types.js';
+import {geometryBounds} from './study-area.js';
+import {FIGURE_ROLE,FIGURE_TYPE,METRES_PER_DEGREE_LATITUDE} from './presentation.js';
+
+/** A picture of a downloaded street network, for the Inspector.
+ *
+ *  Added 2026-10-13, on the practitioner's suggestion, after they could not tell whether a download
+ *  had worked. Four widgets consume a `network` and none of them is an output, so a street network
+ *  had no way to be looked at: the only feedback was "N nodes · M directed edges" and a source
+ *  string, and the only real check was to run an isochrone over it and see whether the answer looked
+ *  sane. That is a slow way to find out that a download missed half the study area.
+ *
+ *  Drawn here rather than by giving the Map a `network` port, which would be a contract change --
+ *  a new port on a widget whose ports are pinned in its release -- for a picture whose job is to
+ *  answer a question at the moment of downloading, where the practitioner already is.
+ *
+ *  The question it answers is not "are there streets" but **"do the streets cover the area I
+ *  asked about"**, so the study-area boundary is drawn over them whenever one is connected. */
+
+export const PREVIEW_WIDTH=252;
+export const PREVIEW_HEIGHT=168;
+
+const escape=(value:string):string=>value.replace(/[&<>"']/g,c=>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+
+/** Metres between two CRS84 positions, by the same haversine the rest of the project uses. */
+function metres(a:Position,b:Position):number{
+  const r=Math.PI/180,dLat=(b[1]-a[1])*r,dLon=(b[0]-a[0])*r;
+  const h=Math.sin(dLat/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dLon/2)**2;
+  return 12742017.6*Math.asin(Math.sqrt(Math.min(1,h)));
+}
+
+export interface NetworkCoverage {
+  junctions:number; segments:number; totalMetres:number;
+  /** How much of the study area's bounding box the network's own extent covers, 0 to 1. `null`
+   *  when no boundary is connected, which is not the same as full coverage. */
+  boundaryCovered:number|null;
+}
+
+export function networkCoverage(network:Network,boundary?:Boundary):NetworkCoverage{
+  const positions=new Map(network.nodes.map(n=>[n.id,n.coordinates]));
+  let totalMetres=0;
+  for(const edge of network.edges){
+    const from=positions.get(edge.from),to=positions.get(edge.to);
+    // Each undirected street is present twice for walking, so halve the sum rather than report
+    // twice the walkable length.
+    if(from&&to)totalMetres+=metres(from,to)/2;
+  }
+  let boundaryCovered:number|null=null;
+  if(boundary&&network.nodes.length){
+    const [w,s,e,n]=geometryBounds(boundary);
+    const lons=network.nodes.map(p=>p.coordinates[0]),lats=network.nodes.map(p=>p.coordinates[1]);
+    const overlap=(lowA:number,highA:number,lowB:number,highB:number)=>
+      Math.max(0,Math.min(highA,highB)-Math.max(lowA,lowB));
+    const area=Math.max(1e-12,(e-w)*(n-s));
+    boundaryCovered=Math.min(1,
+      (overlap(w,e,Math.min(...lons),Math.max(...lons))*overlap(s,n,Math.min(...lats),Math.max(...lats)))/area);
+  }
+  return {junctions:network.nodes.length,segments:network.edges.length,totalMetres,boundaryCovered};
+}
+
+export function networkPreviewSvg(network:Network,boundary?:Boundary):string{
+  if(!network?.nodes?.length)return '';
+  const points=network.nodes.map(n=>n.coordinates);
+  const ring=boundary?(boundary.type==='Polygon'?boundary.coordinates:boundary.coordinates.flat()).flat():[];
+  // The frame holds both, so a network that misses the area shows as a gap rather than as a
+  // picture of streets that happens to be somewhere else.
+  const all=[...points,...ring as Position[]];
+  const west=Math.min(...all.map(p=>p[0])),east=Math.max(...all.map(p=>p[0]));
+  const south=Math.min(...all.map(p=>p[1])),north=Math.max(...all.map(p=>p[1]));
+  const cos=Math.cos(((south+north)/2)*Math.PI/180);
+  const pad=10,usableW=PREVIEW_WIDTH-pad*2,usableH=PREVIEW_HEIGHT-pad*2;
+  const scale=Math.min(usableW/Math.max((east-west)*cos,1e-9),usableH/Math.max(north-south,1e-9));
+  const project=(c:Position):[number,number]=>[
+    PREVIEW_WIDTH/2+(c[0]-(east+west)/2)*cos*scale,
+    PREVIEW_HEIGHT/2-(c[1]-(south+north)/2)*scale];
+
+  const positions=new Map(network.nodes.map(n=>[n.id,n.coordinates]));
+  // One path for every segment rather than one element each: a 1 km square of central London is
+  // 11,497 segments, and 11,497 DOM nodes in an Inspector panel is not a preview.
+  const seen=new Set<string>();
+  let d='';
+  for(const edge of network.edges){
+    const key=edge.from<edge.to?`${edge.from}|${edge.to}`:`${edge.to}|${edge.from}`;
+    if(seen.has(key))continue;
+    seen.add(key);
+    const from=positions.get(edge.from),to=positions.get(edge.to);
+    if(!from||!to)continue;
+    const [x1,y1]=project(from),[x2,y2]=project(to);
+    d+=`M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}`;
+  }
+  const outline=boundary
+    ?(boundary.type==='Polygon'?[boundary.coordinates]:boundary.coordinates)
+      .map(poly=>'M'+poly[0].map(c=>project(c as Position).map(v=>v.toFixed(1)).join(' ')).join('L')+'Z').join('')
+    :'';
+  return `<svg class="network-preview" viewBox="0 0 ${PREVIEW_WIDTH} ${PREVIEW_HEIGHT}" `
+    +`width="100%" role="img" aria-label="Downloaded street network${boundary?' and the study area':''}">`
+    +`<rect width="${PREVIEW_WIDTH}" height="${PREVIEW_HEIGHT}" fill="${FIGURE_ROLE.background}"/>`
+    +`<path d="${d}" fill="none" stroke="${FIGURE_ROLE.quietInk}" stroke-width="0.6" stroke-linecap="round"/>`
+    +(outline?`<path d="${outline}" fill="none" stroke="${FIGURE_ROLE.attention}" stroke-width="1.4" stroke-dasharray="4 3"/>`:'')
+    +`</svg>`;
+}
+
+/** The sentence under the picture. States the measurement, and says plainly when the download does
+ *  not reach the area it was asked for -- which is the failure a practitioner is looking for. */
+export function networkPreviewCaption(coverage:NetworkCoverage):string{
+  const km=(coverage.totalMetres/1000);
+  const length=km>=1?`${km.toFixed(km>=10?0:1)} km`:`${Math.round(coverage.totalMetres)} m`;
+  const parts=[`${coverage.junctions.toLocaleString('en')} junctions`,
+    `${coverage.segments.toLocaleString('en')} directed segments`,
+    `${length} of street`];
+  if(coverage.boundaryCovered===null)
+    parts.push('no study area connected, so coverage is unknown');
+  else if(coverage.boundaryCovered>=0.999)parts.push('covering the study area');
+  else parts.push(`covering about ${Math.round(coverage.boundaryCovered*100)}% of the study area`);
+  return parts.join(' · ');
+}
+
+export const PREVIEW_SCALE_NOTE=(coverage:NetworkCoverage):string=>
+  coverage.boundaryCovered!==null&&coverage.boundaryCovered<0.999
+    ? 'The dashed outline is the study area. Where it runs outside the streets, the download did not reach that ground.'
+    : 'The dashed outline is the study area.';
+export const METRES_PER_DEGREE=METRES_PER_DEGREE_LATITUDE;

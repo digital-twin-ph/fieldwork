@@ -1,0 +1,59 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:facility_audit",
+ "version": "0.2.0",
+ "nodeType": "facility_audit",
+ "title": "Evidence register",
+ "released": "2026-10-12",
+ "implementationStatus": "implemented",
+ "standardization": "example-specific",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['facility_audit']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "decisions",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/old-naledi.ts",
+   "src/old-naledi-ui.ts"
+  ],
+  "definition": "src/old-naledi.ts#OLD_TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "Consumes a general point layer instead of the gradedFacilities carrier, and the port is named for what it carries rather than for the widget that used to produce it. gradedFacilities was a producer-named stud -- D4a is the criterion -- emitted by one widget and consumed by two, and retiring it is what let nearest take the graded facilities as candidates and filter on tier and service with its own knob, which is what decomposing access needed. What a point layer cannot carry is the registry boundary and facilitySource that the old carrier passed through here; those belong to the nodes that produced them, and a consumer reaching through a carrier to find them is how a thin carrier becomes a thick one. Neither is used by the table this widget feeds, which is what makes the loss safe rather than merely acceptable."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

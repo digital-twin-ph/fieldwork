@@ -32,13 +32,15 @@ test('workflow supports four outputs, shared inference, and pinned dataset valid
   const graded=plan.filter(n=>n.type==='apply_ruleset'
     &&n.params.ruleset.id==='urn:fieldwork:ruleset:nb06-evidence');
   assert.equal(graded.length,1);
-  assert.equal(graded[0].params.ruleset.version,'1.0.0');
+  assert.equal(graded[0].params.ruleset.version,'2.0.0','2.0.0 emits a point layer instead of the retired gradedFacilities stud');
   assert.deepEqual(graded[0].params.ruleset.inputs,[['facilities','facilities']]);
-  assert.equal(graded[0].params.ruleset.output,'gradedFacilities');
+  assert.equal(graded[0].params.ruleset.output,'points');
   assert.equal(w.nodes.find(n=>n.type==='area').params.dataset,DATASET);
-  w.nodes.find(n=>n.type==='access').params.speedMPerMin=0;
-  assert.throws(()=>validateWorkflow(w),/speedMPerMin/);
-  w.nodes.find(n=>n.type==='access').params.speedMPerMin=70;
+  // The walking speed moved from `access` to the travel_time primitive when access was
+  // decomposed: the assumption now sits in the step that states it, not inside a search.
+  w.nodes.find(n=>n.type==='travel_time').params.speedMPerMin=0;
+  assert.throws(()=>validateWorkflow(w),/Walking speed must be between 10 and 400/);
+  w.nodes.find(n=>n.type==='travel_time').params.speedMPerMin=70;
   w.nodes.find(n=>n.type==='area').params.dataset='unknown';assert.throws(()=>validateWorkflow(w),/dataset version/);
 });
 

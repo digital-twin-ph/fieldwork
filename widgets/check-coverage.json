@@ -16,12 +16,6 @@
  },
  "widgets": [
   {
-   "nodeType": "access",
-   "expectation": "parity",
-   "check": null,
-   "computes": "Derives a straight-line proxy travel time per facility from a speed, and grades service against it."
-  },
-  {
    "nodeType": "alert",
    "expectation": "none",
    "reason": "A declared status. Nothing is derived from anything."
@@ -249,6 +243,13 @@
    "nodeType": "table_output",
    "expectation": "none",
    "reason": "Draws what it is given and derives no value."
+  },
+  {
+   "nodeType": "travel_time",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Walking minutes from each distance at a stated speed, reading each row's declared unit.",
+   "reason": "A division, so the arithmetic is not the interesting part. What a lab check would establish is that the unit is read rather than assumed -- a metre reading divided by metres-per-minute against a kilometre reading, which differ by a thousand. Owed."
   },
   {
    "nodeType": "travel_time_band",

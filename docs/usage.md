@@ -115,7 +115,7 @@ After updating the application, reload to install the updated service worker, th
 
 ## Retired widgets, and what replaced them
 
-Six widgets were retired on 2026-10-12. **A retired widget never runs**, so a saved workflow holding
+Seven widgets were retired on 2026-10-12. **A retired widget never runs**, so a saved workflow holding
 one is rewritten when it loads and the Inspector names the replacement on the node itself. This
 table is here so a name in an old file, a screenshot or a migration notice can still be looked up.
 
@@ -127,6 +127,7 @@ table is here so a name in an old file, a screenshot or a migration notice can s
 | **Outreach criteria** (`policy`) | Flagged a location when an alert was active and its distance exceeded a threshold | **Apply ruleset** (`apply_ruleset`) with the *Outreach criteria* ruleset |
 | **Access review** (`access_policy`) | Flagged a location whose proxy travel time exceeded a threshold, and banded it into a zone | **Apply ruleset** with the *Access review* ruleset |
 | **Diagnostic evidence** (`xpert`) | Graded a facility's evidence level and expected service against a published hierarchy | **Apply ruleset** with the *Diagnostic evidence grading* ruleset |
+| **Facility access** (`access`) | Found each location's nearest facility that met an evidence and service threshold, and estimated walking minutes | **Nearest point** with a candidate filter, then **Travel time from distance** |
 
 The last three were one widget each for one set of rules. Their rules are now **declared artifacts**
 with an identity, a version and a stated basis, and one widget applies any of them — so what was
@@ -134,8 +135,14 @@ three node types is one node type and three rulesets you can read. Each migrated
 ruleset at the version that produced that widget's results, because a change to a rule changes a
 result.
 
-**Nothing was lost in any of the six.** Every one is fully replaceable, and each of their release
-files names the widget that replaces it, so a saved workflow migrates rather than refusing to open.
+**Five of the seven migrate silently-but-stamped**, and their release files name the widget that
+replaces each, so a saved workflow opens and the Inspector tells you what changed.
+
+**`Facility access` is the exception, deliberately.** It was three operations in one node, so no single
+widget replaces it and a saved workflow holding it **refuses to open**, naming it. Rebuild that step as
+**Nearest point** with a candidate filter, then **Travel time from distance**, then **Apply ruleset**
+with the *Access review* ruleset. The filter is where the evidence and service thresholds went: an
+attribute name and the values to match, which is the same condition form the rule builder uses.
 
 ## References and provenance
 

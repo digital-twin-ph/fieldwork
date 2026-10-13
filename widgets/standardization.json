@@ -2,7 +2,7 @@
  "schema": "fieldwork/widget-standardization/1",
  "note": "A widget may not be name-attached to a worked example. That is the practitioner's rule of 2026-10-12, and the striking thing is that the shipped files already agree: twelve of the 51 release files declare standardization: 'example-specific' about themselves. Nothing read that declaration, so twelve self-reported failed admissions sat in the palette and in the count. This file is the ratchet that reads it. Every example-specific widget must appear below with the record that will remove it, and the exemption count may fall freely and may never rise. Retiring twelve widgets once would be undone by widget 52; a constraint that fails the build is what makes the reduction permanent. The reduction plan is docs/experiments/64-widget-streamlining.md as amended 2026-10-12, and the direction is its Stage 1: essentiality decided on its own terms, with example impact as the output. Gates name a blocker id in widgets/blockers.json, not a document path: a gate pointing at a design record names no claim and carries no clock, and scripts/validate-blockers.mjs refuses one that does.",
  "measuredAt": "2026-10-12",
- "exemptionCeiling": 4,
+ "exemptionCeiling": 3,
  "disagreementFound": "The widget audit's prose listed nine example-bound widgets and named comparison_map, which declares itself 'shared'. The release files list twelve and do not include it. The files are what ship, so the files are what this ratchet reads; the audit's prose is corrected rather than the declarations.",
  "exempt": [
   {
@@ -11,13 +11,6 @@
    "reason": "Declaring an external condition and the date it applies to is irreducible -- nothing in the application derives it -- so the kind is right and the name bakes in 'heat'. Recorded as ungated on 2026-10-12 and corrected the same day: its output predicate is fw:heatAlert, which policy's rules read by name, and its port type 'alert' is consumed as a bound role once the ruleset widget exists. Renaming the widget without the predicate leaves a general widget asserting a domain term; renaming both before 65 means doing it twice, which is the duplicated-work failure this project has already named.",
    "gatedOn": "outreach-predicates-name-a-domain",
    "record": "docs/experiments/65-ruleset-as-data.md"
-  },
-  {
-   "nodeType": "access",
-   "disposition": "merge",
-   "reason": "Nearest-neighbour-with-distance plus a speed and a service grading. What it adds is domain, so it merges into the general one (103).",
-   "gatedOn": "one-output-carrier-for-nearest",
-   "record": "docs/experiments/66-ports-as-schema-binding.md"
   },
   {
    "nodeType": "facilities",
@@ -84,6 +77,21 @@
     "apply_ruleset"
    ],
    "note": "Its rules became rulesets/nb06-evidence/1.0.0.json. The name was a product's and the hierarchy is NB06's."
+  },
+  {
+   "nodeType": "access",
+   "retiredAt": "2026-10-12",
+   "replacedBy": [],
+   "note": "Nearest-neighbour-with-distance plus a speed and a service grading. What it adds is domain, so it merges into the general one (103)."
+  },
+  {
+   "nodeType": "access",
+   "retiredAt": "2026-10-12",
+   "replacedBy": [
+    "nearest",
+    "travel_time"
+   ],
+   "note": "Decomposed rather than replaced: a candidate filter knob on nearest, the shared nearest-neighbour search, and the travel_time primitive. Not replaceable by one widget, so a saved workflow holding it now refuses to open naming it -- which is the practitioner's rule, and the 2026-10-06 frozen fixture is what proves it."
   }
  ],
  "generalisedSoFar": [

@@ -1,0 +1,59 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:travel_time",
+ "version": "0.1.0",
+ "nodeType": "travel_time",
+ "title": "Travel time from distance",
+ "released": "2026-10-12",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['travel_time']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "distances",
+    "type": "distances"
+   }
+  ],
+  "output": "distances",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "The activity class fw:TravelTimeEstimate is declared; a dedicated semantic contract is not yet registered.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/travel-time.ts",
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit tested. The arithmetic is a division and the interesting claim is the assumption, which no recomputation can validate -- whether 70 metres per minute is the right walking speed is a judgement, and whether a straight line stands for a walk is a limitation this widget states rather than tests."
+ },
+ "changes": [
+  {
+   "kind": "baseline",
+   "description": "Extracted from the retired access widget, which derived proxy minutes inside a nearest-neighbour search. A widget and not a knob on nearest, by the test experiment 107 derived: a minutes column changes every row for every consumer of the distances carrier, so the contract moves. And not a third value of the unit knob either -- metres to kilometres is a pure conversion while minutes is a MODEL, a straight-line distance walked at a constant speed, and putting a model behind a unit selector would present an assumption as a unit. The assumption is named in the receipt on every run. Reads each row unit rather than assuming kilometres, because a metre reading divided by metres-per-minute is right while a kilometre reading is wrong by a thousand. A row with no distance gains no minutes: a missing distance is not a travel time of zero."
+  }
+ ]
+}

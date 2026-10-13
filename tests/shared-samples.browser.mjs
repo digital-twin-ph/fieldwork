@@ -2,11 +2,12 @@ import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {oldNalediWorkflow} from '../build/old-naledi.js';
-test('generated samples feed shared outputs and access accepts ordinary point input offline',async({page,context})=>{
+test('generated samples feed shared outputs and the nearest search accepts ordinary point input offline',async({page,context})=>{
   const w=oldNalediWorkflow();
   w.nodes.push({id:'sample-table',type:'table_output',x:0,y:650,params:{label:'Generated sample table'}},{id:'sample-map',type:'map_output',x:250,y:650,params:{label:'Generated sample map'}},{id:'custom',type:'observations',x:0,y:800,params:{label:'Observed locations',data:{type:'FeatureCollection',features:[{type:'Feature',id:'custom-one',properties:{name:'Observed location',visits:2},geometry:{type:'Point',coordinates:[25.901,-24.689]}},{type:'Feature',id:'custom-missing',properties:{name:'Unlocated observation'},geometry:null}]}}});
   w.edges.push({id:'sample-table-edge',from:'samples',to:'sample-table',port:'points'},{id:'sample-map-edge',from:'samples',to:'sample-map',port:'points'},{id:'sample-map-area',from:'area',to:'sample-map',port:'area'});
-  w.edges.find(e=>e.to==='access'&&e.port==='samples').from='custom';
+  // The port is 'points' now: access was decomposed and the search is nearest's.
+  w.edges.find(e=>e.to==='access'&&e.port==='points').from='custom';
   await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'shared-samples.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.getByRole('tab',{name:'Generated sample table'}).click();

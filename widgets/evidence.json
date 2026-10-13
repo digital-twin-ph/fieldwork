@@ -35,17 +35,6 @@
  ],
  "widgets": [
   {
-   "nodeType": "access",
-   "exampleUses": [
-    "old-naledi"
-   ],
-   "exampleUseCount": 1,
-   "lab": "awaiting",
-   "labOwed": true,
-   "fieldUse": [],
-   "rung": "example only"
-  },
-  {
    "nodeType": "alert",
    "exampleUses": [
     "heat"
@@ -317,9 +306,10 @@
   {
    "nodeType": "nearest",
    "exampleUses": [
-    "heat"
+    "heat",
+    "old-naledi"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
@@ -534,6 +524,17 @@
    "labOwed": false,
    "fieldUse": [],
    "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "travel_time",
+   "exampleUses": [
+    "old-naledi"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
   },
   {
    "nodeType": "travel_time_band",

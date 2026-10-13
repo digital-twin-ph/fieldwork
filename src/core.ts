@@ -41,9 +41,11 @@ import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,Nea
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
 interface ExecutionInputs extends OldInputs {polygons:Polygons;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection;original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
-import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading} from './old-naledi.js';
+import classification from '../widgets/classification.json' with {type:'json'};
+import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
 import {outreachProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
+import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
 import {measureArea,validateAreaUnit} from './area-measurement.js';
 import {checkCoverage,validateCoverageParams} from './spatial-coverage.js';
@@ -75,6 +77,13 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
   reproject:{title:'Reproject input',group:'Sources',icon:'⇄',color:'blue',description:'Import projected UTM points and convert them to WGS84 longitude/latitude',inputs:[],output:'points'},
   raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
+  // Extracted from `access`, which derived proxy minutes inside a nearest-neighbour search. A
+  // widget and not a knob: a minutes column changes every row for every consumer of `distances`,
+  // so the contract moves, which is what the knob test refuses. And not a third value of the unit
+  // knob either -- minutes is a model, not a unit.
+  travel_time:{title:'Travel time from distance',group:'Spatial operations',icon:'◷',color:'teal',
+    description:'Estimate walking minutes from each distance at a stated speed, as a proxy rather than a routed time',
+    inputs:[['distances','distances']],output:'distances'},
   // One entry for every declared ruleset, replacing policy, access_policy and xpert, which
   // differed only in which rules they ran. Ports are the ruleset's and are pinned per node, so
   // inputs is empty and output is null here, exactly as micro_workflow declares them.
@@ -218,6 +227,17 @@ export function validateWorkflow(raw:unknown):Workflow {
   migrateHealthsitesNodes(w);
   migrateFacilitySources(w);
   migrateOutputNodes(w);
+  // Every migration above has run, so a node still naming a retired widget is one that cannot be
+  // migrated — and the practitioner's rule is that such a workflow ceases to work, naming the
+  // widget. It used to fail further down as "Incompatible node connection", which told a reader
+  // nothing about why a file that opened last week does not open today.
+  for(const node of w.nodes){
+    const retired=(classification.widgets as {nodeType:string; retired?:boolean}[])
+      .find(entry=>entry.nodeType===node?.type&&entry.retired);
+    if(retired)throw new Error(`This workflow uses ${TYPES[node.type]?.title||node.type}, which was retired `
+      +`and cannot be replaced automatically. Rebuild that step and save the workflow again; `
+      +`docs/usage.md lists what replaced each retired widget.`);
+  }
   for (const n of w.nodes) {
     validatePrivacyNode(n);
     validatePointComparisonNode(n);
@@ -309,6 +329,7 @@ export function validateWorkflow(raw:unknown):Workflow {
       if (!['map','table','bars'].includes(n.params.view)) throw new Error('Visual outputs must use a map, table, or bar chart.');
       if (n.params.label !== undefined && (typeof n.params.label!=='string' || n.params.label.length>60)) throw new Error('Output names must be text of at most 60 characters.');
     }
+    if (n.type==='travel_time') validateTravelTime(n.params.speedMPerMin);
     if (n.type==='samples' && (!Number.isFinite(n.params.spacingM) || n.params.spacingM<150 || n.params.spacingM>1000)) throw new Error('spacingM must be between 150 and 1000.');
     if (n.type==='policy' && (!Number.isFinite(n.params.thresholdKm) || n.params.thresholdKm<0 || n.params.thresholdKm>1000)) throw new Error('Distance threshold must be between 0 and 1,000 km.');
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
@@ -381,11 +402,11 @@ export function nearestPlaces(places:PointCollection,centers:PointCollection,uni
   const valid=located.filter(f=>satisfies(f.properties,candidateFilter));
   const inUnit=(kilometres:number)=>unit==='metres'?kilometres*1000:kilometres;
   const rows=places.features.map(place=>{
-    if (!place.geometry || !valid.length) return {id:place.id,name:place.properties.name,coordinates:place.geometry?.coordinates ?? null,distance:null,unit,center:null,reason:!place.geometry?'This point has no coordinates.':'No candidate point with valid coordinates is available.'};
+    if (!place.geometry || !valid.length) return {id:place.id,name:place.properties.name,attributes:{...place.properties},coordinates:place.geometry?.coordinates ?? null,distance:null,unit,center:null,reason:!place.geometry?'This point has no coordinates.':'No candidate point with valid coordinates is available.'};
     // One shared search, three callers: see src/nearest-neighbour.ts.
     const match=nearestOf(place.geometry.coordinates,valid,center=>center.geometry?.coordinates);
     const best=match!.candidate,distance=match!.kilometres;
-    return {id:place.id,name:place.properties.name,coordinates:place.geometry.coordinates,distance:inUnit(distance),unit,center:{id:best!.id,name:best!.properties.name,coordinates:best!.geometry!.coordinates}};
+    return {id:place.id,name:place.properties.name,coordinates:place.geometry.coordinates,attributes:{...place.properties},distance:inUnit(distance),unit,center:{id:best!.id,name:best!.properties.name,coordinates:best!.geometry!.coordinates,attributes:{...best!.properties}}};
   });
   return {rows,candidateCount:located.length,eligibleCount:valid.length};
 }
@@ -504,9 +525,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const narrowed=node.params.candidateFilter?.length
           ? ` Candidates narrowed by ${node.params.candidateFilter.map(c=>`${c.field} ${c.comparator==='in'?'in':'not in'} {${c.values.join(', ')}}`).join('; ')}: ${searched.eligibleCount} of ${searched.candidateCount} eligible.`
           : '';
+        // `locationSource` says where the subjects came from, which `access` carried and a general
+        // search should too: a reader of a distance wants to know what was measured, not only from
+        // what. Carried here so the carrier stays thin -- it is the points input's own provenance.
+        const from=inputs.points as unknown as {sourceNodeId?:string; sourceKind?:string};
         value={rows:searched.rows,centers:inputs.candidates.features,
           method:`Haversine; sphere radius 6371.0088 km; CRS84 longitude/latitude; distances in ${node.params.unit}.${narrowed}`,
-          candidateCount:searched.candidateCount,eligibleCount:searched.eligibleCount} as unknown as DisplayValue;
+          candidateCount:searched.candidateCount,eligibleCount:searched.eligibleCount,
+          locationSource:{nodeId:from.sourceNodeId,kind:from.sourceKind==='generated-grid'?'generated-grid':'input-points'}} as unknown as DisplayValue;
         break;
       }
       case 'apply_ruleset':{
@@ -525,6 +551,17 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             const applied=await applyAccessReview(inputs.access,bound.threshold,reasoner);
             value=applied.value;receipts.push({nodeId:node.id,...applied.receipt});break;
           }
+          case 'access-review-distances':{
+            // Same rules, same facts, read off the general carrier that nearest and travel_time
+            // produce instead of the one `access` emitted.
+            const applied=await applyAccessReview(distancesAsAccess(inputs.distances),bound.threshold,reasoner);
+            value=applied.value;receipts.push({nodeId:node.id,...applied.receipt});break;
+          }
+          case 'facility-grading-points':{
+            const applied=await applyFacilityGrading(inputs.facilities,reasoner);
+            value=gradedPointLayer(applied.value) as unknown as DisplayValue;
+            receipts.push({nodeId:node.id,...applied.receipt});break;
+          }
           case 'facility-grading':{
             const applied=await applyFacilityGrading(inputs.facilities,reasoner);
             value=applied.value as unknown as DisplayValue;
@@ -532,6 +569,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           }
           default:throw new Error(`This build carries no projection for ${pinned.title}.`);
         }
+        break;
+      }
+      case 'travel_time':{
+        const source=workflow.edges.find(e=>e.to===node.id&&e.port==='distances')!.from;
+        const timed=travelTime(inputs.distances.rows,node.params.speedMPerMin);
+        value={...inputs.distances,rows:timed,
+          method:`${inputs.distances.method} ${TRAVEL_TIME_METHOD}`} as unknown as DisplayValue;
+        receipts.push(travelTimeReceipt(node,timed,runId,source));
         break;
       }
       case 'policy':{

@@ -21,12 +21,24 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   await clinic.click();await expect(page.locator('#inspector-content')).toContainText('Dickinson 2017');
   await page.getByRole('tab',{name:'Access zones'}).click();await expect(page.locator('#bars-panel')).toBeVisible();
   await expect(page.locator('#bars-panel .bar-row').filter({hasText:'> 30 min'}).locator('b')).toHaveText('21');
-  await select('access');await page.locator('#param-minimumEvidence').selectOption('inferential');await page.locator('#param-service').selectOption('anyKnown');await run();
+  // Widening eligibility, through the candidate-filter editor that replaced `access`'s two
+  // selects. The widget was decomposed on 2026-10-12: the narrowing is now a knob on nearest,
+  // authored as conditions over the candidate layer's own attribute values.
+  await select('access');
+  // Each edit re-renders the Inspector, so the node is re-selected between steps.
+  await page.locator('#filter-values-0').fill('Direct, Contextual, Inferential');
+  await page.locator('#filter-values-0').press('Tab');
+  await select('access');await page.locator('#filter-comparator-1').selectOption('notIn');
+  await select('access');await page.locator('#filter-values-1').fill('Unknown');
+  await page.locator('#filter-values-1').press('Tab');
+  await run();
   await page.getByRole('tab',{name:'Access map'}).click();await expect(page.locator('#result-metrics .review b')).toHaveText('0');
   await page.locator('#map [data-place="sample-1"]').click();await expect(page.locator('#inspector-content')).toContainText('Generated grid location');
   await page.locator('#expand-results').click();await expect(page.locator('#workflow-view')).toBeHidden();
   await page.locator('#expand-results').click();await expect(page.locator('#workflow-view')).toBeVisible();
-  await select('access');await page.locator('#param-minimumEvidence').selectOption('direct');
+  // Narrowing back to Direct-only evidence, through the filter editor.
+  await select('access');await page.locator('#filter-values-0').fill('Direct');
+  await page.locator('#filter-values-0').press('Tab');
   await select('facilities');await number('#param-radiusKm',1);await run();
   await expect(page.locator('#result-metrics .unknown b')).toHaveText('21');
   // Switching examples preserves their independent local edits.
@@ -40,7 +52,7 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('fw:evidenceLevel');
   const downloadPromise=page.waitForEvent('download');await page.locator('#download-evidence').click();const download=await downloadPromise;
   const receipt=JSON.parse(await readFile(await download.path(),'utf8'));
-  assert.equal(receipt.outputs.length,4);assert.equal(receipt.receipts.length,8);assert.equal(receipt.outputs[0].dataset,'gaborone-7f183843');
+  assert.equal(receipt.outputs.length,4);assert.equal(receipt.receipts.length,9,'nine since access was decomposed: travel_time is its own step with its own receipt');assert.equal(receipt.outputs[0].dataset,'gaborone-7f183843');
   assert.equal(receipt.outputs[0].provenance.files.length,3);assert.ok(receipt.outputs[0].provenance.files.every(f=>/^[a-f0-9]{64}$/.test(f.sha256)));
   assert.equal(receipt.outputs[0].rows.length,21);assert.equal(receipt.workflow.nodes.find(n=>n.type==='facilities').params.radiusKm,6);
   // Exercise actual N3 boundary semantics and unknown access independently of the UI.

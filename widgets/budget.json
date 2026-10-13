@@ -4,9 +4,9 @@
  "measuredAt": "2026-10-12",
  "counts": {
   "widgets": 46,
-  "primitive": 31,
-  "composite": 15,
-  "retired": 6,
+  "primitive": 32,
+  "composite": 14,
+  "retired": 7,
   "compositions": 1,
   "addable": 47
  },
@@ -50,6 +50,11 @@
    "measuredAt": "2026-10-12",
    "widgets": 46,
    "note": "policy, access_policy and xpert retired into apply_ruleset, which hosts their rules as declared versioned rulesets. Three palette entries and three widget contracts become one; the three projections remain and are dispatched by declared data, which the release says plainly rather than claiming code was deleted. Six widgets retired in one day, from a set that had never retired one."
+  },
+  {
+   "measuredAt": "2026-10-12",
+   "widgets": 46,
+   "note": "access retired and travel_time added, so the count is flat while an example-bound widget became two general ones: its candidate filter is a knob on nearest, its search was already shared code, and its proxy-minutes derivation is the new primitive. The gradedFacilities custom stud went with it."
   }
  ],
  "pendingRule": {

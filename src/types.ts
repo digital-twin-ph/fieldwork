@@ -63,7 +63,11 @@ export interface ParamsByType {
    *  with it (ports, output carrier and behaviour are unchanged, only what is admitted changes) and
    *  the failure it guards is contained, because isochrone runs in a Worker with a timeout. 2,000 is
    *  the measured default; above about 3,000 is untested. */
-  network_input:{label:string;data:import('./catchments.js').Network;inputMethod?:'osm'|'file';marginM?:number;maxNodes?:number};
+  /** `pauseSeconds` is the minimum wait this practitioner wants between OSM requests. It can only
+   *  raise the pause: the module takes the longest of the 60-second floor, the volume a response
+   *  actually cost, and this. Being more respectful of a public service is always permitted;
+   *  being less is not. */
+  network_input:{label:string;data:import('./catchments.js').Network;inputMethod?:'osm'|'file';marginM?:number;maxNodes?:number;pauseSeconds?:number};
   voronoi:{label:string;zone:number;hemisphere:'north'|'south'};
   isochrone:{label:string;zone:number;hemisphere:'north'|'south';minutes:number;thresholds?:number[];fillHoles?:boolean;speedMPerMin:number;bufferM:number;maxSnapM:number;direction:'inbound'|'outbound'};
   clip_polygons:{label:string};

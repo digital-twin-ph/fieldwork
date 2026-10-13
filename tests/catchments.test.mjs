@@ -78,7 +78,7 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   const fetcher=async(url,init)=>{assert.equal(init.credentials,'omit');assert.match(String(init.body),/data=/);return new Response(JSON.stringify(raw));};
   const n=await requestOSM(boundary,250,fetcher);assert.equal(n.edges.length,3);assert.equal(n.provenance.sha256.length,64);assert.deepEqual(n.provenance.boundary,boundary);
   await assert.rejects(requestOSM(boundary,0,async()=>new Response('',{status:429})),/HTTP 429/);
-  await assert.rejects(requestOSM(boundary,0,async()=>new Response(' '.repeat(2000001))),/larger than 2 MB/);
+  await assert.rejects(requestOSM(boundary,0,async()=>new Response(' '.repeat(2000001))),/over the [\d,]+ bytes this download accepts/);
 });
 test('buffer creates a distinct area and expands acquisition without carrying old area measurements',()=>{
   const snapshot=structuredClone(boundary),source={boundary,label:'Reporting area',areaId:'urn:test:source',geometryId:'urn:test:shape',measurement:{squareMetres:100,value:100,unit:'m2',method:'fixture'}};

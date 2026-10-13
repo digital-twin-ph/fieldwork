@@ -65,7 +65,8 @@ test('the walking filter is one list, used for the request and the response', ()
   for(const value of sn.WALKABLE_HIGHWAYS)assert.ok(q.includes(value),`${value} must be requested`);
   assert.ok(q.includes('out skel qt'),'plain nodes are fetched as skeletons');
   assert.ok(q.includes('node._["barrier"]'),'barrier tags are still fetched, because the filter reads them');
-  assert.ok(q.includes('maxsize:2097152'),'the request must not ask for more than the client accepts');
+  // The ceiling now follows the graph knob, so the default is the 2,000,000 the client accepts.
+  assert.ok(q.includes('maxsize:2000000'),'the request must not ask for more than the client accepts');
   assert.ok(!q.includes('maxsize:16777216'));
 });
 
@@ -152,4 +153,107 @@ test('the batch size is the measured one, and batching is actually used', ()=>{
   // 2,532 ms and +21 MB against 17,175 ms and +4,599 MB for a single call.
   assert.equal(cm.BUFFER_BATCH,25);
   assert.ok(cm.BUFFER_BATCH>1,'batches of one pay the engine per-call overhead 3,925 times');
+});
+
+// --- the throttle: a floor that can only be raised ---
+
+const th=await bundle('src/network-throttle.ts');
+
+test('the pause has a floor nothing can go under', ()=>{
+  assert.equal(th.OSM_PAUSE_MS,60_000);
+  for(const [bytes,chosen] of [[0,0],[1,0],[1e6,0],[0,1],[1e5,1_000],[NaN,NaN],[-5,-5]])
+    assert.ok(th.earnedPause(bytes,chosen)>=th.OSM_PAUSE_MS,
+      `${bytes} bytes and a ${chosen} ms request must not go under the floor`);
+});
+
+test('a request pays for what it took', ()=>{
+  // 30 seconds a megabyte: the 1.4 MB ordinary case stays at the floor, the 7.4 MB extent earns
+  // about 3.7 minutes.
+  assert.equal(th.earnedPause(1.42e6),60_000,'1.42 MB is inside the floor');
+  assert.equal(Math.round(th.earnedPause(7.39e6)/1000),222);
+  assert.ok(th.earnedPause(4e6)>th.earnedPause(2e6),'more bytes must cost more');
+});
+
+test('a practitioner can be more respectful but not less', ()=>{
+  assert.equal(th.earnedPause(0,300_000),300_000,'a longer chosen pause is honoured');
+  assert.equal(th.earnedPause(0,10_000),60_000,'a shorter one falls back to the floor');
+  // The volume charge still applies when it exceeds what was chosen.
+  assert.equal(Math.round(th.earnedPause(7.39e6,90_000)/1000),222);
+});
+
+test('no single response can lock the button indefinitely', ()=>{
+  assert.equal(th.earnedPause(1e9),th.OSM_PAUSE_MAX_MS);
+  assert.equal(th.earnedPause(0,9e9),th.OSM_PAUSE_MAX_MS);
+});
+
+test('charging a download only ever pushes the deadline later', ()=>{
+  th.resetNetworkPacing();
+  const now=1_000_000;
+  th.chargeNetworkDownload(7.39e6,0,now);
+  const after=th.networkDownloadStatus(now).waitSeconds;
+  assert.equal(after,222);
+  // A later small download must not shorten a pause already earned.
+  th.chargeNetworkDownload(1000,0,now);
+  assert.equal(th.networkDownloadStatus(now).waitSeconds,222);
+  th.resetNetworkPacing();
+});
+
+test('the pause knob is validated, and 60 is the lowest it accepts', ()=>{
+  const node=(pauseSeconds)=>({id:'n',type:'network_input',x:0,y:0,
+    params:{label:'Street network',data:{nodes:[],edges:[]},pauseSeconds}});
+  assert.throws(()=>cm.validateCatchmentNode(node(30)),/60–900 second/);
+  assert.throws(()=>cm.validateCatchmentNode(node(901)),/60–900 second/);
+  assert.doesNotThrow(()=>cm.validateCatchmentNode(node(60)));
+  assert.doesNotThrow(()=>cm.validateCatchmentNode(node(900)));
+  assert.doesNotThrow(()=>cm.validateCatchmentNode(node(undefined)));
+});
+
+// --- the download caps now follow the graph knob ---
+
+test('the download caps are never tighter than the ones that shipped', ()=>{
+  assert.deepEqual(cm.downloadLimits(),{maxBytes:2_000_000,maxFeatures:15_000});
+  assert.deepEqual(cm.downloadLimits(500),{maxBytes:2_000_000,maxFeatures:15_000},
+    'lowering the graph knob must not tighten the download below the shipped limits');
+});
+
+test('raising the graph knob widens the download enough for the measured cost', ()=>{
+  // Measured 2026-10-13: 272 bytes and 1.87 features per junction on both extents. The shipped
+  // isochrone extent is 7.39 MB and 50,791 features at 27,181 junctions.
+  const {maxBytes,maxFeatures}=cm.downloadLimits(27181);
+  assert.ok(maxBytes>7.39e6,`${maxBytes} must admit the 7.39 MB that extent really costs`);
+  assert.ok(maxFeatures>50791,`${maxFeatures} must admit the 50,791 features it really has`);
+  assert.ok(cm.BYTES_PER_NODE>272*2,'the multiplier carries about double the measured cost');
+  assert.ok(cm.FEATURES_PER_NODE>1.87*2);
+});
+
+test('the request tells the service the same ceiling the client enforces', ()=>{
+  const area={type:'Polygon',coordinates:[[[-0.142,51.509],[-0.128,51.509],[-0.128,51.517],[-0.142,51.517],[-0.142,51.509]]]};
+  assert.ok(sn.osmQuery(area,0).query.includes('maxsize:2000000'));
+  assert.ok(sn.osmQuery(area,0,27181).query.includes(`maxsize:${cm.downloadLimits(27181).maxBytes}`),
+    'a raised knob must widen what the service is asked for too, or it refuses first');
+});
+
+test('a pause is recommended for a given response size, never shorter than the charge', ()=>{
+  // The point of the recommendation is to be settable in advance; it must not under-advise.
+  for(const bytes of [0,1e6,2e6,4e6,8e6,16e6,30e6,1e9])
+    assert.ok(th.recommendedPauseSeconds(bytes)*1000>=th.earnedPause(bytes),
+      `${bytes} bytes: advice must cover the charge`);
+  assert.equal(th.recommendedPauseSeconds(2e6),60);
+  assert.equal(th.recommendedPauseSeconds(4e6),120);
+  assert.equal(th.recommendedPauseSeconds(8e6),240);
+  assert.equal(th.recommendedPauseSeconds(16e6),480);
+  assert.equal(th.recommendedPauseSeconds(30e6),900,'the ceiling caps the advice too');
+});
+
+test('the recommendation matches the download the graph knob allows', ()=>{
+  // The two knobs are tied: raising the graph limit widens the download, which earns a longer
+  // pause, and the interface recommends that pause rather than leaving it to be discovered.
+  for(const maxNodes of [2000,10000,27181,50000]){
+    const {maxBytes}=cm.downloadLimits(maxNodes);
+    assert.ok(th.recommendedPauseSeconds(maxBytes)>=60);
+    assert.ok(th.recommendedPauseSeconds(maxBytes)*1000>=th.earnedPause(maxBytes));
+  }
+  assert.ok(th.recommendedPauseSeconds(cm.downloadLimits(50000).maxBytes)
+    >th.recommendedPauseSeconds(cm.downloadLimits(2000).maxBytes),
+    'a bigger allowance must earn a longer recommended pause');
 });

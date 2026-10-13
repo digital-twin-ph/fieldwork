@@ -147,8 +147,18 @@ today** — I read a one-line description or a name instead of the artifact. Tha
 
 | | Count |
 | --- | --- |
-| Declared `fw:` terms in the ontology | **263** |
-| Of those, carrying an alignment to a standard — `owl:equivalentProperty`, `owl:equivalentClass`, `skos:exactMatch`, `rdfs:seeAlso` | **0** |
+| Declared `fw:` terms in the ontology | **462**, across 17 ttl files |
+| Of those, carrying an alignment to a non-`fw:` term | **76** |
+
+> **Corrected 2026-10-12.** This table first read *263 terms, 0 aligned*. Both figures came from
+> grepping `ontology/fieldwork.ttl` — one file of seventeen — for four alignment predicates, and not
+> for `rdfs:subClassOf` or `rdfs:subPropertyOf`, which are how this project had been aligning all
+> along. The sideways stance is supposed to be an inventory; an inventory of one shelf is not one.
+> `docs/audits/ontology-audit.md` records this and the four other numbers that came from the same
+> mistake.
+
+| | |
+| --- | --- |
 | External namespaces the project does use for what it says — `geo:`, `prov:`, `qudt:`, `dcat:`, `dcterms:` | 5 |
 | Operations whose practitioner-facing title hides a standard operation name | 2 |
 | Dictionaries translating this project's relation names into DE-9IM | **was 2, now 1** |
@@ -188,9 +198,9 @@ ratcheted.** The parallel is exact and the gap is the third row:
 
 | Layer | Its basis | Ratchet | Today |
 | --- | --- | --- | --- |
-| Computation | an independent recomputation | `parity.json`, the Lab | 23 of 52 |
+| Computation | an independent recomputation | `parity.json`, the Lab | 23 of 53 |
 | Knowledge | a citation a reader can open | `validate-rulesets.mjs` | 0 of 3 resolvable |
-| **Vocabulary** | **a standard that curated the term** | **none** | **0 of 263 aligned** |
+| **Vocabulary** | **a standard that curated the term** | **none** | **76 of 462 aligned** |
 
 The action is the same discipline one layer over, and it must not be "every term aligns", which
 would be false — most of the 263 describe this project's conduct and no standard names them. It is

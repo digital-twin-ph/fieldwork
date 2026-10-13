@@ -295,16 +295,7 @@
    "rung": "parity only"
   },
   {
-   "nodeType": "micro_workflow",
-   "exampleUses": [],
-   "exampleUseCount": 0,
-   "lab": "none",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "neither applies"
-  },
-  {
-   "nodeType": "nearest",
+   "nodeType": "measure_distance",
    "exampleUses": [
     "heat",
     "old-naledi"
@@ -314,6 +305,15 @@
    "labOwed": true,
    "fieldUse": [],
    "rung": "example only"
+  },
+  {
+   "nodeType": "micro_workflow",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "neither applies"
   },
   {
    "nodeType": "network_input",

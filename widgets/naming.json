@@ -5,7 +5,7 @@
   "domainPrefixes": {
     "urn:fieldwork:pack:sea-level-rise": "slr"
   },
-  "maxKnownViolations": 11,
+  "maxKnownViolations": 10,
   "knownViolations": [
     {
       "nodeType": "reproject",
@@ -43,12 +43,6 @@
       "rule": "audited-name",
       "reason": "A category noun: which area? It is the study area, and the title says so while the identifier does not.",
       "clearedBy": "Rename to `study_area`, with the experiment 18 adapter keeping the old identifier resolving."
-    },
-    {
-      "nodeType": "nearest",
-      "rule": "audited-name",
-      "reason": "A bare adjective. Generalised in place on 2026-10-12 rather than retired, so the name outlived the heat example it was written for.",
-      "clearedBy": "Rename to `measure_distance`, which is what it now does."
     },
     {
       "nodeType": "alert",

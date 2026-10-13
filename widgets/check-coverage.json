@@ -138,7 +138,7 @@
       "reason": "Expands to its members and asserts fw:claimsNoComputation. The members carry the checks."
     },
     {
-      "nodeType": "nearest",
+      "nodeType": "measure_distance",
       "expectation": "parity",
       "check": null,
       "computes": "Computes the distance from each point to the nearest centre."

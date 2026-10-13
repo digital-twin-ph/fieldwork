@@ -109,11 +109,11 @@
       "classification": "standard"
     },
     {
-      "nodeType": "micro_workflow",
+      "nodeType": "measure_distance",
       "classification": "standard"
     },
     {
-      "nodeType": "nearest",
+      "nodeType": "micro_workflow",
       "classification": "standard"
     },
     {

@@ -94,7 +94,7 @@ export interface ParamsByType {
    *  categorical, and over a finite declared vocabulary that compiles to a set — `{Direct,
    *  Contextual}` — the same move by which OR compiles to one rule per disjunct. The authoring
    *  surface may offer "at least Contextual"; what is stored and executed is the set. */
-  nearest:{unit:DistanceUnit; candidateFilter?:CandidateCondition[]};
+  measure_distance:{unit:DistanceUnit; candidateFilter?:CandidateCondition[]};
   travel_time:{label:string; speedMPerMin:number};
   policy:{thresholdKm:number};
   measure_area:{unit:AreaUnit}; coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
@@ -117,8 +117,8 @@ export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'
  *  which refuses. Each entry is a public identifier that can never be removed, only kept
  *  resolving -- which is why the naming convention treats a name as a commitment made at D1 time
  *  and not a label adjusted later. */
-export type RenamedNodeType='samples';
-export const RENAMED_NODE_TYPES:Record<RenamedNodeType,NodeType>={samples:'point_grid'};
+export type RenamedNodeType='samples'|'nearest';
+export const RENAMED_NODE_TYPES:Record<RenamedNodeType,NodeType>={samples:'point_grid',nearest:'measure_distance'};
 
 export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType|RenamedNodeType; version:'1'}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}

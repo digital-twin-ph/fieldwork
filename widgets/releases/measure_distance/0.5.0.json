@@ -1,0 +1,67 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:measure_distance",
+  "version": "0.5.0",
+  "nodeType": "measure_distance",
+  "title": "Measure distance",
+  "released": "2026-10-13",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['measure_distance']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      },
+      {
+        "name": "candidates",
+        "type": "points"
+      }
+    ],
+    "output": "distances",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Renamed from `nearest` to `measure_distance`. The old identifier keeps resolving: a saved workflow naming `nearest` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `nearest` is a bare adjective, which the naming convention refuses: it names a property of the answer rather than the operation, and the operation is measuring the distance to the closest candidate. No contract change: ports, output, parameters and behaviour are identical."
+    },
+    {
+      "kind": "minor",
+      "description": "A candidate filter, which is what `access` added over this widget. Held as a KNOB rather than built as a widget, by the test experiment 107 derived the same day: a knob is honest when the contract does not move with it. This leaves both ports and the output carrier untouched and changes only which candidates are eligible, which is what a threshold does too. Its language is experiment 106's authored condition -- a field, a comparator, a value -- so the rule builder's form now serves a third caller, after classification and the role binding experiment 61 proposes.\n\nThe comparators are `in` and `notIn` over a declared set, deliberately, and not an ordinal `>=`. Old Naledi asks for 'evidence at least Contextual', an ordinal comparison on a categorical, and over a finite declared vocabulary that compiles to the set {Direct, Contextual} -- the same move by which OR compiles to one rule per disjunct. An authoring surface may offer 'at least Contextual'; what is stored and executed is the set.\n\nA candidate missing the attribute a condition names FAILS the condition rather than passing it: an unrecorded evidence level has not met a minimum evidence level, and the looser reading would quietly widen the search.\n\nThe filter's two counts -- how many candidates were located and how many survived narrowing -- are reported in this widget's own receipt and method string, so the exclusion and the search cannot disagree about what was considered. That is what holding the filter here buys over a separate node, and the note on when a node would earn its place instead is in docs/experiments/103-duplicates-should-merge.md.\n\nVerified against the real Old Naledi data: the knob's conditions select the identical eligible set to `access`'s own predicate, 1 of 122 graded facilities. This does not yet retire `access`, which also derives proxy minutes and receives its candidates on the gradedFacilities carrier."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

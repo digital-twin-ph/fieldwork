@@ -993,7 +993,16 @@ export let servingBuild='unknown';
 if('serviceWorker' in navigator){
   navigator.serviceWorker.addEventListener('message',event=>{
     const data=event.data as {type?:string;build?:string}|null;
-    if(data?.type==='fieldwork-build'&&data.build){servingBuild=data.build;$('#offline-status').title=`Served by build ${data.build}`;}
+    if(data?.type==='fieldwork-build'&&data.build){
+      servingBuild=data.build;$('#offline-status').title=`Served by build ${data.build}`;
+      // The catalog renders its markup once, from the value held when it was opened. The
+      // handshake with the controlling worker can land after that -- on a first visit the
+      // worker claims the page only after it activates -- so the already-rendered row is
+      // updated here. Without this the dialog says "unknown" for the rest of the tab's life,
+      // which is the opposite of what the row is for: it exists to be trusted when a stale
+      // cache is the thing under suspicion.
+      const shown=document.getElementById('catalog-build');if(shown)shown.textContent=data.build;
+    }
   });
   const askBuild=()=>navigator.serviceWorker.controller?.postMessage({type:'fieldwork-build'});
   navigator.serviceWorker.register('./sw.js').then(async registration=>{

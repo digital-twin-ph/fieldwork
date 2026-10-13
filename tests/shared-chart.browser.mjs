@@ -11,7 +11,7 @@ test('shared Chart supports migration, source selection, view switching, evidenc
   await run();await expect(page.locator('[data-add="chart_output"]')).toBeVisible();await expect(page.locator('[data-add="output"]')).toHaveCount(0);
   await expect(page.locator('.react-flow__node[data-id="chart"]')).toContainText('Reasoning result');
   await expect(page.locator('.react-flow__node[data-id="map"]')).toContainText('Reasoning result');
-  await page.getByRole('tab',{name:'Legacy counts'}).click();await expect(page.locator('#bars-panel .bar-row').filter({hasText:'Review'}).locator('b')).toHaveText('5');
+  await page.getByRole('tab',{name:'Legacy counts'}).click();await expect(page.locator('#bars-panel .bar-column').filter({hasText:'Review'}).locator('b')).toHaveText('5');
   await page.locator('.react-flow__node[data-id="chart"]').click();await expect(page.locator('#chart-decisions')).toHaveValue('criteria');
   await page.locator('#output-label').fill('Decision counts');await page.locator('#output-label').press('Tab');
   await page.locator('#chart-decisions').selectOption('');await page.locator('#chart-decisions').selectOption('criteria');

@@ -20,7 +20,7 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   await expect(page.locator('#result-rows tr').filter({hasText:'Princess Marina Hospital'})).toContainText('Direct');
   await clinic.click();await expect(page.locator('#inspector-content')).toContainText('Dickinson 2017');
   await page.getByRole('tab',{name:'Access zones'}).click();await expect(page.locator('#bars-panel')).toBeVisible();
-  await expect(page.locator('#bars-panel .bar-row').filter({hasText:'> 30 min'}).locator('b')).toHaveText('21');
+  await expect(page.locator('#bars-panel .bar-column').filter({hasText:'> 30 min'}).locator('b')).toHaveText('21');
   // Widening eligibility, through the candidate-filter editor that replaced `access`'s two
   // selects. The widget was decomposed on 2026-10-12: the narrowing is now a knob on nearest,
   // authored as conditions over the candidate layer's own attribute values.

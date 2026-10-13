@@ -332,7 +332,12 @@ export function validateWorkflow(raw:unknown):Workflow {
     // A difference is computed by the Vega-Lite specification, so it needs that renderer.
     if(n.type==='chart_output'&&n.params.bandMeasure==='difference'&&n.params.renderer!=='vega-lite')throw new Error('Band differences are computed in the Vega-Lite specification, so select the Vega-Lite renderer.');
     if(n.type==='chart_output'&&((n.params.renderer!==undefined&&!['html','vega-lite'].includes(n.params.renderer))||(n.params.mark!==undefined&&!['bar','point'].includes(n.params.mark))||(n.params.orientation!==undefined&&!['horizontal','vertical'].includes(n.params.orientation))))throw new Error('Choose a supported chart renderer, mark and orientation.');
-    if(n.type==='chart_output'&&n.params.renderer!=='vega-lite'&&(n.params.mark==='point'||n.params.orientation==='vertical'))throw new Error('Point and vertical charts require Vega-Lite rendering.');
+    // Vertical is no longer gated on the renderer. The classic bars have always had a column branch
+    // and the series default has always reached it, so refusing a practitioner who states the same
+    // value explicitly was incoherent -- and from 2026-10-13 vertical is the default for every bar
+    // chart, which would have made the default unstatable. The point mark stays gated: the HTML
+    // renderer draws bars and has nothing to draw a dot with.
+    if(n.type==='chart_output'&&n.params.renderer!=='vega-lite'&&n.params.mark==='point')throw new Error('A dot chart requires the enhanced renderer; the classic bars draw bars.');
     if(n.type==='chart_output'){
       // Raised to match the map's on 2026-10-13, and for the same reason: a chart subtitle does the
       // same job as a map's -- state what the figure shows and what it does not claim -- and the

@@ -1,7 +1,7 @@
 import type {ChartSummary} from './results.js';
 import type {WorkflowNode} from './types.js';
 import appPackage from '../package.json';
-import {FIGURE_PALETTE,FIGURE_ROLE,FIGURE_TYPE} from './presentation.js';
+import {FIGURE_PALETTE,FIGURE_ROLE,FIGURE_TYPE,FIGURE_GRID,TUFTE_AXIS} from './presentation.js';
 
 type ChartParams=WorkflowNode<'chart_output'>['params'];
 type VegaChart={finalize:()=>void};
@@ -13,14 +13,20 @@ let generation=0;
 const colors=FIGURE_PALETTE;
 /** Which way the bars run, and what decides it when nobody has said.
  *
- *  A case series is an epidemic curve: periods run along the bottom and counts rise, which
- *  is how every outbreak report draws one, so reading it the other way is work a
- *  practitioner should not have to do. Categorical bars stay horizontal, where a long
- *  category label has room to be read.
+ *  **Vertical, for every kind of bar chart.** Changed on 2026-10-13 on the practitioner's
+ *  instruction. The earlier default split: a case series ran vertical, because that is how every
+ *  outbreak report draws an epidemic curve, and categorical bars ran horizontal, on the argument
+ *  that a long category label has room to be read lying down.
  *
- *  It is a default and not a rule: the Inspector offers both for either kind. */
+ *  That argument is real but it is not the common case, and it made one widget answer the same
+ *  question two ways depending on an input mode a reader cannot see. A bar chart has counts rising
+ *  from a baseline; that is what a reader expects to meet, and the long-label case is a reason to
+ *  CHANGE the orientation rather than a reason to default to it.
+ *
+ *  It remains a default and not a rule: the Inspector offers both for either kind, and a long
+ *  category label is the case to switch for. */
 export const chartOrientation=(params:{orientation?:'horizontal'|'vertical';inputMode?:string}):'horizontal'|'vertical'=>
-  params.orientation??(params.inputMode==='series'?'vertical':'horizontal');
+  params.orientation??'vertical';
 
 export function chartSourceNote(params:ChartParams,sourceId?:string,runId?:string){
   return params.sourceNote?.trim()||`Source: ${sourceId||'connected workflow result'}${runId?` · run ${runId}`:''}`;
@@ -93,10 +99,18 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
     height:orientation==='horizontal'?Math.max(140,chart.bins.length*38):280,
     // One type scale with the map, including the family: a chart that inherits the page font and a
     // map that names Arial are two figures, not a pair.
+    // After Tufte and Cairo: the frame, the domain lines and the ticks carry no data and go; the
+    // gridline survives only on the MEASURED axis, because that is the one a reader reads a value
+    // off. The categorical axis keeps nothing -- a label under a bar needs no line pointing at it.
     config:{view:{stroke:null},font:FIGURE_TYPE.family,
-      axis:{labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,labelColor:FIGURE_ROLE.quietInk,titleColor:FIGURE_ROLE.ink},
-      title:{fontSize:FIGURE_TYPE.title,subtitleFontSize:FIGURE_TYPE.subtitle,color:FIGURE_ROLE.ink,subtitleColor:FIGURE_ROLE.quietInk},
-      legend:{labelFontSize:FIGURE_TYPE.legend,titleFontSize:FIGURE_TYPE.legend,labelColor:FIGURE_ROLE.quietInk}},
+      axis:{...TUFTE_AXIS,labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,
+        labelColor:FIGURE_ROLE.quietInk,titleColor:FIGURE_ROLE.ink},
+      axisQuantitative:{grid:true,gridColor:FIGURE_GRID,gridWidth:1},
+      title:{fontSize:FIGURE_TYPE.title,subtitleFontSize:FIGURE_TYPE.subtitle,color:FIGURE_ROLE.ink,subtitleColor:FIGURE_ROLE.quietInk,
+        subtitlePadding:8,offset:12},
+      legend:{labelFontSize:FIGURE_TYPE.legend,titleFontSize:FIGURE_TYPE.legend,labelColor:FIGURE_ROLE.quietInk,
+        symbolStrokeWidth:0,offset:12},
+      bar:{binSpacing:2}},
   };
 }
 

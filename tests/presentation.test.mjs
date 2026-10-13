@@ -152,3 +152,51 @@ test('an epidemic curve runs time along the bottom', ()=>{
   // The subtitle has to say which date, because date of death is not date of onset.
   assert.match(node.params.subtitle,/not date of onset/);
 });
+
+// --- opinionated defaults, after Tufte and Cairo ---
+
+test('the chart keeps a gridline only on the axis a value is read off', ()=>{
+  const spec=chartVegaSpec({bins:[{key:'a',label:'A',count:3},{key:'b',label:'B',count:7}],caption:'c',field:'count'},
+    {renderer:'vega-lite',inputMode:'decisions'},{sourceId:'s',runId:'r'});
+  // Tufte: the frame, the domain line and the ticks carry no data.
+  assert.equal(spec.config.view.stroke,null);
+  assert.equal(spec.config.axis.domain,false);
+  assert.equal(spec.config.axis.ticks,false);
+  assert.equal(spec.config.axis.grid,false);
+  // Cairo's exception: comparing a far bar against a far axis is where a reader needs one.
+  assert.equal(spec.config.axisQuantitative.grid,true);
+  assert.ok(spec.config.axisQuantitative.gridColor,'and it must be light enough to read past');
+});
+
+test('a bar chart baseline is zero, and nothing in the config undoes it', ()=>{
+  // Cairo: honest before beautiful. A bar whose baseline is not zero misstates every ratio on it.
+  const spec=chartVegaSpec({bins:[{key:'a',label:'A',count:300},{key:'b',label:'B',count:310}],caption:'c',field:'count'},
+    {renderer:'vega-lite',inputMode:'decisions'},{sourceId:'s',runId:'r'});
+  const quantity=spec.encoding.y.type==='quantitative'?spec.encoding.y:spec.encoding.x;
+  assert.equal(quantity.scale.domainMin,0);
+  assert.ok(!JSON.stringify(spec).includes('"zero":false'),'no axis may opt out of its baseline');
+});
+
+test('every bar chart defaults to counts rising from a baseline', ()=>{
+  for(const inputMode of ['decisions','polygons','series']){
+    const spec=chartVegaSpec({bins:[{key:'a',label:'A',count:3}],caption:'c',field:'count'},
+      {renderer:'vega-lite',inputMode},{sourceId:'s',runId:'r'});
+    assert.equal(spec.encoding.y.type,'quantitative',`${inputMode} should put the count on the vertical axis`);
+    assert.equal(spec.encoding.x.type,'nominal');
+  }
+});
+
+test('the map plot carries no frame and no heading of its own', async()=>{
+  const {catchmentPlot}=await import('../build/catchment-output.js');
+  const polygons={features:[{id:'c',name:'5 min',minutes:5,geometry:{type:'Polygon',
+    coordinates:[[[-0.14,51.512],[-0.133,51.512],[-0.133,51.516],[-0.14,51.516],[-0.14,51.512]]]}}],
+    sites:[],observations:{features:[]},method:'Dijkstra outbound',notes:[]};
+  const svg=catchmentPlot(polygons,s=>s);
+  // The 740x530 frame was ink carrying nothing, and the heading duplicated the figure's own title.
+  assert.ok(!svg.includes('stroke="#333"'),'no frame around the plot');
+  assert.ok(!svg.includes('Travel-time regions, observation locations and sites'),'no duplicate heading');
+  // The data and the things a reader measures with are still there.
+  assert.match(svg,/<path data-catchment=/);
+  assert.match(svg,/Longitude/);
+  assert.match(svg,/Latitude/);
+});

@@ -71,20 +71,28 @@
       ]
     },
     {
-      "id": "urn:fieldwork:widget:area",
-      "nodeType": "area",
-      "currentVersion": "0.2.0",
+      "id": "urn:fieldwork:widget:study_area",
+      "nodeType": "study_area",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
-          "path": "widgets/releases/area/0.1.0.json",
+          "path": "widgets/releases/study_area/0.1.0.json",
           "sha256": "bb24afb87dc5478136dba95aa5a66a93fc9d19547784c2bc630bdd231dbb7fbd"
         },
         {
           "version": "0.2.0",
-          "path": "widgets/releases/area/0.2.0.json",
+          "path": "widgets/releases/study_area/0.2.0.json",
           "sha256": "35c27341f2860d1a8e6f6b261f22fdeaa33472d34426f98ff718f6f374b5fb31"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/study_area/0.3.0.json",
+          "sha256": "7d0082a698969bd5e03398650d9425d7ca15234fdb58ced9f7713b88fa097ebd"
         }
+      ],
+      "previousNodeTypes": [
+        "area"
       ]
     },
     {

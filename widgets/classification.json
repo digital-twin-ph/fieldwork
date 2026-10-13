@@ -24,10 +24,6 @@
       "classification": "standard"
     },
     {
-      "nodeType": "area",
-      "classification": "standard"
-    },
-    {
       "nodeType": "buffer_area",
       "classification": "standard"
     },
@@ -188,6 +184,10 @@
     },
     {
       "nodeType": "stack_polygons",
+      "classification": "standard"
+    },
+    {
+      "nodeType": "study_area",
       "classification": "standard"
     },
     {

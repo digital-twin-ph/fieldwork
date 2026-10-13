@@ -12,7 +12,7 @@ import {rasterImage} from './raster-ui.js';
 import type {RasterClipOptions,RasterMaskMethod} from './raster-mask.js';
 import {dimensionedBox,circleAround} from './area-buffer.js';
 
-export function openStudyAreaEditor(node:WorkflowNode<'area'>,onApply:(params:DrawnParams,options?:RasterClipOptions)=>void|boolean,context:{boundary?:Boundary;point?:{coordinates:Position|null;name:string};raster?:RasterGrid;clip?:boolean;clipOptions?:RasterClipOptions}={}){
+export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(params:DrawnParams,options?:RasterClipOptions)=>void|boolean,context:{boundary?:Boundary;point?:{coordinates:Position|null;name:string};raster?:RasterGrid;clip?:boolean;clipOptions?:RasterClipOptions}={}){
   const clipOptions:RasterClipOptions={method:context.clipOptions?.method||'cell-center',marginPixels:context.clipOptions?.marginPixels||0};
   const dialog=element('#area-dialog'),$=<S extends string>(s:S)=>element(s,dialog);
   let geometry:Polygon|null=node.params.source==='drawn'&&node.params.geometry?structuredClone(node.params.geometry):null,selectionMode:DrawnParams['selectionMode']=node.params.source==='drawn'?node.params.selectionMode:'polygon';

@@ -22,14 +22,13 @@
       "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
     },
     {
-      "nodeType": "area",
+      "nodeType": "study_area",
       "title": "Study area",
       "group": "Sources",
-      "fingerprint": "3072f9008d4d",
+      "fingerprint": "2357dce21929",
       "verdict": "pending",
       "reviewed": null,
-      "reviewedBy": null,
-      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+      "reviewedBy": null
     },
     {
       "nodeType": "find_health_facilities",

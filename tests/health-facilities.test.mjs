@@ -183,7 +183,7 @@ test('running a workflow issues no network request, however the data arrived',as
     // The area is a required input, not a filter: the node answers "which facilities are in my
     // study area", so there is no form of it that runs without one.
     const workflow={schema:'fieldwork/workflow/1',id:'w',label:'Facilities',
-      nodes:[{id:'area',type:'area',x:0,y:0,
+      nodes:[{id:'area',type:'study_area',x:0,y:0,
         params:{label:'Study area',source:'drawn',selectionMode:'polygon',geometry:AREA}},
         node({data:{type:'FeatureCollection',features:[{type:'Feature',id:'node/1',
           properties:{name:'Ospital ng Maynila',kind:'hospital'},

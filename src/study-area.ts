@@ -3,7 +3,7 @@ import type {ReasonerQuad} from './worker-types.js';
 import {isRecord} from './guards.js';
 export const CRS84='http://www.opengis.net/def/crs/OGC/1.3/CRS84';
 export const blankWorkflow=():Workflow=>({schema:'fieldwork/workflow/1',exampleId:'blank',name:'Study area experiment',nodes:[],edges:[]});
-export const newStudyArea=():NodeSpec<'area'>=>({type:'area',params:{source:'drawn',label:'My study area',selectionMode:'polygon',geometry:null}});
+export const newStudyArea=():NodeSpec<'study_area'>=>({type:'study_area',params:{source:'drawn',label:'My study area',selectionMode:'polygon',geometry:null}});
 const same=(a:Position,b:Position)=>a[0]===b[0]&&a[1]===b[1];
 export function geometryBounds(g:Boundary):Bounds{const points=g.type==='MultiPolygon'?g.coordinates.flat(2):g.coordinates.flat();return [Math.min(...points.map(p=>p[0])),Math.min(...points.map(p=>p[1])),Math.max(...points.map(p=>p[0])),Math.max(...points.map(p=>p[1]))];}
 export function bboxPolygon(west:number,south:number,east:number,north:number):Polygon{
@@ -51,7 +51,7 @@ export function geometryWKT(g:Boundary){
   const ring=(r:Position[])=>'('+r.map(p=>p.join(' ')).join(', ')+')';
   return g.type==='Polygon'?'POLYGON ('+g.coordinates.map(ring).join(', ')+')':'MULTIPOLYGON ('+g.coordinates.map(p=>'('+p.map(ring).join(', ')+')').join(', ')+')';
 }
-export function studyAreaN3(node:Pick<WorkflowNode<'area'>,'id'|'params'>){
+export function studyAreaN3(node:Pick<WorkflowNode<'study_area'>,'id'|'params'>){
   validateAreaParams(node.params);const p=node.params;
   if(p.source!=='drawn'||!p.geometry)throw new Error('Select a study area on the map before running.');
   const [west,south,east,north]=geometryBounds(p.geometry);

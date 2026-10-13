@@ -5,11 +5,11 @@ import {loadRasterAsset} from './raster-workflow.js';
 import {boundary as oldNalediBoundary} from '../examples/old-naledi/data.js';
 import {bufferedBoundary} from './area-buffer.js';
 
-export function previewArea(workflow:Workflow,nodeId:string):{node:WorkflowNode<'area'>;boundary:Boundary}{
+export function previewArea(workflow:Workflow,nodeId:string):{node:WorkflowNode<'study_area'>;boundary:Boundary}{
   const visited=new Set<string>(),buffers:number[]=[];let id=nodeId;
   while(!visited.has(id)){
     visited.add(id);const node=workflow.nodes.find(n=>n.id===id);
-    if(node?.type==='area'){
+    if(node?.type==='study_area'){
       const boundary=node.params.geometry||(node.params.source!=='drawn'?oldNalediBoundary as Boundary:null);
       if(!boundary)throw new Error('Define the connected Study area first.');
       return {node,boundary:buffers.toReversed().reduce((shape,distance)=>bufferedBoundary(shape,distance),boundary)};

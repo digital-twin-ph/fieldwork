@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const AREA={type:'Polygon',coordinates:[[[120.95,14.55],[121.00,14.55],[121.00,14.60],[120.95,14.60],[120.95,14.55]]]};
 const workflow=()=>({schema:'fieldwork/workflow/1',id:'facilities-trial',name:'Facility retrieval trial',
   exampleId:'blank',
-  nodes:[{id:'area',type:'area',x:40,y:40,
+  nodes:[{id:'area',type:'study_area',x:40,y:40,
       params:{label:'Study area',source:'drawn',selectionMode:'polygon',geometry:AREA}},
     {id:'hf',type:'find_health_facilities',x:320,y:40,
       params:{label:'Find health facilities',source:'openstreetmap-live',kinds:['hospital','clinic'],

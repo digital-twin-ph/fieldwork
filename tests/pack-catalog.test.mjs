@@ -38,7 +38,7 @@ test('every node type states that its definition came from the host registry', a
 });
 
 test('a plan that does not state its source is refused, so silence cannot pass for host provenance', async () => {
-  const workflow={nodes:[{id:'area',type:'area',params:{},x:0,y:0}],edges:[]};
+  const workflow={nodes:[{id:'area',type:'study_area',params:{},x:0,y:0}],edges:[]};
   const silent=canvasN3(workflow).replace(/; fw:widgetDefinitionSource "[^"]+"/,'');
   assert.equal((await validateGraph(new Store(new Parser().parse(silent)))).conforms,false);
   const invented=canvasN3(workflow).replace(/fw:widgetDefinitionSource "[^"]+"/,'fw:widgetDefinitionSource "wherever"');

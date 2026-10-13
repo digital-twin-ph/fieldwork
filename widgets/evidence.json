@@ -58,24 +58,6 @@
    "rung": "example+parity"
   },
   {
-   "nodeType": "area",
-   "exampleUses": [
-    "geoprivacy",
-    "old-naledi",
-    "raster",
-    "sea-level",
-    "snow-epidemic-curve",
-    "snow-geoprivacy",
-    "snow-isochrone",
-    "snow-voronoi"
-   ],
-   "exampleUseCount": 8,
-   "lab": "none",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example, lab not applicable"
-  },
-  {
    "nodeType": "buffer_area",
    "exampleUses": [
     "snow-isochrone"
@@ -459,6 +441,24 @@
    "labOwed": false,
    "fieldUse": [],
    "rung": "parity only"
+  },
+  {
+   "nodeType": "study_area",
+   "exampleUses": [
+    "geoprivacy",
+    "old-naledi",
+    "raster",
+    "sea-level",
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 8,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example, lab not applicable"
   },
   {
    "nodeType": "summarize_combined_area",

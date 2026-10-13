@@ -1,11 +1,10 @@
 import type {Boundary,Position} from './types.js';
 import type {Network} from './catchments.js';
-import {validateNetwork,graphLimits} from './catchments.js';
+import {validateNetwork,graphLimits,downloadLimits} from './catchments.js';
 import {geometryBounds} from './study-area.js';
 import {isRecord} from './guards.js';
-import {pacedNetworkDownload,deferNetworkDownload} from './network-throttle.js';
+import {pacedNetworkDownload,deferNetworkDownload,chargeNetworkDownload} from './network-throttle.js';
 export const OVERPASS='https://overpass-api.de/api/interpreter';
-export const NETWORK_BYTES=2_000_000;
 /** The highway values this walking filter accepts. One list, used twice: Overpass filters on it
  *  so the service does not send what we would discard, and `networkFromOSM` filters on it again
  *  because a response can be a fixture or a cached file that never went through that request.
@@ -16,7 +15,7 @@ export const NETWORK_BYTES=2_000_000;
 export const WALKABLE_HIGHWAYS=['residential','living_street','pedestrian','footway','path','steps',
   'service','unclassified','tertiary','tertiary_link','secondary','secondary_link','primary',
   'primary_link','track'] as const;
-export function osmQuery(boundary:Boundary,marginM:number){
+export function osmQuery(boundary:Boundary,marginM:number,maxNodes?:number){
   if(!Number.isFinite(marginM)||marginM<0||marginM>2000)throw new Error('Download margin must be 0–2,000 metres.');
   const b=geometryBounds(boundary),dy=marginM/111195,dx=dy/Math.cos((b[1]+b[3])/2*Math.PI/180);
   const bounds=[b[0]-dx,b[1]-dy,b[2]+dx,b[3]+dy];
@@ -31,7 +30,10 @@ export function osmQuery(boundary:Boundary,marginM:number){
   // on some Overpass versions and not on overpass-api.de 0.7.62, which refuses it, so the default
   // set is used throughout.
   const highways=WALKABLE_HIGHWAYS.join('|');
-  const query=`[out:json][timeout:25][maxsize:2097152];way["highway"~"^(${highways})$"]`
+  // The service is told the same ceiling the client enforces, so it refuses early rather than
+  // building a result that would be discarded on arrival.
+  const {maxBytes}=downloadLimits(maxNodes);
+  const query=`[out:json][timeout:25][maxsize:${maxBytes}];way["highway"~"^(${highways})$"]`
     +`(${s.toFixed(7)},${w.toFixed(7)},${n.toFixed(7)},${e.toFixed(7)});out body qt;>;out skel qt;`
     +`node._["barrier"];out tags qt;`;
   return {query,bounds,marginM};
@@ -52,11 +54,12 @@ export function networkFromOSM(raw:unknown,maxNodes?:number):Network{
     throw new Error(`The street service reported a partial answer and the previous graph is `
       +`unchanged: ${String(raw.remark).slice(0,200)}. This usually means the request was too `
       +`large or the service was busy; retry, or draw a smaller study area.`);
-  if(raw.elements.length>15000)
+  const {maxFeatures}=downloadLimits(maxNodes);
+  if(raw.elements.length>maxFeatures)
     throw new Error(`The street data for this area came back with ${raw.elements.length} features, `
-      +`more than the 15,000 this widget normalizes, and the previous graph is unchanged. This is a `
-      +`limit on street detail, not on area: draw a smaller study area, or upload a network file `
-      +`prepared outside the browser.`);
+      +`more than the ${maxFeatures} this widget normalizes, and the previous graph is unchanged. `
+      +`This is a limit on street detail, not on area: raise the graph limit on the Street network `
+      +`widget, draw a smaller study area, or upload a network file prepared outside the browser.`);
   const positions=new Map<string,Position>();const blocked=new Set<string>();
   // A node may now arrive twice: once as a skeleton with coordinates and no tags, once as tags with
   // no coordinates. So coordinates are only recorded when they are actually present -- writing
@@ -79,20 +82,37 @@ export function networkFromOSM(raw:unknown,maxNodes?:number):Network{
   }
   const network:Network={nodes:[...used].map(id=>({id:'osm-'+id,coordinates:positions.get(id)!})),edges,source:'OpenStreetMap contributors, ODbL; prototype walking filter v1. Uses explicit foot restrictions; excludes conditional ways and unapproved barriers. No turn restrictions, grade, stairs cost or wheelchair model. Vehicle oneway does not imply foot oneway.',limits:graphLimits(maxNodes)};validateNetwork(network,maxNodes);return network;
 }
-export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number):Promise<Network>{
-  osmQuery(boundary,marginM); // Invalid local input must not consume the public-service pause.
-  return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes));
+export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pauseMs?:number):Promise<Network>{
+  osmQuery(boundary,marginM,maxNodes); // Invalid local input must not consume the public-service pause.
+  return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes,pauseMs));
 }
 /** Request/normalization boundary exposed for fixture tests; UI must use paced downloadOSM. */
-export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number):Promise<Network>{
-  const request=osmQuery(boundary,marginM),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),35000);
+export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number):Promise<Network>{
+  const request=osmQuery(boundary,marginM,maxNodes),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),35000);
   try{
     let response:Response;
     try{response=await fetcher(OVERPASS,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data:request.query}),signal:controller.signal,credentials:'omit',referrerPolicy:'origin'});}catch{throw new Error('OSM could not be reached or the browser blocked the response. Wait before retrying, or upload a saved network file.');}
     if(!response.ok){if([429,502,503,504,406].includes(response.status))deferNetworkDownload(response.headers.get('retry-after'));throw new Error(`OSM download failed (HTTP ${response.status}); wait before retrying or upload a network file.`);}
-    if(Number(response.headers.get('content-length'))>NETWORK_BYTES)throw new Error('The street data for this area is larger than 2 MB, so it was not downloaded. This is a limit on how much street detail can be held, not on how large the area is: a dense city block can exceed it while a sparse district many times the size does not. Draw a smaller study area, or upload a network file prepared outside the browser.');
+    const {maxBytes}=downloadLimits(maxNodes),asMB=(n:number)=>(n/1e6).toFixed(1);
+    // Megabytes to one decimal read best, but a response one byte over the limit rounded to the
+    // same number on both sides -- "is 2.0 MB, over the 2.0 MB this download accepts", which reads
+    // as a contradiction. When the two would print alike, exact bytes are used instead.
+    const sizes=(size:number)=>asMB(size)===asMB(maxBytes)
+      ?[`${size.toLocaleString('en')} bytes`,`${maxBytes.toLocaleString('en')} bytes`]
+      :[`${asMB(size)} MB`,`${asMB(maxBytes)} MB`];
+    const tooLarge=(size:number)=>{
+      const [got,limit]=sizes(size);
+      return new Error(`The street data for this area is ${got}, over the ${limit} this download `
+        +`accepts, so nothing was changed. The limit follows the graph limit on the Street network `
+        +`widget: raise it to pull more, or draw a smaller study area. Street density matters more `
+        +`than extent here -- a dense city block can exceed this while a sparse district many `
+        +`times the size does not.`);
+    };
+    if(Number(response.headers.get('content-length'))>maxBytes)throw tooLarge(Number(response.headers.get('content-length')));
     if(!response.body)throw new Error('OSM response has no readable body.');const reader=response.body.getReader(),chunks:Uint8Array[]= [];let bytes=0;
-    try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>NETWORK_BYTES){controller.abort();throw new Error('The street data for this area is larger than 2 MB, so it was not downloaded. This is a limit on how much street detail can be held, not on how large the area is: a dense city block can exceed it while a sparse district many times the size does not. Draw a smaller study area, or upload a network file prepared outside the browser.');}chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
+    try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>maxBytes){controller.abort();throw tooLarge(bytes);}chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
+    // Charged once the size is known: a larger request earns a longer pause.
+    chargeNetworkDownload(bytes,pauseMs);
     const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const raw=JSON.parse(new TextDecoder().decode(joined)),network=networkFromOSM(raw,maxNodes);
     network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',attribution:'© OpenStreetMap contributors',url:OVERPASS,retrievedAt:new Date().toISOString(),query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
   }finally{clearTimeout(timer);}
@@ -109,7 +129,10 @@ export function parseGraphML(text:string,filename:string,maxNodes?:number):Netwo
   const result={nodes,edges,source:`Uploaded ${filename}; directed GraphML, WGS84; edge length interpreted as metres. Verify the source, acquisition date and travel mode. Original tags and restrictions are not reinterpreted.`,limits:graphLimits(maxNodes)};validateNetwork(result,maxNodes);return result;
 }
 export async function importNetwork(file:File,maxNodes?:number):Promise<Network>{
-  if(file.size>NETWORK_BYTES)throw new Error('This network file is larger than 2 MB. Prepare a smaller extent, or simplify the graph before uploading: the limit is on the graph the browser holds, not on the area it covers.');const text=await file.text();let result:Network;
+  const {maxBytes}=downloadLimits(maxNodes);
+  if(file.size>maxBytes)throw new Error(`This network file is ${(file.size/1e6).toFixed(1)} MB, over `
+    +`the ${(maxBytes/1e6).toFixed(1)} MB this upload accepts. Raise the graph limit on the Street `
+    +`network widget, or simplify the graph before uploading.`);const text=await file.text();let result:Network;
   if(/\.graphml$/i.test(file.name))result=parseGraphML(text,file.name,maxNodes);
   else{const raw=JSON.parse(text);
     if(isRecord(raw)&&Array.isArray(raw.elements))result=networkFromOSM(raw,maxNodes);

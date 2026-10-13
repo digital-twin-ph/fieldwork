@@ -34,6 +34,25 @@ export const NETWORK_NODE_LIMIT=2000;
  *  together. */
 export const SEGMENTS_PER_NODE=2.5;
 export const NETWORK_NODE_LIMIT_MAX=50000;
+/** What a response costs per junction it finally yields, measured 2026-10-13 on two real extents
+ *  with the tightened query:
+ *
+ *  | Snow rectangle   | 1.42 MB | 9,458 features  | 5,249 junctions  | 270 B, 1.80 features each |
+ *  | Isochrone extent | 7.39 MB | 50,791 features | 27,181 junctions | 272 B, 1.87 features each |
+ *
+ *  Close enough on two very different areas to derive the download caps from the graph knob rather
+ *  than leave three independent numbers that were never measured against each other -- which is how
+ *  a 6 km envelope came to sit beside a 2,000-junction cap that no dense urban kilometre could meet.
+ *  The multipliers carry roughly double the measured cost as headroom, because a sparse area yields
+ *  fewer junctions per byte and must not be refused for it. */
+export const BYTES_PER_NODE=600;
+export const FEATURES_PER_NODE=4;
+/** Never tighter than the limits that shipped, so raising the knob can only widen what is accepted
+ *  and a practitioner who never touches it sees exactly the previous behaviour. */
+export const downloadLimits=(maxNodes=NETWORK_NODE_LIMIT)=>({
+  maxBytes:Math.max(2_000_000,maxNodes*BYTES_PER_NODE),
+  maxFeatures:Math.max(15_000,maxNodes*FEATURES_PER_NODE),
+});
 export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
   ({maxNodes,maxEdges:Math.round(maxNodes*SEGMENTS_PER_NODE)});
 export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;minutes?:number;count?:number;total?:number;missingValues?:number}
@@ -72,6 +91,7 @@ export function validateCatchmentNode(n:WorkflowNode){
   if(n.type==='network_input'){
     if(!n.params.data||!Array.isArray(n.params.data.nodes)||!Array.isArray(n.params.data.edges))throw new Error('Invalid network input.');
     if(n.params.maxNodes!==undefined&&(!Number.isInteger(n.params.maxNodes)||n.params.maxNodes<500||n.params.maxNodes>NETWORK_NODE_LIMIT_MAX))throw new Error(`Use a graph limit between 500 and ${NETWORK_NODE_LIMIT_MAX} junctions.`);
+    if(n.params.pauseSeconds!==undefined&&(!Number.isFinite(n.params.pauseSeconds)||n.params.pauseSeconds<60||n.params.pauseSeconds>900))throw new Error('Use a 60–900 second pause between OSM requests. 60 is the minimum; it can only be raised.');
     if(n.params.data.nodes.length||n.params.data.edges.length)validateNetwork(n.params.data,n.params.maxNodes);
     if(n.params.marginM!==undefined&&(!Number.isFinite(n.params.marginM)||n.params.marginM<0||n.params.marginM>2000))throw new Error('Use a 0–2,000 metre download margin.');
     if(n.params.inputMethod!==undefined&&!['osm','file'].includes(n.params.inputMethod))throw new Error('Choose OSM download or file upload.');

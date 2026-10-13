@@ -65,6 +65,23 @@ export function chartSourceNote(params:ChartParams,sourceId?:string,runId?:strin
  *
  *  It never changes the axis quietly. The measure is renamed, the caption says so, and the
  *  receipt carries a distinct `fw:chartMeasureKind`. */
+/** Breaks a line of title text to the width the plot is drawn at.
+ *
+ *  Vega-Lite leaves a long subtitle to run off the edge, where it is cut rather than wrapped. The
+ *  character width is approximate -- 12px Helvetica averages near 6.2px a character -- and erring
+ *  short costs a line break, while erring long costs a clipped sentence. */
+export function wrapToWidth(value:string,width:number):string[]{
+  const max=Math.max(24,Math.floor(width/6.2));
+  const lines:string[]=[];let line='';
+  for(const word of value.split(/\s+/)){
+    if(!line)line=word;
+    else if((line+' '+word).length<=max)line+=' '+word;
+    else{lines.push(line);line=word;}
+  }
+  if(line)lines.push(line);
+  return lines;
+}
+
 export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string}={}){
   if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
   const mark=params.mark||'bar',orientation=chartOrientation(params);
@@ -101,17 +118,29 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
   ]}:{};
   const color=params.colorByCategory?{color:{field:'displayLabel',type:'nominal' as const,scale:{domain:values.map(v=>v.displayLabel),range:colors.slice(0,values.length)},legend:{title:'Category'}}}:{};
   const sourceNote=chartSourceNote(params,context.sourceId,context.runId);
+  const chartWidth=Math.min(560,Math.max(300,chart.bins.length*72));
   return {
     $schema:'https://vega.github.io/schema/vega-lite/v6.json',
+    // Stated so an exported figure carries its own surface. Without it the SVG is transparent
+    // and takes the colour of whatever it is dropped onto, which for a figure meant to be
+    // handed to somebody is a defect rather than a convenience.
+    background:FIGURE_ROLE.background,
     description:difference?`${chart.caption} Shown as the difference between neighbouring bands, computed in the specification.`:chart.caption,
     data:{values},
     ...transform,
-    title:{text:params.chartTitle?.trim()||chart.caption,subtitle:[params.subtitle?.trim(),sourceNote].filter((part):part is string=>!!part),anchor:'start' as const},
+    // Vega-Lite does not wrap title text: a subtitle longer than the plot runs off the right edge
+    // and is simply cut. Found by exporting the Snow curve and looking at it -- "the pump handle was
+    // removed on 8 Septem". `subtitle` takes an array of lines, so the wrapping is done here, at the
+    // width the chart is actually drawn.
+    title:{text:params.chartTitle?.trim()||chart.caption,
+      subtitle:[params.subtitle?.trim(),sourceNote].filter((part):part is string=>!!part)
+        .flatMap(part=>wrapToWidth(part,chartWidth)),
+      anchor:'start' as const},
     mark:{type:mark,filled:true,...(params.colorByCategory?{}:{color:FIGURE_ROLE.primary}),...(mark==='point'?{size:110}:{})},
     encoding:orientation==='horizontal'
       ?{x:{...quantity,title:params.xAxisTitle?.trim()||quantityTitle},y:{...category,title:params.yAxisTitle?.trim()||'Category'},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]}
       :{x:{...category,title:params.xAxisTitle?.trim()||'Category'},y:{...quantity,title:params.yAxisTitle?.trim()||quantityTitle},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]},
-    width:Math.min(560,Math.max(300,chart.bins.length*72)),
+    width:chartWidth,
     height:orientation==='horizontal'?Math.max(140,chart.bins.length*38):280,
     // One type scale with the map, including the family: a chart that inherits the page font and a
     // map that names Arial are two figures, not a pair.

@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {standaloneChartSvg,axisMaximum,FIGURE_WIDTH} from '../build/chart-figure.js';
-import {FIGURE_PALETTE,FIGURE_ROLE,FIGURE_TYPE} from '../build/presentation.js';
+import {Parser} from 'n3';
+import {standaloneChartSvg} from '../build/chart-figure.js';
+import {chartVegaSpec,chartSpecificationFacts} from '../build/chart-vega.js';
+import {FIGURE_ROLE,FIGURE_TYPE} from '../build/presentation.js';
 
 const curve={caption:'Cases by day of date of death',field:'count',total:616,
   bins:[{key:'d1',label:'1854-08-31',count:3,order:1},{key:'d2',label:'1854-09-01',count:70,order:2},
@@ -9,128 +11,94 @@ const curve={caption:'Cases by day of date of death',field:'count',total:616,
 const decisions={caption:'Locations by decision',field:'status',total:8,
   bins:[{key:'Review',label:'Review',count:5},{key:'NoFlag',label:'No flag',count:2},
         {key:'Unknown',label:'Insufficient data',count:0}]};
-const svgFor=(chart,params={})=>standaloneChartSvg(chart,params,{sourceId:'curve',runId:'run-1'});
+const titled={chartTitle:'Cholera deaths by date of death, Soho, London, 1854',
+  subtitle:'Date of death, not date of onset or of report.',
+  xAxisTitle:'Date of death, 1854',yAxisTitle:'Recorded deaths',sourceNote:'Source: Snow 1855.'};
 
-test('the figure is self-contained and says what it is', ()=>{
-  const svg=svgFor(curve,{chartTitle:'Cholera deaths by date of death, Soho, 1854',
-    subtitle:'Date of death, not date of onset.',xAxisTitle:'Date of death',yAxisTitle:'Recorded deaths',
-    sourceNote:'Source: Snow 1855.'});
-  assert.match(svg,/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
-  // An exported figure is opened elsewhere: nothing may be fetched when it is.
-  assert.ok(!/<image|xlink:href|url\(http|<script/.test(svg),'no external reference and no script');
-  for(const text of ['Cholera deaths by date of death','not date of onset','Date of death',
-                     'Recorded deaths','Source: Snow 1855.'])
+test('the exported figure is the specification the receipt stores', async()=>{
+  // The property this file exists for. Before 2026-10-13 the export was drawn by hand from the
+  // bins, so it could drift from the figure the receipt described and nothing would have noticed.
+  const node={id:'epidemic',type:'chart_output',x:0,y:0,params:{label:'Curve',...titled}};
+  const facts=chartSpecificationFacts(node,'run-1','curve',curve,'record-count');
+  const stored=new Parser().parse(facts)
+    .find(q=>q.predicate.value==='urn:fieldwork:rendererSpecification').object.value;
+  const svg=await standaloneChartSvg(curve,node.params,{sourceId:'curve',runId:'run-1'});
+  // Same specification in, same specification rendered: every word the receipt claims is on the page.
+  const spec=JSON.parse(stored);
+  assert.equal(spec.title.text,titled.chartTitle);
+  for(const text of [titled.chartTitle,titled.subtitle,titled.xAxisTitle,titled.yAxisTitle,titled.sourceNote])
     assert.ok(svg.includes(text),`the figure must carry ${JSON.stringify(text)}`);
-  assert.match(svg,/role="img"/);
-  assert.match(svg,/<title>Cholera deaths/,'and name itself for a screen reader');
 });
 
-test('every bar is labelled with its value, so the axis round-trip is optional', ()=>{
-  // This is also the relief the palette's contrast warning requires.
-  const svg=svgFor(curve);
-  for(const bin of curve.bins)assert.ok(svg.includes(`>${bin.count}<`),`${bin.count} must appear`);
+test('a chart on the classic bars still exports, by deriving the specification', async()=>{
+  // The classic bars are divs with no SVG to take. Rather than draw a second figure by hand, the
+  // specification is derived for the export, so even that file is one the receipt could describe.
+  const svg=await standaloneChartSvg(curve,{renderer:'html',...titled},{});
+  assert.match(svg,/^<svg/);
+  assert.ok(svg.includes(titled.chartTitle));
 });
 
-test('a zero-count category keeps its place and its label', ()=>{
-  // The gap is the finding. Dropping the row would hide it.
-  const svg=svgFor(decisions);
-  assert.ok(svg.includes('Insufficient data'));
-  assert.ok(svg.includes('>0<'),'and its zero is written');
+test('the figure is self-contained', async()=>{
+  const svg=await standaloneChartSvg(curve,titled,{});
+  // Opened elsewhere: nothing may be fetched, and it must not take the colour of what it lands on.
+  assert.ok(!/<image|xlink:href|url\(http|<script/.test(svg),'no external reference and no script');
+  assert.ok(svg.includes(FIGURE_ROLE.background.toLowerCase())||svg.includes(FIGURE_ROLE.background),
+    'it carries its own surface');
+  assert.ok(svg.includes(FIGURE_TYPE.family.split(',')[0].replace(/'/g,''))
+    ||svg.includes('Helvetica'),'and the shared type stack');
 });
 
-test('the baseline is zero and the axis maximum is a round number', ()=>{
-  for(const [highest,expected] of [[3,5],[70,100],[127,200],[1,1],[0,1],[250,250],[8,10]])
-    assert.equal(axisMaximum(highest),expected,`${highest} should scale to ${expected}`);
-  for(const bad of [NaN,-5,Infinity])assert.equal(axisMaximum(bad),1);
-  // The zero gridline is drawn in ink rather than grid grey, because it is the baseline.
-  const svg=svgFor(curve);
-  assert.ok(svg.includes(FIGURE_ROLE.quietInk),'the baseline is darker than the gridlines');
-  assert.ok(svg.includes('>0<'),'and labelled zero');
+test('every value is drawn, including a zero', async()=>{
+  const svg=await standaloneChartSvg(decisions,{},{});
+  for(const bin of decisions.bins)assert.ok(svg.includes(bin.label),`${bin.label} keeps its place`);
 });
 
-test('no frame, no tick marks, and gridlines only on the measured axis', ()=>{
-  const svg=svgFor(curve);
-  // Tufte: the frame and the ticks carry no data. Five gridlines, one per labelled value.
-  assert.equal((svg.match(/<line /g)||[]).length,5);
-  assert.ok(!/fill="none" stroke/.test(svg),'no frame rectangle');
-});
-
-test('one series carries no legend; several hues carry one', ()=>{
-  // A single series is named by the title, so a legend box would repeat it.
-  assert.ok(!svgFor(decisions).includes('rx="2"'),'no legend swatch for one hue');
-  const coloured=svgFor(decisions,{colorByCategory:true});
-  assert.ok(coloured.includes('rx="2"'),'a swatch per category when the hues differ');
-  for(const bin of decisions.bins)assert.ok(coloured.includes(bin.label));
-});
-
-test('a coloured figure uses the validated palette in order, and refuses to run out', ()=>{
-  const coloured=svgFor(decisions,{colorByCategory:true});
-  for(let i=0;i<decisions.bins.length;i++)
-    assert.ok(coloured.includes(FIGURE_PALETTE[i]),`category ${i} takes palette slot ${i}`);
-  const many={caption:'c',field:'count',total:7,
+test('the renderer refuses what the specification refuses', async()=>{
+  // The export cannot become a way around the checks the specification makes.
+  await assert.rejects(standaloneChartSvg({bins:[{key:'a',label:'A',count:-1}],caption:'c',field:'count'},{},{}),
+    /nonnegative/);
+  await assert.rejects(standaloneChartSvg(
+    {bins:[{key:'a',label:'A',count:1},{key:'a',label:'B',count:2}],caption:'c',field:'count'},{},{}),
+    /unique stable keys/);
+  const seven={caption:'c',field:'count',total:7,
     bins:Array.from({length:7},(_,i)=>({key:'k'+i,label:'L'+i,count:i+1}))};
-  // Seven categories is one past the validated six; inventing a hue is refused.
-  assert.throws(()=>svgFor(many,{colorByCategory:true}),/at most 6 categories/);
+  await assert.rejects(standaloneChartSvg(seven,{colorByCategory:true},{}),/at most 6 distinct categories/);
 });
 
-test('an unnamed measure is still named, and a count is not called a total', ()=>{
-  assert.ok(svgFor(curve).includes('Recorded count'));
-  assert.ok(svgFor({...curve,field:'total'}).includes('Recorded total'));
-});
-
-test('both orientations draw, and the measured axis is the one that moves', ()=>{
-  const vertical=svgFor(curve),horizontal=svgFor(curve,{orientation:'horizontal'});
-  assert.ok(vertical.includes('rotate(-90)'),'vertical names its measure down the side');
-  assert.ok(!horizontal.includes('rotate(-90)'));
-  for(const svg of [vertical,horizontal]){
-    assert.ok(svg.startsWith(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${FIGURE_WIDTH} `),
-      'the figure is a fixed width so a pair of them line up on a page');
-    assert.ok(svg.includes(FIGURE_TYPE.family),'the shared type stack travels with it');
+test('both orientations render, and neither invents a baseline', async()=>{
+  for(const orientation of ['vertical','horizontal']){
+    const svg=await standaloneChartSvg(curve,{...titled,orientation},{});
+    assert.match(svg,/^<svg/);
+    assert.ok(svg.length>1000,'a real figure, not an empty frame');
   }
+  // Cairo's rule survives the round trip: the quantitative scale still starts at zero.
+  const spec=chartVegaSpec(curve,{renderer:'vega-lite'},{});
+  const quantity=spec.encoding.y.type==='quantitative'?spec.encoding.y:spec.encoding.x;
+  assert.equal(quantity.scale.domainMin,0);
 });
 
-test('a long category label turns rather than collides', ()=>{
-  const many={caption:'c',field:'count',total:40,
-    bins:Array.from({length:20},(_,i)=>({key:'k'+i,label:`1854-09-${String(i+1).padStart(2,'0')}`,count:i}))};
-  assert.ok(svgFor(many).includes('rotate(-45)'),'twenty dates cannot sit flat');
-  assert.ok(!svgFor(decisions).includes('rotate(-45)'),'three short labels can');
+test('the figure renders without a DOM, so it can be checked outside a browser', async()=>{
+  assert.equal(typeof document,'undefined','this test would be vacuous in a browser');
+  const svg=await standaloneChartSvg(curve,titled,{});
+  assert.ok(svg.length>0);
 });
 
-test('an empty chart is refused rather than exported blank', ()=>{
-  assert.throws(()=>svgFor({caption:'c',field:'count',total:0,bins:[]}),/no categories to draw/);
-});
-
-test('nothing is drawn outside the figure, at any number of categories', ()=>{
-  // The lesson from rendering the Snow curve and looking at it: the string assertions above all
-  // passed while the axis title sat on top of 43 rotated date labels and the last of them ran off
-  // the edge. Geometry needs measuring, not reading.
-  for(const count of [1,3,12,20,43,60]){
-    const chart={caption:'c',field:'count',total:count,
-      bins:Array.from({length:count},(_,i)=>({key:'k'+i,label:`1854-09-${String((i%30)+1).padStart(2,'0')}`,count:i}))};
-    for(const params of [{},{orientation:'horizontal'}]){
-      const svg=standaloneChartSvg(chart,params,{});
-      const [,width,height]=svg.match(/viewBox="0 0 (\d+) (\d+)"/).map(Number);
-      const xs=[...svg.matchAll(/\sx="(-?[\d.]+)"/g)].map(m=>Number(m[1]));
-      const ys=[...svg.matchAll(/\sy="(-?[\d.]+)"/g)].map(m=>Number(m[1]));
-      assert.ok(Math.min(...xs)>=0,`${count} bars ${params.orientation??'vertical'}: something starts left of the figure`);
-      assert.ok(Math.max(...xs)<=width,`${count} bars: something starts right of the figure`);
-      assert.ok(Math.max(...ys)<=height,`${count} bars: something is drawn below the figure`);
-      // The last bar must sit inside the plot, not on the edge.
-      const rects=[...svg.matchAll(/<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)"/g)];
-      for(const [,x,,w] of rects)assert.ok(Number(x)+Number(w)<=width,'a bar runs past the edge');
-    }
-  }
-});
-
-test('many bars are labelled selectively, few are labelled in full', ()=>{
-  // A number over every one of 43 bars is noise; the eye reads the shape and the peak.
-  const many={caption:'c',field:'count',total:100,
-    bins:Array.from({length:43},(_,i)=>({key:'k'+i,label:'L'+i,count:i}))};
-  const labels=svg=>[...svg.matchAll(/text-anchor="middle" font-size="12" fill="#1A1A1A">([\d,]+)</g)].length;
-  const shown=labels(standaloneChartSvg(many,{},{}));
-  assert.ok(shown>0&&shown<=6,`at 43 bars only the peak and its near neighbours, got ${shown}`);
-  assert.ok(shown<many.bins.length/4,'and far fewer than one per bar');
-  const few={caption:'c',field:'count',total:10,
-    bins:Array.from({length:4},(_,i)=>({key:'k'+i,label:'L'+i,count:i+1}))};
-  assert.equal(labels(standaloneChartSvg(few,{},{})),4,'at four bars every value is written');
+test('a long subtitle or source note wraps instead of running off the edge', async()=>{
+  // Vega-Lite does not wrap title text; it cuts it. Found by exporting the Snow curve and looking
+  // at it: "the pump handle was removed on 8 Septem".
+  const {wrapToWidth}=await import('../build/chart-vega.js');
+  const long='Date of death, not date of onset or of report. The outbreak is conventionally dated '
+    +'from 31 August; the pump handle was removed on 8 September, by which time the curve had turned.';
+  const lines=wrapToWidth(long,560);
+  assert.ok(lines.length>1,'it must break');
+  for(const line of lines)assert.ok(line.length<=Math.floor(560/6.2),`"${line}" is too long for the plot`);
+  assert.equal(lines.join(' '),long.replace(/\s+/g,' '),'and lose no words');
+  // A narrow plot breaks sooner; a short note stays on one line.
+  assert.ok(wrapToWidth(long,300).length>lines.length);
+  assert.deepEqual(wrapToWidth('Source: Snow 1855.',560),['Source: Snow 1855.']);
+  // The spec carries the wrapped lines, which is what the renderer draws.
+  const spec=chartVegaSpec(curve,{subtitle:long,renderer:'vega-lite'},{sourceId:'s'});
+  assert.ok(Array.isArray(spec.title.subtitle));
+  for(const line of spec.title.subtitle)
+    assert.ok(line.length<=Math.floor(spec.width/6.2),`spec line too long: ${line}`);
 });

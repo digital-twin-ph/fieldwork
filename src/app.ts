@@ -822,12 +822,17 @@ function renderResults(){
   // SVG to take.
   const exportable=!!output?.chart&&!!chartNode;
   $('#chart-communication').hidden=!exportable;
-  if(exportable)$('#chart-download-svg').onclick=()=>{
+  // Rendering the stored specification is asynchronous, because the renderer is loaded on demand:
+  // an export is rare and the compiler should not sit in the first paint.
+  if(exportable)$('#chart-download-svg').onclick=async()=>{
+    const button=$('#chart-download-svg');
+    button.disabled=true;
     try{
-      const svg=standaloneChartSvg(output!.chart!,chartNode!.params,
+      const svg=await standaloneChartSvg(output!.chart!,chartNode!.params,
         {sourceId:runWorkflow?.edges.find(e=>e.to===output!.nodeId)?.from,runId:result?.runId});
       download(`${output!.nodeId}-chart.svg`,svg,'image/svg+xml');
     }catch(error){toast(errorMessage(error));}
+    finally{button.disabled=false;}
   };
   $('#facility-legend').textContent=output?.kind?'Qualifying facility':'Cooling center';$('#map-note').textContent=output?.kind==='facility-evidence'?'Historical facilities · evidence tiers':output?.kind==='access'?`${output.locationSource?.kind==='input-points'?'Input locations':'Generated samples'} \u00b7 source boundary`:'Local locations · no external map tiles';
   $('#review-legend').textContent=output?.kind==='facility-evidence'?'Contextual / inferential':'Review';$('#clear-legend').textContent=output?.kind==='facility-evidence'?'Direct':'No flag';$('#unknown-legend').textContent=output?.kind==='facility-evidence'?'No evidence':'Unknown';$('#facility-legend').parentElement!.hidden=output?.kind==='facility-evidence';

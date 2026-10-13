@@ -1,0 +1,92 @@
+{
+  "schema": "fieldwork/widget-naming/1",
+  "convention": "docs/audits/ontology-audit.md#naming-convention-for-node-types",
+  "note": "The checkable part of the naming convention, recorded 2026-10-09 and unenforced until 2026-10-13. A violation not listed here fails the build; a listed violation that no longer occurs also fails, so this list can only shrink. maxKnownViolations may be lowered, never raised. A name is a public identifier saved workflows carry, so clearing one of these is a migration and not a relabelling.",
+  "domainPrefixes": {
+    "urn:fieldwork:pack:sea-level-rise": "slr"
+  },
+  "maxKnownViolations": 13,
+  "knownViolations": [
+    {
+      "nodeType": "reproject",
+      "rule": "role-word-in-title",
+      "reason": "Titled 'Reproject input' while the node type carries no role word. The title is also the wrong form: neither verb_object nor object_role.",
+      "clearedBy": "Retitle to 'Reproject points' once the widget stops importing its own data; the title should not be fixed while the contract still makes it true."
+    },
+    {
+      "nodeType": "reproject",
+      "rule": "transform-in-sources",
+      "reason": "The node type opens with a transform verb and the widget is filed under Sources. Both are honest about the contract: inputs are empty and the data arrives in params, so it imports UTM points and converts them in one step. The name promises a transform the contract does not offer on its own.",
+      "clearedBy": "Split the operation: `reproject` takes points and returns points under Spatial operations. Acquisition stays with the source widgets, which gain an output CRS so the common case needs no second node. Migration uses the experiment 18 adapter."
+    },
+    {
+      "nodeType": "observations",
+      "rule": "role-word-in-title",
+      "reason": "Titled 'Input data', which says 'input' while the node type does not, and names a category rather than an operation.",
+      "clearedBy": "Retitle and rename together; the operation is importing observed points."
+    },
+    {
+      "nodeType": "observations",
+      "rule": "title-type-agreement",
+      "reason": "'Input data' shares no word with `observations`, so a reader has to learn a mapping that carries no information.",
+      "clearedBy": "Same rename."
+    },
+    {
+      "nodeType": "observations",
+      "rule": "audited-name",
+      "reason": "A category noun. Judged in the 2026-10-09 audit sweep.",
+      "clearedBy": "Same rename."
+    },
+    {
+      "nodeType": "area",
+      "rule": "audited-name",
+      "reason": "A category noun: which area? It is the study area, and the title says so while the identifier does not.",
+      "clearedBy": "Rename to `study_area`, with the experiment 18 adapter keeping the old identifier resolving."
+    },
+    {
+      "nodeType": "nearest",
+      "rule": "audited-name",
+      "reason": "A bare adjective. Generalised in place on 2026-10-12 rather than retired, so the name outlived the heat example it was written for.",
+      "clearedBy": "Rename to `measure_distance`, which is what it now does."
+    },
+    {
+      "nodeType": "alert",
+      "rule": "audited-name",
+      "reason": "An example's parameter, not an operation.",
+      "gatedOn": "outreach-predicates-name-a-domain",
+      "clearedBy": "Retire with the outreach ruleset's 2.0.0, which is what the blocker tracks."
+    },
+    {
+      "nodeType": "facilities",
+      "rule": "audited-name",
+      "reason": "Names the content of one demonstration. It is a radius filter, not a facility list.",
+      "gatedOn": "no-points-within-area-selection",
+      "clearedBy": "Replace with a points-within-area selection honouring totality, then retire."
+    },
+    {
+      "nodeType": "samples",
+      "rule": "audited-name",
+      "reason": "Names the content of one demonstration rather than the operation, which is generating a point grid.",
+      "clearedBy": "Rename to `point_grid`, matching its own title."
+    },
+    {
+      "nodeType": "samples",
+      "rule": "title-type-agreement",
+      "reason": "Titled 'Point grid' against the type `samples`; the title is the better name and the type has not caught up.",
+      "clearedBy": "Same rename, which clears both entries at once."
+    },
+    {
+      "nodeType": "facility_audit",
+      "rule": "title-type-agreement",
+      "reason": "Titled 'Evidence register' against the type `facility_audit`. Neither says the other, and the widget runs no reasoner despite its decisions port.",
+      "gatedOn": "presentation-stage",
+      "clearedBy": "Decided with the presentation stage, which is where this widget is expected to land."
+    },
+    {
+      "nodeType": "hex_aggregate",
+      "rule": "title-type-agreement",
+      "reason": "Titled 'Group points in H3 cells'. H3 cells are hexagons, so the title is accurate for a practitioner who knows H3 and shares no stem with the identifier. The mildest entry here and arguably a false positive; kept rather than exempted so the rule is not weakened for the cases it exists to catch.",
+      "clearedBy": "Retitle to name the hexagon, or accept and retire this entry with a recorded decision."
+    }
+  ]
+}

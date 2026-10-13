@@ -50,7 +50,7 @@ test('distanceKm is the haversine the three searches shared before the merge',()
 test('nearestPlaces is unchanged by the merge: same winner, same distance, same reasons',()=>{
   const collection=features=>({type:'FeatureCollection',features});
   const point=(id,coordinates)=>({type:'Feature',id,properties:{name:id},geometry:coordinates?{type:'Point',coordinates}:null});
-  const rows=nearestPlaces(
+  const {rows}=nearestPlaces(
     collection([point('a',[0,0]),point('b',[10,0]),point('nowhere',null)]),
     collection([point('near',[0.1,0]),point('far',[11,0])]));
   assert.equal(rows[0].center.id,'near');
@@ -69,9 +69,49 @@ test('the unit is a parameter, and metres is a thousand times kilometres',()=>{
   const collection=features=>({type:'FeatureCollection',features});
   const point=(id,coordinates)=>({type:'Feature',id,properties:{name:id},geometry:{type:'Point',coordinates}});
   const places=collection([point('a',[0,0])]),centres=collection([point('near',[0.1,0])]);
-  const km=nearestPlaces(places,centres,'kilometres')[0];
-  const m=nearestPlaces(places,centres,'metres')[0];
+  const km=nearestPlaces(places,centres,'kilometres').rows[0];
+  const m=nearestPlaces(places,centres,'metres').rows[0];
   assert.equal(km.unit,'kilometres');
   assert.equal(m.unit,'metres');
   assert.ok(Math.abs(m.distance-km.distance*1000)<1e-6,`${m.distance} vs ${km.distance}*1000`);
+});
+
+/** The candidate filter, which is what `access` added over this widget.
+ *
+ *  Held as a knob rather than a widget by the test experiment 107 derived: a knob is honest when
+ *  the contract does not move with it, and this changes only which candidates are eligible. Its
+ *  two counts are the filter's provenance and live in this widget's receipt, where the exclusion
+ *  and the search cannot disagree about what was considered.
+ */
+test('a candidate filter narrows the search by attribute and reports what it excluded',()=>{
+  const point=(id,x,y,properties={})=>({type:'Feature',id,properties:{name:id,...properties},
+    geometry:{type:'Point',coordinates:[x,y]}});
+  const places={type:'FeatureCollection',features:[point('p',0,0)]};
+  const candidates={type:'FeatureCollection',features:[
+    point('near-but-ineligible',0.01,0,{tier:'None',service:'Unknown'}),
+    point('far-but-eligible',1,0,{tier:'Direct',service:'Onsite'}),
+  ]};
+
+  const all=nearestPlaces(places,candidates,'kilometres');
+  assert.equal(all.rows[0].center.id,'near-but-ineligible','with no filter the nearest wins');
+  assert.equal(all.candidateCount,2);assert.equal(all.eligibleCount,2);
+
+  // "evidence at least Contextual" compiles to a SET over the declared vocabulary rather than an
+  // ordinal comparator, which is the same move by which OR compiles to one rule per disjunct.
+  const filtered=nearestPlaces(places,candidates,'kilometres',
+    [{field:'tier',comparator:'in',values:['Direct','Contextual']},
+     {field:'service',comparator:'notIn',values:['Unknown']}]);
+  assert.equal(filtered.rows[0].center.id,'far-but-eligible','the filter runs before the search');
+  assert.equal(filtered.candidateCount,2,'located candidates, before narrowing');
+  assert.equal(filtered.eligibleCount,1,'after narrowing');
+
+  // A candidate missing the attribute fails the condition rather than passing it: an unrecorded
+  // evidence level has not met a minimum evidence level, and the looser reading would quietly
+  // widen the search.
+  const unattributed={type:'FeatureCollection',features:[point('no-attributes',0.01,0)]};
+  const strict=nearestPlaces(places,unattributed,'kilometres',
+    [{field:'tier',comparator:'in',values:['Direct']}]);
+  assert.equal(strict.eligibleCount,0);
+  assert.equal(strict.rows[0].distance,null);
+  assert.match(strict.rows[0].reason,/No candidate point with valid coordinates/);
 });

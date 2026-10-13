@@ -35,7 +35,7 @@ import {mapSpecificationFacts} from './map-communication.js';
 import {assertProjectManifest,syncProjectManifest} from './project-manifest.js';
 import {migrateOutputNodes,decisionPresentation} from './output-contract.js';
 import {referencedPDFs,evidenceProvenance} from './evidence.js';
-import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType} from './types.js';
+import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,CandidateCondition} from './types.js';
 import type {Reasoner} from './worker-types.js';
 import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status} from './results.js';
 import type {OldInputs} from './old-naledi.js';
@@ -57,7 +57,7 @@ import {dataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
 import {computeRate,fromPoints,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
 import {caseSeries,caseSeriesFromTable,seriesTable,seriesChart,seriesReceipt,validateCaseSeriesNode} from './case-series.js';
 import {projectionExtract,projectionTable,readExtract,assignSites,assignmentTable,compareToElevation,extractReceipt,assignmentReceipt,comparisonReceipt as thresholdReceipt,validateSeaLevelNode} from './sea-level.js';
-import {distanceKm,nearestOf} from './nearest-neighbour.js';
+import {distanceKm,nearestOf,satisfies} from './nearest-neighbour.js';
 export const NS = 'urn:fieldwork:';
 export const TYPES:Record<NodeType,NodeDefinition> = {
   mean_center:{title:'Mean center',group:'Spatial operations',icon:'⊙',color:'teal',description:'Compute the unweighted center of point locations in a metric CRS',inputs:[['points','points']],output:'mean-center'},
@@ -371,16 +371,23 @@ export {distanceKm};
  *  implement it separately. A point with no coordinates, or an empty candidate set, returns a
  *  null distance **and a reason** -- which is what lets `policy` answer Unknown rather than
  *  defaulting, so it is part of the contract and not an error path. */
-export function nearestPlaces(places:PointCollection,centers:PointCollection,unit:DistanceUnit='kilometres'):NearestRow[] {
-  const valid=centers.features.filter(f=>f.geometry);
+export function nearestPlaces(places:PointCollection,centers:PointCollection,unit:DistanceUnit='kilometres',
+  candidateFilter?:CandidateCondition[]):{rows:NearestRow[];candidateCount:number;eligibleCount:number} {
+  // The filter runs before the search, on the candidates' own attributes. Its two counts are the
+  // filter's provenance and belong in this receipt, where the exclusion and the search cannot
+  // disagree about what was considered -- which is what holding it as a knob buys over a
+  // separate node.
+  const located=centers.features.filter(f=>f.geometry);
+  const valid=located.filter(f=>satisfies(f.properties,candidateFilter));
   const inUnit=(kilometres:number)=>unit==='metres'?kilometres*1000:kilometres;
-  return places.features.map(place=>{
+  const rows=places.features.map(place=>{
     if (!place.geometry || !valid.length) return {id:place.id,name:place.properties.name,coordinates:place.geometry?.coordinates ?? null,distance:null,unit,center:null,reason:!place.geometry?'This point has no coordinates.':'No candidate point with valid coordinates is available.'};
     // One shared search, three callers: see src/nearest-neighbour.ts.
     const match=nearestOf(place.geometry.coordinates,valid,center=>center.geometry?.coordinates);
     const best=match!.candidate,distance=match!.kilometres;
     return {id:place.id,name:place.properties.name,coordinates:place.geometry.coordinates,distance:inUnit(distance),unit,center:{id:best!.id,name:best!.properties.name,coordinates:best!.geometry!.coordinates}};
   });
+  return {rows,candidateCount:located.length,eligibleCount:valid.length};
 }
 export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:number) {
   // `nearest` states its unit, and this threshold is in kilometres, so a metres input would be
@@ -492,7 +499,16 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
       case 'reproject':{if(!node.params.data.features.length)throw new Error('Import a projected point file before running.');value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:{format:'reprojected-points',...structuredClone(node.params.provenance||{}),...structuredClone(node.params.source||{})},spatialReference:structuredClone(node.params.spatialReference)};break;}
       case 'alert':value=node.params;break;
-      case 'nearest':value={rows:nearestPlaces(inputs.points,inputs.candidates,node.params.unit),centers:inputs.candidates.features,method:`Haversine; sphere radius 6371.0088 km; CRS84 longitude/latitude; distances in ${node.params.unit}`};break;
+      case 'nearest':{
+        const searched=nearestPlaces(inputs.points,inputs.candidates,node.params.unit,node.params.candidateFilter);
+        const narrowed=node.params.candidateFilter?.length
+          ? ` Candidates narrowed by ${node.params.candidateFilter.map(c=>`${c.field} ${c.comparator==='in'?'in':'not in'} {${c.values.join(', ')}}`).join('; ')}: ${searched.eligibleCount} of ${searched.candidateCount} eligible.`
+          : '';
+        value={rows:searched.rows,centers:inputs.candidates.features,
+          method:`Haversine; sphere radius 6371.0088 km; CRS84 longitude/latitude; distances in ${node.params.unit}.${narrowed}`,
+          candidateCount:searched.candidateCount,eligibleCount:searched.eligibleCount} as unknown as DisplayValue;
+        break;
+      }
       case 'apply_ruleset':{
         // The merge: three widgets differed only in which rules they ran. The projection is the
         // ruleset's own declaration, and each still assembles a different carrier for whatever

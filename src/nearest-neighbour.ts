@@ -1,4 +1,4 @@
-import type {Position} from './types.js';
+import type {Position,CandidateCondition} from './types.js';
 
 /** Nearest-neighbour with distance, once.
  *
@@ -29,6 +29,22 @@ export function distanceKm(a:Position,b:Position):number{
   return 6371.0088*2*Math.asin(Math.sqrt(Math.min(1,Math.max(0,h))));
 }
 
+
+/** Does a candidate satisfy every condition? Conditions are conjunctive, which is the rule
+ *  builder's `all` group and the only combinator `access`'s filter ever needed.
+ *
+ *  A candidate missing the attribute a condition names **fails** the condition rather than passing
+ *  it. That is the stricter reading and it is the right one here: a candidate whose evidence level
+ *  is unrecorded has not met a minimum evidence level, and treating an absent attribute as
+ *  satisfying a filter would quietly widen the search. */
+export function satisfies(attributes:Record<string,unknown>|undefined,conditions:CandidateCondition[]|undefined):boolean{
+  if(!conditions?.length)return true;
+  return conditions.every(condition=>{
+    const value=attributes?.[condition.field];
+    const present=condition.values.some(allowed=>allowed===value);
+    return condition.comparator==='in'?present:value!==undefined&&!present;
+  });
+}
 export interface NearestMatch<T> {candidate:T; kilometres:number}
 
 /** The candidate nearest `from`, or null when there is nothing to match against.

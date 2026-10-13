@@ -55,7 +55,7 @@ export function oldNalediWorkflow():Workflow{
     // least Contextual" is stored as the set it compiles to over the declared vocabulary.
     node('xpert','apply_ruleset',485,265,{label:'Diagnostic evidence',
       ruleset:pinnedRuleset('urn:fieldwork:ruleset:nb06-evidence','2.0.0'),parameters:{}}),
-    node('access','nearest',715,30,{unit:'kilometres',candidateFilter:[
+    node('access','measure_distance',715,30,{unit:'kilometres',candidateFilter:[
       {field:'tier',comparator:'in',values:['Direct','Contextual']},
       {field:'service',comparator:'in',values:['Onsite']}]}),
     node('minutes','travel_time',845,30,{label:'Proxy walking time',speedMPerMin:70}),

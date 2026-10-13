@@ -117,7 +117,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // the nearest member of the set. D7 names this failure -- a port name that encodes a use rather
   // than what the port carries -- and it is why this widget read as example-specific while its
   // computation never was. The unit knob landed earlier the same day.
-  nearest: {title:'Nearest point', group:'Spatial operations', icon:'⌁', color:'teal', description:'For each point, the straight-line distance to the nearest of a set of candidate points', inputs:[['points','points'],['candidates','points']], output:'distances'},
+  measure_distance: {title:'Measure distance', group:'Spatial operations', icon:'⌁', color:'teal', description:'For each point, the straight-line distance to the nearest of a set of candidate points', inputs:[['points','points'],['candidates','points']], output:'distances'},
   policy: {title:'Outreach criteria', group:'Semantic reasoning', icon:'⋈', color:'purple', description:'Apply N3 rules with EYE-JS', inputs:[['distances','distances'],['alert','alert']], output:'decisions'},
   ...OLD_TYPES,
   // Generalised in place on 2026-10-12, out of OLD_TYPES and into the shared palette. The grid
@@ -169,7 +169,7 @@ export function exampleWorkflow():Workflow {
   return {schema:'fieldwork/workflow/1',name:'Heat outreach screening',nodes:[
     {id:'neighborhoods',type:'observations',x:35,y:52,params:{label:'Neighborhoods',data:{type:'FeatureCollection',features:[point('oakwood','Oakwood',[-84.455,33.873]),point('northgate','Northgate',[-84.337,33.875]),point('riverside','Riverside',[-84.438,33.812]),point('midtown','Midtown',[-84.37,33.79]),point('eastfield','Eastfield',[-84.277,33.795]),point('brookside','Brookside',[-84.421,33.734]),point('southpark','South Park',[-84.34,33.72]),point('cedar','Cedar Heights',null)]}}},
     {id:'centers',type:'observations',x:35,y:229,params:{label:'Cooling centers',data:{type:'FeatureCollection',features:[point('library','Central Library',[-84.367,33.79]),point('community','West Community Hall',[-84.426,33.823])]}}},
-    {id:'nearest',type:'nearest',x:323,y:90,params:{unit:'kilometres'}},
+    {id:'nearest',type:'measure_distance',x:323,y:90,params:{unit:'kilometres'}},
     {id:'alert',type:'alert',x:323,y:284,params:{active:true,date:'2026-07-15'}},
     // The template names the ruleset rather than the retired `policy` type, so the shipped example
     // does not depend on a migration running. The threshold is the ruleset's declared parameter now,
@@ -212,7 +212,7 @@ export function validateWorkflow(raw:unknown):Workflow {
   // `nearest`'s input ports were renamed from the heat demo's `places`/`centers` to the general
   // `points`/`candidates`. A saved workflow still names the old ones, and an edge whose port no
   // longer exists is refused, so it is rewritten here rather than failing to open.
-  const nearestNodes=new Set(w.nodes.filter(n=>n&&n.type==='nearest').map(n=>n.id));
+  const nearestNodes=new Set(w.nodes.filter(n=>n&&n.type==='measure_distance').map(n=>n.id));
   for(const edge of w.edges)
     if(edge&&nearestNodes.has(edge.to)&&(edge.port==='places'||edge.port==='centers'))
       edge.port=edge.port==='places'?'points':'candidates';
@@ -531,7 +531,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
       case 'reproject':{if(!node.params.data.features.length)throw new Error('Import a projected point file before running.');value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:{format:'reprojected-points',...structuredClone(node.params.provenance||{}),...structuredClone(node.params.source||{})},spatialReference:structuredClone(node.params.spatialReference)};break;}
       case 'alert':value=node.params;break;
-      case 'nearest':{
+      case 'measure_distance':{
         const searched=nearestPlaces(inputs.points,inputs.candidates,node.params.unit,node.params.candidateFilter);
         const narrowed=node.params.candidateFilter?.length
           ? ` Candidates narrowed by ${node.params.candidateFilter.map(c=>`${c.field} ${c.comparator==='in'?'in':'not in'} {${c.values.join(', ')}}`).join('; ')}: ${searched.eligibleCount} of ${searched.candidateCount} eligible.`

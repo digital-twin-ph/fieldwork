@@ -207,14 +207,13 @@
       "reviewedBy": null
     },
     {
-      "nodeType": "nearest",
-      "title": "Nearest point",
+      "nodeType": "measure_distance",
+      "title": "Measure distance",
       "group": "Spatial operations",
-      "fingerprint": "499a24daa900",
+      "fingerprint": "eb6d703f44b1",
       "verdict": "pending",
       "reviewed": null,
-      "reviewedBy": null,
-      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+      "reviewedBy": null
     },
     {
       "nodeType": "reachable_corridor",

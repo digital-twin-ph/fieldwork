@@ -88,7 +88,7 @@
       "nodeType": "access",
       "retiredAt": "2026-10-12",
       "replacedBy": [
-        "nearest",
+        "measure_distance",
         "travel_time"
       ],
       "note": "Decomposed rather than replaced: a candidate filter knob on nearest, the shared nearest-neighbour search, and the travel_time primitive. Not replaceable by one widget, so a saved workflow holding it now refuses to open naming it -- which is the practitioner's rule, and the 2026-10-06 frozen fixture is what proves it."
@@ -101,7 +101,7 @@
       "note": "Title, description, module and output stamp were the example attachment, not the node type -- so this was a generalisation in place, with no new widget, no migration and no change to any example's node count. standardization went from example-specific to shared, which is what ticks this ratchet down."
     },
     {
-      "nodeType": "nearest",
+      "nodeType": "measure_distance",
       "generalisedAt": "2026-10-12",
       "note": "Title, two port names and a unit-bearing field name were the example attachment; the computation never was. The merge of access and facilities into it is separate and still gated on experiment 66, because three implementations carry three different output carriers and choosing one is a base-contract change."
     }

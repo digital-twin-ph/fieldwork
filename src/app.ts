@@ -171,7 +171,7 @@ function setConnection(w:Workflow,from:string|null,to:string,port:string){
     try{const {boundary,node}=previewArea(w,to),geometry=boundary.type==='MultiPolygon'&&boundary.coordinates.length===1?{type:'Polygon' as const,coordinates:boundary.coordinates[0]}:boundary;target.params.cutline={geometry:structuredClone(validateDrawnGeometry(geometry)),selectionMode:node.params.source==='drawn'?node.params.selectionMode:'polygon'};}catch{/* An unfinished or complex boundary remains linked until a supported cutline is applied. */}
   }
 }
-function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TYPES[n.type].description,detail='Ready';if((n.type==='places'||n.type==='centers')){subtitle=`${n.params.data.features.length} local locations`;detail='GeoJSON · CRS84';}if(n.type==='raster_input'){detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare a local GeoTIFF';}if(n.type==='clip_raster'){subtitle='Raster + polygon -> masked raster';detail=n.params.method+' / margin '+(n.params.marginPixels||0)+' px';}if(n.type==='policy'){subtitle=`Heat alert + distance > ${n.params.thresholdKm} km`;detail='Evidence → decision';}if(n.type==='alert'){subtitle=n.params.active===null?'Alert status unknown':n.params.active?'Heat alert is active':'No active heat alert';detail=n.params.date;}if(n.type==='nearest'){detail='Kilometers · straight-line';}if(n.type==='output'){subtitle={table:'Table with supporting evidence',bars:'Grouped result counts',map:'Map of results and locations'}[n.params.view];detail='Creates a Results tab';}if(n.type==='area'){const p=n.params;subtitle=p.source==='drawn'?(p.geometry?`Drawn ${p.selectionMode==='bbox'?'box':'polygon'}`:'No boundary selected yet'):(p.dataset||'Source dataset');detail=p.source==='drawn'&&!p.geometry?'Select it on the map':'CRS84';}if(n.type==='point_grid'){subtitle=`Regular grid · ${n.params.spacingM} m`;detail='Demonstration points';}if(n.type==='facilities'){subtitle=`Search within ${n.params.radiusKm} km`;detail='Historical registry · 214 points';}if(n.type==='xpert'){subtitle='Named evidence → facility type';detail='NB06 hierarchy · N3';}if(n.type==='access'){subtitle=`${n.params.minimumEvidence} evidence · ${n.params.service==='onsite'?'onsite':'incl. referral'}`;detail=`Straight-line proxy · ${n.params.speedMPerMin} m/min`;}if(n.type==='access_policy'){subtitle=`Review proxy time > ${n.params.thresholdMin} min`;detail='N3 · missing stays unknown';}if(n.type==='facility_audit'){subtitle='Service, evidence, and references';detail='All candidate facilities';}return {definition:{...TYPES[n.type],inputs:nodeInputs(n),output:outputOf(n)},type:n.type,label:n.params.label||TYPES[n.type].title,subtitle,detail,status,glow:justFinished.has(n.id)};}
+function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TYPES[n.type].description,detail='Ready';if((n.type==='places'||n.type==='centers')){subtitle=`${n.params.data.features.length} local locations`;detail='GeoJSON · CRS84';}if(n.type==='raster_input'){detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare a local GeoTIFF';}if(n.type==='clip_raster'){subtitle='Raster + polygon -> masked raster';detail=n.params.method+' / margin '+(n.params.marginPixels||0)+' px';}if(n.type==='policy'){subtitle=`Heat alert + distance > ${n.params.thresholdKm} km`;detail='Evidence → decision';}if(n.type==='alert'){subtitle=n.params.active===null?'Alert status unknown':n.params.active?'Heat alert is active':'No active heat alert';detail=n.params.date;}if(n.type==='measure_distance'){detail='Kilometers · straight-line';}if(n.type==='output'){subtitle={table:'Table with supporting evidence',bars:'Grouped result counts',map:'Map of results and locations'}[n.params.view];detail='Creates a Results tab';}if(n.type==='area'){const p=n.params;subtitle=p.source==='drawn'?(p.geometry?`Drawn ${p.selectionMode==='bbox'?'box':'polygon'}`:'No boundary selected yet'):(p.dataset||'Source dataset');detail=p.source==='drawn'&&!p.geometry?'Select it on the map':'CRS84';}if(n.type==='point_grid'){subtitle=`Regular grid · ${n.params.spacingM} m`;detail='Demonstration points';}if(n.type==='facilities'){subtitle=`Search within ${n.params.radiusKm} km`;detail='Historical registry · 214 points';}if(n.type==='xpert'){subtitle='Named evidence → facility type';detail='NB06 hierarchy · N3';}if(n.type==='access'){subtitle=`${n.params.minimumEvidence} evidence · ${n.params.service==='onsite'?'onsite':'incl. referral'}`;detail=`Straight-line proxy · ${n.params.speedMPerMin} m/min`;}if(n.type==='access_policy'){subtitle=`Review proxy time > ${n.params.thresholdMin} min`;detail='N3 · missing stays unknown';}if(n.type==='facility_audit'){subtitle='Service, evidence, and references';detail='All candidate facilities';}return {definition:{...TYPES[n.type],inputs:nodeInputs(n),output:outputOf(n)},type:n.type,label:n.params.label||TYPES[n.type].title,subtitle,detail,status,glow:justFinished.has(n.id)};}
 function render(){
   const url=new URL(location.href);url.searchParams.set('example',exampleKey(workflow));window.history.replaceState(null,'',url);
   renderLibrary($('#node-search').value);
@@ -493,7 +493,7 @@ function renderInspector(){
     content+=`<div class="field"><label class="field-label" for="alert-state">Heat alert status</label><select id="alert-state"><option value="true" ${n.params.active===true?'selected':''}>Active</option><option value="false" ${n.params.active===false?'selected':''}>Inactive</option><option value="null" ${n.params.active===null?'selected':''}>Unknown</option></select><label class="field-label" for="assessment-date">Assessment date</label><input id="assessment-date" type="date" value="${n.params.date}"><small>This example supplies a single alert status for all locations on the assessment date. No external alert feed is queried.</small></div>`;
   }else if((n.type==='places'||n.type==='centers')){
     content+=`<div class="field"><label class="field-label" for="source-label">Source label</label><input id="source-label" maxlength="60" value="${esc(n.params.label)}"></div><div class="detail-row"><span>Records</span><strong>${n.params.data.features.length}</strong></div><div class="detail-row"><span>Coordinates</span><strong>Longitude, latitude · CRS84</strong></div><button id="replace-data" class="button small">↑ Replace with local GeoJSON</button><ul class="record-list">${n.params.data.features.slice(0,12).map(f=>`<li>${esc(f.properties.name)}<span>${f.geometry?'Point':'Missing location'}</span></li>`).join('')}</ul><small class="muted">Point FeatureCollections only, up to 2,000 records. Files stay in this browser.</small>`;
-  }else if(n.type==='nearest'){
+  }else if(n.type==='measure_distance'){
     // A structured editor for the candidate filter, which is what `access`'s two selects became.
     // The comparator is a select. The FIELD and the VALUES are typed, and that is a limitation
     // stated rather than hidden: a candidate layer computed upstream -- the graded facilities,
@@ -700,28 +700,28 @@ function renderInspector(){
         const value=control(e).value===''?NaN:Number(control(e).value);
         change(w=>{getNode(w,n.id,'apply_ruleset').params.parameters[parameter.name]=value;});
       });
-  if(n.type==='nearest'){
-    const current=()=>structuredClone(getNode(workflow,n.id,'nearest').params.candidateFilter??[]);
+  if(n.type==='measure_distance'){
+    const current=()=>structuredClone(getNode(workflow,n.id,'measure_distance').params.candidateFilter??[]);
     optionalElement('#filter-add')?.addEventListener('click',()=>change(w=>{
-      const node=getNode(w,n.id,'nearest');
+      const node=getNode(w,n.id,'measure_distance');
       node.params.candidateFilter=[...(node.params.candidateFilter??[]),{field:'',comparator:'in',values:[]}];
     }));
     current().forEach((_condition,index)=>{
       optionalElement(`#filter-remove-${index}`)?.addEventListener('click',()=>change(w=>{
-        const node=getNode(w,n.id,'nearest');
+        const node=getNode(w,n.id,'measure_distance');
         node.params.candidateFilter=(node.params.candidateFilter??[]).filter((__,i)=>i!==index);
       }));
       optionalElement(`#filter-field-${index}`)?.addEventListener('change',e=>{
         const field=control(e).value.trim();
-        change(w=>{const list=getNode(w,n.id,'nearest').params.candidateFilter!;list[index]={...list[index],field};});
+        change(w=>{const list=getNode(w,n.id,'measure_distance').params.candidateFilter!;list[index]={...list[index],field};});
       });
       optionalElement(`#filter-comparator-${index}`)?.addEventListener('change',e=>{
         const comparator=control(e).value as 'in'|'notIn';
-        change(w=>{const list=getNode(w,n.id,'nearest').params.candidateFilter!;list[index]={...list[index],comparator};});
+        change(w=>{const list=getNode(w,n.id,'measure_distance').params.candidateFilter!;list[index]={...list[index],comparator};});
       });
       optionalElement(`#filter-values-${index}`)?.addEventListener('change',e=>{
         const values=control(e).value.split(',').map(v=>v.trim()).filter(Boolean);
-        change(w=>{const list=getNode(w,n.id,'nearest').params.candidateFilter!;list[index]={...list[index],values};});
+        change(w=>{const list=getNode(w,n.id,'measure_distance').params.candidateFilter!;list[index]={...list[index],values};});
       });
     });
   }

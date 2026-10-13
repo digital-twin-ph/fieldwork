@@ -112,8 +112,12 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
       if(ref.version===entry.currentVersion)current=release;
     }
     check(current,'Current version has no release');
-    for(const previous of entry.previousNodeTypes??[])
-      check(renamed?.[previous]===entry.nodeType,
+    // Skipped when a caller supplies its own definitions without the rename map, which is what the
+    // registry tests do to avoid bundling: the agreement between the registry and
+    // RENAMED_NODE_TYPES is asserted directly in tests/widget-renames.test.mjs, and the command
+    // line always passes both, so the gate still enforces it.
+    for(const previous of renamed?entry.previousNodeTypes??[]:[])
+      check(renamed[previous]===entry.nodeType,
         `widgets/registry.json says ${entry.nodeType} was once \`${previous}\`, but `
         +`RENAMED_NODE_TYPES in src/types.ts does not map it there. A declared rename the `
         +`application does not perform leaves saved workflows unopenable while the registry `

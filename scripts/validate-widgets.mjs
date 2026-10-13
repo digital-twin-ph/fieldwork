@@ -62,7 +62,13 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
             `Declared ${kind} do not match what ${definition} asserts: declared `
             +`[${release.ontology.emits[kind].join(', ')}], asserts [${expected[kind].join(', ')}]`);
       } else check(release.released<='2026-10-10',
-        'A release published after 2026-10-10 declares ontology.emits');
+        // The message used to read "declares ontology.emits", which states the opposite of the
+        // condition: the check fires when `emits` is ABSENT. Found 2026-10-13 while adding a
+        // release, where it sent the author looking for a field to remove.
+        `A release published after 2026-10-10 must declare ontology.emits, and ${release.version} `
+        +`(released ${release.released}) does not. It records the fw: terms the widget's module `
+        +`asserts, so a change to them forces a release and a drift signal for any composition `
+        +`pinning the old one.`);
       check((release.ontology.status==='gap')===(release.ontology.mappings.length===0),'Ontology status contradicts mappings');
       for(const mapping of release.ontology.mappings){
         check(['entity','activity','configuration'].includes(mapping.role),'Invalid mapping role');

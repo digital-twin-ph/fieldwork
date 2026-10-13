@@ -116,7 +116,7 @@ const builders={
         note:hexed.notes[0]};
     });
     return {fixture:{
-      ...base('hex-soho-001','hex_aggregate','Group points in H3 cells','src/geoprivacy.ts#aggregateHex'),
+      ...base('hex-soho-001','hex_aggregate','Aggregate points in hexagons','src/geoprivacy.ts#aggregateHex'),
       declaredParameters:{
         computationCRS:'OGC:CRS84',minOccupancy,resolutions:[9,11],
         indexRule:'Each located point is indexed to the H3 cell containing it at the stated resolution, by latitude and longitude. The cell boundary returned is h3\u2019s own boundary for that cell.',

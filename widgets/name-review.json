@@ -172,13 +172,12 @@
     },
     {
       "nodeType": "hex_aggregate",
-      "title": "Group points in H3 cells",
+      "title": "Aggregate points in hexagons",
       "group": "Spatial operations",
-      "fingerprint": "461ea4f9efb7",
+      "fingerprint": "dc798fad52b7",
       "verdict": "pending",
       "reviewed": null,
-      "reviewedBy": null,
-      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+      "reviewedBy": null
     },
     {
       "nodeType": "isochrone",

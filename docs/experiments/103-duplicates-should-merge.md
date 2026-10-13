@@ -183,6 +183,64 @@ The disposition is net **zero** on the widget count: one general primitive added
 example-specific widget retired. The count is not the point. It converts a widget that bakes in one
 example's reference point and one registry's attribute vocabulary into two that bake in neither.
 
+## `access` against `nearest`, read side by side
+
+_Added 2026-10-12 at the practitioner's request, to settle what the merge actually requires._
+
+| | `nearest` | `access` |
+| --- | --- | --- |
+| Candidate set | every candidate with geometry | **pre-filtered**: evidence tier ≥ a minimum **and** service matches |
+| The search | `nearestOf` | `nearestOf` — **already shared** |
+| Distance | `distance` with a declared `unit` | `distanceKm` — the unit welded into the field name |
+| Derived measure | — | `minutes = km × 1000 / speedMPerMin` |
+| Matched candidate | a `Sample` | a `GradedFacility`, carrying tier and service |
+| No geometry | `null` **and a stated `reason`** | `null`, with no reason |
+| Carrier out | `distances`: rows, centers, method | `access`: rows, centers, method, **plus** boundary, filters, `eligibleCount`, `candidateCount`, source, dataset, locationSource |
+
+**The duplicate implementation is already gone.** Both call `nearestOf` from
+`src/nearest-neighbour.ts`, merged earlier on 2026-10-12. What remains is the wrapper, and the
+wrapper is three things:
+
+1. **An attribute filter on the candidate layer** — tier and service. Not geometry, not a search:
+   a filter on declared attributes.
+2. **A scalar derivation** — kilometres divided by a speed to give minutes.
+3. **A richer matched-candidate type**, which is the only genuine carrier question.
+
+### Which makes the carrier question smaller than it looked
+
+`access`'s extra carrier fields are **the filter's receipt, not the search's**. `eligibleCount` and
+`candidateCount` record how many candidates survived the narrowing; `filters` records what the
+narrowing was. If the filter is its own node it carries its own counts, and what reaches `nearest`
+is a narrowed point layer like any other. Then `access`'s output is `distances` plus a derived
+column, and **the second carrier is not needed**.
+
+So this is the same shape as the `facilities` correction above: the blocker shrinks on examination.
+What stops the decomposition today is not the carrier — it is that **neither missing operation
+exists**. Nothing filters a layer by attribute, and nothing derives a scalar column from a
+parameter. Those are the same two gaps the spatial selection needs
+([107](107-set-operations-and-the-ruleset.md)), one axis over: a filter on attributes rather than on
+geometry.
+
+### Two defects found by reading them side by side
+
+**`AccessRow.distanceKm` still welds the unit into the field name.** That is the exact defect
+removed from `NearestRow` on 2026-10-12, in the widget that is supposed to merge *into* the one it
+was removed from. The fix is the same fix and has not been applied here.
+
+**`nearest`'s own reason strings still named one example's nouns.** They read *"Neighborhood
+location is missing"* and *"No cooling center with valid coordinates is available"* — in a widget
+whose ports, title and unit were generalised that morning and which now declares
+`standardization: "shared"`. Fixed to *"This point has no coordinates"* and *"No candidate point
+with valid coordinates is available"*. **The standardization ratchet could not catch it**, because
+it reads a declaration and not the strings a practitioner sees. That is a gap in the ratchet, not
+only in the widget.
+
+And a third thing, which is D5 one layer out: `access` returns nulls with no reason, so
+`access_policy` re-derives *why* a value is missing in the consumer — *"Input location has no
+coordinates"* against *"No facility meets the selected evidence and service criteria"* — by
+inspecting which field is null. `nearest` states the reason on the row. The input knows why; the
+consumer is guessing from a shape.
+
 ## What this does not establish
 
 **That the merge is safe.** It is blocked on the same port work as everything else —

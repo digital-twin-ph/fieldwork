@@ -375,7 +375,7 @@ export function nearestPlaces(places:PointCollection,centers:PointCollection,uni
   const valid=centers.features.filter(f=>f.geometry);
   const inUnit=(kilometres:number)=>unit==='metres'?kilometres*1000:kilometres;
   return places.features.map(place=>{
-    if (!place.geometry || !valid.length) return {id:place.id,name:place.properties.name,coordinates:place.geometry?.coordinates ?? null,distance:null,unit,center:null,reason:!place.geometry?'Neighborhood location is missing.':'No cooling center with valid coordinates is available.'};
+    if (!place.geometry || !valid.length) return {id:place.id,name:place.properties.name,coordinates:place.geometry?.coordinates ?? null,distance:null,unit,center:null,reason:!place.geometry?'This point has no coordinates.':'No candidate point with valid coordinates is available.'};
     // One shared search, three callers: see src/nearest-neighbour.ts.
     const match=nearestOf(place.geometry.coordinates,valid,center=>center.geometry?.coordinates);
     const best=match!.candidate,distance=match!.kilometres;

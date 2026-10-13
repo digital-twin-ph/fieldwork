@@ -58,7 +58,10 @@ export function catchmentPlot(p:Polygons,esc:Escape,context?:PointCollection):st
   const frame=catchmentFrame(p,context);
   if(!frame)return '<text x="40" y="50">No located geometry to plot</text>';
   const {project,bounds:[west,south,east,north]}=frame;
-  let svg=`<desc>${esc(p.method+' / '+p.notes.join(' '))}</desc>`+'<rect width="850" height="650" fill="white"/><text x="425" y="24" text-anchor="middle" font-size="16">Travel-time regions, observation locations and sites</text><rect x="85" y="45" width="740" height="530" fill="none" stroke="#333"/>';
+  let svg=`<desc>${esc(p.method+' / '+p.notes.join(' '))}</desc>`+// The frame around the plot was 740x530 of ink carrying nothing, and the heading duplicated the
+  // title the standalone figure already puts above it. Both removed 2026-10-13, after Tufte: what is
+  // left on the page is the geometry, its axis labels, and the furniture a reader measures with.
+  '<rect width="850" height="650" fill="white"/>';
   for(let i=0;i<=4;i++){const lon=west+(east-west)*i/4,lat=south+(north-south)*i/4,x=project([lon,south])[0],y=project([west,lat])[1];svg+=`<text x="${x}" y="595" text-anchor="middle" font-size="12">${lon.toFixed(4)}</text><text x="78" y="${y+4}" text-anchor="end" font-size="12">${lat.toFixed(4)}</text>`;}
   svg+='<text x="455" y="617" text-anchor="middle" font-size="14">Longitude</text><text transform="translate(20,310) rotate(-90)" text-anchor="middle" font-size="14">Latitude</text>';
   for(const f of [...p.features].sort((a,b)=>(b.minutes||0)-(a.minutes||0))){const rings=f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat();svg+=`<path data-catchment="${esc(f.id)}" d="${rings.map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="#1f77b4" fill-opacity=".2" fill-rule="evenodd"><title>${esc(f.name)}</title></path>`;}

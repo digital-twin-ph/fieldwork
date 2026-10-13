@@ -84,16 +84,18 @@ test('a set that is not actually nested is refused, rather than drawn negative',
     /These bands are not nested: within 5 min holds fewer records \(20\) than within 1 min \(50\), so differences between them would be negative\./);
 });
 
-test('an epidemic curve runs vertically unless asked otherwise',async()=>{
+test('every bar chart runs vertically unless asked otherwise',async()=>{
   const {chartOrientation}=await import('../build/chart-vega.js');
   const {chartMarkup}=await import('../build/chart-output.js');
-  // A case series is an epidemic curve: periods along the bottom, counts rising.
-  assert.equal(chartOrientation({inputMode:'series'}),'vertical');
-  assert.equal(chartOrientation({inputMode:'decisions'}),'horizontal','categories keep their room to read');
-  assert.equal(chartOrientation({inputMode:'polygons'}),'horizontal');
-  // A default, not a rule: either kind can be asked for either way.
+  // Changed 2026-10-13: vertical for every kind, not only for a case series. A bar chart has counts
+  // rising from a baseline, and the earlier split made one widget answer the same question two ways
+  // depending on an input mode a reader cannot see.
+  for(const inputMode of ['series','decisions','polygons',undefined])
+    assert.equal(chartOrientation({inputMode}),'vertical',`${inputMode} should default to vertical`);
+  // A default, not a rule: either kind can be asked for either way, and a long category label is
+  // the case to ask.
   assert.equal(chartOrientation({inputMode:'series',orientation:'horizontal'}),'horizontal');
-  assert.equal(chartOrientation({inputMode:'polygons',orientation:'vertical'}),'vertical');
+  assert.equal(chartOrientation({inputMode:'polygons',orientation:'horizontal'}),'horizontal');
 
   const series={field:'period',caption:'Deaths by day',total:6,
     bins:[{key:'d1',label:'31 Aug',count:1},{key:'d2',label:'1 Sep',count:4},{key:'d3',label:'2 Sep',count:1}]};

@@ -113,3 +113,40 @@ export function northArrowSvg(options:{x:number;y:number;size?:number}):string{
     +`<text x="${x}" y="${y+size+13}" font-size="${t.note}" font-family="${t.family}" fill="${FIGURE_ROLE.ink}" text-anchor="middle">N</text>`
     +`</g>`;
 }
+
+/** Opinionated defaults, after Tufte and Cairo.
+ *
+ *  Added 2026-10-13 on the practitioner's direction: be opinionated, following the people who have
+ *  argued this out, rather than shipping whatever a library defaults to. The two rules that do the
+ *  most work here:
+ *
+ *  **Tufte: maximise the share of ink that carries data.** Every line that is not the data is a
+ *  line a reader has to look past -- a frame around a plot, a tick for every label, a filled
+ *  legend swatch beside a single series, a gridline dark enough to compete with a bar. So the
+ *  frame goes, the domain line goes, ticks go, and gridlines stay only where a reader has to
+ *  compare magnitudes across a gap, drawn light enough to read past.
+ *
+ *  **Cairo: the figure must be honest before it is beautiful.** A bar chart's baseline is zero and
+ *  is not an option; a scale bar is drawn from the projection actually used; a label says which
+ *  measure and which unit. Both are enforced elsewhere in this codebase and the config here must
+ *  not quietly undo them: `scale:{domainMin:0}` on the quantity, and no `zero:false` anywhere.
+ *
+ *  Where the two could conflict -- Tufte would strip a gridline that Cairo wants for comparison --
+ *  the reading wins. A gridline that helps a reader read a value is data ink doing its job.
+ *
+ *  References: Edward Tufte, The Visual Display of Quantitative Information, 2nd ed., 2001;
+ *  Alberto Cairo, The Truthful Art, 2016. */
+export const FIGURE_GRID='#E6E6E6';
+export const TUFTE_AXIS={
+  /** No line along the axis. The bars already start from a common baseline and a second line
+   *  stating it is ink that carries nothing. */
+  domain:false,
+  /** No tick marks. A label positioned under a bar does not need a mark pointing at it. */
+  ticks:false,
+  /** Gridlines on the measured axis only, and light. This is the Cairo exception to Tufte's
+   *  stripping: comparing a bar at the far right against the axis at the far left is exactly
+   *  where a reader needs one. */
+  grid:false,
+  labelPadding:6,
+  titlePadding:10,
+} as const;

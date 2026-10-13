@@ -102,6 +102,60 @@ And the paper's three limitations apply here, not only there:
 - **Performance.** Theirs is query runtime. Ours would be bins: the builder
   already refuses more than 100.
 
+## Observable Plot, which the first pass skipped
+
+_Added 2026-10-13, after the practitioner asked why it had not been looked at._
+
+It had not. The comparison named ECharts, Plotly and D3 and mentioned Observable
+Plot only in a quoted line. That was an omission, not a judgement, and it deserves
+one:
+
+| | |
+| --- | --- |
+| Version | 0.6.17, published 2025-02-14 |
+| Licence | **ISC** — permissive, no obstacle here |
+| Dependencies | `d3`, `isoformat`, `interval-tree-1d` |
+| Shape | A grammar of graphics, like Vega-Lite, by D3's own author |
+| Server-side rendering | **Yes** — pass a JSDOM `document` and take `outerHTML` |
+
+**Why it still loses on this project's deciding criterion.** A Plot specification is
+a JavaScript options object holding marks built by function calls, over in-memory
+data, with accessors that are themselves functions. It does not round-trip through
+JSON, so it cannot be what `fw:rendererSpecification` stores. Vega-Lite's can,
+which is the whole reason a receipt can carry the figure. That is a real
+disqualification rather than a preference — but it should have been written down
+and checked in the first pass, not left out.
+
+**And it would have won somewhere.** Plot renders to SVG in Node. That is exactly
+the job `src/chart-figure.ts` was hand-written for on the same day: axis scaling,
+label rotation, overflow geometry, about two hundred lines of drawing code. Had
+the question been asked before that was written rather than after, Plot would have
+been the obvious candidate.
+
+## The bigger thing that question exposed
+
+The exporter should not have been written at all, and not because of Plot.
+
+`vega` is **already a pinned dependency**, and it renders the exact specification
+the receipt stores, headlessly, with no DOM:
+
+```js
+const view=new vega.View(vega.parse(compile(spec).spec),{renderer:'none'});
+const svg=await view.toSVG();   // 6,412 bytes, carrying the title and the source note
+```
+
+Measured 2026-10-13. So the application now has **three** renderings of the same
+chart — Vega-Lite on screen, the classic bars on screen, and a third,
+hand-written SVG for export — and the exported figure is drawn from the bins
+rather than from the specification the receipt carries. The guarantee claimed for
+it, "the same file whichever renderer is on screen", is true and is the weaker of
+the two available. The stronger one is *the exported file is what the receipt says
+was drawn*, and it needs no new code and no new dependency.
+
+**Not yet changed.** Swapping the exporter is a reversal of work committed hours
+earlier and loses the figure's hand-set Tufte geometry for Vega's own, so it is
+the practitioner's call rather than a tidy-up to perform quietly.
+
 ## What changed our minds
 
 Nothing — the choice stands. What changed is the *reason* on record. Before this,

@@ -285,21 +285,46 @@ fw:TravelTimeEstimate a owl:Class;
 # the word meant and neither could this file: it had no port vocabulary at all. The word was living
 # in prose, in TypeScript types and in release JSON, and nowhere a reader could look it up.
 #
-# **"Carrier" on its own is not defined here, deliberately.** It is an umbrella over two different
-# granularities, and using it bare is what made it vague. The two it covers are both below, and a
-# sentence should say which it means:
+# **What a carrier is.** The value one node produced and another consumes. In a run it is
+# identified as `urn:fieldwork:run:{runId}:output:{nodeId}` -- one per node, already emitted. It is
+# a narrowing of prov:Entity rather than a new idea: an Entity that travels between ports. A
+# referenced PDF and a declared ruleset are also Entities and travel between no ports.
 #
-#   fw:CarrierKind  -- five structural categories. What a conversion between them must be honest
-#                      about, because a keyed table has no geometry.
-#   fw:PortType     -- thirteen declared names in the live set. What a connection is actually
-#                      checked against, since two ports connect when their port types match.
+# **What a carrier is not.** It is not the port (fw:Port, the connection point), not the port type
+# (fw:PortType, the declared name a connection is checked against), not the carrier kind
+# (fw:CarrierKind, the structural category), not the activity that produced it, and not a record
+# inside it -- records are geo:Feature and are distinguished by their own IRI shape,
+# `...:output:{nodeId}:record:{id}`.
 #
-# Nine of the thirteen port types are the same carrier kind, which is why the distinction matters:
-# at the granularity a connection is checked, the kind barely distinguishes anything.
+# **Why it is defined rather than dropped.** The practitioner asked that it be defined and
+# disambiguated or removed from the vocabulary altogether, and that it be an entity that can be
+# instantiated. It can: one run of the Old Naledi example emits 227 of these IRIs. What it lacked
+# was a type -- those instances are asserted today as prov:Entity, as
+# `fw:PointDataset, geo:FeatureCollection`, and as `geo:FeatureCollection, prov:Entity`, three
+# different ways for one role. A word with instances and no type is exactly a word that floats, and
+# that is what made it vague.
 #
+# **The three levels, which is the disambiguation.** A sentence must say which it means:
+#
+#   fw:Carrier      the instance -- this value, in this run, from this node
+#   fw:PortType     the type     -- thirteen declared names; what a connection is checked against
+#   fw:CarrierKind  the kind     -- five structural categories; what a conversion must be honest
+#                                   about, because a keyed table has no geometry
+#
+# Nine of the thirteen port types share one carrier kind, which is why naming only the kind
+# misleads: at the granularity a connection is checked, the kind barely distinguishes anything.
+
 # These terms are declared and **not yet asserted by any run**. No receipt emits a port fact today;
-# the ports live in each widget's release file. That is a gap recorded rather than hidden, and it is
-# the same declared-but-unasserted state ontology/coupling-debt.json already tracks.
+# the ports live in each widget's release file. Declaring fw:Carrier does not by itself make the
+# runs consistent either -- it gives them something to be consistent WITH. That is a gap recorded
+# rather than hidden, and it is the same declared-but-unasserted state
+# ontology/coupling-debt.json already tracks.
+
+fw:Carrier a owl:Class;
+  rdfs:subClassOf prov:Entity;
+  rdfs:label "Value travelling between two ports";
+  rdfs:comment "The value one node produced and another consumes, identified in a run as urn:fieldwork:run:{runId}:output:{nodeId}. A narrowing of prov:Entity and not a new idea: an Entity that travels between ports, where a referenced PDF and a declared ruleset are Entities that travel between none. NOT the port, NOT the port type a connection is checked against, NOT the structural carrier kind, NOT the activity that produced it, and NOT a record inside it -- records are geo:Feature with their own IRI shape. Instantiable and already instantiated: one run of the Old Naledi example emits 227 of these. What it lacked was a type, which is why the bare word floated.";
+  fw:implementationStatus "proposed".
 
 fw:Port a owl:Class;
   rdfs:label "Named connection point on a widget";

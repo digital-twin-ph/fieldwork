@@ -111,3 +111,17 @@ test('the widget catalog shows identities, digests and independent checks, and w
   await expect(page.locator('#catalog-dialog tr[data-widget]')).toHaveCount(registry.widgets.length);
   await page.screenshot({path:'test-results/widget-catalog.png',fullPage:true});
 });
+
+// A first visit that opens the catalog immediately. The dialog renders its markup once, and on a
+// first visit no worker is controlling the page yet, so the build row is rendered "unknown" and
+// the handshake lands afterwards. This passed for four days in a form that could not fail: the
+// shipped test opened the dialog after several round trips, by which time the worker had usually
+// claimed the page -- usually on a warm laptop, never on a cold CI runner. The deep link removes
+// the waiting, so the row must be updated in place rather than rendered once and left.
+test('the serving build is reported even when the catalog opens before the worker claims the page',async({page})=>{
+  const build=readFileSync(new URL('../sw.js',import.meta.url),'utf8').match(/"(fieldwork-ts-[0-9a-f]+)"/)[1];
+  await page.goto('/?example=blank&catalog=1');
+  const dialog=page.locator('#catalog-dialog');
+  await expect(dialog).toBeVisible({timeout:45000});
+  await expect(dialog.locator('#catalog-build')).toHaveText(build,{timeout:45000});
+});

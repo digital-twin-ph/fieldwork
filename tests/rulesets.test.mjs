@@ -31,7 +31,11 @@ test('declared rulesets assemble byte-identical rule text',()=>{
 
 test('a ruleset declares its basis, and none of three carries resolvable evidence',()=>{
   const sets=bundledRulesets();
-  assert.equal(sets.length,3);
+  // Three ruleset IDENTITIES across five version files: nb06-evidence and access-review each
+  // published a 2.0.0 for a CARRIER change, with the rules and the conclusions unchanged. A basis
+  // belongs to the ruleset, not to each version of it.
+  assert.equal(new Set(sets.map(s=>s.id)).size,3);
+  assert.equal(sets.length,5);
   for(const set of sets){
     assert.ok(set.basis.status&&set.basis.statedBy,`${set.id} must say what its basis is and who says so`);
     assert.ok(set.mustNotBeReadAs?.trim(),`${set.id} must say what it is not`);

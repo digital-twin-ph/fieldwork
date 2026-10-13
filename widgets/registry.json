@@ -5,7 +5,7 @@
   {
    "id": "urn:fieldwork:widget:access",
    "nodeType": "access",
-   "currentVersion": "1.0.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -16,6 +16,11 @@
      "version": "1.0.0",
      "path": "widgets/releases/access/1.0.0.json",
      "sha256": "da47cced3375b8d135b9f15b7604818f367d18b19483eb1f15c9effd93ece434"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/access/0.2.0.json",
+     "sha256": "7dcc0c74ec9f90a3346985c54980bf3ec30ca2c4aa3cfaa5f7d83a8721553707"
     }
    ]
   },
@@ -294,12 +299,17 @@
   {
    "id": "urn:fieldwork:widget:facility_audit",
    "nodeType": "facility_audit",
-   "currentVersion": "0.1.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
      "path": "widgets/releases/facility_audit/0.1.0.json",
      "sha256": "0c02cf7915912adcbd84f59fc1a0e17adc35d9c62118babf643459765f96ed83"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/facility_audit/0.2.0.json",
+     "sha256": "d7780e4c9c56bdff8942da3c9654719954287cd62c92c788c1709906e8429b8b"
     }
    ]
   },
@@ -832,6 +842,18 @@
      "version": "0.4.0",
      "path": "widgets/releases/table_output/0.4.0.json",
      "sha256": "3eba13d48d016fa88371b84e0601d43b6b7ab4d134a7af6609326654f2564bd0"
+    }
+   ]
+  },
+  {
+   "id": "urn:fieldwork:widget:travel_time",
+   "nodeType": "travel_time",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/travel_time/0.1.0.json",
+     "sha256": "a80209355c0b19ab4dc5295f43a9d9685386f6f393f68e833a1df0aaaef59742"
     }
    ]
   },

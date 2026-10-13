@@ -2,7 +2,7 @@ import {containsPoint,boundaryExtent,gridPoints,GRID_METHOD} from './point-grid.
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
 import {pinnedRuleset} from './rule-application.js';
 import type {Boundary,Position,Workflow,WorkflowNode,NodeDefinition,NodeType,ParamsByType,PointFeature,PointCollection,SourceInfo} from './types.js';
-import type {Facility,GradedFacility,AreaValue,SamplesValue,RegistryValue,GradedRegistryValue,AccessValue,Receipt,AccessRow} from './results.js';
+import type {Facility,GradedFacility,AreaValue,SamplesValue,RegistryValue,GradedRegistryValue,AccessValue,Receipt,AccessRow,Tier,Service,NearestRow} from './results.js';
 import type {Reasoner,ReasonerQuad} from './worker-types.js';
 const boundary=sourceBoundary as Boundary;
 export interface OldInputs {points:PointCollection & {sourceNodeId?:string; sourceInfo?:SourceInfo}; area:AreaValue; facilities:GradedRegistryValue; samples:PointCollection & Partial<SamplesValue> & {sourceNodeId?:string; sourceKind?:string}; access:AccessValue}
@@ -17,7 +17,9 @@ export const OLD_TYPES:Record<'area'|'facilities'|'xpert'|'access'|'access_polic
   xpert:{title:'Diagnostic evidence',group:'Semantic reasoning',icon:'⋈',color:'purple',description:'Apply the NB06 evidence hierarchy with N3',inputs:[['facilities','facilities']],output:'gradedFacilities'},
   access:{title:'Facility access',group:'Spatial operations',icon:'⌁',color:'teal',description:'Find the nearest facility meeting your evidence criteria',inputs:[['samples','points'],['facilities','gradedFacilities']],output:'access'},
   access_policy:{title:'Access review',group:'Semantic reasoning',icon:'⋈',color:'purple',description:'Classify access proxies and explicit missing evidence with N3',inputs:[['access','access']],output:'decisions'},
-  facility_audit:{title:'Evidence register',group:'Summaries',icon:'☷',color:'green',description:'Inspect every candidate facility and its evidence basis',inputs:[['facilities','gradedFacilities']],output:'decisions'}
+  // Consumes a general point layer, not the retired gradedFacilities stud, and the port is named
+  // for what it carries rather than for the widget that used to produce it.
+  facility_audit:{title:'Evidence register',group:'Summaries',icon:'☷',color:'green',description:'Inspect every candidate facility and its evidence basis',inputs:[['points','points']],output:'decisions'}
 };
 export function facilityInput(id:string):WorkflowNode<'observations'>{
   return {id,type:'observations',x:25,y:390,params:{label:'Gaborone facility registry',
@@ -38,18 +40,27 @@ export function migrateFacilitySources(w:Workflow):void{
 }
 export function oldNalediWorkflow():Workflow{
   const node=<K extends NodeType>(id:string,type:K,x:number,y:number,params:ParamsByType[K])=>({id,type,x,y,params}) as WorkflowNode<K>;
-  const edges=[['facility-data','facilities','points'],['area','samples','area'],['area','facilities','area'],['facilities','xpert','facilities'],['samples','access','samples'],['xpert','access','facilities'],['access','review','access'],['xpert','audit','facilities'],['review','access-map','decisions'],['review','access-table','decisions'],['review','access-chart','decisions'],['audit','evidence-table','decisions']].map(([from,to,port],i)=>({id:`old-e${i}`,from,to,port}));
+  const edges=[['facility-data','facilities','points'],['area','samples','area'],['area','facilities','area'],['facilities','xpert','facilities'],['samples','access','points'],['xpert','access','candidates'],['access','minutes','distances'],['minutes','review','distances'],['xpert','audit','points'],['review','access-map','decisions'],['review','access-table','decisions'],['review','access-chart','decisions'],['audit','evidence-table','decisions']].map(([from,to,port],i)=>({id:`old-e${i}`,from,to,port}));
   return {schema:'fieldwork/workflow/1',exampleId:'old-naledi',name:'Old Naledi · diagnostic access',nodes:[
     facilityInput('facility-data'),node('area','area',25,140,{dataset:DATASET}),node('samples','samples',255,30,{spacingM:250}),node('facilities','facilities',255,265,{dataset:DATASET,radiusKm:6,sourceMode:'connected'}),
     // `xpert` and `access_policy` were retired into apply_ruleset on 2026-10-12: both were a set of
     // rules and nothing else. The template names their rulesets so this example does not depend on
     // a migration running. `facility_audit` stays -- it runs no reasoner and is a presentation
     // widget, which is why it was not part of that merge.
+    // `access` retired 2026-10-12 into three steps it was always made of: a candidate filter, now a
+    // knob on nearest; the nearest-neighbour search itself; and the proxy-minutes derivation, now
+    // the travel_time primitive, which states its walking-speed assumption in its own receipt
+    // instead of burying it in a search. The filter conditions reproduce `access`'s eligibility
+    // exactly -- verified against the real data at 1 of 122 graded facilities -- and "evidence at
+    // least Contextual" is stored as the set it compiles to over the declared vocabulary.
     node('xpert','apply_ruleset',485,265,{label:'Diagnostic evidence',
-      ruleset:pinnedRuleset('urn:fieldwork:ruleset:nb06-evidence','1.0.0'),parameters:{}}),
-    node('access','access',715,30,{minimumEvidence:'contextual',service:'onsite',speedMPerMin:70}),
-    node('review','apply_ruleset',945,30,{label:'Access review',
-      ruleset:pinnedRuleset('urn:fieldwork:ruleset:access-review','1.0.0'),parameters:{threshold:30}}),
+      ruleset:pinnedRuleset('urn:fieldwork:ruleset:nb06-evidence','2.0.0'),parameters:{}}),
+    node('access','nearest',715,30,{unit:'kilometres',candidateFilter:[
+      {field:'tier',comparator:'in',values:['Direct','Contextual']},
+      {field:'service',comparator:'in',values:['Onsite']}]}),
+    node('minutes','travel_time',845,30,{label:'Proxy walking time',speedMPerMin:70}),
+    node('review','apply_ruleset',975,30,{label:'Access review',
+      ruleset:pinnedRuleset('urn:fieldwork:ruleset:access-review','2.0.0'),parameters:{threshold:30}}),
     node('audit','facility_audit',715,300,{}),
     node('access-map','map_output',1175,0,{label:'Access map',inputMode:'decisions'}),node('access-table','table_output',1175,150,{label:'Access table',inputMode:'decisions'}),
     node('access-chart','chart_output',1175,300,{label:'Access zones'}),node('evidence-table','table_output',945,300,{label:'Facility evidence',inputMode:'decisions'})
@@ -121,6 +132,24 @@ export function accessN3(rows:AccessRow[],threshold:number){
  *
  *  Lifted out of the `xpert` case on 2026-10-12 so one implementation serves both that node type
  *  and the general `apply_ruleset` host while the migration is verifiable. Nothing here changed. */
+/** The graded facilities as a **point layer**, which is what retires the `gradedFacilities` carrier.
+ *
+ *  `gradedFacilities` is a producer-named stud -- D4a's term -- emitted by one widget and consumed
+ *  by two. Emitting a general point layer with the grading in each feature's attributes lets
+ *  `nearest` take it as candidates and filter on `tier` and `service` with its own knob, which is
+ *  what decomposing `access` needs.
+ *
+ *  What a point layer cannot carry is the registry's `boundary` and `facilitySource`, which the old
+ *  carrier passed through to `facility_audit`. Those belong to the nodes that produced them, and a
+ *  consumer reaching through a carrier to find them is how a thin carrier becomes a thick one. */
+export function gradedPointLayer(graded:GradedRegistryValue):PointCollection & {sourceNodeId?:string}{
+  return {type:'FeatureCollection',sourceNodeId:graded.facilitySource?.nodeId,
+    features:graded.facilities.map(f=>({type:'Feature' as const,id:f.id,
+      properties:{...f.attributes,name:f.name,owner:f.owner,serviceType:f.serviceType,
+        tier:f.tier,service:f.service,reference:f.reference},
+      geometry:f.coordinates?{type:'Point' as const,coordinates:[...f.coordinates]}:null}))};
+}
+
 export async function applyFacilityGrading(facilities:GradedRegistryValue,reasoner:Reasoner){
   const n3=facilityN3(facilities.facilities),conclusions=await reasoner(n3.input);
   return {
@@ -133,6 +162,44 @@ export async function applyFacilityGrading(facilities:GradedRegistryValue,reason
 }
 
 /** `access-review` applied: a decision and a travel-time zone per sampled location. */
+/** A `distances` layer read as the access rows the ruleset's fact generator expects.
+ *
+ *  The matched candidate's grading is read from its own attributes, which `nearest` now carries on
+ *  `center`. The explanation this ruleset writes names the facility's evidence level and service,
+ *  and before 2026-10-12 it got them because the carrier made every matched candidate a
+ *  GradedFacility -- a producer-named type. Reading them from the candidate's attributes is the
+ *  general form of the same thing, and it is what let the carrier be retired.
+ *
+ *  `NearestRow.reason` is dropped here and that is a known loss, recorded rather than hidden: the
+ *  general carrier states WHY a distance is absent and AccessRow has nowhere to put it, so the
+ *  ruleset's consumer re-derives the wording from which field is null -- the same D5 failure noted
+ *  in experiment 103. Carrying the reason through is what a 3.0.0 of this ruleset would fix.
+ *
+ *  `access` carried its own rows; `nearest` plus `travel_time` carry the same facts on the general
+ *  carrier. The generator needs an id, the proxy minutes, and enough to explain an absence, so this
+ *  maps rather than reshapes: nothing is computed here and nothing is assumed. */
+export function distancesAsAccess(distances:{rows:NearestRow[];centers:PointFeature[];method:string;
+  candidateCount?:number;eligibleCount?:number;locationSource?:AccessValue['locationSource'];
+  speedMPerMin?:number}):AccessValue{
+  // The filter's counts and the subjects' provenance are carried, not invented: nearest reports
+  // how many candidates it located and how many survived narrowing, and travel_time passes them
+  // through. Replacing them with zeros here is what made the UI read "0 eligible facilities".
+  return {kind:'access',boundary:structuredClone(boundary),
+    filters:{minimumEvidence:'contextual',service:'onsite',speedMPerMin:distances.speedMPerMin??0},
+    locationSource:distances.locationSource,
+    centers:[],eligibleCount:distances.eligibleCount??0,candidateCount:distances.candidateCount??0,
+    method:distances.method,source:SOURCE,dataset:DATASET,provenance:structuredClone(provenance),
+    rows:distances.rows.map((row):AccessRow=>({id:row.id,name:row.name,coordinates:row.coordinates,
+      attributes:row.attributes??{},distanceKm:row.unit==='metres'&&row.distance!==null?row.distance/1000:row.distance,
+      minutes:row.minutes??null,center:row.center?{...row.center,
+        tier:(row.center.attributes?.tier as Tier)??'None',
+        service:(row.center.attributes?.service as Service)??'Unknown',
+        owner:String(row.center.attributes?.owner??''),
+        serviceType:String(row.center.attributes?.serviceType??''),
+        reference:String(row.center.attributes?.reference??''),
+        attributes:row.center.attributes??{}} as unknown as AccessRow['center']:null}))};
+}
+
 export async function applyAccessReview(access:AccessValue,thresholdMin:number,reasoner:Reasoner){
   const n3=accessN3(access.rows,thresholdMin),conclusions=await reasoner(n3.input);
   return {
@@ -192,7 +259,21 @@ export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner
       receipts.push({nodeId:node.id,...applied.receipt});
       return applied.value;
     }
-    case 'facility_audit':return {kind:'facility-evidence' as const,facilitySource:inputs.facilities.facilitySource,boundary:inputs.facilities.boundary,dataset:DATASET,provenance:structuredClone(provenance),source:SOURCE,centers:[],rows:inputs.facilities.facilities.map(f=>({...f,status:f.tier==='Direct'?'NoFlag' as const:f.tier==='None'?'Unknown' as const:'Review' as const,distanceKm:null,explanation:f.reference}))};
+    case 'facility_audit':{
+      // Rows from a point layer's own attributes. facilitySource and boundary left with the
+      // gradedFacilities carrier: they belong to the nodes that produced them, and reaching
+      // through a carrier to find them is how a thin carrier becomes a thick one.
+      return {kind:'facility-evidence' as const,dataset:DATASET,provenance:structuredClone(provenance),
+        source:SOURCE,centers:[],rows:inputs.points.features.map(f=>{
+          const tier=f.properties.tier as Tier;
+          return {id:f.id,name:String(f.properties.name),
+            coordinates:f.geometry?([...f.geometry.coordinates] as Position):null,
+            owner:String(f.properties.owner??''),serviceType:String(f.properties.serviceType??''),
+            tier,service:f.properties.service as Service,reference:String(f.properties.reference??''),
+            status:tier==='Direct'?('NoFlag' as const):tier==='None'?('Unknown' as const):('Review' as const),
+            distance:null,unit:'kilometres' as const,center:null,explanation:String(f.properties.reference??'')};
+        })};
+    }
     default:throw new Error('Unsupported Old Naledi node.');
   }
 }

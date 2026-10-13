@@ -1,0 +1,69 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:access",
+ "version": "0.2.0",
+ "nodeType": "access",
+ "title": "Facility access",
+ "released": "2026-10-12",
+ "implementationStatus": "retired",
+ "standardization": "example-specific",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['access']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "samples",
+    "type": "points"
+   },
+   {
+    "name": "facilities",
+    "type": "gradedFacilities"
+   }
+  ],
+  "output": "access",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:SpatialOperation",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Generic spatial-operation alignment; accepts point features, preserves missing coordinates as unknown; no dedicated activity-type receipt is added.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/old-naledi.ts",
+   "src/old-naledi-ui.ts"
+  ],
+  "definition": "src/old-naledi.ts#OLD_TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Retired. Decomposed into the three steps it was always made of. Its candidate narrowing -- evidence tier at or above a minimum, service matching -- is now a candidateFilter knob on nearest, which is honest as a knob by the test experiment 107 derived: it leaves both ports and the output carrier untouched and changes only which candidates are eligible. Its nearest-neighbour search was already shared code, merged into src/nearest-neighbour.ts earlier the same day. Its proxy-minutes derivation is now the travel_time primitive, a widget rather than a knob because a minutes column changes every row for every consumer, and deliberately not a third value of the unit knob because minutes is a model and not a unit -- a straight-line distance walked at a constant speed, which this widget's own method string already admitted. The filter conditions reproduce this widget's eligibility exactly, verified against the real Old Naledi data at 1 of 122 graded facilities. Not replaceable by a single widget, so a saved workflow holding this node cannot be migrated automatically: it must be rebuilt as nearest with a candidate filter, then travel_time, then the access-review ruleset at 2.0.0. The Old Naledi example was rewired that way in the same commit."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

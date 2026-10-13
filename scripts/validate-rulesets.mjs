@@ -91,7 +91,16 @@ for(const {path,doc} of sets){
 // Resolvable evidence, not citation strings. Restructuring the basis to carry url-or-pdf
 // references is what showed the difference: the one ruleset recorded as having a cited basis cites
 // three papers as author-year text, which resolve to nothing a reader can open.
-const uncited=sets.filter(s=>!(s.doc.basis?.evidence??[]).length);
+// One entry per ruleset IDENTITY, not per version file. A basis belongs to the ruleset: publishing
+// 2.0.0 for a carrier change does not create a second uncited ruleset, and counting files would make
+// the ceiling rise for a change that altered no claim. The newest version of each id is read.
+const byId=new Map();
+for(const entry of sets){
+  const seen=byId.get(entry.doc.id);
+  if(!seen||String(seen.doc.version)<String(entry.doc.version))byId.set(entry.doc.id,entry);
+}
+const rulesets=[...byId.values()];
+const uncited=rulesets.filter(s=>!(s.doc.basis?.evidence??[]).length);
 if(uncited.length>ledger.uncitedCeiling)
   problems.push(`${uncited.length} rulesets carry no citation and rulesets/ledger.json sets uncitedCeiling `
     +`to ${ledger.uncitedCeiling}: ${uncited.map(s=>s.doc.id).join(', ')}. A ruleset must be sourced. `
@@ -104,16 +113,16 @@ for(const entry of ledger.uncited)
   if(!uncited.some(s=>s.doc.id===entry.id))
     problems.push(`rulesets/ledger.json lists ${entry.id} as uncited and it now carries a citation. `
       +`Remove the entry and lower uncitedCeiling to ${uncited.length}, so the number means something.`);
-if(ledger.counts?.rulesets!==sets.length)
-  problems.push(`rulesets/ledger.json counts ${ledger.counts?.rulesets} rulesets and ${sets.length} are present.`);
+if(ledger.counts?.rulesets!==rulesets.length)
+  problems.push(`rulesets/ledger.json counts ${ledger.counts?.rulesets} rulesets and ${rulesets.length} identities are present across ${sets.length} version files.`);
 
 if(problems.length){
   console.error(`\nRulesets: ${problems.length} problem${problems.length===1?'':'s'}.\n`);
   for(const p of problems)console.error(`  • ${p}\n`);
   process.exit(1);
 }
-const unresolved=sets.reduce((n,s)=>n+(s.doc.basis?.unresolvedCitations??[]).length,0);
-console.log(`Rulesets: ${sets.length} declared, ${sets.length-uncited.length} with resolvable evidence, `
+const unresolved=rulesets.reduce((n,s)=>n+(s.doc.basis?.unresolvedCitations??[]).length,0);
+console.log(`Rulesets: ${rulesets.length} declared across ${sets.length} version files, ${rulesets.length-uncited.length} with resolvable evidence, `
   +`${uncited.length} without, against a ceiling of ${ledger.uncitedCeiling}. `
   +`${unresolved} citation${unresolved===1?'':'s'} named but not resolvable.`);
 if(uncited.length)console.log(`  no resolvable evidence: ${uncited.map(s=>`${s.doc.id.split(':').pop()} (${s.doc.basis.status})`).join(', ')}`);

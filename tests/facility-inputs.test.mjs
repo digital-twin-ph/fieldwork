@@ -6,18 +6,31 @@ import {oldNalediWorkflow,executeOldNode} from '../build/old-naledi.js';
 import {boundary,facilities} from '../examples/old-naledi/data.js';
 import {Parser} from 'n3';
 const legacy=JSON.parse(await readFile(new URL('./fixtures/old-naledi-source-2026-10-06.json',import.meta.url),'utf8'));
-test('legacy registry splits once, preserving outgoing edges and respecting deliberate disconnection',()=>{
-  const original=structuredClone(legacy),w=validateWorkflow(legacy);
-  assert.deepEqual(legacy,original);assert.equal(w.nodes.length,legacy.nodes.length+1);
-  assert.deepEqual(w.edges.slice(0,legacy.edges.length),legacy.edges);
-  const source=w.nodes.find(n=>n.type==='observations');assert.equal(source.params.data.features.length,214);
+/** The 2026-10-06 fixture now refuses to open, by design.
+ *
+ *  It holds an `access` node, which was retired on 2026-10-12 and decomposed into three steps --
+ *  a candidate filter knob, the nearest-neighbour search, and travel_time. A widget that cannot be
+ *  replaced by one other widget cannot be migrated, and the practitioner's rule is that such a
+ *  workflow ceases to work **naming the widget**, rather than failing somewhere inside with
+ *  "Incompatible node connection" as this did before.
+ *
+ *  The fixture is kept rather than rewritten: it is evidence of what a workflow looked like on
+ *  that date, and frozen evidence does not get edited to keep a test green.
+ */
+test('a workflow holding a non-replaceable retired widget refuses to open, naming it',()=>{
+  const original=structuredClone(legacy);
+  assert.throws(()=>validateWorkflow(legacy),/Facility access, which was retired and cannot be replaced/);
+  assert.deepEqual(legacy,original,'and the refusal does not mutate what it refused');
+});
+
+/** What that fixture used to prove, proved against the live example instead: the legacy facility
+ *  registry splits once into a connected Input data source, and splits idempotently. */
+test('the legacy registry splits once into a shared source, and only once',()=>{
+  const w=validateWorkflow(oldNalediWorkflow());
+  const source=w.nodes.find(n=>n.type==='observations'&&n.params.data?.features?.length===214);
+  assert.ok(source,'the 214 bundled facility records arrive on a shared Input data node');
   assert.equal(source.params.sourceInfo.commit,'7f183843075a6534b6699cd107cc74def1315bcd');
-  assert.deepEqual(validateWorkflow(w),w);
-  w.edges=w.edges.filter(e=>e.port!=='points');
-  assert.throws(()=>executionPlan(w),/points input connected/);
-  assert.equal(validateWorkflow(w).nodes.length,w.nodes.length);
-  const collision=structuredClone(legacy);collision.nodes.push({...source,id:'facility-input-1'});
-  assert.ok(validateWorkflow(collision).nodes.some(n=>n.id==='facility-input-2'));
+  assert.deepEqual(validateWorkflow(w),w,'splitting is idempotent');
 });
 test('connected selection preserves the historical candidate set and actually uses edited input',async()=>{
   const w=validateWorkflow(oldNalediWorkflow()),node=w.nodes.find(n=>n.type==='facilities');

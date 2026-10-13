@@ -1,0 +1,5 @@
+var u="Straight-line distance divided by a stated walking speed. A proxy, not a routed travel time: no street network, no barriers, no terrain and no waiting.";function d(t){if(!Number.isFinite(t)||t<10||t>400)throw new Error("Walking speed must be between 10 and 400 metres per minute.")}function l(t,n){return d(n),t.map(e=>{if(e.distance===null||e.distance===void 0)return{...e,minutes:null};let i=e.unit==="metres"?e.distance:e.distance*1e3;return{...e,minutes:i/n}})}function m(t,n,e,i){let s=`<urn:fieldwork:run:${e}:traveltime:${t.id}>`,a=n.filter(o=>o.minutes!==null&&o.minutes!==void 0).length,r=`@prefix fw: <urn:fieldwork:>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+${s} a fw:TravelTimeEstimate, prov:Activity; prov:used <urn:fieldwork:run:${e}:output:${i}>; fw:assumedSpeedMetresPerMinute ${t.params.speedMPerMin}; fw:travelMode "walking"; fw:recordCount ${n.length}; fw:sampledCount ${a}.
+`;return{nodeId:t.id,kind:"computation",facts:r,rules:"",input:r,conclusions:[],method:u}}export{u as a,d as b,l as c,m as d};
+//# sourceMappingURL=chunk-T4Y3O5LD.js.map

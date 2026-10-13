@@ -87,6 +87,7 @@ export interface ParamsByType {
    *  Contextual}` — the same move by which OR compiles to one rule per disjunct. The authoring
    *  surface may offer "at least Contextual"; what is stored and executed is the set. */
   nearest:{unit:DistanceUnit; candidateFilter?:CandidateCondition[]};
+  travel_time:{label:string; speedMPerMin:number};
   policy:{thresholdKm:number};
   measure_area:{unit:AreaUnit}; coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
   map_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'raster'|'polygons';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:'none'|'osm'|'topo'}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'};

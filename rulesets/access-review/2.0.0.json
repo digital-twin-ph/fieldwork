@@ -1,0 +1,93 @@
+{
+  "schema": "fieldwork/ruleset/1",
+  "id": "urn:fieldwork:ruleset:access-review",
+  "version": "2.0.0",
+  "title": "Access review",
+  "released": "2026-10-12",
+  "description": "Flags a location for review when its straight-line proxy travel time to a qualifying facility exceeds a threshold, and bands every location into a travel-time zone.",
+  "mustNotBeReadAs": "A clinical recommendation, or a routed travel time. The minutes are a straight-line proxy at a stated walking speed.",
+  "rules": "# Proxy access review; not a clinical recommendation or routed travel time.\n{ ?p fw:accessKnown false. } => { ?p fw:decision fw:Unknown; fw:zone fw:Unknown. }.\n{ ?p fw:proxyMinutes ?m. ?m math:greaterThan {{threshold}}. } => { ?p fw:decision fw:Review. }.\n{ ?p fw:proxyMinutes ?m. ?m math:notGreaterThan {{threshold}}. } => { ?p fw:decision fw:NoFlag. }.\n{ ?p fw:proxyMinutes ?m. ?m math:notGreaterThan 5. } => { ?p fw:zone fw:Within5. }.\n{ ?p fw:proxyMinutes ?m. ?m math:greaterThan 5; math:notGreaterThan 15. } => { ?p fw:zone fw:Within15. }.\n{ ?p fw:proxyMinutes ?m. ?m math:greaterThan 15; math:notGreaterThan 30. } => { ?p fw:zone fw:Within30. }.\n{ ?p fw:proxyMinutes ?m. ?m math:greaterThan 30. } => { ?p fw:zone fw:Over30. }.\n",
+  "parameters": [
+    {
+      "name": "threshold",
+      "role": "proxyMinutes",
+      "type": "number",
+      "unit": "http://qudt.org/vocab/unit/MIN",
+      "min": 0,
+      "max": 120,
+      "default": 20,
+      "decimals": 9,
+      "placeholder": "{{threshold}}",
+      "meaning": "Proxy travel time above which a location is flagged for review.",
+      "unitLabel": "min"
+    }
+  ],
+  "inputContract": {
+    "factGenerator": "src/old-naledi.ts#accessN3",
+    "subjectKind": "sampled locations",
+    "expects": [
+      {
+        "predicate": "fw:accessKnown",
+        "type": "boolean"
+      },
+      {
+        "predicate": "fw:proxyMinutes",
+        "type": "number",
+        "unit": "http://qudt.org/vocab/unit/MIN"
+      }
+    ],
+    "ports": {
+      "inputs": [
+        [
+          "distances",
+          "distances"
+        ]
+      ],
+      "output": "decisions"
+    },
+    "projection": "access-review-distances",
+    "parameterFrom": {
+      "threshold": "thresholdMin"
+    },
+    "portsNote": "Declared so one widget can host every ruleset with the ruleset's own ports, pinned in the node as a micro_workflow pins its composition's. Changed at 2.0.0: consumes the general distances carrier, which nearest with a candidate filter and travel_time together produce, instead of the access carrier that one retired widget emitted. The facts are the same facts -- an accessKnown boolean and proxy minutes per subject -- read from a general carrier rather than a producer-named one."
+  },
+  "outputVocabulary": {
+    "predicates": [
+      {
+        "predicate": "fw:decision",
+        "values": [
+          "Review",
+          "NoFlag",
+          "Unknown"
+        ],
+        "unknownValue": "Unknown"
+      },
+      {
+        "predicate": "fw:zone",
+        "values": [
+          "Within5",
+          "Within15",
+          "Within30",
+          "Over30",
+          "Unknown"
+        ],
+        "unknownValue": "Unknown"
+      }
+    ],
+    "unmatchedSubjectsExpected": false,
+    "note": "Two predicates from one ruleset, and one rule concludes both. This is why a rule form with a single conclusion was refuted by the rulesets that exist."
+  },
+  "basis": {
+    "status": "proxy",
+    "statedBy": "The ruleset text itself: \"not a clinical recommendation or routed travel time.\"",
+    "evidence": [],
+    "unresolvedCitations": [],
+    "note": "Three uncited numbers, not one: the review threshold, and the 5, 15 and 30 minute zone bounds, which are literals in the rules rather than parameters because they are this rulesets own banding."
+  },
+  "changes": [
+    {
+      "kind": "major",
+      "description": "Input carrier changed from access to distances. The rules are unchanged. access derived its proxy minutes inside a nearest-neighbour search; that derivation is now the travel_time primitive, which states the walking-speed assumption in its own receipt rather than burying it in a search."
+    }
+  ]
+}

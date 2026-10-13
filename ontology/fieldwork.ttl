@@ -275,6 +275,11 @@ fw:networkMetadata a owl:DatatypeProperty.
 fw:networkNodeCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:networkEdgeCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 
+fw:TravelTimeEstimate a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Travel time estimated from a distance";
+  rdfs:comment "One derivation of walking minutes from a straight-line distance at a stated speed. A PROXY and not a routed travel time: no street network, no barriers, no terrain, no waiting. Declared as its own activity rather than folded into a distance measurement, because minutes is a model and not a unit of distance -- putting it behind a unit selector would present an assumption as a unit. The assumed speed is recorded on every run.";
+  fw:implementationStatus "implemented".
 fw:Ruleset a owl:Class;
   rdfs:subClassOf prov:Plan;
   rdfs:label "Declared ruleset";

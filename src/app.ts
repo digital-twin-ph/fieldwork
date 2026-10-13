@@ -9,8 +9,9 @@ import {pointComparisonMarkup} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
 import {mountCatchmentMap} from './catchment-map.js';
-import {catchmentPlot,polygonSvg} from './catchment-output.js';
+import {catchmentPlot,polygonSvg,catchmentFrame} from './catchment-output.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
+import {metresPerPixel} from './presentation.js';
 import {installCredentials} from './credentials-ui.js';
 import type {CredentialAccess} from './credentials-ui.js';
 import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_COMPOSITION} from './palette.js';
@@ -64,26 +65,26 @@ import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
 import {pointPort,MAX_POINT_LAYERS} from './point-layers.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-function chartControls(n:WorkflowNode<'chart_output'>){
+function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:boolean}={}){
   const p=n.params;
   return `<div class="field"><label class="field-label" for="chart-renderer">Chart enhancement</label><select id="chart-renderer"><option value="html" ${p.renderer!=='vega-lite'?'selected':''}>Classic bars</option><option value="vega-lite" ${p.renderer==='vega-lite'?'selected':''}>Vega-Lite (experimental)</option></select></div>`+
     (p.renderer==='vega-lite'?`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${p.mark!=='point'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option></select>
-    <label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>
+    ${options.omitOrientation?'':`<label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>`}
     <label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(p.chartTitle||'')}" placeholder="Default: result caption">
-    <label class="field-label" for="chart-subtitle">Subtitle / context</label><input id="chart-subtitle" maxlength="160" value="${esc(p.subtitle||'')}" placeholder="Optional context or limitation">
+    <label class="field-label" for="chart-subtitle">Subtitle / context</label><input id="chart-subtitle" maxlength="280" value="${esc(p.subtitle||'')}" placeholder="Optional context or limitation">
     <label class="field-label" for="chart-x-axis">Horizontal axis label</label><input id="chart-x-axis" maxlength="80" value="${esc(p.xAxisTitle||'')}" placeholder="Default from data">
     <label class="field-label" for="chart-y-axis">Vertical axis label</label><input id="chart-y-axis" maxlength="80" value="${esc(p.yAxisTitle||'')}" placeholder="Default from data">
     <label><input id="chart-legend" type="checkbox" ${p.colorByCategory?'checked':''}> Color categories and show legend</label>
-    <label class="field-label" for="chart-source-note">Source / method note</label><textarea id="chart-source-note" maxlength="240" rows="2" placeholder="Default: connected result and run">${esc(p.sourceNote||'')}</textarea>
+    <label class="field-label" for="chart-source-note">Source / method note</label><textarea id="chart-source-note" maxlength="500" rows="2" placeholder="Default: connected result and run">${esc(p.sourceNote||'')}</textarea>
     <p class="description">The title, note, axes and legend travel with the SVG. Both renderers use the same recorded values. Add a Method reference for supporting research.</p>`:'');
 }
 function mapControls(n:WorkflowNode<'map_output'>){
   const p=n.params;
   return `<div class="source-card" data-map-communication><span class="inspector-section">Standalone map</span>
     <label class="field-label" for="map-title">Map title</label><input id="map-title" maxlength="120" value="${esc(p.mapTitle||'')}" placeholder="Default: results tab name">
-    <label class="field-label" for="map-subtitle">Subtitle / context</label><input id="map-subtitle" maxlength="160" value="${esc(p.mapSubtitle||'')}" placeholder="Optional scope or limitation">
+    <label class="field-label" for="map-subtitle">Subtitle / context</label><input id="map-subtitle" maxlength="280" value="${esc(p.mapSubtitle||'')}" placeholder="Optional scope or limitation">
     <label><input id="map-legend-toggle" type="checkbox" ${p.showLegend!==false?'checked':''}> Show map key</label>
-    <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="240" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
+    <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
     ${p.inputMode==='polygons'&&p.presentation==='interactive'?`<label class="field-label" for="map-basemap">Interactive basemap</label><select id="map-basemap"><option value="none" ${!p.basemap||p.basemap==='none'?'selected':''}>Local geometry (offline)</option><option value="osm" ${p.basemap==='osm'?'selected':''}>OpenStreetMap streets</option><option value="topo" ${p.basemap==='topo'?'selected':''}>OpenTopoMap terrain</option></select>`:''}
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
 }
@@ -360,6 +361,7 @@ function renderInspector(){
       +`<select id="series-orientation"><option value="vertical" ${chartOrientation(n.params)==='vertical'?'selected':''}>Vertical · periods along the bottom</option>`
       +`<option value="horizontal" ${chartOrientation(n.params)==='horizontal'?'selected':''}>Horizontal · periods down the side</option></select></div>`
       +'<div class="notice">An epidemic curve: cases per period, in order, labelled with the kind of date the series was built from. A presentation of the series, with no smoothing, no interpolation and no new inference. Vertical by default, because that is how an outbreak report draws one.</div>';
+    content+=chartControls(n,{omitOrientation:true});
   }else if(n.type==='slr_extract_import'){
     const p=n.params;
     content+='<p class="description">Declares an imported long-format table as a bounded extract of published AR6 projections. It imports and declares; it acquires nothing and produces no projection.</p>'
@@ -731,7 +733,12 @@ function renderInspector(){
   optionalElement('#source-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title));
   optionalElement('#replace-data')?.addEventListener('click',()=>{importNode=n.id;$('#geojson-file').click();});
   optionalElement('#output-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()));
-  optionalElement('#chart-renderer')?.addEventListener('change',e=>change(w=>{const params=getNode(w,n.id,'chart_output').params;params.renderer=control(e).value as 'html'|'vega-lite';if(params.renderer==='html'){params.mark='bar';params.orientation='horizontal';}}));
+  // Switching back to the classic bars drops to a mark the HTML renderer can draw, but it must not
+  // flip the axes of a case series: an epidemic curve runs time along the bottom, and forcing it
+  // horizontal left the shipped Snow curve with no columns at all. Found 2026-10-13, when a series
+  // chart was given a renderer control for the first time -- before that it could not reach this
+  // handler, so the defect was unreachable rather than absent.
+  optionalElement('#chart-renderer')?.addEventListener('change',e=>change(w=>{const params=getNode(w,n.id,'chart_output').params;params.renderer=control(e).value as 'html'|'vega-lite';if(params.renderer==='html'){params.mark='bar';if(params.inputMode!=='series')params.orientation='horizontal';}}));
   optionalElement('#chart-mark')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.mark=control(e).value as 'bar'|'point'));
   optionalElement('#chart-orientation')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical'));
   for(const [selector,key] of [['#chart-title','chartTitle'],['#chart-subtitle','subtitle'],['#chart-x-axis','xAxisTitle'],['#chart-y-axis','yAxisTitle'],['#chart-source-note','sourceNote']] as const)
@@ -864,7 +871,13 @@ function renderMap(){
     $('#map-communication-key').innerHTML=key;$('#map-communication-header-key').innerHTML=key;
     $('#map-download-svg').onclick=()=>{const content=result?.polygons&&result.polygonPresentation==='interactive'?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonSvg(result.polygons,esc)):svg.innerHTML;
       const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':svg.getAttribute('viewBox')||'0 0 850 295';
-      download(`${result!.nodeId}-map.svg`,standaloneMapSvg(content,viewBox,spec),'image/svg+xml');};
+      // The scale bar is derived from the plot's own frame, and only for the catchment plot, whose
+      // vertical axis is latitude. A decision table or a basemap-backed view has no single ground
+      // scale, so none is offered rather than guessed.
+      const plotted=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)
+        ?catchmentFrame(result.polygons,result.contextPoints):null;
+      const frame=plotted?{metresPerPixel:metresPerPixel(plotted.pixelsPerDegreeLatitude)}:undefined;
+      download(`${result!.nodeId}-map.svg`,standaloneMapSvg(content,viewBox,spec,frame),'image/svg+xml');};
   }
   svg.style.display='';svg.setAttribute('viewBox','0 0 850 295');
   if(result?.comparison){svg.style.display='none';const host=document.createElement('div');host.id='comparison-map-host';host.innerHTML=pointComparisonMarkup(result.comparison,esc);$('#map-panel').append(host);return;}

@@ -16,9 +16,29 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
       :{id:'catchments',type:'voronoi',x:320,y:200,params:{label:'Nearest pump catchments',zone:30,hemisphere:'north'},references:[reference('voronoi-method','John Snow Voronoi notebook',voronoiSource+'NB03-Constructing-Voronoi-Polygons.ipynb','method','Independent half-plane implementation in WGS84 UTM zone 30N. Original notebook uses angular coordinates; results need not match.')]},
     {id:'clip',type:'clip_polygons',x:620,y:30,params:{label:'Clip to reporting area'}},
     {id:'summary',type:'summarize_polygons',x:910,y:100,params:{label:'Locations and deaths by catchment',boundary:'include',valueField:'DEATHS'}},
-    {id:'map',type:'map_output',x:1210,y:0,params:{label:iso?'Isochrone plot':'Voronoi catchment map',inputMode:'polygons',presentation:'plot',contextPoints:iso}},
+    // Configured for a reader who was not in the room. Everything a figure needs to stand alone is
+    // stated here rather than left to fall back on the node's label and a list of upstream node
+    // names: a title that says what is shown and where, a subtitle that says what the reader is
+    // looking at and what it does not claim, and a source note that credits the data and names the
+    // method. The scale bar, north arrow and ODbL credit are derived.
+    {id:'map',type:'map_output',x:1210,y:0,params:{label:iso?'Isochrone plot':'Voronoi catchment map',inputMode:'polygons',presentation:'plot',contextPoints:iso,
+      mapTitle:iso
+        ?'Five-minute walk from the Broad Street pump, Soho, London, 1854'
+        :'Nearest-pump catchments and cholera deaths, Soho, London, 1854',
+      mapSubtitle:iso
+        ?'Streets reachable on foot within 1, 5, 10 and 15 minutes at 75 m/min, drawn as a 25 m corridor. Walking time along the street network, not straight-line distance; it models reach, not who drank where.'
+        :'Each cell is the ground closer to its own pump than to any other, by straight-line distance. A catchment is a statement about geometry, not about which pump anybody drank from.',
+      mapSourceNote:'Deaths and pump locations: John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, as digitised by Robin Wilson (blog.rtwilson.com/john-snows-cholera-data-in-more-formats). Recomputed in Fieldwork; see the run receipt for method and versions.',
+      showLegend:true}},
     {id:'table',type:'table_output',x:1210,y:170,params:{label:'Catchment counts and deaths',inputMode:'polygons'}},
-    {id:'chart',type:'chart_output',x:1210,y:340,params:{label:'Deaths by catchment',inputMode:'polygons'}},
+    {id:'chart',type:'chart_output',x:1210,y:340,params:{label:'Deaths by catchment',inputMode:'polygons',
+      chartTitle:iso?'Deaths within each walking-time band':'Deaths in each nearest-pump catchment',
+      subtitle:iso
+        ?'Counted once per band, cumulatively: a death one minute from the pump is inside all four.'
+        :'A death is counted in the catchment its address falls in. Counts are of recorded deaths, not of people who used that pump.',
+      xAxisTitle:'Recorded deaths',
+      yAxisTitle:iso?'Walking time from the pump':'Nearest pump',
+      sourceNote:'Source: Snow 1855 death register, digitised by Robin Wilson; catchments recomputed in Fieldwork.'}},
     // Place and time from the same outbreak, side by side and deliberately not joined: the map has
     // buildings without dates and the table has dates without buildings, so no case links the two.
     {id:'dates',type:'table_input',x:20,y:620,params:{label:'Snow 1855 Table 1 · deaths by date',
@@ -30,7 +50,22 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
         `Daily attacks and deaths for the Broad Street outbreak. ${dates.excludedUndated.attacks} attacks of unknown date are excluded, because a keyed table cannot hold an empty key.`)]},
     {id:'curve',type:'case_series',x:470,y:620,params:{label:'Deaths by day',source:'table',
       dateField:'date',dateKind:'death',period:'day'}},
-    {id:'epidemic',type:'chart_output',x:900,y:620,params:{label:'Epidemic curve · by date of death',inputMode:'series'}}
+    // The presentation text is configured and the renderer is NOT. Switching the shipped curve to
+    // Vega-Lite was tried and backed out: the mounted chart is not disposed when a practitioner
+    // switches back to the classic bars, so the panel keeps showing the old chart until the next
+    // full render. That is a defect in the renderer swap, not in this example, and shipping the
+    // example on the renderer that exposes it would have hidden it behind a worked example instead
+    // of recording it. With the text in place, choosing "Enhanced" in the Inspector gives a
+    // complete figure immediately.
+    {id:'epidemic',type:'chart_output',x:900,y:620,params:{label:'Epidemic curve · by date of death',inputMode:'series',
+      // Orientation is left to the default, which is vertical for a case series. Stating it
+      // explicitly is refused unless the Vega renderer is also selected -- an inconsistency, since
+      // the default reaches the same value and the classic bars draw it -- so the default is used.
+      chartTitle:'Cholera deaths by date of death, Soho, London, 1854',
+      subtitle:'Date of death, not date of onset or of report. The outbreak is conventionally dated from 31 August; the pump handle was removed on 8 September, by which time the curve had already turned.',
+      xAxisTitle:'Date of death, 1854',
+      yAxisTitle:'Recorded deaths',
+      sourceNote:'Source: John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, as digitised by Robin Wilson. 489 deaths at 250 distinct addresses.'}}
   ];
   if(iso)nodes.push({id:'network',type:'network_input',x:20,y:390,params:{label:'Soho OSM network snapshot',inputMethod:'file',marginM:250,data:structuredClone(graph)},references:[reference('network-source','Soho saved GraphML',isoSource+'outputs/soho.graphml','data','OpenStreetMap contributors, ODbL. Extraction date unknown. 738 nodes / 1619 directed edges; not a reconstructed 1854 network.')]});
   if(iso){

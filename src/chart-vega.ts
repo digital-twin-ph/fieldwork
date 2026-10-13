@@ -1,12 +1,16 @@
 import type {ChartSummary} from './results.js';
 import type {WorkflowNode} from './types.js';
 import appPackage from '../package.json';
+import {FIGURE_PALETTE,FIGURE_ROLE,FIGURE_TYPE} from './presentation.js';
 
 type ChartParams=WorkflowNode<'chart_output'>['params'];
 type VegaChart={finalize:()=>void};
 let current:VegaChart|null=null;
 let generation=0;
-const colors=['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc949','#af7aa1','#ff9da7'];
+/** The shared figure palette, so a chart and the map beside it agree. It was a Tableau-flavoured
+ *  eight of its own until 2026-10-13, which meant a map and a chart from the same worked example
+ *  could not go on one page. */
+const colors=FIGURE_PALETTE;
 /** Which way the bars run, and what decides it when nobody has said.
  *
  *  A case series is an epidemic curve: periods run along the bottom and counts rise, which
@@ -81,13 +85,18 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
     data:{values},
     ...transform,
     title:{text:params.chartTitle?.trim()||chart.caption,subtitle:[params.subtitle?.trim(),sourceNote].filter((part):part is string=>!!part),anchor:'start' as const},
-    mark:{type:mark,filled:true,...(params.colorByCategory?{}:{color:'#176956'}),...(mark==='point'?{size:110}:{})},
+    mark:{type:mark,filled:true,...(params.colorByCategory?{}:{color:FIGURE_ROLE.primary}),...(mark==='point'?{size:110}:{})},
     encoding:orientation==='horizontal'
       ?{x:{...quantity,title:params.xAxisTitle?.trim()||quantityTitle},y:{...category,title:params.yAxisTitle?.trim()||'Category'},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]}
       :{x:{...category,title:params.xAxisTitle?.trim()||'Category'},y:{...quantity,title:params.yAxisTitle?.trim()||quantityTitle},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]},
     width:Math.min(560,Math.max(300,chart.bins.length*72)),
     height:orientation==='horizontal'?Math.max(140,chart.bins.length*38):280,
-    config:{view:{stroke:null},axis:{labelFontSize:12,titleFontSize:12}},
+    // One type scale with the map, including the family: a chart that inherits the page font and a
+    // map that names Arial are two figures, not a pair.
+    config:{view:{stroke:null},font:FIGURE_TYPE.family,
+      axis:{labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,labelColor:FIGURE_ROLE.quietInk,titleColor:FIGURE_ROLE.ink},
+      title:{fontSize:FIGURE_TYPE.title,subtitleFontSize:FIGURE_TYPE.subtitle,color:FIGURE_ROLE.ink,subtitleColor:FIGURE_ROLE.quietInk},
+      legend:{labelFontSize:FIGURE_TYPE.legend,titleFontSize:FIGURE_TYPE.legend,labelColor:FIGURE_ROLE.quietInk}},
   };
 }
 

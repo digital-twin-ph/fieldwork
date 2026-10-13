@@ -1,34 +1,63 @@
 import type {Output,Receipt} from './results.js';
 import type {WorkflowNode,Workflow} from './types.js';
+import {FIGURE_ROLE,FIGURE_TYPE,scaleBarSvg,northArrowSvg,metresPerPixel} from './presentation.js';
 
-export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:'square'}[]; presentation:'plot'|'interactive'; basemap:'none'|'osm'|'topo'}
+export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:'square'}[]; presentation:'plot'|'interactive'; basemap:'none'|'osm'|'topo';
+  /** Licence and attribution for the data shown. Separate from the source note because a note is
+   *  editorial and this is an obligation: an OSM-derived layer must say ODbL and credit
+   *  contributors wherever the figure ends up, and a figure that travels without it is not
+   *  publishable however complete it otherwise looks. */
+  attribution:string}
 
 /** A map specification describes presentation; it never changes source geometries or decisions. */
 export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,workflow:Workflow):MapPresentation{
   const upstream=workflow.edges.filter(e=>e.to===node.id).map(e=>workflow.nodes.find(n=>n.id===e.from)?.params.label||e.from);
   const sourceNote=node.params.mapSourceNote?.trim()||`Sources: ${upstream.join(', ')||'connected workflow inputs'} · CRS84. ${output.polygons?.method||output.method||'See N3 & evidence for method.'}`;
+  // Colours come from FIGURE_ROLE, so the same meaning carries the same hue here, in the plot and
+  // in a chart placed beside it. They were eight unrelated hex literals until 2026-10-13.
+  const R=FIGURE_ROLE;
   let items:MapPresentation['items']=[];
   if(output.polygons){
-    items=output.polygons.kind==='hexbin'?[{label:'Released H3 cell',color:'#3686a8'},{label:'Sparse cells omitted',color:'#ffffff'}]:output.polygons.features.some(f=>f.minutes!==undefined)?[
-      {label:'Cumulative travel-time region',color:'#1f77b4'},
-      {label:'Observations',color:node.params.presentation==='interactive'?'#d62f2f':'gray'},
-      {label:'Sites / context',color:node.params.presentation==='interactive'?'#174d47':'red',shape:'square'}
-    ]:[{label:'Modeled catchment',color:'#3686a8'},{label:'Observations',color:'#70523a'},{label:'Sites',color:'#174d47',shape:'square'}];
-  }else if(output.raster)items=[{label:'Relative cell value (see scale)',color:'#3686a8'},{label:'NoData / outside mask',color:'#a8a8a8'}];
-  else if(output.kind==='spatial-map')items=[{label:'Outside boundary',color:'#c88944'},{label:'Inside / boundary',color:'#598c73'},{label:'Missing location (not plotted)',color:'#a89b87'}];
-  else items=[{label:'Review',color:'#c88944'},{label:'No flag',color:'#598c73'},{label:'Unknown',color:'#a89b87'},{label:'Facility',color:'#375e59',shape:'square'}];
+    items=output.polygons.kind==='hexbin'?[{label:'Released H3 cell',color:R.primary},{label:'Sparse cells omitted',color:R.background}]:output.polygons.features.some(f=>f.minutes!==undefined)?[
+      {label:'Cumulative travel-time region',color:R.primary},
+      {label:'Observations',color:R.secondary},
+      {label:'Sites / context',color:R.site,shape:'square'}
+    ]:[{label:'Modeled catchment',color:R.primary},{label:'Observations',color:R.secondary},{label:'Sites',color:R.site,shape:'square'}];
+  }else if(output.raster)items=[{label:'Relative cell value (see scale)',color:R.primary},{label:'NoData / outside mask',color:R.unknown}];
+  else if(output.kind==='spatial-map')items=[{label:'Outside boundary',color:R.attention},{label:'Inside / boundary',color:R.agreement},{label:'Missing location (not plotted)',color:R.unknown}];
+  else items=[{label:'Review',color:R.attention},{label:'No flag',color:R.agreement},{label:'Unknown',color:R.unknown},{label:'Facility',color:R.site,shape:'square'}];
   const interactive=node.params.presentation==='interactive'&&!!output.polygons;
-  return {title:node.params.mapTitle?.trim()||node.params.label,subtitle:node.params.mapSubtitle?.trim()||'',sourceNote,legend:node.params.showLegend!==false,items,presentation:interactive?'interactive':'plot',basemap:interactive?node.params.basemap||'none':'none'};
+  const basemap=interactive?node.params.basemap||'none':'none';
+  // Derived, not authored: a basemap carries an obligation the practitioner cannot opt out of by
+  // leaving a field blank, and a street network reached this figure through an ODbL download.
+  const credits=[
+    basemap==='osm'||basemap==='topo'?'Basemap © OpenStreetMap contributors, ODbL':'',
+    output.polygons?.method?.includes('Dijkstra')||output.polygons?.notes?.some(n=>n.includes('OSM'))
+      ?'Street network © OpenStreetMap contributors, ODbL':'',
+  ].filter(Boolean);
+  return {title:node.params.mapTitle?.trim()||node.params.label,subtitle:node.params.mapSubtitle?.trim()||'',sourceNote,legend:node.params.showLegend!==false,items,presentation:interactive?'interactive':'plot',basemap,
+    attribution:credits.join(' · ')};
 }
 
-export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentation):string{
+/** `metresPerPixel` comes from the plot's own frame (`catchmentFrame`), so the scale bar is drawn
+ *  from the number the geometry was drawn with. Omitted for a view with no single ground scale --
+ *  a decision table, a basemap-backed interactive view -- and then no bar is drawn, because a
+ *  figure missing a scale bar is incomplete while a figure with a wrong one is misleading. */
+export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentation,frame?:{metresPerPixel?:number}):string{
   const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
   const lines=(value:string,max:number)=>value.match(new RegExp(`.{1,${max}}(?:\\s|$)|.{1,${max}}`,'g'))?.map(line=>line.trim())||[];
+  const t=FIGURE_TYPE;
   const titleLines=lines(spec.title,60),subtitleLines=lines(spec.subtitle,105);
-  const width=850,height=Number(viewBox.trim().split(/\s+/)[3])||295,base=52+titleLines.length*24+subtitleLines.length*16,legendRows=spec.legend?Math.ceil(spec.items.length/2):0,noteLines=lines(spec.sourceNote,110),footer=38+legendRows*22+noteLines.length*16,total=base+height+footer;
-  const legend=spec.legend?spec.items.map((item,i)=>{const x=28+(i%2)*402,y=base+height+24+Math.floor(i/2)*22;return `${item.shape==='square'?`<rect x="${x}" y="${y-9}" width="10" height="10" fill="${item.color}"/>`:`<circle cx="${x+5}" cy="${y-4}" r="5" fill="${item.color}" stroke="#718171"/>`}<text x="${x+17}" y="${y}" font-size="12" fill="#344b40">${escape(item.label)}</text>`;}).join(''):'';
+  const width=850,height=Number(viewBox.trim().split(/\s+/)[3])||295,base=52+titleLines.length*24+subtitleLines.length*16,legendRows=spec.legend?Math.ceil(spec.items.length/2):0,noteLines=lines(spec.sourceNote,110);
+  const creditLines=spec.attribution?lines(spec.attribution,110):[];
+  const footer=38+legendRows*22+(noteLines.length+creditLines.length)*16,total=base+height+footer;
+  const legend=spec.legend?spec.items.map((item,i)=>{const x=28+(i%2)*402,y=base+height+24+Math.floor(i/2)*22;return `${item.shape==='square'?`<rect x="${x}" y="${y-9}" width="10" height="10" fill="${item.color}"/>`:`<circle cx="${x+5}" cy="${y-4}" r="5" fill="${item.color}" stroke="${FIGURE_ROLE.quietInk}"/>`}<text x="${x+17}" y="${y}" font-size="${t.legend}" fill="${FIGURE_ROLE.ink}">${escape(item.label)}</text>`;}).join(''):'';
   const noteY=base+height+30+legendRows*22;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${total}" width="${width}" height="${total}" role="img" aria-label="${escape(spec.title)}"><title>${escape(spec.title)}</title><desc>${escape(spec.subtitle+' '+spec.sourceNote)}</desc><style>text{font-family:Arial,sans-serif}.gridline{stroke:#cdd8c5;stroke-width:.5;stroke-dasharray:2 6}.location-label{font-size:10px;fill:#4f6550}</style><rect width="${width}" height="${total}" fill="white"/>${titleLines.map((line,i)=>`<text x="28" y="${31+i*24}" font-size="20" font-weight="bold" fill="#213f34">${escape(line)}</text>`).join('')}${subtitleLines.map((line,i)=>`<text x="28" y="${35+titleLines.length*24+i*16}" font-size="12" fill="#53695e">${escape(line)}</text>`).join('')}<svg x="0" y="${base}" width="850" height="${height}" viewBox="${escape(viewBox)}">${content}</svg>${legend}${noteLines.map((line,i)=>`<text x="28" y="${noteY+i*16}" font-size="11" fill="#53695e">${escape(line)}</text>`).join('')}</svg>`;
+  // Placed over the plot's lower-left, inside the mapped frame rather than in the footer, which is
+  // where a reader looks for them and where they stay if the figure is cropped to the map.
+  const furniture=(frame?.metresPerPixel?scaleBarSvg({x:110,y:base+height-26,metresPerPixel:frame.metresPerPixel}):'')
+    +(frame?.metresPerPixel?northArrowSvg({x:width-52,y:base+28}):'');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${total}" width="${width}" height="${total}" role="img" aria-label="${escape(spec.title)}"><title>${escape(spec.title)}</title><desc>${escape(spec.subtitle+' '+spec.sourceNote)}</desc><style>text{font-family:${t.family}}.gridline{stroke:#CDD8C5;stroke-width:.5;stroke-dasharray:2 6}.location-label{font-size:${t.tick-2}px;fill:${FIGURE_ROLE.quietInk}}</style><rect width="${width}" height="${total}" fill="${FIGURE_ROLE.background}"/>${titleLines.map((line,i)=>`<text x="28" y="${31+i*24}" font-size="${t.title}" font-weight="${t.titleWeight}" fill="${FIGURE_ROLE.ink}">${escape(line)}</text>`).join('')}${subtitleLines.map((line,i)=>`<text x="28" y="${35+titleLines.length*24+i*16}" font-size="${t.subtitle}" fill="${FIGURE_ROLE.quietInk}">${escape(line)}</text>`).join('')}<svg x="0" y="${base}" width="850" height="${height}" viewBox="${escape(viewBox)}">${content}</svg>${furniture}${legend}${[...noteLines,...creditLines].map((line,i)=>`<text x="28" y="${noteY+i*16}" font-size="${t.note}" fill="${FIGURE_ROLE.quietInk}">${escape(line)}</text>`).join('')}</svg>`;
 }
 
 export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Output,workflow:Workflow,runId:string,receipt:Receipt):string{

@@ -63,10 +63,13 @@ export interface DisplayValue {
   contextPoints?:PointCollection;
   polygons?:import('./catchments.js').Polygons;
   raster?:import('./raster.js').RasterGrid;
+  /** A street network shown as itself. Carried here rather than converted to polygons, because
+   *  the thing a practitioner is checking is the graph that was downloaded. */
+  network?:import('./catchments.js').Network;
   chart?:ChartSummary;
   locationSource?:{nodeId?:string; kind:string};
   facilitySource?:RegistryValue['facilitySource'];
-  kind?:'study-area'|'spatial-coverage'|'spatial-map'|'point-table'|'data-table'|'access'|'facility-evidence'|'raster-map';
+  kind?:'study-area'|'spatial-coverage'|'spatial-map'|'point-table'|'data-table'|'access'|'facility-evidence'|'raster-map'|'network-map';
   rows:DisplayRow[]; centers:PointFeature[]; boundary?:Boundary; label?:string; areaId?:string; geometryId?:string;
   measurement?:Measurement; ready?:boolean; pointTable?:boolean; pointLayers?:LayerSummary[];
   checkNodeId?:string; areaNodeId?:string; reviewCount?:number; excludedCount?:number; canProceed?:boolean;

@@ -323,6 +323,18 @@ fw:portType a owl:ObjectProperty;
   fw:implementationStatus "proposed".
 
 
+# Two port types no live widget declares. They were the carriers of widgets retired on 2026-10-12 --
+# gradedFacilities emitted by xpert and consumed by access and facility_audit, and access emitted by
+# access and consumed by access_policy -- and they survive in those widgets' own definitions, which
+# a retired widget keeps so that a saved workflow can still be read. Declared here so the mapping
+# from a port type to its term is total, and so the ontology records which carriers were retired,
+# which it had no way to say before.
+fw:GradedFacilitiesPort a fw:PortType; rdfs:label "gradedFacilities";
+  rdfs:comment "Retired 2026-10-12. A producer-named port type -- D4a's custom stud -- replaced by a general point layer carrying the grading in each feature's attributes.";
+  fw:implementationStatus "retired".
+fw:AccessPort a fw:PortType; rdfs:label "access";
+  rdfs:comment "Retired 2026-10-12 with the access widget, which was decomposed into a candidate filter on nearest, the shared nearest-neighbour search, and the travel_time primitive. Its rows travel as `distances` now.";
+  fw:implementationStatus "retired".
 fw:PointsPort a fw:PortType; rdfs:label "points".
 fw:AreaPort a fw:PortType; rdfs:label "area".
 fw:PolygonsPort a fw:PortType; rdfs:label "polygons".

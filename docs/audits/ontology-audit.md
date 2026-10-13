@@ -323,6 +323,52 @@ the fifth — structure — is covered by classes that already exist and are **u
 assertions across twelve node outputs. That gap is real and entirely independent of the carrier
 class; adding a class did not close it and removing one did not open it.
 
+### The shape, written — and what SHACL could not be made to check
+
+Written 2026-10-12. The gap: ten of twelve per-node outputs asserted nothing about themselves
+beyond `prov:Entity`, so a reader had to fetch a widget's release file to learn what a value was.
+
+**What the run now says.** The shared emitter in `src/evidence.ts` asserts, for each node,
+`prov:generated` from the step to the value it produced — a link the emitter never made — and the
+value's declared port type:
+
+    <...:step:nearest> a prov:Activity; fw:workflowNode <...:plan:nearest>; prov:generated <...:output:nearest>.
+    <...:output:nearest> a prov:Entity; fw:portType fw:DistancesPort.
+
+Five of five node outputs in the heat example now declare one, and twelve of twelve in Old Naledi.
+
+**The shape**, `fw:PortTypeClaimShape` in `ontology/shapes/runtime-receipts.ttl`, targets the
+subjects of `fw:portType` and requires each to be a `prov:Entity` with exactly one port type drawn
+from the declared individuals. `sh:class fw:PortType` is what makes an undeclared port type a
+violation rather than a silent string. It is enforced against a real run, not an example graph:
+`tests/runtime-ontology.test.mjs` already loads a run's provenance and receipts through
+`auditRuntimeRun` and asserts conformance.
+
+**What it cannot check, and why that is the right answer.** It cannot require *every* node output to
+declare a port type, because **SHACL cannot identify a node output**. There is no marker: this audit
+tried `sh:targetSubjectsOf fw:workflowNode` first and it failed, because
+`src/runtime-semantics.ts` asserts that property on every *receipt* activity; `prov:generated` fails
+too, since `area-measurement.ts`, `data-table.ts` and `table-output.ts` each emit it for entities of
+their own.
+
+A marker could be minted to make the target work. **That marker is `fw:Carrier`**, the class D11
+rejected two sections above — and the rejection holds: the function here is *completeness of a
+claim across a known plan*, and a test knows the plan while the graph does not. So completeness is
+checked in `tests/evidence.test.mjs`, which walks the plan and requires a port-type claim per node,
+and additionally derives each port type's term — `coverage-check` → `fw:CoverageCheckPort` — so a new
+port type cannot arrive with its term silently missing. There is no table to forget to update.
+
+**The split is the finding.** SHACL checks the shape of a claim; a test checks that the claim is
+made everywhere it should be. Reaching for a class to collapse the two would have put a term in the
+ontology to serve a validator's targeting convenience, which is not a function.
+
+Two smaller things fell out. `fw:GradedFacilitiesPort` and `fw:AccessPort` are now declared and
+marked `retired`: no live widget emits either, both survive in retired widgets' own definitions, and
+declaring them makes the port-type mapping total while recording in the ontology which carriers were
+retired — which it had no way to say before. And the `PortType` union was briefly reduced to 13 to
+match, then restored to 15, because retired widgets keep their declarations so a saved workflow can
+still be read.
+
 ### A criterion this yields, which is D1 for vocabulary
 
 The widget criterion asks whether a residual distinction remains that does not follow from a

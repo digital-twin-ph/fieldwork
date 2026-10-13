@@ -618,7 +618,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     const output=outputs.find(o=>o.nodeId===node.id),receipt=receipts.find(r=>r.nodeId===node.id);
     if(output&&receipt)mapSpecificationFacts(node,output,workflow,runId,receipt);
   }
-  const provenance=evidenceProvenance(plan,workflow.edges,runId,receipts);
+  // Each node's declared output port type, so the provenance says what every value travelled as.
+  const portTypes=Object.fromEntries(plan.map(node=>[node.id,outputOf(node)]));
+  const provenance=evidenceProvenance(plan,workflow.edges,runId,receipts,portTypes);
   for(const receipt of receipts){const cited=provenance.evidence.find(e=>e.nodeId===receipt.nodeId);if(cited)receipt.references=structuredClone(cited.references);}
   return {...provenance,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString()};
 }

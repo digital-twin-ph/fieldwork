@@ -73,7 +73,20 @@ export interface ParamsByType {
   // Metres and kilometres are the same measurement stated differently; minutes needs a speed and
   // stays with `access`. The unit travels on the output, because a distance without its unit is
   // not interpretable and `policy` compares it against a threshold.
-  nearest:{unit:DistanceUnit};
+  /** `candidateFilter` narrows which candidates the search considers, by their own attributes.
+   *
+   *  A knob rather than a widget, by the test experiment 107 derived: a knob is honest when the
+   *  contract does not move with it. This leaves both ports and the output carrier untouched and
+   *  changes only which candidates are eligible, which is what a threshold does too. It is what
+   *  `access` added over this widget, and holding it here means the exclusion and the search land
+   *  in one receipt and cannot disagree about what was considered.
+   *
+   *  The comparators are `in` and `notIn` over a declared set, deliberately, and not an ordinal
+   *  `>=`. Old Naledi asks for "evidence at least Contextual", which is an ordinal comparison on a
+   *  categorical, and over a finite declared vocabulary that compiles to a set — `{Direct,
+   *  Contextual}` — the same move by which OR compiles to one rule per disjunct. The authoring
+   *  surface may offer "at least Contextual"; what is stored and executed is the set. */
+  nearest:{unit:DistanceUnit; candidateFilter?:CandidateCondition[]};
   policy:{thresholdKm:number};
   measure_area:{unit:AreaUnit}; coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
   map_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'raster'|'polygons';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:'none'|'osm'|'topo'}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'};
@@ -98,6 +111,10 @@ export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId
 // (docs/experiments/105-five-directions.md), and removed rather than counted, because a closed
 // union with a dead member is a contract that claims a carrier the application does not have.
 export type DistanceUnit = 'metres'|'kilometres';
+/** One condition on a candidate's own attributes. The same shape as the rule builder's authored
+ *  condition (experiment 106), pointed at selection rather than at classification — a third caller
+ *  for that form, after classification and the role binding experiment 61 proposes. */
+export interface CandidateCondition {field:string; comparator:'in'|'notIn'; values:Scalar[]}
 export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'polygons'|'network'|'mean-center'|'point-comparison';
 export interface NodeDefinition {title:string; group:string; icon:string; color:string; description:string; inputs:[string,PortType][]; output:PortType|null}
 export type Escape = (value:unknown)=>string;

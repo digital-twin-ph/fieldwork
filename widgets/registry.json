@@ -457,7 +457,7 @@
   {
    "id": "urn:fieldwork:widget:nearest",
    "nodeType": "nearest",
-   "currentVersion": "0.3.0",
+   "currentVersion": "0.4.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -468,6 +468,11 @@
      "version": "0.3.0",
      "path": "widgets/releases/nearest/0.3.0.json",
      "sha256": "15870e87d35ca5583f34f31e085726e5dd531b0f0cdd68d2175db69773b5fc63"
+    },
+    {
+     "version": "0.4.0",
+     "path": "widgets/releases/nearest/0.4.0.json",
+     "sha256": "322bd0a7f5b869e9b0ee1e4e6cfacf83de20fe0466281f8a4cdbe1b235df5900"
     }
    ]
   },

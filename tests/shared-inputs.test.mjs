@@ -19,8 +19,8 @@ test('heat sources share Input data and legacy normalization preserves identity,
     assert.deepEqual(normalized.nodes[i].sourceMigration,{fromType:legacy.nodes[i].type,version:'1'});
   }
   assert.deepEqual(validateWorkflow(normalized),normalized,'migration must be idempotent');
-  const rows=nearestPlaces(normalized.nodes[0].params.data,normalized.nodes[1].params.data);
-  const before=nearestPlaces(original.nodes[0].params.data,original.nodes[1].params.data);
+  const {rows}=nearestPlaces(normalized.nodes[0].params.data,normalized.nodes[1].params.data);
+  const {rows:before}=nearestPlaces(original.nodes[0].params.data,original.nodes[1].params.data);
   assert.deepEqual(rows,before);
   assert.deepEqual(makeN3(rows,{active:true,date:'2026-07-15'},5),makeN3(before,{active:true,date:'2026-07-15'},5));
   // `distanceKm` became `distance` with a stated `unit` when the unit became a knob: three

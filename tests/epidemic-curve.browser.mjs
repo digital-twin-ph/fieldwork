@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {useClassicBars} from './classic-bars.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
@@ -12,6 +13,8 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await upload(page,fixture);
   await run(page);
+  // These checks read the classic bars' markup; Vega-Lite is the default renderer now.
+  await useClassicBars(page,'curve');
 
   // 43 daily bins between 19 August and 30 September 1854, totalling 616 deaths.
   await expect(page.locator('#bars-panel')).toContainText('Cases by day of date of death');
@@ -63,6 +66,7 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
 test('the John Snow workspace shows place and time together, and refuses to join them',async({page})=>{
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
+  await useClassicBars(page,'epidemic');
 
   // The catchment map and the epidemic curve are results of one workspace.
   await page.locator('#result-tabs [data-output="map"]').click();
@@ -90,6 +94,7 @@ test('the epidemic curve can be turned on its side, and reports the same counts'
   await page.goto('/?example=snow-isochrone');
   await page.locator('#run-button').click();
   await expect(page.locator('#result-tabs [data-output="epidemic"]')).toBeVisible({timeout:30000});
+  await useClassicBars(page,'epidemic');
   await page.locator('#result-tabs [data-output="epidemic"]').click();
   await expect(page.locator('#bars-panel .bar-column')).toHaveCount(43);
 

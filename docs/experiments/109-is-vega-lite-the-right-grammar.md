@@ -70,12 +70,25 @@ right kind of thing, not that fourteen marks are enough — nobody has yet wante
 chart this cannot draw, and the first time somebody does, the answer is Vega and
 the experiment is whether a Vega specification stays as inspectable in a receipt.
 
-It also does not establish that the renderer is in good order. Three defects found
-on 2026-10-13 while configuring the Snow figures are recorded in the commit that
-made them standalone: the mounted chart is not disposed when a practitioner
-switches back to the classic bars, a series chart had no presentation controls at
-all, and the classic bars have no figure export, so a chart drawn on the default
-renderer cannot leave the application the way a map can.
+It also does not establish that the renderer is in good order. Two real defects
+were found on 2026-10-13 while configuring the Snow figures: a series chart had no
+presentation controls at all, and the classic bars have no figure export, so a
+chart drawn on the default renderer cannot leave the application the way a map can.
+
+**A third was not real, and was reported twice before being checked.** This
+document and the commit that preceded it both said the mounted chart is not
+disposed when a practitioner switches back to the classic bars, and that this was
+why shipping the Snow curve on Vega-Lite was backed out. Reproduced in a browser on
+the same day: switching to Vega-Lite and back restores the classic bars exactly --
+43 columns, the right caption, and zero leftover SVG -- because `renderResults`
+calls `disposeVegaChart()` before it renders anything. The real cause of that
+afternoon's failures was a chain of my own edits: a series chart genuinely had no
+renderer control yet, and an explicit `orientation: 'vertical'` was refused without
+the Vega renderer. Both are fixed, and neither is a disposal problem.
+
+The lesson is the one this repository keeps relearning. "The chart is not disposed"
+was an inference from a failing test, and it was written down in the same sentence
+as measurements that had actually been taken, which is what made it look like one.
 
 And the paper's three limitations apply here, not only there:
 

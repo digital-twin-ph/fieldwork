@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {useClassicBars} from './classic-bars.mjs';
 import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
 test("Old Naledi evidence and diagnostic access workflows",async({page,context})=>{
@@ -19,6 +20,8 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   await expect(clinic).toContainText('Inferential');await expect(clinic).toContainText('Onsite or referral');
   await expect(page.locator('#result-rows tr').filter({hasText:'Princess Marina Hospital'})).toContainText('Direct');
   await clinic.click();await expect(page.locator('#inspector-content')).toContainText('Dickinson 2017');
+  // These read the classic bars' markup; Vega-Lite is the default renderer now.
+  await useClassicBars(page,'access-chart');
   await page.getByRole('tab',{name:'Access zones'}).click();await expect(page.locator('#bars-panel')).toBeVisible();
   await expect(page.locator('#bars-panel .bar-column').filter({hasText:'> 30 min'}).locator('b')).toHaveText('21');
   // Widening eligibility, through the candidate-filter editor that replaced `access`'s two

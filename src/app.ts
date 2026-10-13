@@ -49,7 +49,7 @@ import {coverageTable,coverageEvidence} from './coverage-ui.js';
 import {openInputDataEditor} from './input-data-ui.js';
 import {boundary as oldNalediBoundary} from '../examples/old-naledi/data.js';
 import {chartMarkup} from './chart-output.js';
-import {chartOrientation} from './chart-vega.js';
+import {chartOrientation,chartRenderer} from './chart-vega.js';
 import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,downloadRaster} from './raster-ui.js';
 import {openReprojectEditor} from './reproject-ui.js';
@@ -67,8 +67,8 @@ import {pointPort,MAX_POINT_LAYERS} from './point-layers.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:boolean}={}){
   const p=n.params;
-  return `<div class="field"><label class="field-label" for="chart-renderer">Chart enhancement</label><select id="chart-renderer"><option value="html" ${p.renderer!=='vega-lite'?'selected':''}>Classic bars</option><option value="vega-lite" ${p.renderer==='vega-lite'?'selected':''}>Vega-Lite (experimental)</option></select></div>`+
-    (p.renderer==='vega-lite'?`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${p.mark!=='point'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option></select>
+  return `<div class="field"><label class="field-label" for="chart-renderer">Chart enhancement</label><select id="chart-renderer"><option value="html" ${chartRenderer(p)!=='vega-lite'?'selected':''}>Classic bars</option><option value="vega-lite" ${p.renderer==='vega-lite'?'selected':''}>Vega-Lite (experimental)</option></select></div>`+
+    (chartRenderer(p)==='vega-lite'?`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${p.mark!=='point'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option></select>
     ${options.omitOrientation?'':`<label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>`}
     <label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(p.chartTitle||'')}" placeholder="Default: result caption">
     <label class="field-label" for="chart-subtitle">Subtitle / context</label><input id="chart-subtitle" maxlength="280" value="${esc(p.subtitle||'')}" placeholder="Optional context or limitation">
@@ -733,12 +733,11 @@ function renderInspector(){
   optionalElement('#source-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title));
   optionalElement('#replace-data')?.addEventListener('click',()=>{importNode=n.id;$('#geojson-file').click();});
   optionalElement('#output-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()));
-  // Switching back to the classic bars drops to a mark the HTML renderer can draw, but it must not
-  // flip the axes of a case series: an epidemic curve runs time along the bottom, and forcing it
-  // horizontal left the shipped Snow curve with no columns at all. Found 2026-10-13, when a series
-  // chart was given a renderer control for the first time -- before that it could not reach this
-  // handler, so the defect was unreachable rather than absent.
-  optionalElement('#chart-renderer')?.addEventListener('change',e=>change(w=>{const params=getNode(w,n.id,'chart_output').params;params.renderer=control(e).value as 'html'|'vega-lite';if(params.renderer==='html'){params.mark='bar';if(params.inputMode!=='series')params.orientation='horizontal';}}));
+  // Switching back to the classic bars drops to a mark that renderer can draw, and touches nothing
+  // else. It used to force orientation to horizontal as well, which was already wrong for a case
+  // series -- it left the shipped Snow curve with no columns -- and became wrong for every chart
+  // once vertical was made the default: a reset that overrides the default is not a reset.
+  optionalElement('#chart-renderer')?.addEventListener('change',e=>change(w=>{const params=getNode(w,n.id,'chart_output').params;params.renderer=control(e).value as 'html'|'vega-lite';if(params.renderer==='html')params.mark='bar';}));
   optionalElement('#chart-mark')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.mark=control(e).value as 'bar'|'point'));
   optionalElement('#chart-orientation')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical'));
   for(const [selector,key] of [['#chart-title','chartTitle'],['#chart-subtitle','subtitle'],['#chart-x-axis','xAxisTitle'],['#chart-y-axis','yAxisTitle'],['#chart-source-note','sourceNote']] as const)
@@ -805,7 +804,7 @@ function renderResults(){
   $('#table-panel').classList.toggle('point-table',!!output?.pointTable);
   if(output?.pointTable)renderPointTable();
   const chartNode=runWorkflow?.nodes.find(n=>n.id===output?.nodeId&&n.type==='chart_output') as WorkflowNode<'chart_output'>|undefined;
-  if(output?.chart&&chartNode?.params.renderer==='vega-lite'){
+  if(output?.chart&&chartNode&&chartRenderer(chartNode.params)==='vega-lite'){
     const chartContext={sourceId:runWorkflow?.edges.find(e=>e.to===output.nodeId)?.from,runId:result?.runId};
     const spec=chartVegaSpec(output.chart,chartNode.params,chartContext);
     $('#bars-panel').innerHTML=`<p class="muted">${esc(output.chart.caption)} · ${output.chart.total} input records · grouping: ${esc(output.chart.field)}</p>${output.chart.field==='total'?'<p class="notice">The chart source does not declare a physical unit for this numeric total. Check the source and method before interpreting it.</p>':''}<div id="vega-chart" role="img" aria-label="${esc(output.chart.caption)}"></div><details><summary>Underlying chart values</summary><table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>${output.chart.bins.map(b=>`<tr><td>${esc(b.label)}</td><td>${b.count}</td></tr>`).join('')}</tbody></table></details><details><summary>Vega-Lite specification</summary><pre>${esc(JSON.stringify(spec,null,2))}</pre></details>`;

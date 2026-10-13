@@ -50,13 +50,7 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
         `Daily attacks and deaths for the Broad Street outbreak. ${dates.excludedUndated.attacks} attacks of unknown date are excluded, because a keyed table cannot hold an empty key.`)]},
     {id:'curve',type:'case_series',x:470,y:620,params:{label:'Deaths by day',source:'table',
       dateField:'date',dateKind:'death',period:'day'}},
-    // The presentation text is configured and the renderer is NOT. Switching the shipped curve to
-    // Vega-Lite was tried and backed out: the mounted chart is not disposed when a practitioner
-    // switches back to the classic bars, so the panel keeps showing the old chart until the next
-    // full render. That is a defect in the renderer swap, not in this example, and shipping the
-    // example on the renderer that exposes it would have hidden it behind a worked example instead
-    // of recording it. With the text in place, choosing "Enhanced" in the Inspector gives a
-    // complete figure immediately.
+    // The presentation text is configured here; the renderer is the application's default.
     {id:'epidemic',type:'chart_output',x:900,y:620,params:{label:'Epidemic curve · by date of death',inputMode:'series',
       // Orientation is left to the default, which is vertical for a case series. Stating it
       // explicitly is refused unless the Vega renderer is also selected -- an inconsistency, since

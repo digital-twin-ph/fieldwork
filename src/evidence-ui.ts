@@ -42,7 +42,7 @@ export function openEvidenceEditor(node:WorkflowNode,onSave:(refs:EvidenceRefere
   const kind=()=>{const pdf=select('reference-kind').value==='pdf';el('reference-url-field').hidden=pdf;el('reference-pdf-field').hidden=!pdf;input('reference-url').required=!pdf;};
   function reset(){
     el<HTMLFormElement>('reference-form').reset();editing=null;dirty=false;el('reference-discard').hidden=true;
-    select('reference-role').value=['area','places','centers','observations','facilities','alert'].includes(node.type)?'data':'method';
+    select('reference-role').value=['area','places','centers','point_input','facilities','alert'].includes(node.type)?'data':'method';
     el('reference-form-title').textContent='Add a reference';el('reference-file-hint').textContent='Up to 5 MB per PDF, 10 MB total per workflow. Stored on this device and included in Export.';kind();
   }
   function edit(ref:EvidenceReference){

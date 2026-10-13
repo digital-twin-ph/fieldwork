@@ -21,8 +21,8 @@ export const OLD_TYPES:Record<'area'|'facilities'|'xpert'|'access'|'access_polic
   // for what it carries rather than for the widget that used to produce it.
   facility_audit:{title:'Evidence register',group:'Summaries',icon:'☷',color:'green',description:'Inspect every candidate facility and its evidence basis',inputs:[['points','points']],output:'decisions'}
 };
-export function facilityInput(id:string):WorkflowNode<'observations'>{
-  return {id,type:'observations',x:25,y:390,params:{label:'Gaborone facility registry',
+export function facilityInput(id:string):WorkflowNode<'point_input'>{
+  return {id,type:'point_input',x:25,y:390,params:{label:'Gaborone facility registry',
     data:{type:'FeatureCollection',features:facilities.map(f=>({type:'Feature',id:f.id,properties:{name:f.name,owner:f.owner,serviceType:f.serviceType},geometry:{type:'Point',coordinates:[...f.coordinates]}}))},
     fields:[{key:'owner',label:'Ownership',type:'text'},{key:'serviceType',label:'Service type',type:'text'}],
     sourceInfo:{format:'bundled-registry',repository:provenance.repository,commit:provenance.commit,sourcePath:provenance.files[1].path,sourceSha256:provenance.files[1].sha256}}};

@@ -49,7 +49,7 @@ export function seaLevelExample():Workflow{
     // The eight published tide gauges the extract covers. A site is where a projection exists,
     // not a place of interest, and the distance to one is part of the result rather than a
     // detail: a projection at a gauge is not a value for an arbitrary point.
-    {id:'sites',type:'observations',x:20,y:470,
+    {id:'sites',type:'point_input',x:20,y:470,
       params:{label:`${sites.features.length} AR6 projection sites`,
         data:structuredClone(sites) as PointCollection,
         sourceInfo:{format:'CSV',source:provenance.sites.source,licence:provenance.sites.licence}},

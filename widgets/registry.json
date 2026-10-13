@@ -512,20 +512,28 @@
       ]
     },
     {
-      "id": "urn:fieldwork:widget:observations",
-      "nodeType": "observations",
-      "currentVersion": "0.2.0",
+      "id": "urn:fieldwork:widget:point_input",
+      "nodeType": "point_input",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
-          "path": "widgets/releases/observations/0.1.0.json",
+          "path": "widgets/releases/point_input/0.1.0.json",
           "sha256": "c49c093b8c0f331b8ecd3410ace9f275a01631f257ad9be66127cc1b5b38e597"
         },
         {
           "version": "0.2.0",
-          "path": "widgets/releases/observations/0.2.0.json",
+          "path": "widgets/releases/point_input/0.2.0.json",
           "sha256": "7a52b52999bc2cada3ec1f0b8471f46dac7c9bf24da1023dd0f3918c884ba201"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/point_input/0.3.0.json",
+          "sha256": "eb395f70a6a8545376d9550e75f40dea8b69cba38cb3043749076680d9d7b7a6"
         }
+      ],
+      "previousNodeTypes": [
+        "observations"
       ]
     },
     {

@@ -28,8 +28,8 @@ test('canvas selection reveals and highlights its library primitive without addi
   await page.locator('.react-flow__node[data-id="catchments"]').click();
   await expect(page.locator('#node-search')).toHaveValue('');await expect(page.locator('[data-add="voronoi"]')).toHaveAttribute('aria-current','true');
   await expect(page.locator('.primitive-selected')).toHaveCount(1);
-  await page.locator('.react-flow__node[data-id="pumps"]').click();await expect(page.locator('[data-add="observations"]')).toHaveClass(/primitive-selected/);await expect(page.locator('[data-add="voronoi"]')).toHaveAttribute('aria-current','false');
-  await page.locator('.react-flow__node[data-id="locations"]').click();await expect(page.locator('[data-add="observations"]')).toHaveClass(/primitive-selected/);
+  await page.locator('.react-flow__node[data-id="pumps"]').click();await expect(page.locator('[data-add="point_input"]')).toHaveClass(/primitive-selected/);await expect(page.locator('[data-add="voronoi"]')).toHaveAttribute('aria-current','false');
+  await page.locator('.react-flow__node[data-id="locations"]').click();await expect(page.locator('[data-add="point_input"]')).toHaveClass(/primitive-selected/);
   assert.equal((await saved(page)).nodes.length,before.nodes.length);
   await page.locator('.react-flow__pane').click({position:{x:10,y:10}});await expect(page.locator('.primitive-selected')).toHaveCount(0);
 });

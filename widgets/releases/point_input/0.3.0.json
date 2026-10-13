@@ -1,0 +1,75 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:point_input",
+  "version": "0.3.0",
+  "nodeType": "point_input",
+  "title": "Point data",
+  "released": "2026-10-13",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['point_input']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [],
+    "output": "points",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "configuration",
+        "iri": "urn:fieldwork:GenericInputConfiguration",
+        "file": "ontology/processing.ttl"
+      }
+    ],
+    "note": "Design alignment to GenericInputConfiguration; not a claim that current receipts emit this type.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/input-data.ts",
+      "src/input-data-ui.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "places",
+        "adapterVersion": "1",
+        "implementation": "src/core.ts#validateWorkflow"
+      },
+      {
+        "nodeType": "centers",
+        "adapterVersion": "1",
+        "implementation": "src/core.ts#validateWorkflow"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Renamed from `observations` to `point_input`. The old identifier keeps resolving: a saved workflow naming `observations` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `observations` is a category noun, and the title \"Input data\" said \"input\" where the identifier did not and shared no word with it -- so a reader had to learn a mapping that carried no information. The operation is importing observed points, and the title is now \"Point data\", which matches `table_input` and \"Tabular data\". Clears three violations: audited-name, role-word-in-title and title-type-agreement. No contract change: ports, output, parameters and behaviour are identical."
+    },
+    {
+      "kind": "minor",
+      "description": "Heat examples use shared input editing. Legacy places and centers normalize on load without changing IDs, labels, references, geometry or scalar attributes; sourceMigration records adapter version 1."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Shared-input unit and Chromium regressions cover migration, data preservation, editor saving and offline EYE results; repository gate remains authoritative."
+  }
+}

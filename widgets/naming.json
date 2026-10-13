@@ -5,7 +5,7 @@
   "domainPrefixes": {
     "urn:fieldwork:pack:sea-level-rise": "slr"
   },
-  "maxKnownViolations": 10,
+  "maxKnownViolations": 7,
   "knownViolations": [
     {
       "nodeType": "reproject",
@@ -19,24 +19,6 @@
       "reason": "The node type opens with a transform verb and the widget is filed under Sources. Both are honest about the contract: inputs are empty and the data arrives in params, so it imports UTM points and converts them in one step. The name promises a transform the contract does not offer on its own.",
       "clearedBy": "Split the operation: `reproject` takes points and returns points under Spatial operations. Acquisition stays with the source widgets, which gain an output CRS so the common case needs no second node. Migration uses the experiment 18 adapter.",
       "gatedOn": "sources-group-does-not-mean-acquisition"
-    },
-    {
-      "nodeType": "observations",
-      "rule": "role-word-in-title",
-      "reason": "Titled 'Input data', which says 'input' while the node type does not, and names a category rather than an operation.",
-      "clearedBy": "Retitle and rename together; the operation is importing observed points."
-    },
-    {
-      "nodeType": "observations",
-      "rule": "title-type-agreement",
-      "reason": "'Input data' shares no word with `observations`, so a reader has to learn a mapping that carries no information.",
-      "clearedBy": "Same rename."
-    },
-    {
-      "nodeType": "observations",
-      "rule": "audited-name",
-      "reason": "A category noun. Judged in the 2026-10-09 audit sweep.",
-      "clearedBy": "Same rename."
     },
     {
       "nodeType": "area",

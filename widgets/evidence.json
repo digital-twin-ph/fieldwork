@@ -327,7 +327,18 @@
    "rung": "example, lab not applicable"
   },
   {
-   "nodeType": "observations",
+   "nodeType": "point_grid",
+   "exampleUses": [
+    "old-naledi"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
+   "nodeType": "point_input",
    "exampleUses": [
     "geoprivacy",
     "heat",
@@ -343,17 +354,6 @@
    "labOwed": false,
    "fieldUse": [],
    "rung": "example, lab not applicable"
-  },
-  {
-   "nodeType": "point_grid",
-   "exampleUses": [
-    "old-naledi"
-   ],
-   "exampleUseCount": 1,
-   "lab": "awaiting",
-   "labOwed": true,
-   "fieldUse": [],
-   "rung": "example only"
   },
   {
    "nodeType": "raster_input",

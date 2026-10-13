@@ -16,6 +16,9 @@ const receipt=async page=>{await page.locator('[data-view="rules"]').click();con
 
 test('Table displays point attributes without a boundary, pages, searches, and reloads offline',async({page,context})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  // The fixture was saved before `observations` was renamed to `point_input`, and keeps its own
+  // value: it is the frozen record the rename adapter exists for. The application migrates it on
+  // load; this line reads the file, so it reads the name the file contains.
   const w=structuredClone(fixture);w.nodes=w.nodes.filter(n=>n.type==='observations');w.edges=[];
   const source=w.nodes[0],sample=source.params.data.features[0];source.params.data.features=Array.from({length:105},(_,i)=>({...structuredClone(sample),id:`row${i}`,geometry:i===104?null:sample.geometry,properties:{...sample.properties,name:`Visit ${i}`,confirmed:false,count:0,...Object.fromEntries(Array.from({length:15},(_,n)=>[`field${n}`,n])),notes:i===104?'<script>needle104</script>':null}}));
   await page.goto('/?example=blank');await upload(page,w);await page.locator('[data-add="table_output"]').click();

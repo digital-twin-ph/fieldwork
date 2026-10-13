@@ -4,7 +4,7 @@ import {exampleWorkflow,validateWorkflow,nearestPlaces,makeN3} from '../build/co
 
 test('heat sources share Input data and legacy normalization preserves identity, attributes and connections',()=>{
   const current=exampleWorkflow();
-  assert.deepEqual(current.nodes.slice(0,2).map(n=>n.type),['observations','observations']);
+  assert.deepEqual(current.nodes.slice(0,2).map(n=>n.type),['point_input','point_input']);
   const legacy=structuredClone(current);
   legacy.nodes[0].type='places';legacy.nodes[1].type='centers';
   legacy.nodes[0].params.data.features[0].properties.population=123;

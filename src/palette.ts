@@ -25,7 +25,7 @@ export const ALWAYS_ADDABLE=[
 ] as const;
 
 /** Offered on the two teaching canvases, which start with almost nothing. */
-export const STARTER_TYPES=['area','observations','measure_area','coverage_check','map_output'] as const;
+export const STARTER_TYPES=['area','point_input','measure_area','coverage_check','map_output'] as const;
 
 /** Derived from each widget's declared `implementationStatus`, not hand-maintained.
  *
@@ -59,7 +59,7 @@ export function addableTypes(options:{
   const {exampleKey,templateTypes,workflowTypes,catchmentTypes}=options;
   const starter=['blank','coverage'].includes(exampleKey);
   const allowed=new Set<string>(starter?STARTER_TYPES:templateTypes);
-  if(exampleKey==='old-naledi')for(const type of ['measure_area','observations','coverage_check','map_output'])allowed.add(type);
+  if(exampleKey==='old-naledi')for(const type of ['measure_area','point_input','coverage_check','map_output'])allowed.add(type);
   for(const type of catchmentTypes)allowed.add(type);
   for(const type of ALWAYS_ADDABLE)allowed.add(type);
   // Whatever is already on the canvas stays addable, so a deleted node can be put back.

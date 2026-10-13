@@ -31,10 +31,10 @@ export function runtimeBindingN3(node:WorkflowNode,runId:string,receipts:Receipt
   let facts=`${plan} a fw:WorkflowNodePlan; fw:widget <${entry.id}>; fw:nodeType ${JSON.stringify(node.type)}; fw:catalogVersion ${JSON.stringify(entry.currentVersion)}; fw:catalogDigest ${JSON.stringify(release.sha256)}; fw:widgetDefinitionSource ${JSON.stringify(HOST_REGISTRY)}.\n<${entry.id}> a fw:WidgetDefinition.\n${step} a fw:WorkflowStep; fw:resultEntity ${output}.\n`;
   // Catalog versions describe the bundle's current descriptors, not selected old executables.
   for(const receipt of receipts.filter(r=>r.nodeId===node.id))for(const activity of receiptActivities(node,runId))facts+=`${step} fw:receiptActivity <${activity}>.\n<${activity}> a prov:Activity; fw:workflowNode ${plan}.\n`;
-  if(node.type==='observations'||node.type==='places'||node.type==='centers'){
+  if(node.type==='point_input'||node.type==='places'||node.type==='centers'){
     facts+=`${plan} a fw:GenericInputConfiguration.\n${step} a fw:PointInput.\n${output} a fw:PointDataset, geo:FeatureCollection; prov:wasGeneratedBy ${step}; fw:recordCount ${node.params.data.features.length}.\n`;
-    const definitions=node.type==='observations'?[...(node.params.fields||[]),...(node.params.attributeRules||[])]:[];
-    if(node.type==='observations'&&node.params.sourceInfo)facts+=`${output} fw:sourceMetadata ${JSON.stringify(JSON.stringify(node.params.sourceInfo))}.\n`;
+    const definitions=node.type==='point_input'?[...(node.params.fields||[]),...(node.params.attributeRules||[])]:[];
+    if(node.type==='point_input'&&node.params.sourceInfo)facts+=`${output} fw:sourceMetadata ${JSON.stringify(JSON.stringify(node.params.sourceInfo))}.\n`;
     for(const f of node.params.data.features){const record=`<${base}output:${node.id}:record:${encodeURIComponent(f.id)}>`;
       facts+=`${output} fw:member ${record}.\n${record} a geo:Feature; dcterms:identifier ${JSON.stringify(f.id)}; dcterms:title ${JSON.stringify(f.properties.name)}; dcterms:isPartOf ${output}; fw:missingLocation ${!f.geometry}.\n`;
       if(f.geometry)facts+=`${record} geo:hasGeometry [ a geo:Geometry; geo:asWKT ${JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT ('+f.geometry.coordinates.join(' ')+')')}^^geo:wktLiteral ].\n`;

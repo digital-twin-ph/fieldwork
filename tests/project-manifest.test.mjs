@@ -8,7 +8,7 @@ test('project manifest inventories additions and removals and rejects stale save
   syncProjectManifest(w);assert.deepEqual(w.manifest,first);
   w.nodes.push({id:'new-chart',type:'chart_output',x:0,y:0,params:{label:'Counts'}});assert.throws(()=>validateWorkflow(w),/manifest/);
   syncProjectManifest(w,true);assert.equal(w.manifest.revision,first.revision+1);assertProjectManifest(w);
-  const source=w.nodes.find(n=>n.type==='observations');source.params.data.features.pop();assert.throws(()=>assertProjectManifest(w),/manifest/);syncProjectManifest(w,true);
+  const source=w.nodes.find(n=>n.type==='point_input');source.params.data.features.pop();assert.throws(()=>assertProjectManifest(w),/manifest/);syncProjectManifest(w,true);
   source.params.fields=[{key:'age',label:'Age',type:'integer'}];assert.throws(()=>assertProjectManifest(w),/manifest/);syncProjectManifest(w,true);
   w.edges.push({id:'counts',from:'criteria',to:'new-chart',port:'decisions'});assert.throws(()=>assertProjectManifest(w),/manifest/);syncProjectManifest(w,true);assert.deepEqual(validateWorkflow(w).manifest,w.manifest);
   w.nodes.pop();w.edges.pop();syncProjectManifest(w,true);assert.equal(w.manifest.inventory.nodes.length,first.inventory.nodes.length);

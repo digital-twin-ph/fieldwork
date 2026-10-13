@@ -149,7 +149,7 @@
       "reason": "Validates a supplied graph against its stated endpoints and lengths. The validation is unit-tested; nothing is recomputed from data."
     },
     {
-      "nodeType": "observations",
+      "nodeType": "point_input",
       "expectation": "none",
       "reason": "Supplied point data."
     },

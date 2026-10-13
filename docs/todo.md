@@ -512,3 +512,31 @@ An earlier version of this entry said `_output` was "a committed artifact that
 nothing checks". That was wrong — it is gitignored, and CI builds the site fresh
 from `content/` on every push, so the published site was never stale. What was
 three notebooks behind was a local build directory, which matters to nobody.
+
+**A source should be able to declare the CRS of its output port.** Proposed
+2026-10-13, from the pandas/geopandas analogy the project already follows: a
+`GeoDataFrame` carries its CRS and `to_crs` is a method on it, so acquiring data
+in UTM and wanting it in WGS84 is one call, not two objects. Today `reproject`
+is the second node, and it is filed under Sources because it imports its own
+data — which is why the naming ratchet flags it twice
+(`widgets/naming.json`). Giving each geospatial source an output-CRS knob saves
+that step for the common case.
+
+The knob is honest by the test experiment 107 derived — the contract does not
+move with it. The output port type stays `points`; what changes is the
+`spatialReference` travelling on the value. That is the precedent `nearest`
+already set with its distance unit: *the unit travels on the output, because a
+distance without its unit is not interpretable*. Coordinates without their CRS
+are not interpretable either, and `SpatialReference` is currently frozen to
+WGS84/EPSG:4326 in `src/types.ts`, so this makes a field that pretends to be
+constant actually vary — which `checkRange` and the UTM advice already assume it
+does.
+
+`reproject` is still needed, and not as a leftover: a practitioner may want a
+mid-workflow translation, or two versions of the same data in different CRSs
+side by side, which a knob on the source cannot express because it has only one
+output. So this is a split, not a replacement — the source gains a knob and
+`reproject` becomes a true `points → points` transform under Spatial
+operations. Renaming it is a migration under the
+[experiment 18](experiments/18-shared-input-standardization.md) adapter, and the
+two naming entries say so.

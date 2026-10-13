@@ -600,6 +600,30 @@ not a label adjusted later.
 D7 continues to apply over the top of these: a name that satisfies every rule above can still
 overclaim, as "Acquire a GeoTIFF window" did for an operation that imports a local file.
 
+**Enforced since 2026-10-13** by `scripts/validate-naming.mjs` against
+`widgets/naming.json`, in the build gate. For four days this section bound nothing: no file in
+`scripts/` read a title, a group or a node type against it, and in that window `reproject` kept a
+title in a form this table does not allow and a group its own name contradicts, while a
+practitioner — not a check — found both. That is the same shape as `implementationStatus:
+'retired'` being a declarable value no file read, and it is the reason a convention recorded as
+prose should be treated as not yet in force.
+
+The ratchet lists 13 known violations, each with a reason and a route out, and it fails in both
+directions: a new violation fails the build, and a violation that has been fixed must be removed
+from the list, so the count can only fall. Six rules are checked — form, `-ize` spelling, a role
+word in a title whose identifier lacks it, a transform verb grouped under Sources, a domain
+widget missing its declared prefix, and a title sharing no stem with its identifier. The rules
+that are not mechanical stay review questions: "name the operation in the words a practitioner
+would use to ask for it" is not checkable, and neither is overclaiming.
+
+Two of the six rules were wrong when first written and reported compliant widgets as violations:
+the domain-prefix rule derived `sea` from the pack IRI `urn:fieldwork:pack:sea-level-rise` and
+failed all three `slr_` widgets, which the convention explicitly blesses, and the title rule
+required a four-character stem, which rejected "Tabular data" for `table_input` because
+*tabular* does not contain *tabl*. Both are now tested against the cases they got wrong. A check
+that fires on correct code teaches people to switch it off, so the first duty of a new ratchet is
+to be right about what already passes.
+
 Renaming an existing node type is a migration and uses the adapter pattern recorded in
 [experiment 18](../experiments/18-shared-input-standardization.md): the old identifier keeps
 resolving, saved workflows keep running, and the release file records the rename. A name is

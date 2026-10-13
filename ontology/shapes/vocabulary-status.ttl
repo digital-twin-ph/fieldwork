@@ -1,0 +1,49 @@
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix fw: <urn:fieldwork:>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+
+# Retirement, stated so that something other than this application can read it.
+#
+# Added 2026-10-13. Two port types were retired on 2026-10-12 carrying only
+# `fw:implementationStatus "retired"` and an rdfs:comment naming their replacement in prose. The
+# status is what src/palette.ts reads; the prose was readable by nobody. OWL 2 already has a
+# deprecation flag, DCMI already has a replacement property and SKOS already has a note for a
+# change, so the standards were adopted alongside the project term rather than instead of it --
+# `fw:implementationStatus` also carries "implemented" and "proposed", so it is not equivalent to
+# `owl:deprecated` and only its "retired" value corresponds.
+#
+# These shapes exist so that the next retirement cannot be recorded the first way. A convention
+# that holds only while someone remembers it is the defect this repository keeps finding: a
+# declared value no file reads, a naming convention no script checked, a reduction ledger nothing
+# cross-referenced.
+
+fw:RetiredTermShape a sh:NodeShape;
+  rdfs:label "A retired term states its retirement in standard vocabulary";
+  sh:targetSubjectsOf fw:implementationStatus;
+  sh:or (
+    # Not retired: nothing to say.
+    [ sh:not [ sh:property [ sh:path fw:implementationStatus; sh:hasValue "retired" ] ] ]
+    # Retired: say it where a reader outside this project will look.
+    [ sh:property [ sh:path owl:deprecated; sh:hasValue true; sh:minCount 1;
+        sh:message "A retired term must carry owl:deprecated true, which is the flag OWL 2 defines and every other tool reads." ];
+      sh:property [ sh:path dcterms:isReplacedBy; sh:minCount 1; sh:nodeKind sh:IRI;
+        sh:message "A retired term must name its replacement with dcterms:isReplacedBy, not in prose inside an rdfs:comment where nothing can follow it." ];
+      sh:property [ sh:path skos:changeNote; sh:minCount 1; sh:nodeKind sh:Literal;
+        sh:message "A retired term must carry a skos:changeNote saying what happened. rdfs:comment says what a term means; a note about a change to it is skos:changeNote." ] ]
+  );
+  sh:message "A term declared `fw:implementationStatus \"retired\"` must also carry owl:deprecated true, dcterms:isReplacedBy and skos:changeNote. The project status is what this application reads; the standard terms are what anything else reads.".
+
+fw:DeprecatedTermShape a sh:NodeShape;
+  rdfs:label "A deprecated term is retired, and says so in both vocabularies";
+  sh:targetSubjectsOf owl:deprecated;
+  # The correspondence runs both ways, so the two records cannot drift. `owl:deprecated false` is
+  # refused rather than treated as "current": it is the default for every term that omits it, so
+  # stating it adds nothing and inviting it would create a second way to say "not retired".
+  sh:property [ sh:path owl:deprecated; sh:hasValue true; sh:maxCount 1;
+    sh:message "owl:deprecated is asserted only as true. Omit it for a term that is not retired, rather than stating false, which is already the default." ];
+  sh:property [ sh:path fw:implementationStatus; sh:hasValue "retired"; sh:minCount 1;
+    sh:message "A term carrying owl:deprecated must also carry fw:implementationStatus \"retired\", because that is the value src/palette.ts reads to keep a retired widget off the palette. Deprecated in the ontology and live in the application is the drift these shapes exist to prevent." ].

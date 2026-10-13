@@ -101,7 +101,7 @@ export interface ParamsByType {
   map_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'raster'|'polygons';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:'none'|'osm'|'topo'}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'};
   chart_output:{label:string;inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference'};
   output:{label?:string; view:'map'|'table'|'bars'};
-  facilities:{dataset:string; radiusKm:number; sourceMode?:'connected'}; samples:{spacingM:number};
+  facilities:{dataset:string; radiusKm:number; sourceMode?:'connected'}; point_grid:{spacingM:number};
   xpert:Record<string,never>; facility_audit:Record<string,never>;
   access:{minimumEvidence:'direct'|'contextual'|'inferential'; service:'onsite'|'anyKnown'; speedMPerMin:number};
   access_policy:{thresholdMin:number};
@@ -112,7 +112,15 @@ export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:
  *  never runs, so loading one is a rewrite that must say so, or a refusal that names it. */
 export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert';
 
-export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType; version:'1'}};
+/** Node types that were renamed rather than retired: the operation is unchanged and the old
+ *  identifier keeps resolving, so a saved workflow opens and runs. Distinct from a retirement,
+ *  which refuses. Each entry is a public identifier that can never be removed, only kept
+ *  resolving -- which is why the naming convention treats a name as a commitment made at D1 time
+ *  and not a label adjusted later. */
+export type RenamedNodeType='samples';
+export const RENAMED_NODE_TYPES:Record<RenamedNodeType,NodeType>={samples:'point_grid'};
+
+export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType|RenamedNodeType; version:'1'}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}
 export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'|'raster'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'sea-level'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
 // 'samples' was removed on 2026-10-12: it sat in this union and nowhere else, produced by

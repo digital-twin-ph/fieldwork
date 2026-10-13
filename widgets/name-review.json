@@ -244,14 +244,13 @@
       "reviewedBy": null
     },
     {
-      "nodeType": "samples",
+      "nodeType": "point_grid",
       "title": "Point grid",
       "group": "Spatial operations",
-      "fingerprint": "be96722534d1",
+      "fingerprint": "15dc526b7b7e",
       "verdict": "pending",
       "reviewed": null,
-      "reviewedBy": null,
-      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+      "reviewedBy": null
     },
     {
       "nodeType": "slr_site_assignment",

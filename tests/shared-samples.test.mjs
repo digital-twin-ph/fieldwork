@@ -8,7 +8,7 @@ import {validateWorkflow,executionPlan,distanceKm} from '../build/core.js';
 import {boundary} from '../examples/old-naledi/data.js';
 
 test('sample generation supplies standard point features and GeoSPARQL computation evidence',async()=>{
-  const w=validateWorkflow(oldNalediWorkflow()),node=w.nodes.find(n=>n.type==='samples'),receipts=[];
+  const w=validateWorkflow(oldNalediWorkflow()),node=w.nodes.find(n=>n.type==='point_grid'),receipts=[];
   const generated=await executeOldNode(node,{area:{boundary,areaId:'urn:test:area'}},()=>{},receipts,distanceKm);
   assert.equal(generated.type,'FeatureCollection');assert.equal(generated.features.length,21);
   assert.deepEqual(generated.features.map(f=>({id:f.id,name:f.properties.name,coordinates:f.geometry.coordinates})),sampleLocations(boundary,250));

@@ -8,6 +8,7 @@
 @prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
 
 # Bounded catchment primitives, experimental implementation (2026-10-07).
 fw:VoronoiComputation a owl:Class;
@@ -329,11 +330,29 @@ fw:portType a owl:ObjectProperty;
 # a retired widget keeps so that a saved workflow can still be read. Declared here so the mapping
 # from a port type to its term is total, and so the ontology records which carriers were retired,
 # which it had no way to say before.
+#
+# Retirement is stated twice on purpose, from 2026-10-13. `fw:implementationStatus` is what the
+# application reads -- src/palette.ts derives the retired set from it -- and `owl:deprecated` is
+# what every other tool reads, because OWL 2 already has a deprecation flag and a project does not
+# need its own. The replacement is `dcterms:isReplacedBy`, which DCMI defines for exactly this, and
+# the explanation is `skos:changeNote`. The practitioner's standing direction: where a standard
+# exists, use it rather than invent a term, and establish the equivalence where both must coexist.
+#
+# `skos:hiddenLabel` is the term for an ARCHIVED NAME -- a label that must stay findable by search
+# and must not be displayed. That is what an old identifier is after a rename, and it is why
+# `samples` is recorded below against the port type it was never on, and in widgets/registry.json
+# as `previousNodeTypes` for the widget identifiers, which are not yet ontology terms.
 fw:GradedFacilitiesPort a fw:PortType; rdfs:label "gradedFacilities";
   rdfs:comment "Retired 2026-10-12. A producer-named port type -- D4a's custom stud -- replaced by a general point layer carrying the grading in each feature's attributes.";
+  owl:deprecated true;
+  dcterms:isReplacedBy fw:PointsPort;
+  skos:changeNote "Retired 2026-10-12 as a producer-named port type under D4a. The grading now travels in each feature's attributes on a general point layer.";
   fw:implementationStatus "retired".
 fw:AccessPort a fw:PortType; rdfs:label "access";
   rdfs:comment "Retired 2026-10-12 with the access widget, which was decomposed into a candidate filter on nearest, the shared nearest-neighbour search, and the travel_time primitive. Its rows travel as `distances` now.";
+  owl:deprecated true;
+  dcterms:isReplacedBy fw:DistancesPort;
+  skos:changeNote "Retired 2026-10-12 with the access widget. Its rows travel as `distances`, emitted by the general nearest-neighbour search.";
   fw:implementationStatus "retired".
 fw:PointsPort a fw:PortType; rdfs:label "points".
 fw:AreaPort a fw:PortType; rdfs:label "area".

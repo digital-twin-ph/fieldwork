@@ -16,7 +16,7 @@ export function receiptActivities(node:WorkflowNode,runId:string):string[]{
   if(node.type==='raster_input'||node.type==='clip_raster')return [base+'raster:'+id];
   if(node.type==='measure_area')return [base+'computation:'+id];
   if(node.type==='coverage_check')return [base+'coverage:'+id];
-  if(node.type==='samples')return [base+'grid:'+id];
+  if(node.type==='point_grid')return [base+'grid:'+id];
   if(node.type==='facilities')return [base+'selection:'+id];
   if(['map_output','table_output','chart_output'].includes(node.type)&&'inputMode' in node.params&&node.params.inputMode==='polygons')return [base+'output:'+id+':view'];
   if(node.type==='chart_output')return [base+'view:'+id];

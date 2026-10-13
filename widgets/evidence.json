@@ -345,6 +345,17 @@
    "rung": "example, lab not applicable"
   },
   {
+   "nodeType": "point_grid",
+   "exampleUses": [
+    "old-naledi"
+   ],
+   "exampleUseCount": 1,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "example only"
+  },
+  {
    "nodeType": "raster_input",
    "exampleUses": [
     "raster"
@@ -399,17 +410,6 @@
    "labOwed": true,
    "fieldUse": [],
    "rung": "declared only"
-  },
-  {
-   "nodeType": "samples",
-   "exampleUses": [
-    "old-naledi"
-   ],
-   "exampleUseCount": 1,
-   "lab": "awaiting",
-   "labOwed": true,
-   "fieldUse": [],
-   "rung": "example only"
   },
   {
    "nodeType": "slr_extract_import",

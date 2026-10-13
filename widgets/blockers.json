@@ -198,6 +198,18 @@
       "measured": "slr_extract_import declares inputs:[['projections','table']] and holds no data parameter; the table arrives from table_input. reproject declares inputs:[] and holds params.data, so it genuinely acquires -- but it also reprojects, which is why the split recorded in docs/todo.md gives the sources an output CRS and leaves reproject a points-to-points transform.",
       "alsoFound": "The naming ratchet added 2026-10-13 catches reproject through its transform verb and misses slr_extract_import entirely, because that rule keys on the verb rather than on the contract. A rule that asks whether a source acquires would catch both, and would not depend on a verb list staying complete.",
       "record": "docs/audits/widget_audit.md"
+    },
+    {
+      "id": "isochrone-does-not-scale",
+      "claim": "The OSM download in `network_input` cannot produce a usable graph for either of Fieldwork's own Soho examples. The binding limit is 2,000 junctions, and it is not arbitrary: at 2.6x that, isochrone construction exhausts the browser's memory. So the cap is a symptom and the defect is in `isochrone`, which allocates per reachable segment rather than per cell.",
+      "blocks": [],
+      "recorded": "2026-10-13",
+      "lastRevisited": "2026-10-13",
+      "status": "standing",
+      "liftTest": "The shipped Soho isochrone extent downloads through the widget's own button and produces an isochrone, with peak memory stated. Until then the download button works only for sparse areas and the examples ship a prepared graph.",
+      "measured": "Measured 2026-10-13 against overpass-api.de with the widget's own query. The Snow rectangle (1.0 x 0.9 km, the shipped snow-voronoi extent) returns 1.52 MB and 8,803 elements, passes the 2 MB and 15,000-element caps, then normalizes to 5,249 junctions and 11,497 directed segments -- 2.6x and 2.3x over the graph caps. The Snow isochrone extent (4.0 x 2.6 km, also shipped) returns 8.15 MB and 48,375 elements, so it fails the byte cap by 4.1x and the element cap by 3.2x and is never parsed. Raising the graph cap to 200,000 and running the real isochrone on the 5,249-junction graph exhausted a 4 GB Node heap after 29 seconds, with the allocation failure inside array growth -- so the cap is load-bearing and raising it would hang or crash a browser tab.",
+      "alsoFound": "Three inconsistencies the measurement exposed. The Overpass query asked for maxsize:16777216 while the client refused anything over 2 MB, so the server was invited to do up to 16 MB of work that could only be discarded; now aligned to 2 MB. The byte-cap message said \"reduce the area or margin\", which cannot reach a working download in a dense city, because the binding constraint is street density and not extent. And osmQuery permits a 6 km envelope, which no dense urban area can satisfy downstream, so the advertised envelope and the graph caps were set independently and never measured against each other.",
+      "record": "docs/experiments/32-john-snow-primitives.md"
     }
   ]
 }

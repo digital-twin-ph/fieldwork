@@ -13,12 +13,30 @@ export function osmQuery(boundary:Boundary,marginM:number){
   if(bounds.some(v=>!Number.isFinite(v))||bounds[0]<-180||bounds[2]>180||Math.abs(bounds[1])>80||Math.abs(bounds[3])>80||(bounds[2]-bounds[0])*111195*Math.cos((b[1]+b[3])/2*Math.PI/180)>6000||(bounds[3]-bounds[1])*111195>6000)throw new Error('Use a local study area with download bounds at most 6 km across.');
   const [w,s,e,n]=bounds;
   // Complete ways and referenced nodes preserve edge topology at the envelope.
-  const query=`[out:json][timeout:25][maxsize:16777216];way["highway"](${s.toFixed(7)},${w.toFixed(7)},${n.toFixed(7)},${e.toFixed(7)});(._;>;);out body;`;
+  const query=`[out:json][timeout:25][maxsize:2097152];way["highway"](${s.toFixed(7)},${w.toFixed(7)},${n.toFixed(7)},${e.toFixed(7)});(._;>;);out body;`;
   return {query,bounds,marginM};
 }
 function metres(a:Position,b:Position){const r=Math.PI/180,dlat=(b[1]-a[1])*r,dlon=(b[0]-a[0])*r,h=Math.sin(dlat/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dlon/2)**2;return 12742017.6*Math.asin(Math.sqrt(Math.min(1,h)));}
 export function networkFromOSM(raw:unknown):Network{
-  if(!isRecord(raw)||!Array.isArray(raw.elements)||raw.elements.length>15000||raw.remark)throw new Error('OSM response is incomplete, too large, or contains a server warning.');
+  // `raw` is unknown until the guard passes, so the count is read after narrowing rather than
+  // inside the condition, where it would be reported as `unknown`.
+  // Three different failures used to share one sentence -- "incomplete, too large, or contains a
+  // server warning" -- so a reader could not tell which had happened. A first draft of the split
+  // was worse: it reported the feature count against the 15,000 cap even when the cause was a
+  // server remark, which told a reader that 5 features exceeded 15,000.
+  if(!isRecord(raw)||!Array.isArray(raw.elements))
+    throw new Error('The street data for this area was not in the expected form, so nothing was '
+      +'changed. Retry the download; if it persists, the service is returning something this '
+      +'widget cannot read.');
+  if(raw.remark)
+    throw new Error(`The street service reported a partial answer and the previous graph is `
+      +`unchanged: ${String(raw.remark).slice(0,200)}. This usually means the request was too `
+      +`large or the service was busy; retry, or draw a smaller study area.`);
+  if(raw.elements.length>15000)
+    throw new Error(`The street data for this area came back with ${raw.elements.length} features, `
+      +`more than the 15,000 this widget normalizes, and the previous graph is unchanged. This is a `
+      +`limit on street detail, not on area: draw a smaller study area, or upload a network file `
+      +`prepared outside the browser.`);
   const positions=new Map<string,Position>();const blocked=new Set<string>();
   for(const e of raw.elements)if(isRecord(e)&&e.type==='node'){const id=String(e.id);positions.set(id,[e.lon as number,e.lat as number]);const t=isRecord(e.tags)?e.tags:{};if(t.barrier&&!['no','entrance'].includes(String(t.barrier))&&!['yes','designated','permissive'].includes(String(t.foot)))blocked.add(id);}
   const edges:Network['edges']=[],used=new Set<string>();
@@ -43,9 +61,9 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     let response:Response;
     try{response=await fetcher(OVERPASS,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data:request.query}),signal:controller.signal,credentials:'omit',referrerPolicy:'origin'});}catch{throw new Error('OSM could not be reached or the browser blocked the response. Wait before retrying, or upload a saved network file.');}
     if(!response.ok){if([429,503,406].includes(response.status))deferNetworkDownload(response.headers.get('retry-after'));throw new Error(`OSM download failed (HTTP ${response.status}); wait before retrying or upload a network file.`);}
-    if(Number(response.headers.get('content-length'))>NETWORK_BYTES)throw new Error('Network response exceeds 2 MB; reduce the area or margin.');
+    if(Number(response.headers.get('content-length'))>NETWORK_BYTES)throw new Error('The street data for this area is larger than 2 MB, so it was not downloaded. This is a limit on how much street detail can be held, not on how large the area is: a dense city block can exceed it while a sparse district many times the size does not. Draw a smaller study area, or upload a network file prepared outside the browser.');
     if(!response.body)throw new Error('OSM response has no readable body.');const reader=response.body.getReader(),chunks:Uint8Array[]= [];let bytes=0;
-    try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>NETWORK_BYTES){controller.abort();throw new Error('Network response exceeds 2 MB; reduce the area or margin.');}chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
+    try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>NETWORK_BYTES){controller.abort();throw new Error('The street data for this area is larger than 2 MB, so it was not downloaded. This is a limit on how much street detail can be held, not on how large the area is: a dense city block can exceed it while a sparse district many times the size does not. Draw a smaller study area, or upload a network file prepared outside the browser.');}chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
     const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const raw=JSON.parse(new TextDecoder().decode(joined)),network=networkFromOSM(raw);
     network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',attribution:'© OpenStreetMap contributors',url:OVERPASS,retrievedAt:new Date().toISOString(),query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
   }finally{clearTimeout(timer);}
@@ -62,7 +80,7 @@ export function parseGraphML(text:string,filename:string):Network{
   const result={nodes,edges,source:`Uploaded ${filename}; directed GraphML, WGS84; edge length interpreted as metres. Verify the source, acquisition date and travel mode. Original tags and restrictions are not reinterpreted.`};validateNetwork(result);return result;
 }
 export async function importNetwork(file:File):Promise<Network>{
-  if(file.size>NETWORK_BYTES)throw new Error('Upload network files up to 2 MB.');const text=await file.text();let result:Network;
+  if(file.size>NETWORK_BYTES)throw new Error('This network file is larger than 2 MB. Prepare a smaller extent, or simplify the graph before uploading: the limit is on the graph the browser holds, not on the area it covers.');const text=await file.text();let result:Network;
   if(/\.graphml$/i.test(file.name))result=parseGraphML(text,file.name);else{const raw=JSON.parse(text);result=isRecord(raw)&&Array.isArray(raw.elements)?networkFromOSM(raw):raw;validateNetwork(result);}
   result.provenance={...result.provenance,filename:file.name,importedAt:new Date().toISOString(),sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(b=>b.toString(16).padStart(2,'0')).join('')};return result;
 }

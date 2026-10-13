@@ -258,7 +258,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (!Object.hasOwn(TYPES,n.type) || !/^[a-zA-Z0-9_-]{1,80}$/.test(n.id) || ids.has(n.id)) throw new Error('Invalid or duplicate node.');
     ids.add(n.id);
     if (![n.x,n.y].every(Number.isFinite) || Math.abs(n.x)>10000 || Math.abs(n.y)>10000 || !n.params) throw new Error('Invalid node position or parameters.');
-    if((n.type==='area'||n.type==='point_input'||n.type==='places'||n.type==='centers')){n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
+    if((n.type==='study_area'||n.type==='point_input'||n.type==='places'||n.type==='centers')){n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
     if ((n.type==='places'||n.type==='centers'||n.type==='point_input')) n.params.data=validateGeoJSON(n.params.data,{attributes:n.type==='point_input'});
     if(n.type==='summarize_hull')validateHullNode(n);
     if(n.type==='summarize_combined_area')validateCombinedAreaNode(n);
@@ -382,10 +382,10 @@ function resultNodes(w:Pick<Workflow,'nodes'>){return w.nodes.filter(n=>['output
 export function executionPlan(workflow:Workflow) {
   const w=validateWorkflow(workflow), outputs=resultNodes(w);
   if(!outputs.length){
-    if(!w.nodes.length||!w.nodes.every(n=>n.type==='area'))throw new Error('Add a visual output before running, or start with a Study area node.');
+    if(!w.nodes.length||!w.nodes.every(n=>n.type==='study_area'))throw new Error('Add a visual output before running, or start with a Study area node.');
     outputs.push(...w.nodes);
   }
-  for(const n of w.nodes)if(n.type==='area'&&n.params.source==='drawn'&&!n.params.geometry)throw new Error('Select a study area on the map before running.');
+  for(const n of w.nodes)if(n.type==='study_area'&&n.params.source==='drawn'&&!n.params.geometry)throw new Error('Select a study area on the map before running.');
   const result:WorkflowNode[]=[], done=new Set<string>();
   function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=['map_output','table_output'].includes(node.type)?(w.edges.some(e=>e.to===node.id&&e.port==='coverage')?[['coverage']]:nodeInputs(node).filter(([port])=>port!=='coverage'&&(port!=='raster'||node.type==='map_output'&&node.params.inputMode==='raster'))):nodeInputs(node);for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;
       // The area is optional here: a country names the scope instead. Required only when the
@@ -605,7 +605,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'table_output':{if(node.params.inputMode==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(node.params.inputMode==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const table=tableOutput(node,inputs.coverage?{coverage:inputs.coverage}:{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
       case 'measure_area':{const computed=measureArea(node,inputs.area,runId);value=computed.value;receipts.push(computed.receipt);break;}
       case 'coverage_check':{const checked=await checkCoverage(node,inputs.area,pointInputs(),reasoner,runId);value=checked.value;receipts.push(checked.receipt);break;}
-      case 'area':{
+      case 'study_area':{
         if(node.params.source!=='drawn'){value={...await executeOldNode(node,inputs,reasoner,receipts,distanceKm,runId),areaId:`urn:fieldwork:area:${node.id}`,geometryId:`urn:fieldwork:geometry:${node.id}`,label:node.params.label||'Old Naledi',rows:[],centers:[]};break;}
         const n3=studyAreaN3(node),conclusions=await reasoner(n3.input);
         const ready=conclusions.some(q=>q.subject===`urn:fieldwork:area:${node.id}`&&q.predicate===NS+'readyForSpatialAnalysis'&&q.object==='true');
@@ -615,7 +615,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       }
       default:value=await executeOldNode(node,inputs,reasoner,receipts,distanceKm,runId);
     }
-    if(node.type==='area'&&isRecord(value))value.spatialReference=structuredClone(node.params.spatialReference);
+    if(node.type==='study_area'&&isRecord(value))value.spatialReference=structuredClone(node.params.spatialReference);
     values.set(node.id,value);trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});onProgress(node.id,'done');
   }
   const outputNodes=resultNodes({nodes:plan});
@@ -624,7 +624,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     if(n.type==='coverage_check')return (['table','map'] as const).map(view=>({...display(n.id),nodeId:n.id+'-'+view,label:view==='table'?'Coverage review':'Coverage map',view}));
     const view=n.type==='output'?n.params.view:n.type==='table_output'?'table':n.type==='chart_output'?'bars':'map';
     return [{...display(n.id),nodeId:n.id,label:n.params.label||(n.type==='measure_area'?'Area · '+display(n.id).label:(view==='table'?'Table':'Map')+' · '+n.id),view}];
-  }):plan.filter(n=>n.type==='area').map(n=>({...display(n.id),kind:'study-area',rows:[],centers:[],nodeId:n.id,label:n.params.label||'Study area preview',view:'map'}));
+  }):plan.filter(n=>n.type==='study_area').map(n=>({...display(n.id),kind:'study-area',rows:[],centers:[],nodeId:n.id,label:n.params.label||'Study area preview',view:'map'}));
   for(const node of plan.filter((n):n is WorkflowNode<'map_output'>=>n.type==='map_output')){
     const output=outputs.find(o=>o.nodeId===node.id),receipt=receipts.find(r=>r.nodeId===node.id);
     if(output&&receipt)mapSpecificationFacts(node,output,workflow,runId,receipt);

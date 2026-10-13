@@ -35,13 +35,13 @@ test('workflow supports four outputs, shared inference, and pinned dataset valid
   assert.equal(graded[0].params.ruleset.version,'2.0.0','2.0.0 emits a point layer instead of the retired gradedFacilities stud');
   assert.deepEqual(graded[0].params.ruleset.inputs,[['facilities','facilities']]);
   assert.equal(graded[0].params.ruleset.output,'points');
-  assert.equal(w.nodes.find(n=>n.type==='area').params.dataset,DATASET);
+  assert.equal(w.nodes.find(n=>n.type==='study_area').params.dataset,DATASET);
   // The walking speed moved from `access` to the travel_time primitive when access was
   // decomposed: the assumption now sits in the step that states it, not inside a search.
   w.nodes.find(n=>n.type==='travel_time').params.speedMPerMin=0;
   assert.throws(()=>validateWorkflow(w),/Walking speed must be between 10 and 400/);
   w.nodes.find(n=>n.type==='travel_time').params.speedMPerMin=70;
-  w.nodes.find(n=>n.type==='area').params.dataset='unknown';assert.throws(()=>validateWorkflow(w),/dataset version/);
+  w.nodes.find(n=>n.type==='study_area').params.dataset='unknown';assert.throws(()=>validateWorkflow(w),/dataset version/);
 });
 
 // The NB06 named-evidence claims are keyed on the registry's own identifiers. A regeneration

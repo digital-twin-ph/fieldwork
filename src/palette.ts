@@ -25,7 +25,7 @@ export const ALWAYS_ADDABLE=[
 ] as const;
 
 /** Offered on the two teaching canvases, which start with almost nothing. */
-export const STARTER_TYPES=['area','point_input','measure_area','coverage_check','map_output'] as const;
+export const STARTER_TYPES=['study_area','point_input','measure_area','coverage_check','map_output'] as const;
 
 /** Derived from each widget's declared `implementationStatus`, not hand-maintained.
  *

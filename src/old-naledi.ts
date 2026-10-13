@@ -11,8 +11,8 @@ import {validateAreaParams} from './study-area.js';
 import {nearestOf} from './nearest-neighbour.js';
 export const SOURCE='https://git.cdc.gov/digital-twin/Gaborone-TB-Agent-Based-Modeling/-/blob/7f183843075a6534b6699cd107cc74def1315bcd/';
 export const DATASET='gaborone-7f183843';
-export const OLD_TYPES:Record<'area'|'facilities'|'xpert'|'access'|'access_policy'|'facility_audit',NodeDefinition>={
-  area:{title:'Study area',group:'Sources',icon:'⬡',color:'blue',description:'Define the geographic extent used by your workflow',inputs:[],output:'area'},
+export const OLD_TYPES:Record<'study_area'|'facilities'|'xpert'|'access'|'access_policy'|'facility_audit',NodeDefinition>={
+  study_area:{title:'Study area',group:'Sources',icon:'⬡',color:'blue',description:'Define the geographic extent used by your workflow',inputs:[],output:'area'},
   facilities:{title:'Select nearby facilities',group:'Spatial operations',icon:'⌂',color:'blue',description:'Select facility points within a radius of the study-area center',inputs:[['area','area'],['points','points']],output:'facilities'},
   xpert:{title:'Diagnostic evidence',group:'Semantic reasoning',icon:'⋈',color:'purple',description:'Apply the NB06 evidence hierarchy with N3',inputs:[['facilities','facilities']],output:'gradedFacilities'},
   access:{title:'Facility access',group:'Spatial operations',icon:'⌁',color:'teal',description:'Find the nearest facility meeting your evidence criteria',inputs:[['samples','points'],['facilities','gradedFacilities']],output:'access'},
@@ -42,7 +42,7 @@ export function oldNalediWorkflow():Workflow{
   const node=<K extends NodeType>(id:string,type:K,x:number,y:number,params:ParamsByType[K])=>({id,type,x,y,params}) as WorkflowNode<K>;
   const edges=[['facility-data','facilities','points'],['area','samples','area'],['area','facilities','area'],['facilities','xpert','facilities'],['samples','access','points'],['xpert','access','candidates'],['access','minutes','distances'],['minutes','review','distances'],['xpert','audit','points'],['review','access-map','decisions'],['review','access-table','decisions'],['review','access-chart','decisions'],['audit','evidence-table','decisions']].map(([from,to,port],i)=>({id:`old-e${i}`,from,to,port}));
   return {schema:'fieldwork/workflow/1',exampleId:'old-naledi',name:'Old Naledi · diagnostic access',nodes:[
-    facilityInput('facility-data'),node('area','area',25,140,{dataset:DATASET}),node('samples','point_grid',255,30,{spacingM:250}),node('facilities','facilities',255,265,{dataset:DATASET,radiusKm:6,sourceMode:'connected'}),
+    facilityInput('facility-data'),node('area','study_area',25,140,{dataset:DATASET}),node('samples','point_grid',255,30,{spacingM:250}),node('facilities','facilities',255,265,{dataset:DATASET,radiusKm:6,sourceMode:'connected'}),
     // `xpert` and `access_policy` were retired into apply_ruleset on 2026-10-12: both were a set of
     // rules and nothing else. The template names their rulesets so this example does not depend on
     // a migration running. `facility_audit` stays -- it runs no reasoner and is a presentation
@@ -68,8 +68,8 @@ export function oldNalediWorkflow():Workflow{
 }
 export function validateOldNode(n:WorkflowNode){
   const range=(key:string,value:number,min:number,max:number)=>{if(!Number.isFinite(value)||value<min||value>max)throw new Error(`${key} must be between ${min} and ${max}.`);};
-  if(n.type==='area'&&n.params.source==='drawn')validateAreaParams(n.params);
-  else if((n.type==='area'||n.type==='facilities')&&(!('dataset' in n.params)||n.params.dataset!==DATASET))throw new Error('Unknown Old Naledi dataset version.');
+  if(n.type==='study_area'&&n.params.source==='drawn')validateAreaParams(n.params);
+  else if((n.type==='study_area'||n.type==='facilities')&&(!('dataset' in n.params)||n.params.dataset!==DATASET))throw new Error('Unknown Old Naledi dataset version.');
   if(n.type==='facilities'){range('radiusKm',n.params.radiusKm,1,15);if(n.params.sourceMode!=='connected')throw new Error('Facility selection needs connected input data.');}
   if(n.type==='access_policy')range('thresholdMin',n.params.thresholdMin,0,120);
   if(n.type==='access'){
@@ -212,7 +212,7 @@ export async function applyAccessReview(access:AccessValue,thresholdMin:number,r
 
 export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner:Reasoner,receipts:Receipt[],distanceKm:(a:Position,b:Position)=>number,runId=crypto.randomUUID()){
   switch(node.type){
-    case 'area':return {boundary:structuredClone(boundary),dataset:DATASET,provenance:structuredClone(provenance)};
+    case 'study_area':return {boundary:structuredClone(boundary),dataset:DATASET,provenance:structuredClone(provenance)};
     case 'point_grid':{
       const rows=sampleLocations(inputs.area.boundary,node.params.spacingM);
       const features:PointFeature[]=rows.map(p=>({type:'Feature',id:p.id,properties:{name:p.name,samplingBasis:'regular-grid'},geometry:{type:'Point',coordinates:[...p.coordinates]}}));

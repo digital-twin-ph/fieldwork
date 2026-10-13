@@ -8,7 +8,7 @@ export function rasterExample():Workflow{
   return {
     schema:'fieldwork/workflow/1',exampleId:'raster',name:'Old Naledi · raster clipping',
     nodes:[
-      {id:'area',type:'area',x:20,y:40,params:{dataset:DATASET,label:'Old Naledi'}},
+      {id:'area',type:'study_area',x:20,y:40,params:{dataset:DATASET,label:'Old Naledi'}},
       {id:'raster-input',type:'raster_input',x:310,y:190,params:{label:'WorldPop raster'}},
       {id:'raster-clip',type:'clip_raster',x:610,y:40,params:{label:'Clip to Old Naledi',method:'all-touched',marginPixels:0,cutline}},
       {id:'raster-map',type:'map_output',x:920,y:40,params:{label:'Clipped population raster',inputMode:'raster'}}

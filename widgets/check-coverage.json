@@ -28,7 +28,7 @@
       "reason": "Checked by the Lab exhaustively rather than by sample: all three rulesets have finite input spaces, 46 cells in total, and check 23 reproduces every conclusion with a Python decision table and verifies the emitted receipt."
     },
     {
-      "nodeType": "area",
+      "nodeType": "study_area",
       "expectation": "none",
       "reason": "A study-area input: the boundary is supplied or drawn, not computed."
     },

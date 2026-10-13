@@ -71,7 +71,7 @@ test('data spanning two zones says so instead of picking silently',()=>{
 });
 
 test('a drawn study area contributes its ring, not just its points',()=>{
-  const drawn={schema:'fieldwork/workflow/1',name:'drawn',edges:[],nodes:[{id:'a',type:'area',x:0,y:0,
+  const drawn={schema:'fieldwork/workflow/1',name:'drawn',edges:[],nodes:[{id:'a',type:'study_area',x:0,y:0,
     params:{label:'Manila bbox',source:'drawn',selectionMode:'bbox',
       geometry:{type:'Polygon',coordinates:[[[120.9,14.5],[121.1,14.5],[121.1,14.7],[120.9,14.7],[120.9,14.5]]]}}}]};
   assert.equal(workflowPositions(drawn).length,5);

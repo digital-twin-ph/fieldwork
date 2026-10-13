@@ -5,7 +5,7 @@ import {test,expect} from '@playwright/test';
 // no point layer to buffer. See TODO, "The study area is Botswana-shaped".
 test('a study area can be drawn as a point with an adjustable radius',async({page})=>{
   await page.goto('/?example=blank');
-  await page.locator('#node-library [data-add="area"]').click();
+  await page.locator('#node-library [data-add="study_area"]').click();
   await page.locator('#edit-study-area').click();
   await expect(page.locator('#area-map')).toBeVisible();
 
@@ -32,7 +32,7 @@ test('a study area can be drawn as a point with an adjustable radius',async({pag
 
   // The node records that it was derived from a centre, not drawn by hand.
   const params=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}')
-    ?.nodes?.find(n=>n.type==='area')?.params);
+    ?.nodes?.find(n=>n.type==='study_area')?.params);
   expect(params.selectionMode).toBe('circle');
   expect(params.geometry.type).toBe('Polygon');
   expect(params.geometry.coordinates[0].length-1).toBe(128);
@@ -42,7 +42,7 @@ test('a study area can be drawn as a point with an adjustable radius',async({pag
 // a radius around a centre. It gets two handles: move, and resize.
 test('a circle offers two handles, not one per vertex',async({page})=>{
   await page.goto('/?example=blank');
-  await page.locator('#node-library [data-add="area"]').click();
+  await page.locator('#node-library [data-add="study_area"]').click();
   await page.locator('#edit-study-area').click();
   await page.locator('[data-draw="circle"]').click();
   const map=page.locator('#area-map');

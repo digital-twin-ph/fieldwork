@@ -69,7 +69,7 @@ test('a study area can be a circle around typed coordinates',()=>{
   assert.equal(geometry.coordinates[0].length-1,BUFFER_POINT_STEPS*4,'the same vertex count as buffer_point');
   const params={source:'drawn',label:'Around the Manila gauge',selectionMode:'circle',geometry};
   assert.doesNotThrow(()=>validateAreaParams(params));
-  assert.match(studyAreaN3({id:'a',type:'area',x:0,y:0,params}).facts,/fw:selectionMode fw:Circle/,
+  assert.match(studyAreaN3({id:'a',type:'study_area',x:0,y:0,params}).facts,/fw:selectionMode fw:Circle/,
     'and the facts say it was derived from a centre, not drawn by hand');
 });
 

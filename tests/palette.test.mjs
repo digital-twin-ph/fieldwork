@@ -47,7 +47,7 @@ test('every palette group has a place in the ordering',()=>{
 
 test('the starter canvases stay small, and the retired output is never offered',()=>{
   const blank=addableTypes({exampleKey:'blank',templateTypes:[],workflowTypes:[],catchmentTypes:[]});
-  assert.ok(blank.has('area'),'a blank canvas must offer a study area');
+  assert.ok(blank.has('study_area'),'a blank canvas must offer a study area');
   assert.ok(!blank.has('xpert'),'a blank canvas does not offer one example\'s evidence hierarchy');
   for(const [exampleKey,workflow] of EXAMPLES)
     assert.ok(!addableTypes({exampleKey,templateTypes:workflow.nodes.map(n=>n.type),

@@ -27,7 +27,7 @@ const AR6=provenance.projections;
 
 export function seaLevelExample():Workflow{
   const nodes:WorkflowNode[]=[
-    {id:'area',type:'area',x:20,y:40,params:{source:'drawn',label:'Manila coastal study area',
+    {id:'area',type:'study_area',x:20,y:40,params:{source:'drawn',label:'Manila coastal study area',
       selectionMode:'bbox',geometry:{type:'Polygon',coordinates:[[
         [120.93,14.52],[121.05,14.52],[121.05,14.68],[120.93,14.68],[120.93,14.52]]]}}},
 

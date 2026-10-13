@@ -13,7 +13,7 @@ test('a saved workflow naming a renamed type still opens, and is stamped', ()=>{
   // naming decision the practitioner did not make.
   const square={type:'Polygon',coordinates:[[[25.9,-24.7],[25.95,-24.7],[25.95,-24.65],[25.9,-24.65],[25.9,-24.7]]]};
   const w=validateWorkflow(workflow([
-    {id:'area',type:'area',x:0,y:0,params:{source:'drawn',label:'Study area',selectionMode:'bbox',geometry:square}},
+    {id:'area',type:'study_area',x:0,y:0,params:{source:'drawn',label:'Study area',selectionMode:'bbox',geometry:square}},
     {id:'grid',type:'samples',x:10,y:10,params:{spacingM:250}}],
     [{id:'e1',from:'area',to:'grid',port:'area'}]));
   const node=w.nodes.find(n=>n.id==='grid');

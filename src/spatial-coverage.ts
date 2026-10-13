@@ -50,7 +50,7 @@ export async function checkCoverage(node:WorkflowNode<'coverage_check'>,area:Are
 export function coverageExercise():Workflow{
   const feature=(id:string,name:string,coordinates:Position|null):PointFeature=>({type:'Feature',id,properties:{name},geometry:coordinates?{type:'Point',coordinates}:null});
   return {schema:'fieldwork/workflow/1',exampleId:'coverage',name:'Spatial coverage · synthetic exercise',nodes:[
-    {id:'scope',type:'area',x:40,y:40,params:{source:'drawn',label:'Illustrative Old Naledi study box',selectionMode:'bbox',geometry:bboxPolygon(25.89,-24.7,25.91,-24.68)}},
+    {id:'scope',type:'study_area',x:40,y:40,params:{source:'drawn',label:'Illustrative Old Naledi study box',selectionMode:'bbox',geometry:bboxPolygon(25.89,-24.7,25.91,-24.68)}},
     {id:'observations',type:'point_input',x:40,y:230,params:{label:'Synthetic coverage records',data:{type:'FeatureCollection' as const,features:[feature('inside','Inside example',[25.9,-24.69]),feature('edge','Boundary example',[25.91,-24.69]),feature('outside','Outside example',[25.92,-24.69]),feature('missing','Missing-location example',null)]}}},
     {id:'coverage',type:'coverage_check',x:380,y:120,params:{exclusions:[]}}
   ],edges:[{id:'scope-link',from:'scope',to:'coverage',port:'area'},{id:'points-link',from:'observations',to:'coverage',port:'points'}]};

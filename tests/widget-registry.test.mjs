@@ -20,7 +20,7 @@ test('registry rejects missing widgets, duplicate releases, digest tampering and
   await assert.rejects(validateRegistry({definitions,catalog:original}),/Port contract drift/);
 });
 test('registry rejects undeclared semantic mappings even with a matching release digest',async()=>{
-  const catalog=structuredClone(original), entry=catalog.widgets.find(w=>w.nodeType==='area'),ref=entry.releases[0];
+  const catalog=structuredClone(original), entry=catalog.widgets.find(w=>w.nodeType==='study_area'),ref=entry.releases[0];
   const release=JSON.parse(await readFile(ref.path,'utf8'));release.ontology.mappings[0].iri='urn:fieldwork:Nonexistent';
   const changed=JSON.stringify(release);ref.sha256=createHash('sha256').update(changed).digest('hex');
   await assert.rejects(validateRegistry({...source,catalog,read:path=>path===ref.path?changed:readFile(path,'utf8')}),/Undeclared ontology class/);

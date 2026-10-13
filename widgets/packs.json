@@ -65,7 +65,7 @@
    },
    "stages": {
     "discovery": "excluded",
-    "acquisition": "excluded",
+    "acquisition": "out-of-scope",
     "extraction": "external",
     "import": "implemented-in-host",
     "application": "implemented-in-host",
@@ -73,12 +73,18 @@
    },
    "requiredHostCapabilities": [],
    "files": {
-    "pack.json": "325d6ee477f95e0c376818976fc639cc7c1488d98b74d4496f004e861bcbb4fa",
+    "pack.json": "f6834e6cb2c7b9291afc808a665bd5abc4b296f01d818943cb7f165dbfdd7de6",
     "ontology/sea-level.ttl": "bdbdfc4a6ca781db8e547cd6509ed70915feac69e6af09245b4aeb1a1463b306",
     "ontology/shapes/sea-level.ttl": "e5e8d66323d27906dce85040832766f9ca4c5bb6e1cac5384771dd1cd44a1fd8",
     "examples/manila-coastal-exposure/projection-sites-ph.csv": "1fc8c902bd98ec061cd538e028bbc74f6381781457bdf1c36d7ba62fa71a87a8",
     "scripts/extract-projection.py": "bbda69524862be31b796c757c1aca759747b88ef3e4859b753804d3964832451"
-   }
+   },
+   "pinNotes": [
+    {
+     "at": "2026-10-12",
+     "note": "Two drifts repaired. The pin was moved to pack commit c3c542d on 2026-10-10 without updating pack.json's digest (325d6ee477f9 -> f6834e6cb2c7) or the acquisition stage word, and the pack commit had never been pushed, so validate:packs answered HTTP 404 rather than reporting either. Pushing the pack made both visible.\n\nThe stage word is the pack's, not a guess: its manifest declares acquisition 'out-of-scope' with the measurement behind it -- Zenodo serves the record with access-control-allow-origin: * and honours Range requests, answering 206 with a Content-Range -- and its own commit is titled 'Acquisition is out of scope by decision, not impossible in a browser'. The host said 'excluded', which was the older and weaker claim."
+    }
+   ]
   }
  ]
 }

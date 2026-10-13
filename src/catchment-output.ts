@@ -35,14 +35,29 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;return `<path data-catchment="${esc(f.id)}" d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${colors[i%colors.length]}" fill-opacity=".22" fill-rule="evenodd" stroke="${colors[i%colors.length]}" stroke-width="1"><title>${esc(f.name)}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+'<text x="20" y="282" font-size="10">Squares: sites · dots: observations · polygons: modeled catchments</text>';
 }
 
+/** The plot's frame: the extent it fits, the pixels it gives a degree of latitude, and the
+ *  projection itself.
+ *
+ *  Exported so a scale bar is drawn from the same number the geometry was drawn with. Computing it
+ *  twice is the defect this repository keeps finding -- two lists that must agree will not -- and a
+ *  scale bar that disagrees with its own map is worse than none, because a reader measures off it.
+ *  Returns null when there is nothing located to plot. */
+export function catchmentFrame(p:Polygons,context?:PointCollection):{project:(c:Position)=>number[];pixelsPerDegreeLatitude:number;bounds:[number,number,number,number]}|null{
+  const sites=context?.features||p.sites,observations=p.observations?.features||[];
+  const coords=[...p.features.flatMap(f=>(f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()).flat()),...sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...observations.flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];
+  if(!coords.length)return null;
+  const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]);
+  const cos=Math.cos((south+north)/2*Math.PI/180),scale=Math.min(680/Math.max((east-west)*cos,.00001),490/Math.max(north-south,.00001));
+  return {project:(c:Position)=>[460+(c[0]-(east+west)/2)*cos*scale,310-(c[1]-(north+south)/2)*scale],
+    pixelsPerDegreeLatitude:scale,bounds:[west,south,east,north]};
+}
+
 /** NB04-style geographic plot. SVG retains vector geometry for export. */
 export function catchmentPlot(p:Polygons,esc:Escape,context?:PointCollection):string{
   const sites=context?.features||p.sites,observations=p.observations?.features||[];
-  const coords=[...p.features.flatMap(f=>(f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()).flat()),...sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...observations.flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];
-  if(!coords.length)return '<text x="40" y="50">No located geometry to plot</text>';
-  const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]);
-  const cos=Math.cos((south+north)/2*Math.PI/180),scale=Math.min(680/Math.max((east-west)*cos,.00001),490/Math.max(north-south,.00001));
-  const project=(c:Position)=>[460+(c[0]-(east+west)/2)*cos*scale,310-(c[1]-(north+south)/2)*scale];
+  const frame=catchmentFrame(p,context);
+  if(!frame)return '<text x="40" y="50">No located geometry to plot</text>';
+  const {project,bounds:[west,south,east,north]}=frame;
   let svg=`<desc>${esc(p.method+' / '+p.notes.join(' '))}</desc>`+'<rect width="850" height="650" fill="white"/><text x="425" y="24" text-anchor="middle" font-size="16">Travel-time regions, observation locations and sites</text><rect x="85" y="45" width="740" height="530" fill="none" stroke="#333"/>';
   for(let i=0;i<=4;i++){const lon=west+(east-west)*i/4,lat=south+(north-south)*i/4,x=project([lon,south])[0],y=project([west,lat])[1];svg+=`<text x="${x}" y="595" text-anchor="middle" font-size="12">${lon.toFixed(4)}</text><text x="78" y="${y+4}" text-anchor="end" font-size="12">${lat.toFixed(4)}</text>`;}
   svg+='<text x="455" y="617" text-anchor="middle" font-size="14">Longitude</text><text transform="translate(20,310) rotate(-90)" text-anchor="middle" font-size="14">Latitude</text>';

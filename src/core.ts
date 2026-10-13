@@ -322,7 +322,11 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='point_input'){validateAttributeSchema(n.params.data,n.params.fields,n.params.attributeRules);if(n.params.pinIdStrategy!==undefined&&!['sequential','uuid'].includes(n.params.pinIdStrategy))throw new Error('Choose sequential or UUID identifiers for new pins.');}
     if((n.type==='map_output'||n.type==='table_output')&&n.params.inputMode!==undefined&&!(n.type==='map_output'?['spatial','decisions','raster','polygons']:['spatial','decisions','polygons','table']).includes(n.params.inputMode))throw new Error('Choose spatial inputs or reasoning results.');
     if(n.type==='map_output'&&((n.params.presentation!==undefined&&!['plot','interactive'].includes(n.params.presentation))||(n.params.contextPoints!==undefined&&typeof n.params.contextPoints!=='boolean')))throw new Error('Invalid polygon map presentation.');
-    if(n.type==='map_output'&&((n.params.showLegend!==undefined&&typeof n.params.showLegend!=='boolean')||(n.params.basemap!==undefined&&!['none','osm','topo'].includes(n.params.basemap))||(['mapTitle','mapSubtitle','mapSourceNote'] as const).some(key=>n.params[key]!==undefined&&(typeof n.params[key]!=='string'||n.params[key]!.length>({mapTitle:120,mapSubtitle:160,mapSourceNote:240}[key])))))throw new Error('Invalid map presentation settings.');
+    // The subtitle and source-note limits were raised on 2026-10-13, measured against the first
+    // figures configured for an outside reader: the Snow subtitles need 176 and 200 characters to
+    // say what the figure shows AND what it does not claim, and a full citation with its licence
+    // runs to 253. The title stays at 120, because something longer than that is not a title.
+    if(n.type==='map_output'&&((n.params.showLegend!==undefined&&typeof n.params.showLegend!=='boolean')||(n.params.basemap!==undefined&&!['none','osm','topo'].includes(n.params.basemap))||(['mapTitle','mapSubtitle','mapSourceNote'] as const).some(key=>n.params[key]!==undefined&&(typeof n.params[key]!=='string'||n.params[key]!.length>({mapTitle:120,mapSubtitle:280,mapSourceNote:500}[key])))))throw new Error('Invalid map presentation settings.');
     if(n.type==='chart_output'&&n.params.inputMode!==undefined&&!['decisions','polygons','series'].includes(n.params.inputMode))throw new Error('Invalid chart input mode.');
     if(n.type==='chart_output'&&n.params.bandMeasure!==undefined&&!['cumulative','difference'].includes(n.params.bandMeasure))throw new Error('Choose cumulative band counts or the difference between neighbouring bands.');
     // A difference is computed by the Vega-Lite specification, so it needs that renderer.
@@ -330,7 +334,11 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='chart_output'&&((n.params.renderer!==undefined&&!['html','vega-lite'].includes(n.params.renderer))||(n.params.mark!==undefined&&!['bar','point'].includes(n.params.mark))||(n.params.orientation!==undefined&&!['horizontal','vertical'].includes(n.params.orientation))))throw new Error('Choose a supported chart renderer, mark and orientation.');
     if(n.type==='chart_output'&&n.params.renderer!=='vega-lite'&&(n.params.mark==='point'||n.params.orientation==='vertical'))throw new Error('Point and vertical charts require Vega-Lite rendering.');
     if(n.type==='chart_output'){
-      for(const [key,limit] of Object.entries({chartTitle:120,subtitle:160,xAxisTitle:80,yAxisTitle:80,sourceNote:240})){const value=n.params[key as keyof typeof n.params];if(value!==undefined&&(typeof value!=='string'||value.length>limit))throw new Error(`Chart ${key} must be text of at most ${limit} characters.`);}
+      // Raised to match the map's on 2026-10-13, and for the same reason: a chart subtitle does the
+      // same job as a map's -- state what the figure shows and what it does not claim -- and the
+      // epidemic curve needs 187 characters to say that date of death is not date of onset. The
+      // axis titles stay at 80, which is already generous for an axis.
+      for(const [key,limit] of Object.entries({chartTitle:120,subtitle:280,xAxisTitle:80,yAxisTitle:80,sourceNote:500})){const value=n.params[key as keyof typeof n.params];if(value!==undefined&&(typeof value!=='string'||value.length>limit))throw new Error(`Chart ${key} must be text of at most ${limit} characters.`);}
       if(n.params.colorByCategory!==undefined&&typeof n.params.colorByCategory!=='boolean')throw new Error('Chart legend setting must be true or false.');
     }
     if(n.type==='clip_raster'&&n.params.cutline!==undefined){if(!n.params.cutline||!['bbox','polygon'].includes(n.params.cutline.selectionMode))throw new Error('Invalid clip boundary settings.');validateDrawnGeometry(n.params.cutline.geometry);}

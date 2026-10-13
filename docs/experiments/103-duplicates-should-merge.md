@@ -241,6 +241,57 @@ coordinates"* against *"No facility meets the selected evidence and service crit
 inspecting which field is null. `nearest` states the reason on the row. The input knows why; the
 consumer is guessing from a shape.
 
+### Can `access` be defined by primitives? Yes — and one of the two gaps is a knob, not a widget
+
+Three steps, tested against what exists:
+
+| Step | Primitive | State |
+| --- | --- | --- |
+| Narrow the candidates by attribute — tier ≥ a minimum, service matches | — | **missing** |
+| Nearest candidate, with distance | `nearest` | **exists** |
+| Derive minutes from kilometres at a speed | — | **missing**; `rate` divides two *fields* (`numeratorField`, `denominatorField`) and cannot divide a field by a parameter |
+
+**The practitioner's question — can attributes be knobs of existing primitives? — resolves the
+first gap without a widget, and the project's own test says so.**
+[107](107-set-operations-and-the-ruleset.md) derived it: *a knob is honest when the contract does not
+move with it.* A candidate-filter knob on `nearest` leaves the ports `points` + `candidates`, leaves
+the output carrier `distances`, and changes only which candidates are considered — which is what a
+threshold does too. It passes.
+
+**And the knob's language already exists.** "tier ≥ Contextual **and** service ≠ Unknown" is a field,
+a comparator, a value, joined by AND — which is exactly
+[106](106-rule-builder-ui.md)'s authored condition form. So the filter needs neither a new widget nor
+a new knob language: it reuses the rule builder, pointed at candidate selection instead of at
+classification. That makes 106's form serve a third caller, after classification and the role
+binding [61](61-input-dimensions.md) proposes.
+
+It also improves the receipt rather than complicating it. `access`'s `eligibleCount` and
+`candidateCount` are the filter's provenance; held as a knob they land in **nearest's own receipt**,
+where the exclusion and the search cannot disagree about what was considered.
+
+**When the node would earn its place.** A knob expresses the condition once per consumer. If two
+widgets needed the *same* eligible set, a knob would state the condition twice and the two could
+drift; a filter node states it once and hands the same layer to both. In `access`'s case the
+filtered set has exactly one consumer, so the knob is right — and the node is not wrong, only
+not yet needed.
+
+### The derivation is not a knob, by the same test
+
+Minutes is the opposite case, and the same test separates them. Adding a `minutes` column to a
+`NearestRow` changes the row for **every** consumer of `distances`, so the contract moves. The knob
+test refuses it.
+
+**And it must not hide behind the existing unit knob**, which is the tempting shortcut.
+`metres | kilometres` is a pure conversion with nothing assumed. Minutes is a **model**: a
+straight-line distance at a constant walking speed, which `access`'s own method string already
+admits — *"Straight-line distance / walking speed; not street routing"*. Putting a model behind a
+unit selector would present an assumption as a unit, which is the failure this project refuses
+everywhere else.
+
+So the derivation needs its own step with its own receipt, stating the speed and that it is a proxy.
+That is one new primitive for `access`, not two — and it is general: a column derived from a field
+and a declared parameter, with the assumption named.
+
 ## What this does not establish
 
 **That the merge is safe.** It is blocked on the same port work as everything else —

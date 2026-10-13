@@ -281,50 +281,31 @@ fw:TravelTimeEstimate a owl:Class;
   rdfs:comment "One derivation of walking minutes from a straight-line distance at a stated speed. A PROXY and not a routed travel time: no street network, no barriers, no terrain, no waiting. Declared as its own activity rather than folded into a distance measurement, because minutes is a model and not a unit of distance -- putting it behind a unit selector would present an assumption as a unit. The assumed speed is recorded on every run.";
   fw:implementationStatus "implemented".
 #
-# Ports, and what "carrier" means. Declared 2026-10-12, because the practitioner could not say what
-# the word meant and neither could this file: it had no port vocabulary at all. The word was living
-# in prose, in TypeScript types and in release JSON, and nowhere a reader could look it up.
+# Ports. Declared 2026-10-12, because this file had no port vocabulary at all: no fw:Port, no port
+# type, nothing. The concepts were living in prose, in TypeScript types and in release JSON.
 #
-# **What a carrier is.** The value one node produced and another consumes. In a run it is
-# identified as `urn:fieldwork:run:{runId}:output:{nodeId}` -- one per node, already emitted. It is
-# a narrowing of prov:Entity rather than a new idea: an Entity that travels between ports. A
-# referenced PDF and a declared ruleset are also Entities and travel between no ports.
+# **"Carrier" is deliberately absent, and was withdrawn the same day it was added.** It was asked
+# for, defined as "a prov:Entity that travels between ports", and then withdrawn on the
+# practitioner's challenge to show a standard that defines such a class. There is none. PROV-O,
+# DCAT, DCMI Terms, GeoSPARQL, OGC Simple Features and ISO 19107 between them name no carrier, and
+# the definition that was reached is derivable rather than new: an Entity prov:wasGeneratedBy one
+# node's activity and prov:used by another's is already exactly that, and the graph already says it.
+# Nothing consumed the class. fw:CarrierKind went with it -- a kind of a term that does not exist is
+# a kind of nothing.
 #
-# **What a carrier is not.** It is not the port (fw:Port, the connection point), not the port type
-# (fw:PortType, the declared name a connection is checked against), not the carrier kind
-# (fw:CarrierKind, the structural category), not the activity that produced it, and not a record
-# inside it -- records are geo:Feature and are distinguished by their own IRI shape,
-# `...:output:{nodeId}:record:{id}`.
+# What the word was doing was standing in for three things, and only the middle one earns a term:
 #
-# **Why it is defined rather than dropped.** The practitioner asked that it be defined and
-# disambiguated or removed from the vocabulary altogether, and that it be an entity that can be
-# instantiated. It can: one run of the Old Naledi example emits 227 of these IRIs. What it lacked
-# was a type -- those instances are asserted today as prov:Entity, as
-# `fw:PointDataset, geo:FeatureCollection`, and as `geo:FeatureCollection, prov:Entity`, three
-# different ways for one role. A word with instances and no type is exactly a word that floats, and
-# that is what made it vague.
+#   the instance  -- already prov:Entity, asserted uniformly for every node output at
+#                    src/evidence.ts:78. No local class needed.
+#   fw:PortType   -- the declared name a connection is checked against. Thirteen of them, and two
+#                    ports connect when these are equal. No standard names this, so it stays.
+#   the structure -- whether a value is features with geometry, a keyed table, a raster or a graph.
+#                    Each port type's instances already assert this where it matters:
+#                    geo:FeatureCollection, fw:PointDataset (ontology/runtime.ttl:40), fw:DataTable.
+#                    A second parallel taxonomy over the top of those added nothing.
 #
-# **The three levels, which is the disambiguation.** A sentence must say which it means:
-#
-#   fw:Carrier      the instance -- this value, in this run, from this node
-#   fw:PortType     the type     -- thirteen declared names; what a connection is checked against
-#   fw:CarrierKind  the kind     -- five structural categories; what a conversion must be honest
-#                                   about, because a keyed table has no geometry
-#
-# Nine of the thirteen port types share one carrier kind, which is why naming only the kind
-# misleads: at the granularity a connection is checked, the kind barely distinguishes anything.
-
-# These terms are declared and **not yet asserted by any run**. No receipt emits a port fact today;
-# the ports live in each widget's release file. Declaring fw:Carrier does not by itself make the
-# runs consistent either -- it gives them something to be consistent WITH. That is a gap recorded
-# rather than hidden, and it is the same declared-but-unasserted state
-# ontology/coupling-debt.json already tracks.
-
-fw:Carrier a owl:Class;
-  rdfs:subClassOf prov:Entity;
-  rdfs:label "Value travelling between two ports";
-  rdfs:comment "The value one node produced and another consumes, identified in a run as urn:fieldwork:run:{runId}:output:{nodeId}. A narrowing of prov:Entity and not a new idea: an Entity that travels between ports, where a referenced PDF and a declared ruleset are Entities that travel between none. NOT the port, NOT the port type a connection is checked against, NOT the structural carrier kind, NOT the activity that produced it, and NOT a record inside it -- records are geo:Feature with their own IRI shape. Instantiable and already instantiated: one run of the Old Naledi example emits 227 of these. What it lacked was a type, which is why the bare word floated.";
-  fw:implementationStatus "proposed".
+# The audit of whether the class should exist, with the five figures that were wrong while it did,
+# is in docs/audits/ontology-audit.md.
 
 fw:Port a owl:Class;
   rdfs:label "Named connection point on a widget";
@@ -336,46 +317,27 @@ fw:PortType a owl:Class;
   rdfs:comment "The name a port declares for what travels through it, and the thing a connection is checked against: two ports connect when their port types are equal. Thirteen are in the live set. A port type named after the widget that emits it rather than after what it carries is a custom stud under D4a -- gradedFacilities was one, retired on 2026-10-12.";
   fw:implementationStatus "proposed".
 
-fw:CarrierKind a owl:Class;
-  rdfs:label "Structural category of how data travels";
-  rdfs:comment "How data travels, as a structure rather than a label: features with geometry, a keyed table, a raster grid, a graph, a declared scalar. A real distinction and not a naming convention -- a keyed table has no geometry, so turning one into points is a loss and not a conversion. Five in all, and nine of the thirteen port types share one of them.";
-  fw:implementationStatus "proposed".
-
 fw:portType a owl:ObjectProperty;
   rdfs:domain fw:Port; rdfs:range fw:PortType;
   rdfs:label "Port type a port declares";
   fw:implementationStatus "proposed".
 
-fw:carrierKind a owl:ObjectProperty;
-  rdfs:domain fw:PortType; rdfs:range fw:CarrierKind;
-  rdfs:label "Carrier kind a port type belongs to";
-  rdfs:comment "Many port types to one carrier kind. This property is what makes the ambiguity in the word \"carrier\" visible rather than arguable.";
-  fw:implementationStatus "proposed".
 
-fw:FeaturesWithGeometry a fw:CarrierKind; rdfs:label "Features with geometry".
-fw:KeyedTable a fw:CarrierKind; rdfs:label "Keyed table";
-  rdfs:comment "Records keyed by declared columns, with no geometry. Experiment 61's problem lives here: which column means what is not derivable from the data.".
-fw:RasterGridKind a fw:CarrierKind; rdfs:label "Raster grid".
-fw:Graph a fw:CarrierKind; rdfs:label "Graph";
-  rdfs:comment "Vertices and edges. Street geometry travels as coordinate arrays rather than as OGC LineStrings, which is recorded in docs/research/ogc-standards-assessment-2026-10-12.md.".
-fw:DeclaredScalar a fw:CarrierKind; rdfs:label "Declared scalar";
-  rdfs:comment "A single value a practitioner states, which nothing in the application derives -- an external condition and the date it applies to.".
-
-fw:PointsPort a fw:PortType; rdfs:label "points"; fw:carrierKind fw:FeaturesWithGeometry.
-fw:AreaPort a fw:PortType; rdfs:label "area"; fw:carrierKind fw:FeaturesWithGeometry.
-fw:PolygonsPort a fw:PortType; rdfs:label "polygons"; fw:carrierKind fw:FeaturesWithGeometry.
-fw:DistancesPort a fw:PortType; rdfs:label "distances"; fw:carrierKind fw:FeaturesWithGeometry;
+fw:PointsPort a fw:PortType; rdfs:label "points".
+fw:AreaPort a fw:PortType; rdfs:label "area".
+fw:PolygonsPort a fw:PortType; rdfs:label "polygons".
+fw:DistancesPort a fw:PortType; rdfs:label "distances";
   rdfs:comment "Each subject with the nearest candidate, the distance in a declared unit, and optionally proxy minutes added by travel_time.".
-fw:DecisionsPort a fw:PortType; rdfs:label "decisions"; fw:carrierKind fw:FeaturesWithGeometry.
-fw:FacilitiesPort a fw:PortType; rdfs:label "facilities"; fw:carrierKind fw:FeaturesWithGeometry.
-fw:CoverageCheckPort a fw:PortType; rdfs:label "coverage-check"; fw:carrierKind fw:FeaturesWithGeometry.
-fw:MeanCenterPort a fw:PortType; rdfs:label "mean-center"; fw:carrierKind fw:FeaturesWithGeometry;
+fw:DecisionsPort a fw:PortType; rdfs:label "decisions".
+fw:FacilitiesPort a fw:PortType; rdfs:label "facilities".
+fw:CoverageCheckPort a fw:PortType; rdfs:label "coverage-check".
+fw:MeanCenterPort a fw:PortType; rdfs:label "mean-center";
   rdfs:comment "The mean of point coordinates, which is NOT a polygon centroid. GeoSPARQL exposes centroid as a function and there is no class to be disjoint with, so the distinction is stated here.".
-fw:PointComparisonPort a fw:PortType; rdfs:label "point-comparison"; fw:carrierKind fw:FeaturesWithGeometry.
-fw:TablePort a fw:PortType; rdfs:label "table"; fw:carrierKind fw:KeyedTable.
-fw:RasterPort a fw:PortType; rdfs:label "raster"; fw:carrierKind fw:RasterGridKind.
-fw:NetworkPort a fw:PortType; rdfs:label "network"; fw:carrierKind fw:Graph.
-fw:AlertPort a fw:PortType; rdfs:label "alert"; fw:carrierKind fw:DeclaredScalar.
+fw:PointComparisonPort a fw:PortType; rdfs:label "point-comparison".
+fw:TablePort a fw:PortType; rdfs:label "table".
+fw:RasterPort a fw:PortType; rdfs:label "raster".
+fw:NetworkPort a fw:PortType; rdfs:label "network".
+fw:AlertPort a fw:PortType; rdfs:label "alert".
 
 fw:Ruleset a owl:Class;
   rdfs:subClassOf prov:Plan;

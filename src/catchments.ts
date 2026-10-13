@@ -10,7 +10,32 @@ import {geometryBounds} from './study-area.js';
 import {pointRelation} from './spatial-predicates.js';
 import {partial,prepareEdges,reachedStreets} from './network-edges.js';
 
-export interface Network {nodes:{id:string;coordinates:Position}[];edges:{from:string;to:string;lengthM:number;geometry?:Position[]}[];source:string;provenance?:Record<string,unknown>}
+/** `limits` records the graph ceiling this network was accepted under, so a practitioner who
+ *  raised the knob is not refused later by a step that re-validates against the default. The
+ *  limit travels on the value for the same reason the distance unit travels on `nearest`'s
+ *  output: a graph of 4,000 junctions is not interpretable without knowing it was allowed. */
+export interface Network {nodes:{id:string;coordinates:Position}[];edges:{from:string;to:string;lengthM:number;geometry?:Position[]}[];source:string;provenance?:Record<string,unknown>;limits?:{maxNodes:number;maxEdges:number}}
+
+/** The default graph ceiling, and the only value measured. Raising it is a knob rather than a
+ *  widget by the test experiment 107 derived -- the contract does not move with it: ports, output
+ *  carrier and behaviour are unchanged and only what is admitted changes, which is what a
+ *  threshold does. It is a knob rather than a fixed cap because the failure it guards is now
+ *  contained: isochrone runs in a Worker with a 45-second timeout, so exceeding it fails one step
+ *  rather than the tab.
+ *
+ *  Measured 2026-10-13: 2,000 junctions is the tested ceiling, and a 1 km square of central London
+ *  normalizes to 5,249 junctions, which exhausted a 4 GB heap during isochrone construction. So
+ *  anything above about 3,000 is untested ground and the interface says so rather than pretending
+ *  the range is uniform. */
+export const NETWORK_NODE_LIMIT=2000;
+/** Directed segments per junction, from the shipped 2,000/5,000 pair. Measured on real street
+ *  data the ratio is 2.19 (11,497 segments over 5,249 junctions), so 2.5 leaves headroom and one
+ *  knob governs both rather than asking a practitioner to calibrate two numbers that move
+ *  together. */
+export const SEGMENTS_PER_NODE=2.5;
+export const NETWORK_NODE_LIMIT_MAX=50000;
+export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
+  ({maxNodes,maxEdges:Math.round(maxNodes*SEGMENTS_PER_NODE)});
 export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;minutes?:number;count?:number;total?:number;missingValues?:number}
 export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;features:Catchment[];sites:PointFeature[];method:string;crs:string;boundary?:Boundary;notes:string[];observations?:PointCollection;summary?:{records:number;matched:number;unmatched:number;missingLocation:number;multiple:number;valueField:string};snaps?:{siteId:string;nodeId:string;distanceM:number}[]}
 export const CATCHMENT_TYPES:Record<'voronoi'|'network_input'|'isochrone'|'clip_polygons'|'summarize_polygons',NodeDefinition>={
@@ -22,8 +47,21 @@ export const CATCHMENT_TYPES:Record<'voronoi'|'network_input'|'isochrone'|'clip_
 };
 const validId=(s:unknown)=>typeof s==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(s);
 const coordinate=(p:unknown):p is Position=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=180&&Math.abs(p[1])<=80;
-export function validateNetwork(n:Network){
-  if(!n||!Array.isArray(n.nodes)||!Array.isArray(n.edges)||!n.nodes.length||n.nodes.length>2000||n.edges.length>5000||typeof n.source!=='string'||!n.source.trim()||n.source.length>2000)throw new Error(`This street network has ${n?.nodes?.length??0} junctions and ${n?.edges?.length??0} directed segments; the limit is 2,000 and 5,000. Measured 2026-10-13, a 1 km square of central London normalizes to 5,249 junctions and exhausts the browser's memory during isochrone construction, so this is a working limit rather than a formality. Use a smaller study area, or simplify the graph before uploading. A network also needs a source description.`);
+export function validateNetwork(n:Network,maxNodes?:number){
+  // Precedence: an explicit argument, then the ceiling the network itself was accepted under, then
+  // the default. The middle term is what stops a step downstream of a raised knob from refusing a
+  // graph the practitioner deliberately allowed.
+  const limits=graphLimits(maxNodes??n?.limits?.maxNodes??NETWORK_NODE_LIMIT);
+  if(!n||!Array.isArray(n.nodes)||!Array.isArray(n.edges)||!n.nodes.length||typeof n.source!=='string'||!n.source.trim()||n.source.length>2000)
+    throw new Error('A street network needs at least one junction, an array of segments and a source description.');
+  if(n.nodes.length>limits.maxNodes||n.edges.length>limits.maxEdges)
+    throw new Error(`This street network has ${n.nodes.length} junctions and ${n.edges.length} `
+      +`directed segments; the limit is ${limits.maxNodes} and ${limits.maxEdges}. The limit is a `
+      +`knob on the Street network widget, so it can be raised to calibrate against your own `
+      +`machine. Measured 2026-10-13, a 1 km square of central London normalizes to 5,249 `
+      +`junctions and exhausted a 4 GB heap during isochrone construction, so raising it far is `
+      +`untested rather than merely slow. Alternatively use a smaller study area, or simplify the `
+      +`graph before uploading.`);
   const ids=new Set<string>();for(const p of n.nodes){if(!p||!validId(p.id)||ids.has(p.id)||!coordinate(p.coordinates))throw new Error('Network node IDs and CRS84 coordinates must be valid and unique.');ids.add(p.id);}
   let vertices=0;for(const e of n.edges){if(!e||!ids.has(e.from)||!ids.has(e.to)||!Number.isFinite(e.lengthM)||e.lengthM<=0||e.lengthM>100000)throw new Error('Network edges need known endpoints and positive metre lengths.');if(e.geometry){vertices+=e.geometry.length;if(!Array.isArray(e.geometry)||e.geometry.length<2||!e.geometry.every(coordinate))throw new Error('Invalid edge geometry.');}}
   if(vertices>30000)throw new Error('Network geometry exceeds 30,000 vertices.');
@@ -33,7 +71,8 @@ export function validateCatchmentNode(n:WorkflowNode){
   if(Object.hasOwn(CATCHMENT_TYPES,n.type)&&(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>100))throw new Error('Name the operation using 1–100 characters.');
   if(n.type==='network_input'){
     if(!n.params.data||!Array.isArray(n.params.data.nodes)||!Array.isArray(n.params.data.edges))throw new Error('Invalid network input.');
-    if(n.params.data.nodes.length||n.params.data.edges.length)validateNetwork(n.params.data);
+    if(n.params.maxNodes!==undefined&&(!Number.isInteger(n.params.maxNodes)||n.params.maxNodes<500||n.params.maxNodes>NETWORK_NODE_LIMIT_MAX))throw new Error(`Use a graph limit between 500 and ${NETWORK_NODE_LIMIT_MAX} junctions.`);
+    if(n.params.data.nodes.length||n.params.data.edges.length)validateNetwork(n.params.data,n.params.maxNodes);
     if(n.params.marginM!==undefined&&(!Number.isFinite(n.params.marginM)||n.params.marginM<0||n.params.marginM>2000))throw new Error('Use a 0–2,000 metre download margin.');
     if(n.params.inputMethod!==undefined&&!['osm','file'].includes(n.params.inputMethod))throw new Error('Choose OSM download or file upload.');
   }
@@ -66,13 +105,18 @@ const multi=(b:Boundary)=>b.type==='Polygon'?[b.coordinates]:b.coordinates;
 export function clipPolygons(input:Polygons,boundary:Boundary):Polygons{
   return {...structuredClone(input),boundary:structuredClone(boundary),features:input.features.flatMap(f=>{const coordinates=polygonClipping.intersection(multi(f.geometry) as ClipMultiPolygon,multi(boundary) as ClipMultiPolygon);return coordinates.length?[{...f,geometry:{type:'MultiPolygon' as const,coordinates}}]:[];}),notes:[...input.notes,'Clipped in CRS84 coordinate space; empty intersections omitted.']};
 }
-export function isochrone(input:PointCollection,network:Network,params:WorkflowNode<'isochrone'>['params']):Polygons{
-  if(params.thresholds?.length){validateCatchmentNode({id:'check',type:'isochrone',params,x:0,y:0});const results=params.thresholds.map(minutes=>isochrone(input,network,{...params,minutes,thresholds:undefined}));return {...results[0],features:results.flatMap(p=>p.features.map(f=>({...f,id:f.siteId+'-t'+f.minutes}))),method:'Cumulative network isochrones: '+params.thresholds.join(', ')+' minutes; '+params.speedMPerMin+' m/min; '+params.bufferM+' m corridor; '+params.direction,notes:[...results[0].notes,'Nested thresholds are cumulative, not disjoint time bands.']};}
+/** `onProgress` is called once per site, before that site's search. It exists so a worker can
+ *  prove it is still alive: the work is synchronous, so a timer inside the worker cannot fire
+ *  during it and only a call from within the computation can. It cannot prove liveness within a
+ *  single site, which is the case that exhausts memory -- that needs the search broken into steps,
+ *  recorded as the blocker `isochrone-does-not-scale`. */
+export function isochrone(input:PointCollection,network:Network,params:WorkflowNode<'isochrone'>['params'],onProgress?:(done:number,total:number)=>void):Polygons{
+  if(params.thresholds?.length){validateCatchmentNode({id:'check',type:'isochrone',params,x:0,y:0});const results=params.thresholds.map((minutes,i)=>{onProgress?.(i,params.thresholds!.length);return isochrone(input,network,{...params,minutes,thresholds:undefined},onProgress);});return {...results[0],features:results.flatMap(p=>p.features.map(f=>({...f,id:f.siteId+'-t'+f.minutes}))),method:'Cumulative network isochrones: '+params.thresholds.join(', ')+' minutes; '+params.speedMPerMin+' m/min; '+params.bufferM+' m corridor; '+params.direction,notes:[...results[0].notes,'Nested thresholds are cumulative, not disjoint time bands.']};}
   validateNetwork(network);validateCatchmentNode({id:'check',type:'isochrone',params,x:0,y:0});const fs=sites(input,10),m=metric(params.zone,params.hemisphere),coords=new Map(network.nodes.map(n=>[n.id,m.forward(n.coordinates)]));
   const edges=prepareEdges(network,params.direction,m.forward);
   const adjacency=new Map<string,typeof edges>();for(const e of edges){const list=adjacency.get(e.from)||[];list.push(e);adjacency.set(e.from,list);}
   const snaps:NonNullable<Polygons['snaps']>=[],notes=['Turf/JSTS corridor buffer in a local azimuthal equidistant projection, 8 quadrant segments. Approximate corridor polygons, not exact travel-time surfaces. Edge time uses supplied length / constant speed. No off-network connectors; snap distance is reported but not charged. Graph extent can truncate reachability. OSM snapshot is not an 1854 street reconstruction.'];
-  const features=fs.map(f=>{const origin=m.forward(f.geometry!.coordinates),snap=network.nodes.reduce((a,b)=>dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b),snapDistance=dist(coords.get(snap.id)!,origin);if(snapDistance>params.maxSnapM)throw new Error(`${f.properties.name}: nearest network node is ${Math.round(snapDistance)} m away, beyond the snap limit.`);snaps.push({siteId:f.id,nodeId:snap.id,distanceM:snapDistance});
+  const features=fs.map((f,index)=>{onProgress?.(index,fs.length);const origin=m.forward(f.geometry!.coordinates),snap=network.nodes.reduce((a,b)=>dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b),snapDistance=dist(coords.get(snap.id)!,origin);if(snapDistance>params.maxSnapM)throw new Error(`${f.properties.name}: nearest network node is ${Math.round(snapDistance)} m away, beyond the snap limit.`);snaps.push({siteId:f.id,nodeId:snap.id,distanceM:snapDistance});
     const budget=params.minutes*params.speedMPerMin,distances=new Map<string,number>([[snap.id,0]]),settled=new Set<string>();
     for(;;){let current:string|undefined,best=Infinity;for(const [id,d] of distances)if(!settled.has(id)&&d<best){current=id;best=d;}if(!current||best>budget)break;settled.add(current);for(const e of adjacency.get(current)||[]){const cost=best+e.lengthM;if(cost<(distances.get(e.to)??Infinity))distances.set(e.to,cost);}}
     const reached:{line:Position[];fraction:number}[]=[];for(const e of edges){const d=distances.get(e.from)??Infinity;if(d<budget)reached.push({line:e.line,fraction:Math.min(1,(budget-d)/e.lengthM)});}

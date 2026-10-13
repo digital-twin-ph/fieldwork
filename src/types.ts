@@ -59,7 +59,11 @@ export interface ParamsByType {
   slr_site_assignment:{label:string};
   slr_threshold_comparison:{label:string;scenario:string;basis:string;family:string;year:string;quantile:string;elevationField:string;verticalDatum:string;elevationReference:''|'baseline-sea-surface'|'other-datum'};
   reproject:{label:string;zone:number;hemisphere:'north'|'south';data:PointCollection;spatialReference?:SpatialReference;source?:import('./reproject.js').ReprojectSource;provenance?:import('./reproject.js').ReprojectProvenance};
-  network_input:{label:string;data:import('./catchments.js').Network;inputMethod?:'osm'|'file';marginM?:number};
+  /** `maxNodes` is the graph ceiling, a knob rather than a fixed cap: the contract does not move
+   *  with it (ports, output carrier and behaviour are unchanged, only what is admitted changes) and
+   *  the failure it guards is contained, because isochrone runs in a Worker with a timeout. 2,000 is
+   *  the measured default; above about 3,000 is untested. */
+  network_input:{label:string;data:import('./catchments.js').Network;inputMethod?:'osm'|'file';marginM?:number;maxNodes?:number};
   voronoi:{label:string;zone:number;hemisphere:'north'|'south'};
   isochrone:{label:string;zone:number;hemisphere:'north'|'south';minutes:number;thresholds?:number[];fillHoles?:boolean;speedMPerMin:number;bufferM:number;maxSnapM:number;direction:'inbound'|'outbound'};
   clip_polygons:{label:string};

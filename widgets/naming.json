@@ -1,11 +1,11 @@
 {
   "schema": "fieldwork/widget-naming/1",
   "convention": "docs/audits/ontology-audit.md#naming-convention-for-node-types",
-  "note": "The checkable part of the naming convention, recorded 2026-10-09 and unenforced until 2026-10-13. A violation not listed here fails the build; a listed violation that no longer occurs also fails, so this list can only shrink. maxKnownViolations may be lowered, never raised. A name is a public identifier saved workflows carry, so clearing one of these is a migration and not a relabelling.",
+  "note": "The checkable part of the naming convention, recorded 2026-10-09 and unenforced until 2026-10-13. A violation not listed here fails the build; a listed violation that no longer occurs also fails, so this list can only shrink. A name is a public identifier saved workflows carry, so clearing one of these is a migration and not a relabelling.",
   "domainPrefixes": {
     "urn:fieldwork:pack:sea-level-rise": "slr"
   },
-  "maxKnownViolations": 13,
+  "maxKnownViolations": 14,
   "knownViolations": [
     {
       "nodeType": "reproject",
@@ -17,7 +17,8 @@
       "nodeType": "reproject",
       "rule": "transform-in-sources",
       "reason": "The node type opens with a transform verb and the widget is filed under Sources. Both are honest about the contract: inputs are empty and the data arrives in params, so it imports UTM points and converts them in one step. The name promises a transform the contract does not offer on its own.",
-      "clearedBy": "Split the operation: `reproject` takes points and returns points under Spatial operations. Acquisition stays with the source widgets, which gain an output CRS so the common case needs no second node. Migration uses the experiment 18 adapter."
+      "clearedBy": "Split the operation: `reproject` takes points and returns points under Spatial operations. Acquisition stays with the source widgets, which gain an output CRS so the common case needs no second node. Migration uses the experiment 18 adapter.",
+      "gatedOn": "sources-group-does-not-mean-acquisition"
     },
     {
       "nodeType": "observations",
@@ -87,6 +88,26 @@
       "rule": "title-type-agreement",
       "reason": "Titled 'Group points in H3 cells'. H3 cells are hexagons, so the title is accurate for a practitioner who knows H3 and shares no stem with the identifier. The mildest entry here and arguably a false positive; kept rather than exempted so the rule is not weakened for the cases it exists to catch.",
       "clearedBy": "Retitle to name the hexagon, or accept and retire this entry with a recorded decision."
+    },
+    {
+      "nodeType": "slr_extract_import",
+      "rule": "source-consumes-data",
+      "reason": "Grouped under Sources while acquiring nothing: the table arrives from table_input on the `projections` port and this widget validates it and annotates provenance onto it. The group states a workflow stage the contract does not occupy.",
+      "gatedOn": "sources-group-does-not-mean-acquisition",
+      "clearedBy": "Move it out of Sources, and express its eight refusals as a declared admission ruleset with the AR6 licence and chapter as basis.evidence -- the fourth caller for the ruleset machinery. Audited in docs/audits/widget_audit.md."
+    }
+  ],
+  "ceilingRule": "maxKnownViolations may be lowered freely and raised only when a NEW RULE is added and finds violations that already existed. Raising it for a newly introduced defect is forbidden. Every raise names the rule and the date, below, so the distinction is auditable rather than asserted -- otherwise the ratchet would quietly discourage adding rules, which is the opposite of what it is for.",
+  "raises": [
+    {
+      "date": "2026-10-13",
+      "from": 13,
+      "to": 14,
+      "rule": "source-consumes-data",
+      "found": [
+        "slr_extract_import"
+      ],
+      "why": "A new rule asking whether a widget grouped under Sources actually acquires anything. The violation it found predates the rule by months: slr_extract_import has always taken a table on an input port. No new defect was admitted."
     }
   ]
 }

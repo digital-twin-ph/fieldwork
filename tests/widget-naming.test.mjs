@@ -31,6 +31,25 @@ test('a transform verb cannot be grouped under Sources, but an acquisition verb 
     'a verb cannot be both a transform and an acquisition');
 });
 
+test('a widget grouped under Sources must acquire, and a scope input is not data', ()=>{
+  // The defect this rule exists for: slr_extract_import takes a table on an input port and only
+  // validates it. The transform-verb rule missed it, because that rule keys on the verb a name
+  // opens with and this one opens with `slr`.
+  assert.deepEqual(rules(run({slr_extract_import:widget({title:'Sea-level projection extract',
+    group:'Sources',inputs:[['projections','table']],output:'table'})},
+    {widgets:[{nodeType:'slr_extract_import',classification:'standard'}]})),
+    ['slr_extract_import:source-consumes-data']);
+  // An `area` says WHERE to acquire from; it is a scope, not data under analysis. Both real
+  // acquiring sources take one, so a rule that rejected it would fire on correct code.
+  assert.deepEqual(rules(run({raster_input:widget({title:'Raster input',group:'Sources',
+    inputs:[['area','area']],output:'raster'})})),[]);
+  assert.deepEqual(rules(run({find_health_facilities:widget({title:'Find health facilities',
+    group:'Sources',inputs:[['area','area']],output:'points'})})),[]);
+  // A source with no inputs at all is the ordinary case and must stay quiet.
+  assert.deepEqual(rules(run({table_input:widget({title:'Tabular data',group:'Sources',
+    inputs:[],output:'table'})})),[]);
+});
+
 test('a domain widget must carry its declared prefix, which is not derived from the pack IRI', ()=>{
   const cls={widgets:[{nodeType:'sea_level_extract',classification:'domain',pack:'urn:fieldwork:pack:sea-level-rise'}]};
   assert.deepEqual(rules(run({sea_level_extract:widget({title:'Sea level extract'})},cls)),

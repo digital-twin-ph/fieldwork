@@ -27,6 +27,9 @@ const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');
 const read=path=>JSON.parse(readFileSync(`${root}/${path}`,'utf8'));
 const ledger=read('widgets/blockers.json');
 const standardization=read('widgets/standardization.json');
+// The naming ratchet gates too, and reads the same blocker ids. Leaving it out of the cross-check
+// would make its gates declared-and-unread -- the defect this whole ledger exists to prevent.
+const naming=read('widgets/naming.json');
 const registry=read('widgets/registry.json');
 
 const STATUSES=new Set(['standing','narrowed','lifted','withdrawn']);
@@ -64,7 +67,11 @@ for(const blocker of ledger.blockers){
 
 // The teeth. A gate in the reduction ledger has to be a claim with a clock behind it.
 const widgetTypes=new Set(registry.widgets.map(w=>w.nodeType));
-const gated=[...(standardization.exempt??[]),...(standardization.deferred??[])].filter(e=>e.gatedOn);
+const gated=[
+  ...(standardization.exempt??[]),
+  ...(standardization.deferred??[]),
+  ...(naming.knownViolations??[]),
+].filter(e=>e.gatedOn);
 for(const entry of gated){
   const blocker=byId.get(entry.gatedOn);
   if(!blocker)
@@ -82,7 +89,8 @@ for(const blocker of ledger.blockers)
   for(const blocked of blocker.blocks??[])
     if(widgetTypes.has(blocked)&&!gated.some(e=>e.nodeType===blocked&&e.gatedOn===blocker.id))
       problems.push(`\`${blocker.id}\` claims to block the widget \`${blocked}\`, which is not gated `
-        +`on it in widgets/standardization.json. A blocker nothing is waiting on is not a blocker.`);
+        +`on it in widgets/standardization.json or widgets/naming.json. A blocker nothing is `
+        +`waiting on is not a blocker.`);
 
 if(problems.length){
   console.error(`\nBlockers: ${problems.length} problem${problems.length===1?'':'s'}.\n`);

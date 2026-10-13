@@ -371,6 +371,127 @@ name, and build it over a shared join. That is item 5 of this audit's plan and h
 not been done. What is new here is that the sharing is cheaper than it looked —
 the domain part is one filter, not an algorithm.
 
+## The sea-level three, audited against the primitives
+
+_Added 2026-10-13, after the practitioner asked for these two next on the grounds that
+postponing the worked example makes their decomposition the open question rather than a
+deferred one._
+
+**First, a correction to the premise.** These were not unaudited: `slr_extract_import` and
+`slr_site_assignment` are classified under D1 above, `slr_site_assignment` has its own
+D2 section, and `slr_threshold_comparison` has its own D7 section. What was deferred was the
+*decision* — "the sea-level three are a separate decision", on the grounds that pack work is
+postponed. Deferring a decision and never auditing are different states, and the earlier text
+let them read alike. This section makes the decision.
+
+**What changed since that deferral is a knob.** `nearest` gained
+`candidateFilter?:CandidateCondition[]` on 2026-10-12 — `in`/`notIn` over a declared set of
+values — because that was what `access` added over the general search
+([107](../experiments/107-knobs-and-contracts.md)). That knob is the same shape as the whole
+domain residue of `slr_site_assignment`, which the D2 section above had already reduced to
+"one filter, not an algorithm". The reduction was recorded and then the machinery to carry it
+arrived for an unrelated widget. Nothing re-read the earlier finding against it, which is the
+procedure gap [103](../experiments/103-duplicates-should-merge.md) exists to close.
+
+### Measured, not argued
+
+Run against the one worked example (`src/sea-level-example.ts`, 194 Manila facilities, 8 AR6
+sites, 288 projection rows) on 2026-10-13:
+
+| Claim | Measurement |
+| --- | --- |
+| The extract's site ids and the site layer's site ids | Identical sets: `145, 260, 394, 522, 537, 664, 1708, 1711` |
+| Sites the extract cannot answer for | **None.** The validity rule that is this widget's entire domain residue excludes nothing in the only workflow that runs it |
+| `slr_threshold_comparison` in the worked example | **Absent.** The example ends at `slr_site_assignment` → `map_output`/`table_output` |
+
+`widgets/evidence.json` already carried the third row and it was not read: the widget's rung is
+**`declared only`** — no example use, no lab check, no field use. It is registered, in the
+palette and in the catalog's counts, and nothing anywhere exercises it. That is the state the
+practitioner exempted from the numbers rule on 2026-10-12 ("pending, not developed, not used"),
+and the exemption is sound; what is not sound is that it reads as a shipped widget.
+
+### `slr_site_assignment` — a composition of two primitives and a gap
+
+```
+nearest(points, sites, candidateFilter:[{field:'site_id', comparator:'in', values:[…]}])
+```
+
+That is the whole operation. The search is already the shared one — `assignSites` calls
+`nearestOf` from `src/nearest-neighbour.ts`, the same function `nearest` and the retired
+`access` called — so there is no algorithm to merge, only a contract to retire. Two things
+genuinely do not fit, and both are gaps rather than reasons to keep the widget:
+
+**Gap 1 — the filter's values are computed, not authored.** `candidateFilter` holds literal
+values a person typed. Here they are `extract.siteIds`, read from a connected port at run time.
+Authoring the eight ids would duplicate the extract in the workflow and go stale against it
+silently, which is worse than the widget. So the knob needs a second binding form: *values from
+a column of a connected input*. This is the same need [61](../experiments/61-role-binding.md)
+raises for role binding and [106](../experiments/106-rule-builder-ui.md) for authored
+conditions — a third caller for one form, which is the argument for building it.
+
+**Gap 2 — the output carrier.** `nearest` emits `distances`; this widget emits `table` with an
+`assignments` rider, because `slr_threshold_comparison` reads `table.assignments`. Riding
+structured data on a general port is the same move `slr_extract_import` makes with its
+`projection` rider, and both are what [66](../experiments/66-ports-as-schema-binding.md)
+blocks on. Two widgets smuggling a private shape through a shared port is a carrier question,
+not a sea-level question.
+
+**Decision: retire it into `nearest` once Gap 1 is closed.** Not before — with the filter
+authored by hand the workflow would be wrong in a way nothing catches, and the no-op
+measurement above is a property of this example's data, not a guarantee. Recorded as a blocker
+so it is revisited rather than remembered.
+
+### `slr_extract_import` — not a source, and the obligations are a ruleset
+
+Its contract is `inputs:[['projections','table']] → table`. **It acquires nothing.** The table
+arrives from `table_input`; this widget validates it and annotates provenance onto it. Yet it
+is grouped under **Sources**, which is the same defect as `reproject` filed there — a widget
+whose group states a stage its contract does not occupy. The naming ratchet added today does not
+catch it, because its `transform-in-sources` rule keys on transform verbs and this type opens
+with `slr`. The rule is too narrow: what it should ask is whether a widget in Sources acquires
+anything, which is checkable — a source has no inputs, or carries acquired data in its params as
+`find_health_facilities` does.
+
+Taking the operation away leaves eight refusals, every one of them a declared obligation with a
+citable basis:
+
+| Refusal | Basis |
+| --- | --- |
+| Key columns must be complete | A projected value without its full key cannot be interpreted |
+| Values in `millimetre` or `metre`, never guessed | AR6 publishes mm; measured 2026-10-09 from the confidence file |
+| Dataset IRI, version and baseline period stated | Values are not comparable across versions or baselines |
+| `basisKind` declared as workflow or confidence-pbox | A p-box bound is not a quantile of one distribution |
+| At least three citations | The dataset licence makes them obligatory |
+| Two distinct family values, and every row in one of them | Values including and excluding vertical land motion are not comparable |
+
+This is exactly the form [65](../experiments/65-ruleset-as-data.md) built: declared rules
+carrying `basis.evidence`, which the three shipped rulesets already use, and the licence and the
+AR6 chapter are the evidence references. The residual function under **D11** is real — nobody
+else refuses an unstated vertical-land-motion family — but it is a residual *ruleset*, not a
+residual widget. The general shape is "admit a connected table as a bounded extract of a
+published dataset, under stated obligations", which is not sea-level-specific at all; only the
+obligations are.
+
+**Decision: keep the widget for now, move it out of Sources, and express the obligations as a
+declared admission ruleset.** The move is free. The ruleset is the real work and it is the
+fourth caller for the ruleset machinery, which strengthens rather than complicates it.
+
+### `slr_threshold_comparison` — hold, and say so
+
+Genuinely domain-bound, as the deferral said: refusing an elevation not measured from the
+baseline sea surface is the knowledge it exists to carry. But at rung `declared only` it has
+never run in any workflow, so there is nothing to audit against — D8 cannot be applied to a
+widget no evidence touches. It should not be in the palette while that is true, which is the
+same argument as the domain-widget gate: offered means claimed.
+
+### What this means for the worked example
+
+If the sea-level example is kept, the workflow becomes `table_input` → extract admission →
+`nearest` with a bound candidate filter → outputs, and the two gaps above are what stands
+between that and today's three widgets. Neither gap is sea-level knowledge. Both are general
+mechanism the project already wants for other reasons, which is the strongest available argument
+that these widgets are a composition and not a domain.
+
 ## D7 — a port name that claims more than the port carries
 
 _Added 2026-10-10._ Found while decomposing the workflow stages, after a

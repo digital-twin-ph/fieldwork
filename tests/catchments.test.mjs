@@ -67,7 +67,7 @@ const raw={elements:[{type:'node',id:1,lon:0,lat:1},{type:'node',id:2,lon:.001,l
 test('OSM walking graph respects explicit foot direction and restrictions, retains shared OSM identity',()=>{
   const n=networkFromOSM(raw);assert.equal(n.nodes.length,3);assert.equal(n.edges.length,3);assert.ok(n.edges.every(e=>e.lengthM>100));
   assert.equal(networkFromOSM({...raw,elements:[...raw.elements,{type:'way',id:12,nodes:[1,3],tags:{highway:'footway',access:'private'}}]}).edges.length,3);
-  assert.throws(()=>networkFromOSM({...raw,remark:'runtime error'}),/incomplete/);
+  assert.throws(()=>networkFromOSM({...raw,remark:'runtime error'}),/partial answer/);
   assert.throws(()=>networkFromOSM({elements:[{type:'way',nodes:[1,2],tags:{highway:'path'}}]}),/missing nodes/);
 });
 test('OSM query scopes acquisition with margin and rejects oversized bounds',()=>{
@@ -78,7 +78,7 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   const fetcher=async(url,init)=>{assert.equal(init.credentials,'omit');assert.match(String(init.body),/data=/);return new Response(JSON.stringify(raw));};
   const n=await requestOSM(boundary,250,fetcher);assert.equal(n.edges.length,3);assert.equal(n.provenance.sha256.length,64);assert.deepEqual(n.provenance.boundary,boundary);
   await assert.rejects(requestOSM(boundary,0,async()=>new Response('',{status:429})),/HTTP 429/);
-  await assert.rejects(requestOSM(boundary,0,async()=>new Response(' '.repeat(2000001))),/exceeds 2 MB/);
+  await assert.rejects(requestOSM(boundary,0,async()=>new Response(' '.repeat(2000001))),/larger than 2 MB/);
 });
 test('buffer creates a distinct area and expands acquisition without carrying old area measurements',()=>{
   const snapshot=structuredClone(boundary),source={boundary,label:'Reporting area',areaId:'urn:test:source',geometryId:'urn:test:shape',measurement:{squareMetres:100,value:100,unit:'m2',method:'fixture'}};

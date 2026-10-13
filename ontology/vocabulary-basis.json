@@ -97,7 +97,8 @@
         "fw:GradedFacilitiesPort",
         "fw:AccessPort"
       ],
-      "on": "2026-10-13"
+      "on": "2026-10-13",
+      "enforced": "ontology/shapes/vocabulary-status.ttl, in the build gate from 2026-10-13. fw:RetiredTermShape requires the standard trio on any term declared retired; fw:DeprecatedTermShape requires the project status on any term carrying owl:deprecated, so the two records cannot drift. Both directions were verified by removing each assertion and watching the shape fail. owl:deprecated false is refused rather than read as 'current': omission is already the default, and admitting it would create a second way to say the same thing."
     },
     {
       "standardTerm": "dcterms:isReplacedBy",
@@ -107,7 +108,8 @@
         "fw:GradedFacilitiesPort",
         "fw:AccessPort"
       ],
-      "on": "2026-10-13"
+      "on": "2026-10-13",
+      "enforced": "ontology/shapes/vocabulary-status.ttl, in the build gate from 2026-10-13. fw:RetiredTermShape requires the standard trio on any term declared retired; fw:DeprecatedTermShape requires the project status on any term carrying owl:deprecated, so the two records cannot drift. Both directions were verified by removing each assertion and watching the shape fail. owl:deprecated false is refused rather than read as 'current': omission is already the default, and admitting it would create a second way to say the same thing."
     },
     {
       "standardTerm": "skos:changeNote",
@@ -117,7 +119,8 @@
         "fw:GradedFacilitiesPort",
         "fw:AccessPort"
       ],
-      "on": "2026-10-13"
+      "on": "2026-10-13",
+      "enforced": "ontology/shapes/vocabulary-status.ttl, in the build gate from 2026-10-13. fw:RetiredTermShape requires the standard trio on any term declared retired; fw:DeprecatedTermShape requires the project status on any term carrying owl:deprecated, so the two records cannot drift. Both directions were verified by removing each assertion and watching the shape fail. owl:deprecated false is refused rather than read as 'current': omission is already the default, and admitting it would create a second way to say the same thing."
     },
     {
       "standardTerm": "skos:hiddenLabel",
@@ -129,5 +132,9 @@
       "appliedTo": [],
       "on": "2026-10-13"
     }
-  ]
+  ],
+  "sweptOn": {
+    "date": "2026-10-13",
+    "finding": "Every term in the vocabulary carrying fw:implementationStatus was parsed across all 17 ttl files: 45 implemented, 30 proposed, 2 retired. Both retired terms already carry the standard trio, and no term carries owl:deprecated without the retired status, so there was nothing left to fix -- which is why the work went into the shapes instead. The sweep is the evidence that the shapes start from a clean graph rather than grandfathering violations."
+  }
 }

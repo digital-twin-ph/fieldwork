@@ -25,9 +25,9 @@
  "counts": {
   "declared only": 4,
   "example only": 10,
-  "parity only": 11,
+  "parity only": 10,
   "example, lab not applicable": 11,
-  "example+parity": 9,
+  "example+parity": 10,
   "neither applies": 1
  },
  "compositionsUsedByNoExample": [
@@ -377,12 +377,17 @@
   },
   {
    "nodeType": "reproject",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "snow-epidemic-curve",
+    "snow-geoprivacy",
+    "snow-isochrone",
+    "snow-voronoi"
+   ],
+   "exampleUseCount": 4,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "parity only"
+   "rung": "example+parity"
   },
   {
    "nodeType": "sample_raster",

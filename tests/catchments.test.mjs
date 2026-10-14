@@ -54,12 +54,23 @@ test('cumulative thresholds retain identity, reject ambiguous budgets and leave 
 test('pinned John Snow examples execute, conserve counts and emit parseable GeoSPARQL and PROV receipts',async()=>{
   for(const kind of ['snow-voronoi','snow-isochrone']){
     const workflow=johnSnowExample(kind);syncProjectManifest(workflow);const result=await executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(workflow))),ready);
-    assert.equal(result.outputs.length,kind==='snow-isochrone'?5:4);const p=result.outputs[0].polygons;
+    // Counts rose by one on 2026-10-14: both examples gained a `reproject` node and a table
+    // showing the pump coordinates in EPSG:32630, the frame the catchments are measured in
+    // (experiment 111). The map's polygons used to be outputs[0] and are now selected by node id,
+    // because the index was an unstated assumption about plan order -- the new table executes
+    // first and silently became outputs[0], which would have left `p` undefined and failed the
+    // conservation assertions below for a reason that has nothing to do with conservation.
+    assert.equal(result.outputs.length,kind==='snow-isochrone'?6:5);
+    const map=result.outputs.find(o=>o.nodeId==='map'),p=map.polygons;
+    assert.ok(p,'the map output must carry the catchment polygons');
+    // The projected table is the same eight pumps (one, for the isochrone) in metres.
+    const projected=result.outputs.find(o=>o.nodeId==='projected-table');
+    assert.ok(projected,'the example must instantiate reproject');
     assert.equal(result.outputs.filter(o=>o.nodeId==='epidemic')[0].chart.bins.length,43);
     assert.equal(p.summary.records,250);assert.equal(p.summary.matched+p.summary.unmatched+p.summary.missingLocation,250);
-    if(kind==='snow-voronoi'){assert.equal(p.summary.multiple,0);assert.equal(p.features.reduce((s,f)=>s+f.count,0),250);assert.equal(p.features.reduce((s,f)=>s+f.total,0),489);}else{assert.deepEqual(p.features.map(f=>[f.minutes,f.count,f.total]),[[1,48,110],[5,216,433],[10,250,489],[15,250,489]]);assert.equal(p.summary.multiple,250);assert.equal(result.outputs[0].contextPoints.features.length,8);assert.equal(result.outputs.at(-1).polygonPresentation,'interactive');assert.deepEqual(result.outputs[0].polygons,result.outputs.at(-1).polygons);assert.match(result.receipts.find(r=>r.nodeId==='map').facts,/output:context-pumps/);}
+    if(kind==='snow-voronoi'){assert.equal(p.summary.multiple,0);assert.equal(p.features.reduce((s,f)=>s+f.count,0),250);assert.equal(p.features.reduce((s,f)=>s+f.total,0),489);}else{assert.deepEqual(p.features.map(f=>[f.minutes,f.count,f.total]),[[1,48,110],[5,216,433],[10,250,489],[15,250,489]]);assert.equal(p.summary.multiple,250);assert.equal(map.contextPoints.features.length,8);assert.equal(result.outputs.at(-1).polygonPresentation,'interactive');assert.deepEqual(map.polygons,result.outputs.at(-1).polygons);assert.match(result.receipts.find(r=>r.nodeId==='map').facts,/output:context-pumps/);}
     for(const r of result.receipts)new Parser().parse(r.facts);
-    assert.ok(result.receipts.some(r=>r.facts.includes('geo:asWKT')));assert.equal(result.receipts.filter(r=>r.kind==='presentation').length,kind==='snow-isochrone'?5:4);
+    assert.ok(result.receipts.some(r=>r.facts.includes('geo:asWKT')));assert.equal(result.receipts.filter(r=>r.kind==='presentation').length,kind==='snow-isochrone'?6:5);
     assert.ok(result.evidence.length>=3);
   }
 });

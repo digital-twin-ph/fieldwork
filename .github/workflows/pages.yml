@@ -27,7 +27,17 @@ jobs:
       # experiment 70 requires a WebKit gate before any desktop packaging decision.
       - run: npx playwright install --with-deps chromium webkit
       - name: Type check, build and run regression tests
-        run: npm run check
+        # validate-dive-deeper and validate-manual check that every widget's links reach a notebook
+        # that exists, by reading ../validation-lab. That repository is PRIVATE, so this runner
+        # cannot check it out without a cross-repo token in a public workflow, which is a bigger
+        # decision than a link check warrants. The flag makes the scripts report the links as
+        # unverified and continue rather than failing the deploy -- which is what they did on
+        # 2026-10-14, taking the whole publish with them.
+        #
+        # The cost is real and is the reason this comment exists: a notebook renamed in the lab
+        # breaks these links and CI will not notice. The check runs wherever the lab is checked
+        # out beside this repository, which today means locally.
+        run: FIELDWORK_LAB_OPTIONAL=1 npm run check
       - name: Stage browser assets and licenses
         run: node scripts/stage-pages.mjs
       - uses: actions/configure-pages@v5

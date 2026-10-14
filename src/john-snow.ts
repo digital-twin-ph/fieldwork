@@ -127,8 +127,8 @@ export function snowExtentExample():Workflow{
         'Death locations digitised from Snow\u2019s map. A location carries no date, so this dataset cannot be joined to Table 1.')]},
     {id:'extent',type:'summarize_hull',x:330,y:20,params:{label:'Observed extent of the outbreak',zone:30,hemisphere:'north'}},
     {id:'review',type:'apply_ruleset',x:640,y:20,params:{label:'Extent review',
-      ruleset:pinnedRuleset('urn:fieldwork:ruleset:extent-review','1.0.0'),parameters:{threshold:250000}}},
-    {id:'decisions',type:'table_output',x:950,y:20,params:{label:'Extent decision',inputMode:'decisions'}},
+      ruleset:pinnedRuleset('urn:fieldwork:ruleset:extent-review','1.1.0'),parameters:{threshold:250000}}},
+    {id:'decisions',type:'table_output',x:950,y:20,params:{label:'Extent decision',inputMode:'polygons'}},
     {id:'pumps',type:'point_input',x:330,y:230,params:{label:'Eight pump locations',
       data:{type:'FeatureCollection',features:pumps},
       sourceInfo:{format:'CSV',url:voronoiSource+'data/pumps.csv',description:'Pump locations, Soho 1854, digitised by Robin Wilson from Snow\u2019s map. Infrastructure, not cases.'}}},
@@ -152,8 +152,8 @@ export function snowExtentExample():Workflow{
   ],edges:[
     {id:'deaths-extent',from:'deaths',to:'extent',port:'points'},
     {id:'extent-review',from:'extent',to:'review',port:'polygons'},
-    {id:'review-decisions',from:'review',to:'decisions',port:'decisions'},
-    {id:'extent-map',from:'extent',to:'map',port:'polygons'},
+    {id:'review-decisions',from:'review',to:'decisions',port:'polygons'},
+    {id:'extent-map',from:'review',to:'map',port:'polygons'},
     {id:'pumps-map',from:'pumps',to:'map',port:'context'},
     // No edge joins the two chains, and none can: a location has no date and a dated count has no
     // place. The separation is the finding, not a gap waiting to be wired.

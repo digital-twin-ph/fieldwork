@@ -9,7 +9,15 @@ export function polygonDisplay(p:Polygons,view:'map'|'table'|'chart'):DisplayVal
   if(view==='chart'&&!p.summary)throw new Error('Connect Summarize points in polygons before a catchment chart.');
   if(view==='chart'&&p.summary?.valueField&&p.features.some(f=>f.total!<0))throw new Error('This chart supports nonnegative totals; use Table for signed summaries.');
   return {kind:'point-table',polygons:p,pointTable:true,centers:[],boundary:p.boundary,
-    rows:p.features.map(f=>({id:f.id,recordId:f.id,name:f.name,coordinates:p.sites.find(s=>s.id===f.siteId)?.geometry?.coordinates||null,sourceNodeId:'catchments',layerLabel:'Catchments (coordinates locate source sites)',attributeTypes:{},attributes:{siteId:f.siteId,...(f.minutes!==undefined?{minutes:f.minutes}:{}),...(p.summary?{locations:f.count!,numericTotal:p.summary.valueField?f.total!:null,missingValues:f.missingValues!}:{})}})),
+    rows:p.features.map(f=>({id:f.id,recordId:f.id,name:f.name,coordinates:p.sites.find(s=>s.id===f.siteId)?.geometry?.coordinates||null,sourceNodeId:'catchments',layerLabel:'Catchments (coordinates locate source sites)',attributeTypes:{},attributes:{siteId:f.siteId,...(f.minutes!==undefined?{minutes:f.minutes}:{}),
+      // A rule's conclusion about this polygon, and what it enclosed, shown where the polygon is
+      // shown. Added 2026-10-14 with the port change that made a ruleset hand back the shapes it
+      // judged: a judgement that travels with the record has to be visible on the record, or the
+      // table a practitioner reads is poorer than the one the old decisions port gave them.
+      // Experiment 113.
+      ...(f.status!==undefined?{status:f.status,explanation:f.explanation??null}:{}),
+      ...(f.areaSquareMetres!==undefined?{areaSquareMetres:f.areaSquareMetres}:{}),
+      ...(p.summary?{locations:f.count!,numericTotal:p.summary.valueField?f.total!:null,missingValues:f.missingValues!}:{})}})),
     ...(view==='chart'?{chart:{field:p.summary!.valueField?'total' as const:'count' as const,caption:(p.features.some(f=>f.minutes!==undefined)?'Cumulative thresholds (not time bands). ':'')+(p.summary!.valueField?`Sum ${p.summary!.valueField} by catchment; missing values reported in Table`:'Location memberships by catchment; overlaps can count more than once'),total:p.summary!.records,bins:p.features.map(f=>({key:f.id,label:f.name,count:p.summary!.valueField?f.total!:f.count!,...(f.minutes===undefined?{}:{order:f.minutes})}))}}:{})};
 }
 export function polygonPresentationReceipt(node:WorkflowNode,source:string,runId:string,contextSource?:string):Receipt{

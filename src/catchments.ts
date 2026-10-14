@@ -69,7 +69,15 @@ export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
 /** `offNetworkMetres` is the straight-line leg charged to reach the network, present only when it
  *  exceeded the snap limit. Its presence marks a catchment that rests on an assumed walkable line;
  *  its absence means the whole route was on mapped streets. See `OffNetworkSite`. */
-export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
+/** `status` and `explanation` are a RULE's conclusion about this polygon, attached to the polygon
+ *  rather than returned beside it.
+ *
+ *  Added 2026-10-14, after the practitioner asked how decisions can be an output. A ruleset over
+ *  points returned its subject whole with a status added; a ruleset over polygons returned the
+ *  judgement and dropped the geometry, so a decision about a shape could be listed and never
+ *  drawn. Carrying it here means a map can colour by it, a clip or a summary afterwards keeps it,
+ *  and nothing has to reach back to a receipt to find out what was decided. Experiment 113. */
+export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;status?:'Review'|'NoFlag'|'Unknown';explanation?:string;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
 /** `unconnected` lists the sites that got no catchment, and `offNetwork` the sites that got one
  *  across a leg no street covers.
  *

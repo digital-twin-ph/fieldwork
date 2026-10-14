@@ -36,7 +36,9 @@ test('every bundled ruleset can be added from the palette, at its current versio
   // The basis belongs where the choice is made. An illustrative ruleset is offered and says so.
   const extent=page.locator('#node-library [data-ruleset^="urn:fieldwork:ruleset:extent-review"]');
   await expect(extent).toContainText('illustrative, no source');
-  await expect(extent).toContainText('polygons → decisions');
+  // polygons in, polygons out: from 1.1.0 the judgement travels on the shape it is about, so
+  // the ports say the ruleset hands back what it was given. Experiment 113.
+  await expect(extent).toContainText('polygons → polygons');
 });
 
 test('adding one pins that ruleset, its ports and its declared defaults',async({page})=>{
@@ -49,7 +51,7 @@ test('adding one pins that ruleset, its ports and its declared defaults',async({
   assert.ok(node,'clicking a ruleset must add an apply_ruleset node');
   assert.equal(node.params.ruleset.id,'urn:fieldwork:ruleset:extent-review');
   assert.deepEqual(node.params.ruleset.inputs,[['polygons','polygons']],'the ports come from the ruleset');
-  assert.equal(node.params.ruleset.output,'decisions');
+  assert.equal(node.params.ruleset.output,'polygons');
   assert.equal(node.params.parameters.threshold,1000000,'the declared default is pinned');
 
   // And the Inspector shows what was pinned rather than an empty node.

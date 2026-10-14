@@ -85,6 +85,41 @@ export interface Composition {
 
 const NAME=/^([a-z]+)_[a-z][a-z_]*[a-z]$/;
 
+/** A member parameter addressed by a dotted path, one level deep or more.
+ *
+ *  Added 2026-10-14 for experiment 113. A composition could only set TOP-LEVEL parameters, so a
+ *  widget whose configuration is structured could not have any of it exposed: `apply_ruleset`
+ *  keeps a ruleset's own settings under `parameters`, and the extent threshold a practitioner is
+ *  supposed to choose lives at `parameters.threshold`. The alternatives were to fix the threshold
+ *  inside the composition -- which would ship a composite whose own "must not be read as" says
+ *  that number is the practitioner's to set -- or to flatten the widget's parameters to suit the
+ *  composition machinery. Addressing a path is the smaller change and the honest one. */
+/** What a member emits, which for one widget is not in the type table.
+ *
+ *  `apply_ruleset` takes its output port from the ruleset it pins, so `TYPES` records null and the
+ *  answer is in the member's own fixed parameters. The validator already did this for INPUTS --
+ *  it passes the fixed params into `nodeInputs` -- and read the static table for the output, so a
+ *  composition could not contain a widget whose port type comes from its own pin. Found
+ *  2026-10-14 by trying to build one: experiment 113. */
+const memberOutput=(member:CompositionMember):PortType|null=>{
+  const pinned=(member.fixed as {ruleset?:{output?:string}}|undefined)?.ruleset?.output;
+  return (pinned as PortType|undefined)??TYPES[member.type as NodeType]?.output??null;
+};
+const setParam=(params:Record<string,unknown>,path:string,value:unknown):void=>{
+  const [head,...rest]=path.split('.');
+  if(!rest.length){params[head]=value;return;}
+  const nested={...(params[head] as Record<string,unknown>|undefined)};
+  setParam(nested,rest.join('.'),value);
+  params[head]=nested;
+};
+const fixedHas=(fixed:Record<string,unknown>,path:string):boolean=>{
+  const [head,...rest]=path.split('.');
+  if(!Object.hasOwn(fixed,head))return false;
+  if(!rest.length)return true;
+  const nested=fixed[head];
+  return !!nested&&typeof nested==='object'&&fixedHas(nested as Record<string,unknown>,rest.join('.'));
+};
+
 /** Every member input port that no internal edge fills. These are the composition's real
  *  inputs, derived from the graph, and the declared ports must match them exactly. */
 export function openInputs(composition:Composition):{node:string; port:string; type:PortType}[] {
@@ -131,8 +166,8 @@ export function validateComposition(composition:Composition,registry:{widgets:{n
     const accepted=nodeInputs({id:to.node,type:to.type,x:0,y:0,params:{...(to.fixed||{}),label:to.node}} as WorkflowNode)
       .find(([port])=>port===edge.port);
     if(!accepted)throw new Error(`${to.node} has no ${edge.port} input.`);
-    if(TYPES[from.type].output!==accepted[1])
-      throw new Error(`${from.node} emits ${TYPES[from.type].output} and ${to.node}'s ${edge.port} takes ${accepted[1]}.`);
+    if(memberOutput(from)!==accepted[1])
+      throw new Error(`${from.node} emits ${memberOutput(from)} and ${to.node}'s ${edge.port} takes ${accepted[1]}.`);
   }
 
   // Ports: declared, and checked against the graph so the surface cannot drift.
@@ -154,8 +189,8 @@ export function validateComposition(composition:Composition,registry:{widgets:{n
       throw new Error(`${o.node}'s ${o.port} input is open and no public port serves it, so the composition could never run.`);
   const terminal=composition.members.find(m=>m.node===composition.ports.output.node);
   if(!terminal)throw new Error(`The output names ${composition.ports.output.node}, which is not a member.`);
-  if(TYPES[terminal.type].output!==composition.ports.output.type)
-    throw new Error(`${terminal.node} emits ${TYPES[terminal.type].output}, not ${composition.ports.output.type}.`);
+  if(memberOutput(terminal)!==composition.ports.output.type)
+    throw new Error(`${terminal.node} emits ${memberOutput(terminal)}, not ${composition.ports.output.type}.`);
   if(composition.edges.some(e=>e.from===terminal.node))
     throw new Error(`${terminal.node} is the output but feeds ${composition.edges.find(e=>e.from===terminal.node)!.to} inside the composition.`);
 
@@ -170,7 +205,7 @@ export function validateComposition(composition:Composition,registry:{widgets:{n
       if(!member)throw new Error(`Public parameter ${parameter.name} names ${target.node}, which is not a member.`);
       const key=`${target.node}:${target.param}`;
       if(exposed.has(key))throw new Error(`${key} is set by both ${exposed.get(key)} and ${parameter.name}.`);
-      if(member.fixed&&Object.hasOwn(member.fixed,target.param))
+      if(member.fixed&&fixedHas(member.fixed,target.param))
         throw new Error(`${key} is both fixed and exposed as ${parameter.name}. Choose one.`);
       exposed.set(key,parameter.name);
     }
@@ -227,7 +262,7 @@ export function expandComposition(
         if(target.node===member.node){
           if(!Object.hasOwn(publicParams,parameter.name))
             throw new Error(`${composition.nodeType} needs a value for ${parameter.name}.`);
-          params[target.param]=publicParams[parameter.name];
+          setParam(params,target.param,publicParams[parameter.name]);
         }
     return {id:local(member.node),type:member.type as NodeType,
       x:position.x+index*180,y:position.y,params} as WorkflowNode;

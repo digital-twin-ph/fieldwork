@@ -1,6 +1,8 @@
 
 import type {Database,SqlJsStatic,SqlValue} from 'sql.js';
 import type {Boundary,Position,PointFeature,PointCollection,Scalar} from './types.js';
+import {READABLE_SOURCE_EPSG,utmFromEPSGCode} from './metric-crs.js';
+import {reprojectToCRS84} from './reproject.js';
 export interface CSVTable {headers:string[]; rows:string[][]}
 /** Which columns hold the axes, and in which unit.
  *
@@ -23,7 +25,7 @@ export interface CSVTable {headers:string[]; rows:string[][]}
  *  every point reads as Outside the study area, which is a finding about geography rather than an
  *  error, and haversine on metres-read-as-degrees returns a finite nonsense distance. */
 export interface CSVMapping {x:number; y:number; id:number; name:number; units:'degree'|'metre'}
-export interface GeoPackageLayer {table_name:string; column_name:string; srs_id:number}
+export interface GeoPackageLayer {table_name:string; column_name:string; srs_id:number; epsg:number}
 
 import {geometryBounds} from './study-area.js';
 import {pointRelation} from './spatial-predicates.js';
@@ -69,9 +71,35 @@ export function syntheticPoints(boundary:Boundary,{inside=20,outside=2,seed=42}=
 }
 const quote=(id:string)=>'"'+String(id).replaceAll('"','""')+'"';
 const records=(db:Database,sql:string):Record<string,SqlValue>[]=>{const r=db.exec(sql)[0];return r?r.values.map(values=>Object.fromEntries(r.columns.map((c,i)=>[c,values[i]]))):[];};
+/** RFC 7946 fixes GeoJSON at CRS84 and removed the `crs` member the superseded 2008 draft allowed.
+ *  Files written to that draft are still in circulation, and a `crs` member naming something else
+ *  is the one case where a GeoJSON says plainly that it is not what this importer assumes. Reading
+ *  it as degrees anyway is the same silent failure a UTM CSV used to produce, so it is refused by
+ *  name. A member that names CRS84 or EPSG:4326 agrees with RFC 7946 and is accepted. */
+export function geoJSONDeclaredCRS(raw:unknown):string{
+  const member=(raw as {crs?:unknown})?.crs;
+  if(member===undefined||member===null)return 'CRS84';
+  const name=(member as {properties?:{name?:unknown}})?.properties?.name;
+  if(typeof name!=='string')throw new Error('This GeoJSON carries a "crs" member this importer cannot read. RFC 7946 removed that member and fixes GeoJSON at CRS84; remove it if the coordinates are longitude and latitude.');
+  if(/(CRS84|(EPSG(::?|:)|^)4326$)/i.test(name))return 'CRS84';
+  throw new Error(`This GeoJSON declares its coordinates as ${name}. This importer reads CRS84 longitude and latitude, which is what RFC 7946 fixes GeoJSON at; convert the file before importing.`);
+}
 export function geoPackageLayers(db:Database):GeoPackageLayer[]{
-  const layers=records(db,"SELECT g.table_name, g.column_name, g.srs_id FROM gpkg_geometry_columns g JOIN gpkg_contents c ON c.table_name=g.table_name JOIN gpkg_spatial_ref_sys s ON s.srs_id=g.srs_id JOIN sqlite_master m ON m.name=g.table_name WHERE c.data_type='features' AND m.type='table' AND upper(g.geometry_type_name)='POINT' AND g.z=0 AND g.m=0 AND upper(s.organization)='EPSG' AND s.organization_coordsys_id=4326");
-  if(!layers.length)throw new Error('No supported 2D POINT layers in EPSG:4326. Reproject or convert the layer before importing.');return layers.map(layer=>{if(typeof layer.table_name!=="string"||typeof layer.column_name!=="string"||typeof layer.srs_id!=="number")throw new Error("Invalid GeoPackage layer metadata.");return {table_name:layer.table_name,column_name:layer.column_name,srs_id:layer.srs_id};});
+  const layers=records(db,"SELECT g.table_name, g.column_name, g.srs_id, s.organization_coordsys_id AS epsg FROM gpkg_geometry_columns g JOIN gpkg_contents c ON c.table_name=g.table_name JOIN gpkg_spatial_ref_sys s ON s.srs_id=g.srs_id JOIN sqlite_master m ON m.name=g.table_name WHERE c.data_type='features' AND m.type='table' AND upper(g.geometry_type_name)='POINT' AND g.z=0 AND g.m=0 AND upper(s.organization)='EPSG'");
+  // A GeoPackage states its own CRS in `gpkg_spatial_ref_sys`. Until 2026-10-13 that declaration
+  // was read only in order to REFUSE anything but EPSG:4326, which told the practitioner to go and
+  // reproject a file that had already told us what it was. The declaration is now honoured: 4326 is
+  // read as it stands, a WGS84 UTM zone is converted on import, and anything else is refused BY ITS
+  // CODE rather than as a blanket "not 4326", because that is the part the practitioner can act on.
+  const described=layers.map(layer=>{if(typeof layer.table_name!=="string"||typeof layer.column_name!=="string"||typeof layer.srs_id!=="number"||typeof layer.epsg!=="number")throw new Error("Invalid GeoPackage layer metadata.");return {table_name:layer.table_name,column_name:layer.column_name,srs_id:layer.srs_id,epsg:layer.epsg};});
+  const readable=described.filter(layer=>READABLE_SOURCE_EPSG(layer.epsg));
+  if(!readable.length){
+    const found=[...new Set(described.map(l=>`EPSG:${l.epsg}`))];
+    throw new Error(described.length
+      ?`This GeoPackage's point layers are in ${found.join(', ')}. This importer reads EPSG:4326 and WGS84 UTM zones; another projection or datum needs a conversion this prototype does not implement, so convert the layer before importing.`
+      :'No supported 2D POINT layers. The importer reads 2D POINT layers in EPSG:4326 or a WGS84 UTM zone.');
+  }
+  return readable;
 }
 export function decodeGeoPackagePoint(bytes:unknown,srsId:number):Position|null{
   if(bytes===null)return null;
@@ -91,7 +119,9 @@ export function geoPackagePoints(db:Database,layer:string):PointCollection{
   if(typeof id!=='string')throw new Error('The point layer needs a primary key.');
   const rows=records(db,`SELECT * FROM ${quote(layer)} ORDER BY ${quote(id)} LIMIT 2001`);
   if(rows.length>2000)throw new Error('GeoPackage layer exceeds the 2,000-point prototype limit.');
-  return {type:'FeatureCollection',features:rows.map(r=>{const f=feature(String(r[id]),String((typeof name==='string'?r[name]:null)??r[id]),decodeGeoPackagePoint(r[valid.column_name],valid.srs_id));const attrs=Object.entries(r).filter(([k])=>k!==valid.column_name);if(attrs.some(([,v])=>v instanceof Uint8Array))throw new Error('Binary attribute fields are not supported in this point importer.');f.properties={...Object.fromEntries(attrs) as Record<string,Scalar>,name:f.properties.name};return f;})};
+  const collection:PointCollection={type:'FeatureCollection',features:rows.map(r=>{const f=feature(String(r[id]),String((typeof name==='string'?r[name]:null)??r[id]),decodeGeoPackagePoint(r[valid.column_name],valid.srs_id));const attrs=Object.entries(r).filter(([k])=>k!==valid.column_name);if(attrs.some(([,v])=>v instanceof Uint8Array))throw new Error('Binary attribute fields are not supported in this point importer.');f.properties={...Object.fromEntries(attrs) as Record<string,Scalar>,name:f.properties.name};return f;})};
+  const utm=utmFromEPSGCode(valid.epsg);
+  return utm?reprojectToCRS84(collection,utm.zone,utm.hemisphere).collection:collection;
 }
 let sqlite:Promise<SqlJsStatic>|null=null;
 export function loadSQLite(){if(!sqlite)sqlite=new Promise<SqlJsStatic>((resolve,reject)=>{const script=document.createElement('script');script.src='./vendor/sql-wasm.js';script.onload=()=>globalThis.initSqlJs({locateFile:()=>new URL('./vendor/sql-wasm.wasm',location.href).href}).then(resolve,reject);script.onerror=()=>reject(new Error('The local GeoPackage reader could not load.'));document.head.append(script);}).catch(error=>{sqlite=null;throw error;});return sqlite;}

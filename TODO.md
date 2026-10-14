@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-10-12_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 Deferred work, in rough priority order. An item here is a decision to do it later, not a
 decision to do it — anything abandoned should be struck with a reason rather than deleted,
@@ -145,6 +145,19 @@ rebuilding (lesson 13 in [62](docs/experiments/62-workflow-traversal.md)).
   retirement marker pointing at the host widgets that now implement them.
 
 ## Primitives and ports
+
+- **A street network from a CSV edge list** (raised 2026-10-14, not an experiment yet —
+  investigate first). `network_input` takes OSM or a GeoJSON-shaped file today. A network is
+  also, commonly, two CSV columns: `node1` and `node2` (or `connects_to_node`), one row per
+  edge. That is how a network arrives from a field survey, a spreadsheet of paths between
+  settlements, or any system that never held geometry. Questions to settle before designing it:
+  where do node *coordinates* come from (a second CSV of node id, lon, lat? a join to a point
+  layer already in the workflow?); where does `lengthM` come from when the CSV carries no
+  geometry — computed straight-line between node coordinates, which makes every edge a lower
+  bound, or taken from a column the surveyor measured; and whether an undirected edge list
+  means one row or two, since `prepareEdges` works on directed edges. Reuses the CSV import
+  this project already has. It would let a network be *authored*, not only downloaded, which
+  matters where OSM is thin — the same places experiment 114's off-network leg is about.
 
 - **Settle [66](docs/experiments/66-ports-as-schema-binding.md) before any port work.** A
   connection is a schema binding: eight of fifteen port types are private wires between two
@@ -585,6 +598,43 @@ What would need deciding first:
   number that invites pruning by popularity would delete exactly those.
 
 Not started.
+
+## A WASM geometry kernel, instead of the JavaScript one
+
+Raised 2026-10-14, **not urgent** and not an experiment yet. The question was which
+widgets could use a Rust/WASM GIS kernel — `geo`, `geos-wasm` or similar.
+
+The split is between the widgets that *compute geometry* and the widgets that do graph
+or table work. Only the first group would gain anything.
+
+| Would use it | Would not |
+| --- | --- |
+| `isochrone`, `reachable_corridor` — buffering and unioning the route; this is where the time goes | `reachable_nodes`, `snap_to_network` — Dijkstra and a nearest-point search over arrays |
+| `clip_polygons`, `fill_interior_gaps`, `summarize_combined_area`, `buffer_area`, `buffer_point` — polygon clipping | `travel_time_band`, `rate`, `case_series`, `table_input` — table work |
+| `voronoi`, `summarize_hull`, `hex_aggregate`, `summarize_polygons` — half-plane intersection, hulls, point-in-polygon | the ruleset and reasoning widgets — already WASM, through EYE-JS |
+| `clip_raster`, `sample_raster` — masks and sampling | the import, output and presentation widgets |
+
+**Why it might be worth it.** The measured cost of a catchment is almost entirely
+`polygon-clipping` and `turf`'s buffer: 4.1 s of the 4.7 s a four-band Snow isochrone
+takes, and the 4 GB heap exhaustion recorded at London scale was a single buffer call
+([experiment 114](docs/experiments/114-the-three-segments-of-a-walk.md), the blocker
+`isochrone-does-not-scale`). Those calls are already behind a handful of functions —
+`taperedCorridor`, `clipPolygons`, the area helpers — so the surface to swap is small.
+
+**What would have to be settled first.**
+
+- **Offline.** The studio precaches and reports *Available offline*. A kernel is another
+  WASM payload beside EYE-JS, and the service worker has to carry it.
+- **Every pinned number moves.** A different engine gives different vertices, so every
+  pinned area, gap count and death count in the suite shifts, exactly as today's work
+  shifted them. That is measure-and-repin, not a regression, but it has to be planned as
+  one exercise rather than discovered.
+- **Which engine, and whether it is the same one the Validation Lab checks against.**
+  The lab uses Shapely/GEOS. A GEOS-based WASM kernel would make the two agree by
+  construction, which is either reassuring or circular depending on what the check is for.
+  That question belongs in the experiment, not in the swap.
+- **Is it a kernel or a widget?** Nothing here needs a new palette entry; this is an
+  implementation swap underneath existing widgets, so it is not a primitive admission.
 
 ## Gap: spatial statistics
 

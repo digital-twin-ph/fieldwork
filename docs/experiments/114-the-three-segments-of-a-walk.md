@@ -2,7 +2,8 @@
 
 _Created 2026-10-14 · Updated 2026-10-14_
 
-**Status:** tried — the defects are measured; the fix is designed and not built.
+**Status:** validated — all three segments are charged and the exclusion is gone.
+What remains is what the two straight legs assume, which is stated rather than fixed.
 
 Raised by the practitioner on 2026-10-14, from the routing notebooks:
 
@@ -158,3 +159,169 @@ fallback, only that it exists and is honest about being a proxy.
 D1 charged, the exclusion replaced by a recorded off-network segment, and the
 shipped isochrone example re-measured — its output will change, and the pinned
 test values with it, which is the result rather than a regression.
+
+_Closed 2026-10-14. All three done; what they cost and what they left is below._
+
+## What landed, 2026-10-14
+
+### 1. D1 is charged
+
+The snap node starts at `snapDistance` rather than zero, in `isochrone` and in the
+`reachable_nodes` primitive, so the budget pays for the walk onto the network.
+Re-measured on the shipped Snow isochrone:
+
+| Quantity | Before | After |
+| --- | --- | --- |
+| Locations in the 1-minute band | 48 | **35** |
+| Deaths in the 1-minute band | 110 | **89** |
+| Band areas (1 / 5 / 10 / 15 min) | — | **−18.5% / −7.8% / −1.7% / 0%** |
+
+The effect shrinks as the budget grows, which is what charging a fixed 10.9 m leg
+against a growing budget does. The pinned test values moved with it; that is the
+result, not a regression.
+
+### 2. The exclusion is gone, in both directions
+
+Past `maxSnapM` the site is **routed anyway**. The straight line to the nearest
+junction is charged against the budget at the street speed, the catchment carries
+`fw:offNetworkMetres`, and the site is listed in `fw:offNetworkSites`. `maxSnapM`
+no longer decides whether a site is answered — it decides whether the answer says
+what it assumed. `snap_to_network` does the same and drops nothing; the points it
+emits carry `offNetworkMetres` so a widget routing from them can repeat the caveat.
+
+What replaced the throw, in order, on one day:
+
+| Behaviour | What a distant site got |
+| --- | --- |
+| until 2026-10-14 | an error that ended the run, discarding every other site's result |
+| for a few hours | no result, reported |
+| now | a result, charged for the walk, marked as resting on an assumed line |
+
+**One case still has no answer, and should not have one.** When the walk to the
+nearest street alone spends the whole budget, nothing is reachable. No polygon is
+emitted, because the only shape available is a corridor-width disc around a junction
+the site cannot reach — which is what this widget drew, silently, whenever `maxSnapM`
+was set wider than the budget. That site is named in `fw:unconnectedSites` and in the
+alert. "Reaches nothing in five minutes" is the finding.
+
+### 3. D3 is modelled
+
+On the practitioner's instruction, later the same day:
+
+> Model D3 — connect D1, D2 and D3 and that's what you buffer.
+
+The corridor was a constant `bufferM` strip around every reached street, including the
+streets at the very edge of the budget. Someone standing there has nothing left to walk,
+so the catchment claimed 25 m of ground beyond its own time, all the way round its
+boundary. The widget's note called the strip a halo standing in for D3, which is a way
+of saying the third segment was not modelled at all.
+
+It is now **a leg with a budget**: at any point on the route the walk off the street is
+`min(bufferM, what is left)`. The region is the whole route buffered — D1, then D2, then
+D3 — so it is full width while there is time to spare and tapers to nothing where the
+time runs out. The catchment now stops at the time it is drawn for.
+
+`bufferM` stops being a drawing width and becomes **the furthest anyone is assumed to
+walk off a street at the end of a route**. The cap matters: without one the model lets
+you leave the network at the origin and walk the whole budget in a straight line, which
+is the crow-flies proxy that network routing exists to avoid.
+
+Re-measured on the shipped Snow isochrone, holes unfilled, against the same reach drawn
+the old way:
+
+| Band | Before | After | Change |
+| --- | --- | --- | --- |
+| 1 min | 12,206 m² | 7,414 m² | **−39.3%** |
+| 5 min | 186,035 m² | 160,415 m² | **−13.8%** |
+| 10 min | 685,799 m² | 656,937 m² | −4.2% |
+| 15 min | 867,199 m² | 867,199 m² | 0.0% |
+
+The 15-minute band does not move, which is the check that the taper only bites where the
+budget binds: at 15 minutes this network runs out before the time does, so every reached
+point still has the full leg to spare. The shortest band moves most, because almost all of
+it is frontier.
+
+The counts the worked example reports follow: the one-minute band falls from 35 locations
+and 89 deaths to **21 and 65**, and the five-minute band from 212/425 to **204/409**. Of
+the 110 deaths the one-minute catchment claimed before any of this work, **45 were inside
+only because two of the walk's three segments were free**.
+
+**The chain agrees.** `snap_to_network → reachable_nodes → travel_time_band →
+reachable_corridor` reproduces the monolith to 2×10⁻⁵ of area at every band, which is
+union ordering in floating point. Getting there required two changes beyond the taper:
+`snap_to_network` now keeps the site's own coordinates on the point it moves — it kept
+only the distance, so nothing downstream could draw the first leg — and `reachable_nodes`
+passes them on to whatever draws the corridor.
+
+**What it costs**, four bands on the Snow network:
+
+| Subdivide every chunk, unpooled | 15.0 s |
+| Subdivide the frontier only, unpooled | 6.1 s |
+| **Subdivide the frontier only, pooled** | **4.7 s** |
+| The same streets at a constant radius — the shape before the taper | 4.1 s |
+
+Two optimisations make the difference between 15% over the halo it replaced and three
+times the work: only the frontier is subdivided, since everywhere with more than
+`bufferM` left takes the full width anyway; and chunks are pooled so a street reached from
+both ends is buffered once. The pooling replaces `reachedStreets`, which pooled by street
+and has been removed along with `bufferedCorridor` — both were unreachable once the
+corridor stopped having a single width.
+
+### 4. The feedback loop
+
+The practitioner's instruction:
+
+> The route widget should alert the user that there are sites that did not
+> connect. That is a feedback loop that can be acted on by the user.
+
+The widget **glows red** on the canvas with a count, and the Inspector names each
+site, what happened to it and the distance that decided it. The spread through
+`clipPolygons` and `summarizePolygons` carries both findings downstream, so a
+summary over seven of nine catchments glows too.
+
+### What the degraded answer still assumes
+
+_Added 2026-10-14, alongside the section of the same purpose above, which was
+written before any of this was built._
+
+The off-network leg is **a lower bound charged at the wrong speed**. A straight line
+assumes it can be walked, and walking off-path is slower than walking a street; both
+assumptions push the same way, so an off-network catchment is optimistic. The widget
+says so; it does not correct for it, and this record does not establish how large the
+error is anywhere, because no example routes where roads are sparse.
+
+**D3 is modelled, not measured.** The final leg is capped at `bufferM`, a number nobody
+has calibrated: 25 m is a plausible distance from a street to a door in Soho and has no
+standing anywhere else. The taper makes the catchment stop at its own time, which is a
+different and smaller claim than making it right.
+
+Both straight legs — D1 and D3 — assume ground that can be walked and charge it at street
+speed. Where that is false, which is exactly where streets are sparse, the catchment is
+still too generous.
+
+The 2.9% figure stands as one site on one well-mapped network. The quantity that
+matters — D1 where roads are sparse — remains unmeasured.
+
+### Validation
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test-unit.mjs` | 492 pass, 0 fail |
+| chain against monolith, four bands | areas agree to 2×10⁻⁵ |
+| `tests/reach-chunks.test.mjs` | 7 new: where the cut falls, walking stopping at the budget, vertices kept, two-way reaches pooled, radii quantised downwards |
+| `tests/unconnected-sites.browser.mjs` | 4 pass (Chromium + WebKit): the glow, the named sites, `--danger-3` on the ring, the downstream glow, `fw:offNetworkSiteCount`, `fw:offNetworkMetres`, `fw:unconnectedSiteCount`, and the alert clearing when the limit is raised |
+| `npm run validate:ontology-coupling` | the five new terms are declared; it caught two of them asserted and undeclared |
+| practitioner reading of the alert | **not done** — whether "Routed off-network" is understood as "optimistic" rather than "broken" is unobserved |
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-14 | The three segments of a walk, and who is excluded by the missing ones |
+| 2026-10-14 | D1 charged in `isochrone` and `reachable_nodes`; Snow isochrone re-measured (1-min band 48 → 35 locations, 110 → 89 deaths; band areas −18.5%/−7.8%/−1.7%/0%) and pinned values moved with it |
+| 2026-10-14 | Exclusion past `maxSnapM` replaced by a report: `unconnected` on the value, a note, `fw:unconnectedSiteCount`/`fw:unconnectedSites` in the receipt, a red glow on the widget and a named list in the Inspector. Same change in `snap_to_network`. The routed crow-flies leg step 2 asked for is still not built |
+| 2026-10-14 | D3 modelled: the corridor is the whole route buffered by the leg the budget still allows, tapering to nothing at the frontier instead of claiming a constant 25 m beyond it. Snow bands −39.3% / −13.8% / −4.2% / 0%; 1-min counts 35/89 → 21/65. Chain and monolith agree to 2e-5. `reachedStreets` and `bufferedCorridor` removed; `snap_to_network` now keeps the site's own coordinates |
+| 2026-10-14 | The crow-flies leg built: past `maxSnapM` the site is routed with the straight line charged, carrying `fw:offNetworkMetres`; `snap_to_network` drops nothing and marks the point instead. `unconnected` now means only "the walk alone spends the budget", which also removed a disc this widget drew around a junction whenever the snap limit was wider than the budget. Status validated; D3 remains unmodelled |

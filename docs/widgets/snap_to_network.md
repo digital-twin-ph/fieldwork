@@ -19,10 +19,19 @@ How far each one travelled is measured and published as
 `fw:greatestSnapDistanceMetres` in the run evidence, and the output points are a
 **derived** dataset — they are not observations any more.
 
-**A site too far from the network stops the run.** Past the snap limit it raises
-an error rather than being carried through as unroutable. A place with no mapped
-street nearby is therefore absent from the result rather than shown as badly
-served, and street mapping is uneven in a known direction.
+**A site too far from the network is snapped anyway, and marked.** Past the snap
+limit the point still moves to its nearest node, and carries `offNetworkMetres`
+as well as `snapDistanceM` — the first leg of its route crosses ground no street
+covers. The widget glows red on the canvas and the Inspector names each such site
+and the distance. What the limit decides is whether the point says so, not
+whether the site is in the result.
+
+Nothing is dropped, and the widget refuses nothing on these grounds. Both of the
+earlier behaviours — an error before 2026-10-14, a silent omission for the hours
+after it — removed the places furthest from a mapped road, which is where street
+mapping is thinnest and where an access analysis is most often needed. The alert
+is the feedback loop instead: raise the limit, extend the network, or accept what
+is listed and say so in what you publish.
 
 ## What to check
 

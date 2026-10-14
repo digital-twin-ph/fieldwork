@@ -1,4 +1,5 @@
 import {readFileSync} from 'node:fs';
+import {ceilingProblems} from './ceiling.mjs';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {sourceDefinitions} from './validate-widgets.mjs';
 
@@ -129,6 +130,8 @@ export function validateNaming({definitions,classification,baseline}){
   for(const v of baseline.knownViolations)
     if(!v.reason||typeof v.reason!=='string')problems.push(`Known violation "${key(v)}" carries no reason`);
 
+  problems.push(...ceilingProblems('widgets/naming.json',
+    {current:baseline.maxKnownViolations,initial:baseline.initialCeiling,raises:baseline.raises}));
   if(baseline.knownViolations.length>baseline.maxKnownViolations)
     problems.push(`${baseline.knownViolations.length} known violations exceeds the ceiling of `
       +`${baseline.maxKnownViolations}. The ceiling may be lowered, never raised.`);

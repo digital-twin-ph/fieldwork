@@ -1,7 +1,7 @@
 import type {Network} from './catchments.js';
 import type {Boundary,Position} from './types.js';
 import {geometryBounds} from './study-area.js';
-import {FIGURE_ROLE,FIGURE_TYPE,METRES_PER_DEGREE_LATITUDE} from './presentation.js';
+import {FIGURE_ROLE,FIGURE_TYPE} from './presentation.js';
 
 /** A picture of a downloaded street network, for the Inspector.
  *
@@ -121,4 +121,3 @@ export const PREVIEW_SCALE_NOTE=(coverage:NetworkCoverage):string=>
   coverage.boundaryCovered!==null&&coverage.boundaryCovered<0.999
     ? 'The dashed outline is the study area. Where it runs outside the streets, the download did not reach that ground.'
     : 'The dashed outline is the study area.';
-export const METRES_PER_DEGREE=METRES_PER_DEGREE_LATITUDE;

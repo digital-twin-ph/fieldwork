@@ -131,5 +131,8 @@
       "gatedOn": "filter-values-from-a-connected-port",
       "record": "docs/audits/widget_audit.md"
     }
-  ]
+  ],
+  "initialExemptionCeiling": 3,
+  "ceilingRule": "exemptionCeiling may be lowered freely and raised only by an entry in `raises`, which states the date, the old and new values and why. Checked: the ceiling must equal initialExemptionCeiling plus every recorded raise, so a ceiling moved quietly fails the build. Added 2026-10-13 after a sweep found the ceiling could be raised by five with nothing noticing -- the list could never grow, but the bound on it could.",
+  "raises": []
 }

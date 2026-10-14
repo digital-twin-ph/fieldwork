@@ -35,7 +35,20 @@ test('the status bar still fits a phone, and the links survive',async({page})=>{
   // Linux WebKit the footer measures wider than on macOS WebKit or Chromium -- enough to push the
   // page into a horizontal scroll at 390px, which only CI saw.
   await expect(page.locator('.app-footer>span').last()).toBeHidden();
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
+  // Names the offending element rather than asserting a bare boolean. Two guesses at which element
+  // overflowed on Linux WebKit were both wrong, and a failure that says only "true" cannot be
+  // diagnosed from a CI log.
+  const overflow=await page.evaluate(()=>{
+    const wide=[...document.querySelectorAll('*')]
+      .map(el=>({tag:el.tagName.toLowerCase(),id:el.id,cls:typeof el.className==='string'?el.className:'',
+        right:Math.round(el.getBoundingClientRect().right),w:Math.round(el.getBoundingClientRect().width)}))
+      .filter(e=>e.right>innerWidth+1)
+      .sort((a,b)=>b.right-a.right).slice(0,6);
+    return {scrollWidth:document.documentElement.scrollWidth,innerWidth,wide};
+  });
+  expect(overflow.scrollWidth,
+    `page scrolls sideways; widest past the edge: ${JSON.stringify(overflow.wide)}`)
+    .toBeLessThanOrEqual(overflow.innerWidth);
   const box=await page.locator('.app-footer').boundingBox();
   expect(box.width).toBeLessThanOrEqual(390);
 });

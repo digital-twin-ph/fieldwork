@@ -140,3 +140,21 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 /* The ports line on a ruleset or composition entry: detail, allowed to truncate rather than
    widen its row. A flex child defaults to min-width:auto, so a long one pushes the whole row. */
 .palette-node .palette-note{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* A widget that found sites it could not connect glows red and says how many. The ring is drawn
+   boldly because the number underneath it is wrong in a way the practitioner cannot see: a count
+   over the sites that connected looks exactly like a count over all of them. The pulse stops after
+   three passes so a canvas of several alerting widgets does not keep moving, and reduced motion
+   gets the ring without the animation. Experiment 114. */
+@keyframes node-alerting{0%{box-shadow:0 0 0 2px var(--danger-3),0 0 14px 2px var(--danger-3)}50%{box-shadow:0 0 0 4px var(--danger-3),0 0 22px 6px var(--danger-3)}100%{box-shadow:0 0 0 2px var(--danger-3),0 0 14px 2px var(--danger-3)}}
+.node.alerting{border-color:var(--danger-3);box-shadow:0 0 0 2px var(--danger-3),0 0 14px 2px var(--danger-3);animation:node-alerting 1.4s ease-in-out 3}
+.node.alerting.selected{border-color:var(--danger-3)}
+@media (prefers-reduced-motion:reduce){.node.alerting{animation:none}}
+.node-alert{margin:0 11px 9px;padding:6px 7px;border-radius:5px;background:var(--danger-wash-1);color:var(--danger-5);font-size:9px;font-weight:650;line-height:1.5;overflow-wrap:anywhere}
+.inspector-alert{border:1.5px solid var(--danger-3);border-left-width:4px;border-radius:7px;background:var(--danger-wash-1);padding:12px;margin:0 0 18px}
+.inspector-alert strong{display:block;font-size:11px;font-weight:650;color:var(--danger-5);letter-spacing:.2px}
+.inspector-alert p{margin:7px 0 0;font-size:10px;line-height:1.7;color:var(--danger-5)}
+.inspector-alert table{margin-top:10px}
+.inspector-alert th{background:none;color:var(--danger-5);border-bottom-color:var(--danger-3)}
+.inspector-alert td{color:var(--danger-5);border-bottom-color:var(--danger-3)}
+.inspector-alert tbody tr{cursor:default}
+.inspector-alert tbody tr:hover{background:none}

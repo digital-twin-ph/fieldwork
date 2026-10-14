@@ -80,4 +80,15 @@ export interface DisplayValue {
   spatialReference?:SpatialReference; method?:string;
 }
 export interface Output extends DisplayValue {nodeId:string; label:string; view:'map'|'table'|'bars'}
-export interface WorkflowRun {evidence:NodeEvidence[]; provenanceN3:string; outputs:Output[]; trace:{nodeId:string; type:string; milliseconds:number}[]; receipts:Receipt[]; runId:string; engine:string; runAt:string}
+/** Something a run FOUND that the practitioner has to act on, carried per node so the widget that
+ *  found it can say so. Not an error: the run completed and the outputs are real.
+ *
+ *  Two findings so far, and the difference between them is what the practitioner does about it.
+ *  `unconnected` sites got no answer -- the walk to the network spends the whole budget -- so the
+ *  counts are over fewer sites than were offered. `offNetwork` sites got an answer that assumes a
+ *  straight line nobody has checked is walkable, so their results are optimistic rather than
+ *  missing. Experiment 114. */
+export interface RunAlert {nodeId:string;
+  unconnected:import('./catchments.js').UnconnectedSite[];
+  offNetwork:import('./catchments.js').OffNetworkSite[]}
+export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; provenanceN3:string; outputs:Output[]; trace:{nodeId:string; type:string; milliseconds:number}[]; receipts:Receipt[]; runId:string; engine:string; runAt:string}

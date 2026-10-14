@@ -1,6 +1,6 @@
 import type {Node,NodeProps,Edge,Connection} from '@xyflow/react';
 import type {Workflow,WorkflowNode,NodeDefinition,NodeType} from './types.js';
-export interface NodeDescription extends Record<string,unknown> {definition:NodeDefinition;type:NodeType;label:string;subtitle:string;detail:string;status?:string;glow?:boolean}
+export interface NodeDescription extends Record<string,unknown> {definition:NodeDefinition;type:NodeType;label:string;subtitle:string;detail:string;status?:string;glow?:boolean;alert?:string}
 type OperationFlowNode=Node<NodeDescription,'operation'>;
 export interface CanvasAPI {update:(graph:Workflow,selection:string|null|undefined,statuses?:Record<string,string>)=>void;fit:()=>void;zoomIn:()=>void;zoomOut:()=>void;setBusy:(busy:boolean)=>void}
 export interface CanvasCallbacks {ready:(api:CanvasAPI)=>void;describe:(node:WorkflowNode,status?:string)=>NodeDescription;select:(id:string)=>void;clear:()=>void;move:(id:string,position:{x:number;y:number})=>void;connect:(connection:Connection)=>void;valid:(connection:Connection|Edge)=>boolean;remove:(ids:string[])=>void;removeEdges:(ids:string[])=>void;zoom:(zoom:number)=>void}
@@ -16,7 +16,7 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   const portLabel=(port:string)=>port==='context'?'Context points':port==='polygons'?'Catchment polygons':port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':`Points ${port==='points'?'1':port.split('_')[1]}`;
   const updateInternals=useUpdateNodeInternals();
   useEffect(()=>{updateInternals(id);},[id,JSON.stringify(t.inputs),updateInternals]);
-  return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.glow?'just-finished':''}`}>
+  return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.glow?'just-finished':''} ${data.alert?'alerting':''}`}>
     <div className="node-heading"><span className="node-icon">{t.icon}</span><div><strong>{data.label}</strong><span className="node-id">{t.group}</span></div></div>
     <div className="node-subtitle">{data.subtitle}</div>
     {spatialPorts&&<div className="node-ports">
@@ -26,6 +26,7 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
       </div>)}
       {t.output&&<div className="node-port-row node-output-row"><span>{t.output==='raster'?'Raster →':'Coverage result →'}</span><Handle type="source" position={Position.Right} id="out" style={{top:'50%'}} title={t.output==='raster'?'Raster output':'Coverage result: study area, points and review decisions'} aria-label={`${data.label}: output`}/></div>}
     </div>}
+    {data.alert&&<div className="node-alert" role="alert" title={data.alert}>⚠ {data.alert}</div>}
     <div className="node-bottom"><span>{data.detail}</span><span className="count">{data.status==='done'?'✓ Done':data.status==='running'?'Running…':data.type==='policy'?'N3 · WASM':'●'}</span></div>
     {!spatialPorts&&t.inputs.map(([port,type],i)=><Handle key={port} type="target" position={Position.Left} id={port} style={{top:48+i*26}} title={`${port} (${type})`} aria-label={`${data.label}: ${port} input`}><span className="handle-name">{port}</span></Handle>)}
     {!spatialPorts&&t.output&&<Handle type="source" position={Position.Right} id="out" style={{top:54}} title={`${t.output} output`} aria-label={`${data.label}: output`}/>}

@@ -34,16 +34,35 @@ test('the status bar still fits a phone, and the links survive',async({page})=>{
   // Names the offending element rather than asserting a bare boolean. Two guesses at which element
   // overflowed on Linux WebKit were both wrong, and a failure that says only "true" cannot be
   // diagnosed from a CI log.
+  //
+  // A third guess was wrong for a different reason, on 2026-10-14: the list named six palette
+  // entries sitting at x=6397, and all six were INSIDE a strip that scrolls horizontally on
+  // purpose. An element past the viewport edge inside a clipping ancestor cannot widen the page,
+  // so listing it sends the reader after the wrong thing -- which is what the fix before this one
+  // did. Only elements with no clipping ancestor are reported now, and each says which ancestor
+  // was expected to clip it.
   const overflow=await page.evaluate(()=>{
-    const wide=[...document.querySelectorAll('*')]
-      .map(el=>({tag:el.tagName.toLowerCase(),id:el.id,cls:typeof el.className==='string'?el.className:'',
-        right:Math.round(el.getBoundingClientRect().right),w:Math.round(el.getBoundingClientRect().width)}))
-      .filter(e=>e.right>innerWidth+1)
-      .sort((a,b)=>b.right-a.right).slice(0,6);
-    return {scrollWidth:document.documentElement.scrollWidth,innerWidth,wide};
+    const clipper=(el)=>{
+      for(let node=el.parentElement;node&&node!==document.documentElement;node=node.parentElement){
+        const {overflowX}=getComputedStyle(node);
+        if(overflowX==='hidden'||overflowX==='auto'||overflowX==='scroll')
+          return `${node.tagName.toLowerCase()}${node.id?'#'+node.id:''}.${typeof node.className==='string'?node.className.split(' ')[0]:''} (${overflowX})`;
+      }
+      return null;
+    };
+    const describe=el=>({tag:el.tagName.toLowerCase(),id:el.id,
+      cls:typeof el.className==='string'?el.className:'',
+      right:Math.round(el.getBoundingClientRect().right),
+      w:Math.round(el.getBoundingClientRect().width),clippedBy:clipper(el)});
+    const past=[...document.querySelectorAll('*')].map(describe).filter(e=>e.right>innerWidth+1);
+    return {scrollWidth:document.documentElement.scrollWidth,innerWidth,
+      wide:past.filter(e=>!e.clippedBy).sort((a,b)=>b.right-a.right).slice(0,6),
+      clipped:past.filter(e=>e.clippedBy).length};
   });
   expect(overflow.scrollWidth,
-    `page scrolls sideways; widest past the edge: ${JSON.stringify(overflow.wide)}`)
+    `page scrolls sideways by ${overflow.scrollWidth-overflow.innerWidth}px; `
+    +`${overflow.clipped} element(s) past the edge are inside something that clips them, which is `
+    +`allowed. Unclipped: ${JSON.stringify(overflow.wide)}`)
     .toBeLessThanOrEqual(overflow.innerWidth);
   const box=await page.locator('.app-footer').boundingBox();
   expect(box.width).toBeLessThanOrEqual(390);

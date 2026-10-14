@@ -54,7 +54,7 @@ test('a micro-workflow is offered, added as one step, and explodes into its prim
   // The Inspector states what it is pinned to, and its parameters are the composition's.
   const inspector=page.locator('#inspector-content');
   await expect(inspector).toContainText('compute_walking_catchment');
-  await expect(inspector).toContainText('0.3.0');
+  await expect(inspector).toContainText('0.4.0');
   await expect(inspector).toContainText('not reviewed by a human');
   await expect(inspector).toContainText('snap_to_network → reachable_nodes → travel_time_band → reachable_corridor');
   await expect(page.locator('[data-micro-param="speedMPerMin"]')).toHaveValue('75');

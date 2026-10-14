@@ -1,6 +1,6 @@
 # How an experiment document is written
 
-_Created 2026-10-11 · Updated 2026-10-11_
+_Created 2026-10-11 · Updated 2026-10-12_
 
 This directory is the record of a developmental evaluation. Its documents are
 where questions are asked, tried in implemented code, and answered or retired.

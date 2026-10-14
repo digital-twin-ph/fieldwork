@@ -1,6 +1,6 @@
 # 49 · The pack catalog in the interface
 
-_Created 2026-10-08 · Updated 2026-10-08_
+_Created 2026-10-08 · Updated 2026-10-10_
 
 **Status:** design record. Nothing in this record is implemented, and one of its
 three options is recommended against being implemented at all.

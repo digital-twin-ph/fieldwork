@@ -1,6 +1,6 @@
 # 65 · A ruleset as declared data, and where its knobs live
 
-_Created 2026-10-09 · Updated 2026-10-12_
+_Created 2026-10-10 · Updated 2026-10-12_
 
 **Status:** admission review. Written before the code, as experiments 48, 58, 61, 63 and 64
 were. Proposes one widget replacing three node types, and one new declared artifact — a

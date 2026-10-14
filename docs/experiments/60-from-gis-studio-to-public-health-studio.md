@@ -1,6 +1,6 @@
 # 60 · From a GIS studio to a studio for public health domains
 
-_Created 2026-10-08 · Updated 2026-10-08_
+_Created 2026-10-08 · Updated 2026-10-10_
 
 **Status:** measurement and reframing. No widget moves and nothing is renamed here; the measurement
 is the point, because it shows that one of yesterday's mechanisms is measuring the wrong thing.

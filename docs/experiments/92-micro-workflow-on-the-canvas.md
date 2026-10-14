@@ -1,6 +1,6 @@
 # 92 · A micro-workflow on the canvas
 
-_Created 2026-10-10 · Updated 2026-10-10_
+_Created 2026-10-10 · Updated 2026-10-11_
 
 **Status:** validated — the composition can be added, inspected, run and exploded, so
 the claim [89](89-the-first-composition.md) could not test is now testable by a

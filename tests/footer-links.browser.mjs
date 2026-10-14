@@ -31,6 +31,10 @@ test('the status bar still fits a phone, and the links survive',async({page})=>{
   await expect(page.locator('#footer-ontology')).toBeVisible();
   await expect(page.locator('#footer-lab')).toBeVisible();
   await expect(page.locator('#footer-context')).toBeHidden();
+  // The research note goes too. It is the one footer item carrying nothing a reader acts on, and on
+  // Linux WebKit the footer measures wider than on macOS WebKit or Chromium -- enough to push the
+  // page into a horizontal scroll at 390px, which only CI saw.
+  await expect(page.locator('.app-footer>span').last()).toBeHidden();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
   const box=await page.locator('.app-footer').boundingBox();
   expect(box.width).toBeLessThanOrEqual(390);

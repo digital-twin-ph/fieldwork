@@ -59,48 +59,4 @@ export function prepareEdges(
   });
 }
 
-/** A line turned to face a fixed way, so the same street arrives at the same key from
- *  either end. A tie on the first vertex falls through to the last, and a closed line --
- *  both ends identical -- is left alone, since neither way is canonical. */
-const orient=(line:Position[]):Position[]=>{
-  const a=line[0],b=line.at(-1)!;
-  return a[0]>b[0]||(a[0]===b[0]&&a[1]>b[1])?line.toReversed():line;
-};
-const lineKey=(line:Position[]):string=>line.map(p=>`${p[0]},${p[1]}`).join(' ');
 
-/** The streets a traveller got into, each one once, truncated where the budget ran out.
- *
- *  A street network is directed, so a street between two reached junctions is normally
- *  offered twice -- once from each end -- and every caller here hands the result to a
- *  buffer. Buffering coincident geometry is the slowest thing an overlay can be asked
- *  to do and the least well defined, and the answer does not need it: a buffer
- *  distributes over a union, so the strip around a street entered from both ends is the
- *  strip around the street. Where the two reaches meet, the whole street is returned
- *  once; where they do not, the piece entered from each end is returned.
- *
- *  Pooling is keyed by the line, not by its two junctions. Soho has six reverse pairs
- *  whose two directions carry different geometry and three junction pairs with more
- *  than one street between them, and pooling those by junction would discard ground a
- *  traveller can reach.
- *
- *  `fraction` is how far along `line`, from `line[0]`, the budget reached. */
-export function reachedStreets(entered:{line:Position[];fraction:number}[]):Position[][]{
-  const pooled=new Map<string,{line:Position[];fromHead:number;fromTail:number}>();
-  for(const {line,fraction} of entered){
-    const canonical=orient(line),head=canonical===line,key=lineKey(canonical);
-    const entry=pooled.get(key)||{line:canonical,fromHead:0,fromTail:0};
-    if(head)entry.fromHead=Math.max(entry.fromHead,fraction);
-    else entry.fromTail=Math.max(entry.fromTail,fraction);
-    pooled.set(key,entry);
-  }
-  const streets:Position[][]=[];
-  for(const entry of pooled.values()){
-    if(entry.fromHead+entry.fromTail>=1){streets.push(entry.line);continue;}
-    for(const [fraction,line] of [[entry.fromHead,entry.line],[entry.fromTail,entry.line.toReversed()]] as [number,Position[]][]){
-      if(fraction<=0)continue;
-      const piece=partial(line,fraction);
-      if(piece.length>1)streets.push(piece);
-    }
-  }
-  return streets;
-}

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {Parser} from 'n3';
 import {voronoi,clipPolygons,summarizePolygons,isochrone,metric,validateNetwork} from '../build/catchments.js';
 import {johnSnowExample} from '../build/john-snow.js';
+import {calculateArea} from '../build/area-computation.js';
+const area=g=>calculateArea(g,'m2').value;
 import {executeWorkflow,validateWorkflow} from '../build/core.js';
 import {syncProjectManifest} from '../build/project-manifest.js';
 import {osmQuery,networkFromOSM,requestOSM} from '../build/street-network.js';
@@ -39,8 +41,49 @@ test('isochrone follows curved partial edges and directed inbound/outbound costs
   const r=summarizePolygons(p,collection(point('on',25,0),point('wrong',25,25),point('too-far',50,30)),{boundary:'include',valueField:''});assert.equal(r.features[0].count,1);
   const to=isochrone(collection(point('b',50,50)),network,{...params,direction:'inbound'});assert.equal(summarizePolygons(to,collection(point('on',50,25)),{boundary:'include',valueField:''}).summary.matched,1);
   const from=isochrone(collection(point('b',50,50)),network,params);assert.equal(summarizePolygons(from,collection(point('on',50,25)),{boundary:'include',valueField:''}).summary.matched,0);
-  assert.throws(()=>isochrone(collection(point('away',500,500)),network,params),/snap limit/);
   assert.throws(()=>validateNetwork({...network,edges:[{from:'a',to:'unknown',lengthM:1}]}),/endpoints/);
+});
+
+test('a site beyond the snap limit is routed anyway, across a leg it marks as off-network',()=>{
+  const network={source:'synthetic directed graph',nodes:[{id:'a',coordinates:coord(0,0)},{id:'b',coordinates:coord(50,50)}],edges:[{from:'a',to:'b',lengthM:100,geometry:[coord(0,0),coord(50,0),coord(50,50)]}]};
+  // One site on the graph and one 500 m away, with a 2 m snap limit. The far site is 636 m from
+  // the nearest junction, inside a 1,500 m budget: it gets an answer, marked. Before 2026-10-14
+  // it threw and took the near site's catchment with it.
+  const wide={...params,minutes:20,speedMPerMin:75};
+  const p=isochrone(collection(point('near',0,0),point('away',500,500)),network,wide);
+  assert.deepEqual(p.features.map(f=>f.siteId),['near','away'],'both sites are answered');
+  assert.equal(p.features[0].offNetworkMetres,undefined,'a site on the network assumed no leg');
+  assert.ok(p.features[1].offNetworkMetres>600,'the far site carries the leg it was charged');
+  assert.deepEqual(p.unconnected,[],'nothing was dropped');
+  assert.deepEqual(p.offNetwork.map(u=>[u.siteId,u.limitM]),[['away',2]]);
+  assert.match(p.notes[0],/^1 of 2 sites started further than the 2 m snap limit/);
+  assert.match(p.notes[0],/lower bound on the walk and reach too far rather than too little/);
+  // The route is drawn whole, so the catchment reaches back to the site itself across the leg it
+  // was charged for -- the straight line it assumed was walkable.
+  const ring=p.features[1].geometry.type==='Polygon'?p.features[1].geometry.coordinates.flat()
+    :p.features[1].geometry.coordinates.flat(2);
+  const site=collection(point('away',500,500)).features[0].geometry.coordinates;
+  const nearest=Math.min(...ring.map(([x,y])=>Math.hypot((x-site[0])*69000,(y-site[1])*111000)));
+  assert.ok(nearest<40,`the catchment comes within ${nearest.toFixed(0)} m of the site it belongs to`);
+});
+
+test('a site whose walk to the network spends the whole budget gets no catchment, and says so',()=>{
+  const network={source:'synthetic directed graph',nodes:[{id:'a',coordinates:coord(0,0)},{id:'b',coordinates:coord(50,50)}],edges:[{from:'a',to:'b',lengthM:100,geometry:[coord(0,0),coord(50,0),coord(50,50)]}]};
+  // 636 m to the nearest junction on a 50 m budget. There is nothing to draw: the only available
+  // shape is a buffer disc around the junction, which is not where the site is nor where it can
+  // reach, and that is what this widget drew before 2026-10-14 whenever the snap limit was wider
+  // than the budget.
+  const p=isochrone(collection(point('near',0,0),point('away',500,500)),network,{...params,minutes:1,speedMPerMin:50,maxSnapM:1000});
+  assert.deepEqual(p.features.map(f=>f.siteId),['near']);
+  assert.deepEqual(p.offNetwork,[],'it is inside the snap limit; the budget is what defeated it');
+  assert.equal(p.unconnected.length,1);
+  assert.equal(p.unconnected[0].budgetM,50);
+  assert.ok(p.unconnected[0].distanceM>600);
+  assert.match(p.notes[0],/the walk to the nearest street alone spends the whole 50 m budget/);
+  assert.match(p.notes[0],/over the origins|over the sites that reached something/);
+  // A summary over an incomplete set carries the omission forward, so the tab that counts says so.
+  const summary=summarizePolygons(p,collection(point('on',25,0)),{boundary:'include',valueField:''});
+  assert.deepEqual(summary.unconnected,p.unconnected);
 });
 
 test('cumulative thresholds retain identity, reject ambiguous budgets and leave legacy results unchanged',()=>{
@@ -68,7 +111,29 @@ test('pinned John Snow examples execute, conserve counts and emit parseable GeoS
     assert.ok(projected,'the example must instantiate reproject');
     assert.equal(result.outputs.filter(o=>o.nodeId==='epidemic')[0].chart.bins.length,43);
     assert.equal(p.summary.records,250);assert.equal(p.summary.matched+p.summary.unmatched+p.summary.missingLocation,250);
-    if(kind==='snow-voronoi'){assert.equal(p.summary.multiple,0);assert.equal(p.features.reduce((s,f)=>s+f.count,0),250);assert.equal(p.features.reduce((s,f)=>s+f.total,0),489);}else{assert.deepEqual(p.features.map(f=>[f.minutes,f.count,f.total]),[[1,48,110],[5,216,433],[10,250,489],[15,250,489]]);assert.equal(p.summary.multiple,250);assert.equal(map.contextPoints.features.length,8);assert.equal(result.outputs.at(-1).polygonPresentation,'interactive');assert.deepEqual(map.polygons,result.outputs.at(-1).polygons);assert.match(result.receipts.find(r=>r.nodeId==='map').facts,/output:context-pumps/);}
+    if(kind==='snow-voronoi'){assert.equal(p.summary.multiple,0);assert.equal(p.features.reduce((s,f)=>s+f.count,0),250);assert.equal(p.features.reduce((s,f)=>s+f.total,0),489);}else{
+      // [minutes, located deaths, total deaths] per band, re-measured 2026-10-14 when D1 began to
+      // be charged. The budget now pays for the 10.91 m walk from the pump to its junction before
+      // any street is walked, and the effect falls almost entirely on the shortest band:
+      //
+      //   1 min   48 locations / 110 deaths  ->  35 / 89
+      //   5 min  216 / 433                   -> 212 / 425
+      //  10 min  250 / 489                   -> unchanged, the band already reaches everything
+      //
+      // Then re-measured again the same day, when D3 was modelled: the corridor is no longer a
+      // constant 25 m strip around every reached street, but the walk off the street that the
+      // budget still allows, so it narrows to nothing where the time runs out instead of claiming
+      // 25 m beyond it all the way round.
+      //
+      //   1 min   35 / 89   ->  21 / 65
+      //   5 min  212 / 425  -> 204 / 409
+      //  10 min  250 / 489  -> unchanged
+      //
+      // So of the 110 deaths the one-minute catchment originally claimed, 45 were inside only
+      // because two of the three segments of the walk were free. That is the result of experiment
+      // 114, not a regression, and "within a minute's walk of the pump" is exactly the question
+      // this example exists to ask.
+      assert.deepEqual(p.features.map(f=>[f.minutes,f.count,f.total]),[[1,21,65],[5,204,409],[10,250,489],[15,250,489]]);assert.equal(p.summary.multiple,250);assert.equal(map.contextPoints.features.length,8);assert.equal(result.outputs.at(-1).polygonPresentation,'interactive');assert.deepEqual(map.polygons,result.outputs.at(-1).polygons);assert.match(result.receipts.find(r=>r.nodeId==='map').facts,/output:context-pumps/);}
     for(const r of result.receipts)new Parser().parse(r.facts);
     assert.ok(result.receipts.some(r=>r.facts.includes('geo:asWKT')));assert.equal(result.receipts.filter(r=>r.kind==='presentation').length,kind==='snow-isochrone'?6:5);
     assert.ok(result.evidence.length>=3);

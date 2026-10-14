@@ -9,7 +9,7 @@ import type {Boundary,PointCollection,PointFeature,Position,WorkflowNode,NodeDef
 import type {Receipt} from './results.js';
 import {geometryBounds} from './study-area.js';
 import {pointRelation} from './spatial-predicates.js';
-import {partial,prepareEdges,reachedStreets} from './network-edges.js';
+import {prepareEdges} from './network-edges.js';
 
 /** `limits` records the graph ceiling this network was accepted under, so a practitioner who
  *  raised the knob is not refused later by a step that re-validates against the default. The
@@ -66,8 +66,55 @@ export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
  *  Metres, always, and only written by a widget that projected to get them -- an area computed in
  *  degrees is not an area. A widget that works in CRS84 leaves these absent, which is the honest
  *  answer rather than a number in the wrong unit. */
-export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
-export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;features:Catchment[];sites:PointFeature[];method:string;crs:string;boundary?:Boundary;notes:string[];observations?:PointCollection;summary?:{records:number;matched:number;unmatched:number;missingLocation:number;multiple:number;valueField:string};snaps?:{siteId:string;nodeId:string;distanceM:number}[]}
+/** `offNetworkMetres` is the straight-line leg charged to reach the network, present only when it
+ *  exceeded the snap limit. Its presence marks a catchment that rests on an assumed walkable line;
+ *  its absence means the whole route was on mapped streets. See `OffNetworkSite`. */
+export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
+/** `unconnected` lists the sites that got no catchment, and `offNetwork` the sites that got one
+ *  across a leg no street covers.
+ *
+ *  A site further than the snap limit used to end the run: a throw inside the per-site
+ *  loop, so ONE distant site took every other site's catchment with it. It is now routed anyway,
+ *  with the crow-flies walk charged against the budget, and listed in `offNetwork` so the answer
+ *  says which legs it assumed. `unconnected` is what is left when even that is impossible: the
+ *  walk alone spends the budget. The practitioner's instruction of 2026-10-14 --
+ *  "the route widget should alert the user that there are sites that did not connect, a feedback
+ *  loop that can be acted on" -- is what this carries. A site nobody can route to is a finding
+ *  about access, and a finding is reported, not raised.
+ *
+ *  An unconnected site is absent from `features` because `Catchment.geometry` is a real polygon
+ *  and there is no honest one to draw. So the absence is stated here instead, where a consumer can
+ *  say "7 of 9 sites" rather than quietly summarising 7 and calling it all of them. An off-network
+ *  site IS in `features`, carrying `offNetworkMetres`, because it has a real answer -- one that
+ *  rests on an assumption the ordinary catchments do not make. Experiment 114. */
+/** A site whose route begins with a leg no street covers: it is further from the network than the
+ *  snap limit allows, and the walk onto the network is charged as a straight line anyway.
+ *
+ *  `distanceM` is D1 as the crow flies, which is a LOWER BOUND on the walk, not a measurement of
+ *  it: it assumes the line is walkable, and where D1 is large -- a home set back from any mapped
+ *  road -- the walked path is routinely longer. It is also charged at the network speed, which is
+ *  a second optimistic assumption. The result for this site is therefore too generous in a stated
+ *  direction, which is what distinguishes it from the result for a site on the network. */
+export interface OffNetworkSite {siteId:string;name:string;distanceM:number;limitM:number}
+/** A site that got no result at all: the walk onto the network alone costs the whole budget, so
+ *  nothing is reachable within the stated time.
+ *
+ *  That is a finding, not a failure -- "this site reaches nothing in five minutes" is the answer --
+ *  but it cannot be drawn. No polygon is emitted, because the only shape available is a `bufferM`
+ *  disc around the junction, which is neither where the site is nor anywhere it can reach. */
+export interface UnconnectedSite {siteId:string;name:string;distanceM:number;budgetM:number}
+/** Reads the omissions off ANY node value, since several widgets now report them and the caller
+ *  (the executor) holds values it cannot narrow. Absent, empty and "not that kind of value" all
+ *  read as no omissions, which is the right answer for a widget that has none. */
+export function unconnectedSites(value:unknown):UnconnectedSite[]{
+  const list=(value as {unconnected?:unknown})?.unconnected;
+  return Array.isArray(list)?list as UnconnectedSite[]:[];
+}
+export function offNetworkSites(value:unknown):OffNetworkSite[]{
+  const list=(value as {offNetwork?:unknown})?.offNetwork;
+  return Array.isArray(list)?list as OffNetworkSite[]:[];
+}
+export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;features:Catchment[];sites:PointFeature[];method:string;crs:string;boundary?:Boundary;notes:string[];observations?:PointCollection;summary?:{records:number;matched:number;unmatched:number;missingLocation:number;multiple:number;valueField:string};snaps?:{siteId:string;nodeId:string;distanceM:number}[];unconnected?:UnconnectedSite[];offNetwork?:OffNetworkSite[]}
 export const CATCHMENT_TYPES:Record<'voronoi'|'network_input'|'isochrone'|'clip_polygons'|'summarize_polygons',NodeDefinition>={
   voronoi:{title:'Voronoi catchments',group:'Spatial operations',icon:'◇',color:'teal',description:'Allocate an extent to the nearest site in a metric CRS',inputs:[['area','area'],['sites','points']],output:'polygons'},
   network_input:{title:'Street network',group:'Sources',icon:'⌁',color:'blue',description:'Download OSM by study area or upload a directed graph',inputs:[['area','area']],output:'network'},
@@ -165,18 +212,119 @@ export function clipPolygons(input:Polygons,boundary:Boundary):Polygons{
  *  The union is a balanced pairwise reduction, not a left fold: folding re-walks the whole
  *  accumulated polygon on every step, which is the same quadratic shape in a different place. */
 export const BUFFER_BATCH=25;
-export function bufferedCorridor(lines:Position[][],bufferM:number,fallback:Position):Boundary{
-  if(!lines.length){
-    const point=turfBuffer({type:'Point',coordinates:fallback},bufferM,{units:'meters',steps:8});
-    if(!point||point.type!=='Feature')throw new Error('Network buffer did not produce a polygon.');
-    return point.geometry as Boundary;
+/** D3 -- the walk off the last junction to a door -- modelled rather than drawn.
+ *
+ *  Until 2026-10-14 the corridor was a constant `bufferM` strip around every reached street,
+ *  including the streets at the very edge of the budget. Someone standing there has nothing left
+ *  to walk, so the catchment claimed 25 m of ground beyond the time it was drawn for, all the way
+ *  round its own boundary. The strip was described in the widget's note as a cartographic halo
+ *  standing in for D3, which is a way of saying the third segment was not modelled at all.
+ *
+ *  It is now a LEG WITH A BUDGET. At any point on the route the walk off the network is
+ *  `min(bufferM, what is left)`, so the corridor is full width while there is time to spare and
+ *  tapers to nothing where the time runs out. `bufferM` stops being a drawing width and becomes
+ *  the furthest anyone is assumed to walk off a street at the end of the route -- a cap, because
+ *  without one the model lets you leave the network at the origin and walk the whole budget in a
+ *  straight line, which is the crow-flies proxy the network routing exists to avoid.
+ *
+ *  The route is buffered whole: D1 (the straight walk onto the network), D2 (the streets) and D3
+ *  (this). The practitioner's instruction of 2026-10-14 -- "connect D1, D2 and D3 and that's what
+ *  you buffer". Experiment 114.
+ *
+ *  Chunking, and what it costs: a chunk takes the budget left at the END it is furthest along,
+ *  so the near end of a chunk is buffered by less than it has earned, and the radius is rounded
+ *  down into buckets as well. Both remove ground. Against that, each chunk is buffered on its
+ *  own, so its far end gets a round cap at the chunk's radius where the rule gives a smaller one,
+ *  which adds a little back. They do not cancel exactly: the Validation Lab's check 08 rebuilds
+ *  the rule independently at 1 m steps and measures this corridor 0.16% LARGER than the rule
+ *  (161,044 m² against 160,785 m², symmetric difference 0.16%, 2026-10-14). So the approximation
+ *  is not purely conservative, and that is stated rather than assumed.
+ */
+export const D3_BUCKETS=6;
+export interface ReachChunk {line:Position[];remainingM:number}
+/** Split a reached stretch of street into chunks, each carrying the budget left where it ends.
+ *  `line` is in projected metres; walking stops when the budget does.
+ *
+ *  Only the frontier is subdivided. While more than `taperFromM` is left the leg is the full
+ *  allowance everywhere, so that stretch is ONE chunk however long it runs; within the last
+ *  `taperFromM` metres the radius is falling and the line is cut every `chunkM`. The corridor is
+ *  then a handful of buffer calls rather than one per 12 metres of street: measured on the shipped
+ *  Snow isochrone, 15.0 s subdividing everything against 2.3 s subdividing the frontier, for the
+ *  same polygons. Experiment 114. */
+export function reachChunks(line:Position[],startRemainingM:number,taperFromM:number,chunkM:number):ReachChunk[]{
+  const out:ReachChunk[]=[];
+  let remaining=startRemainingM,current:Position[]=[line[0]],run=0;
+  for(let i=1;i<line.length&&remaining>1e-9;i++){
+    let [ax,ay]=line[i-1];const [bx,by]=line[i];
+    let left=Math.hypot(bx-ax,by-ay);
+    while(left>1e-9&&remaining>1e-9){
+      // Walk to whichever comes first: the end of this segment, the end of the chunk, the point
+      // where the taper begins, or the end of the budget.
+      const toTaper=remaining>taperFromM?remaining-taperFromM:Infinity;
+      const step=Math.min(left,remaining>taperFromM?toTaper:chunkM-run,remaining);
+      const t=step/left,nx=ax+(bx-ax)*t,ny=ay+(by-ay)*t;
+      current.push([nx,ny]);
+      run+=step;remaining-=step;left-=step;ax=nx;ay=ny;
+      if(remaining<=taperFromM+1e-9&&(run>=chunkM-1e-9||remaining<=1e-9||step===toTaper)){
+        if(current.length>1)out.push({line:current,remainingM:Math.max(0,remaining)});
+        current=[[ax,ay]];run=0;
+      }
+    }
+  }
+  if(current.length>1)out.push({line:current,remainingM:Math.max(0,remaining)});
+  return out;
+}
+/** Buffer each chunk by the leg its own budget allows, and union the result.
+ *
+ *  Radii are quantised DOWN into `D3_BUCKETS` steps so the whole corridor costs a handful of
+ *  buffer calls rather than one per chunk, and so that quantising can only make it smaller.
+ *  `inverse` returns each chunk to CRS84, where the buffer is measured in metres. */
+export function taperedCorridor(chunks:ReachChunk[],maxRadiusM:number,
+  inverse:(p:Position)=>Position,fallback:{point:Position;radiusM:number}):Boundary{
+  // One street reached from both ends arrives twice, and a street buffered twice costs twice and
+  // unions to the same polygon. Pooling by the line itself, keeping whichever reach had more
+  // budget left, is what `reachedStreets` did before the taper replaced it -- the same idea,
+  // carrying the budget it needs now.
+  //
+  // What the taper costs, measured on the shipped Snow isochrone (four bands, 2026-10-14):
+  //
+  // | subdivide every chunk, unpooled             | 15.0 s |
+  // | subdivide the frontier only, unpooled       |  6.1 s |
+  // | **subdivide the frontier only, pooled**     |  **4.7 s** |
+  // | the same streets at a constant radius -- the shape before the taper | 4.1 s |
+  //
+  // So the modelled D3 costs about 15% over the halo it replaced, and the two optimisations
+  // together are the difference between that and three times the work. All four produce the
+  // same polygons to within union ordering.
+  const pooled=new Map<string,ReachChunk>();
+  for(const chunk of chunks){
+    const a=chunk.line[0],b=chunk.line.at(-1)!;
+    const forward=a[0]>b[0]||(a[0]===b[0]&&a[1]>b[1])?chunk.line.toReversed():chunk.line;
+    const key=forward.map(p=>`${p[0].toFixed(3)},${p[1].toFixed(3)}`).join(' ');
+    const seen=pooled.get(key);
+    if(!seen||chunk.remainingM>seen.remainingM)pooled.set(key,{line:forward,remainingM:chunk.remainingM});
+  }
+  const step=maxRadiusM/D3_BUCKETS,buckets=new Map<number,Position[][]>();
+  for(const chunk of pooled.values()){
+    const radius=Math.floor(Math.min(maxRadiusM,chunk.remainingM)/step)*step;
+    if(radius<=0)continue;
+    const list=buckets.get(radius)||[];list.push(chunk.line.map(inverse));buckets.set(radius,list);
   }
   const parts:ClipPolygon[]=[];
-  for(let i=0;i<lines.length;i+=BUFFER_BATCH){
-    const batch=turfBuffer({type:'MultiLineString',coordinates:lines.slice(i,i+BUFFER_BATCH)},
-      bufferM,{units:'meters',steps:8});
-    if(!batch||batch.type!=='Feature')throw new Error('Network buffer did not produce a polygon.');
-    parts.push(...(multi(batch.geometry) as ClipPolygon[]));
+  for(const [radius,lines] of buckets)
+    for(let i=0;i<lines.length;i+=BUFFER_BATCH){
+      const batch=turfBuffer({type:'MultiLineString',coordinates:lines.slice(i,i+BUFFER_BATCH)},
+        radius,{units:'meters',steps:8});
+      if(!batch||batch.type!=='Feature')throw new Error('Network buffer did not produce a polygon.');
+      parts.push(...(multi(batch.geometry) as ClipPolygon[]));
+    }
+  if(!parts.length){
+    // Nothing had any budget left to step off a street with. The site itself is what is reached,
+    // and the leg it can still walk from its own door is what is drawn.
+    const point=turfBuffer({type:'Point',coordinates:fallback.point},Math.max(fallback.radiusM,1),
+      {units:'meters',steps:8});
+    if(!point||point.type!=='Feature')throw new Error('Network buffer did not produce a polygon.');
+    return point.geometry as Boundary;
   }
   let level:ClipMultiPolygon[]=parts.map(p=>[p]);
   while(level.length>1){
@@ -186,39 +334,73 @@ export function bufferedCorridor(lines:Position[][],bufferM:number,fallback:Posi
     level=next;
   }
   const polygons=level[0];
-  // One polygon is returned as a Polygon, as the single buffer call did, so receipts and
-  // downstream readers see the same geometry type for the same shape.
   return polygons.length===1
     ?{type:'Polygon',coordinates:polygons[0] as Position[][]}
     :{type:'MultiPolygon',coordinates:polygons as Position[][][]};
 }
 export function isochrone(input:PointCollection,network:Network,params:WorkflowNode<'isochrone'>['params'],onProgress?:(done:number,total:number)=>void):Polygons{
-  if(params.thresholds?.length){validateCatchmentNode({id:'check',type:'isochrone',params,x:0,y:0});const results=params.thresholds.map((minutes,i)=>{onProgress?.(i,params.thresholds!.length);return isochrone(input,network,{...params,minutes,thresholds:undefined},onProgress);});return {...results[0],features:results.flatMap(p=>p.features.map(f=>({...f,id:f.siteId+'-t'+f.minutes}))),method:'Cumulative network isochrones: '+params.thresholds.join(', ')+' minutes; '+params.speedMPerMin+' m/min; '+params.bufferM+' m corridor; '+params.direction,notes:[...results[0].notes,'Nested thresholds are cumulative, not disjoint time bands.']};}
+  if(params.thresholds?.length){validateCatchmentNode({id:'check',type:'isochrone',params,x:0,y:0});const results=params.thresholds.map((minutes,i)=>{onProgress?.(i,params.thresholds!.length);return isochrone(input,network,{...params,minutes,thresholds:undefined},onProgress);});// The omissions come from the LARGEST band, not the first. A site that reaches nothing in one
+    // minute but something in fifteen is not a site with no result; it is a site whose smallest
+    // band is empty, which is what bands are for. The largest budget is the only one that can say
+    // "nothing at all", and because the budget only grows, its list is the intersection of them.
+    const widest=results[results.length-1];
+    return {...results[0],features:results.flatMap(p=>p.features.map(f=>({...f,id:f.siteId+'-t'+f.minutes}))),method:'Cumulative network isochrones: '+params.thresholds.join(', ')+' minutes; '+params.speedMPerMin+' m/min; '+params.bufferM+' m corridor; '+params.direction,notes:[...widest.notes,'Nested thresholds are cumulative, not disjoint time bands.'],unconnected:widest.unconnected,offNetwork:widest.offNetwork};}
   validateNetwork(network);validateCatchmentNode({id:'check',type:'isochrone',params,x:0,y:0});const fs=sites(input,10),m=metric(params.zone,params.hemisphere),coords=new Map(network.nodes.map(n=>[n.id,m.forward(n.coordinates)]));
   const edges=prepareEdges(network,params.direction,m.forward);
   const adjacency=new Map<string,typeof edges>();for(const e of edges){const list=adjacency.get(e.from)||[];list.push(e);adjacency.set(e.from,list);}
-  const snaps:NonNullable<Polygons['snaps']>=[],notes=['Turf/JSTS corridor buffer in a local azimuthal equidistant projection, 8 quadrant segments. Approximate corridor polygons, not exact travel-time surfaces. Edge time uses supplied length / constant speed. No off-network connectors; snap distance is reported but not charged. Graph extent can truncate reachability. OSM snapshot is not an 1854 street reconstruction.'];
-  const features=fs.map((f,index)=>{onProgress?.(index,fs.length);const origin=m.forward(f.geometry!.coordinates),snap=network.nodes.reduce((a,b)=>dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b),snapDistance=dist(coords.get(snap.id)!,origin);if(snapDistance>params.maxSnapM)throw new Error(`${f.properties.name}: nearest network node is ${Math.round(snapDistance)} m away, beyond the snap limit.`);/* ASSUMPTION, EXCLUDING: a site too far from the network produces no answer at all, and this throw ends the RUN -- every other site goes with it. Missing road data becomes absence from the analysis rather than fw:Unknown, which inverts the rule applied to every other kind of missing evidence. OSM footpath coverage is unequal in a known direction, so this lands hardest on under-mapped settlements. The designed replacement is a crow-flies D1 charged anyway and recorded as an off-network segment -- a lower bound, since a straight line assumes a walkable one. Experiment 114. */snaps.push({siteId:f.id,nodeId:snap.id,distanceM:snapDistance});
-    // ASSUMPTION, UNCHARGED: the walk from the site onto the network costs nothing.
+  const snaps:NonNullable<Polygons['snaps']>=[],unconnected:NonNullable<Polygons['unconnected']>=[],offNetwork:NonNullable<Polygons['offNetwork']>=[],notes=['Turf/JSTS corridor buffer in a local azimuthal equidistant projection, 8 quadrant segments. Approximate corridor polygons, not exact travel-time surfaces. Edge time uses supplied length / constant speed. All three segments of the walk are charged: the straight line onto the network (D1), the streets (D2), and the walk off the street at the end (D3), which is the leg the budget still allows up to the stated limit. The region is the whole route buffered, so it narrows to nothing where the time runs out. Both straight legs assume ground that can be walked, at street speed. Graph extent can truncate reachability. OSM snapshot is not an 1854 street reconstruction.'];
+  const features=fs.map((f,index)=>{onProgress?.(index,fs.length);const origin=m.forward(f.geometry!.coordinates),snap=network.nodes.reduce((a,b)=>dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b),snapDistance=dist(coords.get(snap.id)!,origin);
+    /* ASSUMPTION, DEGRADING: a site further from the network than `maxSnapM` is NOT excluded. The
+       crow-flies walk onto the network is charged anyway and the site is recorded in `offNetwork`,
+       so a place with no mapped street nearby gets an answer that says what it assumed rather than
+       no answer at all. Until 2026-10-14 it threw and ended the run; between then and now it was
+       reported and dropped. Both put the places with the sparsest road data -- which OSM
+       under-maps in a known direction -- outside the analysis that exists to make them visible.
+       The straight line is a LOWER BOUND on that walk, charged at the network speed, so the
+       degraded answer is optimistic in a stated direction. `maxSnapM` no longer decides whether
+       the site is answered; it decides whether the answer is marked. Experiment 114. */
+    const budget=params.minutes*params.speedMPerMin;
+    if(snapDistance>=budget){
+      /* ASSUMPTION, EXCLUDING: the walk onto the network alone spends the whole budget, so nothing
+         is reachable and there is no polygon to draw. Emitting one would mean a `bufferM` disc
+         around the JUNCTION -- not where the site is, and not anywhere it can reach -- which is
+         what this widget drew before 2026-10-14 whenever `maxSnapM` was set wider than the budget.
+         The site is reported instead. "Reaches nothing in five minutes" is the finding. */
+      unconnected.push({siteId:String(f.id),name:String(f.properties.name),
+        distanceM:Number(snapDistance.toFixed(2)),budgetM:Number(budget.toFixed(2))});
+      return null;
+    }
+    const offNetworkMetres=snapDistance>params.maxSnapM?Number(snapDistance.toFixed(2)):undefined;
+    if(offNetworkMetres!==undefined)offNetwork.push({siteId:String(f.id),name:String(f.properties.name),
+      distanceM:offNetworkMetres,limitM:params.maxSnapM});
+    snaps.push({siteId:f.id,nodeId:snap.id,distanceM:snapDistance});
+    // D1 IS CHARGED. The walk from the site onto the network comes out of the budget.
     //
     // A route has three segments -- D1 site to nearest node, D2 network distance, D3 last node to
-    // destination. `snapDistance` above IS D1: measured, pushed into `snaps`, published as
-    // fw:networkSnaps -- and then the snap node starts at 0 here, so the budget never pays for it.
-    // The isochrone therefore reaches further than its stated time allows, by exactly D1.
+    // destination. `snapDistance` above IS D1, and from 2026-10-14 the snap node starts at that
+    // cost rather than at zero, so the stated minutes pay for the walk onto the network.
     //
-    // Measured on the shipped Soho example 2026-10-14: D1 10.9 m against a 375 m budget, 2.9%.
-    // That figure is the wrong one to remember. D1 is largest where a home sits back from any
-    // mapped road, which is where an access analysis is used to argue for investment, so ignoring
-    // it flatters the places that are worst served. Charging it is one edit -- start the snap node
-    // at `snapDistance` -- and it shrinks every isochrone, including the pinned example's.
+    // Until then it was measured, published as fw:networkSnaps, and not charged, so every
+    // isochrone reached further than its time allowed -- by 10.9 m of a 375 m budget on this
+    // example, 2.9%. That figure was never the point. D1 is largest where a home sits back from
+    // any mapped road, which is where an access analysis is used to argue for investment, so
+    // ignoring it flattered the places worst served.
     //
-    // D3 is not modelled at all; `bufferM` below is a cartographic halo standing in for it.
+    // A straight line to the nearest junction is still a LOWER BOUND on that first walk: it
+    // assumes you can cross whatever lies between, and where D1 is large the walked path is
+    // routinely longer. Charging it makes the isochrone smaller and still optimistic.
+    //
+    // D3 remains unmodelled; `bufferM` below is a cartographic halo standing in for it.
     // Experiment 114 and the Dive Deeper section of the lab's 19-snap notebook.
-    const budget=params.minutes*params.speedMPerMin,distances=new Map<string,number>([[snap.id,0]]),settled=new Set<string>();
+    const distances=new Map<string,number>([[snap.id,snapDistance]]),settled=new Set<string>();
     for(;;){let current:string|undefined,best=Infinity;for(const [id,d] of distances)if(!settled.has(id)&&d<best){current=id;best=d;}if(!current||best>budget)break;settled.add(current);for(const e of adjacency.get(current)||[]){const cost=best+e.lengthM;if(cost<(distances.get(e.to)??Infinity))distances.set(e.to,cost);}}
-    const reached:{line:Position[];fraction:number}[]=[];for(const e of edges){const d=distances.get(e.from)??Infinity;if(d<budget)reached.push({line:e.line,fraction:Math.min(1,(budget-d)/e.lengthM)});}
-    const lines=reachedStreets(reached).map(line=>line.map(m.inverse));
-    const corridor=bufferedCorridor(lines,params.bufferM,snap.coordinates);
+    // The whole route, chunked with the budget left at every point along it: the straight walk
+    // onto the network, then every street reached. D3 is then the leg each chunk can still
+    // afford. See `taperedCorridor`.
+    const chunkM=Math.max(5,params.bufferM/2);
+    const chunks:ReachChunk[]=reachChunks([origin,coords.get(snap.id)!],budget,params.bufferM,chunkM);
+    for(const e of edges){const d=distances.get(e.from)??Infinity;if(d<budget)chunks.push(...reachChunks(e.line,budget-d,params.bufferM,chunkM));}
+    const corridor=taperedCorridor(chunks,params.bufferM,m.inverse,{point:f.geometry!.coordinates,radiusM:params.bufferM});
     // Infill keeps each polygon's outer ring and drops its holes. The union was a spread of every
     // ring into one call, which on a large corridor passes thousands of arguments; a balanced
     // reduction does the same work without that.
@@ -233,8 +415,16 @@ export function isochrone(input:PointCollection,network:Network,params:WorkflowN
       }
       geometry={type:'MultiPolygon',coordinates:level[0] as Position[][][]};
     }
-    return {id:f.id,siteId:f.id,minutes:params.minutes,name:`${f.properties.name} - ${params.minutes} min`,geometry};
-  });notes.push(params.fillHoles?'Infill enabled: interior holes are filled for illustrative regions; this can include unreachable off-network locations.':'Infill disabled: corridor holes are retained.');return {features,sites:structuredClone(fs),crs:m.crs,method:`Dijkstra ${params.direction}; ${params.minutes} min; ${params.speedMPerMin} m/min; partial edges; ${params.bufferM} m corridor`,notes,snaps};
+    return {id:f.id,siteId:f.id,minutes:params.minutes,name:`${f.properties.name} - ${params.minutes} min`,geometry,...(offNetworkMetres!==undefined?{offNetworkMetres}:{})};
+  }).filter(c=>c!==null);notes.push(params.fillHoles?'Infill enabled: interior holes are filled for illustrative regions; this can include unreachable off-network locations.':'Infill disabled: corridor holes are retained.');  if(offNetwork.length)notes.unshift(
+    `${offNetwork.length} of ${fs.length} site${fs.length===1?'':'s'} started further than the ${params.maxSnapM} m snap limit from any street, and ${offNetwork.length===1?'its route was':'their routes were'} charged a straight line to reach one: `
+    +offNetwork.map(u=>`${u.name} (${Math.round(u.distanceM)} m off-network)`).join(', ')
+    +'. A straight line assumes it can be walked, so those catchments are a lower bound on the walk and reach too far rather than too little.');
+  if(unconnected.length)notes.unshift(
+    `${unconnected.length} of ${fs.length} site${fs.length===1?'':'s'} ${unconnected.length===1?'has':'have'} no catchment: the walk to the nearest street alone spends the whole ${Math.round(params.minutes*params.speedMPerMin)} m budget. `
+    +unconnected.map(u=>`${u.name} (${Math.round(u.distanceM)} m)`).join(', ')
+    +'. Any count over these catchments is over the sites that reached something, not over all of them.');
+  return {features,sites:structuredClone(fs),crs:m.crs,method:`Dijkstra ${params.direction}; ${params.minutes} min; ${params.speedMPerMin} m/min; partial edges; D1+D2+D3 buffered, final leg up to ${params.bufferM} m`,notes,snaps,unconnected,offNetwork};
 }
 export function summarizePolygons(input:Polygons,points:PointCollection,params:WorkflowNode<'summarize_polygons'>['params']):Polygons{
   const features=input.features.map(f=>({...structuredClone(f),count:0,total:0,missingValues:0}));let matched=0,unmatched=0,missingLocation=0,multiple=0;
@@ -256,7 +446,7 @@ export function catchmentReceipt(node:WorkflowNode,value:Polygons|Network,runId:
   let facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n'+`<${activity}> a prov:Activity, fw:${classes[node.type]}; fw:parameters ${JSON.stringify(JSON.stringify(node.type==='network_input'?{source:(value as Network).source,inputMethod:node.params.inputMethod,marginM:node.params.marginM}:node.params))}.\n<${entity}> a prov:Entity; prov:wasGeneratedBy <${activity}>.\n`;
   for(const source of sources)facts+=`<${activity}> prov:used <urn:fieldwork:run:${runId}:output:${source}>.\n`;
   if('nodes' in value)facts+=`<${entity}> fw:sourceDescription ${JSON.stringify(value.source)}; fw:networkMetadata ${JSON.stringify(JSON.stringify(value.provenance||{}))}; fw:networkNodeCount ${value.nodes.length}; fw:networkEdgeCount ${value.edges.length}.\n`;
-  if('features' in value){facts+=`<${activity}> ${operationCRS?`fw:metricCRS ${JSON.stringify(operationCRS)}; `:''}${conformsTo?`dcterms:conformsTo <${conformsTo}>; `:''}fw:method ${JSON.stringify(operationMethod)}; fw:caveats ${JSON.stringify(value.notes.join(' '))}.\n`;for(const f of value.features){const id=`${entity}:cell:${encodeURIComponent(f.id)}`,wkt='MULTIPOLYGON ('+multi(f.geometry).map(p=>'('+p.map(r=>'('+r.map(c=>c.join(' ')).join(', ')+')').join(', ')+')').join(', ')+')';facts+=`<${entity}> fw:member <${id}>.\n<${id}> a geo:Feature; fw:siteId ${JSON.stringify(f.siteId)}; geo:hasGeometry [ a geo:Geometry; geo:asWKT ${JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> '+wkt)}^^geo:wktLiteral ].\n`;if(f.minutes!==undefined)facts+=`<${id}> fw:travelTimeMinutes ${f.minutes}.\n`;if(f.count!==undefined)facts+=`<${id}> fw:recordCount ${f.count}; fw:missingValueCount ${f.missingValues}.\n`;}if(value.summary?.valueField)for(const f of value.features)facts+=`<${entity}:cell:${encodeURIComponent(f.id)}> fw:numericTotal ${f.total}.\n`;if(value.summary)facts+=`<${entity}> fw:summary ${JSON.stringify(JSON.stringify(value.summary))}.\n`;if(value.snaps)facts+=`<${activity}> fw:networkSnaps ${JSON.stringify(JSON.stringify(value.snaps))}.\n`;}
+  if('features' in value){facts+=`<${activity}> ${operationCRS?`fw:metricCRS ${JSON.stringify(operationCRS)}; `:''}${conformsTo?`dcterms:conformsTo <${conformsTo}>; `:''}fw:method ${JSON.stringify(operationMethod)}; fw:caveats ${JSON.stringify(value.notes.join(' '))}.\n`;for(const f of value.features){const id=`${entity}:cell:${encodeURIComponent(f.id)}`,wkt='MULTIPOLYGON ('+multi(f.geometry).map(p=>'('+p.map(r=>'('+r.map(c=>c.join(' ')).join(', ')+')').join(', ')+')').join(', ')+')';facts+=`<${entity}> fw:member <${id}>.\n<${id}> a geo:Feature; fw:siteId ${JSON.stringify(f.siteId)}; geo:hasGeometry [ a geo:Geometry; geo:asWKT ${JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> '+wkt)}^^geo:wktLiteral ].\n`;if(f.minutes!==undefined)facts+=`<${id}> fw:travelTimeMinutes ${f.minutes}.\n`;if(f.count!==undefined)facts+=`<${id}> fw:recordCount ${f.count}; fw:missingValueCount ${f.missingValues}.\n`;}if(value.summary?.valueField)for(const f of value.features)facts+=`<${entity}:cell:${encodeURIComponent(f.id)}> fw:numericTotal ${f.total}.\n`;if(value.summary)facts+=`<${entity}> fw:summary ${JSON.stringify(JSON.stringify(value.summary))}.\n`;if(value.snaps)facts+=`<${activity}> fw:networkSnaps ${JSON.stringify(JSON.stringify(value.snaps))}.\n`;if(value.unconnected?.length)facts+=`<${activity}> fw:unconnectedSiteCount ${value.unconnected.length}; fw:unconnectedSites ${JSON.stringify(JSON.stringify(value.unconnected))}.\n`;if(value.offNetwork?.length)facts+=`<${activity}> fw:offNetworkSiteCount ${value.offNetwork.length}; fw:offNetworkSites ${JSON.stringify(JSON.stringify(value.offNetwork))}.\n`;for(const f of value.features)if(f.offNetworkMetres!==undefined)facts+=`<${entity}:cell:${encodeURIComponent(f.id)}> fw:offNetworkMetres ${f.offNetworkMetres}.\n`;}
   facts+=catchmentSemantics(node,value,entity,activity,runId);
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:operationMethod};
 }

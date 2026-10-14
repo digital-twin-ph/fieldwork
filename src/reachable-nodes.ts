@@ -1,5 +1,6 @@
 import type {PointCollection,PointFeature,Position,WorkflowNode} from './types.js';
 import type {Network} from './catchments.js';
+import type {OffNetworkSite,UnconnectedSite} from './catchments.js';
 import {validateNetwork} from './catchments.js';
 import {defaultSpatialReference} from './spatial-reference.js';
 import type {Receipt} from './results.js';
@@ -75,8 +76,9 @@ export function validateReachNode(node:WorkflowNode<'reachable_nodes'>):void{
  *  budget, so nothing beyond it is explored. */
 export function costsWithin(
   adjacency:Map<string,{to:string;lengthM:number}[]>, originId:string, budgetM:number,
+  spentM=0,
 ):Map<string,number>{
-  const costs=new Map<string,number>([[originId,0]]),settled=new Set<string>();
+  const costs=new Map<string,number>([[originId,spentM]]),settled=new Set<string>();
   for(;;){
     let current:string|undefined,best=Infinity;
     for(const [id,c] of costs)if(!settled.has(id)&&c<best){current=id;best=c;}
@@ -121,18 +123,48 @@ export function reachableNodes(
   const budgetM=minutes*speedMPerMin;
   const features:PointFeature[]=[];
   const reachedPerOrigin:number[]=[];
+  // What this run could not answer, and what it answered across unmapped ground. Both are
+  // findings about access rather than failures of the run, and both reach the practitioner as an
+  // alert on the widget. Experiment 114.
+  const unconnected:UnconnectedSite[]=[],offNetwork:OffNetworkSite[]=[];
   for(const origin of origins){
     const originNode=origin.properties.networkNodeId as string;
-    const costs=costsWithin(adjacency,originNode,budgetM);
+    // D1 is charged here too, so this chain and the monolithic isochrone agree. `snap_to_network`
+    // attaches `snapDistanceM` to every point it moves -- the walk from where the site stood to
+    // the junction it was snapped to -- and the budget pays for it before any street is walked.
+    //
+    // Seeding the origin at 0 was the same defect catchments.ts carried: the displacement was
+    // measured, attached and published, and then nothing spent it. The parity tests between this
+    // chain and the monolith are what caught it, by failing when only one of the two was fixed.
+    // A site that moved further than the whole budget reaches nothing, which is the honest answer
+    // rather than a negative remainder. Experiment 114.
+    const d1=Number(origin.properties.snapDistanceM);
+    const spent=Number.isFinite(d1)&&d1>0?d1:0;
+    const costs=spent>=budgetM?new Map<string,number>():costsWithin(adjacency,originNode,budgetM,spent);
+    if(!costs.size)unconnected.push({siteId:String(origin.id),name:String(origin.properties.name),
+      distanceM:Number(spent.toFixed(2)),budgetM:Number(budgetM.toFixed(2))});
+    const offNetworkMetres=Number(origin.properties.offNetworkMetres);
+    if(Number.isFinite(offNetworkMetres)&&offNetworkMetres>0)
+      offNetwork.push({siteId:String(origin.id),name:String(origin.properties.name),
+        distanceM:offNetworkMetres,limitM:offNetworkMetres});
     reachedPerOrigin.push(costs.size);
     for(const [nodeId,costM] of [...costs].sort((a,b)=>a[1]-b[1]||a[0].localeCompare(b[0]))){
+      const travelled=Number(costM.toFixed(2));
       features.push({type:'Feature',id:`${origin.id}-${nodeId}`,
         properties:{name:`${origin.properties.name} → ${nodeId}`,
           originSiteId:String(origin.id),networkNodeId:nodeId,travelDirection:direction,
           speedMPerMin,travelMode,
-          travelMetres:Number(costM.toFixed(2)),
+          // Where the origin SITE stands, and how far it is from its junction: the first segment
+          // of the route, carried so that whatever draws the corridor can draw that leg too.
+          // Absent when the points were not snapped by `snap_to_network`, in which case the leg
+          // is unknown rather than zero.
+          ...(Number.isFinite(Number(origin.properties.siteLongitude))?{
+            originLongitude:Number(origin.properties.siteLongitude),
+            originLatitude:Number(origin.properties.siteLatitude),
+            originSnapDistanceM:spent}:{}),
+          travelMetres:travelled,
           travelMinutes:Number((costM/speedMPerMin).toFixed(2)),
-          remainingM:Number((budgetM-costM).toFixed(2))},
+          remainingM:Number((budgetM-travelled).toFixed(2))},
         geometry:{type:'Point',coordinates:[...nodeAt.get(nodeId)!] as Position}});
     }
   }
@@ -144,9 +176,15 @@ export function reachableNodes(
     'Each junction carries remainingM, the budget left on arrival, and travelDirection. Those are what fix where the edge of the time falls between junctions, so a corridor drawn from these points cannot disagree with the budget or the direction used here.',
     origins.length===1?`This origin reached ${most} junction${most===1?'':'s'}.`:`Origins reached between ${fewest} and ${most} junctions each.`,
     'A junction can be unreached because it is too far or because the downloaded network stops short of it. The two look the same here.',
-    'The walk from the site to its own junction was not charged, so every distance here starts from the road and not from the site.',
+    'The walk from the site to its own junction (snapDistanceM, charged since 2026-10-14) comes out of the budget before any street is walked, so a site set back from the road reaches less of the network than one on it. An origin whose walk exceeds the whole budget reaches nothing.',
     `Street lengths come from the network as supplied (${network.source}) and are not re-measured here. If they are wrong, every distance and time above is wrong with them.`,
   ];
+  if(offNetwork.length)notes.unshift(`${offNetwork.length} origin${offNetwork.length===1?'':'s'} reached the network across ground no street covers (`
+    +offNetwork.map(u=>`${u.name}, ${Math.round(u.distanceM)} m`).join('; ')
+    +`), charged as a straight line at the street speed. ${offNetwork.length===1?'That distance is':'Those distances are'} a lower bound on the real walk, so ${offNetwork.length===1?'this origin reaches':'these origins reach'} further here than on the ground.`);
+  if(unconnected.length)notes.unshift(`${unconnected.length} origin${unconnected.length===1?'':'s'} reached NO junction: the walk to the network alone spends the ${budgetM.toFixed(0)} m budget (`
+    +unconnected.map(u=>`${u.name}, ${Math.round(u.distanceM)} m`).join('; ')
+    +`). ${unconnected.length===1?'It is':'They are'} absent from the result, and any count below is over the origins that reached something.`);
   if(input.features.length>origins.length)
     notes.push(`${input.features.length-origins.length} origin${input.features.length-origins.length===1?' without coordinates was':'s without coordinates were'} skipped.`);
   const activity=`<urn:fieldwork:run:${runId}:${node.id}:reach>`;
@@ -155,13 +193,15 @@ export function reachableNodes(
     +`fw:originCount ${origins.length}; `
     +`fw:reachedNodeCount ${features.length}; `
     +`fw:travelBudgetMetres ${budgetM.toFixed(2)}; `
+    +(unconnected.length?`fw:unconnectedSiteCount ${unconnected.length}; fw:unconnectedSites ${JSON.stringify(JSON.stringify(unconnected))}; `:'')
+    +(offNetwork.length?`fw:offNetworkSiteCount ${offNetwork.length}; fw:offNetworkSites ${JSON.stringify(JSON.stringify(offNetwork))}; `:'')
     +`fw:travelBudgetMinutes ${minutes}; `
     +`fw:assumedSpeedMetresPerMinute ${speedMPerMin}; `
     +`fw:travelMode ${JSON.stringify(travelMode)}; `
     +`fw:travelDirection ${JSON.stringify(direction)}; `
     +`fw:edgeLengthSource ${JSON.stringify(network.source)}; `
     +`prov:used <urn:fieldwork:run:${runId}:${sourceNodeId}>.\n`;
-  return {value:{type:'FeatureCollection',features,sourceNodeId:node.id,
+  return {value:{type:'FeatureCollection',features,sourceNodeId:node.id,unconnected,offNetwork,
     sourceKind:'input-points',spatialReference:defaultSpatialReference(),
     sourceInfo:{format:'reachable-network-nodes',network:network.source,notes}} as PointCollection&{sourceNodeId:string},
     receipt:{nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],

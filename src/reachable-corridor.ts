@@ -2,8 +2,9 @@ import {metricCRSAssertion} from './metric-crs.js';
 import {buffer as turfBuffer} from '@turf/buffer';
 import type {Boundary,PointCollection,Position,WorkflowNode} from './types.js';
 import type {Catchment,Network,Polygons} from './catchments.js';
-import {metric,validateNetwork} from './catchments.js';
-import {partial,prepareEdges,reachedStreets} from './network-edges.js';
+import {metric,validateNetwork,reachChunks,taperedCorridor} from './catchments.js';
+import type {ReachChunk} from './catchments.js';
+import {partial,prepareEdges} from './network-edges.js';
 import type {Receipt} from './results.js';
 
 /** The strip of ground along the streets a traveller can actually get down.
@@ -55,7 +56,9 @@ export function reachableCorridor(
   const fromNode=new Map<string,typeof edges>();
   for(const e of edges){const list=fromNode.get(e.from)||[];list.push(e);fromNode.set(e.from,list);}
   // One corridor per origin, so two clinics' catchments stay separable.
-  const origins=new Map<string,{remaining:Map<string,number>;name:string;minutes?:number}>();
+  const origins=new Map<string,{remaining:Map<string,number>;name:string;minutes?:number;
+    site?:{coordinates:Position;snapDistanceM:number};
+    entry?:{coordinates:Position;remainingM:number}}>();
   // A band stamps its minutes on every junction it keeps. Carried onto the polygon so a
   // map can colour by walking time and a chart can label by it, as the case study does.
   const banded=new Set(input.features.map(f=>f.properties.bandMinutes));
@@ -66,12 +69,23 @@ export function reachableCorridor(
     const group=origins.get(originId)||{remaining:new Map<string,number>(),
       name:String(f.properties.originSiteId??f.properties.name),minutes:bandMinutes};
     group.remaining.set(f.properties.networkNodeId as string,f.properties.remainingM as number);
+    // D1, when the junctions came through `snap_to_network`: where the site stands, how far it
+    // is from the network, and which junction it entered at -- the one with most budget left,
+    // since the origin's own junction is the cheapest one it reached. Buffering the route without
+    // this would draw a catchment that starts at a junction the person has already walked to.
+    const longitude=Number(f.properties.originLongitude),latitude=Number(f.properties.originLatitude),
+      d1=Number(f.properties.originSnapDistanceM),remainingM=f.properties.remainingM as number;
+    if(!group.site&&[longitude,latitude,d1].every(Number.isFinite))
+      group.site={coordinates:[longitude,latitude],snapDistanceM:d1};
+    if(!group.entry||remainingM>group.entry.remainingM)
+      group.entry={coordinates:[...(f.geometry!.coordinates as Position)],remainingM};
     origins.set(originId,group);
   }
   const features:Catchment[]=[];
   let entered=0,trimmed=0,unreachedJunctions=0;
   for(const [originId,group] of origins){
-    const reached:{line:Position[];fraction:number}[]=[];
+    const chunkM=Math.max(5,bufferM/2);
+    const chunks:ReachChunk[]=[];
     for(const [nodeId,remainingM] of group.remaining)
       for(const e of fromNode.get(nodeId)||[]){
         if(remainingM<=0)continue;
@@ -79,15 +93,18 @@ export function reachableCorridor(
         if(fraction<1)trimmed++;
         if(partial(e.line,fraction).length<=1)continue;
         entered++;
-        reached.push({line:e.line,fraction});
+        chunks.push(...reachChunks(e.line,remainingM,bufferM,chunkM));
       }
-    // Counted per directed street entered, which is what the Validation Lab's notebook
-    // counts. Pooling below changes only the geometry the buffer is given, not the reach.
-    const lines=reachedStreets(reached).map(line=>line.map(projection.inverse));
-    if(!lines.length){unreachedJunctions++;continue;}
-    const buffered=turfBuffer({type:'MultiLineString',coordinates:lines},bufferM,
-      {units:'meters',steps:BUFFER_QUADRANT_SEGMENTS});
-    if(!buffered||buffered.type!=='Feature')throw new Error('The corridor buffer did not produce a polygon.');
+    // D1 first, so the corridor reaches back to where the walk started. The budget at the site
+    // is what it had before the walk onto the network: the leg plus whatever the junction kept.
+    if(group.site&&group.entry)
+      chunks.unshift(...reachChunks(
+        [projection.forward(group.site.coordinates),projection.forward(group.entry.coordinates)],
+        group.entry.remainingM+group.site.snapDistanceM,bufferM,chunkM));
+    // Counted per directed street entered, which is what the Validation Lab's notebook counts.
+    if(!chunks.length){unreachedJunctions++;continue;}
+    const buffered={geometry:taperedCorridor(chunks,bufferM,projection.inverse,
+      {point:group.site?.coordinates||[0,0],radiusM:bufferM}),type:'Feature' as const};
     features.push({id:bandMinutes===undefined?`corridor-${originId}`:`corridor-${originId}-t${bandMinutes}`,
       name:bandMinutes===undefined?`${group.name} corridor`:`${group.name} within ${bandMinutes} min`,
       siteId:originId,geometry:buffered.geometry as Boundary,
@@ -96,8 +113,9 @@ export function reachableCorridor(
   if(!features.length)
     throw new Error('No street could be entered from any reachable junction, so there is no corridor. Every junction had nothing left of its budget.');
   const notes=[
-    `${features.length} corridor${features.length===1?'':'s'} from ${origins.size} origin${origins.size===1?'':'s'}, ${bufferM} m either side of ${entered} reachable street segment${entered===1?'':'s'}, buffered in ${projection.crs} and returned as longitude and latitude.`,
-    `${bufferM} m either side is a ${bufferM*2} m wide strip, and it is a claim: anywhere within it counts as reached. That includes the insides of buildings, locked yards and the far side of walls, none of which this knows about.`,
+    `${features.length} corridor${features.length===1?'':'s'} from ${origins.size} origin${origins.size===1?'':'s'}, up to ${bufferM} m either side of ${entered} reachable street segment${entered===1?'':'s'}, buffered in ${projection.crs} and returned as longitude and latitude.`,
+    `${bufferM} m either side is the final walk off the street, and it is charged: it is the full ${bufferM} m only where that much budget is left, and narrows to nothing where the time runs out. Before 2026-10-14 it was a constant strip, which claimed ${bufferM} m of ground beyond the budget all the way round.`,
+    `Within that width anywhere counts as reached, which is a claim about ground this knows nothing about: the insides of buildings, locked yards and the far side of walls.`,
     `${trimmed} segment${trimmed===1?' was':'s were'} entered part-way, where the budget ran out mid-block. That is what puts the edge of the time between junctions rather than at them.`,
     `Travel was ${direction}. The budget and the direction came from the junctions themselves, so this corridor cannot disagree with the traversal that produced them.`,
     ...(bandMinutes===undefined?[]:[`Drawn for the ${bandMinutes} minute band, which the junctions state. A band's corridor contains every shorter band's corridor: these are nested, not rings.`]),

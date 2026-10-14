@@ -1,6 +1,6 @@
 # Using Fieldwork
 
-_Created 2026-10-08 · Updated 2026-10-08_
+_Created 2026-10-08 · Updated 2026-10-13_
 
 The practitioner detail that used to live in the README. The
 [README](../README.md) keeps the overview, the published links and the current
@@ -167,5 +167,32 @@ Citation metadata uses PROV-O and Dublin Core alongside the spatial GeoSPARQL fa
 ## NB04-style isochrone views
 
 The John Snow network example now pairs an SVG plot with an interactive map of cumulative 1/5/10/15-minute catchments, mortality locations and all pump locations. Travel-time and infill settings remain in the processing widget. Selecting a canvas widget highlights its source primitive in the library. See [worked example](examples/john-snow.md) and [design experiment 33](experiments/33-isochrone-plot-and-interactive-map.md). Existing saved workspaces are preserved; Restore example loads the revised template.
+
+### What a travel-time catchment does not include
+
+A walk has three parts: from where you are to the nearest street junction, along
+the streets, and from the last junction to where you are going. **The catchment
+charges only the middle one.**
+
+- The walk onto the network is measured and shown in the run's evidence as
+  `fw:networkSnaps`, and then **not deducted from the time budget**. The catchment
+  reaches a little further than the minutes say. On the Soho example that is 10.9 m
+  of a 375 m budget, about 3%.
+- The walk from the last junction to a doorway is not modelled at all. The smooth
+  edge of the catchment is a fixed corridor width, not a walk.
+- **A site further than the snap limit from any mapped street stops the run.** It
+  is not shown as hard to reach; it produces an error instead.
+
+The third matters most, and not equally for everyone. Streets and footpaths are
+mapped unevenly — informal settlements least of all — so the places that would
+show the worst access are the ones most likely to be excluded from the picture
+altogether. Read a catchment over sparsely mapped ground as optimistic, and check
+`fw:networkSnaps` in the evidence for how far each site had to move to reach a
+street.
+
+The lab's [snapping notebook](https://digital-twin-ph.github.io/validation-lab/lab/index.html?path=19-snap-vs-pyproj.ipynb)
+measures this on the example data, and
+[experiment 114](experiments/114-the-three-segments-of-a-walk.md) records what
+would change it.
 
 The [semantic audit procedure](audits/ontology-audit.md) defines admission and worked-example checkpoints, and opens with a glossary of the ontology vocabulary these records use, so the work can be reviewed without a background in description logic. [Experiment 34](experiments/34-widget-ontology-audit.md) records canvas RDF, runtime provenance and SHACL regression coverage, with explicit remaining semantic gaps.

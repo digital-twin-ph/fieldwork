@@ -1,0 +1,82 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:snap_to_network",
+ "version": "0.2.0",
+ "nodeType": "snap_to_network",
+ "title": "Snap to street network",
+ "released": "2026-10-14",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['snap_to_network']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "sites",
+    "type": "points"
+   },
+   {
+    "name": "network",
+    "type": "network"
+   }
+  ],
+  "output": "points"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:NetworkSnap",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Emits an fw:NetworkSnap activity carrying fw:siteCount, fw:snappedNodeCount, fw:greatestSnapDistanceMetres, fw:snapLimitMetres, fw:metricCRS and, when any site lay beyond the limit, fw:offNetworkSiteCount and fw:offNetworkSites, and prov:used the site source.",
+  "emits": {
+   "classes": [
+    "NetworkSnap"
+   ],
+   "properties": [
+    "greatestSnapDistanceMetres",
+    "offNetworkSiteCount",
+    "offNetworkSites",
+    "siteCount",
+    "snapLimitMetres",
+    "snappedNodeCount"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/network-snap.ts",
+   "src/core.ts",
+   "src/palette.ts"
+  ],
+  "definition": "src/network-snap.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "Attaches each site to its nearest network node, measured in metres, and carries how far it moved as a snapDistanceM attribute on the point. Extracted from isochrone, which snaps inside itself and then states in a note that the distance is reported but not charged; on a node of its own that admission is visible and mappable. Third of six primitives an isochrone composition needs, and the first taken from the source end: building backwards stopped because reached edges are truncated mid-street and validateNetwork requires every edge endpoint to be a declared node, so no existing carrier can hold them. Takes a UTM zone to measure a distance, which makes eight widgets that each ask for one. See docs/experiments/82-snap-to-network.md."
+  },
+  {
+   "kind": "changed",
+   "description": "A site beyond the snap limit is no longer refused. It is snapped anyway and marked: the point carries offNetworkMetres as well as snapDistanceM, and the activity asserts fw:offNetworkSiteCount and fw:offNetworkSites. Refusing removed exactly the sites furthest from a mapped road, which is where street data is thinnest and where an access question is most often asked. The widget also keeps each site’s own coordinates on the point it moves, as siteLongitude and siteLatitude: it kept only the distance, so nothing downstream could draw or undo the displacement. Experiment 114."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Seven unit checks cover the nearest node being taken with the displacement carried on the point; measurement in metres picking a different node than degrees would, which is the defect this guards -- at 51.5 degrees north a node 100 m east is nearer than one 120 m north, while in raw degrees the north node looks closer; a site beyond the limit stopping the run and naming the site and the distance; two sites on one node being reported rather than refused; unlocated records being excluded and counted; the uncharged walk travelling in both the notes and the method; and refusal of a bad zone, limit or label. Not established: that the nearest node is the right attachment point. Parity against OSMnx nearest_nodes is not done."
+ }
+}

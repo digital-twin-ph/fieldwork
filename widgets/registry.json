@@ -375,7 +375,7 @@
     {
       "id": "urn:fieldwork:widget:isochrone",
       "nodeType": "isochrone",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -386,6 +386,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/isochrone/0.2.0.json",
           "sha256": "2c57bf98022f46c7602e7edad82a3b86e8448727890cdb44ba7dcfc04ba0699b"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/isochrone/0.3.0.json",
+          "sha256": "0e7ce19e1fbbea6fb44d49fd88ac18d0e8ee96099026811447269253f1a4a71c"
         }
       ]
     },
@@ -667,7 +672,7 @@
     {
       "id": "urn:fieldwork:widget:reachable_corridor",
       "nodeType": "reachable_corridor",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -678,13 +683,18 @@
           "version": "0.2.0",
           "path": "widgets/releases/reachable_corridor/0.2.0.json",
           "sha256": "7b28cf9314de6a3e4c3594112c5197ebed1f30297be22306248ac00c0e73aa40"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/reachable_corridor/0.3.0.json",
+          "sha256": "5187254c2a302b79f0e3bd886d0d5a482e65c3ae81cafa07ad5351bec3cf75b8"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:reachable_nodes",
       "nodeType": "reachable_nodes",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -700,6 +710,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/reachable_nodes/0.3.0.json",
           "sha256": "ebc8cbce694b41677bddc93beb24e1e850d57e50e325f0fa9945ad3ac660b057"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/reachable_nodes/0.4.0.json",
+          "sha256": "b211f77151b9287784c09d2cab0d3724bb7df4751bb155290fa7938ed5e99e9e"
         }
       ]
     },
@@ -801,12 +816,17 @@
     {
       "id": "urn:fieldwork:widget:snap_to_network",
       "nodeType": "snap_to_network",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/snap_to_network/0.1.0.json",
           "sha256": "51332a8c55a6dd1365ca048272bf9af44cf0580045e4c85527e07a8353901998"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/snap_to_network/0.2.0.json",
+          "sha256": "649489d1499dcecd24157adc03f2fefea195101bf567928768858cb4059bc98b"
         }
       ]
     },

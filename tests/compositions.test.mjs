@@ -6,7 +6,7 @@ import {validateComposition,openInputs,detectDrift,expandComposition,STAGE_VERBS
 import {executeWorkflow} from '../build/core.js';
 
 const load=async()=>({
-  composition:JSON.parse(await readFile('compositions/compute_walking_catchment/0.3.0.json','utf8')),
+  composition:JSON.parse(await readFile('compositions/compute_walking_catchment/0.4.0.json','utf8')),
   registry:JSON.parse(await readFile('widgets/registry.json','utf8'))});
 const clone=o=>structuredClone(o);
 
@@ -54,7 +54,7 @@ test('only registry widgets may be members, pinned to a published digest',async(
   const tampered=clone(composition);
   tampered.members[1].sha256='0'.repeat(64);
   assert.throws(()=>validateComposition(tampered,registry),
-    /pins a digest that is not reachable_nodes 0\.3\.0's\. Re-pin it rather than editing the digest\./);
+    /pins a digest that is not reachable_nodes 0\.4\.0's\. Re-pin it rather than editing the digest\./);
 });
 
 test('the name asserts the stage, and the stage cannot contradict it',async()=>{
@@ -90,17 +90,17 @@ test('drift is reported per member, naming where it moved',async()=>{
   // A member publishing a new version: pinned release still exists, but is no longer current.
   const moved=clone(registry);
   const band=moved.widgets.find(w=>w.nodeType==='travel_time_band');
-  band.releases.push({version:'0.4.0',path:'x',sha256:'1'.repeat(64)});
-  band.currentVersion='0.4.0';
+  band.releases.push({version:'0.5.0',path:'x',sha256:'1'.repeat(64)});
+  band.currentVersion='0.5.0';
   const afterMove=detectDrift(composition,moved).find(d=>d.node==='band');
   assert.equal(afterMove.state,'moved');
-  assert.match(afterMove.detail,/has moved from 0\.3\.0 to 0\.4\.0 since this composition pinned it/);
+  assert.match(afterMove.detail,/has moved from 0\.3\.0 to 0\.5\.0 since this composition pinned it/);
 
   // A published release edited underneath it.
   const rewritten=clone(registry);
   rewritten.widgets.find(w=>w.nodeType==='corridor'===undefined);
   const corridor=rewritten.widgets.find(w=>w.nodeType==='reachable_corridor');
-  corridor.releases.find(r=>r.version==='0.2.0').sha256='2'.repeat(64);
+  corridor.releases.find(r=>r.version==='0.3.0').sha256='2'.repeat(64);
   const afterEdit=detectDrift(composition,rewritten).find(d=>d.node==='corridor');
   assert.equal(afterEdit.state,'moved');
   assert.match(afterEdit.detail,/no longer has the digest this composition pinned, so that release changed/);
@@ -150,18 +150,24 @@ test('run as one step it gives the hand-built chain, and one receipt per member'
   for(const receipt of memberReceipts)
     assert.ok(receipt.facts.includes('prov:used'),`${receipt.nodeId} records what it used`);
 
-  // The same street selection the Shapely parity check agreed with: 301 entered, 45 cut.
+  // The street selection, re-measured on 2026-10-14 when D1 began to be charged: 283 entered and
+  // 38 cut, from 301 and 45. The budget now pays for the 10.91 m walk from the pump to its
+  // junction before any street is walked, so fewer streets fall inside it. The shrink is the
+  // result, not a regression -- and lab check 08 agreed with Shapely on the OLD selection, so its
+  // fixture is now of a corridor this build no longer produces. Recorded in experiment 114.
   const corridor=memberReceipts.find(r=>r.nodeId==='catchment-corridor');
   assert.match(corridor.facts,/fw:corridorCount 1/);
-  assert.match(corridor.facts,/fw:enteredSegmentCount 301/);
-  assert.match(corridor.facts,/fw:partialSegmentCount 45/);
+  assert.match(corridor.facts,/fw:enteredSegmentCount 283/);
+  assert.match(corridor.facts,/fw:partialSegmentCount 38/);
   const snap=memberReceipts.find(r=>r.nodeId==='catchment-snap');
   assert.match(snap.facts,/fw:siteCount 1; fw:snappedNodeCount 1/);
   const reach=memberReceipts.find(r=>r.nodeId==='catchment-reach');
   assert.match(reach.facts,/fw:reachedNodeCount 706/,'the 15 minute traversal');
   const band=memberReceipts.find(r=>r.nodeId==='catchment-band');
   assert.match(band.facts,/fw:bandMinutes 5; fw:bandBudgetMetres 375\.00/);
-  assert.match(band.facts,/fw:junctionsInBand 142/);
+  // 142 junctions until 2026-10-14, 134 now: the five-minute band pays for the 10.91 m walk onto
+  // the network before any street, so eight junctions it used to reach fall outside the budget.
+  assert.match(band.facts,/fw:junctionsInBand 134/);
   assert.ok(run.outputs.length>=1,'the corridor reached a map');
 });
 
@@ -178,11 +184,16 @@ test('a member publishing a new release makes a pinned composition report drift'
   assert.equal(band.pinnedVersion,'0.2.0');
   assert.equal(band.currentVersion,'0.3.0');
   assert.match(band.detail,/Read that release's changes before trusting the result/);
-  assert.deepEqual(report.filter(d=>d.state!=='unchanged').map(d=>d.node),['band'],
-    'only the member that moved');
+  // When this fixture was made only `band` had moved. By 2026-10-14 the other three had
+  // published too -- D1 charged, the snap limit marking instead of refusing, D3 modelled -- so
+  // the same fixture now reports four. That growth is the point of keeping it: a composition
+  // pinned four days ago is further from the build every time a member changes, and the report
+  // says so by name. The single-member case is covered above against a cloned registry.
+  assert.deepEqual(report.filter(d=>d.state!=='unchanged').map(d=>d.node),
+    ['snap','reach','band','corridor']);
 
   // And the shipped version, re-pinned, reports none.
-  const current=JSON.parse(await readFile('compositions/compute_walking_catchment/0.3.0.json','utf8'));
+  const current=JSON.parse(await readFile('compositions/compute_walking_catchment/0.4.0.json','utf8'));
   assert.deepEqual(detectDrift(current,registry).filter(d=>d.state!=='unchanged'),[]);
 });
 
@@ -226,7 +237,7 @@ test('as one node on a canvas it runs, and still emits one receipt per member',a
   // One record of the arrangement, which claims no computation.
   assert.equal(arrangement.length,1);
   assert.match(arrangement[0].facts,/a prov:Plan, fw:MicroWorkflow/);
-  assert.match(arrangement[0].facts,/fw:compositionVersion "0\.3\.0"/);
+  assert.match(arrangement[0].facts,/fw:compositionVersion "0\.4\.0"/);
   assert.match(arrangement[0].facts,/fw:claimsNoComputation true/);
   assert.match(arrangement[0].facts,/fw:governanceStatus "private"/);
   assert.equal((arrangement[0].facts.match(/fw:memberOf/g)||[]).length,4,'each member is associated');
@@ -241,9 +252,9 @@ test('as one node on a canvas it runs, and still emits one receipt per member',a
   assert.match(plan.facts,/fw:parameterValue "75"/,'the speed it was run with');
   assert.match(plan.method,/states the association only/);
   const corridor=members.find(r=>r.nodeId==='catchment-corridor');
-  assert.match(corridor.facts,/fw:enteredSegmentCount 301/);
-  assert.match(corridor.facts,/fw:partialSegmentCount 45/);
-  assert.match(members.find(r=>r.nodeId==='catchment-band').facts,/fw:junctionsInBand 142/);
+  assert.match(corridor.facts,/fw:enteredSegmentCount 283/);
+  assert.match(corridor.facts,/fw:partialSegmentCount 38/);
+  assert.match(members.find(r=>r.nodeId==='catchment-band').facts,/fw:junctionsInBand 134/);
   assert.ok(run.outputs.length>=1,'the result reached the map');
 });
 
@@ -255,7 +266,7 @@ test('a pinned composition this build does not carry fails by name',async()=>{
     composition:{id:composition.id,nodeType:composition.nodeType,version,title:composition.title,
       stage:composition.stage,inputs:[['sites','points']],output:'polygons'},parameters:{}}});
   assert.throws(()=>expandMicroWorkflows({schema:'fieldwork/workflow/1',nodes:[host('9.9.9')],edges:[]},
-    resolveComposition,'run'),/version 9\.9\.9, and this build carries 0\.3\.0/);
+    resolveComposition,'run'),/version 9\.9\.9, and this build carries 0\.4\.0/);
   const absent={...host('0.2.0')};
   absent.params.composition.id='urn:fieldwork:composition:summarize_nothing';
   assert.throws(()=>expandMicroWorkflows({schema:'fieldwork/workflow/1',nodes:[absent],edges:[]},

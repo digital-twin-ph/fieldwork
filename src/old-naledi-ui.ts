@@ -31,10 +31,12 @@ export function distanceText(row:{distance?:number|null; unit?:DistanceUnit},abs
 }
 
 export function resultTable(output:DisplayValue|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string){
-  const rows=output?.rows||[],audit=output?.kind==='facility-evidence',access=output?.kind==='access';
-  const columns=audit?['Facility','Service assignment','Evidence','Reference']:access?['Sample','Qualifying facility','Proxy minutes','Decision']:['Neighborhood','Nearest center','Distance','Decision'];
+  const rows=output?.rows||[],audit=output?.kind==='facility-evidence',access=output?.kind==='access',extent=output?.kind==='extent';
+  const columns=audit?['Facility','Service assignment','Evidence','Reference']:access?['Sample','Qualifying facility','Proxy minutes','Decision']:extent?['Polygon','Enclosed area','Decision']:['Neighborhood','Nearest center','Distance','Decision'];
   const body=rows.map(r=>{
-    const cells=audit?[r.name,serviceLabel(r.service||'Unknown'),tierLabel(r.tier||'Unknown'),r.reference]:[r.name,r.center?.name||'—',access?(r.minutes===null?'Unknown':r.minutes!.toFixed(1)+' min'):distanceText(r,'—'),statusLabel(r.status)];
+    const cells=audit?[r.name,serviceLabel(r.service||'Unknown'),tierLabel(r.tier||'Unknown'),r.reference]
+      :extent?[r.name,typeof r.areaSquareMetres==='number'?`${(r.areaSquareMetres/1e6).toFixed(3)} km²`:'Not measured',statusLabel(r.status)]
+      :[r.name,r.center?.name||'—',access?(r.minutes===null?'Unknown':r.minutes!.toFixed(1)+' min'):distanceText(r,'—'),statusLabel(r.status)];
     return `<tr tabindex="0" data-place="${esc(r.id)}">${cells.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`;
   }).join('');
   return {head:columns.map(c=>`<th>${c}</th>`).join(''),body};

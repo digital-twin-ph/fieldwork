@@ -1,10 +1,11 @@
 import {diveDeeperPanel} from './dive-deeper.js';
+import {manualButton,openManual} from './manual.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
 import {canvasN3} from './canvas-semantics.js';
 import appPackage from '../package.json';
 import {networkDownloadStatus} from './network-throttle.js';
 import {downloadOSM,importNetwork} from './street-network.js';
-import {johnSnowExample} from './john-snow.js';
+import {johnSnowExample,snowExtentExample} from './john-snow.js';
 import {geoprivacyExample} from './geoprivacy-example.js';
 import {pointComparisonMarkup} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES} from './catchments.js';
@@ -15,7 +16,7 @@ import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
 import {installCredentials} from './credentials-ui.js';
 import type {CredentialAccess} from './credentials-ui.js';
-import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_COMPOSITION} from './palette.js';
+import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_COMPOSITION,ADDABLE_VIA_RULESET} from './palette.js';
 import {compositionEntry,explodeMicroWorkflow,detectDrift} from './compositions.js';
 import {tidyLayout,alreadyTidy} from './layout.js';
 import {bundledCompositions,resolveComposition} from './composition-registry.js';
@@ -33,7 +34,9 @@ import type {Connection,Edge} from '@xyflow/react';
 import type {ReasonerQuad,ReasoningRequest,ReasoningResponse} from './worker-types.js';
 import {element as $,optionalElement,control} from './dom.js';
 import {errorMessage,required} from './guards.js';
-import {resolveRuleset} from './rulesets.js';
+import {resolveRuleset,bundledRulesets} from './rulesets.js';
+import type {Ruleset} from './rulesets.js';
+import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
@@ -102,7 +105,7 @@ const WORKSPACES='fieldwork-examples-v1';
 // place it is least visible.
 const NAMED_WORKSPACES=['blank','coverage','raster','sea-level'];
 const exampleKey=(w:Workflow):string=>w.exampleId?.startsWith('snow-')?w.exampleId:NAMED_WORKSPACES.includes(w.exampleId as string)?w.exampleId as string:w.exampleId==='old-naledi'||w.nodes.some(n=>n.type==='study_area')?'old-naledi':'heat';
-const template=(key:string)=>key==='sea-level'?seaLevelExample():key==='snow-geoprivacy'?geoprivacyExample():key==='snow-voronoi'||key==='snow-isochrone'?johnSnowExample(key):key==='raster'?rasterExample():key==='coverage'?coverageExercise():key==='blank'?blankWorkflow():key==='old-naledi'?oldNalediWorkflow():exampleWorkflow();
+const template=(key:string)=>key==='sea-level'?seaLevelExample():key==='snow-geoprivacy'?geoprivacyExample():key==='snow-extent'?snowExtentExample():key==='snow-voronoi'||key==='snow-isochrone'?johnSnowExample(key):key==='raster'?rasterExample():key==='coverage'?coverageExercise():key==='blank'?blankWorkflow():key==='old-naledi'?oldNalediWorkflow():exampleWorkflow();
 const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='raster_input'&&!n.params.asset||n.type==='network_input'&&!n.params.data.nodes.length||n.type==='table_input'&&!n.params.data.rows.length);
 let credentials:CredentialAccess|null=null;
 let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
@@ -213,7 +216,7 @@ function renderLibrary(search=''){
   const allowed=addableTypes({exampleKey:exampleKey(workflow),
     templateTypes:template(exampleKey(workflow)).nodes.map(n=>n.type),
     workflowTypes:workflow.nodes.map(n=>n.type),catchmentTypes:Object.keys(CATCHMENT_TYPES)});
-  let group='';const entries=Object.entries(TYPES).filter(([k,t])=>allowed.has(k)&&!ADDABLE_VIA_COMPOSITION.includes(k as typeof ADDABLE_VIA_COMPOSITION[number])&&(t.title+' '+t.description).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>PALETTE_GROUPS.indexOf(a[1].group as typeof PALETTE_GROUPS[number])-PALETTE_GROUPS.indexOf(b[1].group as typeof PALETTE_GROUPS[number]));$('#library-count').textContent=String(allowed.size);$('#node-library').innerHTML=entries.map(([k,t])=>{const heading=t.group!==group?`<div class="library-group">${t.group}</div>`:'';group=t.group;return `${heading}<button class="palette-node ${t.color} ${workflow.nodes.find(n=>n.id===selected)?.type===k?'primitive-selected':''}" aria-current="${workflow.nodes.find(n=>n.id===selected)?.type===k?'true':'false'}" data-add="${k}"><span class="palette-icon">${t.icon}</span><strong>${t.title}</strong><span>+</span></button>`;}).join('');
+  let group='';const entries=Object.entries(TYPES).filter(([k,t])=>allowed.has(k)&&!ADDABLE_VIA_COMPOSITION.includes(k as typeof ADDABLE_VIA_COMPOSITION[number])&&!ADDABLE_VIA_RULESET.includes(k as typeof ADDABLE_VIA_RULESET[number])&&(t.title+' '+t.description).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>PALETTE_GROUPS.indexOf(a[1].group as typeof PALETTE_GROUPS[number])-PALETTE_GROUPS.indexOf(b[1].group as typeof PALETTE_GROUPS[number]));$('#library-count').textContent=String(allowed.size);$('#node-library').innerHTML=entries.map(([k,t])=>{const heading=t.group!==group?`<div class="library-group">${t.group}</div>`:'';group=t.group;return `${heading}<button class="palette-node ${t.color} ${workflow.nodes.find(n=>n.id===selected)?.type===k?'primitive-selected':''}" aria-current="${workflow.nodes.find(n=>n.id===selected)?.type===k?'true':'false'}" data-add="${k}"><span class="palette-icon">${t.icon}</span><strong>${t.title}</strong><span>+</span></button>`;}).join('');
   // One entry per bundled composition, under Micro-workflows, with its governance status
   // where a practitioner sees it. An unreviewed composition is offered and says so, because
   // a rule that stops one being tried stops the learning it was written to protect.
@@ -230,6 +233,52 @@ function renderLibrary(search=''){
       }).join(''));
     $('#library-count').textContent=String(allowed.size+compositions.length);
   }
+  // One entry per bundled ruleset, each adding a node with that ruleset already pinned. The
+  // generic "Apply ruleset" entry that stood here until 2026-10-14 added a node with no ruleset,
+  // which has no ports and cannot run -- exactly what src/palette.ts said must not happen, while
+  // the palette did it. Four rulesets were bundled and none could be chosen: the widget rule
+  // "a widget nobody can add is invisible", one layer down.
+  //
+  // The basis status is shown where a practitioner decides, not buried in the Inspector. An
+  // illustrative ruleset is offered and says so, for the same reason an unreviewed composition is.
+  // The CURRENT version of each ruleset identity, not every bundled one. Older versions are
+  // carried so a saved workflow that pinned one still replays -- a rule change changes results,
+  // which is why the pin exists -- and offering them here would let a practitioner start new work
+  // on a superseded rule. Six bundled versions, four identities, four entries.
+  const current=new Map<string,Ruleset>();
+  for(const r of bundledRulesets() as Ruleset[]){
+    const held=current.get(r.id);
+    if(!held||held.version.localeCompare(r.version,undefined,{numeric:true})<0)current.set(r.id,r);
+  }
+  const rulesets=[...current.values()]
+    .filter((r:Ruleset)=>(r.title+' '+r.description).toLowerCase().includes(search.toLowerCase()));
+  if(rulesets.length){
+    const BASIS:Record<string,string>={published:'',"practitioner-agreed":'',illustrative:'illustrative, no source',proxy:'proxy, no source'};
+    $('#node-library').insertAdjacentHTML('beforeend','<div class="library-group">Rulesets</div>'
+      +rulesets.map((r:Ruleset)=>{
+        const warn=BASIS[r.basis.status]?`<span class="pill warn">${esc(BASIS[r.basis.status])}</span>`:'';
+        const ports=(r.inputContract as {ports:{inputs:[string,string][];output:string}}).ports;
+        return `<button class="palette-node purple" data-ruleset="${esc(r.id+'@'+r.version)}" `
+          +`title="${esc(r.mustNotBeReadAs)}"><span class="palette-icon">⋈</span>`
+          +`<span class="palette-label">${esc(r.title)} ${warn}</span>`
+          +`<span class="palette-note">${esc(ports.inputs.map(([,t])=>t).join(', ')+' → '+ports.output)}</span></button>`;
+      }).join(''));
+    $('#library-count').textContent=String(Number($('#library-count').textContent||0)+rulesets.length);
+  }
+  $('#node-library').querySelectorAll<HTMLButtonElement>('[data-ruleset]').forEach(b=>b.onclick=()=>{
+    const [id,version]=(b.dataset.ruleset||'').split('@');
+    const found=bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version);
+    if(!found)return;
+    const nodeId=`apply_ruleset-${Date.now()}`;
+    const didAdd=change(w=>{w.nodes.push({id:nodeId,type:'apply_ruleset',
+      x:180+(w.nodes.length%4)*80,y:90+(w.nodes.length%3)*80,
+      params:{label:found.title,ruleset:pinnedRuleset(found.id,found.version),
+        parameters:Object.fromEntries(found.parameters.filter(p=>p.default!==undefined).map(p=>[p.name,p.default as number]))}} as WorkflowNode);
+      selected=nodeId;});
+    if(didAdd===false)return;
+    flow?.fit();
+    toast(`${found.title} added. Its ports come from the ruleset, not the widget.`);
+  });
   $('#node-library').querySelectorAll<HTMLButtonElement>('[data-composition]').forEach(b=>b.onclick=()=>{
     const found=bundledCompositions().find(c=>`${c.id}@${c.version}`===b.dataset.composition);
     if(!found)return;
@@ -266,7 +315,7 @@ function renderInspector(){
   if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><span class="inspector-section">Developmental evaluation · step 1</span><h2>Define the study area</h2><p class="description">Add Study area, then select the node to draw a bounding box or polygon on an online map.</p><div class="rule-preview">Predict what the selection will produce, inspect the N3 facts, then run the readiness rule.</div><p class="muted">Your other worked examples remain saved separately.</p></div>';return;}
   const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><h2>Your analysis, connected.</h2><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p><div class="notice">${exampleKey(workflow).startsWith('snow-')?'Historical case-study locations; modeled catchments. Inspect a processing node to compare its assumptions.':exampleKey(workflow)==='old-naledi'?'Real source boundary and historical facilities; generated sample locations. Select Facility access to explore the assumptions.':'The heat example uses synthetic neighborhoods and illustrative screening criteria.'}</div></div>`;return;}
   let content=title(n)+`<p class="description">${esc(n.type==='map_output'&&n.params.inputMode==='raster'?'Display native raster cells and the clipping boundary':TYPES[n.type].description)}. ${n.type==='policy'?'Turn computed spatial evidence into explicit, inspectable conclusions.':''}</p>`;
-  content+=diveDeeperPanel(n.type,esc);
+  content+=manualButton(n.type,esc)+diveDeeperPanel(n.type,esc);
   if(n.type==='micro_workflow'){
     const pin=n.params.composition;
     const found=bundledCompositions().find(c=>c.id===pin.id&&c.version===pin.version);
@@ -660,6 +709,7 @@ function renderInspector(){
       return change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;node.params.unit=result.unit;node.params.source=result.source;},{requirePersistence:true});
     },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit}:undefined);
   });
+  optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
   optionalElement('#prepare-raster')?.addEventListener('click',()=>{
     let source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);const visited=new Set<string>();
     while(source?.type==='measure_area'&&!visited.has(source.id)){visited.add(source.id);source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===source!.id&&e.port==='area')?.from);}
@@ -1023,7 +1073,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});
 const requestedExample=new URLSearchParams(location.search).get('example');
-if(requestedExample&&['old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy','sea-level'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':requestedExample==='raster'?'raster-input':requestedExample==='old-naledi'?'access':'criteria';}
+if(requestedExample&&['old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent','sea-level'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':requestedExample==='raster'?'raster-input':requestedExample==='old-naledi'?'access':'criteria';}
 wireThemeControl();renderLibrary();renderResults();save();render();mountPanelLayout();
 export let servingBuild='unknown';
 if('serviceWorker' in navigator){

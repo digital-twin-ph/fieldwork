@@ -56,7 +56,17 @@ export const downloadLimits=(maxNodes=NETWORK_NODE_LIMIT)=>({
 });
 export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
   ({maxNodes,maxEdges:Math.round(maxNodes*SEGMENTS_PER_NODE)});
-export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;minutes?:number;count?:number;total?:number;missingValues?:number}
+/** `areaSquareMetres` and `spanMetres` are DERIVED quantities, attached to the record rather than
+ *  left in the receipt. Until 2026-10-14 a hull computed its area, wrote it to `fw:hullAreaSquareMetres`
+ *  and to a note, and dropped it: the feature carried id, name, siteId and geometry. Nothing
+ *  downstream could use it, because a port carries a value and not a receipt, and reaching through
+ *  to a receipt is how a thin port type becomes a thick one. A rule that asks "is this catchment
+ *  larger than 2 km2?" has nothing to bind to until the quantity is a field. Experiment 113.
+ *
+ *  Metres, always, and only written by a widget that projected to get them -- an area computed in
+ *  degrees is not an area. A widget that works in CRS84 leaves these absent, which is the honest
+ *  answer rather than a number in the wrong unit. */
+export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
 export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;features:Catchment[];sites:PointFeature[];method:string;crs:string;boundary?:Boundary;notes:string[];observations?:PointCollection;summary?:{records:number;matched:number;unmatched:number;missingLocation:number;multiple:number;valueField:string};snaps?:{siteId:string;nodeId:string;distanceM:number}[]}
 export const CATCHMENT_TYPES:Record<'voronoi'|'network_input'|'isochrone'|'clip_polygons'|'summarize_polygons',NodeDefinition>={
   voronoi:{title:'Voronoi catchments',group:'Spatial operations',icon:'◇',color:'teal',description:'Allocate an extent to the nearest site in a metric CRS',inputs:[['area','area'],['sites','points']],output:'polygons'},
@@ -188,7 +198,22 @@ export function isochrone(input:PointCollection,network:Network,params:WorkflowN
   const edges=prepareEdges(network,params.direction,m.forward);
   const adjacency=new Map<string,typeof edges>();for(const e of edges){const list=adjacency.get(e.from)||[];list.push(e);adjacency.set(e.from,list);}
   const snaps:NonNullable<Polygons['snaps']>=[],notes=['Turf/JSTS corridor buffer in a local azimuthal equidistant projection, 8 quadrant segments. Approximate corridor polygons, not exact travel-time surfaces. Edge time uses supplied length / constant speed. No off-network connectors; snap distance is reported but not charged. Graph extent can truncate reachability. OSM snapshot is not an 1854 street reconstruction.'];
-  const features=fs.map((f,index)=>{onProgress?.(index,fs.length);const origin=m.forward(f.geometry!.coordinates),snap=network.nodes.reduce((a,b)=>dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b),snapDistance=dist(coords.get(snap.id)!,origin);if(snapDistance>params.maxSnapM)throw new Error(`${f.properties.name}: nearest network node is ${Math.round(snapDistance)} m away, beyond the snap limit.`);snaps.push({siteId:f.id,nodeId:snap.id,distanceM:snapDistance});
+  const features=fs.map((f,index)=>{onProgress?.(index,fs.length);const origin=m.forward(f.geometry!.coordinates),snap=network.nodes.reduce((a,b)=>dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b),snapDistance=dist(coords.get(snap.id)!,origin);if(snapDistance>params.maxSnapM)throw new Error(`${f.properties.name}: nearest network node is ${Math.round(snapDistance)} m away, beyond the snap limit.`);/* ASSUMPTION, EXCLUDING: a site too far from the network produces no answer at all, and this throw ends the RUN -- every other site goes with it. Missing road data becomes absence from the analysis rather than fw:Unknown, which inverts the rule applied to every other kind of missing evidence. OSM footpath coverage is unequal in a known direction, so this lands hardest on under-mapped settlements. The designed replacement is a crow-flies D1 charged anyway and recorded as an off-network segment -- a lower bound, since a straight line assumes a walkable one. Experiment 114. */snaps.push({siteId:f.id,nodeId:snap.id,distanceM:snapDistance});
+    // ASSUMPTION, UNCHARGED: the walk from the site onto the network costs nothing.
+    //
+    // A route has three segments -- D1 site to nearest node, D2 network distance, D3 last node to
+    // destination. `snapDistance` above IS D1: measured, pushed into `snaps`, published as
+    // fw:networkSnaps -- and then the snap node starts at 0 here, so the budget never pays for it.
+    // The isochrone therefore reaches further than its stated time allows, by exactly D1.
+    //
+    // Measured on the shipped Soho example 2026-10-14: D1 10.9 m against a 375 m budget, 2.9%.
+    // That figure is the wrong one to remember. D1 is largest where a home sits back from any
+    // mapped road, which is where an access analysis is used to argue for investment, so ignoring
+    // it flatters the places that are worst served. Charging it is one edit -- start the snap node
+    // at `snapDistance` -- and it shrinks every isochrone, including the pinned example's.
+    //
+    // D3 is not modelled at all; `bufferM` below is a cartographic halo standing in for it.
+    // Experiment 114 and the Dive Deeper section of the lab's 19-snap notebook.
     const budget=params.minutes*params.speedMPerMin,distances=new Map<string,number>([[snap.id,0]]),settled=new Set<string>();
     for(;;){let current:string|undefined,best=Infinity;for(const [id,d] of distances)if(!settled.has(id)&&d<best){current=id;best=d;}if(!current||best>budget)break;settled.add(current);for(const e of adjacency.get(current)||[]){const cost=best+e.lengthM;if(cost<(distances.get(e.to)??Infinity))distances.set(e.to,cost);}}
     const reached:{line:Position[];fraction:number}[]=[];for(const e of edges){const d=distances.get(e.from)??Infinity;if(d<budget)reached.push({line:e.line,fraction:Math.min(1,(budget-d)/e.lengthM)});}

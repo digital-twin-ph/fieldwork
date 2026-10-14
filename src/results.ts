@@ -45,6 +45,9 @@ export interface AccessValue {kind:'access'; locationSource?:{nodeId?:string; ki
 /** Presentation fields shared by heterogeneous result tabs. Calculations use the narrower contracts above. */
 export interface DisplayRow {
   id:string; name:string; coordinates:Position|null; status?:Status; explanation?:string;
+  /** Enclosed area in square metres, for a decision about extent. Null when no widget measured
+   *  one -- a polygon computed in degrees has no area, which is not an area of zero. */
+  areaSquareMetres?:number|null;
   // `distanceKm` was removed on 2026-10-12. It sat here beside `distance` and `unit` after the
   // rename, so three display readers kept reading a field nothing wrote any more, typechecked
   // against this declaration, and got undefined — which threw on `.toFixed` and emptied the
@@ -69,7 +72,7 @@ export interface DisplayValue {
   chart?:ChartSummary;
   locationSource?:{nodeId?:string; kind:string};
   facilitySource?:RegistryValue['facilitySource'];
-  kind?:'study-area'|'spatial-coverage'|'spatial-map'|'point-table'|'data-table'|'access'|'facility-evidence'|'raster-map'|'network-map';
+  kind?:'study-area'|'spatial-coverage'|'spatial-map'|'point-table'|'data-table'|'access'|'facility-evidence'|'raster-map'|'network-map'|'extent';
   rows:DisplayRow[]; centers:PointFeature[]; boundary?:Boundary; label?:string; areaId?:string; geometryId?:string;
   measurement?:Measurement; ready?:boolean; pointTable?:boolean; pointLayers?:LayerSummary[];
   checkNodeId?:string; areaNodeId?:string; reviewCount?:number; excludedCount?:number; canProceed?:boolean;

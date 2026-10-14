@@ -1,4 +1,5 @@
 import walkingCatchment from '../compositions/compute_walking_catchment/0.4.0.json';
+import classifyExtent from '../compositions/classify_extent/0.1.0.json';
 import type {Composition} from './compositions.js';
 
 /** The compositions this build carries, by id and version.
@@ -12,7 +13,7 @@ import type {Composition} from './compositions.js';
  *  palette is therefore a build decision, which is the same gate admission already
  *  describes: assets, a review and an owner before anyone else can add it to a canvas. */
 
-const BUNDLED:Composition[]=[walkingCatchment as unknown as Composition];
+const BUNDLED:Composition[]=[walkingCatchment as unknown as Composition,classifyExtent as unknown as Composition];
 
 export const compositionKey=(id:string,version:string)=>`${id}@${version}`;
 

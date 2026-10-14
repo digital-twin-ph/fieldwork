@@ -1,0 +1,111 @@
+{
+ "schema": "fieldwork/composition/2",
+ "id": "urn:fieldwork:composition:classify_extent",
+ "nodeType": "classify_extent",
+ "version": "0.1.0",
+ "title": "Extent review",
+ "author": "Fieldwork project",
+ "released": "2026-10-14",
+ "stage": "classify",
+ "description": "How far a set of points reaches, and whether that is large enough to look at. Draws the convex hull of the points, measures its area in a metric CRS, and classifies the hull against a stated threshold with the extent-review ruleset. The polygon comes out carrying its own status, so a map can colour it and anything downstream keeps the judgement.",
+ "mustNotBeReadAs": "Not a judgement that a large area is a problem. Whether extent matters, and above what size, depends entirely on the question: a hull over 2 km2 is unremarkable for a city and alarming for a building footprint. The threshold is the practitioner\u2019s to set and neither this composition nor the ruleset inside it ships a basis for any value. A hull is also an outline of what was OBSERVED, not a boundary anyone agreed to, and it encloses ground where nothing was recorded.",
+ "governance": {
+  "status": "private",
+  "owner": "Fieldwork project",
+  "reviews": [
+   {
+    "at": "2026-10-14",
+    "by": "agent, unreviewed by a human",
+    "outcome": "Assembled and executed, and substituted into the John Snow outbreak-extent example, which is how a composition is tested here. Not admitted to the palette: admission needs a human review and an ontology expansion, neither of which exists. Status stays private. Experiment 113."
+   }
+  ]
+ },
+ "members": [
+  {
+   "node": "hull",
+   "type": "summarize_hull",
+   "version": "0.1.0",
+   "sha256": "a0fc9ba3a62934b0f3513c1da1b2e2ce1b4f758088ae0abd8d84a184b1abb9f5"
+  },
+  {
+   "node": "review",
+   "type": "apply_ruleset",
+   "version": "0.1.0",
+   "sha256": "addf81a11b0b3971d16b8c2b5b365a0e50b9a9573f3fd75d8aa7ce504a7913a9",
+   "fixed": {
+    "ruleset": {
+     "id": "urn:fieldwork:ruleset:extent-review",
+     "version": "1.1.0",
+     "title": "Extent review",
+     "inputs": [
+      [
+       "polygons",
+       "polygons"
+      ]
+     ],
+     "output": "polygons"
+    }
+   }
+  }
+ ],
+ "edges": [
+  {
+   "from": "hull",
+   "to": "review",
+   "port": "polygons"
+  }
+ ],
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points",
+    "members": [
+     {
+      "node": "hull",
+      "port": "points"
+     }
+    ]
+   }
+  ],
+  "output": {
+   "node": "review",
+   "type": "polygons"
+  }
+ },
+ "parameters": [
+  {
+   "name": "zone",
+   "title": "UTM zone",
+   "members": [
+    {
+     "node": "hull",
+     "param": "zone"
+    }
+   ],
+   "default": 30
+  },
+  {
+   "name": "hemisphere",
+   "title": "Hemisphere",
+   "members": [
+    {
+     "node": "hull",
+     "param": "hemisphere"
+    }
+   ],
+   "default": "north"
+  },
+  {
+   "name": "threshold",
+   "title": "Area above which to review, in square metres",
+   "members": [
+    {
+     "node": "review",
+     "param": "parameters.threshold"
+    }
+   ],
+   "default": 1000000
+  }
+ ]
+}

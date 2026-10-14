@@ -1,6 +1,6 @@
 # Experiment 41: an accompanying Validation Lab
 
-_Created 2026-10-08 · Updated 2026-10-08_
+_Created 2026-10-08 · Updated 2026-10-11_
 
 **Status:** validated — the lab exists, every notebook executes in CI and fails
 the build on an error cell, and six widgets' results agree with an independent

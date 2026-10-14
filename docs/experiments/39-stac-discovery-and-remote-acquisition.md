@@ -1,6 +1,6 @@
 # Experiment 39: STAC discovery and remote asset acquisition
 
-_Created 2026-10-08 · Updated 2026-10-08_
+_Created 2026-10-08 · Updated 2026-10-10_
 
 Date: October 7, 2026. Status: design specification, measured dependency cost and
 measured catalog probes. No application code, widget release or dependency is

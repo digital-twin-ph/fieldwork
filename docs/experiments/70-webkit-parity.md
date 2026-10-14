@@ -1,6 +1,6 @@
 # 70 · WebKit parity: what the second engine found
 
-_Created 2026-10-09 · Updated 2026-10-09_
+_Created 2026-10-10 · Updated 2026-10-13_
 
 **Status:** three root causes found and fixed. The documented gate stays
 Chromium; this records what running a second engine actually bought.

@@ -1,6 +1,6 @@
 # 66 · Ports as semantic connections: syntactic, semantic and pragmatic interoperability
 
-_Created 2026-10-09 · Updated 2026-10-09_
+_Created 2026-10-10 · Updated 2026-10-10_
 
 **Status:** reframing, with a measurement. No code changes and no implementation proposed;
 this is a base-contract reframe that supersedes advice in three earlier records and should be

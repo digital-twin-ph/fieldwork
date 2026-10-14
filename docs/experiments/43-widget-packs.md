@@ -1,6 +1,6 @@
 # Experiment 43: widget packs
 
-_Created 2026-10-08 · Updated 2026-10-08_
+_Created 2026-10-08 · Updated 2026-10-10_
 
 Date: October 8, 2026. Status: design specification and developmental-evaluation
 questions. No pack format, loader, manifest or dependency is implemented by this

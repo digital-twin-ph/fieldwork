@@ -26,6 +26,19 @@ import {bufferPoint,BUFFER_POINT_STEPS} from '../build/buffer-point.js';
 import {bufferedBoundary} from '../build/area-buffer.js';
 import {aggregateHex} from '../build/geoprivacy.js';
 import {caseSeriesFromTable} from '../build/case-series.js';
+import {extentN3,extentProjection} from '../build/rule-application.js';
+import {runInThisContext} from 'node:vm';
+import {readFileSync} from 'node:fs';
+import {resolveRuleset} from '../build/rulesets.js';
+
+// The reasoner in node, the same engine and version the browser worker runs. `vendor/eye-21.1.24.js`
+// is a webpack bundle assigning to `var eyereasoner`, so `runInThisContext` puts it in scope --
+// the technique scripts/export-ruleset-fixture.mjs established on 2026-10-12. A fixture that
+// recorded a classification without running the reasoner would be recording an assumption.
+globalThis.self=globalThis;
+runInThisContext(readFileSync(new URL('../vendor/eye-21.1.24.js',import.meta.url),'utf8'),{filename:'eye-21.1.24.js'});
+const reasonFixture=async input=>(await eyereasoner.n3reasoner(input,undefined,{outputType:'quads'}))
+  .map(q=>({subject:q.subject.value,predicate:q.predicate.value,object:q.object.value}));
 
 const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
@@ -506,6 +519,46 @@ const builders={
       note:'Project the points to the declared CRS, take their convex hull, and compare the ring, its vertex count, its shoelace area and its widest span. The ring is returned in longitude and latitude; compare it in projected metres or allow for the round trip.'
     },files:{}};
   },
+  async 'extent-soho-001'(){
+    // The whole chain experiment 113 is about, in one fixture: 250 located deaths, their convex
+    // hull, the area that hull derived, and the classification a declared ruleset reached from
+    // that area. The reference rebuilds all three -- hull, area, threshold -- so the check tests
+    // the DERIVATION as well as the rule, which is the thing the experiment doubted.
+    //
+    // The conclusion travels on the polygon, not beside it. Until 2026-10-14 this fixture could
+    // not have existed in this shape: the ruleset returned rows and the geometry it judged was
+    // dropped, so there was nothing to compare a status against except a table.
+    const deaths=johnSnowExample('snow-voronoi').nodes.find(n=>n.id==='locations').params.data;
+    const zone=30,hemisphere='north',threshold=250000;
+    const hull=convexHull(deaths,{id:'hull',type:'summarize_hull',x:0,y:0,
+      params:{label:'Observed extent of the outbreak',zone,hemisphere}},'fixture','locations');
+    const n3=extentN3(hull.value,threshold);
+    const conclusions=await reasonFixture(n3.input);
+    const judged=extentProjection(hull.value,threshold,conclusions);
+    const feature=judged.features[0];
+    const ruleset=resolveRuleset('urn:fieldwork:ruleset:extent-review','1.1.0');
+    return {fixture:{
+      ...base('extent-soho-001','apply_ruleset','Apply ruleset','src/rule-application.ts#extentProjection'),
+      declaredParameters:{
+        zone,hemisphere,metricCRS:'EPSG:32630',thresholdSquareMetres:threshold,
+        ruleset:{id:ruleset.id,version:ruleset.version,title:ruleset.title},
+        derivationRule:'The area is NOT recomputed by the rule. The widget that projected to metres attaches areaSquareMetres to the polygon, and the rule reads it from the record. A widget that worked in degrees attaches nothing, and absent becomes fw:areaKnown false rather than a zero.',
+        hullRule:'Monotone-chain convex hull of the projected points; shoelace area of the closed ring in EPSG:32630, which is the area of the ring and not a geodesic area.',
+        classificationRule:'fw:areaKnown false gives Unknown. Otherwise area > threshold gives Review and area <= threshold gives NoFlag.',
+        outputRule:'The classification is attached to the polygon as status and explanation, and the polygons are what the rule hands back. Before extent-review 1.1.0 it returned rows and dropped the geometry.',
+        method:`Extent review against ${(threshold/1e6).toFixed(3)} km²`,
+        semantics:'A status is a prompt to look, not a finding. Whether extent matters, and above what size, depends on the question being asked, and neither the widget nor the ruleset ships a basis for any threshold.'
+      },
+      input:{points:deaths.features.map(f=>({id:String(f.id),coordinates:f.geometry?f.geometry.coordinates:null}))},
+      output:{
+        ring:feature.geometry.coordinates[0],
+        areaSquareMetres:feature.areaSquareMetres,
+        status:feature.status,
+        explanation:feature.explanation,
+        statusCounts:judged.rows.reduce((counts,r)=>({...counts,[r.status]:(counts[r.status]||0)+1}),{})},
+      note:'Project the points, take their convex hull, measure the ring in square metres, and classify it against the stated threshold. Then check that Fieldwork reached the same status for the same reason, and that the status is on the polygon rather than in a table beside it.'
+    },files:{}};
+  },
   'corridor-soho-001'(){
     // The five minute band's corridor. Edge geometry travels because the reference has to
     // walk the same streets: a corridor cannot be recomputed from endpoints, since these
@@ -726,7 +779,7 @@ const builders={
 
 const [id,outputDir]=process.argv.slice(2);
 if(!builders[id]||!outputDir)throw new Error(`Usage: node scripts/export-validation-fixture.mjs <${Object.keys(builders).join('|')}> <outputDir>`);
-const {fixture,files}=builders[id]();
+const {fixture,files}=await builders[id]();
 // Binary assets travel with their digest declared inside the fixture. A sidecar cannot be
 // read from the lab's browser kernel at all, which is the other half of the 2026-10-11
 // finding, so nothing beside the file is written any more.

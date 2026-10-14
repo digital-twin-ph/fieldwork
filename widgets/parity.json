@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file\u2019s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "7faf7833147652bfefb0d341ba6e6b7f55ff6ded"
+    "commit": "3633ae32debd880bd79f7cabcb08e0a7a69e4466"
   },
   "outcomes": {
     "agrees": "Every case met the stated criterion.",
@@ -442,6 +442,44 @@
       "ranAt": "2026-10-14T12:59:53.753881+00:00",
       "note": "The FORWARD direction, which release 0.2.0 performs. Check 01 covers the inverse that 0.1.0 did, so until this ran the widget's only evidence described a contract it no longer had and the catalog reported \"agrees - earlier release\". A round trip through both of Fieldwork's own directions is not a substitute: they come from one proj4 build, so a fault in its UTM would round-trip perfectly. The residual is the storage precision rather than the projection -- coordinates are kept to three decimals, whose combined rounding bound is 0.00071 m, and the worst separation is below it. The criterion's second clause exists because the proj4 string and the EPSG:326xx label are built separately from the zone: mutating the fixture's code from 32630 to 32631 leaves every coordinate agreeing to the same 0.62 mm and is caught only by comparing the frames.",
       "notebook": "24-project-vs-pyproj.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:apply_ruleset",
+      "coversRelease": "0.1.0",
+      "check": "25-extent",
+      "result": "content/results/check-25-extent.json",
+      "sha256": "0c146bdd9d699719588f80b930eba913b442184c560c4990ae01fef26d72bbc3",
+      "external": [
+        "shapely 2.2.0",
+        "GEOS 3.14.1",
+        "pyproj 3.8.0"
+      ],
+      "criterion": "hull ring vertex for vertex within 1e-06 degrees, area within 0.01%, and the same status for the same stated comparison",
+      "outcome": "agrees",
+      "measured": "the same 11-vertex hull ring vertex for vertex; area 139230.0 against 139230.0 square metres (0.0000%); and NoFlag from both, for the same stated comparison",
+      "ranAt": "2026-10-14T22:14:51.637692+00:00",
+      "note": "Covers a rule over a quantity DERIVED from geometry rather than over an imported column, which is what experiment 113 doubted was possible. The reference rebuilds the whole chain -- hull, area, threshold -- so a disagreement in the status would be as likely to be about the area as about the rule. The explanation is read for the same two numbers, so a status that agreed by accident would fail. It does not check the reasoner: the fixture records what EYE concluded and the reference recomputes the comparison in Python, which is check 23's job. Nor does it establish that 250,000 m2 is the right threshold, or a convex hull the right outline; the notebook beside it classifies the same observed outbreak as Review at 0.139 km2 and NoFlag at 0.250, against a figure the case study records no reason for.",
+      "notebook": "25-extent-vs-shapely.ipynb",
+      "diveDeeper": "Dive deeper \u00b7 three leaps this makes"
+    },
+    {
+      "widget": "urn:fieldwork:widget:summarize_hull",
+      "coversRelease": "0.1.0",
+      "check": "25-extent",
+      "result": "content/results/check-25-extent.json",
+      "sha256": "0c146bdd9d699719588f80b930eba913b442184c560c4990ae01fef26d72bbc3",
+      "external": [
+        "shapely 2.2.0",
+        "GEOS 3.14.1",
+        "pyproj 3.8.0"
+      ],
+      "criterion": "hull ring vertex for vertex within 1e-06 degrees, area within 0.01%, and the same status for the same stated comparison",
+      "outcome": "agrees",
+      "measured": "the same 11-vertex hull ring vertex for vertex; area 139230.0 against 139230.0 square metres (0.0000%); and NoFlag from both, for the same stated comparison",
+      "ranAt": "2026-10-14T22:14:51.637692+00:00",
+      "note": "The same check, listed here because the first of its three leaps is this widget's: the area a hull derives has to be a FIELD on the polygon rather than a line in the run receipt, or no rule downstream can read it. Until 2026-10-14 it was computed, published as fw:hullAreaSquareMetres, and dropped. The hull geometry itself is checked by 10-hull.",
+      "notebook": "25-extent-vs-shapely.ipynb",
+      "diveDeeper": "Dive deeper \u00b7 three leaps this makes"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

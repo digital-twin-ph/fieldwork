@@ -1,4 +1,4 @@
-import {projectionExplainer} from './metric-crs.js';
+import {diveDeeperPanel} from './dive-deeper.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
 import {canvasN3} from './canvas-semantics.js';
 import appPackage from '../package.json';
@@ -266,6 +266,7 @@ function renderInspector(){
   if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><span class="inspector-section">Developmental evaluation · step 1</span><h2>Define the study area</h2><p class="description">Add Study area, then select the node to draw a bounding box or polygon on an online map.</p><div class="rule-preview">Predict what the selection will produce, inspect the N3 facts, then run the readiness rule.</div><p class="muted">Your other worked examples remain saved separately.</p></div>';return;}
   const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><h2>Your analysis, connected.</h2><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p><div class="notice">${exampleKey(workflow).startsWith('snow-')?'Historical case-study locations; modeled catchments. Inspect a processing node to compare its assumptions.':exampleKey(workflow)==='old-naledi'?'Real source boundary and historical facilities; generated sample locations. Select Facility access to explore the assumptions.':'The heat example uses synthetic neighborhoods and illustrative screening criteria.'}</div></div>`;return;}
   let content=title(n)+`<p class="description">${esc(n.type==='map_output'&&n.params.inputMode==='raster'?'Display native raster cells and the clipping boundary':TYPES[n.type].description)}. ${n.type==='policy'?'Turn computed spatial evidence into explicit, inspectable conclusions.':''}</p>`;
+  content+=diveDeeperPanel(n.type,esc);
   if(n.type==='micro_workflow'){
     const pin=n.params.composition;
     const found=bundledCompositions().find(c=>c.id===pin.id&&c.version===pin.version);
@@ -555,10 +556,6 @@ function renderInspector(){
         +`</div>`;
     }
   }
-  // Every widget that projects gets the same explanation of what the zone does, keyed off
-  // METRIC_NODE_TYPES rather than written into each branch above, so a widget cannot acquire
-  // a zone knob without acquiring the explanation of it.
-  content+=projectionExplainer(n.type);
   $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
   document.querySelectorAll<HTMLButtonElement>('[data-raster-step]').forEach(button=>button.onclick=()=>{selected=button.dataset.rasterStep;render();});
   optionalElement('#manage-references')?.addEventListener('click',()=>{let baseline=JSON.stringify(n.references||[]);openEvidenceEditor(n,refs=>{const current=workflow.nodes.find(x=>x.id===n.id);if(!current||JSON.stringify(current.references||[])!==baseline)throw new Error('The node changed while editing. Close and reopen its references.');const saved=change(w=>{required(w.nodes.find(x=>x.id===n.id)).references=structuredClone(refs);},{requirePersistence:true});if(saved)baseline=JSON.stringify(refs);return saved;});});

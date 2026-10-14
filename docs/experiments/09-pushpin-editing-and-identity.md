@@ -57,3 +57,14 @@ The existing input exercise now explicitly discards an edited draft when cancell
 Observe whether practitioners can identify when a change becomes persistent, distinguish deleting a source record from excluding it in an analysis, and explain Category versus a computed classification. These are questions for developmental evaluation, not established usability findings.
 
 Validation on October 5, 2026: `npm run check` passed the build, all 33 unit tests and all 17 Chromium scenarios with no skips or retries. The browser portion took approximately 2.4 minutes. The original pending-pair regression failed before the fix and passed afterward. The revised editor screenshot was inspected; documentation links and whitespace checks passed. Firefox/WebKit and participant effectiveness were not evaluated.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

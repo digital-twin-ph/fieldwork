@@ -50,3 +50,13 @@ That a hull is the right boundary for anything. It is the smallest convex one,
 which is a mathematical property, not a claim that the phenomenon is convex. An
 outbreak along a river is not convex, and a hull of it asserts area nobody
 observed.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add the convex hull, first of six primitives an isochrone composition needs |
+| 2026-10-10 | Add summarize_combined_area, and fix the hull's spelling |

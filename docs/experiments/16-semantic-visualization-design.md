@@ -152,3 +152,15 @@ The [workflow publication products extension](17-workflow-publication-products.m
 4. Evaluate practitioner interpretation and browser resource costs before adding coordinated interactions, broader chart grammars or automatic recommendations.
 
 Open decisions include the exact OGC portrayal terms to reuse, whether VISO adds value beyond the selected profile, the initial renderer/schema versions, measured resource limits, and the scope of portable interactive exports. These require implementation spikes and recorded evidence. The decision in this specification is to share semantics and provenance while keeping rendering adapters replaceable.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Add semantic asset profiles, versioned widget registry and output designs |
+| 2026-10-07 | Add standalone chart and map communication views |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

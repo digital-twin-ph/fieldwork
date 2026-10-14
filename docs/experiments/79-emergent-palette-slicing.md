@@ -105,3 +105,13 @@ Nor does it establish that two axes are enough, or the right ones. They are the
 two a practitioner named. Others — data you have, question you are asking — may
 turn out to matter more, and the way to find out is to label the examples and see
 what the counting says.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Slice the palette by purpose, from use rather than by decree |
+| 2026-10-11 | Decide: the browser app is for field work, learning is the desktop build's |

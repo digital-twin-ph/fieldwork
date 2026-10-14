@@ -135,3 +135,17 @@ does. Explanation belongs in the notebooks.
 
 The John Snow example still uses `isochrone`. Replacing it is the next decision
 and a real one: the monolith is a shipped widget and the example teaches it.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Explode a micro-workflow on the canvas |
+| 2026-10-10 | Fix a race in the micro-workflow browser check |
+| 2026-10-10 | Give the micro-workflow node its output port |
+| 2026-10-10 | Stop the expanded graph being checked against the project manifest |
+| 2026-10-11 | Retire the claim that more nodes explain themselves |
+| 2026-10-11 | Give the experiment document a form, and a ratchet to hold it |

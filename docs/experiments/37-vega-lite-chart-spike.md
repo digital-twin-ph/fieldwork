@@ -43,3 +43,14 @@ Use the Heat decision fixture to compare classic bars, Vega-Lite bars and dots a
 Validation on October 7: TypeScript build, 100 unit tests, ontology validation and widget-registry validation passed. Four focused Chromium scenarios passed on the final chart/semantic build: legacy Chart migration, Vega-Lite settings and SVG export, offline reload, and the John Snow N3/evidence graph. A broader run passed 59 of 61 browser scenarios, with one skip; its sole failure was a chart SHACL receipt missing a unit-status field after the shape was edited while the run was in progress. The receipt was corrected and the affected semantic/browser scenarios passed after rebuild. The broad suite was not repeated in full after that correction. The offline asset manifest lists 133 assets, including a 857,966-byte minified Vega-Embed chunk; total listed build assets are about 3.77 MB before transfer compression. This cost is material for an offline-first browser app and should be compared with a smaller renderer before expanding chart types.
 
 The browser evidence is Chromium only. Firefox/WebKit support, practitioner comprehension, color-vision evaluation, larger-data performance and scientific correctness remain untested.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Add standalone chart and map communication views |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

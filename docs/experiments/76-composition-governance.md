@@ -156,3 +156,16 @@ Nor does it establish that inheritance holds in practice. It holds by
 construction while every member is a registry widget at a known version — and
 whether that survives a member changing is [77](77-composition-drift-detection.md),
 not this.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Three admission reviews for compositions, written before the code |
+| 2026-10-10 | Let a composition assert its stage in its name |
+| 2026-10-10 | The palette is a curated surface: compositions reach it by admission |
+| 2026-10-10 | Promotion is not exposure: a composition gives both views of its knobs |
+| 2026-10-10 | Build the composition artifact, with the isochrone chain as the first one |

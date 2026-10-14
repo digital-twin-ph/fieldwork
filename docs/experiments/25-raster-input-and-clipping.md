@@ -55,3 +55,14 @@ Map registry release 0.4.0 records this contract. A Chromium regression drags Cl
 On October 6, the user narrowed the GDAL/WASM exploration to a sufficient study polygon and a small native-resolution raster subset. A temporary gdal3.js 2.8.1 Worker experiment passed synthetic clipping and offline rerun, but introduced approximately 40 MB of runtime assets. Its dependency, Worker, UI engine selector and runtime files were removed from the active app after the scope clarification. It is not an implemented Fieldwork processing engine.
 
 For this slice, retain GeoTIFF.js file/window I/O and the existing center-in-polygon mask. GEOS-WASM would be sufficient for richer vector boundary operations alongside the raster reader/writer; it does not itself read or write GeoTIFF pixels. Add it only when boundary union/intersection/repair is needed. GDAL, reprojection, extra inclusion choices and a general processing toolbox remain deferred. Expanding beyond the retained input window still requires reacquisition from the original source.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

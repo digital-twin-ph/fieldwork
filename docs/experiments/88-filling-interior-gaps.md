@@ -116,3 +116,12 @@ That filling is ever the right choice. It makes a map read solid, and it makes
 every area downstream larger. The case study fills, and its own interface warns
 against filling for coverage; both can be true, because those are different
 outputs from the same geometry.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add fill_interior_gaps, and correct the infill record from dead code |

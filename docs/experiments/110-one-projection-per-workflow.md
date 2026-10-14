@@ -174,3 +174,12 @@ not answered by any of this.
 
 A practitioner who did not write it reading the projection section and reporting
 what they concluded about their own zone choice.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-13 | One projection per run, stated where a reader can query it |

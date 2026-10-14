@@ -181,3 +181,15 @@ is suggestive — three widgets built without it, none demonstrated — but the
 method has one successful instance, and that one had an independent source to
 read. Whether it works when the source is your own is exactly what the sea-level
 notebook will test.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Name the notebook-first method, and define a tide gauge |
+| 2026-10-10 | Map the three cholera case studies notebook by notebook against the palette |
+| 2026-10-10 | Record the teaching tension D1 cannot express |
+| 2026-10-10 | Record user-composed routine primitives, and the mechanism already specified |

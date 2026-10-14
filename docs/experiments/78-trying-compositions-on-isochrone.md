@@ -107,3 +107,15 @@ territory and needs people, not a trial.
 Nor does it establish that isochrone should be a composition. It may well be
 right that it ships as one node — the point is to find out what that node costs
 and conceals, which can only be seen by taking it apart once.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Plan the composition trial on isochrone, where a control exists |
+| 2026-10-10 | Correct a prediction: the isochrone knobs are not hidden |
+| 2026-10-10 | Ordering is a variable a composition can test, and should be documented |
+| 2026-10-10 | Promotion is not exposure: a composition gives both views of its knobs |

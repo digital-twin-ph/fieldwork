@@ -1,6 +1,8 @@
 # Developmental evaluation: coordinate reference systems
 
-_Created 2026-10-06 · Updated 2026-10-08_
+_Created 2026-10-06 · Updated 2026-10-14_
+
+**Status:** validated — A23 shipped and was widened on 2026-10-14; four of A24's proposals were delivered on 2026-10-13/14 and are listed below, with the two that were not.
 
 Date: October 5, 2026. The user asked how geographic nodes should carry a datum, default to WGS84 / EPSG:4326, and later support a Reproject node.
 
@@ -39,3 +41,16 @@ Reprojection invalidates geometry-dependent computed values and spatial predicat
 **Implemented now:** default metadata, Inspector display, propagation and rejection of unsupported declarations. **Proposed:** executable Reproject node, projected-coordinate storage/adapters, coordinate-operation selection, grid loading and cross-CRS execution. No transformed-coordinate accuracy or practitioner-usability claim is made.
 
 Unit checks verify default metadata, propagation through Calculate area into Map, rejection of unsupported EPSG declarations and rejection of a contradictory stored axis order. The browser regression checks preserve existing GeoSPARQL readiness, calculation and coverage behavior. These are contract checks, not coordinate-transformation validation.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |
+| 2026-10-14 | Read bottom-up against the code, nine days on. **A24 predicted the design that landed.** `reproject` is now `points → points` as its proposed flow said; its provenance records source and target CRS, axis order, units, operation and library; `ProjectedReference` is the "internal geometry contract carrying its CRS independently"; and "projected coordinates must not be passed to current Turf geographic calculations" is now a hard stop refusing 23 of 24 consumers by name. "Multi-layer operations should require compatible CRS contracts rather than silently reinterpreting mismatched coordinates" is the one-projection rule of [110](110-one-projection-per-workflow.md). Experiments [111](111-splitting-reproject.md) and [114](114-the-three-segments-of-a-walk.md) carry the work. |
+| 2026-10-14 | **What A24 proposed and nobody has done.** "Reprojection invalidates geometry-dependent computed values — area, bounds and coverage must be recomputed under the selected method": not applicable yet, because `reproject` handles points and carries no area or bounds, and it will become live the moment a polygon can be reprojected. And the offline operation machinery — coordinate-operation selection, grid loading, an explicit error for an unavailable operation — is not built: this prototype does WGS84 UTM only and refuses other datums rather than shifting them. Both are open, and neither is tracked anywhere but here. |

@@ -135,3 +135,15 @@ Take an exported SVG and its run receipt from any worked example, and try to red
 figure from those two artifacts alone. Write down everything you had to guess. That list
 is this record's audit, independently derived, and it should get shorter each time the
 exercise is repeated.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Audit reproducibility of figures, and record what a basemap is for |
+| 2026-10-08 | Grade reproducibility per input, because a figure inherits its weakest one |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

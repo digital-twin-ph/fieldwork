@@ -273,3 +273,19 @@ Before any Fieldwork document claims the lab validates an operation:
 Until all six hold for a given operation, its validation status is unchanged.
 Running a notebook is not validation, and neither is a green comparison whose
 tolerance was selected afterwards.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Record the Validation Lab and its first two results |
+| 2026-10-08 | Audit structure, semantics and relevance, with competency questions |
+| 2026-10-08 | Number the competency questions as experiment 44 |
+| 2026-10-08 | Match GDAL's all-touched rule, and record which rule a clip used |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
+| 2026-10-11 | Re-pin parity at the fixed lab, and measure JS against WASM GEOS |
+| 2026-10-11 | Give the experiment document a form, and a ratchet to hold it |

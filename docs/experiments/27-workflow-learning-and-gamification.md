@@ -436,3 +436,17 @@ already half-made: the browser app stays focused on field work, and learning is 
 dimension. This moves to **retired** if that holds and nothing here is built in the browser, or
 to **tried** if a desktop learner record is attempted. It does not need points or badges to
 close — it needs the question answered.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-07 | Add catchment workflows, semantic evidence, and browser Pages release |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |
+| 2026-10-11 | Give the experiment document a form, and a ratchet to hold it |
+| 2026-10-12 | Make the total a signed number, and make an open experiment say what closes it |

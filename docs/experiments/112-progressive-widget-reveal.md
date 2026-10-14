@@ -225,3 +225,12 @@ addable widgets is helped by seeing 6. Nobody has been watched using either.
 Required-versus-optional declared per port, and then the reveal tried behind a
 flag on one example, with one practitioner who did not write it saying whether
 they found what they needed or concluded it was missing.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-14 | Measure progressive widget reveal before enforcing it |

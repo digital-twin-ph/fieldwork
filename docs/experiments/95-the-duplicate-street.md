@@ -155,3 +155,13 @@ remaining 20-minute case lives.
 after a question about engines. Whether 1.4 s instead of 2.2 s changes anything
 for someone working on a phone in the field is not measured, and the run timer
 added alongside this change exists so that it can at least be seen.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-11 | Buffer each street once, and the isochrone gets 3.5x faster |
+| 2026-10-11 | Give the experiment document a form, and a ratchet to hold it |

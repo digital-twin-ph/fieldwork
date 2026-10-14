@@ -110,3 +110,12 @@ every criterion anybody does not want to sweep. Nothing prevents that except rev
 **And nothing about the widgets themselves.** This is the clock, not the sweep. Four criteria have
 never been applied to the set, and after today's work the set is unchanged: still 51, still nine
 example-bound, still three nearest-neighbour implementations.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-12 | Admission is dated, not permanent: put a clock on the criteria |

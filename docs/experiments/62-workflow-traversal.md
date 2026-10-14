@@ -209,3 +209,12 @@ AR6 numbers: no file in the Zenodo datasets has been read for this record either
 in lesson 7 is identified, not resolved. And that the lesson table changes behaviour — a consolidated
 list of mistakes is a record of what was learned, not evidence that it will not recur, which only the
 next exercise can show.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

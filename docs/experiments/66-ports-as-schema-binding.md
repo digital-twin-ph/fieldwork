@@ -471,3 +471,12 @@ That schema contracts are expressible for raster and graph inputs, where no attr
 exists at all today ([65](65-ruleset-as-data.md)). And nothing about whether a practitioner
 finds a bound connection clearer than a typed one, which is an observation to run rather than
 a claim to make.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

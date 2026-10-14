@@ -77,3 +77,16 @@ Practitioner evaluation should ask users to explain the difference between a sel
 ## Related projects
 
 See [Prior art: concepts and tools to adapt and adopt](../research/prior-art.md) for openEO, QGIS Processing Modeler, Geo Engine and APE, their architectural fit and proposed adoption experiments.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Add catchment workflows, semantic evidence, and browser Pages release |
+| 2026-10-08 | Record the Validation Lab and its first two results |
+| 2026-10-08 | Match GDAL's all-touched rule, and record which rule a clip used |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

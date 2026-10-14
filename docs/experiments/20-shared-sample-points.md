@@ -37,3 +37,14 @@ A practitioner can try this slice by adding a Table to Old Naledi, selecting Sam
 Shared result/visualization adapters and reusable semantic reasoning remain subsequent slices. This change does not implement a new sampler, road routing, population allocation or a digital-twin simulation engine.
 
 Validation on October 6: TypeScript and production build passed, followed by all 54 unit tests. The full browser run passed 33 existing scenarios; the new scenario initially failed because its exact tab-name locator omitted an icon prefix. After correcting the locator and completing location-basis labels, the new scenario passed, and both Old Naledi and heat-output browser regressions passed again on the final build. Ontology validation and registry validation passed (18 identities, 24 releases). Evidence covers Chromium only and has not run in remote CI.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

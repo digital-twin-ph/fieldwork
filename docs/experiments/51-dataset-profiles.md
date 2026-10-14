@@ -321,3 +321,15 @@ Take a completed activity of your own. Write down which of the four classes it u
 the vintage of each, and the licence each source carried. Then ask whether the three
 vintages agreed, and whether you could have published the data alongside the result.
 Most of the value of this record is in how uncomfortable that exercise is.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Record what predicts the data a field activity needs, and how profiles accrue |
+| 2026-10-08 | Correct experiment 51: relevance extends past the study area, and tiles do not scale |
+| 2026-10-08 | Measure cacheable basemaps: one file, not 8.6 million requests |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |

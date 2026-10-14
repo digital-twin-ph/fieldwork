@@ -91,3 +91,13 @@ one that several domains would immediately use.
 
 If the pattern holds there, it is a pattern. If the second domain reveals no missing primitive and
 produces a thick domain layer, this record is wrong and should say so.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Record what the exercise taught, and correct the claim that installation was impossible |
+| 2026-10-08 | Distinguish standard from domain widgets, then measure what standard is hiding |

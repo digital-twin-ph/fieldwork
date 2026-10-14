@@ -35,3 +35,14 @@ Regression tests cover four shared thresholds, unchanged legacy single-time beha
 Existing saved examples are preserved. Use **Restore example** to load the revised template (export personal changes first); Undo can restore the previous workflow.
 
 Validation on 2026-10-07: TypeScript build, 90 unit tests, registry (27 identities / 53 releases), ontology checks and the full 55-test Chromium suite passed. After final rendering/lifecycle changes, all five catchment browser scenarios passed again, including fullscreen, mocked tile failures, offline zoom and immediate workspace switching. That last sequence exposed a delayed Leaflet zoom callback after removal; this view now disables transition animations and guards its resize observer during disposal. Screenshots were inspected against the embedded NB04 plot. Static Pages staging succeeded; this slice was not published.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Add catchment workflows, semantic evidence, and browser Pages release |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

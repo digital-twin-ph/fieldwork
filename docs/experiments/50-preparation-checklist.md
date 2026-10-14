@@ -222,3 +222,15 @@ Before your next field activity, write by hand everything you had to do to be
 ready. Then mark each item: could the application have checked this, or only you?
 Bring the list back. The split between those two columns is the format question
 stated as data, and it is currently the only evidence anyone has about it.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Open experiment 50: the checklist format is the question, not a detail |
+| 2026-10-08 | Correct experiment 50: the study area is known, so most of the list derives |
+| 2026-10-08 | Record what predicts the data a field activity needs, and how profiles accrue |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |

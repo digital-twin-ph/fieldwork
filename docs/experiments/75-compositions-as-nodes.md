@@ -154,3 +154,16 @@ rebuilding the same three nodes, is the thing to watch and cannot be argued here
 Nor does it establish the teaching claim. That breaking a problem into parts on a
 canvas teaches problem-solving is plausible, and [27](27-workflow-learning-and-gamification.md)
 has the vocabulary to observe it. It has not been observed.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Three admission reviews for compositions, written before the code |
+| 2026-10-10 | Separate the two surfaces: worked examples load, compositions are added |
+| 2026-10-10 | The palette is a curated surface: compositions reach it by admission |
+| 2026-10-10 | Ordering is a variable a composition can test, and should be documented |
+| 2026-10-10 | Say what an order that changes the answer actually is |

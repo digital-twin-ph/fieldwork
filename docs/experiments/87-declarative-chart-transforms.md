@@ -94,3 +94,12 @@ that an operation which changes the answer should be a visible step.
 What the prototype shows is that the trade is real in both directions, not that
 it has been settled. Settling it needs a practitioner reading both charts, which
 is [74](74-notebook-first-worked-examples.md)'s method and not a test.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Chart band differences with a Vega-Lite transform, as a prototype |

@@ -80,3 +80,15 @@ flowchart LR
 Before adding a composition or new-chart primitive, follow the [ontology audit procedure](../audits/ontology-audit.md): define meaning/exclusions, roles, typed ports, units/CRS, provenance, missing-data policy, reuse, SHACL shapes, and positive/negative fixtures. Proposed shapes check bindings, unique panel IDs, ordering, role separation and filter targets. Application checks resolve actual fields/assets and browser checks inspect marks, legends, popups, reading order and offline behavior. SHACL cannot establish numerical correctness, scientific interpretation or reader comprehension.
 
 First bounded exercise: use one pinned John Snow isochrone run for static SVG and interactive maps plus a catchment-count bar chart, then compose a one-page infographic and two-panel dashboard mockup. Compare exact count-table values and thresholds independently. Test a missing location, changed run, unavailable basemap, mismatched unit and filter scoped to only one panel. The infographic/dashboard remain designs until composition, export/reopen and browser tests exist.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Add standalone chart and map communication views |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

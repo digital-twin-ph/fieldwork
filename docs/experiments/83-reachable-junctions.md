@@ -209,3 +209,16 @@ no difference between a person with a wheelchair and a person on a bicycle.
 It is a geometry of the street graph, and reporting it in minutes invites it to
 be read as a geography of access. The minutes are stated as derived, and the
 speed used is reported with them, so the reader can divide back out.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add reachable_nodes, which settles the carrier question without a new port type |
+| 2026-10-10 | Make travel mode a knob, and trace the 75 m/min default to 1854 Soho |
+| 2026-10-10 | Record parity for reachable_nodes against NetworkX |
+| 2026-10-11 | Correct the walking speed lesson: the reasoning existed and was not recorded |
+| 2026-10-11 | Record that the walking speed estimate was deliberately bounded |

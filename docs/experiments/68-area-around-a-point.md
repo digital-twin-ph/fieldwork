@@ -77,3 +77,12 @@ and this widget cannot make it a finding. Nor does it establish that the facilit
 scope are the right population: nothing in the application filters features by a boundary —
 `coverage_check` reports what falls outside and does not select — which remains one of the six
 primitives the NB06 derivation named.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

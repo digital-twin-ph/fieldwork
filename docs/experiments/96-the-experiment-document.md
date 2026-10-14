@@ -152,3 +152,13 @@ contributors, not a public health practitioner in the field. It was placed first
 because it governs how everything else gets written down, and that is a claim
 about the project's own machinery — worth doing, and worth being honest about who
 it is for.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-11 | Give the experiment document a form, and a ratchet to hold it |
+| 2026-10-12 | Make the total a signed number, and make an open experiment say what closes it |

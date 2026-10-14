@@ -143,3 +143,12 @@ computing widgets still have no check at all — the next urgent item.
 **And nothing about Fieldwork's own correctness.** The lab is for contributors
 with connectivity. A practitioner in the field relies on the widget being right
 and will never run the notebook that checks it.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-11 | Record the browser kernel gate, and what three wrong guesses cost |

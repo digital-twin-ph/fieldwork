@@ -127,3 +127,13 @@ Must be refused:
 Take any result and try to answer, from the receipt alone, what the method that produced it is
 based on. Today the honest answer is usually "the code, at this digest" — which is precisely
 the gap. Then ask whether you would cite that result in a report.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Make validation evidence citable, and record the method-provenance gap |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |

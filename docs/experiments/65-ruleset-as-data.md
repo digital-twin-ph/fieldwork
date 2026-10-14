@@ -482,3 +482,14 @@ is given and records which rules ran. That extracting the rules preserves Old Na
 behaviour: the regression suite decides that, and if it does not hold, this record is wrong
 and should say so. And nothing about whether a practitioner can read a ruleset, which is a
 question for the runbook observation in [experiment 63](63-worked-example-runbooks.md).
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
+| 2026-10-12 | 65: structured rule entry, with N3 as the compiled form |
+| 2026-10-12 | The ruleset layer gets its constraint at birth, and it is not the widget's |

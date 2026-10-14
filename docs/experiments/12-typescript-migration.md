@@ -59,3 +59,14 @@ Commands:
 ## Validation record
 
 On October 5, 2026, strict application/worker checking, all eight compile-time rejection cases, all 33 unit tests and all 21 Chromium browser scenarios passed locally using Node 22.20.0. Browser execution took approximately 2.7 minutes, with no retries or skips. This includes pushpin save/error/retry/deletion/UUID behavior, all input formats, connector dragging, actual EYE inference, the frozen saved-workflow fixture and offline replay. Tests use isolated contexts and port 4174, leaving the user's saved canvas on port 4173 untouched. Firefox/WebKit, a remote GitLab pipeline and practitioner sessions have not been run for this migration.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

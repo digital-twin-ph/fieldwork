@@ -106,3 +106,13 @@ the minimum was, and that is a claim about an adversary's knowledge that no thre
 **And that the purpose can be inferred.** It cannot, which is the point. A workflow that
 aggregates to cells records a resolution and a minimum, and nothing anywhere in the run says
 whether the intent was to see a pattern or to hide a person.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-11 | Check hex aggregation and the case series; record what the cells are for |
+| 2026-10-12 | Make the total a signed number, and make an open experiment say what closes it |

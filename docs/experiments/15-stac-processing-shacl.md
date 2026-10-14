@@ -89,3 +89,14 @@ The [worked STAC graph](../../ontology/examples/stac-processing.ttl) is syntheti
 Regression checks include deliberate missing/bad digests, invalid identity and levels, absent CRS, broken asset ownership, unresolved links, reversed/incomplete time intervals, unavailable bytes, mismatched inspections, incompatible contracts and incomplete selections. Practitioner evaluation should ask whether a candidate operation is understood as a proposal rather than an executed result, and whether source-specific normalization is distinguishable from generic geometry processing.
 
 The final local `npm run check` gate passed on October 6, 2026: strict TypeScript checks, production build, 44 unit tests and 31 Chromium scenarios (2.5 minutes for the browser suite). This includes six SHACL test groups with valid and deliberately invalid graphs, and two EYE routing scenarios. The CLI was also checked for exit 0 on valid examples and exit 1 with JSON/RDF reports on an incomplete post-selection graph. Documentation links and whitespace checks passed. Browser evidence is Chromium only; these new checks have not run in remote CI.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Add semantic asset profiles, versioned widget registry and output designs |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

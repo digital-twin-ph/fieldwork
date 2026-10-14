@@ -72,3 +72,15 @@ The added unit checks cover metadata/URL validation, file identity and limits, g
 The full `npm run check` gate passed locally on October 6, 2026: strict TypeScript checks, the production build, all 38 unit tests and all 26 Chromium scenarios (2.9 minutes for the browser suite). This includes five new unit tests and five new browser scenarios for references. No practitioner sessions, Firefox/WebKit validation or remote CI execution are claimed.
 
 In a later practitioner session, ask the participant to identify the exact census edition/table, explain which processing decision a reference supports, distinguish an available PDF from a URL-only citation, and identify which citation version belongs to an earlier run. Record incorrect attribution or an inference that “attached” means “verified” as a design failure requiring revision.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

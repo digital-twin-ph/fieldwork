@@ -322,3 +322,16 @@ extent, plus the project's own vector overlays**, with the archive's size measur
 region rather than estimated from these means. The conclusion that *rendering*
 regional raster tiles from a public tile server is infeasible stands; the conclusion
 that a cached basemap is therefore impossible does not.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Measure cacheable basemaps: one file, not 8.6 million requests |
+| 2026-10-08 | Name both formats in the record's title |
+| 2026-10-08 | Answer whether basemaps need a widget: no, on a rule that generalises |
+| 2026-10-08 | Audit reproducibility of figures, and record what a basemap is for |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |

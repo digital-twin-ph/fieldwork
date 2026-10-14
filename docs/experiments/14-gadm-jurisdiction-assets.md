@@ -89,3 +89,14 @@ Ask whether the practitioner can explain the differences among a country file, a
 The full local `npm run check` gate passed on October 6, 2026: strict TypeScript checks, production build, 38 unit tests and 29 Chromium scenarios, including three new ontology scenarios. Local documentation links and whitespace checks also passed.
 
 The examples exercise N3 relationships rather than a GADM importer. They do not establish full OWL/GeoSPARQL conformance, validate geometry topology, test provider availability, or demonstrate practitioner effectiveness. The new checks have not yet run in remote CI or Firefox/WebKit.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Add semantic asset profiles, versioned widget registry and output designs |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

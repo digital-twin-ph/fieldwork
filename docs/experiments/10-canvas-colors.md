@@ -27,3 +27,14 @@ A ResizeObserver updates the document's scroll padding to the rendered bar heigh
 `tests/floating-controls.browser.mjs` scrolls desktop and mobile layouts to the bottom and checks that the entire project bar, title and all three actions remain in the viewport at top position zero. This confirms persistence of the controls, not practitioner effectiveness.
 
 Validation on October 5, 2026: `npm run check` passed the build, all 33 unit tests and all 21 Chromium scenarios in one run, without retries or skips. The browser suite took approximately 2.5 minutes. Desktop and mobile alert and floating-control screenshots were inspected. Firefox/WebKit and screen-reader announcements were not runtime-tested.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

@@ -156,3 +156,14 @@ against need. [63](63-worked-example-runbooks.md)'s observation would settle it.
 
 Nor that `coverage_check`'s dropping of excluded records has ever caused a wrong answer. It is a
 latent constraint on what downstream rules can express, found by reasoning rather than by a defect.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-12 | 107: intersections, unions and memberships, and where each belongs |
+| 2026-10-12 | Assess the OGC and ISO geometry recommendations against what is here |
+| 2026-10-12 | The standard names are already in the code; only the widgets hide them |

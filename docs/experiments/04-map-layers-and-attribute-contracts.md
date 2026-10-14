@@ -74,3 +74,14 @@ Validation on October 5, 2026: the build and all 23 unit tests passed, followed 
 The browser exercise exposed a layout issue: layer controls and notices could compress the map enough to intercept point clicks. The spatial-results layout now preserves a usable map height and lets the page grow. Coincident markers in two test layers were correctly identified as overlapping; the exercise uses layer toggles to select the underlying record.
 
 Next observe whether practitioners distinguish a visual mismatch from a data-quality decision, understand shared definitions versus per-record values, notice hidden layers, and predict the effect of adding/removing a port. No participant findings are claimed. [CRS and future reprojection](05-coordinate-reference-systems.md) records the next design question.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

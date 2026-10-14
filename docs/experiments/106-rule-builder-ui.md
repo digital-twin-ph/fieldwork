@@ -333,3 +333,16 @@ recognise their own intent in it — observations for the runbook work in
 Nor that any ruleset is *right*. The compiler preserves meaning; it does not supply it, and the
 ruleset's basis remains its author's claim ([65](65-ruleset-as-data.md),
 [56](56-basis-behind-identity.md)).
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-12 | 106 and 64: the rule builder's tests, and essentiality before example impact |
+| 2026-10-12 | 106: the ruleset measurement, redone after it was lost uncommitted |
+| 2026-10-12 | Spatial selection: three outputs are three layers, and a fourth ruleset |
+| 2026-10-12 | slr_threshold_comparison is the sixth rule application, and the third kind |
+| 2026-10-12 | The standard names are already in the code; only the widgets hide them |

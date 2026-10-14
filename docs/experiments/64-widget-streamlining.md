@@ -462,3 +462,17 @@ Phases 2 to 6 executed, or each remaining phase explicitly withdrawn with a reas
 done. The practitioner directed on 2026-10-12 that this work precedes any further validation, so
 the closing condition is now the project's stated next step rather than a someday — and
 `widgets/budget.json` reports the distance to the target in every run.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
+| 2026-10-12 | Promote the widget shrink to urgent, and record what the delay cost |
+| 2026-10-12 | Retired means archived: define it per surface, and find the state is inert |
+| 2026-10-12 | A retired widget never runs, so it needs no visible surface at all |
+| 2026-10-12 | Make the total a signed number, and make an open experiment say what closes it |
+| 2026-10-12 | 106 and 64: the rule builder's tests, and essentiality before example impact |

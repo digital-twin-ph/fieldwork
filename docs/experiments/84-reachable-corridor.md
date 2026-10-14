@@ -109,3 +109,15 @@ That a corridor is a service area, or that 25 metres is right for anywhere. It
 is the ground near the streets a graph says you can enter within a budget
 derived from one speed. Nobody checked whether the streets exist, whether they
 are passable, or whether anyone would walk them.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add reachable_corridor: the decomposition now reproduces the monolith |
+| 2026-10-10 | Record parity for reachable_nodes against NetworkX |
+| 2026-10-10 | Add fill_interior_gaps, and correct the infill record from dead code |
+| 2026-10-10 | Record parity for reachable_corridor against Shapely |

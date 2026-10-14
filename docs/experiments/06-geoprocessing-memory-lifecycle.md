@@ -84,3 +84,14 @@ The next bounded spike can pair this contract with the proposed [Reproject node]
 Record engine/library versions, device/browser, job counts, logical heap capacity, tracked bytes and any available process measurements separately. Observe behavior after repeated completion/cancellation; do not infer reclamation solely from a disappearing worker or a passing output test. Chromium observations do not establish Firefox/WebKit behavior.
 
 Developmental evaluation should ask whether practitioners can predict what cancellation discards, identify which completed data remains available, and choose a defensible response to an over-budget plan. Software correctness, resource profiling and practitioner understanding require separate evidence. This record supplies a design and source assessment only; no memory-reclamation benchmark or participant evaluation has been conducted.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

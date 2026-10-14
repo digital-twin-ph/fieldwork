@@ -205,3 +205,14 @@ also relevant to sequencing: the Copernicus collections that clear the CRS gate
 are already EPSG:4326 and are blocked by authentication instead, so raster
 warping unblocks Sentinel and Landsat UTM assets later rather than any catalog
 reachable today.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Add the Reproject input widget |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-10 | Record why reprojection goes one way: a layer cannot say where it is |

@@ -147,3 +147,14 @@ Record the application revision, date, participant role and relevant GIS experie
 - [Leaflet 1.9.4 API](https://leafletjs.com/reference.html): map interaction and local GeoJSON rendering.
 - [OGC GeoSPARQL 1.1](https://docs.ogc.org/is/22-047r1/22-047r1.html): geometry representation, WKT literals, and CRS84 axis order.
 - [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/): attribution, visible map use, and no bulk offline tile download.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

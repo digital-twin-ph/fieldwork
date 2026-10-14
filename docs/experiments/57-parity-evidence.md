@@ -136,3 +136,14 @@ Run `npm run validate:parity` and read the list of widgets without parity. Pick 
 output you would most want to put in a report, and write down what external implementation would
 have to agree with it, and under what criterion, before you would. That is the next check, and it
 is a better choice than anything a backlog would suggest.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Record parity evidence: what an external process can actually establish |
+| 2026-10-08 | Check two spatial operations against external implementations |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |

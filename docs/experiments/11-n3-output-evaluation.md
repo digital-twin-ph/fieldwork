@@ -220,3 +220,15 @@ Current anchors include [study-area representation tests](../../tests/study-area
 This document adds a protocol and architectural decisions A40–A44. It does not implement the manifest, comparator, Evaluation tab, SHACL integration, proof verification or participant study. The documentation was reviewed against current source and test contracts and the linked primary specifications. Runtime tests need not be rerun for this documentation-only change.
 
 The proposed [workflow learning and gamification experiment](27-workflow-learning-and-gamification.md) builds on this separation of computational correctness and practitioner understanding. It adds bounded learning milestones, independent transfer tasks and a comparison of explanatory feedback with and without points; scores are not scientific-validity judgments.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

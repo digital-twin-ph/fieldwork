@@ -172,23 +172,30 @@ The John Snow network example now pairs an SVG plot with an interactive map of c
 
 A walk has three parts: from where you are to the nearest street junction, along
 the streets, and from the last junction to where you are going. **The catchment
-charges only the middle one.**
+charges all three**, and what it draws is that whole route.
 
-- The walk onto the network is measured and shown in the run's evidence as
-  `fw:networkSnaps`, and then **not deducted from the time budget**. The catchment
-  reaches a little further than the minutes say. On the Soho example that is 10.9 m
-  of a 375 m budget, about 3%.
-- The walk from the last junction to a doorway is not modelled at all. The smooth
-  edge of the catchment is a fixed corridor width, not a walk.
-- **A site further than the snap limit from any mapped street stops the run.** It
-  is not shown as hard to reach; it produces an error instead.
+- The walk onto the network is measured, charged against the time budget, and
+  shown in the run's evidence as `fw:networkSnaps`. It is charged as a **straight
+  line at street speed**, which is a lower bound on the real walk: it assumes you
+  can cross whatever lies between. On the Soho example it is 10.9 m of a 375 m
+  budget.
+- The walk from the last junction to a doorway is the **final walk off the street**
+  on the widget, charged like the rest: the full width where that much time is left,
+  narrowing to nothing where it runs out. So the catchment stops at the time it is
+  drawn for. The number itself — 25 m by default — is a plausible distance from a
+  street to a door and has been calibrated nowhere.
+- A site further than the snap limit from any mapped street is **routed anyway and
+  marked**. Its catchment carries `fw:offNetworkMetres`, the widget glows red, and
+  the Inspector names the site and the leg it was charged. A site whose walk to the
+  nearest street would spend the whole budget gets **no catchment**, and is named in
+  the same place: there is nothing it reaches, and no honest shape to draw.
 
 The third matters most, and not equally for everyone. Streets and footpaths are
 mapped unevenly — informal settlements least of all — so the places that would
-show the worst access are the ones most likely to be excluded from the picture
-altogether. Read a catchment over sparsely mapped ground as optimistic, and check
-`fw:networkSnaps` in the evidence for how far each site had to move to reach a
-street.
+show the worst access are the ones whose results rest on the longest assumed
+lines. Read a catchment over sparsely mapped ground as optimistic, and check the
+alert and `fw:networkSnaps` in the evidence for how far each site had to go to
+reach a street.
 
 The lab's [snapping notebook](https://digital-twin-ph.github.io/validation-lab/lab/index.html?path=19-snap-vs-pyproj.ipynb)
 measures this on the example data, and

@@ -28,28 +28,46 @@ It produces polygons, one per site, which a map can draw and
 
 ## What it assumes
 
-**A walk has three parts, and this charges for one of them.** From where you
-stand to the nearest junction; along the streets; from the last junction to the
-door. Only the middle part is counted.
+**A walk has three parts, and this charges for all three.** From where you stand
+to the nearest junction; along the streets; from the last junction to the door.
+The region drawn is that whole route, buffered by the final leg.
 
 - The walk **onto** the network is measured — you can see it in the run evidence
-  as `fw:networkSnaps` — and then not deducted from your budget. The catchment
-  reaches slightly further than the minutes say. On the Soho example that is
-  10.9 m of a 375 m budget, about 3%.
-- The walk **off** the network, from the last junction to a doorway, is not
-  modelled. The smooth edge is a fixed corridor width, not a walk.
-- A site **further than the snap limit** from any mapped street **stops the
-  run**. It is not shown as hard to reach; it produces an error.
+  as `fw:networkSnaps` — and deducted from your budget before any street is
+  walked. On the Soho example that is 10.9 m of a 375 m budget. It is charged as
+  a straight line at street speed, which is a lower bound on the real walk.
+  Until 2026-10-14 it was free, and the catchment reached about 3% further than
+  the minutes said.
+- The walk **off** the network, from the last junction to a doorway, is the
+  **final walk off the street** setting, and it is charged: it is that wide where
+  the budget allows and narrower where it does not, so the region ends at its own
+  time rather than 25 m beyond it. It assumes that ground can be walked, at street
+  speed, which near the edge of the budget is where the catchment is most generous.
+- A site **further than the snap limit** from any mapped street is **routed
+  anyway**, with the straight line to the nearest junction charged against the
+  budget. Its catchment carries `fw:offNetworkMetres`, the widget glows red and
+  the Inspector names the leg. The line is a lower bound on that walk — it
+  assumes you can cross whatever lies between — so the catchment reaches further
+  than the ground allows. Before 2026-10-14 such a site stopped the run outright,
+  taking every other site's catchment with it.
+- A site whose walk to the nearest street would **spend the whole budget** gets
+  **no catchment at all**. It reaches nothing in the stated time, which is the
+  answer; there is no polygon, because the only shape available is a corridor-width
+  disc around a junction the site cannot even get to. It is named in the alert and
+  in `fw:unconnectedSites`, and the note on the result says the counts are over the
+  sites that reached something.
 
 ## Who this misleads, and in which direction
 
-All three push the same way: **a poorly connected place looks better served than
-it is, or disappears from the result.**
+All of them push the same way: **a poorly connected place looks better served
+than it is.**
 
 Streets and footpaths are mapped unevenly, and informal settlements least of all.
-So the places that would show the worst access are the ones most likely to be
-excluded altogether. Read a catchment over sparsely mapped ground as optimistic,
-and check `fw:networkSnaps` for how far each site had to move to reach a street.
+Nothing is now excluded for being far from a street, but a site reached across an
+assumed straight line is still read as if that line were a footpath. Read a
+catchment over sparsely mapped ground as optimistic, check the widget's alert for
+sites routed off-network, and check `fw:networkSnaps` for how far each site had to
+go to reach a street.
 
 ## What it is not
 

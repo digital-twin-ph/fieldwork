@@ -1,6 +1,6 @@
 # 82 · Snap to street network
 
-_Created 2026-10-10 · Updated 2026-10-10_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 **Status:** admission review, written before the code. Third of the six
 primitives [78](78-trying-compositions-on-isochrone.md) needs, and the first
@@ -34,10 +34,11 @@ source end, where both carriers already exist: points in, points out.
 
 ## Where it comes from
 
-`isochrone` snaps inside itself (`src/catchments.ts:75`): nearest node by
-straight-line distance in the metric CRS, refused beyond `maxSnapM`, and the
-distance recorded in a `snaps` array. Its own note says what that costs — *"No
-off-network connectors; snap distance is reported but not charged"*. The walk
+`isochrone` snaps inside itself: nearest node by straight-line distance in the
+metric CRS, refused beyond `maxSnapM`, and the distance recorded in a `snaps`
+array. Its own note says what that costs — *"No off-network connectors; snap
+distance is reported but not charged"*. (As of 2026-10-14 neither clause holds:
+the distance is charged and nothing is refused. See the supersession below.) The walk
 from the site to the street is free. Extracting the step puts that admission on
 a node of its own, where a practitioner can see the displacement and decide
 whether it matters, rather than reading it in a note attached to a polygon.
@@ -66,6 +67,15 @@ whether it matters, rather than reading it in a note attached to a polygon.
 | The distance to the network is not charged to travel time | **Limitation.** Inherited from `isochrone` and now stated on the node that creates it |
 | Nearest is straight-line, not along the network | **Limitation.** A node 20 m away across a railway is still the nearest |
 
+**Two of those rows were superseded on 2026-10-14 by
+[experiment 114](114-the-three-segments-of-a-walk.md).** They are left standing
+because the reasoning that produced them is what 114 had to argue against.
+
+| Row as written | What it is today |
+| --- | --- |
+| "A site too far from any road is not snapped — **hard stop**" | **Run-time check that marks, not refuses.** The site is snapped anyway and carries `offNetworkMetres`; nothing is dropped and no run fails on these grounds. The hard stop removed exactly the sites whose streets are unmapped, which is where the question is usually asked |
+| "The distance to the network is not charged to travel time — **limitation**" | **Charged.** `isochrone` and `reachable_nodes` both spend `snapDistanceM` out of the budget before any street is walked. The limitation that remains is narrower: the charge is a straight line at street speed, which is a lower bound |
+
 ## What this does not establish
 
 That the nearest node is the right attachment. A site's real access point is
@@ -73,3 +83,13 @@ where its door meets a road, which the street graph does not record. Snapping
 to the nearest node is a convention, and on a sparse graph it can move a site
 hundreds of metres to a junction when the street outside it was never a node at
 all. The distance is reported so that this is arguable; it is not resolved.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add snap_to_network, and turn the decomposition around |
+| 2026-10-14 | Two of the five distinctions superseded by [114](114-the-three-segments-of-a-walk.md): the hard stop past `maxSnapM` became a mark on the point, and the uncharged walk became a charged one |

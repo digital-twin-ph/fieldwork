@@ -3,7 +3,52 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## In development
+## 0.8.0 — In development
+
+- **A travel-time catchment now charges all three parts of the walk, and draws the whole
+  route.** The walk off the street at the end — from the last junction to a door — used to be a
+  fixed 25 m strip drawn around every reached street, including the streets at the very edge of
+  the budget, so the region claimed 25 m of ground beyond its own time all the way round. It is
+  now a leg with a budget: the full width where that much time is left, narrowing to nothing
+  where it runs out. The setting is renamed **Final walk off the street** and means the furthest
+  anyone is assumed to walk off a street at the end of a route. **Results change again**: on the
+  John Snow example the bands shrink by 39.3%, 13.8%, 4.2% and 0% — the longest band does not
+  move, because there the network runs out before the time does — and the one-minute band falls
+  from 35 locations and 89 deaths to 21 and 65. Of the 110 deaths that band claimed before any of
+  this work, 45 were inside only because two of the walk's three segments were free.
+- **Travel-time catchments now charge the walk onto the street network.** A route has three
+  parts — from the site to the nearest junction, along the streets, and from the last junction
+  to the door. The first was measured, published in the evidence and then thrown away, so every
+  isochrone reached further than its minutes allowed. It is now deducted from the budget, in
+  both **Network isochrone** and **Reachable junctions**. **Results change**: on the shipped John
+  Snow example the one-minute band falls from 48 to 35 locations and from 110 to 89 deaths, and
+  the band areas shrink by 18.5%, 7.8%, 1.7% and 0% as the budget grows. A workflow rerun after
+  updating will show smaller catchments; that is the correction, not a regression.
+- **A site far from the streets is no longer thrown out of the run.** Past the snap limit it used
+  to raise an error that discarded every other site's result. It is now routed anyway, with the
+  straight line to the nearest junction charged against the budget, and marked: the catchment
+  carries `fw:offNetworkMetres` and the site is listed in `fw:offNetworkSites`. **Snap sites to
+  the network** drops nothing either; the points it emits say which of them crossed ground no
+  street covers. A straight line assumes a walk that may not exist, so those results are
+  optimistic in a stated direction rather than missing.
+- **The widget tells you, in red.** A widget that could not connect a site glows on the canvas
+  with a count, and the Inspector names each site, what happened to it and the distance that
+  decided it. The finding travels downstream, so a summary over seven of nine catchments glows
+  too. Sites whose walk alone spends the whole budget get no catchment at all — nothing is
+  reachable, and the only drawable shape would be a disc around a junction they cannot get to —
+  and are named in `fw:unconnectedSites`. That disc was being drawn silently before, whenever the
+  snap limit was set wider than the travel budget.
+- **Snap sites to the network** keeps each site's own coordinates on the point it moves, which
+  is what lets anything downstream draw the first leg of the route. The four-widget chain
+  (snap → reachable junctions → band → corridor) reproduces the one-widget catchment to 2×10⁻⁵ of
+  area at every band.
+- Validation limits: both straight legs — onto the network and off it at the end — are charged at
+  the street walking speed and assume ground that can be walked, so a catchment over sparsely
+  mapped ground is still optimistic. The 25 m default for the final walk is plausible for Soho
+  and calibrated nowhere. Measured only on the well-mapped Soho network. See
+  [experiment 114](docs/experiments/114-the-three-segments-of-a-walk.md).
+- Removed two internal corridor builders (`bufferedCorridor`, `reachedStreets`) that nothing
+  could reach once the corridor stopped having a single width.
 
 - Add the **Manila coastal exposure** worked example, the first increment of the sea-level work:
   published IPCC AR6 projections for eight Philippine tide gauges against 60 real OpenStreetMap

@@ -62,7 +62,8 @@ export function combinedArea(
     'Combining answers whether anywhere is covered, not how well. Two areas overlapping meant two things reached the same ground, and that is now gone.',
     'What distinguished the parts — which facility, which site — is discarded. That is the operation, not a defect.',
   ];
-  const feature:Catchment={id:'combined',name:node.params.label,siteId:'combined',geometry};
+  const feature:Catchment={id:'combined',name:node.params.label,siteId:'combined',geometry,
+    areaSquareMetres:Number(combinedAreaM2.toFixed(2))};
   const value:Polygons={features:[feature],sites:[],
     method:`Union of ${parts.length} areas in ${projection.crs}`,crs:projection.crs,notes,
     siteSourceNodeId:sourceNodeId};

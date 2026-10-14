@@ -49,7 +49,7 @@ interface ExecutionInputs extends OldInputs {polygons:Polygons;network:Network;s
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
-import {outreachProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
+import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
 import {measureArea,validateAreaUnit} from './area-measurement.js';
@@ -624,6 +624,19 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             const n3=makeN3(inputs.distances.rows,inputs.alert,bound.threshold);
             const conclusions=await reasoner(n3.input);
             value=outreachProjection(inputs.distances,inputs.alert,bound.threshold,conclusions);
+            receipts.push({nodeId:node.id,...n3,conclusions});break;
+          }
+          case 'polygon-extent':{
+            // Experiment 113: a rule over a quantity DERIVED from geometry rather than over an
+            // imported column. The area is read from the record, where the widget that projected
+            // to get it now attaches it; this step neither projects nor measures.
+            //
+            // That this case had to be written is the experiment's own finding. A ruleset declares
+            // its `projection` as data, but the handler for a new one is a branch here, so adding
+            // a ruleset over a shape nothing had classified before is not a data change.
+            const n3=extentN3(inputs.polygons,bound.threshold);
+            const conclusions=await reasoner(n3.input);
+            value=extentProjection(inputs.polygons,bound.threshold,conclusions);
             receipts.push({nodeId:node.id,...n3,conclusions});break;
           }
           case 'access-review':{

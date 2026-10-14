@@ -3,6 +3,7 @@ import dates from '../examples/john-snow/dates.json';
 import graph from '../examples/john-snow/network.json';
 import type {Workflow,WorkflowNode,PointFeature} from './types.js';
 import type {EvidenceReference} from './evidence.js';
+import {pinnedRuleset} from './rule-application.js';
 const voronoiSource='https://github.com/PHI-Case-Studies/1854-Cholera-Outbreak-London-Advanced-2/blob/d1b56c135b0fab2f470b837a51e6777dfc20b286/';
 const isoSource='https://github.com/PHI-Case-Studies/Jupyterlite-1854-Cholera-Outbreak-London-Advanced-1/blob/8bde848d13d71602b2b32c62e5d4b4957e4a45a1/content/';
 function reference(id:string,title:string,url:string,role:EvidenceReference['role'],notes:string):EvidenceReference{return {id,kind:'url',title,url,role,authors:'PHI Case Studies; source attribution in repository',published:'',locator:'Pinned source revision',notes,addedAt:'2026-10-07T00:00:00.000Z',modifiedAt:'2026-10-07T00:00:00.000Z'};}
@@ -90,4 +91,73 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
   if(iso){edges.push({id:'summary-interactive',from:'summary',to:'interactive',port:'polygons'},...['map','interactive'].map(to=>({id:'context-'+to,from:'context-pumps',to,port:'context'})));nodes.push({id:'acquisition-buffer',type:'buffer_area',x:320,y:430,params:{label:'Network acquisition buffer',distanceM:500}});edges.push({id:'area-buffer',from:'study',to:'acquisition-buffer',port:'area'},{id:'area-network',from:'acquisition-buffer',to:'network',port:'area'});}
 
   return {schema:'fieldwork/workflow/1',exampleId:kind,name:iso?'John Snow · network isochrones':'John Snow · Voronoi catchments',nodes,edges};
+}
+
+/** The smallest John Snow workspace, over the three datasets the outbreak left behind.
+ *
+ *  None of them can be joined to another, and each is unjoinable for its own reason:
+ *
+ *  - **250 death locations** carry a place and **no date**.
+ *  - **Snow's Table 1** carries dates and **no place**.
+ *  - **Eight pump locations** carry a place and are **not cases at all** -- infrastructure, not
+ *    people, so even sharing a coordinate system joins them to nothing.
+ *
+ *  The workspace shows all three and connects none of them to each other. The pumps appear on the
+ *  map as context beside the hull, which is what Snow's own map did and is as far as the data
+ *  licenses anyone to go: proximity is not transmission. `tests/epidemic-curve.browser.mjs` holds
+ *  the same distinction for the other Snow examples by checking that no edge links the chains.
+ *
+ *  Nine nodes against fourteen, because it carries one new question rather than the whole case
+ *  study: can a rule run over a quantity DERIVED from geometry rather than over a column somebody
+ *  imported? Experiment 113.
+ *
+ *  The answer the historical data gives is the point. The 250 locations enclose **0.139 km2, 498 m
+ *  at their widest**, so against a 0.25 km2 threshold the rule concludes **NoFlag** -- and that
+ *  tightness is Snow's finding: the deaths clustered within a short walk of one pump. An example
+ *  whose rule does not fire is the honest one here. NoFlag is a measured answer, not the absence
+ *  of one, which is the same three-valued reading the ruleset applies when no area is attached at
+ *  all and it concludes Unknown instead. */
+export function snowExtentExample():Workflow{
+  const deaths=structuredClone(data.deaths) as PointFeature[],pumps=structuredClone(data.pumps) as PointFeature[];
+  return {schema:'fieldwork/workflow/1',name:'John Snow · outbreak extent',exampleId:'snow-extent',nodes:[
+    {id:'deaths',type:'point_input',x:20,y:20,params:{label:'250 death locations (489 deaths)',
+      data:{type:'FeatureCollection',features:deaths},
+      sourceInfo:{format:'CSV',url:voronoiSource+'data/cholera_deaths.csv',description:'Cholera deaths, Soho 1854, digitised by Robin Wilson from Snow\u2019s map. These records carry a place and no date.'}},
+      references:[reference('snow-deaths','Snow 1855, death locations','https://geodacenter.github.io/data-and-lab//snow/','data',
+        'Death locations digitised from Snow\u2019s map. A location carries no date, so this dataset cannot be joined to Table 1.')]},
+    {id:'extent',type:'summarize_hull',x:330,y:20,params:{label:'Observed extent of the outbreak',zone:30,hemisphere:'north'}},
+    {id:'review',type:'apply_ruleset',x:640,y:20,params:{label:'Extent review',
+      ruleset:pinnedRuleset('urn:fieldwork:ruleset:extent-review','1.0.0'),parameters:{threshold:250000}}},
+    {id:'decisions',type:'table_output',x:950,y:20,params:{label:'Extent decision',inputMode:'decisions'}},
+    {id:'pumps',type:'point_input',x:330,y:230,params:{label:'Eight pump locations',
+      data:{type:'FeatureCollection',features:pumps},
+      sourceInfo:{format:'CSV',url:voronoiSource+'data/pumps.csv',description:'Pump locations, Soho 1854, digitised by Robin Wilson from Snow\u2019s map. Infrastructure, not cases.'}}},
+    {id:'map',type:'map_output',x:640,y:230,params:{label:'Observed extent',inputMode:'polygons',presentation:'plot',contextPoints:true,
+      mapTitle:'How far the 1854 Soho outbreak reached',
+      mapSubtitle:'Convex hull of 250 death locations, measured in EPSG:32630, with the eight pumps for context',
+      mapSourceNote:'John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, digitised by Robin Wilson. A hull is an outline of what was observed, not a boundary anyone agreed to, and it asserts area where nothing was seen.'}},
+    {id:'dates',type:'table_input',x:20,y:430,params:{label:'Snow 1855 Table 1 \u00b7 deaths by date',
+      keys:['date'],valueField:'deaths',data:{kind:'data-table',keys:['date'],valueField:'deaths',
+        rows:dates.rows.map(row=>({key:{date:row.date},value:row.deaths})),
+        rowCount:dates.rows.length,missingValueCount:0},
+      source:{filename:'snow_dates.csv',bytes:828,sha256:'',rows:dates.rows.length}},
+      references:[reference('snow-dates','Snow 1855, Table 1','https://geodacenter.github.io/data-and-lab//snow/','data',
+        `Daily attacks and deaths for the Broad Street outbreak. ${dates.excludedUndated.attacks} attacks of unknown date are excluded, because a keyed table cannot hold an empty key. These records carry a date and no place.`)]},
+    {id:'curve',type:'case_series',x:330,y:430,params:{label:'Deaths by day',source:'table',
+      dateField:'date',dateKind:'death',period:'day'}},
+    {id:'epidemic',type:'chart_output',x:640,y:430,params:{label:'Epidemic curve \u00b7 by date of death',inputMode:'series',
+      chartTitle:'Cholera deaths by date of death, Soho, London, 1854',
+      xAxisTitle:'Date of death, 1854',yAxisTitle:'Recorded deaths',
+      sourceNote:'Snow 1855, Table 1. Date of death, not of onset or of report.'}},
+  ],edges:[
+    {id:'deaths-extent',from:'deaths',to:'extent',port:'points'},
+    {id:'extent-review',from:'extent',to:'review',port:'polygons'},
+    {id:'review-decisions',from:'review',to:'decisions',port:'decisions'},
+    {id:'extent-map',from:'extent',to:'map',port:'polygons'},
+    {id:'pumps-map',from:'pumps',to:'map',port:'context'},
+    // No edge joins the two chains, and none can: a location has no date and a dated count has no
+    // place. The separation is the finding, not a gap waiting to be wired.
+    {id:'dates-curve',from:'dates',to:'curve',port:'cases'},
+    {id:'curve-epidemic',from:'curve',to:'epidemic',port:'series'},
+  ]};
 }

@@ -26,6 +26,7 @@ import accessReview2 from '../rulesets/access-review/2.0.0.json' with {type:'jso
 import nb06Evidence2 from '../rulesets/nb06-evidence/2.0.0.json' with {type:'json'};
 import accessReview from '../rulesets/access-review/1.0.0.json' with {type:'json'};
 import nb06Evidence from '../rulesets/nb06-evidence/1.0.0.json' with {type:'json'};
+import extentReview from '../rulesets/extent-review/1.0.0.json' with {type:'json'};
 
 export interface RulesetParameter {
   name:string; role:string; type:string; unit?:string; min?:number; max?:number;
@@ -84,7 +85,7 @@ export const rulesetCitation=(ruleset:Ruleset):RulesetCitation=>
 
 // Both versions of each changed ruleset are carried: a saved workflow pins the version that
 // produced its results, and a carrier change does not entitle this build to forget the old one.
-const BUNDLED=[outreachCriteria,accessReview,accessReview2,nb06Evidence,nb06Evidence2] as unknown as Ruleset[];
+const BUNDLED=[outreachCriteria,accessReview,accessReview2,nb06Evidence,nb06Evidence2,extentReview] as unknown as Ruleset[];
 export const rulesetKey=(id:string,version:string)=>`${id}@${version}`;
 const INDEX=new Map(BUNDLED.map(r=>[rulesetKey(r.id,r.version),r]));
 

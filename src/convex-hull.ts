@@ -75,7 +75,8 @@ export function convexHull(
   const areaM2=ringAreaM2(ring);
   const spanM=Math.max(...ring.flatMap((a,i)=>ring.slice(i+1).map(b=>Math.hypot(a[0]-b[0],a[1]-b[1]))));
   const geometry:Boundary={type:'Polygon',coordinates:[ring.map(p=>projection.inverse(p))]};
-  const feature:Catchment={id:'hull',name:node.params.label,siteId:'hull',geometry};
+  const feature:Catchment={id:'hull',name:node.params.label,siteId:'hull',geometry,
+    areaSquareMetres:Number(areaM2.toFixed(2)),spanMetres:Number(spanM.toFixed(1))};
   const notes=[
     `Convex hull of ${located.length} located points, computed in ${projection.crs} and returned as longitude and latitude.`,
     `Encloses ${areaM2.toFixed(1)} m\u00b2 across ${spanM.toFixed(0)} m at its widest. A hull far longer than it is wide is a line the projection did not quite flatten, and should be read as one.`,

@@ -29,13 +29,20 @@ test('declared rulesets assemble byte-identical rule text',()=>{
   assert.equal(facilityN3([{id:'f1',name:'X',serviceType:'Clinic',owner:'GOVERNMENT'}]).rules,golden.facility);
 });
 
-test('a ruleset declares its basis, and none of three carries resolvable evidence',()=>{
+test('a ruleset declares its basis, and none of four carries resolvable evidence',()=>{
   const sets=bundledRulesets();
-  // Three ruleset IDENTITIES across five version files: nb06-evidence and access-review each
-  // published a 2.0.0 for a CARRIER change, with the rules and the conclusions unchanged. A basis
-  // belongs to the ruleset, not to each version of it.
-  assert.equal(new Set(sets.map(s=>s.id)).size,3);
-  assert.equal(sets.length,5);
+  // Four ruleset IDENTITIES across six version files: nb06-evidence and access-review each
+  // published a 2.0.0 for a change of port type, with the rules and the conclusions unchanged. A
+  // basis belongs to the ruleset, not to each version of it.
+  //
+  // The fourth is extent-review, added 2026-10-14 for experiment 113 to find out whether a rule
+  // can run over a quantity DERIVED from geometry. It is illustrative and uncited, which is what
+  // the ledger's uncited ceiling exists to make someone decide rather than drift into: the ceiling
+  // moved 3 -> 4 with the reason recorded in the same commit, under the practitioner's policy that
+  // it may move a little either way. If 113 concludes against the approach the ruleset is deleted
+  // and these counts return to three and five.
+  assert.equal(new Set(sets.map(s=>s.id)).size,4);
+  assert.equal(sets.length,6);
   for(const set of sets){
     assert.ok(set.basis.status&&set.basis.statedBy,`${set.id} must say what its basis is and who says so`);
     assert.ok(set.mustNotBeReadAs?.trim(),`${set.id} must say what it is not`);

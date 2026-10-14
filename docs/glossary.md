@@ -1,6 +1,6 @@
 # Fieldwork's glossary of terms
 
-_Created 2026-10-09 · Updated 2026-10-09_
+_Created 2026-10-10 · Updated 2026-10-12_
 
 ## Start here
 
@@ -206,7 +206,7 @@ by hand inside each widget instead.
 | **Role** | What a widget needs, described by meaning rather than by column name: *a numeric distance in a length unit*, *an evidence level from this list*. A widget cannot know what your columns are called, so it asks for roles |
 | **Binding** | Which of your fields plays which role. Chosen by you from what the connected data offers, never guessed, and recorded in the receipt so a later reader knows which column meant what |
 | **Fitness condition** | What a widget requires to be *true of the provenance* before it will run: an elevation whose reference can be related to the projection's baseline; a denominator whose period covers the numerator's. Checked against declarations, not against the numbers |
-| **Port contract** | The whole of the above for one port — carrier kind, roles and conditions — declared rather than implied, so it can be read, tested and queried |
+| **Port contract** | The whole of the above for one port — the value's structural class, roles and conditions — declared rather than implied, so it can be read, tested and queried. *Corrected 2026-10-14: this read "carrier kind, roles and conditions", naming a term withdrawn two rows above on 2026-10-12. The structural class is what replaced it — `geo:FeatureCollection`, `fw:PointDataset`, `fw:DataTable` — as that row says.* |
 
 ### Why the answer is definite, and the one thing it cannot settle
 

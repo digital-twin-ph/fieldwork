@@ -1,0 +1,72 @@
+{
+  "schema": "fieldwork/widget-audit-queue/1",
+  "note": "Widgets awaiting an audit, with the reason each is in the queue. The practitioner opened this on 2026-10-14 while auditing the decision-producing widgets: \"Those widgets need auditing too. Let's put them all in our audit bin.\" A queue is only useful if it can be seen shrinking, so `pendingCeiling` may be lowered and never raised, and a widget leaves only by having an audit record that names it. Entries are findings, not verdicts: being in the queue says nobody has looked, not that anything is wrong.",
+  "openedAt": "2026-10-14",
+  "pendingCeiling": 7,
+  "ceilingRule": "pendingCeiling may be lowered freely and never raised. Removing an entry requires `auditedIn` naming a document that exists and mentions the node type; scripts/validate-audit-queue.mjs enforces both.",
+  "audited": [
+    {
+      "nodeType": "slr_extract_import",
+      "auditedIn": "docs/audits/sea-level-widget-audit.md",
+      "on": "2026-10-13",
+      "verdict": "Misfiled and misnamed; the widget itself is right. Recommended: group Comparisons and checks, rename slr_declare_extract."
+    },
+    {
+      "nodeType": "slr_site_assignment",
+      "auditedIn": "docs/audits/sea-level-widget-audit.md",
+      "on": "2026-10-13",
+      "verdict": "Legitimate composite, computation already factored into nearestOf. Leave the contract."
+    },
+    {
+      "nodeType": "apply_ruleset",
+      "auditedIn": "docs/audits/rule-application-audit.md",
+      "on": "2026-10-14",
+      "verdict": "One primitive, not five: three rule applications plus two carrier adapters. Name and group are right. Unfinished -- the intent is any input with fields, and the distance to it is a declared field mapping from the input's columns to the ruleset's `expects` predicates, replacing the factGenerator function reference."
+    }
+  ],
+  "pending": [
+    {
+      "nodeType": "facility_audit",
+      "why": "Emits `decisions` and runs no reasoner: a tier-to-status ternary in TypeScript reaching the same three labels a ruleset reaches. Already reclassified once on exactly that confusion (widgets/standardization.json, 2026-10-12). Rule-shaped logic that is not declared as a rule.",
+      "raisedBy": "the decision-widget question of 2026-10-14"
+    },
+    {
+      "nodeType": "slr_threshold_comparison",
+      "why": "The third decision producer that runs no reasoner, and one of the four widgets on the weakest evidence rung reported by validate:check-coverage.",
+      "raisedBy": "the decision-widget question of 2026-10-14"
+    },
+    {
+      "nodeType": "alert",
+      "why": "A Source that acquires nothing, whose only consumer is retired, whose date is validated strictly and then reaches no receipt, and which carries no provenance for a fact the application cannot derive. Structurally a one-row table_input without the source information.",
+      "raisedBy": "the widget-names inventory review of 2026-10-14"
+    },
+    {
+      "nodeType": "facilities",
+      "why": "Carries a recorded `audited-name` violation and is offered only inside one example. Named for a thing rather than an operation.",
+      "raisedBy": "the widget-names inventory review of 2026-10-14"
+    },
+    {
+      "nodeType": "comparison_map",
+      "why": "Named in the standardization ledger as belonging with facility_audit in a presentation stage that does not exist yet. Declares itself shared while the release files disagree.",
+      "raisedBy": "the widget-names inventory review of 2026-10-14"
+    },
+    {
+      "nodeType": "isochrone",
+      "why": "Charges no cost for the walk from a site onto the network (D1), which it measures and records but starts at zero, and THROWS when a site is beyond the snap limit rather than recording it as unroutable -- ending the whole run. Both errors push the same way: a poorly connected place looks better served, or vanishes. Experiment 114.",
+      "raisedBy": "the routing-segments question of 2026-10-14"
+    },
+    {
+      "nodeType": "snap_to_network",
+      "why": "Same exclusion: a site beyond maxSnapM throws. Also labels its output `sourceKind: 'input-points'` when every point has been MOVED to a junction, by a distance it measures as greatestSnapDistanceMetres. Experiment 114 and the synthetic-data question of 2026-10-14.",
+      "raisedBy": "the routing-segments question of 2026-10-14"
+    }
+  ],
+  "ceilingMoves": [
+    {
+      "date": "2026-10-14",
+      "from": 5,
+      "to": 7,
+      "reason": "Two widgets added after the practitioner's routing question found a scientific-validity defect in both. Raised under the policy stated for the ruleset ledger the same day -- up a little or down, with a reason, not a one-way ratchet. The queue has also fallen 6 -> 5 today by auditing apply_ruleset, so the net move is +1."
+    }
+  ]
+}

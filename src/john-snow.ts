@@ -61,6 +61,24 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
       yAxisTitle:'Recorded deaths',
       sourceNote:'Source: John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, as digitised by Robin Wilson. 489 deaths at 250 distinct addresses.'}}
   ];
+  // Appended after the array rather than inside it, so the headline results keep their place:
+  // the result tabs follow node order, and inserting these two mid-array made the example open
+  // on a table of UTM coordinates instead of the cholera map. A supporting view must not
+  // displace what the example is about.
+  nodes.push(
+    // The Voronoi measures in EPSG:32630 and never shows it. Every catchment boundary, every
+    // area and every distance in this workflow is computed in that projected frame, and a reader
+    // sees only degrees going in and polygons coming out. These two nodes make the frame visible:
+    // the pump coordinates as the analysis actually measured them, which is also what a colleague
+    // reproducing this in desktop GIS needs.
+    //
+    // It is not decoration. `reproject` is a metric widget, so adding it makes this the first
+    // worked example with TWO widgets declaring a projection, and the one-projection rule of
+    // experiment 110 now has something real to hold together: change either zone and the run is
+    // refused by name. Added 2026-10-14; before it, no example instantiated the widget at all.
+    {id:'projected',type:'reproject',x:20,y:430,params:{label:iso?'Broadwick Street pump in UTM 30N':'Pump locations in UTM 30N',zone:30,hemisphere:'north'}},
+    {id:'projected-table',type:'table_output',x:320,y:430,params:{label:iso?'Pump coordinate as measured':'Pump coordinates as measured',inputMode:'spatial'}}
+  );
   if(iso)nodes.push({id:'network',type:'network_input',x:20,y:390,params:{label:'Soho OSM network snapshot',inputMethod:'file',marginM:250,data:structuredClone(graph)},references:[reference('network-source','Soho saved GraphML',isoSource+'outputs/soho.graphml','data','OpenStreetMap contributors, ODbL. Extraction date unknown. 738 nodes / 1619 directed edges; not a reconstructed 1854 network.')]});
   if(iso){
     const study=nodes.find(n=>n.id==='study')!;if(study.type==='study_area')study.params={source:'drawn',label:'Soho isochrone reporting extent (illustrative)',selectionMode:'bbox',geometry:{type:'Polygon',coordinates:[[[-.155,51.502],[-.119,51.502],[-.119,51.525],[-.155,51.525],[-.155,51.502]]]}};
@@ -68,7 +86,7 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
     nodes.push({id:'interactive',type:'map_output',x:1210,y:510,params:{label:'Interactive isochrone map',inputMode:'polygons',presentation:'interactive',contextPoints:true}});
     nodes.find(n=>n.id==='catchments')!.references!.push(reference('nb04-visual','NB04 Cell 15 plot and Folium map','https://github.com/PHI-Case-Studies/1854-Cholera-Outbreak-London-Advanced-1/blob/97a1d13dfb23032387ed23804e3d6f4dbc99aec7/NB04-Cholera-Case-Study-Isochrone-Map.ipynb','method','Visual target: executed Cell 15 and Cell 18. Fieldwork retains its independent computational method; cumulative counts are not notebook band counts.'));
   }
-  const edges=[{id:'sites-catchments',from:'pumps',to:'catchments',port:'sites'},{id:'area-clip',from:'study',to:'clip',port:'area'},{id:'catchments-clip',from:'catchments',to:'clip',port:'polygons'},{id:'clip-summary',from:'clip',to:'summary',port:'polygons'},{id:'points-summary',from:'locations',to:'summary',port:'points'},...['map','table','chart'].map(id=>({id:'summary-'+id,from:'summary',to:id,port:'polygons'})),{id:'dates-curve',from:'dates',to:'curve',port:'cases'},{id:'curve-epidemic',from:'curve',to:'epidemic',port:'series'},iso?{id:'network-catchments',from:'network',to:'catchments',port:'network'}:{id:'area-catchments',from:'study',to:'catchments',port:'area'}];
+  const edges=[{id:'sites-catchments',from:'pumps',to:'catchments',port:'sites'},{id:'pumps-projected',from:'pumps',to:'projected',port:'points'},{id:'projected-projected-table',from:'projected',to:'projected-table',port:'points'},{id:'area-clip',from:'study',to:'clip',port:'area'},{id:'catchments-clip',from:'catchments',to:'clip',port:'polygons'},{id:'clip-summary',from:'clip',to:'summary',port:'polygons'},{id:'points-summary',from:'locations',to:'summary',port:'points'},...['map','table','chart'].map(id=>({id:'summary-'+id,from:'summary',to:id,port:'polygons'})),{id:'dates-curve',from:'dates',to:'curve',port:'cases'},{id:'curve-epidemic',from:'curve',to:'epidemic',port:'series'},iso?{id:'network-catchments',from:'network',to:'catchments',port:'network'}:{id:'area-catchments',from:'study',to:'catchments',port:'area'}];
   if(iso){edges.push({id:'summary-interactive',from:'summary',to:'interactive',port:'polygons'},...['map','interactive'].map(to=>({id:'context-'+to,from:'context-pumps',to,port:'context'})));nodes.push({id:'acquisition-buffer',type:'buffer_area',x:320,y:430,params:{label:'Network acquisition buffer',distanceM:500}});edges.push({id:'area-buffer',from:'study',to:'acquisition-buffer',port:'area'},{id:'area-network',from:'acquisition-buffer',to:'network',port:'area'});}
 
   return {schema:'fieldwork/workflow/1',exampleId:kind,name:iso?'John Snow · network isochrones':'John Snow · Voronoi catchments',nodes,edges};

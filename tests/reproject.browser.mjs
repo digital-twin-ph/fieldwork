@@ -25,18 +25,14 @@ test('Reproject points is a transform: it declares its target frame and takes a 
 });
 
 test('a projected result is refused by a widget that measures, in the application',async({page})=>{
+  // From 2026-10-14 the example ships its own `projected` node, so this rewires that one rather
+  // than adding a second. The Voronoi measures, so feeding it metres must be refused by name.
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await expect(page.locator('.react-flow__node[data-id="projected"]')).toHaveCount(1);
 
-  await page.locator('[data-add="reproject"]').click();
-  const id=await page.locator('.react-flow__node').last().getAttribute('data-id');
-  await page.locator(`.react-flow__node[data-id="${id}"]`).click();
-  await page.locator('.inspector select[data-map-port="points"]').selectOption({label:'Eight pump locations'});
-
-  // Rewire the Voronoi's sites from the pumps to the projected copy. It measures, so the run
-  // must be refused by name rather than silently treating metres as degrees.
   await page.locator('.react-flow__node[data-id="catchments"]').click();
-  await page.locator('.inspector select[data-map-port="sites"]').selectOption(id);
+  await page.locator('.inspector select[data-map-port="sites"]').selectOption('projected');
   await page.locator('#run-button').click();
   await expect(page.locator('body')).toContainText('needs longitude and latitude',{timeout:45000});
   await expect(page.locator('body')).toContainText('Reproject points gives it easting and northing');

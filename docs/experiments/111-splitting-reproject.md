@@ -326,9 +326,28 @@ collection-out function with a round-trip check at 0.01 m. Half B is a shell
 change around code that is already the right shape; Half A is new UI over the
 same function.
 
-**D10 — some example must instantiate it.** Unsatisfied today and not fixed by
-this design. No example reprojects, which is why the widget's naming violations
-have been gated rather than cleared.
+**D10 — some example must instantiate it.** Unsatisfied when this was written, and
+**satisfied 2026-10-14**: the John Snow examples now project the pump locations
+into the zone the analysis measures in and show them in a table.
+
+The use is not decoration, which is the trap D10 invites — bolting a widget into an
+example to move a counter is a rule binding harmfully rather than usefully. The
+Voronoi measures in EPSG:32630 and never shows it: every catchment boundary, every
+area and every distance comes out of that projected frame, and a reader sees
+degrees going in and polygons coming out. The two added nodes make the frame
+visible, and give a colleague reproducing the work in desktop GIS the coordinates
+the analysis actually used.
+
+It also puts the one-projection rule to work for the first time. `reproject` is a
+metric widget, so this is the first worked example with **two** widgets declaring a
+projection, and [110](110-one-projection-per-workflow.md)'s refusal now holds
+something real together. Changing either zone refuses the run by name:
+
+> This workflow computes in 2 different projections: projected (reproject) in
+> EPSG:32631, catchments (voronoi) in EPSG:32630.
+
+Before this the rule was exercised only by its own tests. The widgets never
+instantiated by an example went from 16 to 15.
 
 ## What this does not establish
 
@@ -351,8 +370,11 @@ regional datum is refused by name, and how often that happens here is unmeasured
 
 ## What would close it
 
-Both halves are implemented and the direction is answered, so what remains is
-evidence rather than design: **no example instantiates `reproject`**, which is D10
-unsatisfied and was unsatisfied before the split too. The transform is exercised
-only by its tests. This moves to retired if a worked example never needs a second
-frame, which would say the mid-workflow case was argued for and not used.
+Both halves are implemented, the direction is answered, the forward projection has
+parity evidence (lab check 24) and a worked example instantiates it. What remains
+is the evidence no gate can produce: **whether a practitioner reaching for a second
+frame reaches for this widget**, or whether the projected table in the Snow example
+is read as an explanation of the analysis rather than as something they would
+build. That is the same open condition as
+[94](94-where-explanation-belongs.md), and it closes the same way — one
+practitioner who did not write it, saying what they did with it.

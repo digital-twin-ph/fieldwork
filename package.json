@@ -39,7 +39,10 @@
     "validate:manual": "node scripts/validate-manual.mjs",
     "validate:audit-queue": "node scripts/validate-audit-queue.mjs",
     "contracts:ports": "node scripts/port-contracts.mjs --write",
-    "validate:port-contracts": "node scripts/validate-port-contracts.mjs"
+    "validate:port-contracts": "node scripts/validate-port-contracts.mjs",
+    "check:fast": "npm run build && npm run validate:docs && npm run validate:experiments && npm run validate:check-coverage && npm run validate:evidence && npm run validate:rulesets && npm run validate:blockers && npm run validate:standardization && npm run validate:naming && npm run validate:names && npm run validate:widget-budget && npm run validate:admission && npm run validate:ontology-coupling && npm run validate:dive-deeper && npm run validate:manual && npm run validate:port-contracts && npm run validate:audit-queue && npm run validate:packs && node scripts/test-unit.mjs",
+    "test:browser:chromium": "playwright test --project=chromium",
+    "hooks:install": "node scripts/install-hooks.mjs"
   },
   "engines": {
     "node": ">=22"

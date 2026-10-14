@@ -15,7 +15,16 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Raised from 20 on 2026-10-14, after c316bc5 was cancelled at 20m16s. The suite grew: 490
+    # unit tests and 220 browser tests across chromium and webkit, plus four validators added the
+    # day before. A shared runner is slower than the machine this is developed on, where the same
+    # gate takes about nine minutes.
+    #
+    # Raised rather than trimmed, and with headroom rather than to just past the last run: a
+    # timeout set to the current duration converts the next few added tests into a cancelled
+    # deploy that looks like an infrastructure flake. It is still a bound, so a genuine hang is
+    # caught -- 40 minutes is roughly three times the honest duration.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v6
       # The widget manual and the Dive Deeper panel link one notebook per widget, and
@@ -36,7 +45,23 @@ jobs:
       - run: npm ci
       # Both engines the gate runs. WebKit is here because Tauri on macOS is WKWebView and
       # experiment 70 requires a WebKit gate before any desktop packaging decision.
+      # The browser download is 40 seconds of every run and changes only when Playwright does, so
+      # it is cached on the resolved version from the lockfile rather than on a hand-written one.
+      # The system libraries --with-deps installs are NOT cached -- they go outside this path, and
+      # install-deps is fast because apt has them.
+      - name: Resolve the Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: browsers
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
       - run: npx playwright install --with-deps chromium webkit
+        if: steps.browsers.outputs.cache-hit != 'true'
+      # A cache hit still needs the system libraries, which live outside the cached path.
+      - run: npx playwright install-deps chromium webkit
+        if: steps.browsers.outputs.cache-hit == 'true'
       # The checkout lands inside the workspace; the scripts look for a sibling of this
       # repository, so it is moved up one level to where they expect it.
       - name: Place the validation lab beside this repository

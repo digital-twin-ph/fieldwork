@@ -50,6 +50,9 @@ export function snapToNetwork(
     const nearest=network.nodes.reduce((a,b)=>
       dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b);
     const distanceM=dist(coords.get(nearest.id)!,origin);
+    // ASSUMPTION, EXCLUDING: see src/catchments.ts and experiment 114. A site beyond the limit
+    // ends the run rather than being carried as unroutable, and the sites this removes are the
+    // ones furthest from a mapped road -- the places an access analysis exists to show.
     if(distanceM>node.params.maxSnapM)
       throw new Error(`${f.properties.name}: the nearest network node is ${Math.round(distanceM)} m away, beyond the ${node.params.maxSnapM} m snap limit.`);
     return {...f,properties:{...f.properties,networkNodeId:nearest.id,

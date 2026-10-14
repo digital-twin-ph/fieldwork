@@ -21,11 +21,15 @@ And then the fix:
 
 ## What the code does
 
-| Segment | Status |
-| --- | --- |
-| **D1** origin → nearest node | **measured, recorded, and not charged** |
-| **D2** network distance | correct — Dijkstra over edge lengths |
-| **D3** last node → destination | **not modelled**; a uniform `bufferM` halo stands in for it |
+_As found on 2026-10-14. All three rows changed the same day; what they are now is under
+"What landed" below, and this table is kept because it is the state the rest of this
+record argues against._
+
+| Segment | Status when found | Today |
+| --- | --- | --- |
+| **D1** origin → nearest node | **measured, recorded, and not charged** | charged, as a straight line at street speed |
+| **D2** network distance | correct — Dijkstra over edge lengths | unchanged |
+| **D3** last node → destination | **not modelled**; a uniform `bufferM` halo stands in for it | charged: `min(bufferM, the budget left)`, tapering to nothing at the frontier |
 
 The isochrone measures D1 and then throws it away:
 
@@ -148,8 +152,9 @@ on one well-mapped network, and the quantity that matters — D1 where roads are
 sparse — is unmeasured here because no example routes in such a place.
 
 It does not establish that charging D1 makes the isochrone *correct*. It makes it
-less wrong in a stated direction. D3 remains unmodelled, and the corridor buffer
-is unchanged by any of this.
+less wrong in a stated direction. (Written before D3 was modelled later the same
+day; the sentence that followed said D3 remained unmodelled, and it no longer
+does. What the modelled D3 still assumes is under "What landed".)
 
 It does not establish that `travel_time`'s straight-line proxy is the right
 fallback, only that it exists and is honest about being a proxy.
@@ -323,5 +328,6 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | The three segments of a walk, and who is excluded by the missing ones |
 | 2026-10-14 | D1 charged in `isochrone` and `reachable_nodes`; Snow isochrone re-measured (1-min band 48 → 35 locations, 110 → 89 deaths; band areas −18.5%/−7.8%/−1.7%/0%) and pinned values moved with it |
 | 2026-10-14 | Exclusion past `maxSnapM` replaced by a report: `unconnected` on the value, a note, `fw:unconnectedSiteCount`/`fw:unconnectedSites` in the receipt, a red glow on the widget and a named list in the Inspector. Same change in `snap_to_network`. The routed crow-flies leg step 2 asked for is still not built |
+| 2026-10-14 | Opening table and "What this does not establish" marked where the day overtook them: both were written before D3 was modelled, and a reader meets them first |
 | 2026-10-14 | D3 modelled: the corridor is the whole route buffered by the leg the budget still allows, tapering to nothing at the frontier instead of claiming a constant 25 m beyond it. Snow bands −39.3% / −13.8% / −4.2% / 0%; 1-min counts 35/89 → 21/65. Chain and monolith agree to 2e-5. `reachedStreets` and `bufferedCorridor` removed; `snap_to_network` now keeps the site's own coordinates |
 | 2026-10-14 | The crow-flies leg built: past `maxSnapM` the site is routed with the straight line charged, carrying `fw:offNetworkMetres`; `snap_to_network` drops nothing and marks the point instead. `unconnected` now means only "the walk alone spends the budget", which also removed a disc this widget drew around a junction whenever the snap limit was wider than the budget. Status validated; D3 remains unmodelled |

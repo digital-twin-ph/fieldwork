@@ -19,6 +19,21 @@ fw:WorkflowStep a owl:Class;
   rdfs:label "Workflow step"; rdfs:subClassOf prov:Activity;
   rdfs:comment "Execution envelope connecting a node plan, upstream outputs and operation-specific receipt activities; not an additional generating activity for an already generated entity.".
 fw:widget a owl:ObjectProperty; rdfs:range fw:WidgetDefinition.
+# The practitioner's point of 2026-10-14: the ontology entry for a widget should point to that
+# widget's page of the manual, so "where is the documentation for this?" is a question the graph
+# answers rather than a convention a reader has to know.
+#
+# Declared as a sub-property of rdfs:seeAlso rather than minted free-standing, which is the
+# vocabulary rule this project follows: rdfs:seeAlso already means "a resource that may provide
+# additional information", and a tool that knows only RDFS still finds the page. What seeAlso does
+# not say is WHICH kind of further reading, and a widget has several -- a lab notebook, an
+# experiment record, a release file. This names the one written for someone using the widget.
+fw:userManual a owl:ObjectProperty;
+  rdfs:subPropertyOf rdfs:seeAlso;
+  rdfs:domain fw:WidgetDefinition;
+  rdfs:label "Manual page for this widget";
+  rdfs:comment "The page of the distributed user manual that describes this widget: what to connect, what to set, what it assumes, and what it refuses. Distinct from fw:diveDeeperNotebook, which is the lab material for a reader who wants to understand the method, and from the release file, which is the contract. One page per widget, browsable inside the application.";
+  fw:implementationStatus "implemented".
 fw:nodeType a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:catalogVersion a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "Observed descriptor version bundled with the application, not a request to dispatch an old executable.".

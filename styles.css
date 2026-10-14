@@ -173,3 +173,16 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
    report now ignores anything with a clipping ancestor and named .header-right and the help
    button on the first run after that change. The row has slack now rather than 8px of deficit:
    10px of padding and 10px between items at phone width, against 15 and 26. */
+/* The header row can shrink. A flex child defaults to min-width:auto, so it refuses to go
+   narrower than its content and pushes the row wider than the screen instead -- the same
+   mechanism that widened the library strip on 2026-10-13. Reducing padding and gaps took the
+   overflow from 8px to 3px on Linux WebKit, which is shaving rather than fixing: the floor was
+   still there. min-width:0 removes the floor, and the connection text gives way first, since a
+   truncated "Available offline" is better than a page that scrolls sideways. macOS WebKit has
+   never reproduced this, so only CI can confirm it. */
+@media(max-width:530px){
+  .app-header{min-width:0}
+  .brand,.workspace-name{min-width:0}
+  .header-right{min-width:0;flex-shrink:1}
+  .header-right .connection{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}

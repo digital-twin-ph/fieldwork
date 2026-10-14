@@ -34,9 +34,24 @@ jobs:
       # the links in a practitioner's browser and nowhere else.
       #
       # Public, so no token: the repository is digital-twin-ph/validation-lab, visibility public.
+      #
+      # At the commit widgets/parity.json pins, not at whatever its default branch holds today.
+      # Those are not the same thing, and on 2026-10-14 they differed: a check and its notebook
+      # were committed on a branch, the ledger pinned that commit, and the deploy failed here
+      # because the default branch did not carry the notebook the ledger said it did. Pinning the
+      # checkout means this job verifies the evidence the ledger CLAIMS rather than the evidence
+      # a branch happens to hold, and a pin that has gone missing fails loudly instead of being
+      # checked against something else.
+      # jq rather than node: this step runs before setup-node, and the runner's own node is not
+      # the version this project requires.
+      - id: lab
+        run: echo "commit=$(jq -r .lab.commit widgets/parity.json)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v6
         with:
           repository: digital-twin-ph/validation-lab
+          ref: ${{ steps.lab.outputs.commit }}
+          # A commit reachable from any branch, which a shallow default-branch clone would miss.
+          fetch-depth: 0
           path: validation-lab-checkout
       - uses: actions/setup-node@v6
         with:

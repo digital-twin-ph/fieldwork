@@ -1,0 +1,73 @@
+{
+ "schema": "fieldwork/ruleset/1",
+ "id": "urn:fieldwork:ruleset:extent-review",
+ "version": "1.1.0",
+ "title": "Extent review",
+ "released": "2026-10-14",
+ "description": "Flags a polygon whose enclosed area exceeds a stated threshold, so a reader is asked to look at it. Written for experiment 113, to find out whether a ruleset can run over a quantity DERIVED from geometry rather than over a column someone imported. Version 1.1.0 returns the polygons themselves, each carrying its status, rather than a table of judgements with the geometry dropped: a decision about a shape that cannot be drawn is a decision nothing downstream can use.",
+ "mustNotBeReadAs": "A judgement that a large area is a problem. Whether extent matters, and above what size, depends entirely on the question being asked -- a hull over 2 km2 is unremarkable for a city and alarming for a building footprint. The threshold is a practitioner's to set and this ruleset ships no basis for any value.",
+ "rules": "# Extent review over a DERIVED area. Not a judgement that large is wrong.\n{ ?p fw:areaKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:areaSquareMetres ?a. ?a math:greaterThan {{threshold}}. } => { ?p fw:decision fw:Review. }.\n{ ?p fw:areaSquareMetres ?a. ?a math:notGreaterThan {{threshold}}. } => { ?p fw:decision fw:NoFlag. }.\n",
+ "parameters": [
+  {
+   "name": "threshold",
+   "role": "area",
+   "type": "number",
+   "unit": "http://qudt.org/vocab/unit/M2",
+   "min": 0,
+   "max": 1000000000,
+   "default": 1000000,
+   "decimals": 2,
+   "placeholder": "{{threshold}}",
+   "meaning": "Area above which a polygon is flagged for review, in square metres.",
+   "unitLabel": "m\u00b2"
+  }
+ ],
+ "inputContract": {
+  "factGenerator": "src/rule-application.ts#extentN3",
+  "subjectKind": "polygons",
+  "projection": "polygon-extent",
+  "expects": [
+   {
+    "predicate": "fw:areaKnown",
+    "type": "boolean"
+   },
+   {
+    "predicate": "fw:areaSquareMetres",
+    "type": "number",
+    "unit": "http://qudt.org/vocab/unit/M2"
+   }
+  ],
+  "note": "The area is READ FROM THE RECORD, not recomputed here. A widget that projected to metres attaches `areaSquareMetres` to each polygon; a widget that worked in degrees leaves it absent, and absent becomes fw:areaKnown false rather than a zero. That is the whole point of experiment 113: a rule over geometry needs the derived quantity to be a field, and until 2026-10-14 it was computed, written to the receipt, and dropped. From 1.1.0 the output port is `polygons`, not `decisions`. The classification is attached to each feature as `status` and `explanation`, so the shape judged travels with the judgement -- a map can colour it, a clip or a summary afterwards keeps it, and the decision table reads it as attributes. A ruleset over points already did this by returning its subject whole; this makes the two agree.",
+  "ports": {
+   "inputs": [
+    [
+     "polygons",
+     "polygons"
+    ]
+   ],
+   "output": "polygons"
+  }
+ },
+ "outputVocabulary": {
+  "predicates": [
+   {
+    "predicate": "fw:decision",
+    "values": [
+     "Review",
+     "NoFlag",
+     "Unknown"
+    ],
+    "unknownValue": "Unknown"
+   }
+  ],
+  "unmatchedSubjectsExpected": false,
+  "note": "The three rules are exhaustive over a polygon: area absent, area above the threshold, area at or below it. A subject none of them fired on would mean a polygon that is neither known nor unknown, which is a gap in the ruleset rather than a finding about the data, so unmatched subjects are not expected."
+ },
+ "basis": {
+  "status": "illustrative",
+  "statedBy": "The ruleset text itself: \"Not a judgement that large is wrong.\"",
+  "evidence": [],
+  "unresolvedCitations": [],
+  "note": "One uncited number: the threshold. It exists to demonstrate that a rule can read a derived quantity, and carries no claim about what area is too large for any purpose."
+ }
+}

@@ -126,16 +126,29 @@ export function extentN3(polygons:{features:{id:string;name:string;areaSquareMet
   return {facts:prefix+facts+'\n',rules:prefix+rules,input:prefix+facts+'\n\n'+rules,ruleset:rulesetCitation(ruleset)};
 }
 
-/** The classification, assembled onto the polygons it is about. */
+/** The classification, assembled onto the polygons it is about -- which from `extent-review`
+ *  1.1.0 it actually is.
+ *
+ *  Until 2026-10-14 this returned rows: id, name, status, area and a sentence, with the geometry
+ *  dropped. A decision about a shape could then be listed and never drawn, while a ruleset over
+ *  points returned its subject whole and could be mapped. The ruleset's declared output port is
+ *  `polygons` now, and each feature carries its own `status` and `explanation`, so the judgement
+ *  travels with the thing judged. The rows stay on the value for the table that reads them, which
+ *  is why nothing downstream of the old port type had to change. Experiment 113. */
 export function extentProjection(polygons:{features:{id:string;name:string;areaSquareMetres?:number}[]},threshold:number,conclusions:ReasonerQuad[]):DisplayValue{
   const decisions=extractDecisions(conclusions,'polygon');
-  return {rows:polygons.features.map(f=>{
+  const judged=polygons.features.map(f=>{
     const status=decisions.get(encodeURIComponent(f.id));
     if(!status)throw new Error(`Reasoner did not classify ${f.name}.`);
     const area=f.areaSquareMetres;
-    return {id:f.id,name:f.name,status,areaSquareMetres:typeof area==='number'?area:null,
-      explanation:status==='Unknown'
-        ? 'No area is attached to this polygon, so no extent rule could fire. A widget that works in degrees does not measure one.'
-        : `Encloses ${(area!/1e6).toFixed(3)} km² ${area!>threshold?'>':'≤'} ${(threshold/1e6).toFixed(3)} km² threshold.`};
-  }),kind:'extent',centers:[],method:`Extent review against ${(threshold/1e6).toFixed(3)} km²`,threshold} as unknown as DisplayValue;
+    return {...f,status,explanation:status==='Unknown'
+      ? 'No area is attached to this polygon, so no extent rule could fire. A widget that works in degrees does not measure one.'
+      : `Encloses ${(area!/1e6).toFixed(3)} km² ${area!>threshold?'>':'≤'} ${(threshold/1e6).toFixed(3)} km² threshold.`};
+  });
+  return {...(polygons as unknown as Record<string,unknown>),features:judged,
+    rows:judged.map(f=>({id:f.id,name:f.name,status:f.status,
+      areaSquareMetres:typeof f.areaSquareMetres==='number'?f.areaSquareMetres:null,
+      explanation:f.explanation})),
+    kind:'extent',centers:[],method:`Extent review against ${(threshold/1e6).toFixed(3)} km²`,
+    threshold} as unknown as DisplayValue;
 }

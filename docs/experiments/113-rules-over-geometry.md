@@ -2,7 +2,9 @@
 
 _Created 2026-10-14 · Updated 2026-10-14_
 
-**Status:** asked
+**Status:** tried — the blocker is fixed, the ruleset exists and a worked example
+runs it. The composition the record is named for is not built, and the question
+that has to be answered before it can be is below.
 
 Proposed by the practitioner on 2026-10-14, in two steps. First:
 
@@ -123,6 +125,51 @@ Written before running, so the result can contradict it:
 A composition that runs end to end in a worked example, with the cost of adding it
 recorded honestly — including whether prediction 2 held.
 
+## What landed, 2026-10-14
+
+Three of the four parts, and not the one the record is named for.
+
+**The blocker is fixed, and prediction 1 held.** `summarize_hull` and
+`summarize_combined_area` attach `areaSquareMetres` and `spanMetres` to the record
+instead of leaving them in a note and a receipt. It was the small change the
+prediction said it would be: the quantity was already computed one line away.
+
+**The ruleset over geometry exists.** `extent-review` 1.0.0 classifies a polygon by
+its own area against a threshold, reading the area off the record. It neither
+projects nor measures.
+
+**Prediction 2 held, and the code says so at the line.** A ruleset declares its
+projection as data, but the handler for a new one is a branch in `core.ts`, so
+adding a ruleset over a shape nothing had classified before was not a data change.
+The `polygon-extent` case carries that finding as a comment where the branch is.
+
+**A worked example runs it**, which satisfies D10 for the chain: the John Snow
+`snow-extent` workspace wires 250 death locations into `summarize_hull`, into
+`apply_ruleset` at a 250,000 m² threshold, and out to a decision table.
+
+**The composition is not built.** The example wires the two widgets by hand. So
+prediction 3 — that a composite would need a human admission review before the
+palette — is untested, because there is nothing to review.
+
+## The question to settle before building it
+
+A composition passes values to its members two ways, and a ruleset fits neither
+cleanly.
+
+| Route | What it allows | What it costs |
+| --- | --- | --- |
+| **Exposed** as a public parameter | a practitioner could choose the ruleset on the node | impossible today: `CompositionParameter.default` is `string \| number \| boolean`, and a ruleset pin is `{id, version}` |
+| **Fixed** by the author | works now, `fixed` takes any value | the ruleset version is frozen inside the composition, and the drift report tracks member *widget* release digests only. The ruleset could publish 1.1.0 and every pinned composite would keep running 1.0.0 with nothing saying so |
+
+`compute_walking_catchment`, the only composition that exists, has no member
+carrying a pinned artefact of its own, so neither case has ever been exercised.
+
+**Prediction, written before building:** the composite will be buildable by fixing
+the ruleset pin, and the drift report will stay silent when the ruleset moves. If
+that holds, the composition is feasible and the pinning is incomplete — a
+composition pins its widgets and not what they were told to apply — and that gap
+is the result of this experiment rather than a reason not to build it.
+
 ## Updates
 
 _Appended, never rewritten. Rows before this table existed are seeded from the commits that
@@ -131,3 +178,4 @@ changed this file; a date stamp sweep is not an update._
 | Date | What happened |
 | --- | --- |
 | 2026-10-14 | Rules over geometry: a quantity derived, attached, and classified |
+| 2026-10-14 | Status to tried. Predictions 1 and 2 held; the blocker is fixed, `extent-review` ships and `snow-extent` runs it end to end. The composition is still not built, and the question that blocks it is recorded: a composition can fix a ruleset pin but cannot expose one, and nothing reports a ruleset moving under a pinned composite |

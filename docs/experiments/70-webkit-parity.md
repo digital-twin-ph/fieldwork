@@ -155,3 +155,20 @@ application before this, every attached PDF and every retained raster would have
 failed there, and the Chromium-only gate would have reported everything as
 green. Any desktop packaging decision should follow a WebKit gate, not precede
 it.
+
+**The gate now runs WebKit, from 2026-10-13.** Asked whether the application could
+be compiled to Tauri, the answer was that this experiment had already set the
+precondition and it was not met: `playwright.config.mjs` defaulted to Chromium and
+the Pages workflow installed Chromium alone, so the WebKit suite ran only on a
+developer's machine by hand.
+
+Measured before changing anything, which is the order this experiment exists to
+teach: **all 102 browser checks pass under WebKit, unmodified.** So the gate starts
+from parity rather than from a list of exemptions, and the default in
+`playwright.config.mjs` is now `chromium,webkit` with the workflow installing both.
+Firefox stays opt-in.
+
+What this costs is roughly nine minutes of browser checks instead of four. What it
+buys is that the precondition above is now a fact rather than an intention, and a
+WebKit regression fails a pull request rather than waiting for somebody to think of
+running it.

@@ -492,15 +492,13 @@ been added since without going through D1 in that table: `buffer_point`, `fill_i
 kind, so the gap is in the audit's counts rather than in the record — but the counts should not
 be read as current. Noted 2026-10-12 while restructuring the table.
 
-**The documented gate is Chromium only, and so is CI.**
-`playwright.config.mjs` says so, and `.github/workflows/pages.yml` runs
-`npx playwright install --with-deps chromium`, so the WebKit suite runs only on
-a developer's machine by hand. Both suites have in fact run at parity all day at
-94 checks each. [70](experiments/70-webkit-parity.md) requires a WebKit
-gate before any desktop packaging decision, and
-[93](experiments/93-gamification-spike.md) now gives a second reason to want
-one. Making WebKit part of the documented gate is small and unblocks that
-question.
+**The documented gate is Chromium only, and so is CI.** ~~Done 2026-10-13.~~ The default in
+`playwright.config.mjs` is now `chromium,webkit` and the Pages workflow installs both. It was
+changed after measuring that all 102 browser checks pass under WebKit unmodified, so the gate
+began at parity rather than with exemptions. This was the precondition
+[70](experiments/70-webkit-parity.md) set for any desktop packaging decision, raised again when
+the practitioner asked whether the application could be compiled to Tauri -- which runs WKWebView
+on macOS. Firefox remains opt-in.
 
 **The Validation Lab had no execution gate.** Fixed 2026-10-11:
 `scripts/run_notebooks.py` executes every notebook and fails on any error cell,

@@ -23,7 +23,9 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # Both engines the gate runs. WebKit is here because Tauri on macOS is WKWebView and
+      # experiment 70 requires a WebKit gate before any desktop packaging decision.
+      - run: npx playwright install --with-deps chromium webkit
       - name: Type check, build and run regression tests
         run: npm run check
       - name: Stage browser assets and licenses

@@ -76,16 +76,14 @@
   },
   "correctionMade": "The counts in the first version of this file were wrong, and wrong in the direction that flattered the finding. It claimed 263 declared terms and ZERO alignments. Both came from grepping ontology/fieldwork.ttl, which is ONE OF SEVENTEEN ttl files, with a pattern that looked for owl:equivalentProperty, owl:equivalentClass, skos:exactMatch and rdfs:seeAlso -- and not for rdfs:subClassOf or rdfs:subPropertyOf, which are how this project had been aligning all along. Parsed properly with N3 across all seventeen: 462 fw: terms typed owl:*, and 76 carrying an axiom to a non-fw term, most often subClassOf dcat:Dataset or subPropertyOf prov:used. So the project was at 16% aligned, not 0%, and the three axioms added on 2026-10-12 sit on top of 73 that were already there. Recorded in docs/audits/ontology-audit.md with the four other numbers that came from the same mistake.",
   "remeasured": {
-    "on": "2026-10-13",
-    "method": "Re-ran the 2026-10-12 parse: every .ttl under ontology/ read with N3, counting fw: subjects typed owl:* and fw: subjects carrying equivalentClass, equivalentProperty, subClassOf, subPropertyOf, exactMatch, closeMatch, seeAlso, isReplacedBy, replaces, broader or narrower to a non-fw named term.",
-    "declaredTerms": 459,
-    "aligned": 77,
-    "wasOn20261012": {
-      "declaredTerms": 462,
-      "aligned": 76
-    },
-    "note": "Three fewer declared terms, which is consistent with fw:Carrier and fw:CarrierKind having been withdrawn on 2026-10-12 and nothing replacing them. The one extra alignment is not attributed with confidence: the axiom list used here may differ slightly from the one used then, and the earlier run's exact predicate list was not recorded. Stated rather than smoothed over, because the whole point of this file's correctionMade is that a flattering number nobody can reproduce is worse than an awkward one.",
-    "notCountedHere": "The deprecation vocabulary adopted on 2026-10-13 does not move either number. owl:deprecated takes a literal, and dcterms:isReplacedBy on these two port types points at another fw: term, so neither is an axiom linking a fw: term to a standard's term. They are adoptions of a standard PROPERTY rather than alignments to a standard CLASS, which is a different thing and is listed under `adopted`."
+    "date": "2026-10-13",
+    "declaredTerms": 515,
+    "implemented": 48,
+    "proposed": 30,
+    "retired": 4,
+    "wasOnThisFile": "462 declared, 45 implemented, 30 proposed, 2 retired, measured 2026-10-12 and 2026-10-13",
+    "whyItMoved": "Two retirements this session: fw:computationCRS as a duplicate of fw:metricCRS, and the port types replaced by the renames. The counts are re-measured here rather than left as the figures that were true when the sweep ran, because the sweep's claim -- that the shapes start from a clean graph rather than grandfathering violations -- is only worth anything if the numbers are the current ones. All four retired terms carry the standard trio; ontology/shapes/vocabulary-status.ttl refuses one that does not.",
+    "method": "grep -rhoE '^fw:[A-Za-z0-9_]+ a ' over the 18 ttl files, unique; statuses by their literal."
   },
   "adopted": [
     {
@@ -131,6 +129,22 @@
       "firstCase": "`samples`, renamed to `point_grid` on 2026-10-13.",
       "appliedTo": [],
       "on": "2026-10-13"
+    },
+    {
+      "standardTerm": "dcterms:conformsTo, with an IRI from the OGC CRS register",
+      "standard": "DCMI Metadata Terms; OGC CRS register (http://www.opengis.net/def/crs/)",
+      "insteadOfMinting": "fw:geographicCRS. Two widgets -- clip_polygons and summarize_polygons -- compute in longitude and latitude without projecting, and were writing fw:metricCRS \"OGC:CRS84\": a geographic CRS under a predicate whose range is a projected one. The obvious repair was to mint a second project term for the geographic case, which would have put the CRS of a run behind two predicates and made the query that found this defect need to know both. Nothing was minted. Every operation now states the frame it computed in with dcterms:conformsTo and a resolvable IRI, and fw:metricCRS keeps its narrow meaning: a projection to metres happened, here is which. Its ABSENCE is now a fact -- nothing was projected -- which it could not be while every operation asserted it.",
+      "notEquivalent": "dcterms:conformsTo is not equivalent to fw:metricCRS and does not replace it. conformsTo answers 'in what frame', for any frame; fw:metricCRS answers 'what projection were the metres taken in', and only a UTM zone satisfies it. A run that measures distance asserts both; a run that only intersects polygons asserts the first alone.",
+      "alsoFixes": "Three spellings of one frame reached the receipts verbatim -- \"CRS84\", \"OGC:CRS84\" and \"EPSG:4326\" -- so a query joining on the CRS saw three projections where there is one. crsIRIFromName in src/metric-crs.ts maps all three to the one OGC IRI, which is the point of stating an IRI rather than a short name.",
+      "appliedTo": [
+        "fw:PolygonClipping",
+        "fw:PolygonPointSummary",
+        "fw:VoronoiComputation",
+        "fw:NetworkIsochrone"
+      ],
+      "on": "2026-10-13",
+      "enforced": "tests/metric-crs.test.mjs, in the unit suite from 2026-10-13. Two checks: no receipt in any executable example may assert fw:metricCRS with anything but a UTM zone, and any receipt whose class is PolygonClipping or PolygonPointSummary must state CRS84 and must NOT assert fw:metricCRS. Both were verified by restoring the defect and watching them name it -- 'snow-voronoi/clip claims fw:metricCRS \"OGC:CRS84\", which measures no distance'. A third check refuses every CRS IRI the OGC register would not resolve, so a typo in a frame cannot pass as a frame.",
+      "howThisWasFound": "By the query the practitioner asked for on 2026-10-13 -- make the CRS choice queryable in the receipts -- and then running it. Asking the receipts what a run measured in returned \"OGC:CRS84\", which measures nothing. The defect was mine and one day old: consolidating fw:computationCRS into fw:metricCRS merged a general term into a specific one, and the specific name then misdescribed the two widgets that had been using the general one honestly. Making a fact queryable is what exposed it; it had been sitting in the receipts unread."
     }
   ],
   "sweptOn": {

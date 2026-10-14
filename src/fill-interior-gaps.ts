@@ -1,3 +1,4 @@
+import {metricCRSAssertion} from './metric-crs.js';
 import type {Boundary,Position,WorkflowNode} from './types.js';
 import type {Catchment,Polygons} from './catchments.js';
 import {metric} from './catchments.js';
@@ -74,14 +75,14 @@ export function fillInteriorGaps(
     'Separate polygons stay separate. Gaps between polygons are not interior, so they are untouched: this fills enclosed space, it does not join things up.',
   ];
   const activity=`<urn:fieldwork:run:${runId}:${node.id}:fill>`;
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`
     +`${activity} a fw:InteriorGapFill, prov:Activity; `
     +`fw:polygonCount ${parts.length}; `
     +`fw:gapsFilled ${gapsFilled}; `
     +`fw:areaBeforeSquareMetres ${areaBefore.toFixed(2)}; `
     +`fw:areaAfterSquareMetres ${areaAfter.toFixed(2)}; `
     +`fw:areaAddedSquareMetres ${addedM2.toFixed(2)}; `
-    +`fw:metricCRS ${JSON.stringify(projection.crs)}; `
+    +metricCRSAssertion(projection.crs)
     +`prov:used <urn:fieldwork:run:${runId}:${sourceNodeId}>.\n`;
   return {value:{...structuredClone(input),features,
     method:`${input.method}; interior gaps filled by keeping outer rings`,

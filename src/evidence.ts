@@ -1,4 +1,5 @@
 import {packCatalogN3} from './pack-catalog.js';
+import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
 import type {Workflow,WorkflowNode} from './types.js';
 import {isRecord} from './guards.js';
 import type {Receipt} from './results.js';
@@ -82,6 +83,11 @@ export function evidenceProvenance(nodes:WorkflowNode[],edges:Workflow['edges'],
   let facts='@prefix dc: <http://purl.org/dc/elements/1.1/>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix fw: <urn:fieldwork:>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n# Citation metadata supplied by the workflow author; not independently verified evidence.\n';
   facts+='@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.\n';
   facts+=packCatalogN3(runId);
+  // The run's projection, stated once. Each metric activity already records its own, but a reader
+  // asking what a RUN computed in should not have to walk every activity and hope they agree --
+  // and since 2026-10-13 they must. The OGC IRI travels beside the short form so the question can
+  // be asked from outside this vocabulary.
+  facts+=metricCRSFacts(runId,workflowMetricCRS({schema:'fieldwork/workflow/1',name:'',nodes,edges} as Workflow));
   const ids=new Set(nodes.map(n=>n.id));
   for(const node of nodes){
     const step=iri('step:'+node.id),plan=iri('plan:'+node.id),output=iri('output:'+node.id);

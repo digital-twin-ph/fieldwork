@@ -110,3 +110,13 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
    being looked at. Marked rather than only activated, because a node can own more than one tab. */
 #result-tabs button.linked-to-selection{box-shadow:inset 0 0 0 1px var(--accent);}
 #result-tabs button.linked-to-selection::before{content:"◆";margin-right:4px;color:var(--accent);font-size:8px;vertical-align:middle}
+/* The projection explainer, beside every widget that takes a UTM zone. Reference material, not a
+   warning: the zone is a legitimate choice and the notice style would make it look like a fault.
+   Collapsed by default so it costs nothing to the practitioner who already knows what a zone is. */
+.explainer{font-size:10px;line-height:1.7;color:var(--muted);border-top:1px solid var(--line);margin:20px 0 0;padding:11px 0 0}
+.explainer>summary{cursor:pointer;color:var(--ink);font-size:11px;list-style:none}
+.explainer>summary::-webkit-details-marker{display:none}
+.explainer>summary::before{content:'▸ ';color:var(--muted)}
+.explainer[open]>summary::before{content:'▾ '}
+.explainer>summary:focus-visible{outline:2px solid var(--tone);outline-offset:2px}
+.explainer p{margin:11px 0 0}

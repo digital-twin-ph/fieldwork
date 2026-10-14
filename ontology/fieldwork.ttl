@@ -196,7 +196,9 @@ fw:hullAreaSquareMetres a owl:DatatypeProperty; rdfs:domain fw:ConvexHull; rdfs:
 fw:hullSpanMetres a owl:DatatypeProperty; rdfs:domain fw:ConvexHull; rdfs:range xsd:decimal;
   rdfs:label "Greatest distance across the hull, in metres".
 fw:metricCRS a owl:DatatypeProperty; rdfs:range xsd:string;
-  rdfs:label "Projected CRS a metric computation used".
+  rdfs:label "Projected CRS a metric computation used";
+  rdfs:comment "The projection an operation computed metres in, as this project's short form -- \"EPSG:32734\". The same fact is stated on the run with dcterms:conformsTo and the OGC register's IRI, which is the identifier a reader outside this vocabulary can resolve. From 2026-10-13 a workflow may declare only ONE of these: nine widgets project to metres and each carries its own zone, and two plausible zones differ by 0.58% on the same four points. ABSENCE IS A FACT: an operation that computed in longitude and latitude and projected nothing -- fw:PolygonClipping and fw:PolygonPointSummary both do -- must NOT assert this property, and states its frame with dcterms:conformsTo alone. Until 2026-10-13 those two asserted fw:metricCRS \"OGC:CRS84\", so a reader asking what a run measured in was answered \"degrees\", which measures no distance. Only a UTM zone satisfies this property; tests/metric-crs.test.mjs refuses anything else.";
+  fw:implementationStatus "implemented".
 fw:DonutGeomasking a owl:Class;
   rdfs:label "Donut geomasking"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Reproducible educational point displacement within a metre-valued annulus; not a privacy guarantee.".
 fw:HexAggregation a owl:Class;
@@ -261,7 +263,15 @@ fw:AreaBuffer a owl:Class;
   rdfs:comment "Generate a distinct expanded acquisition boundary without changing the reporting study area.".
 fw:bufferDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
 fw:parameters a owl:DatatypeProperty.
-fw:computationCRS a owl:DatatypeProperty.
+# Retired 2026-10-13: a second name for fw:metricCRS. Three widgets wrote this one and five wrote
+# the other, so a query for the projection a run used got half an answer depending on which term it
+# asked for -- the D2 duplicate, in the vocabulary rather than in the code.
+fw:computationCRS a owl:DatatypeProperty;
+  rdfs:label "Projected CRS a computation used (retired)";
+  owl:deprecated true;
+  dcterms:isReplacedBy fw:metricCRS;
+  skos:changeNote "Retired 2026-10-13 as a duplicate of fw:metricCRS. The three widgets that wrote it now write fw:metricCRS; receipts made before that date carry this term.";
+  fw:implementationStatus "retired".
 fw:caveats a owl:DatatypeProperty.
 fw:member a owl:ObjectProperty;
   owl:equivalentProperty rdfs:member;

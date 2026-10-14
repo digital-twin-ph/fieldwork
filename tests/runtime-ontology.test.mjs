@@ -24,7 +24,14 @@ test('uncited executed widgets bind plans and receipts to catalog identities and
   const g=audit.graph,base=fw+'run:'+run.runId+':';
   for(const id of ['network','catchments','clip','summary'])assert.equal(g.getObjects(n(base+'output:'+id),n(prov+'wasGeneratedBy'),null).length,1);
   const source=g.getObjects(n(base+'output:catchments:cell:origin-t1'),n(fw+'sourceSite'),null)[0];assert.equal(source.value,base+'output:pumps:record:origin');
-  assert.equal(g.getObjects(n(base+'output:clip:activity'),n(fw+'computationCRS'),null)[0].value,'OGC:CRS84');
+  // The clip intersects in longitude and latitude and projects nothing, so it states its frame
+  // with the standard term and must claim no metric CRS. Until 2026-10-13 this line asserted
+  // fw:computationCRS "OGC:CRS84" and then fw:metricCRS "OGC:CRS84": a geographic frame under a
+  // predicate meaning projected. Checked here at the graph level as well as in the receipt,
+  // because this is the form a reader's query actually sees.
+  assert.equal(g.getObjects(n(base+'output:clip:activity'),n(fw+'metricCRS'),null).length,0);
+  assert.equal(g.getObjects(n(base+'output:clip:activity'),n('http://purl.org/dc/terms/conformsTo'),null)[0].value,
+    'http://www.opengis.net/def/crs/OGC/1.3/CRS84');
   assert.equal(g.getObjects(n(base+'output:network'),n(fw+'networkEdge'),null).length,1);
 });
 test('runtime shapes reject missing widget, source identity, direction, units and graph endpoints',async()=>{

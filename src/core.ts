@@ -22,7 +22,7 @@ import type {PointComparison} from './point-comparison.js';
 import {computeMeanCenter,meanCenterReceipt,validateMeanCenterNode} from './mean-center.js';
 import type {MeanCenter} from './mean-center.js';
 import {bufferArea,validateBuffer} from './area-buffer.js';
-import {CATCHMENT_TYPES,validateNetwork,validateCatchmentNode,voronoi,isochrone,clipPolygons,summarizePolygons,catchmentReceipt} from './catchments.js';
+import {CATCHMENT_TYPES,validateNetwork,validateCatchmentNode,voronoi,isochrone,clipPolygons,summarizePolygons,catchmentReceipt,unconnectedSites,offNetworkSites} from './catchments.js';
 import type {Polygons,Network} from './catchments.js';
 import {polygonDisplay,polygonPresentationReceipt} from './catchment-output.js';
 import {loadRaster,clipRaster,rasterReceipt,validateRasterAsset} from './raster-workflow.js';
@@ -749,5 +749,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   const portTypes=Object.fromEntries(plan.map(node=>[node.id,outputOf(node)]));
   const provenance=evidenceProvenance(plan,workflow.edges,runId,receipts,portTypes);
   for(const receipt of receipts){const cited=provenance.evidence.find(e=>e.nodeId===receipt.nodeId);if(cited)receipt.references=structuredClone(cited.references);}
-  return {...provenance,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString()};
+  // Findings the run made that no output tab states, carried per node. `unconnectedSites` reads
+  // any value, so this does not need to know which widgets report omissions.
+  const alerts:WorkflowRun['alerts']=plan.flatMap(node=>{
+    const value=values.get(node.id),unconnected=unconnectedSites(value),offNetwork=offNetworkSites(value);
+    return unconnected.length||offNetwork.length?[{nodeId:node.id,unconnected,offNetwork}]:[];
+  });
+  return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString()};
 }

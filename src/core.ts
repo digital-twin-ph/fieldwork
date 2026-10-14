@@ -149,6 +149,28 @@ export function outputOf(node:WorkflowNode):PortType|null{
   return TYPES[node.type].output;
 }
 
+/** The ports a node must have connected before it will run, as distinct from the ports it MAY
+ *  take, which is what `nodeInputs` returns.
+ *
+ *  Extracted from `executionPlan` on 2026-10-14. It had been a ternary inside the traversal, and
+ *  scripts/port-contracts.mjs had to restate it to publish the same answer -- one contract written
+ *  twice, in two files, with nothing holding the copies together. Now the generator imports this,
+ *  so the published declaration cannot disagree with the behaviour it describes. Experiment 112. */
+export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:boolean}):[string,PortType][]{
+  const all=nodeInputs(node);
+  // A country can name the scope instead, so the area is optional rather than absent.
+  if(node.type==='network_input')return all.filter(([port])=>port!=='area');
+  if(!['map_output','table_output'].includes(node.type))return all;
+  // A view fed by a coverage check takes THAT and nothing else: the check already carries the
+  // points and the area it was run over, so insisting on them again would ask for the same data
+  // twice. Graph-dependent rather than node-dependent, which is why it is a parameter -- a node
+  // alone cannot say whether anything is connected to it.
+  if(options?.coverageConnected)return all.filter(([port])=>port==='coverage');
+  // A coverage check is never insisted on, and a raster only when the map is showing one.
+  return all.filter(([port])=>port!=='coverage'
+    &&(port!=='raster'||node.type==='map_output'&&(node.params as {inputMode?:string}).inputMode==='raster'));
+}
+
 export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // One node type serves every composition, so the ports are the composition's, pinned in
   // the node rather than looked up: a saved workflow validates without the file present.
@@ -416,7 +438,7 @@ export function executionPlan(workflow:Workflow) {
   }
   for(const n of w.nodes)if(n.type==='study_area'&&n.params.source==='drawn'&&!n.params.geometry)throw new Error('Select a study area on the map before running.');
   const result:WorkflowNode[]=[], done=new Set<string>();
-  function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=['map_output','table_output'].includes(node.type)?(w.edges.some(e=>e.to===node.id&&e.port==='coverage')?[['coverage']]:nodeInputs(node).filter(([port])=>port!=='coverage'&&(port!=='raster'||node.type==='map_output'&&node.params.inputMode==='raster'))):nodeInputs(node);for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;
+  function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=requiredInputs(node,{coverageConnected:w.edges.some(e=>e.to===node.id&&e.port==='coverage')});for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;
       // The area is optional here: a country names the scope instead. Required only when the
       // practitioner has asked for the study area to bound the request.
       const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new Error(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));} done.add(node.id);result.push(node);}

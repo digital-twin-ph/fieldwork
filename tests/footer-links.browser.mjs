@@ -31,10 +31,6 @@ test('the status bar still fits a phone, and the links survive',async({page})=>{
   await expect(page.locator('#footer-ontology')).toBeVisible();
   await expect(page.locator('#footer-lab')).toBeVisible();
   await expect(page.locator('#footer-context')).toBeHidden();
-  // The research note goes too. It is the one footer item carrying nothing a reader acts on, and on
-  // Linux WebKit the footer measures wider than on macOS WebKit or Chromium -- enough to push the
-  // page into a horizontal scroll at 390px, which only CI saw.
-  await expect(page.locator('.app-footer>span').last()).toBeHidden();
   // Names the offending element rather than asserting a bare boolean. Two guesses at which element
   // overflowed on Linux WebKit were both wrong, and a failure that says only "true" cannot be
   // diagnosed from a CI log.

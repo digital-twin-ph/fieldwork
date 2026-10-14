@@ -17,6 +17,7 @@
  * Usage: node scripts/validate-standardization.mjs
  */
 import {readFileSync} from 'node:fs';
+import {ceilingProblems} from './ceiling.mjs';
 
 const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');
 const read=path=>JSON.parse(readFileSync(`${root}/${path}`,'utf8'));
@@ -59,6 +60,8 @@ for(const [type,entry] of exempt){
 }
 
 // 3 · the ratchet itself
+problems.push(...ceilingProblems('widgets/standardization.json',
+  {current:ledger.exemptionCeiling,initial:ledger.initialExemptionCeiling,raises:ledger.raises}));
 if(exempt.size>ledger.exemptionCeiling)
   problems.push(`widgets/standardization.json exempts ${exempt.size} widgets and sets exemptionCeiling `
     +`to ${ledger.exemptionCeiling}. The list may shrink freely and may never grow.`);

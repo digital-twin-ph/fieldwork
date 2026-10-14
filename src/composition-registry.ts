@@ -32,7 +32,4 @@ export function resolveComposition(id:string,version:string):Composition{
  *  Private and shared compositions are usable in the workflow that holds them and are not
  *  offered to everyone who opens the application, which is what admission means in
  *  [76](../docs/experiments/76-composition-governance.md). */
-export const admittedCompositions=():Composition[]=>
-  BUNDLED.filter(c=>c.governance.status==='admitted').map(c=>structuredClone(c));
-
 export const bundledCompositions=():Composition[]=>BUNDLED.map(c=>structuredClone(c));

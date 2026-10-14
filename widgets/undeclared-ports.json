@@ -1,0 +1,21 @@
+{
+  "schema": "fieldwork/undeclared-ports/1",
+  "note": "Ports a widget accepts under some parameter setting, which TYPES.inputs -- the definition the palette, the Inspector and every reader meets first -- does not list. Found 2026-10-14 by checking every edge in the six shipped examples against the declared ports: each of these runs, so the declaration is simply not where the behaviour is. Recorded as a ceiling rather than fixed in one go, because widening TYPES.inputs changes what the palette offers and what a connection check admits, and that is a change per widget rather than a sweep.",
+  "measuredAt": "2026-10-14",
+  "ceiling": 12,
+  "ceilingRule": "May be lowered freely and never raised. Declaring a port removes it from this list; a new widget that hides a port raises the count and fails the build.",
+  "pairs": [
+    "case_series.cases",
+    "chart_output.polygons",
+    "chart_output.series",
+    "compare_point_sets.movedCenter",
+    "compare_point_sets.originalCenter",
+    "map_output.context",
+    "map_output.decisions",
+    "map_output.network",
+    "map_output.polygons",
+    "table_output.decisions",
+    "table_output.polygons",
+    "table_output.table"
+  ]
+}

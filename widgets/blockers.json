@@ -1,7 +1,7 @@
 {
   "schema": "fieldwork/blockers/1",
   "note": "A blocker is a dated claim, not a property of the world. The practitioner's rule of 2026-10-12: even blockers are not permanent, and each should be revisited in DE mode. This file exists because the two blockers recorded in TODO.md went unexamined and both were wrong when finally re-derived on the day this file was written -- one had been lifted by a widget that shipped, and the other was half true and had been stopping work it did not actually block. A blocker nobody re-derives does the same damage as an admission nobody re-reviews: it looks like a fact and acts like a decision. Every entry must therefore carry a liftTest -- the check that would show it has gone -- because a blocker with no stated lift test cannot be falsified and is only a mood. The ratchet is the revisit window: scripts/validate-blockers.mjs fails when a standing blocker has not been revisited within it.",
-  "measuredAt": "2026-10-12",
+  "measuredAt": "2026-10-13",
   "revisitWindowDays": 7,
   "windowBasis": "This project adds and retires widgets in days, not months: twelve widgets arrived in three days and three were retired in one. A blocker older than a week has outlived the conditions it was recorded under.",
   "blockers": [
@@ -61,16 +61,17 @@
     },
     {
       "id": "presentation-stage",
-      "claim": "There is no communication, visualization and presentation stage, so a display-only widget has nowhere to go but the palette -- and logic that belongs in a decision class stays hidden in one, as facility_audit's tier-to-status ternary does.",
+      "claim": "There is no communication, visualization and presentation STAGE, so a display-only widget has nowhere to go but the palette -- and logic that belongs in a decision class stays hidden in one, as facility_audit's tier-to-status ternary does.",
       "blocks": [
         "comparison_map",
         "facility_audit"
       ],
       "recorded": "2026-10-12",
-      "lastRevisited": "2026-10-12",
+      "lastRevisited": "2026-10-13",
       "status": "standing",
       "liftTest": "A presentation-stage composition exists and comparison_map is expressed as one.",
-      "record": "no experiment yet -- the practitioner's direction of 2026-10-12, recorded in widgets/standardization.json under deferred"
+      "record": "no experiment yet -- the practitioner's direction of 2026-10-12, recorded in widgets/standardization.json under deferred",
+      "narrowedBy": "Revisited 2026-10-13. A day of presentation work did NOT lift this and the lift test is unchanged, but what is missing is now narrower than when it was recorded. The figure layer exists: src/presentation.ts holds one validated palette and one type scale that a map and a chart both read, maps export with a scale bar, a north arrow and a derived licence line, charts export the specification the receipt stores, and the Snow figures carry titles, subtitles, axis names and citations. So 'there is nowhere for presentation to live' is no longer true of the DRAWING. What is still missing is a composition stage: a way to express comparison_map as an arrangement of primitives rather than as a widget, which is what the lift test asks for and what nothing yet offers."
     },
     {
       "id": "outreach-predicates-name-a-domain",

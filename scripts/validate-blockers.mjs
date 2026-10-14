@@ -33,9 +33,19 @@ const naming=read('widgets/naming.json');
 const registry=read('widgets/registry.json');
 
 const STATUSES=new Set(['standing','narrowed','lifted','withdrawn']);
-const today=new Date(ledger.measuredAt);
-const days=(a,b)=>Math.round((a-new Date(b))/86400000);
 const problems=[];
+const days=(a,b)=>Math.round((a-new Date(b))/86400000);
+// The revisit window is measured against the REAL date, not against a field inside the file being
+// checked. It used to read `ledger.measuredAt`, so a blocker could never breach the window unless
+// somebody also advanced that field -- and advancing it is exactly what a person who forgot to
+// revisit would also forget. The clock measured itself, so it never ticked.
+//
+// FIELDWORK_TODAY exists so a check can pin the date; nothing in the application reads it.
+const today=process.env.FIELDWORK_TODAY?new Date(process.env.FIELDWORK_TODAY):new Date();
+if(Number.isNaN(today.getTime()))throw new Error('FIELDWORK_TODAY must be a date.');
+if(days(today,ledger.measuredAt)<0)
+  problems.push(`widgets/blockers.json records measuredAt ${ledger.measuredAt}, which is in the `
+    +`future. The counts cannot have been taken yet.`);
 const byId=new Map();
 
 for(const blocker of ledger.blockers){

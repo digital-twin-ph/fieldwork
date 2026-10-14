@@ -37,6 +37,7 @@ import {migrateOutputNodes,decisionPresentation} from './output-contract.js';
 import {referencedPDFs,evidenceProvenance} from './evidence.js';
 import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,RenamedNodeType,CandidateCondition} from './types.js';
 import {RENAMED_NODE_TYPES} from './types.js';
+import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
 // Re-exported so the registry validator can cross-check a declared rename against the one the
 // application actually performs, from the same bundle it already reads TYPES out of.
 export {RENAMED_NODE_TYPES};
@@ -407,7 +408,20 @@ export function executionPlan(workflow:Workflow) {
       // The area is optional here: a country names the scope instead. Required only when the
       // practitioner has asked for the study area to bound the request.
       const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new Error(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));} done.add(node.id);result.push(node);}
-  outputs.forEach(visit);return result;
+  outputs.forEach(visit);
+  // One RUN, one projection. Nine widgets project to metres and each carries its own zone, with
+  // nothing requiring them to agree -- and two plausible zones differ by 0.58% on the same points.
+  //
+  // This belongs here and not in validateWorkflow, which runs on every edit. Put there on
+  // 2026-10-13 it made all eight metric widgets unaddable: unconfigured drafts carry whatever
+  // default zone their branch supplies, so the second one added to a canvas disagreed with the
+  // first, validation threw, change() rolled the workflow back and the canvas appeared to ignore
+  // the click. That is the failure experiment 48 recorded and tests/palette-add.browser.mjs
+  // exists to catch; it caught it. Measured against the nodes in the PLAN rather than the whole
+  // workflow, because a draft sitting unconnected on the canvas is not part of this run and has
+  // no business refusing it.
+  workflowMetricCRS({...w,nodes:result});
+  return result;
 }
 // Moved to src/nearest-neighbour.ts, beside the search that uses it, and re-exported so every
 // existing caller is unaffected. See that file for what a sphere costs against an ellipsoid.

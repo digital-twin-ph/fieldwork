@@ -1,3 +1,4 @@
+import {metricCRSAssertion} from './metric-crs.js';
 import type {PointCollection,PointFeature,Position,WorkflowNode} from './types.js';
 import type {Network} from './catchments.js';
 import {metric,validateNetwork} from './catchments.js';
@@ -68,13 +69,13 @@ export function snapToNetwork(
   if(shared)notes.push(`${shared} site${shared===1?' shares':'s share'} a node with another, so they are indistinguishable to anything routed from here.`);
   if(unlocated)notes.push(`${unlocated} record${unlocated===1?' without coordinates was':'s without coordinates were'} not snapped and ${unlocated===1?'is':'are'} not in the result.`);
   const activity=`<urn:fieldwork:run:${runId}:${node.id}:snap>`;
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`
     +`${activity} a fw:NetworkSnap, prov:Activity; `
     +`fw:siteCount ${features.length}; `
     +`fw:snappedNodeCount ${distinct}; `
     +`fw:greatestSnapDistanceMetres ${greatest.toFixed(2)}; `
     +`fw:snapLimitMetres ${node.params.maxSnapM}; `
-    +`fw:metricCRS ${JSON.stringify(projection.crs)}; `
+    +metricCRSAssertion(projection.crs)
     +`prov:used <urn:fieldwork:run:${runId}:${sourceNodeId}>.\n`;
   return {value:{type:'FeatureCollection',features,sourceNodeId:node.id,
     sourceKind:'input-points',spatialReference:defaultSpatialReference(),

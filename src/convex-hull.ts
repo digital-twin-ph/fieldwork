@@ -1,3 +1,4 @@
+import {metricCRSAssertion} from './metric-crs.js';
 import type {Boundary,PointCollection,Position,WorkflowNode} from './types.js';
 import type {Catchment,Polygons} from './catchments.js';
 import {metric} from './catchments.js';
@@ -85,13 +86,13 @@ export function convexHull(
   const value:Polygons={features:[feature],sites:[],method:`Convex hull (monotone chain) in ${projection.crs}`,
     crs:projection.crs,notes,siteSourceNodeId:sourceNodeId};
   const activity=`<urn:fieldwork:run:${runId}:${node.id}:hull>`;
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`
     +`${activity} a fw:ConvexHull, prov:Activity; `
     +`fw:recordCount ${located.length}; `
     +`fw:hullVertexCount ${ring.length-1}; `
     +`fw:hullAreaSquareMetres ${areaM2.toFixed(2)}; `
     +`fw:hullSpanMetres ${spanM.toFixed(1)}; `
-    +`fw:metricCRS ${JSON.stringify(projection.crs)}; `
+    +metricCRSAssertion(projection.crs)
     +`prov:used <urn:fieldwork:run:${runId}:${sourceNodeId}>.\n`;
   return {value,receipt:{nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
     method:`${value.method}. ${notes.slice(1).join(' ')}`}};

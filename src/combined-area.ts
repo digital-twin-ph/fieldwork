@@ -1,3 +1,4 @@
+import {metricCRSAssertion} from './metric-crs.js';
 import type {Boundary,Position,WorkflowNode} from './types.js';
 import type {Catchment,Polygons} from './catchments.js';
 import {metric} from './catchments.js';
@@ -66,13 +67,13 @@ export function combinedArea(
     method:`Union of ${parts.length} areas in ${projection.crs}`,crs:projection.crs,notes,
     siteSourceNodeId:sourceNodeId};
   const activity=`<urn:fieldwork:run:${runId}:${node.id}:combined>`;
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`
     +`${activity} a fw:CombinedArea, prov:Activity; `
     +`fw:partCount ${parts.length}; `
     +`fw:combinedPieceCount ${combined.length}; `
     +`fw:partsAreaSquareMetres ${partsArea.toFixed(2)}; `
     +`fw:combinedAreaSquareMetres ${combinedAreaM2.toFixed(2)}; `
-    +`fw:metricCRS ${JSON.stringify(projection.crs)}; `
+    +metricCRSAssertion(projection.crs)
     +`prov:used <urn:fieldwork:run:${runId}:${sourceNodeId}>.\n`;
   return {value,receipt:{nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
     method:`${value.method}. ${notes.slice(1).join(' ')}`}};

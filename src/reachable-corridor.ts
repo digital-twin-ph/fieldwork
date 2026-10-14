@@ -1,3 +1,4 @@
+import {metricCRSAssertion} from './metric-crs.js';
 import {buffer as turfBuffer} from '@turf/buffer';
 import type {Boundary,PointCollection,Position,WorkflowNode} from './types.js';
 import type {Catchment,Network,Polygons} from './catchments.js';
@@ -106,7 +107,7 @@ export function reachableCorridor(
   if(unreachedJunctions)
     notes.push(`${unreachedJunctions} origin${unreachedJunctions===1?' had':'s had'} no street to enter and produced no corridor.`);
   const activity=`<urn:fieldwork:run:${runId}:${node.id}:corridor>`;
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`
     +`${activity} a fw:ReachableCorridor, prov:Activity; `
     +`fw:originCount ${origins.size}; `
     +`fw:corridorCount ${features.length}; `
@@ -114,7 +115,7 @@ export function reachableCorridor(
     +`fw:partialSegmentCount ${trimmed}; `
     +`fw:corridorHalfWidthMetres ${bufferM}; `
     +`fw:travelDirection ${JSON.stringify(direction)}; `
-    +`fw:metricCRS ${JSON.stringify(projection.crs)}; `
+    +metricCRSAssertion(projection.crs)
     +`prov:used <urn:fieldwork:run:${runId}:${sourceNodeId}>.\n`;
   return {value:{features,sites:[],method:`Street corridor: reachable segments truncated by remaining budget, buffered ${bufferM} m in ${projection.crs}`,
     crs:projection.crs,notes,siteSourceNodeId:sourceNodeId},

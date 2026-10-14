@@ -1,3 +1,4 @@
+import {metricCRSAssertion} from './metric-crs.js';
 import {metric} from './catchments.js';
 import type {PointCollection,Position,WorkflowNode} from './types.js';
 import type {Receipt} from './results.js';
@@ -23,6 +24,6 @@ export function computeMeanCenter(points:PointCollection,params:WorkflowNode<'me
 export function meanCenterReceipt(node:WorkflowNode<'mean_center'>,value:MeanCenter,runId:string,source:string):Receipt{
   const entity=`urn:fieldwork:run:${runId}:output:${node.id}`,activity=`${entity}:activity`;
   const wkt=`<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT (${value.coordinates.join(' ')})`;
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<${activity}> a fw:MeanCenterComputation, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; fw:computationCRS ${JSON.stringify(value.crs)}; fw:inputCount ${value.count}.\n<${entity}> a fw:MeanCenterResult, prov:Entity; prov:wasGeneratedBy <${activity}>; geo:hasGeometry <${entity}:geometry>.\n<${entity}:geometry> a geo:Geometry; geo:asWKT ${JSON.stringify(wkt)}^^geo:wktLiteral.\n`;
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<${activity}> a fw:MeanCenterComputation, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; ${metricCRSAssertion(value.crs)}fw:inputCount ${value.count}.\n<${entity}> a fw:MeanCenterResult, prov:Entity; prov:wasGeneratedBy <${activity}>; geo:hasGeometry <${entity}:geometry>.\n<${entity}:geometry> a geo:Geometry; geo:asWKT ${JSON.stringify(wkt)}^^geo:wktLiteral.\n`;
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:value.method};
 }

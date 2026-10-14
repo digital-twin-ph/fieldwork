@@ -1,3 +1,4 @@
+import {projectionExplainer} from './metric-crs.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
 import {canvasN3} from './canvas-semantics.js';
 import appPackage from '../package.json';
@@ -557,6 +558,10 @@ function renderInspector(){
         +`</div>`;
     }
   }
+  // Every widget that projects gets the same explanation of what the zone does, keyed off
+  // METRIC_NODE_TYPES rather than written into each branch above, so a widget cannot acquire
+  // a zone knob without acquiring the explanation of it.
+  content+=projectionExplainer(n.type);
   $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
   document.querySelectorAll<HTMLButtonElement>('[data-raster-step]').forEach(button=>button.onclick=()=>{selected=button.dataset.rasterStep;render();});
   optionalElement('#manage-references')?.addEventListener('click',()=>{let baseline=JSON.stringify(n.references||[]);openEvidenceEditor(n,refs=>{const current=workflow.nodes.find(x=>x.id===n.id);if(!current||JSON.stringify(current.references||[])!==baseline)throw new Error('The node changed while editing. Close and reopen its references.');const saved=change(w=>{required(w.nodes.find(x=>x.id===n.id)).references=structuredClone(refs);},{requirePersistence:true});if(saved)baseline=JSON.stringify(refs);return saved;});});

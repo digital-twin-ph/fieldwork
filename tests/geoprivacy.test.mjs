@@ -67,7 +67,7 @@ test('connected example exposes private before and derived after tabs with valid
   assert.deepEqual(run.outputs.map(o=>o.nodeId),['before-map','before-table','after-move-map','after-move-table','comparison-map','after-group-map','after-group-table']);
   assert.equal(run.outputs[2].rows.length,250);assert.equal(run.outputs[5].polygons.kind,'hexbin');
   assert.equal(run.outputs[4].comparison.pumps.features.length,8);
-  assert.match(run.receipts.find(r=>r.nodeId==='compare').facts,/fw:computationCRS "EPSG:32630"/);
+  assert.match(run.receipts.find(r=>r.nodeId==='compare').facts,/fw:metricCRS "EPSG:32630"/);
   assert.match(run.receipts.find(r=>r.nodeId==='compare').facts,/fw:originalMeanCenter/);
   assert.match(run.receipts.find(r=>r.nodeId==='compare').facts,/fw:originalNearestPumpId/);
   assert.match(run.receipts.find(r=>r.nodeId==='original-center').facts,/fw:MeanCenterComputation/);

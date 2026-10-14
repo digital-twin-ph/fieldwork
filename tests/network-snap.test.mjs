@@ -39,10 +39,27 @@ test('nearest is measured in metres, which picks a different node than degrees w
   assert.equal(Math.round(got.value.features[0].properties.snapDistanceM),100);
 });
 
-test('a site beyond the snap limit stops the run and says which site and how far',()=>{
+test('a site beyond the snap limit snaps anyway and carries the leg it crossed',()=>{
   const network=net(['n-1',0,0]);
-  assert.throws(()=>snapToNetwork(points(site('clinic',300,0)),network,node({maxSnapM:150}),'r','src'),
-    /clinic: the nearest network node is 300 m away, beyond the 150 m snap limit/);
+  const got=snapToNetwork(points(site('near',40,30),site('clinic',300,0)),network,node({maxSnapM:150}),'r','src');
+  assert.deepEqual(got.value.features.map(f=>f.id),['near','clinic'],'nothing is dropped');
+  assert.equal(got.value.features[0].properties.offNetworkMetres,undefined,'a site inside the limit assumed no leg');
+  assert.equal(got.value.features[1].properties.offNetworkMetres,300,'the far site says its first leg crossed no street');
+  assert.equal(got.value.features[1].properties.snapDistanceM,300,'and the distance is charged like any other');
+  assert.deepEqual(got.value.offNetwork,[{siteId:'clinic',name:'clinic',distanceM:300,limitM:150}]);
+  assert.match(got.value.sourceInfo.notes[0],/^1 of 2 sites is further than the 150 m snap limit from any node and reached the network across ground no street covers: clinic \(300 m\)/);
+  assert.match(got.value.sourceInfo.notes[0],/assumes a walk that may not exist/);
+  assert.match(got.receipt.facts,/fw:offNetworkSiteCount 1/);
+  assert.match(got.receipt.facts,/fw:offNetworkSites "\[\{\\"siteId\\":\\"clinic/);
+});
+
+test('a layer entirely off the network still snaps, and says every site is off-network',()=>{
+  // No refusal: refusing here would discard exactly the layer whose streets are unmapped.
+  const network=net(['n-1',0,0]);
+  const got=snapToNetwork(points(site('clinic',300,0)),network,node({maxSnapM:150}),'r','src');
+  assert.equal(got.value.features.length,1);
+  assert.equal(got.value.offNetwork.length,1);
+  assert.match(got.value.sourceInfo.notes[0],/^1 of 1 site is further than the 150 m snap limit/);
 });
 
 test('two sites on one node is reported, not refused',()=>{
@@ -62,13 +79,14 @@ test('records without coordinates are left out and counted',()=>{
   assert.match(got.value.sourceInfo.notes.join(' '),/1 record without coordinates was not snapped/);
 });
 
-test('the uncharged walk to the road travels in the notes and the method',()=>{
+test('the walk to the road travels in the notes and the method, and says who charges it',()=>{
   const network=net(['n-1',0,0]);
   const got=snapToNetwork(points(site('a',100,0)),network,node(),'r','src');
   const said=got.value.sourceInfo.notes.join(' ');
-  assert.match(said,/not charged to any later travel time/);
+  assert.match(said,/charge that distance against their budget/);
+  assert.match(said,/without reading snapDistanceM treats a site 200 m from the road as if it were on it/);
   assert.match(said,/straight-line, not along the network/);
-  assert.match(got.receipt.method,/not charged to any later travel time/);
+  assert.match(got.receipt.method,/charge that distance against their budget/);
 });
 
 test('a bad zone or snap limit is refused before anything is measured',()=>{

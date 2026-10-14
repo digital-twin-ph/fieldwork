@@ -25,11 +25,20 @@ test('a street entered part-way stops where the budget ran out',()=>{
   assert.equal(got.value.features.length,1);
   assert.match(got.receipt.facts,/fw:partialSegmentCount 1/);
   assert.match(got.receipt.facts,/fw:enteredSegmentCount 1/);
-  // 40 m strip 50 m wide, plus a half-disc of radius 25 at each end.
-  const expected=40*50+Math.PI*25*25;
-  const measured=turfArea(got.value.features[0].geometry);
-  assert.ok(Math.abs(measured-expected)/expected<0.05,
-    `${measured.toFixed(0)} m2 against about ${expected.toFixed(0)} m2`);
+  // Since 2026-10-14 the strip is not a constant 25 m: it is the walk off the street that the
+  // budget still allows, so it is 25 m wide while more than 25 m is left and narrows to nothing
+  // as the budget runs out. The furthest ground it claims along the street is therefore 40 m from
+  // the junction -- the budget -- where a constant 25 m strip claimed 65 m. Experiment 114.
+  const geometry=got.value.features[0].geometry;
+  const ring=geometry.type==='Polygon'?geometry.coordinates.flat():geometry.coordinates.flat(2);
+  const metresEast=(Math.max(...ring.map(p=>p[0]))-at(0)[0])/0.00144*100;
+  assert.ok(metresEast<41,`reaches ${metresEast.toFixed(1)} m east, and the budget is 40 m`);
+  assert.ok(metresEast>38,`reaches only ${metresEast.toFixed(1)} m east of 40 m of budget`);
+  // Smaller than the constant strip it replaced: 40 m of 50 m-wide street plus the end caps.
+  const constant=40*50+Math.PI*25*25;
+  const measured=turfArea(geometry);
+  assert.ok(measured<constant*0.8,`${measured.toFixed(0)} m2 against ${constant.toFixed(0)} m2 before`);
+  assert.ok(measured>Math.PI*25*25,'and larger than the one disc a junction with no street gets');
 });
 
 test('a junction with nothing left enters no street',()=>{
@@ -64,7 +73,8 @@ test('junctions from two different traversals are refused rather than mixed',()=
 test('the corridor width is reported as the claim it is, and holes are kept',()=>{
   const said=reachableCorridor(reached(['n0',50]),net(2),node({bufferM:30}),'run','src')
     .value.notes.join(' ');
-  assert.match(said,/30 m either side is a 60 m wide strip, and it is a claim/);
+  assert.match(said,/30 m either side is the final walk off the street, and it is charged/);
+  assert.match(said,/narrows to nothing where the time runs out/);
   assert.match(said,/insides of buildings, locked yards and the far side of walls/);
   assert.match(said,/Holes are kept/);
   assert.match(said,/eight-sided approximation of a curve, not a curve/);

@@ -81,8 +81,12 @@ test('on the real corridors it matches the monolith and adds up to 5 per cent',a
     params:{label:'S',zone:30,hemisphere:'north',maxSnapM:100}},'r','p');
   const traversal=reachableNodes(snapped.value,network,{id:'r',type:'reachable_nodes',x:0,y:0,
     params:{label:'R',minutes:15,speedMPerMin:75,direction:'outbound',travelMode:'walking'}},'r','s');
-  // Expected gap counts, measured 2026-10-10. Recorded so a change in them is noticed.
-  for(const [minutes,gaps] of [[1,0],[5,11],[10,58],[15,81]]){
+  // Expected gap counts, measured 2026-10-10 and re-measured twice on 2026-10-14: first when D1
+  // began to be charged (the 5-minute corridor lost three holes, 11 -> 8, because it no longer
+  // reaches as far), then when D3 was modelled and the corridor stopped claiming a constant 25 m
+  // beyond the budget (5 min 8 -> 6, 10 min 58 -> 54). Recorded so a change in them is noticed,
+  // which is what happened, twice. Experiment 114.
+  for(const [minutes,gaps] of [[1,0],[5,6],[10,54],[15,81]]){
     const banded=travelTimeBand(traversal.value,
       {id:'b',type:'travel_time_band',x:0,y:0,params:{label:'B',minutes}},'r','r');
     const corridor=reachableCorridor(banded.value,network,{id:'c',type:'reachable_corridor',x:0,y:0,
@@ -120,7 +124,21 @@ test('filling changed no death count here, which is a fact about this data',asyn
     params:{label:'S',zone:30,hemisphere:'north',maxSnapM:100}},'r','p');
   const traversal=reachableNodes(snapped.value,network,{id:'r',type:'reachable_nodes',x:0,y:0,
     params:{label:'R',minutes:15,speedMPerMin:75,direction:'outbound',travelMode:'walking'}},'r','s');
-  for(const [minutes,expected] of [[1,48],[5,216],[10,250],[15,250]]){
+  // Deaths inside each band, re-measured 2026-10-14 when D1 began to be charged. The budget now
+  // pays for the 10.91 m walk from the pump to its junction before any street is walked, so every
+  // band is smaller and the shortest is far smaller: the one-minute catchment claimed 48 deaths
+  // and holds 35. Thirteen were inside only because the walk onto the network was free.
+  //
+  // Re-measured again the same day, when D3 was modelled and the corridor stopped claiming a
+  // constant 25 m beyond the budget: 1 min 35 -> 21, 5 min 211 -> 201. So 27 of the 48 deaths
+  // the one-minute catchment originally claimed were inside only because two of the walk's three
+  // segments were free.
+  //
+  // The third column is the count AFTER filling interior holes, and it is no longer always the
+  // same number: at five minutes, filling adds three. This test was named for the fact that
+  // filling changed no count on this data, and charging D1 ended that -- which is the thing it
+  // was written to notice. Experiment 114.
+  for(const [minutes,expected,filledExpected] of [[1,21,21],[5,201,204],[10,250,250],[15,250,250]]){
     const banded=travelTimeBand(traversal.value,
       {id:'b',type:'travel_time_band',x:0,y:0,params:{label:'B',minutes}},'r','r');
     const corridor=reachableCorridor(banded.value,network,{id:'c',type:'reachable_corridor',x:0,y:0,
@@ -129,6 +147,6 @@ test('filling changed no death count here, which is a fact about this data',asyn
     const plainCount=summarizePolygons(corridor,deaths,{label:'D',boundary:'include'}).features[0].count;
     const filledCount=summarizePolygons(filled,deaths,{label:'D',boundary:'include'}).features[0].count;
     assert.equal(plainCount,expected,`${minutes} min unfilled count`);
-    assert.equal(filledCount,expected,`${minutes} min filled count is the same`);
+    assert.equal(filledCount,filledExpected,`${minutes} min filled count`);
   }
 });

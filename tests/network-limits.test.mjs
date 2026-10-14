@@ -122,32 +122,47 @@ const grid=(n)=>Array.from({length:n},(_,i)=>{
   return [[x,y],[x+0.00035,y]];
 });
 
+// The corridor is now built from chunks carrying the budget left where each ends, so these
+// pass a budget far above the radius: every chunk takes the full width and the shape is the
+// one the constant-radius buffer produced. The taper itself is tested in catchments.test.mjs.
+const identity=p=>p;
+const whole=lines=>lines.map(line=>({line,remainingM:1e6}));
+const corridor=(lines,radius=25)=>cm.taperedCorridor(whole(lines),radius,identity,
+  {point:[-0.14,51.51],radiusM:radius});
+
 test('batching does not change the corridor, which is why the batch size is free to choose', ()=>{
   // A buffer distributes over a union, so the strip around a set of streets is the union of the
   // strips around each. The whole optimisation rests on that, so it is asserted rather than
   // assumed: 120 streets buffered in batches of 25 against the same streets in one call.
   const lines=grid(120);
-  const batched=cm.bufferedCorridor(lines,25,[-0.14,51.51]);
-  const single=cm.bufferedCorridor(lines.slice(0,cm.BUFFER_BATCH),25,[-0.14,51.51]);
+  const batched=corridor(lines);
+  const single=corridor(lines.slice(0,cm.BUFFER_BATCH));
   assert.ok(turfArea(batched)>turfArea(single),'more streets must cover more ground');
-  // Equivalence is checked against a one-call buffer of the same input, built here directly.
-  const whole=cm.bufferedCorridor(lines,25,[-0.14,51.51]);
-  assert.equal(Math.round(turfArea(batched)),Math.round(turfArea(whole)));
+  const same=corridor(lines);
+  assert.equal(Math.round(turfArea(batched)),Math.round(turfArea(same)));
 });
 
 test('a corridor of one piece is a Polygon, and of several a MultiPolygon', ()=>{
-  const near=cm.bufferedCorridor([[[-0.14,51.51],[-0.1395,51.51]]],25,[-0.14,51.51]);
+  const near=corridor([[[-0.14,51.51],[-0.1395,51.51]]]);
   assert.equal(near.type,'Polygon','one street buffers to one polygon');
   // Two streets a kilometre apart cannot merge at a 25 m buffer.
-  const apart=cm.bufferedCorridor([[[-0.14,51.51],[-0.1395,51.51]],[[-0.12,51.52],[-0.1195,51.52]]],25,[-0.14,51.51]);
+  const apart=corridor([[[-0.14,51.51],[-0.1395,51.51]],[[-0.12,51.52],[-0.1195,51.52]]]);
   assert.equal(apart.type,'MultiPolygon');
   assert.equal(apart.coordinates.length,2);
 });
 
-test('no streets at all buffers the snapped junction, so a site still gets a shape', ()=>{
-  const out=cm.bufferedCorridor([],25,[-0.14,51.51]);
+test('no streets at all buffers the site, so a site still gets a shape', ()=>{
+  const out=cm.taperedCorridor([],25,identity,{point:[-0.14,51.51],radiusM:25});
   assert.equal(out.type,'Polygon');
   assert.ok(turfArea(out)>0);
+});
+
+test('a chunk with nothing left of its budget is not drawn', ()=>{
+  // The taper reaching zero is the budget boundary: there is no leg to walk off the street.
+  const spent=cm.taperedCorridor([{line:[[-0.14,51.51],[-0.1395,51.51]],remainingM:0}],25,identity,
+    {point:[-0.14,51.51],radiusM:3});
+  assert.ok(turfArea(spent)<turfArea(corridor([[[-0.14,51.51],[-0.1395,51.51]]])),
+    'it falls back to the site, not to a full-width strip');
 });
 
 test('the batch size is the measured one, and batching is actually used', ()=>{

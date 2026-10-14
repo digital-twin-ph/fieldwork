@@ -109,7 +109,13 @@ test('snapping then reachability runs on the real Soho network',async()=>{
   assert.ok(reached>1&&reached<network.nodes.length,
     `some but not all of 738 junctions are within 375 m of the Broad Street pump, got ${reached}`);
   const costs=got.value.features.map(f=>f.properties.travelMetres);
-  assert.equal(Math.min(...costs),0,'the origin junction itself costs nothing');
+  // The origin junction costs D1: the walk from where the pump stood to the junction it snapped
+  // to. This asserted 0 until 2026-10-14, which was the defect experiment 114 reports -- the
+  // displacement was measured, attached as snapDistanceM and published, and then nothing spent
+  // it, so every isochrone reached further than its minutes allowed.
+  const d1=snapped.value.features[0].properties.snapDistanceM;
+  assert.ok(d1>0,`the pump moved to reach a junction, got ${d1}`);
+  assert.equal(Math.min(...costs),d1,'reaching the origin junction costs the walk to it');
   assert.ok(Math.max(...costs)<=375,`no junction exceeds the 375 m budget, got ${Math.max(...costs)}`);
   for(const f of got.value.features)
     assert.equal(Number((f.properties.travelMetres+f.properties.remainingM).toFixed(2)),375,

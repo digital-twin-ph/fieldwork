@@ -526,10 +526,13 @@ const builders={
       ...base('corridor-soho-001','reachable_corridor','Reachable corridor','src/reachable-corridor.ts#reachableCorridor'),
       declaredParameters:{
         bufferM,quadrantSegments:8,direction,metricCRS:'EPSG:32630',
-        truncationRule:'For each directed edge leaving a reached junction, take the first remainingM / lengthM of its length from that junction, dropping edges where nothing is left. Buffer the collected lines by bufferM and union them.',
+        truncationRule:'For each directed edge leaving a reached junction, take the first remainingM / lengthM of its length from that junction, dropping edges where nothing is left.',
+        bufferRule:'The walk off the street at the end of a route is charged, so the buffer at any point of the route is min(bufferM, the budget left at that point), falling to nothing where the budget runs out. bufferM is the furthest anyone is assumed to walk off a street, not a drawing width.',
+        firstLegRule:'The route begins with a straight line from the site to the junction it was snapped to, charged against the budget at the street speed and buffered on the same rule. It is part of the corridor.',
+        quantisation:'Fieldwork cuts the route into chunks -- one for the whole stretch with more than bufferM left, then every 12.5 m -- takes the budget left at each chunk\u2019s far end, and rounds the radius down into 6 steps of bufferM/6. That removes ground; buffering each chunk separately adds a little back, since the chunk\u2019s far end gets a round cap at the chunk\u2019s radius where the rule gives a smaller one. Neither is large and they do not cancel exactly.',
         bufferProjection:'Turf/JSTS local azimuthal equidistant, 8 segments per quadrant',
         method:corridor.receipt.method,
-        semantics:'A corridor is the ground within bufferM of a street a traveller can enter within the budget. Interior holes are retained. The half-width is a claim that anywhere within it is reached.'
+        semantics:'A corridor is the ground a traveller can reach within the budget: along the streets, and then off the street by whatever the budget still allows up to bufferM. Interior holes are retained.'
       },
       input:{
         network:{source:network.source,
@@ -537,7 +540,13 @@ const builders={
           edges:network.edges.map(e=>({from:e.from,to:e.to,lengthM:e.lengthM,
             ...(e.geometry?{geometry:e.geometry}:{})}))},
         reached:banded.value.features.map(f=>({networkNodeId:f.properties.networkNodeId,
-          travelMetres:f.properties.travelMetres,remainingM:f.properties.remainingM}))
+          travelMetres:f.properties.travelMetres,remainingM:f.properties.remainingM})),
+        // The first leg, so the reference can rebuild the whole route rather than only the
+        // streets: where the site stands, and how far it is from the junction it entered at.
+        origin:{coordinates:[banded.value.features[0].properties.originLongitude,
+          banded.value.features[0].properties.originLatitude],
+          snapDistanceM:banded.value.features[0].properties.originSnapDistanceM,
+          networkNodeId:snapped.value.features[0].properties.networkNodeId}
       },
       output:{corridor:corridor.value.features[0].geometry,
         enteredSegmentCount:Number(/fw:enteredSegmentCount (\d+)/.exec(corridor.receipt.facts)[1]),

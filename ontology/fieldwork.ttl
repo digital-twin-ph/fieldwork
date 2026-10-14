@@ -289,6 +289,21 @@ fw:numericTotal a owl:DatatypeProperty.
 fw:missingValueCount a owl:DatatypeProperty.
 fw:summary a owl:DatatypeProperty.
 fw:networkSnaps a owl:DatatypeProperty.
+fw:unconnectedSiteCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Sites that got no result, because reaching the network spends the whole budget";
+  rdfs:comment "Asserted by any operation that routes from sites over a street network. No domain: the isochrone and the reachability step both report it, and both are fw:SpatialOperation. Its presence means every count, area and summary from that activity is over the sites that reached something, not over the sites that were offered. Absence means none were in that position, which is a fact, not a silence. Distinct from fw:offNetworkSiteCount: those sites DID get a result.".
+fw:unconnectedSites a owl:DatatypeProperty;
+  rdfs:label "The sites with no result, with the walk and the budget that defeated it";
+  rdfs:comment "A JSON array of site identifier, name, straight-line metres to the nearest junction and the travel budget in metres. Carried as a literal for the same reason fw:networkSnaps is: the receipt records what the run held.".
+fw:offNetworkSiteCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Sites whose route began across ground no street covers";
+  rdfs:comment "Sites further from the network than the snap limit allows, routed anyway with the first leg charged as a straight line at the street speed. Their results exist and are optimistic in a stated direction: a straight line assumes a walk nobody has checked, and the walked path in such places is routinely longer. The count is a reading of where the street data stops, not of where people are.".
+fw:offNetworkSites a owl:DatatypeProperty;
+  rdfs:label "The off-network sites, with the straight-line leg and the limit it passed";
+  rdfs:comment "A JSON array of site identifier, name, straight-line metres charged and the snap limit that marked it.".
+fw:offNetworkMetres a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:label "Straight-line metres charged to reach the network, on one result";
+  rdfs:comment "Present on a catchment whose site lay beyond the snap limit, absent on one whose whole route ran on mapped streets. Absence is the claim that no leg was assumed, which is why it is omitted rather than written as zero.".
 fw:sourceDescription a owl:DatatypeProperty.
 fw:networkMetadata a owl:DatatypeProperty.
 fw:networkNodeCount a owl:DatatypeProperty; rdfs:range xsd:integer.

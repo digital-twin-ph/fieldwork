@@ -155,3 +155,13 @@ way would still not be caught, and nothing proves the list is closed now either.
 outside its zone, so a study area spanning two zones cannot use it as these sites are used now.
 Replacing a constant with a projection introduces a failure mode where there was none, and
 [100](100-choosing-the-metric-crs.md)'s guard question is unresolved.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-12 | Audit every place metres become an angle, and find one defect with seven faces |
+| 2026-10-12 | Audit the other direction, which the first audit had not asked about |

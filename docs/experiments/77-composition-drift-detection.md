@@ -89,3 +89,12 @@ numbers carry one.
 Extend `tests/composition-drift.test.mjs`, which records today's silence. When
 detection exists those tests will fail, and that is the point: the change becomes
 visible instead of silent, which is the property drift itself lacks.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Three admission reviews for compositions, written before the code |

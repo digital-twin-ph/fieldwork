@@ -95,3 +95,15 @@ Start with a field report for the spatial coverage exercise. It should contain t
 After this slice, reuse the blocks in a short story map, an infographic summary and a dashboard. Compare cross-product numerical consistency, time to create/update a product, traceability of claims, comprehension of limitations, offline completeness and browser resource use. Report technical conformance separately from practitioner-effectiveness evidence.
 
 Open decisions include artifact connector design, portable export formats, document/graphics engines, template authoring, filter coordination, accessible export support and measured resource budgets. No runtime or user evaluation of this extension has been performed.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Add semantic asset profiles, versioned widget registry and output designs |
+| 2026-10-07 | Add standalone chart and map communication views |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

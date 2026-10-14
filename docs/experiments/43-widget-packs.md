@@ -414,3 +414,21 @@ That slice tests the manifest, the admission review, the example contract and th
 digest pinning while no executable code crosses a repository boundary. Runtime
 loading, port-registry changes and version pinning in saved workflows are
 separate experiments, and each needs its own migration note.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Specify curated widget packs |
+| 2026-10-08 | Specify a sea-level-rise pack as the first widget pack use case |
+| 2026-10-08 | Name the pipeline stages a pack assumes rather than supplies |
+| 2026-10-08 | Add the curated pack catalog, and check it before what it points at |
+| 2026-10-08 | Clear the pack's blocker, and stop taking its word for it |
+| 2026-10-08 | Check the stages a catalog entry restates, because one had already drifted |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Record what the exercise taught, and correct the claim that installation was impossible |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
+| 2026-10-10 | Define extraction by its purpose, not by a size the data no longer has |

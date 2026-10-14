@@ -99,3 +99,12 @@ another show the 1-minute area four times, and a reader comparing ring widths is
 comparing areas that contain each other. Disjoint annuli would need a
 subtraction this does not do, and whether a practitioner reads nested or
 disjoint rings more accurately is not something a test can answer.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add travel_time_band, and fix a hole being reported as overlap |

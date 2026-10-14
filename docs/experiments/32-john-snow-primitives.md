@@ -92,3 +92,19 @@ Validation on 2026-10-07: full gate passed 88 unit tests and 54 Chromium scenari
 ## Follow-up
 
 [Experiment 33](33-isochrone-plot-and-interactive-map.md) extends this initial slice with a bounded threshold list, explicit optional infill, NB04-style plot and interactive map, and canvas-to-library primitive highlighting. The single-time, hole-preserving behavior described above remains the default for older saved configurations. The revised Snow template uses four thresholds and infill explicitly.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Add catchment workflows, semantic evidence, and browser Pages release |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |
+| 2026-10-13 | Tell the truth about the street network limits |
+| 2026-10-13 | Correct the browser consequence: isochrone already runs in a Worker |
+| 2026-10-13 | Buffer the corridor in batches: 6.8x faster, 219x less memory |
+| 2026-10-13 | Let the download caps follow the knob, and make the pause a floor |
+| 2026-10-13 | Fix the broken OSM download, pin the renderers, and export the chart |

@@ -378,3 +378,15 @@ is read as an explanation of the analysis rather than as something they would
 build. That is the same open condition as
 [94](94-where-explanation-belongs.md), and it closes the same way — one
 practitioner who did not write it, saying what they did with it.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-13 | Every source states the CRS of what it read |
+| 2026-10-13 | Split reproject: a transform, not a source |
+| 2026-10-14 | Record parity for the forward projection |
+| 2026-10-14 | Instantiate reproject in the John Snow examples |

@@ -82,3 +82,12 @@ That a sampled elevation is suitable for any comparison — that is the vertical
 question, enforced separately on the comparison itself ([62](62-workflow-traversal.md)). That
 the raster is right, or current, or at a useful resolution for the question. And nothing about
 interpolation, which is deliberately not offered.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

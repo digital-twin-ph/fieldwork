@@ -77,3 +77,12 @@ The five process verbs have never been applied to a new widget. They were derive
 from 24 existing ones and describe them; whether they help somebody design a
 widget that does not exist yet is untested. By the standard in
 [the rule audit](../audits/rule-audit.md), they have not fired.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Record the stage vocabulary rewrite as a finding, not only as a result |

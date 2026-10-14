@@ -172,3 +172,16 @@ because it forces the rate primitive that experiment 51 identified as the most c
 Either exercise also tests something the sea-level work could not: whether a workflow organised around
 time or person, rather than geometry, can be built, run, reasoned over and presented here at all. That
 is the question the stated direction turns on, and it is currently unanswered.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Distinguish standard from domain widgets, then measure what standard is hiding |
+| 2026-10-08 | Correct experiment 60: place is an axis, not a domain to demote |
+| 2026-10-08 | Record the synthesis: epidemiology added to a spatially enabled workflow |
+| 2026-10-08 | Locate person and time in the input data, where the John Snow file already carries them |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

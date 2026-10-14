@@ -147,3 +147,15 @@ whether anything else does has not been audited.
 error, and found that the figure recorded in this document — 0.06–0.32% at 51.5°N — is the
 **best** case of the four latitudes measured, not the typical one. At the equator it is −0.56%
 to +0.11%, and at Manila's latitude −0.49% to +0.13%.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-11 | Answer whether a UTM selector exists, and correct how I explained the donut band |
+| 2026-10-11 | Derive the UTM zone from the data, and say what a wrong one costs |
+| 2026-10-12 | Audit every place metres become an angle, and find one defect with seven faces |
+| 2026-10-12 | Make the total a signed number, and make an open experiment say what closes it |

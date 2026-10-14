@@ -314,3 +314,23 @@ as its own developmental-evaluation item in
 wearing a user interface, and the formats are not interchangeable. The two readiness
 defects above are prerequisites for it, because a checklist derived from an
 unenumerated cache would report confidently and be wrong.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Frame the catalog's invisibility as a design problem, and refuse the obvious fix |
+| 2026-10-08 | Correct experiment 49: offline-first is a lifecycle, and it hides two defects |
+| 2026-10-08 | Open experiment 50: the checklist format is the question, not a detail |
+| 2026-10-08 | Correct experiment 50: the study area is known, so most of the list derives |
+| 2026-10-08 | Measure cacheable basemaps: one file, not 8.6 million requests |
+| 2026-10-08 | Record the catalog provenance work in experiment 49 and the release notes |
+| 2026-10-08 | Make validation evidence citable, and record the method-provenance gap |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |
+| 2026-10-08 | Show pack governance in the catalog, and say why nothing can be added |
+| 2026-10-08 | Report which build is serving the page, and announce installed updates |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

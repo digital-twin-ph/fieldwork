@@ -79,3 +79,14 @@ The unit checks cover concave-polygon versus bounding-box distinctions, boundary
 The Chromium browser exercise uses actual EYE inference and the local SQLite/WASM reader. It checks alerts, exclusion/restore, manual boundary expansion, all input methods, a numeric custom pin field, capture time, attribute preservation, offline GeoPackage import, cancellation and mobile overflow. Screenshots are regenerable local artifacts: `test-results/pushpin-form.png`, `coverage-map.png`, and `input-mobile.png`. Firefox/WebKit and practitioner effectiveness have not been evaluated.
 
 Next observe whether the alert prompts appropriate investigation rather than automatic deletion; whether the user can explain the difference between a true outlier, a data error and a deliberately out-of-scope observation; whether expanding the scope changes the research question; and whether the form distinguishes supplied attributes from automatically captured metadata. Record observed actions, user explanations and evaluator interpretation separately. No such participant findings have been collected in this implementation exercise.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

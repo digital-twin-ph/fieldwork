@@ -79,3 +79,14 @@ here the prior work was in a different directory and was never looked for.
 
 What would have prevented it is one grep of `docs/` for the widget names before writing. That is
 cheaper than the document it would have replaced.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-12 | Audit widget names against the worked examples they came from |
+| 2026-10-12 | Retire 102: the widget naming audit already existed |
+| 2026-10-12 | Two kinds of widget, not four: separate the kind from the placement |

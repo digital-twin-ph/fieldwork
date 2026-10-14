@@ -44,3 +44,14 @@ The browser exercise imports a legacy heat workflow, inspects shared controls, s
 To try this slice, select an output in Heat or Old Naledi. Its shared inspector should show Reasoning results and the connected reasoning node. On a new Map or Table, choose Reasoning results before connecting a decision-producing node. Use Point layers or spatial coverage for direct input data and spatial review.
 
 Validation on October 6: strict TypeScript/build and all 56 unit tests passed. The full Chromium run passed 34 scenarios; the older heat-output test still used a legacy label-control ID in one locator. After updating that locator, its complete scenario passed on the same build, giving passing evidence for all 35 scenarios across the suite and focused rerun. Ontology and registry validation passed (18 identities, 27 releases). No remote CI or Firefox/Safari validation was performed.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

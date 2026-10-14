@@ -75,3 +75,14 @@ artifact profile should unify them only after their different data and privacy
 semantics are audited. Export does not yet include a standalone interactive
 HTML package, embedded licensed tiles, scale bar or custom cartographic
 styling. User comprehension and accessibility of the map key need evaluation.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Add standalone chart and map communication views |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

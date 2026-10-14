@@ -95,3 +95,12 @@ be the next experiment instead.
 Either way the licence question is answered **before** the spike ships, not
 after, because an Apache-2.0 project taking an LGPL dependency is a decision the
 practitioner makes and not one a spike makes by accident.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-13 | Record experiment 108: Reactodia, and the thing we have never drawn |

@@ -122,3 +122,12 @@ Written before running, so the result can contradict it:
 
 A composition that runs end to end in a worked example, with the cost of adding it
 recorded honestly — including whether prediction 2 held.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-14 | Rules over geometry: a quantity derived, attached, and classified |

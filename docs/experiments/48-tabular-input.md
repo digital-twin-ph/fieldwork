@@ -109,3 +109,14 @@ caught by either one's shape.
 Not established: that any particular table's units or values are correct, that a
 practitioner reads a keyed table correctly, or anything about tables larger than
 the stated cap. The importer checks shape and identity, not meaning.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Import a long-format table, and refuse to guess what it means |
+| 2026-10-08 | Clear the pack's blocker, and stop taking its word for it |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |

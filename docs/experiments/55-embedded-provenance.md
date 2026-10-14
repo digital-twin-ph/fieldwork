@@ -185,3 +185,14 @@ Must be refused:
 Export a figure, open it in a text editor, and see how much of its history you can
 reconstruct. Then screenshot the same figure and repeat. The difference between those two
 is the part that has to be visible, and it is smaller than most people expect.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Compare ways to embed provenance in artifacts, and refuse the clever one |
+| 2026-10-08 | Measure encodings for an embedded receipt: escaped text wins by 4 percent |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |

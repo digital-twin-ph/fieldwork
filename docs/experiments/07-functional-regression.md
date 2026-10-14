@@ -84,3 +84,16 @@ Encrypted project packages and persistent manifests passed the final full local 
 Raster input and explicit clipping passed TypeScript/build and the full local suite (70 unit tests, 43 Chromium scenarios, including the local WorldPop file). A subsequent unit run passed all 71 tests after adding negative CRS/PixelIsPoint coverage and exact mask counts. Raster coverage includes source-value preservation, zero/NoData, holes/multipart geometry, native crops, resource limits, metadata/provenance, manifest inventory, encrypted portability and fresh-browser offline recomputation. See [the raster experiment](25-raster-input-and-clipping.md).
 
 Source metadata/citation: TypeScript/build, all 73 unit tests, widget/ontology validation and six focused Chromium scenarios passed. The latter cover raster source edits without re-upload, real WorldPop source-template use, readable GeoTIFF provenance with preserved pixels, encrypted/offline transfer, and existing PDF/package behavior. Large Unicode TIFF-description regressions protect against the upstream writer fixed-buffer limit. See [experiment 26](26-raster-source-provenance.md).
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-06 | Add semantic asset profiles, versioned widget registry and output designs |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

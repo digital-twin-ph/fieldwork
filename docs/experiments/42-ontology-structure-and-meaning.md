@@ -237,3 +237,17 @@ interface, so it reproduces that tool's engine and not its visualisation or its
 SHACL report. Consistency, classification and the probe results establish
 formal properties of a graph; they establish nothing about geographic
 correctness, public-health interpretation or practitioner understanding.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Measure the ontology's structure and meaning, and add a glossary |
+| 2026-10-08 | Fill the ontology gaps the reasoner found |
+| 2026-10-08 | Number the competency questions as experiment 44 |
+| 2026-10-08 | Replace the ontology editor with a reading view |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

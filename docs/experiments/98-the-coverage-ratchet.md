@@ -383,3 +383,20 @@ crossed — both implementations assert that area identically, and the notebook 
 **And nothing about the 13 that remain.** They are now counted, named and grouped, which is
 not the same as done. If the number sits at 13 in a month, the ratchet will say so, and that
 is the point of it.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-11 | Count what the lab does not check, and check one of it |
+| 2026-10-11 | Two more of the twenty-six, and a fixture helper for the Soho corridors |
+| 2026-10-11 | Two more of the twenty-six, and a rule about numbers in prose |
+| 2026-10-11 | Voronoi and layer ordering checked; the example is now verified end to end |
+| 2026-10-11 | Check the buffers, and record that a criterion failing is the point |
+| 2026-10-11 | Check snap and band; the isochrone decomposition is fully checked |
+| 2026-10-11 | Actually apply the correction to experiment 98 |
+| 2026-10-11 | Check hex aggregation and the case series; record what the cells are for |
+| 2026-10-12 | Make the total a signed number, and make an open experiment say what closes it |

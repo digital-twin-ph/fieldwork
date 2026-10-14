@@ -123,3 +123,14 @@ Capture the source asset/version, boundary snapshot, grid/dimension choices, met
 The subsequent point-input, spatial-exception, and pushpin-form exercise is recorded in [developmental evaluation notes 03](03-input-data-and-spatial-review.md).
 
 `area-computation.js` supplies the numerical operation and conversions; `area-measurement.js` creates the computation receipt and RDF; `core.js` executes the dependency graph. The local bundle supports offline computation. Numerical tests compare an analytic spherical rectangle, ring reversal, triangle versus bounding box, holes and MultiPolygon sums. Workflow tests check input requirements, stable geometry identity, unit invariance and recalculation after editing. Browser checks exercise all six units, the visible connector, receipts, export/import and offline reopening. These checks do not validate the proposed raster/NetCDF/resource-planning capabilities.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

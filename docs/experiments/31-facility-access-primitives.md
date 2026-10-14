@@ -129,3 +129,15 @@ Each slice needs source-identity/attribute preservation, parameter persistence, 
 Related records: [facility source split](19-facility-input-standardization.md), [shared origin points](20-shared-sample-points.md), [prior art](../research/prior-art.md), [credential files](30-local-credential-files.md), and [N3 evaluation](11-n3-output-evaluation.md).
 
 Implementation follow-up: [Experiment 32](../experiments/32-john-snow-primitives.md) adds bounded shared catchment primitives and two runnable workspaces. Its methods and runtime evidence are separate from this source-inspection/design record.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Add catchment workflows, semantic evidence, and browser Pages release |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

@@ -40,3 +40,14 @@ The reference is the local checkout of [Map Encryption Library](https://git.cdc.
 ## Validation contract and limits
 
 Positive tests: radii constrain every moved point, a fixed seed reproduces the example, each source location belongs to exactly one H3 cell, occupancy filtering omits small cells, released exports contain only derived IDs and geometry, and executed RDF conforms to SHACL. Negative tests: invalid units/resolutions, missing coordinates, malformed source attributes, and attempted conflation of hex cells with catchments fail. Browser checks inspect actual before/after tabs and the N3 & evidence view. A private run receipt intentionally retains source lineage, so it is not a publishable privacy artifact. Linkage, reidentification, analyst utility, and a motivated attacker are separate evaluations not established by these checks.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Release Fieldwork 0.3.0 geoprivacy and panel controls |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

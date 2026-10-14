@@ -183,3 +183,15 @@ can discard a session while the reader is looking something up.
 Implemented in `src/credentials.ts` and `src/credentials-ui.ts`, launched by the project toolbar's Credentials button. The file extension is Git-ignored and absent from the generated offline asset manifest. The runtime uses native Web Crypto without a new dependency. Credential resolution is a provider/origin-bound interface for future adapters; it is not an implemented Healthsites request path.
 
 On 2026-10-07, strict TypeScript/build, all 80 unit tests and all 50 Chromium scenarios passed, with the real Botswana WorldPop exercise enabled. A subsequent three-case credential browser run passed with direct localStorage/sessionStorage/IndexedDB and workflow-export isolation checks. Unit tests cover file authentication, randomized ciphertext, bounds, schema validation, provider/origin binding, deadline expiry and pending-unlock cancellation. Browser tests cover creation, encrypted download, wrong-password retry, offline reload/unlock, deletion, manual/idle lock and closing during unlock. The dialog screenshot was inspected. No real credentials were used. Firefox/WebKit testing, independent security review and a live authenticated provider integration remain outstanding. Changes are local; no publication is implied by this record.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Add catchment workflows, semantic evidence, and browser Pages release |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

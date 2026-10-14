@@ -186,3 +186,15 @@ Either a STAC browse-and-fetch path built against one of the 40 CORS-enabled cat
 decided — which moves this to **tried** — or a decision that acquisition belongs to the desktop
 build, which moves it to **retired**. The survey answered what is possible; nothing has decided
 what to do.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add experiment 91: what integrating a STAC browser would take |
+| 2026-10-10 | Measure CORS, licensing and credentials across all 45 public STAC APIs |
+| 2026-10-11 | Give the experiment document a form, and a ratchet to hold it |
+| 2026-10-12 | Make the total a signed number, and make an open experiment say what closes it |

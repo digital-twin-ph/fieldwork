@@ -53,3 +53,14 @@ Validation on October 6: the final full local `npm run check` passed strict Type
 - [zip.js documentation](https://gildas-lormeau.github.io/zip.js/): browser integration, AE-2 support and untrusted archive handling.
 - [Writer options](https://gildas-lormeau.github.io/zip.js/api/interfaces/ZipWriterConstructorOptions.html): AES strength, encryption and timestamp settings.
 - [Entry extraction options](https://gildas-lormeau.github.io/zip.js/api/interfaces/EntryGetDataOptions.html): password and integrity-check controls.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

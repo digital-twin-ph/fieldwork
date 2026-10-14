@@ -241,3 +241,13 @@ not a facility this can place. No centroid is guessed and no kind inferred.
   of routing a practitioner's key through it. Noted, not planned.
 - This is why the claim is that Fieldwork works offline *given the right
   conditions*, not that it is a wholly offline application.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add three widgets, and get facility data from sources a browser can reach |
+| 2026-10-10 | Define discovery by what it learns, not by what it withholds |

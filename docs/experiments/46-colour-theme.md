@@ -132,3 +132,15 @@ decision rather than made as a side effect of adding a widget.
 
 The ratchet behaved exactly as intended: it refused a regression it had never seen before, caused by
 a colour that was already in the codebase.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Release 0.6.0: light, dark and device themes |
+| 2026-10-08 | Measure contrast, fix what dark got wrong, and make a dialog idempotent |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Add the time axis, and give it John Snow's own daily table |

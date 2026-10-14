@@ -172,3 +172,13 @@ What this costs is roughly nine minutes of browser checks instead of four. What 
 buys is that the precondition above is now a fact rather than an intention, and a
 WebKit regression fails a pull request rather than waiting for somebody to think of
 running it.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Store file bytes rather than Blobs, so attachments work in Safari at all |
+| 2026-10-13 | Put WebKit in the gate |

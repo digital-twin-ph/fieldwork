@@ -51,3 +51,12 @@ That combining is appropriate. Two catchments overlapping means two facilities
 reach the same ground, and a union erases that — it answers "is anywhere reached"
 and not "how well is anywhere reached". A practitioner wanting the second needs
 the parts, not the whole.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add summarize_combined_area, and fix the hull's spelling |

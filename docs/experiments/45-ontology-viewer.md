@@ -119,3 +119,13 @@ fence rather than globally, so consistency is reported only where a fence asks f
 it. The quality score is a heuristic. And the site establishes nothing about
 whether the vocabulary is *right* — a reader can now see the modelling clearly,
 which is a precondition for judging it, not a judgement.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Replace the ontology editor with a reading view |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |

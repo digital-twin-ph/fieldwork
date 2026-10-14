@@ -82,3 +82,12 @@ example can be rebuilt from source rather than edited by hand, which is the poin
 The two licences differ and both travel: AR6 is CC BY 4.0 and obliges three
 citations, which the extract widget independently requires; the facilities are
 ODbL and share-alike. `examples/manila-sea-level/NOTICE.txt` carries both.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add the Manila coastal exposure example, and fix what building it exposed |

@@ -31,3 +31,14 @@ The expected synthetic heat baseline is eight neighborhoods, five review classif
 Old Naledi's facility and sample contracts, shared visualization outputs, reusable reasoning widgets, full semantic port shapes, runtime version pinning and general migrations remain subsequent standardization work. See the [registry](../../widgets/README.md) and [visualization specification](16-semantic-visualization-design.md).
 
 Validation on October 6: strict TypeScript checks and build passed; the full Chromium suite passed all 32 scenarios (3.0 minutes). The unit suite passed all 50 tests after adding the migration-adapter rejection case. Registry validation passed with 18 identities and 21 release records. Firefox, Safari and remote CI have not been tested for this change.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

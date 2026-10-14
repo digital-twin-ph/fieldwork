@@ -156,3 +156,13 @@ The composition was re-pinned as 0.2.0, and 0.1.0 kept as
 `tests/fixtures/drifted-composition-2026-10-10.json` so the drift report stays
 exercised by a test rather than becoming a story about something that happened
 once.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Couple widgets to the ontology in CI, and record the 42 terms of debt |
+| 2026-10-10 | Complete the widget-ontology coupling: debt to zero, and the cascade works |

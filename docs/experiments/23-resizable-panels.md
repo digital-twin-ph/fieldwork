@@ -24,3 +24,14 @@ Dividers support pointer dragging, keyboard arrows (10 pixels, or 40 with Shift)
 Browser regressions cover all three dividers, size persistence offline, workflow result preservation, keyboard limits, cancellation, reset, malformed preferences, unavailable storage and narrow-screen overflow. These tests establish runtime behavior, not practitioner usability or comprehensive assistive-technology certification.
 
 Validation on October 6: the full local `npm run check` passed strict TypeScript checks, the production build, all 59 unit tests and all 38 Chromium scenarios. Desktop layout was also inspected visually. No Firefox/Safari or remote deployment validation was performed.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

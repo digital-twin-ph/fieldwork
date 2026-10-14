@@ -306,3 +306,17 @@ the obvious next application.
 **And that the other recorded-but-undisposed findings are now dispositioned.** Extending D2 and
 D7 changes what the *next* audit must do. It does not retroactively decide the findings the last
 one left lying, and nothing here sweeps them.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-12 | A duplicate operation is a merge decision, not a recorded fact |
+| 2026-10-12 | facilities was never a nearest-neighbour duplicate |
+| 2026-10-12 | facilities is a study-area problem, measured |
+| 2026-10-12 | The buffer distance is a knob, raised to 50,000 m — and it was not the obstacle |
+| 2026-10-12 | Read access and nearest side by side; the carrier is not the blocker |
+| 2026-10-12 | access is three steps, and the filter is a knob rather than a widget |

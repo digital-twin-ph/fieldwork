@@ -243,3 +243,15 @@ mechanised. Pointing sideways at the inventory for twenty minutes found a dead c
 private pipes, and explained why a merge nobody could schedule had been blocked for three days. No
 ratchet would have found that, because a ratchet records a lesson and does not find one — which
 this document already said about the other four directions and had not yet applied to itself.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-12 | Record the five directions, and audit which ones this project can see in |
+| 2026-10-12 | Survey the inventory sideways, delete what it found, and check it stays deleted |
+| 2026-10-12 | A standard is a validated input, and vocabulary is the unratcheted basis |
+| 2026-10-12 | Withdraw fw:Carrier: no standard defines it and nothing consumed it |

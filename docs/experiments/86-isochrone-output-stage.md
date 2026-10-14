@@ -86,3 +86,12 @@ That nested bands are the clearer presentation. Four translucent rings drawn ove
 one another show the innermost area four times, and a reader comparing their
 widths is comparing areas that contain each other. The notebook hedges the same
 way, printing both the stacked grey version and the coloured one.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add stack_polygons, so the four bands reach one map, chart and table |

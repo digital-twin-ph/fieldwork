@@ -380,3 +380,20 @@ and motivation is a claim about people that no receipt can settle. There is also
 a real possibility the answer is no: that a professional tool used for outbreak
 work is the wrong place for points, and that the same effort spent on clearer
 refusals would teach more. The spike should be able to end that way.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-11 | Add a gamification spike, and an actual TODO list |
+| 2026-10-11 | Retire the claim that more nodes explain themselves |
+| 2026-10-11 | Cite the gamification experiment I missed, and measure parsimony instead |
+| 2026-10-11 | Record why the measure is over the artifact, not the session |
+| 2026-10-11 | Resolve the parsimony baseline: there is none, until a problem recurs |
+| 2026-10-11 | Record that a learning record needs a desktop build, and what that does not license |
+| 2026-10-11 | Decide: the browser app is for field work, learning is the desktop build's |
+| 2026-10-11 | Give the experiment document a form, and a ratchet to hold it |
+| 2026-10-12 | Make the total a signed number, and make an open experiment say what closes it |

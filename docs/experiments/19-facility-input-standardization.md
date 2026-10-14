@@ -37,3 +37,14 @@ The browser experiment imports that fixture, verifies the historical review coun
 Sample generation, specialized reasoning and output standardization remain future slices. This change does not imply publication, a new download service, generic polygon import or a simulation engine.
 
 Validation on October 6: strict TypeScript checks, production build, all 52 unit tests and all 33 Chromium scenarios passed. The additional RDF receipt assertions passed in a focused rerun. Ontology and widget-registry validation passed; the registry contains 18 identities and 22 release records. This slice has not been tested in Firefox, Safari or remote CI.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

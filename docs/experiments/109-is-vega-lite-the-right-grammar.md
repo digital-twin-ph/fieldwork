@@ -165,3 +165,14 @@ survives comparison is narrower and stronger: a grammar states the mapping from
 data to channel, and a mark can carry the IRI of what it represents. Those two are
 why a specification can be read against a vocabulary, and neither is a property of
 being configured in JSON.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-13 | Record why Vega-Lite, with the three answers separated |
+| 2026-10-13 | Make Vega-Lite the default renderer, and withdraw a defect that was not real |
+| 2026-10-13 | Assess Observable Plot, and record what asking about it exposed |

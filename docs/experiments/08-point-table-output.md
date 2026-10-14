@@ -37,3 +37,14 @@ Adding a second table for the same coverage check must not multiply the global r
 These checks join `npm run check` automatically. Practitioner evaluation should observe whether users distinguish raw point attributes from coverage decisions, notice records with missing locations, and understand that paging changes the display rather than the dataset. No practitioner findings or Firefox/WebKit validation are claimed.
 
 Validation on October 5, 2026: the full gate passed with 32 unit tests and 11 Chromium scenarios. The two Table scenarios passed again after the final reviewed-row attribute display and offline-cache update. Desktop/mobile screenshots were inspected, and local documentation links and whitespace checks passed. Existing saved workflows were preserved; tests used the separate test origin.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Capture current Fieldwork development prototype and regression baseline |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

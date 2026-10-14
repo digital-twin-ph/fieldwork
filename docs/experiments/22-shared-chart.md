@@ -40,3 +40,14 @@ Reasoning-mode outputs can switch between Map, Table and Chart while retaining t
 Regression coverage includes legacy migration, empty/missing/unrecognized categories, all three grouping contracts, source immutability, RDF count reconciliation, shared upstream execution, browser source selection, view switching, evidence export and offline reload. Existing worked-example numerical checks remain in place. Automated runtime evidence is distinct from evidence that practitioners understand or find the interface useful.
 
 Validation on October 6: TypeScript/build and all 59 unit tests passed; the full Chromium suite passed all 36 scenarios. A visual inspection then identified a chart-icon encoding issue and an existing reasoning-port label displaying “Points undefined.” Both were corrected, the application rebuilt, and all 59 unit tests plus five affected output browser scenarios passed again. A fresh Chart added through the palette displayed Heat's 5 review, 2 no-flag and 1 insufficient-data records. Ontology validation and the registry check passed (19 identities, 29 releases). No remote publication or Firefox/Safari validation was performed.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

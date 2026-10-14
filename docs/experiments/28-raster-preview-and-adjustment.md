@@ -71,3 +71,14 @@ Regression scenarios exercise opening before execution, initial pixel overlay, o
 Validation: strict TypeScript/build and all 73 unit tests passed. The broader browser run passed 44 scenarios and caught an unchanged-preview save that unnecessarily converted the original source boundary. After correcting the equality check, all seven affected Chromium scenarios passed (area measurement, spatial review, four raster cases including the real Botswana file, and study-area drawing). The new preview case also verifies storage-quota failure keeps the draft open, an unchanged Apply preserves the entire manifest, and preview dimensions/counts equal the subsequent run receipt. Registry validation covers 21 widget identities and 36 releases; SHACL validation conforms. These are local Chromium checks, not Firefox/Safari certification.
 
 For practitioner evaluation, ask participants to predict which cells will remain, explain the difference between raster coverage and NoData, shrink the cutline, and restore it. Observe whether they distinguish operation parameters from the shared Study area and the output map. Record task completion, erroneous assumptions and requested parameters separately from software test results. Browser regression success does not establish usability or scientific appropriateness.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Add catchment workflows, semantic evidence, and browser Pages release |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

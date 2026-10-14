@@ -378,3 +378,14 @@ failed revalidation to a warning that a practitioner could miss.
 This mirrors the existing treatment of reference-only project imports, which are
 rejected when their PDF or raster assets are unavailable rather than opening a
 partially populated project.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Assess STAC Browser and specify discovery against measured catalogs |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

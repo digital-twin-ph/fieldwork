@@ -205,3 +205,12 @@ never be read as doing so. That the example's numbers are correct — the runboo
 workflow, it does not validate it. That a practitioner can transfer the pattern to their own
 data, which is the question [experiment 27](27-workflow-learning-and-gamification.md) and
 [experiment 43](43-widget-packs.md) both ask and which only an independent task answers.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

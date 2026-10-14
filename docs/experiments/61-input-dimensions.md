@@ -184,3 +184,14 @@ That the declaration is true. Nothing in the application can know whether `DEATH
 a workflow author who declares `one-case` for an aggregated file will get wrong answers confidently.
 The declaration makes the assumption **visible and checkable against the data's own provenance**; it
 does not verify it.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Locate person and time in the input data, where the John Snow file already carries them |
+| 2026-10-08 | Add the time axis, and give it John Snow's own daily table |
+| 2026-10-12 | 61: the gate where place stops being a column |

@@ -267,3 +267,12 @@ reaching the receipt as a resolvable IRI with share-alike distinguished from not
 - The healthsites.io completeness score is lost. If it turns out to matter, it
   can only come back through a hand-back or a proxy, and [69](69-healthsites-acquisition.md)
   records what each would cost.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Add three widgets, and get facility data from sources a browser can reach |

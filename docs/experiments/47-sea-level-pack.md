@@ -381,3 +381,19 @@ answer may be that only the median and a stated range should ever be shown. The
 pack would let a practitioner put an authoritative number beside a facility; it
 would not make that number a statement about flooding, and the design above
 exists mostly to stop it being read as one.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Specify a sea-level-rise pack as the first widget pack use case |
+| 2026-10-08 | Name the pipeline stages a pack assumes rather than supplies |
+| 2026-10-08 | Answer whether the sea-level pack has the importers it needs: it does not |
+| 2026-10-08 | Add the curated pack catalog, and check it before what it points at |
+| 2026-10-08 | Import a long-format table, and refuse to guess what it means |
+| 2026-10-08 | Clear the pack's blocker, and stop taking its word for it |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-10 | Correct "impossible in a browser": it was a decision, not a limit |

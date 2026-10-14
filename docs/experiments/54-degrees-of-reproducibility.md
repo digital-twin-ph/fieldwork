@@ -142,3 +142,14 @@ Take a map you have already published or presented. Grade each of its inputs aga
 ladder above, then identify the weakest. For most published public health figures the
 weakest input is the basemap, and almost nobody records it — which is the gap this record
 exists to make visible rather than to scold anyone about.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Grade reproducibility per input, because a figure inherits its weakest one |
+| 2026-10-08 | Link experiment 54 to the embedding comparison |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |

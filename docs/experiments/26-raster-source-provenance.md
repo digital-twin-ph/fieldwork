@@ -37,3 +37,14 @@ GeoTIFF.js 3.0.5 reserves a fixed-size IFD buffer: putting long citation text di
 The unit suite passes 73 tests, including provenance validation, RDF parsing, encrypted preservation and large Unicode TIFF descriptions. Chromium exercises both a synthetic raster and the user's actual WorldPop file: template/manual entry, save, reopen, metadata-only edit, clipping, downloaded TIFF metadata, N3 source citation, fresh-browser encrypted transfer and offline rerun. This is application/data-transfer evidence, not independent validation of provider claims or a STAC interoperability test. The national raster is not committed or redistributed. Browser evidence is Chromium only.
 
 Final focused validation: six Chromium scenarios passed on the final build (three raster scenarios, including the actual WorldPop file, and three existing encrypted-package scenarios). Source-form layout was inspected visually. Widget registry and ontology validation also passed. These local changes have not been published remotely.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-06 | Standardize widgets and add portable raster workflows with provenance |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |

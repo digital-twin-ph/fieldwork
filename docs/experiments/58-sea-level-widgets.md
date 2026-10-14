@@ -108,3 +108,14 @@ A browser check imports a synthetic extract carrying the published key structure
 values, not AR6 numbers**, since the real extract requires the 38 GB store and the pack's own
 extraction script — assigns sites, compares against an elevation attribute, displays the result and
 reloads offline.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-08 | Implement the sea-level pack's three contracts in the host |
+| 2026-10-08 | Record what the exercise taught, and correct the claim that installation was impossible |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

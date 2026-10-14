@@ -47,3 +47,15 @@ plans. Updated that assertion and reran the study-area test with two new N3 UI
 tests: all three passed. The new tests parse the N3 shown for an incomplete
 canvas and validate the downloaded John Snow run graph against SHACL. This
 covers all 57 distinct browser cases. Firefox and WebKit were not exercised.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-07 | Add catchment workflows, semantic evidence, and browser Pages release |
+| 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-08 | Show the widget catalog in the application |
+| 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |

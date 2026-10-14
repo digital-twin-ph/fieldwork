@@ -127,3 +127,15 @@ belongs in the Validation Lab notebooks, not in more canvas nodes. What this
 experiment actually demonstrated — reuse, pinned governance, drift detection and
 one receipt per member — stands without the comprehension claim, and is the
 better case for compositions.
+
+## Updates
+
+_Appended, never rewritten. Rows before this table existed are seeded from the commits that
+changed this file; a date stamp sweep is not an update._
+
+| Date | What happened |
+| --- | --- |
+| 2026-10-10 | Build the composition artifact, with the isochrone chain as the first one |
+| 2026-10-11 | Retire the claim that more nodes explain themselves |
+| 2026-10-11 | Give the experiment document a form, and a ratchet to hold it |
+| 2026-10-12 | Make the total a signed number, and make an open experiment say what closes it |

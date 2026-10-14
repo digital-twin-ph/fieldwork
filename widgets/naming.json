@@ -5,21 +5,8 @@
   "domainPrefixes": {
     "urn:fieldwork:pack:sea-level-rise": "slr"
   },
-  "maxKnownViolations": 6,
+  "maxKnownViolations": 4,
   "knownViolations": [
-    {
-      "nodeType": "reproject",
-      "rule": "role-word-in-title",
-      "reason": "Titled 'Reproject input' while the node type carries no role word. The title is also the wrong form: neither verb_object nor object_role.",
-      "clearedBy": "Retitle to 'Reproject points' once the widget stops importing its own data; the title should not be fixed while the contract still makes it true."
-    },
-    {
-      "nodeType": "reproject",
-      "rule": "transform-in-sources",
-      "reason": "The node type opens with a transform verb and the widget is filed under Sources. Both are honest about the contract: inputs are empty and the data arrives in params, so it imports UTM points and converts them in one step. The name promises a transform the contract does not offer on its own.",
-      "clearedBy": "Split the operation: `reproject` takes points and returns points under Spatial operations. Acquisition stays with the source widgets, which gain an output CRS so the common case needs no second node. Migration uses the experiment 18 adapter.",
-      "gatedOn": "sources-group-does-not-mean-acquisition"
-    },
     {
       "nodeType": "alert",
       "rule": "audited-name",
@@ -62,5 +49,17 @@
       "why": "A new rule asking whether a widget grouped under Sources actually acquires anything. The violation it found predates the rule by months: slr_extract_import has always taken a table on an input port. No new defect was admitted."
     }
   ],
-  "initialCeiling": 13
+  "initialCeiling": 13,
+  "clearedOn": [
+    {
+      "date": "2026-10-13",
+      "nodeType": "reproject",
+      "rules": [
+        "role-word-in-title",
+        "transform-in-sources"
+      ],
+      "how": "Both cleared by the split in experiment 111, not by renaming. The widget stopped importing its own data and became a points-to-points transform, so it moved from Sources to Spatial operations -- which is what transform-in-sources was waiting for -- and the title became 'Reproject points', which is the object the operation acts on rather than the role word 'input'. The ledger said the title should not be fixed while the contract still made it true; the contract changed first.",
+      "ceiling": "6 -> 4"
+    }
+  ]
 }

@@ -2,7 +2,7 @@
 
 _Created 2026-10-13 · Updated 2026-10-13_
 
-**Status:** tried
+**Status:** validated
 
 The practitioner's decision of 2026-10-13, confirming the analysis already in
 [todo.md](../todo.md): `reproject` is **split, not retired**. The source widgets
@@ -168,6 +168,116 @@ can be honoured, because `+proj=utm +zone=N` is constructible without a PROJ
 registry in the browser. Another datum needs a shift this prototype does not
 implement, and guessing at one would misplace every point.
 
+## Half B, implemented 2026-10-13
+
+### The direction question, answered
+
+The record said Half B would not start until the direction was settled, because it
+determines whether anything can consume the output. **Forward: CRS84 → UTM.**
+
+It is the only direction that composes. After Half A every source emits CRS84, so
+nothing upstream produces projected points for an inverse transform to consume —
+the inverse had a producer only while `reproject` imported its own file, which is
+the contract being removed. Forward has a producer in every source and a consumer
+in the table view, which is the case the practitioner named: two versions of the
+same data in different frames, one to hand to someone else.
+
+### What changed
+
+`reproject` takes `points` and returns `points`, in Spatial operations, titled
+**Reproject points**. The file dialog is gone — `src/reproject-ui.ts` was deleted,
+since acquisition now belongs to the sources. Released as **0.2.0**, breaking.
+
+Both naming violations cleared with the contract rather than by renaming, which is
+what the ledger had said to wait for: *the title should not be fixed while the
+contract still makes it true*. The ceiling went **6 → 4**.
+
+### Projected points are not geographic points
+
+A `points` value was CRS84 by contract and 23 of its 24 consumers assume degrees.
+`SpatialReference` is widened by a separate `ProjectedReference`, and deliberately
+**not** admitted in a saved node's params: `validateSpatialReference` still accepts
+the geographic one only, so a hand-edited workflow cannot declare its points
+projected and be believed. The projected frame exists on the run-time value, written
+by the step that computed the coordinates matching it.
+
+The distinction is a **hard stop** in `executionPlan`, refusing by name:
+
+> Voronoi catchments needs longitude and latitude, and Reproject points gives it
+> easting and northing in metres. Connect it to the source points instead; Table
+> can show projected coordinates. Every widget that measures projects for itself
+> and states the zone it used.
+
+At plan time rather than run time, because the practitioner can still change the
+connection. `table_output` is the single allowed consumer.
+
+### The last place CRS84 was hardcoded
+
+`table-output.ts` wrote `<CRS84> POINT (...)` into every geometry literal. That was
+true while nothing could project; with this change it would have labelled metres as
+degrees — the defect [110](110-one-projection-per-workflow.md) cleared from the
+receipts, reintroduced at the final step of the chain. It now states the frame the
+coordinates are actually in, verified as `EPSG/0/32630` with Soho eastings.
+
+### Three casts refused
+
+Writing this produced three places where a cast would have made the types compile
+and the record lie, and each was fixed in the type instead:
+
+| Cast | What it would have said | Instead |
+| --- | --- | --- |
+| `targetCRS:crs as 'OGC:CRS84'` | the forward projection outputs CRS84 | `ReprojectProvenance` describes both directions, with units and axis order on each side |
+| `inputs.points` as a layer | — | the port's declared type carries the frame, because the value always did |
+| `fromType:'reproject' as RetiredNodeType` | the type was retired | `RecontractedNodeType`: a third kind of migration, where a type stays and its contract changes |
+
+### Migration
+
+A node saved under 0.1.0 holds `params.data` — points the old widget had **already**
+converted to CRS84 at import. It becomes the `point_input` it effectively was,
+keeping records, label, connections and provenance, stamped
+`sourceMigration.fromType: 'reproject'`. `params.data` is the discriminator, and the
+new contract never writes it.
+
+### What the gate caught
+
+Three checks fired on this change and all three were right. The **blocker ratchet**:
+clearing the naming violation left `sources-group-does-not-mean-acquisition` with
+nothing waiting on it, so it was narrowed to `slr_extract_import`, which still earns
+it. The **name-review gate**: the palette row changed, so the pinned review went
+stale; re-pinned as still `pending`, since it was never accepted under the old name
+either. The **registry**: port contract drift, a missing change history, an ontology
+status contradicting its own empty mappings — three separate ways a release can
+describe a widget that no longer exists.
+
+### The forward projection has no parity evidence
+
+The catalog said so before anyone noticed, and a browser test failed on it:
+
+> Independent check: **agrees · earlier release** — maximum separation 6.70e-5 m
+> over 9 points, against pyproj 3.8.0, PROJ 9.8.1. **Covers release 0.1.0.**
+
+The lab's check 01 recomputes the **inverse** transform, which is what 0.1.0 did.
+0.2.0 projects **forward**, and no notebook checks it. The round-trip in
+`tests/reproject-transform.test.mjs` shows the two directions agree with each
+other to 1e-9 m, which is a self-consistency check and **not parity**: both
+directions come from the same proj4 build, so a fault in proj4's UTM would pass it.
+
+Not papered over. The catalog's suffix is the mechanism that reports it, the test
+now asserts the suffix rather than the bare verdict, and closing it means a lab
+check for the forward direction.
+
+### A default that migrated itself away
+
+Adding `reproject` from the palette produced a **`point_input`**. The palette's
+default params still carried `data:{type:'FeatureCollection',features:[]}` from the
+old contract, and `params.data` is the migration discriminator — so every new node
+was migrated to the input it was never meant to be, immediately, before anyone
+could connect it.
+
+TypeScript could not see it: the field is legitimately optional so that saved
+workflows still parse, and an empty collection is a valid value. Only the browser
+test that opened the Inspector and read what it said caught it.
+
 ## Admission review (D1–D9)
 
 **D1 — does the distinction survive decomposition, and would a practitioner ask
@@ -207,5 +317,8 @@ regional datum is refused by name, and how often that happens here is unmeasured
 
 ## What would close it
 
-Half A implemented, and the direction question answered with a named consumer
-for the transform's output.
+Both halves are implemented and the direction is answered, so what remains is
+evidence rather than design: **no example instantiates `reproject`**, which is D10
+unsatisfied and was unsatisfied before the split too. The transform is exercised
+only by its tests. This moves to retired if a worked example never needs a second
+frame, which would say the mid-workflow case was argued for and not used.

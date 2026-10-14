@@ -36,7 +36,7 @@ import {assertProjectManifest,syncProjectManifest} from './project-manifest.js';
 import {migrateOutputNodes,decisionPresentation} from './output-contract.js';
 import {referencedPDFs,evidenceProvenance} from './evidence.js';
 import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,RenamedNodeType,CandidateCondition} from './types.js';
-import {RENAMED_NODE_TYPES} from './types.js';
+import {RENAMED_NODE_TYPES,isProjectedReference} from './types.js';
 import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
 // Re-exported so the registry validator can cross-check a declared rename against the one the
 // application actually performs, from the same bundle it already reads TYPES out of.
@@ -45,7 +45,7 @@ import type {Reasoner} from './worker-types.js';
 import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status} from './results.js';
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
-interface ExecutionInputs extends OldInputs {polygons:Polygons;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection;original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
+interface ExecutionInputs extends OldInputs {polygons:Polygons;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
@@ -59,7 +59,7 @@ import {tableOutput} from './table-output.js';
 import {MAX_POINT_LAYERS,pointPort,isPointPort} from './point-layers.js';
 import {validateAttributeSchema} from './attribute-schema.js';
 import {defaultSpatialReference,validateSpatialReference} from './spatial-reference.js';
-import {utmDefinition} from './reproject.js';
+import {utmDefinition,projectFromCRS84} from './reproject.js';
 import {dataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
 import {computeRate,fromPoints,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
 import {caseSeries,caseSeriesFromTable,seriesTable,seriesChart,seriesReceipt,validateCaseSeriesNode} from './case-series.js';
@@ -80,7 +80,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   slr_extract_import:{title:'Sea-level projection extract',group:'Sources',icon:'≈',color:'blue',description:'Declare an imported long-format table as a bounded extract of published AR6 projections',inputs:[['projections','table']],output:'table'},
   slr_site_assignment:{title:'Assign projection site',group:'Spatial operations',icon:'⊕',color:'teal',description:'Assign each point its nearest published projection site and record the distance',inputs:[['points','points'],['sites','points'],['projections','table']],output:'table'},
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
-  reproject:{title:'Reproject input',group:'Sources',icon:'⇄',color:'blue',description:'Import projected UTM points and convert them to WGS84 longitude/latitude',inputs:[],output:'points'},
+  reproject:{title:'Reproject points',group:'Spatial operations',icon:'⇄',color:'blue',description:'Project longitude/latitude points into a UTM zone, in metres',inputs:[['points','points']],output:'points'},
   raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
   // Extracted from `access`, which derived proxy minutes inside a nearest-neighbour search. A
   // widget and not a knob: a minutes column changes every row for every consumer of `distances`,
@@ -213,6 +213,18 @@ export function validateWorkflow(raw:unknown):Workflow {
   // Normalize historical heat sources before validation to preserve scalar attributes.
   w.nodes=w.nodes.map(n=>n && (n.type==='places'||n.type==='centers')
     ? {...n,type:'point_input',sourceMigration:{fromType:n.type,version:'1'}} : n);
+  // `reproject` was a Source that imported a UTM file and stored the CONVERTED CRS84 points
+  // (experiment 111). From 2026-10-13 it is a transform that takes points and returns points, so a
+  // node saved under the old contract carries data no transform should own. The stored points are
+  // already CRS84 -- the conversion ran at import -- so the node becomes the input it effectively
+  // was, and its records, label and connections are kept. The discriminator is `params.data`,
+  // which the new contract never writes.
+  w.nodes=w.nodes.map(n=>n && n.type==='reproject' && isRecord(n.params) && isRecord((n.params as Record<string,unknown>).data)
+    ? {...n,type:'point_input' as const,
+       params:{label:(n.params as {label?:string}).label||'Reprojected points',
+         data:(n.params as {data:PointCollection}).data,
+         sourceInfo:{format:'reprojected-points',...(n.params as {source?:object}).source,...(n.params as {provenance?:object}).provenance}} as ParamsByType['point_input'],
+       sourceMigration:{fromType:'reproject' as const,version:'1' as const}} : n);
   // `nearest`'s input ports were renamed from the heat demo's `places`/`centers` to the general
   // `points`/`candidates`. A saved workflow still names the old ones, and an edge whose port no
   // longer exists is refused, so it is rewritten here rather than failing to open.
@@ -322,7 +334,7 @@ export function validateWorkflow(raw:unknown):Workflow {
       if(t.rows.length>MAX_TABLE_ROWS)throw new Error(`Tabular input supports at most ${MAX_TABLE_ROWS.toLocaleString()} rows.`);
     }
     // Reproject stores the already-converted CRS84 collection, so it is validated as geographic here.
-    if(n.type==='reproject'){utmDefinition(n.params.zone,n.params.hemisphere);n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);n.params.data=validateGeoJSON(n.params.data,{attributes:true});}
+    if(n.type==='reproject'){utmDefinition(n.params.zone,n.params.hemisphere);n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
     if(n.type==='point_input'){validateAttributeSchema(n.params.data,n.params.fields,n.params.attributeRules);if(n.params.pinIdStrategy!==undefined&&!['sequential','uuid'].includes(n.params.pinIdStrategy))throw new Error('Choose sequential or UUID identifiers for new pins.');}
     if((n.type==='map_output'||n.type==='table_output')&&n.params.inputMode!==undefined&&!(n.type==='map_output'?['spatial','decisions','raster','polygons','network']:['spatial','decisions','polygons','table']).includes(n.params.inputMode))throw new Error('Choose spatial inputs or reasoning results.');
     if(n.type==='map_output'&&((n.params.presentation!==undefined&&!['plot','interactive'].includes(n.params.presentation))||(n.params.contextPoints!==undefined&&typeof n.params.contextPoints!=='boolean')))throw new Error('Invalid polygon map presentation.');
@@ -409,6 +421,26 @@ export function executionPlan(workflow:Workflow) {
       // practitioner has asked for the study area to bound the request.
       const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new Error(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));} done.add(node.id);result.push(node);}
   outputs.forEach(visit);
+  // Projected points are not geographic points. `reproject` emits easting and northing in metres,
+  // and 23 of the 24 widgets that accept a `points` port assume degrees: a buffer would read metres
+  // as degrees, a haversine distance would return a finite nonsense number, and a map would plot
+  // the Atlantic. That is the silent failure src/input-data.ts documents for a UTM CSV, moved
+  // mid-workflow where there is no file to re-read.
+  //
+  // Enforced here as a HARD STOP at plan time rather than discovered at run time, because the
+  // practitioner can still change the connection. The allowed consumers are the ones that show
+  // coordinates as values rather than computing with them.
+  const PROJECTED_CONSUMERS=new Set(['table_output']);
+  for(const edge of w.edges){
+    const from=w.nodes.find(n=>n.id===edge.from);
+    if(from?.type!=='reproject')continue;
+    const to=w.nodes.find(n=>n.id===edge.to);
+    if(!to||!result.some(n=>n.id===to.id))continue;
+    if(!PROJECTED_CONSUMERS.has(to.type))throw new Error(
+      `${TYPES[to.type]?.title||to.type} needs longitude and latitude, and ${TYPES[from.type].title} gives it easting and northing in metres. `
+      +`Connect it to the source points instead; ${[...PROJECTED_CONSUMERS].map(t=>TYPES[t as NodeType]?.title||t).join(' and ')} can show projected coordinates. `
+      +`Every widget that measures projects for itself and states the zone it used.`);
+  }
   // One RUN, one projection. Nine widgets project to metres and each carries its own zone, with
   // nothing requiring them to agree -- and two plausible zones differ by 0.58% on the same points.
   //
@@ -559,7 +591,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'slr_threshold_comparison':{const table=inputs.assignments;if(!table?.assignments)throw new Error('Connect Assign projection site: a comparison needs the assignments, not a plain table.');const comparison=compareToElevation(table.assignments,{selection:{scenario:node.params.scenario,basis:node.params.basis,family:node.params.family,year:node.params.year,quantile:node.params.quantile},elevationField:node.params.elevationField,verticalDatum:node.params.verticalDatum,elevationReference:node.params.elevationReference});value=comparison as unknown as DisplayValue;receipts.push(thresholdReceipt(node,comparison,table.assignments,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='assignments')!.from));break;}
       case 'table_input':{if(!node.params.data.rows.length)throw new Error('Import a long-format table before running.');const imported=tableReceipt(node,node.params.data,runId);value=imported.value;receipts.push(imported.receipt);break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
-      case 'reproject':{if(!node.params.data.features.length)throw new Error('Import a projected point file before running.');value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:{format:'reprojected-points',...structuredClone(node.params.provenance||{}),...structuredClone(node.params.source||{})},spatialReference:structuredClone(node.params.spatialReference)};break;}
+      case 'reproject':{
+        const source=inputs.points;
+        if(isProjectedReference(source.spatialReference))throw new Error(`${TYPES[node.type].title} projects longitude and latitude into a UTM zone. Its input is already projected into ${source.spatialReference.geometryCRS}; projecting twice is not a conversion between zones.`);
+        const projected=projectFromCRS84(source,node.params.zone,node.params.hemisphere);
+        const {crs}=utmDefinition(node.params.zone,node.params.hemisphere);
+        value={...projected.collection,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:{format:'projected-points',...structuredClone(projected.provenance)},
+          spatialReference:{datum:'WGS84',geodeticCRS:'EPSG:4326',geometryCRS:crs,axisOrder:'easting-northing',units:'metre'}};break;}
       case 'alert':value=node.params;break;
       case 'measure_distance':{
         const searched=nearestPlaces(inputs.points,inputs.candidates,node.params.unit,node.params.candidateFilter);

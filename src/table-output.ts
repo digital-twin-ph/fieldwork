@@ -1,3 +1,4 @@
+import {crsIRIFromName} from './metric-crs.js';
 import type {NodeSpec,WorkflowNode,PointInput,Escape} from './types.js';
 import type {CoverageValue,TableValue,PointRow,CoverageRow,Receipt} from './results.js';
 export type TableInputs={coverage:CoverageValue;points?:never}|{coverage?:undefined;points:PointInput};
@@ -22,7 +23,11 @@ export function tableOutput(node:WorkflowNode<'table_output'>,inputs:TableInputs
   else for(const row of value.rows){
     const record=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}>`,geometry=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}:geometry>`;
     facts+=`${record} a geo:Feature; rdfs:label ${JSON.stringify(row.name)}; <http://purl.org/dc/terms/isPartOf> <urn:fieldwork:source:${row.sourceNodeId}>.\n`;
-    if(row.coordinates)facts+=`${record} geo:hasGeometry ${geometry}.\n${geometry} a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> POINT ('+row.coordinates.join(' ')+')')}^^geo:wktLiteral.\n`;
+    // The WKT names the frame the coordinates are actually in. It was hardcoded to CRS84, which
+    // was true while nothing could project; once `reproject` can hand this view easting and
+    // northing, a fixed CRS84 would label metres as degrees -- the same defect the receipts were
+    // cleared of on 2026-10-13, reintroduced at the last step of the chain.
+    if(row.coordinates)facts+=`${record} geo:hasGeometry ${geometry}.\n${geometry} a geo:Geometry; geo:asWKT ${JSON.stringify('<'+(crsIRIFromName(value.spatialReference?.geometryCRS??'')??CRS84)+'> POINT ('+row.coordinates.join(' ')+')')}^^geo:wktLiteral.\n`;
     for(const [key,v] of Object.entries(row.attributes))if(key!=='name')facts+=`${record} fw:attribute [ fw:fieldKey ${JSON.stringify(key)}; ${v===null?'fw:missingValue true':'<http://www.w3.org/1999/02/22-rdf-syntax-ns#value> '+attributeLiteral(v,row.attributeTypes[key])} ].\n`;
   }
   return {value,receipt:{nodeId:node.id,kind:'presentation',input:facts,facts,rules:'',conclusions:[],method:'Tabular presentation of source records; no new spatial classification or exclusion'}};

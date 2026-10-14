@@ -29,7 +29,17 @@ const retired=new Set(registry.widgets.filter(w=>
   read(`widgets/releases/${w.nodeType}/${w.currentVersion}.json`).implementationStatus==='retired')
   .map(w=>w.nodeType));
 const known=new Set(registry.widgets.map(w=>w.nodeType).filter(t=>!retired.has(t)));
-const checked=new Map(parity.entries.map(e=>[e.widget.split(':').pop(),e.check]));
+// Every check recorded for a widget, not the last one written down. A widget may be covered by
+// more than one: `apply_ruleset` is checked against an enumerated decision table by 23 and against
+// a rule over derived geometry by 25, and `summarize_hull` by 10 for its ring and by 25 for the
+// area that ring derives. Keyed as a Map of one check, the second entry silently replaced the
+// first and this validator reported the widget's own declaration as a claim about nothing.
+// Found 2026-10-14 by adding the second check. Experiment 113.
+const checked=new Map();
+for(const e of parity.entries){
+  const nodeType=e.widget.split(':').pop();
+  checked.set(nodeType,(checked.get(nodeType)||new Set()).add(e.check));
+}
 const problems=[];
 
 if(declared.size!==coverage.widgets.length)problems.push('A widget is declared twice.');
@@ -47,7 +57,7 @@ for(const [nodeType,entry] of declared){
   if(entry.expectation==='parity'&&!entry.check&&!entry.computes?.trim())
     problems.push(`${nodeType}: say what it computes, so the check that is owed has something to aim at.`);
   // A claimed check has to exist as parity evidence, or the count is a claim about nothing.
-  if(entry.check&&checked.get(nodeType)!==entry.check)
+  if(entry.check&&!checked.get(nodeType)?.has(entry.check))
     problems.push(`${nodeType}: claims check "${entry.check}", which parity.json does not record for it.`);
   if(!entry.check&&checked.has(nodeType))
     problems.push(`${nodeType}: parity.json records check "${checked.get(nodeType)}" and this file does not. Record it, so the count falls.`);

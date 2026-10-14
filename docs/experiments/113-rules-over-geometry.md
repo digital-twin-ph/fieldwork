@@ -151,6 +151,71 @@ The `polygon-extent` case carries that finding as a comment where the branch is.
 prediction 3 — that a composite would need a human admission review before the
 palette — is untested, because there is nothing to review.
 
+## What breaks the composite: a decision is not a thing
+
+Raised by the practitioner on 2026-10-14, as a question about the design rather than
+about the code:
+
+> How can decisions be an output?
+
+Literally, it is a declared port type, and the type is **data**: `apply_ruleset` takes its
+output from the ruleset's own contract, and `extent-review` declares
+`ports: {inputs: [["polygons","polygons"]], output: "decisions"}`. `outputOf` reads it off
+the pin (`src/core.ts:147`), so changing it is a ruleset version, not a code change.
+
+**But for polygons that value is the judgement with its subject thrown away.** Two
+projections in the same file, doing the same job:
+
+| Ruleset over | Returns | So a map can |
+| --- | --- | --- |
+| points — `outreachProjection` | `{...row, status, explanation}`, the subject kept whole including its coordinates | draw the decisions |
+| polygons — `extentProjection` | `{id, name, status, areaSquareMetres, explanation}` — **no geometry** | not draw them |
+
+`extentProjection`'s own doc comment says *"The classification, assembled onto the polygons
+it is about"*. It is not: the polygons do not come out. So a decision about a shape can be
+listed and cannot be drawn, and the inconsistency is invisible until someone tries to map
+one.
+
+**This is the fourth instance of the same defect shape on 2026-10-14**, after the `alert`
+widget's date, `fw:metricCRS` inside a JSON string, and the derived area this experiment
+already fixed: a quantity computed, published, and left where nothing downstream can use
+it. Here it is a conclusion rather than a measurement.
+
+### Why it breaks the composite specifically
+
+A composition has exactly one output (`ports.output`, one terminal member,
+`src/compositions.ts:155`). A composite of `summarize_hull → apply_ruleset` therefore emits
+whatever the ruleset emits.
+
+`snow-extent` feeds the hull to **two** places: the ruleset, and the map that draws the
+outbreak outline. Substituting a composite that emits `decisions` leaves the map with
+nothing to connect to, because a decision value has no geometry. So the experiment's own
+test — the practitioner's method, *substitute it into the worked example and see* — cannot
+be run while the ruleset emits decisions. That is what makes or breaks this experiment,
+and it is a property of the port type rather than of the composition machinery.
+
+### The change, and what it predicts
+
+The decision travels **on** the record it is about: `extentProjection` returns the polygons
+with `status` and `explanation` attached to each feature, and the ruleset declares
+`output: "polygons"`.
+
+Predictions, written before building:
+
+1. Substituting the composite into `snow-extent` will then keep **every** edge, because the
+   composite emits what the hull emitted plus a judgement. The one-output limit stops being
+   a blocker without being changed.
+2. The decision will survive operations the decision table never could: clipping or
+   summarising the polygons afterwards keeps the status, where today it is dropped at the
+   ruleset.
+3. The map will be able to colour by status, which is the first time a rule result is
+   visible as geometry rather than as a row.
+4. Nothing is lost for the table: a polygons value carrying status is a superset of the
+   rows the decision table read.
+
+If prediction 1 fails, the obstacle is the composition machinery after all, and the
+one-output limit is the thing to argue with.
+
 ## The question to settle before building it
 
 A composition passes values to its members two ways, and a ruleset fits neither
@@ -178,4 +243,5 @@ changed this file; a date stamp sweep is not an update._
 | Date | What happened |
 | --- | --- |
 | 2026-10-14 | Rules over geometry: a quantity derived, attached, and classified |
+| 2026-10-14 | "How can decisions be an output?" — the question that decides the experiment. A ruleset over points returns its subject whole; a ruleset over polygons returns the judgement without the geometry, so a decision about a shape cannot be drawn and the composite cannot replace the hull in the worked example. Fourth instance of the day's defect shape. The fix and its four predictions recorded |
 | 2026-10-14 | Status to tried. Predictions 1 and 2 held; the blocker is fixed, `extent-review` ships and `snow-extent` runs it end to end. The composition is still not built, and the question that blocks it is recorded: a composition can fix a ruleset pin but cannot expose one, and nothing reports a ruleset moving under a pinned composite |

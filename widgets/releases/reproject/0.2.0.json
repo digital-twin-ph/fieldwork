@@ -1,0 +1,69 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:reproject",
+  "nodeType": "reproject",
+  "version": "0.2.0",
+  "title": "Reproject points",
+  "released": "2026-10-13",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['reproject']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      }
+    ],
+    "output": "points",
+    "optionalInputs": [],
+    "note": "A transform, not a source. Takes CRS84 points and returns the same records projected into the declared UTM zone, in metres. The output is a PROJECTED points value: its spatialReference carries units 'metre' and axis order 'easting-northing', and executionPlan refuses to connect it to any widget that assumes degrees."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No coordinate-transformation activity class or runtime SHACL shape is defined, so this step writes no typed RDF of its own and the status is a gap rather than a partial alignment. What the projection does reach RDF through is the consuming view: a Table output renders the geometry with the OGC IRI of the frame the coordinates are actually in, rather than the fixed CRS84 it asserted before 2026-10-13.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/reproject.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES",
+    "note": "src/reproject-ui.ts was deleted with this release: the file dialog belonged to the acquiring contract, and the sources read UTM themselves from 0.2.0 of the import path."
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "version": "0.2.0",
+      "description": "Split: the widget stopped importing its own data and became a points-to-points transform, projecting CRS84 into a UTM zone.",
+      "breaking": true,
+      "migration": "A node saved under 0.1.0 carries params.data holding points the old widget had ALREADY converted to CRS84 at import. validateWorkflow rewrites such a node to point_input with those records, its label and its connections kept, and stamps sourceMigration.fromType 'reproject'. Recorded as a RecontractedNodeType: the type was neither retired nor renamed, its contract changed.",
+      "direction": "CRS84 -> UTM, which is the only direction that composes. After the source CRS rule every source emits CRS84, so nothing upstream produces projected points for an inverse transform to consume.",
+      "record": "docs/experiments/111-splitting-reproject.md"
+    },
+    {
+      "kind": "initial",
+      "description": "Import-time projection change from WGS84 UTM metres to CRS84 degrees; see docs/experiments/40-reprojection-primitives.md. WGS84 zones only, no datum shift, no raster warping. Narrower than the general Reproject node proposed in experiment 05."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks assert UTM definitional invariants (false easting and northing, symmetry about the central meridian), round-trip error within 0.01 m and guard refusals. Independently compared against pyproj 3.8.0 / PROJ 9.8.1 over nine points in zone 35 south: maximum separation 6.70e-05 m against a 1 mm tolerance, explained by the nine-decimal coordinate rounding (see docs/experiments/41-validation-lab.md). That comparison ran in CPython, not a browser kernel, covers one zone, and establishes no datum other than WGS84."
+  }
+}

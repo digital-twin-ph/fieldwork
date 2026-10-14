@@ -10,7 +10,15 @@ export interface FormField extends AttributeDefinition {label:string}
 export interface PointFeature {type:'Feature'; id:string; properties:Record<string,Scalar> & {name:string}; geometry:Point|null}
 export interface PointCollection {type:'FeatureCollection'; features:PointFeature[]}
 export interface SpatialReference {datum:'WGS84'; geodeticCRS:'EPSG:4326'; geometryCRS:'OGC:CRS84'; axisOrder:'longitude-latitude'; units:'degree'}
-export interface PointLayer extends PointCollection {sourceNodeId:string; label?:string; spatialReference?:SpatialReference; attributeDefinitions?:AttributeDefinition[]}
+/** The frame of a value that has been projected to metres mid-workflow. Deliberately NOT allowed
+ *  in a saved node's params: `validateSpatialReference` still accepts the geographic one only, so
+ *  a hand-edited workflow cannot declare its points projected and have the application believe it.
+ *  A projected frame is produced by `reproject` at run time, on the value, where the coordinates
+ *  that match the label were computed in the same step that wrote it. */
+export interface ProjectedReference {datum:'WGS84'; geodeticCRS:'EPSG:4326'; geometryCRS:string; axisOrder:'easting-northing'; units:'metre'}
+export type AnySpatialReference = SpatialReference | ProjectedReference;
+export const isProjectedReference=(reference:AnySpatialReference|undefined):reference is ProjectedReference=>reference?.units==='metre';
+export interface PointLayer extends PointCollection {sourceNodeId:string; label?:string; spatialReference?:AnySpatialReference; attributeDefinitions?:AttributeDefinition[]}
 export type PointInput = PointLayer | {layers:PointLayer[]};
 export interface SourceInfo {format:string; [key:string]:unknown}
 export interface PointParams {label:string; data:PointCollection; spatialReference?:SpatialReference}
@@ -58,7 +66,10 @@ export interface ParamsByType {
   slr_extract_import:{label:string;datasetIRI:string;datasetVersion:string;baselinePeriod:string;citations:string[];basisKind:''|'workflow'|'confidence-pbox';familyValues:{withVerticalLandMotion:string;withoutVerticalLandMotion:string}};
   slr_site_assignment:{label:string};
   slr_threshold_comparison:{label:string;scenario:string;basis:string;family:string;year:string;quantile:string;elevationField:string;verticalDatum:string;elevationReference:''|'baseline-sea-surface'|'other-datum'};
-  reproject:{label:string;zone:number;hemisphere:'north'|'south';data:PointCollection;spatialReference?:SpatialReference;source?:import('./reproject.js').ReprojectSource;provenance?:import('./reproject.js').ReprojectProvenance};
+  // From 2026-10-13 a transform, not a source: it takes points and returns points. `data`, `source`
+  // and `provenance` remain OPTIONAL so a workflow saved before that date still parses; they are
+  // the discriminator the migration reads, and nothing writes them any more.
+  reproject:{label:string;zone:number;hemisphere:'north'|'south';data?:PointCollection;spatialReference?:SpatialReference;source?:import('./reproject.js').ReprojectSource;provenance?:import('./reproject.js').ReprojectProvenance};
   /** `maxNodes` is the graph ceiling, a knob rather than a fixed cap: the contract does not move
    *  with it (ports, output carrier and behaviour are unchanged, only what is admitted changes) and
    *  the failure it guards is contained, because isochrone runs in a Worker with a timeout. 2,000 is
@@ -111,6 +122,12 @@ export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:
 /** The node types a saved workflow may still name and no canvas may still hold. A retired widget
  *  never runs, so loading one is a rewrite that must say so, or a refusal that names it. */
 export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert';
+/** A node type that still exists but whose contract changed, so a node saved under the old one is
+ *  migrated to a different type. `reproject` was a Source holding an imported file; from
+ *  2026-10-13 it is a points-to-points transform, and the saved nodes become the `point_input`
+ *  they effectively were. Distinct from retirement, where the type is gone, and from a rename,
+ *  where the contract is the same under a new name. */
+export type RecontractedNodeType='reproject';
 
 /** Node types that were renamed rather than retired: the operation is unchanged and the old
  *  identifier keeps resolving, so a saved workflow opens and runs. Distinct from a retirement,
@@ -120,7 +137,7 @@ export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'
 export type RenamedNodeType='samples'|'nearest'|'observations'|'area';
 export const RENAMED_NODE_TYPES:Record<RenamedNodeType,NodeType>={samples:'point_grid',nearest:'measure_distance',observations:'point_input',area:'study_area'};
 
-export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType|RenamedNodeType; version:'1'}};
+export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType|RenamedNodeType|RecontractedNodeType; version:'1'}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}
 export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'|'raster'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'sea-level'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
 // 'samples' was removed on 2026-10-12: it sat in this union and nowhere else, produced by

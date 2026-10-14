@@ -706,12 +706,17 @@
     {
       "id": "urn:fieldwork:widget:reproject",
       "nodeType": "reproject",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/reproject/0.1.0.json",
           "sha256": "dffeecbf96534c06a0e9f1bb88eed316943b1c94587f19ebfe9273280ea192ad"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/reproject/0.2.0.json",
+          "sha256": "c593359e126a53909557f85927f1c5a1db6fef3479ca59259742dedea56b6ef2"
         }
       ]
     },

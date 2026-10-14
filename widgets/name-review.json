@@ -68,13 +68,13 @@
     },
     {
       "nodeType": "reproject",
-      "title": "Reproject input",
-      "group": "Sources",
-      "fingerprint": "92978ef26028",
+      "title": "Reproject points",
+      "group": "Spatial operations",
+      "fingerprint": "0717fdbb9716",
       "verdict": "pending",
       "reviewed": null,
       "reviewedBy": null,
-      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
+      "note": "Re-pinned 2026-10-13 after the split in experiment 111 changed the contract: the widget stopped importing its own data and became a points-to-points transform, so it moved from Sources to Spatial operations and the title gained the object it acts on. Both mechanical naming violations cleared with it and the ceiling went 6 -> 4. STILL PENDING review: the row was never accepted under the old name either, and re-pinning records what the palette now says, not that anyone has agreed with it."
     },
     {
       "nodeType": "slr_extract_import",

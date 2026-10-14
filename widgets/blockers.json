@@ -189,7 +189,6 @@
       "id": "sources-group-does-not-mean-acquisition",
       "claim": "Two widgets are grouped under Sources while acquiring nothing. `reproject` imports its own data and converts it, so its name promises a transform its group denies; `slr_extract_import` takes a table on an input port and only validates and annotates it. The palette group states a workflow stage, and for these two it states one the contract does not occupy.",
       "blocks": [
-        "reproject",
         "slr_extract_import"
       ],
       "recorded": "2026-10-13",
@@ -198,7 +197,8 @@
       "liftTest": "A check in scripts/validate-naming.mjs requires a widget grouped under Sources to acquire something -- no inputs, or acquired data carried in its params as `find_health_facilities` does -- and both widgets either move group or change contract so the check passes without an exemption.",
       "measured": "slr_extract_import declares inputs:[['projections','table']] and holds no data parameter; the table arrives from table_input. reproject declares inputs:[] and holds params.data, so it genuinely acquires -- but it also reprojects, which is why the split recorded in docs/todo.md gives the sources an output CRS and leaves reproject a points-to-points transform.",
       "alsoFound": "The naming ratchet added 2026-10-13 catches reproject through its transform verb and misses slr_extract_import entirely, because that rule keys on the verb rather than on the contract. A rule that asks whether a source acquires would catch both, and would not depend on a verb list staying complete.",
-      "record": "docs/audits/widget_audit.md"
+      "record": "docs/audits/widget_audit.md",
+      "resolvedForReproject": "Lifted for `reproject` on 2026-10-13 by the split in experiment 111, which is what the lift test asked for: the widget changed contract rather than taking an exemption. It no longer imports its own data -- the sources read UTM themselves -- and takes points and returns points under Spatial operations. Both of its naming violations cleared with it and the ceiling went 6 -> 4. It still stands for `slr_extract_import`, which declares inputs:[['projections','table']], holds no data parameter, and acquires nothing: the table arrives from table_input and this widget validates and annotates it."
     },
     {
       "id": "isochrone-does-not-scale",

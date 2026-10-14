@@ -32,7 +32,11 @@ test('the widget catalog shows identities, digests and independent checks, and w
   const row=dialog.locator('tr[data-widget="reproject"]');
   await expect(row).toContainText(reproject.currentVersion);
   await expect(row).toContainText(reproject.releases.find(r=>r.version===reproject.currentVersion).sha256.slice(0,12));
-  await expect(row.locator('[data-parity]')).toHaveText('agrees');
+  // "earlier release" is the catalog being honest, not a stale fixture. The lab's check 01 proves
+  // the INVERSE transform of reproject 0.1.0; 0.2.0 projects forward and has no parity evidence of
+  // its own. The suffix appears the moment a release outruns the check that covers it, which is
+  // what this assertion is here to keep working -- it changed when reproject 0.2.0 shipped.
+  await expect(row.locator('[data-parity]')).toHaveText('agrees · earlier release');
 
   // A partial result is shown as partial rather than rounded up to a pass.
   await expect(dialog.locator('tr[data-widget="clip_raster"] [data-parity]')).toHaveText('partial');

@@ -2,9 +2,9 @@
 
 _Created 2026-10-14 · Updated 2026-10-14_
 
-**Status:** tried — the blocker is fixed, the ruleset exists and a worked example
-runs it. The composition the record is named for is not built, and the question
-that has to be answered before it can be is below.
+**Status:** validated — the composite is built, substituted into the worked example and
+checked against Shapely. Three of the four predictions held; the fourth held only after a
+change nobody predicted.
 
 Proposed by the practitioner on 2026-10-14, in two steps. First:
 
@@ -216,7 +216,58 @@ Predictions, written before building:
 If prediction 1 fails, the obstacle is the composition machinery after all, and the
 one-output limit is the thing to argue with.
 
-## The question to settle before building it
+## What the building found, 2026-10-14
+
+**Prediction 1 held.** `classify_extent` 0.1.0 pins `summarize_hull → apply_ruleset`, and
+substituting it into `snow-extent` keeps **every** edge: the composite takes the points and
+hands back polygons, so the decision table and the map connect to it exactly as they
+connected to the two nodes it replaced. A browser test drives that substitution. The
+one-output limit stopped being a blocker without being changed, as predicted — but only
+because the port type changed first.
+
+**Prediction 2 held**, by construction: the status is a field on the polygon, so whatever
+clips, summarises or displays it afterwards carries the judgement.
+
+**Prediction 3 is partly met.** The map draws the judged polygon, because it is a polygon.
+It does not yet colour by status: the SVG fills every ring the same way. The claim in the
+prediction was too strong, and the honest version is that the decision is now *drawable*,
+which it was not before.
+
+**Prediction 4 held only after a change nobody predicted.** The polygon table showed the
+polygons and said nothing about their status, because it builds its attributes from a fixed
+list of catchment fields. A judgement that travels on a record has to be VISIBLE on the
+record, or the table a practitioner reads is poorer than the one the old decisions port
+gave them. The attributes now include `status`, `explanation` and `areaSquareMetres`.
+
+### Three limits in the composition machinery, found by building one
+
+Each was found by trying, in this order, and each is recorded because the next composition
+will hit them too.
+
+| Limit | What it blocked | What happened |
+| --- | --- | --- |
+| A public parameter's default is `string \| number \| boolean` | a ruleset pin, which is an object, cannot be exposed — only fixed | **Unfixed.** The composite fixes its ruleset, and the drift report says nothing when a ruleset moves underneath it, because drift tracks member *widget* digests |
+| A parameter could only address a TOP-LEVEL field | the extent threshold lives at `parameters.threshold`, so the one number a practitioner must choose could not be exposed | **Fixed.** A member parameter may be addressed by a dotted path. The alternative was to fix the threshold inside a composite whose own "must not be read as" says that number is the practitioner's to set |
+| The validator read a member's output from the static type table | `apply_ruleset` takes its output from the ruleset it pins, so `TYPES` records null and the composition was refused as emitting nothing | **Fixed.** A member's output is read from its pin when it has one. The validator already did this for INPUTS and not for the output |
+
+The first is the one to watch: a composition pins its widgets and not what they were told to
+apply.
+
+### Checked, not just run
+
+Lab check 25 rebuilds the whole chain in Shapely — hull, area, threshold — because checking
+the comparison alone would prove nothing; what was doubted is whether a derived quantity can
+reach a rule at all. The same 11-vertex ring, 139,230.0 m² against 139,230.0, and NoFlag from
+both for the same stated comparison, with the explanation read for the same two numbers so a
+status that agreed by accident would still fail.
+
+The notebook beside it carries the Dive Deeper half, because the three changes behind that
+short check are easy to miss in the diff: a derived quantity has to be a field rather than a
+line in a receipt, a decision has to travel on the thing it judges, and a composite can only
+replace a chain if it emits what the chain emitted. It is linked from `apply_ruleset` and
+from `summarize_hull`, whose area is the first of the three.
+
+## The question that had to be settled before building it
 
 A composition passes values to its members two ways, and a ruleset fits neither
 cleanly.
@@ -235,6 +286,9 @@ that holds, the composition is feasible and the pinning is incomplete — a
 composition pins its widgets and not what they were told to apply — and that gap
 is the result of this experiment rather than a reason not to build it.
 
+_Held, both halves. `classify_extent` fixes `extent-review` 1.1.0 and runs; nothing
+reports a ruleset moving under a pinned composite. Recorded 2026-10-14._
+
 ## Updates
 
 _Appended, never rewritten. Rows before this table existed are seeded from the commits that
@@ -245,3 +299,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | Rules over geometry: a quantity derived, attached, and classified |
 | 2026-10-14 | "How can decisions be an output?" — the question that decides the experiment. A ruleset over points returns its subject whole; a ruleset over polygons returns the judgement without the geometry, so a decision about a shape cannot be drawn and the composite cannot replace the hull in the worked example. Fourth instance of the day's defect shape. The fix and its four predictions recorded |
 | 2026-10-14 | Status to tried. Predictions 1 and 2 held; the blocker is fixed, `extent-review` ships and `snow-extent` runs it end to end. The composition is still not built, and the question that blocks it is recorded: a composition can fix a ruleset pin but cannot expose one, and nothing reports a ruleset moving under a pinned composite |
+| 2026-10-14 | Status to validated. `extent-review` 1.1.0 hands back the polygons it judged; `classify_extent` 0.1.0 pins hull + ruleset and substitutes into `snow-extent` keeping every edge; lab check 25 rebuilds the chain in Shapely and agrees to the vertex and the square metre. Three limits in the composition machinery found by building one, two fixed and one left open: a composition pins its widgets and not the ruleset they apply |

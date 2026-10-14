@@ -5,6 +5,22 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.0 — In development
 
+- **A rule about a shape now hands the shape back.** The extent ruleset used to return a table of
+  judgements and drop the geometry, so a decision about a polygon could be listed and never drawn,
+  clipped or summarised. `extent-review` **1.1.0** returns the polygons it judged, each carrying its
+  status and the comparison behind it, and the polygon table shows both along with the area the
+  polygon derived. The John Snow outbreak-extent example draws the judged outline. A workflow
+  pinning 1.0.0 keeps working and keeps its old table.
+- **A saved composition can hold a ruleset.** `classify_extent` is one step that expands into a
+  convex hull and the extent ruleset, with the threshold exposed for a practitioner to set. It is
+  private and unreviewed, as the other composition is. Building it fixed two limits that any future
+  composition would have hit: a parameter can now address a nested field, and a member whose output
+  port comes from its own pin is no longer refused as emitting nothing. One limit is left open and
+  recorded — a composition pins its widgets, not the ruleset they apply, so nothing reports a
+  ruleset moving underneath it.
+- Widgets that measure a shape and widgets that judge one now link to the Validation Lab notebook
+  explaining what those steps assume, reachable from the Inspector.
+
 - **A travel-time catchment now charges all three parts of the walk, and draws the whole
   route.** The walk off the street at the end — from the last junction to a door — used to be a
   fixed 25 m strip drawn around every reached street, including the streets at the very edge of

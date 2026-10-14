@@ -262,9 +262,43 @@ The lab's check 01 recomputes the **inverse** transform, which is what 0.1.0 did
 other to 1e-9 m, which is a self-consistency check and **not parity**: both
 directions come from the same proj4 build, so a fault in proj4's UTM would pass it.
 
-Not papered over. The catalog's suffix is the mechanism that reports it, the test
-now asserts the suffix rather than the bare verdict, and closing it means a lab
-check for the forward direction.
+**Closed 2026-10-14** by lab check 24, `24-project-vs-pyproj.ipynb`, against pyproj
+3.8.0 / PROJ 9.8.1 over nine points spread across zone 30 north — on the central
+meridian, at both edges of the six-degree band, and from 0.5° to 70° of latitude.
+
+> **agrees** · maximum separation **0.623 mm** against a stated 1 mm tolerance.
+
+The residual is the storage precision, not the projection. Fieldwork keeps
+projected coordinates to three decimals, whose combined rounding bound is
+0.707 mm, and the notebook computes that bound rather than asserting it: the worst
+separation is **below** it, so the two implementations agree as finely as the file
+can record. The catalog now reports plain `agrees`, and the test asserts that,
+with the suffix's meaning kept in a comment — if it returns, a release has
+outrun its check.
+
+### The check the coordinates alone could not make
+
+Fieldwork builds two things from the same zone and hemisphere: the proj4 string it
+projects with, and the `EPSG:326xx` label its receipts carry. They are constructed
+separately, so they can disagree — and **no comparison of coordinates would
+notice**, because every point would agree with the definition actually used while
+the receipts named a different frame to everyone downstream.
+
+So the check recomputes from the declared *definition* and then asks PROJ whether
+the declared *code* is the same frame. Lift-tested by mutating the fixture:
+
+| Fixture altered | Separation | Code matches | Verdict |
+| --- | --- | --- | --- |
+| nothing | 0.62 mm | yes | agrees |
+| one easting moved 2 mm | 2.13 mm | yes | disagrees |
+| definition's zone 30 → 31 | 671,519 m | no | disagrees |
+| **code `EPSG:32630` → `EPSG:32631`** | **0.62 mm** | **no** | **disagrees** |
+| definition made southern | 10,000,000 m | no | disagrees |
+
+The fourth row is why that clause is in the criterion. The coordinates are
+untouched and agree to the same 0.62 mm; only the label is wrong. Without the frame
+comparison the check would have passed a widget that misnames the projection in
+every receipt it writes.
 
 ### A default that migrated itself away
 

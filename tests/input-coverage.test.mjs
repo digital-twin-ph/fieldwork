@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseCSV,csvPoints,syntheticPoints,geoPackageLayers,geoPackagePoints,decodeGeoPackagePoint} from '../build/input-data.js';
+import {parseCSV,csvPoints,syntheticPoints,geoPackageLayers,geoPackagePoints,decodeGeoPackagePoint,geoJSONDeclaredCRS} from '../build/input-data.js';
 import {pointRelation,coverageFacts,coverageExercise,featureSignature} from '../build/spatial-coverage.js';
 import {bboxPolygon} from '../build/study-area.js';
 import {validateGeoJSON,validateWorkflow} from '../build/core.js';
@@ -32,7 +32,23 @@ test('synthetic generation is reproducible and has the requested outside-point c
 test('GeoPackage parser reads point geometry and attributes, rejects unsupported CRS and malformed blobs',async()=>{
   const {SQL,bytes}=await pointGeoPackage(),db=new SQL.Database(bytes);
   assert.equal(geoPackageLayers(db)[0].table_name,'observations');const data=validateGeoJSON(geoPackagePoints(db,'observations'),{attributes:true});assert.deepEqual(data.features[0].geometry.coordinates,[25.9,-24.69]);assert.equal(data.features[0].properties.case_count,3);db.close();
-  const bad=await pointGeoPackage({projected:true}),other=new bad.SQL.Database(bad.bytes);assert.throws(()=>geoPackageLayers(other),/EPSG:4326/);other.close();
+  // A GeoPackage declares its own CRS. Until 2026-10-13 that declaration was read only to refuse
+  // anything but 4326, which sent the practitioner away to reproject a file that had already said
+  // what it was. A WGS84 UTM layer is now honoured and converted; the degrees come back to the
+  // ninth decimal, which is where stored coordinates are rounded.
+  const projectedGpkg=await pointGeoPackage({utm:true}),utmDb=new projectedGpkg.SQL.Database(projectedGpkg.bytes);
+  assert.equal(geoPackageLayers(utmDb)[0].epsg,32735);
+  const converted=geoPackagePoints(utmDb,'observations').features.map(f=>f.geometry.coordinates);
+  for(const [i,[lon,lat]] of [[25.9,-24.69],[25.94,-24.69]].entries()){
+    assert.ok(Math.abs(converted[i][0]-lon)<1e-8,`longitude ${converted[i][0]} is not ${lon}`);
+    assert.ok(Math.abs(converted[i][1]-lat)<1e-8,`latitude ${converted[i][1]} is not ${lat}`);
+  }
+  utmDb.close();
+  // And one it cannot honour is refused BY ITS CODE, which is the part a practitioner can act on.
+  const bad=await pointGeoPackage({projected:true}),other=new bad.SQL.Database(bad.bytes);
+  assert.throws(()=>geoPackageLayers(other),/EPSG:3857/);
+  assert.throws(()=>geoPackageLayers(other),/WGS84 UTM zones/);
+  other.close();
   assert.throws(()=>decodeGeoPackagePoint(new Uint8Array(10),4326),/header/);
 });
 test('coverage exclusions match the source and complete record snapshot, without altering input',()=>{
@@ -94,4 +110,19 @@ test('the x,y gate declares its unit, and cannot see an in-range axis swap',()=>
   // What does catch it is the study area, downstream: every record reads Outside and
   // coverage_check's canProceed goes false. The gate cannot, and should not pretend to.
   assert.ok(true,'recorded: the swap guard is the study area, not this gate');
+});
+
+test('GeoJSON states the frame RFC 7946 fixes it at, and refuses a legacy member that disagrees',()=>{
+  // RFC 7946 removed the `crs` member and fixes GeoJSON at CRS84, but files written to the
+  // superseded 2008 draft still carry one. A member naming a projected system is the one case
+  // where the file says plainly it is not what the importer assumes; reading it as degrees anyway
+  // is the same silent failure a UTM CSV used to produce.
+  const doc=crs=>crs===undefined?{type:'FeatureCollection',features:[]}:{type:'FeatureCollection',crs,features:[]};
+  const named=name=>doc({type:'name',properties:{name}});
+  assert.equal(geoJSONDeclaredCRS(doc()),'CRS84','a file with no member is CRS84 by the standard');
+  for(const name of ['urn:ogc:def:crs:OGC:1.3:CRS84','CRS84','EPSG:4326','urn:ogc:def:crs:EPSG::4326'])
+    assert.equal(geoJSONDeclaredCRS(named(name)),'CRS84',name);
+  assert.throws(()=>geoJSONDeclaredCRS(named('urn:ogc:def:crs:EPSG::32735')),/32735/);
+  assert.throws(()=>geoJSONDeclaredCRS(named('EPSG:27700')),/27700/);
+  assert.throws(()=>geoJSONDeclaredCRS(doc({type:'link',href:'http://example.org/crs'})),/cannot read/);
 });

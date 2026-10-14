@@ -1,3 +1,4 @@
+import {crsIRIFromName} from './metric-crs.js';
 import registry from '../widgets/registry.json';
 import type {WorkflowNode} from './types.js';
 import type {Receipt} from './results.js';
@@ -34,7 +35,17 @@ export function runtimeBindingN3(node:WorkflowNode,runId:string,receipts:Receipt
   if(node.type==='point_input'||node.type==='places'||node.type==='centers'){
     facts+=`${plan} a fw:GenericInputConfiguration.\n${step} a fw:PointInput.\n${output} a fw:PointDataset, geo:FeatureCollection; prov:wasGeneratedBy ${step}; fw:recordCount ${node.params.data.features.length}.\n`;
     const definitions=node.type==='point_input'?[...(node.params.fields||[]),...(node.params.attributeRules||[])]:[];
-    if(node.type==='point_input'&&node.params.sourceInfo)facts+=`${output} fw:sourceMetadata ${JSON.stringify(JSON.stringify(node.params.sourceInfo))}.\n`;
+    if(node.type==='point_input'&&node.params.sourceInfo){
+      facts+=`${output} fw:sourceMetadata ${JSON.stringify(JSON.stringify(node.params.sourceInfo))}.\n`;
+      // The frame the FILE arrived in, as a triple rather than a key inside that JSON string.
+      // A reader asking what a run measured in can now follow the chain the whole way -- source
+      // file, then operation, then run -- and `fw:sourceMetadata` alone could not answer the first
+      // step: the CRS was in the receipt but only as text inside a literal, which is the same
+      // "present but unqueryable" shape this vocabulary spent 2026-10-13 removing elsewhere.
+      const declared=node.params.sourceInfo.sourceCRS??node.params.sourceInfo.crs;
+      const iri=typeof declared==='string'?crsIRIFromName(declared):null;
+      if(iri)facts+=`${output} dcterms:conformsTo <${iri}>.\n`;
+    }
     for(const f of node.params.data.features){const record=`<${base}output:${node.id}:record:${encodeURIComponent(f.id)}>`;
       facts+=`${output} fw:member ${record}.\n${record} a geo:Feature; dcterms:identifier ${JSON.stringify(f.id)}; dcterms:title ${JSON.stringify(f.properties.name)}; dcterms:isPartOf ${output}; fw:missingLocation ${!f.geometry}.\n`;
       if(f.geometry)facts+=`${record} geo:hasGeometry [ a geo:Geometry; geo:asWKT ${JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT ('+f.geometry.coordinates.join(' ')+')')}^^geo:wktLiteral ].\n`;

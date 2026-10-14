@@ -3,11 +3,12 @@
 // declaredParameters alone. See docs/experiments/41-validation-lab.md.
 //
 // Usage: node scripts/export-validation-fixture.mjs <fixtureId> <outputDir>
-//        fixtureId: reproject-utm35s-001 | clip-all-touched-001 | measure-area-001 | mean-center-001
+//        fixtureId: reproject-utm35s-001 | project-forward-utm30n-001 | clip-all-touched-001
+//                   | measure-area-001 | mean-center-001
 //                   | reachability-soho-001 | corridor-soho-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
-import {reprojectToCRS84} from '../build/reproject.js';
+import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
 import {clipRaster,encodeRaster} from '../build/raster.js';
 import {calculateArea,AREA_METHOD} from '../build/area-computation.js';
 import {computeMeanCenter} from '../build/mean-center.js';
@@ -652,6 +653,30 @@ const builders={
       input:collection.features.map(f=>({id:f.id,easting:f.geometry.coordinates[0],northing:f.geometry.coordinates[1]})),
       output:converted.features.map(f=>({id:f.id,longitude:f.geometry.coordinates[0],latitude:f.geometry.coordinates[1]})),
       note:'Recompute the output from declaredParameters and the input only. Fieldwork’s own intermediate values are deliberately absent.'
+    },files:{}};
+  },
+  'project-forward-utm30n-001'(){
+    // The FORWARD direction, CRS84 -> UTM, which reproject 0.2.0 performs and which no check
+    // covered: the lab's check 01 recomputes the inverse that 0.1.0 did. A round trip through
+    // both directions is not parity, because both come from the same proj4 build.
+    //
+    // Spread deliberately across zone 30 north: on the central meridian (-3), at both edges of
+    // the six-degree band where the scale factor is largest, and from near-equatorial to high
+    // latitude, where a metre of northing is a very different number of degrees. All inside the
+    // widget's validity guard, so what is compared is the projection and not the refusal.
+    const zone=30,hemisphere='north';
+    const geographic=[[-3,0.5],[-3,51.5],[-3,70],[-5.9,0.5],[-5.9,51.5],[-5.9,70],[-0.1,0.5],[-0.1,51.5],[-0.1,70]];
+    const collection={type:'FeatureCollection',features:geographic.map(([lon,lat],i)=>({type:'Feature',id:`p${i+1}`,properties:{name:`Point ${i+1}`},geometry:{type:'Point',coordinates:[lon,lat]}}))};
+    const {collection:projected,provenance}=projectFromCRS84(collection,zone,hemisphere);
+    return {fixture:{
+      ...base('project-forward-utm30n-001','reproject','Reproject points','src/reproject.ts#projectFromCRS84'),
+      declaredParameters:{sourceCRS:provenance.sourceCRS,definition:provenance.definition,axisOrder:provenance.axisOrder,units:provenance.units,
+        targetCRS:provenance.targetCRS,targetAxisOrder:provenance.targetAxisOrder,targetUnits:provenance.targetUnits,datumShift:provenance.datumShift,zone,hemisphere,
+        operation:provenance.operation,library:provenance.library},
+      selfReported:{transformed:provenance.transformed,withoutCoordinates:provenance.withoutCoordinates,maxRoundTripM:provenance.maxRoundTripM,coordinateDecimals:3},
+      input:collection.features.map(f=>({id:f.id,longitude:f.geometry.coordinates[0],latitude:f.geometry.coordinates[1]})),
+      output:projected.features.map(f=>({id:f.id,easting:f.geometry.coordinates[0],northing:f.geometry.coordinates[1]})),
+      note:'Recompute the output from declaredParameters and the input only. Fieldwork\u2019s own intermediate values are deliberately absent. Coordinates are stored to three decimals, so agreement is expected at the millimetre rather than exactly.'
     },files:{}};
   },
   'clip-all-touched-001'(){

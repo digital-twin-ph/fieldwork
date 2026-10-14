@@ -177,7 +177,8 @@
     {
       "nodeType": "reproject",
       "expectation": "parity",
-      "check": "01-reproject"
+      "check": "24-project-forward",
+      "note": "Two checks cover this widget. 01-reproject recomputes the INVERSE transform, which the widget performed until release 0.1.0; 24-project-forward recomputes the FORWARD projection it performs from 0.2.0. The check named here is the one covering the current release, because this field answers whether what ships is checked. The validator reads one check per widget from parity.json and keeps the last entry, so a widget with two checks is recorded accurately in parity.json and narrowed to the live one here."
     },
     {
       "nodeType": "sample_raster",

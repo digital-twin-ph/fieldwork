@@ -91,8 +91,8 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label class="field-label" for="map-subtitle">Subtitle / context</label><input id="map-subtitle" maxlength="280" value="${esc(p.mapSubtitle||'')}" placeholder="Optional scope or limitation">
     <label><input id="map-legend-toggle" type="checkbox" ${p.showLegend!==false?'checked':''}> Show map key</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
-    ${p.inputMode==='polygons'?`<label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap"><option value="none" ${!p.basemap||p.basemap==='none'?'selected':''}>None · local geometry, works offline</option><option value="osm" ${p.basemap==='osm'?'selected':''}>OpenStreetMap streets</option><option value="topo" ${p.basemap==='topo'?'selected':''}>OpenTopoMap terrain</option></select>`
-      +`<p class="description">Choosing a basemap switches this map to the interactive presentation, which is the only one that can draw tiles. ${p.presentation==='interactive'?'':'This map is a static plot today, so picking one will change how it is drawn.'}</p>`:''}
+    <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap"><option value="none" ${!p.basemap||p.basemap==='none'?'selected':''}>None · local geometry, works offline</option><option value="osm" ${p.basemap==='osm'?'selected':''}>OpenStreetMap streets</option><option value="topo" ${p.basemap==='topo'?'selected':''}>OpenTopoMap terrain</option></select>
+    <p class="description">A basemap is layer 0, under everything the workflow produced. Choosing one switches this map to the interactive presentation, which is the only one that can draw tiles. ${p.presentation==='interactive'?'':'This map is a static plot today, so picking one will change how it is drawn.'}</p>
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
 }
 const KEY='fieldwork-workflow-v1';
@@ -1183,7 +1183,11 @@ function renderMap(){
   if(result?.comparison){svg.style.display='none';const host=document.createElement('div');host.id='comparison-map-host';host.innerHTML=pointComparisonMarkup(result.comparison,esc);$('#map-panel').append(host);return;}
   if(result?.polygons){
     const note=document.createElement('div');note.id='catchment-map-host';$('#map-panel').insertBefore(note,$('#map-communication-key'));
-    if(result.polygonPresentation==='interactive'&&result.view==='map'){svg.style.display='none';disposeCatchmentMap=mountCatchmentMap(note,result.polygons,result.contextPoints,esc,mapNode?.params.basemap||'none',choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);});}
+    // Interactive for ANY map, not only one that has polygons. The renderer draws the layers it is
+    // given, so a study area with points on it is a map like any other -- and since only the
+    // interactive presentation can draw tiles, this is what makes a basemap reachable on a map
+    // that is not a catchment. Reported three times before the cause turned out to be here.
+    if(mapNode?.params.presentation==='interactive'&&result.view==='map'){svg.style.display='none';disposeCatchmentMap=mountCatchmentMap(note,result.polygons?{...result,polygons:result.polygons}:result,result.contextPoints,esc,mapNode?.params.basemap||'none',choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);});}
     else if(result.polygons.features.some(f=>f.minutes!==undefined)){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
     else svg.innerHTML=polygonSvg(result.polygons,esc);
     const method=document.createElement('p');method.className='muted';method.textContent=result.polygons.method+' / '+result.polygons.notes.join(' ');note.append(method);return;

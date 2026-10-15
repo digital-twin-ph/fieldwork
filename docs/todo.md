@@ -488,6 +488,68 @@ receipts are good enough to answer a practitioner's question, and that is a find
 either way. C needs a decision about sending a canvas off the device, which is a bigger
 question than a help feature.
 
+### The proposed shape: a **Field guide**, running an OODA loop
+
+**The name.** A field guide is a book you carry and open *when you choose* — the invitation is
+in the metaphor, which is the one thing Clippy got wrong. Its organising question is *"what is
+this thing in front of me?"*, which is option B. It absorbs the manual rather than competing
+with it: a field guide has an entry per species, so the per-widget pages become its entries.
+And it claims no intelligence — nobody expects a field guide to be clever, only accurate and
+indexed. *Assistant* and *Helper* claim agency and invite questions it cannot answer; *Compass*
+implies it tells you which way to go; *Scout* implies going ahead unasked. A character or a
+person's name is worse than all of them: anthropomorphism makes a reader trust a thing past its
+evidence, which is what most of the effort in this project goes into preventing.
+
+**What it looks like.** No face, no animation, no idle presence. An entry in the header beside
+Help, opening a dialog in the same family as the manual and the catalog, which is a pattern
+already here. Three sections: **this step** (the selected widget's entry, its ports, what it
+will not do), **this canvas** (answered from the workflow, the port contracts and the last run's
+receipts), and **a tour** (the playback, which exists, pointed at the current example).
+
+**It opens when asked.** One exception is worth allowing: a refused run already names its cause,
+so an *explain this* link there opens the guide at that entry — invited by a failure rather than
+by idle watching.
+
+**The loop.** The practitioner's framing, 2026-10-15: *Observe → Orient → Decide/Act.* It fits
+because each phase maps onto something the application already computes, which is the whole
+argument for building B rather than C:
+
+| | What it does | Where it comes from |
+| --- | --- | --- |
+| **Observe** | what is on the canvas, what cannot run, what the last run found, what is declared and what is not | listed below — all of it exists |
+| **Orient** | name the problem in the practitioner's terms, **with the evidence it came from** | the citation rule, below |
+| **Decide / Act** | the options with what each costs, and where the action is unambiguous, a button that takes it | the zone advice already works this way: it states the cost and offers *Use zone 30N* |
+
+**Twelve things Observe could read today, without anything new being computed:**
+
+| | Signal | Already computed by |
+| --- | --- | --- |
+| 1 | a step with no ruleset chosen | `executionPlan`, which refuses it by name |
+| 2 | a required input not connected | `requiredInputs` |
+| 3 | a map with nothing wired to it | the run's refusal, in layer terms |
+| 4 | a UTM zone that disagrees with the data, and what it costs | `suggestUTM`, `utmScaleFactor` |
+| 5 | a ruleset pinned to a superseded version | `supersession` |
+| 6 | provenance a step has not declared | `DeclarationGap` |
+| 7 | sites the street network could not reach | the run alert |
+| 8 | records no rule matched | `fw:unmatchedSubjectCount` in the receipt |
+| 9 | a comparison whose units disagree | `authoredUnitProblems` |
+| 10 | rules near the compile ceiling | `compiledRuleCount` |
+| 11 | a cached build older than the one installed | the service worker's version report |
+| 12 | a download that failed, and which instances were tried | the Overpass failover's message |
+
+**The rule that makes it this project's rather than a generic help bot: every answer cites
+where it came from — a receipt, a port contract, a manual page, a measurement — and links to
+it. When it has no citation it says it does not know.** That is the provenance discipline
+applied to a help feature, and it is also the honest constraint: it knows the application, not
+the epidemiology. It must not guess, must not paraphrase a receipt into something friendlier
+and less true, and must not answer a question about what the data *means*.
+
+**The cheapest thing building it would prove.** Six of the eight refusals measured in
+[112](experiments/112-progressive-widget-reveal.md) already name the step that should have come
+first. A Field guide that can answer *"why was this refused?"* from the receipt is reading
+something the application already writes — and if it cannot, that is a finding about the
+receipts rather than about the guide.
+
 
 **Four concepts worth taking from ArcGIS Model Builder**, from the sideways sweep in
 [116](experiments/116-model-builder-sideways.md) over screenshots the practitioner uploaded on

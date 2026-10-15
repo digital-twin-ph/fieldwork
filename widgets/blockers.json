@@ -1,217 +1,230 @@
 {
-  "schema": "fieldwork/blockers/1",
-  "note": "A blocker is a dated claim, not a property of the world. The practitioner's rule of 2026-10-12: even blockers are not permanent, and each should be revisited in DE mode. This file exists because the two blockers recorded in TODO.md went unexamined and both were wrong when finally re-derived on the day this file was written -- one had been lifted by a widget that shipped, and the other was half true and had been stopping work it did not actually block. A blocker nobody re-derives does the same damage as an admission nobody re-reviews: it looks like a fact and acts like a decision. Every entry must therefore carry a liftTest -- the check that would show it has gone -- because a blocker with no stated lift test cannot be falsified and is only a mood. The ratchet is the revisit window: scripts/validate-blockers.mjs fails when a standing blocker has not been revisited within it.",
-  "measuredAt": "2026-10-13",
-  "revisitWindowDays": 7,
-  "windowBasis": "This project adds and retires widgets in days, not months: twelve widgets arrived in three days and three were retired in one. A blocker older than a week has outlived the conditions it was recorded under.",
-  "blockers": [
-    {
-      "id": "raster-value-onto-point",
-      "claim": "No widget can put a raster value onto a point.",
-      "blocks": [],
-      "recorded": "2026-10-09",
-      "lastRevisited": "2026-10-12",
-      "status": "lifted",
-      "liftTest": "A registered, implemented widget takes a raster and points and outputs points.",
-      "liftedBy": "sample_raster 0.1.0, designed in docs/experiments/67-sample-raster-at-points.md and executed at src/core.ts case 'sample_raster'. Ports: points + raster -> points.",
-      "whatChanged": "The widget was built on 2026-10-12 and TODO.md still read 'Designed in 67; not built' when this file was written. docs/todo.md had already noted 'now done' in passing, in the middle of a paragraph about something else, so the project held both the stale claim and its refutation at once."
-    },
-    {
-      "id": "typed-field-schema",
-      "claim": "There is no typed field schema beyond point attributes. src/attribute-schema.ts declares one for PointCollection only; table, raster and network have nothing.",
-      "blocks": [
-        "generic role binding in docs/experiments/65-ruleset-as-data.md",
-        "the port contracts in docs/experiments/66-ports-as-schema-binding.md"
-      ],
-      "recorded": "2026-10-11",
-      "lastRevisited": "2026-10-12",
-      "status": "narrowed",
-      "liftTest": "A declared field schema exists for table, raster and network inputs, with per-field type and unit, and a role binding can be offered against it.",
-      "whatChanged": "The claim was true and its scope was not. It was recorded as blocking the ruleset widget outright, and it does block the general form -- binding any field of any input to a declared role. It does not block the merge that reduces the widget count, because the three existing fact generators take typed carriers and not arbitrary attribute tables: makeN3(NearestRow[]), accessN3(AccessRow[]), facilityN3(Facility[]). So one widget can host the three rulesets as declared data with their existing fact generation, which is 4 widgets to 1, while generic binding waits for the schema. A blocker stated one size too large had been stopping work it did not block."
-    },
-    {
-      "id": "ruleset-as-declared-data",
-      "claim": "No widget applies a ruleset that is declared data rather than a template literal in the execution path, so three widgets exist whose only difference is which rules they run.",
-      "blocks": [],
-      "recorded": "2026-10-09",
-      "lastRevisited": "2026-10-12",
-      "status": "lifted",
-      "liftTest": "One widget hosts the three rulesets as declared, versioned, digested data, and every frozen fixture and Old Naledi classification replays identically -- experiment 106's B1.",
-      "narrowedTo": "The merge needs ruleset-as-data and the existing fact generators. It does not need generic role binding; see typed-field-schema. Narrowed again the same day: facility_audit was listed among what this blocks and runs no reasoner, so it is a presentation widget and not a rule application. Three widgets, not four.",
-      "record": "docs/experiments/65-ruleset-as-data.md, docs/experiments/106-rule-builder-ui.md",
-      "liftedBy": "apply_ruleset 0.1.0, hosting outreach-criteria, access-review and nb06-evidence as declared versioned rulesets. policy, access_policy and xpert retired at 0.2.0.",
-      "whatChanged": "The liftTest was met in full: one widget hosts the three rulesets as declared, versioned data, and every frozen fixture and Old Naledi classification replays identically -- 356 unit tests and 97 browser tests. Worth recording that the liftTest named the Old Naledi classifications as the oracle, and the practitioner has since said that example is incomplete and was never revisited, so that oracle is weaker than this blocker assumed when it was written."
-    },
-    {
-      "id": "one-output-carrier-for-nearest",
-      "claim": "access and nearest are two implementations of nearest-neighbour-with-distance carrying different output carriers, so merging them is a base-contract change and not a rename.",
-      "blocks": [],
-      "recorded": "2026-10-12",
-      "lastRevisited": "2026-10-12",
-      "status": "lifted",
-      "liftTest": "One output carrier is declared for nearest-neighbour-with-distance, and access and facilities produce it with no result in any example moving.",
-      "narrowedTo": "It did not block generalising nearest itself. Its ports, title and unit were renamed on 2026-10-12 without touching the carrier, and nearest now declares standardization 'shared'. The blocker covers the merge of the other two, which is less than it was recorded as covering. Narrowed again the same day, and this is the second time revisiting it shrank it. It was recorded as blocking access AND facilities. facilities is a radius selection and not nearest-neighbour at all, so it was queued behind a blocker that never applied to it. One widget, not two. Narrowed a THIRD time on reading the two side by side. access's extra carrier fields -- eligibleCount, candidateCount, filters -- are the FILTER'S receipt, not the search's. If the filter is its own node it carries its own counts, what reaches nearest is a narrowed point layer like any other, and access's output is `distances` plus a derived column. So the carrier is not what blocks this. What blocks it is that neither missing operation exists: nothing filters a layer by attribute, and nothing derives a scalar column from a parameter. Those are the same two gaps the spatial selection needs, one axis over.",
-      "record": "docs/experiments/66-ports-as-schema-binding.md, docs/experiments/103-duplicates-should-merge.md",
-      "alsoFound": "AccessRow.distanceKm still welds its unit into the field name -- the exact defect removed from NearestRow the same day, surviving in the widget meant to merge into it. And nearest's own reason strings still named one example's nouns until this reading: 'Neighborhood location is missing', 'No cooling center with valid coordinates is available', in a widget that declares standardization 'shared'. The ratchet reads declarations, not the strings a practitioner sees.",
-      "canAccessBeDefinedByPrimitives": "Yes, in three steps, and only one needs a new primitive. The candidate filter is a KNOB on nearest, not a widget: by the knob test derived in experiment 107 -- a knob is honest when the contract does not move with it -- a candidate filter leaves the ports and the output carrier unchanged and alters only which candidates are considered. Its language already exists too: 'tier >= Contextual and service != Unknown' is experiment 106's authored condition form, so the filter reuses the rule builder pointed at selection instead of classification. access's eligibleCount and candidateCount then land in nearest's own receipt, where the exclusion and the search cannot disagree.",
-      "whatStillNeedsAPrimitive": "The derivation. Minutes from kilometres at a speed adds a column to every NearestRow, so the contract moves and the knob test refuses it. It must also not hide behind the existing unit knob: metres-to-kilometres is a pure conversion, while minutes is a MODEL -- straight-line distance at a constant walking speed, as access's own method string admits -- and putting a model behind a unit selector would present an assumption as a unit. One new primitive, general: a column derived from a field and a declared parameter, with the assumption named in the receipt.",
-      "whenAFilterNodeWouldEarnItsPlace": "A knob states the condition once per consumer. If two widgets needed the same eligible set, a knob would state it twice and the two could drift. access has one consumer, so the knob is right here and the node is not wrong, only not yet needed.",
-      "liftedBy": "nearest 0.4.0 with a candidateFilter knob, travel_time 0.1.0, nb06-evidence 2.0.0 emitting points, access-review 2.0.0 consuming distances, facility_audit 0.2.0 consuming points, access retired at 0.2.0.",
-      "whatChanged": "The liftTest asked for one output carrier declared for nearest-neighbour-with-distance, with access producing it and no result moving. Delivered differently and better: access was not made to produce `distances`, it was decomposed, so there is one carrier because there is one search. 361 unit tests and 97 browser tests pass, including Old Naledi's frozen classifications.\n\nRevisiting this blocker shrank it four times in one day -- it did not block generalising nearest; it never applied to facilities; the carrier was the filter's receipt rather than the search's; and finally the carrier was not the obstacle at all. What actually stood in the way was two missing operations, one of which turned out to be a knob."
-    },
-    {
-      "id": "presentation-stage",
-      "claim": "There is no communication, visualization and presentation STAGE, so a display-only widget has nowhere to go but the palette -- and logic that belongs in a decision class stays hidden in one, as facility_audit's tier-to-status ternary does.",
-      "blocks": [
-        "comparison_map",
-        "facility_audit"
-      ],
-      "recorded": "2026-10-12",
-      "lastRevisited": "2026-10-13",
-      "status": "standing",
-      "liftTest": "A presentation-stage composition exists and comparison_map is expressed as one.",
-      "record": "no experiment yet -- the practitioner's direction of 2026-10-12, recorded in widgets/standardization.json under deferred",
-      "narrowedBy": "Revisited 2026-10-13. A day of presentation work did NOT lift this and the lift test is unchanged, but what is missing is now narrower than when it was recorded. The figure layer exists: src/presentation.ts holds one validated palette and one type scale that a map and a chart both read, maps export with a scale bar, a north arrow and a derived licence line, charts export the specification the receipt stores, and the Snow figures carry titles, subtitles, axis names and citations. So 'there is nowhere for presentation to live' is no longer true of the DRAWING. What is still missing is a composition stage: a way to express comparison_map as an arrangement of primitives rather than as a widget, which is what the lift test asks for and what nothing yet offers."
-    },
-    {
-      "id": "outreach-predicates-name-a-domain",
-      "claim": "outreach-criteria 1.0.0 asserts fw:heatAlert and fw:distanceKm. One names a domain and the other welds a unit into a predicate name, and the rules read both by name, so the alert widget cannot be generalised without a ruleset 2.0.0.",
-      "blocks": [
-        "alert"
-      ],
-      "recorded": "2026-10-12",
-      "lastRevisited": "2026-10-12",
-      "status": "standing",
-      "liftTest": "A ruleset 2.0.0 exists whose predicates name no domain and carry no unit in their names, with the unit on the declaration, and 1.0.0 is kept because it is what reproduces the shipped conclusions.",
-      "narrowedTo": "What replaced ruleset-as-declared-data for alert alone. Declaring a condition and the date it applies to is irreducible, so alert survives as a primitive; only its name and its predicate are domain, and the predicate is now in a versioned artefact rather than in a template literal, which is what makes this a version bump rather than a code change.",
-      "record": "docs/experiments/65-ruleset-as-data.md"
-    },
-    {
-      "id": "no-points-within-area-selection",
-      "claim": "No widget takes an area and a point layer and outputs the points inside it. coverage_check does the geometry and emits a review carrier consumed only by map_output and table_output, so a spatial selection cannot be chained into anything.",
-      "blocks": [
-        "facilities"
-      ],
-      "recorded": "2026-10-12",
-      "lastRevisited": "2026-10-12",
-      "status": "standing",
-      "liftTest": "A primitive takes (area, points) and outputs points, and the Old Naledi example produces its facility set from buffer_area plus that selection, with the difference from the shipped selection stated rather than discovered.",
-      "measured": "Measured across buffer distances 2026-10-12, after the cap was raised. Shipped: a 6 km circle at the boundary's bounding-box centre selects 122 of 214 facilities. Boundary widened by 4,000 m: 93, all of them inside the shipped set. 4,500 m: 109, all inside. 5,000 m: 122, agreeing on 121 with one differing each way. 5,500 m: 139, containing all 122 and 17 more. 6,000 m: 150, containing all 122 and 28 more. So the closest equivalent to the shipped selection is a 5,000 m margin around the boundary, which is a 1-in-122 difference, and that value was inside the old cap all along.",
-      "alsoFound": "The 5,000 m cap on validateBuffer was an unjustified knob range -- the geometry helpers in the same module accept 50,000, and validateBufferPointNode delegates to the same function, so one number governed both buffer widgets. Raised to 50,000 on the practitioner's point that it is a knob. It was NOT blocking this replacement, which is a claim recorded an hour earlier and withdrawn by the measurement: 6,000 m over-selects by 28 facilities and 5,000 m is the best match, so the cap never stood in the way.",
-      "narrowedTo": "Replaces `facilities-carrier`, recorded an hour earlier, which framed this as a producer-named stud question. It is not: the carrier is downstream of the real gap, which is that the selection has nowhere to come from.",
-      "record": "docs/experiments/103-duplicates-should-merge.md",
-      "design": {
-        "question": "The practitioner, 2026-10-12: spatial selection potentially has types of outputs -- boolean (all points belong or not), points (which belong, which do not).",
-        "answer": "Those are three LAYERS, not three variants of one widget, and coverage_check already contains all three fused together.",
-        "layers": [
-          "1 - relation per point. Geometry only, no policy. coverage_check computes SpatialRelation = Inside | Boundary | Outside | MissingLocation, and maps each to GeoSPARQL: sfWithin, sfTouches, sfDisjoint. This is the primitive.",
-          "2 - decision per point. A ruleset over the relation. coverage_check has six N3 rules in a template literal concluding fw:coverageDecision over Accept | Review | Excluded.",
-          "3 - set-level boolean and counts. An aggregate over the decision. canProceed is three conditions over two counts: rows.length>0 && reviewCount===0 && rows.length>excludedCount.",
-          "4 - the filter: relation or decision to points. This is the only genuinely missing piece, and it is what facilities needs."
-        ],
-        "whyNotABooleanPerPoint": "WITHDRAWN. It argued that a boolean destroys MissingLocation, which was defending an artefact. If the input is genuinely points the relation is THREE-valued -- Inside, Boundary, Outside -- and the fourth value exists only because the carrier admits non-points. The fix belongs at the carrier, not in the relation vocabulary.",
-        "whyNotABooleanOutput": "'All points belong' is not a predicate over the relation -- it is a policy applied to it. coverage_check's own rules say so in a comment: 'Boundary points are included by policy.' So the boolean belongs downstream of a ruleset, not as an output mode of a geometry widget. Giving a selection widget output modes would fuse policy back into geometry, which is exactly what coverage_check did.",
-        "alsoFound": "coverage_check's retainedData filters on `excluded`, NOT on relation, so the points it retains INCLUDE Outside ones. It is not the inside-set selection facilities needs, which I had half-assumed it was.",
-        "correction": "Withdrawn 2026-10-12, challenged by the practitioner: 'This is a GIS studio, and a point is essentially x and y, lat, long coordinates. Where did this reasoning come from?' It came from the code -- src/spatial-predicates.ts returns 'MissingLocation' when coordinates are absent, and experiment 03 distinguishes four relations -- and I restated a project-specific data-quality state as a claim about points. That is a category error. A point IS coordinates; a PointFeature with geometry:null is not a point with an unknown location, it is not a point.",
-        "whatStands": "The boundary-policy argument, which is independent: Inside and Boundary both concluding Accept is a policy stated in a code comment, so a set-level boolean is a policy applied to the relation rather than a reading of it, and belongs downstream of a ruleset either way.",
-        "setOperations": "Studied 2026-10-12 in docs/experiments/107-set-operations-and-the-ruleset.md, and it yields a design rule this blocker must honour: a membership relation must be TOTAL over a closed vocabulary and must never drop non-members. Because the rule subset has no negation, 'not inside' is only expressible as 'Outside or Boundary' -- a union of positive facts -- which requires every subject to carry a value. coverage_check's relation is total and its retainedData is not: it filters on the excluded flag, so the layer it passes downstream has records removed. A selection primitive that drops non-members makes difference inexpressible for everything after it."
-      }
-    },
-    {
-      "id": "undeclared-rule-applications",
-      "claim": "Three of six rule applications carry their rules outside a declared ruleset. coverage_check holds six N3 rules in a template literal; facility_audit and slr_threshold_comparison classify with a TypeScript ternary and call no reasoner at all.",
-      "blocks": [],
-      "recorded": "2026-10-12",
-      "lastRevisited": "2026-10-12",
-      "status": "standing",
-      "liftTest": "All six rule applications resolve a declared ruleset with a basis, an output vocabulary including an unknown value, and byte-identical conclusions on the frozen fixtures.",
-      "whyItMatters": "Its policy is stated in a code comment -- 'Boundary points are included by policy' -- and two of its rules map DIFFERENT relations to the SAME decision: Outside to Review and MissingLocation to Review. So the policy collapses outside-ness and unknown-ness, which is the distinction the four-valued relation upstream exists to preserve. Declaring the ruleset makes that choice visible and contestable; a template literal does not. It is also the second OR compiled by hand -- Inside and Boundary both conclude Accept -- after facilityN3's last two rules.",
-      "formExtension": "One rule concludes about the ACTIVITY rather than a subject: '{ ?activity fw:checkedRecord ?r. ?r fw:coverageDecision fw:Review. } => { ?activity fw:requiresReview true. }'. Experiment 106's authored form concludes per subject only, so hosting this ruleset needs set-level conclusions, which is a real extension and not a detail.",
-      "record": "docs/experiments/65-ruleset-as-data.md, 106-rule-builder-ui.md",
-      "theThreeKinds": "Declared ruleset: policy, access_policy and xpert, now apply_ruleset. N3 in a template literal: coverage_check. A TypeScript ternary: facility_audit and slr_threshold_comparison. The standardization ratchet sees none of the latter two kinds -- coverage_check and slr_threshold_comparison declare 'shared', and facility_audit left the merge once it turned out to run no reasoner. A hidden rule is a different failure from an example-bound widget.",
-      "formExtensionsFound": [
-        "coverage_check concludes about the ACTIVITY as well as its subjects -- '?activity fw:requiresReview true' -- so hosting it needs set-level conclusions, which experiment 106's per-subject form lacks.",
-        "slr_threshold_comparison compares FIELD TO FIELD: the projected change for the row's site against the row's own elevation attribute, with no parameter at all. The form admits a literal or a bound parameter as the right-hand side and needs to admit another field of the same subject."
-      ],
-      "geospatialRulesets": "The practitioner asked whether geospatial rulesets are relevant here. They are not needed. slr_threshold_comparison's rule is scalar -- level >= elevation, two numbers -- and the widget is merely in a geospatial pipeline. For a genuinely spatial rule, coverage_check already shows the shape that works without spatial builtins, which EYE does not provide: the geometry is computed in TypeScript and the RELATION is asserted as a fact, '<record> fw:spatialRelation fw:Inside', and the rules reason over the relation. Its own comment says 'Point relations are computed locally.' So what is missing is not capability but declaration.",
-      "namingDissolves": "slr_threshold_comparison carries an example label -- slr_ names a pack, not an operation. Becoming a ruleset makes that correct rather than needing a fix: a widget must be general and a ruleset must be particular, which is the division validate-rulesets.mjs enforces."
-    },
-    {
-      "id": "points-carrier-admits-non-points",
-      "claim": "PointFeature declares geometry as Point|null, so the `points` carrier admits features that are not points. Two unrelated populations arrive through it and one relation value conflates them.",
-      "blocks": [],
-      "recorded": "2026-10-12",
-      "lastRevisited": "2026-10-12",
-      "status": "withdrawn",
-      "twoPopulations": [
-        "(a) An imported record whose coordinates were absent in the source. src/input-data.ts writes geometry:null when they are. This is a data-quality fact about a row, it is legitimate to report rather than reject -- experiment 48 found that validating unconditionally made a node impossible to add -- and it belongs at the IMPORT boundary as a reported exclusion, which facilities already does with missingLocationCount.",
-        "(b) Something with no location at all. src/case-series.ts builds a FeatureCollection whose every feature has geometry:null from a table, and casts it `as unknown as PointCollection` to reuse the point-based path. The double cast is the admission: the code had to lie to the type system to put non-points in a point collection."
-      ],
-      "consequence": "src/spatial-predicates.ts returns MissingLocation for both, so one relation value means 'the source omitted a location' and 'this thing has no location'. Those are different facts and only the first is about data quality.",
-      "liftTest": "PointFeature requires a geometry; records without coordinates are reported and excluded at the import boundary; non-spatial tables travel as `table`; and SpatialRelation is three-valued.",
-      "whyItMatters": "This is D7 one level above port names -- a carrier whose name claims more than it carries. D7 swept port NAMES on 2026-10-12 and found four encoding a use; it did not ask whether a port TYPE admits what its name says. The four-valued relation, and my own argument defending it, are both downstream of this.",
-      "record": "docs/audits/ontology-audit.md (D7), docs/experiments/03-input-data-and-spatial-review.md",
-      "whatChanged": "Withdrawn within the hour, on the practitioner's pandas/geopandas framing. A GeoDataFrame is a table with a geometry column, and that column MAY be missing per row -- geopandas supports it and tracks missing-ness separately from any predicate, via isna and is_empty. So PointFeature declaring geometry as Point|null is the GeoDataFrame model, not a type lie, and the blocker was wrong about its central claim. The carrier is a geo-table whose geometry column holds points, which is what `points` reasonably names. Escalating it to 'D7 one level above port names' was overreach.",
-      "whatSurvives": "Two narrower things, both moved to table-to-points-conversion-missing. The relation modelling: a missing geometry is not a spatial relation, so MissingLocation does not belong in SpatialRelation. And case_series's cast, which is a workaround for a missing conversion rather than a type lie -- in geopandas you would keep the DataFrame rather than manufacture a GeoDataFrame with every geometry null."
-    },
-    {
-      "id": "table-to-points-conversion-missing",
-      "claim": "Nothing converts a table into points. No widget takes `table` and outputs `points`, and no widget anywhere names which columns hold coordinates -- there is no latField, lonField or equivalent in src/. So a practitioner who imports a CSV with latitude and longitude columns cannot make it spatial.",
-      "blocks": [],
-      "recorded": "2026-10-12",
-      "lastRevisited": "2026-10-12",
-      "status": "standing",
-      "theModel": "The practitioner's framing, and it is the right one. `table` is a pandas DataFrame: records with columns, no geometry. `points` is a geopandas GeoDataFrame: records with a geometry column, which may be missing per row. The conversion between them is explicit in geopandas and names the coordinate columns -- GeoDataFrame(df, geometry=points_from_xy(df.lon, df.lat)) -- and that explicit naming is the step Fieldwork has no widget for.",
-      "measured": "Three widgets consume `table` -- slr_extract_import, slr_site_assignment, slr_threshold_comparison -- and all three emit a table or decisions. The only ways to obtain points are observations (a data editor), samples (generates a grid) and find_health_facilities (fetches from a source). None converts.",
-      "twoConsequences": [
-        "case_series builds a FeatureCollection whose every feature has geometry:null from a table and casts it `as unknown as PointCollection` to reuse the point-based path. That is a workaround for the missing conversion, not a type lie: in geopandas you would keep the DataFrame.",
-        "MissingLocation sits in SpatialRelation alongside Inside, Boundary and Outside. A missing geometry is not a spatial relation. geopandas tracks missing-ness separately from any predicate, and the relation should be three-valued with rows lacking geometry counted rather than related."
-      ],
-      "liftTest": "A widget takes a table and a declared binding of which columns are longitude and latitude, with a CRS, and outputs points; SpatialRelation is three-valued; and case_series consumes the table directly instead of casting.",
-      "relatedWork": "This is experiment 61's problem exactly -- 'the ability to say which column means what' -- and the same role-binding mechanism experiment 65 needs for rulesets. Whichever lands first should be built so the other can use it, which 65 already says.",
-      "record": "docs/experiments/61-input-dimensions.md, 48-tabular-input.md, 65-ruleset-as-data.md"
-    },
-    {
-      "id": "filter-values-from-a-connected-port",
-      "claim": "`nearest`'s candidateFilter holds literal values a person authored. `slr_site_assignment` needs the same filter over `extract.siteIds`, read from a connected table at run time, so the merge the D2 section established cannot be performed: authoring the ids would duplicate the extract in the workflow and go stale against it silently.",
-      "blocks": [
-        "slr_site_assignment"
-      ],
-      "recorded": "2026-10-13",
-      "lastRevisited": "2026-10-13",
-      "status": "standing",
-      "liftTest": "A CandidateCondition can bind its values to a column of a connected input, and the sea-level example produces its assignments from `nearest` with that binding, agreeing row for row with `slr_site_assignment` on the 194 Manila facilities.",
-      "measured": "Measured 2026-10-13 against src/sea-level-example.ts: the extract's site ids and the site layer's site ids are the identical set of eight (145, 260, 394, 522, 537, 664, 1708, 1711), so the validity rule that is this widget's entire domain residue excludes nothing in the only workflow that runs it. That is a property of this example's data and not a guarantee, which is why the filter must be bindable rather than dropped.",
-      "alsoFound": "This is the third caller for one authored-condition form, after classification (experiment 106) and role binding (experiment 61). Three callers is the argument for building it rather than three arguments for three mechanisms.",
-      "record": "docs/audits/widget_audit.md"
-    },
-    {
-      "id": "sources-group-does-not-mean-acquisition",
-      "claim": "Two widgets are grouped under Sources while acquiring nothing. `reproject` imports its own data and converts it, so its name promises a transform its group denies; `slr_extract_import` takes a table on an input port and only validates and annotates it. The palette group states a workflow stage, and for these two it states one the contract does not occupy.",
-      "blocks": [
-        "slr_extract_import"
-      ],
-      "recorded": "2026-10-13",
-      "lastRevisited": "2026-10-13",
-      "status": "standing",
-      "liftTest": "A check in scripts/validate-naming.mjs requires a widget grouped under Sources to acquire something -- no inputs, or acquired data carried in its params as `find_health_facilities` does -- and both widgets either move group or change contract so the check passes without an exemption.",
-      "measured": "slr_extract_import declares inputs:[['projections','table']] and holds no data parameter; the table arrives from table_input. reproject declares inputs:[] and holds params.data, so it genuinely acquires -- but it also reprojects, which is why the split recorded in docs/todo.md gives the sources an output CRS and leaves reproject a points-to-points transform.",
-      "alsoFound": "The naming ratchet added 2026-10-13 catches reproject through its transform verb and misses slr_extract_import entirely, because that rule keys on the verb rather than on the contract. A rule that asks whether a source acquires would catch both, and would not depend on a verb list staying complete.",
-      "record": "docs/audits/widget_audit.md",
-      "resolvedForReproject": "Lifted for `reproject` on 2026-10-13 by the split in experiment 111, which is what the lift test asked for: the widget changed contract rather than taking an exemption. It no longer imports its own data -- the sources read UTM themselves -- and takes points and returns points under Spatial operations. Both of its naming violations cleared with it and the ceiling went 6 -> 4. It still stands for `slr_extract_import`, which declares inputs:[['projections','table']], holds no data parameter, and acquires nothing: the table arrives from table_input and this widget validates and annotates it."
-    },
-    {
-      "id": "isochrone-does-not-scale",
-      "claim": "The OSM download in `network_input` cannot produce a usable graph for either of Fieldwork's own Soho examples. The binding limit is 2,000 junctions, and it is not arbitrary: at 2.6x that, isochrone construction exhausts the browser's memory. So the cap is a symptom and the defect is in `isochrone`, which allocates per reachable segment rather than per cell.",
-      "blocks": [],
-      "recorded": "2026-10-13",
-      "lastRevisited": "2026-10-13",
-      "status": "lifted",
-      "liftTest": "The download button fetches the shipped Soho isochrone extent. That now depends on the download caps rather than on the isochrone: the response is 7.39 MB against a 2 MB byte cap and 50,791 features against a 15,000 feature cap. Raising those means pulling more from a public service for one study area, so it is a politeness decision and not only a limit to be moved. The isochrone itself no longer blocks it.",
-      "measured": "Measured 2026-10-13 against overpass-api.de with the widget's own query. The Snow rectangle (1.0 x 0.9 km, the shipped snow-voronoi extent) returns 1.52 MB and 8,803 elements, passes the 2 MB and 15,000-element caps, then normalizes to 5,249 junctions and 11,497 directed segments -- 2.6x and 2.3x over the graph caps. The Snow isochrone extent (4.0 x 2.6 km, also shipped) returns 8.15 MB and 48,375 elements, so it fails the byte cap by 4.1x and the element cap by 3.2x and is never parsed. Raising the graph cap to 200,000 and running the real isochrone on the 5,249-junction graph exhausted a 4 GB Node heap after 29 seconds, with the allocation failure inside array growth -- so the cap is load-bearing. The browser consequence is milder than that measurement suggests, and an earlier version of this entry overstated it: `isochrone` already runs in a Web Worker (src/catchment-worker.ts) behind a disposable-worker executor with a 45-second timeout and terminate(), so the same blow-up fails the one step rather than taking down the tab. The Node measurement hit the no-Worker fallback in src/catchment-executor.ts, which runs inline, which is why it killed the whole process. | Re-measured after the buffer fix: the shipped snow-isochrone node's own configuration -- four cumulative thresholds, infill on, 75 m/min, 25 m corridor -- completes on the full 27,181-junction, 58,144-segment graph from its own 4.0 x 2.6 km study area in 8,546 ms using 157 MB. Before the fix a graph a fifth that size exhausted 4 GB on a single band. The 1- and 5-minute bands are identical on both graphs (9,209 and 127,487 m2) and only the 10- and 15-minute bands grow (634,449 to 665,173 and 1,033,908 to 1,805,921), which is the graph extent truncating reachability exactly as the method note says it does.",
-      "alsoFound": "Three inconsistencies the measurement exposed. The Overpass query asked for maxsize:16777216 while the client refused anything over 2 MB, so the server was invited to do up to 16 MB of work that could only be discarded; now aligned to 2 MB. The byte-cap message said \"reduce the area or margin\", which cannot reach a working download in a dense city, because the binding constraint is street density and not extent. And osmQuery permits a 6 km envelope, which no dense urban area can satisfy downstream, so the advertised envelope and the graph caps were set independently and never measured against each other. And the worker changes what the cap is for. Because the failure is already contained, the cap is no longer the only thing standing between a practitioner and a frozen tab; it is a refusal issued in advance of a failure that would now be survivable and reported. That makes 'refuse at 2,000' versus 'attempt it and report the failure' a real choice rather than a safety requirement. Two things the worker does not do: it does not reduce allocation, so the ceiling moves only when isochrone stops allocating per reachable segment; and a worker killed for memory does not reliably fire onerror, so the practitioner may wait the full 45 seconds for a timeout that then blames time rather than memory. A heartbeat cannot detect a memory death mid-computation, which is what was hoped for it. `isochrone` is one synchronous call, so a timer inside the worker cannot fire until the work is already over, and from outside a reclaimed worker and a long synchronous computation are indistinguishable. A first draft ran a watchdog throughout and would have killed a healthy ten-second isochrone after four seconds. What shipped instead: a boot check (a worker that never loads is caught in 4 seconds, which previously waited the full 45), progress reported per site from inside the computation, and a timeout message that names memory as a likely cause once the graph is above the measured ceiling. Detecting it properly needs the search broken into steps, which is this blocker.",
-      "record": "docs/experiments/32-john-snow-primitives.md",
-      "whatChanged": "Narrowed twice on 2026-10-13. First the cap became a knob and the boot failure became detectable. Then the scaling defect itself was found and fixed, and it was not where this blocker said it was. Profiled per phase on the 5,249-junction graph: the search takes 82 ms and 6 MB, and `turfBuffer` over every reached street in one call takes 15,114 ms and 4,592 MB. The O(V^2) Dijkstra this blocker blamed is not the problem at this size. Buffering in batches of 25 and unioning in a balanced tree costs 2,532 ms and 21 MB for the same answer -- 6.8x faster and 219x less memory, with the area differing by 0.000006% (1 m2 in 987,859), which is union ordering in floating point. What remains is the download path, not the isochrone. Lifted 2026-10-13 on the practitioner's judgement that Overpass behaves well given a respectful throttle. The three download caps now derive from the graph knob instead of standing as independent numbers -- 600 bytes and 4 features per junction, against a measured 272 bytes and 1.87 features, and never tighter than the 2 MB and 15,000 that shipped, so a practitioner who leaves the knob alone sees exactly the previous behaviour. The Overpass `maxsize` follows the same ceiling, so the service refuses early rather than building a result that would be discarded. The pause is now a floor of 60 seconds that can only be raised: a download is charged 30 seconds per megabyte received, a practitioner can set a longer minimum, and the interface recommends the pause for the size the current graph limit admits rather than leaving the wait to be discovered afterwards."
-    }
-  ]
+ "schema": "fieldwork/blockers/1",
+ "note": "A blocker is a dated claim, not a property of the world. The practitioner's rule of 2026-10-12: even blockers are not permanent, and each should be revisited in DE mode. This file exists because the two blockers recorded in TODO.md went unexamined and both were wrong when finally re-derived on the day this file was written -- one had been lifted by a widget that shipped, and the other was half true and had been stopping work it did not actually block. A blocker nobody re-derives does the same damage as an admission nobody re-reviews: it looks like a fact and acts like a decision. Every entry must therefore carry a liftTest -- the check that would show it has gone -- because a blocker with no stated lift test cannot be falsified and is only a mood. The ratchet is the revisit window: scripts/validate-blockers.mjs fails when a standing blocker has not been revisited within it.",
+ "measuredAt": "2026-10-14",
+ "revisitWindowDays": 7,
+ "windowBasis": "This project adds and retires widgets in days, not months: twelve widgets arrived in three days and three were retired in one. A blocker older than a week has outlived the conditions it was recorded under.",
+ "blockers": [
+  {
+   "id": "raster-value-onto-point",
+   "claim": "No widget can put a raster value onto a point.",
+   "blocks": [],
+   "recorded": "2026-10-09",
+   "lastRevisited": "2026-10-12",
+   "status": "lifted",
+   "liftTest": "A registered, implemented widget takes a raster and points and outputs points.",
+   "liftedBy": "sample_raster 0.1.0, designed in docs/experiments/67-sample-raster-at-points.md and executed at src/core.ts case 'sample_raster'. Ports: points + raster -> points.",
+   "whatChanged": "The widget was built on 2026-10-12 and TODO.md still read 'Designed in 67; not built' when this file was written. docs/todo.md had already noted 'now done' in passing, in the middle of a paragraph about something else, so the project held both the stale claim and its refutation at once."
+  },
+  {
+   "id": "typed-field-schema",
+   "claim": "There is no typed field schema beyond point attributes. src/attribute-schema.ts declares one for PointCollection only; table, raster and network have nothing.",
+   "blocks": [
+    "generic role binding in docs/experiments/65-ruleset-as-data.md",
+    "the port contracts in docs/experiments/66-ports-as-schema-binding.md"
+   ],
+   "recorded": "2026-10-11",
+   "lastRevisited": "2026-10-12",
+   "status": "narrowed",
+   "liftTest": "A declared field schema exists for table, raster and network inputs, with per-field type and unit, and a role binding can be offered against it.",
+   "whatChanged": "The claim was true and its scope was not. It was recorded as blocking the ruleset widget outright, and it does block the general form -- binding any field of any input to a declared role. It does not block the merge that reduces the widget count, because the three existing fact generators take typed carriers and not arbitrary attribute tables: makeN3(NearestRow[]), accessN3(AccessRow[]), facilityN3(Facility[]). So one widget can host the three rulesets as declared data with their existing fact generation, which is 4 widgets to 1, while generic binding waits for the schema. A blocker stated one size too large had been stopping work it did not block."
+  },
+  {
+   "id": "ruleset-as-declared-data",
+   "claim": "No widget applies a ruleset that is declared data rather than a template literal in the execution path, so three widgets exist whose only difference is which rules they run.",
+   "blocks": [],
+   "recorded": "2026-10-09",
+   "lastRevisited": "2026-10-12",
+   "status": "lifted",
+   "liftTest": "One widget hosts the three rulesets as declared, versioned, digested data, and every frozen fixture and Old Naledi classification replays identically -- experiment 106's B1.",
+   "narrowedTo": "The merge needs ruleset-as-data and the existing fact generators. It does not need generic role binding; see typed-field-schema. Narrowed again the same day: facility_audit was listed among what this blocks and runs no reasoner, so it is a presentation widget and not a rule application. Three widgets, not four.",
+   "record": "docs/experiments/65-ruleset-as-data.md, docs/experiments/106-rule-builder-ui.md",
+   "liftedBy": "apply_ruleset 0.1.0, hosting outreach-criteria, access-review and nb06-evidence as declared versioned rulesets. policy, access_policy and xpert retired at 0.2.0.",
+   "whatChanged": "The liftTest was met in full: one widget hosts the three rulesets as declared, versioned data, and every frozen fixture and Old Naledi classification replays identically -- 356 unit tests and 97 browser tests. Worth recording that the liftTest named the Old Naledi classifications as the oracle, and the practitioner has since said that example is incomplete and was never revisited, so that oracle is weaker than this blocker assumed when it was written."
+  },
+  {
+   "id": "one-output-carrier-for-nearest",
+   "claim": "access and nearest are two implementations of nearest-neighbour-with-distance carrying different output carriers, so merging them is a base-contract change and not a rename.",
+   "blocks": [],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "lifted",
+   "liftTest": "One output carrier is declared for nearest-neighbour-with-distance, and access and facilities produce it with no result in any example moving.",
+   "narrowedTo": "It did not block generalising nearest itself. Its ports, title and unit were renamed on 2026-10-12 without touching the carrier, and nearest now declares standardization 'shared'. The blocker covers the merge of the other two, which is less than it was recorded as covering. Narrowed again the same day, and this is the second time revisiting it shrank it. It was recorded as blocking access AND facilities. facilities is a radius selection and not nearest-neighbour at all, so it was queued behind a blocker that never applied to it. One widget, not two. Narrowed a THIRD time on reading the two side by side. access's extra carrier fields -- eligibleCount, candidateCount, filters -- are the FILTER'S receipt, not the search's. If the filter is its own node it carries its own counts, what reaches nearest is a narrowed point layer like any other, and access's output is `distances` plus a derived column. So the carrier is not what blocks this. What blocks it is that neither missing operation exists: nothing filters a layer by attribute, and nothing derives a scalar column from a parameter. Those are the same two gaps the spatial selection needs, one axis over.",
+   "record": "docs/experiments/66-ports-as-schema-binding.md, docs/experiments/103-duplicates-should-merge.md",
+   "alsoFound": "AccessRow.distanceKm still welds its unit into the field name -- the exact defect removed from NearestRow the same day, surviving in the widget meant to merge into it. And nearest's own reason strings still named one example's nouns until this reading: 'Neighborhood location is missing', 'No cooling center with valid coordinates is available', in a widget that declares standardization 'shared'. The ratchet reads declarations, not the strings a practitioner sees.",
+   "canAccessBeDefinedByPrimitives": "Yes, in three steps, and only one needs a new primitive. The candidate filter is a KNOB on nearest, not a widget: by the knob test derived in experiment 107 -- a knob is honest when the contract does not move with it -- a candidate filter leaves the ports and the output carrier unchanged and alters only which candidates are considered. Its language already exists too: 'tier >= Contextual and service != Unknown' is experiment 106's authored condition form, so the filter reuses the rule builder pointed at selection instead of classification. access's eligibleCount and candidateCount then land in nearest's own receipt, where the exclusion and the search cannot disagree.",
+   "whatStillNeedsAPrimitive": "The derivation. Minutes from kilometres at a speed adds a column to every NearestRow, so the contract moves and the knob test refuses it. It must also not hide behind the existing unit knob: metres-to-kilometres is a pure conversion, while minutes is a MODEL -- straight-line distance at a constant walking speed, as access's own method string admits -- and putting a model behind a unit selector would present an assumption as a unit. One new primitive, general: a column derived from a field and a declared parameter, with the assumption named in the receipt.",
+   "whenAFilterNodeWouldEarnItsPlace": "A knob states the condition once per consumer. If two widgets needed the same eligible set, a knob would state it twice and the two could drift. access has one consumer, so the knob is right here and the node is not wrong, only not yet needed.",
+   "liftedBy": "nearest 0.4.0 with a candidateFilter knob, travel_time 0.1.0, nb06-evidence 2.0.0 emitting points, access-review 2.0.0 consuming distances, facility_audit 0.2.0 consuming points, access retired at 0.2.0.",
+   "whatChanged": "The liftTest asked for one output carrier declared for nearest-neighbour-with-distance, with access producing it and no result moving. Delivered differently and better: access was not made to produce `distances`, it was decomposed, so there is one carrier because there is one search. 361 unit tests and 97 browser tests pass, including Old Naledi's frozen classifications.\n\nRevisiting this blocker shrank it four times in one day -- it did not block generalising nearest; it never applied to facilities; the carrier was the filter's receipt rather than the search's; and finally the carrier was not the obstacle at all. What actually stood in the way was two missing operations, one of which turned out to be a knob."
+  },
+  {
+   "id": "presentation-stage",
+   "claim": "There is no communication, visualization and presentation STAGE, so a display-only widget has nowhere to go but the palette -- and logic that belongs in a decision class stays hidden in one, as facility_audit's tier-to-status ternary does.",
+   "blocks": [
+    "comparison_map",
+    "facility_audit"
+   ],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-13",
+   "status": "standing",
+   "liftTest": "A presentation-stage composition exists and comparison_map is expressed as one.",
+   "record": "no experiment yet -- the practitioner's direction of 2026-10-12, recorded in widgets/standardization.json under deferred",
+   "narrowedBy": "Revisited 2026-10-13. A day of presentation work did NOT lift this and the lift test is unchanged, but what is missing is now narrower than when it was recorded. The figure layer exists: src/presentation.ts holds one validated palette and one type scale that a map and a chart both read, maps export with a scale bar, a north arrow and a derived licence line, charts export the specification the receipt stores, and the Snow figures carry titles, subtitles, axis names and citations. So 'there is nowhere for presentation to live' is no longer true of the DRAWING. What is still missing is a composition stage: a way to express comparison_map as an arrangement of primitives rather than as a widget, which is what the lift test asks for and what nothing yet offers."
+  },
+  {
+   "id": "outreach-predicates-name-a-domain",
+   "claim": "outreach-criteria 1.0.0 asserts fw:heatAlert and fw:distanceKm. One names a domain and the other welds a unit into a predicate name, and the rules read both by name, so the alert widget cannot be generalised without a ruleset 2.0.0.",
+   "blocks": [
+    "alert"
+   ],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "liftTest": "A ruleset 2.0.0 exists whose predicates name no domain and carry no unit in their names, with the unit on the declaration, and 1.0.0 is kept because it is what reproduces the shipped conclusions.",
+   "narrowedTo": "What replaced ruleset-as-declared-data for alert alone. Declaring a condition and the date it applies to is irreducible, so alert survives as a primitive; only its name and its predicate are domain, and the predicate is now in a versioned artefact rather than in a template literal, which is what makes this a version bump rather than a code change.",
+   "record": "docs/experiments/65-ruleset-as-data.md"
+  },
+  {
+   "id": "no-points-within-area-selection",
+   "claim": "No widget takes an area and a point layer and outputs the points inside it. coverage_check does the geometry and emits a review carrier consumed only by map_output and table_output, so a spatial selection cannot be chained into anything.",
+   "blocks": [
+    "facilities"
+   ],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "liftTest": "A primitive takes (area, points) and outputs points, and the Old Naledi example produces its facility set from buffer_area plus that selection, with the difference from the shipped selection stated rather than discovered.",
+   "measured": "Measured across buffer distances 2026-10-12, after the cap was raised. Shipped: a 6 km circle at the boundary's bounding-box centre selects 122 of 214 facilities. Boundary widened by 4,000 m: 93, all of them inside the shipped set. 4,500 m: 109, all inside. 5,000 m: 122, agreeing on 121 with one differing each way. 5,500 m: 139, containing all 122 and 17 more. 6,000 m: 150, containing all 122 and 28 more. So the closest equivalent to the shipped selection is a 5,000 m margin around the boundary, which is a 1-in-122 difference, and that value was inside the old cap all along.",
+   "alsoFound": "The 5,000 m cap on validateBuffer was an unjustified knob range -- the geometry helpers in the same module accept 50,000, and validateBufferPointNode delegates to the same function, so one number governed both buffer widgets. Raised to 50,000 on the practitioner's point that it is a knob. It was NOT blocking this replacement, which is a claim recorded an hour earlier and withdrawn by the measurement: 6,000 m over-selects by 28 facilities and 5,000 m is the best match, so the cap never stood in the way.",
+   "narrowedTo": "Replaces `facilities-carrier`, recorded an hour earlier, which framed this as a producer-named stud question. It is not: the carrier is downstream of the real gap, which is that the selection has nowhere to come from.",
+   "record": "docs/experiments/103-duplicates-should-merge.md",
+   "design": {
+    "question": "The practitioner, 2026-10-12: spatial selection potentially has types of outputs -- boolean (all points belong or not), points (which belong, which do not).",
+    "answer": "Those are three LAYERS, not three variants of one widget, and coverage_check already contains all three fused together.",
+    "layers": [
+     "1 - relation per point. Geometry only, no policy. coverage_check computes SpatialRelation = Inside | Boundary | Outside | MissingLocation, and maps each to GeoSPARQL: sfWithin, sfTouches, sfDisjoint. This is the primitive.",
+     "2 - decision per point. A ruleset over the relation. coverage_check has six N3 rules in a template literal concluding fw:coverageDecision over Accept | Review | Excluded.",
+     "3 - set-level boolean and counts. An aggregate over the decision. canProceed is three conditions over two counts: rows.length>0 && reviewCount===0 && rows.length>excludedCount.",
+     "4 - the filter: relation or decision to points. This is the only genuinely missing piece, and it is what facilities needs."
+    ],
+    "whyNotABooleanPerPoint": "WITHDRAWN. It argued that a boolean destroys MissingLocation, which was defending an artefact. If the input is genuinely points the relation is THREE-valued -- Inside, Boundary, Outside -- and the fourth value exists only because the carrier admits non-points. The fix belongs at the carrier, not in the relation vocabulary.",
+    "whyNotABooleanOutput": "'All points belong' is not a predicate over the relation -- it is a policy applied to it. coverage_check's own rules say so in a comment: 'Boundary points are included by policy.' So the boolean belongs downstream of a ruleset, not as an output mode of a geometry widget. Giving a selection widget output modes would fuse policy back into geometry, which is exactly what coverage_check did.",
+    "alsoFound": "coverage_check's retainedData filters on `excluded`, NOT on relation, so the points it retains INCLUDE Outside ones. It is not the inside-set selection facilities needs, which I had half-assumed it was.",
+    "correction": "Withdrawn 2026-10-12, challenged by the practitioner: 'This is a GIS studio, and a point is essentially x and y, lat, long coordinates. Where did this reasoning come from?' It came from the code -- src/spatial-predicates.ts returns 'MissingLocation' when coordinates are absent, and experiment 03 distinguishes four relations -- and I restated a project-specific data-quality state as a claim about points. That is a category error. A point IS coordinates; a PointFeature with geometry:null is not a point with an unknown location, it is not a point.",
+    "whatStands": "The boundary-policy argument, which is independent: Inside and Boundary both concluding Accept is a policy stated in a code comment, so a set-level boolean is a policy applied to the relation rather than a reading of it, and belongs downstream of a ruleset either way.",
+    "setOperations": "Studied 2026-10-12 in docs/experiments/107-set-operations-and-the-ruleset.md, and it yields a design rule this blocker must honour: a membership relation must be TOTAL over a closed vocabulary and must never drop non-members. Because the rule subset has no negation, 'not inside' is only expressible as 'Outside or Boundary' -- a union of positive facts -- which requires every subject to carry a value. coverage_check's relation is total and its retainedData is not: it filters on the excluded flag, so the layer it passes downstream has records removed. A selection primitive that drops non-members makes difference inexpressible for everything after it."
+   }
+  },
+  {
+   "id": "undeclared-rule-applications",
+   "claim": "Three of six rule applications carry their rules outside a declared ruleset. coverage_check holds six N3 rules in a template literal; facility_audit and slr_threshold_comparison classify with a TypeScript ternary and call no reasoner at all.",
+   "blocks": [],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "liftTest": "All six rule applications resolve a declared ruleset with a basis, an output vocabulary including an unknown value, and byte-identical conclusions on the frozen fixtures.",
+   "whyItMatters": "Its policy is stated in a code comment -- 'Boundary points are included by policy' -- and two of its rules map DIFFERENT relations to the SAME decision: Outside to Review and MissingLocation to Review. So the policy collapses outside-ness and unknown-ness, which is the distinction the four-valued relation upstream exists to preserve. Declaring the ruleset makes that choice visible and contestable; a template literal does not. It is also the second OR compiled by hand -- Inside and Boundary both conclude Accept -- after facilityN3's last two rules.",
+   "formExtension": "One rule concludes about the ACTIVITY rather than a subject: '{ ?activity fw:checkedRecord ?r. ?r fw:coverageDecision fw:Review. } => { ?activity fw:requiresReview true. }'. Experiment 106's authored form concludes per subject only, so hosting this ruleset needs set-level conclusions, which is a real extension and not a detail.",
+   "record": "docs/experiments/65-ruleset-as-data.md, 106-rule-builder-ui.md",
+   "theThreeKinds": "Declared ruleset: policy, access_policy and xpert, now apply_ruleset. N3 in a template literal: coverage_check. A TypeScript ternary: facility_audit and slr_threshold_comparison. The standardization ratchet sees none of the latter two kinds -- coverage_check and slr_threshold_comparison declare 'shared', and facility_audit left the merge once it turned out to run no reasoner. A hidden rule is a different failure from an example-bound widget.",
+   "formExtensionsFound": [
+    "coverage_check concludes about the ACTIVITY as well as its subjects -- '?activity fw:requiresReview true' -- so hosting it needs set-level conclusions, which experiment 106's per-subject form lacks.",
+    "slr_threshold_comparison compares FIELD TO FIELD: the projected change for the row's site against the row's own elevation attribute, with no parameter at all. The form admits a literal or a bound parameter as the right-hand side and needs to admit another field of the same subject."
+   ],
+   "geospatialRulesets": "The practitioner asked whether geospatial rulesets are relevant here. They are not needed. slr_threshold_comparison's rule is scalar -- level >= elevation, two numbers -- and the widget is merely in a geospatial pipeline. For a genuinely spatial rule, coverage_check already shows the shape that works without spatial builtins, which EYE does not provide: the geometry is computed in TypeScript and the RELATION is asserted as a fact, '<record> fw:spatialRelation fw:Inside', and the rules reason over the relation. Its own comment says 'Point relations are computed locally.' So what is missing is not capability but declaration.",
+   "namingDissolves": "slr_threshold_comparison carries an example label -- slr_ names a pack, not an operation. Becoming a ruleset makes that correct rather than needing a fix: a widget must be general and a ruleset must be particular, which is the division validate-rulesets.mjs enforces."
+  },
+  {
+   "id": "points-carrier-admits-non-points",
+   "claim": "PointFeature declares geometry as Point|null, so the `points` carrier admits features that are not points. Two unrelated populations arrive through it and one relation value conflates them.",
+   "blocks": [],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "withdrawn",
+   "twoPopulations": [
+    "(a) An imported record whose coordinates were absent in the source. src/input-data.ts writes geometry:null when they are. This is a data-quality fact about a row, it is legitimate to report rather than reject -- experiment 48 found that validating unconditionally made a node impossible to add -- and it belongs at the IMPORT boundary as a reported exclusion, which facilities already does with missingLocationCount.",
+    "(b) Something with no location at all. src/case-series.ts builds a FeatureCollection whose every feature has geometry:null from a table, and casts it `as unknown as PointCollection` to reuse the point-based path. The double cast is the admission: the code had to lie to the type system to put non-points in a point collection."
+   ],
+   "consequence": "src/spatial-predicates.ts returns MissingLocation for both, so one relation value means 'the source omitted a location' and 'this thing has no location'. Those are different facts and only the first is about data quality.",
+   "liftTest": "PointFeature requires a geometry; records without coordinates are reported and excluded at the import boundary; non-spatial tables travel as `table`; and SpatialRelation is three-valued.",
+   "whyItMatters": "This is D7 one level above port names -- a carrier whose name claims more than it carries. D7 swept port NAMES on 2026-10-12 and found four encoding a use; it did not ask whether a port TYPE admits what its name says. The four-valued relation, and my own argument defending it, are both downstream of this.",
+   "record": "docs/audits/ontology-audit.md (D7), docs/experiments/03-input-data-and-spatial-review.md",
+   "whatChanged": "Withdrawn within the hour, on the practitioner's pandas/geopandas framing. A GeoDataFrame is a table with a geometry column, and that column MAY be missing per row -- geopandas supports it and tracks missing-ness separately from any predicate, via isna and is_empty. So PointFeature declaring geometry as Point|null is the GeoDataFrame model, not a type lie, and the blocker was wrong about its central claim. The carrier is a geo-table whose geometry column holds points, which is what `points` reasonably names. Escalating it to 'D7 one level above port names' was overreach.",
+   "whatSurvives": "Two narrower things, both moved to table-to-points-conversion-missing. The relation modelling: a missing geometry is not a spatial relation, so MissingLocation does not belong in SpatialRelation. And case_series's cast, which is a workaround for a missing conversion rather than a type lie -- in geopandas you would keep the DataFrame rather than manufacture a GeoDataFrame with every geometry null."
+  },
+  {
+   "id": "table-to-points-conversion-missing",
+   "claim": "Nothing converts a table into points. No widget takes `table` and outputs `points`, and no widget anywhere names which columns hold coordinates -- there is no latField, lonField or equivalent in src/. So a practitioner who imports a CSV with latitude and longitude columns cannot make it spatial.",
+   "blocks": [],
+   "recorded": "2026-10-12",
+   "lastRevisited": "2026-10-12",
+   "status": "standing",
+   "theModel": "The practitioner's framing, and it is the right one. `table` is a pandas DataFrame: records with columns, no geometry. `points` is a geopandas GeoDataFrame: records with a geometry column, which may be missing per row. The conversion between them is explicit in geopandas and names the coordinate columns -- GeoDataFrame(df, geometry=points_from_xy(df.lon, df.lat)) -- and that explicit naming is the step Fieldwork has no widget for.",
+   "measured": "Three widgets consume `table` -- slr_extract_import, slr_site_assignment, slr_threshold_comparison -- and all three emit a table or decisions. The only ways to obtain points are observations (a data editor), samples (generates a grid) and find_health_facilities (fetches from a source). None converts.",
+   "twoConsequences": [
+    "case_series builds a FeatureCollection whose every feature has geometry:null from a table and casts it `as unknown as PointCollection` to reuse the point-based path. That is a workaround for the missing conversion, not a type lie: in geopandas you would keep the DataFrame.",
+    "MissingLocation sits in SpatialRelation alongside Inside, Boundary and Outside. A missing geometry is not a spatial relation. geopandas tracks missing-ness separately from any predicate, and the relation should be three-valued with rows lacking geometry counted rather than related."
+   ],
+   "liftTest": "A widget takes a table and a declared binding of which columns are longitude and latitude, with a CRS, and outputs points; SpatialRelation is three-valued; and case_series consumes the table directly instead of casting.",
+   "relatedWork": "This is experiment 61's problem exactly -- 'the ability to say which column means what' -- and the same role-binding mechanism experiment 65 needs for rulesets. Whichever lands first should be built so the other can use it, which 65 already says.",
+   "record": "docs/experiments/61-input-dimensions.md, 48-tabular-input.md, 65-ruleset-as-data.md"
+  },
+  {
+   "id": "filter-values-from-a-connected-port",
+   "claim": "`nearest`'s candidateFilter holds literal values a person authored. `slr_site_assignment` needs the same filter over `extract.siteIds`, read from a connected table at run time, so the merge the D2 section established cannot be performed: authoring the ids would duplicate the extract in the workflow and go stale against it silently.",
+   "blocks": [
+    "slr_site_assignment"
+   ],
+   "recorded": "2026-10-13",
+   "lastRevisited": "2026-10-13",
+   "status": "standing",
+   "liftTest": "A CandidateCondition can bind its values to a column of a connected input, and the sea-level example produces its assignments from `nearest` with that binding, agreeing row for row with `slr_site_assignment` on the 194 Manila facilities.",
+   "measured": "Measured 2026-10-13 against src/sea-level-example.ts: the extract's site ids and the site layer's site ids are the identical set of eight (145, 260, 394, 522, 537, 664, 1708, 1711), so the validity rule that is this widget's entire domain residue excludes nothing in the only workflow that runs it. That is a property of this example's data and not a guarantee, which is why the filter must be bindable rather than dropped.",
+   "alsoFound": "This is the third caller for one authored-condition form, after classification (experiment 106) and role binding (experiment 61). Three callers is the argument for building it rather than three arguments for three mechanisms.",
+   "record": "docs/audits/widget_audit.md"
+  },
+  {
+   "id": "sources-group-does-not-mean-acquisition",
+   "claim": "Two widgets are grouped under Sources while acquiring nothing. `reproject` imports its own data and converts it, so its name promises a transform its group denies; `slr_extract_import` takes a table on an input port and only validates and annotates it. The palette group states a workflow stage, and for these two it states one the contract does not occupy.",
+   "blocks": [
+    "slr_extract_import"
+   ],
+   "recorded": "2026-10-13",
+   "lastRevisited": "2026-10-13",
+   "status": "standing",
+   "liftTest": "A check in scripts/validate-naming.mjs requires a widget grouped under Sources to acquire something -- no inputs, or acquired data carried in its params as `find_health_facilities` does -- and both widgets either move group or change contract so the check passes without an exemption.",
+   "measured": "slr_extract_import declares inputs:[['projections','table']] and holds no data parameter; the table arrives from table_input. reproject declares inputs:[] and holds params.data, so it genuinely acquires -- but it also reprojects, which is why the split recorded in docs/todo.md gives the sources an output CRS and leaves reproject a points-to-points transform.",
+   "alsoFound": "The naming ratchet added 2026-10-13 catches reproject through its transform verb and misses slr_extract_import entirely, because that rule keys on the verb rather than on the contract. A rule that asks whether a source acquires would catch both, and would not depend on a verb list staying complete.",
+   "record": "docs/audits/widget_audit.md",
+   "resolvedForReproject": "Lifted for `reproject` on 2026-10-13 by the split in experiment 111, which is what the lift test asked for: the widget changed contract rather than taking an exemption. It no longer imports its own data -- the sources read UTM themselves -- and takes points and returns points under Spatial operations. Both of its naming violations cleared with it and the ceiling went 6 -> 4. It still stands for `slr_extract_import`, which declares inputs:[['projections','table']], holds no data parameter, and acquires nothing: the table arrives from table_input and this widget validates and annotates it."
+  },
+  {
+   "id": "isochrone-does-not-scale",
+   "claim": "The OSM download in `network_input` cannot produce a usable graph for either of Fieldwork's own Soho examples. The binding limit is 2,000 junctions, and it is not arbitrary: at 2.6x that, isochrone construction exhausts the browser's memory. So the cap is a symptom and the defect is in `isochrone`, which allocates per reachable segment rather than per cell.",
+   "blocks": [],
+   "recorded": "2026-10-13",
+   "lastRevisited": "2026-10-13",
+   "status": "lifted",
+   "liftTest": "The download button fetches the shipped Soho isochrone extent. That now depends on the download caps rather than on the isochrone: the response is 7.39 MB against a 2 MB byte cap and 50,791 features against a 15,000 feature cap. Raising those means pulling more from a public service for one study area, so it is a politeness decision and not only a limit to be moved. The isochrone itself no longer blocks it.",
+   "measured": "Measured 2026-10-13 against overpass-api.de with the widget's own query. The Snow rectangle (1.0 x 0.9 km, the shipped snow-voronoi extent) returns 1.52 MB and 8,803 elements, passes the 2 MB and 15,000-element caps, then normalizes to 5,249 junctions and 11,497 directed segments -- 2.6x and 2.3x over the graph caps. The Snow isochrone extent (4.0 x 2.6 km, also shipped) returns 8.15 MB and 48,375 elements, so it fails the byte cap by 4.1x and the element cap by 3.2x and is never parsed. Raising the graph cap to 200,000 and running the real isochrone on the 5,249-junction graph exhausted a 4 GB Node heap after 29 seconds, with the allocation failure inside array growth -- so the cap is load-bearing. The browser consequence is milder than that measurement suggests, and an earlier version of this entry overstated it: `isochrone` already runs in a Web Worker (src/catchment-worker.ts) behind a disposable-worker executor with a 45-second timeout and terminate(), so the same blow-up fails the one step rather than taking down the tab. The Node measurement hit the no-Worker fallback in src/catchment-executor.ts, which runs inline, which is why it killed the whole process. | Re-measured after the buffer fix: the shipped snow-isochrone node's own configuration -- four cumulative thresholds, infill on, 75 m/min, 25 m corridor -- completes on the full 27,181-junction, 58,144-segment graph from its own 4.0 x 2.6 km study area in 8,546 ms using 157 MB. Before the fix a graph a fifth that size exhausted 4 GB on a single band. The 1- and 5-minute bands are identical on both graphs (9,209 and 127,487 m2) and only the 10- and 15-minute bands grow (634,449 to 665,173 and 1,033,908 to 1,805,921), which is the graph extent truncating reachability exactly as the method note says it does.",
+   "alsoFound": "Three inconsistencies the measurement exposed. The Overpass query asked for maxsize:16777216 while the client refused anything over 2 MB, so the server was invited to do up to 16 MB of work that could only be discarded; now aligned to 2 MB. The byte-cap message said \"reduce the area or margin\", which cannot reach a working download in a dense city, because the binding constraint is street density and not extent. And osmQuery permits a 6 km envelope, which no dense urban area can satisfy downstream, so the advertised envelope and the graph caps were set independently and never measured against each other. And the worker changes what the cap is for. Because the failure is already contained, the cap is no longer the only thing standing between a practitioner and a frozen tab; it is a refusal issued in advance of a failure that would now be survivable and reported. That makes 'refuse at 2,000' versus 'attempt it and report the failure' a real choice rather than a safety requirement. Two things the worker does not do: it does not reduce allocation, so the ceiling moves only when isochrone stops allocating per reachable segment; and a worker killed for memory does not reliably fire onerror, so the practitioner may wait the full 45 seconds for a timeout that then blames time rather than memory. A heartbeat cannot detect a memory death mid-computation, which is what was hoped for it. `isochrone` is one synchronous call, so a timer inside the worker cannot fire until the work is already over, and from outside a reclaimed worker and a long synchronous computation are indistinguishable. A first draft ran a watchdog throughout and would have killed a healthy ten-second isochrone after four seconds. What shipped instead: a boot check (a worker that never loads is caught in 4 seconds, which previously waited the full 45), progress reported per site from inside the computation, and a timeout message that names memory as a likely cause once the graph is above the measured ceiling. Detecting it properly needs the search broken into steps, which is this blocker.",
+   "record": "docs/experiments/32-john-snow-primitives.md",
+   "whatChanged": "Narrowed twice on 2026-10-13. First the cap became a knob and the boot failure became detectable. Then the scaling defect itself was found and fixed, and it was not where this blocker said it was. Profiled per phase on the 5,249-junction graph: the search takes 82 ms and 6 MB, and `turfBuffer` over every reached street in one call takes 15,114 ms and 4,592 MB. The O(V^2) Dijkstra this blocker blamed is not the problem at this size. Buffering in batches of 25 and unioning in a balanced tree costs 2,532 ms and 21 MB for the same answer -- 6.8x faster and 219x less memory, with the area differing by 0.000006% (1 m2 in 987,859), which is union ordering in floating point. What remains is the download path, not the isochrone. Lifted 2026-10-13 on the practitioner's judgement that Overpass behaves well given a respectful throttle. The three download caps now derive from the graph knob instead of standing as independent numbers -- 600 bytes and 4 features per junction, against a measured 272 bytes and 1.87 features, and never tighter than the 2 MB and 15,000 that shipped, so a practitioner who leaves the knob alone sees exactly the previous behaviour. The Overpass `maxsize` follows the same ceiling, so the service refuses early rather than building a result that would be discarded. The pause is now a floor of 60 seconds that can only be raised: a download is charged 30 seconds per megabyte received, a practitioner can set a longer minimum, and the interface recommends the pause for the size the current graph limit admits rather than leaving the wait to be discovered afterwards."
+  },
+  {
+   "id": "ruleset-pin-has-no-digest",
+   "claim": "A node pins a ruleset by id and version only, and a run receipt cites it the same way, so neither can prove WHICH TEXT was applied. rulesetCitation records id, version, title and basis; nothing records or checks a digest of the ruleset document. Two builds can resolve urn:fieldwork:ruleset:extent-review@1.1.0 to different rules and nothing detects it, and a composition that fixes a ruleset pin reports no drift when that ruleset changes, because drift is checked on member widget digests.",
+   "blocks": [
+    "Reproducing a rule result from its receipt alone",
+    "Experiment 113's composite, which fixes a ruleset pin"
+   ],
+   "recorded": "2026-10-14",
+   "lastRevisited": "2026-10-14",
+   "status": "standing",
+   "liftTest": "A receipt carries a digest of the ruleset document it applied, and resolving a pin checks it, so a changed ruleset at an unchanged version fails rather than runs. Composition members already work this way: a member pin is {node, type, version, sha256} and validateComposition refuses a mismatch.",
+   "why": "Found 2026-10-14 by asking whether a pin is unique. It is unique as a lookup key within a build and not as a content identity, which is the sense reproducibility needs."
+  }
+ ]
 }

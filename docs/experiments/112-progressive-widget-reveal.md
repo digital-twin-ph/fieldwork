@@ -586,7 +586,7 @@ Enumerated, 2026-10-14:
 | Legal producer → consumer-port pairs | **578** |
 | Demonstrated by one of the seven shipped examples | **54 (9.3%)** |
 | Never tried anywhere | 524 |
-| Edges the examples run that the enumeration does not admit | 11 |
+| Edges the examples run that the enumeration cannot derive | 11 |
 
 Five hundred and seventy-eight is a small number. It can be listed, held in a file, checked
 and counted — which changes what "prediction is difficult" means. The difficulty was never
@@ -600,10 +600,24 @@ palette can say so without guessing at intent — *these have been done before, 
 possible and untried* — which is the distinction a practitioner can actually act on, and
 it falls out of enumeration rather than inference.
 
-The eleven edges the enumeration cannot admit are the pinned widgets again:
-`summarize_hull → apply_ruleset`, `apply_ruleset → map_output` and nine more, all real,
-all running in shipped examples, all invisible to a rule that reads types from the
-definition rather than from the pin.
+**"Inadmissible" was the wrong word, and the correction is the point.** *Corrected
+2026-10-14, when the practitioner asked why.* The application admits all eleven: they run
+in shipped examples, and `validateWorkflow` accepts them, because the connection check asks
+`nodeInputs(node)` — which resolves the mode, the pin and the parameters of that particular
+node. The enumeration asked the type-level declaration instead. So these are edges the
+declaration cannot **derive**, not edges the application refuses.
+
+| Why the declaration misses it | Count |
+| --- | --- |
+| A port that arrives with a pinned ruleset — `apply_ruleset` on one side or the other | 10 |
+| A port that exists per NODE rather than per type: `map_output.points_2`, one of up to eight point inputs a parameter creates | 1 |
+
+The second is a category the earlier measurements had not separated. A widget's port list is
+not fixed by its type: `map_output` takes `pointInputCount` from 1 to 8, so `points_2`
+exists on an instance and nowhere in the declaration. Reading ports from the type is wrong
+for the same reason in both rows — **the contract belongs to the node, not to the widget**,
+and the enumeration of 578 is therefore a lower bound on a universe whose exact size depends
+on how each node is configured.
 
 The 524 untried pairs are also a map of where the defects of this project hide. Every
 "computed, published, inert" defect found this week was a combination nobody had wired:
@@ -652,3 +666,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | Playback built behind ?playback=1: a worked example replayed widget by widget on the canvas, the palette dimming what the rule would not offer, with the order and the revealed set computed in one module the measurement script shares. On snow-extent two steps of nine do all the revealing. The receipt reading anticipates the extent ruleset by one step -- and only because summarize_hull now asserts the area of the polygon; on old-naledi both rulesets are justified at the step that adds them and never before |
 | 2026-10-14 | The border widgets measured: 18 of 51 emit a type they also take, so a port rule can never retire them; 2 have no type contract at all; 11 emit `points` into 25 consumers. And the asymmetry that settles the design -- fitness conditions exclude almost nothing FORWARD (22 of 25 still legal after a point input) and collapse the answer to one BACKWARD (travel_time_band can only follow reachable_nodes). Expectations are a property of a widget and declarable; intent is not a property of any widget. So the useful feature is each widget saying what it expects and who satisfies it, before it is wired rather than after it is run |
 | 2026-10-14 | The connection universe enumerated: 46 widgets with an output, 578 legal producer-to-consumer-port pairs, 54 demonstrated by the seven shipped examples (9.3%), 524 never tried, and 11 edges the examples run that the enumeration cannot admit because the ports come from a pin. Suggests the honest feature: offer the finite menu ranked by evidence -- done before, versus possible and untried -- rather than predicting intent. And 9% coverage of the connection space is where this week's inert-quantity defects were hiding |
+| 2026-10-14 | "Why inadmissible?" -- it was the wrong word and the correction matters: the application RUNS all eleven, because its connection check asks nodeInputs(node), which resolves the mode, the pin and that node's parameters, while the enumeration asked the type-level declaration. Ten are a pinned ruleset's ports; the eleventh is map_output.points_2, a port that exists per NODE because a parameter creates up to eight of them. The contract belongs to the node, not to the widget, so 578 is a lower bound |

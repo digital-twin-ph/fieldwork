@@ -449,6 +449,35 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**Nothing converts a table into points.** Moved here from the blocker ledger on 2026-10-15, where
+it had been `standing` while gating nothing. No widget takes `table` and outputs `points`, and no
+widget anywhere names which columns hold coordinates — there is no `latField`, `lonField` or
+equivalent in `src/`. So a practitioner who imports a CSV with latitude and longitude columns
+cannot make it spatial. Three widgets consume `table` and all three emit a table or decisions; the
+only ways to obtain points are the data editor, the grid generator and the facility search. Two
+consequences are already paid for: `case_series` builds a FeatureCollection of null geometries and
+casts it `as unknown as PointCollection` to reuse the point path, and `SpatialRelation` keeps a
+`MissingLocation` value that conflates "the source omitted a location" with "this has no
+location". **Lifts when** a widget takes a table plus a declared binding of which columns are
+longitude and latitude, with a CRS, and outputs points; `SpatialRelation` becomes three-valued;
+and `case_series` consumes the table directly. This is experiment 61's problem exactly — *"the
+ability to say which column means what"* — and the same role-binding mechanism 65 needs for
+rulesets, so whichever lands first should be built for the other to use.
+
+**Three of six rule applications carry their rules outside a declared ruleset.** Moved here from
+the blocker ledger on 2026-10-15 for the same reason. `coverage_check` holds six N3 rules in a
+template literal; `facility_audit` and `slr_threshold_comparison` classify with a TypeScript
+ternary and call no reasoner at all. The standardization ratchet sees none of the latter two kinds.
+What makes it worth doing is not tidiness: `coverage_check`'s policy is stated in a code comment —
+*"Boundary points are included by policy"* — and two of its rules map **different** relations to
+the **same** decision, Outside→Review and MissingLocation→Review, so the policy collapses
+outside-ness and unknown-ness where a declared ruleset would have to say which it meant. Hosting
+it also needs a form extension the authored ruleset shape lacks: one of its rules concludes about
+the **activity** rather than a subject, and `slr_threshold_comparison` compares field to field.
+**Lifts when** all six resolve a declared ruleset with a basis and an output vocabulary including
+an unknown value, with byte-identical conclusions on the frozen fixtures.
+
+
 **A workflow cannot require an old widget version, because a widget version labels code and only
 one version of it is in the build.** Established 2026-10-15, correcting a claim made the same day
 and withdrawn within the hour. The practitioner's question: *"Isn't the widget version a

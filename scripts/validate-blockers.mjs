@@ -32,7 +32,11 @@ const standardization=read('widgets/standardization.json');
 const naming=read('widgets/naming.json');
 const registry=read('widgets/registry.json');
 
-const STATUSES=new Set(['standing','narrowed','lifted','withdrawn']);
+// `finding` was added 2026-10-15. A claim that is TRUE and gates nothing is not a blocker: calling
+// it standing says work is queued behind it when none is, and it collects a weekly re-derivation
+// that buys nobody anything. Two entries were in that position. A finding carries a claim and a
+// liftTest like any other entry, and no clock, because there is no gate to keep honest.
+const STATUSES=new Set(['standing','narrowed','lifted','withdrawn','finding']);
 const problems=[];
 const days=(a,b)=>Math.round((a-new Date(b))/86400000);
 // The revisit window is measured against the REAL date, not against a field inside the file being
@@ -47,6 +51,8 @@ if(days(today,ledger.measuredAt)<0)
   problems.push(`widgets/blockers.json records measuredAt ${ledger.measuredAt}, which is in the `
     +`future. The counts cannot have been taken yet.`);
 const byId=new Map();
+// An entry may hold the clock open longer than the ledger default, with a stated reason.
+const window=blocker=>blocker.revisitWindowDays??ledger.revisitWindowDays;
 
 for(const blocker of ledger.blockers){
   const {id,claim,status,recorded,lastRevisited,liftTest}=blocker;
@@ -61,10 +67,40 @@ for(const blocker of ledger.blockers){
   if(!recorded||!lastRevisited)problems.push(`\`${id}\`: both recorded and lastRevisited are required.`);
   else if(days(new Date(lastRevisited),recorded)<0)
     problems.push(`\`${id}\`: lastRevisited ${lastRevisited} is before recorded ${recorded}.`);
-  else if(status==='standing'&&days(today,lastRevisited)>ledger.revisitWindowDays)
+  else if(status==='standing'&&days(today,lastRevisited)>window(blocker))
     problems.push(`\`${id}\` is standing and was last revisited ${lastRevisited}, `
-      +`${days(today,lastRevisited)} days ago, against a window of ${ledger.revisitWindowDays}. `
-      +`Re-derive it and set lastRevisited, or change its status. ${ledger.windowBasis}`);
+      +`${days(today,lastRevisited)} days ago, against a window of ${window(blocker)}. `
+      +`Re-derive it and record what you found in revisits, or change its status. ${ledger.windowBasis}`);
+  // The clock used to be satisfiable by editing one date, which rewards the person who forgot to
+  // re-derive with a one-character fix. A standing blocker now carries dated revisit notes and the
+  // newest one has to BE lastRevisited, so the date cannot move unless somebody writes a finding.
+  if(status==='standing'){
+    const revisits=blocker.revisits??[];
+    if(!revisits.length)
+      problems.push(`\`${id}\` is standing and records no revisits. The clock is satisfied by a dated `
+        +`note saying what re-deriving the claim found -- not by moving lastRevisited, which is the `
+        +`edit a person who skipped the re-derivation would also make.`);
+    else{
+      for(const entry of revisits)
+        if(!entry?.date||!entry?.found?.trim())
+          problems.push(`\`${id}\`: every revisit needs a date and what it found.`);
+      const newest=revisits.map(r=>r.date).filter(Boolean).sort().at(-1);
+      if(newest!==lastRevisited)
+        problems.push(`\`${id}\`: lastRevisited is ${lastRevisited} and the newest revisit note is `
+          +`${newest}. The date and the finding have to be the same event.`);
+    }
+    if(!(blocker.blocks??[]).length)
+      problems.push(`\`${id}\` is standing and blocks nothing. A blocker nothing is waiting on is not `
+        +`a blocker: give it the work it gates, or record it as a finding, which carries no clock.`);
+  }
+  if(status==='finding'&&(blocker.blocks??[]).length)
+    problems.push(`\`${id}\` is a finding and lists ${blocker.blocks.length} thing(s) it blocks. `
+      +`Something waiting on it makes it standing, with a clock.`);
+  if(blocker.revisitWindowDays&&blocker.revisitWindowDays>ledger.revisitWindowDays&&!blocker.windowReason?.trim())
+    problems.push(`\`${id}\` raises its revisit window to ${blocker.revisitWindowDays} days above the `
+      +`ledger's ${ledger.revisitWindowDays} and states no windowReason. A longer window is defensible `
+      +`-- re-deriving a claim that waits on a mechanism nobody is building buys nothing -- but it is a `
+      +`claim about the claim and has to be argued.`);
   if(['lifted','withdrawn'].includes(status)&&!blocker.whatChanged?.trim())
     problems.push(`\`${id}\` is ${status} and does not say what changed. A blocker that disappears `
       +`without a record is indistinguishable from one that was forgotten.`);
@@ -88,7 +124,7 @@ for(const entry of gated){
     problems.push(`widgets/standardization.json gates \`${entry.nodeType}\` on "${entry.gatedOn}", `
       +`which is not a blocker id in widgets/blockers.json. A gate naming a document names no claim `
       +`and carries no clock: add the blocker, with its liftTest, and gate on its id.`);
-  else if(!['standing','narrowed'].includes(blocker.status))
+  else if(!['standing','narrowed'].includes(blocker.status))  // a finding gates nothing, by definition
     problems.push(`\`${entry.nodeType}\` is gated on \`${blocker.id}\`, which is ${blocker.status}. `
       +`The gate is gone: act on the entry or re-record the blocker.`);
   else if(!(blocker.blocks??[]).includes(entry.nodeType))
@@ -108,9 +144,10 @@ if(problems.length){
   process.exit(1);
 }
 const counts=Object.fromEntries([...STATUSES].map(s=>[s,ledger.blockers.filter(b=>b.status===s).length]));
+const findings=counts.finding?`, ${counts.finding} finding${counts.finding===1?'':'s'} (true, gating nothing, no clock)`:'';
 const oldest=ledger.blockers.filter(b=>b.status==='standing')
   .sort((a,b)=>new Date(a.lastRevisited)-new Date(b.lastRevisited))[0];
 console.log(`Blockers: ${counts.standing} standing, ${counts.narrowed} narrowed, ${counts.lifted} lifted, `
-  +`${counts.withdrawn} withdrawn. Revisit window ${ledger.revisitWindowDays} days.`);
+  +`${counts.withdrawn} withdrawn${findings}. Revisit window ${ledger.revisitWindowDays} days.`);
 if(oldest)console.log(`  oldest standing: ${oldest.id}, revisited ${oldest.lastRevisited} `
   +`(${days(today,oldest.lastRevisited)} days ago)`);

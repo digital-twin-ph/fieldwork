@@ -4,7 +4,27 @@ import {validateNetwork,graphLimits,downloadLimits} from './catchments.js';
 import {geometryBounds} from './study-area.js';
 import {isRecord} from './guards.js';
 import {pacedNetworkDownload,deferNetworkDownload,chargeNetworkDownload} from './network-throttle.js';
-export const OVERPASS='https://overpass-api.de/api/interpreter';
+/** The Overpass instances this client will ask, in order.
+ *
+ *  Named by the practitioner on 2026-10-15, after reporting that the download was broken. It was,
+ *  and not because of anything in the query: measured that afternoon, overpass-api.de returned
+ *  502, 200, 502 to three identical requests, and an hour later timed out entirely while
+ *  kumi.systems and private.coffee both returned 500 and overpass.osm.ch answered 200 with an
+ *  HTML page. Four public endpoints, none of them healthy at the same moment, and the widget
+ *  asked exactly one of them once.
+ *
+ *  Order is deliberate: FOSSGIS first because it is the reference instance, the two Private.coffee
+ *  hosts next, the Swiss association last. A mirror that answers is recorded in the provenance --
+ *  WHICH instance served a network is part of where the data came from, and the receipt said
+ *  overpass-api.de whatever had actually answered until this was built. */
+export const OVERPASS_ENDPOINTS=[
+  {url:'https://overpass-api.de/api/interpreter',operator:'FOSSGIS'},
+  {url:'https://overpass.kumi.systems/api/interpreter',operator:'Private.coffee'},
+  {url:'https://overpass.private.coffee/api/interpreter',operator:'Private.coffee'},
+  {url:'https://overpass.osm.ch/api/interpreter',operator:'Swiss OpenStreetMap Association'},
+] as const;
+/** The reference instance. Kept as a name because receipts and tests cite it. */
+export const OVERPASS=OVERPASS_ENDPOINTS[0].url;
 /** The highway values this walking filter accepts. One list, used twice: Overpass filters on it
  *  so the service does not send what we would discard, and `networkFromOSM` filters on it again
  *  because a response can be a fixture or a cached file that never went through that request.
@@ -96,9 +116,50 @@ export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pa
 export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number):Promise<Network>{
   const request=osmQuery(boundary,marginM,maxNodes),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),35000);
   try{
-    let response:Response;
-    try{response=await fetcher(OVERPASS,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data:request.query}),signal:controller.signal,credentials:'omit',referrerPolicy:'origin'});}catch{throw new Error('OSM could not be reached or the browser blocked the response. Wait before retrying, or upload a saved network file.');}
-    if(!response.ok){if([429,502,503,504,406].includes(response.status))deferNetworkDownload(response.headers.get('retry-after'));throw new Error(`OSM download failed (HTTP ${response.status}); wait before retrying or upload a network file.`);}
+    let response!:Response;
+    // Overpass fails on its own account, and one attempt treats that as the practitioner's
+    // problem. Measured against overpass-api.de on 2026-10-15, after a report that the download
+    // was broken: three identical requests returned 502, 200, 502. The query was fine; the public
+    // instance is intermittent, and a single attempt meets it two times in three.
+    //
+    // So a SERVER error is retried twice with a short backoff. 429 is not retried -- that one
+    // means this client is asking too often, and waiting is the answer, which
+    // deferNetworkDownload already enforces. Nor is any other 4xx: a refused query is refused
+    // however many times it is sent.
+    // Each endpoint once, in order, then the whole list a second time with a backoff. A server
+    // error, a connection failure and an HTML body are all the same thing from here -- this
+    // instance is not serving the API now -- so all three move to the next instance rather than
+    // being reported to a practitioner who cannot act on any of them.
+    //
+    // 429 stops everything: it means this client is asking too often, and asking a DIFFERENT
+    // public instance instead would be discourteous rather than clever.
+    const SERVER_ERRORS=[500,502,503,504];
+    let reached:typeof OVERPASS_ENDPOINTS[number]|undefined,lastStatus=0,unreachable=0;
+    outer: for(let round=1;round<=2;round++){
+      for(const endpoint of OVERPASS_ENDPOINTS){
+        try{response=await fetcher(endpoint.url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data:request.query}),signal:controller.signal,credentials:'omit',referrerPolicy:'origin'});}
+        catch{unreachable++;continue;}
+        if(response.ok){
+          // A 200 carrying HTML is an error page, and parsing it as a network would fail far from
+          // here. overpass.osm.ch returned exactly that on 2026-10-15.
+          const kind=response.headers.get('content-type')??'';
+          if(kind.includes('json')||kind.includes('text/plain')){reached=endpoint;break outer;}
+          unreachable++;continue;
+        }
+        lastStatus=response.status;
+        if(response.status===429){deferNetworkDownload(response.headers.get('retry-after'));
+          throw new Error(`OSM download failed (HTTP 429); wait before retrying.`);}
+        if(!SERVER_ERRORS.includes(response.status))break outer;
+      }
+      if(round===1)await new Promise(resolve=>setTimeout(resolve,2000));
+    }
+    if(!reached){
+      deferNetworkDownload(null);
+      throw new Error(`No Overpass instance answered. ${OVERPASS_ENDPOINTS.length} were tried twice each`
+        +`${lastStatus?`, the last reporting HTTP ${lastStatus}`:''}${unreachable?`, ${unreachable} unreachable or not serving the API`:''}. `
+        +`These are free public services and they do go down together; wait and retry, or upload a saved network file.`);
+    }
+    // Reaching here means one instance answered with a usable body; failures are handled above.
     const {maxBytes}=downloadLimits(maxNodes),asMB=(n:number)=>(n/1e6).toFixed(1);
     // Megabytes to one decimal read best, but a response one byte over the limit rounded to the
     // same number on both sides -- "is 2.0 MB, over the 2.0 MB this download accepts", which reads
@@ -120,7 +181,8 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     // Charged once the size is known: a larger request earns a longer pause.
     chargeNetworkDownload(bytes,pauseMs);
     const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const raw=JSON.parse(new TextDecoder().decode(joined)),network=networkFromOSM(raw,maxNodes);
-    network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',attribution:'© OpenStreetMap contributors',url:OVERPASS,retrievedAt:new Date().toISOString(),query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
+    network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',
+      attribution:`© OpenStreetMap contributors, via ${reached.operator}`,url:reached.url,retrievedAt:new Date().toISOString(),query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
   }finally{clearTimeout(timer);}
 }
 export function parseGraphML(text:string,filename:string,maxNodes?:number):Network{

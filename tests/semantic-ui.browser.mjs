@@ -8,8 +8,12 @@ import {quadToN3} from '../build/study-area.js';
 test('N3 tab shows conforming canvas RDF for unfinished widgets',async({page})=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/?example=blank');
-  await page.locator('[data-add="raster_input"]').click();
+  // Place an input first, which is what a canvas with nothing on it now offers. raster_input
+  // takes an area, so it is a process step by the stage rule however much it looks like a source.
+  await page.locator('[data-add="study_area"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(1);
+  await page.locator('[data-add="raster_input"]').click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(2);
   await page.locator('[data-view="rules"]').click();
   const shown=await page.locator('#n3-preview').innerText();
   assert.match(shown,/CURRENT CANVAS PLANS/);

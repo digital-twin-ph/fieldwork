@@ -1,6 +1,6 @@
 import type {DataTable} from './data-table.js';
 import type {PointCollection,Position,Scalar,WorkflowNode} from './types.js';
-import type {DisplayRow,Receipt,Status} from './results.js';
+import type {DeclarationGap,DisplayRow,Receipt,Status} from './results.js';
 import {nearestOf} from './nearest-neighbour.js';
 
 /** Sea-level projections, implemented in the host from the declaration-only pack at
@@ -23,9 +23,15 @@ export interface FamilyValues {withVerticalLandMotion:string; withoutVerticalLan
 export interface ExtractProvenance {
   datasetIRI:string; datasetVersion:string; baselinePeriod:string; citations:string[]; familyValues:FamilyValues;
   basisKind:BasisKind;
+  /** Where the file came from, in the practitioner's own words, for a source with no IRI. A note
+   *  is not a citation and does not satisfy the licence; it is better than nothing, and nothing is
+   *  what an IRI field offers somebody who was emailed a CSV. */
+  sourceNote?:string;
 }
 export interface ProjectionExtract {
   kind:'projection-extract'; table:DataTable; provenance:ExtractProvenance; siteIds:string[];
+  /** Provenance the practitioner has not declared. Reported, never fatal. */
+  gaps?:DeclarationGap[];
 }
 export interface ProjectionSelection {scenario:string; basis:string; family:string; year:string; quantile:string}
 
@@ -52,8 +58,6 @@ export function projectionExtract(table:DataTable,provenance:ExtractProvenance):
     throw new Error(`The extract states its values are in "${table.unit??'an unstated unit'}". `
       +`Sea-level projections are published in millimetres and compared in metres, so state `
       +`${Object.keys(VALUE_UNITS).join(' or ')}.`);
-  if(!text(provenance.datasetIRI))throw new Error('Name the published dataset this extract came from.');
-  if(!text(provenance.datasetVersion))throw new Error('State the dataset version: values are not comparable across versions.');
   if(!/\d{4}/.test(text(provenance.baselinePeriod)))throw new Error('State the baseline period the change is measured against; it is read from the dataset documentation and never assumed.');
   // A basis identifier is uninterpretable without the kind of identifier it is: wf_1e is one
   // workflow, "medium" is a p-box over several, and a p-box bound is not a quantile of one
@@ -63,7 +67,6 @@ export function projectionExtract(table:DataTable,provenance:ExtractProvenance):
       +'workflow, or "confidence-pbox" for values read from a confidence output file, which is a '
       +'p-box combining workflow p-boxes.');
   const citations=(provenance.citations||[]).map(text).filter(Boolean);
-  if(citations.length<3)throw new Error('The licence makes three citations obligatory: the chapter, the FACTS paper and the dataset version.');
   const {withVerticalLandMotion:withVLM,withoutVerticalLandMotion:withoutVLM}=provenance.familyValues;
   if(!text(withVLM)||!text(withoutVLM))throw new Error('State which family value in the file includes vertical land motion and which excludes it; a value is uninterpretable without it.');
   if(text(withVLM)===text(withoutVLM))throw new Error('The two family values must differ.');
@@ -71,15 +74,48 @@ export function projectionExtract(table:DataTable,provenance:ExtractProvenance):
   for(const row of table.rows)if(!allowed.has(row.key.family))
     throw new Error(`Row family "${row.key.family}" is neither of the declared families. Families that include and exclude vertical land motion are not comparable.`);
   return {kind:'projection-extract',table,provenance:{...provenance,citations},
+    gaps:provenanceGaps({...provenance,citations}),
     siteIds:[...new Set(table.rows.map(row=>row.key.site_id))].sort()};
+}
+
+/** Where the data came from, and whether the practitioner has said.
+ *
+ *  Reported, never fatal, on the practitioner's decision of 2026-10-15: "Provenance is something
+ *  we can check if uploaded or not and can be flagged as an alert, not a blocker." Until then a
+ *  missing dataset IRI, version or third citation stopped the run -- and no provenance field
+ *  changes a single computed number, so refusing to compute was a punishment for an unfilled form.
+ *
+ *  The split between what is reported here and what still refuses follows one question: does the
+ *  field say WHERE THE DATA CAME FROM, or HOW TO INTERPRET THE NUMBERS? The baseline period, the
+ *  basis kind, the value unit, the key columns and the declared families are all the second kind
+ *  -- a change of +0.5 m means nothing without the baseline it is measured from -- so they stay
+ *  fatal and belong to the ruleset contract of P1 in experiment 115. These three are the first
+ *  kind. It is a judgement, and the dataset version is the arguable one: it identifies the source,
+ *  and values are also not comparable across versions.
+ *
+ *  The honest consequence of the change: a workflow can now publish a result from an extract whose
+ *  source is undeclared. The alert is what makes that visible rather than silent. */
+export function provenanceGaps(provenance:ExtractProvenance):DeclarationGap[]{
+  const gaps:DeclarationGap[]=[];
+  if(!text(provenance.datasetIRI))gaps.push({field:'Published dataset',
+    says:'No dataset IRI or DOI is named, so a reader cannot get to the source these numbers came from.'});
+  if(!text(provenance.datasetVersion))gaps.push({field:'Dataset version',
+    says:'No version is stated. Values are not comparable across dataset versions, so a reader cannot tell whether these agree with another extract.'});
+  const cited=(provenance.citations||[]).map(text).filter(Boolean).length;
+  if(cited<3)gaps.push({field:'Citations',
+    says:`${cited} of the three citations the licence makes obligatory are given: the chapter, the FACTS paper and the dataset version. This is a licence obligation and not a preference.`});
+  if(!text(provenance.sourceNote)&&!text(provenance.datasetIRI))gaps.push({field:'Source note',
+    says:'Nothing says where this file came from in words either. A note is not a citation, and it is better than nothing.'});
+  return gaps;
 }
 
 /** The distinct values of each key, so a selection is chosen from what the extract contains. */
 /** The value carried on a table port: a data table a Table output can display unchanged, with the
  *  extract's provenance annotated on it rather than replacing it. */
-export type ProjectionTable=DataTable&{projection:{provenance:ExtractProvenance;siteIds:string[]}};
+export type ProjectionTable=DataTable&{projection:{provenance:ExtractProvenance;siteIds:string[];gaps?:DeclarationGap[]}};
 export const projectionTable=(extract:ProjectionExtract):ProjectionTable=>
-  ({...extract.table,projection:{provenance:extract.provenance,siteIds:extract.siteIds}});
+  ({...extract.table,projection:{provenance:extract.provenance,siteIds:extract.siteIds,
+    ...(extract.gaps?.length?{gaps:extract.gaps}:{})}});
 export function readExtract(value:ProjectionTable):ProjectionExtract{
   if(!value?.projection)throw new Error('Connect a Sea-level projection extract, not a plain table: the dataset, baseline and citations must be declared first.');
   const {projection,...table}=value;

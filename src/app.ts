@@ -217,6 +217,15 @@ function nodeAlert(id:string){return result?.alerts?.find(a=>a.nodeId===id);}
  *  where the streets stop -- which is why they share one alert. */
 function alertText(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   const said=[];
+  // Declaration gaps read differently from the catchment findings: nothing is wrong with the
+  // numbers, and what is missing is what a reader would need to trust them. Said first and
+  // separately, and never as a reason the result is unusable -- the practitioner's decision of
+  // 2026-10-15 was that provenance is an alert and not a blocker.
+  if(alert.gaps?.length)said.push(
+    `${alert.gaps.length} thing${alert.gaps.length===1?' this step has'
+      :'s this step has'} not declared. Every number here is computed and usable; what is missing is `
+    +`what a reader would need in order to check where it came from. Fill the fields below, or `
+    +`publish as it is and say that the source is undeclared.`);
   if(alert.unconnected.length)said.push(
     `${alert.unconnected.length} site${alert.unconnected.length===1?'':'s'} got no result at all: the walk to the nearest street alone spends the whole travel budget. Every count and area from this widget is over the sites that reached something.`);
   if(alert.offNetwork.length)said.push(
@@ -228,6 +237,7 @@ function alertText(alert:NonNullable<ReturnType<typeof nodeAlert>>){
  *  reading it is asking the same question of every row: where does the road data stop? */
 function alertRows(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   return [
+    ...(alert.gaps??[]).map(gap=>({name:gap.field,outcome:'Not declared',detail:gap.says})),
     ...alert.unconnected.map(u=>({name:u.name,outcome:'No result',
       detail:`${Math.round(u.distanceM)} m to the nearest street, from a ${Math.round(u.budgetM)} m budget`})),
     ...alert.offNetwork.map(u=>({name:u.name,outcome:'Routed off-network',
@@ -236,6 +246,7 @@ function alertRows(alert:NonNullable<ReturnType<typeof nodeAlert>>){
 }
 function alertHeadline(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   const parts=[];
+  if(alert.gaps?.length)parts.push(`${alert.gaps.length} undeclared`);
   if(alert.unconnected.length)parts.push(`${alert.unconnected.length} with no result`);
   if(alert.offNetwork.length)parts.push(`${alert.offNetwork.length} routed off-network`);
   return parts.join(' · ');
@@ -388,7 +399,11 @@ function renderInspector(){
   const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><h2>Your analysis, connected.</h2><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p><div class="notice">${exampleKey(workflow).startsWith('snow-')?'Historical case-study locations; modeled catchments. Inspect a processing node to compare its assumptions.':exampleKey(workflow)==='old-naledi'?'Real source boundary and historical facilities; generated sample locations. Select Facility access to explore the assumptions.':'The heat example uses synthetic neighborhoods and illustrative screening criteria.'}</div></div>`;return;}
   let content=title(n)+`<p class="description">${esc(n.type==='map_output'&&n.params.inputMode==='raster'?'Display native raster cells and the clipping boundary':TYPES[n.type].description)}. ${n.type==='policy'?'Turn computed spatial evidence into explicit, inspectable conclusions.':''}</p>`;
   const alert=nodeAlert(n.id);
-  if(alert)content+=`<div class="inspector-alert" role="alert"><strong>Out of bounds · ${esc(alertHeadline(alert))}</strong><p>${esc(alertText(alert))}</p><table><thead><tr><th>Site</th><th>What happened</th><th>Distance</th></tr></thead><tbody>${alertRows(alert).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.outcome)}</td><td>${esc(r.detail)}</td></tr>`).join('')}</tbody></table>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
+  // The heading names what was found. It read "Out of bounds" for every alert, which is right for
+  // a site the streets could not reach and wrong for a field nobody filled in: a declaration gap
+  // is not a geometry problem and the columns are not distances. 2026-10-15.
+  const gapsOnly=!!alert&&!!alert.gaps?.length&&!alert.unconnected.length&&!alert.offNetwork.length;
+  if(alert)content+=`<div class="inspector-alert" role="alert"><strong>${gapsOnly?'Not declared':'Out of bounds'} · ${esc(alertHeadline(alert))}</strong><p>${esc(alertText(alert))}</p><table><thead><tr><th>${gapsOnly?'Field':'Site'}</th><th>What happened</th><th>${gapsOnly?'What is missing':'Distance'}</th></tr></thead><tbody>${alertRows(alert).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.outcome)}</td><td>${esc(r.detail)}</td></tr>`).join('')}</tbody></table>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
   content+=manualButton(n.type,esc)+diveDeeperPanel(n.type,esc);
   if(n.type==='micro_workflow'){
     const pin=n.params.composition;
@@ -498,6 +513,10 @@ function renderInspector(){
     content+='<p class="description">Declares an imported long-format table as a bounded extract of published AR6 projections. It imports and declares; it acquires nothing and produces no projection.</p>'
       +`<div class="field"><label class="field-label" for="slr-dataset">Published dataset (IRI or DOI)</label><input id="slr-dataset" data-slr="datasetIRI" maxlength="300" value="${esc(p.datasetIRI)}" placeholder="https://doi.org/..."></div>`
       +`<div class="field"><label class="field-label" for="slr-version">Dataset version</label><input id="slr-version" data-slr="datasetVersion" maxlength="60" value="${esc(p.datasetVersion)}" placeholder="20210809"></div>`
+      // Where the file came from, in the practitioner's own words. The IRI field above offers
+      // nothing to somebody who was emailed a CSV, and the alert now asks rather than refuses, so
+      // there has to be somewhere to answer. A note is not a citation and the alert says so.
+      +`<div class="field"><label class="field-label" for="slr-source-note">Where did this file come from?</label><input id="slr-source-note" data-slr="sourceNote" maxlength="300" value="${esc(p.sourceNote??'')}" placeholder="Downloaded from the NASA sea level portal, 2026-10-02"><small>Free text, for a source with no IRI. It does not satisfy the licence, and it is better than nothing.</small></div>`
       +`<div class="field"><label class="field-label" for="slr-baseline">Baseline period the change is measured against</label><input id="slr-baseline" data-slr="baselinePeriod" maxlength="60" value="${esc(p.baselinePeriod)}" placeholder="1995-2014"></div>`
       +`<div class="field"><label class="field-label" for="slr-basis-kind">What the basis column names</label><select id="slr-basis-kind" data-slr="basisKind">`
       +`<option value=""${p.basisKind?'':' selected'}>Not stated</option>`

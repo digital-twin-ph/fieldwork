@@ -88,7 +88,23 @@ export interface Output extends DisplayValue {nodeId:string; label:string; view:
  *  counts are over fewer sites than were offered. `offNetwork` sites got an answer that assumes a
  *  straight line nobody has checked is walkable, so their results are optimistic rather than
  *  missing. Experiment 114. */
+/** Something a node was supposed to declare and has not.
+ *
+ *  Reported, never fatal, on the practitioner's decision of 2026-10-15: provenance "can be flagged
+ *  as an alert, not a blocker." General rather than sea-level-specific because the shape is: a
+ *  named field, and what its absence costs a reader. Nothing about it is about projections. */
+export interface DeclarationGap {field:string; says:string}
 export interface RunAlert {nodeId:string;
   unconnected:import('./catchments.js').UnconnectedSite[];
-  offNetwork:import('./catchments.js').OffNetworkSite[]}
+  offNetwork:import('./catchments.js').OffNetworkSite[];
+  gaps?:DeclarationGap[]}
+/** Declaration gaps a value carries, read without knowing what the value is -- the same way
+ *  `unconnectedSites` reads any value, so the run does not need to know which widgets declare. */
+export function declarationGaps(value:unknown):DeclarationGap[]{
+  const carried=(value as {projection?:{gaps?:unknown}}|null|undefined)?.projection?.gaps;
+  return Array.isArray(carried)
+    ?carried.filter((gap):gap is DeclarationGap=>
+      typeof (gap as DeclarationGap)?.field==='string'&&typeof (gap as DeclarationGap)?.says==='string')
+    :[];
+}
 export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; provenanceN3:string; outputs:Output[]; trace:{nodeId:string; type:string; milliseconds:number}[]; receipts:Receipt[]; runId:string; engine:string; runAt:string}

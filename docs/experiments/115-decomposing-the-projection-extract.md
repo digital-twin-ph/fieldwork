@@ -3,9 +3,9 @@
 _Created 2026-10-15 · Updated 2026-10-15_
 
 **Status:** asked — the widget is read operation by operation and none of its five
-operations is about sea level. The decomposition is designed and not built: its
-largest piece needs a declared field schema for tables, which is a standing
-blocker with two other callers, and this is the third.
+operations is about sea level. The practitioner settled all three pieces on
+2026-10-15, including the refusal question this document could not answer; the
+decisions are below and the build has not started.
 
 Asked by the practitioner on 2026-10-15, on finding `slr_extract_import` named in the
 blocker ledger as the last widget holding `sources-group-does-not-mean-acquisition` up:
@@ -121,6 +121,74 @@ should see rather than have hidden by a stopped run. That split is a claim about
 failures are legible, and it is the one piece here that a practitioner should overrule if
 they disagree.
 
+## The decisions, 2026-10-15
+
+Given by the practitioner, and they resolve the open question rather than choosing between
+the three answers this document had offered:
+
+> P1 in 115 is potentially a ruleset. The ruleset widget establishes the contract. AND/OR
+> The user must know what fields are required so must feed a table that has the right shape
+> and metadata to pass the rules. P2 — Provenance is something we can check if uploaded or
+> not and can be flagged as an alert, not a blocker. The user must know where the data came
+> from and can note that down in an Inspector field. P3 is an input widget knob (unique
+> values required for column x).
+
+### P1 · The contract is the ruleset's own declaration
+
+The refusal question above was over-thought. A ruleset already declares what it needs:
+`inputContract.expects` is a list of predicates with their types and units —
+`extent-review` declares `fw:areaKnown` as a boolean and `fw:areaSquareMetres` as a number
+in m² — and `apply_ruleset` is what holds a practitioner to it. So the contract does not
+need a new widget and the ruleset does not need the power to stop a run. **The ruleset
+widget establishes the contract**, and a table that cannot satisfy the declaration does not
+reach the rules.
+
+What that leaves is narrower than `typed-field-schema` in general: a **declared binding from
+column to predicate**, so a generic table fact generator can emit one subject per row with
+the declared fields as predicates. The analogous mechanism already exists one field over —
+`inputContract.parameterFrom` maps a node's parameters to a ruleset's declared parameters —
+so this is the same idea for fields rather than a new kind of thing. The general
+field-schema UI that 65 and 61 want is a larger mechanism and is not needed here.
+
+The consequence for the practitioner is stated rather than hidden: **they must know what
+fields are required**, and supply a table with the right shape and metadata. The ruleset
+declares it, the Inspector can show it, and nothing guesses a column's meaning from its
+spelling.
+
+### P2 · Provenance is an alert, not a blocker
+
+Today a missing dataset IRI, version, baseline period, basis kind or third citation
+**stops the run**. That is the wrong severity: no provenance field changes a single
+computed number, so refusing to compute is a punishment for an unfilled form. It becomes
+an **alert** — checked, named, visible, and not fatal — with an Inspector field where the
+practitioner notes where the data came from.
+
+The alert machinery for exactly this shape already shipped: the unconnected-sites alert and
+the version-supersession notice both say what was found, what it costs, and what to do,
+without stopping anything.
+
+This is a behaviour change, and the honest consequence is that a workflow can now publish a
+result from an extract whose source is undeclared. The alert is what makes that visible
+rather than silent, which is the trade the practitioner chose: *"The user must know where the
+data came from."*
+
+### P3 · The distinct values are a knob on the input widget
+
+Not a widget, and not a derivation in the middle of the graph: a knob on the input that
+declares **unique values are required for column x**. The constraint then lives where the
+data enters, which is where it can be acted on — a practitioner who sees it at import can
+fix the file, while one who meets it three steps downstream cannot.
+
+It also leaves the distinct set available at the input rather than annotated onto a value in
+transit, which is what `filter-values-from-a-connected-port` wants to bind a candidate
+filter to.
+
+### What the decisions change about the count
+
+P1 is declared data, P2 is an alert plus a field, P3 is a knob. **No piece of the
+decomposition is a new widget**, so the net is −1: `slr_extract_import` retires and nothing
+replaces it. 46 live against a target of 41.
+
 ## What this does not establish
 
 That the AR6 knowledge in this widget is *correct*. Nothing here re-reads the dataset
@@ -140,10 +208,15 @@ the finding worth more than any one of them.
 
 ## What would close it
 
-A decision on the refusal question above — whether a declared ruleset may stop a run —
-since that decides whether P1 is declared data or a general widget, and the net widget count
-follows from it. Then a declared field schema for `table`, which `typed-field-schema` gates
-and which this makes a third caller for.
+The decisions are made, so what remains is code, in the order the pieces depend on each
+other:
 
-Both are decisions and code, not observations, so neither waits on a phase this project has
-not reached.
+1. **P2** — the provenance check becomes an alert and the Inspector grows a source field.
+   Self-contained, and the alert machinery exists.
+2. **P3** — a unique-values knob on the table input.
+3. **P1** — a declared column-to-predicate binding, a generic table fact generator, and an
+   `extract-contract` ruleset carrying the AR6 expectations; then `slr_extract_import`
+   retires and the sea-level example replays to the same numbers.
+
+This moves to `tried` when the three are built and the sea-level example produces identical
+results, and to `validated` when a frozen fixture shows it.

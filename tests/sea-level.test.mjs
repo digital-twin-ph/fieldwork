@@ -32,7 +32,7 @@ const points={type:'FeatureCollection',features:[
 const extract=()=>projectionExtract(table(),provenance);
 const graph=text=>new Store(new Parser().parse(text));
 
-test('an extract is admissible only with the full key, the unit, the baseline and three citations', () => {
+test('an extract is admissible only with the full key, the unit, the baseline and the basis kind', () => {
   const ok=extract();
   assert.deepEqual(ok.siteIds,['145','394']);
   assert.equal(selectionDomains(ok).family.length,2);
@@ -45,14 +45,42 @@ test('an extract is admissible only with the full key, the unit, the baseline an
   const partial=dataTable({headers,rows:unique},{keys:['site_id','scenario','year','quantile'],valueField:'value_m',unit:'metre'});
   assert.throws(()=>projectionExtract(partial,provenance),/missing key columns: basis, family/);
   assert.throws(()=>projectionExtract(dataTable({headers,rows},{...selection,unit:undefined}),provenance),/state metre or millimetre/);
-  assert.throws(()=>projectionExtract(table(),{...provenance,citations:['one','two']}),/three citations obligatory/);
   // A basis identifier without its kind cannot be interpreted: wf_1e is one workflow, "medium" is
   // a p-box over several, and a p-box bound is not a quantile of one distribution.
   assert.throws(()=>projectionExtract(table(),{...provenance,basisKind:''}),/Declare what the basis column names/);
   assert.throws(()=>projectionExtract(table(),{...provenance,basisKind:'pbox'}),/Declare what the basis column names/);
   assert.equal(projectionExtract(table(),{...provenance,basisKind:'confidence-pbox'}).provenance.basisKind,'confidence-pbox');
   assert.throws(()=>projectionExtract(table(),{...provenance,baselinePeriod:'recent'}),/baseline period/);
-  assert.throws(()=>projectionExtract(table(),{...provenance,datasetVersion:''}),/dataset version/);
+});
+
+// The practitioner's decision of 2026-10-15: "Provenance is something we can check if uploaded or
+// not and can be flagged as an alert, not a blocker." Before that, a missing dataset IRI, version
+// or third citation stopped the run -- and no provenance field changes a computed number, so the
+// refusal was a punishment for an unfilled form. The split follows one question: does the field
+// say WHERE THE DATA CAME FROM, or HOW TO INTERPRET THE NUMBERS? The second kind still refuses,
+// and the test above is what holds that line.
+test('undeclared provenance is reported and still computes', () => {
+  const bare=projectionExtract(table(),{...provenance,datasetIRI:'',datasetVersion:'',citations:['one']});
+  // It computed: the numbers are all there.
+  assert.equal(bare.table.rowCount,4);
+  assert.deepEqual(bare.siteIds,['145','394']);
+  const fields=bare.gaps.map(gap=>gap.field);
+  assert.deepEqual(fields,['Published dataset','Dataset version','Citations','Source note']);
+  // Each gap says what its absence costs a reader, which is what makes it actionable rather than
+  // a scold.
+  for(const gap of bare.gaps)assert.ok(gap.says.length>40,`${gap.field} says too little`);
+  assert.match(bare.gaps[2].says,/1 of the three citations/);
+  // A note is not a citation and does not clear the licence gap, but it does answer the question
+  // the alert asks, so the source-note gap goes.
+  const noted=projectionExtract(table(),{...provenance,datasetIRI:'',datasetVersion:'',citations:['one'],
+    sourceNote:'Emailed by a colleague on 2026-10-02'});
+  assert.deepEqual(noted.gaps.map(g=>g.field),['Published dataset','Dataset version','Citations']);
+  // A complete declaration reports nothing.
+  assert.deepEqual(projectionExtract(table(),provenance).gaps,[]);
+  // And the gaps travel on the value, so the run can report them without knowing what a
+  // projection is.
+  assert.equal(projectionTable(bare).projection.gaps.length,4);
+  assert.equal(projectionTable(projectionExtract(table(),provenance)).projection.gaps,undefined);
 });
 
 test('a family value the declaration does not name is refused, since families are not comparable', () => {

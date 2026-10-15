@@ -2,7 +2,8 @@
 
 _Created 2026-10-14 · Updated 2026-10-14_
 
-**Status:** asked — the defect is measured; nothing is built.
+**Status:** asked — the defect is measured and the cost is already being paid in three
+places; nothing is built.
 
 Raised by the practitioner on 2026-10-14, correcting an explanation of mine:
 
@@ -155,25 +156,40 @@ case; the isochrone canvas holds ten drawable nodes and its map is told about tw
 **It records a correction to a model, which this project keeps rather than quietly
 absorbs.** The explanation it corrects was mine, written the same day.
 
-**What it does not earn is a rewrite.** Nothing shipped is broken: all ten maps render,
-and the two special cases carry the six that need more than one layer. Nobody has asked for
-polygons beside a raster, or two polygon layers, or a network beside points — this record
-asserted those were wanted only because no port exists to ask with, and *that is an
-inference, not a measurement*. The demand is unmeasured.
+**~~What it does not earn is a rewrite.~~** *Struck 2026-10-14, within the hour, by the
+practitioner: "all 10 maps render with a broken model inside them."* The paragraph said
+nothing shipped is broken and the demand was unmeasured. Rendering correctly is not
+evidence that the model is sound, and the demand is not unmeasured — **it has been paid for
+three times, in three different places, none of which is allowed to say "layer".**
+
+| What was built | What it is | Scope |
+| --- | --- | --- |
+| `pointInputCount`, with `point-layers.ts` | numbered ports `points`…`points_8` | eight layers, points only |
+| `contextPoints` | one extra port named `context` | one layer, points only, polygons mode only |
+| **`stack_polygons`, an entire widget** | numbered ports `polygons`…`polygons_6`, **ordered largest first so the smaller draw on top** | six layers, polygons only |
+
+The third is the one that settles it. `stack_polygons` exists because a map cannot take
+two polygon layers, and its own documentation describes what it does as layering: *"several
+polygon layers collected into one, with nothing merged … ordered largest area first, so the
+smaller bands draw on top of the larger."* **Draw order — which this record listed as a new
+question the layer model would raise — is already implemented, in a widget, for one type,
+by a heuristic.**
+
+So the cost is already being paid: two parameters, one widget, a renderer that branches
+five ways, and an interaction where the mode must be set before the shape can arrive. What
+a layer model would do is collect those into one thing that can be named.
 
 ## What would close it
 
-A decision, not a rewrite: evidence that a practitioner wants a combination the modes
-forbid. A worked example that needs polygons over a raster, or two polygon layers
-distinguished, or a network beside the points routed on it, is the evidence; the shipped
-seven contain none.
+A map that takes N layer inputs of mixed types, draws them in a stated order with a legend
+derived from the layers, and reproduces all ten shipped maps — the sea-level map with three
+layers, the isochrone map with polygons and context points, the four nested isochrone bands
+— with no `inputMode`, no `contextPoints`, no numbered point ports, and `stack_polygons`
+retired or reduced to what it is actually for.
 
-If that evidence appears, closing it means a map that takes N layer inputs of mixed types,
-draws them in a stated order with a legend derived from the layers, and reproduces all ten
-shipped maps with no `inputMode`, no `contextPoints` and no numbered point ports.
-
-If it does not appear, the honest outcome is to record that the mode model was wrong in
-principle and adequate in practice, and to leave it.
+The draw order it uses today, largest area first, is a heuristic that happens to be right
+for nested bands and has no reason to be right for a raster under points. Ordering is the
+practitioner's, and that is the one thing a layer model adds rather than collects.
 
 ## Updates
 
@@ -185,3 +201,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | A map has layers, not modes — the correction, and the measurement that supports it: 6 of 10 shipped maps already show more than one layer, through two special-case mechanisms that each handle points only |
 | 2026-10-14 | "An output widget being the last stage can see what the widgets before it are producing that it can consume." It already does, one port at a time: twelve Inspector pickers list the canvas nodes whose output matches a port's type and call setConnection on choice. Measured: the isochrone canvas holds ten drawable nodes and its map is told about two, hidden by the mode rather than by sense. So the edge-making half of a layer list is built; what is missing is one list keyed by drawable instead of several keyed by a mode's ports, and a renderer that composes |
 | 2026-10-14 | "Why is 115 needed?" -- narrowed in answer. It earns its place by changing what the blocker output-mode-set-before-the-shape-arrives should do (automating a mode switch would entrench the model this record calls wrong), by holding measurements that live nowhere else, and by recording a model correction. It does NOT earn a rewrite: nothing shipped is broken, and the claim that combinations are wanted is an inference rather than a measurement. Closing it now means evidence of demand, not a new renderer |
+| 2026-10-14 | "All 10 maps render with a broken model inside them." Struck the paragraph claiming nothing is broken and the demand unmeasured: rendering is not evidence the model is sound, and the demand has been paid for three times -- pointInputCount for eight point layers, contextPoints for one beside polygons, and stack_polygons, an entire widget, for six polygon layers ORDERED LARGEST FIRST SO THE SMALLER DRAW ON TOP. Draw order, which this record called a new question, is already implemented for one type by a heuristic |

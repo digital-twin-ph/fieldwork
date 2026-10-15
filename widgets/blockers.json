@@ -1,7 +1,7 @@
 {
  "schema": "fieldwork/blockers/1",
- "note": "A blocker is a dated claim, not a property of the world. The practitioner's rule of 2026-10-12: even blockers are not permanent, and each should be revisited in DE mode. This file exists because the two blockers recorded in TODO.md went unexamined and both were wrong when finally re-derived on the day this file was written -- one had been lifted by a widget that shipped, and the other was half true and had been stopping work it did not actually block. A blocker nobody re-derives does the same damage as an admission nobody re-reviews: it looks like a fact and acts like a decision. Every entry must therefore carry a liftTest -- the check that would show it has gone -- because a blocker with no stated lift test cannot be falsified and is only a mood. The ratchet is the revisit window: scripts/validate-blockers.mjs fails when a standing blocker has not been revisited within it.",
- "measuredAt": "2026-10-14",
+ "note": "A blocker is a dated claim, not a property of the world. The practitioner's rule of 2026-10-12: even blockers are not permanent, and each should be revisited in DE mode. This file exists because the two blockers recorded in TODO.md went unexamined and both were wrong when finally re-derived on the day this file was written -- one had been lifted by a widget that shipped, and the other was half true and had been stopping work it did not actually block. A blocker nobody re-derives does the same damage as an admission nobody re-reviews: it looks like a fact and acts like a decision. Every entry must therefore carry a liftTest -- the check that would show it has gone -- because a blocker with no stated lift test cannot be falsified and is only a mood. The ratchet is the revisit window: scripts/validate-blockers.mjs fails when a standing blocker has not been revisited within it.\n\nRe-derived in full on 2026-10-15, on the practitioner's instruction that blockers should make sense and be actionable rather than an obstacle to progress. All nine standing claims were tested against the code that day and all nine were still true -- so the audit found no stale CLAIM. What it found was two wrong STATUSES and one ungameable rule missing. `undeclared-rule-applications` and `table-to-points-conversion-missing` block nothing and nothing is gated on them, so `standing` was claiming queued work that did not exist; both are now `finding`, which carries no clock, and both are carried in docs/todo.md where work is actually chosen. And the revisit clock could be satisfied by editing one date: a standing blocker now needs a dated `revisits` note whose newest date IS lastRevisited, so the date cannot move unless somebody writes what they found. An entry may raise its own window above the ledger default by stating windowReason, because a weekly re-derivation of a claim waiting on a mechanism nobody is building buys nothing and is exactly the ceremony that makes a ledger an obstacle.",
+ "measuredAt": "2026-10-15",
  "revisitWindowDays": 7,
  "windowBasis": "This project adds and retires widgets in days, not months: twelve widgets arrived in three days and three were retired in one. A blocker older than a week has outlived the conditions it was recorded under.",
  "blockers": [
@@ -67,11 +67,17 @@
     "facility_audit"
    ],
    "recorded": "2026-10-12",
-   "lastRevisited": "2026-10-13",
+   "lastRevisited": "2026-10-15",
    "status": "standing",
    "liftTest": "A presentation-stage composition exists and comparison_map is expressed as one.",
    "record": "no experiment yet -- the practitioner's direction of 2026-10-12, recorded in widgets/standardization.json under deferred",
-   "narrowedBy": "Revisited 2026-10-13. A day of presentation work did NOT lift this and the lift test is unchanged, but what is missing is now narrower than when it was recorded. The figure layer exists: src/presentation.ts holds one validated palette and one type scale that a map and a chart both read, maps export with a scale bar, a north arrow and a derived licence line, charts export the specification the receipt stores, and the Snow figures carry titles, subtitles, axis names and citations. So 'there is nowhere for presentation to live' is no longer true of the DRAWING. What is still missing is a composition stage: a way to express comparison_map as an arrangement of primitives rather than as a widget, which is what the lift test asks for and what nothing yet offers."
+   "narrowedBy": "Revisited 2026-10-13. A day of presentation work did NOT lift this and the lift test is unchanged, but what is missing is now narrower than when it was recorded. The figure layer exists: src/presentation.ts holds one validated palette and one type scale that a map and a chart both read, maps export with a scale bar, a north arrow and a derived licence line, charts export the specification the receipt stores, and the Snow figures carry titles, subtitles, axis names and citations. So 'there is nowhere for presentation to live' is no longer true of the DRAWING. What is still missing is a composition stage: a way to express comparison_map as an arrangement of primitives rather than as a widget, which is what the lift test asks for and what nothing yet offers.",
+   "revisits": [
+    {
+     "date": "2026-10-15",
+     "found": "Re-derived against compositions/: two compositions exist, classify_extent (stage classify) and compute_walking_catchment (stage compute). No composition declares a presentation stage and comparison_map is not expressed as one, so the lift test is unmet and the claim stands unchanged."
+    }
+   ]
   },
   {
    "id": "outreach-predicates-name-a-domain",
@@ -80,11 +86,17 @@
     "alert"
    ],
    "recorded": "2026-10-12",
-   "lastRevisited": "2026-10-12",
+   "lastRevisited": "2026-10-15",
    "status": "standing",
    "liftTest": "A ruleset 2.0.0 exists whose predicates name no domain and carry no unit in their names, with the unit on the declaration, and 1.0.0 is kept because it is what reproduces the shipped conclusions.",
    "narrowedTo": "What replaced ruleset-as-declared-data for alert alone. Declaring a condition and the date it applies to is irreducible, so alert survives as a primitive; only its name and its predicate are domain, and the predicate is now in a versioned artefact rather than in a template literal, which is what makes this a version bump rather than a code change.",
-   "record": "docs/experiments/65-ruleset-as-data.md"
+   "record": "docs/experiments/65-ruleset-as-data.md",
+   "revisits": [
+    {
+     "date": "2026-10-15",
+     "found": "Re-derived against rulesets/outreach-criteria/: 1.0.0 is still the only version, and its rules read fw:heatAlert and fw:distanceKm four times each. No 2.0.0 exists, so the claim stands unchanged."
+    }
+   ]
   },
   {
    "id": "no-points-within-area-selection",
@@ -93,7 +105,7 @@
     "facilities"
    ],
    "recorded": "2026-10-12",
-   "lastRevisited": "2026-10-12",
+   "lastRevisited": "2026-10-15",
    "status": "standing",
    "liftTest": "A primitive takes (area, points) and outputs points, and the Old Naledi example produces its facility set from buffer_area plus that selection, with the difference from the shipped selection stated rather than discovered.",
    "measured": "Measured across buffer distances 2026-10-12, after the cap was raised. Shipped: a 6 km circle at the boundary's bounding-box centre selects 122 of 214 facilities. Boundary widened by 4,000 m: 93, all of them inside the shipped set. 4,500 m: 109, all inside. 5,000 m: 122, agreeing on 121 with one differing each way. 5,500 m: 139, containing all 122 and 17 more. 6,000 m: 150, containing all 122 and 28 more. So the closest equivalent to the shipped selection is a 5,000 m margin around the boundary, which is a 1-in-122 difference, and that value was inside the old cap all along.",
@@ -115,7 +127,13 @@
     "correction": "Withdrawn 2026-10-12, challenged by the practitioner: 'This is a GIS studio, and a point is essentially x and y, lat, long coordinates. Where did this reasoning come from?' It came from the code -- src/spatial-predicates.ts returns 'MissingLocation' when coordinates are absent, and experiment 03 distinguishes four relations -- and I restated a project-specific data-quality state as a claim about points. That is a category error. A point IS coordinates; a PointFeature with geometry:null is not a point with an unknown location, it is not a point.",
     "whatStands": "The boundary-policy argument, which is independent: Inside and Boundary both concluding Accept is a policy stated in a code comment, so a set-level boolean is a policy applied to the relation rather than a reading of it, and belongs downstream of a ruleset either way.",
     "setOperations": "Studied 2026-10-12 in docs/experiments/107-set-operations-and-the-ruleset.md, and it yields a design rule this blocker must honour: a membership relation must be TOTAL over a closed vocabulary and must never drop non-members. Because the rule subset has no negation, 'not inside' is only expressible as 'Outside or Boundary' -- a union of positive facts -- which requires every subject to carry a value. coverage_check's relation is total and its retainedData is not: it filters on the excluded flag, so the layer it passes downstream has records removed. A selection primitive that drops non-members makes difference inexpressible for everything after it."
-   }
+   },
+   "revisits": [
+    {
+     "date": "2026-10-15",
+     "found": "Re-derived against the type table: no widget declares area and points as inputs with points as output. Claim stands unchanged."
+    }
+   ]
   },
   {
    "id": "undeclared-rule-applications",
@@ -123,7 +141,7 @@
    "blocks": [],
    "recorded": "2026-10-12",
    "lastRevisited": "2026-10-12",
-   "status": "standing",
+   "status": "finding",
    "liftTest": "All six rule applications resolve a declared ruleset with a basis, an output vocabulary including an unknown value, and byte-identical conclusions on the frozen fixtures.",
    "whyItMatters": "Its policy is stated in a code comment -- 'Boundary points are included by policy' -- and two of its rules map DIFFERENT relations to the SAME decision: Outside to Review and MissingLocation to Review. So the policy collapses outside-ness and unknown-ness, which is the distinction the four-valued relation upstream exists to preserve. Declaring the ruleset makes that choice visible and contestable; a template literal does not. It is also the second OR compiled by hand -- Inside and Boundary both conclude Accept -- after facilityN3's last two rules.",
    "formExtension": "One rule concludes about the ACTIVITY rather than a subject: '{ ?activity fw:checkedRecord ?r. ?r fw:coverageDecision fw:Review. } => { ?activity fw:requiresReview true. }'. Experiment 106's authored form concludes per subject only, so hosting this ruleset needs set-level conclusions, which is a real extension and not a detail.",
@@ -134,7 +152,8 @@
     "slr_threshold_comparison compares FIELD TO FIELD: the projected change for the row's site against the row's own elevation attribute, with no parameter at all. The form admits a literal or a bound parameter as the right-hand side and needs to admit another field of the same subject."
    ],
    "geospatialRulesets": "The practitioner asked whether geospatial rulesets are relevant here. They are not needed. slr_threshold_comparison's rule is scalar -- level >= elevation, two numbers -- and the widget is merely in a geospatial pipeline. For a genuinely spatial rule, coverage_check already shows the shape that works without spatial builtins, which EYE does not provide: the geometry is computed in TypeScript and the RELATION is asserted as a fact, '<record> fw:spatialRelation fw:Inside', and the rules reason over the relation. Its own comment says 'Point relations are computed locally.' So what is missing is not capability but declaration.",
-   "namingDissolves": "slr_threshold_comparison carries an example label -- slr_ names a pack, not an operation. Becoming a ruleset makes that correct rather than needing a fix: a widget must be general and a ruleset must be particular, which is the division validate-rulesets.mjs enforces."
+   "namingDissolves": "slr_threshold_comparison carries an example label -- slr_ names a pack, not an operation. Becoming a ruleset makes that correct rather than needing a fix: a widget must be general and a ruleset must be particular, which is the division validate-rulesets.mjs enforces.",
+   "whatChanged": "Re-derived 2026-10-15 and the claim is unchanged and still true. The STATUS was wrong: it blocks nothing and nothing is gated on it in widgets/standardization.json or widgets/naming.json, so calling it standing claimed that work was queued behind it when none was. Recorded as a finding -- true, unscheduled, no clock, because there is no gate to keep honest. The practitioner's instruction of 2026-10-15: blockers should make sense and be actionable, not an obstacle to progress. Carried into docs/todo.md so it is scheduled from where work is chosen rather than from a gate nobody reads."
   },
   {
    "id": "points-carrier-admits-non-points",
@@ -160,7 +179,7 @@
    "blocks": [],
    "recorded": "2026-10-12",
    "lastRevisited": "2026-10-12",
-   "status": "standing",
+   "status": "finding",
    "theModel": "The practitioner's framing, and it is the right one. `table` is a pandas DataFrame: records with columns, no geometry. `points` is a geopandas GeoDataFrame: records with a geometry column, which may be missing per row. The conversion between them is explicit in geopandas and names the coordinate columns -- GeoDataFrame(df, geometry=points_from_xy(df.lon, df.lat)) -- and that explicit naming is the step Fieldwork has no widget for.",
    "measured": "Three widgets consume `table` -- slr_extract_import, slr_site_assignment, slr_threshold_comparison -- and all three emit a table or decisions. The only ways to obtain points are observations (a data editor), samples (generates a grid) and find_health_facilities (fetches from a source). None converts.",
    "twoConsequences": [
@@ -169,7 +188,8 @@
    ],
    "liftTest": "A widget takes a table and a declared binding of which columns are longitude and latitude, with a CRS, and outputs points; SpatialRelation is three-valued; and case_series consumes the table directly instead of casting.",
    "relatedWork": "This is experiment 61's problem exactly -- 'the ability to say which column means what' -- and the same role-binding mechanism experiment 65 needs for rulesets. Whichever lands first should be built so the other can use it, which 65 already says.",
-   "record": "docs/experiments/61-input-dimensions.md, 48-tabular-input.md, 65-ruleset-as-data.md"
+   "record": "docs/experiments/61-input-dimensions.md, 48-tabular-input.md, 65-ruleset-as-data.md",
+   "whatChanged": "Re-derived 2026-10-15 and the claim is unchanged and still true. The STATUS was wrong: it blocks nothing and nothing is gated on it in widgets/standardization.json or widgets/naming.json, so calling it standing claimed that work was queued behind it when none was. Recorded as a finding -- true, unscheduled, no clock, because there is no gate to keep honest. The practitioner's instruction of 2026-10-15: blockers should make sense and be actionable, not an obstacle to progress. Carried into docs/todo.md so it is scheduled from where work is chosen rather than from a gate nobody reads."
   },
   {
    "id": "filter-values-from-a-connected-port",
@@ -178,12 +198,18 @@
     "slr_site_assignment"
    ],
    "recorded": "2026-10-13",
-   "lastRevisited": "2026-10-13",
+   "lastRevisited": "2026-10-15",
    "status": "standing",
    "liftTest": "A CandidateCondition can bind its values to a column of a connected input, and the sea-level example produces its assignments from `nearest` with that binding, agreeing row for row with `slr_site_assignment` on the 194 Manila facilities.",
    "measured": "Measured 2026-10-13 against src/sea-level-example.ts: the extract's site ids and the site layer's site ids are the identical set of eight (145, 260, 394, 522, 537, 664, 1708, 1711), so the validity rule that is this widget's entire domain residue excludes nothing in the only workflow that runs it. That is a property of this example's data and not a guarantee, which is why the filter must be bindable rather than dropped.",
    "alsoFound": "This is the third caller for one authored-condition form, after classification (experiment 106) and role binding (experiment 61). Three callers is the argument for building it rather than three arguments for three mechanisms.",
-   "record": "docs/audits/widget_audit.md"
+   "record": "docs/audits/widget_audit.md",
+   "revisits": [
+    {
+     "date": "2026-10-15",
+     "found": "Re-derived against src/types.ts: CandidateCondition is still {field, comparator, values: Scalar[]} -- literal values only, with no way to bind values to a column of a connected input. Claim stands unchanged."
+    }
+   ]
   },
   {
    "id": "sources-group-does-not-mean-acquisition",
@@ -192,13 +218,20 @@
     "slr_extract_import"
    ],
    "recorded": "2026-10-13",
-   "lastRevisited": "2026-10-13",
+   "lastRevisited": "2026-10-15",
    "status": "standing",
    "liftTest": "A check in scripts/validate-naming.mjs requires a widget grouped under Sources to acquire something -- no inputs, or acquired data carried in its params as `find_health_facilities` does -- and both widgets either move group or change contract so the check passes without an exemption.",
    "measured": "slr_extract_import declares inputs:[['projections','table']] and holds no data parameter; the table arrives from table_input. reproject declares inputs:[] and holds params.data, so it genuinely acquires -- but it also reprojects, which is why the split recorded in docs/todo.md gives the sources an output CRS and leaves reproject a points-to-points transform.",
    "alsoFound": "The naming ratchet added 2026-10-13 catches reproject through its transform verb and misses slr_extract_import entirely, because that rule keys on the verb rather than on the contract. A rule that asks whether a source acquires would catch both, and would not depend on a verb list staying complete.",
    "record": "docs/audits/widget_audit.md",
-   "resolvedForReproject": "Lifted for `reproject` on 2026-10-13 by the split in experiment 111, which is what the lift test asked for: the widget changed contract rather than taking an exemption. It no longer imports its own data -- the sources read UTM themselves -- and takes points and returns points under Spatial operations. Both of its naming violations cleared with it and the ceiling went 6 -> 4. It still stands for `slr_extract_import`, which declares inputs:[['projections','table']], holds no data parameter, and acquires nothing: the table arrives from table_input and this widget validates and annotates it."
+   "resolvedForReproject": "Lifted for `reproject` on 2026-10-13 by the split in experiment 111, which is what the lift test asked for: the widget changed contract rather than taking an exemption. It no longer imports its own data -- the sources read UTM themselves -- and takes points and returns points under Spatial operations. Both of its naming violations cleared with it and the ceiling went 6 -> 4. It still stands for `slr_extract_import`, which declares inputs:[['projections','table']], holds no data parameter, and acquires nothing: the table arrives from table_input and this widget validates and annotates it.",
+   "revisits": [
+    {
+     "date": "2026-10-15",
+     "found": "Re-derived against the type table. Narrowed by measurement: of the ten widgets grouped under Sources, four declare an input -- network_input, raster_input and find_health_facilities each take an `area` to acquire WITHIN, which is acquisition, and slr_extract_import takes a `table` on a port and acquires nothing. So this is now true of one widget rather than two, reproject having been resolved by experiment 111's split. The liftTest's check is unwritten."
+    }
+   ],
+   "narrowedTo": "One widget, not two, as of 2026-10-15. `reproject` was resolved by experiment 111's split -- it changed contract rather than taking an exemption. Of the ten Sources widgets, network_input, raster_input and find_health_facilities each take an `area` to acquire WITHIN, which is acquisition; slr_extract_import takes a `table` on a port and acquires nothing."
   },
   {
    "id": "isochrone-does-not-scale",
@@ -221,10 +254,16 @@
     "Experiment 113's composite, which fixes a ruleset pin"
    ],
    "recorded": "2026-10-14",
-   "lastRevisited": "2026-10-14",
+   "lastRevisited": "2026-10-15",
    "status": "standing",
    "liftTest": "A receipt carries a digest of the ruleset document it applied, and resolving a pin checks it, so a changed ruleset at an unchanged version fails rather than runs. Composition members already work this way: a member pin is {node, type, version, sha256} and validateComposition refuses a mismatch.",
-   "why": "Found 2026-10-14 by asking whether a pin is unique. It is unique as a lookup key within a build and not as a content identity, which is the sense reproducibility needs."
+   "why": "Found 2026-10-14 by asking whether a pin is unique. It is unique as a lookup key within a build and not as a content identity, which is the sense reproducibility needs.",
+   "revisits": [
+    {
+     "date": "2026-10-15",
+     "found": "Re-derived against src/rule-application.ts: a pin is still {id, version, title, inputs, output} with no digest, and nothing checks one. Claim stands unchanged. Noted while building supersession alerting the same day: the alert can name a newer version precisely because versions are data in one build, which is the same property that makes an unverified pin resolvable to different text in two builds."
+    }
+   ]
   },
   {
    "id": "output-mode-set-before-the-shape-arrives",
@@ -234,10 +273,16 @@
     "Revealing an output widget by its type, which does not say what it takes"
    ],
    "recorded": "2026-10-14",
-   "lastRevisited": "2026-10-14",
+   "lastRevisited": "2026-10-15",
    "status": "standing",
    "liftTest": "Dragging a connection to an output widget whose current mode does not accept it switches the mode when exactly one mode accepts that port type, and asks which the practitioner meant when more than one does. Measured: 2 of 3 output widgets need no question at all. NOTE 2026-10-14: the Map widget page (docs/widgets/map_output.md) records that the mode model is itself the defect -- a map has layers, not modes -- so automating the switch would entrench what it would remove. Read that page before lifting this.",
-   "why": "Raised by the practitioner on 2026-10-14: the output widgets depend on the shape of the process widget outputs for inputs."
+   "why": "Raised by the practitioner on 2026-10-14: the output widgets depend on the shape of the process widget outputs for inputs.",
+   "revisits": [
+    {
+     "date": "2026-10-15",
+     "found": "Re-derived against src/types.ts: map_output still declares inputMode with five values and draws the ports its current mode gives it. Claim stands unchanged. Read docs/widgets/map_output.md before lifting: the practitioner's direction of 2026-10-14 is that a map has layers and not modes, which would dissolve this blocker rather than lift it."
+    }
+   ]
   }
  ]
 }

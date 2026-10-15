@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
+import {readFile} from 'node:fs/promises';
 
 const run=(today)=>{
   try{
@@ -21,8 +22,42 @@ test('a blocker left standing past the window fails the build', ()=>{
 });
 
 test('a blocker revisited inside the window passes', ()=>{
-  const {ok}=run('2026-10-14');
-  assert.equal(ok,true);
+  // Pinned after the ledger's own measuredAt and inside the window. It used to read 2026-10-14,
+  // which began failing the moment the ledger was re-derived on 2026-10-15 -- not because a
+  // blocker was stale but because the pinned clock was then BEHIND measuredAt, which the
+  // validator refuses for its own reason. A date before the file was written is not a test of
+  // the window.
+  const {ok,out}=run('2026-10-20');
+  assert.equal(ok,true,out);
+});
+
+// Added 2026-10-15 with the rules they lock. The clock was satisfiable by editing one date, which
+// rewards the person who skipped the re-derivation with a one-character fix; and `standing` was
+// being used for claims nothing was waiting on, which is how a ledger becomes an obstacle instead
+// of a list of work. These assert the DATA satisfies both, so the ledger cannot drift back even
+// if the validator is loosened.
+test('every standing blocker records what re-deriving it found, dated as lastRevisited', async()=>{
+  const ledger=JSON.parse(await readFile('widgets/blockers.json','utf8'));
+  for(const blocker of ledger.blockers.filter(b=>b.status==='standing')){
+    const dates=(blocker.revisits??[]).map(r=>r.date).filter(Boolean).sort();
+    assert.ok(dates.length,`${blocker.id} is standing and records no revisits`);
+    assert.equal(dates.at(-1),blocker.lastRevisited,
+      `${blocker.id}: the date and the finding must be the same event`);
+    for(const entry of blocker.revisits)
+      assert.ok(entry.found?.trim(),`${blocker.id}: a revisit must say what it found`);
+  }
+});
+
+test('standing means something is waiting, and a finding means nothing is', async()=>{
+  const ledger=JSON.parse(await readFile('widgets/blockers.json','utf8'));
+  for(const blocker of ledger.blockers){
+    if(blocker.status==='standing')
+      assert.ok((blocker.blocks??[]).length,
+        `${blocker.id} is standing and blocks nothing -- it is a finding, which carries no clock`);
+    if(blocker.status==='finding')
+      assert.equal((blocker.blocks??[]).length,0,
+        `${blocker.id} is a finding and lists work waiting on it -- that makes it standing`);
+  }
 });
 
 test('counts dated in the future are refused', ()=>{

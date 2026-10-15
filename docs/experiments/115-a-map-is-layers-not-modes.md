@@ -87,6 +87,41 @@ Consequences, stated before anything is built:
    points, a raster renderer, a network renderer. Composition is the work; the ports are
    the easy half.
 
+## The last stage can see what is upstream, and the mechanism is already there
+
+The practitioner, continuing:
+
+> An output widget being the last stage can see what the widgets before it are producing
+> that it can consume — points, polygons, rasters, even derived polygons and points.
+
+It can, and **the Inspector already works this way for one port at a time.** Twelve source
+pickers exist in the Inspector today, each a `<select>` carrying `data-map-port`, listing
+the nodes on the canvas whose output matches that port's type; choosing one calls
+`setConnection` and the edge appears. A practitioner wiring a catchment map does not have
+to drag anything: they pick *Polygon input* from a list of the polygon producers on the
+canvas.
+
+So the map is already told what it can consume by looking at the canvas. What stops it
+being a layer list is only that the lookup is **per port, and the ports come from the
+mode**.
+
+Measured on two shipped canvases, counting every node whose output is drawable — `points`,
+`polygons`, `raster`, `area`, `network`:
+
+| Canvas | Layers the map wires | Layers the map could see |
+| --- | --- | --- |
+| snow-extent | 2 | **4** — deaths, hull, judged hull, pumps |
+| snow-isochrone | 2 | **10** — study area, pumps, deaths, catchments, clipped, summarised, projected points, network, context pumps, acquisition buffer |
+
+The isochrone canvas holds ten drawable things and its map is told about two. The other
+eight are not hidden by a rule about what makes sense; they are hidden because the map is
+in polygons mode and polygons mode has two ports.
+
+**This makes the change cheaper than the previous section implies.** The edge-making half
+is built and shipping — a picker that lists candidates by type and calls `setConnection`.
+What is missing is one list instead of several, keyed by *drawable* rather than by a mode's
+port, plus the renderer that composes what comes back.
+
 ## What this does not establish
 
 That every type should be drawable as a layer. `decisions` carries rows that may have no
@@ -117,3 +152,4 @@ changed this file; a date stamp sweep is not an update._
 | Date | What happened |
 | --- | --- |
 | 2026-10-14 | A map has layers, not modes — the correction, and the measurement that supports it: 6 of 10 shipped maps already show more than one layer, through two special-case mechanisms that each handle points only |
+| 2026-10-14 | "An output widget being the last stage can see what the widgets before it are producing that it can consume." It already does, one port at a time: twelve Inspector pickers list the canvas nodes whose output matches a port's type and call setConnection on choice. Measured: the isochrone canvas holds ten drawable nodes and its map is told about two, hidden by the mode rather than by sense. So the edge-making half of a layer list is built; what is missing is one list keyed by drawable instead of several keyed by a mode's ports, and a renderer that composes |

@@ -38,13 +38,50 @@ else if(readFileSync(compiledPath,'utf8')!==JSON.stringify(compiledPages(),null,
     +'APPLICATION is the compiled file, so a page edited and not recompiled is a page the '
     +'practitioner never sees. Run `npm run manual:widgets`.');
 
+// A manual is for the person using the widget, not for the people building it. The practitioner,
+// 2026-10-15: "The manual should not contain historical / audit / revision history text. It's for
+// the human user, not developers or agents ... focus on understanding what the widget is (e.g.,
+// type - input, process, output, what it does, ports) and how to use it and point to worked
+// examples that exercise it."
+//
+// The map page had become a design record with a manual wrapped around it: dated removals,
+// measured counts, blocker names, quotations. That content is not wrong and is not deleted -- it
+// moves to docs/widget-specs/, where the people who need it look. These two checks keep the split.
+const MANUAL_SECTIONS=['## What it does','## How to use it'];
+const RECORD_MARKERS=[
+  [/\b(Removed|Measured|Withdrawn|Corrected|Narrowed|Reworded) \d{4}-\d{2}-\d{2}\b/,'a dated change note'],
+  [/\bthe practitioner\b/i,'a quotation of who said what'],
+  [/docs\/experiments\//,'a link into the experiment record'],
+  [/\bblocker\b/i,'a blocker name'],
+];
+for(const nodeType of documented){
+  const text=readFileSync(join(root,`docs/widgets/${nodeType}.md`),'utf8');
+  for(const heading of MANUAL_SECTIONS)
+    if(!text.includes(heading))
+      problems.push(`docs/widgets/${nodeType}.md has no "${heading}" section. A manual says what the `
+        +`widget does and how to use it; a reader who has to infer either is reading a specification.`);
+  // The pointer at the bottom is the one allowed mention, and the compiler strips it from the page.
+  const body=text.replace(/\n---\n+\*How this widget is built[\s\S]*$/,'');
+  for(const [pattern,what] of RECORD_MARKERS)
+    if(pattern.test(body))
+      problems.push(`docs/widgets/${nodeType}.md contains ${what}. A manual is for the person using `
+        +`the widget: no history, no audit trail, no revision notes. That belongs in `
+        +`docs/widget-specs/${nodeType}.md, which the manual links to at the end.`);
+}
+
 // A page must say something. An empty page satisfies a count and helps nobody.
 for(const nodeType of documented){
   const text=readFileSync(join(root,`docs/widgets/${nodeType}.md`),'utf8');
   if(text.trim().length<400)
     problems.push(`docs/widgets/${nodeType}.md is ${text.trim().length} characters. A page that only repeats the title is a worse answer than no page, because it stops anyone writing the real one.`);
-  if(!/^##\s+What it assumes/m.test(text))
-    problems.push(`docs/widgets/${nodeType}.md has no "What it assumes" section. That is the section this manual exists for; the rest a practitioner can infer from the Inspector.`);
+  // "What it assumes" was required here until 2026-10-15, when the practitioner set the audience:
+  // a manual is for the person using the widget. An assumption that changes what they should do
+  // belongs under "What it will not do", in their terms; an assumption about how the widget is
+  // built belongs in docs/widget-specs/. The requirement moved rather than being dropped.
+  if(!/^##\s+What it will not do/m.test(text))
+    problems.push(`docs/widgets/${nodeType}.md has no "What it will not do" section. A reader needs `
+      +`the limits that change what THEY should do, in plain words -- not the widget's internal `
+      +`assumptions, which belong in docs/widget-specs/${nodeType}.md.`);
 }
 
 // The gap may close and may never widen.

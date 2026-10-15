@@ -1,81 +1,73 @@
 # Network isochrone
 
-_Created 2026-10-14 · Updated 2026-10-14_
+_Created 2026-10-14 · Updated 2026-10-15_
 
-Draws the area reachable within a stated walking time along a street network,
-from one or more sites.
+**A process widget.** It draws the area you can reach on foot within a stated time, walking
+along real streets, from one or more sites.
+
+## What it does
+
+From each site it walks outward along the street network until the time runs out, then draws a
+band around every street it reached. The result is one region per site — not a circle, because
+streets are not straight and do not go everywhere.
+
+A walk has three parts and this charges for all three: **to** the nearest junction, **along**
+the streets, and **off** the street at the end to reach a door.
 
 ## What you connect
 
-| Port | What it expects |
+| Connect | What it needs |
 | --- | --- |
-| `sites` | the points to walk from — pumps, clinics, depots |
-| `network` | a street network, from **Street network** |
+| your sites | the points to walk from — pumps, clinics, depots |
+| a street network | from the **Street network** widget |
 
-It produces polygons, one per site, which a map can draw and
-**Summarize points in polygons** can count into.
+Out come polygons, one per site. Draw them on a Map, or count your records into them with
+**Summarize points in polygons**.
 
-## What you set
+## How to use it
 
-- **Minutes** and **metres per minute** — together these are the distance budget.
-  5 minutes at 75 m/min is 375 m of street.
-- **Corridor width** — how wide a band to draw around the reachable streets.
-- **Snap limit** — how far a site may be from the nearest junction before the
-  run stops.
-- **UTM zone and hemisphere** — the projection it measures in. Every widget in a
-  workflow that measures must agree on this one, and the run is refused by name
-  if they disagree.
+1. **Add it** from the palette, under Catchments.
+2. **Connect your sites and a street network.**
+3. **Set the budget.** *Minutes* × *metres per minute* is how far someone can walk — 5 minutes
+   at 75 m/min is 375 m of street.
+4. **Set the final walk off the street** — how far from a street someone can get to a door.
+   The band is this wide where there is time left and narrower where there is not.
+5. **Set the snap limit** — how far a site may be from the nearest street before the result
+   says so.
+6. **Check the zone.** Measuring happens in metres, so the UTM zone is part of the answer, and
+   every measuring step in one workflow must agree on it. The run is refused by name if they
+   disagree.
+7. **Run the workflow**, then read the regions on a map and the alert in the Inspector.
 
-## What it assumes
+## Worked examples that use it
 
-**A walk has three parts, and this charges for all three.** From where you stand
-to the nearest junction; along the streets; from the last junction to the door.
-The region drawn is that whole route, buffered by the final leg.
+| Example | What it does there |
+| --- | --- |
+| **John Snow · walking catchments** | five-minute walking regions around the eight Soho pumps, drawn as a plot and as an interactive map, with the 1854 deaths counted into them |
 
-- The walk **onto** the network is measured — you can see it in the run evidence
-  as `fw:networkSnaps` — and deducted from your budget before any street is
-  walked. On the Soho example that is 10.9 m of a 375 m budget. It is charged as
-  a straight line at street speed, which is a lower bound on the real walk.
-  Until 2026-10-14 it was free, and the catchment reached about 3% further than
-  the minutes said.
-- The walk **off** the network, from the last junction to a doorway, is the
-  **final walk off the street** setting, and it is charged: it is that wide where
-  the budget allows and narrower where it does not, so the region ends at its own
-  time rather than 25 m beyond it. It assumes that ground can be walked, at street
-  speed, which near the edge of the budget is where the catchment is most generous.
-- A site **further than the snap limit** from any mapped street is **routed
-  anyway**, with the straight line to the nearest junction charged against the
-  budget. Its catchment carries `fw:offNetworkMetres`, the widget glows red and
-  the Inspector names the leg. The line is a lower bound on that walk — it
-  assumes you can cross whatever lies between — so the catchment reaches further
-  than the ground allows. Before 2026-10-14 such a site stopped the run outright,
-  taking every other site's catchment with it.
-- A site whose walk to the nearest street would **spend the whole budget** gets
-  **no catchment at all**. It reaches nothing in the stated time, which is the
-  answer; there is no polygon, because the only shape available is a corridor-width
-  disc around a junction the site cannot even get to. It is named in the alert and
-  in `fw:unconnectedSites`, and the note on the result says the counts are over the
-  sites that reached something.
+## What it will not do
 
-## Who this misleads, and in which direction
+- **It is not a service area or a routed travel time.** It is an approximation of shape, drawn
+  to be read. Nobody agreed to it and no router produced it.
+- **It assumes the ground beside a street can be walked**, at walking speed, in any direction.
+  Near the edge of the budget that is where the region is most generous.
+- **It does not drop a site that is far from the streets.** Such a site is routed anyway, with
+  the straight line to the nearest junction charged against its budget. Its region is marked,
+  the widget glows red, and the Inspector names the leg. That straight line assumes you can
+  cross whatever lies between, so the region reaches further than the ground allows.
+- **A site whose walk to the street would spend the whole budget gets no region at all.** It
+  reaches nothing in the stated time, which is the answer. It is named in the alert, and the
+  note on the result says the counts are over the sites that reached something.
 
-All of them push the same way: **a poorly connected place looks better served
-than it is.**
+### The direction it misleads
 
-Streets and footpaths are mapped unevenly, and informal settlements least of all.
-Nothing is now excluded for being far from a street, but a site reached across an
-assumed straight line is still read as if that line were a footpath. Read a
-catchment over sparsely mapped ground as optimistic, check the widget's alert for
-sites routed off-network, and check `fw:networkSnaps` for how far each site had to
-go to reach a street.
+All of the above push the same way: **a poorly connected place looks better served than it
+is.** Streets and footpaths are mapped unevenly, and informal settlements least of all. Read a
+region over sparsely mapped ground as optimistic, check the alert for sites routed off the
+network, and check how far each site had to go to reach a street.
 
-## What it is not
-
-Not a service area, not a catchment anyone agreed to, and not a routed travel
-time. The corridor is an approximation of shape, drawn to be read, not measured.
-
-## Going deeper
+## Checking it yourself
 
 The lab's [snapping notebook](https://digital-twin-ph.github.io/validation-lab/lab/index.html?path=19-snap-vs-pyproj.ipynb)
-measures the displacement on the example data. Experiment 114 records what would
-change it.
+measures the displacement on the example data, and the corridor check rebuilds the region from
+the stated rule with Shapely.

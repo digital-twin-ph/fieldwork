@@ -105,8 +105,22 @@ export function toHTML(markdown){
   return out.join('');
 }
 
+/** What the reader of a manual does not need: the repository's own revision stamp, and the
+ *  pointer to the specification kept for developers.
+ *
+ *  The practitioner, 2026-10-15: "The manual should not contain historical / audit / revision
+ *  history text. It's for the human user, not developers or agents." The stamp stays in the FILE,
+ *  because every document in docs/ carries one and `validate:docs` checks it; it is removed on
+ *  the way to the page, which is where it is noise. */
+function forReader(markdown){            // a declaration: the CLI block above calls compiledPages
+  return markdown                        // before a const defined here would be initialised
+    .replace(/^_Created \d{4}-\d{2}-\d{2} · Updated \d{4}-\d{2}-\d{2}_$/m,'')
+    .replace(/\n---\n+\*How this widget is built[\s\S]*$/,'\n')
+    .replace(/\n{3,}/g,'\n\n');
+}
+
 export function compiledPages(){
   const {documented}=coverage();
   return Object.fromEntries(documented.map(nodeType=>
-    [nodeType,toHTML(readFileSync(join(root,`docs/widgets/${nodeType}.md`),'utf8'))]));
+    [nodeType,toHTML(forReader(readFileSync(join(root,`docs/widgets/${nodeType}.md`),'utf8')))]));
 }

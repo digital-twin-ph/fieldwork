@@ -556,11 +556,21 @@ something the connection already said.
 beside polygons), `raster` (the subject, or an overlay in spatial mode) and `polygons` (with
 context or without). Those are real questions and worth asking.
 
-**The dependency runs backwards in the interface.** `validConnection` compares the
-producer's output against `nodeInputs(target)`, and `nodeInputs` resolves the mode the
-target is *currently* in — so dragging polygons to a map still in spatial mode is refused,
-because that mode has no `polygons` port. The shape determines the mode, and the
-practitioner must set the mode before the shape can arrive.
+**The dependency runs backwards in the interface, and here is what that looks like.** A
+`map_output` node draws the ports `nodeInputs` gives it, and those depend on its current
+mode. In the default **spatial** mode it draws four: `area`, `points`, `coverage`,
+`raster`. In **polygons** mode it draws one: `polygons`.
+
+So a practitioner who has just made catchments and wants to map them finds **no port to
+aim at**. It is not an error message and not a rejected drop — there is nothing on the
+node to drop onto. What they have to do is select the map, open the Inspector, change
+**Input mode** to *"Catchment polygons / summaries"*, and watch the node redraw with a
+single `polygons` port; only then can the connection be made. (`validConnection` would
+also reject it, for the same reason, but nobody reaches that check: the port is not
+drawn.)
+
+The shape determines the mode, and the practitioner must set the mode before the shape can
+arrive.
 
 What this costs reveal: an output widget cannot be meaningfully revealed by its type,
 because its type does not say what it takes. It is the fourth kind of

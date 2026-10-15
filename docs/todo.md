@@ -451,13 +451,35 @@ missing axiom does not mean the question went unasked.
 
 **A building-footprint widget.** Asked for by the practitioner on 2026-10-15. Nothing in the
 palette brings buildings in, so any analysis that needs where people actually are — exposure,
-coverage of a settlement, population disaggregation — has no source for them. The obvious one is
-OpenStreetMap through the same Overpass path `network_input` uses, which means it inherits that
-path's problems and its politeness rules; the other candidates are the Microsoft and Google
-open building footprint datasets, which are far larger and are files rather than an API. **What
-would decide it:** which of those a practitioner would actually have, and whether the widget
-acquires (a download, with caps and attribution, like `find_health_facilities`) or imports a file
-they already hold. Unscheduled and unsized.
+coverage of a settlement, population disaggregation — has no source for them.
+
+**The source question is already answered, and not here.** The practitioner pointed at it the
+same day: `digitaltwin-aas/gaborone/03a-Building-Footprint-Augmentation.ipynb` evaluates four
+products against one city and records a decision, with the comparability paper behind it
+(Tatem et al., *Building footprint data for countries in Africa: to what extent are existing
+data products comparable?*).
+
+| Source | Access | Licence | Verdict there |
+| --- | --- | --- | --- |
+| OpenStreetMap | OSMnx / Overpass | ODbL | the baseline — 156k buildings, and the only one with rich attributes (type, name, levels) |
+| Overture Maps | `overturemaps` Python package, monthly release | ODbL-ish per theme | **used** — richest schema: height, floors, class, subtype |
+| 3D-GloBFP (Copernicus ESSD 2024) | Zenodo grid index → Figshare zips, ~92 MB per grid | CC-BY | **used** — explicit height in metres |
+| Google Open Buildings v3 | per-S2-tile CSV.gz, ~6 M rows for the tile covering Gaborone | CC-BY-4.0 | **excluded** |
+| Microsoft GlobalML | country GeoJSON.gz from an index CSV | ODbL | **excluded** |
+
+The two exclusions are the finding worth carrying: both were dropped not for coverage but
+because they *carry no height*, and because their **high counts in informal settlements are
+inflated by sliver detections** — noise without the attribute the model needed. A footprint
+count is not a measure of how many buildings there are.
+
+**What this leaves for Fieldwork, which is the part that is not answered.** Fieldwork runs in a
+browser with no Python. Of the five, only OSM is reachable the way this application reaches
+anything — the Overpass path `network_input` uses, inheriting its caps, its politeness rules and
+its instability. Overture is GeoParquet on object storage, 3D-GloBFP is a grid of zipped
+shapefiles, and the two excluded products are country- or tile-sized files. So the widget is
+either **OSM-only acquisition**, or an **import of a file the practitioner prepared elsewhere** —
+which is what the notebook pipeline already is, and would make this an import widget rather than
+a source widget. That choice is the open question; the data question is closed.
 
 **OpenFreeMap tiles and themes for the Map widget.** Asked for by the practitioner on
 2026-10-15. Today the only basemaps are OpenStreetMap's raster tiles and OpenTopoMap, both

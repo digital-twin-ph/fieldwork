@@ -449,6 +449,28 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**Four concepts worth taking from ArcGIS Model Builder**, from the sideways sweep in
+[116](experiments/116-model-builder-sideways.md) over screenshots the practitioner uploaded on
+2026-10-15. Each is independently useful and none depends on another:
+
+1. **Ask which role when more than one port fits.** Dropping a layer on a tool there opens a
+   menu — *Input Features*, *Extent*, *Precondition*. Our Map binds by type silently, which
+   already needed a workaround: `context` is points-typed and means *drawn beside polygons*, so
+   it had to be excluded from automatic binding to stop it taking a role nobody chose. Binding
+   silently when one port fits and **asking when more than one does** is the honest rule, and it
+   extends the configurable port from the Map to every widget.
+2. **Validate without running.** `executionPlan` already computes whether a canvas is coherent;
+   it is only reachable by running, and a run here downloads street networks and reasons over
+   N3. A button over machinery that exists.
+3. **Say on the node that it cannot run yet.** An unconfigured step says so in the Inspector, to
+   somebody who has already selected it. The canvas is where the shape of the work is read.
+4. **Declare the metric frame once per workflow.** ArcGIS calls it an *Environment*: declared
+   for the model, inherited by every tool, overridable per tool. Ours is a UTM zone in every
+   measuring widget's parameters, refused when two disagree, with the cost of a wrong one
+   measured in [100](experiments/100-choosing-the-metric-crs.md). The better shape, and the only
+   one of the four that changes what a saved workflow holds.
+
+
 **A building-footprint widget.** Asked for by the practitioner on 2026-10-15. Specified in
 [docs/widget-specs/find_building_footprints.md](widget-specs/find_building_footprints.md),
 which carries the source evaluation from

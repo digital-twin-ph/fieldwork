@@ -707,7 +707,7 @@ fw:ChartSpecification a owl:Class;
   fw:implementationStatus "implemented".
 fw:layerCount a owl:DatatypeProperty; rdfs:domain fw:MapSpecification; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "How many layers this map draws";
-  rdfs:comment "A map draws LAYERS: whatever arrives at one of its input ports, each with its own symbology, over or under the others. The count and the kinds were derivable before this term existed -- prov:used reaches each source and fw:portType says what it emits -- but the join is fragile: a node appears under two IRI forms and the activity uses itself, so a naive query returned four sources for a two-layer map. Asserted here so the question does not require knowing that. Experiment 115.".
+  rdfs:comment "A map draws LAYERS: whatever arrives at one of its input ports, each with its own symbology, over or under the others. The count and the kinds were derivable before this term existed -- prov:used reaches each source and fw:portType says what it emits -- but the join is fragile: a node appears under two IRI forms and the activity uses itself, so a naive query returned four sources for a two-layer map. Asserted here so the question does not require knowing that. See the Map widget page, docs/widgets/map_output.md.".
 fw:layer a owl:ObjectProperty; rdfs:domain fw:MapSpecification;
   rdfs:label "One layer this map draws";
   rdfs:comment "Carries the port the layer arrived at, the port type it carries, its index in the drawing order, and the activity that generated it. The index is the order the ports are declared, which is the order they are drawn today; when a practitioner can state the order, that order belongs here instead.".

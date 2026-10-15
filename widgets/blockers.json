@@ -236,7 +236,7 @@
    "recorded": "2026-10-14",
    "lastRevisited": "2026-10-14",
    "status": "standing",
-   "liftTest": "Dragging a connection to an output widget whose current mode does not accept it switches the mode when exactly one mode accepts that port type, and asks which the practitioner meant when more than one does. Measured: 2 of 3 output widgets need no question at all. NOTE 2026-10-14: experiment 115 argues the mode model is itself the defect -- a map has layers, not modes -- so automating the switch would entrench what it proposes to remove. Read 115 before lifting this.",
+   "liftTest": "Dragging a connection to an output widget whose current mode does not accept it switches the mode when exactly one mode accepts that port type, and asks which the practitioner meant when more than one does. Measured: 2 of 3 output widgets need no question at all. NOTE 2026-10-14: the Map widget page (docs/widgets/map_output.md) records that the mode model is itself the defect -- a map has layers, not modes -- so automating the switch would entrench what it would remove. Read that page before lifting this.",
    "why": "Raised by the practitioner on 2026-10-14: the output widgets depend on the shape of the process widget outputs for inputs."
   }
  ]

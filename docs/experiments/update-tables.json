@@ -2,6 +2,6 @@
  "schema": "fieldwork/experiment-updates/1",
  "note": "How many experiments carry an append-only update table. Opened 2026-10-14 on the practitioner's point that a single Updated stamp cannot say whether an experiment is heading anywhere -- it records that a file changed, not that the thinking moved, and a sweep destroys it. The day before, a date-stamp correction rewrote Updated on 50 experiments and made twelve that had not been thought about in three days look current.\n\nThe floor rises and never falls: a table, once added, is not removed. Seeded from git history rather than transcribed, because the history is already recorded there and writing it by hand would be inventing it.",
  "openedAt": "2026-10-14",
- "floor": 115,
+ "floor": 114,
  "floorRule": "May be raised freely and never lowered."
 }

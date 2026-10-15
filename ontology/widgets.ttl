@@ -31,7 +31,8 @@
 <urn:fieldwork:widget:hex_aggregate> a fw:WidgetDefinition; fw:nodeType "hex_aggregate"; rdfs:label "Aggregate points in hexagons".
 <urn:fieldwork:widget:isochrone> a fw:WidgetDefinition; fw:nodeType "isochrone"; rdfs:label "Network isochrone";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/isochrone.md>.
-<urn:fieldwork:widget:map_output> a fw:WidgetDefinition; fw:nodeType "map_output"; rdfs:label "Map".
+<urn:fieldwork:widget:map_output> a fw:WidgetDefinition; fw:nodeType "map_output"; rdfs:label "Map";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_output.md>.
 <urn:fieldwork:widget:mean_center> a fw:WidgetDefinition; fw:nodeType "mean_center"; rdfs:label "Mean center".
 <urn:fieldwork:widget:measure_area> a fw:WidgetDefinition; fw:nodeType "measure_area"; rdfs:label "Calculate area".
 <urn:fieldwork:widget:micro_workflow> a fw:WidgetDefinition; fw:nodeType "micro_workflow"; rdfs:label "Micro-workflow".

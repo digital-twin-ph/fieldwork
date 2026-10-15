@@ -34,4 +34,4 @@ ${w} a fw:MapView, prov:Activity; prov:used <urn:fieldwork:run:${l}:output:${g}>
 `,k=`<${h}> fw:layerCount ${d.length}.
 `+d.map((v,R)=>`<${h}> fw:layer [ fw:layerIndex ${R}; fw:layerKind <urn:fieldwork:${v.kind}>; ${v.features!==void 0?`fw:layerFeatureCount ${v.features}; `:""}${v.role?`fw:layerRole ${JSON.stringify(v.role)}; `:""}${v.port?`fw:layerPort ${JSON.stringify(v.port)}`:`fw:layerWithin ${JSON.stringify(v.within||"the value")}`} ].
 `).join("");return l.facts+=b+k,l.input=l.facts,b+k}export{Fr as a,sn as b,Cr as c,Pr as d,V as e,_ as f,ie as g,Ir as h,j as i,Zo as j,Ar as k,Rr as l,Or as m,Dr as n,Sr as o,Qo as p,hr as q,Tr as r,Wr as s,zr as t,wr as u,vr as v,Mr as w,Lr as x,Br as y};
-//# sourceMappingURL=chunk-F72XB3RB.js.map
+//# sourceMappingURL=chunk-HPVC4IHB.js.map

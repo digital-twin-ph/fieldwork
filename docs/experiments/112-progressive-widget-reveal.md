@@ -578,6 +578,34 @@ contract-not-in-the-type found in one day, after late binding, per-node ports, a
 and the general statement is the one the glossary now carries: **the port contract belongs
 to the node.**
 
+### Reveal already exists for one port at a time, and it is called a source picker
+
+The last stage can see what the stages before it produce, and **the Inspector already works
+that way** — twelve source pickers, each a `<select>` listing the canvas nodes whose output
+matches one port's type, calling `setConnection` when you choose. A practitioner wiring a
+catchment map drags nothing: they pick *Polygon input* from a list of the polygon producers
+on the canvas.
+
+That is progressive reveal, shipped, for one port. What it is not is a view of what the
+node could show, because the lookup is **per port, and the ports come from the mode**.
+Counting every node on a canvas whose output is drawable — `points`, `polygons`, `raster`,
+`area`, `network`:
+
+| Canvas | The map is wired to | The map could see |
+| --- | --- | --- |
+| snow-extent | 2 | **4** — deaths, hull, judged hull, pumps |
+| snow-isochrone | 2 | **10** — study area, pumps, deaths, catchments, clipped, summarised, projected points, network, context pumps, acquisition buffer |
+
+The isochrone canvas holds ten drawable things and its map is offered two. The other eight
+are not hidden by a rule about what makes sense — they are hidden because the map is in
+polygons mode and polygons mode has two ports.
+
+**So the cheapest useful reveal in this application is not a palette filter at all.** It is
+the picker that already exists, keyed by what a widget can display rather than by one
+port's type. The specification of what a map displays, and the three mechanisms built to
+work around its one-kind-of-thing assumption, are in
+[the Map widget page](../widgets/map_output.md).
+
 ### Expectations are declarable; intents are not
 
 What the fitness conditions actually buy, measured by transcribing the eight refusals in
@@ -778,3 +806,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | Third reading measured: input/process/output stages, 7/41/5 of the 53 widgets. Weaker as a filter than the port rule -- one input opens 48 of 53 against 20 -- and stronger as an explanation. The two disagree about outputs, and the examples side with the port rule: of 35 edges into an output, 9 come straight from an input (pumps onto a map for context, a study area onto a map, geoprivacy's before-view), so a stage gate would hide the widget that plots your input |
 | 2026-10-14 | "The output widgets depend on the shape of the process widget outputs for inputs." Measured: map_output carries six contracts selected by inputMode and contextPoints, table_output four, chart_output three. On table_output and chart_output no port type appears in two modes, so the connection determines the mode completely and asking is redundant; on map_output three types are genuinely ambiguous (points as subject or context, raster as subject or overlay, polygons with context or without). But validConnection resolves the mode the target is CURRENTLY in, so the shape cannot arrive until the mode is set by hand -- the dependency runs backwards in the interface |
 | 2026-10-14 | Stage rule revised by the practitioner on the evidence -- an output may follow an input directly, because inspecting what an input produces is how you decide what to process. Two of the seven examples already build that way and all seven start with an input. What the revision leaves is a single gate, "start with an input", which STARTER_TYPES already implements: the stage reading is the shape of the work and not a filter, and narrowing beyond the first step belongs to the port and receipt readings |
+| 2026-10-14 | The map material moved out: what a map displays is widget specification, now docs/widgets/map_output.md, and what belongs here is the reveal finding inside it. Reveal already exists for one port at a time -- twelve Inspector source pickers list the canvas nodes whose output matches a port's type and wire the edge on choice. Measured: the isochrone canvas holds ten drawable nodes and its map is offered two, hidden by the mode rather than by sense. The cheapest useful reveal is that picker keyed by what a widget can display |

@@ -18,7 +18,7 @@
  */
 import type {ParamsByType} from './types.js';
 import type {Escape} from './types.js';
-import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING} from './authored-rules.js';
+import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems} from './authored-rules.js';
 
 type Authored=NonNullable<ParamsByType['apply_ruleset']['authored']>;
 type Field=Authored['fields'][number];
@@ -61,6 +61,10 @@ export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorR
     let rules:Authored['rules']=JSON.parse(JSON.stringify(authored.rules));
     const fields=authored.fields,choices=readable(fields);
     const kindOf=(predicate:string)=>choices.find(c=>c.predicate===predicate)?.kind??'term';
+    const unitOf=(predicate:string)=>{
+      const field=fields.find(f=>f.predicate===predicate);
+      return field?.unitLabel||field?.unit?.split('/').pop();
+    };
 
     const dialog=document.createElement('dialog');
     dialog.id='rule-editor';
@@ -81,7 +85,11 @@ export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorR
         +`</select>`
         +(kind==='boolean'
           ?`<select ${where} data-part="value" aria-label="Value"><option value="true" ${condition.value===true?'selected':''}>true</option><option value="false" ${condition.value===false?'selected':''}>false</option></select>`
-          :`<input ${where} data-part="value" aria-label="Value" value="${esc(String(condition.value??''))}" placeholder="${kind==='number'?'a number, or {{parameter}}':'a value, such as clinic'}">`)
+          :`<input ${where} data-part="value" aria-label="Value" value="${esc(String(condition.value??''))}" placeholder="${kind==='number'?'a number, or {{parameter}}':'a value, such as clinic'}">`
+            // The unit the field is measured in, beside the box the number is typed into. A bare
+            // literal takes the field's unit and nothing can check it, so showing it is the only
+            // defence there is: the practitioner typing 10 can see whether 10 means minutes.
+            +(kind==='number'&&unitOf(condition.field)?`<span class="rule-unit">${esc(unitOf(condition.field)!)}</span>`:''))
         +`<button class="button small" ${where} data-part="drop-condition" aria-label="Remove this condition">Remove</button>`
         +`</div>`;
     };
@@ -91,6 +99,13 @@ export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorR
       let problem='';
       try{compileAuthoredRuleset({subject:'?s',rules:rules as never});}
       catch(error){problem=error instanceof Error?error.message:String(error);}
+      // Units are checked while the rule is being written, which is the whole point: the same
+      // check at run time tells a practitioner their rules are wrong after they have written
+      // them, kept them, and run the workflow.
+      if(!problem){
+        const units=authoredUnitProblems({...authored,rules:rules as never});
+        if(units.length)problem=units[0].says;
+      }
       dialog.innerHTML=`<div class="manual-head"><h2 id="rule-editor-title">${esc(authored.title)}</h2>`
         +`<div><button class="button" id="rule-editor-cancel">Close without keeping</button>`
         +`<button class="button primary" id="rule-editor-keep" ${problem?'disabled':''}>Keep these rules</button></div></div>`

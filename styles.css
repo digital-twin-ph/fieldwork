@@ -243,3 +243,7 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .rule-is{font-size:10px;color:var(--text-faint-3)}
 .button.primary{background:var(--accent-9);color:var(--accent-contrast);border-color:transparent;font-weight:650}
 .button.primary:disabled{opacity:.45}
+/* The unit a numeric field is measured in, beside the box its value is typed into. A bare
+   literal takes the field's unit and nothing can check it, so showing it is the only defence
+   there is. 2026-10-15. */
+.rule-unit{font-size:10px;color:var(--text-faint-3);white-space:nowrap}

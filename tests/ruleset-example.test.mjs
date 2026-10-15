@@ -85,15 +85,54 @@ test('debt 1 · the two comparators nothing had executed now run, including on t
   assert.match(receipt.rules,/math:notLessThan 10/);
 });
 
-test('debt 2 · a wrong unit passes every check, and what it eventually says is about something else',async()=>{
+test('debt 2, paid · a unit is required, and a mismatch is refused by name',async()=>{
+  // The practitioner, 2026-10-15: "How do we make sure measurements have units in the ruleset
+  // widget?" By requiring one on every numeric field and every numeric setting, and refusing a
+  // comparison whose two sides disagree -- refused rather than converted, which is the
+  // precedent makeN3 set for distances.
+  const {authoredUnitProblems}=await import('../build/rulesets.js');
+  const workflow=rulesetExample();
+  const step=workflow.nodes.find(n=>n.id==='wait');
+
+  // As shipped, every measurement in the example states its unit.
+  assert.deepEqual(authoredUnitProblems(step.params.authored),[]);
+
+  // A setting in hours against a field in minutes: the mismatch this could not see before.
+  const hours=JSON.parse(JSON.stringify(step.params.authored));
+  hours.parameters[0].unit='http://qudt.org/vocab/unit/HR';
+  hours.parameters[0].unitLabel='hours';
+  const mismatch=authoredUnitProblems(hours);
+  assert.equal(mismatch.length,1);
+  assert.match(mismatch[0].says,/measured in minutes and the threshold setting is in hours/);
+  // It says what to do, in both directions.
+  assert.match(mismatch[0].says,/State the setting in minutes/);
+
+  // A number with no unit at all is not a measurement, and is refused before any comparison.
+  const bare=JSON.parse(JSON.stringify(step.params.authored));
+  delete bare.fields[0].unit;
+  assert.match(authoredUnitProblems(bare)[0].says,/not a measurement/);
+
+  // And the run refuses it, naming the step rather than failing somewhere downstream.
+  step.params.authored.parameters[0].unit='http://qudt.org/vocab/unit/HR';
+  syncProjectManifest(workflow);
+  await assert.rejects(
+    executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(workflow))),reason),
+    /1 · Banding a number cannot run: Wait is measured in minutes/);
+});
+
+test('debt 2, as it was · a wrong unit used to pass every check',async()=>{
   // The fields declare minutes. A threshold typed as "1", meaning one HOUR, is a number in
   // range, so every check this application has lets it through: the parameter validates and the
   // rules compile.
+  // Kept as the record of what the check replaced: a threshold of 1, meaning one hour, against
+  // fields in minutes. The units now AGREE in the declaration -- both minutes -- so the unit
+  // check passes and this is purely a wrong number, which is the case nothing can catch. It is
+  // the reason the editor shows the field's unit beside the box.
   const workflow=rulesetExample();
   const step=workflow.nodes.find(n=>n.id==='wait');
   step.params.parameters.threshold=1;
   assert.doesNotThrow(()=>validateWorkflow(JSON.parse(JSON.stringify(workflow))),
-    'nothing refuses a threshold in the wrong unit');
+    'a number in range is accepted, whatever the practitioner meant by it');
   syncProjectManifest(workflow);
 
   // What happens at the run was not what I expected, and is worth recording. The bands are

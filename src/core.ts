@@ -52,7 +52,7 @@ import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAcc
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt} from './authored-application.js';
-import {compileAuthoredRuleset} from './authored-rules.js';
+import {compileAuthoredRuleset,authoredUnitProblems} from './authored-rules.js';
 import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
 import {measureArea,validateAreaUnit} from './area-measurement.js';
@@ -720,6 +720,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const authored=node.params.authored;
         if(authored){
           const subjects=inputs.subjects as PointCollection;
+          // Units first. A rule comparing minutes to hours is wrong by a factor of sixty and
+          // every other check in this application passes it: the parameter is in range, the
+          // rules compile, the run succeeds. Refused rather than converted, which is the
+          // precedent makeN3 set for distances -- reinterpreting a practitioner's number
+          // silently would change what they decided.
+          const unitProblems=authoredUnitProblems(authored);
+          if(unitProblems.length)
+            throw new Error(`${node.params.label||node.id} cannot run: ${unitProblems[0].says}`
+              +(unitProblems.length>1?` (${unitProblems.length-1} more like it.)`:''));
           const facts=authoredFacts(subjects,authored.fields);
           const compiled=compileAuthoredRuleset({subject:'?s',comment:authored.title,
             rules:authored.rules as never});

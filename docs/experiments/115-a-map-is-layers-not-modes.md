@@ -188,6 +188,47 @@ interface still answers in five branches, and the gap between the two is visible
 than argued about. `fw:layerIndex` is the declaration order today, because that is what the
 renderer uses; when a practitioner can state the order, the same term carries it.
 
+## A map can be read many ways, and the receipt records only half of what decides the reading
+
+> In short, a map no matter how we configure it can be read many ways. We can make maps
+> tell lies if we want to just by the way it's constructed.
+
+Audited on the shipped isochrone map, 2026-10-14, by asking which construction choices the
+graph records.
+
+**Recorded as terms**, so a reader can reconstruct them: `corridorWidth`, `snapLimit`,
+`walkingSpeed`, `travelTime`, `travelDirection`, `fillInteriorHoles`, `metricCRS`,
+`countSemantics`, `caveats` — and since today `layerCount`, `layerPortType`, `layerIndex`,
+`mapLegend`, `mapBasemap`, `mapPresentation`.
+
+**Absent from the vocabulary entirely**: `fw:layerColour`, `fw:layerWeight`,
+`fw:layerRole`, `fw:mapExtent`, `fw:classBreaks`. No term exists for the colour or size a
+layer is drawn at, for which layer the map is *about*, for what was cropped out of the
+frame, or for the class breaks a shaded map uses.
+
+So the division is clean and uncomfortable: **the graph can reconstruct what was computed,
+and not how it was shown.** Every choice recorded above changes the *numbers*. The choices
+that are absent change the *reading* while leaving every number intact.
+
+The application contains a worked demonstration of exactly that. `catchmentPlot` draws the
+computation's inputs red at radius 3.5 and the observations gray at 2.7, so the John Snow
+map de-emphasises the deaths it exists to show — and **nothing in the receipt records it**.
+A reader checking that map against its graph would find the corridor width, the speed, the
+direction, the CRS, the infill, the caveats and the two layers, and would have no way to
+learn that the subject was drawn smaller than the context.
+
+That is the honest answer to *can we make maps tell lies*: yes, and this project's
+provenance would not catch it, because provenance here records computation and the lie
+lives in presentation. Three things follow, and none is a small job:
+
+1. **Symbology belongs in the specification.** Colour, size and order are choices, and the
+   specification already records title, legend and basemap — it stops exactly where the
+   misleading begins.
+2. **Which layer is the subject is a declaration, not an inference.** Today it is inferred
+   from which widget computed what, which is how the emphasis got inverted.
+3. **The frame is a choice.** What a map crops decides what a reader believes is absent,
+   and no term records the extent that was drawn.
+
 ## What this does not establish
 
 That every type should be drawable as a layer. `decisions` carries rows that may have no
@@ -269,3 +310,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | "All 10 maps render with a broken model inside them." Struck the paragraph claiming nothing is broken and the demand unmeasured: rendering is not evidence the model is sound, and the demand has been paid for three times -- pointInputCount for eight point layers, contextPoints for one beside polygons, and stack_polygons, an entire widget, for six polygon layers ORDERED LARGEST FIRST SO THE SMALLER DRAW ON TOP. Draw order, which this record called a new question, is already implemented for one type by a heuristic |
 | 2026-10-14 | "Context is relative depending on the focus." In both John Snow maps the pumps are the computation's input and the deaths are what the reader is asked to look at -- so `context` as a port name fixes a judgement that belongs to the question. Worse, catchmentPlot takes its visual hierarchy from the computation's roles: pumps red at radius 3.5, deaths gray at 2.7, legend "Gray: observations, red: sites". The thing each map exists to show is drawn smaller and duller than the thing that produced the shape |
 | 2026-10-14 | "The ontology N3 receipts should be able to provide count and types of layers in the workflow maps." They could, by joining prov:used to fw:portType, and the join was fragile enough to return four sources for a two-layer map. Now asserted: fw:layerCount plus one fw:layer per port carrying fw:layerPort, fw:layerPortType, fw:layerIndex and what generated it. The layer model reaches the vocabulary before the renderer, which makes the gap between them queryable instead of arguable |
+| 2026-10-14 | "We can make maps tell lies just by the way it's constructed." Audited: the graph records every choice that changes the NUMBERS -- corridorWidth, snapLimit, walkingSpeed, travelTime, travelDirection, fillInteriorHoles, metricCRS, countSemantics, caveats, and now the layers -- and has no term at all for the choices that change the READING: layer colour, layer weight, which layer is the subject, the frame that was cropped, class breaks. catchmentPlot draws the pumps red at 3.5 and the deaths gray at 2.7 and nothing in the receipt says so |

@@ -160,6 +160,34 @@ is built and shipping — a picker that lists candidates by type and calls `setC
 What is missing is one list instead of several, keyed by *drawable* rather than by a mode's
 port, plus the renderer that composes what comes back.
 
+## The receipts now say how many layers, and of what kinds
+
+> The ontology N3 receipts should be able to provide count and types of layers in the
+> workflow maps.
+
+They could already, and badly. `prov:used` reaches each source and `fw:portType` says what
+that source emits, so a two-step join answers the question — but the join is fragile: a
+node appears under two IRI forms, the activity uses itself, and on the geoprivacy maps a
+naive query returned **four sources for a two-layer map**.
+
+So the map specification asserts it directly: `fw:layerCount`, and one `fw:layer` per
+connected port carrying `fw:layerPort`, `fw:layerPortType`, `fw:layerIndex` and the
+activity that generated it. Measured on the shipped examples:
+
+| Map | Asserted |
+| --- | --- |
+| isochrone plot | `layerCount 2` → `polygons:PolygonsPort`, `context:PointsPort` |
+| interactive isochrone | `layerCount 2` → same |
+| geoprivacy BEFORE | `layerCount 2` → `area:AreaPort`, `points:PointsPort` |
+| geoprivacy AFTER · moved | `layerCount 2` → same |
+| geoprivacy AFTER · cells | `layerCount 1` → `polygons:PolygonsPort` |
+
+**This is the layer model arriving in the vocabulary before it arrives in the renderer**,
+which is the right order for this project: the graph can now be asked a question the
+interface still answers in five branches, and the gap between the two is visible rather
+than argued about. `fw:layerIndex` is the declaration order today, because that is what the
+renderer uses; when a practitioner can state the order, the same term carries it.
+
 ## What this does not establish
 
 That every type should be drawable as a layer. `decisions` carries rows that may have no
@@ -240,3 +268,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | "Why is 115 needed?" -- narrowed in answer. It earns its place by changing what the blocker output-mode-set-before-the-shape-arrives should do (automating a mode switch would entrench the model this record calls wrong), by holding measurements that live nowhere else, and by recording a model correction. It does NOT earn a rewrite: nothing shipped is broken, and the claim that combinations are wanted is an inference rather than a measurement. Closing it now means evidence of demand, not a new renderer |
 | 2026-10-14 | "All 10 maps render with a broken model inside them." Struck the paragraph claiming nothing is broken and the demand unmeasured: rendering is not evidence the model is sound, and the demand has been paid for three times -- pointInputCount for eight point layers, contextPoints for one beside polygons, and stack_polygons, an entire widget, for six polygon layers ORDERED LARGEST FIRST SO THE SMALLER DRAW ON TOP. Draw order, which this record called a new question, is already implemented for one type by a heuristic |
 | 2026-10-14 | "Context is relative depending on the focus." In both John Snow maps the pumps are the computation's input and the deaths are what the reader is asked to look at -- so `context` as a port name fixes a judgement that belongs to the question. Worse, catchmentPlot takes its visual hierarchy from the computation's roles: pumps red at radius 3.5, deaths gray at 2.7, legend "Gray: observations, red: sites". The thing each map exists to show is drawn smaller and duller than the thing that produced the shape |
+| 2026-10-14 | "The ontology N3 receipts should be able to provide count and types of layers in the workflow maps." They could, by joining prov:used to fw:portType, and the join was fragile enough to return four sources for a two-layer map. Now asserted: fw:layerCount plus one fw:layer per port carrying fw:layerPort, fw:layerPortType, fw:layerIndex and what generated it. The layer model reaches the vocabulary before the renderer, which makes the gap between them queryable instead of arguable |

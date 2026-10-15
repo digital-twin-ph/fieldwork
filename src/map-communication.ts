@@ -1,4 +1,5 @@
 import type {Output,Receipt} from './results.js';
+import {outputOf} from './core.js';
 import type {WorkflowNode,Workflow} from './types.js';
 import {FIGURE_ROLE,FIGURE_TYPE,scaleBarSvg,northArrowSvg,metresPerPixel} from './presentation.js';
 
@@ -64,6 +65,26 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   const spec=mapPresentation(node,output,workflow),activity=node.params.inputMode==='polygons'?`urn:fieldwork:run:${runId}:output:${node.id}:view`:node.params.inputMode==='raster'||node.params.inputMode==='decisions'?`urn:fieldwork:run:${runId}:view:${node.id}`:`urn:fieldwork:run:${runId}:map:${node.id}`;
   const iri=`urn:fieldwork:run:${runId}:map-specification:${node.id}`;
   const sources=workflow.edges.filter(e=>e.to===node.id).map(e=>`<urn:fieldwork:run:${runId}:output:${e.from}>`);
+  // The layers this map draws, counted and typed, asserted rather than left to be joined.
+  //
+  // The facts were already derivable: prov:used reaches each source and fw:portType says what
+  // that source emits. But the join is fragile -- a node appears under two IRI forms, the
+  // activity uses itself, and on the geoprivacy maps the naive query returns four sources where
+  // two edges exist. A reader asking "how many layers does this map draw, and of what kinds"
+  // should not have to know that. Experiment 115, and the practitioner's request that the
+  // receipts answer the count and the types.
+  //
+  // One fw:layer per connected port, carrying the port it arrived at and the type it carries, in
+  // the order the ports are declared -- which is the order they are drawn today. When a map takes
+  // its layers in a stated order rather than a declared one, that order belongs here too.
+  const layers=workflow.edges.filter(e=>e.to===node.id).map(edge=>{
+    const source=workflow.nodes.find(n=>n.id===edge.from);
+    return {port:edge.port,type:source?outputOf(source):null,from:edge.from};
+  });
+  const layerFacts=`<${iri}> fw:layerCount ${layers.length}.\n`
+    +layers.map((layer,index)=>`<${iri}> fw:layer [ fw:layerIndex ${index}; fw:layerPort ${JSON.stringify(layer.port)}; `
+      +`${layer.type?`fw:layerPortType <urn:fieldwork:${layer.type.split('-').map((word:string)=>word[0].toUpperCase()+word.slice(1)).join('')}Port>; `:''}`
+      +`prov:wasGeneratedBy <urn:fieldwork:run:${runId}:${layer.from}> ].\n`).join('');
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n<${iri}> a fw:MapSpecification, prov:Plan; dcterms:title ${JSON.stringify(spec.title)}; dcterms:description ${JSON.stringify(spec.subtitle)}; fw:mapLegend ${spec.legend}; fw:mapPresentation ${JSON.stringify(spec.presentation)}; fw:mapBasemap ${JSON.stringify(spec.basemap)}; fw:mapSourceNote ${JSON.stringify(spec.sourceNote)}; prov:wasDerivedFrom ${sources.join(', ')}.\n<${activity}> fw:mapSpecification <${iri}>; prov:used <${iri}>.\n`;
-  receipt.facts+=facts;receipt.input=receipt.facts;return facts;
+  receipt.facts+=facts+layerFacts;receipt.input=receipt.facts;return facts+layerFacts;
 }

@@ -97,3 +97,22 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.deepEqual(errors,[]);console.log('PASS: Map node, polygon/point connections, visible outside and missing records, keyboard inspection, coverage/exclusions, saved workflow, offline reload and mobile layout.');
 });
+
+// The receipts answer how many layers a map draws and of what kinds, asserted rather than left
+// to be joined out of prov:used and fw:portType -- a join that returned four sources for a
+// two-layer map, because a node appears under two IRI forms and the activity uses itself.
+// Experiment 115, and the practitioner's request of 2026-10-14.
+test('a map receipt states its layer count and the kind of each layer',async({page})=>{
+  await page.goto('/?example=snow-isochrone');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="rules"]').click();
+  const n3=await page.locator('#n3-preview').textContent();
+  expect(n3).toContain('fw:layerCount 2');
+  expect(n3).toContain('fw:layerPort "polygons"');
+  expect(n3).toContain('fw:layerPort "context"');
+  expect(n3).toContain('fw:layerPortType <urn:fieldwork:PolygonsPort>');
+  expect(n3).toContain('fw:layerPortType <urn:fieldwork:PointsPort>');
+  // The index is the drawing order, so a reader can say which is on top.
+  expect(n3).toContain('fw:layerIndex 0');
+  expect(n3).toContain('fw:layerIndex 1');
+});

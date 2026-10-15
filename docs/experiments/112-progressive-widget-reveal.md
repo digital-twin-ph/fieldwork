@@ -573,6 +573,44 @@ it serves a practitioner immediately whether or not it is.
 
 That is now the first item below, ahead of the reveal itself.
 
+### The universe is finite, so enumerate it
+
+> The widget universe is finite. The range of things that a widget can provide input to,
+> also finite.
+
+Enumerated, 2026-10-14:
+
+| | |
+| --- | --- |
+| Widgets with a declared output | 46 |
+| Legal producer → consumer-port pairs | **578** |
+| Demonstrated by one of the seven shipped examples | **54 (9.3%)** |
+| Never tried anywhere | 524 |
+| Edges the examples run that the enumeration does not admit | 11 |
+
+Five hundred and seventy-eight is a small number. It can be listed, held in a file, checked
+and counted — which changes what "prediction is difficult" means. The difficulty was never
+that the space is large. It is that **we have evidence about 9% of it**, and the rest is
+legal-by-type and unexercised.
+
+That suggests the honest version of the feature, and it is not a prediction at all:
+**offer the finite menu and rank it by evidence.** After a point input, twenty-two widgets
+could follow; fifteen of those pairs appear in a worked example and the rest do not. A
+palette can say so without guessing at intent — *these have been done before, these are
+possible and untried* — which is the distinction a practitioner can actually act on, and
+it falls out of enumeration rather than inference.
+
+The eleven edges the enumeration cannot admit are the pinned widgets again:
+`summarize_hull → apply_ruleset`, `apply_ruleset → map_output` and nine more, all real,
+all running in shipped examples, all invisible to a rule that reads types from the
+definition rather than from the pin.
+
+The 524 untried pairs are also a map of where the defects of this project hide. Every
+"computed, published, inert" defect found this week was a combination nobody had wired:
+the derived area that no rule could read, the decision that no map could draw, the snap
+distance that nothing charged. **Nine per cent coverage of the connection space is the
+measurement that explains the week.**
+
 ### Revised 2026-10-14, after the receipt question
 
 The port-type rule is not worth building: measured, it filters only at the first
@@ -613,3 +651,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | The hypothesis tested level by level with ten canvas competency questions (experiment 44, scripts/competency-canvas.mjs): syntactic 2 of 2, semantic 1 of 3, pragmatic 2 of 4 before the day's work and 4 of 4 after. It survives, with the order corrected -- semantic is the WEAKEST level, not the middle one, because nothing records what a point means. And a canvas carries facts only about what has been run toward an output, so a receipt rule says nothing on a fresh canvas, which is where the port rule was strongest |
 | 2026-10-14 | Playback built behind ?playback=1: a worked example replayed widget by widget on the canvas, the palette dimming what the rule would not offer, with the order and the revealed set computed in one module the measurement script shares. On snow-extent two steps of nine do all the revealing. The receipt reading anticipates the extent ruleset by one step -- and only because summarize_hull now asserts the area of the polygon; on old-naledi both rulesets are justified at the step that adds them and never before |
 | 2026-10-14 | The border widgets measured: 18 of 51 emit a type they also take, so a port rule can never retire them; 2 have no type contract at all; 11 emit `points` into 25 consumers. And the asymmetry that settles the design -- fitness conditions exclude almost nothing FORWARD (22 of 25 still legal after a point input) and collapse the answer to one BACKWARD (travel_time_band can only follow reachable_nodes). Expectations are a property of a widget and declarable; intent is not a property of any widget. So the useful feature is each widget saying what it expects and who satisfies it, before it is wired rather than after it is run |
+| 2026-10-14 | The connection universe enumerated: 46 widgets with an output, 578 legal producer-to-consumer-port pairs, 54 demonstrated by the seven shipped examples (9.3%), 524 never tried, and 11 edges the examples run that the enumeration cannot admit because the ports come from a pin. Suggests the honest feature: offer the finite menu ranked by evidence -- done before, versus possible and untried -- rather than predicting intent. And 9% coverage of the connection space is where this week's inert-quantity defects were hiding |

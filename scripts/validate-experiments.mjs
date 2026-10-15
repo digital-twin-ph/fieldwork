@@ -25,6 +25,25 @@ const CHANGED_OUR_MINDS=/^## What changed our minds\b/m;
 // open while the thing it half-did gets re-derived -- which is how 93 re-derived 27 and 102
 // re-derived the widget audit. Counted, not yet gated, because 87 documents predate the standard.
 const WOULD_CLOSE=/^## (What would close (it|this)|What would close)\b/m;
+// A closing condition has to be executable in the phase this project is in. Four documents had
+// named a practitioner who did not write them saying what they concluded -- real questions, and
+// unanswerable without field testing, which this project has not reached. The effect is a
+// document parked under a word that claims it is waiting on work. The practitioner, 2026-10-15:
+// "That is not an experiment question."
+//
+// Matched inside the closing section only, so the same sentence stays legal everywhere else: a
+// document may and should discuss what a practitioner would do with the thing it built. What it
+// may not do is make that its condition for closing. A field question goes in
+// docs/field-questions.md, and a restated condition may cite it -- hence the link exemption.
+const DEFERS_TO_OBSERVATION=/practitioner who did not write|someone who did not write|watch(?:ing|ed)? (?:a|one) practitioner|(?:needs|requires) field test/i;
+const CITES_FIELD_QUESTIONS=/field-questions\.md/;
+const closingSection=text=>{
+  const start=text.search(WOULD_CLOSE);
+  if(start<0)return '';
+  const rest=text.slice(start+1);
+  const next=rest.search(/^## /m);
+  return next<0?rest:rest.slice(0,next);
+};
 
 const documents=readdirSync(dir).filter(f=>/^\d+-.+\.md$/.test(f)).sort();
 const debt=JSON.parse(readFileSync(DEBT,'utf8'));
@@ -46,6 +65,11 @@ for(const file of documents){
   if(usesSplit)withSplit++;
   if(CHANGED_OUR_MINDS.test(text))withMinds++;
   if(word==='asked'||word==='tried'){open++;if(WOULD_CLOSE.test(text))openWithClosing++;}
+  const closing=closingSection(text);
+  if(closing&&DEFERS_TO_OBSERVATION.test(closing)&&!CITES_FIELD_QUESTIONS.test(closing))
+    problems.push(`${file}: its closing condition waits on a practitioner observation, which this `
+      +`project cannot execute -- field testing is a phase it has not reached. State what `
+      +`measurement, code or decision closes it, and move the observation to docs/field-questions.md.`);
 
   if(conforms&&listed.has(file))fixed.push(file);
   if(conforms||listed.has(file))continue;

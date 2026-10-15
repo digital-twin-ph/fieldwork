@@ -172,8 +172,16 @@ not answered by any of this.
 
 ## What would close it
 
-A practitioner who did not write it reading the projection section and reporting
-what they concluded about their own zone choice.
+A decision between the two instruments this document has already built the case
+for: an explanation the practitioner may read, or a refusal of a zone the
+application can measure as wrong. The measurement that would settle which is
+affordable is in [100](100-choosing-the-metric-crs.md) — the cost of a
+disagreeing zone is stated in numbers for the shipped data — so what remains is
+the choice of instrument, not more evidence about zones.
+
+_Restated 2026-10-15. This section had required a practitioner who did not write it to
+report what they concluded, which needs field testing, a phase this project has not
+reached. Kept as a [field question](../field-questions.md#does-the-projection-section-change-what-a-practitioner-does-about-their-zone)._
 
 ## Updates
 

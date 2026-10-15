@@ -371,13 +371,21 @@ regional datum is refused by name, and how often that happens here is unmeasured
 ## What would close it
 
 Both halves are implemented, the direction is answered, the forward projection has
-parity evidence (lab check 24) and a worked example instantiates it. What remains
-is the evidence no gate can produce: **whether a practitioner reaching for a second
-frame reaches for this widget**, or whether the projected table in the Snow example
-is read as an explanation of the analysis rather than as something they would
-build. That is the same open condition as
-[94](94-where-explanation-belongs.md), and it closes the same way — one
-practitioner who did not write it, saying what they did with it.
+parity evidence (lab check 24) and a worked example instantiates it. Nothing
+measurable is outstanding, which is why this sat open on something no gate can
+produce.
+
+What can close it here is a disposition, and the honest options are two: keep the
+widget on the argument this document already makes — that a second frame is a real
+need and separability is the reason to serve it as its own step — or retire it as a
+widget that exists because it was separable rather than because anything asked for
+it. The project's own rule for that choice is in
+[103](103-duplicates-should-merge.md): a criterion that detects without deciding
+leaves the thing it found in place. This document detected and did not decide.
+
+_Restated 2026-10-15. This section had required one practitioner saying what they did with
+it, which needs field testing, a phase this project has not reached. Kept as a
+[field question](../field-questions.md#would-a-practitioner-reach-for-a-second-frame-and-reach-for-this-widget)._
 
 ## Updates
 

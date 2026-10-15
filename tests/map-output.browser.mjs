@@ -171,12 +171,22 @@ test('the manual is legible in dark mode and is the page on disk',async({page})=
   const dialog=page.locator('#manual-dialog');
   await expect(dialog).toBeVisible();
 
-  // The compiled page is the current one.
-  await expect(dialog).toContainText('There is no input mode');
-  await expect(dialog).not.toContainText('depends on its Input mode');
+  // The compiled page is the current one, and it is a MANUAL: what the widget is, what it does,
+  // how to use it, which examples exercise it. The record it used to carry moved to
+  // docs/widget-specs/ on 2026-10-15 -- "It's for the human user, not developers or agents."
+  await expect(dialog).toContainText('An output widget');
+  await expect(dialog).toContainText('How to use it');
+  await expect(dialog).toContainText('Worked examples that use it');
+  await expect(dialog).not.toContainText('Input mode');
+  // No revision stamp, no dated change notes, no link into the experiment record.
+  await expect(dialog).not.toContainText('Created 2026');
+  await expect(dialog).not.toContainText('2026-10-');
+  await expect(dialog).not.toContainText('docs/experiments');
 
-  // Every code chip reads against its own background, in the theme actually rendered.
-  const contrast=await dialog.locator('.manual-body code').first().evaluate(el=>{
+  // Measured on the table header, which carried the same defect as the code chips and is still
+  // on the page -- the rewritten manual has no inline code at all, which is what plain language
+  // looks like.
+  const contrast=await dialog.locator('.manual-body th').first().evaluate(el=>{
     const parse=v=>v.match(/\d+(\.\d+)?/g).slice(0,3).map(Number);
     const L=c=>{const [r,g,b]=c.map(v=>{const s=v/255;return s<=.03928?s/12.92:((s+.055)/1.055)**2.4;});
       return .2126*r+.7152*g+.0722*b;};

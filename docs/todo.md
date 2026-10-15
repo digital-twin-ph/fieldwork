@@ -525,7 +525,7 @@ OpenTopoMap's CC-BY-SA style is credited separately from OSM's ODbL data. The tw
 it are not equivalent and the choice is the practitioner's — a static tile composite embedded in
 the plot SVG (self-contained figure, one request per render, an embedded raster in every export)
 or more maps made interactive (cheap, but an interactive view has no scale bar and exports
-without its ground). Both in [the Map widget page](widgets/map_output.md).
+without its ground). Both in [the Map widget page](widget-specs/map_output.md).
 
 
 **Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**

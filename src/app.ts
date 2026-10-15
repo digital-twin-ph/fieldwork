@@ -497,7 +497,7 @@ function renderInspector(){
     // offer -- which is why removing it answers four separate reports at once.
     //
     // The practitioner's direction, 2026-10-14: "there is no such thing as mode, only layers."
-    // Written into docs/widgets/map_output.md that day and into the code on 2026-10-15, after
+    // Written into docs/widget-specs/map_output.md that day and into the code on 2026-10-15, after
     // "I thought we got rid of mode!"
     const wiredPorts=nodeInputs(n).filter(([port])=>workflow.edges.some(e=>e.to===n.id&&e.port===port));
     content+=`<span class="inspector-section">Layers</span>`

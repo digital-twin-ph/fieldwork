@@ -78,7 +78,7 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   //
   // So this reads the same value the renderer draws from, in the order it draws: ground first,
   // then fills, then marks. A layer that arrived inside another layer's value says so with
-  // fw:layerWithin rather than claiming a port it does not have. See docs/widgets/map_output.md.
+  // fw:layerWithin rather than claiming a port it does not have. See docs/widget-specs/map_output.md.
   const ground=`urn:fieldwork:run:${runId}:map-specification:${node.id}`;void ground;
   const portOf=(type:string)=>workflow.edges.find(e=>e.to===node.id&&e.port===type);
   const drawn:{kind:string;features?:number;port?:string;within?:string;role?:string;provider?:string}[]=[];

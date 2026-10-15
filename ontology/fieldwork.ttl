@@ -707,7 +707,7 @@ fw:ChartSpecification a owl:Class;
   fw:implementationStatus "implemented".
 fw:layerCount a owl:DatatypeProperty; rdfs:domain fw:MapSpecification; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "How many layers this map draws";
-  rdfs:comment "A map draws LAYERS: whatever arrives at one of its input ports, each with its own symbology, over or under the others. The count and the kinds were derivable before this term existed -- prov:used reaches each source and fw:portType says what it emits -- but the join is fragile: a node appears under two IRI forms and the activity uses itself, so a naive query returned four sources for a two-layer map. Asserted here so the question does not require knowing that. See the Map widget page, docs/widgets/map_output.md.".
+  rdfs:comment "A map draws LAYERS: whatever arrives at one of its input ports, each with its own symbology, over or under the others. The count and the kinds were derivable before this term existed -- prov:used reaches each source and fw:portType says what it emits -- but the join is fragile: a node appears under two IRI forms and the activity uses itself, so a naive query returned four sources for a two-layer map. Asserted here so the question does not require knowing that. See the Map widget page, docs/widget-specs/map_output.md.".
 fw:layer a owl:ObjectProperty; rdfs:domain fw:MapSpecification;
   rdfs:label "One layer this map draws";
   rdfs:comment "Carries the port the layer arrived at, the port type it carries, its index in the drawing order, and the activity that generated it. The index is the order the ports are declared, which is the order they are drawn today; when a practitioner can state the order, that order belongs here instead.".
@@ -730,7 +730,7 @@ fw:layerTileProvider a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The tile service a basemap layer is drawn from: osm or topo. A third origin beside fw:layerPort and fw:layerWithin, for a layer that arrives from a configured service rather than from the workflow at all. Its tiles are fetched by the reader's browser and are not in the SVG export, so this records what a reader saw and not what the figure carries.".
 fw:BasemapLayer a owl:Class;
   rdfs:label "Third-party map tiles drawn beneath the data";
-  rdfs:comment "Layer index 0 when present. Counted as a layer from 2026-10-14: a basemap is displayed, and recording it only as fw:mapBasemap made the layer that carries all the geographic context read as a setting on the specification. Offered on 1 of the 10 maps in the published worked examples, and off by default there, because the control is reachable only from the interactive presentation of the polygons input -- see docs/widgets/map_output.md.".
+  rdfs:comment "Layer index 0 when present. Counted as a layer from 2026-10-14: a basemap is displayed, and recording it only as fw:mapBasemap made the layer that carries all the geographic context read as a setting on the specification. Offered on 1 of the 10 maps in the published worked examples, and off by default there, because the control is reachable only from the interactive presentation of the polygons input -- see docs/widget-specs/map_output.md.".
 fw:AreaLayer a owl:Class; rdfs:label "A boundary drawn as a layer".
 fw:PolygonsLayer a owl:Class; rdfs:label "Polygons drawn as a layer".
 fw:PointsLayer a owl:Class; rdfs:label "Points drawn as a layer".

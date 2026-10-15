@@ -178,7 +178,7 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
  *
  *  "There is no such thing as mode, only layers" -- the practitioner, 2026-10-14, repeated on
  *  2026-10-15 after finding the selector still there: "I thought we got rid of mode!" It had not
- *  been; the direction was written into docs/widgets/map_output.md and the code was left alone.
+ *  been; the direction was written into docs/widget-specs/map_output.md and the code was left alone.
  *
  *  A map now declares every layer port and the practitioner wires what they have. This function
  *  is what replaces the question: the drawing path follows the connections. The precedence is the

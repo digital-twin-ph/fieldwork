@@ -1410,9 +1410,23 @@ if(new URLSearchParams(location.search).get('playback')==='1')setPlayback(0);
 export let servingBuild='unknown';
 if('serviceWorker' in navigator){
   navigator.serviceWorker.addEventListener('message',event=>{
-    const data=event.data as {type?:string;build?:string}|null;
+    const data=event.data as {type?:string;build?:string;version?:string}|null;
     if(data?.type==='fieldwork-build'&&data.build){
-      servingBuild=data.build;$('#offline-status').title=`Served by build ${data.build}`;
+      servingBuild=data.build;
+      // Which VERSION is actually serving this page, in the header, beside the number the page
+      // believes it is. The two disagree exactly when a cached build is being served, which is
+      // the thing a practitioner cannot otherwise see: reported twice, three days apart, while
+      // the repository was a release and a half ahead of the browser.
+      const serving=data.version;
+      $('#offline-status').title=`Served by build ${data.build}${serving?` (v${serving})`:''}`;
+      if(serving&&serving!==appPackage.version){
+        $('#app-version').textContent=`v${serving} · cached`;
+        $('#app-version').title=`This page is being served from a cached build of v${serving}. `
+          +`The files on disk are v${appPackage.version}. Reload to update.`;
+        toast(`You are looking at a cached v${serving}; v${appPackage.version} is installed.`,
+          {action:{label:'Update now',run:()=>navigator.serviceWorker.getRegistration()
+            .then(r=>r?.update()).then(()=>location.reload())}});
+      }
       // The catalog renders its markup once, from the value held when it was opened. The
       // handshake with the controlling worker can land after that -- on a first visit the
       // worker claims the page only after it activates -- so the already-rendered row is
@@ -1425,6 +1439,12 @@ if('serviceWorker' in navigator){
   const askBuild=()=>navigator.serviceWorker.controller?.postMessage({type:'fieldwork-build'});
   navigator.serviceWorker.register('./sw.js').then(async registration=>{
     await navigator.serviceWorker.ready;
+    // Check for a newer worker on every start where one is ALREADY in control. The browser's own
+    // check is periodic, so a worker installed days ago could go on serving its cache
+    // indefinitely, which is what happened. Skipped on a first registration: the worker is
+    // installing anyway, and asking it to update mid-install makes it precache everything twice
+    // -- which showed up as the browser suite taking 8.9 minutes instead of 3.8.
+    if(navigator.serviceWorker.controller)registration.update().catch(()=>{});
     askBuild();
     // A page already running old code keeps running it until it is reloaded, and with
     // content-hashed chunks it can ask for files the new cache no longer holds. So an update is

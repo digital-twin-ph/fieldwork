@@ -51,6 +51,9 @@ const hash=createHash('sha256');
 for(const asset of assets){hash.update(asset);hash.update(await readFile(asset==='./'?'index.html':asset));}
 hash.update(await readFile('src/sw.ts'));
 const cache='fieldwork-ts-'+hash.digest('hex').slice(0,16);
-await build({entryPoints:['src/sw.ts'],bundle:true,format:'iife',outfile:'sw.js',minify:true,define:{__PRECACHE_ASSETS__:JSON.stringify(assets),__CACHE_VERSION__:JSON.stringify(cache)}});
+// The version the SERVING worker was compiled from, so a stale cache can be named rather than
+// guessed at. 2026-10-15.
+const appVersion=JSON.parse(await readFile('package.json','utf8')).version;
+await build({entryPoints:['src/sw.ts'],bundle:true,format:'iife',outfile:'sw.js',minify:true,define:{__PRECACHE_ASSETS__:JSON.stringify(assets),__CACHE_VERSION__:JSON.stringify(cache),__APP_VERSION__:JSON.stringify(appVersion)}});
 await writeFile('build/asset-manifest.json',JSON.stringify({cache,assets},null,2)+'\n');
 console.log('Built TypeScript application, workers and offline asset manifest.');

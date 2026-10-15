@@ -68,7 +68,7 @@ export interface ParamsByType {
   find_health_facilities:{label:string;source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';kinds:string[];requireName:boolean;country:string;minConfidence:number;data:PointCollection|null;retrieved:{source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';sourceLabel:string;licence:string;licenceIRI:string;sourceIRI:string;attribution:string;origin:string;kept:number;dropped:{kind:number;coordinates:number;name:number};at:string;scope:string;filename?:string;sha256?:string;bytes?:number;release?:string;belowConfidence?:number;unmappedCategory?:number;minConfidence?:number}|null};
   buffer_point:{label:string;pointId:string;distanceM:number};
   sample_raster:{label:string;attribute:string;valueUnit:string};
-  slr_extract_import:{label:string;datasetIRI:string;datasetVersion:string;baselinePeriod:string;citations:string[];basisKind:''|'workflow'|'confidence-pbox';familyValues:{withVerticalLandMotion:string;withoutVerticalLandMotion:string}};
+  slr_extract_import:{label:string;datasetIRI:string;datasetVersion:string;baselinePeriod:string;citations:string[];basisKind:''|'workflow'|'confidence-pbox';familyValues:{withVerticalLandMotion:string;withoutVerticalLandMotion:string};sourceNote?:string};
   slr_site_assignment:{label:string};
   slr_threshold_comparison:{label:string;scenario:string;basis:string;family:string;year:string;quantile:string;elevationField:string;verticalDatum:string;elevationReference:''|'baseline-sea-surface'|'other-datum'};
   // From 2026-10-13 a transform, not a source: it takes points and returns points. `data`, `source`

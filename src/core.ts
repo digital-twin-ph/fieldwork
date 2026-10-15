@@ -43,6 +43,7 @@ import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
 export {RENAMED_NODE_TYPES};
 import type {Reasoner} from './worker-types.js';
 import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status} from './results.js';
+import {declarationGaps} from './results.js';
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
 interface ExecutionInputs extends OldInputs {polygons:Polygons;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
@@ -618,7 +619,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'point_input':value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:structuredClone(node.params.sourceInfo),spatialReference:structuredClone(node.params.spatialReference)};break;
       case 'rate':{const result=computeRate(fromPoints(inputs.records),node.params);value={...rateTable(result),chart:rateChart(result)} as unknown as DisplayValue;receipts.push(rateReceipt(node,result,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));break;}
       case 'case_series':{const series=node.params.source==='table'?caseSeriesFromTable(inputs.cases,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period}):caseSeries(inputs.points,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period,weightField:node.params.weightField});value={...seriesTable(series),chart:seriesChart(series)} as unknown as DisplayValue;receipts.push(seriesReceipt(node,series,runId,workflow.edges.find(e=>e.to===node.id&&(e.port==='points'||e.port==='cases'))!.from));break;}
-      case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,basisKind:node.params.basisKind,familyValues:node.params.familyValues});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}
+      case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,basisKind:node.params.basisKind,familyValues:node.params.familyValues,sourceNote:node.params.sourceNote});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}
       case 'slr_site_assignment':{const extract=readExtract(inputs.projections);const assignments=assignSites(inputs.points,inputs.sites,extract);value=assignmentTable(assignments) as unknown as DisplayValue;const edge=(port:string)=>workflow.edges.find(e=>e.to===node.id&&e.port===port)!.from;receipts.push(assignmentReceipt(node,assignments,runId,{points:edge('points'),sites:edge('sites'),projections:edge('projections')}));break;}
       case 'slr_threshold_comparison':{const table=inputs.assignments;if(!table?.assignments)throw new Error('Connect Assign projection site: a comparison needs the assignments, not a plain table.');const comparison=compareToElevation(table.assignments,{selection:{scenario:node.params.scenario,basis:node.params.basis,family:node.params.family,year:node.params.year,quantile:node.params.quantile},elevationField:node.params.elevationField,verticalDatum:node.params.verticalDatum,elevationReference:node.params.elevationReference});value=comparison as unknown as DisplayValue;receipts.push(thresholdReceipt(node,comparison,table.assignments,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='assignments')!.from));break;}
       case 'table_input':{if(!node.params.data.rows.length)throw new Error('Import a long-format table before running.');const imported=tableReceipt(node,node.params.data,runId);value=imported.value;receipts.push(imported.receipt);break;}
@@ -766,7 +767,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // any value, so this does not need to know which widgets report omissions.
   const alerts:WorkflowRun['alerts']=plan.flatMap(node=>{
     const value=values.get(node.id),unconnected=unconnectedSites(value),offNetwork=offNetworkSites(value);
-    return unconnected.length||offNetwork.length?[{nodeId:node.id,unconnected,offNetwork}]:[];
+    const gaps=declarationGaps(value);
+    return unconnected.length||offNetwork.length||gaps.length
+      ?[{nodeId:node.id,unconnected,offNetwork,...(gaps.length?{gaps}:{})}]:[];
   });
   return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString()};
 }

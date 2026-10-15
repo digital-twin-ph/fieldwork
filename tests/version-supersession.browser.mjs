@@ -97,10 +97,10 @@ test('the Inspector says what the offered version of a widget changed',async({pa
   await page.goto('/?example=snow-extent');
   await page.locator('.react-flow__node[data-id="map"]').click();
   const inspector=page.locator('#inspector-content');
-  await expect(inspector).toContainText('What changed in 0.9.0');
+  await expect(inspector).toContainText('What changed in 0.10.0');
   // Folded by default for an ordinary release; the text is there once opened.
-  await inspector.locator('details',{hasText:'What changed in 0.9.0'}).first().click();
-  await expect(inspector).toContainText('Accepts a street network and draws it as itself');
+  await inspector.locator('details',{hasText:'What changed in 0.10.0'}).first().click();
+  await expect(inspector).toContainText('declares every layer port it can draw');
   await expect(inspector).toContainText('Earlier releases stay in the registry');
   expect(errors).toEqual([]);
 });

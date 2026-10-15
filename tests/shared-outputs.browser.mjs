@@ -8,9 +8,12 @@ test('shared output modes migrate legacy views, recover with Undo and preserve e
   const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});};
   await run();await expect(page.locator('#result-metrics .review b')).toHaveText('5');
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await expect(page.locator('#output-input-mode')).toHaveValue('decisions');await expect(page.locator('#map-decisions')).toHaveValue('criteria');await expect(page.locator('#add-point-input')).toHaveCount(0);
-  await page.locator('#output-input-mode').selectOption('spatial');await expect(page.locator('#map-area')).toHaveValue('');await expect(page.locator('#add-point-input')).toBeVisible();
-  await page.locator('#undo-button').click();await expect(page.locator('#map-decisions')).toHaveValue('criteria');
+  // No mode selector, and no mode to be in: the decisions are wired to the decisions port and the
+  // map also offers an area port and a point-layer adder, because a map draws what it is given.
+  // This used to assert the opposite -- that a decisions map has no way to add a point layer.
+  await expect(page.locator('#output-input-mode')).toHaveCount(0);
+  await expect(page.locator('#map-decisions')).toHaveValue('criteria');
+  await expect(page.locator('#add-point-input')).toBeVisible();
   await page.locator('#output-view').selectOption('table');await expect(page.locator('#table-decisions')).toHaveValue('criteria');
   await page.locator('#output-view').selectOption('map');await expect(page.locator('#map-decisions')).toHaveValue('criteria');await run();
   await page.locator('[data-view="rules"]').click();const pending=page.waitForEvent('download');await page.locator('#download-evidence').click();const receipt=JSON.parse(await readFile(await (await pending).path(),'utf8'));

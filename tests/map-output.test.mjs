@@ -20,7 +20,10 @@ test('Map displays enriched study area and every record without inferring accept
   assert.equal(map.rows[2].decision,undefined);assert.equal(map.canProceed,undefined);
   const receipt=run.receipts.find(r=>r.nodeId==='map');assert.match(receipt.facts,/geo:sfDisjoint/);assert.match(receipt.facts,/geo:hasMetricArea/);assert.equal(receipt.rules,'');
   assert.doesNotThrow(()=>validateWorkflow(JSON.parse(JSON.stringify(w))));
-  w.edges.pop();assert.throws(()=>executionPlan(w),/points input connected/);
+  // A map insists on no particular port from 2026-10-15 -- it draws the layers it is given -- so
+  // removing one connection no longer refuses the plan. A map with NOTHING wired is refused at
+  // the run, which tests/network-map.test.mjs covers on a workflow where the map is the only node.
+  w.edges.pop();assert.doesNotThrow(()=>executionPlan(w));
 });
 
 test('geographic sources default to WGS84 with explicit serialization order and reject unsupported relabeling',()=>{

@@ -199,3 +199,8 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 .palette-node.unrevealed{opacity:.35}
 .palette-node.unrevealed:hover{opacity:.6}
 body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
+/* A map declares every layer port it can draw; the ones it is not drawing are still drop targets
+   and do not get a labelled row, so the node stays the size of its layers rather than the size of
+   its contract. 2026-10-15. */
+.node-spare-port{opacity:.35;width:8px;height:8px}
+.node-spare-port:hover{opacity:1}

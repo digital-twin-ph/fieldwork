@@ -8,8 +8,14 @@ page.on('pageerror',e=>errors.push(e.message));
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});};
 const select=async id=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"] .node-heading`).click();};
+// A map shows the layers it draws and ONE port to add another, so a layer that is not yet
+// connected is dropped on `layer` and bound to its real port by what the source emits.
+// 2026-10-15: "Instead of cluttering the side of the map widget with input ports, the Inspector
+// UI should offer 1 configurable port but also enable addition of more input ports."
 const connect=async(from,to,port)=>{
-  const source=page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`),target=page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`);
+  const existing=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).count();
+  const handle=existing?port:'layer';
+  const source=page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`),target=page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${handle}"]`);
   await expect(source).toBeVisible();await expect(target).toBeVisible();
   const a=await source.boundingBox(),b=await target.boundingBox();
   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
@@ -20,7 +26,13 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   await page.locator('#workflow-file').setInputFiles({name:'map-start.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('[data-add="map_output"]').click();
   await page.locator('#map-label').fill('Boundary and observations');await page.locator('#map-label').press('Tab');
-  await page.locator('#map-area').selectOption('scope');await page.locator('#map-points').selectOption('observations');
+  // A new map draws nothing, so it has no per-layer pickers yet -- it has the configurable one.
+  // Each choice binds to the port its type belongs to and then gets a picker of its own.
+  await expect(page.locator('#map-area')).toHaveCount(0);
+  await page.locator('#map-add-layer').selectOption('scope');
+  await expect(page.locator('#map-area')).toHaveValue('scope');
+  await page.locator('#map-add-layer').selectOption('observations');
+  await expect(page.locator('#map-points')).toHaveValue('observations');
   const mapId=(await saved()).nodes.find(n=>n.type==='map_output').id;
   await expect(page.locator('.react-flow__node[data-id="scope"] .node')).toHaveCSS('background-color','rgb(237, 240, 242)');
   await expect(page.locator(`.react-flow__node[data-id="${mapId}"] .node`)).toHaveCSS('background-color','rgb(229, 243, 229)');
@@ -55,9 +67,16 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   await page.locator('#undo-button').click();
   assert.deepEqual((await saved()).edges.filter(e=>e.to===mapId).map(e=>e.port),['area','points']);
   await connect(checkId,mapId,'coverage');await expect(page.locator('#map-coverage')).toHaveValue(checkId);
-  // Also exercise the reported empty Map, rejecting the wrong socket without changing the graph.
+  // Also exercise the reported empty Map. There is no wrong socket to reject any more: the one
+  // configurable port takes anything the map can draw and binds it to the port its TYPE belongs
+  // to, so a coverage result aimed anywhere on the node lands on `coverage`. This used to assert
+  // that the same drop changed nothing, which was true when a practitioner had to pick the socket
+  // themselves and could pick the wrong one.
   await page.locator('#map-coverage').selectOption('');
-  await connect(checkId,mapId,'area');assert.equal((await saved()).edges.filter(e=>e.to===mapId).length,0);
+  assert.equal((await saved()).edges.filter(e=>e.to===mapId).length,0);
+  await connect(checkId,mapId,'area');
+  assert.deepEqual((await saved()).edges.filter(e=>e.to===mapId).map(e=>e.port),['coverage']);
+  await page.locator('#map-coverage').selectOption('');
   await connect(checkId,mapId,'coverage');await expect(page.locator('#map-coverage')).toHaveValue(checkId);
   // Switching back to direct inputs uses the same replacement rule; Undo restores the reviewed result.
   await connect('scope',mapId,'area');await expect(page.locator('#map-area')).toHaveValue('scope');
@@ -79,13 +98,20 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   await page.locator('#workflow-file').setInputFiles({name:'layers.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(multi))});
   await expect(page.locator('#run-button')).toBeEnabled();await page.locator('[data-view="workflow"]').click();await page.locator('[data-add="map_output"]').click();
   const multiMapId=(await saved()).nodes.find(n=>n.type==='map_output').id;
-  await page.locator('#map-label').fill('Layer comparison');await page.locator('#map-label').press('Tab');await page.locator('#map-area').selectOption('scope');await page.locator('#map-points').selectOption('observations');
-  await page.locator('#add-point-input').click();await expect(page.locator(`.react-flow__node[data-id="${multiMapId}"] [data-handleid="points_2"]`)).toHaveCount(1);await page.locator('#map-points_2').selectOption('second');await run();
+  await page.locator('#map-label').fill('Layer comparison');await page.locator('#map-label').press('Tab');
+  await page.locator('#map-add-layer').selectOption('scope');await page.locator('#map-add-layer').selectOption('observations');
+  // A second point source needs no "add point input" click: the configurable port sees that
+  // `points` is taken and opens the next slot itself.
+  await page.locator('#map-add-layer').selectOption('second');
+  await expect(page.locator(`.react-flow__node[data-id="${multiMapId}"] [data-handleid="points_2"]`)).toHaveCount(1);
+  await expect(page.locator('#map-points_2')).toHaveValue('second');await run();
   await page.getByRole('tab',{name:'Layer comparison'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(6);await expect(page.locator('#map-layer-list input')).toHaveCount(2);await expect(page.locator('#map-missing-records button')).toHaveCount(2);
   await page.locator('[data-map-layer="second"]').uncheck();await expect(page.locator('#map [data-layer="second"]:visible')).toHaveCount(0);await expect(page.locator('#map [data-layer="observations"]:visible')).toHaveCount(3);await page.locator('[data-map-layer="second"]').check();
   await select(multiMapId);await page.locator('#remove-point-input').click();assert.equal((await saved()).edges.filter(e=>e.to===multiMapId).length,2);await page.locator('#undo-button').click();await expect(page.locator('#map-points_2')).toHaveValue('second');
   await select('coverage');await page.locator('#add-point-input').click();await page.locator('#coverage-points_2').selectOption('second');
-  await select(multiMapId);await page.locator('#map-coverage').selectOption('coverage');await run();await page.getByRole('tab',{name:'Layer comparison'}).click();
+  // Not drawn yet, so the coverage result is added through the configurable picker.
+  await select(multiMapId);await page.locator('#map-add-layer').selectOption('coverage');
+  await expect(page.locator('#map-coverage')).toHaveValue('coverage');await run();await page.getByRole('tab',{name:'Layer comparison'}).click();
   // Coincident points from the two datasets can be inspected by toggling layers.
   await page.locator('[data-map-layer="second"]').uncheck();await page.locator('#map [data-layer="observations"][aria-label^="Outside example"]').click();await page.locator('#exclusion-reason').fill('Error in first dataset only');await page.locator('#coverage-exclude-form button').click();await run();await page.locator('[data-map-layer="second"]').check();
   await expect(page.locator('#map [data-layer="observations"][aria-label^="Outside example"]')).toHaveAttribute('aria-label',/Excluded/);await expect(page.locator('#map [data-layer="second"][aria-label^="Outside example"]')).toHaveAttribute('aria-label',/Outside/);

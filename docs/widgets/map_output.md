@@ -20,16 +20,34 @@ the difference is the thing to understand about this widget.
 | `network` | a street network, drawn as itself |
 | `coverage` | a spatial coverage review |
 
-Which of these the node offers depends on its **Input mode**, and that is the part a
-practitioner meets as friction: a map in the default *spatial* mode draws the ports `area`,
-`points`, `coverage` and `raster`, and nothing else. Connect catchments to it and there is
-no port to aim at — not an error, nothing to drop onto. Change **Input mode** to *Catchment
-polygons / summaries* and the node redraws with a `polygons` port.
+**There is no input mode.** Removed 2026-10-15. A map declares every one of these ports, the
+renderer is chosen from what is wired (`src/core.ts#drawnMode`), and a saved workflow's stored
+`inputMode` is read only as a fallback for a map with nothing connected.
+
+On the canvas a map shows **the layers it draws, plus one port to add another**. Drop any
+drawable result on that port and it binds to the port its type belongs to — a second point
+source opens the next point slot by itself rather than replacing the first. The Inspector is
+the same thing in a panel: one picker per layer, and one *Add a layer* picker listing every
+result on the canvas this map could draw.
+
+*What this replaced, and why it is recorded rather than quietly deleted:* the ports used to
+depend on an **Input mode** selector, so a map in the default *spatial* mode had `area`,
+`points`, `coverage` and `raster` and nothing else. Connect catchments to it and there was no
+port to aim at — not an error, nothing to drop onto. The mode also decided whether a
+presentation could be chosen and whether a basemap was on offer, which is why removing it
+answered four separate reports at once. Connecting a raster additionally **deleted every other
+connection**, because a raster map could show nothing else; a raster is now a layer and the
+others stay.
 
 ## What it assumes
 
-**That a map is a map of one kind of thing.** It is not, and the application works around
-its own assumption in three places: `pointInputCount` gives up to eight point layers,
+**That a map is a map of one kind of thing.** *Was* — removed 2026-10-15; the section stands
+because the three workarounds it describes are still what the application has, and they are
+what the next piece of work is about. The three remain because the RENDERERS are still one
+picture at a time: a map with polygons and a raster wired draws the raster. That is now a
+limit of the drawing code rather than a question put to the practitioner.
+
+The application works around the old assumption in three places: `pointInputCount` gives up to eight point layers,
 `contextPoints` gives one points layer beside polygons, and `stack_polygons` is an entire
 widget that collects up to six polygon layers into one value *ordered largest first so the
 smaller draw on top*. Each handles one type. None of them is allowed to say "layer".
@@ -88,16 +106,24 @@ What a basemap costs, which is why this is not a free fix:
 
 - It sends the viewed extent to a third party on every pan, from a tool whose other maps
   work offline and make no request. For maps of case locations that is a disclosure.
-- Tiles are excluded from the SVG export, so a figure exported from a basemap-backed map is
-  not the figure the practitioner was looking at. The receipt now says which provider was
+- Tiles are excluded from **the SVG export**, so a figure exported from a basemap-backed map
+  is not the figure the practitioner was looking at. The receipt now says which provider was
   on, so the gap is at least recorded rather than silent.
+
+  *Corrected 2026-10-15, by the practitioner:* "excluded" was written as though it were a
+  property of static maps, and it is a property of SVG. A static **image** map can carry a
+  basemap — Python's `contextily` composites tiles into a matplotlib figure, which is exactly
+  this case — and **PMTiles** serves tiles from a single file for an interactive map with no
+  network at all. So the real option set is three, not two: tiles in a static raster export,
+  PMTiles for offline interactive, or no basemap. The offline one is the interesting one here,
+  because it removes the disclosure objection above rather than trading against it.
 - OpenTopoMap's style is CC-BY-SA, not ODbL. Until 2026-10-14 both providers were credited
   as OpenStreetMap alone, which under-credited the style; fixed.
 
 **The decision is the practitioner's.** Two ways to close it, and they are not equivalent:
 
 1. **Let the plot presentation carry a basemap** — one static tile composite fetched at the
-   plot's own extent and embedded in the SVG. The figure then matches what was on screen and
+   plot's own extent, embedded in a raster export (as `contextily` does) rather than in the SVG. The figure then matches what was on screen and
    stays self-contained, at the cost of a request per render and an embedded raster in every
    export. Recommended if the point is that published figures should be legible as geography.
 2. **Make more maps interactive** — cheaper, since the machinery exists, but it changes what a

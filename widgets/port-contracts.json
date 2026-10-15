@@ -819,7 +819,8 @@
       "contracts": [
         {
           "when": "inputMode=spatial",
-          "required": [
+          "required": [],
+          "optional": [
             [
               "area",
               "area"
@@ -827,52 +828,7 @@
             [
               "points",
               "points"
-            ]
-          ],
-          "optional": [
-            [
-              "coverage",
-              "coverage-check"
             ],
-            [
-              "raster",
-              "raster"
-            ]
-          ]
-        },
-        {
-          "when": "inputMode=decisions",
-          "required": [
-            [
-              "decisions",
-              "decisions"
-            ]
-          ],
-          "optional": []
-        },
-        {
-          "when": "inputMode=raster",
-          "required": [
-            [
-              "raster",
-              "raster"
-            ]
-          ],
-          "optional": []
-        },
-        {
-          "when": "inputMode=polygons",
-          "required": [
-            [
-              "polygons",
-              "polygons"
-            ]
-          ],
-          "optional": []
-        },
-        {
-          "when": "contextPoints=true,inputMode=polygons",
-          "required": [
             [
               "polygons",
               "polygons"
@@ -880,19 +836,24 @@
             [
               "context",
               "points"
-            ]
-          ],
-          "optional": []
-        },
-        {
-          "when": "inputMode=network",
-          "required": [
+            ],
+            [
+              "decisions",
+              "decisions"
+            ],
+            [
+              "coverage",
+              "coverage-check"
+            ],
+            [
+              "raster",
+              "raster"
+            ],
             [
               "network",
               "network"
             ]
-          ],
-          "optional": []
+          ]
         }
       ]
     },

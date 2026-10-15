@@ -88,6 +88,43 @@ Consequences, stated before anything is built:
    points, a raster renderer, a network renderer. Composition is the work; the ports are
    the easy half.
 
+## "Context" is a reading, not a port — and the renderer has it backwards
+
+The practitioner, on what the two John Snow maps are actually for:
+
+> For a Voronoi catchment, we use the pumps to calculate the tessellation. Then overlay the
+> death locations layer to demonstrate which catchment had the most locations where people
+> died. Same with isochrone. The Broad Street pump + street network was used to create
+> derived polygons, the time bands. The death location points are overlaid on the time bands
+> to figure out distribution of death locations within the time bands.
+
+So in both maps the **pumps are the computation's input** and the **deaths are what the
+reader is asked to look at**. The pump is on the map so you can see where the bands came
+from. The question is about the deaths.
+
+The port is named `context` and the parameter `contextPoints`, which fixes in the
+vocabulary a judgement that belongs to the question. The same pump layer is the subject of
+a map asking *where are the pumps*, and context in a map asking *how did deaths fall around
+one*. Nothing about the data decides which; the reading does.
+
+**And the renderer takes its visual hierarchy from the computation's roles.** In
+`catchmentPlot`:
+
+```js
+const sites=context?.features||p.sites, observations=p.observations?.features||[];
+for(const [fs,color,r,kind] of [[observations,'gray',2.7,'observation'],
+                                [sites,'red',3.5,'site']])
+```
+
+The pumps — the input — are drawn **red at radius 3.5**. The deaths — the subject of the
+question — are drawn **gray at radius 2.7**, and the legend reads *"Gray: observations ·
+red: sites"*. The thing the map exists to show is smaller and duller than the thing that
+produced the shape, because one is called a site and the other an observation, and those
+names come from the computation rather than from the reading.
+
+That is the cost of the missing vocabulary stated as something a practitioner sees: not a
+refused connection, but **a map whose emphasis is wrong for its own question.**
+
 ## The last stage can see what is upstream, and the mechanism is already there
 
 The practitioner, continuing:
@@ -202,3 +239,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | "An output widget being the last stage can see what the widgets before it are producing that it can consume." It already does, one port at a time: twelve Inspector pickers list the canvas nodes whose output matches a port's type and call setConnection on choice. Measured: the isochrone canvas holds ten drawable nodes and its map is told about two, hidden by the mode rather than by sense. So the edge-making half of a layer list is built; what is missing is one list keyed by drawable instead of several keyed by a mode's ports, and a renderer that composes |
 | 2026-10-14 | "Why is 115 needed?" -- narrowed in answer. It earns its place by changing what the blocker output-mode-set-before-the-shape-arrives should do (automating a mode switch would entrench the model this record calls wrong), by holding measurements that live nowhere else, and by recording a model correction. It does NOT earn a rewrite: nothing shipped is broken, and the claim that combinations are wanted is an inference rather than a measurement. Closing it now means evidence of demand, not a new renderer |
 | 2026-10-14 | "All 10 maps render with a broken model inside them." Struck the paragraph claiming nothing is broken and the demand unmeasured: rendering is not evidence the model is sound, and the demand has been paid for three times -- pointInputCount for eight point layers, contextPoints for one beside polygons, and stack_polygons, an entire widget, for six polygon layers ORDERED LARGEST FIRST SO THE SMALLER DRAW ON TOP. Draw order, which this record called a new question, is already implemented for one type by a heuristic |
+| 2026-10-14 | "Context is relative depending on the focus." In both John Snow maps the pumps are the computation's input and the deaths are what the reader is asked to look at -- so `context` as a port name fixes a judgement that belongs to the question. Worse, catchmentPlot takes its visual hierarchy from the computation's roles: pumps red at radius 3.5, deaths gray at 2.7, legend "Gray: observations, red: sites". The thing each map exists to show is drawn smaller and duller than the thing that produced the shape |

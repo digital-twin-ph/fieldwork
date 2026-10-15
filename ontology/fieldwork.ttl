@@ -705,6 +705,19 @@ fw:ChartSpecification a owl:Class;
   rdfs:label "Bounded chart presentation specification";
   rdfs:comment "Configured presentation of an exact upstream result. Mark and orientation affect appearance; field and measure kind disclose the already-computed quantity. The specification is not a statistical computation or an arbitrary Vega-Lite program.";
   fw:implementationStatus "implemented".
+fw:layerCount a owl:DatatypeProperty; rdfs:domain fw:MapSpecification; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "How many layers this map draws";
+  rdfs:comment "A map draws LAYERS: whatever arrives at one of its input ports, each with its own symbology, over or under the others. The count and the kinds were derivable before this term existed -- prov:used reaches each source and fw:portType says what it emits -- but the join is fragile: a node appears under two IRI forms and the activity uses itself, so a naive query returned four sources for a two-layer map. Asserted here so the question does not require knowing that. Experiment 115.".
+fw:layer a owl:ObjectProperty; rdfs:domain fw:MapSpecification;
+  rdfs:label "One layer this map draws";
+  rdfs:comment "Carries the port the layer arrived at, the port type it carries, its index in the drawing order, and the activity that generated it. The index is the order the ports are declared, which is the order they are drawn today; when a practitioner can state the order, that order belongs here instead.".
+fw:layerIndex a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Where this layer falls in the drawing order".
+fw:layerPort a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "The input port this layer arrived at".
+fw:layerPortType a owl:ObjectProperty;
+  rdfs:label "The port type this layer carries";
+  rdfs:comment "What KIND of thing is drawn -- points, polygons, a raster, a boundary, a network. The kind decides how a layer is drawn, not whether it may be there.".
 fw:MapSpecification a owl:Class;
   rdfs:subClassOf prov:Plan;
   rdfs:label "Bounded map communication specification";

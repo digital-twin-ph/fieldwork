@@ -23,6 +23,7 @@ import {tidyLayout,alreadyTidy} from './layout.js';
 import {bundledCompositions,resolveComposition} from './composition-registry.js';
 import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
+import {rulesetExample} from './ruleset-example.js';
 import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
@@ -105,9 +106,9 @@ const WORKSPACES='fieldwork-examples-v1';
 // example has an area node and was silently labelled, described and noted as Old Naledi until
 // it was added. This is the "examples are the default world" problem in TODO.md, in the one
 // place it is least visible.
-const NAMED_WORKSPACES=['blank','coverage','raster','sea-level'];
+const NAMED_WORKSPACES=['blank','coverage','raster','sea-level','rulesets'];
 const exampleKey=(w:Workflow):string=>w.exampleId?.startsWith('snow-')?w.exampleId:NAMED_WORKSPACES.includes(w.exampleId as string)?w.exampleId as string:w.exampleId==='old-naledi'||w.nodes.some(n=>n.type==='study_area')?'old-naledi':'heat';
-const template=(key:string)=>key==='sea-level'?seaLevelExample():key==='snow-geoprivacy'?geoprivacyExample():key==='snow-extent'?snowExtentExample():key==='snow-voronoi'||key==='snow-isochrone'?johnSnowExample(key):key==='raster'?rasterExample():key==='coverage'?coverageExercise():key==='blank'?blankWorkflow():key==='old-naledi'?oldNalediWorkflow():exampleWorkflow();
+const template=(key:string)=>key==='rulesets'?rulesetExample():key==='sea-level'?seaLevelExample():key==='snow-geoprivacy'?geoprivacyExample():key==='snow-extent'?snowExtentExample():key==='snow-voronoi'||key==='snow-isochrone'?johnSnowExample(key):key==='raster'?rasterExample():key==='coverage'?coverageExercise():key==='blank'?blankWorkflow():key==='old-naledi'?oldNalediWorkflow():exampleWorkflow();
 const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='raster_input'&&!n.params.asset||n.type==='network_input'&&!n.params.data.nodes.length||n.type==='table_input'&&!n.params.data.rows.length);
 let credentials:CredentialAccess|null=null;
 let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
@@ -298,6 +299,7 @@ function render(){
   const old=exampleKey(workflow)==='old-naledi';$('#example-select').value=old?'old-naledi':'heat';$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
   if(exampleKey(workflow)==='blank'){$('#example-select').value='blank';$('#project-description').textContent='Developmental evaluation · define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
   if(exampleKey(workflow)==='coverage'){$('#example-select').value='coverage';$('#project-description').textContent='Developmental evaluation · inspect spatial exceptions, exclude with a reason, or revise the boundary.';$('#example-note').textContent='Synthetic points and illustrative boundary · no patient data';$('#canvas-example').textContent='SPATIAL COVERAGE · EXPERIMENT';$('#footer-context').textContent='Synthetic coverage exercise · CRS84 · boundary included';}
+  if(exampleKey(workflow)==='rulesets'){$('#example-select').value='rulesets';$('#project-description').textContent='How a rule is put together: bands, alternatives, two conclusions at once, and a category match \u2014 each on its own step, over twelve synthetic service points.';$('#example-note').textContent='Synthetic data, chosen so every branch of every rule has a record in it. The rules are written in this workflow rather than chosen from a list, and the receipt carries them.';$('#canvas-example').textContent='RULESETS \u00b7 HOW A RULE IS PUT TOGETHER';$('#footer-context').textContent='Authored rules \u00b7 compiled to N3 \u00b7 declared field bindings';}
   if(exampleKey(workflow)==='raster'){$('#example-select').value='raster';$('#project-description').textContent='Prepare a local raster, preview and adjust the clipping boundary, then run and inspect the clipped result.';$('#example-note').textContent='1 Prepare raster / 2 Preview and adjust / 3 Run workflow';$('#canvas-example').textContent='OLD NALEDI / RASTER CLIPPING';$('#footer-context').textContent='Native raster cells / adjustable polygon mask / local file and source citation';}
   if(exampleKey(workflow)==='sea-level'){$('#example-select').value='sea-level';$('#project-description').textContent='Published AR6 sea-level projections against real Manila health facilities: which gauge, how far away.';$('#example-note').textContent='Projections are IPCC AR6, CC BY 4.0, in millimetres against the 1995\u20132014 baseline. Facilities are OpenStreetMap, ODbL. No elevation is supplied, so nothing here is compared against one \u2014 and none of it is an inundation model.';}
   if(exampleKey(workflow).startsWith('snow-')){$('#example-select').value=exampleKey(workflow);$('#project-description').textContent='Historical pump and death-location tables; explicit metric catchment computations and source evidence.';$('#example-note').textContent='250 locations / 489 deaths; network is a modern OSM snapshot, not 1854 streets';$('#canvas-example').textContent='JOHN SNOW / CATCHMENT WORKED EXAMPLE';$('#footer-context').textContent='CRS84 inputs and outputs / UTM computation / method parameters in evidence';}
@@ -705,6 +707,55 @@ function renderInspector(){
     // The ruleset is chosen HERE rather than in the palette. One widget is offered and the
     // practitioner says what it should do, because a palette entry per ruleset grew with every
     // ruleset and again with every version of one. Their decision, 2026-10-14.
+    // Rules written in this workflow. The Inspector described the PINNED artefact here until
+    // 2026-10-15, so a step applying authored rules showed somebody else's title, description,
+    // threshold and basis -- found by the ruleset worked example, which is what a worked example
+    // about a widget is for. The pin gives such a node its ports and nothing else.
+    const authored=n.params.authored;
+    if(authored){
+      const comparator=(c:string)=>({equals:'is',greaterThan:'is more than',notGreaterThan:'is at most',
+        lessThan:'is less than',notLessThan:'is at least'}[c]??c);
+      const readable=(value:string|number|boolean)=>typeof value==='string'&&/^\{\{(.+)\}\}$/.test(value)
+        ?`the ${value.slice(2,-2)} setting below`
+        :typeof value==='string'&&value.includes(':')?value.slice(value.indexOf(':')+1):String(value);
+      const named=(predicate:string)=>{
+        const field=authored.fields.find(f=>f.predicate===predicate||`${f.predicate}Known`===predicate);
+        if(!field)return predicate.slice(predicate.indexOf(':')+1);
+        return predicate.endsWith('Known')?`whether ${field.label||field.attribute} is recorded`:(field.label||field.attribute);
+      };
+      content+=`<span class="inspector-section">What this step applies</span>`
+        +`<div class="detail-row"><span>${esc(authored.title)}</span><strong>written here</strong></div>`
+        +`<p class="description">These rules are part of this workflow rather than a published ruleset chosen from a list. They travel with the file, and the run evidence carries them in full.</p>`
+        +`<div class="notice">${esc(authored.mustNotBeReadAs)}</div>`
+        +`<span class="inspector-section">The rules, in order</span>`
+        +`<ol class="authored-rules">`
+        +authored.rules.map(rule=>`<li><em>If</em> `
+          +rule.any.map(group=>group.all.map(condition=>
+            `${esc(named(condition.field))} ${esc(comparator(condition.comparator))} <b>${esc(readable(condition.value))}</b>`).join(' <em>and</em> ')
+          ).join('<br><em>or if</em> ')
+          +`<br><em>then</em> `
+          +rule.then.map(conclusion=>
+            `${esc(conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))} is <b>${esc(readable(conclusion.value))}</b>`).join(' <em>and</em> ')
+          +`</li>`).join('')
+        +`</ol>`
+        +`<p class="description">Every rule is checked against every record, so the rules must not disagree: no record may match two rules that reach different conclusions about the same thing. A record matching none keeps no conclusion, and the run evidence counts those.</p>`
+        +`<span class="inspector-section">Which column means what</span>`
+        +`<table class="inspector-table"><thead><tr><th>Column</th><th>Read as</th><th>Kind</th></tr></thead><tbody>`
+        +authored.fields.map(field=>`<tr><td>${esc(field.attribute)}</td><td>${esc(field.label||field.attribute)}</td><td>${esc(field.kind)}</td></tr>`).join('')
+        +`</tbody></table>`
+        +`<p class="description">Nothing is guessed from a column name. A record missing one of these is recorded as missing, which is why a rule can conclude Unknown instead of concluding nothing.</p>`;
+      for(const parameter of authored.parameters??[])
+        content+=`<div class="field"><label class="field-label" for="ruleset-${esc(parameter.name)}">${esc(parameter.meaning)}</label>`
+          +`<input id="ruleset-${esc(parameter.name)}" type="number" data-ruleset-parameter="${esc(parameter.name)}" `
+          +`value="${esc(String(n.params.parameters?.[parameter.name]??''))}" ${parameter.min!==undefined?`min="${parameter.min}"`:''} ${parameter.max!==undefined?`max="${parameter.max}"`:''}>`
+          +`${parameter.unitLabel?`<small>${esc(parameter.unitLabel)}</small>`:''}</div>`;
+      content+=manualButton(n.type,esc)+identityMarkup(n.type,esc);
+      $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
+      document.querySelectorAll<HTMLInputElement>('[data-ruleset-parameter]').forEach(el=>
+        el.addEventListener('change',()=>change(w=>{
+          getNode(w,n.id,'apply_ruleset').params.parameters[required(el.dataset.rulesetParameter)]=Number(el.value);})));
+      return;
+    }
     content+=`<span class="inspector-section">What this step applies</span>`
       +`<div class="field"><label class="field-label" for="ruleset-choice">Ruleset</label>`
       +`<select id="ruleset-choice"><option value="">Choose a ruleset…</option>`
@@ -1335,7 +1386,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});
 const requestedExample=new URLSearchParams(location.search).get('example');
-if(requestedExample&&['old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent','sea-level'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':requestedExample==='raster'?'raster-input':requestedExample==='old-naledi'?'access':'criteria';}
+if(requestedExample&&['old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent','sea-level','rulesets'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':requestedExample==='raster'?'raster-input':requestedExample==='old-naledi'?'access':'criteria';}
 wireThemeControl();renderLibrary();renderResults();save();render();mountPanelLayout();
 // Progressive reveal, played back. Behind ?playback=1 because the rule is not adopted: nothing
 // about the normal palette changes, and the control does not appear unless it is asked for.

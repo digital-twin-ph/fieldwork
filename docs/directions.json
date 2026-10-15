@@ -121,6 +121,10 @@
     {
      "date": "2026-10-15",
      "found": "Acted on, partly, the same day. The authored form and its compiler are built in src/authored-rules.ts and B1 is GREEN: all three shipped rulesets rebuilt in the form, compiled, and reasoned under the real EYE engine reach identical conclusions. A1, A2, A3, A5, A8, A9 and A10 pass too, and the rule ceiling is checked from the form before anything is compiled. 106 moves asked -> tried. What is NOT built is the half the practitioner meets: the Inspector still offers a ruleset chosen from a list, so the rules are still pinned from where they sit. Four comparators compile and have never been executed, so by 106's own rule they must not be offered until B2 passes."
+    },
+    {
+     "date": "2026-10-15",
+     "found": "Carried further the same day, on the practitioner's proposal: \"We should have a worked example just for the ruleset widget to exercise different ruleset conditions so users can also see examples of how to configure it. That is one way to execute widget rules and validate at the same time.\" Built as the `rulesets` workspace: three steps, one condition kind each -- a band from two comparisons, alternatives with two conclusions at once, a category match -- over twelve synthetic records chosen so every branch has one. A node can now CARRY authored rules and a generic path runs them: facts from declared field bindings, the authored form compiled, conclusions back onto the records. Two things the example found that no unit test would: the Inspector described the PINNED ruleset, so a step applying authored rules showed somebody else's title, threshold and basis; and authored rules MINT VOCABULARY -- thirty terms in one afternoon -- which now lives in urn:fieldwork:authored: so a practitioner's coinage is never mistaken for a term this application defines. The Inspector reads the rules back in plain words. What is still missing is composing them there: the rules can be read and their numbers changed, not yet written."
     }
    ]
   }

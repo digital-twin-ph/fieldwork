@@ -33,7 +33,7 @@ const attribute=(result,nodeId,recordId,key)=>
 
 test('the example runs, and each step demonstrates one way to write a condition',async()=>{
   const result=await run();
-  assert.equal(result.outputs.length,3,'three outputs: two tables and a map');
+  assert.equal(result.outputs.length,4,'four outputs: three tables and a map');
 
   // 1 · Bands. Two comparisons on one field, and a boundary value on each edge.
   assert.equal(attribute(result,'bands','s3','band'),'Short');      // 5 min
@@ -62,6 +62,71 @@ test('the example runs, and each step demonstrates one way to write a condition'
   // classify; reading that silence as a conclusion is the trap 65 exists to prevent.
   assert.equal(attribute(result,'map','s11','service'),undefined);
   assert.equal(attribute(result,'map','s12','service'),undefined);
+});
+
+// The three debts experiment 106 records, exercised here rather than only written down. The
+// practitioner, 2026-10-15: "The three debts should go in the worked example for rulesets so
+// these can be exercised and evaluated." Two of them are DEFECTS this example now demonstrates,
+// which is uncomfortable and is the point: a debt nobody can run is a debt nobody will pay.
+
+test('debt 1 · the two comparators nothing had executed now run, including on the boundary',async()=>{
+  const result=await run();
+  // `lessThan` and `notLessThan` compiled from the day the compiler was written and were
+  // executed by nothing. Step 4 is what makes offering them in the editor defensible.
+  assert.equal(attribute(result,'access','s3','access'),'WalkIn');        // 5 < 10
+  assert.equal(attribute(result,'access','s10','access'),'WalkIn');       // 7 < 10
+  // Exactly on the boundary: NOT less than 10, which is the whole difference between
+  // `is less than` and `is at most` and the case a reader checks first.
+  assert.equal(attribute(result,'access','s13','access'),'Appointment');  // 10
+  assert.equal(attribute(result,'access','s2','access'),'Appointment');   // 48
+  assert.equal(attribute(result,'access','s9','access'),'Unrecorded');    // no wait recorded
+  const receipt=result.receipts.find(r=>r.nodeId==='walkin');
+  assert.match(receipt.rules,/math:lessThan 10/);
+  assert.match(receipt.rules,/math:notLessThan 10/);
+});
+
+test('debt 2 · a wrong unit passes every check, and what it eventually says is about something else',async()=>{
+  // The fields declare minutes. A threshold typed as "1", meaning one HOUR, is a number in
+  // range, so every check this application has lets it through: the parameter validates and the
+  // rules compile.
+  const workflow=rulesetExample();
+  const step=workflow.nodes.find(n=>n.id==='wait');
+  step.params.parameters.threshold=1;
+  assert.doesNotThrow(()=>validateWorkflow(JSON.parse(JSON.stringify(workflow))),
+    'nothing refuses a threshold in the wrong unit');
+  syncProjectManifest(workflow);
+
+  // What happens at the run was not what I expected, and is worth recording. The bands are
+  // written against a fixed 15 and a parameter: at 1 they OVERLAP, so a 12-minute wait is both
+  // at most 15 and more than 1, two rules fire, and the run refuses.
+  //
+  // So a unit mistake is caught -- by accident, through debt 3, and the message a practitioner
+  // reads is about conclusions disagreeing. It does not mention units, the parameter, or which
+  // number to look at. Being refused for the wrong reason is better than a wrong answer and is
+  // not the same as being told.
+  await assert.rejects(
+    executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(workflow))),reason),
+    error=>/two different band conclusions for one record/.test(error.message)
+      &&!/unit|minute|hour|threshold/i.test(error.message));
+});
+
+test('debt 3 · rules that disagree are caught at the run, which is late',async()=>{
+  // Conclusions are free text and the authored form declares no output vocabulary, so nothing
+  // stops two rules concluding different values of one predicate for one record. The compiler
+  // cannot see it -- both rules are well formed -- and the editor cannot either. The reasoner
+  // reaches both conclusions and the projection refuses them.
+  const workflow=rulesetExample();
+  const step=workflow.nodes.find(n=>n.id==='kind');
+  step.params.authored.rules.push({
+    any:[{all:[{field:'fwa:category',comparator:'equals',value:'fwa:clinic'}]}],
+    then:[{predicate:'fwa:service',value:'fwa:Dispensing'}],   // clinics already conclude Consultation
+  });
+  syncProjectManifest(workflow);
+  await assert.rejects(
+    executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(workflow))),reason),
+    /two different service conclusions for one record/);
+  // Late is better than never, and the message says what to do; but the practitioner has by then
+  // written the rules, kept them, and run the workflow.
 });
 
 test('the receipt carries the rules themselves, the bindings, and what was left unmatched',async()=>{

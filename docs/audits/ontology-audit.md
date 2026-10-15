@@ -1,6 +1,6 @@
 # Semantic admission and worked-example audit
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 If the vocabulary below is unfamiliar, start with
 [the glossary](#glossary-the-semantic-vocabulary-used-in-these-documents); the

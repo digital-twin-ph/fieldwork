@@ -1,6 +1,6 @@
 # 109 — Is Vega-Lite the right grammar?
 
-_Created 2026-10-13 · Updated 2026-10-14_
+_Created 2026-10-13 · Updated 2026-10-15_
 
 **Status:** validated
 

@@ -1,6 +1,6 @@
 # 84 · Reachable corridor
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** built and parity-checked. Fifth of the six primitives
 [78](78-trying-compositions-on-isochrone.md) needs, and the one that makes the

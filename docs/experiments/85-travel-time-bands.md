@@ -1,6 +1,6 @@
 # 85 · Travel time bands
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** built. The sixth primitive the isochrone decomposition needs, which
 was not on [78](78-trying-compositions-on-isochrone.md)'s list of six.

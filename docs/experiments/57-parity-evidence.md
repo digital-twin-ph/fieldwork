@@ -1,6 +1,6 @@
 # 57 · Parity evidence: what an external process can establish
 
-_Created 2026-10-08 · Updated 2026-10-14_
+_Created 2026-10-08 · Updated 2026-10-15_
 
 **Status:** implemented for the two widgets that have it, with the gap measured and visible.
 

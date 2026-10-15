@@ -40,6 +40,10 @@ const sites=():PointCollection=>({type:'FeatureCollection',features:[
   site('s10','Night desk',25.888,-24.687,{category:'clinic',wait_minutes:7,open_today:false}),
   site('s11','Railway aid room',25.922,-24.701,{category:'other',wait_minutes:26,open_today:true}),
   site('s12','Depot window',25.885,-24.695,{category:'other',wait_minutes:95,open_today:true}),
+  // Exactly on the boundary of step 4's parameter. `is less than 10` excludes it and `is at
+  // least 10` includes it, which is the whole difference between those two comparators and the
+  // case a reader checks first. Every boundary in this example has a record standing on it.
+  site('s13','Corner surgery',25.910,-24.700,{category:'clinic',wait_minutes:10,open_today:true}),
 ]});
 
 /** The bindings every step shares: which attribute means which predicate in the rules. */
@@ -138,9 +142,31 @@ export function rulesetExample():Workflow{
             // receipt says how many it declined. Reading silence as a conclusion is the trap.
           ]}}},
 
+      // 4 · The two comparators nothing had ever executed. `lessThan` and `notLessThan` compiled
+      // from the day the compiler was written and were run by no test and no example, so by
+      // experiment 106's own rule they should not have been offered in the editor. They are
+      // offered, and this step is what makes that defensible: running this example executes
+      // them against the real engine, over a boundary value in each direction.
+      {id:'walkin',type:'apply_ruleset',x:380,y:860,params:{
+        label:'4 · Bounds from below',parameters:{quiet:10},
+        ruleset:authoredPin(),
+        authored:{title:'Walk in, or make an appointment',
+          parameters:[{name:'quiet',meaning:'Wait below which a service point is quiet enough to walk into.',unitLabel:'min',min:0,max:600,decimals:0}],
+          mustNotBeReadAs:'Advice about attending anywhere. It exists to exercise the two comparators the rest of the example does not use.',
+          fields:FIELDS,
+          rules:[
+            {any:[{all:[{field:'fwa:waitMinutesKnown',comparator:'equals',value:false}]}],
+             then:[{predicate:'fwa:access',value:'fwa:Unrecorded'}]},
+            {any:[{all:[{field:'fwa:waitMinutes',comparator:'lessThan',value:'{{quiet}}'}]}],
+             then:[{predicate:'fwa:access',value:'fwa:WalkIn'}]},
+            {any:[{all:[{field:'fwa:waitMinutes',comparator:'notLessThan',value:'{{quiet}}'}]}],
+             then:[{predicate:'fwa:access',value:'fwa:Appointment'}]},
+          ]}}},
+
       {id:'bands',type:'table_output',x:760,y:60,params:{label:'1 · Bands',inputMode:'spatial'}},
       {id:'decisions',type:'table_output',x:760,y:330,params:{label:'2 · Decisions',inputMode:'spatial'}},
       {id:'map',type:'map_output',x:760,y:600,params:{label:'3 · Service points by kind'}},
+      {id:'access',type:'table_output',x:760,y:860,params:{label:'4 · Walk in or appointment',inputMode:'spatial'}},
     ],
     edges:[
       {id:'e1',from:'sites',to:'wait',port:'subjects'},
@@ -150,5 +176,7 @@ export function rulesetExample():Workflow{
       {id:'e5',from:'review',to:'decisions',port:'points'},
       {id:'e6',from:'kind',to:'map',port:'points'},
       {id:'e7',from:'town',to:'map',port:'area'},
+      {id:'e8',from:'sites',to:'walkin',port:'subjects'},
+      {id:'e9',from:'walkin',to:'access',port:'points'},
     ]};
 }

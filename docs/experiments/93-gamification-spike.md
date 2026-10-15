@@ -1,6 +1,6 @@
 # 93 · Architectural spike: gamifying the workflow
 
-_Created 2026-10-11 · Updated 2026-10-14_
+_Created 2026-10-11 · Updated 2026-10-15_
 
 **Status:** asked — a spike. Nothing is built, and the purpose is to find out what would
 have to be true before anything is.

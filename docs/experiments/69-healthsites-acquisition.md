@@ -1,6 +1,6 @@
 # 69 · Healthsites facilities: one widget for discovery and acquisition
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** **excluded 2026-10-09.** Built, measured, and then removed in favour of
 [71](71-health-facility-sources.md), which uses sources a browser can actually

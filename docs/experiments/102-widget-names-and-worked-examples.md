@@ -1,6 +1,6 @@
 # 102 · Widget names and worked examples
 
-_Created 2026-10-12 · Updated 2026-10-14_
+_Created 2026-10-12 · Updated 2026-10-15_
 
 **Status:** retired — this re-derived an audit that already existed, less accurately, and is
 kept only to record that and to carry the two things in it that were new. The live record is

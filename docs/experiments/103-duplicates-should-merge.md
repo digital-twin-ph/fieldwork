@@ -1,6 +1,6 @@
 # 103 · A duplicate operation is a merge, not a note
 
-_Created 2026-10-12 · Updated 2026-10-14_
+_Created 2026-10-12 · Updated 2026-10-15_
 
 **Status:** validated — the gap in the audit procedure is identified, the criterion that let it
 through is extended, and the first case is worked. Nothing is merged yet; the merge is blocked on

@@ -1,6 +1,6 @@
 # Experiment 40: reprojection primitives
 
-_Created 2026-10-08 · Updated 2026-10-14_
+_Created 2026-10-08 · Updated 2026-10-15_
 
 Date: October 7, 2026. Status: semantic admission review, with the vector slice
 implemented and the raster slice specified but not built. This closes part of the

@@ -1,6 +1,6 @@
 # Widget design audit
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Audit run 2026-10-09 against 39 widgets.** The primitive design audit D1–D10 in
 [the audit procedure](ontology-audit.md) was written from the lessons consolidated in

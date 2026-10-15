@@ -1,6 +1,6 @@
 # 79 · Slicing the palette by purpose, from use rather than by decree
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** proposal, with one measurement already in hand.
 

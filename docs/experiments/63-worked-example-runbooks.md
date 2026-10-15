@@ -1,6 +1,6 @@
 # 63 · Runbooks: a guided tour of a worked example
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** admission review. Written before the code, as experiments 48, 58 and 61 were.
 Proposes a presentation artifact and **no new widget**, no new port type and no new

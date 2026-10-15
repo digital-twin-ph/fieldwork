@@ -1,6 +1,6 @@
 # 89 · The first composition
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** tried — built and run. The artifact [75](75-compositions-as-nodes.md),
 [76](76-composition-governance.md) and [77](77-composition-drift-detection.md)

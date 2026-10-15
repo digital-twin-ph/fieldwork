@@ -1,6 +1,6 @@
 # 91 · Integrating a STAC browser, given what CORS actually allows
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** asked — a research note. No code, and nothing proposed for the palette yet.
 Asked for after [jltobias/JupyterLite-STAC-Browser](https://github.com/jltobias/JupyterLite-STAC-Browser)

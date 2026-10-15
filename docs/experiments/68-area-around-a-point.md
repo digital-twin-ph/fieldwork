@@ -1,6 +1,6 @@
 # 68 · An area around a point
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** admission review, written before the code. One primitive, no new port type, one new
 activity class.

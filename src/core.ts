@@ -628,7 +628,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           : '';
         // `locationSource` says where the subjects came from, which `access` carried and a general
         // search should too: a reader of a distance wants to know what was measured, not only from
-        // what. Carried here so the carrier stays thin -- it is the points input's own provenance.
+        // what. Carried here so the value stays thin -- it is the points input's own provenance.
         const from=inputs.points as unknown as {sourceNodeId?:string; sourceKind?:string};
         value={rows:searched.rows,centers:inputs.candidates.features,
           method:`Haversine; sphere radius 6371.0088 km; CRS84 longitude/latitude; distances in ${node.params.unit}.${narrowed}`,
@@ -638,7 +638,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       }
       case 'apply_ruleset':{
         // The merge: three widgets differed only in which rules they ran. The projection is the
-        // ruleset's own declaration, and each still assembles a different carrier for whatever
+        // ruleset's own declaration, and each still assembles a different value for whatever
         // consumes it -- so this collapses the palette and the contract, not the three projections.
         const pinned=node.params.ruleset,bound=node.params.parameters;
         switch(projectionOf(pinned.id,pinned.version)){
@@ -666,7 +666,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             value=applied.value;receipts.push({nodeId:node.id,...applied.receipt});break;
           }
           case 'access-review-distances':{
-            // Same rules, same facts, read off the general carrier that nearest and travel_time
+            // Same rules, same facts, read off the general value that nearest and travel_time
             // produce instead of the one `access` emitted.
             const applied=await applyAccessReview(distancesAsAccess(inputs.distances),bound.threshold,reasoner);
             value=applied.value;receipts.push({nodeId:node.id,...applied.receipt});break;

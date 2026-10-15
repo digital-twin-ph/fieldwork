@@ -43,10 +43,10 @@ export interface Ruleset {
   inputContract:{
     factGenerator:string; subjectKind:string; expects:unknown[]; note?:string; knownDefect?:string;
     /** The ruleset's own ports, pinned into a node that hosts it. Declared here because the three
-     *  rulesets have three different input sets and two different output carriers, which is what
+     *  rulesets have three different input sets and two different output port types, which is what
      *  made one widget hosting all three look like a base-contract change. */
     ports:{inputs:[string,PortType][]; output:PortType};
-    /** Which carrier the classification is assembled into. Each ruleset's consumer expects a
+    /** Which port type the classification is assembled into. Each ruleset's consumer expects a
      *  different shape, so the merge collapses the palette and not these. */
     projection:string;
     /** Which parameter of the node this ruleset was extracted from supplies which declared
@@ -85,7 +85,7 @@ export const rulesetCitation=(ruleset:Ruleset):RulesetCitation=>
   ({id:ruleset.id,version:ruleset.version,title:ruleset.title,basis:structuredClone(ruleset.basis)});
 
 // Both versions of each changed ruleset are carried: a saved workflow pins the version that
-// produced its results, and a carrier change does not entitle this build to forget the old one.
+// produced its results, and a port type change does not entitle this build to forget the old one.
 const BUNDLED=[outreachCriteria,accessReview,accessReview2,nb06Evidence,nb06Evidence2,extentReview,extentReview2] as unknown as Ruleset[];
 export const rulesetKey=(id:string,version:string)=>`${id}@${version}`;
 const INDEX=new Map(BUNDLED.map(r=>[rulesetKey(r.id,r.version),r]));

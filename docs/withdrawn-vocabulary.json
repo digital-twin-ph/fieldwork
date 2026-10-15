@@ -1,0 +1,15 @@
+{
+ "schema": "fieldwork/withdrawn-vocabulary/1",
+ "note": "Terms this project withdrew, with what to say instead, and a ceiling on how many times each may still appear. A withdrawal recorded only in the glossary withdraws nothing: carrier was withdrawn on 2026-10-12 and used 173 times afterwards, including in work done two days later. The ceiling may be lowered freely and never raised, so the uses already written into dated records can stand -- they are evidence of what was thought at the time -- while a new use fails the build.",
+ "measuredAt": "2026-10-15",
+ "terms": [
+  {
+   "term": "carrier",
+   "pattern": "\\bcarriers?\\b|\\bcarrier kinds?\\b",
+   "withdrawn": "2026-10-12",
+   "insteadSay": "prov:Entity for the value, port type for what a connection is checked against, or the class the value already asserts",
+   "ceiling": 146,
+   "why": "Defined as a prov:Entity that travels between ports, then withdrawn when no standard could be shown that defines such a class. The definition was derivable rather than new, and nothing consumed it."
+  }
+ ]
+}

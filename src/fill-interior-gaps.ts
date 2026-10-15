@@ -20,7 +20,7 @@ import type {Receipt} from './results.js';
  *  What a gap means depends on where the polygons came from, and this cannot know. In a
  *  corridor it is ground no street reached, and filling it is a cartographic choice. In an
  *  administrative boundary it would be a real enclave, and filling it would be a
- *  falsification. The carrier limits the damage: `donut_geomask` emits points, not
+ *  falsification. The port type limits the damage: `donut_geomask` emits points, not
  *  polygons, so the one case where a hole *is* the operation cannot reach this port.
  *
  *  Takes no UTM zone, unlike the nine widgets that do. The input states the metric CRS its

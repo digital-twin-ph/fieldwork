@@ -1,0 +1,2 @@
+function u(o,e){let t=a=>a*Math.PI/180,i=t(e[1]-o[1]),n=t(e[0]-o[0]),r=Math.sin(i/2)**2+Math.cos(t(o[1]))*Math.cos(t(e[1]))*Math.sin(n/2)**2;return 6371.0088*2*Math.asin(Math.sqrt(Math.min(1,Math.max(0,r))))}function d(o,e){return e?.length?e.every(t=>{let i=o?.[t.field],n=t.values.some(r=>r===i);return t.comparator==="in"?n:i!==void 0&&!n}):!0}function c(o,e,t,i=u){let n=null;for(let r of e){let a=t(r);if(!a)continue;let s=i(o,a);(!n||s<n.kilometres)&&(n={candidate:r,kilometres:s})}return n}export{u as a,d as b,c};
+//# sourceMappingURL=chunk-Y7AFQXFJ.js.map

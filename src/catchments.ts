@@ -19,7 +19,7 @@ export interface Network {nodes:{id:string;coordinates:Position}[];edges:{from:s
 
 /** The default graph ceiling, and the only value measured. Raising it is a knob rather than a
  *  widget by the test experiment 107 derived -- the contract does not move with it: ports, output
- *  carrier and behaviour are unchanged and only what is admitted changes, which is what a
+ *  port types and behaviour are unchanged and only what is admitted changes, which is what a
  *  threshold does. It is a knob rather than a fixed cap because the failure it guards is now
  *  contained: isochrone runs in a Worker with a 45-second timeout, so exceeding it fails one step
  *  rather than the tab.

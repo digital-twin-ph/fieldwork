@@ -57,6 +57,55 @@ red: sites"*.
 `fw:layerRole` records which is which, so a reader can see which way round a map was built.
 Nothing yet lets a practitioner set it.
 
+## There is almost never a basemap under the data
+
+Measured 2026-10-14, across every `map_output` node in the ten published worked examples:
+
+| example | map | input | presentation | basemap |
+| --- | --- | --- | --- | --- |
+| snow-extent | `map` | polygons | plot | no control |
+| snow-voronoi | `map` | polygons | plot | no control |
+| snow-isochrone | `map` | polygons | plot | no control |
+| snow-isochrone | `interactive` | polygons | interactive | offered, ships off |
+| old-naledi | `access-map` | decisions | — | no control |
+| sea-level | `map` | spatial | — | no control |
+| snow-geoprivacy | `before-map` | spatial | — | no control |
+| snow-geoprivacy | `after-move-map` | spatial | — | no control |
+| snow-geoprivacy | `after-group-map` | polygons | plot | no control |
+| raster | `raster-map` | raster | — | no control |
+
+**One of ten can be given a basemap, and it ships with none.** So a reader of any published
+example sees geometry on blank ground: a corridor with no streets beneath it, deaths with no
+Soho around them, Manila facilities with no coastline.
+
+The cause is not a policy about tiles. The basemap control is rendered only when the input is
+`polygons` **and** the presentation is `interactive` (`src/app.ts:94`), because tiles are
+Leaflet's, and `interactive` is the only presentation that mounts Leaflet. Every other map is
+a local SVG, and an SVG cannot hold a tile without fetching and embedding it. The gate is a
+renderer boundary wearing the clothes of a setting — the same shape as mode, found again.
+
+What a basemap costs, which is why this is not a free fix:
+
+- It sends the viewed extent to a third party on every pan, from a tool whose other maps
+  work offline and make no request. For maps of case locations that is a disclosure.
+- Tiles are excluded from the SVG export, so a figure exported from a basemap-backed map is
+  not the figure the practitioner was looking at. The receipt now says which provider was
+  on, so the gap is at least recorded rather than silent.
+- OpenTopoMap's style is CC-BY-SA, not ODbL. Until 2026-10-14 both providers were credited
+  as OpenStreetMap alone, which under-credited the style; fixed.
+
+**The decision is the practitioner's.** Two ways to close it, and they are not equivalent:
+
+1. **Let the plot presentation carry a basemap** — one static tile composite fetched at the
+   plot's own extent and embedded in the SVG. The figure then matches what was on screen and
+   stays self-contained, at the cost of a request per render and an embedded raster in every
+   export. Recommended if the point is that published figures should be legible as geography.
+2. **Make more maps interactive** — cheaper, since the machinery exists, but it changes what a
+   map *is* in this application: an interactive view has no scale bar (no single ground scale)
+   and exports without its ground.
+
+Neither is started. What is done is the recording: a basemap in use is now a layer.
+
 ## What the run evidence records, and what it does not
 
 Everything that changes the **numbers** is recorded as a term: `corridorWidth`, `snapLimit`,
@@ -64,6 +113,12 @@ Everything that changes the **numbers** is recorded as a term: `corridorWidth`, 
 `countSemantics`, the caveats each step stated, and — for the map itself — `layerCount`,
 `layerKind`, `layerFeatureCount`, `layerRole`, `layerIndex`, `layerPort`, `layerWithin`,
 `mapLegend`, `mapBasemap`, `mapPresentation`, the title, subtitle and source note.
+
+A basemap in use is layer 0, with `fw:layerKind fw:BasemapLayer` and `fw:layerTileProvider`
+naming the service — a third layer origin beside `fw:layerPort` and `fw:layerWithin`, for a
+layer that comes from neither the workflow nor another layer's value. Before 2026-10-14 the
+basemap was recorded only as `fw:mapBasemap`, a property of the specification, so the layer
+carrying all the geographic context did not appear in `fw:layerCount` at all.
 
 Nothing records what changes the **reading** while leaving every number intact: there is no
 term for a layer's colour or size, for which layer the map is about, for what was cropped
@@ -84,3 +139,5 @@ made to show.
   is largest-area-first — a heuristic that suits nested bands and has no reason to suit a
   raster under points.
 - A practitioner cannot reorder layers, set a layer's role, or restyle one.
+- Nine of the ten published maps have no basemap control, and none can embed one in an
+  export. See above for the two ways out and what each costs.

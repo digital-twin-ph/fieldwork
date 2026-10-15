@@ -416,6 +416,21 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**Nine of the ten published maps cannot show a basemap, and the tenth ships with it off.**
+Raised by the practitioner on 2026-10-14: *"Our map_output layers do not even have a basemap!"*
+Measured the same day — the control is rendered only when the input is `polygons` **and** the
+presentation is `interactive` (`src/app.ts:94`), because tiles are Leaflet's and `interactive`
+is the only presentation that mounts Leaflet. Every other map is a local SVG, which cannot hold
+a tile without fetching and embedding one. So a reader of any worked example sees geometry on
+blank ground. Recorded, not fixed: the basemap in use is now layer 0 in the receipt
+(`fw:BasemapLayer`, `fw:layerTileProvider`) instead of a property of the specification, and
+OpenTopoMap's CC-BY-SA style is credited separately from OSM's ODbL data. The two ways to close
+it are not equivalent and the choice is the practitioner's — a static tile composite embedded in
+the plot SVG (self-contained figure, one request per render, an embedded raster in every export)
+or more maps made interactive (cheap, but an interactive view has no scale bar and exports
+without its ground). Both in [the Map widget page](widgets/map_output.md).
+
+
 **Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**
 The kind/placement distinction behind this was corrected on 2026-10-12: there are two kinds of
 widget, primitive and composite, and being example-bound is a placement problem rather than a

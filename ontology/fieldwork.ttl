@@ -717,7 +717,7 @@ fw:layerPort a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "The input port this layer arrived at".
 fw:layerKind a owl:ObjectProperty;
   rdfs:label "What kind of thing this layer draws";
-  rdfs:comment "fw:AreaLayer, fw:PolygonsLayer, fw:PointsLayer, fw:RasterLayer or fw:NetworkLayer. The kind decides HOW a layer is drawn, not whether it may be there. Distinct from a port type on purpose: ports receive or transmit, layers are displayed -- the practitioner's distinction of 2026-10-14. A map with two ports can draw four layers.".
+  rdfs:comment "fw:BasemapLayer, fw:AreaLayer, fw:PolygonsLayer, fw:PointsLayer, fw:RasterLayer or fw:NetworkLayer. The kind decides HOW a layer is drawn, not whether it may be there. Distinct from a port type on purpose: ports receive or transmit, layers are displayed -- the practitioner's distinction of 2026-10-14. A map with two ports can draw four layers.".
 fw:layerFeatureCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "How many features this layer draws".
 fw:layerRole a owl:DatatypeProperty; rdfs:range xsd:string;
@@ -726,6 +726,11 @@ fw:layerRole a owl:DatatypeProperty; rdfs:range xsd:string;
 fw:layerWithin a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "The port whose value carried this layer, when it arrived at no port of its own";
   rdfs:comment "summarize_polygons keeps the points it counted on the value it returns, so 250 death locations reach a map that was never wired to them. Such a layer is displayed and has no port, and saying so is the difference between a count of what is shown and a count of what is connected.".
+fw:layerTileProvider a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The tile service a basemap layer is drawn from: osm or topo. A third origin beside fw:layerPort and fw:layerWithin, for a layer that arrives from a configured service rather than from the workflow at all. Its tiles are fetched by the reader's browser and are not in the SVG export, so this records what a reader saw and not what the figure carries.".
+fw:BasemapLayer a owl:Class;
+  rdfs:label "Third-party map tiles drawn beneath the data";
+  rdfs:comment "Layer index 0 when present. Counted as a layer from 2026-10-14: a basemap is displayed, and recording it only as fw:mapBasemap made the layer that carries all the geographic context read as a setting on the specification. Offered on 1 of the 10 maps in the published worked examples, and off by default there, because the control is reachable only from the interactive presentation of the polygons input -- see docs/widgets/map_output.md.".
 fw:AreaLayer a owl:Class; rdfs:label "A boundary drawn as a layer".
 fw:PolygonsLayer a owl:Class; rdfs:label "Polygons drawn as a layer".
 fw:PointsLayer a owl:Class; rdfs:label "Points drawn as a layer".

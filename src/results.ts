@@ -11,7 +11,7 @@ export interface GradedFacility extends Facility {tier:Tier; service:Service; re
  *
  *  Added 2026-10-12, when `access` was decomposed. Knowing WHICH candidate won is rarely enough:
  *  an explanation that says "nearest facility: X" and nothing about X's evidence level tells a
- *  reader less than the widget knew. The old `access` carrier solved this by making the matched
+ *  reader less than the widget knew. The old `access` port type solved this by making the matched
  *  candidate a GradedFacility, which is a producer-named type; carrying the candidate's attributes
  *  solves it generally, for any candidate layer. */
 export interface Sample {id:string; name:string; coordinates:Position; attributes?:Record<string,Scalar>}

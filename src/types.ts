@@ -71,7 +71,7 @@ export interface ParamsByType {
   // the discriminator the migration reads, and nothing writes them any more.
   reproject:{label:string;zone:number;hemisphere:'north'|'south';data?:PointCollection;spatialReference?:SpatialReference;source?:import('./reproject.js').ReprojectSource;provenance?:import('./reproject.js').ReprojectProvenance};
   /** `maxNodes` is the graph ceiling, a knob rather than a fixed cap: the contract does not move
-   *  with it (ports, output carrier and behaviour are unchanged, only what is admitted changes) and
+   *  with it (ports, output port type and behaviour are unchanged, only what is admitted changes) and
    *  the failure it guards is contained, because isochrone runs in a Worker with a timeout. 2,000 is
    *  the measured default; above about 3,000 is untested. */
   /** `pauseSeconds` is the minimum wait this practitioner wants between OSM requests. It can only
@@ -95,7 +95,7 @@ export interface ParamsByType {
   /** `candidateFilter` narrows which candidates the search considers, by their own attributes.
    *
    *  A knob rather than a widget, by the test experiment 107 derived: a knob is honest when the
-   *  contract does not move with it. This leaves both ports and the output carrier untouched and
+   *  contract does not move with it. This leaves both ports and the output port type untouched and
    *  changes only which candidates are eligible, which is what a threshold does too. It is what
    *  `access` added over this widget, and holding it here means the exclusion and the search land
    *  in one receipt and cannot disagree about what was considered.
@@ -143,7 +143,7 @@ export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId
 // 'samples' was removed on 2026-10-12: it sat in this union and nowhere else, produced by
 // nothing and consumed by nothing. Found by surveying the inventory sideways
 // (docs/experiments/105-five-directions.md), and removed rather than counted, because a closed
-// union with a dead member is a contract that claims a carrier the application does not have.
+// union with a dead member is a contract that claims a port type the application does not have.
 export type DistanceUnit = 'metres'|'kilometres';
 /** One condition on a candidate's own attributes. The same shape as the rule builder's authored
  *  condition (experiment 106), pointed at selection rather than at classification — a third caller

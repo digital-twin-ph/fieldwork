@@ -132,16 +132,22 @@ export function accessN3(rows:AccessRow[],threshold:number){
  *
  *  Lifted out of the `xpert` case on 2026-10-12 so one implementation serves both that node type
  *  and the general `apply_ruleset` host while the migration is verifiable. Nothing here changed. */
-/** The graded facilities as a **point layer**, which is what retires the `gradedFacilities` carrier.
+/** The graded facilities as a **point layer**, which is what retires the `gradedFacilities`
+ *  port type.
  *
- *  `gradedFacilities` is a producer-named stud -- D4a's term -- emitted by one widget and consumed
- *  by two. Emitting a general point layer with the grading in each feature's attributes lets
- *  `nearest` take it as candidates and filter on `tier` and `service` with its own knob, which is
- *  what decomposing `access` needs.
+ *  `gradedFacilities` is a producer-named port type -- D4a's term -- emitted by one widget and
+ *  consumed by two. Emitting a general point layer with the grading in each feature's attributes
+ *  lets `nearest` take it as candidates and filter on `tier` and `service` with its own knob,
+ *  which is what decomposing `access` needs.
  *
- *  What a point layer cannot carry is the registry's `boundary` and `facilitySource`, which the old
- *  carrier passed through to `facility_audit`. Those belong to the nodes that produced them, and a
- *  consumer reaching through a carrier to find them is how a thin carrier becomes a thick one. */
+ *  What a point layer cannot carry is the registry's `boundary` and `facilitySource`, which the
+ *  old port type passed through to `facility_audit`. Those belong to the nodes that produced
+ *  them, and a consumer reaching through a value to find them is how a thin port type becomes a
+ *  thick one.
+ *
+ *  Reworded 2026-10-14: this said "carrier", a term withdrawn on 2026-10-12. The sentence means
+ *  the same thing with the surviving vocabulary, which is the test of whether a withdrawal was
+ *  right. */
 export function gradedPointLayer(graded:GradedRegistryValue):PointCollection & {sourceNodeId?:string}{
   return {type:'FeatureCollection',sourceNodeId:graded.facilitySource?.nodeId,
     features:graded.facilities.map(f=>({type:'Feature' as const,id:f.id,
@@ -166,17 +172,17 @@ export async function applyFacilityGrading(facilities:GradedRegistryValue,reason
  *
  *  The matched candidate's grading is read from its own attributes, which `nearest` now carries on
  *  `center`. The explanation this ruleset writes names the facility's evidence level and service,
- *  and before 2026-10-12 it got them because the carrier made every matched candidate a
+ *  and before 2026-10-12 it got them because the port type made every matched candidate a
  *  GradedFacility -- a producer-named type. Reading them from the candidate's attributes is the
- *  general form of the same thing, and it is what let the carrier be retired.
+ *  general form of the same thing, and it is what let the port type be retired.
  *
  *  `NearestRow.reason` is dropped here and that is a known loss, recorded rather than hidden: the
- *  general carrier states WHY a distance is absent and AccessRow has nowhere to put it, so the
+ *  general value states WHY a distance is absent and AccessRow has nowhere to put it, so the
  *  ruleset's consumer re-derives the wording from which field is null -- the same D5 failure noted
  *  in experiment 103. Carrying the reason through is what a 3.0.0 of this ruleset would fix.
  *
  *  `access` carried its own rows; `nearest` plus `travel_time` carry the same facts on the general
- *  carrier. The generator needs an id, the proxy minutes, and enough to explain an absence, so this
+ *  value. The generator needs an id, the proxy minutes, and enough to explain an absence, so this
  *  maps rather than reshapes: nothing is computed here and nothing is assumed. */
 export function distancesAsAccess(distances:{rows:NearestRow[];centers:PointFeature[];method:string;
   candidateCount?:number;eligibleCount?:number;locationSource?:AccessValue['locationSource'];
@@ -261,8 +267,8 @@ export async function executeOldNode(node:WorkflowNode,inputs:OldInputs,reasoner
     }
     case 'facility_audit':{
       // Rows from a point layer's own attributes. facilitySource and boundary left with the
-      // gradedFacilities carrier: they belong to the nodes that produced them, and reaching
-      // through a carrier to find them is how a thin carrier becomes a thick one.
+      // gradedFacilities value: they belong to the nodes that produced them, and reaching
+      // through a value to find them is how a thin port type becomes a thick one.
       return {kind:'facility-evidence' as const,dataset:DATASET,provenance:structuredClone(provenance),
         source:SOURCE,centers:[],rows:inputs.points.features.map(f=>{
           const tier=f.properties.tier as Tier;

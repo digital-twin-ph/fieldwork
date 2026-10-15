@@ -10,7 +10,7 @@ import type {Position,CandidateCondition} from './types.js';
  *
  *  What stays with the callers is deliberate. Each pre-filters its candidates — `access` to
  *  facilities meeting an evidence threshold, `slr_site_assignment` to sites the projection extract
- *  can answer for — and each shapes the result into its own carrier with its own wording for why
+ *  can answer for — and each shapes the result into its own value with its own wording for why
  *  a point could not be matched. Those are the domain. The search is not. */
 
 /** Great-circle distance in kilometres, on a sphere of radius 6,371.0088 km.

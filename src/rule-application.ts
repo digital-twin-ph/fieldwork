@@ -1,18 +1,18 @@
 /** One widget applying a declared ruleset, where three widgets differed only in which rules they ran.
  *
  *  `policy`, `access_policy` and `xpert` are three arrangements of the same four stages: project
- *  facts from a typed carrier, bind a parameter, evaluate N3, extract a classification. The rules
+ *  facts from a typed value, bind a parameter, evaluate N3, extract a classification. The rules
  *  became declared data earlier on 2026-10-12; this is the node type that hosts them.
  *
  *  Ports come from the ruleset, pinned into the node, exactly as a `micro_workflow` pins its
  *  composition's — `nodeInputs` and `outputOf` already vary per node, so this reuses the mechanism
  *  compositions established rather than inventing one. That matters because the three had three
- *  different port sets and two different output carriers, which is why this looked like a
+ *  different port sets and two different output port types, which is why this looked like a
  *  base-contract change and is not.
  *
  *  **What this merge does and does not do.** It collapses the palette from three entries to one and
  *  the audit surface from three widget contracts to one. It does **not** collapse the three
- *  projections: each ruleset still assembles a different carrier for whatever consumes it, and that
+ *  projections: each ruleset still assembles a different value for whatever consumes it, and that
  *  code is dispatched here by declared data rather than deleted. Saying so matters, because a merge
  *  that claimed to remove code and only moved it would be worse than no merge.
  *

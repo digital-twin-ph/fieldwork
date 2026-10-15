@@ -3,6 +3,7 @@ import registry from '../widgets/registry.json';
 import parityRecord from '../widgets/parity.json';
 import packCatalog from '../widgets/packs.json';
 import classification from '../widgets/classification.json';
+import releaseNotes from '../widgets/release-notes.json';
 import appPackage from '../package.json';
 import {PACK_CATALOG} from './pack-catalog.js';
 import {TYPES} from './core.js';
@@ -26,7 +27,10 @@ export function widgetIdentity(nodeType:string){
   const release=entry.releases.find(r=>r.version===entry.currentVersion)!;
   const parity=parityFor(entry.id);
   const kind=kindOf(nodeType);
+  const notes=(releaseNotes.widgets as Record<string,{version:string;released?:string;breaking?:boolean;
+    changes:{kind:string;description:string;breaking?:boolean;migration?:string}[]}>)[nodeType];
   return {id:entry.id,version:entry.currentVersion,digest:release.sha256,releases:entry.releases.length,
+    notes:notes?.version===entry.currentVersion?notes:undefined,
     classification:kind?.classification??'standard',pack:kind?.pack,
     parity:parity.find(p=>p.coversRelease===entry.currentVersion),stale:parity.find(p=>p.coversRelease!==entry.currentVersion)};
 }
@@ -46,6 +50,18 @@ export function identityMarkup(nodeType:string,esc:Escape):string{
     +`<div class="detail-row"><span>Kind</span><strong>${identity.classification==='domain'?`Domain widget · ${esc(String(packName(identity.pack)))}`:'Standard widget · any domain'}</strong></div>`
     +`<div class="detail-row"><span>Independent check</span><strong>${badge(parity?.outcome,!!identity.stale&&!identity.parity)}</strong></div>`
     +(parity?`<details><summary>What was checked</summary><p class="muted">${esc(parity.measured)}</p><p class="muted">Against ${esc(parity.external.join(', '))}; criterion: ${esc(parity.criterion)}. Covers release ${esc(parity.coversRelease)}.</p></details>`:'')
+    // What this version changed, from the release itself. Every release has carried these notes
+    // and nothing read one until 2026-10-15, on the practitioner's instruction that the manual
+    // explain what was changed in the current version and warn of incompatible functionality.
+    // A breaking change is said in the summary, not only inside the fold, because a practitioner
+    // who does not open the details is exactly the one it is for.
+    +(identity.notes?.changes.length
+      ?`<details${identity.notes.breaking?' open':''}><summary>What changed in ${esc(identity.notes.version)}`
+        +`${identity.notes.breaking?' · <strong>breaking</strong>':''}</summary>`
+        +identity.notes.changes.map(change=>`<p class="muted">${change.breaking?'<strong>Breaking.</strong> ':''}`
+          +`${esc(change.description)}${change.migration?` <strong>To move:</strong> ${esc(change.migration)}`:''}</p>`).join('')
+        +`<p class="muted">Released ${esc(String(identity.notes.released??'date not stated'))}. Earlier releases stay in the registry because a saved workflow may cite one; the palette offers this one.</p></details>`
+      :'')
     +'<p class="muted">Compiled into this build. No widget is fetched at runtime.</p>';
 }
 

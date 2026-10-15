@@ -35,7 +35,7 @@ import type {Connection,Edge} from '@xyflow/react';
 import type {ReasonerQuad,ReasoningRequest,ReasoningResponse} from './worker-types.js';
 import {element as $,optionalElement,control} from './dom.js';
 import {errorMessage,required} from './guards.js';
-import {resolveRuleset,bundledRulesets} from './rulesets.js';
+import {resolveRuleset,bundledRulesets,supersession} from './rulesets.js';
 import type {Ruleset} from './rulesets.js';
 import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
@@ -620,6 +620,23 @@ function renderInspector(){
       illustrative:'Illustrative — no source',proxy:'Proxy — no source'}[ruleset.basis.status]||ruleset.basis.status;
     content+=`<span class="inspector-section">Ruleset</span><div class="detail-row"><span>${esc(ruleset.title)}</span><strong>${esc(ruleset.version)}</strong></div>`
       +`<p class="description">${esc(ruleset.description)}</p>`;
+    // A pinned version keeps running, deliberately -- a rule change changes results, so a saved
+    // workflow replays the rules it was built on. What was missing until 2026-10-15 is that
+    // nobody was told a newer one exists. The practitioner's instruction: alert on the newer
+    // version, explain what changed, warn of deprecated or incompatible functionality.
+    //
+    // Styled as a danger when a change declares an incompatibility, because then the choice is
+    // not "update when convenient" but "rewire or stay", and the two read differently.
+    const newer=supersession(pinned.id,pinned.version);
+    if(newer){
+      const said=newer.changes.map(c=>`<p>${esc(c.description)}</p>`
+        +(c.incompatibility?`<p><strong>Incompatible:</strong> ${esc(c.incompatibility)}</p>`:'')
+        +(c.deprecates?`<p><strong>No longer supported:</strong> ${esc(c.deprecates)}</p>`:'')).join('');
+      content+=newer.incompatible
+        ?`<div class="inspector-alert" role="alert"><strong>Pinned to ${esc(pinned.version)} · ${esc(newer.version)} is available and is not a drop-in</strong>`
+          +`${said}<p>This step keeps running on ${esc(pinned.version)}, which is what reproduces the results it was built on. Choose the newer version above only when you are ready to re-wire; Undo restores what this disconnects.</p></div>`
+        :`<div class="notice"><strong>${esc(newer.version)} is available.</strong> This step is pinned to ${esc(pinned.version)} and keeps running on it, because a rule change changes results.${said}</div>`;
+    }
     if(ruleset.parameters.length){
       content+='<span class="inspector-section">Rule settings</span>';
       for(const parameter of ruleset.parameters)
@@ -1076,7 +1093,32 @@ function reason(input:string):Promise<ReasonerQuad[]>{return new Promise<Reasone
   worker.onmessage=({data}:MessageEvent<ReasoningResponse>)=>{if(data.id!==id)return;clearTimeout(timeout);if('error' in data)reject(new Error(data.error));else resolve(data.quads);};
   worker.onerror=e=>{clearTimeout(timeout);worker?.terminate();worker=null;reject(new Error(`Reasoning worker failed: ${errorMessage(e)}`));};worker.postMessage({id,input} satisfies ReasoningRequest);
 });}
-async function run(){if(busy)return;try{executionPlan(workflow);}catch(e){toast(errorMessage(e));return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(workflow,selected,statuses);},FINISH_GLOW_MS);}flow?.update(workflow,selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;expandForRun=next.runId;renderResults();toast(`Complete in ${elapsedText(lastRunMs)}: ${result.outputs.length} output tabs updated.`);}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`);$('#workflow-state').textContent='Run failed';console.error(e);}finally{busy=false;render();}}
+/** Named after a run: every ruleset this workflow pinned that a newer version supersedes.
+ *
+ *  The practitioner's instruction of 2026-10-14: "when new versions appear, and a workflow is run
+ *  that requires an old version, we have to alert the user that there is a newer version." Said
+ *  at the run because that is the moment a result is produced by rules the practitioner may not
+ *  know are superseded; what CHANGED is in the Inspector, where there is room for it, and in the
+ *  widget manual. An incompatible supersession is named as such here, because it decides whether
+ *  the practitioner is looking at a convenience or at a rewiring job.
+ *
+ *  Reads the run's own snapshot, not the live workflow, so it describes the run that just
+ *  finished rather than an edit made since. */
+function supersessionNotice(ran:Workflow):string{
+  const hosts=ran.nodes.filter((n):n is WorkflowNode<'apply_ruleset'>=>n.type==='apply_ruleset');
+  const stale=hosts.flatMap(node=>{
+    const pinned=node.params.ruleset;if(!pinned)return [];
+    const found=supersession(pinned.id,pinned.version);
+    return found?[{node,pinned,found}]:[];
+  });
+  if(!stale.length)return '';
+  const named=stale.map(({node,pinned,found})=>`${node.params.label||node.id} is pinned to `
+    +`${pinned.version}, and ${found.version} is available`
+    +`${found.incompatible?' and is not a drop-in':''}`);
+  return ` Note: ${named.join('; ')}. The run used the pinned version${stale.length===1?'':'s'}, `
+    +`which is what reproduces these results; the Inspector says what changed.`;
+}
+async function run(){if(busy)return;try{executionPlan(workflow);}catch(e){toast(errorMessage(e));return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(workflow,selected,statuses);},FINISH_GLOW_MS);}flow?.update(workflow,selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;expandForRun=next.runId;renderResults();toast(`Complete in ${elapsedText(lastRunMs)}: ${result.outputs.length} output tabs updated.`+supersessionNotice(snapshot));}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`);$('#workflow-state').textContent='Run failed';console.error(e);}finally{busy=false;render();}}
 function download(name:string,text:string,type='application/json'){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 $('#release-download').onclick=()=>{const output=activeOutput();if(!output||exampleKey(workflow)!=='snow-geoprivacy'||!output.nodeId.startsWith('after-'))return;
   const features=output.polygons?.kind==='hexbin'?output.polygons.features.map(f=>({type:'Feature',id:f.id,properties:{count:f.count},geometry:f.geometry})):output.rows.map(r=>({type:'Feature',id:r.id,properties:{name:r.name},geometry:r.coordinates?{type:'Point',coordinates:r.coordinates}:null}));

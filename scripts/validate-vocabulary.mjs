@@ -23,7 +23,12 @@ const SEARCHED=['docs','src','widgets','ontology','rulesets','compositions','tes
 const EXTENSIONS=/\.(md|ts|tsx|json|ttl|mjs)$/;
 // The glossary states the withdrawal, this file enforces it, and the ledger lists the debt. All
 // three have to name the term to do their job.
-const EXEMPT=new Set(['docs/glossary.md',LEDGER,'scripts/validate-vocabulary.mjs']);
+// widgets/release-notes.json is GENERATED from the release files, which are dated records whose
+// text may not be reworded -- a withdrawn term inside one is evidence of what was thought then.
+// Counting the generated mirror counts the same eleven words twice and would push the ceiling up
+// for prose nobody wrote today, so the source is counted and the copy is not. Added 2026-10-15.
+const EXEMPT=new Set(['docs/glossary.md',LEDGER,'scripts/validate-vocabulary.mjs',
+  'widgets/release-notes.json']);
 
 const walk=dir=>{
   let out=[];

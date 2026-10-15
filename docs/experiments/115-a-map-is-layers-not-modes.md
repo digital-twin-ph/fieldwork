@@ -229,6 +229,41 @@ lives in presentation. Three things follow, and none is a small job:
 3. **The frame is a choice.** What a map crops decides what a reader believes is absent,
    and no term records the extent that was drawn.
 
+## Reordering layers, and why the control cannot be honest yet
+
+> Another map knob is the layer index. The Inspector should allow for a reordering of
+> layers for better usability.
+
+Agreed, and `fw:layerIndex` was added today carrying the declaration order precisely so
+that a practitioner's order could replace it. The obstacle is not the control. It is that
+**the renderer's layers are not the node's layers.**
+
+The isochrone map has two things connected to it: `polygons ← summary` and
+`context ← context-pumps`. `catchmentPlot` draws **three**:
+
+| Drawn | Where it comes from |
+| --- | --- |
+| the time bands | the polygons value |
+| **250 death locations** | `p.observations` — carried **inside** the polygons value by `summarize_polygons` |
+| the pumps | the `context` port |
+
+The deaths are not a connected layer at all. `summarize_polygons` counts points inside
+polygons and keeps the points it counted on the value it returns, so the map draws them
+without anything having been wired. A reorder control listing the node's two ports would
+therefore not mention the layer a reader most wants moved, and a control listing all three
+would be offering to reorder something that is not a layer in the model — a knob whose
+effect the graph cannot state.
+
+That is the same defect shape this project keeps finding, caught before shipping rather
+than after: **a control that claims an effect the model cannot carry.** The honest order of
+work is the layer model first, the control second, and the control then has something true
+to write into `fw:layerIndex`.
+
+A narrower version is available and worth naming: order the two connected ports against
+each other — pumps over the bands or under them — which is real, recordable and about a
+quarter of the value, since the layer a practitioner would actually reach for is the one
+arriving inside the value.
+
 ## What this does not establish
 
 That every type should be drawable as a layer. `decisions` carries rows that may have no
@@ -311,3 +346,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | "Context is relative depending on the focus." In both John Snow maps the pumps are the computation's input and the deaths are what the reader is asked to look at -- so `context` as a port name fixes a judgement that belongs to the question. Worse, catchmentPlot takes its visual hierarchy from the computation's roles: pumps red at radius 3.5, deaths gray at 2.7, legend "Gray: observations, red: sites". The thing each map exists to show is drawn smaller and duller than the thing that produced the shape |
 | 2026-10-14 | "The ontology N3 receipts should be able to provide count and types of layers in the workflow maps." They could, by joining prov:used to fw:portType, and the join was fragile enough to return four sources for a two-layer map. Now asserted: fw:layerCount plus one fw:layer per port carrying fw:layerPort, fw:layerPortType, fw:layerIndex and what generated it. The layer model reaches the vocabulary before the renderer, which makes the gap between them queryable instead of arguable |
 | 2026-10-14 | "We can make maps tell lies just by the way it's constructed." Audited: the graph records every choice that changes the NUMBERS -- corridorWidth, snapLimit, walkingSpeed, travelTime, travelDirection, fillInteriorHoles, metricCRS, countSemantics, caveats, and now the layers -- and has no term at all for the choices that change the READING: layer colour, layer weight, which layer is the subject, the frame that was cropped, class breaks. catchmentPlot draws the pumps red at 3.5 and the deaths gray at 2.7 and nothing in the receipt says so |
+| 2026-10-14 | "Another map knob is the layer index. The Inspector should allow for a reordering of layers." Agreed, and not buildable honestly yet: the renderer's layers are not the node's layers. The isochrone map has two ports connected and catchmentPlot draws three things, because summarize_polygons keeps the 250 death locations INSIDE the polygons value it returns. A control over the two ports would omit the layer a reader most wants moved; a control over all three would reorder something the model cannot name. Layer model first, control second |

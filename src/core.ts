@@ -46,11 +46,13 @@ import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,Nea
 import {declarationGaps} from './results.js';
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
-interface ExecutionInputs extends OldInputs {polygons:Polygons;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
+interface ExecutionInputs extends OldInputs {polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
+import {authoredFacts,authoredProjection,authoredReceipt} from './authored-application.js';
+import {compileAuthoredRuleset} from './authored-rules.js';
 import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
 import {measureArea,validateAreaUnit} from './area-measurement.js';
@@ -361,9 +363,16 @@ export function validateWorkflow(raw:unknown):Workflow {
       // Resolving it here is what makes a workflow naming a ruleset this build does not carry
       // refuse to open, by name, rather than failing somewhere inside the executor.
       const ruleset=resolveRuleset(r.id,r.version);
-      for(const parameter of ruleset.parameters){
+      // A node carrying authored rules is held to ITS OWN declaration. The pin gives such a node
+      // its ports and says nothing about rules the practitioner wrote, so checking their values
+      // against the pinned artefact's parameters refused a step whose rules use none.
+      const declared=n.params.authored
+        ?(n.params.authored.parameters??[]).map(p=>({name:p.name,meaning:p.meaning,min:p.min,max:p.max}))
+        :ruleset.parameters;
+      const title=n.params.authored?n.params.authored.title:ruleset.title;
+      for(const parameter of declared){
         const value=n.params.parameters?.[parameter.name];
-        if(!Number.isFinite(value))throw new Error(`${ruleset.title} needs a value for ${parameter.name}: ${parameter.meaning}`);
+        if(!Number.isFinite(value))throw new Error(`${title} needs a value for ${parameter.name}: ${parameter.meaning}`);
         if((parameter.min!==undefined&&value<parameter.min)||(parameter.max!==undefined&&value>parameter.max))
           throw new Error(`${parameter.name} must be between ${parameter.min} and ${parameter.max}.`);
       }
@@ -704,6 +713,31 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // executionPlan refuses an unconfigured node before anything runs, so reaching here
         // without a pin would be a defect in the plan rather than in the workflow.
         if(!pinned)throw new Error(`${node.params.label||node.id} has no ruleset to apply.`);
+        // Rules the practitioner wrote. One generic path -- facts from the declared field
+        // bindings, the authored form compiled to N3, conclusions carried back onto the records
+        // that were judged -- where a bundled ruleset has a generator and a projection written
+        // for the shape it expects. Experiment 106.
+        const authored=node.params.authored;
+        if(authored){
+          const subjects=inputs.subjects as PointCollection;
+          const facts=authoredFacts(subjects,authored.fields);
+          const compiled=compileAuthoredRuleset({subject:'?s',comment:authored.title,
+            rules:authored.rules as never});
+          // The authored ruleset's OWN parameters, not the pinned artefact's. The pin gives this
+          // node its ports; it does not describe rules the practitioner wrote, and binding
+          // against its declaration refused a step whose rules simply use no parameter.
+          const declared=(authored.parameters??[]).map(p=>({name:p.name,role:'authored',type:'number',
+            min:p.min,max:p.max,default:undefined,decimals:p.decimals??9,
+            placeholder:`{{${p.name}}}`,meaning:p.meaning,unitLabel:p.unitLabel}));
+          const rules=bindParameters({...resolveRuleset(pinned.id,pinned.version),
+            title:authored.title,parameters:declared as never,rules:compiled},bound);
+          const conclusions=await reasoner(facts+'\n'+rules);
+          const judged=authoredProjection(subjects,authored.fields,conclusions);
+          value={type:'FeatureCollection',features:judged.features,rows:judged.rows,
+            kind:'authored-ruleset',centers:[],method:authored.title} as unknown as DisplayValue;
+          receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges));
+          break;
+        }
         switch(projectionOf(pinned.id,pinned.version)){
           case 'outreach':{
             const n3=makeN3(inputs.distances.rows,inputs.alert,bound.threshold,pinned.version);

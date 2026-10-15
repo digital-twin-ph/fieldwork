@@ -59,7 +59,28 @@ export interface ParamsByType {
   apply_ruleset:{label:string;
     ruleset?:{id:string;version:string;title:string;
       inputs:[string,PortType][];output:PortType};
-    parameters:Record<string,number>};
+    parameters:Record<string,number>;
+    /** Rules the practitioner wrote, rather than a bundled ruleset chosen from a list.
+     *
+     *  Experiment 106's authored form, carried on the node the way a composition is: the node
+     *  holds what it applies, so a saved workflow opens and runs without the rules having to
+     *  exist anywhere else. When this is present it is what runs, and `ruleset` is the pin that
+     *  gives the node its ports.
+     *
+     *  `fields` is what makes a generic ruleset possible at all: it says which attribute of a
+     *  record means which predicate in the rules. Nothing is guessed from a column name. */
+    authored?:{
+      title:string;
+      /** What the rules must not be read as -- required of a bundled ruleset, required here. */
+      mustNotBeReadAs:string;
+      fields:{attribute:string;predicate:string;kind:'number'|'boolean'|'term';label?:string;unitLabel?:string}[];
+      /** The numbers a practitioner can change without rewriting a rule. Declared by the authored
+       *  ruleset itself rather than borrowed from a bundled one: a step whose rules use no
+       *  parameter declares none, and binding then has nothing to insist on. */
+      parameters?:{name:string;meaning:string;unitLabel?:string;min?:number;max?:number;decimals?:number}[];
+      rules:{any:{all:{field:string;comparator:string;value:string|number|boolean}[]}[];
+        then:{predicate:string;value:string}[]}[];
+    }};
   micro_workflow:{label:string;
     composition:{id:string;nodeType:string;version:string;title:string;stage:string;
       inputs:[string,PortType][];output:PortType};
@@ -144,7 +165,7 @@ export const RENAMED_NODE_TYPES:Record<RenamedNodeType,NodeType>={samples:'point
 
 export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType|RenamedNodeType|RecontractedNodeType; version:'1'}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}
-export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'|'raster'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'snow-extent'|'sea-level'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
+export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'|'raster'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'snow-extent'|'sea-level'|'rulesets'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
 // 'samples' was removed on 2026-10-12: it sat in this union and nowhere else, produced by
 // nothing and consumed by nothing. Found by surveying the inventory sideways
 // (docs/experiments/105-five-directions.md), and removed rather than counted, because a closed

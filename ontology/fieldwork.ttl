@@ -736,6 +736,37 @@ fw:PolygonsLayer a owl:Class; rdfs:label "Polygons drawn as a layer".
 fw:PointsLayer a owl:Class; rdfs:label "Points drawn as a layer".
 fw:RasterLayer a owl:Class; rdfs:label "A raster drawn as a layer".
 fw:NetworkLayer a owl:Class; rdfs:label "A street network drawn as a layer".
+# Applying rules the practitioner wrote, rather than a ruleset this build publishes.
+#
+# A declared ruleset is cited by id, version and basis: the artefact exists and a reader can go
+# and read it. An authored one has no artefact, so its receipt carries the rules themselves and
+# the bindings that make them mean anything. Experiment 106; built 2026-10-15.
+#
+# The terms the RULES use are not here and never will be. A practitioner authoring rules mints
+# vocabulary -- waitMinutes, Short, LongOrClosed -- and it lives in urn:fieldwork:authored:,
+# under the fwa: prefix, so that a word somebody coined this afternoon is never mistaken for one
+# this application defines. These terms describe the ACT of applying such rules, which is the
+# application's business and so is declared.
+fw:RuleApplication a owl:Class;
+  rdfs:subClassOf prov:Activity;
+  rdfs:label "Applying a ruleset to the records it judges";
+  rdfs:comment "Carries the rules when they were authored in the workflow, and cites the artefact when they were published as one.".
+fw:ruleSource a owl:DatatypeProperty; rdfs:domain fw:RuleApplication; rdfs:range xsd:string;
+  rdfs:comment "authored, for rules written in this workflow. A published ruleset is cited instead, by id and version.".
+fw:rulesetTitle a owl:DatatypeProperty; rdfs:domain fw:RuleApplication; rdfs:range xsd:string;
+  rdfs:comment "What the practitioner called these rules. A name, not an identifier: authored rules have no identity outside the workflow that holds them.".
+fw:mustNotBeReadAs a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "What a classification must not be taken for. Required of every published ruleset and of every authored one: applying a hierarchy is not the same as being it, and a classification is not a decision anyone has taken.".
+fw:unmatchedSubjectCount a owl:DatatypeProperty; rdfs:domain fw:RuleApplication; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "How many records no rule fired on. A ruleset may decline to classify; reading that silence as a conclusion is what this count exists to prevent.".
+fw:fieldBinding a owl:ObjectProperty; rdfs:domain fw:RuleApplication;
+  rdfs:comment "Which attribute of a record supplies which predicate the rules read. Nothing is guessed from a column name, so a ruleset over arbitrary records is possible only because this is declared.".
+fw:boundAttribute a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "The attribute on the record, as imported".
+fw:boundPredicate a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "The predicate the rules use for it, in the authored namespace".
+fw:boundKind a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "number, boolean or term. Decides how the value is written as a fact, and whether a comparison or a match can read it.".
 fw:MapSpecification a owl:Class;
   rdfs:subClassOf prov:Plan;
   rdfs:label "Bounded map communication specification";

@@ -40,7 +40,7 @@ rather than arguable.
 | | Concept | What we have | Verdict |
 | --- | --- | --- | --- |
 | 1 | **Drop and choose the role** — dragging a layer onto a tool opens *Select input…* listing `Input Features`, `Extent`, `Precondition` | the Map's one configurable port, which binds by TYPE automatically | **adapt** — ask when ambiguous |
-| 2 | **Validate, separate from Run** — *"Verify all data elements and parameter values are valid"* as its own ribbon button | `executionPlan` validates, but only as the first step of Run | **adopt** |
+| 2 | **Validate, separate from Run** — *"Verify all data elements and parameter values are valid"* as its own ribbon button | `executionPlan` validates, but only as the first step of Run | **adopt last** — the case is weaker than first written; see below |
 | 3 | **Ready vs not-ready, on the node** — an unfilled tool is missing parameters; a filled one can run | status is done/running/failed; "not yet runnable" is an Inspector notice | **adopt** |
 | 4 | **Suggest Tool** — a ribbon button that proposes the next tool | nothing, and [112](112-progressive-widget-reveal.md) concluded the useful feature is exactly this direction | **adopt the direction, not the button** |
 | 5 | **Environments** — settings applied across the whole model | the UTM zone, checked for agreement widget by widget | **adapt** |
@@ -65,13 +65,29 @@ The menu is the honest answer to exactly that: bind silently when one port fits,
 more than one does**. It would also extend the configurable port from the Map to every widget,
 which is the thing that made the Map's canvas legible.
 
-### 2 · Validate without running
+### 2 · Validate without running — *and the case for it is weaker than I wrote*
 
-ArcGIS separates *are the parameters valid* from *do the work*. We do not, and the cost is
-specific: a practitioner who wants to know whether a canvas is coherent has to run it, and a
-run here downloads street networks over an unstable public service, reasons over N3, and takes
-tens of seconds. `executionPlan` already computes the answer. Exposing it is a button and a
-message, not a mechanism.
+ArcGIS separates *are the parameters valid* from *do the work*. We do not: `executionPlan`
+computes the answer and only Run reaches it.
+
+**The reason I gave was wrong, and the practitioner corrected it on 2026-10-15:**
+
+> We actually download the street networks through the street network widget before we even run
+> the workflow to make sure the data is available for the run.
+
+Correct. `network_input` has its own **Download from OpenStreetMap** button, the result is
+stored in the node's parameters, and a run reads what is already there. The expensive,
+network-dependent, unreliable part of this application is deliberately *not* in the run, and I
+wrote that it was.
+
+What a run actually costs is reasoning over N3 and computing catchments — seconds, locally, with
+no outside service. So Validate buys a practitioner much less here than the argument implied: it
+would tell them about an unconfigured step or a missing connection a few seconds sooner, and
+those are already visible in the Inspector.
+
+**Revised verdict: adopt, but as the smallest of the four**, and for a different reason than
+speed — a practitioner building a large canvas may want to know it is coherent *before*
+committing to a run, and the answer already exists. Not worth doing ahead of items 1, 3 and 5.
 
 ### 3 · Say on the node that it cannot run yet
 
@@ -82,6 +98,25 @@ same affordance for *not runnable yet* is small and would have told a practition
 blank-canvas palette work of the same day, which of the seven inputs they still had to fill in.
 
 ### 5 · Declare the metric frame once, for the workflow
+
+**Partly built the same day**, on the practitioner's extension of it:
+
+> Selecting the study area should automatically suggest the UTM zone and the pros and cons for
+> selecting a particular one if there is more than one possible choice.
+
+`suggestUTM` already derived a zone from every coordinate on the canvas and already reported
+when the data spans more than one — and the advice was rendered **only on widgets that already
+have a zone**, which is after the decision has been made. A study area has no zone of its own
+and is exactly where the zone is decided: everything measured afterwards inherits what the
+first measuring widget was given.
+
+The advice now appears on the study area, says plainly that it sets nothing, and when the area
+straddles a boundary it names **each candidate zone with the worst stretch it would cost**, in
+per cent, with the one holding most of the area marked. The pros and cons as numbers rather
+than as a warning that no answer is right.
+
+What remains of this item is the Environments shape itself — declared once for the workflow,
+inherited, overridable — which is the part that changes what a saved workflow holds.
 
 This is the one with a measured cost in our own records. Every widget that measures carries a
 UTM zone, the run is refused by name when two disagree, and

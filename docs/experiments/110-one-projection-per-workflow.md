@@ -1,6 +1,6 @@
 # 110 — One projection per workflow, stated where a reader can query it
 
-_Created 2026-10-13 · Updated 2026-10-13_
+_Created 2026-10-13 · Updated 2026-10-15_
 
 **Status:** validated
 

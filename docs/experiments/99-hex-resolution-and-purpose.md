@@ -1,6 +1,6 @@
 # 99 · H3 resolution, and what the aggregation is for
 
-_Created 2026-10-11 · Updated 2026-10-12_
+_Created 2026-10-11 · Updated 2026-10-14_
 
 **Status:** asked — the trade-off is measured and the rule of thumb is written where a
 practitioner meets it, but nothing in the application states a purpose or checks a resolution

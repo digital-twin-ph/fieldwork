@@ -1,6 +1,6 @@
 # Open work, in priority order
 
-_Created 2026-10-11 · Updated 2026-10-13_
+_Created 2026-10-11 · Updated 2026-10-15_
 
 What is committed to and not yet done. Items leave this list by being done or by
 being recorded as decided against, not by being forgotten. Dated so that an item

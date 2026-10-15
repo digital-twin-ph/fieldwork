@@ -1,6 +1,6 @@
 # 83 · Reachable junctions
 
-_Created 2026-10-10 · Updated 2026-10-11_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 **Status:** admission review, written before the code. Fourth of the six
 primitives [78](78-trying-compositions-on-isochrone.md) needs.

@@ -1,6 +1,6 @@
 # Prior art: concepts and tools to adapt and adopt
 
-_Created 2026-10-07 · Updated 2026-10-10_
+_Created 2026-10-07 · Updated 2026-10-14_
 
 Date: 2026-10-06. Status: design specification and comparative research notes.
 

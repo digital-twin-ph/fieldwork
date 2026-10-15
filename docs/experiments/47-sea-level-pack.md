@@ -1,6 +1,6 @@
 # Experiment 47: a sea-level-rise widget pack over the IPCC AR6 projections
 
-_Created 2026-10-08 · Updated 2026-10-10_
+_Created 2026-10-08 · Updated 2026-10-14_
 
 Date: October 8, 2026. Status: the pack repository exists at
 [digital-twin-ph/widget-pack-sea-level-rise](https://github.com/digital-twin-ph/widget-pack-sea-level-rise)

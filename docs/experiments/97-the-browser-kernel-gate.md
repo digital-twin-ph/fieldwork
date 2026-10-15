@@ -1,6 +1,6 @@
 # 97 · The browser kernel gate
 
-_Created 2026-10-11 · Updated 2026-10-11_
+_Created 2026-10-11 · Updated 2026-10-14_
 
 **Status:** validated — all seven Validation Lab notebooks execute in the browser
 kernel with no error cells, in under a minute, and the check blocks publication

@@ -1,6 +1,6 @@
 # Kinds of validation
 
-_Created 2026-10-10 · Updated 2026-10-10_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 "Is this widget validated?" has no single answer, because there are seven different checks
 here and each one establishes something different. A widget can pass one and fail another,

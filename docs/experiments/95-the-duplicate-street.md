@@ -1,6 +1,6 @@
 # 95 · The duplicate street
 
-_Created 2026-10-11 · Updated 2026-10-11_
+_Created 2026-10-11 · Updated 2026-10-14_
 
 **Status:** validated. Measured, implemented, parity re-checked against the
 Validation Lab, and 3.5× faster on the operation it addresses.

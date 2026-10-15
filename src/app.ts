@@ -24,6 +24,7 @@ import {bundledCompositions,resolveComposition} from './composition-registry.js'
 import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
 import {rulesetExample} from './ruleset-example.js';
+import {openRuleEditor} from './rule-editor.js';
 import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
@@ -779,8 +780,16 @@ function renderInspector(){
           +`<input id="ruleset-${esc(parameter.name)}" type="number" data-ruleset-parameter="${esc(parameter.name)}" `
           +`value="${esc(String(n.params.parameters?.[parameter.name]??''))}" ${parameter.min!==undefined?`min="${parameter.min}"`:''} ${parameter.max!==undefined?`max="${parameter.max}"`:''}>`
           +`${parameter.unitLabel?`<small>${esc(parameter.unitLabel)}</small>`:''}</div>`;
-      content+=manualButton(n.type,esc)+identityMarkup(n.type,esc);
+      content+=`<div class="inspector-actions"><button id="edit-rules" class="button">Edit these rules</button></div>`
+        +manualButton(n.type,esc)+identityMarkup(n.type,esc);
       $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
+      // In a dialog, because the conditions nest and this panel is 320 px wide. The
+      // practitioner's call, 2026-10-15: "Perhaps the rule editor should be a modal dialog so
+      // there is enough space."
+      optionalElement('#edit-rules')?.addEventListener('click',async()=>{
+        const edited=await openRuleEditor(authored,esc);
+        if(edited)change(w=>{getNode(w,n.id,'apply_ruleset').params.authored!.rules=edited.rules as never;});
+      });
       document.querySelectorAll<HTMLInputElement>('[data-ruleset-parameter]').forEach(el=>
         el.addEventListener('change',()=>change(w=>{
           getNode(w,n.id,'apply_ruleset').params.parameters[required(el.dataset.rulesetParameter)]=Number(el.value);})));

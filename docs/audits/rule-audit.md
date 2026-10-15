@@ -1,6 +1,6 @@
 # Rule audit
 
-_Created 2026-10-10 · Updated 2026-10-11_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 **Status:** first pass. Covers the rules added to governance files on 2026-10-09
 and 2026-10-10.

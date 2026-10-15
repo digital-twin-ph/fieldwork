@@ -1,6 +1,6 @@
 # 105 · Five directions
 
-_Created 2026-10-12 · Updated 2026-10-12_
+_Created 2026-10-12 · Updated 2026-10-15_
 
 **Status:** tried — the record of deriving the five directions and of the sweeps made with them.
 Four produced findings; the fifth, forward, produced a direction that nothing has yet tested.

@@ -1,6 +1,6 @@
 # 53 · Reproducible maps and mapping workflows
 
-_Created 2026-10-08 · Updated 2026-10-10_
+_Created 2026-10-08 · Updated 2026-10-14_
 
 **Status:** audit with findings, and a proposed gate. The audit is of shipped code; the
 additions are specified and unbuilt.

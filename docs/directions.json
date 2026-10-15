@@ -115,7 +115,7 @@
     "docs/experiments/65-ruleset-as-data.md"
    ],
    "workItem": "106, whose closing condition is Group A green and B1 green against the three existing rulesets on their frozen fixtures",
-   "status": "open",
+   "status": "built",
    "lastChecked": "2026-10-15",
    "checks": [
     {
@@ -129,6 +129,10 @@
     {
      "date": "2026-10-15",
      "found": "Carried further the same day, on the practitioner's proposal: \"We should have a worked example just for the ruleset widget to exercise different ruleset conditions so users can also see examples of how to configure it. That is one way to execute widget rules and validate at the same time.\" Built as the `rulesets` workspace: three steps, one condition kind each -- a band from two comparisons, alternatives with two conclusions at once, a category match -- over twelve synthetic records chosen so every branch has one. A node can now CARRY authored rules and a generic path runs them: facts from declared field bindings, the authored form compiled, conclusions back onto the records. Two things the example found that no unit test would: the Inspector described the PINNED ruleset, so a step applying authored rules showed somebody else's title, threshold and basis; and authored rules MINT VOCABULARY -- thirty terms in one afternoon -- which now lives in urn:fieldwork:authored: so a practitioner's coinage is never mistaken for a term this application defines. The Inspector reads the rules back in plain words. What is still missing is composing them there: the rules can be read and their numbers changed, not yet written."
+    },
+    {
+     "date": "2026-10-15",
+     "found": "Built. The practitioner opened the published example -- \"I see the ruleset widget but it's not editable\" -- and then chose the shape: \"Perhaps the rule editor should be a modal dialog so there is enough space.\" src/rule-editor.ts edits 106's authored form in a dialog: conditions grouped by and, alternatives by or, a list of conclusions, add and remove throughout. The compiler runs on every edit, so the rule ceiling and any refusal appear while authoring rather than at the end, and Keep is disabled while the rules cannot compile. Comparators are filtered by the field's kind, so a category cannot be given `is more than`, and the fwa: namespace is added for the practitioner rather than typed by them. Three debts recorded in 106 rather than hidden: two comparators are offered that have never been executed against the real engine, nothing catches an incommensurable unit at authoring time, and conclusions are free text so two rules can disagree -- caught at run time, which is late."
     }
    ]
   }

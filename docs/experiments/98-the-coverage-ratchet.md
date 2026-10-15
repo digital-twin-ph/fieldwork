@@ -1,6 +1,6 @@
 # 98 · The coverage ratchet, and the first of the twenty-six
 
-_Created 2026-10-11 · Updated 2026-10-12_
+_Created 2026-10-11 · Updated 2026-10-14_
 
 **Status:** tried — the ratchet is built, gated and verified against four failure modes, and
 thirteen of the twenty-six widgets now have one, including the whole isochrone decomposition,

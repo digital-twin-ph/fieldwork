@@ -102,17 +102,27 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
 // to be joined out of prov:used and fw:portType -- a join that returned four sources for a
 // two-layer map, because a node appears under two IRI forms and the activity uses itself.
 // Experiment 115, and the practitioner's request of 2026-10-14.
-test('a map receipt states its layer count and the kind of each layer',async({page})=>{
+test('a map receipt counts the layers it draws, not the ports it has',async({page})=>{
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="rules"]').click();
   const n3=await page.locator('#n3-preview').textContent();
-  expect(n3).toContain('fw:layerCount 2');
-  expect(n3).toContain('fw:layerPort "polygons"');
+
+  // Two ports, four layers. Ports receive or transmit; layers are displayed.
+  expect(n3).toContain('fw:layerCount 4');
+  expect(n3).toContain('fw:layerKind <urn:fieldwork:AreaLayer>');
+  expect(n3).toContain('fw:layerKind <urn:fieldwork:PolygonsLayer>');
+  expect(n3).toContain('fw:layerKind <urn:fieldwork:PointsLayer>');
+
+  // The 250 death locations are displayed and arrived at no port of their own: summarize_polygons
+  // keeps the points it counted on the value it returns. The receipt says so rather than omitting
+  // the layer a reader most wants to find.
+  expect(n3).toContain('fw:layerFeatureCount 250');
+  expect(n3).toContain('fw:layerRole "observations"');
+  expect(n3).toContain('fw:layerWithin "polygons"');
+
+  // And the pumps, which did arrive at a port, and are context in this map's reading.
+  expect(n3).toContain('fw:layerRole "context"');
   expect(n3).toContain('fw:layerPort "context"');
-  expect(n3).toContain('fw:layerPortType <urn:fieldwork:PolygonsPort>');
-  expect(n3).toContain('fw:layerPortType <urn:fieldwork:PointsPort>');
-  // The index is the drawing order, so a reader can say which is on top.
-  expect(n3).toContain('fw:layerIndex 0');
-  expect(n3).toContain('fw:layerIndex 1');
+  for(const index of [0,1,2,3])expect(n3).toContain(`fw:layerIndex ${index}`);
 });

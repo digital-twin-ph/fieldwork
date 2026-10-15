@@ -182,6 +182,20 @@ activity that generated it. Measured on the shipped examples:
 | geoprivacy AFTER · moved | `layerCount 2` → same |
 | geoprivacy AFTER · cells | `layerCount 1` → `polygons:PolygonsPort` |
 
+*Corrected within the hour, 2026-10-14: those numbers counted PORTS. "Layer count should be
+about layers not ports", and then the distinction that settles it — **ports receive or
+transmit, layers are displayed.** The counts now come from the value the renderer draws
+from, in the order it draws, and the isochrone map reports four: a boundary, four bands, 250
+death locations and eight pumps. A layer that arrived at no port says so with
+`fw:layerWithin` rather than claiming one.*
+
+| Map | Ports | Layers |
+| --- | --- | --- |
+| isochrone plot | 2 | **4** — area, polygons(4), points(250) *observations*, points(8) *context* |
+| interactive isochrone | 2 | **4** — same |
+| snow-extent | 2 | 2 — polygons(1), points(8) *context* |
+| geoprivacy AFTER · cells | 1 | **2** — polygons(5), points(5) *sites* |
+
 **This is the layer model arriving in the vocabulary before it arrives in the renderer**,
 which is the right order for this project: the graph can now be asked a question the
 interface still answers in five branches, and the gap between the two is visible rather
@@ -347,3 +361,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | "The ontology N3 receipts should be able to provide count and types of layers in the workflow maps." They could, by joining prov:used to fw:portType, and the join was fragile enough to return four sources for a two-layer map. Now asserted: fw:layerCount plus one fw:layer per port carrying fw:layerPort, fw:layerPortType, fw:layerIndex and what generated it. The layer model reaches the vocabulary before the renderer, which makes the gap between them queryable instead of arguable |
 | 2026-10-14 | "We can make maps tell lies just by the way it's constructed." Audited: the graph records every choice that changes the NUMBERS -- corridorWidth, snapLimit, walkingSpeed, travelTime, travelDirection, fillInteriorHoles, metricCRS, countSemantics, caveats, and now the layers -- and has no term at all for the choices that change the READING: layer colour, layer weight, which layer is the subject, the frame that was cropped, class breaks. catchmentPlot draws the pumps red at 3.5 and the deaths gray at 2.7 and nothing in the receipt says so |
 | 2026-10-14 | "Another map knob is the layer index. The Inspector should allow for a reordering of layers." Agreed, and not buildable honestly yet: the renderer's layers are not the node's layers. The isochrone map has two ports connected and catchmentPlot draws three things, because summarize_polygons keeps the 250 death locations INSIDE the polygons value it returns. A control over the two ports would omit the layer a reader most wants moved; a control over all three would reorder something the model cannot name. Layer model first, control second |
+| 2026-10-14 | "Ports receive or transmit. Layers are displayed." fw:layerCount had been counting ports: 2 for a map that draws four things. It now reads the value the renderer draws from, in draw order, and records each layer's kind, feature count and role, with fw:layerWithin for a layer that arrived at no port -- the 250 death locations that summarize_polygons keeps on the value it returns. The isochrone map reports 4 layers from 2 ports; the H3 cells map reports 2 from 1 |

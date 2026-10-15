@@ -715,9 +715,22 @@ fw:layerIndex a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "Where this layer falls in the drawing order".
 fw:layerPort a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "The input port this layer arrived at".
-fw:layerPortType a owl:ObjectProperty;
-  rdfs:label "The port type this layer carries";
-  rdfs:comment "What KIND of thing is drawn -- points, polygons, a raster, a boundary, a network. The kind decides how a layer is drawn, not whether it may be there.".
+fw:layerKind a owl:ObjectProperty;
+  rdfs:label "What kind of thing this layer draws";
+  rdfs:comment "fw:AreaLayer, fw:PolygonsLayer, fw:PointsLayer, fw:RasterLayer or fw:NetworkLayer. The kind decides HOW a layer is drawn, not whether it may be there. Distinct from a port type on purpose: ports receive or transmit, layers are displayed -- the practitioner's distinction of 2026-10-14. A map with two ports can draw four layers.".
+fw:layerFeatureCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "How many features this layer draws".
+fw:layerRole a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "What this layer is in the map's reading";
+  rdfs:comment "observations, sites, context. A READING and not a property of the data: the same pumps are the subject of a map asking where the pumps are and context in a map asking how deaths fell around one. Recorded because the renderer takes its emphasis from these names -- it draws sites red at radius 3.5 and observations gray at 2.7 -- so a reader can see which way round the map was built.".
+fw:layerWithin a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "The port whose value carried this layer, when it arrived at no port of its own";
+  rdfs:comment "summarize_polygons keeps the points it counted on the value it returns, so 250 death locations reach a map that was never wired to them. Such a layer is displayed and has no port, and saying so is the difference between a count of what is shown and a count of what is connected.".
+fw:AreaLayer a owl:Class; rdfs:label "A boundary drawn as a layer".
+fw:PolygonsLayer a owl:Class; rdfs:label "Polygons drawn as a layer".
+fw:PointsLayer a owl:Class; rdfs:label "Points drawn as a layer".
+fw:RasterLayer a owl:Class; rdfs:label "A raster drawn as a layer".
+fw:NetworkLayer a owl:Class; rdfs:label "A street network drawn as a layer".
 fw:MapSpecification a owl:Class;
   rdfs:subClassOf prov:Plan;
   rdfs:label "Bounded map communication specification";

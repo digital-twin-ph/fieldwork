@@ -186,3 +186,16 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
   .header-right{min-width:0;flex-shrink:1}
   .header-right .connection{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
+/* The reveal playback: a worked example replayed one widget at a time, like running a notebook
+   from the first cell, on a canvas instead of in a column. It is a view over an example that
+   already exists -- nothing is saved and leaving restores the canvas -- so the rule can be
+   watched behaving on something real before the application is committed to it. The palette
+   dims what the rule would not yet offer rather than hiding it, because a hidden widget can
+   make a practitioner conclude the application cannot do something it can. Experiment 112. */
+.playback-bar{position:absolute;top:46px;left:20px;right:20px;z-index:2;display:flex;align-items:center;gap:10px;background:var(--surface-raised-1);border:1px solid var(--line);border-radius:7px;padding:7px 10px;box-shadow:0 2px 8px var(--shadow-3);font-size:11px}
+.playback-bar #playback-step{font-weight:650;white-space:nowrap}
+.playback-reason{color:var(--text-faint-17);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.playback-bar .button{flex:0 0 auto}
+.palette-node.unrevealed{opacity:.35}
+.palette-node.unrevealed:hover{opacity:.6}
+body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}

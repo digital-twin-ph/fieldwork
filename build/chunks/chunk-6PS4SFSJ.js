@@ -1,4 +1,4 @@
-import{a as Wi}from"./chunk-DX3LJVK7.js";import{a as hi}from"./chunk-M5JSOBQI.js";import{a as Oe,d as $i,h as Hi}from"./chunk-XZ2OYQG2.js";import{c as Vi}from"./chunk-TBDA2OKI.js";import{e as zi,f as ji}from"./chunk-SO2IVJPV.js";var Et=JSON.stringify,Ht=(t,e)=>`[ a qudt:QuantityValue; qudt:numericValue "${t}"^^xsd:double; qudt:unit <http://qudt.org/vocab/unit/${e}> ]`;function Ji(t,e,i,r,s){let n=`@prefix qudt: <http://qudt.org/schema/qudt/>.
+import{a as Wi}from"./chunk-DX3LJVK7.js";import{a as hi}from"./chunk-M5JSOBQI.js";import{c as Vi}from"./chunk-TBDA2OKI.js";import{a as Oe,d as $i,h as Hi}from"./chunk-XZ2OYQG2.js";import{e as zi,f as ji}from"./chunk-SO2IVJPV.js";var Et=JSON.stringify,Ht=(t,e)=>`[ a qudt:QuantityValue; qudt:numericValue "${t}"^^xsd:double; qudt:unit <http://qudt.org/vocab/unit/${e}> ]`;function Ji(t,e,i,r,s){let n=`@prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix dcterms: <http://purl.org/dc/terms/>.
 `;if("nodes"in e){n+=`<${i}> a fw:StreetNetwork; fw:directed true.
@@ -40,4 +40,4 @@ northing meters`+t;var d=f/2,w=0,c=0,N,P,T,E,O;return d>0&&(N=1e5/Math.pow(10,d)
 `),e.offNetwork?.length&&(f+=`<${l}> fw:offNetworkSiteCount ${e.offNetwork.length}; fw:offNetworkSites ${JSON.stringify(JSON.stringify(e.offNetwork))}.
 `);for(let d of e.features)d.offNetworkMetres!==void 0&&(f+=`<${h}:cell:${encodeURIComponent(d.id)}> fw:offNetworkMetres ${d.offNetworkMetres}.
 `)}return f+=Ji(t,e,h,l,i),{nodeId:t.id,kind:"computation",facts:f,input:f,rules:"",conclusions:[],method:a}}export{Di as a,Ui as b,m0 as c,Zr as d,g0 as e,d0 as f,hg as g,p0 as h,lg as i,fg as j,_0 as k,sn as l,Yr as m,rn as n,ug as o,cg as p,tn as q,v0 as r,en as s,x0 as t,w0 as u,mg as v,gg as w};
-//# sourceMappingURL=chunk-4P23E46J.js.map
+//# sourceMappingURL=chunk-6PS4SFSJ.js.map

@@ -510,12 +510,80 @@ to assert the area of the polygon rather than of the computation. One widget's r
 the difference between a palette that can offer the next step and one that can only agree
 with it afterwards.
 
+### The border widgets, where prediction gets hard
+
+The practitioner, after the playback:
+
+> So based on the worked examples, it's still about pragmatic interoperability. Possible
+> intents, possible expectations. Let's look at the border widgets where the prediction
+> becomes difficult.
+
+Three borders, measured.
+
+**The loop widgets.** Eighteen of the fifty-one emit a type they also take — `reproject`,
+`donut_geomask`, `snap_to_network`, `reachable_nodes`, `travel_time_band`,
+`clip_polygons`, `fill_interior_gaps`, `sample_raster` and ten more. Once one is offered
+the rule can never retire it, and it offers itself. A palette driven by port types will
+keep proposing *reproject the reprojected points* forever.
+
+**The pinned widgets.** `apply_ruleset` and `micro_workflow` have no type-level contract at
+all; their ports arrive with the artefact chosen inside them.
+
+**The crowded type.** Eleven widgets emit `points` and twenty-five accept it. Placing any
+of the eleven leaves twenty-five candidates, which is not a prediction.
+
+### Expectations are declarable; intents are not
+
+What the fitness conditions actually buy, measured by transcribing the eight refusals in
+`src/` and asking both questions of them:
+
+| Asked forward — what could follow this? | Type-legal | Would actually run |
+| --- | --- | --- |
+| after `point_input` | 25 | **22** |
+| after `snap_to_network` | 25 | **23** |
+| after `reachable_nodes` | 25 | **25** |
+
+| Asked backward — what could precede this? | Satisfied only by |
+| --- | --- |
+| `reachable_nodes` needs `networkNodeId` | `snap_to_network` |
+| `travel_time_band` needs `networkNodeId`, `travelMetres`, `remainingM`, `speedMPerMin` | `reachable_nodes` |
+| `reachable_corridor` needs `networkNodeId`, `remainingM`, `travelDirection` | `reachable_nodes` |
+
+**Forward, the conditions exclude almost nothing. Backward, they collapse the answer to
+one.** Which is what the practitioner's phrasing already says: a widget's **expectations**
+are a property of the widget, and it can declare them; a widget's **intent** — what you
+would want to do next — is not a property of any widget, and no declaration will produce
+it. The twenty-two remaining candidates after `point_input` are not a failure of the rule.
+They are twenty-two things a practitioner might legitimately want, and a palette that
+picked three of them would be guessing at intent and calling it help.
+
+### So the useful feature is the other direction
+
+Not *hide what you cannot use yet* — which is weakly determined, prunes little, and risks
+making someone conclude the application cannot do something it can. Instead: **let each
+widget say what it expects and who satisfies it**, before it is wired rather than after it
+is run.
+
+The application already knows this. Six of the eight refusals name the step that should
+have come first — *"Add a Snap to street network step before this one"* — and say it only
+once the practitioner has wired the connection and pressed Run. Declaring those conditions
+turns six after-the-fact errors into something a widget can state about itself, and it is
+the same declaration the receipt rule needs. It serves reveal if reveal is ever built, and
+it serves a practitioner immediately whether or not it is.
+
+That is now the first item below, ahead of the reveal itself.
+
 ### Revised 2026-10-14, after the receipt question
 
 The port-type rule is not worth building: measured, it filters only at the first
 placement, where a starter set already does the job. What would close the **receipt** rule
 is a different and shorter list, and each item is worth doing on its own account:
 
+0. **Let each widget declare what it expects, and name who satisfies it** — the item the
+   border measurement moved to the front. It is the one piece of work that pays whether or
+   not reveal is ever built: six of the eight refusals already name the step that should
+   have come first, and say so only after the practitioner has wired the connection and run
+   it. See *Expectations are declarable; intents are not* above.
 1. **Relate the terms that mean the same thing.** `fw:hullAreaSquareMetres` is an area;
    so is `fw:areaSquareMetres`; the ontology says they are distinct and relates them in no
    other way. An `rdfs:subPropertyOf` where the specific term is a kind of the general one
@@ -544,3 +612,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | "Port type matching only solves a part of the problem." Measured the gap: `points` alone admits 330 type-legal connections; the four-widget routing chain is `points -> points` at every step and relies on eight run-time refusals to catch what the type cannot see, six of which already name the step that should have come first. Semantic difference -- deaths against pumps against grid samples -- is unaddressed at any level, and `map_output.context` is not even a declared port. Reveal reads the syntactic level only |
 | 2026-10-14 | The hypothesis tested level by level with ten canvas competency questions (experiment 44, scripts/competency-canvas.mjs): syntactic 2 of 2, semantic 1 of 3, pragmatic 2 of 4 before the day's work and 4 of 4 after. It survives, with the order corrected -- semantic is the WEAKEST level, not the middle one, because nothing records what a point means. And a canvas carries facts only about what has been run toward an output, so a receipt rule says nothing on a fresh canvas, which is where the port rule was strongest |
 | 2026-10-14 | Playback built behind ?playback=1: a worked example replayed widget by widget on the canvas, the palette dimming what the rule would not offer, with the order and the revealed set computed in one module the measurement script shares. On snow-extent two steps of nine do all the revealing. The receipt reading anticipates the extent ruleset by one step -- and only because summarize_hull now asserts the area of the polygon; on old-naledi both rulesets are justified at the step that adds them and never before |
+| 2026-10-14 | The border widgets measured: 18 of 51 emit a type they also take, so a port rule can never retire them; 2 have no type contract at all; 11 emit `points` into 25 consumers. And the asymmetry that settles the design -- fitness conditions exclude almost nothing FORWARD (22 of 25 still legal after a point input) and collapse the answer to one BACKWARD (travel_time_band can only follow reachable_nodes). Expectations are a property of a widget and declarable; intent is not a property of any widget. So the useful feature is each widget saying what it expects and who satisfies it, before it is wired rather than after it is run |

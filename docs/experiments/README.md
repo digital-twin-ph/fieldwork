@@ -90,6 +90,26 @@ would move this to `validated` or `retired`. `validated` and `retired` need none
 closed. The count of open documents without one is reported by `validate:experiments`, so it
 cannot drift quietly.
 
+**And the condition has to be executable in the phase this project is in.** Stated by the
+practitioner on 2026-10-15, on finding four documents whose closing condition was a practitioner
+who did not write them saying what they concluded:
+
+> This cannot be answered without field testing which is a phase this project has not reached
+> yet. That is not an experiment question.
+
+A condition nobody can execute is not a closing condition; it is a document parked under a word
+that claims it is waiting on work. Four were — 94, 110, 111 and 112 — and the effect is the same
+failure this section exists to prevent, one step further along: the document says what would close
+it, the sentence cannot be acted on, and `tried` stops meaning *the measurement is in and the
+finding is recorded* and starts meaning *waiting for a phase that does not exist*.
+
+A question that needs a user in front of the software is a **field question**. It is real, it is
+often the most important one a document raises, and it belongs in
+[docs/field-questions.md](../field-questions.md) — the list field testing will have to answer when
+there is field testing — not in a closing condition. The experiment keeps what it can settle from
+the code, the declarations and its own measurements, and `validate:experiments` fails a closing
+condition that defers to an observation instead.
+
 ## One heading spelling
 
 **"What this does not establish."** It is the strongest convention in the corpus

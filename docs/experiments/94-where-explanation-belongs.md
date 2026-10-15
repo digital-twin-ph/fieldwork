@@ -123,11 +123,20 @@ anything.
 
 ## What would close it
 
-A Dive Deeper section in the Validation Lab that a practitioner has read and can act on. Ten
-notebooks now carry one ([98](98-the-coverage-ratchet.md)), which is the mechanism; what is
-missing is any evidence that the explanation lands. This moves to **validated** when one
-practitioner who did not write it reports what they learned from one, and to **retired** if the
-notebooks turn out to be the wrong surface after all.
+Ten notebooks carry a Dive Deeper section ([98](98-the-coverage-ratchet.md)), which is the
+mechanism, and the ratchet keeps the count from falling. Whether an explanation *lands* is not
+measurable here.
+
+What is: whether the notebook is the right surface for it. That is answerable against this
+project's own record rather than against a reader — the question is whether the explanation a
+widget needs is reachable from where the widget is used, and today it is one navigation away in
+a different tool that needs a connection. A decision to move explanation into the Inspector, to
+keep it in the Lab, or to carry it in both closes this; the three can be argued from what the
+corpus already shows about where practitioners are when the question arises.
+
+_Restated 2026-10-15. This section had required one practitioner who did not write it to report
+what they learned, which needs field testing, a phase this project has not reached. Kept as a
+[field question](../field-questions.md#does-a-dive-deeper-section-land)._
 
 ## What this does not establish
 

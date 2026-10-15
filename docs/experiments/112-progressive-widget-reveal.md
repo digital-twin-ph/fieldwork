@@ -4,8 +4,10 @@ _Created 2026-10-14 · Updated 2026-10-14_
 
 **Status:** tried — the rule is applied to every shipped example and measured against
 declared contracts, which is the observation stage AGENTS.md says is usually skipped. It
-is not implemented in the interface, and nobody has watched a practitioner meet either
-version of the palette.
+runs in the interface behind `?playback=1`, where the palette dims what the rule would not
+offer; the ordinary palette is untouched. What is left is not a measurement but a decision —
+whether to adopt the rule and under which reading — and the evidence that decision needs is
+below.
 
 Proposed by the practitioner on 2026-10-14, while revisiting the widgets the names
 inventory marks *"example templates only"*:
@@ -418,14 +420,24 @@ It still says nothing about whether anyone would *want* to build them in that or
 
 ## What would close it
 
-Required-versus-optional declared per port, and then the reveal tried behind a
-flag on one example, with one practitioner who did not write it saying whether
-they found what they needed or concluded it was missing.
+A decision, on the measurements already taken: whether the rule is applied to the
+ordinary palette, and under which of the three readings — stage, port or receipt.
+Everything that decision needs is in this document. 53 widgets carry declared
+contracts, each reading is measured per step on four worked examples, the
+readings disagree in ways the measurements name, and the playback behind
+`?playback=1` shows what any of them would do to a canvas being built. What is
+missing is not evidence but a choice, and the choice is the practitioner's.
 
-_First half done 2026-10-14: 53 widgets carry declared contracts and the measurement is
-above. The second half is unchanged and is not something this record can do to itself —
-the question is whether a practitioner facing 7 widgets finds what they need or concludes
-the application cannot do it, and only watching one answers that._
+Adopting one moves this to `validated` with the reading named; deciding against
+all three moves it to `retired` and the playback becomes a teaching device rather
+than a prototype.
+
+_Restated 2026-10-15. This section had required "one practitioner who did not write it
+saying whether they found what they needed", which is not a condition this project can
+execute: field testing is a phase it has not reached. That question is real and is kept as
+a [field question](../field-questions.md#does-progressive-reveal-help-or-hide-the-application),
+with what has been built to ask it with. The practitioner's correction: "That is not an
+experiment question."_
 
 ### The hypothesis, as the practitioner states it
 

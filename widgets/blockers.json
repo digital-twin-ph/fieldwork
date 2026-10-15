@@ -225,6 +225,19 @@
    "status": "standing",
    "liftTest": "A receipt carries a digest of the ruleset document it applied, and resolving a pin checks it, so a changed ruleset at an unchanged version fails rather than runs. Composition members already work this way: a member pin is {node, type, version, sha256} and validateComposition refuses a mismatch.",
    "why": "Found 2026-10-14 by asking whether a pin is unique. It is unique as a lookup key within a build and not as a content identity, which is the sense reproducibility needs."
+  },
+  {
+   "id": "output-mode-set-before-the-shape-arrives",
+   "claim": "An output widget's ports are a function of its inputMode, and validConnection resolves the mode the target is currently in, so a connection carrying a shape that mode does not take is refused rather than switching it. The practitioner must declare the shape before the shape can arrive. On table_output and chart_output the mode is fully determined by the connected port type -- no type appears in two modes -- so the question is redundant; on map_output three types are genuinely ambiguous: points as subject or as context, raster as subject or as overlay, polygons with context or without.",
+   "blocks": [
+    "Connecting a polygon producer to a map without first changing its mode",
+    "Revealing an output widget by its type, which does not say what it takes"
+   ],
+   "recorded": "2026-10-14",
+   "lastRevisited": "2026-10-14",
+   "status": "standing",
+   "liftTest": "Dragging a connection to an output widget whose current mode does not accept it switches the mode when exactly one mode accepts that port type, and asks which the practitioner meant when more than one does. Measured: 2 of 3 output widgets need no question at all.",
+   "why": "Raised by the practitioner on 2026-10-14: the output widgets depend on the shape of the process widget outputs for inputs."
   }
  ]
 }

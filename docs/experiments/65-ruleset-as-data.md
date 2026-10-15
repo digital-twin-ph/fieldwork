@@ -1,6 +1,6 @@
 # 65 · A ruleset as declared data, and where its knobs live
 
-_Created 2026-10-10 · Updated 2026-10-12_
+_Created 2026-10-11 · Updated 2026-10-14_
 
 **Status:** admission review. Written before the code, as experiments 48, 58, 61, 63 and 64
 were. Proposes one widget replacing three node types, and one new declared artifact — a
@@ -475,6 +475,63 @@ not contain instance data. They become what they always were: an attribute of th
 records in the example's own data, declared as an input. That changes the Old Naledi example's
 data, not its results, and the existing regression expectations are what prove it.
 
+## The widget is an interpreter, and the ruleset is the program
+
+_Added 2026-10-14, from the practitioner:_
+
+> In a nutshell, a ruleset widget is like a mini-software program with many possibilities
+> because of how rules may be combined to produce an output.
+
+That reading settles four questions this record had been answering one at a time, because
+each is a property of interpreters rather than a quirk of this widget.
+
+| In the frame | Here |
+| --- | --- |
+| the interpreter | `apply_ruleset` — one widget, one contract: apply what this node was given |
+| the program | the ruleset document: rules, declared expectations, declared ports |
+| its arguments | the ruleset's declared parameters, bound on the node |
+| its signature | the ports — which belong to the program, not the interpreter |
+| its execution record | the N3 receipt |
+
+**Why the ports are late-bound.** A signature belongs to a program. One `apply_ruleset`
+node takes `polygons` and gives `polygons`; another takes `distances` and `alert` and gives
+`decisions`. The interpreter cannot declare either.
+
+**Why one palette entry and not one per ruleset.** You do not put every program in the menu
+of an interpreter. The practitioner's decision of the same day — *"when we offer instances
+of rulesets as widgets, that's the recipe for exponential clutter"* — is the same point:
+the palette offers the interpreter, and the Inspector chooses the program.
+
+**Why "many possibilities" is the hard part.** Rules compose. The output space of a ruleset
+is not enumerable from the widget, which is why experiment 112 could predict a successor
+for a routing step and could predict nothing for this one.
+
+### The receipt is the node's final state, and it was citing the wrong program
+
+The practitioner, in the same exchange: *a ruleset widget's N3 receipts represent the final
+state of the node when the ruleset is configured and the ports are bound.* Tested against
+the code, and it failed.
+
+**All four fact generators resolved their own ruleset version rather than the node's pin.**
+`extentN3` hardcoded `extent-review 1.0.0`, `makeN3` `outreach-criteria 1.0.0`, `accessN3`
+`access-review 1.0.0`, `facilityN3` `nb06-evidence 1.0.0`. So a node pinning
+`extent-review 1.1.0` produced a receipt citing **1.0.0** — the receipt stated a program the
+node had not chosen.
+
+It survived because the rules are byte-identical across every pair of versions this build
+carries: `access-review` 1.0.0/2.0.0, `nb06-evidence` 1.0.0/2.0.0 and `extent-review`
+1.0.0/1.1.0 differ in their declared PORTS and not in their rules. So no conclusion was
+ever wrong, and nothing could have noticed. The next version that changes a rule would have
+made every receipt of it a false citation.
+
+Fixed by passing the node's pinned version into each generator. Verified on both worked
+examples: three ruleset nodes, each receipt now citing the version its node pins.
+
+**What this does not fix** is the one the blocker `ruleset-pin-has-no-digest` records: a
+pin names a version and carries no digest, so the receipt still cannot prove *which text*
+that version was. Naming a program without identifying it is the gap, and for an
+interpreter that is the whole provenance question.
+
 ## What this cannot establish
 
 That any ruleset is correct, or that NB06 is applied faithfully — the widget evaluates what it
@@ -493,3 +550,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
 | 2026-10-12 | 65: structured rule entry, with N3 as the compiled form |
 | 2026-10-12 | The ruleset layer gets its constraint at birth, and it is not the widget's |
+| 2026-10-14 | The practitioner's frame -- a ruleset widget is a mini-program interpreter -- recorded, and it settles why the ports are late-bound, why one palette entry is right, and why a successor cannot be predicted for this widget. Tested their other statement, that the receipt is the node's final state once configured and bound: it failed. All four fact generators resolved their own hardcoded ruleset version instead of the node's pin, so a node pinning extent-review 1.1.0 cited 1.0.0. It survived because rules are byte-identical across every version pair this build carries. Fixed and verified on both worked examples |

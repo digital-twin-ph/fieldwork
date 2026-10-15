@@ -630,6 +630,45 @@ the derived area that no rule could read, the decision that no map could draw, t
 distance that nothing charged. **Nine per cent coverage of the connection space is the
 measurement that explains the week.**
 
+### The third reading: input, process, output
+
+> The other way to think about progressive reveal is input, process and output stages.
+> Process widgets cannot be revealed when there are no inputs. And output widgets cannot be
+> revealed when there is no input and process widgets.
+
+A coarser rule, and a different kind of claim: not *what can follow this value* but *what
+stage of work is sensible yet*. Derived from the contracts rather than from the palette
+groups — a widget that requires nothing and emits something is an input, one that requires
+something and emits nothing is an output, everything else processes — the 53 widgets split
+**7 inputs, 41 process, 5 outputs**.
+
+| Canvas | Stage rule offers | Port rule offers |
+| --- | --- | --- |
+| empty | 7 | 7 |
+| one input placed | **48** | 20 |
+| one process placed | 53 | 26 |
+
+**As a filter it is weaker**, and by a lot: one input opens 48 of 53 against the port
+rule's 20. As an *explanation* it is far stronger — three sentences a practitioner can
+hold, matching how the work actually proceeds, and it never implies a precision it does
+not have.
+
+The two also disagree on something real. The port rule lets a map be added as soon as any
+points exist; the stage rule forbids an output until something has been processed. **The
+shipped examples side with the port rule.** Of 35 edges into an output widget, **9 go
+straight from an input** — Snow's pump locations onto the map for context, a drawn study
+area onto a map, the geoprivacy example's before-view of its own source points. Plotting
+your input to see it *is* a legitimate first move, and the stage rule would hide the widget
+that does it.
+
+So the three readings are not rivals to choose between:
+
+| Reading | Good at | Wrong about |
+| --- | --- | --- |
+| **Stage** | explaining the shape of the work; a first canvas | forbids plotting an input, which 9 real edges do |
+| **Port** | the strongest type-level filter available | 22 of 25 successors remain after a point input; cannot retire loop widgets |
+| **Receipt** | binds late, where the others stop binding; the only one expressible in the ontology | silent until something has been run toward an output |
+
 ### Revised 2026-10-14, after the receipt question
 
 The port-type rule is not worth building: measured, it filters only at the first
@@ -672,3 +711,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | The border widgets measured: 18 of 51 emit a type they also take, so a port rule can never retire them; 2 have no type contract at all; 11 emit `points` into 25 consumers. And the asymmetry that settles the design -- fitness conditions exclude almost nothing FORWARD (22 of 25 still legal after a point input) and collapse the answer to one BACKWARD (travel_time_band can only follow reachable_nodes). Expectations are a property of a widget and declarable; intent is not a property of any widget. So the useful feature is each widget saying what it expects and who satisfies it, before it is wired rather than after it is run |
 | 2026-10-14 | The connection universe enumerated: 46 widgets with an output, 578 legal producer-to-consumer-port pairs, 54 demonstrated by the seven shipped examples (9.3%), 524 never tried, and 11 edges the examples run that the enumeration cannot admit because the ports come from a pin. Suggests the honest feature: offer the finite menu ranked by evidence -- done before, versus possible and untried -- rather than predicting intent. And 9% coverage of the connection space is where this week's inert-quantity defects were hiding |
 | 2026-10-14 | "Why inadmissible?" -- it was the wrong word and the correction matters: the application RUNS all eleven, because its connection check asks nodeInputs(node), which resolves the mode, the pin and that node's parameters, while the enumeration asked the type-level declaration. Ten are a pinned ruleset's ports; the eleventh is map_output.points_2, a port that exists per NODE because a parameter creates up to eight of them. The contract belongs to the node, not to the widget, so 578 is a lower bound |
+| 2026-10-14 | Third reading measured: input/process/output stages, 7/41/5 of the 53 widgets. Weaker as a filter than the port rule -- one input opens 48 of 53 against 20 -- and stronger as an explanation. The two disagree about outputs, and the examples side with the port rule: of 35 edges into an output, 9 come straight from an input (pumps onto a map for context, a study area onto a map, geoprivacy's before-view), so a stage gate would hide the widget that plots your input |

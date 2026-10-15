@@ -87,6 +87,19 @@ export const rulesetCitation=(ruleset:Ruleset):RulesetCitation=>
 // Both versions of each changed ruleset are carried: a saved workflow pins the version that
 // produced its results, and a port type change does not entitle this build to forget the old one.
 const BUNDLED=[outreachCriteria,accessReview,accessReview2,nb06Evidence,nb06Evidence2,extentReview,extentReview2] as unknown as Ruleset[];
+/** The version of this ruleset a practitioner would be offered today, if it is not the one
+ *  pinned. Returns nothing when the pin is current.
+ *
+ *  A pinned version keeps running, deliberately: a rule change changes results, so a saved
+ *  workflow replays the rules it was built on. What was missing is that nobody was told a newer
+ *  one exists. The practitioner's instruction of 2026-10-14: "when new versions appear, and a
+ *  workflow is run that requires an old version, we have to alert the user that there is a newer
+ *  version." */
+export function supersededBy(id:string,version:string):string|undefined{
+  const newer=BUNDLED.filter(r=>r.id===id&&r.version.localeCompare(version,undefined,{numeric:true})>0)
+    .map(r=>r.version).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  return newer.at(-1);
+}
 export const rulesetKey=(id:string,version:string)=>`${id}@${version}`;
 const INDEX=new Map(BUNDLED.map(r=>[rulesetKey(r.id,r.version),r]));
 

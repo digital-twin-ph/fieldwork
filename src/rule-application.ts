@@ -97,8 +97,8 @@ export function pinnedRuleset(rulesetId:string,version:string):ParamsByType['app
   const ruleset=resolveRuleset(rulesetId,version);
   const ports=(ruleset.inputContract as {ports:{inputs:[string,string][]; output:string}}).ports;
   return {id:ruleset.id,version:ruleset.version,title:ruleset.title,
-    inputs:structuredClone(ports.inputs) as ParamsByType['apply_ruleset']['ruleset']['inputs'],
-    output:ports.output as ParamsByType['apply_ruleset']['ruleset']['output']};
+    inputs:structuredClone(ports.inputs) as NonNullable<ParamsByType['apply_ruleset']['ruleset']>['inputs'],
+    output:ports.output as NonNullable<ParamsByType['apply_ruleset']['ruleset']>['output']};
 }
 
 export function projectionOf(rulesetId:string,version:string):string{
@@ -112,7 +112,7 @@ export type RuleApplicationResult={value:DisplayValue; receipt:Receipt};
  *  `areaSquareMetres` is attached by the widget that projected to get it (experiment 113). A widget
  *  that worked in degrees attaches nothing, and absent becomes `fw:areaKnown false` rather than a
  *  zero: a polygon whose area nobody measured is not a polygon of no area. */
-export function extentN3(polygons:{features:{id:string;name:string;areaSquareMetres?:number}[]},threshold:number){
+export function extentN3(polygons:{features:{id:string;name:string;areaSquareMetres?:number}[]},threshold:number,version='1.0.0'){
   if(!Number.isFinite(threshold)||threshold<0)throw new Error('State a review threshold in square metres, zero or greater.');
   if(!polygons?.features?.length)throw new Error('Connect polygons to review. There is nothing to classify.');
   const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix math: <http://www.w3.org/2000/10/swap/math#>.\n';
@@ -121,7 +121,13 @@ export function extentN3(polygons:{features:{id:string;name:string;areaSquareMet
     return `<urn:fieldwork:polygon:${encodeURIComponent(f.id)}> fw:areaKnown ${known}.`
       +(known?`\n<urn:fieldwork:polygon:${encodeURIComponent(f.id)}> fw:areaSquareMetres ${f.areaSquareMetres!.toFixed(2)}.`:'');
   }).join('\n');
-  const ruleset=resolveRuleset('urn:fieldwork:ruleset:extent-review','1.0.0');
+  // The version the NODE pinned, not one written here. A receipt states what the node did, and a
+  // generator that resolves its own version makes the receipt cite rules the node did not choose:
+  // before 2026-10-14 a node pinning extent-review 1.1.0 produced a receipt citing 1.0.0. The
+  // rules happened to be identical across those versions, so no conclusion was wrong -- which is
+  // exactly why it survived. The practitioner's framing is the test it failed: a ruleset node's
+  // receipt is the final state of that node once the ruleset is configured and the ports bound.
+  const ruleset=resolveRuleset('urn:fieldwork:ruleset:extent-review',version);
   const rules=bindParameters(ruleset,{threshold:Number(threshold.toFixed(2))});
   return {facts:prefix+facts+'\n',rules:prefix+rules,input:prefix+facts+'\n\n'+rules,ruleset:rulesetCitation(ruleset)};
 }

@@ -283,6 +283,41 @@ function renderN3(){
   else if(result)$('#n3-preview').textContent=runEvidenceText();
   else $('#n3-preview').textContent='Add a Study area and draw a boundary to generate facts, or run a worked example.';
 }
+/** The CURRENT version of each ruleset identity, not every bundled one. Older versions are
+ *  carried so a saved workflow that pinned one still replays -- a rule change changes results,
+ *  which is why the pin exists -- and offering them would let a practitioner start new work on a
+ *  superseded rule. Seven bundled documents, four identities, four choices. */
+/** Choosing a ruleset on the node: pin it, take its declared defaults, and name the step after
+ *  what it does unless the practitioner has already named it themselves. The ports change with
+ *  the ruleset, so whatever was wired to this node is disconnected -- the same bargain the output
+ *  widgets make when their input mode changes, and Undo restores it. */
+function wireRulesetChoice(node:WorkflowNode){
+  optionalElement('#ruleset-choice')?.addEventListener('change',event=>{
+    const [id,version]=control(event).value.split('@');
+    const chosen=id?bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version):undefined;
+    change(w=>{
+      const target=getNode(w,node.id,'apply_ruleset');
+      const generic=!target.params.label||target.params.label===TYPES.apply_ruleset.title
+        ||currentRulesets().some(r=>r.title===target.params.label);
+      if(!chosen){delete (target.params as {ruleset?:unknown}).ruleset;target.params.parameters={};}
+      else{
+        target.params.ruleset=pinnedRuleset(chosen.id,chosen.version);
+        target.params.parameters=Object.fromEntries(chosen.parameters
+          .filter(p=>p.default!==undefined).map(p=>[p.name,p.default as number]));
+        if(generic)target.params.label=chosen.title;
+      }
+      w.edges=w.edges.filter(edge=>edge.to!==node.id&&edge.from!==node.id);
+    });
+  });
+}
+function currentRulesets():Ruleset[]{
+  const current=new Map<string,Ruleset>();
+  for(const r of bundledRulesets() as Ruleset[]){
+    const held=current.get(r.id);
+    if(!held||held.version.localeCompare(r.version,undefined,{numeric:true})<0)current.set(r.id,r);
+  }
+  return [...current.values()];
+}
 function renderLibrary(search=''){
   const allowed=addableTypes({exampleKey:exampleKey(workflow),
     templateTypes:template(exampleKey(workflow)).nodes.map(n=>n.type),
@@ -315,44 +350,6 @@ function renderLibrary(search=''){
   //
   // The basis status is shown where a practitioner decides, not buried in the Inspector. An
   // illustrative ruleset is offered and says so, for the same reason an unreviewed composition is.
-  // The CURRENT version of each ruleset identity, not every bundled one. Older versions are
-  // carried so a saved workflow that pinned one still replays -- a rule change changes results,
-  // which is why the pin exists -- and offering them here would let a practitioner start new work
-  // on a superseded rule. Six bundled versions, four identities, four entries.
-  const current=new Map<string,Ruleset>();
-  for(const r of bundledRulesets() as Ruleset[]){
-    const held=current.get(r.id);
-    if(!held||held.version.localeCompare(r.version,undefined,{numeric:true})<0)current.set(r.id,r);
-  }
-  const rulesets=[...current.values()]
-    .filter((r:Ruleset)=>(r.title+' '+r.description).toLowerCase().includes(search.toLowerCase()));
-  if(rulesets.length){
-    const BASIS:Record<string,string>={published:'',"practitioner-agreed":'',illustrative:'illustrative, no source',proxy:'proxy, no source'};
-    $('#node-library').insertAdjacentHTML('beforeend','<div class="library-group">Rulesets</div>'
-      +rulesets.map((r:Ruleset)=>{
-        const warn=BASIS[r.basis.status]?`<span class="pill warn">${esc(BASIS[r.basis.status])}</span>`:'';
-        const ports=(r.inputContract as {ports:{inputs:[string,string][];output:string}}).ports;
-        return `<button class="palette-node purple" data-ruleset="${esc(r.id+'@'+r.version)}" `
-          +`title="${esc(r.mustNotBeReadAs)}"><span class="palette-icon">⋈</span>`
-          +`<span class="palette-label">${esc(r.title)} ${warn}</span>`
-          +`<span class="palette-note">${esc(ports.inputs.map(([,t])=>t).join(', ')+' → '+ports.output)}</span></button>`;
-      }).join(''));
-    if(!revealed)$('#library-count').textContent=String(Number($('#library-count').textContent||0)+rulesets.length);
-  }
-  $('#node-library').querySelectorAll<HTMLButtonElement>('[data-ruleset]').forEach(b=>b.onclick=()=>{
-    const [id,version]=(b.dataset.ruleset||'').split('@');
-    const found=bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version);
-    if(!found)return;
-    const nodeId=`apply_ruleset-${Date.now()}`;
-    const didAdd=change(w=>{w.nodes.push({id:nodeId,type:'apply_ruleset',
-      x:180+(w.nodes.length%4)*80,y:90+(w.nodes.length%3)*80,
-      params:{label:found.title,ruleset:pinnedRuleset(found.id,found.version),
-        parameters:Object.fromEntries(found.parameters.filter(p=>p.default!==undefined).map(p=>[p.name,p.default as number]))}} as WorkflowNode);
-      selected=nodeId;});
-    if(didAdd===false)return;
-    flow?.fit();
-    toast(`${found.title} added. Its ports come from the ruleset, not the widget.`);
-  });
   $('#node-library').querySelectorAll<HTMLButtonElement>('[data-composition]').forEach(b=>b.onclick=()=>{
     const found=bundledCompositions().find(c=>`${c.id}@${c.version}`===b.dataset.composition);
     if(!found)return;
@@ -366,7 +363,8 @@ function renderLibrary(search=''){
     toast(`${entry.title} added as one step. Connect its ports; it expands into ${found.members.length} primitives when it runs.`);
   });
   $('#node-library').querySelectorAll<HTMLButtonElement>('[data-add]').forEach(b=>b.onclick=()=>{
-    const type=b.dataset.add as NodeType,sample=structuredClone(type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Mean-center displacement',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='hex_aggregate'?{type:'hex_aggregate' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered acquisition area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected bands'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Area the points cover',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='coverage_check'?newCoverageCheck():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
+    const type=b.dataset.add as NodeType,sample=structuredClone(type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
+      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Mean-center displacement',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='hex_aggregate'?{type:'hex_aggregate' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered acquisition area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected bands'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Area the points cover',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='coverage_check'?newCoverageCheck():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
     // in, from the mean longitude of every coordinate already configured. The parameter stays: a
@@ -602,6 +600,21 @@ function renderInspector(){
     // parameters are for: each one carries its unit, its range and what it means, so the control,
     // the label and the hint all come from the ruleset instead of being written per widget. This
     // is the UI that three widgets used to have three copies of.
+    // The ruleset is chosen HERE rather than in the palette. One widget is offered and the
+    // practitioner says what it should do, because a palette entry per ruleset grew with every
+    // ruleset and again with every version of one. Their decision, 2026-10-14.
+    content+=`<span class="inspector-section">What this step applies</span>`
+      +`<div class="field"><label class="field-label" for="ruleset-choice">Ruleset</label>`
+      +`<select id="ruleset-choice"><option value="">Choose a ruleset…</option>`
+      +currentRulesets().map(r=>`<option value="${esc(r.id+'@'+r.version)}" ${n.params.ruleset?.id===r.id?'selected':''}>`
+        +`${esc(r.title)} ${esc(r.version)} · ${esc(r.inputContract.ports.inputs.map(([,t])=>t).join(', '))} → ${esc(r.inputContract.ports.output)}</option>`).join('')
+      +`</select><small>The ruleset decides what this step classifies, which inputs it takes and what it gives back. Changing it disconnects what is wired here, because the ports change with it; Undo restores them.</small></div>`;
+    if(!n.params.ruleset){
+      content+=`<div class="notice">This step has nothing to apply yet. It can sit on the canvas unconfigured — the run refuses it by name until a ruleset is chosen.</div>`;
+      $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
+      wireRulesetChoice(n);
+      return;
+    }
     const pinned=n.params.ruleset,ruleset=resolveRuleset(pinned.id,pinned.version);
     const basis={published:'Published basis',"practitioner-agreed":'Practitioner-agreed basis',
       illustrative:'Illustrative — no source',proxy:'Proxy — no source'}[ruleset.basis.status]||ruleset.basis.status;
@@ -821,12 +834,14 @@ function renderInspector(){
   optionalElement('#edit-study-area')?.addEventListener('click',()=>openStudyAreaEditor(getNode(workflow,n.id,'study_area'),params=>change(w=>getNode(w,n.id,'study_area').params=params)));
   optionalElement('#area-view-n3')?.addEventListener('click',()=>{renderN3();switchView('rules');});
   $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('[data-param]').forEach(el=>el.addEventListener('change',()=>change(w=>updateParam(w,n.id,required(el.dataset.param),el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value))));
-  if(n.type==='apply_ruleset')
-    for(const parameter of resolveRuleset(n.params.ruleset.id,n.params.ruleset.version).parameters)
+  if(n.type==='apply_ruleset'){
+    wireRulesetChoice(n);
+    for(const parameter of (n.params.ruleset?resolveRuleset(n.params.ruleset.id,n.params.ruleset.version).parameters:[]))
       optionalElement(`#ruleset-${parameter.name}`)?.addEventListener('change',e=>{
         const value=control(e).value===''?NaN:Number(control(e).value);
         change(w=>{getNode(w,n.id,'apply_ruleset').params.parameters[parameter.name]=value;});
       });
+  }
   if(n.type==='measure_distance'){
     const current=()=>structuredClone(getNode(workflow,n.id,'measure_distance').params.candidateFilter??[]);
     optionalElement('#filter-add')?.addEventListener('click',()=>change(w=>{

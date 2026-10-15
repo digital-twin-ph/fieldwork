@@ -22,6 +22,11 @@ export const ALWAYS_ADDABLE=[
   'rate','case_series','slr_extract_import','slr_site_assignment',
   'slr_threshold_comparison','donut_geomask','hex_aggregate','mean_center','compare_point_sets',
   'comparison_map','chart_output','map_output','table_output',
+  // One rule-application widget, offered everywhere, with the ruleset chosen on the node. It was
+  // reachable only through a per-ruleset palette entry until 2026-10-14, so removing those
+  // entries would have left it addable only where an example already contained one -- which the
+  // widget-names ledger reported as "example templates only" the moment the entries went.
+  'apply_ruleset',
 ] as const;
 
 /** Offered on the two teaching canvases, which start with almost nothing. */
@@ -46,11 +51,22 @@ export const RETIRED_FROM_PALETTE:readonly string[]=
  *  has no ports and cannot run, so the type is kept out of `ALWAYS_ADDABLE` on purpose. */
 export const ADDABLE_VIA_COMPOSITION=['micro_workflow'] as const;
 
-/** Addable, but not by choosing the type: the palette shows one entry per bundled ruleset and each
- *  adds an `apply_ruleset` node already carrying that ruleset's pinned ports and declared
- *  parameters. The same reasoning as compositions above — a generic entry would add a node with no
- *  ruleset, which has no ports and cannot run. */
-export const ADDABLE_VIA_RULESET=['apply_ruleset'] as const;
+/** Nothing. The palette offers ONE generic rule-application widget and the ruleset is chosen on
+ *  the node.
+ *
+ *  It used to show one entry per bundled ruleset, each adding a node with that ruleset already
+ *  pinned, so that adding one always gave a node that could run. The practitioner's decision of
+ *  2026-10-14 reversed that: "the palette should only offer a generic ruleset widget that can be
+ *  named based on what it does in the workflow -- it can filter, can classify, etc. When we offer
+ *  instances of rulesets as widgets, that's the recipe for exponential clutter."
+ *
+ *  Measured when the decision was made: four rulesets were showing as SEVEN palette entries,
+ *  because a superseded version stays bundled so saved workflows can still resolve their pins. So
+ *  the list grew with every ruleset and again with every version of one, and could never shrink.
+ *
+ *  What it costs is a node that exists before it can run, which `executionPlan` refuses by name --
+ *  the arrangement a drawn study area with no boundary has always had. */
+export const ADDABLE_VIA_RULESET=[] as const;
 
 export function addableTypes(options:{
   exampleKey:string; templateTypes:readonly string[]; workflowTypes:readonly string[];

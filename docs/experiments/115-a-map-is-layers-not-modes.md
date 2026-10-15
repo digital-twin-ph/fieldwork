@@ -137,12 +137,43 @@ It also does not establish the cost. The renderer branches in at least five plac
 interactive map is a separate implementation from the plot, so "compose layers" is a
 rewrite of the display path rather than a port change.
 
+## Why this record exists, since nothing shipped is broken
+
+Asked directly on 2026-10-14: *why is 115 needed?* Three reasons, and one thing it does
+not earn.
+
+**It changes what a different fix should be.** The blocker
+`output-mode-set-before-the-shape-arrives` proposes to switch a map's mode automatically
+when exactly one mode accepts the connected type. That is a sensible repair *inside* the
+mode model, and if this record is right it entrenches the thing to remove. Without 115
+someone implements it and the model hardens.
+
+**It holds measurements that would otherwise live nowhere**: six of the ten shipped maps
+already show more than one layer and every one reaches that through a points-only special
+case; the isochrone canvas holds ten drawable nodes and its map is told about two.
+
+**It records a correction to a model, which this project keeps rather than quietly
+absorbs.** The explanation it corrects was mine, written the same day.
+
+**What it does not earn is a rewrite.** Nothing shipped is broken: all ten maps render,
+and the two special cases carry the six that need more than one layer. Nobody has asked for
+polygons beside a raster, or two polygon layers, or a network beside points — this record
+asserted those were wanted only because no port exists to ask with, and *that is an
+inference, not a measurement*. The demand is unmeasured.
+
 ## What would close it
 
-A map that takes N layer inputs of mixed types, draws them in a stated order with a legend
-derived from the layers, and reproduces all ten shipped maps — including the sea-level map
-with three layers and the isochrone map with polygons and context points — with no
-`inputMode`, no `contextPoints` and no numbered point ports.
+A decision, not a rewrite: evidence that a practitioner wants a combination the modes
+forbid. A worked example that needs polygons over a raster, or two polygon layers
+distinguished, or a network beside the points routed on it, is the evidence; the shipped
+seven contain none.
+
+If that evidence appears, closing it means a map that takes N layer inputs of mixed types,
+draws them in a stated order with a legend derived from the layers, and reproduces all ten
+shipped maps with no `inputMode`, no `contextPoints` and no numbered point ports.
+
+If it does not appear, the honest outcome is to record that the mode model was wrong in
+principle and adequate in practice, and to leave it.
 
 ## Updates
 
@@ -153,3 +184,4 @@ changed this file; a date stamp sweep is not an update._
 | --- | --- |
 | 2026-10-14 | A map has layers, not modes — the correction, and the measurement that supports it: 6 of 10 shipped maps already show more than one layer, through two special-case mechanisms that each handle points only |
 | 2026-10-14 | "An output widget being the last stage can see what the widgets before it are producing that it can consume." It already does, one port at a time: twelve Inspector pickers list the canvas nodes whose output matches a port's type and call setConnection on choice. Measured: the isochrone canvas holds ten drawable nodes and its map is told about two, hidden by the mode rather than by sense. So the edge-making half of a layer list is built; what is missing is one list keyed by drawable instead of several keyed by a mode's ports, and a renderer that composes |
+| 2026-10-14 | "Why is 115 needed?" -- narrowed in answer. It earns its place by changing what the blocker output-mode-set-before-the-shape-arrives should do (automating a mode switch would entrench the model this record calls wrong), by holding measurements that live nowhere else, and by recording a model correction. It does NOT earn a rewrite: nothing shipped is broken, and the claim that combinations are wanted is an inference rather than a measurement. Closing it now means evidence of demand, not a new renderer |

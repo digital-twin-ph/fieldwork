@@ -199,6 +199,10 @@ fw:areaSquareMetres a owl:DatatypeProperty; rdfs:range xsd:decimal;
   rdfs:label "Enclosed area of a polygon, in square metres";
   rdfs:comment "Read FROM a record rather than recomputed: a widget that projected to metres attaches it, and one that worked in degrees attaches nothing. Distinct from fw:hullAreaSquareMetres, which states one hull's area in its own receipt; this is the quantity a later step can bind a rule to. Experiment 113.";
   fw:implementationStatus "implemented".
+fw:spanMetres a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:label "Greatest distance across a geometry, in metres";
+  rdfs:comment "Of the GEOMETRY, as fw:areaSquareMetres is. Distinct from fw:hullSpanMetres, which is a quantity of the hull COMPUTATION -- what that step measured -- and so is asserted of an activity. An activity has no width, which is why the two are separate terms rather than one related to the other: a subPropertyOf between them would entail that a computation spans metres.";
+  fw:implementationStatus "implemented".
 fw:areaKnown a owl:DatatypeProperty; rdfs:range xsd:boolean;
   rdfs:label "Whether an area was measured for this subject";
   rdfs:comment "Asserted for every subject, including the ones with no area, because the rule subset excludes negation-as-failure: absence has to be a measured fact rather than an inference from silence. False concludes fw:Unknown, which is a result and not a failure. The companion of fw:distanceKnown, fw:alertKnown and fw:accessKnown; experiment 65 records why the pattern exists.";

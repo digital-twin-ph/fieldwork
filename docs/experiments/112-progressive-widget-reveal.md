@@ -427,6 +427,44 @@ above. The second half is unchanged and is not something this record can do to i
 the question is whether a practitioner facing 7 widgets finds what they need or concludes
 the application cannot do it, and only watching one answers that._
 
+### The hypothesis, as the practitioner states it
+
+> Syntactic, semantic, then pragmatic interoperability are the foundation of the
+> progressive reveal.
+
+Which makes reveal a **pragmatic** feature in the standard sense — intent and effect, the
+receiving system acting on what the data means rather than logging a number — resting on
+the two levels below it. [The glossary](../glossary.md) now carries all three in their
+general form beside this project's own table.
+
+Tested, by asking the canvas the questions each level needs and seeing which it can answer.
+The ten questions, their measured statuses and the method are in
+[experiment 44](44-ontology-competency-questions.md); the harness is
+`scripts/competency-canvas.mjs`, which runs a worked example, parses its receipts and
+provenance back in, and asks. `--before` asks them of the canvas as it stands **before** the
+widget in question is added, which is when reveal has to answer.
+
+| Level | Answered |
+| --- | --- |
+| Syntactic | 2 of 2 |
+| Semantic | 1 of 3 |
+| Pragmatic | 2 of 4, before the day's work; 4 of 4 after one widget was taught to assert a fact about the thing it made |
+
+**The hypothesis survives, with one correction to its order.** The levels do rest on each
+other, and the canvas answers the syntactic questions outright. But the semantic level is
+the *weakest*, not the middle: nothing in the graph records whether a point is an
+observation, a piece of infrastructure or a synthetic sample, so the level the hypothesis
+places second is the one with the least support. A reveal rule built today would be
+syntactic and pragmatic with a hole where the meaning should be — able to say *this ruleset
+can run on that polygon* and unable to say *those points are pumps, not deaths*.
+
+And one structural fact no level survives without: **a canvas carries facts only about what
+has been run toward an output.** A widget wired to nothing is not in the execution plan,
+emits no receipt, and is invisible to any rule reading the graph. Before a run there are
+plans, not receipts. Reveal driven by receipts therefore reveals nothing on a fresh canvas,
+which is exactly where the port rule was strongest — the two rules are complements, not
+rivals.
+
 ### Revised 2026-10-14, after the receipt question
 
 The port-type rule is not worth building: measured, it filters only at the first
@@ -459,3 +497,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | Measured the filter's strength through three real builds, which the blank-canvas figure had hidden: two placements open more than half the palette (57%, 51%, 57%) and the rest of each build runs at 57-82% addable. The rule binds hardest where a starter set already helps and stops binding where a canvas is actually crowded. Recorded as evidence against building it |
 | 2026-10-14 | The practitioner's question -- "what is revealed depends on what N3 receipts are already on the canvas, right?" -- separated two rules that had been discussed as one. Everything measured so far is the PORT rule, which filters only at the first placement. The RECEIPT rule is the one that can live in the ontology and binds late in a build, and today it would reveal nothing: 0 of 7 rulesets' expected predicates appear in any widget's declared emissions, because a hull's receipt says fw:hullAreaSquareMetres and the rule expects fw:areaSquareMetres, declared distinct and related by nothing |
 | 2026-10-14 | "Port type matching only solves a part of the problem." Measured the gap: `points` alone admits 330 type-legal connections; the four-widget routing chain is `points -> points` at every step and relies on eight run-time refusals to catch what the type cannot see, six of which already name the step that should have come first. Semantic difference -- deaths against pumps against grid samples -- is unaddressed at any level, and `map_output.context` is not even a declared port. Reveal reads the syntactic level only |
+| 2026-10-14 | The hypothesis tested level by level with ten canvas competency questions (experiment 44, scripts/competency-canvas.mjs): syntactic 2 of 2, semantic 1 of 3, pragmatic 2 of 4 before the day's work and 4 of 4 after. It survives, with the order corrected -- semantic is the WEAKEST level, not the middle one, because nothing records what a point means. And a canvas carries facts only about what has been run toward an output, so a receipt rule says nothing on a fresh canvas, which is where the port rule was strongest |

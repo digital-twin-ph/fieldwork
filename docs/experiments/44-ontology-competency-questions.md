@@ -1,6 +1,6 @@
 # Experiment 44: ontology competency questions
 
-_Created 2026-10-08 · Updated 2026-10-10_
+_Created 2026-10-08 · Updated 2026-10-14_
 
 Date: October 8, 2026. Status: question list with measured statuses, thirteen of
 them executable. No vocabulary term is changed by this document; it records what
@@ -111,6 +111,69 @@ would be worse than one that does not.
 | R4 | Is this travel time what a person would experience? | A modelled corridor under stated assumptions is not observed travel |
 | R5 | Did this workflow produce a correct result? | Structure, consistency and conformance establish none of that |
 
+## Canvas questions: what a rule reading the current canvas can ask
+
+_Added 2026-10-14, for [experiment 112](112-progressive-widget-reveal.md). The practitioner's
+hypothesis is that **syntactic, then semantic, then pragmatic interoperability are the
+foundation of progressive reveal**, so the questions are grouped by level and asked in that
+order._
+
+These differ from the questions above in **when** they are asked. The others are asked of a
+finished run by someone reviewing it. These are asked of a canvas **mid-build**, to decide what
+to offer next — so the answer has to be there *before* the widget in question is added. Asking
+after it has run is asking whether the thing you already did was possible.
+
+`scripts/competency-canvas.mjs` executes a worked example, parses the receipts and workflow
+provenance back in — the same text the N3 and evidence view shows — and asks each question of
+that graph. `--before` removes the rule node and re-attaches its output, which is the state a
+reveal rule would actually meet. Measured on `snow-extent` and `snow-isochrone`, 2026-10-14:
+
+| # | Level | Question | Status |
+| --- | --- | --- | --- |
+| C1 | Syntactic | What kinds of thing has this canvas produced? | **Answerable** — 19 `fw:` classes in the graph |
+| C2 | Syntactic | Which geometry is here, and in which CRS are its coordinates? | **Answerable** — 258 geometries, CRS84 stated in each literal |
+| C3 | Semantic | Is a point here an observation, infrastructure, or synthetic? | **Not answerable** — no term records what a point IS. Deaths, pumps and generated grid samples are indistinguishable |
+| C4 | Semantic | Which feature is the study area, found by its role? | **Not answerable** here — the same gap S1b records for pinned-dataset examples |
+| C5 | Semantic | What did a rule conclude, and about which thing? | **Answerable** after a rule runs; absent before, which is correct |
+| C6 | Pragmatic | What on this canvas asserts an enclosed area, asked once? | **Answerable from 2026-10-14** — see below. It was not |
+| C7 | Pragmatic | Which results were computed in a metric CRS, and which one? | **Answerable** — `fw:metricCRS`, two assertions |
+| C8 | Pragmatic | Could the extent ruleset run on what is here, by its own declared expectations? | **Answerable from 2026-10-14** |
+| C9 | Pragmatic | Is a point here attached to a street network, so it can be routed from? | **Answerable** in the routing example via `fw:networkSnaps` and `fw:snappedNodeCount`; the per-point attachment is still an attribute rather than a fact |
+| C10 | Pragmatic | Is any result here over fewer sites than were offered? | **Answerable** when it happens — `fw:unconnectedSiteCount`, added 2026-10-14 — and silent otherwise, which is correct |
+
+**5 of 10 before the day's work, 5 of 10 after — but a different five, and the two that moved
+are the two the reveal rule needs.**
+
+### What C6 found, and why it was not a subPropertyOf
+
+The canvas held the number and could not answer the question. `summarize_hull` measured
+139,230.01 m² and asserted `fw:hullAreaSquareMetres` **of the activity** — the computation. The
+extent ruleset expects `fw:areaSquareMetres` **of the polygon**, and was minting those facts
+itself, inside its own fact generator, at the moment it ran. So the canvas could answer *could
+this ruleset run here?* only after the ruleset had run.
+
+The obvious repair — declare one term a kind of the other — is wrong, and the graph says why:
+the subjects differ. An activity does not enclose ground, so `fw:hullAreaSquareMetres
+rdfs:subPropertyOf fw:areaSquareMetres` would entail that a computation has an area, and
+nothing would catch it, because `fw:areaSquareMetres` declares no domain.
+
+What the hull does now is assert the area **of the polygon it generated**, at the IRI
+`extentN3` already mints for that polygon, so the receipt and the rule facts are about the same
+subject rather than two nodes that happen to share a number. `fw:spanMetres` is declared the
+same way, as a property of a geometry, beside `fw:hullSpanMetres` which remains a quantity of
+the computation.
+
+It is [experiment 113](113-rules-over-geometry.md)'s first leap one layer up. There, a derived
+quantity had to become a field on the record before a rule could read it. Here, the same
+quantity had to become a fact about the thing, not about the step that produced it.
+
+### What these questions say about the hypothesis
+
+Syntactic questions answer. Semantic questions mostly do not: **nothing in the graph records
+what a point means**, so the level the hypothesis puts second is the level with the least
+support. Pragmatic questions answer where a widget was taught to assert the fact, and not
+otherwise — which makes them a ledger of work rather than a property of the design.
+
 ## Using this list
 
 Add a question before adding a primitive, not after: if a proposed widget
@@ -130,3 +193,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-08 | Match GDAL's all-touched rule, and record which rule a clip used |
 | 2026-10-08 | Date every documentation file from git history, and check it in the gate |
 | 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
+| 2026-10-14 | Ten canvas questions added for experiment 112, grouped by the practitioner's hypothesis — syntactic, then semantic, then pragmatic — and executed against a real run graph by scripts/competency-canvas.mjs. Syntactic answers; semantic mostly does not, since nothing records what a point MEANS; pragmatic answers only where a widget was taught to assert the fact. C6 and C8 moved to answerable when summarize_hull began asserting the area of the POLYGON rather than only of the computation |

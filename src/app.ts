@@ -1339,13 +1339,19 @@ wireThemeControl();renderLibrary();renderResults();save();render();mountPanelLay
 // Started here, after the requested example has been loaded, rather than beside the other
 // controls. Starting it earlier rendered the canvas once, which syncs ?example= to the workspace
 // being shown -- so the playback overwrote the example it was asked to play. Experiment 112.
-if(new URLSearchParams(location.search).get('playback')==='1'){
-  $('#playback-bar').hidden=false;
-  setPlayback(0);
-  $('#playback-next').onclick=()=>setPlayback(Math.min(playbackOrder().length,(playbackStep??0)+1));
-  $('#playback-back').onclick=()=>setPlayback(Math.max(0,(playbackStep??0)-1));
-  $('#playback-exit').onclick=()=>setPlayback(null);
-}
+$('#playback-next').onclick=()=>setPlayback(Math.min(playbackOrder().length,(playbackStep??0)+1));
+$('#playback-back').onclick=()=>setPlayback(Math.max(0,(playbackStep??0)-1));
+$('#playback-exit').onclick=()=>setPlayback(null);
+// Reachable from the workspace bar, not only by typing ?playback=1. The playback IS the
+// refinement instrument for the reveal rule -- it is what produced the three readings and the
+// per-step measurements in 112 -- and an instrument nobody can find does not refine anything.
+// The practitioner, 2026-10-15, twice: "I still do not see progressive reveal", then "I thought
+// we implemented progressive reveal in worked examples."
+//
+// It still changes nothing about the ordinary palette, because the rule is not adopted. Playing
+// it back is a thing you ASK for, and leaving it restores the canvas.
+$('#playback-start').onclick=()=>setPlayback(playbackStep===null?0:null);
+if(new URLSearchParams(location.search).get('playback')==='1')setPlayback(0);
 export let servingBuild='unknown';
 if('serviceWorker' in navigator){
   navigator.serviceWorker.addEventListener('message',event=>{

@@ -485,7 +485,11 @@ rivals.
 > The playback is like playing Jupyter Notebooks from start to finish. Only in this case
 > everything happens on a highly abstracted canvas.
 
-Built, behind `?playback=1`, over any worked example. The canvas shows the nodes placed so
+Built, over any worked example. Reachable from the workspace bar as **Play back the build**
+since 2026-10-15 — it was behind `?playback=1` alone until the practitioner asked for the
+reveal twice and then said *"I thought we implemented progressive reveal in worked examples.
+And used this as a progressive reveal refinement approach."* Both were true, and an instrument
+for refining a rule that only its author can reach refines nothing. The canvas shows the nodes placed so
 far, the palette dims what the rule would not yet offer, and a bar says what the newest
 step emitted and what that revealed. It is a **view**: nothing is edited, nothing is saved,
 and leaving restores the canvas. `src/reveal-playback.ts` computes the order and the

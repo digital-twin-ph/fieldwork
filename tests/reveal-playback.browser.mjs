@@ -59,3 +59,28 @@ test('the playback changes nothing that is saved',async({page})=>{
   const during=await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'));
   expect(JSON.parse(during).nodes.length,'the saved workflow keeps every node').toBe(JSON.parse(before).nodes.length);
 });
+
+// "I thought we implemented progressive reveal in worked examples" -- the practitioner,
+// 2026-10-15, having asked for it twice. It was implemented, and only reachable by typing
+// ?playback=1, which is the same failure in a smaller form: the instrument that refines the rule
+// existed and nobody could find it. It is in the workspace bar now, and it still changes nothing
+// about the ordinary palette, because the rule is not adopted.
+test('the playback is reachable without typing a query parameter',async({page})=>{
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=snow-extent');
+  await expect(page.locator('#playback-bar')).toBeHidden();
+  // The ordinary palette is untouched until it is asked for.
+  const dimmed=()=>page.locator('#node-library [data-add].unrevealed').count();
+  expect(await dimmed()).toBe(0);
+
+  await page.locator('#playback-start').click();
+  await expect(page.locator('#playback-bar')).toBeVisible();
+  await expect(page.locator('#playback-step')).toContainText('Step 0 of');
+  expect(await dimmed()).toBeGreaterThan(0);
+
+  // And the same button leaves, restoring the canvas and the palette.
+  await page.locator('#playback-start').click();
+  await expect(page.locator('#playback-bar')).toBeHidden();
+  expect(await dimmed()).toBe(0);
+});

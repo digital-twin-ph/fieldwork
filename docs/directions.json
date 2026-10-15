@@ -1,0 +1,94 @@
+{
+ "schema": "fieldwork/directions/1",
+ "note": "A DE moment is a point at which the direction should change. The practitioner named it on 2026-10-15, after finding that a map still had an Input mode a day after the discussion that ruled against modes: \"The map output discussion is what we call a DE moment, a moment when things should head in a different direction, and it did not.\"\n\nThis file is the answer to that. Every direction a discussion settles is recorded here with what it requires IN CODE and a clock on it, because the failure mode is specific and this project has produced it at least three times: the direction is written into a spec page, a glossary entry or an ontology term, the code is left alone, and the record now says the matter is settled while the running application still does the old thing. A widget page is not a work item and no ratchet can see one.\n\nIt is deliberately not the blocker ledger. A blocker is a claim that something CANNOT be done yet. A direction is a decision that something SHOULD now be done differently, and the two fail in opposite ways: a blocker rots by being lifted and not noticed, a direction rots by being agreed and not built.",
+ "measuredAt": "2026-10-15",
+ "checkWindowDays": 7,
+ "windowBasis": "The same window the blocker ledger uses, for the same reason: this project changes in days. A direction nobody has checked in a week is a direction nobody is acting on, and saying so is the entire point of the file.",
+ "directions": [
+  {
+   "id": "a-map-has-layers-not-modes",
+   "stated": "2026-10-14",
+   "statedBy": "the practitioner",
+   "inTheirWords": "I think we have a misunderstanding of maps: ... A map has layers... So there is no such thing as mode, only layers",
+   "requiresInCode": "map_output stops having an inputMode parameter that decides which ports exist; the renderer is chosen from what is connected.",
+   "recordedIn": [
+    "docs/widgets/map_output.md",
+    "ontology/fieldwork.ttl",
+    "docs/glossary.md"
+   ],
+   "workItem": "docs/experiments/112-progressive-widget-reveal.md and the blocker output-mode-set-before-the-shape-arrives",
+   "status": "built",
+   "lastChecked": "2026-10-15",
+   "checks": [
+    {
+     "date": "2026-10-15",
+     "found": "Shipped unchanged for a day. The direction reached docs/widgets/map_output.md, the fw:layerCount vocabulary and the glossary; inputMode stayed in src/core.ts, in the Inspector and in validate-widgets.mjs, which REQUIRED four mode-keyed port declarations. The practitioner found it in the running app: \"Map still has input mode\", then \"I thought we got rid of mode!\" Built the same day: every layer port always declared, drawnMode reads the renderer from the connections, one configurable port on the node, map_output 0.10.0."
+    }
+   ]
+  },
+  {
+   "id": "carrier-is-withdrawn-vocabulary",
+   "stated": "2026-10-12",
+   "statedBy": "the practitioner, via the glossary withdrawal",
+   "inTheirWords": "It's like \"carrier\" which is still out there in several files (2026-10-15, naming it as the same failure as the map model)",
+   "requiresInCode": "The live text of the corpus stops using `carrier` and `carrier kind`. Dated records keep theirs: a withdrawn term inside one is evidence of what was thought then.",
+   "recordedIn": [
+    "docs/glossary.md",
+    "docs/withdrawn-vocabulary.json",
+    "scripts/validate-vocabulary.mjs"
+   ],
+   "workItem": "docs/withdrawn-vocabulary.json#classified, and the 57 ledger uses that remain unseparated",
+   "status": "open",
+   "lastChecked": "2026-10-15",
+   "checks": [
+    {
+     "date": "2026-10-15",
+     "found": "146 occurrences across 45 files, exactly at the ceiling, three days after withdrawal. The ratchet forbids a NEW use and nothing makes the count fall, so the debt can sit at 146 indefinitely -- the same shape as a direction recorded and not built. What is missing is a classification: which of the 146 are dated records that may not be reworded, and which are live text that should be. The first number is a floor and the second is work. Nobody has separated them."
+    },
+    {
+     "date": "2026-10-15",
+     "found": "Classified, which is what the ceiling was missing. Of 146: 79 are dated records that may never be reworded, 57 are ledger entries not yet separated into record and live text, 6 are necessary mentions -- the ontology's own note that the term was withdrawn, and references to the fw:Carrier CLASS D11 rejected -- and 4 were live prose. The 4 were reworded to 'port type' and the ceiling fell 146 -> 142, the first time it has moved since the withdrawal. The remaining work is the 57."
+    }
+   ]
+  },
+  {
+   "id": "five-directions-as-a-method",
+   "stated": "2026-10-12",
+   "statedBy": "the practitioner, in experiment 105",
+   "inTheirWords": "Gone are the five directions in 105. It was short lived. (2026-10-15)",
+   "requiresInCode": "Nothing in code. It is a method for looking at the project -- sideways, above, below, forward -- and what it requires is USE: a sweep that produces findings, periodically, with the previous pass's findings in hand.",
+   "recordedIn": [
+    "docs/experiments/105-five-directions.md"
+   ],
+   "workItem": "105's own closing condition: each direction pointed at the project a second time",
+   "status": "open",
+   "lastChecked": "2026-10-15",
+   "checks": [
+    {
+     "date": "2026-10-15",
+     "found": "Pointed at the project twice, both on 2026-10-12 -- once over the widget set and once over vocabulary -- and not since, through three days in which the widget count, the ruleset layer, the map model and the blocker ledger all changed. The method was not withdrawn and is not in use, which is the state this file exists to make visible rather than a conclusion about whether it is worth using."
+    }
+   ]
+  },
+  {
+   "id": "progressive-reveal-on-the-ordinary-palette",
+   "stated": "2026-10-14",
+   "statedBy": "the practitioner",
+   "inTheirWords": "BTW on 0.80 I still do not see progressive reveal. On a blank canvas, all widgets are active, does not start with Study Area. (2026-10-15)",
+   "requiresInCode": "The reveal rule applied to the palette a practitioner actually uses, rather than only inside the ?playback=1 view.",
+   "recordedIn": [
+    "docs/experiments/112-progressive-widget-reveal.md",
+    "src/reveal-playback.ts"
+   ],
+   "workItem": "112, whose closing condition is now a decision: adopt the rule and under which of the three readings",
+   "status": "open",
+   "lastChecked": "2026-10-15",
+   "checks": [
+    {
+     "date": "2026-10-15",
+     "found": "Measured under three readings on four worked examples, prototyped behind ?playback=1 with tests, and never applied to the ordinary palette -- so a blank canvas offers all 51 widgets. revealedTypes() already produces the expected behaviour at step 0, because only widgets with an empty required set are revealed on an empty canvas, which is the inputs. What is missing is the decision of WHICH reading to adopt, and that is the practitioner's; it is not missing evidence."
+    }
+   ]
+  }
+ ]
+}

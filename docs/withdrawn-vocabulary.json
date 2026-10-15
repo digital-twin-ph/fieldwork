@@ -8,8 +8,18 @@
    "pattern": "\\bcarriers?\\b|\\bcarrier kinds?\\b",
    "withdrawn": "2026-10-12",
    "insteadSay": "prov:Entity for the value, port type for what a connection is checked against, or the class the value already asserts",
-   "ceiling": 146,
-   "why": "Defined as a prov:Entity that travels between ports, then withdrawn when no standard could be shown that defines such a class. The definition was derivable rather than new, and nothing consumed it."
+   "ceiling": 142,
+   "why": "Defined as a prov:Entity that travels between ports, then withdrawn when no standard could be shown that defines such a class. The definition was derivable rather than new, and nothing consumed it.",
+   "classified": {
+    "measuredAt": "2026-10-15",
+    "why": "The practitioner, 2026-10-15: \"It's like 'carrier' which is still out there in several files\" -- naming this debt as the same failure as a settled model that never reached the code. A ceiling that forbids a NEW use is not a plan to clear the old ones, so the count sat at 146 for three days and could have sat there indefinitely. Classifying it is what turns a cap into work.",
+    "datedRecords": 79,
+    "ledgersAndOther": 57,
+    "liveCodeAndSpec": 4,
+    "necessaryMentions": 6,
+    "note": "Dated records -- experiments, audits, research notes -- may never be reworded: a withdrawn term inside one is evidence of what was thought then, and 79 of the uses are those. Six more are necessary mentions: the ontology's own record that the term was withdrawn, and references to the fw:Carrier CLASS that D11 rejected, which is the name of a rejected artefact rather than a use of the vocabulary. The 4 live uses in ontology/fieldwork.ttl, validate-rulesets.mjs and validate-naming.mjs were reworded to 'port type' on 2026-10-15 and the ceiling fell 146 -> 142.",
+    "whatRemains": "The 57 in ledgers. widgets/blockers.json holds 21 and most are inside dated blocker entries, which are records; some are in live fields such as liftTest. Separating those is the next reduction and nobody has done it. The floor, once separated, is the dated-record count: below that the ceiling cannot fall without falsifying the record."
+   }
   }
  ]
 }

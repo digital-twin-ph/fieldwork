@@ -28,7 +28,12 @@ const EXTENSIONS=/\.(md|ts|tsx|json|ttl|mjs)$/;
 // Counting the generated mirror counts the same eleven words twice and would push the ceiling up
 // for prose nobody wrote today, so the source is counted and the copy is not. Added 2026-10-15.
 const EXEMPT=new Set(['docs/glossary.md',LEDGER,'scripts/validate-vocabulary.mjs',
-  'widgets/release-notes.json']);
+  'widgets/release-notes.json',
+  // docs/directions.json tracks the withdrawal itself -- what it requires, and what checking it
+  // found -- and cannot do that without naming the term, for the same reason the glossary and the
+  // ledger cannot. Added 2026-10-15, when the practitioner pointed at this very debt as the same
+  // failure as the map model: a decision recorded and not carried out.
+  'docs/directions.json']);
 
 const walk=dir=>{
   let out=[];

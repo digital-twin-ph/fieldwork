@@ -152,3 +152,38 @@ test('a map receipt counts the layers it draws, not the ports it has',async({pag
   expect(n3).toContain('fw:layerPort "context"');
   for(const index of [0,1,2,3])expect(n3).toContain(`fw:layerIndex ${index}`);
 });
+
+// "Manual for Map is not readable for some words" -- the practitioner, 2026-10-15, with a
+// screenshot of the Map manual in dark mode: every inline `code` span and the table header were
+// near-white chips under light text. `--tint` is defined on the node colour classes and nowhere
+// else, so inside the dialog it was undefined and the rule fell back to #f4f4f4 in BOTH themes.
+//
+// The same screenshot showed the page still explaining the Input mode selector that had been
+// deleted the day before, because the manual a practitioner reads is compiled into
+// widgets/manual-pages.json and nothing compared it to its source. validate-manual.mjs does now.
+test('the manual is legible in dark mode and is the page on disk',async({page})=>{
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.emulateMedia({colorScheme:'dark'});
+  await page.goto('/?example=snow-extent');
+  await page.locator('.react-flow__node[data-id="map"]').click();
+  await page.locator('#open-manual').click();
+  const dialog=page.locator('#manual-dialog');
+  await expect(dialog).toBeVisible();
+
+  // The compiled page is the current one.
+  await expect(dialog).toContainText('There is no input mode');
+  await expect(dialog).not.toContainText('depends on its Input mode');
+
+  // Every code chip reads against its own background, in the theme actually rendered.
+  const contrast=await dialog.locator('.manual-body code').first().evaluate(el=>{
+    const parse=v=>v.match(/\d+(\.\d+)?/g).slice(0,3).map(Number);
+    const L=c=>{const [r,g,b]=c.map(v=>{const s=v/255;return s<=.03928?s/12.92:((s+.055)/1.055)**2.4;});
+      return .2126*r+.7152*g+.0722*b;};
+    const style=getComputedStyle(el);
+    const a=L(parse(style.color)),b=L(parse(style.backgroundColor));
+    return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+  });
+  // WCAG AA for small text. It measured 1.08 before the fix -- indistinguishable.
+  expect(contrast).toBeGreaterThan(4.5);
+});

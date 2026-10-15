@@ -134,8 +134,14 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 .manual-body li{margin:0 0 5px}
 .manual-body table{border-collapse:collapse;width:100%;margin:0 0 14px;font-size:11px}
 .manual-body th,.manual-body td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
-.manual-body th{background:var(--tint,#f4f4f4);font-weight:600}
-.manual-body code{font-size:11px;background:var(--tint,#f4f4f4);padding:1px 4px;border-radius:3px}
+/* --tint is defined on the node colour classes (.blue, .teal, ...) and nowhere else, so inside the
+   manual dialog it was undefined and both of these fell back to #f4f4f4: a near-white chip under
+   light text in dark mode, which is invisible. Reported 2026-10-15: "Manual for Map is not
+   readable for some words." Theme-aware surface, and an explicit colour rather than whatever the
+   chip happens to inherit. */
+.manual-body th{background:var(--surface-tint-1);color:var(--ink);font-weight:600}
+.manual-body code{font-size:11px;background:var(--surface-tint-1);color:var(--ink);padding:1px 4px;border-radius:3px}
+.manual-body a{color:var(--accent-muted-1)}
 
 /* The ports line on a ruleset or composition entry: detail, allowed to truncate rather than
    widen its row. A flex child defaults to min-width:auto, so a long one pushes the whole row. */

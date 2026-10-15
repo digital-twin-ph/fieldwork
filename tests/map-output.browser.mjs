@@ -101,7 +101,7 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
 // The receipts answer how many layers a map draws and of what kinds, asserted rather than left
 // to be joined out of prov:used and fw:portType -- a join that returned four sources for a
 // two-layer map, because a node appears under two IRI forms and the activity uses itself.
-// Experiment 115, and the practitioner's request of 2026-10-14.
+// See docs/widgets/map_output.md.
 test('a map receipt counts the layers it draws, not the ports it has',async({page})=>{
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});

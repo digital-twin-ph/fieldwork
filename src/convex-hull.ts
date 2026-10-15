@@ -87,14 +87,34 @@ export function convexHull(
   const value:Polygons={features:[feature],sites:[],method:`Convex hull (monotone chain) in ${projection.crs}`,
     crs:projection.crs,notes,siteSourceNodeId:sourceNodeId};
   const activity=`<urn:fieldwork:run:${runId}:${node.id}:hull>`;
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`
+  const polygon=`urn:fieldwork:polygon:${encodeURIComponent(feature.id)}`;
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n`
     +`${activity} a fw:ConvexHull, prov:Activity; `
     +`fw:recordCount ${located.length}; `
     +`fw:hullVertexCount ${ring.length-1}; `
     +`fw:hullAreaSquareMetres ${areaM2.toFixed(2)}; `
     +`fw:hullSpanMetres ${spanM.toFixed(1)}; `
     +metricCRSAssertion(projection.crs)
-    +`prov:used <urn:fieldwork:run:${runId}:${sourceNodeId}>.\n`;
+    +`prov:used <urn:fieldwork:run:${runId}:${sourceNodeId}>; `
+    +`prov:generated <${polygon}>.\n`
+    // The area of the POLYGON, asserted of the polygon.
+    //
+    // `fw:hullAreaSquareMetres` above is a quantity of the COMPUTATION: it says this hull step
+    // measured 139,230 m². It does not say that anything on the canvas encloses that area, and an
+    // activity does not enclose ground, so the two cannot be related by subPropertyOf without
+    // entailing that a computation has an area.
+    //
+    // Found 2026-10-14 by asking the graph a question a reveal rule would ask -- what here asserts
+    // an area? -- and getting nothing, while the number sat in the receipt. The rule that needs it
+    // was minting `fw:areaSquareMetres` itself, in its own fact generator, at the moment it ran:
+    // so the canvas could answer "could this ruleset run here?" only after the ruleset had run.
+    //
+    // The IRI is the one `extentN3` mints for the same polygon, deliberately, so the receipt and
+    // the rule facts are about the same subject rather than two nodes that happen to share a
+    // number. Experiment 113's first leap, one layer up: the quantity became a field so a rule
+    // could read it, and the term had not made the same move.
+    +`<${polygon}> a geo:Feature; fw:areaSquareMetres ${areaM2.toFixed(2)}; fw:areaKnown true; `
+    +`fw:spanMetres ${spanM.toFixed(1)}.\n`;
   return {value,receipt:{nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
     method:`${value.method}. ${notes.slice(1).join(' ')}`}};
 }

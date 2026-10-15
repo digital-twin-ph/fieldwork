@@ -183,9 +183,25 @@ already uses, in their usual sense._
 Two widgets interoperate when one's output can be used by the other. That turns out to be
 three questions, not one, and they fail independently.
 
+In their general form, outside this project:
+
+- **Syntactic interoperability — format.** Systems use a compatible structure, grammar or
+  vocabulary to package and transmit data: XML, JSON, CSV.
+- **Semantic interoperability — meaning.** Systems understand the same real-world meaning for
+  the same element: that a field named `temp_c` is a temperature in Celsius.
+- **Pragmatic interoperability — intent and effect.** Systems align on *why* the data was sent
+  and what should happen as a result: a sensor reporting a high temperature triggers a shutdown
+  rather than being logged as a number.
+
+The third is the one most often skipped, and it is the one that makes a system act. It is also
+where this project's proposed **progressive reveal** lives: a canvas that offers the next widget
+because of what its facts MEAN is a system acting on intent, not matching a format.
+
+Here:
+
 | Level | The question it asks | What carries it | Passes here and is still wrong |
 | --- | --- | --- | --- |
-| **Syntactic** | Can this data be carried and read at all? | The **carrier kind** | A keyed table flattened into points: it parses, and the key is gone |
+| **Syntactic** | Can this data be carried and read at all? | The **port type** | A keyed table flattened into points: it parses, and the key is gone |
 | **Semantic** | Does the same field mean the same thing on both sides? | **Roles**, each with a type, a unit and a value set | A column of counts where each row stands for several cases — 250 rows holding 489 deaths |
 | **Pragmatic** | Is this data fit for the **use** the other widget will make of it? | **Fitness conditions**, read from declared provenance | Two lengths in metres, measured from different references, compared to each other |
 

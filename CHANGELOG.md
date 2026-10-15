@@ -3,6 +3,41 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.8.1 — In development
+
+- **A map has layers, not modes.** `map_output` no longer asks which kind of thing it is before
+  it will accept one. It declares every layer port it can draw, the renderer is read from what is
+  connected, and the canvas shows the layers a map draws plus **one configurable port**: drop any
+  drawable result on it and it binds to the port its type belongs to, with a second point source
+  opening the next slot rather than replacing the first. The Inspector is the same — one picker
+  per layer, one *Add a layer* picker. **Migration:** saved workflows keep their stored
+  `inputMode`; it is read only as a fallback for a map with nothing connected, and nothing writes
+  it, so what a saved workflow drew is what it draws. A map node now carries more handles than
+  before and a canvas laid out tightly around the old shape may need a Tidy. Widget release
+  `map_output` **0.10.0**.
+- **Presentation and basemap are available on every map**, not only on one input mode of one
+  presentation. Choosing a basemap switches the map to the presentation that can draw it. Nine of
+  the ten maps in the worked examples previously had no basemap control at all. Tiles are still
+  excluded from the SVG export, and the receipt now records a basemap in use as layer 0 with the
+  provider it came from.
+- **Connecting a raster no longer deletes a map's other connections.** A raster is a layer; the
+  others stay wired and recorded. The renderer still draws one picture at a time.
+- **A superseded ruleset says so.** A step pinned to an older ruleset version names the newer one
+  in the Inspector and at the run, with what changed, what it deprecates and whether moving is a
+  drop-in. The Inspector also says what the offered version of a widget changed, folded for an
+  ordinary release and open for a breaking one.
+- **Undeclared provenance on a projection extract is an alert, not a refusal.** A missing dataset
+  IRI, version or third citation used to stop the run; no provenance field changes a computed
+  number. **Migration:** a workflow that previously refused to run will now run and report the
+  gaps, so a result can be published from an extract whose source is undeclared — the alert is
+  what makes that visible. Fields that decide how numbers are *interpreted* — baseline period,
+  basis kind, value unit, key columns, declared families — still refuse.
+- **The progressive-reveal playback is reachable** from the workspace bar as *Play back the
+  build*, rather than only by typing `?playback=1`. It changes nothing that is saved and leaves
+  the ordinary palette untouched: the reveal rule is measured and prototyped, not adopted.
+- **Validation limits.** 496 unit tests and 122 browser tests pass, with the browser suite run on
+  Chromium, Firefox and WebKit in CI. No practitioner other than the author has used any of this.
+
 ## 0.8.0 — In development
 
 - **A rule about a shape now hands the shape back.** The extent ruleset used to return a table of

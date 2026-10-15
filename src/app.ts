@@ -887,6 +887,43 @@ function renderInspector(){
   // the five places a zone field is rendered. It reports; it does not refuse. `metric()` already
   // refuses a coordinate more than 6 degrees from the central meridian -- which is a zone too
   // wide, so an off-by-one zone passes and costs +0.17% at London's latitude, +0.47% at 15N.
+  // A study area has no zone of its own and is where the zone is DECIDED: everything measured
+  // afterwards inherits whatever the first measuring widget was given. The practitioner,
+  // 2026-10-15: "selecting the study area should automatically suggest the UTM zone and the pros
+  // and cons for selecting a particular one if there is more than one possible choice."
+  //
+  // So the advice appears here too, before any measuring widget exists to carry it, and when the
+  // area spans more than one zone it names each candidate with what that choice costs rather
+  // than only saying that no answer is right.
+  if(n.type==='study_area'&&(n.params as {geometry?:unknown}).geometry){
+    const advice=suggestUTM(workflow);
+    if(advice){
+      const positions=workflowPositions(workflow);
+      const name=(c:{zone:number;hemisphere:string})=>`${c.zone}${c.hemisphere==='north'?'N':'S'}`;
+      const costOf=(zone:number)=>{
+        const choice={zone,hemisphere:advice.choice.hemisphere};
+        const worst=positions.reduce((most,position)=>Math.max(most,utmScaleFactor(position,choice)),0);
+        return (worst-1)*100;
+      };
+      const candidates=(advice.straddles.length?advice.straddles:[advice.choice.zone])
+        .map(zone=>({zone,cost:costOf(zone)})).sort((a,b)=>a.cost-b.cost);
+      content+=`<div class="${advice.straddles.length?'notice':'rule-preview'}" data-zone-advice>`
+        +`<strong>Measuring in metres will use UTM zone ${esc(name(advice.choice))}.</strong> `
+        +`Suggested from ${advice.positions} coordinate${advice.positions===1?'':'s'} already on this canvas. `
+        +`Nothing is set here — the first widget that measures carries the zone, and this is what it will be offered.`
+        +(advice.straddles.length
+          ?`<p>This area spans ${advice.straddles.length} zones, so <strong>no single zone is right</strong> `
+            +`and the choice is which side to keep whole. What each costs, as the most any coordinate `
+            +`here would be stretched:</p><table class="inspector-table"><thead><tr><th>Zone</th>`
+            +`<th>Worst stretch</th><th></th></tr></thead><tbody>`
+            +candidates.map(c=>`<tr><td>${esc(name({zone:c.zone,hemisphere:advice.choice.hemisphere}))}</td>`
+              +`<td>${c.cost.toFixed(3)}%</td><td>${c.zone===advice.choice.zone?'holds most of the area':''}</td></tr>`).join('')
+            +`</tbody></table>`
+            +`<p class="muted">A stretch applies to every length measured afterwards, so it is systematic rather than random: an area, a catchment and a distance are all wrong in the same direction by about this much.</p>`
+          :` Measured over this area, it stretches ground distance by at most <strong>${candidates[0].cost.toFixed(3)}%</strong>.`)
+        +`</div>`;
+    }
+  }
   const zoned=n.params as Record<string,unknown>;
   if(typeof zoned.zone==='number'&&typeof zoned.hemisphere==='string'){
     const advice=suggestUTM(workflow);

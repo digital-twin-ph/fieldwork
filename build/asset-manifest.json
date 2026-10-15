@@ -1,5 +1,5 @@
 {
-  "cache": "fieldwork-ts-ee18667af79f2325",
+  "cache": "fieldwork-ts-5a9fcbfdca34a357",
   "assets": [
     "./",
     "./build/app.css",
@@ -42,6 +42,7 @@
     "./build/chunks/chunk-6JJ2XG36.js",
     "./build/chunks/chunk-6UOZV4JG.js",
     "./build/chunks/chunk-7WK4B4P6.js",
+    "./build/chunks/chunk-7YZN3TVW.js",
     "./build/chunks/chunk-7Z5NKNP6.js",
     "./build/chunks/chunk-A7QUYRVD.js",
     "./build/chunks/chunk-AEAA3NWV.js",
@@ -110,7 +111,6 @@
     "./build/chunks/chunk-T4Y3O5LD.js",
     "./build/chunks/chunk-TBDA2OKI.js",
     "./build/chunks/chunk-TLDR7C22.js",
-    "./build/chunks/chunk-U3QDYAIL.js",
     "./build/chunks/chunk-U3UCMMFN.js",
     "./build/chunks/chunk-U5ERB6OS.js",
     "./build/chunks/chunk-UB3RCO35.js",

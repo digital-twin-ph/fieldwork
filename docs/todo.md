@@ -459,12 +459,16 @@ missing axiom does not mean the question went unasked.
    it had to be excluded from automatic binding to stop it taking a role nobody chose. Binding
    silently when one port fits and **asking when more than one does** is the honest rule, and it
    extends the configurable port from the Map to every widget.
-2. **Validate without running.** `executionPlan` already computes whether a canvas is coherent;
-   it is only reachable by running, and a run here downloads street networks and reasons over
-   N3. A button over machinery that exists.
+2. **Validate without running.** `executionPlan` already computes whether a canvas is coherent
+   and only Run reaches it. **Smallest of the four:** the reason first given — that a run
+   downloads street networks — was wrong, and the practitioner corrected it. `network_input`
+   downloads on its own button before the run, so the expensive unreliable part is already
+   outside it, and a run costs seconds of local reasoning.
 3. **Say on the node that it cannot run yet.** An unconfigured step says so in the Inspector, to
    somebody who has already selected it. The canvas is where the shape of the work is read.
-4. **Declare the metric frame once per workflow.** ArcGIS calls it an *Environment*: declared
+4. **Declare the metric frame once per workflow.** *Partly built 2026-10-15: the study area now
+   suggests the zone and, when an area straddles a boundary, names each candidate with the worst
+   stretch it would cost. What remains is the Environments shape itself.* ArcGIS calls it an *Environment*: declared
    for the model, inherited by every tool, overridable per tool. Ours is a UTM zone in every
    measuring widget's parameters, refused when two disagree, with the cost of a wrong one
    measured in [100](experiments/100-choosing-the-metric-crs.md). The better shape, and the only

@@ -46,7 +46,10 @@ export const OVERPASS_PROBE='[out:json][timeout:5];node(1);out ids;';
  *  long ones: a dead instance otherwise costs the full download timeout before the next is
  *  tried. An instance that answers anything other than JSON is not answering. */
 export async function liveEndpoints(fetcher:typeof fetch=fetch,timeoutMs=6000):Promise<OverpassEndpoint[]>{
-  const results=await Promise.all(OVERPASS_ENDPOINTS.map(async endpoint=>{
+  const ordered=preferred
+    ?[...OVERPASS_ENDPOINTS].sort((a,b)=>(b.url===preferred?1:0)-(a.url===preferred?1:0))
+    :OVERPASS_ENDPOINTS;
+  const results=await Promise.all(ordered.map(async endpoint=>{
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
     try{
       const response=await fetcher(endpoint.url,{method:'POST',
@@ -62,6 +65,23 @@ export async function liveEndpoints(fetcher:typeof fetch=fetch,timeoutMs=6000):P
   }));
   return results.filter((endpoint):endpoint is OverpassEndpoint=>!!endpoint);
 }
+
+/** The instance that answered last, tried first next time.
+ *
+ *  Within a session only, and deliberately not persisted: an instance that was healthy
+ *  yesterday is no evidence about today, and a stale preference would send every first request
+ *  of a session to whichever one happened to work last week. Reset when it stops answering. */
+let preferred:string|undefined;
+export const preferredEndpoint=()=>preferred;
+
+/** How long one attempt may take, as opposed to all of them.
+ *
+ *  These were a single 35-second budget covering the probe and every failover attempt, which
+ *  meant an instance that hung for thirty seconds left five seconds for the other three -- the
+ *  failover added on 2026-10-15 was being cut short by a timeout written before it existed. A
+ *  practitioner saw that as "the download is flaky", and it was, partly on our side. */
+const ATTEMPT_MS=20000;
+const TOTAL_MS=75000;
 
 /** The reference instance. Kept as a name because receipts and tests cite it. */
 export const OVERPASS=OVERPASS_ENDPOINTS[0].url;
@@ -154,7 +174,13 @@ export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pa
 }
 /** Request/normalization boundary exposed for fixture tests; UI must use paced downloadOSM. */
 export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number):Promise<Network>{
-  const request=osmQuery(boundary,marginM,maxNodes),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),35000);
+  const request=osmQuery(boundary,marginM,maxNodes);
+  // One budget per attempt, and one for the whole thing. See ATTEMPT_MS.
+  const startedAt=Date.now();
+  let controller=new AbortController(),timer=setTimeout(()=>controller.abort(),ATTEMPT_MS);
+  const freshAttempt=()=>{clearTimeout(timer);controller=new AbortController();
+    timer=setTimeout(()=>controller.abort(),ATTEMPT_MS);return controller.signal;};
+  const outOfTime=()=>Date.now()-startedAt>TOTAL_MS;
   try{
     let response!:Response;
     // Overpass fails on its own account, and one attempt treats that as the practitioner's
@@ -187,13 +213,15 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     let reached:OverpassEndpoint|undefined,lastStatus=0,unreachable=0;
     outer: for(let round=1;round<=2;round++){
       for(const endpoint of live){
-        try{response=await fetcher(endpoint.url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data:request.query}),signal:controller.signal,credentials:'omit',referrerPolicy:'origin'});}
+        if(outOfTime())break outer;
+        try{response=await fetcher(endpoint.url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data:request.query}),signal:freshAttempt(),credentials:'omit',referrerPolicy:'origin'});}
         catch{unreachable++;continue;}
         if(response.ok){
           // A 200 carrying HTML is an error page, and parsing it as a network would fail far from
           // here. overpass.osm.ch returned exactly that on 2026-10-15.
           const kind=response.headers.get('content-type')??'';
-          if(kind.includes('json')||kind.includes('text/plain')){reached=endpoint;break outer;}
+          if(kind.includes('json')||kind.includes('text/plain')){
+            reached=endpoint;preferred=endpoint.url;break outer;}
           unreachable++;continue;
         }
         lastStatus=response.status;
@@ -204,6 +232,7 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
       if(round===1)await new Promise(resolve=>setTimeout(resolve,2000));
     }
     if(!reached){
+      preferred=undefined;
       deferNetworkDownload(null);
       throw new Error(`No Overpass instance answered. ${live.length} were answering a moment ago and were tried twice each`
         +`${lastStatus?`, the last reporting HTTP ${lastStatus}`:''}${unreachable?`, ${unreachable} unreachable or not serving the API`:''}. `

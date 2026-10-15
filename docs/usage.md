@@ -113,6 +113,28 @@ Application assets and the bundled EYE engine are cached after the first success
 
 After updating the application, reload to install the updated service worker, then reload again if the old interface remains visible.
 
+## If the version on screen is not the version you built
+
+Fieldwork caches itself so it can run offline, which means a browser can go on serving a build
+you have since replaced. The version is shown in the header, next to the Fieldwork mark, and
+hovering it names the build actually serving the page.
+
+When the two disagree the header says so — **`v0.7.0 · cached`** — and offers to update. If you
+want to clear it yourself, or you are reading this in an embedded browser with no developer
+tools, such as VS Code's Simple Browser:
+
+```
+http://localhost:PORT/?reset-cache=1
+```
+
+That unregisters every service worker for the page, deletes every cache it owns, and reloads
+with a one-time cache-busting parameter so the browser's own HTTP cache cannot answer either.
+**Your saved workspaces are untouched** — they are in local storage, and this clears the
+application rather than your work.
+
+The equivalents, where you do have developer tools, are a hard reload, Application → Service
+Workers → Unregister, or Application → Storage → Clear site data.
+
 ## Retired widgets, and what replaced them
 
 Seven widgets were retired on 2026-10-12. **A retired widget never runs**, so a saved workflow holding

@@ -98,6 +98,36 @@ function mapControls(n:WorkflowNode<'map_output'>){
 }
 const KEY='fieldwork-workflow-v1';
 $('#app-version').textContent=`v${appPackage.version}`;
+
+/** `?reset-cache=1` — throw away every cached copy of this application and reload.
+ *
+ *  A service worker that has cached a build serves it until something replaces it, and the
+ *  remedies for that are all developer tools: a hard reload, unregistering the worker, clearing
+ *  site data. A practitioner reading this page in an embedded browser -- VS Code's Simple
+ *  Browser, a preview pane, a kiosk -- has none of those, and no way to tell that what they are
+ *  looking at is a build from last week. The practitioner, 2026-10-15, on exactly that: "This is
+ *  the in-VSCode Browser viewing local static page and still shows 0.7.0", with the files on disk
+ *  at 0.8.1.
+ *
+ *  So the escape hatch is a URL. It unregisters every worker for this origin, deletes every cache
+ *  it owns, and reloads with a one-time cache-busting parameter so the HTTP cache cannot answer
+ *  either. The saved workspaces are in localStorage and are deliberately untouched: this clears
+ *  the APPLICATION, not the practitioner's work.
+ */
+if(new URLSearchParams(location.search).has('reset-cache')){
+  (async()=>{
+    try{
+      const registrations=await navigator.serviceWorker?.getRegistrations?.()??[];
+      await Promise.all(registrations.map(registration=>registration.unregister()));
+      const keys=await caches?.keys?.()??[];
+      await Promise.all(keys.map(key=>caches.delete(key)));
+    }catch{/* a browser that refuses either one still gets the reload below */}
+    const url=new URL(location.href);
+    url.searchParams.delete('reset-cache');
+    url.searchParams.set('cache-bust',String(Date.now()));
+    location.replace(url.toString());
+  })();
+}
 // Keep keyboard and scroll-to-element navigation clear of the floating controls.
 new ResizeObserver(([entry])=>document.documentElement.style.setProperty('--project-bar-height',`${entry.target.getBoundingClientRect().height+12}px`)).observe($('.project-bar'));
 const WORKSPACES='fieldwork-examples-v1';

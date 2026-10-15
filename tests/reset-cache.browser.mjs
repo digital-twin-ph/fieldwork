@@ -1,0 +1,37 @@
+import {test,expect} from '@playwright/test';
+import {collectPageErrors} from './page-errors.mjs';
+
+// "This is the in-VSCode Browser viewing local static page and still shows 0.7.0" -- the
+// practitioner, 2026-10-15, with the files on disk at 0.8.1. Every remedy for a stale service
+// worker is a developer tool, and an embedded browser has none of them. This is the one that is
+// just a URL.
+test('?reset-cache=1 unregisters the worker, empties the caches, and reloads clean',async({page,context})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  // Let the worker install and cache the build.
+  await expect.poll(async()=>await page.evaluate(async()=>(await caches.keys()).length),
+    {timeout:30000}).toBeGreaterThan(0);
+  // A key the application never writes, so what survives is evidence about the reset rather
+  // than about the app's own saving.
+  await page.evaluate(()=>localStorage.setItem('zz-practitioner-data','kept'));
+
+  await page.goto('/?reset-cache=1');
+  // It reloads itself, dropping the parameter and busting the HTTP cache on the way out.
+  await expect.poll(()=>page.url(),{timeout:30000}).toContain('cache-bust=');
+  expect(page.url()).not.toContain('reset-cache');
+
+  // Nothing of the application's own cache survives the moment it reloads.
+  const state=await page.evaluate(async()=>({
+    registrations:(await navigator.serviceWorker.getRegistrations()).length,
+    saved:localStorage.getItem('zz-practitioner-data'),
+    workspace:!!localStorage.getItem('fieldwork-workflow-v1'),
+  }));
+  // The saved workspace is the practitioner's work and is deliberately untouched: this clears
+  // the application, not what they built with it.
+  assert_equal(state.saved,'kept');
+  expect(state.workspace,'the workspace is still there').toBe(true);
+  expect(state.registrations,'a fresh worker may re-register after the reload').toBeLessThanOrEqual(1);
+  await expect(page.locator('#app-version')).toContainText('v');
+  expect(errors).toEqual([]);
+});
+function assert_equal(actual,expected){expect(actual).toBe(expected);}

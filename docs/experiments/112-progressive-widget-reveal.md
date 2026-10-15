@@ -692,11 +692,34 @@ area onto a map, the geoprivacy example's before-view of its own source points. 
 your input to see it *is* a legitimate first move, and the stage rule would hide the widget
 that does it.
 
+#### Revised the same day, which is what the evidence was for
+
+> So revise the stage rule, that's what a DE project is for. An input widget can go
+> straight to output and it's very plausible, because I would use output widgets to inspect
+> what the output of an input widget looks like before I add a process widget.
+
+| | Original | Revised |
+| --- | --- | --- |
+| Process widgets need | an input | an input |
+| Output widgets need | an input **and** a process | an input |
+
+Two of the seven shipped examples already build that way — `snow-isochrone` and
+`snow-geoprivacy` both place an output before any process widget — and every one of the
+seven begins with an input. So the revision agrees with the examples where the original
+contradicted nine of their edges.
+
+**What the revision leaves is one gate, and it is already in the product.** After a single
+input, the rule admits all 53 widgets; its whole content is *start with an input*, which
+is what `STARTER_TYPES` does on a blank canvas today. That is a real result rather than a
+disappointment: the stage rule, corrected by evidence, turns out to be the rule the palette
+already follows, and the work of narrowing beyond the first step belongs to the other two
+readings.
+
 So the three readings are not rivals to choose between:
 
 | Reading | Good at | Wrong about |
 | --- | --- | --- |
-| **Stage** | explaining the shape of the work; a first canvas | forbids plotting an input, which 9 real edges do |
+| **Stage** | explaining the shape of the work; a first canvas | after the revision its whole content is *start with an input*, which the palette already does |
 | **Port** | the strongest type-level filter available | 22 of 25 successors remain after a point input; cannot retire loop widgets |
 | **Receipt** | binds late, where the others stop binding; the only one expressible in the ontology | silent until something has been run toward an output |
 
@@ -744,3 +767,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | "Why inadmissible?" -- it was the wrong word and the correction matters: the application RUNS all eleven, because its connection check asks nodeInputs(node), which resolves the mode, the pin and that node's parameters, while the enumeration asked the type-level declaration. Ten are a pinned ruleset's ports; the eleventh is map_output.points_2, a port that exists per NODE because a parameter creates up to eight of them. The contract belongs to the node, not to the widget, so 578 is a lower bound |
 | 2026-10-14 | Third reading measured: input/process/output stages, 7/41/5 of the 53 widgets. Weaker as a filter than the port rule -- one input opens 48 of 53 against 20 -- and stronger as an explanation. The two disagree about outputs, and the examples side with the port rule: of 35 edges into an output, 9 come straight from an input (pumps onto a map for context, a study area onto a map, geoprivacy's before-view), so a stage gate would hide the widget that plots your input |
 | 2026-10-14 | "The output widgets depend on the shape of the process widget outputs for inputs." Measured: map_output carries six contracts selected by inputMode and contextPoints, table_output four, chart_output three. On table_output and chart_output no port type appears in two modes, so the connection determines the mode completely and asking is redundant; on map_output three types are genuinely ambiguous (points as subject or context, raster as subject or overlay, polygons with context or without). But validConnection resolves the mode the target is CURRENTLY in, so the shape cannot arrive until the mode is set by hand -- the dependency runs backwards in the interface |
+| 2026-10-14 | Stage rule revised by the practitioner on the evidence -- an output may follow an input directly, because inspecting what an input produces is how you decide what to process. Two of the seven examples already build that way and all seven start with an input. What the revision leaves is a single gate, "start with an input", which STARTER_TYPES already implements: the stage reading is the shape of the work and not a filter, and narrowing beyond the first step belongs to the port and receipt readings |

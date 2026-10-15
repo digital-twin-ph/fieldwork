@@ -7,7 +7,7 @@
 import {readFileSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
-import {coverage,turtle} from './widget-manual.mjs';
+import {coverage,turtle,compiledPages} from './widget-manual.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const ledgerPath=join(root,'widgets/manual-coverage.json');
@@ -23,6 +23,20 @@ const generatedPath=join(root,'ontology/widgets.ttl');
 if(!existsSync(generatedPath))problems.push('ontology/widgets.ttl is missing. Run `npm run manual:widgets`.');
 else if(readFileSync(generatedPath,'utf8')!==turtle())
   problems.push('ontology/widgets.ttl has drifted from widgets/registry.json and docs/widgets/. Run `npm run manual:widgets`.');
+
+// The page a practitioner READS is widgets/manual-pages.json, compiled from the markdown at build
+// time, and nothing checked it against its source. So docs/widgets/map_output.md could be rewritten
+// -- as it was on 2026-10-15, to say a map has no input mode -- while the Manual button in the
+// application went on explaining the Input mode selector that had just been deleted. The
+// practitioner read it there: "Manual for Map is not readable for some words", with a screenshot of
+// the old page. A generated artefact nothing compares to its source is the defect this project has
+// now found often enough to check for by default.
+const compiledPath=join(root,'widgets/manual-pages.json');
+if(!existsSync(compiledPath))problems.push('widgets/manual-pages.json is missing. Run `npm run manual:widgets`.');
+else if(readFileSync(compiledPath,'utf8')!==JSON.stringify(compiledPages(),null,2)+'\n')
+  problems.push('widgets/manual-pages.json has drifted from docs/widgets/. The manual shown IN THE '
+    +'APPLICATION is the compiled file, so a page edited and not recompiled is a page the '
+    +'practitioner never sees. Run `npm run manual:widgets`.');
 
 // A page must say something. An empty page satisfies a count and helps nobody.
 for(const nodeType of documented){

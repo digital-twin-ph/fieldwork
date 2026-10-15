@@ -1,6 +1,6 @@
 # Map
 
-_Created 2026-10-14 · Updated 2026-10-14_
+_Created 2026-10-14 · Updated 2026-10-15_
 
 Draws what the workflow produced: boundaries, points, polygons, rasters and street
 networks, one layer over another.

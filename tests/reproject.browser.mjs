@@ -9,6 +9,10 @@ import assert from 'node:assert/strict';
 test('Reproject points is a transform: it declares its target frame and takes a points input',async({page})=>{
   await page.goto('/?example=blank');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
+  // A process widget is offered once the canvas holds an input, from 2026-10-15. Reproject takes
+  // points, so points are what a practitioner would place first anyway.
+  await page.locator('[data-add="point_input"]').click();
+  await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(1);
   await page.locator('[data-add="reproject"]').click();
 
   const inspector=page.locator('.inspector');

@@ -83,6 +83,12 @@ test('the widget catalog shows identities, digests and independent checks, and w
   await expect(dialog).toBeHidden();
 
   // The same identity is available where a practitioner is working: on the selected node.
+  // A process widget is offered once the canvas holds an input, from 2026-10-15, so place one
+  // first -- which is what the rule asks of a practitioner too.
+  if(!await page.locator('[data-add="reproject"]').count()){
+    await page.locator('[data-add="point_input"]').click();
+    await expect(page.locator('[data-add="reproject"]')).toHaveCount(1);
+  }
   await page.locator('[data-add="reproject"]').click();
   await expect(page.locator('.inspector')).toContainText('Definition');
   await expect(page.locator('.inspector')).toContainText(`reproject ${reproject.currentVersion}`);

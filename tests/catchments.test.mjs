@@ -154,6 +154,43 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   const fetcher=async(url,init)=>{assert.equal(init.credentials,'omit');assert.match(String(init.body),/data=/);return new Response(JSON.stringify(raw));};
   const n=await requestOSM(boundary,250,fetcher);assert.equal(n.edges.length,3);assert.equal(n.provenance.sha256.length,64);assert.deepEqual(n.provenance.boundary,boundary);
   await assert.rejects(requestOSM(boundary,0,async()=>new Response('',{status:429})),/HTTP 429/);
+
+  // Overpass fails on its own account. Measured on 2026-10-15 after a report that the download
+  // was broken: three identical requests to overpass-api.de returned 502, 200, 502. A single
+  // attempt meets that two times in three and reports it as if the practitioner had done
+  // something wrong.
+  let attempts=0;
+  const flaky=async(...args)=>{attempts++;return attempts<3?new Response('',{status:502}):fetcher(...args);};
+  const recovered=await requestOSM(boundary,250,flaky);
+  assert.equal(attempts,3,'two server errors are retried, the third attempt succeeds');
+  assert.equal(recovered.edges.length,3,'and the network that arrives is the network');
+
+  // A server error that never clears still fails, after a bounded number of tries rather than
+  // forever: every instance, twice. Measured 2026-10-15, all four public endpoints were
+  // unhealthy at the same moment, so this is the case that actually happens.
+  let kept=0;
+  await assert.rejects(requestOSM(boundary,0,async()=>{kept++;return new Response('',{status:503});}),
+    /No Overpass instance answered/);
+  assert.equal(kept,8,'four instances, two rounds, then it stops');
+
+  // A 200 carrying HTML is an error page, not a network. overpass.osm.ch returned exactly that.
+  // It moves to the next instance rather than being parsed.
+  let served=0;
+  const htmlThenReal=async(...args)=>{served++;
+    return served===1?new Response('<html>down</html>',{status:200,headers:{'content-type':'text/html'}}):fetcher(...args);};
+  const past=await requestOSM(boundary,250,htmlThenReal);
+  assert.equal(past.edges.length,3,'an HTML page is skipped and the next instance answers');
+
+  // The instance that answered is recorded, because WHICH one served a network is part of where
+  // the data came from. The receipt named the reference instance whatever had answered, until
+  // this was built.
+  assert.ok(past.provenance.url.includes('overpass'),'the endpoint that answered is in the provenance');
+  assert.match(past.provenance.attribution,/OpenStreetMap contributors, via /);
+
+  // 429 means this client is asking too often, so it is NOT retried: waiting is the answer.
+  let throttled=0;
+  await assert.rejects(requestOSM(boundary,0,async()=>{throttled++;return new Response('',{status:429});}),/HTTP 429/);
+  assert.equal(throttled,1,'rate limiting is deferred to, not retried against');
   await assert.rejects(requestOSM(boundary,0,async()=>new Response(' '.repeat(2000001))),/over the [\d,]+ bytes this download accepts/);
 });
 test('buffer creates a distinct area and expands acquisition without carrying old area measurements',()=>{

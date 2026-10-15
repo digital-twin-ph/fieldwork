@@ -449,6 +449,30 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**A building-footprint widget.** Asked for by the practitioner on 2026-10-15. Nothing in the
+palette brings buildings in, so any analysis that needs where people actually are — exposure,
+coverage of a settlement, population disaggregation — has no source for them. The obvious one is
+OpenStreetMap through the same Overpass path `network_input` uses, which means it inherits that
+path's problems and its politeness rules; the other candidates are the Microsoft and Google
+open building footprint datasets, which are far larger and are files rather than an API. **What
+would decide it:** which of those a practitioner would actually have, and whether the widget
+acquires (a download, with caps and attribution, like `find_health_facilities`) or imports a file
+they already hold. Unscheduled and unsized.
+
+**OpenFreeMap tiles and themes for the Map widget.** Asked for by the practitioner on
+2026-10-15. Today the only basemaps are OpenStreetMap's raster tiles and OpenTopoMap, both
+third-party services that see the viewed extent of every pan. [OpenFreeMap](https://openfreemap.org)
+serves **vector** tiles free and without an API key, with several styles, and can be
+self-hosted — which is the part that matters here, because it is the first basemap option that
+could remove the disclosure objection rather than trade against it. Vector tiles also mean themes:
+a light, dark or minimal ground chosen to sit under the data rather than compete with it, which
+raster tiles cannot offer. **What would decide it:** whether a vector renderer is worth the
+dependency. Leaflet draws raster tiles with no help; vector tiles need MapLibre GL or an
+equivalent, which is a substantial addition to a project that currently ships one mapping library.
+Related: the three basemap options recorded in [the Map specification](widget-specs/map_output.md),
+where PMTiles is the other offline-capable candidate.
+
+
 **Nothing converts a table into points.** Moved here from the blocker ledger on 2026-10-15, where
 it had been `standing` while gating nothing. No widget takes `table` and outputs `points`, and no
 widget anywhere names which columns hold coordinates — there is no `latField`, `lonField` or

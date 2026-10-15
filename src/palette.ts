@@ -29,8 +29,32 @@ export const ALWAYS_ADDABLE=[
   'apply_ruleset',
 ] as const;
 
-/** Offered on the two teaching canvases, which start with almost nothing. */
+/** Offered on the two teaching canvases, which start with almost nothing.
+ *
+ *  **Superseded 2026-10-15 by `INPUT_STAGE`, and kept because `widget-names.mjs` reports against
+ *  it.** It never did what it looked like it did: `addableTypes` began with these five and then
+ *  added `ALWAYS_ADDABLE` and the catchment types unconditionally, so a blank canvas offered 41
+ *  of 53 widgets. Experiment 112 dismissed two forms of progressive reveal on the premise that
+ *  this list already handled the first placement; it did not, and nobody had measured the palette
+ *  itself. */
+import portContracts from '../widgets/port-contracts.json';
+
 export const STARTER_TYPES=['study_area','point_input','measure_area','coverage_check','map_output'] as const;
+
+/** The widgets that need nothing and emit something: the input stage.
+ *
+ *  Derived from the declared port contracts rather than listed here, so the palette and the
+ *  reveal measurement in experiment 112 cannot disagree about what an input is -- the same
+ *  arrangement the playback uses, and for the same reason.
+ *
+ *  A widget whose ports come from a pin (`apply_ruleset`, `micro_workflow`) is not an input: it
+ *  has no ports at all until it is configured, which is a different thing from needing nothing. */
+interface DeclaredContract {output?:string|null; lateBoundTo?:string; contracts?:{required:unknown[]}[]}
+export const INPUT_STAGE:ReadonlySet<string>=new Set(
+  Object.entries((portContracts as unknown as {widgets:Record<string,DeclaredContract>}).widgets)
+    .filter(([,widget])=>!widget.lateBoundTo&&!!widget.output
+      &&(!(widget.contracts??[]).length||(widget.contracts??[]).some(c=>c.required.length===0)))
+    .map(([name])=>name));
 
 /** Derived from each widget's declared `implementationStatus`, not hand-maintained.
  *
@@ -73,6 +97,18 @@ export function addableTypes(options:{
   catchmentTypes:readonly string[];
 }):Set<string>{
   const {exampleKey,templateTypes,workflowTypes,catchmentTypes}=options;
+  // Start with an input. Until the canvas holds one, the palette offers the input stage and
+  // nothing else: there is no sensible process step before there is something to process, and no
+  // output before there is something to show. The practitioner's rule, revised by them on
+  // 2026-10-14 so that an output needs only an input -- plotting what you just imported, to see
+  // it, is a legitimate first move -- and adopted on 2026-10-15 after the measurement that showed
+  // a blank canvas offering 41 of 53.
+  //
+  // Keyed on the CANVAS rather than on which example is open, so it lifts the moment an input is
+  // placed and returns if everything is deleted. Whatever is already on the canvas stays addable
+  // regardless, so a deleted node can always be put back.
+  if(!workflowTypes.some(type=>INPUT_STAGE.has(type)))
+    return new Set<string>([...INPUT_STAGE,...workflowTypes].filter(type=>!RETIRED_FROM_PALETTE.includes(type as never)));
   const starter=['blank','coverage'].includes(exampleKey);
   const allowed=new Set<string>(starter?STARTER_TYPES:templateTypes);
   if(exampleKey==='old-naledi')for(const type of ['measure_area','point_input','coverage_check','map_output'])allowed.add(type);

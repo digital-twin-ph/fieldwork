@@ -412,7 +412,7 @@ of its contracts is satisfied by what is already on the canvas:
 
 **81 nodes, none stranded.** The earlier version of this claim was made against
 `TYPES.inputs` read as a conjunction and was wrong in both directions; this one is made
-against the contracts and includes the two widgets with a deferred port contract.
+against the contracts and includes the two widgets whose ports are late-bound.
 
 It still says nothing about whether anyone would *want* to build them in that order.
 
@@ -526,12 +526,13 @@ Three borders, measured.
 the rule can never retire it, and it offers itself. A palette driven by port types will
 keep proposing *reproject the reprojected points* forever.
 
-**The widgets with a deferred port contract.** `apply_ruleset` and `micro_workflow` have
-no type-level contract at all; their ports arrive with the artefact the node pins. *Called
-"pinned widgets" in earlier rows of this record, which is wrong twice over: the widget is
-not pinned, the node holds a pin; and nothing is pinned about the widget itself. The
-glossary defines **pin**, **deferred port contract** and **per-node port** from
-2026-10-14.*
+**The widgets whose ports are late-bound.** `apply_ruleset` and `micro_workflow` have no
+type-level contract at all: each applies a declared artefact, and the artefact decides the
+ports, so they are bound when it is chosen rather than when the widget is defined. *Called
+"pinned widgets" in earlier rows of this record, which is wrong twice over — the widget is
+not pinned, a node holds a pin — and then "deferred port contract", which named the symptom
+rather than the thing. The glossary carries **pin**, **applies a declared artefact**, **late
+binding** and **per-node port** from 2026-10-14.*
 
 **The crowded type.** Eleven widgets emit `points` and twenty-five accept it. Placing any
 of the eleven leaves twenty-five candidates, which is not a prediction.

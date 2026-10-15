@@ -29,7 +29,7 @@ else{
 // is a port nobody can discover.
 const undeclared=[];
 for(const [type,widget] of Object.entries(contracts())){
-  if(widget.deferredTo)continue;
+  if(widget.lateBoundTo)continue;
   const declared=new Set((TYPES[type]?.inputs??[]).map(([port])=>port));
   for(const contract of widget.contracts)
     for(const [port] of [...contract.required,...contract.optional])

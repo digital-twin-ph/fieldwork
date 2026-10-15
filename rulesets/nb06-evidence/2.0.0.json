@@ -101,7 +101,8 @@
   "changes": [
     {
       "kind": "major",
-      "description": "Output carrier changed from gradedFacilities to points. The rules are unchanged and the conclusions are unchanged -- only what the classification is assembled into. 1.0.0 is kept because it is what reproduces the conclusions a saved workflow pinned, and because a rule change changes results while a carrier change changes connections."
+      "description": "Output carrier changed from gradedFacilities to points. The rules are unchanged and the conclusions are unchanged -- only what the classification is assembled into. 1.0.0 is kept because it is what reproduces the conclusions a saved workflow pinned, and because a rule change changes results while a carrier change changes connections.",
+      "incompatibility": "The output port changed from gradedFacilities to points. A workflow pinned to 1.0.0 has whatever consumed gradedFacilities wired to this step; that consumer must accept a point layer and read the grading from each feature's attributes instead. Moving versions is a rewiring job, not a click."
     }
   ]
 }

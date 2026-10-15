@@ -113,6 +113,34 @@ for(const entry of ledger.uncited)
   if(!uncited.some(s=>s.doc.id===entry.id))
     problems.push(`rulesets/ledger.json lists ${entry.id} as uncited and it now carries a citation. `
       +`Remove the entry and lower uncitedCeiling to ${uncited.length}, so the number means something.`);
+// A version that is not the first of its identity must say what it changed, and a version that
+// moved a port must say what moving costs. Added 2026-10-15 after finding the opposite: two
+// rulesets had carried change notes since 2026-10-12 and nothing read them, while the third had
+// changed its output port with its only account of it buried in a prose description.
+const ports=doc=>JSON.stringify(doc.inputContract?.ports??{});
+for(const [id,versions] of Object.entries(sets.reduce((by,s)=>{
+  (by[s.doc.id]??=[]).push(s);return by;},{}))){
+  const ordered=versions.slice().sort((a,b)=>String(a.doc.version).localeCompare(String(b.doc.version),undefined,{numeric:true}));
+  for(let i=1;i<ordered.length;i++){
+    const {path,doc}=ordered[i],previous=ordered[i-1].doc;
+    const changes=doc.changes??[];
+    if(!changes.length){
+      problems.push(`${path}: ${id} ${doc.version} supersedes ${previous.version} and declares no changes. `
+        +`A practitioner told only that a newer version exists has been told the least useful half of it.`);
+      continue;
+    }
+    for(const change of changes){
+      if(!['major','minor','patch'].includes(change.kind))
+        problems.push(`${path}: a change declares kind ${JSON.stringify(change.kind)}, not major, minor or patch.`);
+      if(!change.description?.trim())problems.push(`${path}: a change carries no description.`);
+    }
+    if(ports(doc)!==ports(previous)&&!changes.some(c=>c.incompatibility?.trim()))
+      problems.push(`${path}: ${id} ${doc.version} changes the ports it declares and no change states an `
+        +`incompatibility. A port change breaks what is wired, whatever the version number says about it, `
+        +`and the practitioner reading the alert needs to know whether moving is a click or a rewiring job.`);
+  }
+}
+
 if(ledger.counts?.rulesets!==rulesets.length)
   problems.push(`rulesets/ledger.json counts ${ledger.counts?.rulesets} rulesets and ${rulesets.length} identities are present across ${sets.length} version files.`);
 

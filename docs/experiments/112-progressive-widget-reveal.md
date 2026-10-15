@@ -278,6 +278,75 @@ both declared: the generated widget contracts, and the pinned artefact's own por
 is the same split experiment 113 met from the other side, where a composition's validator
 read a member's output from the static type table and had to be taught to read the pin.
 
+### The rule stops filtering at the second node
+
+The blank canvas is the easy case, and it is not the case that matters. Counting what is
+addable after each node is placed, through three real builds, over the 51 widgets whose
+contract is known from their type:
+
+| Example | After 1 node | After 2 | End of build |
+| --- | --- | --- | --- |
+| snow-isochrone (18 nodes) | 12 (24%) | **29 (57%)** | 42 (82%) |
+| snow-extent (9 nodes) | 20 (39%) | **26 (51%)** | 29 (57%) |
+| old-naledi (13 nodes) | 20 (39%) | **29 (57%)** | 33 (65%) |
+
+In all three, **two placements open more than half the palette**, and the rest of the
+build runs at 57–82% addable.
+
+This is the number that decides the proposal, and it decides it against. The rule binds
+hardest at the first placement — where `STARTER_TYPES` already offers 5 and the measured
+alternative is 7 — and stops binding exactly where a practitioner might actually be
+overwhelmed, which is a canvas with a dozen nodes on it and most of the palette open. A
+rule that filters when there is nothing to filter, and not when there is, is the shape
+AGENTS.md warns about: it fires reliably and that firing is not evidence of worth.
+
+**What it suggests instead.** If a crowded palette is a real problem it is a problem late
+in a build, where reveal does nothing. Relevance to what is selected, or grouping, or
+search would have to carry that, and none of them is this rule. That is a finding, not a
+plan: nobody has been watched being overwhelmed either.
+
+### Two different rules were being discussed, and the weak one was measured
+
+The practitioner, on reading the measurement above:
+
+> What is revealed depends on what N3 receipts are already on the canvas, right?
+
+Everything above measures a **port-type** rule: a widget is revealed because some node on
+the canvas would emit a value of a type it accepts. That is a structural fact about the
+graph, available before anything runs, and it is the rule that stops filtering at the
+second node.
+
+The **receipt** rule is a different and stronger claim: a widget is revealed because the
+facts already asserted on this canvas are the facts it consumes. *The extent ruleset is
+addable because something here asserts an area.* It is specific where the port rule is
+coarse — 324 terms are asserted across the application against 15 port types — and it
+binds late in a build, which is exactly where the port rule stops binding. It is also the
+only version that can live in the ontology as the practitioner proposed, because the facts
+an ontology rule can read are the receipts.
+
+**Measured today, the receipt rule would reveal nothing at all.** Not because nothing
+qualifies, but because the two halves speak different vocabularies.
+
+| What exists | Count |
+| --- | --- |
+| Widgets whose current release declares what it emits | 24 of 53 |
+| Ruleset documents declaring what they expect | 7 of 7 |
+| Expected predicates that appear in any widget's declared emissions | **0** |
+
+Zero. And the reason is a line in the ontology:
+
+```ttl
+fw:areaSquareMetres  … rdfs:comment "… Distinct from fw:hullAreaSquareMetres, which …"
+```
+
+`summarize_hull`'s receipt asserts `fw:hullAreaSquareMetres`. The extent ruleset expects
+`fw:areaSquareMetres`. Both are declared, the ontology says in so many words that they are
+distinct, and nothing relates them — so a rule asking *what on this canvas asserts an
+area* finds the receipt and the requirement as unrelated terms. The translation between
+them happens inside the fact generator, in code, declared nowhere. It is experiment 113's
+first leap again, one layer up: the quantity became a field so a rule could read it, and
+the *term* has not made the same move.
+
 ### Every shipped example is still buildable in order
 
 Each of the seven worked examples, placed node by node with a node admitted only when one
@@ -310,6 +379,26 @@ above. The second half is unchanged and is not something this record can do to i
 the question is whether a practitioner facing 7 widgets finds what they need or concludes
 the application cannot do it, and only watching one answers that._
 
+### Revised 2026-10-14, after the receipt question
+
+The port-type rule is not worth building: measured, it filters only at the first
+placement, where a starter set already does the job. What would close the **receipt** rule
+is a different and shorter list, and each item is worth doing on its own account:
+
+1. **Relate the terms that mean the same thing.** `fw:hullAreaSquareMetres` is an area;
+   so is `fw:areaSquareMetres`; the ontology says they are distinct and relates them in no
+   other way. An `rdfs:subPropertyOf` where the specific term is a kind of the general one
+   lets a rule ask one question and get both answers. Cheap per pair, and a check can hold
+   the ledger of pairs that still disagree.
+2. **Declare what a widget CONSUMES in RDF terms**, as the ruleset documents already do
+   with `expects`. Until then the receipt rule is computable for rulesets and nothing else.
+3. **Widen the emissions coverage** from 24 of 53, which happens as widgets publish
+   releases — the older release files are immutable and cannot be backfilled.
+
+Only then is there a rule to try behind a flag, and only then does watching a practitioner
+measure the thing the practitioner proposed rather than the weaker rule that was easier to
+compute.
+
 ## Updates
 
 _Appended, never rewritten. Rows before this table existed are seeded from the commits that
@@ -319,3 +408,5 @@ changed this file; a date stamp sweep is not an update._
 | --- | --- |
 | 2026-10-14 | Measure progressive widget reveal before enforcing it |
 | 2026-10-14 | Blocker cleared: port-contracts.json declares required-versus-optional for 53 widgets, generated from `requiredInputs` and held true by a drift check — a mirror of the code, not a source it obeys. Reveal re-measured against it: 7 addable on a blank canvas against today's 5, 12 after one study area, 51 at the fixpoint, and all 81 nodes of the seven shipped examples buildable in order. `apply_ruleset` and `micro_workflow` have no contract at all, because their ports come from their pin; a reveal rule over types alone would hide the two widgets most likely to be thought missing |
+| 2026-10-14 | Measured the filter's strength through three real builds, which the blank-canvas figure had hidden: two placements open more than half the palette (57%, 51%, 57%) and the rest of each build runs at 57-82% addable. The rule binds hardest where a starter set already helps and stops binding where a canvas is actually crowded. Recorded as evidence against building it |
+| 2026-10-14 | The practitioner's question -- "what is revealed depends on what N3 receipts are already on the canvas, right?" -- separated two rules that had been discussed as one. Everything measured so far is the PORT rule, which filters only at the first placement. The RECEIPT rule is the one that can live in the ontology and binds late in a build, and today it would reveal nothing: 0 of 7 rulesets' expected predicates appear in any widget's declared emissions, because a hull's receipt says fw:hullAreaSquareMetres and the rule expects fw:areaSquareMetres, declared distinct and related by nothing |

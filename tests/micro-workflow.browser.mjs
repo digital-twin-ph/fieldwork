@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {collectPageErrors} from './page-errors.mjs';
 
 // The composition as a practitioner meets it: on the palette, added as one step, inspected,
 // and exploded into the primitives it arranges. Experiment 89 claimed a composition is
@@ -23,8 +24,7 @@ async function settledNodes(page){
 }
 
 test('a micro-workflow is offered, added as one step, and explodes into its primitives',async({page})=>{
-  const errors=[];
-  page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   // Fieldwork saves each workspace to localStorage, so a test that edits snow-isochrone
   // leaves it edited for the next one. Cleared first: this file adds and explodes a
   // composition three times over, and the counts only mean something from a known start.
@@ -107,8 +107,7 @@ test('a micro-workflow is offered, added as one step, and explodes into its prim
 // manifest and the run stopped. Hand-built test workflows carry no manifest, so they never
 // saw it. This runs a composition inside a real worked example, which does carry one.
 test('a composition runs inside a worked example, which carries a project manifest',async({page})=>{
-  const errors=[];
-  page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   // Fieldwork saves each workspace to localStorage, so a test that edits snow-isochrone
   // leaves it edited for the next one. Cleared first: this file adds and explodes a
   // composition three times over, and the counts only mean something from a known start.
@@ -157,8 +156,7 @@ test('a composition runs inside a worked example, which carries a project manife
 // Both reported after using the feature: an edited worked example stayed edited with no way
 // back, and an exploded composition left the canvas unreadable with no way to tidy it.
 test('a worked example can be reset, and an exploded canvas can be laid out',async({page})=>{
-  const errors=[];
-  page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   page.on('dialog',d=>d.accept());
   // Fieldwork saves each workspace to localStorage, so a test that edits snow-isochrone
   // leaves it edited for the next one. Cleared first: this file adds and explodes a

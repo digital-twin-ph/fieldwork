@@ -164,3 +164,74 @@ export function compileAuthoredRuleset(ruleset:AuthoredRuleset):string{
   }
   return lines.join('\n')+'\n';
 }
+
+/** What a comparison is measured in, on each side, and whether the two agree.
+ *
+ *  The practitioner, 2026-10-15: *"How do we make sure measurements have units in the ruleset
+ *  widget?"* The answer this project already uses one layer down: every published ruleset
+ *  declares a QUDT unit on each numeric parameter and on each numeric predicate it expects, and
+ *  `makeN3` refuses distances in the wrong unit rather than converting them -- *"the threshold is
+ *  a practitioner's judgement in a stated unit, and silently reinterpreting it would change what
+ *  they decided."* The authored form had a unit LABEL, which is a word on a screen, and nothing
+ *  compared the two sides.
+ *
+ *  Three rules, and the first is the one that makes the others possible:
+ *
+ *  1. A numeric field declares a unit. A number without one is not a measurement.
+ *  2. A numeric parameter declares a unit.
+ *  3. A comparison between a field and a parameter whose units differ is **refused**, naming
+ *     both. Refused rather than converted, following the precedent: converting would change
+ *     what the practitioner decided without telling them.
+ *
+ *  A bare literal is the case nothing can check — `waitMinutes is more than 10` carries no unit
+ *  of its own and takes the field's. The defence there is not a rule but the editor, which shows
+ *  the field's unit beside the box the number is typed into.
+ */
+export interface UnitProblem {field:string; says:string}
+export function authoredUnitProblems(authored:{
+  fields:{predicate:string;kind:string;label?:string;unit?:string;unitLabel?:string}[];
+  parameters?:{name:string;unit?:string;unitLabel?:string}[];
+  rules:{any:{all:{field:string;comparator:string;value:string|number|boolean}[]}[]}[];
+}):UnitProblem[]{
+  const problems:UnitProblem[]=[];
+  const named=(predicate:string)=>authored.fields.find(f=>f.predicate===predicate);
+  const shown=(unit?:string,label?:string)=>label||unit?.split('/').pop()||'no unit';
+
+  for(const field of authored.fields)
+    if(field.kind==='number'&&!field.unit?.trim())
+      problems.push({field:field.predicate,
+        says:`${field.label||field.predicate} is a number and states no unit. A number without a unit is `
+          +`not a measurement, and a rule comparing it to anything is comparing two numbers and hoping.`});
+  for(const parameter of authored.parameters??[])
+    if(!parameter.unit?.trim())
+      problems.push({field:parameter.name,
+        says:`The ${parameter.name} setting states no unit, so nothing can check that it means the same `
+          +`as the field it is compared against.`});
+
+  // One report per (field, setting) pair rather than per condition. Step 1 of the ruleset
+  // example compares the same two things in three rules, and telling a practitioner three times
+  // that minutes are not hours is not telling them three things.
+  const reported=new Set<string>();
+  for(const rule of authored.rules)
+    for(const group of rule.any)
+      for(const condition of group.all){
+        if(condition.comparator==='equals')continue;
+        const field=named(condition.field);
+        if(!field?.unit)continue;
+        const placeholder=typeof condition.value==='string'&&/^\{\{(.+)\}\}$/.exec(condition.value);
+        if(!placeholder)continue;
+        const parameter=(authored.parameters??[]).find(p=>p.name===placeholder[1]);
+        if(!parameter?.unit)continue;
+        const pair=`${condition.field}/${parameter.name}`;
+        if(parameter.unit!==field.unit&&!reported.has(pair)){
+          reported.add(pair);
+          problems.push({field:condition.field,
+            says:`${field.label||field.predicate} is measured in ${shown(field.unit,field.unitLabel)} and the `
+              +`${parameter.name} setting is in ${shown(parameter.unit,parameter.unitLabel)}. They are compared `
+              +`directly, so this rule would be wrong by whatever separates the two. State the setting in `
+              +`${shown(field.unit,field.unitLabel)}, or compare against a field that is in `
+              +`${shown(parameter.unit,parameter.unitLabel)}.`});
+        }
+      }
+  return problems;
+}

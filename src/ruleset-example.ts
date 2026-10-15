@@ -47,8 +47,10 @@ const sites=():PointCollection=>({type:'FeatureCollection',features:[
 ]});
 
 /** The bindings every step shares: which attribute means which predicate in the rules. */
+const MINUTE='http://qudt.org/vocab/unit/MIN';
 const FIELDS=[
-  {attribute:'wait_minutes',predicate:'fwa:waitMinutes',kind:'number' as const,label:'Wait (minutes)',unitLabel:'min'},
+  {attribute:'wait_minutes',predicate:'fwa:waitMinutes',kind:'number' as const,label:'Wait',
+    unit:MINUTE,unitLabel:'minutes'},
   {attribute:'category',predicate:'fwa:category',kind:'term' as const,label:'Kind of service point'},
   {attribute:'open_today',predicate:'fwa:openToday',kind:'boolean' as const,label:'Open today'},
 ];
@@ -80,7 +82,7 @@ export function rulesetExample():Workflow{
         label:'1 · Banding a number',parameters:{threshold:30},
         ruleset:authoredPin(),
         authored:{title:'Waiting time, in bands',
-          parameters:[{name:'threshold',meaning:'Wait above which a service point is called Long.',unitLabel:'min',min:0,max:600,decimals:0}],
+          parameters:[{name:'threshold',meaning:'Wait above which a service point is called Long.',unit:MINUTE,unitLabel:'minutes',min:0,max:600,decimals:0}],
           mustNotBeReadAs:'A measurement of how long anyone actually waited. These are reported figures for one synthetic day.',
           fields:FIELDS,
           rules:[
@@ -100,7 +102,7 @@ export function rulesetExample():Workflow{
         label:'2 · Alternatives, and two conclusions at once',parameters:{threshold:30},
         ruleset:authoredPin(),
         authored:{title:'Which service points to look at',
-          parameters:[{name:'threshold',meaning:'Wait above which a closed service point is worth looking at.',unitLabel:'min',min:0,max:600,decimals:0}],
+          parameters:[{name:'threshold',meaning:'Wait above which a closed service point is worth looking at.',unit:MINUTE,unitLabel:'minutes',min:0,max:600,decimals:0}],
           mustNotBeReadAs:'A judgement about any service point. It is an illustration of how alternatives are written.',
           fields:FIELDS,
           rules:[
@@ -151,7 +153,7 @@ export function rulesetExample():Workflow{
         label:'4 · Bounds from below',parameters:{quiet:10},
         ruleset:authoredPin(),
         authored:{title:'Walk in, or make an appointment',
-          parameters:[{name:'quiet',meaning:'Wait below which a service point is quiet enough to walk into.',unitLabel:'min',min:0,max:600,decimals:0}],
+          parameters:[{name:'quiet',meaning:'Wait below which a service point is quiet enough to walk into.',unit:MINUTE,unitLabel:'minutes',min:0,max:600,decimals:0}],
           mustNotBeReadAs:'Advice about attending anywhere. It exists to exercise the two comparators the rest of the example does not use.',
           fields:FIELDS,
           rules:[

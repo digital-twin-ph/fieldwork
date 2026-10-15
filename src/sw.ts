@@ -41,11 +41,30 @@ self.addEventListener('fetch',event=>{
     event.respondWith(caches.match(event.request).then(hit=>hit||fetch(event.request)));
     return;
   }
-  event.respondWith(fetch(event.request).then(response=>{
-    // Keep the cache current so the offline fallback is the build they last had online, not the
-    // one they first installed.
-    if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));}
-    return response;
-  }).catch(()=>caches.match(event.request,{ignoreSearch:event.request.mode==='navigate'})
-    .then(hit=>hit??Response.error())));
+  // Network first, but never worse than the cache. The first version of this returned
+  // `Response.error()` when the network failed and nothing was cached, which turns a transient
+  // local failure into a hard load error -- cache-first had been quietly serving the cache
+  // through exactly those. It showed up as three "Load failed" page errors in CI WebKit and in
+  // no local run, which is the signature of a flaky server rather than a defect.
+  //
+  // So: race the network against a short timer. Whichever is ready first wins, the cache is
+  // updated from any successful fetch, and a failure falls back to the cache before it falls
+  // back to failing.
+  const fromCache=()=>caches.match(event.request,{ignoreSearch:event.request.mode==='navigate'});
+  event.respondWith((async()=>{
+    const network=fetch(event.request).then(response=>{
+      if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));}
+      return response;
+    });
+    try{
+      const slow=new Promise<undefined>(resolve=>setTimeout(()=>resolve(undefined),2000));
+      const first=await Promise.race([network,slow]);
+      if(first)return first;
+      // The network is being slow. Serve what is cached if anything is, and let the fetch finish
+      // in the background so the next load has it.
+      return (await fromCache())??await network;
+    }catch{
+      return (await fromCache())??await network;
+    }
+  })());
 });

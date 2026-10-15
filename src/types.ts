@@ -73,11 +73,16 @@ export interface ParamsByType {
       title:string;
       /** What the rules must not be read as -- required of a bundled ruleset, required here. */
       mustNotBeReadAs:string;
-      fields:{attribute:string;predicate:string;kind:'number'|'boolean'|'term';label?:string;unitLabel?:string}[];
+      /** A numeric field must declare the unit it is measured in, as a QUDT IRI -- the same
+       *  vocabulary the published rulesets use. Not optional: a number without a unit is not a
+       *  measurement, and a rule comparing one to another is comparing two numbers and hoping. */
+      fields:{attribute:string;predicate:string;kind:'number'|'boolean'|'term';label?:string;
+        unit?:string;unitLabel?:string}[];
       /** The numbers a practitioner can change without rewriting a rule. Declared by the authored
        *  ruleset itself rather than borrowed from a bundled one: a step whose rules use no
        *  parameter declares none, and binding then has nothing to insist on. */
-      parameters?:{name:string;meaning:string;unitLabel?:string;min?:number;max?:number;decimals?:number}[];
+      parameters?:{name:string;meaning:string;unit?:string;unitLabel?:string;
+        min?:number;max?:number;decimals?:number}[];
       rules:{any:{all:{field:string;comparator:string;value:string|number|boolean}[]}[];
         then:{predicate:string;value:string}[]}[];
     }};

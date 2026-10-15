@@ -364,8 +364,39 @@ either one fails a test and whoever fixes it reads why.
 | | How it is exercised | What running it showed |
 | --- | --- | --- |
 | A6/B2 | step 4 of the example, *Bounds from below*, uses `lessThan` and `notLessThan` over a record standing exactly on the boundary | both fire correctly against the real engine; `10` is **not** less than `10`, which is the difference from `is at most` |
-| A7 | a test sets the threshold to 1, meaning one hour, against fields declared in minutes | **nothing refuses it.** The run then fails — but through debt 3, because the bands overlap at 1 — and the message is about conclusions disagreeing. It does not mention units, the parameter, or which number to look at. Being refused for the wrong reason is better than a wrong answer and is not the same as being told |
+| A7 | a test sets the threshold to 1, meaning one hour, against fields declared in minutes | **was**: nothing refused it, and the run failed through debt 3 with a message about conclusions disagreeing that never mentioned units. **Paid 2026-10-15** — see below |
 | conflicting conclusions | a test adds a second rule concluding `Dispensing` for clinics, which already conclude `Consultation` | caught, and only at the run. The compiler cannot see it because both rules are well formed, and neither can the editor |
+
+### A7 paid: a measurement states its unit, or it is not one
+
+The practitioner, 2026-10-15: *"How do we make sure measurements have units in the ruleset
+widget?"* By requiring one, and by refusing a comparison whose sides disagree — which is the
+answer this project already uses one layer down. Every published ruleset declares a QUDT unit on
+each numeric parameter and on each numeric predicate it expects, and `makeN3` refuses distances
+in the wrong unit rather than converting them, because *"the threshold is a practitioner's
+judgement in a stated unit, and silently reinterpreting it would change what they decided."* The
+authored form had a unit *label* — a word on a screen — and nothing compared the two sides.
+
+Three rules now, in `authoredUnitProblems`:
+
+1. **A numeric field declares a unit.** A number without one is not a measurement.
+2. **A numeric parameter declares a unit.**
+3. **A comparison between a field and a parameter whose units differ is refused**, naming both
+   and saying what to do in either direction. Refused rather than converted, following the
+   precedent.
+
+Checked **while the rule is being written**, in the editor, and again at the run — the same
+check in both places, because a practitioner told at the run has already written the rules, kept
+them and run the workflow. Reported once per field-and-setting pair, not once per condition:
+step 1 of the example compares the same two things in three rules, and saying it three times is
+not saying three things.
+
+**What no rule can catch, and what the interface does instead.** A bare literal carries no unit
+of its own — `Wait is more than 10` takes the field's. Nothing can tell whether the practitioner
+meant ten minutes. So the editor shows the field's unit beside the box the number is typed into,
+which is a defence against the mistake being made rather than a check on it having been made.
+The old behaviour is kept as a test: a threshold of 1 against fields in minutes still passes
+every check, because the units agree and only the intention is wrong.
 
 The surface is built, so what remains is narrower:
 
@@ -373,8 +404,7 @@ The surface is built, so what remains is narrower:
    never been executed against the real engine**. By this record's own rule they should not be
    offered until B2 passes. They are offered, and that is a debt rather than a decision: the
    alternative was to ship an editor that cannot express a lower bound.
-2. **A7's refusal** — an incommensurable unit binding caught while authoring rather than at run
-   time. The editor accepts any number for a numeric field, including one in the wrong unit.
+2. ~~**A7's refusal**~~ — paid 2026-10-15, above.
 3. **Conclusions are free text.** The authored form has no declared output vocabulary, so nothing
    stops two rules concluding different values of the same predicate for one record. The compiler
    cannot catch it — only a run can, and `authoredConclusions` throws when it happens, which is

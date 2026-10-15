@@ -151,16 +151,26 @@ test('OSM query scopes acquisition with margin and rejects oversized bounds',()=
   assert.throws(()=>osmQuery({type:'Polygon',coordinates:[[[0,0],[1,0],[1,1],[0,1],[0,0]]]},0),/6 km/);
 });
 test('OSM download retains request provenance and fails on HTTP or byte limits',async()=>{
-  const fetcher=async(url,init)=>{assert.equal(init.credentials,'omit');assert.match(String(init.body),/data=/);return new Response(JSON.stringify(raw));};
+  // Every instance is asked a one-line question first -- the heartbeat the practitioner asked
+  // for on 2026-10-15 -- so a mock has to answer the probe as well as the download. The probe is
+  // recognisable by the query it carries.
+  // `node(1)` rather than `out ids`: a URLSearchParams body encodes the space as `+`, so
+  // matching on a phrase with a space in it silently never matches.
+  const isProbe=init=>String(init?.body??'').includes('node%281%29');
+  const probeOk=()=>new Response(JSON.stringify({version:0.6,elements:[]}));
+  const fetcher=async(url,init)=>{assert.equal(init.credentials,'omit');assert.match(String(init.body),/data=/);
+    return isProbe(init)?probeOk():new Response(JSON.stringify(raw));};
   const n=await requestOSM(boundary,250,fetcher);assert.equal(n.edges.length,3);assert.equal(n.provenance.sha256.length,64);assert.deepEqual(n.provenance.boundary,boundary);
-  await assert.rejects(requestOSM(boundary,0,async()=>new Response('',{status:429})),/HTTP 429/);
+  await assert.rejects(requestOSM(boundary,0,async(url,init)=>
+    isProbe(init)?probeOk():new Response('',{status:429})),/HTTP 429/);
 
   // Overpass fails on its own account. Measured on 2026-10-15 after a report that the download
   // was broken: three identical requests to overpass-api.de returned 502, 200, 502. A single
   // attempt meets that two times in three and reports it as if the practitioner had done
   // something wrong.
   let attempts=0;
-  const flaky=async(...args)=>{attempts++;return attempts<3?new Response('',{status:502}):fetcher(...args);};
+  const flaky=async(url,init)=>{if(isProbe(init))return probeOk();
+    attempts++;return attempts<3?new Response('',{status:502}):fetcher(url,init);};
   const recovered=await requestOSM(boundary,250,flaky);
   assert.equal(attempts,3,'two server errors are retried, the third attempt succeeds');
   assert.equal(recovered.edges.length,3,'and the network that arrives is the network');
@@ -169,17 +179,41 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   // forever: every instance, twice. Measured 2026-10-15, all four public endpoints were
   // unhealthy at the same moment, so this is the case that actually happens.
   let kept=0;
-  await assert.rejects(requestOSM(boundary,0,async()=>{kept++;return new Response('',{status:503});}),
-    /No Overpass instance answered/);
+  await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
+    if(isProbe(init))return probeOk();
+    kept++;return new Response('',{status:503});}),/No Overpass instance answered/);
   assert.equal(kept,8,'four instances, two rounds, then it stops');
+
+  // And when nothing answers the heartbeat, the download is not attempted at all: the
+  // practitioner is told before waiting rather than after four timeouts.
+  let probed=0;
+  await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
+    if(isProbe(init)){probed++;return new Response('',{status:502});}
+    throw new Error('the download must not be attempted when nothing is answering');}),
+    /No Overpass instance is answering/);
+  assert.equal(probed,4,'every instance is asked, once, at the same time');
 
   // A 200 carrying HTML is an error page, not a network. overpass.osm.ch returned exactly that.
   // It moves to the next instance rather than being parsed.
   let served=0;
-  const htmlThenReal=async(...args)=>{served++;
-    return served===1?new Response('<html>down</html>',{status:200,headers:{'content-type':'text/html'}}):fetcher(...args);};
+  const htmlThenReal=async(url,init)=>{if(isProbe(init))return probeOk();
+    served++;
+    return served===1?new Response('<html>down</html>',{status:200,headers:{'content-type':'text/html'}}):fetcher(url,init);};
   const past=await requestOSM(boundary,250,htmlThenReal);
   assert.equal(past.edges.length,3,'an HTML page is skipped and the next instance answers');
+
+  // A regional instance that answers 200 with an empty result is a coverage problem, not a study
+  // area without streets. overpass.osm.ch does exactly this for a bbox outside Switzerland, and
+  // it is reached only when the global instances are down -- so the practitioner meets it at the
+  // worst moment and must not be told their city has no roads.
+  const empty=JSON.stringify({version:0.6,generator:'Overpass API',osm3s:{timestamp_osm_base:'1'},elements:[]});
+  // Only the Swiss instance answers, which is the situation that puts it in play: the global
+  // ones are down and it is last in the list.
+  const swissOnly=async(url,init)=>url.includes('osm.ch')
+    ?new Response(isProbe(init)?JSON.stringify({elements:[{id:1}]}):empty,{status:200,headers:{'content-type':'application/json'}})
+    :new Response('',{status:503});
+  await assert.rejects(requestOSM(boundary,250,swissOnly),
+    /holds Switzerland only .* limit of that instance rather than a fact about your study area/s);
 
   // The instance that answered is recorded, because WHICH one served a network is part of where
   // the data came from. The receipt named the reference instance whatever had answered, until
@@ -189,9 +223,12 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
 
   // 429 means this client is asking too often, so it is NOT retried: waiting is the answer.
   let throttled=0;
-  await assert.rejects(requestOSM(boundary,0,async()=>{throttled++;return new Response('',{status:429});}),/HTTP 429/);
+  await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
+    if(isProbe(init))return probeOk();
+    throttled++;return new Response('',{status:429});}),/HTTP 429/);
   assert.equal(throttled,1,'rate limiting is deferred to, not retried against');
-  await assert.rejects(requestOSM(boundary,0,async()=>new Response(' '.repeat(2000001))),/over the [\d,]+ bytes this download accepts/);
+  await assert.rejects(requestOSM(boundary,0,async(url,init)=>
+    isProbe(init)?probeOk():new Response(' '.repeat(2000001))),/over the [\d,]+ bytes this download accepts/);
 });
 test('buffer creates a distinct area and expands acquisition without carrying old area measurements',()=>{
   const snapshot=structuredClone(boundary),source={boundary,label:'Reporting area',areaId:'urn:test:source',geometryId:'urn:test:shape',measurement:{squareMetres:100,value:100,unit:'m2',method:'fixture'}};

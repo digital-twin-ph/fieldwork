@@ -17,12 +17,52 @@ import {pacedNetworkDownload,deferNetworkDownload,chargeNetworkDownload} from '.
  *  hosts next, the Swiss association last. A mirror that answers is recorded in the provenance --
  *  WHICH instance served a network is part of where the data came from, and the receipt said
  *  overpass-api.de whatever had actually answered until this was built. */
-export const OVERPASS_ENDPOINTS=[
+export interface OverpassEndpoint {url:string; operator:string;
+  /** Set when the instance holds one region's data and answers for the whole world anyway. */
+  regional?:string}
+export const OVERPASS_ENDPOINTS:readonly OverpassEndpoint[]=[
   {url:'https://overpass-api.de/api/interpreter',operator:'FOSSGIS'},
   {url:'https://overpass.kumi.systems/api/interpreter',operator:'Private.coffee'},
   {url:'https://overpass.private.coffee/api/interpreter',operator:'Private.coffee'},
-  {url:'https://overpass.osm.ch/api/interpreter',operator:'Swiss OpenStreetMap Association'},
-] as const;
+  // Regional. Measured 2026-10-15: it answers 200 with valid, EMPTY JSON for a bbox in
+  // Botswana, which is the most dangerous shape of failure here -- a mirror that says yes and
+  // means "not my region". Last in the list, and an empty result from it is reported as a
+  // coverage problem rather than as a study area with no streets in it.
+  {url:'https://overpass.osm.ch/api/interpreter',operator:'Swiss OpenStreetMap Association',regional:'Switzerland'},
+];
+/** The cheapest question an Overpass instance can be asked: one node, by id, identifiers only.
+ *
+ *  The practitioner, 2026-10-15: *"So the important first step for a street network download is
+ *  to check if the API is alive, like a heartbeat ping."* Right, and the obvious candidate --
+ *  `/api/status` -- is not usable: measured the same afternoon it timed out on overpass-api.de,
+ *  returned 500 on kumi.systems and 400 on overpass.osm.ch, which does not appear to serve it at
+ *  all. A probe has to exercise the path that matters, so it is a real query, just the smallest
+ *  one. It answered in under half a second on every instance that was answering at all. */
+export const OVERPASS_PROBE='[out:json][timeout:5];node(1);out ids;';
+
+/** Which instances are answering right now, in the order they are preferred.
+ *
+ *  Asked of all of them at once, because the point is to spend one short wait rather than four
+ *  long ones: a dead instance otherwise costs the full download timeout before the next is
+ *  tried. An instance that answers anything other than JSON is not answering. */
+export async function liveEndpoints(fetcher:typeof fetch=fetch,timeoutMs=6000):Promise<OverpassEndpoint[]>{
+  const results=await Promise.all(OVERPASS_ENDPOINTS.map(async endpoint=>{
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
+    try{
+      const response=await fetcher(endpoint.url,{method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:new URLSearchParams({data:OVERPASS_PROBE}),signal:controller.signal,
+        credentials:'omit',referrerPolicy:'origin'});
+      if(!response.ok)return null;
+      const kind=response.headers.get('content-type')??'';
+      if(!kind.includes('json')&&!kind.includes('text/plain'))return null;
+      return endpoint;
+    }catch{return null;}
+    finally{clearTimeout(timer);}
+  }));
+  return results.filter((endpoint):endpoint is OverpassEndpoint=>!!endpoint);
+}
+
 /** The reference instance. Kept as a name because receipts and tests cite it. */
 export const OVERPASS=OVERPASS_ENDPOINTS[0].url;
 /** The highway values this walking filter accepts. One list, used twice: Overpass filters on it
@@ -134,9 +174,19 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     // 429 stops everything: it means this client is asking too often, and asking a DIFFERENT
     // public instance instead would be discourteous rather than clever.
     const SERVER_ERRORS=[500,502,503,504];
-    let reached:typeof OVERPASS_ENDPOINTS[number]|undefined,lastStatus=0,unreachable=0;
+    // The heartbeat. One short wait asked of every instance at once, so a download is not spent
+    // discovering that the first three are down -- which on 2026-10-15 they were.
+    const live=await liveEndpoints(fetcher);
+    if(!live.length){
+      deferNetworkDownload(null);
+      throw new Error(`No Overpass instance is answering. All ${OVERPASS_ENDPOINTS.length} were asked a `
+        +`one-line question first and none replied, so nothing was downloaded and nothing was changed. `
+        +`These are free public services and they do go down together; wait and retry, or upload a `
+        +`saved network file.`);
+    }
+    let reached:OverpassEndpoint|undefined,lastStatus=0,unreachable=0;
     outer: for(let round=1;round<=2;round++){
-      for(const endpoint of OVERPASS_ENDPOINTS){
+      for(const endpoint of live){
         try{response=await fetcher(endpoint.url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data:request.query}),signal:controller.signal,credentials:'omit',referrerPolicy:'origin'});}
         catch{unreachable++;continue;}
         if(response.ok){
@@ -155,7 +205,7 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     }
     if(!reached){
       deferNetworkDownload(null);
-      throw new Error(`No Overpass instance answered. ${OVERPASS_ENDPOINTS.length} were tried twice each`
+      throw new Error(`No Overpass instance answered. ${live.length} were answering a moment ago and were tried twice each`
         +`${lastStatus?`, the last reporting HTTP ${lastStatus}`:''}${unreachable?`, ${unreachable} unreachable or not serving the API`:''}. `
         +`These are free public services and they do go down together; wait and retry, or upload a saved network file.`);
     }
@@ -180,7 +230,19 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>maxBytes){controller.abort();throw tooLarge(bytes);}chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
     // Charged once the size is known: a larger request earns a longer pause.
     chargeNetworkDownload(bytes,pauseMs);
-    const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const raw=JSON.parse(new TextDecoder().decode(joined)),network=networkFromOSM(raw,maxNodes);
+    const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const raw=JSON.parse(new TextDecoder().decode(joined));
+    // A regional instance answers for the whole world and has data for part of it. Measured
+    // 2026-10-15: overpass.osm.ch returns 200 with an empty `elements` array for a bbox in
+    // Botswana, which `validateNetwork` would then refuse as an invalid network -- true, and
+    // about the wrong thing. An empty result from a regional mirror is a coverage problem, and
+    // saying so is the difference between a practitioner retrying and a practitioner concluding
+    // their study area has no streets in it.
+    if(reached.regional&&!(raw.elements??[]).length)
+      throw new Error(`${reached.operator}'s Overpass instance answered, and it holds `
+        +`${reached.regional} only — it reported no streets for this area, which is a limit of that `
+        +`instance rather than a fact about your study area. It was asked because the others were `
+        +`not answering. Retry in a few minutes, or upload a saved network file.`);
+    const network=networkFromOSM(raw,maxNodes);
     network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',
       attribution:`© OpenStreetMap contributors, via ${reached.operator}`,url:reached.url,retrievedAt:new Date().toISOString(),query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
   }finally{clearTimeout(timer);}

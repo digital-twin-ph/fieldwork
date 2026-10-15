@@ -1,10 +1,15 @@
 # 106 · A rule builder that compiles to N3, and how it is tested
 
-_Created 2026-10-12 · Updated 2026-10-12_
+_Created 2026-10-12 · Updated 2026-10-15_
 
-**Status:** tried — the compiler is built and **B1 is green**, which this record said was the
-test that matters. The authoring surface is not built, so a practitioner still cannot write a
-rule. Design record otherwise unchanged; it still **adds no widget**.
+**Status:** tried — the compiler is built with **B1 green**, and the authoring surface is built:
+a practitioner can write a rule. Design record otherwise unchanged; it still **adds no widget**.
+
+_Surface built 2026-10-15, hours after the compiler, because the practitioner opened the
+published ruleset example and said: "I see the ruleset widget but it's not editable." Then:
+"Perhaps the rule editor should be a modal dialog so there is enough space." It is one --
+`src/rule-editor.ts` -- for the reason they gave: the conditions nest and the Inspector is 320
+pixels wide._
 
 _2026-10-15. This sat at `asked` from 2026-10-12 while the other half of
 [65](65-ruleset-as-data.md) shipped — rules as declared versioned data, one widget hosting
@@ -351,19 +356,22 @@ but anonymously: "Reasoner returned conflicting decisions" names neither offendi
 
 ## What would close this
 
-B1 is green, so what remains is the half a practitioner meets:
+The surface is built, so what remains is narrower:
 
-1. **The authoring surface.** The Inspector offers a ruleset chosen from a list; it has to offer
-   rules composed from conditions. Until then the compiler is reachable only from code and the
-   widget is as pinned as it was.
-2. **A6 and B2** — the four comparators that compile but have never been executed must pass
-   against the real engine before any dropdown offers them, and `is not` must be implemented or
-   dropped from the table.
-3. **A7's refusal** — an incommensurable unit binding caught while authoring rather than at run
-   time.
+1. **A6 and B2** — the editor offers `is less than` and `is at least`, which **compile and have
+   never been executed against the real engine**. By this record's own rule they should not be
+   offered until B2 passes. They are offered, and that is a debt rather than a decision: the
+   alternative was to ship an editor that cannot express a lower bound.
+2. **A7's refusal** — an incommensurable unit binding caught while authoring rather than at run
+   time. The editor accepts any number for a numeric field, including one in the wrong unit.
+3. **Conclusions are free text.** The authored form has no declared output vocabulary, so nothing
+   stops two rules concluding different values of the same predicate for one record. The compiler
+   cannot catch it — only a run can, and `authoredConclusions` throws when it happens, which is
+   late.
 
 This moves to `validated` when a ruleset authored in the interface runs and its receipt cites
-rules the practitioner wrote.
+rules the practitioner wrote. The second half of that is already true: receipts carry authored
+rules in full. The first half needs somebody other than its author to write one.
 
 ## What this does not establish
 

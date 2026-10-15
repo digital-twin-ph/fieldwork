@@ -1,6 +1,6 @@
 # 112 — Progressive widget reveal
 
-_Created 2026-10-14 · Updated 2026-10-14_
+_Created 2026-10-14 · Updated 2026-10-15_
 
 **Status:** tried — the rule is applied to every shipped example and measured against
 declared contracts, which is the observation stage AGENTS.md says is usually skipped. It

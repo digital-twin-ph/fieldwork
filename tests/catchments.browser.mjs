@@ -71,10 +71,19 @@ test.describe('bounded network download',()=>{
 test('Street network downloads bounded OSM data explicitly, preserves failed downloads and acquisition provenance',async({page})=>{
   await page.clock.install();
   await page.goto('/?example=snow-isochrone');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
-  let requests=0;await page.route('https://overpass-api.de/api/interpreter',async route=>{requests++;assert.match(route.request().postData(),/data=/);await route.fulfill({json:{elements:[{type:'node',id:1,lon:-.136668,lat:51.513341},{type:'node',id:2,lon:-.135,lat:51.513341},{type:'way',id:3,nodes:[1,2],tags:{highway:'footway'}}]}});});
+  // Every instance is asked a one-line question before any download, so a probe and a download
+  // both arrive here. Counted separately: the heartbeat was added 2026-10-15 and this test
+  // asserts how many DOWNLOADS happen, which is the thing that costs anybody anything.
+  let requests=0,probes=0;await page.route('https://overpass-api.de/api/interpreter',async route=>{
+    const sent=route.request().postData()||'';
+    if(sent.includes('node%281%29')){probes++;await route.fulfill({json:{version:0.6,elements:[]}});return;}
+    requests++;assert.match(sent,/data=/);await route.fulfill({json:{elements:[{type:'node',id:1,lon:-.136668,lat:51.513341},{type:'node',id:2,lon:-.135,lat:51.513341},{type:'way',id:3,nodes:[1,2],tags:{highway:'footway'}}]}});});
   await page.locator('.react-flow__node[data-id="network"]').click();await page.locator('#network-input-method').selectOption('osm');assert.equal(requests,0);await page.locator('#download-network').click();await expect(page.locator('#inspector-content')).toContainText('2 nodes');assert.equal(requests,1);const w=await saved(page),data=w.nodes.find(n=>n.type==='network_input').params.data;assert.equal(data.provenance.provider,'OpenStreetMap');assert.ok(data.provenance.bounds[0]<-.142);assert.ok(data.provenance.boundary.coordinates.length);
   await expect(page.locator('#download-network')).toBeDisabled();await expect(page.locator('#network-download-status')).toContainText('seconds');await page.clock.fastForward(61000);await expect(page.locator('#download-network')).toBeEnabled();
-  await page.unroute('https://overpass-api.de/api/interpreter');await page.route('https://overpass-api.de/api/interpreter',route=>route.fulfill({status:429,body:'Rate limited'}));await page.locator('#download-network').click();await expect(page.locator('#toast')).toContainText('HTTP 429');assert.deepEqual((await saved(page)).nodes,w.nodes);
+  await page.unroute('https://overpass-api.de/api/interpreter');await page.route('https://overpass-api.de/api/interpreter',route=>
+    (route.request().postData()||'').includes('node%281%29')
+      ?route.fulfill({json:{version:0.6,elements:[]}})
+      :route.fulfill({status:429,body:'Rate limited'}));await page.locator('#download-network').click();await expect(page.locator('#toast')).toContainText('HTTP 429');assert.deepEqual((await saved(page)).nodes,w.nodes);
 });
 });
 test('sized study boundaries and independent buffer preserve reporting geometry',async({page})=>{

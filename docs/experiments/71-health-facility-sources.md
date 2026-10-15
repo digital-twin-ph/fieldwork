@@ -1,6 +1,6 @@
 # 71 · Health facility sources a browser can read
 
-_Created 2026-10-10 · Updated 2026-10-10_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 **Status:** built. `find_health_facilities` 0.1.0, two sources, superseding the
 excluded `healthsites_discovery` ([69](69-healthsites-acquisition.md)).

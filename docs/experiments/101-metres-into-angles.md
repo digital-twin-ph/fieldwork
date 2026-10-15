@@ -1,6 +1,6 @@
 # 101 · Metres into angles, audited
 
-_Created 2026-10-12 · Updated 2026-10-12_
+_Created 2026-10-12 · Updated 2026-10-14_
 
 **Status:** validated — every site that converts between metres and angles, in both directions,
 is now found, measured against an independent geodesic, and re-measurable by

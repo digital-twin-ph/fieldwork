@@ -1,6 +1,6 @@
 # 62 · Tracing a workflow instead of auditing the widgets
 
-_Created 2026-10-10 · Updated 2026-10-10_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 **Status:** measurement and lesson record. No mechanism is added here. Two general primitives are
 proposed, one claim in [experiment 60](60-from-gis-studio-to-public-health-studio.md) is corrected,

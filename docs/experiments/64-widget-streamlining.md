@@ -1,6 +1,6 @@
 # 64 · Streamlining the widget set: a sequenced refactor
 
-_Created 2026-10-10 · Updated 2026-10-12_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 **Status:** tried — Phase 1 is done and Phases 2 to 6 are not. Confirmed as the direction by
 the practitioner on 2026-10-12, three days and twelve widgets later; see *what the delay cost*

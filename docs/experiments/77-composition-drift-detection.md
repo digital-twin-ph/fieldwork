@@ -1,6 +1,6 @@
 # 77 · Composition versioning and drift detection
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** admission review, written before the code. Third of three with
 [75](75-compositions-as-nodes.md) and [76](76-composition-governance.md).

@@ -1,6 +1,6 @@
 # 67 · Sampling a raster at points
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** admission review, written before the code. Proposes one primitive, no new port type
 and no new vocabulary beyond the terms it emits.

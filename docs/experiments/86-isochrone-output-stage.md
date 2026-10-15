@@ -1,6 +1,6 @@
 # 86 · The isochrone output stage
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** built, with one gap named at the end.
 

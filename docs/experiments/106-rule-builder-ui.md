@@ -356,6 +356,17 @@ but anonymously: "Reasoner returned conflicting decisions" names neither offendi
 
 ## What would close this
 
+**All three debts are exercised by the ruleset worked example and its tests from 2026-10-15**, on
+the practitioner's instruction: *"The three debts should go in the worked example for rulesets so
+these can be exercised and evaluated."* Two of the three are asserted as DEFECTS, so that fixing
+either one fails a test and whoever fixes it reads why.
+
+| | How it is exercised | What running it showed |
+| --- | --- | --- |
+| A6/B2 | step 4 of the example, *Bounds from below*, uses `lessThan` and `notLessThan` over a record standing exactly on the boundary | both fire correctly against the real engine; `10` is **not** less than `10`, which is the difference from `is at most` |
+| A7 | a test sets the threshold to 1, meaning one hour, against fields declared in minutes | **nothing refuses it.** The run then fails — but through debt 3, because the bands overlap at 1 — and the message is about conclusions disagreeing. It does not mention units, the parameter, or which number to look at. Being refused for the wrong reason is better than a wrong answer and is not the same as being told |
+| conflicting conclusions | a test adds a second rule concluding `Dispensing` for clinics, which already conclude `Consultation` | caught, and only at the run. The compiler cannot see it because both rules are well formed, and neither can the editor |
+
 The surface is built, so what remains is narrower:
 
 1. **A6 and B2** — the editor offers `is less than` and `is at least`, which **compile and have

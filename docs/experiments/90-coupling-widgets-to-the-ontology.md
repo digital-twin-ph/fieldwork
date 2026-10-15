@@ -1,6 +1,6 @@
 # 90 · Coupling widgets to the ontology
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** mechanised, with 42 terms of debt recorded and a ratchet on it.
 

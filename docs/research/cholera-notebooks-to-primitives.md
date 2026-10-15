@@ -1,6 +1,6 @@
 # Cholera case studies, notebook by notebook, against the palette
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 Source inspection only. No notebook was executed and no upstream implementation
 was copied. The Basic and Advanced studies are Apache-2.0; the JupyterLite

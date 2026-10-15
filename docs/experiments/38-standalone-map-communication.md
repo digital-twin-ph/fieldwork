@@ -1,6 +1,6 @@
 # Experiment 38: standalone communication maps
 
-_Created 2026-10-07 · Updated 2026-10-14_
+_Created 2026-10-07 · Updated 2026-10-15_
 
 ## Admission and scope
 

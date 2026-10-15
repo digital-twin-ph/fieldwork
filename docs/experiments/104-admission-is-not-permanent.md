@@ -1,6 +1,6 @@
 # 104 · Admission is not permanent
 
-_Created 2026-10-12 · Updated 2026-10-14_
+_Created 2026-10-12 · Updated 2026-10-15_
 
 **Status:** tried — the clock is built, gated and verified by breaking it. Four criteria have
 never been swept and two of those are recorded as contestable, so the re-admission work itself

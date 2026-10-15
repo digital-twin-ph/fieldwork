@@ -1,6 +1,6 @@
 # 75 · A workflow used as a node
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** admission review, written before the code. Proposes a mechanism, not a
 primitive, so it says which design checks apply and which cannot.

@@ -1,6 +1,6 @@
 # Shared Chart widget
 
-_Created 2026-10-06 · Updated 2026-10-14_
+_Created 2026-10-06 · Updated 2026-10-15_
 
 Date: October 6, 2026. Status: fifth widget-standardization slice.
 

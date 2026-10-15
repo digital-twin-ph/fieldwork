@@ -1,6 +1,6 @@
 # 107 · Intersections, unions and memberships — and where each belongs
 
-_Created 2026-10-12 · Updated 2026-10-14_
+_Created 2026-10-12 · Updated 2026-10-15_
 
 **Status:** asked — a design study, no code. The practitioner's question: *"We may need a widget
 that processes intersections, unions, memberships. Let's study this in relation to the emergent

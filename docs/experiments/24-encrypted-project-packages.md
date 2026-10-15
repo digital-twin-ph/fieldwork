@@ -1,6 +1,6 @@
 # Encrypted project packages
 
-_Created 2026-10-06 · Updated 2026-10-14_
+_Created 2026-10-06 · Updated 2026-10-15_
 
 Date: October 6, 2026. Status: design and bounded prototype; not a security certification.
 

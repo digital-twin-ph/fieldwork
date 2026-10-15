@@ -1,6 +1,6 @@
 # 72 · Manila coastal exposure, built in increments
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** increment 1 built and in the workspace list as `sea-level`. Two
 increments remain, and the example deliberately stops where the evidence stops.

@@ -1,6 +1,6 @@
 # 81 · Combined area
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-15_
 
 **Status:** admission review, written before the code. Second of the six
 primitives [78](78-trying-compositions-on-isochrone.md) needs.

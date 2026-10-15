@@ -465,6 +465,51 @@ plans, not receipts. Reveal driven by receipts therefore reveals nothing on a fr
 which is exactly where the port rule was strongest — the two rules are complements, not
 rivals.
 
+### Played back on the canvas, 2026-10-14
+
+> Because we already have the worked examples from end to end, we can simulate widget
+> addition step by step and see the progressive reveal happen on the canvas.
+>
+> The playback is like playing Jupyter Notebooks from start to finish. Only in this case
+> everything happens on a highly abstracted canvas.
+
+Built, behind `?playback=1`, over any worked example. The canvas shows the nodes placed so
+far, the palette dims what the rule would not yet offer, and a bar says what the newest
+step emitted and what that revealed. It is a **view**: nothing is edited, nothing is saved,
+and leaving restores the canvas. `src/reveal-playback.ts` computes the order and the
+revealed set, and the measurement script imports the same functions, so the interface and
+the measurement cannot disagree about what the rule says.
+
+The notebook reading is the right one. A notebook run from the first cell accumulates
+state, and each cell can only use what the ones above produced; the canvas is that, with
+the linear column replaced by a graph and the cell output replaced by a port type and a
+receipt.
+
+Playing back `snow-extent`:
+
+| Step | Placed | Emits | Addable | Newly revealed |
+| --- | --- | --- | --- | --- |
+| 0 | — | — | 7 | the widgets that need no input |
+| 1 | death locations | `points` | 20 | **13** |
+| 2 | convex hull | `polygons` | 26 | **6** |
+| 3 | extent review | `polygons` | 26 | — |
+| 4–6 | table, pumps, map | — | 26 | — |
+| 7 | Snow's dated table | `table` | 29 | **3** |
+| 8–9 | case series, chart | — | 29 | — |
+
+Two steps of nine do the revealing. Everything after step 2 adds nodes and tells the
+practitioner nothing new about what else they could use — which is the same finding the
+filter-strength table reports, now visible rather than tabulated.
+
+**What the playback is for is the thing it shows next.** Run it on `old-naledi` with the
+receipt reading and the two rulesets are justified at exactly the step that adds them,
+never before: their fact generators mint what they expect, so the canvas can confirm them
+and never anticipate them. On `snow-extent` the extent ruleset is justified at step 2 and
+added at step 3 — anticipated — and only because `summarize_hull` was taught that morning
+to assert the area of the polygon rather than of the computation. One widget's receipt is
+the difference between a palette that can offer the next step and one that can only agree
+with it afterwards.
+
 ### Revised 2026-10-14, after the receipt question
 
 The port-type rule is not worth building: measured, it filters only at the first
@@ -498,3 +543,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | The practitioner's question -- "what is revealed depends on what N3 receipts are already on the canvas, right?" -- separated two rules that had been discussed as one. Everything measured so far is the PORT rule, which filters only at the first placement. The RECEIPT rule is the one that can live in the ontology and binds late in a build, and today it would reveal nothing: 0 of 7 rulesets' expected predicates appear in any widget's declared emissions, because a hull's receipt says fw:hullAreaSquareMetres and the rule expects fw:areaSquareMetres, declared distinct and related by nothing |
 | 2026-10-14 | "Port type matching only solves a part of the problem." Measured the gap: `points` alone admits 330 type-legal connections; the four-widget routing chain is `points -> points` at every step and relies on eight run-time refusals to catch what the type cannot see, six of which already name the step that should have come first. Semantic difference -- deaths against pumps against grid samples -- is unaddressed at any level, and `map_output.context` is not even a declared port. Reveal reads the syntactic level only |
 | 2026-10-14 | The hypothesis tested level by level with ten canvas competency questions (experiment 44, scripts/competency-canvas.mjs): syntactic 2 of 2, semantic 1 of 3, pragmatic 2 of 4 before the day's work and 4 of 4 after. It survives, with the order corrected -- semantic is the WEAKEST level, not the middle one, because nothing records what a point means. And a canvas carries facts only about what has been run toward an output, so a receipt rule says nothing on a fresh canvas, which is where the port rule was strongest |
+| 2026-10-14 | Playback built behind ?playback=1: a worked example replayed widget by widget on the canvas, the palette dimming what the rule would not offer, with the order and the revealed set computed in one module the measurement script shares. On snow-extent two steps of nine do all the revealing. The receipt reading anticipates the extent ruleset by one step -- and only because summarize_hull now asserts the area of the polygon; on old-naledi both rulesets are justified at the step that adds them and never before |

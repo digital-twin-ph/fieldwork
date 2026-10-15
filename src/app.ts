@@ -1,4 +1,5 @@
 import {diveDeeperPanel} from './dive-deeper.js';
+import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
 import {manualButton,openManual} from './manual.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
 import {canvasN3} from './canvas-semantics.js';
@@ -118,6 +119,35 @@ let lastRunMs:number|null=null;
  *  which widget is waiting on which. Held outside `statuses` because finishing is an
  *  event and `done` is a state: the glow is cleared on a timer, the status is not. */
 const justFinished=new Set<string>();
+/** Progressive reveal, played back over the example already on the canvas.
+ *
+ *  Null when off, otherwise how many widgets of the build order have been placed. It is a VIEW:
+ *  the workflow is not edited, nothing is saved, and leaving restores the canvas as it was. The
+ *  palette dims what the rule would not yet offer rather than hiding it, because a hidden widget
+ *  can make a practitioner conclude the application cannot do something it can -- the asymmetry
+ *  experiment 112 recorded before any of this was built. */
+let playbackStep:number|null=null;
+const playbackOrder=()=>buildOrder(workflow).order;
+const playbackPlaced=()=>playbackStep===null?workflow.nodes:playbackOrder().slice(0,playbackStep);
+function renderPlayback(){
+  $('#playback-bar').hidden=playbackStep===null;
+  document.body.classList.toggle('playing-back',playbackStep!==null);
+  if(playbackStep===null)return;
+  const order=playbackOrder(),placed=order.slice(0,playbackStep);
+  const {type,unlocked}=revealReason(placed);
+  $('#playback-step').textContent=`Step ${playbackStep} of ${order.length}`;
+  $('#playback-reason').textContent=!placed.length
+    ?'An empty canvas offers only the widgets that need no input.'
+    :unlocked.length
+      ?`${placed.at(-1)!.params.label||placed.at(-1)!.type} emits ${type}, which reveals ${unlocked.length}: ${unlocked.slice(0,4).join(', ')}${unlocked.length>4?'…':''}`
+      :`${placed.at(-1)!.params.label||placed.at(-1)!.type} emits ${type||'nothing'}, which reveals nothing new.`;
+  ($('#playback-back') as HTMLButtonElement).disabled=playbackStep===0;
+  ($('#playback-next') as HTMLButtonElement).disabled=playbackStep>=order.length;
+}
+function setPlayback(step:number|null){
+  playbackStep=step;
+  renderPlayback();renderLibrary($('#node-search').value);render();
+}
 const FINISH_GLOW_MS=900;
 /** Durations as a practitioner reads them, not as a profiler does. */
 const elapsedText=(ms:number)=>ms<1000?`${Math.round(ms)} ms`:`${(ms/1000).toFixed(ms<10000?1:0)} s`;
@@ -222,7 +252,15 @@ function render(){
   if(exampleKey(workflow).startsWith('snow-')){$('#example-select').value=exampleKey(workflow);$('#project-description').textContent='Historical pump and death-location tables; explicit metric catchment computations and source evidence.';$('#example-note').textContent='250 locations / 489 deaths; network is a modern OSM snapshot, not 1854 streets';$('#canvas-example').textContent='JOHN SNOW / CATCHMENT WORKED EXAMPLE';$('#footer-context').textContent='CRS84 inputs and outputs / UTM computation / method parameters in evidence';}
   if(exampleKey(workflow)==='snow-geoprivacy'){$('#project-description').textContent='Compare private source points with moved points and H3 cell aggregates.';$('#example-note').textContent='Before views and workflow exports contain source coordinates; after views are educational transformations, not privacy guarantees';$('#canvas-example').textContent='JOHN SNOW / GEOPRIVACY EXPERIMENT';$('#footer-context').textContent='CRS84 · seeded donut · H3 aggregation · hide and map encryption remain TODO';}
   $('#blank-canvas').hidden=workflow.nodes.length!==0||exampleKey(workflow)!=='blank';
-  flow?.update(workflow,selected,statuses);$('#node-count').textContent=String(workflow.nodes.length);$('#undo-button').disabled=!history.length||busy;$('#redo-button').disabled=!future.length||busy;
+  // The bar is refreshed here rather than only when a control is used, because the workflow can
+  // change underneath it -- loading an example being the case that caught this: the playback had
+  // been set up against the default canvas and went on reporting its length.
+  renderPlayback();
+  // During a playback the canvas shows the nodes placed so far, and the edges between them.
+  const shown=playbackStep===null?workflow:(()=>{const placed=new Set(playbackPlaced().map(n=>n.id));
+    return {...workflow,nodes:workflow.nodes.filter(n=>placed.has(n.id)),
+      edges:workflow.edges.filter(e=>placed.has(e.from)&&placed.has(e.to))};})();
+  flow?.update(shown,selected,statuses);$('#node-count').textContent=String(shown.nodes.length);$('#undo-button').disabled=!history.length||busy;$('#redo-button').disabled=!future.length||busy;
   $('#workflow-state').textContent=busy?'Running locally…':dirty?(result?'Changed · rerun to update':'Ready to run'):'✓ Run complete';
   $('#run-button').disabled=busy;$('#run-button').innerHTML=busy?'◌ Running…':'<span>▶</span> Run workflow';
   $('#run-summary').textContent=result?(dirty?'Previous run · settings have changed':`${result.outputs.length} outputs · ${lastRunMs===null?'':`ran in ${elapsedText(lastRunMs)} · `}${Math.round(result.trace.reduce((a,t)=>a+t.milliseconds,0))} ms computing`):'Run the workflow to see results';
@@ -249,7 +287,10 @@ function renderLibrary(search=''){
   const allowed=addableTypes({exampleKey:exampleKey(workflow),
     templateTypes:template(exampleKey(workflow)).nodes.map(n=>n.type),
     workflowTypes:workflow.nodes.map(n=>n.type),catchmentTypes:Object.keys(CATCHMENT_TYPES)});
-  let group='';const entries=Object.entries(TYPES).filter(([k,t])=>allowed.has(k)&&!ADDABLE_VIA_COMPOSITION.includes(k as typeof ADDABLE_VIA_COMPOSITION[number])&&!ADDABLE_VIA_RULESET.includes(k as typeof ADDABLE_VIA_RULESET[number])&&(t.title+' '+t.description).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>PALETTE_GROUPS.indexOf(a[1].group as typeof PALETTE_GROUPS[number])-PALETTE_GROUPS.indexOf(b[1].group as typeof PALETTE_GROUPS[number]));$('#library-count').textContent=String(allowed.size);$('#node-library').innerHTML=entries.map(([k,t])=>{const heading=t.group!==group?`<div class="library-group">${t.group}</div>`:'';group=t.group;return `${heading}<button class="palette-node ${t.color} ${workflow.nodes.find(n=>n.id===selected)?.type===k?'primitive-selected':''}" aria-current="${workflow.nodes.find(n=>n.id===selected)?.type===k?'true':'false'}" data-add="${k}"><span class="palette-icon">${t.icon}</span><strong>${t.title}</strong><span>+</span></button>`;}).join('');
+  // What progressive reveal would offer at this step. Dimmed rather than removed: a hidden
+  // widget can make a practitioner conclude the application cannot do something it can.
+  const revealed=playbackStep===null?null:revealedTypes(playbackPlaced());
+  let group='';const entries=Object.entries(TYPES).filter(([k,t])=>allowed.has(k)&&!ADDABLE_VIA_COMPOSITION.includes(k as typeof ADDABLE_VIA_COMPOSITION[number])&&!ADDABLE_VIA_RULESET.includes(k as typeof ADDABLE_VIA_RULESET[number])&&(t.title+' '+t.description).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>PALETTE_GROUPS.indexOf(a[1].group as typeof PALETTE_GROUPS[number])-PALETTE_GROUPS.indexOf(b[1].group as typeof PALETTE_GROUPS[number]));$('#library-count').textContent=revealed?`${entries.filter(([k])=>revealed.has(k as NodeType)).length} of ${allowed.size}`:String(allowed.size);$('#node-library').innerHTML=entries.map(([k,t])=>{const heading=t.group!==group?`<div class="library-group">${t.group}</div>`:'';group=t.group;return `${heading}<button class="palette-node ${t.color} ${workflow.nodes.find(n=>n.id===selected)?.type===k?'primitive-selected':''} ${revealed&&!revealed.has(k as NodeType)?'unrevealed':''}" ${revealed&&!revealed.has(k as NodeType)?'title="Nothing on the canvas emits what this takes, at this step"':''} aria-current="${workflow.nodes.find(n=>n.id===selected)?.type===k?'true':'false'}" data-add="${k}"><span class="palette-icon">${t.icon}</span><strong>${t.title}</strong><span>+</span></button>`;}).join('');
   // One entry per bundled composition, under Micro-workflows, with its governance status
   // where a practitioner sees it. An unreviewed composition is offered and says so, because
   // a rule that stops one being tried stops the learning it was written to protect.
@@ -264,7 +305,7 @@ function renderLibrary(search=''){
           +`<span class="palette-label">${esc(entry.title)} ${mark}</span>`
           +`<span class="palette-note">${esc(c.members.length+' steps · '+entry.stage)}</span></button>`;
       }).join(''));
-    $('#library-count').textContent=String(allowed.size+compositions.length);
+    if(!revealed)$('#library-count').textContent=String(allowed.size+compositions.length);
   }
   // One entry per bundled ruleset, each adding a node with that ruleset already pinned. The
   // generic "Apply ruleset" entry that stood here until 2026-10-14 added a node with no ruleset,
@@ -296,7 +337,7 @@ function renderLibrary(search=''){
           +`<span class="palette-label">${esc(r.title)} ${warn}</span>`
           +`<span class="palette-note">${esc(ports.inputs.map(([,t])=>t).join(', ')+' → '+ports.output)}</span></button>`;
       }).join(''));
-    $('#library-count').textContent=String(Number($('#library-count').textContent||0)+rulesets.length);
+    if(!revealed)$('#library-count').textContent=String(Number($('#library-count').textContent||0)+rulesets.length);
   }
   $('#node-library').querySelectorAll<HTMLButtonElement>('[data-ruleset]').forEach(b=>b.onclick=()=>{
     const [id,version]=(b.dataset.ruleset||'').split('@');
@@ -1110,6 +1151,19 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLower
 const requestedExample=new URLSearchParams(location.search).get('example');
 if(requestedExample&&['old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent','sea-level'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':requestedExample==='raster'?'raster-input':requestedExample==='old-naledi'?'access':'criteria';}
 wireThemeControl();renderLibrary();renderResults();save();render();mountPanelLayout();
+// Progressive reveal, played back. Behind ?playback=1 because the rule is not adopted: nothing
+// about the normal palette changes, and the control does not appear unless it is asked for.
+//
+// Started here, after the requested example has been loaded, rather than beside the other
+// controls. Starting it earlier rendered the canvas once, which syncs ?example= to the workspace
+// being shown -- so the playback overwrote the example it was asked to play. Experiment 112.
+if(new URLSearchParams(location.search).get('playback')==='1'){
+  $('#playback-bar').hidden=false;
+  setPlayback(0);
+  $('#playback-next').onclick=()=>setPlayback(Math.min(playbackOrder().length,(playbackStep??0)+1));
+  $('#playback-back').onclick=()=>setPlayback(Math.max(0,(playbackStep??0)-1));
+  $('#playback-exit').onclick=()=>setPlayback(null);
+}
 export let servingBuild='unknown';
 if('serviceWorker' in navigator){
   navigator.serviceWorker.addEventListener('message',event=>{

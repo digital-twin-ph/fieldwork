@@ -449,6 +449,46 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**An on-surface guide — a tour, and something that answers questions.** Asked for as an
+exploration by the practitioner on 2026-10-15: *"add a Clippy like agent on the UI surface as a
+guide to the UI — can provide a guided tour and answer questions."*
+
+**Three different things wear that description, and they have almost nothing in common.** Which
+one is meant decides everything about the cost, so they are separated here rather than scoped
+together:
+
+| | What it is | Needs | Offline |
+| --- | --- | --- | --- |
+| A | **A scripted tour.** Steps through the interface pointing at things, in a fixed order, with text written by hand | nothing new | yes |
+| B | **An assistant that answers from the canvas.** "Why is this step refused?", "what produced this number?", "what can I connect here?" — answered from the workflow, the port contracts and the run receipts | query surfaces over things that already exist | yes |
+| C | **An assistant backed by a language model** | a network call carrying the practitioner's canvas to somebody else's service | **no** |
+
+**What already exists and should be counted first.** The playback behind *Play back the build*
+is a guided tour of a worked example — it steps a real workflow one widget at a time and says
+what each step revealed. The manual is one page per widget. Dive Deeper explains the assumption
+behind ten of them. Experiment [44](experiments/44-ontology-competency-questions.md) is
+literally a list of questions the graph is supposed to answer, several of which it does. A
+guide built on those would be assembling what is here; one built on a model would be answering
+beside it.
+
+**C has a cost this application has otherwise refused to pay.** Everything here runs locally:
+no widget is fetched at run time, the reasoner is WASM on the device, and the one feature that
+contacts an outside service — a basemap — says so in the interface and is off by default. An
+assistant that sends the canvas away would be the first thing to break that, and a canvas is
+not neutral: it holds case locations.
+
+**What Clippy actually got wrong is worth keeping in view.** Not that it was an assistant, but
+that it **interrupted** — it appeared uninvited, read what you were doing, and offered help
+nobody asked for. The feature to copy is the one a practitioner opens.
+
+**What would decide it:** which of A, B or C is wanted. A is small and could be built now. B is
+the interesting one for this project, because every answer it would give has to come from
+something the application can already show — which is a test of whether the ontology and the
+receipts are good enough to answer a practitioner's question, and that is a finding worth having
+either way. C needs a decision about sending a canvas off the device, which is a bigger
+question than a help feature.
+
+
 **Four concepts worth taking from ArcGIS Model Builder**, from the sideways sweep in
 [116](experiments/116-model-builder-sideways.md) over screenshots the practitioner uploaded on
 2026-10-15. Each is independently useful and none depends on another:

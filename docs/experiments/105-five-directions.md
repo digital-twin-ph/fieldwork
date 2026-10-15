@@ -2,9 +2,16 @@
 
 _Created 2026-10-12 · Updated 2026-10-12_
 
-**Status:** tried — the five directions are recorded as the method and each has been pointed at
-this project once. Four produced findings; the fifth, forward, produced a direction that nothing
-has yet tested.
+**Status:** tried — the record of deriving the five directions and of the sweeps made with them.
+Four produced findings; the fifth, forward, produced a direction that nothing has yet tested.
+
+**The method itself is not under test here and cannot be retired by this document.** Stated by
+the practitioner on 2026-10-15: *"105 cannot be retired as it embodies the DE approach."* The
+five directions moved to [AGENTS.md](../../AGENTS.md#the-five-directions) that day, where the
+method is, because a method recorded only inside the experiment that derived it reads as a
+proposal that could be dropped — and this one had been, quietly: two sweeps on 2026-10-12 and
+none since. What this document remains is the derivation, the three readings it first got
+wrong, and the dated findings of each sweep.
 
 Searched `docs/` first, per [the standard](README.md): the prior statement is the glossary's
 **Developmental evaluation** entry, which gives the stance and names no directions.
@@ -217,10 +224,17 @@ Only the third is debt, and only the third needs a ceiling that may fall and nev
 
 ## What would close it
 
-Each direction pointed at this project a second time, with the first pass's findings in hand — and
-in particular the forward prediction tested by collapsing one private pipe and seeing whether the
-merge it blocks becomes a rename. This moves to `validated` if it does, and to `retired` if the
-synthesis turns out to be a description of what already happened rather than a direction.
+The **forward prediction**, and only that: collapsing one private pipe and seeing whether the merge
+it blocks becomes a rename. This moves to `validated` if it does, and to `retired` **as a
+prediction** if the synthesis turns out to be a description of what already happened rather than a
+direction.
+
+_Narrowed 2026-10-15. This section used to put the whole method on the same hook — "each direction
+pointed at this project a second time" — which made the five directions look like a technique on
+trial, retirable along with the prediction. They are not: the method is the stance, it lives in
+[AGENTS.md](../../AGENTS.md#the-five-directions), and only the forward prediction derived here is
+falsifiable. Whether the sweeps are actually being made is tracked as a direction with a clock, in
+[docs/directions.json](../directions.json), rather than as this document's closing condition._
 
 ## What changed our minds
 

@@ -55,18 +55,24 @@
    "id": "five-directions-as-a-method",
    "stated": "2026-10-12",
    "statedBy": "the practitioner, in experiment 105",
-   "inTheirWords": "Gone are the five directions in 105. It was short lived. (2026-10-15)",
-   "requiresInCode": "Nothing in code. It is a method for looking at the project -- sideways, above, below, forward -- and what it requires is USE: a sweep that produces findings, periodically, with the previous pass's findings in hand.",
+   "inTheirWords": "In a DE project, we look back, we look forward, we look sideways, above and below. — and, on 2026-10-15: \"105 cannot be retired as it embodies the DE approach.\"",
+   "requiresInCode": "Nothing in code. It is the stance, not a technique: back, sideways, above, below and forward, pointed at the project periodically with the previous pass's findings in hand. What it requires is USE, and that each sweep's findings land as work items rather than as a document.",
    "recordedIn": [
+    "AGENTS.md#the-five-directions",
+    "docs/glossary.md",
     "docs/experiments/105-five-directions.md"
    ],
-   "workItem": "105's own closing condition: each direction pointed at the project a second time",
+   "workItem": "A sweep. Findings go to docs/todo.md, widgets/blockers.json or this register, per AGENTS.md.",
    "status": "open",
    "lastChecked": "2026-10-15",
    "checks": [
     {
      "date": "2026-10-15",
      "found": "Pointed at the project twice, both on 2026-10-12 -- once over the widget set and once over vocabulary -- and not since, through three days in which the widget count, the ruleset layer, the map model and the blocker ledger all changed. The method was not withdrawn and is not in use, which is the state this file exists to make visible rather than a conclusion about whether it is worth using."
+    },
+    {
+     "date": "2026-10-15",
+     "found": "Corrected by the practitioner: \"105 cannot be retired as it embodies the DE approach.\" This entry had offered retirement as an option and 105's own closing condition had put the whole method on the same hook as its forward prediction, so a stance read as a technique on trial. The five directions moved into AGENTS.md where the method is; 105 keeps the derivation, the three readings it first got wrong, and the dated sweeps, and its closing condition is narrowed to the prediction alone. The gap itself is unchanged and is the reason this stays open: two sweeps, both 2026-10-12, none since, through three days in which the widget set, the ruleset layer, the map model and the blocker ledger all moved."
     }
    ]
   },
@@ -87,6 +93,10 @@
     {
      "date": "2026-10-15",
      "found": "Measured under three readings on four worked examples, prototyped behind ?playback=1 with tests, and never applied to the ordinary palette -- so a blank canvas offers all 51 widgets. revealedTypes() already produces the expected behaviour at step 0, because only widgets with an empty required set are revealed on an empty canvas, which is the inputs. What is missing is the decision of WHICH reading to adopt, and that is the practitioner's; it is not missing evidence."
+    },
+    {
+     "date": "2026-10-15",
+     "found": "The practitioner, having asked twice: \"I thought we implemented progressive reveal in worked examples. And used this as a progressive reveal refinement approach.\" Both true. The playback IS the refinement instrument -- it is what produced the three readings and the per-step measurements on four examples -- and it was reachable only by typing ?playback=1, so the person it was built for could not find it. Put in the workspace bar as \"Play back the build\" the same day. The ordinary palette is still untouched, which is the open part and is a decision rather than missing work."
     }
    ]
   }

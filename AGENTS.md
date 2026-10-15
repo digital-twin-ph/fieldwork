@@ -44,6 +44,36 @@ the design refuses to answer.
 Do not declare the framework, or an experiment series, finished. Emergence is the object
 of study here.
 
+### The five directions
+
+The practitioner's formulation of the method, and part of the stance rather than a technique
+to adopt or drop: *"In a DE project, we look back, we look forward, we look sideways, above
+and below."* Stated here, where the method is, because a method recorded only inside the
+experiment that derived it looks like a proposal that could be retired. It cannot be: it is
+what this project means by developmental evaluation.
+
+| Direction | What it asks |
+| --- | --- |
+| **Backward** | Does what was already admitted still pass what we now know? |
+| **Sideways** | The present inventory: duplicates, connections, gaps, value in what we have *now* |
+| **Above** | The forest: what does the emerging framework look like? |
+| **Below** | A tree: what does this one thing uniquely contribute to the forest? |
+| **Forward** | The synthesis: given the other four, what does that mean for the direction of emergence? |
+
+Forward is the only one that is **derived rather than observed**, so it cannot be answered
+from a single document and is not a per-document field. The other four are things to go and
+look at.
+
+Point them at the project periodically, with the previous pass's findings in hand, and write
+what each one finds. A sweep that finds nothing is a result and gets written down too. What a
+sweep produces is not a document on its own: a finding becomes a work item in
+[docs/todo.md](docs/todo.md), a blocker in `widgets/blockers.json` if something is waiting on
+it, or a direction in [docs/directions.json](docs/directions.json) if it settles a model —
+because a finding nobody scheduled is the failure the directions register exists to catch.
+
+[105](docs/experiments/105-five-directions.md) is the dated record of deriving them and of the
+first two sweeps, including the three of the five this project first got wrong.
+
 ## Semantic admission and audit checkpoints
 
 To create a widget, follow [the adding-a-widget procedure](widgets/README.md), which

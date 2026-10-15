@@ -87,7 +87,9 @@
   "changes": [
     {
       "kind": "major",
-      "description": "Input carrier changed from access to distances. The rules are unchanged. access derived its proxy minutes inside a nearest-neighbour search; that derivation is now the travel_time primitive, which states the walking-speed assumption in its own receipt rather than burying it in a search."
+      "description": "Input carrier changed from access to distances. The rules are unchanged. access derived its proxy minutes inside a nearest-neighbour search; that derivation is now the travel_time primitive, which states the walking-speed assumption in its own receipt rather than burying it in a search.",
+      "incompatibility": "Both input ports changed from access to distances. The widget that emitted access is retired, so a workflow pinned to 1.0.0 cannot be moved by swapping the version alone: it needs nearest with a candidate filter and travel_time in place of the one retired step.",
+      "deprecates": "The access port type, and with it the walking-speed assumption that was made inside a nearest-neighbour search and never stated. travel_time states it in its own receipt."
     }
   ]
 }

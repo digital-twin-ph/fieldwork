@@ -36,8 +36,25 @@ export interface RulesetParameter {
    *  declared rather than derived because deriving 'km' from a QUDT IRI is a guess. */
   unitLabel?:string;
 }
+/** What a version changed, declared by the version that changed it.
+ *
+ *  Two rulesets have carried these notes since 2026-10-12 and nothing read them: typed, validated
+ *  and shown from 2026-10-15, because a practitioner told that a newer version exists has been
+ *  told the least useful half of it. `incompatibility` is what a workflow pinned to the previous
+ *  version must change in order to move, and it is required whenever the ports changed -- a port
+ *  change breaks what is wired, whatever the version number says about it. */
+export interface RulesetChange {
+  kind:'major'|'minor'|'patch';
+  description:string;
+  /** Absent when a workflow can move versions and change nothing else. */
+  incompatibility?:string;
+  /** What this version stops supporting, for a reader who relied on it. */
+  deprecates?:string;
+}
 export interface Ruleset {
   schema:string; id:string; version:string; title:string; released:string;
+  /** Declared by this version about itself. Absent on a first version, which changed nothing. */
+  changes?:RulesetChange[];
   description:string; mustNotBeReadAs:string; rules:string;
   parameters:RulesetParameter[];
   inputContract:{
@@ -99,6 +116,23 @@ export function supersededBy(id:string,version:string):string|undefined{
   const newer=BUNDLED.filter(r=>r.id===id&&r.version.localeCompare(version,undefined,{numeric:true})>0)
     .map(r=>r.version).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   return newer.at(-1);
+}
+/** The newer version and what it changed, for a node pinned to an older one.
+ *
+ *  `changes` is read from every version BETWEEN the pin and the newest, not from the newest
+ *  alone, so a pin two versions behind is told about both. `incompatible` is true when any of
+ *  them declares an incompatibility, which is what decides whether moving is a click or a
+ *  rewiring job. */
+export function supersession(id:string,version:string):
+  {version:string; changes:RulesetChange[]; incompatible:boolean}|undefined{
+  const newest=supersededBy(id,version);
+  if(!newest)return undefined;
+  const between=BUNDLED.filter(r=>r.id===id
+    &&r.version.localeCompare(version,undefined,{numeric:true})>0
+    &&r.version.localeCompare(newest,undefined,{numeric:true})<=0)
+    .sort((a,b)=>a.version.localeCompare(b.version,undefined,{numeric:true}));
+  const changes=between.flatMap(r=>r.changes||[]);
+  return {version:newest,changes,incompatible:changes.some(c=>!!c.incompatibility)};
 }
 export const rulesetKey=(id:string,version:string)=>`${id}@${version}`;
 const INDEX=new Map(BUNDLED.map(r=>[rulesetKey(r.id,r.version),r]));

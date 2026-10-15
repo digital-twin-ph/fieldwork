@@ -347,6 +347,54 @@ them happens inside the fact generator, in code, declared nowhere. It is experim
 first leap again, one layer up: the quantity became a field so a rule could read it, and
 the *term* has not made the same move.
 
+### Port matching solves one level of three
+
+The practitioner again, on the measurement above:
+
+> Port type matching only solves a part of the problem.
+
+[The glossary](../glossary.md) names the three levels and this is where they land.
+
+**Syntactic — what kind of thing it is.** Port types. `points` is produced by 11 widgets
+and accepted at 30 ports on 25 widgets, so on this one port type alone the rule admits
+**330 connections**. Reveal reads this level and nothing else.
+
+**Pragmatic — whether this particular value will work.** The routing chain is the clearest
+case, because it is type-identical at every step:
+
+| Widget | Takes | Gives |
+| --- | --- | --- |
+| `snap_to_network` | points, network | points |
+| `reachable_nodes` | points, network | points |
+| `travel_time_band` | points | points |
+| `reachable_corridor` | points, network | polygons |
+
+Every arrow is `points → points`, so port matching says any order will do. The code says
+otherwise, in eight refusals that exist precisely because the type cannot see what the
+value carries:
+
+> *"this origin is not on the network. Add a Snap to street network step before this one"*
+> *"this point is not a reachable junction. It must carry networkNodeId and remainingM"*
+> *"These points are not reachable junctions. They must carry the speed the traversal used"*
+
+Eight of the 508 refusals raised in `src/` are of this kind, and six of them name the step
+that should have come first — the application already knows the answer a reveal rule would
+want, and tells the practitioner only after they have wired it and pressed Run. **These are
+fitness conditions**, and they are the receipt rule's subject matter: `networkNodeId`,
+`remainingM`, `snapDistanceM` and the rest are facts about the value, not about its type.
+
+**Semantic — what the thing MEANS.** Nothing addresses this level at all. Death locations,
+pump locations and generated grid samples are all `points`, and the John Snow map
+distinguishes them by wiring observations to one port and context to another — where
+`map_output.context` is one of the 12 ports the declaration does not even list. A
+connection can be type-correct, pass every fitness condition, run without complaint and
+answer the wrong question, and nothing in the application can tell.
+
+So the order of work is not reveal-first. **It is: declare the fitness conditions that
+eight run-time refusals already enforce, which makes the receipt rule computable and makes
+those refusals preventable rather than diagnostic.** Reveal is one consumer of that, and
+not the most valuable one.
+
 ### Every shipped example is still buildable in order
 
 Each of the seven worked examples, placed node by node with a node admitted only when one
@@ -410,3 +458,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | Blocker cleared: port-contracts.json declares required-versus-optional for 53 widgets, generated from `requiredInputs` and held true by a drift check — a mirror of the code, not a source it obeys. Reveal re-measured against it: 7 addable on a blank canvas against today's 5, 12 after one study area, 51 at the fixpoint, and all 81 nodes of the seven shipped examples buildable in order. `apply_ruleset` and `micro_workflow` have no contract at all, because their ports come from their pin; a reveal rule over types alone would hide the two widgets most likely to be thought missing |
 | 2026-10-14 | Measured the filter's strength through three real builds, which the blank-canvas figure had hidden: two placements open more than half the palette (57%, 51%, 57%) and the rest of each build runs at 57-82% addable. The rule binds hardest where a starter set already helps and stops binding where a canvas is actually crowded. Recorded as evidence against building it |
 | 2026-10-14 | The practitioner's question -- "what is revealed depends on what N3 receipts are already on the canvas, right?" -- separated two rules that had been discussed as one. Everything measured so far is the PORT rule, which filters only at the first placement. The RECEIPT rule is the one that can live in the ontology and binds late in a build, and today it would reveal nothing: 0 of 7 rulesets' expected predicates appear in any widget's declared emissions, because a hull's receipt says fw:hullAreaSquareMetres and the rule expects fw:areaSquareMetres, declared distinct and related by nothing |
+| 2026-10-14 | "Port type matching only solves a part of the problem." Measured the gap: `points` alone admits 330 type-legal connections; the four-widget routing chain is `points -> points` at every step and relies on eight run-time refusals to catch what the type cannot see, six of which already name the step that should have come first. Semantic difference -- deaths against pumps against grid samples -- is unaddressed at any level, and `map_output.context` is not even a declared port. Reveal reads the syntactic level only |

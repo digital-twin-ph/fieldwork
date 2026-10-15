@@ -8,6 +8,11 @@ test('a worked example replays widget by widget, and the palette follows',async(
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/?example=snow-extent&playback=1');
   await expect(page.locator('#playback-bar')).toBeVisible({timeout:45000});
+  // The example auto-runs on load. Every canvas draw goes through the playback filter now, so a
+  // run underneath it is harmless -- but waiting for it makes a failure here mean what it says
+  // rather than meaning the run was still going. This failed in CI and nowhere else until the
+  // run's own canvas updates were routed through the same filter.
+  await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
 
   // Step 0: an empty canvas. Only the widgets that need no input are offered.
   await expect(page.locator('#playback-step')).toHaveText('Step 0 of 9');

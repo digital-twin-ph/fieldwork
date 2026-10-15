@@ -537,6 +537,37 @@ binding** and **per-node port** from 2026-10-14.*
 **The crowded type.** Eleven widgets emit `points` and twenty-five accept it. Placing any
 of the eleven leaves twenty-five candidates, which is not a prediction.
 
+### The output widgets take their shape from what is upstream
+
+> The output widgets depend on the shape of the process widget outputs for inputs.
+
+They do, and the implementation makes the practitioner say it first. An output widget has
+no fixed contract: `map_output` carries **six**, selected by `inputMode` and
+`contextPoints`; `table_output` four; `chart_output` three. Each mode admits a different
+port set, so what the widget accepts is a function of a parameter, and the right value of
+that parameter is whatever the upstream widget emits.
+
+**For two of the three the parameter is redundant.** No port type appears in more than one
+mode on `table_output` or `chart_output`, so connecting `polygons` or a `table` or
+`decisions` determines the mode completely — the practitioner is being asked to state
+something the connection already said.
+
+**On the map, three types are genuinely ambiguous**: `points` (the subject, or context
+beside polygons), `raster` (the subject, or an overlay in spatial mode) and `polygons` (with
+context or without). Those are real questions and worth asking.
+
+**The dependency runs backwards in the interface.** `validConnection` compares the
+producer's output against `nodeInputs(target)`, and `nodeInputs` resolves the mode the
+target is *currently* in — so dragging polygons to a map still in spatial mode is refused,
+because that mode has no `polygons` port. The shape determines the mode, and the
+practitioner must set the mode before the shape can arrive.
+
+What this costs reveal: an output widget cannot be meaningfully revealed by its type,
+because its type does not say what it takes. It is the fourth kind of
+contract-not-in-the-type found in one day, after late binding, per-node ports, and modes —
+and the general statement is the one the glossary now carries: **the port contract belongs
+to the node.**
+
 ### Expectations are declarable; intents are not
 
 What the fitness conditions actually buy, measured by transcribing the eight refusals in
@@ -712,3 +743,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-14 | The connection universe enumerated: 46 widgets with an output, 578 legal producer-to-consumer-port pairs, 54 demonstrated by the seven shipped examples (9.3%), 524 never tried, and 11 edges the examples run that the enumeration cannot admit because the ports come from a pin. Suggests the honest feature: offer the finite menu ranked by evidence -- done before, versus possible and untried -- rather than predicting intent. And 9% coverage of the connection space is where this week's inert-quantity defects were hiding |
 | 2026-10-14 | "Why inadmissible?" -- it was the wrong word and the correction matters: the application RUNS all eleven, because its connection check asks nodeInputs(node), which resolves the mode, the pin and that node's parameters, while the enumeration asked the type-level declaration. Ten are a pinned ruleset's ports; the eleventh is map_output.points_2, a port that exists per NODE because a parameter creates up to eight of them. The contract belongs to the node, not to the widget, so 578 is a lower bound |
 | 2026-10-14 | Third reading measured: input/process/output stages, 7/41/5 of the 53 widgets. Weaker as a filter than the port rule -- one input opens 48 of 53 against 20 -- and stronger as an explanation. The two disagree about outputs, and the examples side with the port rule: of 35 edges into an output, 9 come straight from an input (pumps onto a map for context, a study area onto a map, geoprivacy's before-view), so a stage gate would hide the widget that plots your input |
+| 2026-10-14 | "The output widgets depend on the shape of the process widget outputs for inputs." Measured: map_output carries six contracts selected by inputMode and contextPoints, table_output four, chart_output three. On table_output and chart_output no port type appears in two modes, so the connection determines the mode completely and asking is redundant; on map_output three types are genuinely ambiguous (points as subject or context, raster as subject or overlay, polygons with context or without). But validConnection resolves the mode the target is CURRENTLY in, so the shape cannot arrive until the mode is set by hand -- the dependency runs backwards in the interface |

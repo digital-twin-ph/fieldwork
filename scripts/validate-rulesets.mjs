@@ -92,7 +92,7 @@ for(const {path,doc} of sets){
 // references is what showed the difference: the one ruleset recorded as having a cited basis cites
 // three papers as author-year text, which resolve to nothing a reader can open.
 // One entry per ruleset IDENTITY, not per version file. A basis belongs to the ruleset: publishing
-// 2.0.0 for a carrier change does not create a second uncited ruleset, and counting files would make
+// 2.0.0 for a port type change does not create a second uncited ruleset, and counting files would make
 // the ceiling rise for a change that altered no claim. The newest version of each id is read.
 const byId=new Map();
 for(const entry of sets){

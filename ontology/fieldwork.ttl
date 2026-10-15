@@ -361,11 +361,11 @@ fw:portType a owl:ObjectProperty;
   fw:implementationStatus "proposed".
 
 
-# Two port types no live widget declares. They were the carriers of widgets retired on 2026-10-12 --
+# Two port types no live widget declares. They were the port types of widgets retired on 2026-10-12 --
 # gradedFacilities emitted by xpert and consumed by access and facility_audit, and access emitted by
 # access and consumed by access_policy -- and they survive in those widgets' own definitions, which
 # a retired widget keeps so that a saved workflow can still be read. Declared here so the mapping
-# from a port type to its term is total, and so the ontology records which carriers were retired,
+# from a port type to its term is total, and so the ontology records which port types were retired,
 # which it had no way to say before.
 #
 # Retirement is stated twice on purpose, from 2026-10-13. `fw:implementationStatus` is what the

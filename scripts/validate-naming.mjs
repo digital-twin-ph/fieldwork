@@ -71,7 +71,7 @@ export function violations({definitions,classification,domainPrefixes={}}){
 
     // A widget grouped under Sources must acquire. It may take a SCOPE -- `raster_input` and
     // `find_health_facilities` both take an `area`, which says where to acquire from -- but not a
-    // data carrier, because consuming data already in the workflow is a transform whatever the
+    // port type, because consuming data already in the workflow is a transform whatever the
     // group says. This catches `slr_extract_import`, which takes a `table` on an input port and
     // only validates and annotates it. The transform-verb rule above missed it: that rule keys on
     // the verb a name opens with, and a verb list is never complete, while a contract can be read.

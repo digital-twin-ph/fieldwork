@@ -195,6 +195,30 @@ dependency; it is the wrong Node version, and the project is not at fault. Do no
 diagnose it as a code or dependency problem, and do not report gates as failing until
 they have been run on Node 22.
 
+### Generated files, and the order they are written in
+
+Several files in this repository are written by a script and checked by a gate: a generator
+writes it, a validator refuses the build when it has drifted from its source, and editing it by
+hand is pointless because the next run overwrites it.
+
+| Generated | Written by | Checked by |
+| --- | --- | --- |
+| `widgets/port-contracts.json` | `npm run contracts:ports` | `validate:port-contracts` |
+| `widgets/manual-pages.json`, `ontology/widgets.ttl` | `npm run manual:widgets` | `validate:manual` |
+| `widgets/release-notes.json` | `npm run notes:releases` | `validate:release-notes` |
+| `docs/widget-names.md` | `npm run names:widgets` | `validate:names` |
+| the date stamp in every `docs/**.md` | `npm run stamp:docs` | `validate:docs` |
+
+**Run `stamp:docs` before `names:widgets`, not after.** `docs/widget-names.md` is both generated
+and stamped: the stamper rewrites the date in a file the generator has just produced, so running
+them the other way round leaves it drifted from its source and the gate fails on a file you have
+just regenerated. Found on 2026-10-15, after regenerating it twice and getting the same refusal.
+
+The general rule the ordering comes from: **a generator that writes into `docs/` must run after
+the stamper, and a generator that writes anywhere else does not care.** If a gate reports drift
+in a file you have just rebuilt, check whether something else wrote to it afterwards before
+looking for a defect in the generator.
+
 ## Versioning and release notes
 
 The application version has one source of truth: the root `package.json` version,

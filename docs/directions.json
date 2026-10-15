@@ -99,6 +99,30 @@
      "found": "The practitioner, having asked twice: \"I thought we implemented progressive reveal in worked examples. And used this as a progressive reveal refinement approach.\" Both true. The playback IS the refinement instrument -- it is what produced the three readings and the per-step measurements on four examples -- and it was reachable only by typing ?playback=1, so the person it was built for could not find it. Put in the workspace bar as \"Play back the build\" the same day. The ordinary palette is still untouched, which is the open part and is a decision rather than missing work."
     }
    ]
+  },
+  {
+   "id": "a-ruleset-widget-is-a-mini-program",
+   "stated": "2026-10-12",
+   "statedBy": "the practitioner, in the 65 amendment and experiment 106",
+   "inTheirWords": "In a nutshell, a ruleset widget is like a mini-software program with many possibilities because of how rules may be combined to produce an output. — and, on 2026-10-15, looking at the shipped Inspector: \"Regarding ruleset widgets, this is not the design we discussed, the rules are pinned not very flexible.\"",
+   "requiresInCode": "The authored form of 106 -- condition {field, comparator, value}, AND groups, OR of groups, a LIST of conclusions from the declared output vocabulary -- with a total compiler to the N3 subset 65 settled, a rule-count ceiling checkable from the form before compiling, and the Inspector authoring rules rather than choosing a pre-baked ruleset from a list of four.",
+   "recordedIn": [
+    "docs/experiments/106-rule-builder-ui.md",
+    "docs/experiments/65-ruleset-as-data.md"
+   ],
+   "workItem": "106, whose closing condition is Group A green and B1 green against the three existing rulesets on their frozen fixtures",
+   "status": "open",
+   "lastChecked": "2026-10-15",
+   "checks": [
+    {
+     "date": "2026-10-15",
+     "found": "Nothing of it is built. No comparator, no authored form, no compiler in src/rulesets.ts or src/rule-application.ts; 106 has been `asked` since 2026-10-12. What shipped is the OTHER half of 65 -- rules as declared versioned data, one widget hosting them, three widgets retired -- which is real and is not this. The practitioner meets a dropdown of four bundled rulesets whose rule text is fixed, and the only thing they can change is a declared parameter such as a 5 km threshold. \"The rules are pinned\" is exactly accurate. 106 says what must come first and it needs no new oracle: B1, the three existing rulesets rebuilt in the authored form and compiled, reaching identical conclusions on their frozen fixtures."
+    },
+    {
+     "date": "2026-10-15",
+     "found": "Acted on, partly, the same day. The authored form and its compiler are built in src/authored-rules.ts and B1 is GREEN: all three shipped rulesets rebuilt in the form, compiled, and reasoned under the real EYE engine reach identical conclusions. A1, A2, A3, A5, A8, A9 and A10 pass too, and the rule ceiling is checked from the form before anything is compiled. 106 moves asked -> tried. What is NOT built is the half the practitioner meets: the Inspector still offers a ruleset chosen from a list, so the rules are still pinned from where they sit. Four comparators compile and have never been executed, so by 106's own rule they must not be offered until B2 passes."
+    }
+   ]
   }
  ]
 }

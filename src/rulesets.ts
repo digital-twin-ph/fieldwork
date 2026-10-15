@@ -134,6 +134,10 @@ export function supersession(id:string,version:string):
   const changes=between.flatMap(r=>r.changes||[]);
   return {version:newest,changes,incompatible:changes.some(c=>!!c.incompatibility)};
 }
+// The authored form and its compiler, re-exported here because this module is what the
+// application and the tests reach for when they mean "a ruleset". Experiment 106.
+export type {AuthoredRuleset,AuthoredRule,AuthoredGroup,AuthoredCondition,AuthoredConclusion,Comparator} from './authored-rules.js';
+export {compileAuthoredRuleset,compiledRuleCount,AuthoredRulesetError,RULE_CEILING} from './authored-rules.js';
 export const rulesetKey=(id:string,version:string)=>`${id}@${version}`;
 const INDEX=new Map(BUNDLED.map(r=>[rulesetKey(r.id,r.version),r]));
 

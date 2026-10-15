@@ -32,7 +32,10 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
   // Derived, not authored: a basemap carries an obligation the practitioner cannot opt out of by
   // leaving a field blank, and a street network reached this figure through an ODbL download.
   const credits=[
-    basemap==='osm'||basemap==='topo'?'Basemap © OpenStreetMap contributors, ODbL':'',
+    basemap==='osm'?'Basemap © OpenStreetMap contributors, ODbL':'',
+    // OpenTopoMap is a style over OSM data under a different licence, so crediting it as
+    // OpenStreetMap alone -- which this did until 2026-10-14 -- under-credits the style.
+    basemap==='topo'?'Basemap style © OpenTopoMap, CC-BY-SA; data © OpenStreetMap contributors, ODbL':'',
     output.polygons?.method?.includes('Dijkstra')||output.polygons?.notes?.some(n=>n.includes('OSM'))
       ?'Street network © OpenStreetMap contributors, ODbL':'',
   ].filter(Boolean);
@@ -78,7 +81,12 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   // fw:layerWithin rather than claiming a port it does not have. See docs/widgets/map_output.md.
   const ground=`urn:fieldwork:run:${runId}:map-specification:${node.id}`;void ground;
   const portOf=(type:string)=>workflow.edges.find(e=>e.to===node.id&&e.port===type);
-  const drawn:{kind:string;features?:number;port?:string;within?:string;role?:string}[]=[];
+  const drawn:{kind:string;features?:number;port?:string;within?:string;role?:string;provider?:string}[]=[];
+  // Ground first. A basemap is displayed, so it is a layer -- asserted only as fw:mapBasemap
+  // until 2026-10-14, which made the one knob that puts a whole layer under the data read as a
+  // property of the specification. The same defect as mode: a layer recorded as a setting.
+  // It arrives through neither a port nor another layer's value, so it names its provider.
+  if(spec.basemap!=='none')drawn.push({kind:'BasemapLayer',provider:spec.basemap});
   if(output.boundary)drawn.push({kind:'AreaLayer',port:portOf('area')?.port});
   if(output.raster)drawn.push({kind:'RasterLayer',port:portOf('raster')?.port});
   if(output.network)drawn.push({kind:'NetworkLayer',port:portOf('network')?.port});
@@ -98,6 +106,8 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
     +drawn.map((layer,index)=>`<${iri}> fw:layer [ fw:layerIndex ${index}; fw:layerKind <urn:fieldwork:${layer.kind}>; `
       +`${layer.features!==undefined?`fw:layerFeatureCount ${layer.features}; `:''}`
       +`${layer.role?`fw:layerRole ${JSON.stringify(layer.role)}; `:''}`
-      +`${layer.port?`fw:layerPort ${JSON.stringify(layer.port)}`:`fw:layerWithin ${JSON.stringify(layer.within||'the value')}`} ].\n`).join('');
+      +`${layer.provider?`fw:layerTileProvider ${JSON.stringify(layer.provider)}`
+        :layer.port?`fw:layerPort ${JSON.stringify(layer.port)}`
+        :`fw:layerWithin ${JSON.stringify(layer.within||'the value')}`} ].\n`).join('');
   receipt.facts+=facts+layerFacts;receipt.input=receipt.facts;return facts+layerFacts;
 }

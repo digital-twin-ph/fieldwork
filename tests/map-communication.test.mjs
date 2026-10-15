@@ -29,3 +29,44 @@ test('Map presentation is independent of geometry and emits a validated, source-
   const {validateWorkflow}=await import('../build/core.js');assert.throws(()=>validateWorkflow(bad),/Invalid map presentation/);
   bad.nodes.at(-1).params.showLegend=true;bad.nodes.at(-1).params.basemap='unsafe-url';assert.throws(()=>validateWorkflow(bad),/Invalid map presentation/);
 });
+
+// "Our map_output layers do not even have a basemap!" -- the practitioner, 2026-10-14. True of
+// the shipped examples (1 of 10 can be given one, and it is off), and true of the receipt, which
+// recorded a basemap only as fw:mapBasemap: the layer carrying every bit of geographic context
+// was a property of the specification and absent from fw:layerCount. A basemap is displayed, so
+// it is a layer, and it is the ground one.
+test('A basemap in use is layer 0, named by the service it is fetched from',async()=>{
+  const workflow=coverageExercise();workflow.nodes=workflow.nodes.slice(0,2);
+  const node={id:'map',type:'map_output',x:0,y:0,params:{label:'Catchments',mapTitle:'Walking catchments',
+    mapSubtitle:'',mapSourceNote:'Synthetic; method: network distance',showLegend:true,
+    inputMode:'polygons',presentation:'interactive',basemap:'topo'}};
+  workflow.nodes.push(node);workflow.edges=[{id:'a',from:'scope',to:'map',port:'polygons'}];
+  const polygons={kind:'catchment',features:[{type:'Feature',properties:{},
+    geometry:{type:'Polygon',coordinates:[[[0,0],[0,1],[1,1],[0,0]]]}}]};
+  const output={nodeId:'map',label:'Catchments',view:'map',polygons,polygonPresentation:'interactive'};
+  const spec=mapPresentation(node,output,workflow);
+  assert.equal(spec.basemap,'topo');
+  // OpenTopoMap's style is CC-BY-SA and is not OpenStreetMap's. Both providers were credited as
+  // OpenStreetMap alone until 2026-10-14, which under-credited the style.
+  assert.match(spec.attribution,/OpenTopoMap, CC-BY-SA/);
+  const receipt={facts:'',input:''};
+  mapSpecificationFacts(node,output,workflow,'run',receipt);
+  const graph=new Store(new Parser().parse(receipt.facts));
+  assert.equal((await validateGraph(graph)).conforms,true);
+  const fw=s=>DataFactory.namedNode('urn:fieldwork:'+s);
+  // The basemap is counted: ground plus the polygons it sits under.
+  assert.equal([...graph.match(null,fw('layerCount'),null)][0].object.value,'2');
+  const ground=[...graph.match(null,fw('layerKind'),fw('BasemapLayer'))][0].subject;
+  assert.equal([...graph.match(ground,fw('layerIndex'),null)][0].object.value,'0');
+  assert.equal([...graph.match(ground,fw('layerTileProvider'),null)][0].object.value,'topo');
+  // Neither a port nor another layer's value: it comes from a service, and says so instead of
+  // claiming an origin in the workflow.
+  assert.equal([...graph.match(ground,fw('layerPort'),null)].length,0);
+  assert.equal([...graph.match(ground,fw('layerWithin'),null)].length,0);
+  // With no basemap the stack is just the data, and nothing claims a ground layer.
+  const offNode={...node,params:{...node.params,basemap:'none'}},offReceipt={facts:'',input:''};
+  mapSpecificationFacts(offNode,output,workflow,'run',offReceipt);
+  const off=new Store(new Parser().parse(offReceipt.facts));
+  assert.equal([...off.match(null,fw('layerCount'),null)][0].object.value,'1');
+  assert.equal([...off.match(null,fw('layerKind'),fw('BasemapLayer'))].length,0);
+});

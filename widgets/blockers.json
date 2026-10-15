@@ -27,7 +27,13 @@
    "lastRevisited": "2026-10-12",
    "status": "narrowed",
    "liftTest": "A declared field schema exists for table, raster and network inputs, with per-field type and unit, and a role binding can be offered against it.",
-   "whatChanged": "The claim was true and its scope was not. It was recorded as blocking the ruleset widget outright, and it does block the general form -- binding any field of any input to a declared role. It does not block the merge that reduces the widget count, because the three existing fact generators take typed carriers and not arbitrary attribute tables: makeN3(NearestRow[]), accessN3(AccessRow[]), facilityN3(Facility[]). So one widget can host the three rulesets as declared data with their existing fact generation, which is 4 widgets to 1, while generic binding waits for the schema. A blocker stated one size too large had been stopping work it did not block."
+   "whatChanged": "The claim was true and its scope was not. It was recorded as blocking the ruleset widget outright, and it does block the general form -- binding any field of any input to a declared role. It does not block the merge that reduces the widget count, because the three existing fact generators take typed carriers and not arbitrary attribute tables: makeN3(NearestRow[]), accessN3(AccessRow[]), facilityN3(Facility[]). So one widget can host the three rulesets as declared data with their existing fact generation, which is 4 widgets to 1, while generic binding waits for the schema. A blocker stated one size too large had been stopping work it did not block.",
+   "callers": [
+    "generic role binding in docs/experiments/65-ruleset-as-data.md",
+    "the port contracts in docs/experiments/66-ports-as-schema-binding.md",
+    "the table contract in docs/experiments/115-decomposing-the-projection-extract.md -- added 2026-10-15. Re-derived the same day: src/attribute-schema.ts still declares a field with a type and, through parseValueSet, a closed set of allowed values, and validateAttributeSchema takes a PointCollection alone. slr_extract_import hand-codes that mechanism for a table column. The mechanism exists and is bound to one port type, which is a narrower claim than 'there is no typed field schema' and the reason this is cheap to generalise."
+   ],
+   "thirdCallerRule": "filter-values-from-a-connected-port states it: three callers is the argument for building it rather than three arguments for three mechanisms. This is the third."
   },
   {
    "id": "ruleset-as-declared-data",
@@ -231,7 +237,8 @@
      "found": "Re-derived against the type table. Narrowed by measurement: of the ten widgets grouped under Sources, four declare an input -- network_input, raster_input and find_health_facilities each take an `area` to acquire WITHIN, which is acquisition, and slr_extract_import takes a `table` on a port and acquires nothing. So this is now true of one widget rather than two, reproject having been resolved by experiment 111's split. The liftTest's check is unwritten."
     }
    ],
-   "narrowedTo": "One widget, not two, as of 2026-10-15. `reproject` was resolved by experiment 111's split -- it changed contract rather than taking an exemption. Of the ten Sources widgets, network_input, raster_input and find_health_facilities each take an `area` to acquire WITHIN, which is acquisition; slr_extract_import takes a `table` on a port and acquires nothing."
+   "narrowedTo": "One widget, not two, as of 2026-10-15. `reproject` was resolved by experiment 111's split -- it changed contract rather than taking an exemption. Of the ten Sources widgets, network_input, raster_input and find_health_facilities each take an `area` to acquire WITHIN, which is acquisition; slr_extract_import takes a `table` on a port and acquires nothing.",
+   "preferredLift": "Decomposition rather than a group change, designed 2026-10-15 in docs/experiments/115-decomposing-the-projection-extract.md. Read operation by operation, none of slr_extract_import's five operations is about sea level: four are assertions about a table -- required key columns, an admissible unit, a closed domain for one column -- and one derives a column's distinct values. The sea-level knowledge is entirely in its parameters. So the widget does not need to move group or change contract; it needs to stop being a widget, which lifts this blocker by removing the thing it is about and takes the live count from 46 toward the target of 41 rather than away from it. Blocked on typed-field-schema, which this makes a third caller for."
   },
   {
    "id": "isochrone-does-not-scale",

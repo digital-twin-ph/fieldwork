@@ -42,3 +42,30 @@ test('a basemap can be chosen on a static plot, and the map becomes one that can
   })).toBe('none/interactive');
   expect(errors).toEqual([]);
 });
+
+// "The map output widget on 0.8.1 has no basemap. We talked about basemap as Layer 0 in
+// docs/widgets!" -- the practitioner, 2026-10-15, the third report of the same thing. The first
+// two were about reach; this one was a regression I introduced removing input mode, which left
+// the basemap control gated on `inputMode==='polygons'` -- a parameter that no longer means
+// anything. Underneath it was the deeper cause: only the interactive presentation can draw tiles,
+// and the interactive renderer REQUIRED polygons, so a map of a study area and points could not
+// have a basemap however the control was gated.
+test('a map with no polygons can still take a basemap',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=old-naledi');
+  await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
+  await page.locator('.react-flow__node[data-id="access-map"]').click();
+
+  // Offered. It was absent entirely on this map before: decisions, not polygons.
+  await expect(page.locator('#map-basemap')).toBeVisible();
+  await expect(page.locator('#inspector-content')).toContainText('A basemap is layer 0');
+  await page.locator('#map-basemap').selectOption('osm');
+  await expect.poll(async()=>await page.evaluate(()=>{
+    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
+    const map=(w.nodes||[]).find(n=>n.id==='access-map');
+    return `${map?.params?.basemap}/${map?.params?.presentation}`;
+  })).toBe('osm/interactive');
+  expect(errors).toEqual([]);
+});

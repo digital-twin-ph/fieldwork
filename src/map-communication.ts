@@ -65,26 +65,39 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   const spec=mapPresentation(node,output,workflow),activity=node.params.inputMode==='polygons'?`urn:fieldwork:run:${runId}:output:${node.id}:view`:node.params.inputMode==='raster'||node.params.inputMode==='decisions'?`urn:fieldwork:run:${runId}:view:${node.id}`:`urn:fieldwork:run:${runId}:map:${node.id}`;
   const iri=`urn:fieldwork:run:${runId}:map-specification:${node.id}`;
   const sources=workflow.edges.filter(e=>e.to===node.id).map(e=>`<urn:fieldwork:run:${runId}:output:${e.from}>`);
-  // The layers this map draws, counted and typed, asserted rather than left to be joined.
+  // The layers this map DRAWS, which is not the same as the ports it has.
   //
-  // The facts were already derivable: prov:used reaches each source and fw:portType says what
-  // that source emits. But the join is fragile -- a node appears under two IRI forms, the
-  // activity uses itself, and on the geoprivacy maps the naive query returns four sources where
-  // two edges exist. A reader asking "how many layers does this map draw, and of what kinds"
-  // should not have to know that. Experiment 115, and the practitioner's request that the
-  // receipts answer the count and the types.
+  // Asserted as ports first, on 2026-10-14, and corrected the same day: "layer count should be
+  // about layers not ports." The isochrone map has two ports and draws four things -- a boundary,
+  // four time bands, 250 death locations and eight pumps -- because `summarize_polygons` keeps
+  // the points it counted on the value it returns, so they reach the map without being wired.
+  // Counting ports reported 2 for a picture a reader sees four layers in.
   //
-  // One fw:layer per connected port, carrying the port it arrived at and the type it carries, in
-  // the order the ports are declared -- which is the order they are drawn today. When a map takes
-  // its layers in a stated order rather than a declared one, that order belongs here too.
-  const layers=workflow.edges.filter(e=>e.to===node.id).map(edge=>{
-    const source=workflow.nodes.find(n=>n.id===edge.from);
-    return {port:edge.port,type:source?outputOf(source):null,from:edge.from};
-  });
-  const layerFacts=`<${iri}> fw:layerCount ${layers.length}.\n`
-    +layers.map((layer,index)=>`<${iri}> fw:layer [ fw:layerIndex ${index}; fw:layerPort ${JSON.stringify(layer.port)}; `
-      +`${layer.type?`fw:layerPortType <urn:fieldwork:${layer.type.split('-').map((word:string)=>word[0].toUpperCase()+word.slice(1)).join('')}Port>; `:''}`
-      +`prov:wasGeneratedBy <urn:fieldwork:run:${runId}:${layer.from}> ].\n`).join('');
+  // So this reads the same value the renderer draws from, in the order it draws: ground first,
+  // then fills, then marks. A layer that arrived inside another layer's value says so with
+  // fw:layerWithin rather than claiming a port it does not have. Experiment 115.
+  const ground=`urn:fieldwork:run:${runId}:map-specification:${node.id}`;void ground;
+  const portOf=(type:string)=>workflow.edges.find(e=>e.to===node.id&&e.port===type);
+  const drawn:{kind:string;features?:number;port?:string;within?:string;role?:string}[]=[];
+  if(output.boundary)drawn.push({kind:'AreaLayer',port:portOf('area')?.port});
+  if(output.raster)drawn.push({kind:'RasterLayer',port:portOf('raster')?.port});
+  if(output.network)drawn.push({kind:'NetworkLayer',port:portOf('network')?.port});
+  if(output.polygons?.features?.length)
+    drawn.push({kind:'PolygonsLayer',features:output.polygons.features.length,port:portOf('polygons')?.port});
+  if(output.polygons?.observations?.features?.length)
+    drawn.push({kind:'PointsLayer',features:output.polygons.observations.features.length,
+      within:portOf('polygons')?.port,role:'observations'});
+  if(output.contextPoints?.features?.length)
+    drawn.push({kind:'PointsLayer',features:output.contextPoints.features.length,port:portOf('context')?.port,role:'context'});
+  else if(output.polygons?.sites?.length)
+    drawn.push({kind:'PointsLayer',features:output.polygons.sites.length,within:portOf('polygons')?.port,role:'sites'});
+  if(!output.polygons&&!output.raster&&output.rows?.length)
+    drawn.push({kind:'PointsLayer',features:output.rows.filter(r=>r.coordinates).length,port:portOf('points')?.port});
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n<${iri}> a fw:MapSpecification, prov:Plan; dcterms:title ${JSON.stringify(spec.title)}; dcterms:description ${JSON.stringify(spec.subtitle)}; fw:mapLegend ${spec.legend}; fw:mapPresentation ${JSON.stringify(spec.presentation)}; fw:mapBasemap ${JSON.stringify(spec.basemap)}; fw:mapSourceNote ${JSON.stringify(spec.sourceNote)}; prov:wasDerivedFrom ${sources.join(', ')}.\n<${activity}> fw:mapSpecification <${iri}>; prov:used <${iri}>.\n`;
+  const layerFacts=`<${iri}> fw:layerCount ${drawn.length}.\n`
+    +drawn.map((layer,index)=>`<${iri}> fw:layer [ fw:layerIndex ${index}; fw:layerKind <urn:fieldwork:${layer.kind}>; `
+      +`${layer.features!==undefined?`fw:layerFeatureCount ${layer.features}; `:''}`
+      +`${layer.role?`fw:layerRole ${JSON.stringify(layer.role)}; `:''}`
+      +`${layer.port?`fw:layerPort ${JSON.stringify(layer.port)}`:`fw:layerWithin ${JSON.stringify(layer.within||'the value')}`} ].\n`).join('');
   receipt.facts+=facts+layerFacts;receipt.input=receipt.facts;return facts+layerFacts;
 }

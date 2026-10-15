@@ -91,7 +91,8 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label class="field-label" for="map-subtitle">Subtitle / context</label><input id="map-subtitle" maxlength="280" value="${esc(p.mapSubtitle||'')}" placeholder="Optional scope or limitation">
     <label><input id="map-legend-toggle" type="checkbox" ${p.showLegend!==false?'checked':''}> Show map key</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
-    ${p.inputMode==='polygons'&&p.presentation==='interactive'?`<label class="field-label" for="map-basemap">Interactive basemap</label><select id="map-basemap"><option value="none" ${!p.basemap||p.basemap==='none'?'selected':''}>Local geometry (offline)</option><option value="osm" ${p.basemap==='osm'?'selected':''}>OpenStreetMap streets</option><option value="topo" ${p.basemap==='topo'?'selected':''}>OpenTopoMap terrain</option></select>`:''}
+    ${p.inputMode==='polygons'?`<label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap"><option value="none" ${!p.basemap||p.basemap==='none'?'selected':''}>None · local geometry, works offline</option><option value="osm" ${p.basemap==='osm'?'selected':''}>OpenStreetMap streets</option><option value="topo" ${p.basemap==='topo'?'selected':''}>OpenTopoMap terrain</option></select>`
+      +`<p class="description">Choosing a basemap switches this map to the interactive presentation, which is the only one that can draw tiles. ${p.presentation==='interactive'?'':'This map is a static plot today, so picking one will change how it is drawn.'}</p>`:''}
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
 }
 const KEY='fieldwork-workflow-v1';
@@ -198,9 +199,45 @@ function save(){
 }
 function loadExample(key:string){if(busy)return;save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[key];workflow=saved?validateWorkflow(saved):template(key);}catch{workflow=template(key);}selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
 function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;render();return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;statuses={};}render();return persisted;}catch(e){workflow=previous;toast(errorMessage(e));render();return false;}}
+/** Which declared port a layer dropped on a map's "add a layer" port should bind to.
+ *
+ *  The map's one configurable port is type-free: the practitioner drops a result on it and this
+ *  reads what that result EMITS to choose the port. Point layers take the first free slot, so a
+ *  second point source lands on points_2 rather than replacing the first -- which is what
+ *  pointInputCount has always created and what nothing let a practitioner reach by dragging. */
+function layerPortFor(w:Workflow,source:WorkflowNode,target:WorkflowNode<'map_output'>):string|undefined{
+  const type=outputOf(source);
+  if(!type)return undefined;
+  const taken=(port:string)=>w.edges.some(e=>e.to===target.id&&e.port===port);
+  // `context` is points-typed and is not a point layer: it means "points drawn beside polygons".
+  // Binding a second point source there because it happened to be free would quietly give the
+  // layer a role the practitioner did not choose, and the role is what the renderer takes its
+  // emphasis from. It stays available in its own picker and out of automatic binding.
+  const declared=nodeInputs(target).filter(([port,portType])=>portType===type&&port!=='context').map(([port])=>port);
+  const free=declared.find(port=>!taken(port));
+  if(free)return free;
+  // Every slot of that type is in use. Point layers can grow: pointInputCount creates them.
+  if(type==='points'){
+    const next=(target.params.pointInputCount??1)+1;
+    if(next<=8){target.params.pointInputCount=next;return pointPort(next-1);}
+  }
+  return declared[0];
+}
+
 function setConnection(w:Workflow,from:string|null,to:string,port:string){
   const target=w.nodes.find(n=>n.id===to),map=['map_output','table_output'].includes(target?.type||'');
-  if(from&&target?.type==='map_output'&&port==='raster'){target.params.inputMode='raster';w.edges=w.edges.filter(e=>e.to!==to);}
+  // The map's single "add a layer" port binds to a declared one by what the source emits.
+  if(from&&port==='layer'&&target?.type==='map_output'){
+    const source=w.nodes.find(n=>n.id===from);
+    const bound=source&&layerPortFor(w,source,target as WorkflowNode<'map_output'>);
+    if(!bound)return;
+    port=bound;
+  }
+  // Connecting a raster used to set the map's mode AND drop every other connection, because a
+  // raster map could show nothing else. A raster is a layer: it arrives and the others stay. The
+  // renderer still draws one picture at a time -- see drawnMode -- so a raster wins the drawing
+  // while the other layers remain wired and recorded. That limit is the drawing code's, and it is
+  // no longer paid for by silently discarding a practitioner's connections.
   w.edges=w.edges.filter(e=>e.to!==to||(e.port!==port&&(!from||!map||(port!=='coverage'&&e.port!=='coverage'))));
   if(from)w.edges.push({id:`e-${Date.now()}`,from,to,port});
   if(from&&port==='area'&&target?.type==='clip_raster'&&!target.params.cutline){
@@ -251,7 +288,10 @@ function alertHeadline(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   if(alert.offNetwork.length)parts.push(`${alert.offNetwork.length} routed off-network`);
   return parts.join(' · ');
 }
-function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TYPES[n.type].description,detail='Ready';if((n.type==='places'||n.type==='centers')){subtitle=`${n.params.data.features.length} local locations`;detail='GeoJSON · CRS84';}if(n.type==='raster_input'){detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare a local GeoTIFF';}if(n.type==='clip_raster'){subtitle='Raster + polygon -> masked raster';detail=n.params.method+' / margin '+(n.params.marginPixels||0)+' px';}if(n.type==='policy'){subtitle=`Heat alert + distance > ${n.params.thresholdKm} km`;detail='Evidence → decision';}if(n.type==='alert'){subtitle=n.params.active===null?'Alert status unknown':n.params.active?'Heat alert is active':'No active heat alert';detail=n.params.date;}if(n.type==='measure_distance'){detail='Kilometers · straight-line';}if(n.type==='output'){subtitle={table:'Table with supporting evidence',bars:'Grouped result counts',map:'Map of results and locations'}[n.params.view];detail='Creates a Results tab';}if(n.type==='study_area'){const p=n.params;subtitle=p.source==='drawn'?(p.geometry?`Drawn ${p.selectionMode==='bbox'?'box':'polygon'}`:'No boundary selected yet'):(p.dataset||'Source dataset');detail=p.source==='drawn'&&!p.geometry?'Select it on the map':'CRS84';}if(n.type==='point_grid'){subtitle=`Regular grid · ${n.params.spacingM} m`;detail='Demonstration points';}if(n.type==='facilities'){subtitle=`Search within ${n.params.radiusKm} km`;detail='Historical registry · 214 points';}if(n.type==='xpert'){subtitle='Named evidence → facility type';detail='NB06 hierarchy · N3';}if(n.type==='access'){subtitle=`${n.params.minimumEvidence} evidence · ${n.params.service==='onsite'?'onsite':'incl. referral'}`;detail=`Straight-line proxy · ${n.params.speedMPerMin} m/min`;}if(n.type==='access_policy'){subtitle=`Review proxy time > ${n.params.thresholdMin} min`;detail='N3 · missing stays unknown';}if(n.type==='facility_audit'){subtitle='Service, evidence, and references';detail='All candidate facilities';}const alert=nodeAlert(n.id);return {definition:{...TYPES[n.type],inputs:nodeInputs(n),output:outputOf(n)},type:n.type,label:n.params.label||TYPES[n.type].title,subtitle,detail,status,glow:justFinished.has(n.id),alert:alert?alertHeadline(alert):undefined};}
+function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TYPES[n.type].description,detail='Ready';if((n.type==='places'||n.type==='centers')){subtitle=`${n.params.data.features.length} local locations`;detail='GeoJSON · CRS84';}if(n.type==='raster_input'){detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare a local GeoTIFF';}if(n.type==='clip_raster'){subtitle='Raster + polygon -> masked raster';detail=n.params.method+' / margin '+(n.params.marginPixels||0)+' px';}if(n.type==='policy'){subtitle=`Heat alert + distance > ${n.params.thresholdKm} km`;detail='Evidence → decision';}if(n.type==='alert'){subtitle=n.params.active===null?'Alert status unknown':n.params.active?'Heat alert is active':'No active heat alert';detail=n.params.date;}if(n.type==='measure_distance'){detail='Kilometers · straight-line';}if(n.type==='output'){subtitle={table:'Table with supporting evidence',bars:'Grouped result counts',map:'Map of results and locations'}[n.params.view];detail='Creates a Results tab';}if(n.type==='study_area'){const p=n.params;subtitle=p.source==='drawn'?(p.geometry?`Drawn ${p.selectionMode==='bbox'?'box':'polygon'}`:'No boundary selected yet'):(p.dataset||'Source dataset');detail=p.source==='drawn'&&!p.geometry?'Select it on the map':'CRS84';}if(n.type==='point_grid'){subtitle=`Regular grid · ${n.params.spacingM} m`;detail='Demonstration points';}if(n.type==='facilities'){subtitle=`Search within ${n.params.radiusKm} km`;detail='Historical registry · 214 points';}if(n.type==='xpert'){subtitle='Named evidence → facility type';detail='NB06 hierarchy · N3';}if(n.type==='access'){subtitle=`${n.params.minimumEvidence} evidence · ${n.params.service==='onsite'?'onsite':'incl. referral'}`;detail=`Straight-line proxy · ${n.params.speedMPerMin} m/min`;}if(n.type==='access_policy'){subtitle=`Review proxy time > ${n.params.thresholdMin} min`;detail='N3 · missing stays unknown';}if(n.type==='facility_audit'){subtitle='Service, evidence, and references';detail='All candidate facilities';}const alert=nodeAlert(n.id);return {definition:{...TYPES[n.type],inputs:nodeInputs(n),output:outputOf(n)},
+    connectedPorts:workflow.edges.filter(e=>e.to===n.id).map(e=>e.port),
+    availablePorts:nodeInputs(n).filter(([,type])=>workflow.nodes.some(x=>x.id!==n.id&&outputOf(x)===type)).map(([port])=>port),
+    type:n.type,label:n.params.label||TYPES[n.type].title,subtitle,detail,status,glow:justFinished.has(n.id),alert:alert?alertHeadline(alert):undefined};}
 function render(){
   const url=new URL(location.href);url.searchParams.set('example',exampleKey(workflow));window.history.replaceState(null,'',url);
   renderLibrary($('#node-search').value);
@@ -449,20 +489,63 @@ function renderInspector(){
     let previewBoundary;
     try{previewBoundary=n.type==='network_input'?previewArea(workflow,n.id).boundary:undefined;}catch{previewBoundary=undefined;}
     content+=catchmentInspector(n,esc,previewBoundary)+nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="catchment-port-${port}">${esc(port)}</label><select id="catchment-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('');
-  }else if(['map_output','table_output','chart_output'].includes(n.type)&&'inputMode' in n.params&&n.params.inputMode==='polygons'){
-    content+=`<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="polygons">Catchment polygons / summaries</option><option value="${n.type==='chart_output'?'decisions':'spatial'}">${n.type==='chart_output'?'Reasoning results':'Point layers'}</option>${n.type==='map_output'?'<option value="network">Street network</option>':''}</select><label class="field-label" for="polygon-source">Polygon input</label><select id="polygon-source" data-map-port="polygons"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='polygons').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select><label class="field-label" for="polygon-output-label">Results tab name</label><input id="polygon-output-label" maxlength="60" value="${esc(n.params.label||'')}"><p class="notice">Connect a polygon operation. Charts require Summarize points in polygons. Display only; processing parameters belong to upstream nodes.</p>`;
-    if(n.type==='map_output')content+=`<label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation" data-catchment-param="presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select><label><input id="polygon-context-toggle" type="checkbox" ${n.params.contextPoints?'checked':''}> Add context point layer (e.g. other pumps)</label>`+(n.params.contextPoints?`<label class="field-label" for="polygon-context">Context points</label><select id="polygon-context" data-map-port="context"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='context'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`:'');
+  }else if(n.type==='map_output'){
+    // No Input mode. A map draws the layers it is given, and the practitioner wires what they
+    // have: one source picker per layer port, every port always present. The selector this
+    // replaces asked a question about shape before the practitioner had the shape, and it decided
+    // which ports existed, whether a presentation could be chosen, and whether a basemap was on
+    // offer -- which is why removing it answers four separate reports at once.
+    //
+    // The practitioner's direction, 2026-10-14: "there is no such thing as mode, only layers."
+    // Written into docs/widgets/map_output.md that day and into the code on 2026-10-15, after
+    // "I thought we got rid of mode!"
+    const wiredPorts=nodeInputs(n).filter(([port])=>workflow.edges.some(e=>e.to===n.id&&e.port===port));
+    content+=`<span class="inspector-section">Layers</span>`
+      +`<p class="description">Connect what you want drawn. ${wiredPorts.length?`${wiredPorts.length} layer source${wiredPorts.length===1?'':'s'} connected; the map draws what it is given, ground first.`:'Nothing is connected yet, so this map has nothing to draw.'}</p>`
+      // One picker per layer the map draws, and one more to add another -- rather than a control
+      // for every port the contract declares. The practitioner's direction, 2026-10-15.
+      +nodeInputs(n).map(([port,type])=>{
+        if(!workflow.edges.some(e=>e.to===n.id&&e.port===port))return '';
+        const sources=workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type);
+        return `<div class="field"><label class="field-label" for="map-${port}">${esc(port)}</label>`
+          +`<select id="map-${port}" data-map-port="${port}"><option value="">Remove this layer</option>`
+          +sources.map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')
+          +`</select></div>`;
+      }).join('')
+      +(()=>{
+        // The configurable one. It lists every result on the canvas this map could draw, whatever
+        // type it is, and binds to the right port when chosen -- the Inspector half of the one
+        // port on the node.
+        const drawable=new Set(nodeInputs(n).map(([,type])=>type));
+        const candidates=workflow.nodes.filter(x=>x.id!==n.id&&drawable.has(outputOf(x) as never));
+        if(!candidates.length)return '';
+        return `<div class="field"><label class="field-label" for="map-add-layer">Add a layer</label>`
+          +`<select id="map-add-layer"><option value="">Choose a result to draw…</option>`
+          +candidates.map(x=>`<option value="${esc(x.id)}">${esc(x.params.label||TYPES[x.type].title)} · ${esc(String(outputOf(x)))}</option>`).join('')
+          +`</select><small>Any result this map can draw. The layer is connected to the port its type belongs to; a second point layer gets a slot of its own.</small></div>`;
+      })()
+      +`<div class="field"><label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation" data-catchment-param="presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select></div>`
+      +`<div class="field"><label class="field-label" for="map-label">Results tab name</label><input id="map-label" maxlength="60" value="${esc(n.params.label)}"></div>`
+      // Shown when decisions are wired, as before: a reasoning result reads as a map, a table or
+      // a chart, and this switches which. It used to be gated on the map being in decisions MODE.
+      +(workflow.edges.some(e=>e.to===n.id&&e.port==='decisions')
+        ?`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map" selected>Map</option><option value="table">Table</option><option value="bars">Chart</option></select></div>`
+        :'');
+    content+=mapControls(n);
+  }else if(['table_output','chart_output'].includes(n.type)&&'inputMode' in n.params&&n.params.inputMode==='polygons'){
+    content+=`<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="polygons">Catchment polygons / summaries</option><option value="${n.type==='chart_output'?'decisions':'spatial'}">${n.type==='chart_output'?'Reasoning results':'Point layers'}</option></select><label class="field-label" for="polygon-source">Polygon input</label><select id="polygon-source" data-map-port="polygons"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='polygons').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select><label class="field-label" for="polygon-output-label">Results tab name</label><input id="polygon-output-label" maxlength="60" value="${esc(n.params.label||'')}"><p class="notice">Connect a polygon operation. Charts require Summarize points in polygons. Display only; processing parameters belong to upstream nodes.</p>`;
+    // map_output has its own branch above and is no longer reached here.
     if(n.type==='chart_output')content+=chartControls(n);
-    if(n.type==='map_output')content+=mapControls(n);
-  }else if(n.type==='map_output'||n.type==='table_output'){
+    // nor here: a map's communication controls are in its own branch.
+  }else if(n.type==='table_output'){
 
-    const outputType=n.type==='table_output'?'table':'map',reasoning=n.params.inputMode==='decisions',raster=n.type==='map_output'&&n.params.inputMode==='raster',tabular=n.type==='table_output'&&n.params.inputMode==='table';
-    content+=`<div class="field"><label class="field-label" for="output-input-mode">Input mode</label><select id="output-input-mode"><option value="spatial" ${!reasoning&&!raster&&!tabular?'selected':''}>Point layers or spatial coverage</option><option value="polygons">Catchment polygons / summaries</option><option value="decisions" ${reasoning?'selected':''}>Reasoning results</option>${n.type==='map_output'?`<option value="raster" ${raster?'selected':''}>Raster</option><option value="network" ${n.params.inputMode==='network'?'selected':''}>Street network</option>`:''}${n.type==='table_output'?`<option value="table" ${tabular?'selected':''}>Tabular data</option>`:''}</select><small>Changing mode removes existing input connectors; Undo restores them.</small></div>`;
+    const outputType=n.type==='table_output'?'table':'map',reasoning=n.params.inputMode==='decisions',raster=false,tabular=n.type==='table_output'&&n.params.inputMode==='table';
+    content+=`<div class="field"><label class="field-label" for="output-input-mode">Input mode</label><select id="output-input-mode"><option value="spatial" ${!reasoning&&!raster&&!tabular?'selected':''}>Point layers or spatial coverage</option><option value="polygons">Catchment polygons / summaries</option><option value="decisions" ${reasoning?'selected':''}>Reasoning results</option>${n.type==='table_output'?`<option value="table" ${tabular?'selected':''}>Tabular data</option>`:''}</select><small>Changing mode removes existing input connectors; Undo restores them.</small></div>`;
     if(reasoning)content+=`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map" ${outputType==='map'?'selected':''}>Map</option><option value="table" ${outputType==='table'?'selected':''}>Table</option><option value="bars">Chart</option></select></div>`;
     content+=`<div class="field"><label class="field-label" for="${outputType}-label">Results tab name</label><input id="${outputType}-label" maxlength="60" value="${esc(n.params.label)}"></div><p class="description">${tabular?'Connect a Tabular data source. The key columns and the value column are displayed as imported; no geometry is implied and no value is converted.':raster?'Connect Raster input or Clip raster. The native grid is displayed with its clipping boundary.':reasoning?'Connect an existing reasoning result. Decisions, missing evidence and supporting references are retained.':outputType==='table'?'Connect point data directly; no study area is required. Or connect a coverage result to include spatial relations and review decisions.':'Connect a study area and points, or use a coverage check that already contains both.'}${!reasoning&&!raster?' Connecting a coverage result or raster replaces the separate inputs; Undo restores them.':''}</p>`;
     content+=nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);return `<div class="field"><label class="field-label" for="${outputType}-${port}">${({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:raster?'Raster':'Or: Raster',network:'Street network'}[port]||'Point data '+(port==='points'?1:port.split('_')[1]))}</label><select id="${outputType}-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;}).join('');
     content+=tabular?'<div class="notice">Rows are shown as imported, with absent values displayed as unknown and an unstated unit named as unstated. Search covers every key column and the value. Works offline.</div>':raster?'<div class="notice">Colors show relative cell values; gray cells are NoData. Download GeoTIFF preserves native values and georeferencing.</div>':reasoning?'<div class="notice">This is a presentation of existing results, with no new inference or exclusion.</div>':outputType==='table'?'<div class="notice">Rows include coordinates and all point attributes. Missing coordinates and excluded records remain visible. Search covers all rows and attributes; large tables use row and attribute pages. Works offline.</div>':'<div class="notice">The map fits the polygon and every located point, including outside records. Missing coordinates appear in a selectable list. This local map works offline.</div>';
-    if(n.type==='map_output')content+=mapControls(n);
+    // map_output has its own branch above; this one is table_output alone.
   }else if(n.type==='table_input'){
     const p=n.params;
     content+='<section class="source-card"><span class="inspector-section">Table contract</span>'
@@ -704,7 +787,8 @@ function renderInspector(){
     if(n.type==='chart_output')content+=chartControls(n);
   }
   if(['study_area','point_input','places','centers','measure_area','coverage_check','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). A source reads degrees or a UTM zone and converts on import; Reproject points projects mid-workflow.</p></div>';
-  if(n.type==='coverage_check'||((n.type==='map_output'||n.type==='table_output')&&(!n.params.inputMode||n.params.inputMode==='spatial')))content+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">${n.type==='table_output'?'No boundary required for point inputs':'One study boundary'} · up to 8 point layers and 2,000 records combined. Each added point port needs a source. Removing the last port also removes its connector; Undo restores it. Adding a point input switches a Map or Table from reviewed input to direct layers.</p>`;
+  // A map can always take another point layer: there is no mode in which it cannot draw points.
+  if(n.type==='coverage_check'||n.type==='map_output'||(n.type==='table_output'&&(!n.params.inputMode||n.params.inputMode==='spatial')))content+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">${n.type==='table_output'?'No boundary required for point inputs':'One study boundary'} · up to 8 point layers and 2,000 records combined. Each added point port needs a source. Removing the last port also removes its connector; Undo restores it. Adding a point input switches a Map or Table from reviewed input to direct layers.</p>`;
   if(exampleKey(workflow)==='raster'&&(n.type==='raster_input'||n.type==='clip_raster'))content+='<div class="source-card"><span class="inspector-section">Raster workflow steps</span><p>Prepare your GeoTIFF and citation, preview the clip, then Run workflow to populate the map.</p><div class="inspector-actions">'+(['raster_input','clip_raster','map_output'] as NodeType[]).map((type,i)=>{const target=workflow.nodes.find(x=>x.type===type);return '<button class="button small" data-raster-step="'+esc(target?.id||'')+'" '+(!target?'disabled':'')+'>'+[ '1. Raster input','2. Clip parameters','3. Map'][i]+'</button>';}).join('')+'</div></div>';
   content+=evidenceInspector(n);
   content+=identityMarkup(n.type,esc);
@@ -922,7 +1006,23 @@ function renderInspector(){
   for(const [selector,key] of [['#map-title','mapTitle'],['#map-subtitle','mapSubtitle'],['#map-source-note','mapSourceNote']] as const)
     document.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector)?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'map_output').params[key]=control(e).value.trim();}));
   document.querySelector<HTMLInputElement>('#map-legend-toggle')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'map_output').params.showLegend=(e.currentTarget as HTMLInputElement).checked));
-  optionalElement('#map-basemap')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'map_output').params.basemap=control(e).value as 'none'|'osm'|'topo'));
+  // Picking a basemap switches the presentation when it has to. The control used to appear only
+  // AFTER the practitioner had found the Presentation selector and set it to interactive, so a
+  // basemap was two steps behind a combination nothing announced -- and the practitioner reported,
+  // 2026-10-15, looking at a shipped map and finding no basemap at all. Five of the ten maps in
+  // the worked examples were two clicks away; the clicks were the defect.
+  optionalElement('#map-add-layer')?.addEventListener('change',e=>{
+    const chosen=control(e).value;
+    if(chosen)change(w=>setConnection(w,chosen,n.id,'layer'));
+  });
+  optionalElement('#map-basemap')?.addEventListener('change',e=>{
+    const choice=control(e).value as 'none'|'osm'|'topo';
+    change(w=>{
+      const target=getNode(w,n.id,'map_output');
+      target.params.basemap=choice;
+      if(choice!=='none')target.params.presentation='interactive';
+    });
+  });
   optionalElement('#output-view')?.addEventListener('change',e=>change(w=>{const index=w.nodes.findIndex(x=>x.id===n.id);w.nodes[index]={...w.nodes[index],type:'output',params:{label:n.params.label,view:control(e).value as 'map'|'table'|'bars'}};}));
   optionalElement('#output-input-mode')?.addEventListener('change',e=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'>;(node.params as unknown as Record<string,string>).inputMode=control(e).value;w.edges=w.edges.filter(edge=>edge.to!==n.id);}));
   $('#delete-node').onclick=()=>removeNodes([n.id]);
@@ -1156,7 +1256,13 @@ function wireThemeControl(){
   });
 }
 function switchView(view:string){$('.work-area').classList.remove('results-expanded');$('#expand-results').textContent='⛶ Expand';$('#expand-results').setAttribute('aria-expanded','false');$('#workflow-view').hidden=view!=='workflow';$('#rules-view').hidden=view!=='rules';document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));}
-function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id===c.source),b=workflow.nodes.find(n=>n.id===c.target);return !!a&&!!b&&a.id!==b.id&&!!outputOf(a)&&nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1]===outputOf(a);}
+function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id===c.source),b=workflow.nodes.find(n=>n.id===c.target);if(!a||!b||a.id===b.id||!outputOf(a))return false;
+  // The map's one configurable port accepts anything the map can draw; which declared port it
+  // becomes is decided on connection, by what the source emits. Without this the drop is refused
+  // before setConnection ever sees it, because `layer` is not a declared port.
+  if(c.targetHandle==='layer'&&b.type==='map_output')
+    return nodeInputs(b).some(([,type])=>type===outputOf(a));
+  return nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1]===outputOf(a);}
 mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},select(id){selected=id;$('#node-search').value='';if(revealResultFor(id))renderResults();markLinkedTabs();render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;markLinkedTabs();render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
 $('#run-button').onclick=run;$('#node-search').oninput=e=>renderLibrary(control(e).value);$('#zoom-in').onclick=()=>flow?.zoomIn();$('#zoom-out').onclick=()=>flow?.zoomOut();$('#fit-button').onclick=()=>flow?.fit();
 // Columns in the order the work happens. Offered rather than applied: a canvas somebody has

@@ -1,0 +1,118 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:map_output",
+ "version": "0.10.0",
+ "nodeType": "map_output",
+ "title": "Map",
+ "released": "2026-10-15",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['map_output']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "points",
+    "type": "points"
+   },
+   {
+    "name": "polygons",
+    "type": "polygons"
+   },
+   {
+    "name": "context",
+    "type": "points"
+   },
+   {
+    "name": "decisions",
+    "type": "decisions"
+   },
+   {
+    "name": "coverage",
+    "type": "coverage-check"
+   },
+   {
+    "name": "raster",
+    "type": "raster"
+   },
+   {
+    "name": "network",
+    "type": "network"
+   }
+  ],
+  "output": null,
+  "dynamicInputs": {
+   "kind": "point-layers",
+   "minimum": 1,
+   "maximum": 8,
+   "implementation": "src/core.ts#nodeInputs"
+  },
+  "note": "Every layer port, on every map, whatever its parameters say. The ports used to vary with an inputMode parameter -- reasoningInput, rasterInput, polygonInput, networkInput were four separate declarations of that -- so the port a connection needed might not exist on the node. Which renderer draws is now read from what is wired: src/core.ts#drawnMode."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:MapView",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "configuration",
+    "iri": "urn:fieldwork:MapSpecification",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Map presentation plan and MapView activity are implemented; broader map artifact and cartographic contracts remain open.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/raster.ts",
+   "src/raster-workflow.ts",
+   "src/raster-ui.ts",
+   "src/app.ts",
+   "src/canvas.tsx",
+   "src/catchment-output.ts",
+   "src/catchment-map.ts",
+   "src/map-communication.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "output",
+    "adapterVersion": "1",
+    "implementation": "src/output-contract.ts#migrateOutputNodes"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "A map declares every layer port it can draw and the practitioner wires what they have. The inputMode parameter no longer decides which ports exist, which presentation is offered or whether a basemap can be chosen; the renderer is read from the connections. The practitioner's direction of 2026-10-14 -- \"there is no such thing as mode, only layers\" -- which had been written into docs/widgets/map_output.md and into the layer vocabulary of the receipts while the interface kept asking the question.",
+   "incompatibility": "A map now has eight input ports instead of the two to four its mode allowed, so the node draws more handles and a canvas laid out around the old shape will look different. Saved workflows keep their inputMode value and nothing reads it except as a fallback for a map with nothing wired, so what they drew is what they draw. Anything that inspected a map's ports to infer its mode must read drawnMode instead.",
+   "migration": "None required for a saved workflow. The stored inputMode is read last and never written."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

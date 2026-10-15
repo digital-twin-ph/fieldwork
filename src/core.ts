@@ -129,7 +129,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   measure_area:{title:'Calculate area',group:'Spatial operations',icon:'▱',color:'teal',description:'Attach an area measurement to the study area',inputs:[['area','area']],output:'area'},
   point_input:{title:'Point data',group:'Sources',icon:'▦',color:'blue',description:'Import point observations or generate synthetic records',inputs:[],output:'points'},
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Identify observations outside the study boundary',inputs:[['area','area'],['points','points']],output:'coverage-check'},
-  map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['coverage','coverage-check'],['raster','raster']],output:null},
+  map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['decisions','decisions'],['coverage','coverage-check'],['raster','raster'],['network','network']],output:null},
   table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display point coordinates, attributes and available review decisions',inputs:[['points','points'],['coverage','coverage-check']],output:null},
   chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Count reasoning results by decision, access zone or evidence tier',inputs:[['decisions','decisions']],output:null},
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
@@ -167,9 +167,41 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // twice. Graph-dependent rather than node-dependent, which is why it is a parameter -- a node
   // alone cannot say whether anything is connected to it.
   if(options?.coverageConnected)return all.filter(([port])=>port==='coverage');
-  // A coverage check is never insisted on, and a raster only when the map is showing one.
-  return all.filter(([port])=>port!=='coverage'
-    &&(port!=='raster'||node.type==='map_output'&&(node.params as {inputMode?:string}).inputMode==='raster'));
+  // A map insists on nothing: it draws the layers it is given, and which ones those are is the
+  // practitioner's business. It used to insist on an area and a points layer, which is why a map
+  // of a raster had to be told it was a raster map before it would accept one.
+  if(node.type==='map_output')return [];
+  return all.filter(([port])=>port!=='coverage');
+}
+
+/** Which renderer a map uses, read from WHAT IS WIRED rather than from a mode it was told.
+ *
+ *  "There is no such thing as mode, only layers" -- the practitioner, 2026-10-14, repeated on
+ *  2026-10-15 after finding the selector still there: "I thought we got rid of mode!" It had not
+ *  been; the direction was written into docs/widgets/map_output.md and the code was left alone.
+ *
+ *  A map now declares every layer port and the practitioner wires what they have. This function
+ *  is what replaces the question: the drawing path follows the connections. The precedence is the
+ *  order of specificity -- a raster or a network is a whole picture, polygons and decisions each
+ *  have their own renderer, and the point/area/coverage path is the general one that already
+ *  draws several layers together.
+ *
+ *  The stored `inputMode` is still read, LAST, so a workflow saved before this opens and draws
+ *  what it drew. Nothing writes it any more.
+ *
+ *  What this does not do is unify the renderers: a map with polygons AND a raster wired draws the
+ *  raster, because no renderer draws both. That limit is the next piece of the same work, and it
+ *  is now a limit of the drawing code rather than a question put to the practitioner. */
+export function drawnMode(node:WorkflowNode<'map_output'>,edges:{to:string;port:string}[]):
+  'network'|'raster'|'polygons'|'decisions'|'spatial'{
+  const wired=new Set(edges.filter(e=>e.to===node.id).map(e=>e.port));
+  if(wired.has('network'))return 'network';
+  if(wired.has('raster'))return 'raster';
+  if(wired.has('polygons'))return 'polygons';
+  if(wired.has('decisions'))return 'decisions';
+  if(wired.size)return 'spatial';
+  const stored=node.params.inputMode;
+  return stored==='network'||stored==='raster'||stored==='polygons'||stored==='decisions'?stored:'spatial';
 }
 
 export function nodeInputs(node:WorkflowNode):[string,PortType][]{
@@ -182,15 +214,22 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   if(node.type==='compare_point_sets'&&node.params.centers)return [...TYPES.compare_point_sets.inputs,['originalCenter','mean-center'],['movedCenter','mean-center']];
   if(node.type==='chart_output'&&node.params.inputMode==='series')return [['series','table']];
   if(node.type==='case_series')return node.params.source==='table'?[['cases','table']]:[['points','points']];
-  if(['map_output','table_output','chart_output'].includes(node.type)&&'inputMode' in node.params&&node.params.inputMode==='polygons')return node.type==='map_output'&&node.params.contextPoints?[['polygons','polygons'],['context','points']]:[['polygons','polygons']];
+  // A map takes every layer it can draw, always. Its ports used to change with its mode, so the
+  // port a connection needed might not exist on the node -- the blocker
+  // `output-mode-set-before-the-shape-arrives`, and the reason a practitioner had to answer a
+  // question about shape before having the shape.
+  if(node.type==='map_output')return [['area','area'],
+    ...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points'] as [string,PortType]),
+    ['polygons','polygons'],['context','points'],['decisions','decisions'],
+    ['coverage','coverage-check'],['raster','raster'],['network','network']];
+  if(['table_output','chart_output'].includes(node.type)&&'inputMode' in node.params&&node.params.inputMode==='polygons')return [['polygons','polygons']];
   if(node.type==='table_output'&&node.params.inputMode==='table')return [['table','table']];
-  if(node.type==='map_output'&&node.params.inputMode==='raster')return [['raster','raster']];
   // A street network is a thing to look at, not only a thing to route over. Four widgets consume a
   // `network` and none of them was an output, so a downloaded network could not be seen.
-  if(node.type==='map_output'&&node.params.inputMode==='network')return [['network','network']];
-  if((node.type==='map_output'||node.type==='table_output')&&node.params.inputMode==='decisions')return [['decisions','decisions']];
-  if(node.type!=='map_output'&&node.type!=='table_output'&&node.type!=='coverage_check')return TYPES[node.type].inputs;
-  return [...(node.type==='table_output'?[]:[['area','area']]),...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points']),...(['map_output','table_output'].includes(node.type)?[['coverage','coverage-check']]:[]),...(node.type==='map_output'?[['raster','raster']]:[])] as [string,PortType][];
+  if(node.type==='table_output'&&node.params.inputMode==='decisions')return [['decisions','decisions']];
+  // map_output returned above with every layer port it can draw, so only these two reach here.
+  if(node.type!=='table_output'&&node.type!=='coverage_check')return TYPES[node.type].inputs;
+  return [...(node.type==='table_output'?[]:[['area','area']]),...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points']),...(node.type==='table_output'?[['coverage','coverage-check']]:[])] as [string,PortType][];
 }
 export function exampleWorkflow():Workflow {
   return {schema:'fieldwork/workflow/1',name:'Heat outreach screening',nodes:[
@@ -426,7 +465,10 @@ export function validateWorkflow(raw:unknown):Workflow {
   }
   const visited=new Set(), stack=new Set();
   for(const n of w.nodes.filter(n=>(n.type==='map_output'||n.type==='table_output'||n.type==='coverage_check'))){const sources=w.edges.filter(e=>e.to===n.id&&isPointPort(e.port)).map(e=>e.from);if(new Set(sources).size!==sources.length)throw new Error('Connect each point source once per operation.');}
-  for(const n of w.nodes.filter(n=>(n.type==='map_output'||n.type==='table_output'))){const inputs=w.edges.filter(e=>e.to===n.id);if(inputs.some(e=>e.port==='raster')&&n.params.inputMode!=='raster')throw new Error('Choose Raster mode for a connected raster.');if(inputs.some(e=>e.port==='coverage')&&inputs.length>1)throw new Error(`${TYPES[n.type].title} accepts either a coverage check or separate ${n.type==='map_output'?'area and ':''}points. Disconnect the other inputs first.`);}
+  for(const n of w.nodes.filter(n=>(n.type==='map_output'||n.type==='table_output'))){const inputs=w.edges.filter(e=>e.to===n.id);/* A connected raster used to require that the map had ALREADY been told it was a raster
+    map, which is the refusal the practitioner met as "the port a connection needs may not
+    exist". The connection now decides, so the rule is gone rather than moved: table_output
+    has no raster mode and never had a raster port. See drawnMode. */ if(inputs.some(e=>e.port==='coverage')&&inputs.length>1)throw new Error(`${TYPES[n.type].title} accepts either a coverage check or separate ${n.type==='map_output'?'area and ':''}points. Disconnect the other inputs first.`);}
   function visit(id:string) {if(stack.has(id)) throw new Error('Workflow cycles are not supported. Keep inference inside the rule node.');if(visited.has(id))return;stack.add(id);w.edges.filter(e=>e.to===id).forEach(e=>visit(e.from));stack.delete(id);visited.add(id);}
   w.nodes.forEach(n=>visit(n.id));
   if(w.outputId && !w.nodes.some(n=>n.id===w.outputId && ['output','map_output','table_output','chart_output','comparison_map'].includes(n.type))) throw new Error('Selected output does not exist.');
@@ -452,7 +494,14 @@ export function executionPlan(workflow:Workflow) {
   function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=requiredInputs(node,{coverageConnected:w.edges.some(e=>e.to===node.id&&e.port==='coverage')});for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;
       // The area is optional here: a country names the scope instead. Required only when the
       // practitioner has asked for the study area to bound the request.
-      const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new Error(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));} done.add(node.id);result.push(node);}
+      const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new Error(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));}
+      // Everything else actually wired, so the plan follows the EDGES and not only the ports a
+      // node insists on. A map insists on nothing from 2026-10-15 -- it draws the layers it is
+      // given -- and ordering by required ports alone put it in the plan BEFORE its own sources,
+      // so it read an undefined value and failed on a shape it had not been handed yet. Required
+      // ports still decide what is REFUSED; they were never the right thing to order by.
+      for(const e of w.edges.filter(e=>e.to===node.id))visit(required(w.nodes.find(n=>n.id===e.from)));
+      done.add(node.id);result.push(node);}
   outputs.forEach(visit);
   // Projected points are not geographic points. `reproject` emits easting and northing in metres,
   // and 23 of the 24 widgets that accept a `points` port assume degrees: a buffer would read metres
@@ -718,7 +767,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'chart_output':{if(node.params.inputMode==='series'){const table=inputs.series;if(!table?.series)throw new Error('Connect Cases by period: a series chart needs the series, not a plain table.');const chart=seriesChart(table.series);const source=workflow.edges.find(e=>e.to===node.id&&e.port==='series')!.from;const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:ChartView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; fw:groupingField "period"; fw:eventDateKind ${JSON.stringify(table.series.dateKind)}.\n`+chartSpecificationFacts(node,runId,source,chart,table.series.weightField?'numeric-total':'record-count');value={...structuredClone(table) as unknown as DisplayValue,chart,rows:[],centers:[]};receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:chart.caption});break;}
       if(node.params.inputMode==='polygons'){const shown=polygonDisplay(inputs.polygons,'chart');value=shown;const sourceId=workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from;const receipt=polygonPresentationReceipt(node,sourceId,runId);receipt.facts+=chartSpecificationFacts(node,runId,sourceId,shown.chart!,shown.chart!.field==='total'?'numeric-total':'location-membership-count');receipt.input=receipt.facts;receipts.push(receipt);break;}const shown=chartOutput(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}
       case 'output':value=inputs.decisions;break;
-      case 'map_output':{if(node.params.inputMode==='network'){
+      case 'map_output':{const mode=drawnMode(node,workflow.edges);
+        // A map insists on no particular port and still insists on something: it draws what it is
+        // given, so given nothing it has nothing to draw. The refusal used to name the port the
+        // mode had chosen -- "needs its network input connected" -- which told a practitioner
+        // about a setting rather than about their canvas.
+        if(!workflow.edges.some(e=>e.to===node.id))
+          throw new Error(`Connect a layer to "${node.params.label||node.id}". A Map draws the layers it is given — an area, points, polygons, a raster or a street network — and nothing is connected to it.`);
+        if(mode==='network'){
         const network=inputs.network as import('./catchments.js').Network;
         if(!network?.nodes?.length)throw new Error('Connect a Street network: this Map is set to show a network and none is connected.');
         const source=workflow.edges.find(e=>e.to===node.id&&e.port==='network')!.from;
@@ -731,7 +787,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push({nodeId:node.id,kind:'presentation',facts,input:facts,rules:'',conclusions:[],
           method:'Draw the downloaded street graph as itself; no routing, no simplification and no new inference.'});
         break;}
-      if(node.params.inputMode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const mapped=mapOutput(node,inputs.coverage?{coverage:inputs.coverage}:{area:inputs.area,points:pointInputs()},runId);value=mapped.value;if(mapped.receipt)receipts.push(mapped.receipt);break;}
+      if(mode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const mapped=mapOutput(node,inputs.coverage?{coverage:inputs.coverage}:{area:inputs.area,points:pointInputs()},runId);value=mapped.value;if(mapped.receipt)receipts.push(mapped.receipt);break;}
       case 'table_output':{if(node.params.inputMode==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(node.params.inputMode==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const table=tableOutput(node,inputs.coverage?{coverage:inputs.coverage}:{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
       case 'measure_area':{const computed=measureArea(node,inputs.area,runId);value=computed.value;receipts.push(computed.receipt);break;}
       case 'coverage_check':{const checked=await checkCoverage(node,inputs.area,pointInputs(),reasoner,runId);value=checked.value;receipts.push(checked.receipt);break;}

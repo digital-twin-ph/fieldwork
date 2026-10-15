@@ -19,13 +19,24 @@ const grid=(size=4,step=0.002,origin=[-0.14,51.51])=>{
 };
 const square=(w,s,e,n)=>({type:'Polygon',coordinates:[[[w,s],[e,s],[e,n],[w,n],[w,s]]]});
 
-test('the Map declares a network port only in network mode', ()=>{
-  assert.deepEqual(nodeInputs({type:'map_output',params:{inputMode:'network'}}),[['network','network']]);
-  // Every other mode is untouched: this is a mode, not a port added to every Map.
-  for(const inputMode of ['raster','polygons','decisions',undefined])
-    assert.ok(!nodeInputs({type:'map_output',params:{inputMode,pointInputCount:1}})
-      .some(([,type])=>type==='network'),`${inputMode} must not gain a network port`);
-  assert.ok(!TYPES.map_output.inputs.some(([,t])=>t==='network'),'nor the static contract');
+// Rewritten 2026-10-15. This used to assert the opposite -- that a network port exists only in
+// network mode -- which was the behaviour the practitioner ruled against: "there is no such thing
+// as mode, only layers", and then "I thought we got rid of mode!" on finding the selector still
+// there. A map now declares every layer it can draw and the practitioner wires what they have.
+test('the Map declares every layer port it can draw, whatever it was last set to', ()=>{
+  const ports=mode=>nodeInputs({type:'map_output',params:{inputMode:mode,pointInputCount:1}})
+    .map(([,type])=>type);
+  for(const mode of ['network','raster','polygons','decisions','spatial',undefined]){
+    const types=ports(mode);
+    for(const needed of ['area','points','polygons','decisions','coverage-check','raster','network'])
+      assert.ok(types.includes(needed),`${mode}: a map must offer a ${needed} port`);
+  }
+  // The static contract says the same thing the node does. It used to list four ports while a
+  // node could have eight, which is how a declared contract and a live node disagreed about what
+  // a map is; the only thing still node-dependent is how MANY point layers, which pointInputCount
+  // creates and a type table cannot know.
+  for(const needed of ['area','points','polygons','decisions','coverage-check','raster','network'])
+    assert.ok(TYPES.map_output.inputs.some(([,t])=>t===needed),`the static contract declares ${needed}`);
 });
 
 test('a street network reaches the Map and is drawn as itself', async()=>{
@@ -46,10 +57,14 @@ test('a street network reaches the Map and is drawn as itself', async()=>{
   assert.ok(!/Dijkstra|isochrone|reachab/i.test(facts),'a view routes nothing');
 });
 
-test('a Map in network mode with nothing connected says so', async()=>{
+// The refusal names the canvas, not a setting. It used to say "needs its network input
+// connected", which is a sentence about the mode the practitioner had chosen rather than about
+// what is missing -- and after 2026-10-15 there is no mode to have chosen.
+test('a Map with nothing connected says so, in terms of layers', async()=>{
   const workflow={schema:'fieldwork/workflow/1',name:'t',nodes:[
     {id:'map',type:'map_output',x:0,y:0,params:{label:'Street map',inputMode:'network'}}],edges:[]};
-  await assert.rejects(executeWorkflow(validateWorkflow(workflow),async()=>[]),/needs its network input connected/);
+  await assert.rejects(executeWorkflow(validateWorkflow(workflow),async()=>[]),
+    /Connect a layer to "Street map"/);
 });
 
 test('the measurement is of streets, not of directed segments', ()=>{

@@ -1,6 +1,12 @@
 import type {Node,NodeProps,Edge,Connection} from '@xyflow/react';
 import type {Workflow,WorkflowNode,NodeDefinition,NodeType} from './types.js';
-export interface NodeDescription extends Record<string,unknown> {definition:NodeDefinition;type:NodeType;label:string;subtitle:string;detail:string;status?:string;glow?:boolean;alert?:string}
+export interface NodeDescription extends Record<string,unknown> {definition:NodeDefinition;
+  /** Ports with something wired to them. A map declares every layer port it can draw, so listing
+   *  them all on the canvas made a node three times taller than the layout it shipped in -- and
+   *  most of the rows named a layer the map does not have. Unconnected ports stay droppable. */
+  connectedPorts?:string[];
+  /** Ports some node on this canvas could supply. */
+  availablePorts?:string[];type:NodeType;label:string;subtitle:string;detail:string;status?:string;glow?:boolean;alert?:string}
 type OperationFlowNode=Node<NodeDescription,'operation'>;
 export interface CanvasAPI {update:(graph:Workflow,selection:string|null|undefined,statuses?:Record<string,string>)=>void;fit:()=>void;zoomIn:()=>void;zoomOut:()=>void;setBusy:(busy:boolean)=>void}
 export interface CanvasCallbacks {ready:(api:CanvasAPI)=>void;describe:(node:WorkflowNode,status?:string)=>NodeDescription;select:(id:string)=>void;clear:()=>void;move:(id:string,position:{x:number;y:number})=>void;connect:(connection:Connection)=>void;valid:(connection:Connection|Edge)=>boolean;remove:(ids:string[])=>void;removeEdges:(ids:string[])=>void;zoom:(zoom:number)=>void}
@@ -14,16 +20,54 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   const role=t.group==='Sources'?'input':t.group==='Outputs'?'output':'processing';
   const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster'].includes(data.type);
   const portLabel=(port:string)=>port==='context'?'Context points':port==='polygons'?'Catchment polygons':port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':`Points ${port==='points'?'1':port.split('_')[1]}`;
+  // A map shows the layers it draws. Everything else keeps showing every port, because for those
+  // widgets the ports ARE the thing: a coverage check with a hidden area port tells a practitioner
+  // nothing about what it needs.
+  const connected=new Set((data.connectedPorts as string[]|undefined)??[]);
+  // Shown: what the map draws, plus what it COULD draw from something already on this canvas. A
+  // port with no possible source is a row about a layer the practitioner has no way to supply,
+  // and eight of those made the node three times taller than the layout it shipped in. Still a
+  // drop target, just without a row -- and a port you could use keeps a full-width one, because
+  // aiming at an 8px dot is not a connection gesture.
+  const available=new Set((data.availablePorts as string[]|undefined)??[]);
+  // A map shows the layers it draws and ONE port to add another, rather than a row for every
+  // layer type it could ever take. The practitioner's direction, 2026-10-15: "Instead of
+  // cluttering the side of the map widget with input ports, the Inspector UI should offer 1
+  // configurable port but also enable addition of more input ports."
+  //
+  // The spare port is type-free on purpose: drop anything drawable on it and the connection is
+  // bound to the real port by what the source emits. Eight declared ports remain underneath --
+  // they are what the receipt and the contract are written in terms of -- and the canvas stops
+  // being where a practitioner meets them.
+  const layerNode=data.type==='map_output';
+  const shownPorts=layerNode?t.inputs.filter(([port])=>connected.has(port)):t.inputs;
+  const canAddLayer=layerNode&&[...available].some(port=>!connected.has(port));
+  const hiddenPorts:[string,string][]=[];
   const updateInternals=useUpdateNodeInternals();
-  useEffect(()=>{updateInternals(id);},[id,JSON.stringify(t.inputs),updateInternals]);
+  useEffect(()=>{updateInternals(id);// Handle positions are cached by React Flow, so every input that can change WHICH handles are
+  // rendered has to invalidate them -- availability as much as connection, or a freshly shown
+  // port is a drop target the library does not know the position of and a drag onto it does
+  // nothing. Found exactly that way: the aria-label was right and the connection never formed.
+  },[id,JSON.stringify(t.inputs),JSON.stringify([...connected]),JSON.stringify([...available]),updateInternals]);
   return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.glow?'just-finished':''} ${data.alert?'alerting':''}`}>
     <div className="node-heading"><span className="node-icon">{t.icon}</span><div><strong>{data.label}</strong><span className="node-id">{t.group}</span></div></div>
     <div className="node-subtitle">{data.subtitle}</div>
     {spatialPorts&&<div className="node-ports">
-      {t.inputs.map(([port,type])=><div className={`node-port-row ${port==='coverage'?'alternative-input':''}`} key={port}>
+      {shownPorts.map(([port,type])=><div className={`node-port-row ${port==='coverage'?'alternative-input':''}`} key={port}>
         <Handle type="target" position={Position.Left} id={port} style={{top:'50%'}} title={`${portLabel(port)} (${type})`} aria-label={`${data.label}: ${portLabel(port)} input`}/>
         <span>{portLabel(port)}</span>
       </div>)}
+      {/* Every other port is still a drop target, stacked down the left edge without a row of
+          its own. A practitioner drags onto the one they want; the node stays the size of what
+          it draws. The title carries the name a row would have shown. */}
+      {hiddenPorts.map(([port,type],i)=><Handle key={port} type="target" position={Position.Left} id={port}
+        className="node-spare-port" style={{top:`${56+i*14}px`}} title={`${portLabel(port)} (${type})`}
+        aria-label={`${data.label}: ${portLabel(port)} input`}/>)}
+      {canAddLayer&&<div className="node-port-row node-add-layer" key="layer">
+        <Handle type="target" position={Position.Left} id="layer" style={{top:'50%'}}
+          title="Add a layer: drop any drawable result here" aria-label={`${data.label}: add a layer`}/>
+        <span>+ Add a layer</span>
+      </div>}
       {t.output&&<div className="node-port-row node-output-row"><span>{t.output==='raster'?'Raster →':'Coverage result →'}</span><Handle type="source" position={Position.Right} id="out" style={{top:'50%'}} title={t.output==='raster'?'Raster output':'Coverage result: study area, points and review decisions'} aria-label={`${data.label}: output`}/></div>}
     </div>}
     {data.alert&&<div className="node-alert" role="alert" title={data.alert}>⚠ {data.alert}</div>}

@@ -17,13 +17,14 @@ test('a downloaded network can be seen in the Inspector and sent to the Map',asy
 
   // And the Map can now take it, which it could not before.
   await page.locator('.react-flow__node[data-id="map"]').click();
-  // A Map already in polygons mode uses the catchment mode select, which did not offer network
-  // until this change -- a practitioner would have had to pass through point layers to reach it.
-  const mode=page.locator('#catchment-output-mode,#output-input-mode').first();
-  await mode.selectOption('network');
-  // Switching mode drops the previous connector, so the source is chosen again. The port
-  // selector is the generic one every Map input gets.
-  await page.locator('#map-network').selectOption('network');
+  // No mode to switch. A map declares every layer port it can draw from 2026-10-15, so the
+  // network is wired straight to the network port -- where this test used to have to change the
+  // map's mode first, and a practitioner reaching for a street map had to pass through point
+  // layers to find the option.
+  await expect(page.locator('#catchment-output-mode')).toHaveCount(0);
+  await expect(page.locator('#output-input-mode')).toHaveCount(0);
+  await page.locator('#map-add-layer').selectOption('network');
+  await expect(page.locator('#map-network')).toHaveValue('network');
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('#result-tabs [data-output="map"]').click();

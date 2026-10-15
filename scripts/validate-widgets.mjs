@@ -149,25 +149,38 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
     const def=definitions[entry.nodeType];
     check(current.title===def.title,'Widget title drift');
     check(JSON.stringify(current.ports.inputs)===JSON.stringify(def.inputs.map(([name,type])=>({name,type})))&&current.ports.output===def.output,`Port contract drift: ${entry.nodeType}`);
-    if(entry.nodeType==='map_output'){check(current.ports.rasterInput?.value==='raster','Missing raster input mode');
-      // Declared as well as implemented: a mode the application offers and the release does not
-      // name is a capability nobody reading the registry can find.
-      check(current.ports.networkInput?.value==='network','Missing network input mode');
-      if(nodeInputs)check(JSON.stringify(nodeInputs({type:'map_output',params:{inputMode:'network'}}))===JSON.stringify([['network','network']]),'Network port contract drift');if(nodeInputs)check(JSON.stringify(nodeInputs({type:'map_output',params:{inputMode:'raster'}}))===JSON.stringify([['raster','raster']]),'Raster port contract drift');}
-    if(['map_output','table_output','chart_output'].includes(entry.nodeType)){
+    // A map's ports stopped depending on a mode on 2026-10-15, so the registry stops declaring
+    // four mode-keyed port sets and declares one contract instead. The checks below used to
+    // REQUIRE the mode model -- "Missing raster input mode" -- which is how a model the project
+    // had ruled against stayed enforced by its own gate.
+    if(entry.nodeType==='map_output'){
+      for(const stale of ['rasterInput','networkInput','polygonInput','reasoningInput'])
+        check(!current.ports[stale],`map_output still declares ${stale}: a map has layers, not modes`);
+      if(nodeInputs)for(const inputMode of ['network','raster','polygons','decisions','spatial',undefined]){
+        const types=nodeInputs({type:'map_output',params:{inputMode,pointInputCount:1}}).map(([,t])=>t);
+        for(const needed of ['area','points','polygons','decisions','coverage-check','raster','network'])
+          check(types.includes(needed),`map_output must offer a ${needed} port whatever inputMode says`);
+      }
+    }
+    if(['table_output','chart_output'].includes(entry.nodeType)){
       check(current.ports.polygonInput?.value==='polygons','Missing polygon input mode');
       if(nodeInputs)check(JSON.stringify(nodeInputs({type:entry.nodeType,params:{inputMode:'polygons'}}))===JSON.stringify([['polygons','polygons']]),'Polygon port contract drift');
     }
     const dynamic=['coverage_check','map_output','table_output'].includes(entry.nodeType);
     check(dynamic===Boolean(current.ports.dynamicInputs),'Dynamic port contract drift');
-    if(['map_output','table_output'].includes(entry.nodeType)){
+    if(entry.nodeType==='table_output'){
       check(current.ports.reasoningInput?.parameter==='inputMode'&&current.ports.reasoningInput.value==='decisions','Missing reasoning input mode');
       if(nodeInputs)check(JSON.stringify(nodeInputs({type:entry.nodeType,params:{inputMode:'decisions'}}))===JSON.stringify([['decisions','decisions']]),'Reasoning port contract drift');
     }
     if(dynamic){
       const d=current.ports.dynamicInputs;
       check(d.kind==='point-layers'&&d.minimum===1&&d.maximum===8,'Dynamic port limits drift');
-      if(nodeInputs)for(const count of [1,8])check(nodeInputs({type:entry.nodeType,params:{pointInputCount:count}}).filter(([,type])=>type==='points').length===count,'Dynamic port expansion drift');
+      // Counted by port NAME, not by type. A map gained an always-present `context` port on
+      // 2026-10-15 which is points-typed and is not one of the point-layer slots, so counting by
+      // type reported one slot too many. The slots are what pointInputCount creates: points,
+      // points_2, and so on.
+      if(nodeInputs)for(const count of [1,8])check(nodeInputs({type:entry.nodeType,params:{pointInputCount:count}})
+        .filter(([name])=>name==='points'||/^points_\d+$/.test(name)).length===count,'Dynamic port expansion drift');
     }
     for(const path of [current.configuration.typescriptFile,...current.implementation.files,current.implementation.definition.split('#')[0]])await access(localPath(path));
     // One replacement, or several. The field held a single IRI, which assumed a retired widget

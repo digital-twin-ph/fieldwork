@@ -350,19 +350,17 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.9.0",
-   "released": "2026-10-13",
+   "version": "0.10.0",
+   "released": "2026-10-15",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Accepts a street network and draws it as itself. Four widgets consumed a network port -- isochrone, reachable_corridor, reachable_nodes, snap_to_network -- and none of them was an output, so a downloaded graph had no way to be looked at: the only feedback was a node and edge count, and the only real check was to run an isochrone over it and judge the answer. A new input mode rather than a new always-present port, following raster and polygons, so nothing changes for a Map that shows points. Emits fw:networkJunctionCount and fw:networkSegmentCount; it routes nothing, simplifies nothing and infers nothing."
-    },
-    {
-     "kind": "minor",
-     "description": "Standalone map title, subtitle, key and source note, SVG export, and selectable local/OSM/OpenTopoMap basemaps for interactive polygons."
+     "kind": "major",
+     "description": "A map declares every layer port it can draw and the practitioner wires what they have. The inputMode parameter no longer decides which ports exist, which presentation is offered or whether a basemap can be chosen; the renderer is read from the connections. The practitioner's direction of 2026-10-14 -- \"there is no such thing as mode, only layers\" -- which had been written into docs/widgets/map_output.md and into the layer vocabulary of the receipts while the interface kept asking the question.",
+     "breaking": true,
+     "migration": "None required for a saved workflow. The stored inputMode is read last and never written."
     }
    ],
-   "breaking": false,
+   "breaking": true,
    "migrationFrom": [
     {
      "nodeType": "output",

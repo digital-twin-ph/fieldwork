@@ -43,7 +43,7 @@ export function contracts(){
     // apply_ruleset and micro_workflow take their ports from a pinned ruleset or composition, so
     // their contract is that other document's, not theirs. Recorded as deferred rather than empty.
     if(type==='apply_ruleset'||type==='micro_workflow'){
-      out[type]={deferredTo:type==='apply_ruleset'?'the pinned ruleset\'s inputContract.ports':'the pinned composition\'s ports',contracts:[]};
+      out[type]={lateBoundTo:type==='apply_ruleset'?'the pinned ruleset\'s inputContract.ports':'the pinned composition\'s ports',contracts:[]};
       continue;
     }
     const variants=VARIANTS[type]??[{}];

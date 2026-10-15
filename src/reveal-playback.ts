@@ -16,13 +16,13 @@ import contracts from '../widgets/port-contracts.json';
 import type {NodeType,Workflow,WorkflowNode,PortType} from './types.js';
 
 type Contract={when:string;required:[string,string][];optional:[string,string][]};
-type Entry={output?:string;deferredTo?:string;contracts:Contract[]};
+type Entry={output?:string;lateBoundTo?:string;contracts:Contract[]};
 const WIDGETS=contracts.widgets as unknown as Record<string,Entry>;
 
 /** What a node emits: from the type, or from the artefact it pins. */
 export function emitted(node:WorkflowNode):PortType|undefined{
   const entry=WIDGETS[node.type];
-  if(entry?.deferredTo){
+  if(entry?.lateBoundTo){
     const params=node.params as {ruleset?:{output?:string};composition?:{output?:string}};
     return (params.ruleset?.output||params.composition?.output) as PortType|undefined;
   }
@@ -32,7 +32,7 @@ export function emitted(node:WorkflowNode):PortType|undefined{
  *  described, which is not the same as needing nothing. */
 function requirements(node:WorkflowNode):string[][]{
   const entry=WIDGETS[node.type];
-  if(entry?.deferredTo){
+  if(entry?.lateBoundTo){
     const params=node.params as {ruleset?:{inputs?:[string,string][]};composition?:{inputs?:[string,string][]}};
     const pinned=params.ruleset?.inputs||params.composition?.inputs||[];
     return [pinned.map(([,type])=>type)];
@@ -66,7 +66,7 @@ export function revealedTypes(placed:WorkflowNode[]):Set<NodeType>{
   for(const node of placed){const out=emitted(node);if(out)available.add(out);}
   return new Set(Object.keys(WIDGETS).filter(type=>{
     const entry=WIDGETS[type];
-    if(entry.deferredTo)return false;   // its ports come from a pin, so the type alone cannot say
+    if(entry.lateBoundTo)return false;   // its ports come from a pin, so the type alone cannot say
     return entry.contracts.some(c=>c.required.every(([,t])=>available.has(t)));
   }) as NodeType[]);
 }

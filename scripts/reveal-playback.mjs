@@ -33,7 +33,7 @@ const {oldNalediWorkflow}=await import(new URL('build/old-naledi.js',root));
 const {bundledRulesets}=await import(new URL('build/rulesets.js',root));
 const FW='urn:fieldwork:';
 const {widgets}=JSON.parse(read('widgets/port-contracts.json'));
-const portNames=Object.keys(widgets).filter(n=>!widgets[n].deferredTo);
+const portNames=Object.keys(widgets).filter(n=>!widgets[n].lateBoundTo);
 
 const EXAMPLES={'snow-extent':snowExtentExample,'snow-isochrone':()=>johnSnowExample('snow-isochrone'),
   'snow-voronoi':()=>johnSnowExample('snow-voronoi'),'old-naledi':oldNalediWorkflow};
@@ -47,10 +47,10 @@ const receiptOf=new Map(run.receipts.map(r=>[r.nodeId,r]));
 const placed=[],waiting=[...workflow.nodes],produced=new Set();
 const requiredOf=node=>{
   const entry=widgets[node.type];
-  if(entry?.deferredTo)return [(node.params.ruleset?.inputs||node.params.composition?.inputs||[]).map(([,t])=>t)];
+  if(entry?.lateBoundTo)return [(node.params.ruleset?.inputs||node.params.composition?.inputs||[]).map(([,t])=>t)];
   return (entry?.contracts||[]).map(c=>c.required.map(([,t])=>t));
 };
-const outputOf=node=>widgets[node.type]?.deferredTo
+const outputOf=node=>widgets[node.type]?.lateBoundTo
   ?(node.params.ruleset?.output||node.params.composition?.output):widgets[node.type]?.output;
 for(let moved=true;moved&&waiting.length;){
   moved=false;

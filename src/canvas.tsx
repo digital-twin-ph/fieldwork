@@ -4,6 +4,10 @@ export interface NodeDescription extends Record<string,unknown> {definition:Node
   /** Ports with something wired to them. A map declares every layer port it can draw, so listing
    *  them all on the canvas made a node three times taller than the layout it shipped in -- and
    *  most of the rows named a layer the map does not have. Unconnected ports stay droppable. */
+  /** The node found something at the run. Separate from `alert`, which is the text on the badge:
+   *  closing the badge takes the text away and must not take away the signal that there is
+   *  something to look at. */
+  flagged?:boolean;
   connectedPorts?:string[];
   /** Ports some node on this canvas could supply. */
   availablePorts?:string[];type:NodeType;label:string;subtitle:string;detail:string;status?:string;glow?:boolean;alert?:string}
@@ -49,7 +53,7 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   // port is a drop target the library does not know the position of and a drag onto it does
   // nothing. Found exactly that way: the aria-label was right and the connection never formed.
   },[id,JSON.stringify(t.inputs),JSON.stringify([...connected]),JSON.stringify([...available]),updateInternals]);
-  return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.glow?'just-finished':''} ${data.alert?'alerting':''}`}>
+  return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.glow?'just-finished':''} ${data.flagged??data.alert?'alerting':''}`}>
     <div className="node-heading"><span className="node-icon">{t.icon}</span><div><strong>{data.label}</strong><span className="node-id">{t.group}</span></div></div>
     <div className="node-subtitle">{data.subtitle}</div>
     {spatialPorts&&<div className="node-ports">
@@ -70,7 +74,17 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
       </div>}
       {t.output&&<div className="node-port-row node-output-row"><span>{t.output==='raster'?'Raster →':'Coverage result →'}</span><Handle type="source" position={Position.Right} id="out" style={{top:'50%'}} title={t.output==='raster'?'Raster output':'Coverage result: study area, points and review decisions'} aria-label={`${data.label}: output`}/></div>}
     </div>}
-    {data.alert&&<div className="node-alert" role="alert" title={data.alert}>⚠ {data.alert}</div>}
+    {data.alert&&<div className="node-alert" role="alert">
+      <span title={data.alert}>⚠ {data.alert}</span>
+      {/* Dismissible, because a badge that cannot be closed covers the node it is about and the
+          practitioner has already read it. It comes back on the next run: dismissing a FINDING
+          permanently would make the canvas quieter and less true, and the detail stays in the
+          Inspector either way. */}
+      <button type="button" className="node-alert-close" data-dismiss-alert={id}
+        aria-label={`Dismiss the alert on ${data.label}`} title="Dismiss until the next run"
+        onPointerDown={event=>{event.stopPropagation();}}
+        onClick={event=>{event.stopPropagation();}}>×</button>
+    </div>}
     <div className="node-bottom"><span>{data.detail}</span><span className="count">{data.status==='done'?'✓ Done':data.status==='running'?'Running…':data.type==='policy'?'N3 · WASM':'●'}</span></div>
     {!spatialPorts&&t.inputs.map(([port,type],i)=><Handle key={port} type="target" position={Position.Left} id={port} style={{top:48+i*26}} title={`${port} (${type})`} aria-label={`${data.label}: ${port} input`}><span className="handle-name">{port}</span></Handle>)}
     {!spatialPorts&&t.output&&<Handle type="source" position={Position.Right} id="out" style={{top:54}} title={`${t.output} output`} aria-label={`${data.label}: output`}/>}

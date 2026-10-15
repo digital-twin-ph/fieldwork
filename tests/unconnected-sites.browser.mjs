@@ -28,6 +28,20 @@ test('a site past the snap limit is routed off-network, and the widget says so',
   await expect(alert).toContainText('charged as a straight line');
   await expect(alert).toContainText('assumes a walk that may not exist');
   assert.ok((await alert.locator('tbody tr').count())>0,'each site is named with the leg it was charged');
+
+  // The badge closes. It covers the node it is about, and once it has been read it is in the
+  // way -- the practitioner asked for an x on 2026-10-15. Closing it keeps the finding: the
+  // Inspector still carries the whole alert, and the node still glows.
+  await widget.locator('.node-alert-close').click();
+  await expect(widget.locator('.node-alert')).toHaveCount(0);
+  await expect(page.locator('.inspector-alert')).toContainText('Out of bounds');
+  await expect(widget.locator('.node')).toHaveClass(/alerting/);
+
+  // And it comes back on the next run, because a finding that stays dismissed across runs makes
+  // the canvas quieter and less true.
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await expect(widget.locator('.node-alert')).toContainText('routed off-network');
   // Red, boldly: the ring is drawn in the danger token, not the ordinary border colour.
   const ring=await widget.locator('.node').evaluate(n=>getComputedStyle(n).boxShadow);
   assert.match(ring,/rgb\(165, 43, 35\)/,'the glow uses --danger-3');

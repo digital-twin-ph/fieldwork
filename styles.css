@@ -247,3 +247,9 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
    literal takes the field's unit and nothing can check it, so showing it is the only defence
    there is. 2026-10-15. */
 .rule-unit{font-size:10px;color:var(--text-faint-3);white-space:nowrap}
+/* The alert badge is dismissible from 2026-10-15: it covers the node it is about, and once it
+   has been read it is in the way. It returns on the next run. */
+.node-alert{display:flex;align-items:flex-start;gap:6px;justify-content:space-between}
+.node-alert-close{background:transparent;border:0;color:inherit;font-size:13px;line-height:1;
+  padding:0 2px;cursor:pointer;opacity:.65;flex:0 0 auto}
+.node-alert-close:hover{opacity:1}

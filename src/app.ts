@@ -162,6 +162,19 @@ const justFinished=new Set<string>();
 let playbackStep:number|null=null;
 const playbackOrder=()=>buildOrder(workflow).order;
 const playbackPlaced=()=>playbackStep===null?workflow.nodes:playbackOrder().slice(0,playbackStep);
+/** The canvas as the playback wants it: the nodes placed so far and the edges between them.
+ *
+ *  Every path that draws the canvas has to go through this, not only `render`. A run's status
+ *  callback used to call `flow.update(workflow, ...)` with the whole workflow on every node it
+ *  finished, so a worked example that auto-runs redrew all nine nodes underneath a playback
+ *  showing one. Locally the run finished before anyone clicked; in CI it did not, and the
+ *  playback test failed there and nowhere else. */
+const playbackView=():Workflow=>{
+  if(playbackStep===null)return workflow;
+  const placed=new Set(playbackPlaced().map(n=>n.id));
+  return {...workflow,nodes:workflow.nodes.filter(n=>placed.has(n.id)),
+    edges:workflow.edges.filter(e=>placed.has(e.from)&&placed.has(e.to))};
+};
 function renderPlayback(){
   $('#playback-bar').hidden=playbackStep===null;
   document.body.classList.toggle('playing-back',playbackStep!==null);
@@ -341,9 +354,7 @@ function render(){
   // been set up against the default canvas and went on reporting its length.
   renderPlayback();
   // During a playback the canvas shows the nodes placed so far, and the edges between them.
-  const shown=playbackStep===null?workflow:(()=>{const placed=new Set(playbackPlaced().map(n=>n.id));
-    return {...workflow,nodes:workflow.nodes.filter(n=>placed.has(n.id)),
-      edges:workflow.edges.filter(e=>placed.has(e.from)&&placed.has(e.to))};})();
+  const shown=playbackView();
   flow?.update(shown,selected,statuses);$('#node-count').textContent=String(shown.nodes.length);$('#undo-button').disabled=!history.length||busy;$('#redo-button').disabled=!future.length||busy;
   $('#workflow-state').textContent=busy?'Running locally…':dirty?(result?'Changed · rerun to update':'Ready to run'):'✓ Run complete';
   $('#run-button').disabled=busy;$('#run-button').innerHTML=busy?'◌ Running…':'<span>▶</span> Run workflow';
@@ -1274,7 +1285,7 @@ function renderPointTable(){
   $('#point-table-controls').querySelectorAll<HTMLButtonElement>('[data-table-fields]').forEach(b=>b.onclick=()=>{tableAttributePage=Number(b.dataset.tableFields);renderPointTable();});
   $('#result-rows').querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(row=>{row.onclick=()=>selectResult(row.dataset.place!);row.onkeydown=e=>{if(e.key==='Enter')selectResult(row.dataset.place!);};});
 }
-function selectResult(id:string){selected=`result:${id}`;renderLibrary($('#node-search').value);flow?.update(workflow,null,statuses);renderInspector();renderMap();}
+function selectResult(id:string){selected=`result:${id}`;renderLibrary($('#node-search').value);flow?.update(playbackView(),null,statuses);renderInspector();renderMap();}
 let disposeCatchmentMap:(()=>void)|undefined;
 function renderMap(){
   disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#comparison-map-host')?.remove();
@@ -1368,7 +1379,7 @@ function supersessionNotice(ran:Workflow):string{
   return ` Note: ${named.join('; ')}. The run used the pinned version${stale.length===1?'':'s'}, `
     +`which is what reproduces these results; the Inspector says what changed.`;
 }
-async function run(){if(busy)return;try{executionPlan(workflow);}catch(e){toast(errorMessage(e));return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(workflow,selected,statuses);},FINISH_GLOW_MS);}flow?.update(workflow,selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;expandForRun=next.runId;renderResults();toast(`Complete in ${elapsedText(lastRunMs)}: ${result.outputs.length} output tabs updated.`+supersessionNotice(snapshot));}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`);$('#workflow-state').textContent='Run failed';console.error(e);}finally{busy=false;render();}}
+async function run(){if(busy)return;try{executionPlan(workflow);}catch(e){toast(errorMessage(e));return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;expandForRun=next.runId;renderResults();toast(`Complete in ${elapsedText(lastRunMs)}: ${result.outputs.length} output tabs updated.`+supersessionNotice(snapshot));}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`);$('#workflow-state').textContent='Run failed';console.error(e);}finally{busy=false;render();}}
 function download(name:string,text:string,type='application/json'){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 $('#release-download').onclick=()=>{const output=activeOutput();if(!output||exampleKey(workflow)!=='snow-geoprivacy'||!output.nodeId.startsWith('after-'))return;
   const features=output.polygons?.kind==='hexbin'?output.polygons.features.map(f=>({type:'Feature',id:f.id,properties:{count:f.count},geometry:f.geometry})):output.rows.map(r=>({type:'Feature',id:r.id,properties:{name:r.name},geometry:r.coordinates?{type:'Point',coordinates:r.coordinates}:null}));

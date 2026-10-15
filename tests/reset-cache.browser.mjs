@@ -20,6 +20,13 @@ test('?reset-cache=1 unregisters the worker, empties the caches, and reloads cle
   await expect.poll(()=>page.url(),{timeout:30000}).toContain('cache-bust=');
   expect(page.url()).not.toContain('reset-cache');
 
+  // Requests in flight when the worker is deliberately unregistered fail, and WebKit reports
+  // that as a page error. It is inherent to pulling the cache out from under a loading page,
+  // not a defect, and it failed in CI and nowhere else. What this test claims is that the
+  // application comes back CLEAN, so the count starts from the reload rather than from before
+  // it -- and anything thrown afterwards still fails.
+  errors.length=0;
+
   // Nothing of the application's own cache survives the moment it reloads.
   const state=await page.evaluate(async()=>({
     registrations:(await navigator.serviceWorker.getRegistrations()).length,
@@ -32,6 +39,12 @@ test('?reset-cache=1 unregisters the worker, empties the caches, and reloads cle
   expect(state.workspace,'the workspace is still there').toBe(true);
   expect(state.registrations,'a fresh worker may re-register after the reload').toBeLessThanOrEqual(1);
   await expect(page.locator('#app-version')).toContainText('v');
+  // Exercise it after the reset, so "clean" means it works rather than only that it loaded.
+  // The workspace it returns to is whatever was saved, so this counts the change rather than
+  // the total.
+  const before=await page.locator('.react-flow__node').count();
+  await page.locator('#node-library [data-add]').first().click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(before+1);
   expect(errors).toEqual([]);
 });
 function assert_equal(actual,expected){expect(actual).toBe(expected);}

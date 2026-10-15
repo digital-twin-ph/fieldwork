@@ -51,8 +51,13 @@ export interface ParamsByType {
   /** One widget for every declared ruleset. The ports are the ruleset's, pinned here rather than
    *  looked up, so a saved workflow validates without the ruleset file being present — the same
    *  reason a micro_workflow pins its composition's ports. */
+  /** `ruleset` is OPTIONAL because the palette offers one rule-application widget and the
+   *  practitioner says what it should apply, from 2026-10-14. A node can therefore exist before
+   *  it has been told anything, exactly as a drawn study area exists before its boundary is
+   *  drawn; `executionPlan` refuses to run it by name. The alternative was a palette entry per
+   *  ruleset, which grew with every ruleset and again with every version of one. */
   apply_ruleset:{label:string;
-    ruleset:{id:string;version:string;title:string;
+    ruleset?:{id:string;version:string;title:string;
       inputs:[string,PortType][];output:PortType};
     parameters:Record<string,number>};
   micro_workflow:{label:string;

@@ -104,13 +104,15 @@ export const NB06_NAMED_EVIDENCE:Record<string,'Marina'|'Broadhurst'>={
   'facility-25':'Broadhurst',   // Broadhurst II Clinic
 };
 
-export function facilityN3(items:Facility[]){
+export function facilityN3(items:Facility[],version='1.0.0'){
   const facts=items.map(f=>{
     const named=NB06_NAMED_EVIDENCE[f.id]??'None';
     const kind=['Referral Hospital','District Hospital','Primary Hospital'].includes(f.serviceType)?'Hospital':['Poly Clinic','Clinic with Maternity','Clinic'].includes(f.serviceType)?'Clinic':f.serviceType==='Health Post'?'HealthPost':'Other';
     return `fw:${f.id} fw:namedRule fw:${named}; fw:government ${f.owner==='GOVERNMENT'}; fw:facilityKind fw:${kind}.`;
   }).join('\n');
-  const nb06=resolveRuleset('urn:fieldwork:ruleset:nb06-evidence','1.0.0');
+  // The version the node pinned. See the note in extentN3: a generator that resolves its own
+  // version makes the receipt cite rules the node did not choose.
+  const nb06=resolveRuleset('urn:fieldwork:ruleset:nb06-evidence',version);
   const rules=bindParameters(nb06,{});
   return {facts:prefix+facts,rules:prefix+rules,input:prefix+facts+'\n'+rules,ruleset:rulesetCitation(nb06)};
 }
@@ -122,9 +124,9 @@ function assertion<T extends string>(quads:ReasonerQuad[],id:string,predicate:st
 export const tierLabel=(t:string)=>(({Direct:'Direct',Contextual:'Contextual',Inferential:'Inferential',None:'No evidence'} as Record<string,string>)[t]||t);
 export const serviceLabel=(t:string)=>(({Onsite:'Onsite',OnsiteOrReferral:'Onsite or referral',ReferralOnly:'Referral only',Unknown:'Unknown'} as Record<string,string>)[t]||t);
 export const zoneLabel=(z:string)=>(({Within5:'≤ 5 min',Within15:'5–15 min',Within30:'15–30 min',Over30:'> 30 min',Unknown:'Unknown'} as Record<string,string>)[z]||z);
-export function accessN3(rows:AccessRow[],threshold:number){
+export function accessN3(rows:AccessRow[],threshold:number,version='1.0.0'){
   const facts=rows.map(r=>`fw:${r.id} fw:accessKnown ${r.minutes!==null}.${r.minutes===null?'':`\nfw:${r.id} fw:proxyMinutes ${r.minutes.toFixed(9)}.`}`).join('\n');
-  const ruleset=resolveRuleset('urn:fieldwork:ruleset:access-review','1.0.0');
+  const ruleset=resolveRuleset('urn:fieldwork:ruleset:access-review',version);
   const rules=bindParameters(ruleset,{threshold:Number(threshold.toFixed(9))});
   return {facts:prefix+facts,rules:prefix+rules,input:prefix+facts+'\n'+rules,ruleset:rulesetCitation(ruleset)};
 }
@@ -156,8 +158,8 @@ export function gradedPointLayer(graded:GradedRegistryValue):PointCollection & {
       geometry:f.coordinates?{type:'Point' as const,coordinates:[...f.coordinates]}:null}))};
 }
 
-export async function applyFacilityGrading(facilities:GradedRegistryValue,reasoner:Reasoner){
-  const n3=facilityN3(facilities.facilities),conclusions=await reasoner(n3.input);
+export async function applyFacilityGrading(facilities:GradedRegistryValue,reasoner:Reasoner,version?:string){
+  const n3=facilityN3(facilities.facilities,version),conclusions=await reasoner(n3.input);
   return {
     receipt:{source:SOURCE+'06-Gaborone-Health-Facilities.ipynb',...n3,conclusions},
     value:{...facilities,facilities:facilities.facilities.map(f=>{
@@ -206,8 +208,8 @@ export function distancesAsAccess(distances:{rows:NearestRow[];centers:PointFeat
         attributes:row.center.attributes??{}} as unknown as AccessRow['center']:null}))};
 }
 
-export async function applyAccessReview(access:AccessValue,thresholdMin:number,reasoner:Reasoner){
-  const n3=accessN3(access.rows,thresholdMin),conclusions=await reasoner(n3.input);
+export async function applyAccessReview(access:AccessValue,thresholdMin:number,reasoner:Reasoner,version?:string){
+  const n3=accessN3(access.rows,thresholdMin,version),conclusions=await reasoner(n3.input);
   return {
     receipt:{...n3,conclusions},
     value:{...access,thresholdMin,rows:access.rows.map(r=>{

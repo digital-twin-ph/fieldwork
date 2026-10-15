@@ -308,6 +308,12 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='fill_interior_gaps')validateFillNode(n);
     if(n.type==='apply_ruleset'){
       const r=n.params.ruleset;
+      // An UNCHOSEN ruleset is allowed to exist and refused at run time, which is how a drawn
+      // study area with no boundary already behaves. The practitioner adds one widget and says
+      // what it should do; offering a palette entry per ruleset instead made the palette grow
+      // with every ruleset AND every version of one, since old versions stay bundled so saved
+      // pins resolve -- four rulesets were showing as seven entries. Their decision, 2026-10-14.
+      if(r===undefined)continue;
       if(!r||!/^urn:fieldwork:ruleset:[a-z0-9-]+$/.test(r.id||'')||!/^\d+\.\d+\.\d+$/.test(r.version||''))
         throw new Error('A rule application names a ruleset by id and version. A rule change changes results, so the version is pinned.');
       if(!Array.isArray(r.inputs)||!r.inputs.length||!r.output)
@@ -437,6 +443,10 @@ export function executionPlan(workflow:Workflow) {
     outputs.push(...w.nodes);
   }
   for(const n of w.nodes)if(n.type==='study_area'&&n.params.source==='drawn'&&!n.params.geometry)throw new Error('Select a study area on the map before running.');
+  // Same shape as the line above: a node may be on the canvas before it has been told what to do,
+  // and the refusal names the node rather than the type, because a workflow can hold several.
+  for(const n of w.nodes)if(n.type==='apply_ruleset'&&!n.params.ruleset)
+    throw new Error(`Choose a ruleset for "${n.params.label||n.id}" before running. It decides what the step classifies and which inputs it takes.`);
   const result:WorkflowNode[]=[], done=new Set<string>();
   function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=requiredInputs(node,{coverageConnected:w.edges.some(e=>e.to===node.id&&e.port==='coverage')});for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;
       // The area is optional here: a country names the scope instead. Required only when the
@@ -505,7 +515,7 @@ export function nearestPlaces(places:PointCollection,centers:PointCollection,uni
   });
   return {rows,candidateCount:located.length,eligibleCount:valid.length};
 }
-export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:number) {
+export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:number,version='1.0.0') {
   // `nearest` states its unit, and this threshold is in kilometres, so a metres input would be
   // compared against a kilometre number and every decision would be wrong by a factor of a
   // thousand with nothing raised. Refused rather than converted: the threshold is a practitioner's
@@ -522,7 +532,7 @@ export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:n
   // The rules are declared data now: rulesets/outreach-criteria/1.0.0.json. `t` is retained
   // because the threshold's nine decimals are what the shipped text used, and the byte-identity
   // test in tests/rulesets.test.mjs depends on reproducing exactly that.
-  const ruleset=resolveRuleset('urn:fieldwork:ruleset:outreach-criteria','1.0.0');
+  const ruleset=resolveRuleset('urn:fieldwork:ruleset:outreach-criteria',version);
   const rules=bindParameters(ruleset,{threshold:Number(t)});
   return {facts:prefix+facts+'\n',rules:prefix+rules,input:prefix+facts+'\n\n'+rules,ruleset:rulesetCitation(ruleset)};
 }
@@ -641,9 +651,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // ruleset's own declaration, and each still assembles a different value for whatever
         // consumes it -- so this collapses the palette and the contract, not the three projections.
         const pinned=node.params.ruleset,bound=node.params.parameters;
+        // executionPlan refuses an unconfigured node before anything runs, so reaching here
+        // without a pin would be a defect in the plan rather than in the workflow.
+        if(!pinned)throw new Error(`${node.params.label||node.id} has no ruleset to apply.`);
         switch(projectionOf(pinned.id,pinned.version)){
           case 'outreach':{
-            const n3=makeN3(inputs.distances.rows,inputs.alert,bound.threshold);
+            const n3=makeN3(inputs.distances.rows,inputs.alert,bound.threshold,pinned.version);
             const conclusions=await reasoner(n3.input);
             value=outreachProjection(inputs.distances,inputs.alert,bound.threshold,conclusions);
             receipts.push({nodeId:node.id,...n3,conclusions});break;
@@ -656,28 +669,28 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             // That this case had to be written is the experiment's own finding. A ruleset declares
             // its `projection` as data, but the handler for a new one is a branch here, so adding
             // a ruleset over a shape nothing had classified before is not a data change.
-            const n3=extentN3(inputs.polygons,bound.threshold);
+            const n3=extentN3(inputs.polygons,bound.threshold,pinned.version);
             const conclusions=await reasoner(n3.input);
             value=extentProjection(inputs.polygons,bound.threshold,conclusions);
             receipts.push({nodeId:node.id,...n3,conclusions});break;
           }
           case 'access-review':{
-            const applied=await applyAccessReview(inputs.access,bound.threshold,reasoner);
+            const applied=await applyAccessReview(inputs.access,bound.threshold,reasoner,pinned.version);
             value=applied.value;receipts.push({nodeId:node.id,...applied.receipt});break;
           }
           case 'access-review-distances':{
             // Same rules, same facts, read off the general value that nearest and travel_time
             // produce instead of the one `access` emitted.
-            const applied=await applyAccessReview(distancesAsAccess(inputs.distances),bound.threshold,reasoner);
+            const applied=await applyAccessReview(distancesAsAccess(inputs.distances),bound.threshold,reasoner,pinned.version);
             value=applied.value;receipts.push({nodeId:node.id,...applied.receipt});break;
           }
           case 'facility-grading-points':{
-            const applied=await applyFacilityGrading(inputs.facilities,reasoner);
+            const applied=await applyFacilityGrading(inputs.facilities,reasoner,pinned.version);
             value=gradedPointLayer(applied.value) as unknown as DisplayValue;
             receipts.push({nodeId:node.id,...applied.receipt});break;
           }
           case 'facility-grading':{
-            const applied=await applyFacilityGrading(inputs.facilities,reasoner);
+            const applied=await applyFacilityGrading(inputs.facilities,reasoner,pinned.version);
             value=applied.value as unknown as DisplayValue;
             receipts.push({nodeId:node.id,...applied.receipt});break;
           }

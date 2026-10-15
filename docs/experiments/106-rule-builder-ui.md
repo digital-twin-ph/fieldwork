@@ -2,9 +2,39 @@
 
 _Created 2026-10-12 · Updated 2026-10-12_
 
-**Status:** asked — design record, written before the code. Specifies the configuration
-surface of the widget [65](65-ruleset-as-data.md) proposes, and **adds no widget**: 65 is net
-−2 on the palette and this record changes that by nothing.
+**Status:** tried — the compiler is built and **B1 is green**, which this record said was the
+test that matters. The authoring surface is not built, so a practitioner still cannot write a
+rule. Design record otherwise unchanged; it still **adds no widget**.
+
+_2026-10-15. This sat at `asked` from 2026-10-12 while the other half of
+[65](65-ruleset-as-data.md) shipped — rules as declared versioned data, one widget hosting
+them, three widgets retired — so the practitioner met a dropdown of four fixed rulesets and
+said: "this is not the design we discussed, the rules are pinned not very flexible." Then:
+"We designed a widget, re-modeled it to streamline rule leaning widgets, a DE moment, not
+acted on." Both accurate. The gap is now tracked in
+[docs/directions.json](../directions.json) rather than in this status line alone._
+
+### What is built, case by case
+
+| | | |
+| --- | --- | --- |
+| A1 | one condition, one conclusion, exact text | **green** |
+| A2 | `all` of three conditions | **green**, and a field compared twice binds once with its builtins chained |
+| A3 | `any` of two groups → two rules, identical conclusions | **green** |
+| A5 | over the ceiling, refused before compiling, naming the product | **green** — `RULE_CEILING` is 64 |
+| A8 | no instance IRI in any compiled ruleset | **green**, and unreachable by construction |
+| A9 | parses under the vendored N3 parser | **green** |
+| A10 | identical forms compile to identical text | **green** |
+| **B1** | the three shipped rulesets rebuilt, compiled, reasoned | **green** — identical conclusions under the real EYE engine |
+| A4 | two `any`s of two → four rules | not written; the form is DNF by construction so the author states disjuncts rather than multiplying them, and what A4 describes cannot arise |
+| A6 | each of the eight comparators | **four** of eight. `greaterThan`, `notGreaterThan`, `lessThan`, `notLessThan` and `equals` compile; `is not` (`log:notEqualTo`) is **not implemented**, and `is recorded` / `is not recorded` are `equals` against a `*Known` boolean rather than comparators of their own |
+| A7 | a bound parameter, unit recorded, incommensurable binding refused | partly: a parameter stays a placeholder and binds through `bindParameters` exactly as a declared ruleset does, so the unit rules are the declaration's. Nothing yet refuses an incommensurable binding at authoring time |
+| B2 | each unproven comparator against the real engine | not written. `lessThan` and `notLessThan` compile and **have never been executed**, so by this record's own rule they must not be offered in a dropdown until B2 passes |
+
+What is deliberately absent: **existence-negation**. There is no "this field is absent"
+condition, because a monotonic subset cannot conclude from absence and a ruleset that appeared
+to would be lying. A ruleset says unknown with an explicit `…Known false` fact, which is what
+all three shipped ones do.
 
 **Searched first**, as [the standard](README.md) requires. `grep -ril
 "comparator\|rule builder\|dropdown" docs/` returns eight files. Seven are unrelated —
@@ -321,8 +351,19 @@ but anonymously: "Reasoner returned conflicting decisions" names neither offendi
 
 ## What would close this
 
-Group A green, and **B1 green against all three existing rulesets on their frozen fixtures**.
-Until B1 passes this record stays `asked`.
+B1 is green, so what remains is the half a practitioner meets:
+
+1. **The authoring surface.** The Inspector offers a ruleset chosen from a list; it has to offer
+   rules composed from conditions. Until then the compiler is reachable only from code and the
+   widget is as pinned as it was.
+2. **A6 and B2** — the four comparators that compile but have never been executed must pass
+   against the real engine before any dropdown offers them, and `is not` must be implemented or
+   dropped from the table.
+3. **A7's refusal** — an incommensurable unit binding caught while authoring rather than at run
+   time.
+
+This moves to `validated` when a ruleset authored in the interface runs and its receipt cites
+rules the practitioner wrote.
 
 ## What this does not establish
 

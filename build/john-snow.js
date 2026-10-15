@@ -1,2 +1,2 @@
-import{a,b}from"./chunks/chunk-GXHZPLGS.js";import"./chunks/chunk-2HAUHYAE.js";import"./chunks/chunk-ILW4DB5Q.js";import"./chunks/chunk-DVJVDQDN.js";import"./chunks/chunk-KVMUXFPB.js";export{a as johnSnowExample,b as snowExtentExample};
+import{a,b}from"./chunks/chunk-4YBVCV5Z.js";import"./chunks/chunk-2HAUHYAE.js";import"./chunks/chunk-F7XMGG2T.js";import"./chunks/chunk-WQQ75TKG.js";import"./chunks/chunk-KVMUXFPB.js";export{a as johnSnowExample,b as snowExtentExample};
 //# sourceMappingURL=john-snow.js.map

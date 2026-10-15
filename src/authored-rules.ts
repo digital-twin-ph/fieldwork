@@ -1,0 +1,166 @@
+/** The authored form of a ruleset, and its compiler to N3.
+ *
+ *  Specified by [experiment 106](../docs/experiments/106-rule-builder-ui.md) on 2026-10-12 and
+ *  not built until 2026-10-15, when the practitioner looked at the shipped Inspector and said:
+ *  *"Regarding ruleset widgets, this is not the design we discussed, the rules are pinned not very
+ *  flexible."* They were right. What shipped was the other half of
+ *  [65](../docs/experiments/65-ruleset-as-data.md) -- rules as declared versioned data, one widget
+ *  hosting them, three widgets retired -- and a practitioner could choose one of four bundled
+ *  rulesets and set a number. The rules themselves were fixed text.
+ *
+ *  The form is three nested things and deliberately no more:
+ *
+ *      condition = { field, comparator, value }
+ *      group     = { all: [condition, ...] }                              // AND
+ *      rule      = { any: [group, ...], then: [{predicate, value}, ...] } // OR of AND groups
+ *
+ *  **Disjunctive normal form by construction**, which is what makes compilation total: every
+ *  authored ruleset has an N3 image and none can need an operator the subset lacks. OR is expanded
+ *  to one rule per disjunct because the subset is monotonic and first-match is unavailable, so
+ *  conclusions must be mutually exclusive by construction rather than by order.
+ *
+ *  Negation: comparison-negation is safe and is what `notGreaterThan` and `notLessThan` are --
+ *  they compile to a math builtin, not to scoped negation. Existence-negation is excluded; there
+ *  is no "field is absent" condition, because a monotonic subset cannot conclude from absence and
+ *  a ruleset that appeared to would be lying. A ruleset says "unknown" with an explicit
+ *  `...Known false` fact instead, which is what all three shipped rulesets do.
+ */
+
+export type Comparator='equals'|'greaterThan'|'notGreaterThan'|'lessThan'|'notLessThan';
+
+/** The N3 builtin each comparator compiles to. `equals` has none: it is a term match in the
+ *  subject clause, which is why it is the only comparator that works on a non-numeric value. */
+const BUILTIN:Record<Exclude<Comparator,'equals'>,string>={
+  greaterThan:'math:greaterThan',
+  notGreaterThan:'math:notGreaterThan',
+  lessThan:'math:lessThan',
+  notLessThan:'math:notLessThan',
+};
+
+export interface AuthoredCondition {
+  /** A predicate in CURIE form, `fw:distanceKm`. A bound role in the Inspector; a predicate here. */
+  field:string;
+  comparator:Comparator;
+  /** A term (`fw:Marina`), a literal (`true`, `5`), or a parameter placeholder (`{{threshold}}`). */
+  value:string|number|boolean;
+}
+export interface AuthoredGroup {all:AuthoredCondition[]}
+export interface AuthoredConclusion {predicate:string; value:string}
+export interface AuthoredRule {
+  any:AuthoredGroup[];
+  /** A LIST, because the rulesets that exist refute a single conclusion: access-review concludes a
+   *  decision and a zone from one rule, nb06-evidence an evidence level and a service from every
+   *  one. 106's first draft had one conclusion and these are what corrected it. */
+  then:AuthoredConclusion[];
+}
+export interface AuthoredRuleset {
+  /** The variable the rules are about: `?p` for a place, `?f` for a facility. */
+  subject:string;
+  comment?:string;
+  rules:AuthoredRule[];
+}
+
+/** The most N3 rules one authored ruleset may compile to.
+ *
+ *  65 asks for a ceiling and 106 for it to be checkable from the form, before compiling. It is a
+ *  guard against a combinatorial surface rather than a judgement about complexity: every disjunct
+ *  is a separate rule the engine must try against every subject, and an author adding one more
+ *  group to each of several rules multiplies rather than adds. 64 is well above anything the three
+ *  shipped rulesets reach -- the largest is 7 -- and low enough that nobody authors their way into
+ *  an unreadable ruleset without being told. */
+export const RULE_CEILING=64;
+
+/** How many N3 rules this compiles to, known from the form alone and without compiling.
+ *
+ *  The rule count is the sum over rules of their group counts, because OR expands. 65 asks for a
+ *  ceiling and this is what makes it checkable before anything is generated -- a practitioner who
+ *  authors a combinatorial explosion is told so while they are authoring it. */
+export const compiledRuleCount=(ruleset:AuthoredRuleset):number=>
+  ruleset.rules.reduce((n,rule)=>n+rule.any.length,0);
+
+const isPlaceholder=(value:unknown):value is string=>
+  typeof value==='string'&&/^\{\{[a-zA-Z][a-zA-Z0-9_]*\}\}$/.test(value);
+
+/** A term as it appears in N3: a CURIE and a placeholder pass through, a string literal is quoted,
+ *  a number and a boolean are written bare. */
+function term(value:string|number|boolean):string{
+  if(typeof value==='boolean'||typeof value==='number')return String(value);
+  if(isPlaceholder(value)||/^[a-zA-Z][a-zA-Z0-9_-]*:[^\s]*$/.test(value))return value;
+  return JSON.stringify(value);
+}
+
+/** A variable for a field that has to be bound before a builtin can compare it.
+ *
+ *  Named from the field rather than numbered, because the compiled N3 is something a practitioner
+ *  is invited to read: `?minutes` says what it holds where `?v2` does not. Collisions with the
+ *  subject and with each other are resolved by suffixing, so the name is always unique within a
+ *  rule and never silently shadows the subject. */
+function variableFor(field:string,taken:Set<string>):string{
+  const local=field.includes(':')?field.slice(field.indexOf(':')+1):field;
+  const base='?'+local.replace(/[^a-zA-Z0-9]/g,'');
+  let name=base;
+  for(let n=2;taken.has(name);n++)name=`${base}${n}`;
+  taken.add(name);
+  return name;
+}
+
+export class AuthoredRulesetError extends Error {}
+
+/** Compile one authored ruleset to the N3 subset. Total: every authored ruleset has an image.
+ *
+ *  Parameters stay as `{{placeholder}}` and are bound later by `bindParameters`, exactly as the
+ *  declared rulesets do -- the compiler does not resolve them, so an authored ruleset and a
+ *  declared one reach the reasoner by the same path. */
+export function compileAuthoredRuleset(ruleset:AuthoredRuleset):string{
+  const subject=ruleset.subject;
+  if(!/^\?[a-zA-Z][a-zA-Z0-9]*$/.test(subject))
+    throw new AuthoredRulesetError(`The subject must be an N3 variable such as ?p, not ${JSON.stringify(subject)}.`);
+  // Refused BEFORE compiling, from the form alone, so the message can name the product and the
+  // ceiling rather than appearing after a wall of generated text. A5.
+  const count=compiledRuleCount(ruleset);
+  if(count>RULE_CEILING)
+    throw new AuthoredRulesetError(`These rules compile to ${count} N3 rules, over the ceiling of ${RULE_CEILING}. `
+      +`Every group of conditions becomes a rule of its own, so adding one alternative to each of several `
+      +`rules multiplies rather than adds. Split this into more than one step, or state fewer alternatives.`);
+  const lines=ruleset.comment?[`# ${ruleset.comment}`]:[];
+  for(const rule of ruleset.rules){
+    if(!rule.any.length)throw new AuthoredRulesetError('A rule needs at least one group of conditions.');
+    if(!rule.then.length)throw new AuthoredRulesetError('A rule needs at least one conclusion.');
+    for(const group of rule.any){
+      if(!group.all.length)throw new AuthoredRulesetError('A group needs at least one condition.');
+      const taken=new Set<string>([subject]);
+      // The subject clause, in authored order, and the builtin clauses that follow it. A field
+      // compared more than once in one group is bound ONCE and its builtins chained, which is how
+      // a band -- over 5 and not over 15 -- stays a single pass over a single binding.
+      const subjectParts:string[]=[];
+      const bound=new Map<string,string>();
+      const builtins=new Map<string,string[]>();
+      for(const condition of group.all){
+        if(!/^[a-zA-Z][a-zA-Z0-9_-]*:[a-zA-Z][a-zA-Z0-9_]*$/.test(condition.field))
+          throw new AuthoredRulesetError(`A condition's field must be a CURIE such as fw:distanceKm, not ${JSON.stringify(condition.field)}.`);
+        if(condition.comparator==='equals'){
+          subjectParts.push(`${condition.field} ${term(condition.value)}`);
+          continue;
+        }
+        const builtin=BUILTIN[condition.comparator];
+        if(!builtin)throw new AuthoredRulesetError(`Unknown comparator ${JSON.stringify(condition.comparator)}.`);
+        if(typeof condition.value!=='number'&&!isPlaceholder(condition.value))
+          throw new AuthoredRulesetError(`${condition.comparator} compares numbers, so its value must be a number `
+            +`or a parameter placeholder, not ${JSON.stringify(condition.value)}. A term is compared with equals.`);
+        let variable=bound.get(condition.field);
+        if(!variable){
+          variable=variableFor(condition.field,taken);
+          bound.set(condition.field,variable);
+          subjectParts.push(`${condition.field} ${variable}`);
+          builtins.set(variable,[]);
+        }
+        builtins.get(variable)!.push(`${builtin} ${term(condition.value)}`);
+      }
+      const premise=[`${subject} ${subjectParts.join('; ')}.`,
+        ...[...builtins].map(([variable,tests])=>`${variable} ${tests.join('; ')}.`)].join(' ');
+      const conclusion=rule.then.map(c=>`${c.predicate} ${term(c.value)}`).join('; ');
+      lines.push(`{ ${premise} } => { ${subject} ${conclusion}. }.`);
+    }
+  }
+  return lines.join('\n')+'\n';
+}

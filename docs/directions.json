@@ -97,6 +97,10 @@
     {
      "date": "2026-10-15",
      "found": "The practitioner, having asked twice: \"I thought we implemented progressive reveal in worked examples. And used this as a progressive reveal refinement approach.\" Both true. The playback IS the refinement instrument -- it is what produced the three readings and the per-step measurements on four examples -- and it was reachable only by typing ?playback=1, so the person it was built for could not find it. Put in the workspace bar as \"Play back the build\" the same day. The ordinary palette is still untouched, which is the open part and is a decision rather than missing work."
+    },
+    {
+     "date": "2026-10-15",
+     "found": "The practitioner: \"What are the three readings? This decision seems vague to make.\" It was, and checking why found a false premise. 112 dismissed the port rule and emptied the stage rule on the same ground -- that the first placement is already handled by STARTER_TYPES, which offers 5. Measured in the running application: a blank canvas shows 41 of 53. addableTypes starts from the starter set and then adds ALWAYS_ADDABLE (32) and the catchment types unconditionally, so the starter set is overridden two lines after it is applied. Nobody had measured the palette, only the list. So there is no three-way choice: the port rule's own numbers still dismiss it (57-82% of the palette open through a build), the receipt rule's prerequisites are unchanged, and the stage rule has content after all -- 41 to 7 on a blank canvas, which is exactly the behaviour reported missing."
     }
    ]
   },

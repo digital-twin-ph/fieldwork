@@ -5,9 +5,10 @@ _Created 2026-10-14 · Updated 2026-10-14_
 **Status:** tried — the rule is applied to every shipped example and measured against
 declared contracts, which is the observation stage AGENTS.md says is usually skipped. It
 runs in the interface behind `?playback=1`, where the palette dims what the rule would not
-offer; the ordinary palette is untouched. What is left is not a measurement but a decision —
-whether to adopt the rule and under which reading — and the evidence that decision needs is
-below.
+offer; the ordinary palette is untouched. What is left is one decision, narrowed on
+2026-10-15 when the premise behind two of the three dismissals turned out to be false: **a
+blank canvas offers 41 of 53 widgets, not the 5 `STARTER_TYPES` implies**, so the stage rule
+has content after all. See *The premise both dismissals rested on is false*.
 
 Proposed by the practitioner on 2026-10-14, while revisiting the widgets the names
 inventory marks *"example templates only"*:
@@ -801,6 +802,46 @@ is a different and shorter list, and each item is worth doing on its own account
 Only then is there a rule to try behind a flag, and only then does watching a practitioner
 measure the thing the practitioner proposed rather than the weaker rule that was easier to
 compute.
+
+### The premise both dismissals rested on is false, measured 2026-10-15
+
+The practitioner, looking at the shipped application: *"On a blank canvas, all widgets are
+active, does not start with Study Area."* And then, of the choice this document had left
+open: *"This decision seems vague to make."* It was, and the vagueness was mine — but
+checking it turned up something worse than vagueness.
+
+Both rules were dismissed above on the same premise: that the only place they bind is the
+first placement, and the first placement is already handled. The port rule *"binds hardest
+at the first placement — where `STARTER_TYPES` already offers 5"*; the stage rule *"after
+the revision its whole content is start with an input, which is what `STARTER_TYPES` does on
+a blank canvas today."*
+
+**`STARTER_TYPES` does not do that.** Measured on 2026-10-15, in the running application:
+
+| | Widgets offered on a blank canvas |
+| --- | --- |
+| `STARTER_TYPES` | 5 |
+| **Actually shown** | **41** of 53 (43 rows, counting compositions) |
+
+`addableTypes` begins with the starter set and then adds `ALWAYS_ADDABLE` — 32 widgets —
+plus the 5 catchment types, unconditionally and whatever the canvas holds. The starter set
+is real and is almost entirely overridden two lines later. Nobody measured what the palette
+shows, only what the starter list contains, and the two have not agreed for some time.
+
+So the finding stands on its head. The first placement is **not** already handled, which
+means:
+
+- the **stage rule has content after all**: it would take a blank canvas from 41 to **7**
+  (`network_input`, `table_input`, `places`, `centers`, `alert`, `study_area`,
+  `point_input`), which is the behaviour the practitioner expected and did not find;
+- the **port rule's** measured numbers are unchanged and still weak after the second
+  placement — 57–82% of the palette open through the body of a build — so that dismissal
+  survives on its own evidence;
+- and the **receipt rule's** prerequisites are unchanged.
+
+What is left is therefore one decision, not three, and it is small: **does a blank canvas
+offer 7 widgets or 41?** Everything else this document measured says the rest of the reveal
+is either already done, not worth building, or blocked on the four items listed above.
 
 ## Updates
 

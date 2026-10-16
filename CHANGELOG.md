@@ -5,6 +5,11 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **A republished worked example says so.** A saved workspace wins over the published template —
+  it must, or your edits would vanish on every visit — so rebuilding an example reached nobody who
+  had already opened it, and nothing mentioned it. The workspace now records which published
+  version it came from, and a newer one offers itself in one click. Nothing is replaced without
+  asking: your copy keeps your edits until you choose.
 - **A widget that fails glows red, and keeps its own colour.** A step whose run was refused used
   to keep the **running** state for ever — `onProgress(id,'done')` is the last line of the loop
   body and a throw skips it — so the canvas showed the one widget that had stopped as the one

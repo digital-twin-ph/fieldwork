@@ -5,6 +5,11 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **Quick look: a table at a width you can read it.** A tabular input offered a filename, a row
+  count and a block of JSON describing the table's *shape* — everything about the table except the
+  table — inside a 292px panel. **Quick look at the table** opens its rows in a wide dialog with
+  every column, a filter, and absent values shown as *not recorded* rather than as blank cells.
+  Point inputs get the same button, for the same reason. It reads; it changes nothing.
 - **A republished worked example says so.** A saved workspace wins over the published template —
   it must, or your edits would vanish on every visit — so rebuilding an example reached nobody who
   had already opened it, and nothing mentioned it. The workspace now records which published

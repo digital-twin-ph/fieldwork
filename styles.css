@@ -238,6 +238,19 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
    toast's own pair, so the contrast is whatever the toast already guarantees. */
 /* A failure does not borrow the colour of a success, and does not vanish while it is being
    read. Reported 2026-10-15: "I cannot make sense of the green error dialog." */
+/* Reading a table at a width it can be read at. Wider than the rule editor, because a table
+   that needs this dialog is one with columns the Inspector could not hold; tall, because
+   scanning rows is what somebody opened it to do. */
+#table-viewer{width:min(1180px,94vw);max-width:min(1180px,94vw);padding:0}
+#table-viewer .manual-head{padding:20px 24px;border-bottom:1px solid var(--line);margin:0}
+.table-viewer-body{padding:16px 24px 24px;max-height:min(74vh,760px);display:flex;flex-direction:column;min-height:0}
+.table-viewer-body .description{margin:0 0 12px}
+.table-viewer-table{overflow:auto;border:1px solid var(--line);border-radius:6px;min-height:0}
+.table-viewer-table table{font-size:11px;white-space:nowrap}
+.table-viewer-table th,.table-viewer-table td{padding:7px 12px}
+.table-viewer-table tbody tr{cursor:default}
+#table-viewer-filter{border:1px solid var(--line);background:var(--surface-raised-1);color:var(--ink);font-size:11px;padding:7px 10px;border-radius:6px;width:260px;max-width:60%}
+
 /* The records an input carries, as columns and rows. The Inspector is 292px wide and a table of
    real data is not, so it scrolls sideways inside its own frame rather than stretching the
    panel. Reported 2026-10-15: "I cannot see the columns against which rules are made." */

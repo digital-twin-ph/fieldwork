@@ -25,6 +25,7 @@ import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
 import {rulesetExample} from './ruleset-example.js';
 import {openRuleEditor} from './rule-editor.js';
+import {openTableViewer,tableViewOf} from './table-viewer.js';
 import {settingNamed} from './authored-rules.js';
 import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
@@ -777,6 +778,7 @@ function recordsPanel(nodeId:string,data:{features:{id?:string|number;properties
     +(['table','json'] as const).map(mode=>`<button data-records-view="${mode}" class="${mode===view.mode?'active':''}">`
       +`${mode==='table'?'Table':'JSON'}</button>`).join('')
     +`</div>`
+    +`<button class="button small" data-records-quicklook>⤢ Quick look</button>`
     +`<label class="records-rows">Showing <select data-records-rows>`
     // Every choice up to and including the first one that covers the whole set, so a set of 13
     // offers 10 and 25 rather than only 10 -- "show me all of them" has to be reachable.
@@ -913,7 +915,11 @@ function renderInspector(){
       +'</section><button id="open-table" class="button primary">Import tabular data</button>'
       +(p.data.rows.length&&!workflow.edges.some(e=>e.from===n.id)?'<div class="inspector-actions"><button id="add-table-view" class="button small">＋ Display as table</button></div>':'')
       +'<p class="description">Reads a long-format CSV: one row per observation, with the key columns you choose and one value column. Every key tuple must be unique, so a wide table or a missing key column is refused rather than silently collapsed.</p>';
-    if(p.data.rows.length)content+=`<p>${esc(p.source?.filename||'Imported file')}<br>${p.data.rowCount} rows, ${p.data.missingValueCount} values absent and kept as unknown.</p><details><summary>Table shape</summary><pre>${esc(JSON.stringify({keys:p.data.keys,valueField:p.data.valueField,unit:p.data.unit||'(unstated)',rows:p.data.rowCount,source:p.source},null,2))}</pre></details>`;
+    // The table itself, at a width it can be read at. The Inspector is 292px wide and this
+    // offered a description of the table's shape inside it -- everything about the table except
+    // the table. The practitioner's call, 2026-10-16.
+    if(p.data.rows.length)content+=`<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button></div>`
+      +`<p>${esc(p.source?.filename||'Imported file')}<br>${p.data.rowCount} rows, ${p.data.missingValueCount} values absent and kept as unknown.</p><details><summary>Table shape</summary><pre>${esc(JSON.stringify({keys:p.data.keys,valueField:p.data.valueField,unit:p.data.unit||'(unstated)',rows:p.data.rowCount,source:p.source},null,2))}</pre></details>`;
     else content+='<p class="description">No table imported yet. This node cannot run until a table is imported.</p>';
     content+='<div class="notice">A unit is recorded as you state it and never inferred. An absent value is kept as unknown, never read as zero. Connect a Table output to display it.</div>';
   }else if(n.type==='rate'){
@@ -1437,6 +1443,11 @@ function renderInspector(){
     const node=getNode(w,n.id,'slr_extract_import');const citations=[...node.params.citations];citations[Number(el.dataset.slrCitation)]=el.value.trim();node.params.citations=citations;})));
   optionalElement('#add-series-chart')?.addEventListener('click',()=>change(w=>{const id=`curve-${Date.now()}`;w.nodes.push({id,type:'chart_output',x:n.x+270,y:n.y,params:{label:'Epidemic curve',inputMode:'series'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'series'});selected=id;}));
   document.querySelectorAll<HTMLInputElement>('#chart-label').forEach(el=>el.addEventListener('change',()=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=el.value.trim()||'Epidemic curve';})));
+  // Reading, not editing: it opens a dialog and touches nothing that is saved.
+  optionalElement('#quick-look')?.addEventListener('click',()=>{
+    const table=getNode(workflow,n.id,'table_input').params;
+    openTableViewer(tableViewOf(table.data,n.params.label||'Tabular data'),esc);
+  });
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table',inputMode:'table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   optionalElement('#open-table')?.addEventListener('click',()=>{
     const baseline=JSON.stringify(workflow),current=getNode(workflow,n.id,'table_input').params;
@@ -1488,6 +1499,18 @@ function renderInspector(){
       const held=dataViews.get(n.id)??{mode:'table' as const,rows:10};
       dataViews.set(n.id,{...held,mode:el.dataset.recordsView as 'table'|'json'});
       renderInspector();
+    }));
+  // The same table, at a width it can be read at. The panel's own view is a glance; this is the
+  // look. Point records get it for the same reason tabular ones do -- the Inspector is 292px.
+  $('#inspector-content').querySelectorAll<HTMLButtonElement>('[data-records-quicklook]').forEach(el=>
+    el.addEventListener('click',()=>{
+      const data=(n.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data;
+      const features=data?.features??[];
+      const columns=[...new Set(features.flatMap(f=>Object.keys(f.properties??{})))];
+      openTableViewer({title:n.params.label||TYPES[n.type].title,columns,
+        rows:features.map(f=>({...f.properties})),
+        note:`${features.length} records, ${columns.length} column${columns.length===1?'':'s'}. `
+          +`These are the columns a rule can read; nothing is guessed from a name.`},esc);
     }));
   $('#inspector-content').querySelectorAll<HTMLSelectElement>('[data-records-rows]').forEach(el=>
     el.addEventListener('change',()=>{

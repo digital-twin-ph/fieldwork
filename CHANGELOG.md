@@ -5,6 +5,12 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **A shapes-and-gaps tab in the data quality dialog.** Where values are missing or unreadable,
+  **one mark per record in file order**, so a pattern is visible rather than totalled — opening
+  the damaged worked-example input shows its gaps are every fourth record, which "63 of 250"
+  cannot say. Plus a distribution per numeric column with the 1.5×IQR fence drawn where it falls,
+  and frequencies per category — except where every value is unique, which is named as an
+  identifier rather than charted. File order may carry meaning or none, and the tab says so.
 - **A data quality dialog, per input widget.** One card per column: what is declared, what does
   not match it, what is absent, and the shape of what is there. It is where a repair is declared
   **and where it is taken back** — removing the declaration restores the originals, which were

@@ -16,7 +16,7 @@
  *  cannot be removed is a decision a practitioner cannot revisit.
  */
 import type {Escape} from './types.js';
-import {profileColumn,type ColumnKind,type ColumnProfile} from './column-profile.js';
+import {profileColumn,columnStates,histogram,type ColumnKind,type ColumnProfile} from './column-profile.js';
 
 export interface QualityRepair {column:string; to:ColumnKind; cast:number; unreadable:string[]; at:string}
 export interface QualityView {
@@ -78,11 +78,110 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
     return rows.length?`<table class="quality-shape">${rows.join('')}</table>`:'';
   };
 
+  /** Where values are missing or unreadable, record by record, in the order the file holds them.
+   *
+   *  The question a total cannot answer: do the absences CLUSTER? Three gaps spread through a
+   *  table are three gaps; three gaps in consecutive rows of a table sorted by date are a week
+   *  nobody recorded, and that is a different problem with a different cause. */
+  const missingness=()=>{
+    const marked=view.columns.map(column=>
+      ({column,states:columnStates(view.rows.map(row=>row[column]),view.declared[column])}));
+    const flawed=marked.filter(m=>m.states.some(state=>state!=='ok'));
+    if(!flawed.length)return `<p class="quality-clean">Every value in every column is present and `
+      +`is what it was declared to be, so there is no pattern of absence to show.</p>`;
+    const rows=view.rows.length;
+    const height=Math.min(260,Math.max(80,rows));
+    const band=height/rows;
+    const width=120;
+    return `<div class="quality-strips">`
+      +flawed.map(({column,states})=>`<figure class="quality-strip">`
+        +`<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" `
+        +`aria-label="${esc(column)}: where values are missing or unreadable, in file order">`
+        +`<rect x="0" y="0" width="${width}" height="${height}" class="strip-ok"/>`
+        +states.map((state,index)=>state==='ok'?''
+          :`<rect x="0" y="${(index*band).toFixed(2)}" width="${width}" height="${Math.max(band,1).toFixed(2)}" `
+           +`class="strip-${state}"></rect>`).join('')
+        +`</svg><figcaption>${esc(column)}</figcaption></figure>`).join('')
+      +`</div>`
+      +`<p class="quality-legend"><span class="swatch strip-absent"></span> no value`
+      +` <span class="swatch strip-mismatched"></span> not the declared kind`
+      +` <span class="swatch strip-ok"></span> readable</p>`
+      // The caveat that makes the picture usable rather than misleading.
+      +`<p class="description">Top to bottom is <strong>the order the file holds</strong>, which may `
+      +`carry meaning or none. If the records are sorted by date, a run of marks is a period nobody `
+      +`recorded; if the order is arbitrary, the same run is a coincidence. This cannot tell which, `
+      +`and a run is a reason to go and look rather than a finding.</p>`;
+  };
+
+  /** What the numbers look like, and what is in the categories. */
+  const shapes=()=>profiles.map(p=>{
+    const bins=p.numeric?histogram(view.rows.map(row=>row[p.column])):[];
+    if(bins.length>1){
+      const tallest=Math.max(...bins.map(b=>b.count));
+      const w=360,h=90,bw=w/bins.length;
+      // The fence drawn where it falls, so a reader sees which bars are beyond it rather than
+      // being told a number and left to work it out.
+      const span=p.numeric!.max-p.numeric!.min||1;
+      const at=(value:number)=>((value-p.numeric!.min)/span)*w;
+      return `<section class="quality-column"><header><h3>${esc(p.column)}</h3>`
+        +`<span class="quality-declared">${bins.length} equal-width bins</span></header>`
+        +`<svg class="quality-chart" viewBox="0 0 ${w} ${h+16}" width="100%" height="${h+16}" role="img" `
+        +`aria-label="Distribution of ${esc(p.column)}">`
+        +bins.map((b,i)=>`<rect x="${(i*bw).toFixed(1)}" y="${(h-(b.count/tallest)*h).toFixed(1)}" `
+          +`width="${(bw-1).toFixed(1)}" height="${((b.count/tallest)*h).toFixed(1)}" class="chart-bar">`
+          +`<title>${esc(trim(b.from))} to ${esc(trim(b.to))}: ${b.count}</title></rect>`).join('')
+        +(p.numeric!.upperFence<p.numeric!.max
+          ?`<line x1="${at(p.numeric!.upperFence).toFixed(1)}" y1="0" x2="${at(p.numeric!.upperFence).toFixed(1)}" y2="${h}" class="chart-fence"/>`:'')
+        +(p.numeric!.lowerFence>p.numeric!.min
+          ?`<line x1="${at(p.numeric!.lowerFence).toFixed(1)}" y1="0" x2="${at(p.numeric!.lowerFence).toFixed(1)}" y2="${h}" class="chart-fence"/>`:'')
+        +`<text x="0" y="${h+13}" class="chart-axis">${esc(trim(p.numeric!.min))}</text>`
+        +`<text x="${w}" y="${h+13}" text-anchor="end" class="chart-axis">${esc(trim(p.numeric!.max))}</text>`
+        +`</svg>`
+        +(p.numeric!.beyondFence?`<p class="quality-legend">The line marks 1.5×IQR. `
+          +`${p.numeric!.beyondFence} value${p.numeric!.beyondFence===1?'':'s'} lie beyond it.</p>`:'')
+        +`</section>`;
+    }
+    if(!p.frequencies?.length)return '';
+    // A column whose every value is unique is an identifier, not a category. Five bars of one
+    // is a frequency chart that has nothing to say, and saying what the column IS tells a reader
+    // more than drawing it does.
+    if(p.distinct===p.total-p.absent&&p.distinct>1)
+      return `<section class="quality-column"><header><h3>${esc(p.column)}</h3>`
+        +`<span class="quality-declared">${p.distinct} distinct</span></header>`
+        +`<p class="quality-clean">Every value here is unique, so this is an identifier rather than `
+        +`a category. There is no distribution to draw.</p></section>`;
+    const most=p.frequencies[0].count;
+    return `<section class="quality-column"><header><h3>${esc(p.column)}</h3>`
+      +`<span class="quality-declared">${p.distinct} distinct</span></header>`
+      +`<div class="quality-bars">`
+      +p.frequencies.map(f=>`<div class="quality-bar-row"><span>${esc(f.value)}</span>`
+        +`<div class="quality-bar"><div style="width:${((f.count/most)*100).toFixed(1)}%"></div></div>`
+        +`<b>${f.count}</b></div>`).join('')
+      +`</div>`
+      +(p.distinct!>p.frequencies.length
+        ?`<p class="quality-legend">and ${p.distinct!-p.frequencies.length} more.</p>`:'')
+      +`</section>`;
+  }).join('');
+
+  let tab:'columns'|'shapes'='columns';
+
   const render=()=>{
     dialog.innerHTML=`<div class="manual-head"><h2 id="data-quality-title">${esc(view.title)}</h2>`
       +`<div><button class="button primary" id="data-quality-close">Close</button></div></div>`
+      +`<div class="result-switch quality-tabs" role="tablist">`
+      +([['columns','Columns'],['shapes','Shapes and gaps']] as const).map(([key,label])=>
+        `<button role="tab" aria-selected="${key===tab}" data-quality-tab="${key}" `
+        +`class="${key===tab?'active':''}">${label}</button>`).join('')
+      +`</div>`
       +`<div class="quality-body">`
-      +`<p class="description">What this input will and will not tell the steps that read it. `
+      +(tab==='shapes'
+        ?`<p class="description">What is in each column, and where it is not. Drawn from the records `
+         +`as the steps downstream will read them, declared repairs included.</p>`
+         +`<h3 class="quality-heading">Where values are missing or unreadable</h3>`
+         +missingness()
+         +`<h3 class="quality-heading">What is in each column</h3>`
+         +shapes()
+        :`<p class="description">What this input will and will not tell the steps that read it. `
       +`A column is only ever <em>wrong</em> against something declared: where no rule has bound a `
       +`column, it is undeclared rather than mistaken, and nothing below calls it a problem.</p>`
       +(view.repairs.length
@@ -107,8 +206,11 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
       +`<p class="description"><strong>A count beyond the fence is not a finding.</strong> It is a `
       +`rank-based prompt to look at that many values. Whether any of them is an outlier is a `
       +`judgement about the thing measured, which this cannot make — a column of counts with a long `
-      +`tail will flag its largest values every time, and that is a property of the distribution.</p>`
+      +`tail will flag its largest values every time, and that is a property of the distribution.</p>`)
       +`</div>`;
+    dialog.querySelectorAll<HTMLButtonElement>('[data-quality-tab]').forEach(button=>{
+      button.onclick=()=>{tab=button.dataset.qualityTab as 'columns'|'shapes';render();};
+    });
     dialog.querySelector<HTMLButtonElement>('#data-quality-close')!.onclick=close;
     dialog.querySelectorAll<HTMLButtonElement>('[data-repair]').forEach(button=>{
       button.onclick=()=>{

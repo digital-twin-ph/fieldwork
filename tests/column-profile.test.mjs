@@ -75,3 +75,26 @@ test('a cast never invents a value for an absent one',()=>{
   assert.equal(outcome.cast,0);
   assert.deepEqual(outcome.unreadable,[]);
 });
+
+test('a cell state is marked per record, so clustering can be seen rather than totalled',async()=>{
+  const {columnStates}=await import('../build/column-profile.js');
+  assert.deepEqual(columnStates([1,null,'3',4,''],'number'),
+    ['ok','absent','mismatched','ok','absent']);
+  // Undeclared: present is all that can be said, so nothing is called a mismatch.
+  assert.deepEqual(columnStates([1,'x',null],undefined),['ok','ok','absent']);
+});
+
+test('equal-width bins, because a gap and a spike are properties of spacing',async()=>{
+  const {histogram}=await import('../build/column-profile.js');
+  // 0..10 in two bins: 0-5 and 5-10. The 5 falls in the upper bin by the floor rule, and 10
+  // is clamped into the last bin rather than falling off the end.
+  const bins=histogram([0,1,2,5,9,10],2);
+  assert.equal(bins.length,2);
+  assert.deepEqual(bins.map(b=>b.count),[3,3]);
+  assert.equal(bins[0].from,0);
+  assert.equal(bins[1].to,10);
+  // One distinct value is one bin, not twelve empty ones around a spike.
+  assert.deepEqual(histogram([7,7,7],12),[{from:7,to:7,count:3}]);
+  // Nothing to draw is nothing drawn.
+  assert.deepEqual(histogram(['a',null],12),[]);
+});

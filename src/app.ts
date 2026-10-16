@@ -239,10 +239,20 @@ function toast(message:string,options?:{action?:{label:string;run:()=>void};tone
   element.classList.toggle('failure',options?.tone==='failure');
   element.classList.toggle('warning',options?.tone==='warning');
   if(options?.tone){
+    // An action BESIDE the close, not instead of it. The first version returned here, so a
+    // toned message could not offer anything to do about itself -- and the messages most worth
+    // acting on are exactly the ones that are not plain successes. 2026-10-16.
+    if(options.action){
+      const act=document.createElement('button');
+      act.className='button small';act.textContent=options.action.label;
+      act.style.marginLeft='12px';act.onclick=options.action.run;
+      element.append(act);
+    }
     const close=document.createElement('button');
     close.className='button small';close.textContent='×';
     close.setAttribute('aria-label','Close this message');
-    close.style.marginLeft='12px';close.onclick=()=>element.classList.remove('visible');
+    close.style.marginLeft=options.action?'6px':'12px';
+    close.onclick=()=>element.classList.remove('visible');
     element.append(close);
     return;
   }
@@ -263,7 +273,56 @@ function save(){
   try{for(const key of [KEY,WORKSPACES])previous.set(key,localStorage.getItem(key));const workspaces=JSON.parse(previous.get(WORKSPACES)||'{}');workspaces[exampleKey(workflow)]=workflow;localStorage.setItem(KEY,JSON.stringify(workflow));localStorage.setItem(WORKSPACES,JSON.stringify(workspaces));$('#save-status').textContent='Saved on this device';return true;}
   catch{for(const [key,value] of previous){try{if(localStorage.getItem(key)!==value){if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}}catch{/* Storage may be unavailable even for rollback. Keep the editor draft open. */}}$('#save-status').textContent='Storage unavailable — export to keep';return false;}
 }
-function loadExample(key:string){if(busy)return;save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[key];workflow=saved?validateWorkflow(saved):template(key);}catch{workflow=template(key);}selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
+/** Which published version of a worked example a saved workspace came from.
+ *
+ *  A saved workspace WINS over the template -- it must, or a practitioner's edits would vanish
+ *  on every visit. The cost is that republishing a worked example reaches nobody who has already
+ *  opened it: the rulesets example was rebuilt on John Snow's data on 2026-10-16 and the
+ *  practitioner, looking at the canvas, said *"I don't see the John Snow data sets"*. Their
+ *  browser was holding the version from before, exactly as designed, and nothing in the
+ *  application mentioned that a newer one existed. They found it by reloading the example, which
+ *  is the one thing a reader has no reason to try.
+ *
+ *  So the version a workspace came from is recorded beside it, and a mismatch is SAID. Nothing
+ *  is replaced: the edits stay until the practitioner asks for the published version, because
+ *  discarding somebody's work to deliver news is not an improvement on withholding the news. */
+const REVISIONS='fieldwork-example-revisions-v1';
+/** Stable over a template's shape: the nodes it has and how they are wired. A label or a
+ *  coordinate changing is not worth interrupting anybody for; a workflow gaining two halves is. */
+function exampleRevision(w:Workflow){
+  const shape=w.nodes.map(n=>`${n.id}:${n.type}`).sort().join(',')
+    +'|'+w.edges.map(e=>`${e.from}>${e.to}:${e.port}`).sort().join(',');
+  let hash=5381;
+  for(let i=0;i<shape.length;i++)hash=((hash*33)^shape.charCodeAt(i))>>>0;
+  return hash.toString(36);
+}
+function readRevisions():Record<string,string>{
+  try{return JSON.parse(localStorage.getItem(REVISIONS)||'{}');}catch{return {};}
+}
+function recordRevision(key:string){
+  try{localStorage.setItem(REVISIONS,JSON.stringify({...readRevisions(),[key]:exampleRevision(template(key))}));}
+  catch{/* storage refused; the notice simply reappears next time, which is harmless */}
+}
+/** Says so when the published example has moved on, and offers to load it. */
+function noticeIfRepublished(key:string){
+  if(key==='blank')return;
+  const held=readRevisions()[key];
+  if(held===exampleRevision(template(key)))return;
+  toast('This worked example has been republished since you last opened it. Your copy is unchanged '
+    +'and still has your edits; the published version is a separate click.',
+    {tone:'warning',action:{label:'Load the published version',run:()=>{
+      const replaced=change(w=>{replaceWorkflow(w,template(key));selected=null;});
+      if(replaced===false)return;
+      recordRevision(key);
+      result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};
+      renderResults();renderLibrary($('#node-search').value);render();
+      setTimeout(()=>flow?.fit(),80);
+      $('#toast').classList.remove('visible');
+      if(canAutoRun(workflow))run();
+    }}});
+}
+
+function loadExample(key:string){if(busy)return;save();let fromTemplate=true;try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[key];fromTemplate=!saved;workflow=saved?validateWorkflow(saved):template(key);}catch{workflow=template(key);}if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
 function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;render();return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}render();return persisted;}catch(e){workflow=previous;toast(errorMessage(e));render();return false;}}
 /** Which declared port a layer dropped on a map's "add a layer" port should bind to.
  *
@@ -1804,6 +1863,7 @@ $('#reset-example').onclick=()=>{
   result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};
   renderResults();renderLibrary($('#node-search').value);render();
   setTimeout(()=>flow?.fit(),80);
+  recordRevision(key);
   toast('Reloaded as published.');
 };
 $('#undo-button').onclick=()=>{if(busy||!history.length)return;future.push(structuredClone(workflow));workflow=history.pop()!;dirty=true;statuses={};save();render();};
@@ -1845,7 +1905,11 @@ document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});
 const requestedExample=new URLSearchParams(location.search).get('example');
-if(requestedExample&&['old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent','sea-level','rulesets'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':requestedExample==='raster'?'raster-input':requestedExample==='old-naledi'?'access':'criteria';}
+if(requestedExample&&['old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent','sea-level','rulesets'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();let openedSaved=false;try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];openedSaved=!!saved;workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}
+  // ?example= is how a worked example is usually reached -- from a link, from the manual -- so
+  // the notice has to live here as well as on the picker, or the practitioner who follows a
+  // link to a republished example still sees the version they already had.
+  if(openedSaved)setTimeout(()=>noticeIfRepublished(requestedExample),900);else recordRevision(requestedExample);selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':requestedExample==='raster'?'raster-input':requestedExample==='old-naledi'?'access':'criteria';}
 wireThemeControl();renderLibrary();renderResults();save();render();mountPanelLayout();
 // Progressive reveal, played back. Behind ?playback=1 because the rule is not adopted: nothing
 // about the normal palette changes, and the control does not appear unless it is asked for.

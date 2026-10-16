@@ -225,3 +225,67 @@ test('a tabular input is profiled too',async({page})=>{
   await expect(deaths).toContainText('modelling decision');
   expect(errors).toEqual([]);
 });
+
+// "Let's add a data quality visualization tab to the modal dialog." -- the practitioner,
+// 2026-10-16. The tab answers the question 117 recorded as open: a count of absences is not a
+// description of them, and whether they cluster is what a reader needs to know.
+test('the shapes tab shows where values are missing, not just how many',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=rulesets');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('#toast button').last().click();
+
+  await page.locator('.react-flow__node[data-id="texty"]').click();
+  await page.locator('[data-records-quality]').click();
+  const dialog=page.locator('#data-quality');
+  await expect(dialog.locator('[data-quality-tab="shapes"]')).toBeVisible();
+  await dialog.locator('[data-quality-tab="shapes"]').click();
+
+  // Only the columns with something to show get a strip: a clean column has no pattern of
+  // absence to draw, and drawing an empty one would imply there was something to look for.
+  await expect(dialog.locator('.quality-strip')).toHaveCount(1);
+  await expect(dialog.locator('.quality-strip figcaption')).toHaveText('DEATHS');
+  // One mark per affected record, so the pattern is visible. D's damage is every fourth row,
+  // which a total of "63 of 250" cannot tell anyone.
+  // Scoped to the drawing: the legend carries a swatch of the same class, which is the sort of
+  // off-by-one a count assertion exists to catch.
+  expect(await dialog.locator('.quality-strip rect.strip-mismatched').count()).toBe(63);
+
+  // And the caveat that makes the picture usable: file order may mean something or nothing.
+  await expect(dialog).toContainText('the order the file holds');
+  await expect(dialog).toContainText('a reason to go and look rather than a finding');
+
+  // A distribution with its fence drawn where it falls.
+  await expect(dialog.locator('.quality-chart').first()).toBeVisible();
+  await expect(dialog.locator('.chart-fence')).toHaveCount(1);
+
+  // A column whose every value is unique is named as an identifier rather than charted.
+  await expect(dialog).toContainText('this is an identifier rather than a category');
+  await expect(dialog.locator('.quality-bar-row')).toHaveCount(0);
+
+  // The tabs are a view, not an edit.
+  const saved=await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'));
+  await dialog.locator('[data-quality-tab="columns"]').click();
+  await expect(dialog.locator('.quality-column').filter({hasText:'DEATHS'})).toContainText('63 of 250');
+  expect(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'))).toBe(saved);
+  expect(errors).toEqual([]);
+});
+
+// A clean input has no pattern of absence, and says so rather than drawing an empty picture.
+test('a clean input says there is no pattern to show',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=rulesets');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('#toast button').last().click();
+
+  await page.locator('.react-flow__node[data-id="buildings"]').click();
+  await page.locator('[data-records-quality]').click();
+  await page.locator('#data-quality [data-quality-tab="shapes"]').click();
+  await expect(page.locator('#data-quality')).toContainText('no pattern of absence to show');
+  await expect(page.locator('.quality-strip')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

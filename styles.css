@@ -256,6 +256,34 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .table-viewer-table table{font-size:11px;white-space:nowrap}
 .table-viewer-table th,.table-viewer-table td{padding:7px 12px}
 .table-viewer-table tbody tr{cursor:default}
+/* The shapes-and-gaps tab. Drawn as plain SVG: these are small, they are read inside a dialog
+   and nowhere else, and a charting dependency for three pictures would cost more than it earns. */
+.quality-tabs{margin:14px 24px 0;width:fit-content}
+.quality-heading{font-size:11px;font-weight:650;margin:18px 0 10px;letter-spacing:.2px}
+.quality-strips{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.quality-strip{margin:0;text-align:center}
+.quality-strip svg{border:1px solid var(--line);border-radius:4px;display:block}
+.quality-strip figcaption{font-size:10px;color:var(--text-faint-28);margin-top:5px;max-width:120px;overflow-wrap:anywhere}
+.strip-ok{fill:var(--surface-tint-1)}
+.strip-absent{fill:var(--text-faint-28)}
+.strip-mismatched{fill:var(--warning-4)}
+.quality-legend{font-size:10px;color:var(--text-faint-28);margin:10px 0 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.quality-legend .swatch{width:10px;height:10px;border-radius:2px;display:inline-block;border:1px solid var(--line)}
+.quality-legend .swatch.strip-ok{background:var(--surface-tint-1)}
+.quality-legend .swatch.strip-absent{background:var(--text-faint-28)}
+.quality-legend .swatch.strip-mismatched{background:var(--warning-4)}
+.quality-chart{margin-top:10px;overflow:visible}
+.chart-bar{fill:var(--accent-9)}
+/* The fence where it falls, so a reader sees which bars lie beyond it. */
+.chart-fence{stroke:var(--warning-4);stroke-width:1.5;stroke-dasharray:3 3}
+.chart-axis{font-size:9px;fill:var(--text-faint-28)}
+.quality-bars{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.quality-bar-row{display:grid;grid-template-columns:minmax(80px,180px) 1fr 34px;gap:10px;align-items:center;font-size:11px}
+.quality-bar-row>span{overflow-wrap:anywhere;color:var(--text-muted-4)}
+.quality-bar-row>b{text-align:right;font-weight:650;font-size:10px}
+.quality-bar{height:12px;background:var(--surface-tint-1);border-radius:3px;overflow:hidden}
+.quality-bar>div{height:100%;background:var(--accent-9);border-radius:3px}
+
 /* Data quality, per input. Wide because a column's profile is the subject here rather than
    context for rows, and one card per column because that is the unit a practitioner acts on. */
 #data-quality{width:min(880px,94vw);max-width:min(880px,94vw);padding:0}

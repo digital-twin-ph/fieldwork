@@ -165,3 +165,44 @@ export function applyRepairs<T extends {properties?:Record<string,unknown>}>(
   }
   return working as T[];
 }
+
+/** Where a column's values are missing or unreadable, record by record, in file order.
+ *
+ *  A count of absences is not a description of them. [117](../docs/experiments/117-data-quality.md)
+ *  recorded that gap plainly: *"Counting absences per column is not a description of their
+ *  pattern. Whether they cluster in a period, a region or a source is the question, and nothing
+ *  here answers it."* A per-record mark is the smallest thing that can answer it, because
+ *  clustering is visible and a total is not.
+ *
+ *  **In file order**, which is the only order available here and may carry meaning or none. A
+ *  file sorted by date makes a run of absences a period; a file in arbitrary order makes the same
+ *  run a coincidence. The drawing says so rather than implying the order is time. */
+export type CellState='ok'|'absent'|'mismatched';
+export function columnStates(values:unknown[],declared?:ColumnKind):CellState[]{
+  return values.map(value=>{
+    if(isAbsent(value))return 'absent';
+    if(declared===undefined)return 'ok';
+    if(declared==='number')return typeof value==='number'&&Number.isFinite(value)?'ok':'mismatched';
+    if(declared==='boolean')return typeof value==='boolean'?'ok':'mismatched';
+    return 'ok';
+  });
+}
+
+/** Counts over equal-width bins, for drawing a distribution.
+ *
+ *  Equal width rather than equal count: a histogram of equal-count bins is a quantile plot
+ *  wearing a histogram's clothes, and the thing a reader is looking for here -- a gap, a spike,
+ *  a second mode -- is a property of the values' spacing. */
+export function histogram(values:unknown[],bins=12):{from:number;to:number;count:number}[]{
+  const numbers=values.map(asNumber).filter((n):n is number=>n!==undefined);
+  if(numbers.length<2)return [];
+  const min=Math.min(...numbers),max=Math.max(...numbers);
+  if(min===max)return [{from:min,to:max,count:numbers.length}];
+  const width=(max-min)/bins;
+  const counts=new Array(bins).fill(0);
+  for(const n of numbers){
+    const at=Math.min(bins-1,Math.floor((n-min)/width));
+    counts[at]++;
+  }
+  return counts.map((count,i)=>({from:min+i*width,to:min+(i+1)*width,count}));
+}

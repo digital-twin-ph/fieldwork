@@ -33,8 +33,8 @@ Four things, of which one is built:
 | --- | --- | --- |
 | **Mixed data types** | a numeric column holding `"3"` | **built** — profiled, marked, and repairable |
 | **Missing data** | no value recorded | profiled; no repair offered, and the reason matters (below) |
-| **Missingness** | the *pattern* of what is absent — how much, where, whether it clusters | counted per column only |
-| **Data shapes** | outliers, frequency, distribution | **built** for numbers and categories; no outlier *action* |
+| **Missingness** | the *pattern* of what is absent — how much, where, whether it clusters | **built** — drawn per record in file order |
+| **Data shapes** | outliers, frequency, distribution | **built** — distributions with the fence drawn where it falls; no outlier *action* |
 
 ## Where the opportunity is, and why it is the quick look
 
@@ -78,6 +78,17 @@ What is offered instead is **awareness**: how many are missing, in which columns
 concludes `Unrecorded` for those is already the honest handling.
 
 ## What is built
+
+**A shapes-and-gaps tab**, added 2026-10-16 at the practitioner's request. It answers the thing
+this record had listed as open: a count of absences is not a description of them.
+
+- **Where values are missing or unreadable**, one mark per record, in file order, for every
+  column that has any. Opening workflow D shows its damage is *every fourth record* — perfectly
+  periodic, so systematic rather than random. "63 of 250" cannot tell anyone that.
+- **A distribution** per numeric column, equal-width bins, with the 1.5×IQR fence drawn where it
+  falls rather than reported as a number to work out.
+- **Frequencies** per category — except where every value is unique, which is named as an
+  identifier instead, because five bars of one is a chart with nothing to say.
 
 **Column profiles.** Every column in the quick look carries what the file says about it:
 
@@ -166,9 +177,11 @@ planning what to obtain; this is about what arrived.
   cannot prevent.
 - **That a practitioner would find the repair before running.** Every path to it today goes
   through the quick look, which somebody has to open.
-- **That missingness is addressed.** Counting absences per column is not a description of their
-  pattern. Whether they cluster in a period, a region or a source is the question, and nothing
-  here answers it.
+- **That the missingness drawing says what the pattern MEANS.** It shows where marks fall in
+  file order, which is the only order available. If the records are sorted by date a run is a
+  period; if the order is arbitrary the same run is a coincidence, and nothing here can tell
+  which. Drawing it against a date or a region — the question actually worth asking — needs a
+  column declared as that, and is not built.
 - **Anything about whether this catches the problems real files have.** The only files tested
   are Snow's, one of them damaged deliberately by this project.
 

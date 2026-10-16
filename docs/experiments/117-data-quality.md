@@ -82,9 +82,12 @@ concludes `Unrecorded` for those is already the honest handling.
 **A shapes-and-gaps tab**, added 2026-10-16 at the practitioner's request. It answers the thing
 this record had listed as open: a count of absences is not a description of them.
 
-- **Where values are missing or unreadable**, one mark per record, in file order, for every
-  column that has any. Opening workflow D shows its damage is *every fourth record* — perfectly
-  periodic, so systematic rather than random. "63 of 250" cannot tell anyone that.
+- **A nullity matrix**, adapted from missingno: every column against the same records, so two
+  columns that go missing together can be told from two that do not, with a completeness
+  sparkline that makes the worst *records* findable. Opening workflow D shows its damage is
+  *every fourth record* — perfectly periodic, so systematic rather than random. "63 of 250"
+  cannot tell anyone that.
+- **How much of each column arrived**, as a bar each.
 - **A distribution** per numeric column, equal-width bins, with the 1.5×IQR fence drawn where it
   falls rather than reported as a number to work out.
 - **Frequencies** per category — except where every value is unique, which is named as an
@@ -165,6 +168,47 @@ data quality is inspected.
 **Not to be confused with [experiment 51](51-dataset-profiles.md)**, which uses "profile" for
 something else entirely: which *classes of dataset* a problem type requires. One is about
 planning what to obtain; this is about what arrived.
+
+## A sideways look at missingno
+
+The practitioner, 2026-10-16: *"There's a Python library called missingno that draws great data
+quality visuals."* The same **sideways** move as [116](116-model-builder-sideways.md) — *does the
+thing we are building already exist, and what did they learn that we have not?*
+
+**What this is read from, and its limit.** The library's documentation and summaries of it.
+Nobody here has used it or read its source. What is adopted below is an idea, not an
+implementation, and a concept taken from documentation is a concept taken from its description.
+
+missingno (Bilogur) draws four things. Two were worth taking, two were not:
+
+| | What it is | Taken |
+| --- | --- | --- |
+| **Matrix** | the nullity pattern row by row, revealing patterns *within and between* columns | **yes** — and it corrected a real defect |
+| **Bar** | per-column completeness, the same information in a simpler form | **yes** |
+| **Heatmap** | nullity *correlation* between pairs of columns, −1 to 1 | no, with a condition |
+| **Dendrogram** | columns clustered by nullity, for datasets too wide for the heatmap | no |
+
+### What the matrix corrected
+
+The drawing built an hour earlier put each column in **its own figure**. That shows the within-
+column pattern and makes the between-column one invisible: two columns that go missing together
+looked exactly like two that never do. missingno's matrix shares one row axis across every
+column, which is the whole point of drawing it as a matrix rather than as strips, and the fix
+was to do the same. The completeness sparkline down the right is theirs too — it makes the worst
+*records* findable, where everything else here is organised by column.
+
+### What was declined, and the condition on one of them
+
+**Nullity correlation** is genuinely informative and was left out for two reasons. It is only
+defined for columns that are *partially* missing — a column with no absences, or nothing but,
+correlates with nothing — and this project's example data has one such column, which makes the
+plot degenerate rather than wrong. And it is a correlation between *indicator vectors*, not
+between the data: reading "these two columns are 0.8 correlated" as a statement about the
+measurements is an error the picture invites. It is worth building when there is data with two
+or more partially-missing columns to exercise it, and not before.
+
+**The dendrogram** clusters columns by nullity for datasets too wide to read as a heatmap. An
+input here has a handful of columns; the matrix shows what the dendrogram would summarise.
 
 ## What this does not establish
 

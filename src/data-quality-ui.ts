@@ -78,39 +78,79 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
     return rows.length?`<table class="quality-shape">${rows.join('')}</table>`:'';
   };
 
-  /** Where values are missing or unreadable, record by record, in the order the file holds them.
+  /** A nullity matrix: every column side by side, sharing one row axis.
    *
-   *  The question a total cannot answer: do the absences CLUSTER? Three gaps spread through a
-   *  table are three gaps; three gaps in consecutive rows of a table sorted by date are a week
-   *  nobody recorded, and that is a different problem with a different cause. */
+   *  Adapted from **missingno** (Bilogur), which the practitioner pointed at on 2026-10-16. Its
+   *  matrix exists to reveal patterns *within and between* columns, and the between is what this
+   *  dialog could not do an hour ago: the first version drew one strip per column as a separate
+   *  figure, so two columns that go missing together looked exactly like two that do not. Rows
+   *  are shared here, so a reader can run their eye across a record.
+   *
+   *  The sparkline on the right is missingno's too: how complete each record is, so the worst
+   *  rows are findable rather than merely present somewhere in the picture.
+   *
+   *  Read from the library's documentation. Nobody here has used it, and what is adopted is the
+   *  idea rather than the implementation -- see [117](../docs/experiments/117-data-quality.md). */
   const missingness=()=>{
     const marked=view.columns.map(column=>
       ({column,states:columnStates(view.rows.map(row=>row[column]),view.declared[column])}));
-    const flawed=marked.filter(m=>m.states.some(state=>state!=='ok'));
-    if(!flawed.length)return `<p class="quality-clean">Every value in every column is present and `
-      +`is what it was declared to be, so there is no pattern of absence to show.</p>`;
+    if(!marked.some(m=>m.states.some(state=>state!=='ok')))
+      return `<p class="quality-clean">Every value in every column is present and is what it was `
+        +`declared to be, so there is no pattern of absence to show.</p>`;
+
     const rows=view.rows.length;
-    const height=Math.min(260,Math.max(80,rows));
-    const band=height/rows;
-    const width=120;
-    return `<div class="quality-strips">`
-      +flawed.map(({column,states})=>`<figure class="quality-strip">`
-        +`<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" `
-        +`aria-label="${esc(column)}: where values are missing or unreadable, in file order">`
-        +`<rect x="0" y="0" width="${width}" height="${height}" class="strip-ok"/>`
-        +states.map((state,index)=>state==='ok'?''
-          :`<rect x="0" y="${(index*band).toFixed(2)}" width="${width}" height="${Math.max(band,1).toFixed(2)}" `
-           +`class="strip-${state}"></rect>`).join('')
-        +`</svg><figcaption>${esc(column)}</figcaption></figure>`).join('')
-      +`</div>`
+    const height=Math.min(300,Math.max(100,rows));
+    const band=Math.max(height/rows,0.5);
+    const colWidth=Math.min(90,Math.max(36,520/marked.length));
+    const gap=6, sparkWidth=70, labels=58;
+    const matrixWidth=marked.length*(colWidth+gap);
+    const width=matrixWidth+sparkWidth+10;
+    // How much of each record is readable. One bar per row, as missingno draws it.
+    const complete=view.rows.map((_,index)=>
+      marked.filter(m=>m.states[index]==='ok').length/marked.length);
+    return `<svg class="quality-matrix" viewBox="0 0 ${width} ${height+labels}" width="100%" `
+      +`height="${height+labels}" role="img" aria-label="Where values are missing or unreadable, `
+      +`every column against the same records">`
+      +marked.map(({column,states},c)=>{
+        const x=c*(colWidth+gap);
+        return `<rect x="${x}" y="0" width="${colWidth}" height="${height}" class="strip-ok"/>`
+          +states.map((state,index)=>state==='ok'?''
+            :`<rect x="${x}" y="${(index*(height/rows)).toFixed(2)}" width="${colWidth}" `
+             +`height="${band.toFixed(2)}" class="strip-${state}"/>`).join('')
+          +`<text x="${x+colWidth/2}" y="${height+14}" text-anchor="end" class="matrix-label" `
+          +`transform="rotate(-45 ${x+colWidth/2} ${height+14})">${esc(column)}</text>`;
+      }).join('')
+      // The completeness sparkline: how much of each record survives.
+      +`<g transform="translate(${matrixWidth+10} 0)">`
+      +`<rect x="0" y="0" width="${sparkWidth}" height="${height}" class="strip-ok"/>`
+      +complete.map((fraction,index)=>
+        `<rect x="0" y="${(index*(height/rows)).toFixed(2)}" width="${(fraction*sparkWidth).toFixed(1)}" `
+        +`height="${band.toFixed(2)}" class="spark-bar"/>`).join('')
+      +`<text x="${sparkWidth/2}" y="${height+14}" text-anchor="end" class="matrix-label" `
+      +`transform="rotate(-45 ${sparkWidth/2} ${height+14})">how complete</text></g>`
+      +`</svg>`
       +`<p class="quality-legend"><span class="swatch strip-absent"></span> no value`
       +` <span class="swatch strip-mismatched"></span> not the declared kind`
-      +` <span class="swatch strip-ok"></span> readable</p>`
-      // The caveat that makes the picture usable rather than misleading.
-      +`<p class="description">Top to bottom is <strong>the order the file holds</strong>, which may `
-      +`carry meaning or none. If the records are sorted by date, a run of marks is a period nobody `
-      +`recorded; if the order is arbitrary, the same run is a coincidence. This cannot tell which, `
-      +`and a run is a reason to go and look rather than a finding.</p>`;
+      +` <span class="swatch strip-ok"></span> readable`
+      +` <span class="swatch spark-bar"></span> how much of the record is readable</p>`
+      +`<p class="description">Every column against <strong>the same records</strong>, so two columns `
+      +`that go missing together can be told from two that do not. Top to bottom is `
+      +`<strong>the order the file holds</strong>, which may carry meaning or none: if the records are `
+      +`sorted by date, a run of marks is a period nobody recorded; if the order is arbitrary, the same `
+      +`run is a coincidence. This cannot tell which, and a run is a reason to go and look rather than a `
+      +`finding.</p>`;
+  };
+
+  /** How much of each column arrived, as a bar each. missingno's simplest plot, and the one that
+   *  answers "which column is worst" without anybody counting marks. */
+  const completeness=()=>{
+    const bars=profiles.map(p=>({column:p.column,
+      readable:p.total-p.absent-p.mismatched,total:p.total}));
+    return `<div class="quality-bars">`
+      +bars.map(b=>`<div class="quality-bar-row"><span>${esc(b.column)}</span>`
+        +`<div class="quality-bar"><div style="width:${((b.readable/b.total)*100).toFixed(1)}%"></div></div>`
+        +`<b>${b.readable}</b></div>`).join('')
+      +`</div><p class="quality-legend">Readable values, out of ${view.rows.length} records.</p>`;
   };
 
   /** What the numbers look like, and what is in the categories. */
@@ -179,6 +219,8 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
          +`as the steps downstream will read them, declared repairs included.</p>`
          +`<h3 class="quality-heading">Where values are missing or unreadable</h3>`
          +missingness()
+         +`<h3 class="quality-heading">How much of each column arrived</h3>`
+         +completeness()
          +`<h3 class="quality-heading">What is in each column</h3>`
          +shapes()
         :`<p class="description">What this input will and will not tell the steps that read it. `

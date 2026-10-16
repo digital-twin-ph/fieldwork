@@ -260,10 +260,12 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
    and nowhere else, and a charting dependency for three pictures would cost more than it earns. */
 .quality-tabs{margin:14px 24px 0;width:fit-content}
 .quality-heading{font-size:11px;font-weight:650;margin:18px 0 10px;letter-spacing:.2px}
-.quality-strips{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
-.quality-strip{margin:0;text-align:center}
-.quality-strip svg{border:1px solid var(--line);border-radius:4px;display:block}
-.quality-strip figcaption{font-size:10px;color:var(--text-faint-28);margin-top:5px;max-width:120px;overflow-wrap:anywhere}
+/* The nullity matrix, adapted from missingno: every column against the same rows, so the
+   BETWEEN-column pattern is visible. Separate figures per column could not show it. */
+.quality-matrix{display:block;max-width:100%;overflow:visible}
+.matrix-label{font-size:9px;fill:var(--text-faint-28)}
+.spark-bar{fill:var(--accent-9)}
+.quality-legend .swatch.spark-bar{background:var(--accent-9)}
 .strip-ok{fill:var(--surface-tint-1)}
 .strip-absent{fill:var(--text-faint-28)}
 .strip-mismatched{fill:var(--warning-4)}

@@ -1081,11 +1081,15 @@ function renderInspector(){
         if(setting)return `the ${setting} setting below`;
         return typeof value==='string'&&value.includes(':')?value.slice(value.indexOf(':')+1):String(value);
       };
+      // The column, as the file spells it. Not a label somebody wrote over it: a reader checking
+      // this rule against their data is looking for the column, and a rule that names something
+      // the file does not contain makes them translate. 2026-10-16.
       const named=(predicate:string)=>{
         const field=authored.fields.find(f=>f.predicate===predicate||`${f.predicate}Known`===predicate);
-        if(!field)return predicate.slice(predicate.indexOf(':')+1);
-        return predicate.endsWith('Known')?`whether ${field.label||field.attribute} is recorded`:(field.label||field.attribute);
+        return field?field.attribute:predicate.slice(predicate.indexOf(':')+1);
       };
+      const presenceOf=(predicate:string)=>
+        authored.fields.some(f=>`${f.predicate}Known`===predicate);
       content+=`<span class="inspector-section">What this step applies</span>`
         +`<div class="detail-row"><span>${esc(authored.title)}</span><strong>written here</strong></div>`
         +`<p class="description">These rules are part of this workflow rather than a published ruleset chosen from a list. They travel with the file, and the run evidence carries them in full.</p>`
@@ -1105,8 +1109,13 @@ function renderInspector(){
             +group.all.map((condition,c)=>`<div class="rule-row">`
               +(c?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
               +`<span class="rule-field">${esc(named(condition.field))}</span>`
-              +`<span class="rule-op">${esc(comparator(condition.comparator))}</span>`
-              +`<span class="rule-value">${esc(readable(condition.value))}</span>`
+              // A condition about whether a value was there reads as one phrase, with nothing
+              // to compare against: "DEATHS is not recorded", not "whether DEATHS is recorded
+              // is false", which is a double negative wrapped around a question.
+              +(presenceOf(condition.field)
+                ?`<span class="rule-op">${condition.value===true?'is recorded':'is not recorded'}</span><span class="rule-value"></span>`
+                :`<span class="rule-op">${esc(comparator(condition.comparator))}</span>`
+                 +`<span class="rule-value">${esc(readable(condition.value))}</span>`)
               +`</div>`).join('')
             +`</div></div>`).join('')
           +`<div class="rule-then"><span class="rule-keyword">THEN</span><div class="rule-conditions">`

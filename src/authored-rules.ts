@@ -214,7 +214,7 @@ export function compileAuthoredRuleset(ruleset:AuthoredRuleset):string{
  */
 export interface UnitProblem {field:string; says:string}
 export function authoredUnitProblems(authored:{
-  fields:{predicate:string;kind:string;label?:string;unit?:string;unitLabel?:string}[];
+  fields:{attribute?:string;predicate:string;kind:string;label?:string;unit?:string;unitLabel?:string}[];
   parameters?:{name:string;unit?:string;unitLabel?:string}[];
   rules:{any:{all:{field:string;comparator:string;value:AuthoredValue}[]}[]}[];
 }):UnitProblem[]{
@@ -225,7 +225,7 @@ export function authoredUnitProblems(authored:{
   for(const field of authored.fields)
     if(field.kind==='number'&&!field.unit?.trim())
       problems.push({field:field.predicate,
-        says:`${field.label||field.predicate} is a number and states no unit. A number without a unit is `
+        says:`${field.attribute||field.label||field.predicate} is a number and states no unit. A number without a unit is `
           +`not a measurement, and a rule comparing it to anything is comparing two numbers and hoping.`});
   for(const parameter of authored.parameters??[])
     if(!parameter.unit?.trim())
@@ -253,7 +253,7 @@ export function authoredUnitProblems(authored:{
         if(parameter.unit!==field.unit&&!reported.has(pair)){
           reported.add(pair);
           problems.push({field:condition.field,
-            says:`${field.label||field.predicate} is measured in ${shown(field.unit,field.unitLabel)} and the `
+            says:`${field.attribute||field.label||field.predicate} is measured in ${shown(field.unit,field.unitLabel)} and the `
               +`${parameter.name} setting is in ${shown(parameter.unit,parameter.unitLabel)}. They are compared `
               +`directly, so this rule would be wrong by whatever separates the two. State the setting in `
               +`${shown(field.unit,field.unitLabel)}, or compare against a field that is in `

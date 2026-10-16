@@ -5,6 +5,22 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **A rule names the column, not a label written over it.** The rule editor and the Inspector
+  showed a binding's human-readable `label` — so a rule read `Deaths at this building` for a
+  column the file calls `DEATHS`, and a practitioner checking the rule against their data had to
+  translate. They name the column now. A label is a gloss beside a binding, never a substitute
+  for it in a rule.
+- **"Is it recorded" is a comparator, not a pseudo-field.** Every bound field has a generated
+  companion saying whether a record had a readable value. It was offered as a second entry in the
+  field list, so a rule read `IF whether Deaths at this building is recorded is false` — a double
+  negative wrapped around a question, and worse for an unlabelled column: `IF whether n_deaths is
+  recorded is false`. `is recorded` / `is not recorded` now sit beside `is more than` in the
+  comparator list, which reads whatever the column is called and halves the field list. The
+  stored rule and its N3 are unchanged.
+- **The ruleset example bands buildings, not "addresses".** The provenance for that file says
+  "250 buildings with death counts" and the upstream table is `deaths_by_bldg`; "address" was a
+  word this example coined. In 1854 Soho one building routinely held several addresses, so the
+  old wording stated a unit of aggregation the source does not have.
 - **Quick look: a table at a width you can read it.** A tabular input offered a filename, a row
   count and a block of JSON describing the table's *shape* — everything about the table except the
   table — inside a 292px panel. **Quick look at the table** opens its rows in a wide dialog with

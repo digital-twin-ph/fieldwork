@@ -12,7 +12,7 @@
  *  needs to separate:
  *
  *  - **Table 1** is dates and counts and carries no place at all. 43 dated rows.
- *  - **The death locations** are places and carry a count each, and no date.
+ *  - **The 250 buildings** are places and carry a count each, and no date.
  *
  *  Those are the two halves, on one canvas, sharing nothing -- which is the point. A rule reads
  *  a predicate and a predicate is bound to an attribute, and that is as true of a table row as
@@ -58,7 +58,7 @@ const deathsByDateWithGaps=():DataTable=>{
     missingValueCount:UNRECORDED_DATES.length};
 };
 
-/** The death locations, with some counts written as text.
+/** The same buildings, with some counts written as text.
  *
  *  The commonest thing that happens to a number on its way through a spreadsheet: it arrives as
  *  `"3"` rather than `3`. The binding declares a number, so the rules are told the value is not
@@ -67,13 +67,24 @@ const deathsByDateWithGaps=():DataTable=>{
  *
  *  **Simulated.** Snow's locations carry clean integers. */
 const asTextEvery=4;
-const deathLocationsAsText=():PointCollection=>({type:'FeatureCollection',
+const buildingsAsText=():PointCollection=>({type:'FeatureCollection',
   features:(structuredClone(points.deaths) as PointFeature[]).map((feature,index)=>
     index%asTextEvery?feature
       :{...feature,properties:{...feature.properties,DEATHS:String(feature.properties.DEATHS)}})});
 
-/** The death locations Snow mapped. Each carries `DEATHS`, the number at that address. */
-const deathLocations=():PointCollection=>
+/** The 250 buildings, each carrying `DEATHS`, the number of deaths recorded in it.
+ *
+ *  **A building, not an address.** The practitioner asked what "address" meant here, 2026-10-16,
+ *  and the honest answer was that it was a word I had coined. The provenance for this file says
+ *  "250 buildings with death counts", the upstream compilation calls the table `deaths_by_bldg`,
+ *  and nothing in either mentions an address. That is not pedantry in 1854 Soho, where a single
+ *  building routinely held several addresses in multi-occupancy: banding "deaths at this address"
+ *  states a unit of aggregation the source does not have, and `Cluster` would then mean something
+ *  other than what a reader takes it to mean.
+ *
+ *  It is also NOT the 578-point digitisation of Snow's map, whose points are stacked beside
+ *  houses as a cartographic device and are displaced from the buildings they belong to. */
+const deathsPerBuilding=():PointCollection=>
   ({type:'FeatureCollection',features:structuredClone(points.deaths) as PointFeature[]});
 
 /** A pin that gives a node its ports. An authored ruleset has no published artefact, so this
@@ -94,29 +105,29 @@ const NOT_A_JUDGEMENT='A judgement about the 1854 outbreak, or about what any nu
  *  could drift, and then C would be demonstrating two things at once -- which is the one way an
  *  example of this kind can lie. */
 /** The rules of the point half. Same reasoning as `dayRules`: D applies exactly these. */
-const addressRules=(title:string)=>({title,
-          parameters:[{name:'cluster',meaning:'Deaths at one address above which it is banded a Cluster.',
+const buildingRules=(title:string)=>({title,
+          parameters:[{name:'cluster',meaning:'Deaths in one building above which it is banded a Cluster.',
             unit:COUNT,unitLabel:'deaths',min:1,max:50,decimals:0}],
           mustNotBeReadAs:NOT_A_JUDGEMENT,
-          fields:[{attribute:'DEATHS',predicate:'fwa:deathsHere',kind:'number' as const,
-            label:'Deaths at this address',unit:COUNT,unitLabel:'deaths'}],
+          fields:[{attribute:'DEATHS',predicate:'fwa:deathsInBuilding',kind:'number' as const,
+            unit:COUNT,unitLabel:'deaths'}],
           rules:[
-            {any:[{all:[{field:'fwa:deathsHereKnown',comparator:'equals',value:false}]}],
-             then:[{predicate:'fwa:address',value:'fwa:Unrecorded'}]},
+            {any:[{all:[{field:'fwa:deathsInBuildingKnown',comparator:'equals',value:false}]}],
+             then:[{predicate:'fwa:building',value:'fwa:Unrecorded'}]},
             // `is less than` and `is at least`, which the table half above does not use. All
             // four numeric comparators are exercised across the two workflows, and every one of
             // them fires against Snow's own records -- no invented row stands on a boundary to
             // make a branch reachable.
-            {any:[{all:[{field:'fwa:deathsHere',comparator:'lessThan',value:2}]}],
-             then:[{predicate:'fwa:address',value:'fwa:Single'}]},
-            {any:[{all:[{field:'fwa:deathsHere',comparator:'notLessThan',value:2},
-                        {field:'fwa:deathsHere',comparator:'notGreaterThan',value:{setting:'cluster'}}]}],
-             then:[{predicate:'fwa:address',value:'fwa:Several'}]},
+            {any:[{all:[{field:'fwa:deathsInBuilding',comparator:'lessThan',value:2}]}],
+             then:[{predicate:'fwa:building',value:'fwa:Single'}]},
+            {any:[{all:[{field:'fwa:deathsInBuilding',comparator:'notLessThan',value:2},
+                        {field:'fwa:deathsInBuilding',comparator:'notGreaterThan',value:{setting:'cluster'}}]}],
+             then:[{predicate:'fwa:building',value:'fwa:Several'}]},
             // Two conclusions from one rule: the band, and that this one is worth looking at.
             // One rule may conclude a list, and a reader meets that here rather than being told
             // about it.
-            {any:[{all:[{field:'fwa:deathsHere',comparator:'greaterThan',value:{setting:'cluster'}}]}],
-             then:[{predicate:'fwa:address',value:'fwa:Cluster'},
+            {any:[{all:[{field:'fwa:deathsInBuilding',comparator:'greaterThan',value:{setting:'cluster'}}]}],
+             then:[{predicate:'fwa:building',value:'fwa:Cluster'},
                    {predicate:'fwa:look',value:'fwa:Yes'}]},
           ]});
 
@@ -125,7 +136,7 @@ const dayRules=(title:string)=>({title,
     unit:COUNT,unitLabel:'deaths',min:0,max:200,decimals:0}],
   mustNotBeReadAs:NOT_A_JUDGEMENT,
   fields:[{attribute:'deaths',predicate:'fwa:deaths',kind:'number' as const,
-    label:'Deaths that day',unit:COUNT,unitLabel:'deaths'}],
+    unit:COUNT,unitLabel:'deaths'}],
   rules:[
     // The branch a reader forgets. Table 1 has no gaps, so over A's data this never fires; over
     // C's it is the whole point.
@@ -169,16 +180,16 @@ export function rulesetExample():Workflow{
       // The same widget, the same rule form, records with a place. The rules do not know the
       // difference and neither half reads the other: Table 1 carries no location and a location
       // carries no date, so the two cannot be joined, and this example does not pretend to.
-      {id:'locations',type:'point_input',x:40,y:260,params:{
-        label:'B · Death locations Snow mapped',data:deathLocations(),
-        fields:[{key:'DEATHS',label:'Deaths at this address',type:'number'}],
+      {id:'buildings',type:'point_input',x:40,y:260,params:{
+        label:'B · 250 buildings, with the deaths recorded in each',data:deathsPerBuilding(),
+        fields:[{key:'DEATHS',label:'DEATHS',type:'number'}],
         sourceInfo:{format:'GeoJSON' as const,
-          description:'Death locations digitised from Snow’s map. A location carries no date, so this cannot be joined to Table 1.'}}},
+          description:'Deaths per building, from Wilson (2011) by way of the deaths_by_bldg compilation. A building carries no date, so this cannot be joined to Table 1.'}}},
 
-      {id:'address',type:'apply_ruleset',x:380,y:260,params:{
-        label:'B · Band each address, and flag the worst',parameters:{cluster:4},
+      {id:'building',type:'apply_ruleset',x:380,y:260,params:{
+        label:'B · Band each building, and flag the worst',parameters:{cluster:4},
         ruleset:authoredPin('points'),
-        authored:addressRules('An address, banded by how many died there')}},
+        authored:buildingRules('A building, banded by how many died in it')}},
 
       // The map needs a boundary to draw within. Soho, taken from the extent of the locations
       // themselves rather than from a round number somebody chose.
@@ -186,10 +197,10 @@ export function rulesetExample():Workflow{
         label:'B · Soho, the extent of the mapped deaths',selectionMode:'bbox' as const,
         geometry:bboxPolygon(-0.1405,51.5115,-0.1325,51.5162)}},
 
-      {id:'address-map',type:'map_output',x:760,y:260,params:{label:'B · Addresses, banded',
-        mapTitle:'Death locations, banded by how many died at each',
+      {id:'building-map',type:'map_output',x:760,y:260,params:{label:'B · Buildings, banded',
+        mapTitle:'Buildings, banded by how many died in each',
         presentation:'plot' as const}},
-      {id:'address-table',type:'table_output',x:1080,y:260,params:{label:'B · Addresses, listed',inputMode:'spatial'}},
+      {id:'building-table',type:'table_output',x:1080,y:260,params:{label:'B · Buildings, listed',inputMode:'spatial'}},
 
       // ── C · The same table, with gaps ─────────────────────────────────────────────────────
       // A and C run IDENTICAL rules. Everything that differs between their results is the
@@ -206,14 +217,14 @@ export function rulesetExample():Workflow{
 
       {id:'gap-table',type:'table_output',x:760,y:620,params:{label:'C · Days, with three unrecorded',inputMode:'table'}},
 
-      // ── D · The same locations, with counts as text ───────────────────────────────────────
+      // ── D · The same buildings, with counts as text ────────────────────────────────────────
       // B and D run identical rules too. A count written "3" is not a number, so the rules are
       // told it is not recorded -- and the answer is the same word the gaps in C produce, for a
       // completely different reason. Telling those two apart is the step's job, not the
       // reader's.
       {id:'texty',type:'point_input',x:40,y:840,params:{
-        label:'D · Death locations · SIMULATED: one count in four written as text',
-        data:deathLocationsAsText(),
+        label:'D · Buildings · SIMULATED: one count in four written as text',
+        data:buildingsAsText(),
         // No declared column types, deliberately. B declares `DEATHS` as a number, and the input
         // widget enforces that -- a text value in a column declared numeric is refused outright,
         // which is the defence working. The file that causes this problem in practice is the one
@@ -221,23 +232,23 @@ export function rulesetExample():Workflow{
         sourceInfo:{format:'GeoJSON' as const,
           description:'A damaged copy of the mapped locations, declaring no column types. Snow\u2019s own carry clean integers.'}}},
 
-      {id:'text-address',type:'apply_ruleset',x:380,y:840,params:{
+      {id:'text-building',type:'apply_ruleset',x:380,y:840,params:{
         label:'D · The same rules, over counts it cannot read',parameters:{cluster:4},
         ruleset:authoredPin('points'),
-        authored:addressRules('An address, banded by how many died there')}},
+        authored:buildingRules('A building, banded by how many died in it')}},
 
-      {id:'text-table',type:'table_output',x:760,y:840,params:{label:'D · Addresses, a quarter unreadable',inputMode:'spatial'}},
+      {id:'text-table',type:'table_output',x:760,y:840,params:{label:'D · Buildings, a quarter unreadable',inputMode:'spatial'}},
     ],
     edges:[
       {id:'a1',from:'dates',to:'day',port:'subjects'},
       {id:'a2',from:'day',to:'day-table',port:'table'},
-      {id:'b1',from:'locations',to:'address',port:'subjects'},
-      {id:'b2',from:'address',to:'address-map',port:'points'},
-      {id:'b3',from:'address',to:'address-table',port:'points'},
-      {id:'b4',from:'soho',to:'address-map',port:'area'},
+      {id:'b1',from:'buildings',to:'building',port:'subjects'},
+      {id:'b2',from:'building',to:'building-map',port:'points'},
+      {id:'b3',from:'building',to:'building-table',port:'points'},
+      {id:'b4',from:'soho',to:'building-map',port:'area'},
       {id:'c1',from:'gapped',to:'gap-day',port:'subjects'},
       {id:'c2',from:'gap-day',to:'gap-table',port:'table'},
-      {id:'d1',from:'texty',to:'text-address',port:'subjects'},
-      {id:'d2',from:'text-address',to:'text-table',port:'points'},
+      {id:'d1',from:'texty',to:'text-building',port:'subjects'},
+      {id:'d2',from:'text-building',to:'text-table',port:'points'},
     ]};
 }

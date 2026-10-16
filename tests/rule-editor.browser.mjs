@@ -12,22 +12,22 @@ test('rules can be edited in a dialog, and the edit reaches the saved workflow',
   await page.goto('/?example=rulesets');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
 
-  await page.locator('.react-flow__node[data-id="address"]').click();
+  await page.locator('.react-flow__node[data-id="building"]').click();
   await page.locator('#edit-rules').click();
   const dialog=page.locator('#rule-editor');
   await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText('An address, banded by how many died there');
+  await expect(dialog).toContainText('A building, banded by how many died in it');
 
   const before=await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
-    return w.nodes.find(n=>n.id==='address').params.authored.rules.length;
+    return w.nodes.find(n=>n.id==='building').params.authored.rules.length;
   });
 
   // Add a rule, and give it a condition and a conclusion in the practitioner's words -- no
   // prefixes typed, because the namespace is the application's business.
   await dialog.locator('#rule-editor-add').click();
   const added=dialog.locator('.rule-card').last();
-  await added.locator('[data-part="field"]').selectOption({index:1});
+  await added.locator('[data-part="field"]').selectOption({index:0});
   await added.locator('[data-part="predicate"]').fill('service');
   await added.locator('[data-part="predicate"]').press('Tab');
   await dialog.locator('.rule-card').last().locator('[data-part="conclusion"]').fill('Referral');
@@ -36,14 +36,14 @@ test('rules can be edited in a dialog, and the edit reaches the saved workflow',
   // Nothing is saved until the practitioner keeps it.
   expect(await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
-    return w.nodes.find(n=>n.id==='address').params.authored.rules.length;
+    return w.nodes.find(n=>n.id==='building').params.authored.rules.length;
   })).toBe(before);
 
   await dialog.locator('#rule-editor-keep').click();
   await expect(dialog).toBeHidden();
   const after=await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
-    const rules=w.nodes.find(n=>n.id==='address').params.authored.rules;
+    const rules=w.nodes.find(n=>n.id==='building').params.authored.rules;
     return {count:rules.length,last:rules[rules.length-1]};
   });
   expect(after.count).toBe(before+1);

@@ -39,13 +39,13 @@ const run=async()=>{
 const day=(result,date)=>
   result.outputs.find(o=>o.nodeId==='day-table').rows.find(r=>r.key.date===date);
 /** A banded address, from the point half. */
-const address=(result,id)=>
-  result.outputs.find(o=>o.nodeId==='address-table').rows.find(r=>r.recordId===id).attributes;
+const building=(result,id)=>
+  result.outputs.find(o=>o.nodeId==='building-table').rows.find(r=>r.recordId===id).attributes;
 
 test('both halves run: a table is classified, and so is a point layer',async()=>{
   const result=await run();
   assert.deepEqual(result.outputs.map(o=>o.nodeId),
-    ['day-table','address-map','address-table','gap-table','text-table']);
+    ['day-table','building-map','building-table','gap-table','text-table']);
 
   // A · Table data. Until 2026-10-16 this could not run at all: the authored path read
   // `inputs.subjects as PointCollection` and nothing else, so rules could be written about
@@ -59,13 +59,13 @@ test('both halves run: a table is classified, and so is a point layer',async()=>
   assert.equal(result.outputs.find(o=>o.nodeId==='day-table').rows.length,43);
 
   // B · Point data, through the same rule form.
-  assert.equal(address(result,'location-2').address,'Single');    // 1 death
-  assert.equal(address(result,'location-1').address,'Several');   // 2
-  assert.equal(address(result,'location-4').address,'Several');   // 4, the cluster setting
-  assert.equal(address(result,'location-74').address,'Cluster');  // 5
+  assert.equal(building(result,'location-2').building,'Single');    // 1 death
+  assert.equal(building(result,'location-1').building,'Several');   // 2
+  assert.equal(building(result,'location-4').building,'Several');   // 4, the cluster setting
+  assert.equal(building(result,'location-74').building,'Cluster');  // 5
   // Two conclusions from one rule: the band, and that this one is worth looking at.
-  assert.equal(address(result,'location-74').look,'Yes');
-  assert.equal(address(result,'location-2').look,undefined);
+  assert.equal(building(result,'location-74').look,'Yes');
+  assert.equal(building(result,'location-2').look,undefined);
 });
 
 // C and D: the boundary workflows. The practitioner, 2026-10-16: "let's add 2 more boundary
@@ -94,17 +94,17 @@ test('D · a value present but unreadable is reported as a different thing from 
   // A count written "3" is not a number. The binding declares one, so the rules are told it is
   // not recorded -- the same word C's genuine gaps produce, for a completely different reason.
   const listed=result.outputs.find(o=>o.nodeId==='text-table').rows;
-  assert.equal(listed.filter(r=>r.attributes.address==='Unrecorded').length,63);
+  assert.equal(listed.filter(r=>r.attributes.building==='Unrecorded').length,63);
   assert.equal(listed.length,250);
 
   // The step says which of the two it found, and only the step that found it says so. Without
   // this the same finding was raised on every node the value travelled to.
   assert.deepEqual(result.alerts.filter(a=>a.dataIssues?.length).map(a=>a.nodeId),
-    ['gap-day','text-address']);
+    ['gap-day','text-building']);
   const [missing]=result.alerts.find(a=>a.nodeId==='gap-day').dataIssues;
   assert.equal(missing.why,'missing');
-  assert.match(missing.says,/3 of 43 records have no value for Deaths that day/);
-  const [unreadable]=result.alerts.find(a=>a.nodeId==='text-address').dataIssues;
+  assert.match(missing.says,/3 of 43 records have no value for deaths/);
+  const [unreadable]=result.alerts.find(a=>a.nodeId==='text-building').dataIssues;
   assert.equal(unreadable.why,'unreadable');
   assert.match(unreadable.says,/63 of 250 records carry a value .* that is not a number/);
   // It names what it saw, so a practitioner can recognise the column without opening the file.
@@ -129,7 +129,7 @@ test('the fail conditions are in the evidence, not only on the screen',async()=>
   // A value somebody collected that the step could not read. The SAME fact reaches the reasoner
   // in both cases -- that the value is not recorded -- so the receipt is the only place the two
   // can be told apart afterwards.
-  const text=result.receipts.find(r=>r.nodeId==='text-address').facts;
+  const text=result.receipts.find(r=>r.nodeId==='text-building').facts;
   assert.match(text,/fw:problemKind fw:ValueUnreadable/);
   assert.match(text,/fw:affectedRecordCount 63; fw:consideredRecordCount 250/);
 
@@ -149,15 +149,15 @@ test('debt 1 · all four numeric comparators are executed against the real engin
   // `lessThan` and `notLessThan` compiled from the day the compiler was written and were
   // executed by nothing, which is what made offering them in the editor indefensible. The point
   // half uses both; the table half uses the other two.
-  const banded=result.receipts.find(r=>r.nodeId==='address');
+  const banded=result.receipts.find(r=>r.nodeId==='building');
   assert.match(banded.rules,/math:lessThan 2/);
   assert.match(banded.rules,/math:notLessThan 2/);
   const days=result.receipts.find(r=>r.nodeId==='day');
   assert.match(days.rules,/math:greaterThan 20/);
   assert.match(days.rules,/math:notGreaterThan 20/);
   // And each one decided a record, rather than merely compiling.
-  assert.equal(address(result,'location-2').address,'Single');   // less than 2
-  assert.equal(address(result,'location-1').address,'Several');  // not less than 2
+  assert.equal(building(result,'location-2').building,'Single');   // less than 2
+  assert.equal(building(result,'location-1').building,'Several');  // not less than 2
 
   // WEAKER THAN THE SYNTHETIC VERSION, deliberately. That example put a record exactly on each
   // boundary, so `is less than 2` and `is at most 2` could be told apart by a run. Snow's data
@@ -176,7 +176,7 @@ test('debt 2 · a unit is required, and a mismatch is refused by name',async()=>
 
   // A count is dimensionless and still declares what it is. As shipped, both halves do.
   assert.deepEqual(authoredUnitProblems(step.params.authored),[]);
-  assert.deepEqual(authoredUnitProblems(workflow.nodes.find(n=>n.id==='address').params.authored),[]);
+  assert.deepEqual(authoredUnitProblems(workflow.nodes.find(n=>n.id==='building').params.authored),[]);
 
   // A setting in hours against a field counting deaths: a comparison between two different
   // things, which no amount of arithmetic makes meaningful.
@@ -198,7 +198,7 @@ test('debt 2 · a unit is required, and a mismatch is refused by name',async()=>
   syncProjectManifest(workflow);
   await assert.rejects(
     executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(workflow))),reason),
-    /cannot run: Deaths that day is measured in deaths/);
+    /cannot run: deaths is measured in deaths/);
 });
 
 test('debt 2, as it was · a wrong number in the right unit passes every check',async()=>{
@@ -239,15 +239,15 @@ test('debt 3 · rules that disagree are caught at the run, which is late',async(
 
 test('the receipt carries the rules themselves, the bindings, and what was left unmatched',async()=>{
   const result=await run();
-  const receipt=result.receipts.find(r=>r.nodeId==='address');
+  const receipt=result.receipts.find(r=>r.nodeId==='building');
   // An authored ruleset has no published artefact to cite, so the receipt carries the rules, in
   // the AUTHORED namespace: these words were written by whoever wrote the rules, and the
   // framework's fw: vocabulary stays exactly what the ontology declares.
-  assert.match(receipt.rules,/=> \{ \?s fwa:address fwa:Cluster; fwa:look fwa:Yes\. \}/);
-  // And the bindings, because a conclusion about fwa:deathsHere means nothing to a reader who
+  assert.match(receipt.rules,/=> \{ \?s fwa:building fwa:Cluster; fwa:look fwa:Yes\. \}/);
+  // And the bindings, because a conclusion about fwa:deathsInBuilding means nothing to a reader who
   // cannot see which column that was.
   assert.match(receipt.facts,/fw:boundAttribute "DEATHS"/);
-  assert.match(receipt.facts,/fw:boundPredicate "fwa:deathsHere"/);
+  assert.match(receipt.facts,/fw:boundPredicate "fwa:deathsInBuilding"/);
   assert.match(receipt.facts,/fw:ruleSource "authored"/);
   // Every record fell in a band, and the receipt says so rather than leaving it to be assumed.
   assert.match(receipt.facts,/fw:unmatchedSubjectCount 0/);

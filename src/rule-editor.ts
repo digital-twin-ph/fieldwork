@@ -36,16 +36,63 @@ const COMPARATORS:Record<Field['kind'],{value:string;label:string}[]>={
   boolean:[{value:'equals',label:'is'}],
 };
 
-/** Every predicate a condition can read: each declared field, and whether it was recorded.
+/** Whether a value was there to read is a COMPARATOR, not a field of its own.
  *
- *  The `…Known` companion is what lets a rule conclude Unknown instead of concluding nothing,
- *  and it is the branch a practitioner forgets, so it is offered rather than left to be typed. */
+ *  Every bound field has a `…Known` companion: a generated fact saying whether this record had a
+ *  readable value. It is what lets a rule conclude Unrecorded instead of concluding nothing, so
+ *  it has to be reachable. It used to be reachable as a second entry in the field list, labelled
+ *  `whether Deaths at this building is recorded` -- and a rule then read
+ *
+ *      IF  whether Deaths at this building is recorded  is  false
+ *
+ *  which is a double negative wrapped around a question. The practitioner, 2026-10-16: *"what
+ *  does it mean when we say IF 'whether Deaths at this address is recorded'? That seems to be a
+ *  hand curated condition."* It is not hand-curated -- it is generated for every field -- but it
+ *  read as though somebody had written it, because a sentence had been composed around their
+ *  label.
+ *
+ *  Then: *"That is context sensitive labeling. Not generic. If we had a different CSV how would
+ *  this look?"* Worse. A fresh import labels a field with its raw column name, so the same row
+ *  read `IF whether n_deaths is recorded is false` -- a column name inside an English sentence
+ *  that does not parse. The composition was the defect, not the wording of this example.
+ *
+ *  So no sentence is composed. The field is the practitioner's field, whatever it is called, and
+ *  `is recorded` / `is not recorded` sit in the comparator list beside `is more than`:
+ *
+ *      Deaths at this building  │ is not recorded
+ *      n_deaths                 │ is not recorded
+ *
+ *  Both read. The stored condition is unchanged -- it is still `{field:'…Known', comparator:
+ *  'equals', value:false}` -- so every compiled rule, every receipt and every saved workflow is
+ *  exactly as it was. This is the surface only. */
+const RECORDED='__recorded', NOT_RECORDED='__notRecorded';
+const RECORDED_COMPARATORS=[{value:RECORDED,label:'is recorded'},{value:NOT_RECORDED,label:'is not recorded'}];
+
+/** A field is named by its COLUMN, as the file spells it.
+ *
+ *  The practitioner, 2026-10-16: *"We have to present the data esp columns as is. It becomes
+ *  confusing when we introduce our 'polish' to the facts on the ground."*
+ *
+ *  This used to prefer `label`, a human-readable name a binding may carry. In the ruleset worked
+ *  example those labels were written by hand -- `DEATHS` was shown as "Deaths at this building"
+ *  -- so a rule named a thing the file does not contain, and a practitioner checking the rule
+ *  against their CSV had to hold a translation in their head. Worse, the polish is only ever
+ *  available where somebody wrote it: a column binding made from an imported file labels itself
+ *  with its own column name, so the example read better than the application it demonstrates.
+ *
+ *  The column is what the file has and what the practitioner will look for. A label, where one
+ *  exists, belongs beside the binding in the Inspector -- as a gloss on the column -- and not in
+ *  place of it in a rule. */
 function readable(fields:Field[]):{predicate:string;label:string;kind:Field['kind']}[]{
-  return fields.flatMap(field=>[
-    {predicate:field.predicate,label:field.label||field.attribute,kind:field.kind},
-    {predicate:`${field.predicate}Known`,label:`whether ${field.label||field.attribute} is recorded`,kind:'boolean' as const},
-  ]);
+  return fields.map(field=>({predicate:field.predicate,label:field.attribute,kind:field.kind}));
 }
+
+/** The declared field a condition is about, whether it reads the value or its presence. */
+const baseFieldOf=(predicate:string,fields:Field[])=>
+  fields.some(f=>`${f.predicate}Known`===predicate)?predicate.slice(0,-'Known'.length):predicate;
+/** Whether this condition asks about presence rather than about the value. */
+const asksPresence=(predicate:string,fields:Field[])=>
+  fields.some(f=>`${f.predicate}Known`===predicate);
 
 const blankCondition=(fields:Field[]):Authored['rules'][number]['any'][number]['all'][number]=>
   ({field:readable(fields)[0]?.predicate??'fwa:field',comparator:'equals',value:''});
@@ -120,7 +167,9 @@ export function openRuleEditor(authored:Authored,esc:Escape,review?:ReviewOption
 
     const conditionRow=(rule:number,group:number,index:number,
       condition:Authored['rules'][number]['any'][number]['all'][number])=>{
-      const kind=kindOf(condition.field);
+      const presence=asksPresence(condition.field,fields);
+      const base=baseFieldOf(condition.field,fields);
+      const kind=kindOf(base);
       const where=`data-rule="${rule}" data-group="${group}" data-condition="${index}"`;
       return `<div class="rule-condition">`
         // The connective, in the margin, as the read-only view shows it. Two conditions stacked
@@ -128,12 +177,16 @@ export function openRuleEditor(authored:Authored,esc:Escape,review?:ReviewOption
         // needs both.
         +`<span class="rule-and">${index?'and':''}</span>`
         +`<select ${where} data-part="field" aria-label="Field">`
-        +choices.map(choice=>`<option value="${esc(choice.predicate)}" ${choice.predicate===condition.field?'selected':''}>${esc(choice.label)}</option>`).join('')
+        +choices.map(choice=>`<option value="${esc(choice.predicate)}" ${choice.predicate===base?'selected':''}>${esc(choice.label)}</option>`).join('')
         +`</select>`
         +`<select ${where} data-part="comparator" aria-label="Comparator">`
-        +COMPARATORS[kind].map(c=>`<option value="${c.value}" ${c.value===condition.comparator?'selected':''}>${esc(c.label)}</option>`).join('')
+        +[...COMPARATORS[kind],...RECORDED_COMPARATORS].map(c=>{
+          const chosen=presence?(condition.value===true?RECORDED:NOT_RECORDED):condition.comparator;
+          return `<option value="${c.value}" ${c.value===chosen?'selected':''}>${esc(c.label)}</option>`;
+        }).join('')
         +`</select>`
-        +valueControl(kind,where,condition)
+        // Nothing to compare against when the question is whether there was anything to compare.
+        +(presence?'':valueControl(kind,where,condition))
         +`<button class="button small" ${where} data-part="drop-condition" aria-label="Remove this condition">Remove</button>`
         +`</div>`;
     };
@@ -231,7 +284,10 @@ export function openRuleEditor(authored:Authored,esc:Escape,review?:ReviewOption
           const g=number(el,'group'),c=number(el,'condition'),t=number(el,'then');
           const condition=rules[r]?.any?.[g]?.all?.[c];
           if(part==='field'&&condition){
-            condition.field=value;
+            // A condition about presence stays about presence when the field changes: the
+            // practitioner picked a different column, not a different question.
+            condition.field=asksPresence(condition.field,fields)?`${value}Known`:value;
+            if(asksPresence(condition.field,fields))return render();
             // The comparators that fit the new field. A term that kept `is more than` would
             // compile to a builtin matching nothing, so the choice is corrected rather than
             // carried over.
@@ -239,7 +295,20 @@ export function openRuleEditor(authored:Authored,esc:Escape,review?:ReviewOption
             if(!allowed.includes(condition.comparator))condition.comparator=allowed[0];
             if(kindOf(value)==='boolean'&&typeof condition.value!=='boolean')condition.value=true;
           }
-          if(part==='comparator'&&condition)condition.comparator=value;
+          if(part==='comparator'&&condition){
+            const base=baseFieldOf(condition.field,fields);
+            if(value===RECORDED||value===NOT_RECORDED){
+              // Stored exactly as it always was, so nothing downstream can tell the difference.
+              condition.field=`${base}Known`;
+              condition.comparator='equals';
+              condition.value=value===RECORDED;
+            }else{
+              const wasPresence=asksPresence(condition.field,fields);
+              condition.field=base;
+              condition.comparator=value;
+              if(wasPresence)condition.value=kindOf(base)==='boolean'?true:kindOf(base)==='number'?0:'';
+            }
+          }
           if(part==='value'&&condition)
             condition.value=kindOf(condition.field)==='boolean'?value==='true'
               :kindOf(condition.field)==='number'&&value.trim()&&!value.includes('{{')?Number(value)

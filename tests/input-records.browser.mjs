@@ -11,7 +11,7 @@ test('an input shows its records as columns and rows, and as the JSON they are',
   await page.goto('/?example=rulesets');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
 
-  await page.locator('.react-flow__node[data-id="locations"]').click();
+  await page.locator('.react-flow__node[data-id="buildings"]').click();
   const table=page.locator('.record-table');
   await expect(table).toBeVisible();
   // Every column a rule could read, named as the records name it.
@@ -98,7 +98,7 @@ test('records the rules cannot read are surfaced, and the notice can be read and
   await expect(toast).not.toHaveClass(/visible/);
 
   // And the step carries the same finding, with the detail the toast has no room for.
-  await page.locator('.react-flow__node[data-id="text-address"]').click();
+  await page.locator('.react-flow__node[data-id="text-building"]').click();
   const alert=page.locator('.inspector-alert').first();
   await expect(alert).toContainText('Read as not recorded');
   await expect(alert).toContainText('63 records the rules could not read');
@@ -132,8 +132,8 @@ test('a failing widget glows red, and is told apart from one that merely found s
   const node=id=>page.locator(`.react-flow__node[data-id="${id}"] .node`);
   // A step that found something on a run that COMPLETED is amber, not red: there is a result,
   // and part of it needs reading differently.
-  await expect(node('text-address')).toHaveClass(/alerting/);
-  await expect(node('text-address')).not.toHaveClass(/failed/);
+  await expect(node('text-building')).toHaveClass(/alerting/);
+  await expect(node('text-building')).not.toHaveClass(/failed/);
 
   // Break one step: take the unit off the field its rules compare.
   await page.locator('.react-flow__node[data-id="gap-day"]').click();
@@ -151,6 +151,6 @@ test('a failing widget glows red, and is told apart from one that merely found s
   // The two states are different colours, not one colour for "something is up": "your answer
   // has a caveat" must not look like "you have no answer".
   const border=id=>node(id).evaluate(e=>getComputedStyle(e).borderColor);
-  expect(await border('gap-day')).not.toBe(await border('text-address'));
+  expect(await border('gap-day')).not.toBe(await border('text-building'));
   expect(errors).toEqual([]);
 });

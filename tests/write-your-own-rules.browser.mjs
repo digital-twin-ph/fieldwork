@@ -31,7 +31,7 @@ test('a ruleset step can be given rules written here, from a standing start',asy
   await page.evaluate(id=>{
     const key='fieldwork-workflow-v1';
     const w=JSON.parse(localStorage.getItem(key));
-    w.edges.push({id:'wire',from:'locations',to:id,port:'subjects'});
+    w.edges.push({id:'wire',from:'buildings',to:id,port:'subjects'});
     delete w.manifest;
     localStorage.setItem(key,JSON.stringify(w));
     const ws=JSON.parse(localStorage.getItem('fieldwork-examples-v1')||'{}');

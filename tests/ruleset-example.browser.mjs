@@ -15,7 +15,7 @@ test('the ruleset example is offered, runs, and shows each condition kind',async
   // Two workflows on one canvas: one over a table, one over a point layer. Neither reads the
   // other -- Snow's Table 1 carries no place and a death location carries no date.
   for(const label of ['A · Snow 1855 Table 1','A · Band each day by its deaths',
-    'B · Death locations Snow mapped','B · Band each address, and flag the worst'])
+    'B · 250 buildings, with the deaths recorded in each','B · Band each building, and flag the worst'])
     await expect(page.locator('.react-flow__node').filter({hasText:label}).first()).toBeVisible();
 
   // The rules are on the node, not chosen from a list: the Inspector shows what this step
@@ -32,7 +32,7 @@ test('the ruleset example is offered, runs, and shows each condition kind',async
   await expect(panel).toContainText('Few');
 
   // B · the point half, through the same rule form.
-  await page.getByRole('tab',{name:'B · Addresses, listed'}).click();
+  await page.getByRole('tab',{name:'B · Buildings, listed'}).click();
   await expect(panel).toContainText('Single');
   await expect(panel).toContainText('Cluster');
   expect(errors).toEqual([]);

@@ -1,13 +1,20 @@
-/** The ruleset worked example, run end to end.
+/** The ruleset worked example, run end to end, over Snow's own data.
  *
- *  The practitioner's proposal, 2026-10-15: "We should have a worked example just for the ruleset
- *  widget to exercise different ruleset conditions so users can also see examples of how to
- *  configure it. That is one way to execute widget rules and validate at the same time."
+ *  The practitioner, 2026-10-15: "We should have a worked example just for the ruleset widget to
+ *  exercise different ruleset conditions ... That is one way to execute widget rules and validate
+ *  at the same time." Then, 2026-10-16: "1 workflow for table data and another for point data",
+ *  and "Why not use the John Snow data sets?"
  *
- *  This is the validate-at-the-same-time half. The example is three steps, one condition kind
- *  each, over twelve synthetic records chosen so every branch of every rule has a record in it.
- *  Running it exercises the authored form against the real engine on real workflow plumbing --
- *  which a compiler test cannot do, because a rule that compiles may still fire on nothing.
+ *  So the example is two workflows on one canvas, and this is the validate-at-the-same-time
+ *  half. The halves share nothing: Table 1 carries no place and a death location carries no
+ *  date, so they cannot be joined and the example does not pretend to. What they share is the
+ *  rule form, which is the thing under test -- a rule reads a predicate, and a predicate is
+ *  bound to an attribute, whether the record is a row or a point.
+ *
+ *  Every assertion below is against a record Snow recorded. The synthetic version this replaced
+ *  put a record on every boundary by construction; this one does not, by the practitioner's
+ *  instruction -- "first without the boundary cases" -- and the difference is stated in each
+ *  test that is weaker for it.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,84 +35,85 @@ const run=async()=>{
   syncProjectManifest(workflow);
   return executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(workflow))),reason);
 };
-const attribute=(result,nodeId,recordId,key)=>
-  result.outputs.find(o=>o.nodeId===nodeId).rows.find(r=>r.recordId===recordId).attributes[key];
+/** A banded day, from the table half: the conclusion arrives as another key column. */
+const day=(result,date)=>
+  result.outputs.find(o=>o.nodeId==='day-table').rows.find(r=>r.key.date===date);
+/** A banded address, from the point half. */
+const address=(result,id)=>
+  result.outputs.find(o=>o.nodeId==='address-table').rows.find(r=>r.recordId===id).attributes;
 
-test('the example runs, and each step demonstrates one way to write a condition',async()=>{
+test('both halves run: a table is classified, and so is a point layer',async()=>{
   const result=await run();
-  assert.equal(result.outputs.length,4,'four outputs: three tables and a map');
+  assert.deepEqual(result.outputs.map(o=>o.nodeId),['day-table','address-map','address-table']);
 
-  // 1 · Bands. Two comparisons on one field, and a boundary value on each edge.
-  assert.equal(attribute(result,'bands','s3','band'),'Short');      // 5 min
-  assert.equal(attribute(result,'bands','s7','band'),'Short');      // exactly 15 — not greater than
-  assert.equal(attribute(result,'bands','s5','band'),'Medium');     // 21
-  assert.equal(attribute(result,'bands','s2','band'),'Long');       // 48, over the 30 parameter
-  // The record with no waiting time concludes Unrecorded rather than being treated as zero.
-  // That is the whole reason a ...Known fact exists, and it is the branch a reader forgets.
-  assert.equal(attribute(result,'bands','s9','band'),'Unrecorded');
+  // A · Table data. Until 2026-10-16 this could not run at all: the authored path read
+  // `inputs.subjects as PointCollection` and nothing else, so rules could be written about
+  // places and not about a table -- which is half of the data anybody has.
+  assert.equal(day(result,'1854-08-20').key.day,'NoDeaths');  // 0 deaths
+  assert.equal(day(result,'1854-08-19').key.day,'Few');       // 1
+  assert.equal(day(result,'1854-09-02').key.day,'Many');      // 127, the worst day
+  // The value field is untouched: what the table MEASURES is still what it measured, and the
+  // judgement sits beside it rather than replacing it.
+  assert.equal(day(result,'1854-09-02').value,127);
+  assert.equal(result.outputs.find(o=>o.nodeId==='day-table').rows.length,43);
 
-  // 2 · Alternatives, and two conclusions from one rule.
-  assert.equal(attribute(result,'decisions','s6','decision'),'Review');   // 62 > 60, first group
-  assert.equal(attribute(result,'decisions','s4','decision'),'Review');   // closed and 33 > 30, second group
-  assert.equal(attribute(result,'decisions','s4','reason'),'LongOrClosed');
-  assert.equal(attribute(result,'decisions','s8','decision'),'NoFlag');   // closed but quick
-  assert.equal(attribute(result,'decisions','s8','reason'),'ClosedButQuick');
-  assert.equal(attribute(result,'decisions','s9','decision'),'Unknown');
-  assert.equal(attribute(result,'decisions','s9','reason'),'NoWaitRecorded');
-
-  // 3 · A category match, with two kinds sharing one conclusion through `any`.
-  assert.equal(attribute(result,'map','s1','service'),'Consultation');
-  assert.equal(attribute(result,'map','s3','service'),'Dispensing');
-  assert.equal(attribute(result,'map','s5','service'),'FirstContact');
-  assert.equal(attribute(result,'map','s7','service'),'FirstContact');
-  // `other` matches no rule, so it carries no conclusion at all. A ruleset may decline to
-  // classify; reading that silence as a conclusion is the trap 65 exists to prevent.
-  assert.equal(attribute(result,'map','s11','service'),undefined);
-  assert.equal(attribute(result,'map','s12','service'),undefined);
+  // B · Point data, through the same rule form.
+  assert.equal(address(result,'location-2').address,'Single');    // 1 death
+  assert.equal(address(result,'location-1').address,'Several');   // 2
+  assert.equal(address(result,'location-4').address,'Several');   // 4, the cluster setting
+  assert.equal(address(result,'location-74').address,'Cluster');  // 5
+  // Two conclusions from one rule: the band, and that this one is worth looking at.
+  assert.equal(address(result,'location-74').look,'Yes');
+  assert.equal(address(result,'location-2').look,undefined);
 });
 
-// The three debts experiment 106 records, exercised here rather than only written down. The
+// The three debts experiment 106 records, exercised rather than only written down. The
 // practitioner, 2026-10-15: "The three debts should go in the worked example for rulesets so
-// these can be exercised and evaluated." Two of them are DEFECTS this example now demonstrates,
-// which is uncomfortable and is the point: a debt nobody can run is a debt nobody will pay.
+// these can be exercised and evaluated."
 
-test('debt 1 · the two comparators nothing had executed now run, including on the boundary',async()=>{
+test('debt 1 · all four numeric comparators are executed against the real engine',async()=>{
   const result=await run();
   // `lessThan` and `notLessThan` compiled from the day the compiler was written and were
-  // executed by nothing. Step 4 is what makes offering them in the editor defensible.
-  assert.equal(attribute(result,'access','s3','access'),'WalkIn');        // 5 < 10
-  assert.equal(attribute(result,'access','s10','access'),'WalkIn');       // 7 < 10
-  // Exactly on the boundary: NOT less than 10, which is the whole difference between
-  // `is less than` and `is at most` and the case a reader checks first.
-  assert.equal(attribute(result,'access','s13','access'),'Appointment');  // 10
-  assert.equal(attribute(result,'access','s2','access'),'Appointment');   // 48
-  assert.equal(attribute(result,'access','s9','access'),'Unrecorded');    // no wait recorded
-  const receipt=result.receipts.find(r=>r.nodeId==='walkin');
-  assert.match(receipt.rules,/math:lessThan 10/);
-  assert.match(receipt.rules,/math:notLessThan 10/);
+  // executed by nothing, which is what made offering them in the editor indefensible. The point
+  // half uses both; the table half uses the other two.
+  const banded=result.receipts.find(r=>r.nodeId==='address');
+  assert.match(banded.rules,/math:lessThan 2/);
+  assert.match(banded.rules,/math:notLessThan 2/);
+  const days=result.receipts.find(r=>r.nodeId==='day');
+  assert.match(days.rules,/math:greaterThan 20/);
+  assert.match(days.rules,/math:notGreaterThan 20/);
+  // And each one decided a record, rather than merely compiling.
+  assert.equal(address(result,'location-2').address,'Single');   // less than 2
+  assert.equal(address(result,'location-1').address,'Several');  // not less than 2
+
+  // WEAKER THAN THE SYNTHETIC VERSION, deliberately. That example put a record exactly on each
+  // boundary, so `is less than 2` and `is at most 2` could be told apart by a run. Snow's data
+  // has 1s and 2s either side of this one, which distinguishes them here -- but no boundary is
+  // guaranteed, and a future threshold could sit where no record stands. Boundary records are
+  // the next thing to add, and they will be labelled as ours when they arrive.
 });
 
-test('debt 2, paid · a unit is required, and a mismatch is refused by name',async()=>{
-  // The practitioner, 2026-10-15: "How do we make sure measurements have units in the ruleset
-  // widget?" By requiring one on every numeric field and every numeric setting, and refusing a
-  // comparison whose two sides disagree -- refused rather than converted, which is the
-  // precedent makeN3 set for distances.
+test('debt 2 · a unit is required, and a mismatch is refused by name',async()=>{
+  // "How do we make sure measurements have units in the ruleset widget?" By requiring one on
+  // every numeric field and every numeric setting, and refusing a comparison whose two sides
+  // disagree -- refused rather than converted.
   const {authoredUnitProblems}=await import('../build/rulesets.js');
   const workflow=rulesetExample();
-  const step=workflow.nodes.find(n=>n.id==='wait');
+  const step=workflow.nodes.find(n=>n.id==='day');
 
-  // As shipped, every measurement in the example states its unit.
+  // A count is dimensionless and still declares what it is. As shipped, both halves do.
   assert.deepEqual(authoredUnitProblems(step.params.authored),[]);
+  assert.deepEqual(authoredUnitProblems(workflow.nodes.find(n=>n.id==='address').params.authored),[]);
 
-  // A setting in hours against a field in minutes: the mismatch this could not see before.
+  // A setting in hours against a field counting deaths: a comparison between two different
+  // things, which no amount of arithmetic makes meaningful.
   const hours=JSON.parse(JSON.stringify(step.params.authored));
   hours.parameters[0].unit='http://qudt.org/vocab/unit/HR';
   hours.parameters[0].unitLabel='hours';
   const mismatch=authoredUnitProblems(hours);
   assert.equal(mismatch.length,1);
-  assert.match(mismatch[0].says,/measured in minutes and the threshold setting is in hours/);
-  // It says what to do, in both directions.
-  assert.match(mismatch[0].says,/State the setting in minutes/);
+  assert.match(mismatch[0].says,/is measured in deaths and the busy setting is in hours/);
+  assert.match(mismatch[0].says,/State the setting in deaths/);
 
   // A number with no unit at all is not a measurement, and is refused before any comparison.
   const bare=JSON.parse(JSON.stringify(step.params.authored));
@@ -117,36 +125,25 @@ test('debt 2, paid · a unit is required, and a mismatch is refused by name',asy
   syncProjectManifest(workflow);
   await assert.rejects(
     executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(workflow))),reason),
-    /1 · Banding a number cannot run: Wait is measured in minutes/);
+    /cannot run: Deaths that day is measured in deaths/);
 });
 
-test('debt 2, as it was · a wrong unit used to pass every check',async()=>{
-  // The fields declare minutes. A threshold typed as "1", meaning one HOUR, is a number in
-  // range, so every check this application has lets it through: the parameter validates and the
-  // rules compile.
-  // Kept as the record of what the check replaced: a threshold of 1, meaning one hour, against
-  // fields in minutes. The units now AGREE in the declaration -- both minutes -- so the unit
-  // check passes and this is purely a wrong number, which is the case nothing can catch. It is
-  // the reason the editor shows the field's unit beside the box.
+test('debt 2, as it was · a wrong number in the right unit passes every check',async()=>{
+  // The case nothing can catch, and the reason the editor shows the field's unit beside the box.
+  // The units AGREE here -- both count deaths -- and the number is simply wrong: a day banded
+  // Many above one death rather than above twenty. Every check this application has passes it.
   const workflow=rulesetExample();
-  const step=workflow.nodes.find(n=>n.id==='wait');
-  step.params.parameters.threshold=1;
+  workflow.nodes.find(n=>n.id==='day').params.parameters.busy=1;
   assert.doesNotThrow(()=>validateWorkflow(JSON.parse(JSON.stringify(workflow))),
     'a number in range is accepted, whatever the practitioner meant by it');
   syncProjectManifest(workflow);
 
-  // What happens at the run was not what I expected, and is worth recording. The bands are
-  // written against a fixed 15 and a parameter: at 1 they OVERLAP, so a 12-minute wait is both
-  // at most 15 and more than 1, two rules fire, and the run refuses.
-  //
-  // So a unit mistake is caught -- by accident, through debt 3, and the message a practitioner
-  // reads is about conclusions disagreeing. It does not mention units, the parameter, or which
-  // number to look at. Being refused for the wrong reason is better than a wrong answer and is
-  // not the same as being told.
-  await assert.rejects(
-    executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(workflow))),reason),
-    error=>/two different band conclusions for one record/.test(error.message)
-      &&!/unit|minute|hour|threshold/i.test(error.message));
+  // It runs, and it answers. Wrongly, and in silence: the 19th had one death and is Few, the
+  // 21st had two and is now Many. Nothing in the result says a threshold was mistaken, because
+  // nothing can know it was.
+  const result=await executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(workflow))),reason);
+  assert.equal(day(result,'1854-08-19').key.day,'Few');
+  assert.equal(day(result,'1854-08-21').key.day,'Many');
 });
 
 test('debt 3 · rules that disagree are caught at the run, which is late',async()=>{
@@ -155,41 +152,37 @@ test('debt 3 · rules that disagree are caught at the run, which is late',async(
   // cannot see it -- both rules are well formed -- and the editor cannot either. The reasoner
   // reaches both conclusions and the projection refuses them.
   const workflow=rulesetExample();
-  const step=workflow.nodes.find(n=>n.id==='kind');
-  step.params.authored.rules.push({
-    any:[{all:[{field:'fwa:category',comparator:'equals',value:'fwa:clinic'}]}],
-    then:[{predicate:'fwa:service',value:'fwa:Dispensing'}],   // clinics already conclude Consultation
+  workflow.nodes.find(n=>n.id==='day').params.authored.rules.push({
+    any:[{all:[{field:'fwa:deaths',comparator:'notGreaterThan',value:0}]}],
+    then:[{predicate:'fwa:day',value:'fwa:Quiet'}],   // a day with no deaths already concludes NoDeaths
   });
   syncProjectManifest(workflow);
   await assert.rejects(
     executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(workflow))),reason),
-    /two different service conclusions for one record/);
+    /two different day conclusions for one record/);
   // Late is better than never, and the message says what to do; but the practitioner has by then
   // written the rules, kept them, and run the workflow.
 });
 
 test('the receipt carries the rules themselves, the bindings, and what was left unmatched',async()=>{
   const result=await run();
-  const receipt=result.receipts.find(r=>r.nodeId==='kind');
-  // An authored ruleset has no published artefact to cite, so the receipt carries the rules.
-  // In the AUTHORED namespace: these words were written by whoever wrote the rules, and the
+  const receipt=result.receipts.find(r=>r.nodeId==='address');
+  // An authored ruleset has no published artefact to cite, so the receipt carries the rules, in
+  // the AUTHORED namespace: these words were written by whoever wrote the rules, and the
   // framework's fw: vocabulary stays exactly what the ontology declares.
-  assert.match(receipt.rules,/fwa:category fwa:clinic/);
-  assert.match(receipt.rules,/=> \{ \?s fwa:service fwa:Consultation\. \}/);
-  // And the bindings, because a conclusion about fw:category means nothing to a reader who
+  assert.match(receipt.rules,/=> \{ \?s fwa:address fwa:Cluster; fwa:look fwa:Yes\. \}/);
+  // And the bindings, because a conclusion about fwa:deathsHere means nothing to a reader who
   // cannot see which column that was.
-  assert.match(receipt.facts,/fw:boundAttribute "category"/);
-  assert.match(receipt.facts,/fw:boundPredicate "fwa:category"/);
+  assert.match(receipt.facts,/fw:boundAttribute "DEATHS"/);
+  assert.match(receipt.facts,/fw:boundPredicate "fwa:deathsHere"/);
   assert.match(receipt.facts,/fw:ruleSource "authored"/);
-  // Two records matched no rule, and the receipt says so rather than letting them pass as
-  // classified.
-  assert.match(receipt.facts,/fw:unmatchedSubjectCount 2/);
-  assert.match(receipt.method,/2 records matched no rule/);
-  // What it must not be read as travels with it, as it does for a bundled ruleset.
+  // Every record fell in a band, and the receipt says so rather than leaving it to be assumed.
+  assert.match(receipt.facts,/fw:unmatchedSubjectCount 0/);
+  assert.match(receipt.method,/Every record matched a rule/);
   assert.match(receipt.facts,/fw:mustNotBeReadAs/);
 
   // A step whose rules use a parameter records the bound value, not the placeholder.
-  const banded=result.receipts.find(r=>r.nodeId==='wait');
-  assert.match(banded.rules,/math:greaterThan 30\b/);
-  assert.ok(!banded.rules.includes('{{threshold}}'),'nothing reaches the reasoner unbound');
+  const days=result.receipts.find(r=>r.nodeId==='day');
+  assert.match(days.rules,/math:greaterThan 20\b/);
+  assert.ok(!days.rules.includes('{{busy}}'),'nothing reaches the reasoner unbound');
 });

@@ -5,6 +5,32 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **A ruleset can read a table.** The authored path took a point layer and nothing else, so rules
+  could be written about places and not about rows — half of the data anybody has, and all of
+  Snow's Table 1. Both ends now normalise to a record: a table row's attributes are its key
+  columns plus its declared value field, the conclusions come back as further key columns beside
+  the number they were made about, and the rule layer between them is unchanged. A point layer
+  behaves exactly as before.
+- **The ruleset worked example is now two workflows on one canvas, over John Snow's own data** —
+  Table 1 banded by the deaths on each date, the mapped locations banded by the deaths at each
+  address. The halves share nothing, because Table 1 carries no place and a location carries no
+  date, and a rule reads neither differently. It replaces twelve invented clinics. **It invents
+  no records**, so a branch fires only where Snow's data put something in it: the missing-value
+  branch is now unexercised, and boundary records are the next thing to add.
+- **An input shows its records** as a table of columns and rows, and as the JSON they actually
+  are, with a control for how many to show. It previously listed twelve record names and no
+  column at all, while the ruleset beside it asked which column meant which field.
+- **A published ruleset's rules can be read in the rule editor**, laid out as rules rather than
+  as N3, with every control disabled — it is pinned and versioned, and a reader of a workflow has
+  to be able to tell which rules ran. Each published document now carries the authored source its
+  N3 was compiled from, and the build fails unless the two still agree.
+- **A failed run says so.** Every toast used success green and faded after five seconds, so
+  "Workflow stopped" looked exactly like "Complete in 280 ms". A failure is red, stays until it
+  is closed, and no longer has its canvas status overwritten by the render that follows it.
+- **A rule refers to a setting by name**, not by typing `{{threshold}}`. The placeholder belongs
+  to the compiled rules, which are text that `bindParameters` fills; it had been carried into the
+  form a practitioner edits.
+
 - **A map has layers, not modes.** `map_output` no longer asks which kind of thing it is before
   it will accept one. It declares every layer port it can draw, the renderer is read from what is
   connected, and the canvas shows the layers a map draws plus **one configurable port**: drop any

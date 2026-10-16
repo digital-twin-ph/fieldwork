@@ -12,22 +12,22 @@ test('rules can be edited in a dialog, and the edit reaches the saved workflow',
   await page.goto('/?example=rulesets');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
 
-  await page.locator('.react-flow__node[data-id="kind"]').click();
+  await page.locator('.react-flow__node[data-id="address"]').click();
   await page.locator('#edit-rules').click();
   const dialog=page.locator('#rule-editor');
   await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText('What each kind of service point can do');
+  await expect(dialog).toContainText('An address, banded by how many died there');
 
   const before=await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
-    return w.nodes.find(n=>n.id==='kind').params.authored.rules.length;
+    return w.nodes.find(n=>n.id==='address').params.authored.rules.length;
   });
 
   // Add a rule, and give it a condition and a conclusion in the practitioner's words -- no
   // prefixes typed, because the namespace is the application's business.
   await dialog.locator('#rule-editor-add').click();
   const added=dialog.locator('.rule-card').last();
-  await added.locator('[data-part="field"]').selectOption({index:2});
+  await added.locator('[data-part="field"]').selectOption({index:1});
   await added.locator('[data-part="predicate"]').fill('service');
   await added.locator('[data-part="predicate"]').press('Tab');
   await dialog.locator('.rule-card').last().locator('[data-part="conclusion"]').fill('Referral');
@@ -36,14 +36,14 @@ test('rules can be edited in a dialog, and the edit reaches the saved workflow',
   // Nothing is saved until the practitioner keeps it.
   expect(await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
-    return w.nodes.find(n=>n.id==='kind').params.authored.rules.length;
+    return w.nodes.find(n=>n.id==='address').params.authored.rules.length;
   })).toBe(before);
 
   await dialog.locator('#rule-editor-keep').click();
   await expect(dialog).toBeHidden();
   const after=await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
-    const rules=w.nodes.find(n=>n.id==='kind').params.authored.rules;
+    const rules=w.nodes.find(n=>n.id==='address').params.authored.rules;
     return {count:rules.length,last:rules[rules.length-1]};
   });
   expect(after.count).toBe(before+1);
@@ -73,8 +73,8 @@ test('a setting is chosen by name, and the template syntax never reaches the sur
 
   // Step 1 bands a number against the `threshold` setting, so it is the step that used to show
   // the braces -- in the Inspector and in the editor both.
-  await page.locator('.react-flow__node[data-id="wait"]').click();
-  await expect(page.locator('#inspector-content')).toContainText('the threshold setting below');
+  await page.locator('.react-flow__node[data-id="day"]').click();
+  await expect(page.locator('#inspector-content')).toContainText('the busy setting below');
   expect(await page.locator('#inspector-content').innerText()).not.toContain('{{');
 
   await page.locator('#edit-rules').click();
@@ -84,20 +84,20 @@ test('a setting is chosen by name, and the template syntax never reaches the sur
   // The setting is an option in the list of what the number is compared against, beside its own
   // unit -- which is what makes a unit mismatch legible rather than merely refused.
   const source=dialog.locator('[data-part="value-source"]').last();
-  await expect(source).toHaveValue('threshold');
-  await expect(source.locator('option')).toHaveText(['a number','the threshold setting']);
+  await expect(source).toHaveValue('busy');
+  await expect(source.locator('option')).toHaveText(['a number','the busy setting']);
 
   // Switching to a typed number, and back, leaves the stored form intact.
   await source.selectOption('');
   await expect(dialog.locator('[data-part="value"]').last()).toBeVisible();
-  await dialog.locator('[data-part="value-source"]').last().selectOption('threshold');
+  await dialog.locator('[data-part="value-source"]').last().selectOption('busy');
   await dialog.locator('#rule-editor-keep').click();
   await expect(dialog).toBeHidden();
   expect(await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
-    const rules=w.nodes.find(n=>n.id==='wait').params.authored.rules;
+    const rules=w.nodes.find(n=>n.id==='day').params.authored.rules;
     return rules[rules.length-1].any[0].all[0].value;
-  })).toEqual({setting:'threshold'});
+  })).toEqual({setting:'busy'});
   expect(errors).toEqual([]);
 });
 

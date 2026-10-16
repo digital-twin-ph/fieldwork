@@ -31,7 +31,7 @@ test('a ruleset step can be given rules written here, from a standing start',asy
   await page.evaluate(id=>{
     const key='fieldwork-workflow-v1';
     const w=JSON.parse(localStorage.getItem(key));
-    w.edges.push({id:'wire',from:'sites',to:id,port:'subjects'});
+    w.edges.push({id:'wire',from:'locations',to:id,port:'subjects'});
     delete w.manifest;
     localStorage.setItem(key,JSON.stringify(w));
     const ws=JSON.parse(localStorage.getItem('fieldwork-examples-v1')||'{}');
@@ -43,7 +43,7 @@ test('a ruleset step can be given rules written here, from a standing start',asy
 
   const inspector=page.locator('#inspector-content');
   await expect(inspector).toContainText('These are the columns the connected records carry');
-  await expect(inspector).toContainText('wait_minutes');
+  await expect(inspector).toContainText('DEATHS');
   await page.locator('#use-columns').click();
 
   // Declared, and a numeric column is asked for its unit, because a number without one is not a
@@ -51,13 +51,13 @@ test('a ruleset step can be given rules written here, from a standing start',asy
   await expect(inspector).toContainText('A numeric column needs its unit');
   const unit=page.locator('[data-field-unit]').first();
   await expect(unit).toBeVisible();
-  await unit.fill('minutes');
+  await unit.fill('m');
   await unit.press('Tab');
   await expect.poll(async()=>await page.evaluate(id=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
     const f=w.nodes.find(n=>n.id===id).params.authored.fields.find(x=>x.kind==='number');
     return f?.unit;
-  },added)).toBe('http://qudt.org/vocab/unit/MIN');
+  },added)).toBe('http://qudt.org/vocab/unit/M');
 
   // And the editor opens on a step that had no rules at all a moment ago.
   await page.locator('#edit-rules').click();

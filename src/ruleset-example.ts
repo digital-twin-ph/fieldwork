@@ -1,184 +1,156 @@
-/** A worked example whose subject is the ruleset widget itself.
+/** A worked example whose subject is the ruleset widget itself, over Snow's own data.
  *
  *  The practitioner's proposal, 2026-10-15: *"We should have a worked example just for the
  *  ruleset widget to exercise different ruleset conditions so users can also see examples of how
- *  to configure it. That is one way to execute widget rules and validate at the same time."*
+ *  to configure it."* Then, 2026-10-16: *"the rule sets in the example should be split into 2 but
+ *  within the same canvas ... 1 workflow for table data and another for point data"*, and
+ *  *"Why not use the John Snow data sets?"*
  *
- *  Every other worked example is about a place or a question -- Soho in 1854, access in Old
- *  Naledi -- and the widgets are how it gets answered. This one is the other way round: the
- *  subject is the widget, and the clinic data is synthetic and deliberately small so a reader can
- *  hold all of it in their head while they read the rules.
+ *  Why not indeed. The first version of this example invented a town of twelve clinics, which
+ *  asked a reader to learn a fiction before they could read a rule. Snow's 1854 outbreak is
+ *  already in this repository, already cited, and comes in exactly the two shapes this example
+ *  needs to separate:
  *
- *  It exercises one condition kind per step, and because it RUNS, it checks them. A rule form
- *  that compiles but does not fire is caught here rather than in a unit test that only compares
- *  text.
+ *  - **Table 1** is dates and counts and carries no place at all. 43 dated rows.
+ *  - **The death locations** are places and carry a count each, and no date.
+ *
+ *  Those are the two halves, on one canvas, sharing nothing -- which is the point. A rule reads
+ *  a predicate and a predicate is bound to an attribute, and that is as true of a table row as
+ *  of a point. Making the table half run is what [experiment
+ *  106](../docs/experiments/106-rule-builder-ui.md) had never checked.
+ *
+ *  **It carries no invented records.** The practitioner asked for it this way first: *"Yes let's
+ *  build it that way, first without the boundary cases."* So every branch that fires here fires
+ *  because Snow's data put a record in it, and a branch with no record in it stays visibly
+ *  empty. That is a weaker guarantee than the synthetic version had -- it exercised every branch
+ *  by construction -- and it is an honest one.
  */
 import type {PointCollection,PointFeature,PortType,Workflow} from './types.js';
+import type {DataTable} from './data-table.js';
 import {pinnedRuleset} from './rule-application.js';
 import {bboxPolygon} from './study-area.js';
+import points from '../examples/john-snow/points.json';
+import dates from '../examples/john-snow/dates.json';
 
-const site=(id:string,name:string,lon:number,lat:number,
-  properties:Record<string,string|number|boolean|null>):PointFeature=>
-  ({type:'Feature',id,properties:{name,...properties} as PointFeature['properties'],
-    geometry:{type:'Point',coordinates:[lon,lat]}});
+/** A count is dimensionless, and says so. QUDT's `NUM` is the honest unit for "how many": not a
+ *  metre or a minute, but not unitless either -- the check insists a number declare what it is,
+ *  and "a number of deaths" is what this is. */
+const COUNT='http://qudt.org/vocab/unit/NUM';
 
-/** Twelve service points around one town. Synthetic, and chosen so that every branch of every
- *  rule below has at least one record in it -- including the branches a reader is most likely to
- *  forget: a missing waiting time, and a category nobody declared. */
-const sites=():PointCollection=>({type:'FeatureCollection',features:[
-  site('s1','Riverside clinic',25.902,-24.683,{category:'clinic',wait_minutes:12,open_today:true}),
-  site('s2','Hilltop clinic',25.908,-24.679,{category:'clinic',wait_minutes:48,open_today:true}),
-  site('s3','Market pharmacy',25.912,-24.686,{category:'pharmacy',wait_minutes:5,open_today:true}),
-  site('s4','Station pharmacy',25.897,-24.690,{category:'pharmacy',wait_minutes:33,open_today:false}),
-  site('s5','North health post',25.905,-24.672,{category:'health_post',wait_minutes:21,open_today:true}),
-  site('s6','South health post',25.899,-24.697,{category:'health_post',wait_minutes:62,open_today:false}),
-  site('s7','Mobile unit · Tuesday',25.916,-24.675,{category:'mobile',wait_minutes:15,open_today:true}),
-  site('s8','Mobile unit · Friday',25.893,-24.681,{category:'mobile',wait_minutes:15,open_today:false}),
-  // No waiting time recorded. The rules conclude Unknown rather than treating it as zero, which
-  // is what the ...Known fact is for.
-  site('s9','Old dispensary',25.919,-24.692,{category:'pharmacy',wait_minutes:null,open_today:true}),
-  site('s10','Night desk',25.888,-24.687,{category:'clinic',wait_minutes:7,open_today:false}),
-  site('s11','Railway aid room',25.922,-24.701,{category:'other',wait_minutes:26,open_today:true}),
-  site('s12','Depot window',25.885,-24.695,{category:'other',wait_minutes:95,open_today:true}),
-  // Exactly on the boundary of step 4's parameter. `is less than 10` excludes it and `is at
-  // least 10` includes it, which is the whole difference between those two comparators and the
-  // case a reader checks first. Every boundary in this example has a record standing on it.
-  site('s13','Corner surgery',25.910,-24.700,{category:'clinic',wait_minutes:10,open_today:true}),
-]});
+/** Snow 1855, Table 1: deaths by date of death. The value field is what the table measures. */
+const deathsByDate=():DataTable=>({kind:'data-table',keys:['date'],valueField:'deaths',unit:'deaths',
+  rows:(dates.rows as {date:string;deaths:number}[]).map(row=>({key:{date:row.date},value:row.deaths})),
+  rowCount:dates.rows.length,missingValueCount:0});
 
-/** The bindings every step shares: which attribute means which predicate in the rules. */
-const MINUTE='http://qudt.org/vocab/unit/MIN';
-const FIELDS=[
-  {attribute:'wait_minutes',predicate:'fwa:waitMinutes',kind:'number' as const,label:'Wait',
-    unit:MINUTE,unitLabel:'minutes'},
-  {attribute:'category',predicate:'fwa:category',kind:'term' as const,label:'Kind of service point'},
-  {attribute:'open_today',predicate:'fwa:openToday',kind:'boolean' as const,label:'Open today'},
-];
+/** The death locations Snow mapped. Each carries `DEATHS`, the number at that address. */
+const deathLocations=():PointCollection=>
+  ({type:'FeatureCollection',features:structuredClone(points.deaths) as PointFeature[]});
 
-/** A pin that gives the node its ports. An authored ruleset has no published artefact, so this
- *  names the form rather than a version of anything: the rules live on the node. */
-const authoredPin=()=>{
+/** A pin that gives a node its ports. An authored ruleset has no published artefact, so this
+ *  names the shape rather than a version of anything: the rules live on the node. */
+const authoredPin=(port:PortType)=>{
   const pin=pinnedRuleset('urn:fieldwork:ruleset:outreach-criteria','1.0.0')!;
   return {id:pin.id,version:pin.version,title:'Rules written in this workflow',
-    inputs:[['subjects','points']] as [string,PortType][],output:'points' as PortType};
+    inputs:[['subjects',port]] as [string,PortType][],output:port};
 };
+
+const NOT_A_JUDGEMENT='A judgement about the 1854 outbreak, or about what any number of deaths '
+  +'meant. These bands exist to show how a rule is put together, and the thresholds are settings '
+  +'on the step rather than anything Snow or anyone else concluded.';
 
 export function rulesetExample():Workflow{
   return {schema:'fieldwork/workflow/1',exampleId:'rulesets',
     name:'Rulesets · how a rule is put together',
     nodes:[
-      {id:'town',type:'study_area',x:40,y:40,params:{source:'drawn' as const,
-        label:'Illustrative town box',selectionMode:'bbox' as const,
-        geometry:bboxPolygon(25.88,-24.705,25.926,-24.668)}},
-      {id:'sites',type:'point_input',x:40,y:200,params:{label:'Twelve service points (synthetic)',
-        data:sites(),
-        fields:[{key:'category',label:'Kind of service point',type:'text'},
-          {key:'wait_minutes',label:'Wait (minutes)',type:'number'},
-          {key:'open_today',label:'Open today',type:'boolean'}],
-        sourceInfo:{format:'manual' as const}}},
+      // ── A · Table data ────────────────────────────────────────────────────────────────────
+      // Dates and counts. No geometry anywhere in this half, which is the thing worth seeing:
+      // a ruleset does not need a map.
+      {id:'dates',type:'table_input',x:40,y:60,params:{label:'A · Snow 1855 Table 1 · deaths by date',
+        keys:['date'],valueField:'deaths',unit:'deaths',data:deathsByDate(),
+        source:{filename:'snow_dates.csv',bytes:828,sha256:'',rows:dates.rows.length}}},
 
-      // 1 · One band, two comparisons on one field. The simplest rule that is not a yes/no.
-      {id:'wait',type:'apply_ruleset',x:380,y:60,params:{
-        label:'1 · Banding a number',parameters:{threshold:30},
-        ruleset:authoredPin(),
-        authored:{title:'Waiting time, in bands',
-          parameters:[{name:'threshold',meaning:'Wait above which a service point is called Long.',unit:MINUTE,unitLabel:'minutes',min:0,max:600,decimals:0}],
-          mustNotBeReadAs:'A measurement of how long anyone actually waited. These are reported figures for one synthetic day.',
-          fields:FIELDS,
+      {id:'day',type:'apply_ruleset',x:380,y:60,params:{
+        label:'A · Band each day by its deaths',parameters:{busy:20},
+        ruleset:authoredPin('table'),
+        authored:{title:'A day, banded by how many died on it',
+          parameters:[{name:'busy',meaning:'Deaths in one day above which that day is banded Many.',
+            unit:COUNT,unitLabel:'deaths',min:0,max:200,decimals:0}],
+          mustNotBeReadAs:NOT_A_JUDGEMENT,
+          fields:[{attribute:'deaths',predicate:'fwa:deaths',kind:'number' as const,
+            label:'Deaths that day',unit:COUNT,unitLabel:'deaths'}],
           rules:[
-            {any:[{all:[{field:'fwa:waitMinutesKnown',comparator:'equals',value:false}]}],
-             then:[{predicate:'fwa:band',value:'fwa:Unrecorded'}]},
-            {any:[{all:[{field:'fwa:waitMinutes',comparator:'notGreaterThan',value:15}]}],
-             then:[{predicate:'fwa:band',value:'fwa:Short'}]},
-            {any:[{all:[{field:'fwa:waitMinutes',comparator:'greaterThan',value:15},
-                        {field:'fwa:waitMinutes',comparator:'notGreaterThan',value:{setting:'threshold'}}]}],
-             then:[{predicate:'fwa:band',value:'fwa:Medium'}]},
-            {any:[{all:[{field:'fwa:waitMinutes',comparator:'greaterThan',value:{setting:'threshold'}}]}],
-             then:[{predicate:'fwa:band',value:'fwa:Long'}]},
+            // The branch a reader forgets. Table 1 has no gaps, so this one does not fire --
+            // and it stays, because a rule that handles a missing value is not wrong for having
+            // nothing to handle yet, and the run counts what matched nothing.
+            {any:[{all:[{field:'fwa:deathsKnown',comparator:'equals',value:false}]}],
+             then:[{predicate:'fwa:day',value:'fwa:Unrecorded'}]},
+            {any:[{all:[{field:'fwa:deaths',comparator:'notGreaterThan',value:0}]}],
+             then:[{predicate:'fwa:day',value:'fwa:NoDeaths'}]},
+            {any:[{all:[{field:'fwa:deaths',comparator:'greaterThan',value:0},
+                        {field:'fwa:deaths',comparator:'notGreaterThan',value:{setting:'busy'}}]}],
+             then:[{predicate:'fwa:day',value:'fwa:Few'}]},
+            {any:[{all:[{field:'fwa:deaths',comparator:'greaterThan',value:{setting:'busy'}}]}],
+             then:[{predicate:'fwa:day',value:'fwa:Many'}]},
           ]}}},
 
-      // 2 · Two alternatives reaching the same conclusion, and two conclusions from one rule.
-      {id:'review',type:'apply_ruleset',x:380,y:330,params:{
-        label:'2 · Alternatives, and two conclusions at once',parameters:{threshold:30},
-        ruleset:authoredPin(),
-        authored:{title:'Which service points to look at',
-          parameters:[{name:'threshold',meaning:'Wait above which a closed service point is worth looking at.',unit:MINUTE,unitLabel:'minutes',min:0,max:600,decimals:0}],
-          mustNotBeReadAs:'A judgement about any service point. It is an illustration of how alternatives are written.',
-          fields:FIELDS,
+      {id:'day-table',type:'table_output',x:760,y:60,params:{label:'A · Days, banded',inputMode:'table'}},
+
+      // ── B · Point data ────────────────────────────────────────────────────────────────────
+      // The same widget, the same rule form, records with a place. The rules do not know the
+      // difference and neither half reads the other: Table 1 carries no location and a location
+      // carries no date, so the two cannot be joined, and this example does not pretend to.
+      {id:'locations',type:'point_input',x:40,y:420,params:{
+        label:'B · Death locations Snow mapped',data:deathLocations(),
+        fields:[{key:'DEATHS',label:'Deaths at this address',type:'number'}],
+        sourceInfo:{format:'GeoJSON' as const,
+          description:'Death locations digitised from Snow’s map. A location carries no date, so this cannot be joined to Table 1.'}}},
+
+      {id:'address',type:'apply_ruleset',x:380,y:420,params:{
+        label:'B · Band each address, and flag the worst',parameters:{cluster:4},
+        ruleset:authoredPin('points'),
+        authored:{title:'An address, banded by how many died there',
+          parameters:[{name:'cluster',meaning:'Deaths at one address above which it is banded a Cluster.',
+            unit:COUNT,unitLabel:'deaths',min:1,max:50,decimals:0}],
+          mustNotBeReadAs:NOT_A_JUDGEMENT,
+          fields:[{attribute:'DEATHS',predicate:'fwa:deathsHere',kind:'number' as const,
+            label:'Deaths at this address',unit:COUNT,unitLabel:'deaths'}],
           rules:[
-            {any:[{all:[{field:'fwa:waitMinutesKnown',comparator:'equals',value:false}]}],
-             then:[{predicate:'fwa:decision',value:'fwa:Unknown'},{predicate:'fwa:reason',value:'fwa:NoWaitRecorded'}]},
-            // Either a long wait, OR closed today with a wait over the threshold. One rule, two
-            // groups: this is what "any" means, and each group is an "all".
-            {any:[{all:[{field:'fwa:waitMinutesKnown',comparator:'equals',value:true},
-                        {field:'fwa:waitMinutes',comparator:'greaterThan',value:60}]},
-                  {all:[{field:'fwa:openToday',comparator:'equals',value:false},
-                        {field:'fwa:waitMinutes',comparator:'greaterThan',value:{setting:'threshold'}}]}],
-             then:[{predicate:'fwa:decision',value:'fwa:Review'},{predicate:'fwa:reason',value:'fwa:LongOrClosed'}]},
-            {any:[{all:[{field:'fwa:waitMinutesKnown',comparator:'equals',value:true},
-                        {field:'fwa:waitMinutes',comparator:'notGreaterThan',value:60},
-                        {field:'fwa:openToday',comparator:'equals',value:true}]}],
-             then:[{predicate:'fwa:decision',value:'fwa:NoFlag'},{predicate:'fwa:reason',value:'fwa:OpenAndReasonable'}]},
-            {any:[{all:[{field:'fwa:waitMinutesKnown',comparator:'equals',value:true},
-                        {field:'fwa:waitMinutes',comparator:'notGreaterThan',value:{setting:'threshold'}},
-                        {field:'fwa:openToday',comparator:'equals',value:false}]}],
-             then:[{predicate:'fwa:decision',value:'fwa:NoFlag'},{predicate:'fwa:reason',value:'fwa:ClosedButQuick'}]},
+            {any:[{all:[{field:'fwa:deathsHereKnown',comparator:'equals',value:false}]}],
+             then:[{predicate:'fwa:address',value:'fwa:Unrecorded'}]},
+            // `is less than` and `is at least`, which the table half above does not use. All
+            // four numeric comparators are exercised across the two workflows, and every one of
+            // them fires against Snow's own records -- no invented row stands on a boundary to
+            // make a branch reachable.
+            {any:[{all:[{field:'fwa:deathsHere',comparator:'lessThan',value:2}]}],
+             then:[{predicate:'fwa:address',value:'fwa:Single'}]},
+            {any:[{all:[{field:'fwa:deathsHere',comparator:'notLessThan',value:2},
+                        {field:'fwa:deathsHere',comparator:'notGreaterThan',value:{setting:'cluster'}}]}],
+             then:[{predicate:'fwa:address',value:'fwa:Several'}]},
+            // Two conclusions from one rule: the band, and that this one is worth looking at.
+            // One rule may conclude a list, and a reader meets that here rather than being told
+            // about it.
+            {any:[{all:[{field:'fwa:deathsHere',comparator:'greaterThan',value:{setting:'cluster'}}]}],
+             then:[{predicate:'fwa:address',value:'fwa:Cluster'},
+                   {predicate:'fwa:look',value:'fwa:Yes'}]},
           ]}}},
 
-      // 3 · Matching a category by name, one rule per kind.
-      {id:'kind',type:'apply_ruleset',x:380,y:600,params:{
-        label:'3 · Matching a category',parameters:{},
-        ruleset:authoredPin(),
-        authored:{title:'What each kind of service point can do',
-          mustNotBeReadAs:'A statement about what any real clinic or pharmacy offers.',
-          fields:FIELDS,
-          rules:[
-            {any:[{all:[{field:'fwa:category',comparator:'equals',value:'fwa:clinic'}]}],
-             then:[{predicate:'fwa:service',value:'fwa:Consultation'}]},
-            {any:[{all:[{field:'fwa:category',comparator:'equals',value:'fwa:pharmacy'}]}],
-             then:[{predicate:'fwa:service',value:'fwa:Dispensing'}]},
-            {any:[{all:[{field:'fwa:category',comparator:'equals',value:'fwa:health_post'}]},
-                  {all:[{field:'fwa:category',comparator:'equals',value:'fwa:mobile'}]}],
-             then:[{predicate:'fwa:service',value:'fwa:FirstContact'}]},
-            // `other` is left unmatched on purpose: a ruleset may decline to classify, and the
-            // receipt says how many it declined. Reading silence as a conclusion is the trap.
-          ]}}},
+      // The map needs a boundary to draw within. Soho, taken from the extent of the locations
+      // themselves rather than from a round number somebody chose.
+      {id:'soho',type:'study_area',x:40,y:700,params:{source:'drawn' as const,
+        label:'B · Soho, the extent of the mapped deaths',selectionMode:'bbox' as const,
+        geometry:bboxPolygon(-0.1405,51.5115,-0.1325,51.5162)}},
 
-      // 4 · The two comparators nothing had ever executed. `lessThan` and `notLessThan` compiled
-      // from the day the compiler was written and were run by no test and no example, so by
-      // experiment 106's own rule they should not have been offered in the editor. They are
-      // offered, and this step is what makes that defensible: running this example executes
-      // them against the real engine, over a boundary value in each direction.
-      {id:'walkin',type:'apply_ruleset',x:380,y:860,params:{
-        label:'4 · Bounds from below',parameters:{quiet:10},
-        ruleset:authoredPin(),
-        authored:{title:'Walk in, or make an appointment',
-          parameters:[{name:'quiet',meaning:'Wait below which a service point is quiet enough to walk into.',unit:MINUTE,unitLabel:'minutes',min:0,max:600,decimals:0}],
-          mustNotBeReadAs:'Advice about attending anywhere. It exists to exercise the two comparators the rest of the example does not use.',
-          fields:FIELDS,
-          rules:[
-            {any:[{all:[{field:'fwa:waitMinutesKnown',comparator:'equals',value:false}]}],
-             then:[{predicate:'fwa:access',value:'fwa:Unrecorded'}]},
-            {any:[{all:[{field:'fwa:waitMinutes',comparator:'lessThan',value:{setting:'quiet'}}]}],
-             then:[{predicate:'fwa:access',value:'fwa:WalkIn'}]},
-            {any:[{all:[{field:'fwa:waitMinutes',comparator:'notLessThan',value:{setting:'quiet'}}]}],
-             then:[{predicate:'fwa:access',value:'fwa:Appointment'}]},
-          ]}}},
-
-      {id:'bands',type:'table_output',x:760,y:60,params:{label:'1 · Bands',inputMode:'spatial'}},
-      {id:'decisions',type:'table_output',x:760,y:330,params:{label:'2 · Decisions',inputMode:'spatial'}},
-      {id:'map',type:'map_output',x:760,y:600,params:{label:'3 · Service points by kind'}},
-      {id:'access',type:'table_output',x:760,y:860,params:{label:'4 · Walk in or appointment',inputMode:'spatial'}},
+      {id:'address-map',type:'map_output',x:760,y:420,params:{label:'B · Addresses, banded',
+        mapTitle:'Death locations, banded by how many died at each',
+        presentation:'plot' as const}},
+      {id:'address-table',type:'table_output',x:760,y:700,params:{label:'B · Addresses, listed',inputMode:'spatial'}},
     ],
     edges:[
-      {id:'e1',from:'sites',to:'wait',port:'subjects'},
-      {id:'e2',from:'sites',to:'review',port:'subjects'},
-      {id:'e3',from:'sites',to:'kind',port:'subjects'},
-      {id:'e4',from:'wait',to:'bands',port:'points'},
-      {id:'e5',from:'review',to:'decisions',port:'points'},
-      {id:'e6',from:'kind',to:'map',port:'points'},
-      {id:'e7',from:'town',to:'map',port:'area'},
-      {id:'e8',from:'sites',to:'walkin',port:'subjects'},
-      {id:'e9',from:'walkin',to:'access',port:'points'},
+      {id:'a1',from:'dates',to:'day',port:'subjects'},
+      {id:'a2',from:'day',to:'day-table',port:'table'},
+      {id:'b1',from:'locations',to:'address',port:'subjects'},
+      {id:'b2',from:'address',to:'address-map',port:'points'},
+      {id:'b3',from:'address',to:'address-table',port:'points'},
+      {id:'b4',from:'soho',to:'address-map',port:'area'},
     ]};
 }

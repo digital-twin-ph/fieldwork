@@ -719,6 +719,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // for the shape it expects. Experiment 106.
         const authored=node.params.authored;
         if(authored){
+          // Points or a table. The rules do not know the difference: a rule reads a predicate,
+          // and a predicate is bound to an attribute of a record. 2026-10-16.
           const subjects=inputs.subjects as PointCollection;
           // Units first. A rule comparing minutes to hours is wrong by a factor of sixty and
           // every other check in this application passes it: the parameter is in range, the
@@ -742,8 +744,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             title:authored.title,parameters:declared as never,rules:compiled},bound);
           const conclusions=await reasoner(facts+'\n'+rules);
           const judged=authoredProjection(subjects,authored.fields,conclusions);
-          value={type:'FeatureCollection',features:judged.features,rows:judged.rows,
-            kind:'authored-ruleset',centers:[],method:authored.title} as unknown as DisplayValue;
+          // A table in, a table out -- carrying what the rules concluded as further key columns,
+          // so a Table output renders the judgement beside the number it was made about. A point
+          // layer in, the records back whole, as extent-review 1.1.0 returns its polygons.
+          value=(judged.table??{type:'FeatureCollection',features:judged.features,rows:judged.rows,
+            kind:'authored-ruleset',centers:[],method:authored.title}) as unknown as DisplayValue;
           receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges));
           break;
         }

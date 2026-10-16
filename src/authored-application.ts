@@ -1,4 +1,4 @@
-/** Running an authored ruleset over a point layer: facts in, conclusions back onto the points.
+/** Running an authored ruleset over records: facts in, conclusions back onto the records.
  *
  *  The declared rulesets each have a fact generator of their own, written for the shape they
  *  expect -- `extentN3` for polygons with an area, `facilityN3` for facilities with a named rule.
@@ -14,7 +14,48 @@
  *  a silence -- which is what lets a ruleset conclude Unknown instead of concluding nothing.
  */
 import type {PointCollection,PointFeature,Scalar} from './types.js';
+import type {DataTable} from './data-table.js';
 import type {ReasonerQuad} from './worker-types.js';
+
+/** One thing the rules are applied to, whatever shape it arrived in.
+ *
+ *  Until 2026-10-16 this path read a point layer and nothing else: `inputs.subjects as
+ *  PointCollection`, straight into `authoredFacts`. So rules could be written about places and
+ *  not about a table, which is half of the data anybody has -- Snow's Table 1 is dates and
+ *  counts and carries no place at all. The rules themselves never cared: a rule reads a
+ *  predicate, and a predicate is bound to an attribute. Only the two ends did.
+ *
+ *  So both ends normalise to this, and the rule layer between them is untouched. */
+export interface SubjectRecord {
+  /** Stable within one run, and what the reasoner's subject IRI is built from. */
+  id:string;
+  /** What a reader is shown when this record is named -- in the unmatched list, in a receipt. */
+  label:string;
+  properties:Record<string,Scalar|null>;
+}
+
+const isTable=(input:unknown):input is DataTable=>
+  (input as DataTable|null)?.kind==='data-table';
+
+/** The records of a point layer or of a long-format table, in one shape.
+ *
+ *  A table row is keyed by its declared key columns and carries one declared value, so the
+ *  attributes a rule can read are exactly the key columns plus the value field -- which is the
+ *  same contract the table widget already states, read the other way round. */
+export function authoredSubjects(input:PointCollection|DataTable):SubjectRecord[]{
+  if(isTable(input))
+    return input.rows.map((row,index)=>({
+      // Positional. A key can repeat across rows in a long-format table, so a key-derived id
+      // would silently merge two records into one subject and the reasoner would conclude about
+      // whichever won.
+      id:`row-${index}`,
+      label:Object.values(row.key).join(' · ')||`Row ${index+1}`,
+      properties:{...row.key,[input.valueField]:row.value}}));
+  return (input?.features??[]).map(feature=>({
+    id:String(feature.id),
+    label:String(feature.properties?.name??feature.id),
+    properties:feature.properties as Record<string,Scalar|null>}));
+}
 
 export const AUTHORED_SUBJECT='subject';
 const NS='urn:fieldwork:';
@@ -52,15 +93,16 @@ export const knownPredicate=(predicate:string)=>`${predicate}Known`;
 export const termFor=(value:Scalar):string=>
   `fwa:${String(value).trim().replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'None'}`;
 
-export function authoredFacts(points:PointCollection,bindings:FieldBinding[]):string{
-  if(!points?.features?.length)throw new Error('Connect records to classify. There is nothing to apply rules to.');
+export function authoredFacts(input:PointCollection|DataTable,bindings:FieldBinding[]):string{
+  const subjects=authoredSubjects(input);
+  if(!subjects.length)throw new Error('Connect records to classify. There is nothing to apply rules to.');
   if(!bindings.length)throw new Error('Say which attribute means what before this step can apply any rule: no field is bound.');
   const prefix=AUTHORED_PREFIX;
-  const lines=points.features.map(feature=>{
-    const subject=`<${NS}${AUTHORED_SUBJECT}:${encodeURIComponent(feature.id)}>`;
+  const lines=subjects.map(record=>{
+    const subject=`<${NS}${AUTHORED_SUBJECT}:${encodeURIComponent(record.id)}>`;
     const parts:string[]=[];
     for(const binding of bindings){
-      const raw=feature.properties?.[binding.attribute];
+      const raw=record.properties?.[binding.attribute];
       const known=raw!==undefined&&raw!==null&&raw!==''
         &&(binding.kind!=='number'||(typeof raw==='number'&&Number.isFinite(raw)));
       parts.push(`${knownPredicate(binding.predicate)} ${known}`);
@@ -105,19 +147,36 @@ export function authoredConclusions(conclusions:ReasonerQuad[]):Map<string,Recor
  *  The subject comes back whole, as extent-review 1.1.0 returns its polygons: a decision about a
  *  record that cannot be drawn is a decision nothing downstream can use. */
 export function authoredProjection(
-  points:PointCollection,bindings:FieldBinding[],conclusions:ReasonerQuad[],
-):{features:PointFeature[];rows:Record<string,Scalar|null>[];unmatched:string[]}{
+  input:PointCollection|DataTable,bindings:FieldBinding[],conclusions:ReasonerQuad[],
+):{features:PointFeature[];rows:Record<string,Scalar|null>[];unmatched:string[];table?:DataTable}{
   const reached=authoredConclusions(conclusions);
+  const subjects=authoredSubjects(input);
   const unmatched:string[]=[];
-  const features=points.features.map(feature=>{
-    const concluded=reached.get(encodeURIComponent(feature.id))??{};
-    if(!Object.keys(concluded).length)unmatched.push(feature.properties.name||feature.id);
-    return {...feature,properties:{...feature.properties,...concluded}};
-  });
-  const rows=features.map(feature=>{
+  const concludedFor=(record:SubjectRecord)=>{
+    const concluded=reached.get(encodeURIComponent(record.id))??{};
+    if(!Object.keys(concluded).length)unmatched.push(record.label);
+    return concluded;
+  };
+
+  if(isTable(input)){
+    // The conclusions become key columns. A long-format table's row is a key and one value, and
+    // a key column is exactly what a concluded term is: a label this row now carries. The value
+    // field is untouched, so what the table MEASURES is still the thing it measured.
+    const rows=input.rows.map((row,index)=>({...row,
+      key:{...row.key,...concludedFor(subjects[index])}}));
+    const table:DataTable={...input,rows,
+      keys:[...input.keys,...[...new Set(rows.flatMap(r=>Object.keys(r.key)))].filter(k=>!input.keys.includes(k))]};
+    return {features:[],
+      rows:rows.map(row=>({...row.key,[input.valueField]:row.value})),
+      unmatched,table};
+  }
+
+  const features=input.features.map((feature,index)=>
+    ({...feature,properties:{...feature.properties,...concludedFor(subjects[index])}}));
+  const rows=features.map((feature,index)=>{
     const row:Record<string,Scalar|null>={id:feature.id,name:feature.properties.name};
     for(const binding of bindings)row[binding.label||binding.attribute]=feature.properties[binding.attribute]??null;
-    for(const [predicate,value] of Object.entries(reached.get(encodeURIComponent(feature.id))??{}))row[predicate]=value;
+    for(const [predicate,value] of Object.entries(reached.get(encodeURIComponent(subjects[index].id))??{}))row[predicate]=value;
     return row;
   });
   return {features,rows,unmatched};

@@ -243,17 +243,25 @@ test('the shapes tab shows where values are missing, not just how many',async({p
   await expect(dialog.locator('[data-quality-tab="shapes"]')).toBeVisible();
   await dialog.locator('[data-quality-tab="shapes"]').click();
 
-  // Only the columns with something to show get a strip: a clean column has no pattern of
-  // absence to draw, and drawing an empty one would imply there was something to look for.
-  await expect(dialog.locator('.quality-strip')).toHaveCount(1);
-  await expect(dialog.locator('.quality-strip figcaption')).toHaveText('DEATHS');
+  // One matrix, EVERY column against the same rows -- adapted from missingno, whose matrix
+  // exists to show patterns within and between columns. Separate figures per column could show
+  // only the within, so two columns going missing together looked like two that do not.
+  await expect(dialog.locator('.quality-matrix')).toHaveCount(1);
+  const labels=await dialog.locator('.matrix-label').evaluateAll(els=>els.map(e=>e.textContent));
+  expect(labels).toEqual(['name','DEATHS','FID','how complete']);
   // One mark per affected record, so the pattern is visible. D's damage is every fourth row,
-  // which a total of "63 of 250" cannot tell anyone.
-  // Scoped to the drawing: the legend carries a swatch of the same class, which is the sort of
-  // off-by-one a count assertion exists to catch.
-  expect(await dialog.locator('.quality-strip rect.strip-mismatched').count()).toBe(63);
+  // which a total of "63 of 250" cannot tell anyone. Scoped to the drawing: the legend carries a
+  // swatch of the same class, which is the sort of off-by-one a count assertion exists to catch.
+  expect(await dialog.locator('.quality-matrix rect.strip-mismatched').count()).toBe(63);
+  // The completeness sparkline, one bar per record, so the worst rows are findable.
+  expect(await dialog.locator('.quality-matrix rect.spark-bar').count()).toBe(250);
 
-  // And the caveat that makes the picture usable: file order may mean something or nothing.
+  // How much of each column arrived: the simplest summary, and the one that answers "which
+  // column is worst" without anybody counting marks.
+  await expect(dialog.locator('.quality-bar-row').filter({hasText:'DEATHS'})).toContainText('187');
+
+  // And the caveats that make the picture usable rather than misleading.
+  await expect(dialog).toContainText('the same records');
   await expect(dialog).toContainText('the order the file holds');
   await expect(dialog).toContainText('a reason to go and look rather than a finding');
 
@@ -263,7 +271,6 @@ test('the shapes tab shows where values are missing, not just how many',async({p
 
   // A column whose every value is unique is named as an identifier rather than charted.
   await expect(dialog).toContainText('this is an identifier rather than a category');
-  await expect(dialog.locator('.quality-bar-row')).toHaveCount(0);
 
   // The tabs are a view, not an edit.
   const saved=await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'));
@@ -286,6 +293,6 @@ test('a clean input says there is no pattern to show',async({page})=>{
   await page.locator('[data-records-quality]').click();
   await page.locator('#data-quality [data-quality-tab="shapes"]').click();
   await expect(page.locator('#data-quality')).toContainText('no pattern of absence to show');
-  await expect(page.locator('.quality-strip')).toHaveCount(0);
+  await expect(page.locator('.quality-matrix')).toHaveCount(0);
   expect(errors).toEqual([]);
 });

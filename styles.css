@@ -227,6 +227,21 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
    it, so in dark mode a near-black label sat on a dark panel inside a light green toast and
    could not be read. Reported with a screenshot, 2026-10-15. Both colours now come from the
    toast's own pair, so the contrast is whatever the toast already guarantees. */
+/* A failure does not borrow the colour of a success, and does not vanish while it is being
+   read. Reported 2026-10-15: "I cannot make sense of the green error dialog." */
+/* The records an input carries, as columns and rows. The Inspector is 292px wide and a table of
+   real data is not, so it scrolls sideways inside its own frame rather than stretching the
+   panel. Reported 2026-10-15: "I cannot see the columns against which rules are made." */
+.record-controls{display:flex;align-items:center;gap:10px;margin:12px 0 10px;flex-wrap:wrap}
+.records-rows{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.records-rows select{border:1px solid var(--line);background:var(--surface-raised-1);color:var(--ink);font-size:10px;padding:3px 5px;border-radius:5px}
+.record-table{overflow:auto;max-height:320px;border:1px solid var(--line);border-radius:6px}
+.record-table table{font-size:10px;white-space:nowrap}
+.record-table th,.record-table td{padding:6px 9px}
+.record-table tbody tr{cursor:default}
+.record-missing{color:var(--text-faint-28);font-style:italic}
+.record-json{max-height:320px;overflow:auto;font-family:Consolas,monospace;font-size:10px;line-height:1.6}
+.toast.failure{background:var(--danger-1);color:#fff;align-items:flex-start;line-height:1.6;text-align:left}
 .toast .button{background:transparent;border-color:currentColor;color:inherit;font-weight:650}
 .toast .button:hover{background:color-mix(in srgb,currentColor 12%,transparent);filter:none}
 /* The rule editor. A dialog because the conditions nest and the Inspector is 320 px wide; the

@@ -42,12 +42,19 @@ test('a stopped run is reported as a failure, and stays until it is closed',asyn
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=rulesets');
-  await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
+  // The run state, not the toast's text: the toast says "Complete in" the moment it appears,
+  // which is before the canvas has settled, and clicking a node then races the layout.
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   const toast=page.locator('#toast');
   await expect(toast).not.toHaveClass(/failure/);
+  // This example's first run reports records it could not read, and that notice stays until it
+  // is closed -- which is what it is for, and it sits over the canvas. Close it before reaching
+  // past it, the way a practitioner would.
+  if(await toast.locator('button').count())await toast.locator('button').click();
+  await expect(toast).not.toHaveClass(/visible/);
 
   // Take the unit off a field the rules compare, which the run refuses by name.
-  await page.locator('.react-flow__node[data-id="day"]').click();
+  await page.locator('.react-flow__node[data-id="gap-day"]').click();
   await page.locator('[data-field-unit]').first().fill('');
   await page.locator('[data-field-unit]').first().press('Tab');
   await page.locator('#run-button').click();
@@ -60,5 +67,50 @@ test('a stopped run is reported as a failure, and stays until it is closed',asyn
   await expect(toast).toHaveClass(/visible/);
   await toast.locator('button').click();
   await expect(toast).not.toHaveClass(/visible/);
+  expect(errors).toEqual([]);
+});
+
+// "we must surface the issue on the widget as a toast message that I can then read and close.
+// This not only tests the boundary cases but also how the widget surfaces the issue for the
+// user to act on." -- the practitioner, 2026-10-16. So this asserts the surfacing, not the
+// conclusions: those are checked against the real engine in tests/ruleset-example.test.mjs.
+test('records the rules cannot read are surfaced, and the notice can be read and closed',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=rulesets');
+
+  // The run SUCCEEDED, so this is not a failure and must not be dressed as one. It is also not
+  // the success line: what matters is not that it finished.
+  const toast=page.locator('#toast');
+  await expect(toast).toHaveClass(/warning/,{timeout:45000});
+  await expect(toast).not.toHaveClass(/failure/);
+  await expect(toast).toContainText('66 records could not be read as declared');
+  // It names the steps, because opening one is the next thing to do.
+  await expect(toast).toContainText('over a table with gaps');
+  await expect(toast).toContainText('over counts it cannot read');
+
+  // Still there well after a success toast would have faded: a notice you are given five
+  // seconds to read is a notice somebody decided you did not need.
+  await page.waitForTimeout(6000);
+  await expect(toast).toHaveClass(/visible/);
+  await toast.locator('button').click();
+  await expect(toast).not.toHaveClass(/visible/);
+
+  // And the step carries the same finding, with the detail the toast has no room for.
+  await page.locator('.react-flow__node[data-id="text-address"]').click();
+  const alert=page.locator('.inspector-alert').first();
+  await expect(alert).toContainText('Read as not recorded');
+  await expect(alert).toContainText('63 records the rules could not read');
+  // Which column, and that this is NOT the same as a value nobody collected.
+  await expect(alert).toContainText('DEATHS');
+  await expect(alert).toContainText('Not a number');
+  // Advice that fits what was found: the catchment advice used to be appended to every alert.
+  await expect(alert).toContainText('Correct the column at its source');
+  await expect(alert).not.toContainText('street network');
+
+  // The other step reports the other problem, in its own terms.
+  await page.locator('.react-flow__node[data-id="gap-day"]').click();
+  await expect(page.locator('.inspector-alert').first()).toContainText('No value');
   expect(errors).toEqual([]);
 });

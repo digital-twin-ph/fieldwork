@@ -97,7 +97,10 @@ export interface DeclarationGap {field:string; says:string}
 export interface RunAlert {nodeId:string;
   unconnected:import('./catchments.js').UnconnectedSite[];
   offNetwork:import('./catchments.js').OffNetworkSite[];
-  gaps?:DeclarationGap[]}
+  gaps?:DeclarationGap[];
+  /** What the records could not tell a step that applied rules to them. Distinct from `gaps`:
+   *  a gap is something nobody DECLARED, an issue is something the data itself could not say. */
+  dataIssues?:import('./authored-application.js').DataIssue[]}
 /** Declaration gaps a value carries, read without knowing what the value is -- the same way
  *  `unconnectedSites` reads any value, so the run does not need to know which widgets declare. */
 export function declarationGaps(value:unknown):DeclarationGap[]{
@@ -106,5 +109,17 @@ export function declarationGaps(value:unknown):DeclarationGap[]{
     ?carried.filter((gap):gap is DeclarationGap=>
       typeof (gap as DeclarationGap)?.field==='string'&&typeof (gap as DeclarationGap)?.says==='string')
     :[];
+}
+/** Data issues a value carries, read the same way `declarationGaps` reads a value: without the
+ *  run needing to know which widget produced it.
+ *
+ *  Attributed to the step that FOUND them, by name. A value travels on -- a classified table is
+ *  read by the table output next to it -- and without this the same finding was raised on every
+ *  node downstream of the one that could act on it. The reader stays generic; the value says
+ *  whose finding it is. */
+export function dataIssuesOf(value:unknown,nodeId:string):import('./authored-application.js').DataIssue[]{
+  const entity=value as {dataIssues?:unknown;issuedBy?:unknown}|null|undefined;
+  if(entity?.issuedBy!==nodeId)return [];
+  return Array.isArray(entity.dataIssues)?entity.dataIssues as import('./authored-application.js').DataIssue[]:[];
 }
 export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; provenanceN3:string; outputs:Output[]; trace:{nodeId:string; type:string; milliseconds:number}[]; receipts:Receipt[]; runId:string; engine:string; runAt:string}

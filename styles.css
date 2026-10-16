@@ -242,6 +242,9 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .record-missing{color:var(--text-faint-28);font-style:italic}
 .record-json{max-height:320px;overflow:auto;font-family:Consolas,monospace;font-size:10px;line-height:1.6}
 .toast.failure{background:var(--danger-1);color:#fff;align-items:flex-start;line-height:1.6;text-align:left}
+/* A run that succeeded and found something. Not red -- nothing failed -- and not the success
+   green either, because the thing worth knowing is not that it finished. */
+.toast.warning{background:var(--warning-4);color:#fff;line-height:1.6;text-align:left;max-width:min(720px,80vw)}
 .toast .button{background:transparent;border-color:currentColor;color:inherit;font-weight:650}
 .toast .button:hover{background:color-mix(in srgb,currentColor 12%,transparent);filter:none}
 /* The rule editor. A dialog because the conditions nest and the Inspector is 320 px wide; the

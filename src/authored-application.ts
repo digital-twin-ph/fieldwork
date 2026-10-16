@@ -93,6 +93,54 @@ export const knownPredicate=(predicate:string)=>`${predicate}Known`;
 export const termFor=(value:Scalar):string=>
   `fwa:${String(value).trim().replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'None'}`;
 
+/** Whether a record's value can be read as the kind its binding declares, and if not, why.
+ *
+ *  Factored out of `authoredFacts` so that the facts and the report of what went wrong cannot
+ *  disagree. Both answers come from this one reading: a value this calls unreadable is exactly a
+ *  value the rules were told is not there.
+ *
+ *  The distinction it draws is the one the result cannot. A date with no count and a count
+ *  written as "3" both produce `…Known false`, both reach the Unrecorded branch, and in the
+ *  output they are the same word. They are not the same problem: one is data nobody collected,
+ *  the other is data somebody collected and this step could not read. 2026-10-16.
+ */
+export type ValueReading={known:true}|{known:false;why:'missing'|'unreadable';saw:string};
+export function readValue(raw:Scalar|null|undefined,kind:FieldBinding['kind']):ValueReading{
+  if(raw===undefined||raw===null||raw==='')return {known:false,why:'missing',saw:''};
+  if(kind==='number'&&!(typeof raw==='number'&&Number.isFinite(raw)))
+    return {known:false,why:'unreadable',saw:String(raw)};
+  return {known:true};
+}
+
+/** What the records could not tell this step, per bound field.
+ *
+ *  The practitioner, 2026-10-16: *"we must surface the issue on the widget as a toast message
+ *  that I can then read and close."* A run that quietly bands a third of its records Unrecorded
+ *  has answered the question it was asked and hidden the thing worth knowing. */
+export interface DataIssue {field:string; why:'missing'|'unreadable'; count:number; of:number; says:string}
+export function authoredDataIssues(input:PointCollection|DataTable,bindings:FieldBinding[]):DataIssue[]{
+  const subjects=authoredSubjects(input);
+  const issues:DataIssue[]=[];
+  for(const binding of bindings){
+    const named=binding.label||binding.attribute;
+    const readings=subjects.map(record=>readValue(record.properties?.[binding.attribute],binding.kind));
+    const missing=readings.filter(r=>!r.known&&r.why==='missing').length;
+    const unreadable=readings.filter(r=>!r.known&&r.why==='unreadable');
+    if(missing)issues.push({field:binding.attribute,why:'missing',count:missing,of:subjects.length,
+      says:`${missing} of ${subjects.length} records have no value for ${named}. The rules were told it is `
+        +`not recorded, so whatever they conclude for those records is a conclusion about an absence.`});
+    if(unreadable.length){
+      const examples=[...new Set(unreadable.map(r=>(r as {saw:string}).saw))].slice(0,3);
+      issues.push({field:binding.attribute,why:'unreadable',count:unreadable.length,of:subjects.length,
+        says:`${unreadable.length} of ${subjects.length} records carry a value for ${named} that is not a number `
+          +`(${examples.map(e=>`"${e}"`).join(', ')}${examples.length<unreadable.length?', and others':''}). `
+          +`They were read as not recorded, which is the same answer this step gives for a value nobody `
+          +`collected -- and this is not that. Correct the column, or bind it as text.`});
+    }
+  }
+  return issues;
+}
+
 export function authoredFacts(input:PointCollection|DataTable,bindings:FieldBinding[]):string{
   const subjects=authoredSubjects(input);
   if(!subjects.length)throw new Error('Connect records to classify. There is nothing to apply rules to.');
@@ -103,8 +151,7 @@ export function authoredFacts(input:PointCollection|DataTable,bindings:FieldBind
     const parts:string[]=[];
     for(const binding of bindings){
       const raw=record.properties?.[binding.attribute];
-      const known=raw!==undefined&&raw!==null&&raw!==''
-        &&(binding.kind!=='number'||(typeof raw==='number'&&Number.isFinite(raw)));
+      const known=readValue(raw,binding.kind).known;
       parts.push(`${knownPredicate(binding.predicate)} ${known}`);
       if(!known)continue;
       parts.push(`${binding.predicate} ${binding.kind==='number'?Number(raw)

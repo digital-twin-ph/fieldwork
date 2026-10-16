@@ -44,7 +44,8 @@ const address=(result,id)=>
 
 test('both halves run: a table is classified, and so is a point layer',async()=>{
   const result=await run();
-  assert.deepEqual(result.outputs.map(o=>o.nodeId),['day-table','address-map','address-table']);
+  assert.deepEqual(result.outputs.map(o=>o.nodeId),
+    ['day-table','address-map','address-table','gap-table','text-table']);
 
   // A · Table data. Until 2026-10-16 this could not run at all: the authored path read
   // `inputs.subjects as PointCollection` and nothing else, so rules could be written about
@@ -65,6 +66,50 @@ test('both halves run: a table is classified, and so is a point layer',async()=>
   // Two conclusions from one rule: the band, and that this one is worth looking at.
   assert.equal(address(result,'location-74').look,'Yes');
   assert.equal(address(result,'location-2').look,undefined);
+});
+
+// C and D: the boundary workflows. The practitioner, 2026-10-16: "let's add 2 more boundary
+// workflows but this time let's simulate data problems in the existing data set ... we must
+// surface the issue on the widget as a toast message that I can then read and close. This not
+// only tests the boundary cases but also how the widget surfaces the issue for the user to act
+// on." Both halves of that are asserted here: what the rules conclude, and what the step says.
+
+test('C · a table with gaps reaches the branch Snow\'s own data cannot',async()=>{
+  const result=await run();
+  // Snow recorded a count for every date, so over A's data the Unrecorded branch never fires.
+  // C is A's data with three counts removed, running A's rules -- the SAME rules, from one
+  // factory, so nothing that differs between the two results is a difference in the rules.
+  const gapped=result.outputs.find(o=>o.nodeId==='gap-table').rows;
+  const unrecorded=gapped.filter(r=>r.key.day==='Unrecorded').map(r=>r.key.date);
+  assert.deepEqual(unrecorded,['1854-09-05','1854-09-06','1854-09-07']);
+  // Every other row is banded exactly as its twin in A, which is what makes the comparison fair.
+  const plain=result.outputs.find(o=>o.nodeId==='day-table').rows;
+  for(const row of gapped)
+    if(!unrecorded.includes(row.key.date))
+      assert.equal(row.key.day,plain.find(p=>p.key.date===row.key.date).key.day,row.key.date);
+});
+
+test('D · a value present but unreadable is reported as a different thing from a value absent',async()=>{
+  const result=await run();
+  // A count written "3" is not a number. The binding declares one, so the rules are told it is
+  // not recorded -- the same word C's genuine gaps produce, for a completely different reason.
+  const listed=result.outputs.find(o=>o.nodeId==='text-table').rows;
+  assert.equal(listed.filter(r=>r.attributes.address==='Unrecorded').length,63);
+  assert.equal(listed.length,250);
+
+  // The step says which of the two it found, and only the step that found it says so. Without
+  // this the same finding was raised on every node the value travelled to.
+  assert.deepEqual(result.alerts.filter(a=>a.dataIssues?.length).map(a=>a.nodeId),
+    ['gap-day','text-address']);
+  const [missing]=result.alerts.find(a=>a.nodeId==='gap-day').dataIssues;
+  assert.equal(missing.why,'missing');
+  assert.match(missing.says,/3 of 43 records have no value for Deaths that day/);
+  const [unreadable]=result.alerts.find(a=>a.nodeId==='text-address').dataIssues;
+  assert.equal(unreadable.why,'unreadable');
+  assert.match(unreadable.says,/63 of 250 records carry a value .* that is not a number/);
+  // It names what it saw, so a practitioner can recognise the column without opening the file.
+  assert.match(unreadable.says,/"\d+"/);
+  assert.match(unreadable.says,/not that/);
 });
 
 // The three debts experiment 106 records, exercised rather than only written down. The

@@ -396,9 +396,48 @@ function renderN3(){
  *  what it does unless the practitioner has already named it themselves. The ports change with
  *  the ruleset, so whatever was wired to this node is disconnected -- the same bargain the output
  *  widgets make when their input mode changes, and Undo restores it. */
+/** The columns a connected layer actually has, as candidate field bindings.
+ *
+ *  Read from the records themselves rather than guessed from a name: the kind comes from the
+ *  values, and a numeric column gets no unit, because this cannot know one and a number without
+ *  a unit is not a measurement. The practitioner states it before the rules will run. */
+function candidateFields(workflow:Workflow,nodeId:string){
+  const edge=workflow.edges.find(e=>e.to===nodeId&&e.port==='subjects');
+  const source=edge&&workflow.nodes.find(n=>n.id===edge.from);
+  const data=(source?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data;
+  const seen=new Map<string,Set<string>>();
+  for(const feature of data?.features?.slice(0,200)??[])
+    for(const [key,value] of Object.entries(feature.properties??{})){
+      if(key==='name'||value===null||value===undefined||value==='')continue;
+      (seen.get(key)??seen.set(key,new Set()).get(key)!).add(typeof value);
+    }
+  return [...seen].map(([attribute,types])=>({attribute,
+    predicate:`fwa:${attribute.replace(/[^A-Za-z0-9]+(.)/g,(_,c:string)=>c.toUpperCase()).replace(/[^A-Za-z0-9]/g,'')}`,
+    kind:types.has('number')&&types.size===1?'number' as const
+      :types.has('boolean')&&types.size===1?'boolean' as const:'term' as const,
+    label:attribute}));
+}
+
 function wireRulesetChoice(node:WorkflowNode){
   optionalElement('#ruleset-choice')?.addEventListener('change',event=>{
-    const [id,version]=control(event).value.split('@');
+    const value=control(event).value;
+    // Writing rules, rather than choosing somebody else's. Until 2026-10-15 the only way to
+    // reach the editor was to open a workflow that already carried authored rules, which meant
+    // the one worked example they were written for: an editor with no entry point.
+    if(value==='authored'){
+      change(w=>{
+        const target=getNode(w,node.id,'apply_ruleset');
+        const pin=pinnedRuleset('urn:fieldwork:ruleset:outreach-criteria','1.0.0');
+        target.params.ruleset={id:pin!.id,version:pin!.version,title:'Rules written in this workflow',
+          inputs:[['subjects','points']],output:'points'};
+        target.params.parameters={};
+        target.params.authored={title:target.params.label||'Rules for this step',
+          mustNotBeReadAs:'',fields:[],parameters:[],rules:[]};
+        w.edges=w.edges.filter(edge=>edge.to!==node.id&&edge.from!==node.id);
+      });
+      return;
+    }
+    const [id,version]=value.split('@');
     const chosen=id?bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version):undefined;
     change(w=>{
       const target=getNode(w,node.id,'apply_ruleset');
@@ -780,22 +819,57 @@ function renderInspector(){
         +`<p class="description">These rules are part of this workflow rather than a published ruleset chosen from a list. They travel with the file, and the run evidence carries them in full.</p>`
         +`<div class="notice">${esc(authored.mustNotBeReadAs)}</div>`
         +`<span class="inspector-section">The rules, in order</span>`
-        +`<ol class="authored-rules">`
-        +authored.rules.map(rule=>`<li><em>If</em> `
-          +rule.any.map(group=>group.all.map(condition=>
-            `${esc(named(condition.field))} ${esc(comparator(condition.comparator))} <b>${esc(readable(condition.value))}</b>`).join(' <em>and</em> ')
-          ).join('<br><em>or if</em> ')
-          +`<br><em>then</em> `
-          +rule.then.map(conclusion=>
-            `${esc(conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))} is <b>${esc(readable(conclusion.value))}</b>`).join(' <em>and</em> ')
-          +`</li>`).join('')
-        +`</ol>`
+        // Laid out as rules rather than written as sentences about rules. The practitioner read
+        // the first version -- "If whether Wait is recorded is false, then band is Unrecorded" --
+        // and called it a description of rules, which it was: prose reads as something somebody
+        // wrote ABOUT the rules, and a rule should look like a thing with parts. So each
+        // condition is a row of three cells, the connectives are labels in the margin, and the
+        // conclusion is separated by a line.
+        +`<div class="authored-rules">`
+        +authored.rules.map((rule,index)=>`<div class="authored-rule">`
+          +`<span class="rule-number">${index+1}</span>`
+          +rule.any.map((group,g)=>`<div class="rule-when">`
+            +`<span class="rule-keyword">${g?'OR':'IF'}</span><div class="rule-conditions">`
+            +group.all.map((condition,c)=>`<div class="rule-row">`
+              +(c?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
+              +`<span class="rule-field">${esc(named(condition.field))}</span>`
+              +`<span class="rule-op">${esc(comparator(condition.comparator))}</span>`
+              +`<span class="rule-value">${esc(readable(condition.value))}</span>`
+              +`</div>`).join('')
+            +`</div></div>`).join('')
+          +`<div class="rule-then"><span class="rule-keyword">THEN</span><div class="rule-conditions">`
+          +rule.then.map((conclusion,t)=>`<div class="rule-row">`
+            +(t?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
+            +`<span class="rule-field">${esc(conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
+            +`<span class="rule-op">is</span>`
+            +`<span class="rule-value">${esc(readable(conclusion.value))}</span>`
+            +`</div>`).join('')
+          +`</div></div></div>`).join('')
+        +`</div>`
         +`<p class="description">Every rule is checked against every record, so the rules must not disagree: no record may match two rules that reach different conclusions about the same thing. A record matching none keeps no conclusion, and the run evidence counts those.</p>`
-        +`<span class="inspector-section">Which column means what</span>`
-        +`<table class="inspector-table"><thead><tr><th>Column</th><th>Read as</th><th>Kind</th></tr></thead><tbody>`
-        +authored.fields.map(field=>`<tr><td>${esc(field.attribute)}</td><td>${esc(field.label||field.attribute)}</td><td>${esc(field.kind)}</td></tr>`).join('')
-        +`</tbody></table>`
-        +`<p class="description">Nothing is guessed from a column name. A record missing one of these is recorded as missing, which is why a rule can conclude Unknown instead of concluding nothing.</p>`;
+        +`<span class="inspector-section">Which column means what</span>`;
+      if(authored.fields.length){
+        content+=`<table class="inspector-table"><thead><tr><th>Column</th><th>Read as</th><th>Kind</th><th>Unit</th></tr></thead><tbody>`
+          +authored.fields.map((field,index)=>`<tr><td>${esc(field.attribute)}</td><td>${esc(field.label||field.attribute)}</td><td>${esc(field.kind)}</td>`
+            +`<td>${field.kind==='number'
+              ?`<input data-field-unit="${index}" value="${esc(field.unitLabel??'')}" placeholder="minutes" aria-label="Unit for ${esc(field.attribute)}">`
+              :'—'}</td></tr>`).join('')
+          +`</tbody></table>`
+          +`<p class="description">Nothing is guessed from a column name. A record missing one of these is recorded as missing, which is why a rule can conclude Unknown instead of concluding nothing. <strong>A numeric column needs its unit</strong> — a number without one is not a measurement, and the rules will not run until every one of them has it.</p>`;
+      }else{
+        // Where a practitioner writing their first ruleset gets stuck: the rules cannot read
+        // anything until the columns are declared, and the columns can only be offered once
+        // something is connected. Both states are said plainly rather than left as an empty
+        // section.
+        const candidates=candidateFields(workflow,n.id);
+        content+=candidates.length
+          ?`<p class="description">These are the columns the connected records carry.</p>`
+            +`<table class="inspector-table"><thead><tr><th>Column</th><th>Reads as</th></tr></thead><tbody>`
+            +candidates.map(field=>`<tr><td>${esc(field.attribute)}</td><td>${esc(field.kind)}</td></tr>`).join('')
+            +`</tbody></table>`
+            +`<div class="inspector-actions"><button id="use-columns" class="button">Use these ${candidates.length} column${candidates.length===1?'':'s'}</button></div>`
+          :`<div class="notice">Connect the records this step should classify, and the columns they carry will be offered here. Rules read columns, and nothing is guessed from a name.</div>`;
+      }
       for(const parameter of authored.parameters??[])
         content+=`<div class="field"><label class="field-label" for="ruleset-${esc(parameter.name)}">${esc(parameter.meaning)}</label>`
           +`<input id="ruleset-${esc(parameter.name)}" type="number" data-ruleset-parameter="${esc(parameter.name)}" `
@@ -807,6 +881,21 @@ function renderInspector(){
       // In a dialog, because the conditions nest and this panel is 320 px wide. The
       // practitioner's call, 2026-10-15: "Perhaps the rule editor should be a modal dialog so
       // there is enough space."
+      optionalElement('#use-columns')?.addEventListener('click',()=>change(w=>{
+        getNode(w,n.id,'apply_ruleset').params.authored!.fields=candidateFields(workflow,n.id) as never;}));
+      // A unit the practitioner types. The label is what the editor shows beside a value box; the
+      // IRI is what the unit check compares, and a word this does not recognise gets the label
+      // and no IRI -- so the check then refuses the rules for want of a unit, which is the
+      // honest outcome rather than a guess at what they meant.
+      const UNIT_IRIS:Record<string,string>={minutes:'MIN',minute:'MIN',min:'MIN',hours:'HR',hour:'HR',hr:'HR',seconds:'SEC',second:'SEC',days:'DAY',day:'DAY',metres:'M',meters:'M',m:'M',kilometres:'KiloM',kilometers:'KiloM',km:'KiloM',percent:'PERCENT'};
+      document.querySelectorAll<HTMLInputElement>('[data-field-unit]').forEach(el=>
+        el.addEventListener('change',()=>change(w=>{
+          const field=getNode(w,n.id,'apply_ruleset').params.authored!.fields[Number(el.dataset.fieldUnit)];
+          const typed=el.value.trim();
+          field.unitLabel=typed||undefined;
+          const code=UNIT_IRIS[typed.toLowerCase()];
+          field.unit=code?`http://qudt.org/vocab/unit/${code}`:undefined;
+        })));
       optionalElement('#edit-rules')?.addEventListener('click',async()=>{
         const edited=await openRuleEditor(authored,esc);
         if(edited)change(w=>{getNode(w,n.id,'apply_ruleset').params.authored!.rules=edited.rules as never;});
@@ -819,6 +908,7 @@ function renderInspector(){
     content+=`<span class="inspector-section">What this step applies</span>`
       +`<div class="field"><label class="field-label" for="ruleset-choice">Ruleset</label>`
       +`<select id="ruleset-choice"><option value="">Choose a ruleset…</option>`
+      +`<option value="authored">Write rules for this step…</option>`
       +currentRulesets().map(r=>`<option value="${esc(r.id+'@'+r.version)}" ${n.params.ruleset?.id===r.id?'selected':''}>`
         +`${esc(r.title)} ${esc(r.version)} · ${esc(r.inputContract.ports.inputs.map(([,t])=>t).join(', '))} → ${esc(r.inputContract.ports.output)}</option>`).join('')
       +`</select><small>The ruleset decides what this step classifies, which inputs it takes and what it gives back. Changing it disconnects what is wired here, because the ports change with it; Undo restores them.</small></div>`;

@@ -258,3 +258,19 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .node-alert-close{background:transparent;border:0;color:inherit;font-size:13px;line-height:1;
   padding:0 2px;cursor:pointer;opacity:.65;flex:0 0 auto}
 .node-alert-close:hover{opacity:1}
+/* Rules laid out as rules, not written as sentences about rules. The practitioner read the prose
+   version and called it "a description of rules", which it was. Each condition is a row of three
+   cells, the connectives sit in the margin, and the conclusion is separated by a line. */
+.authored-rules{margin:0 0 14px;font-size:11px}
+.authored-rule{border:1px solid var(--line);border-radius:7px;padding:8px 10px 8px 26px;margin:0 0 9px;
+  position:relative;background:var(--surface)}
+.rule-number{position:absolute;left:8px;top:8px;font-size:9px;font-weight:700;color:var(--text-faint-3)}
+.rule-when,.rule-then{display:flex;gap:8px;align-items:flex-start}
+.rule-then{border-top:1px solid var(--line-soft-2);margin-top:6px;padding-top:6px}
+.rule-keyword{flex:0 0 34px;font-size:9px;font-weight:700;letter-spacing:.9px;color:var(--text-faint-3);padding-top:3px}
+.rule-conditions{flex:1 1 auto;min-width:0}
+.rule-row{display:flex;gap:6px;align-items:baseline;margin:0 0 3px;flex-wrap:wrap}
+.rule-and{flex:0 0 22px;font-size:9px;color:var(--text-faint-3);text-align:right}
+.rule-field{font-weight:600}
+.rule-op{color:var(--text-faint-3)}
+.rule-value{font-weight:700;background:var(--surface-tint-1);border-radius:4px;padding:1px 5px}

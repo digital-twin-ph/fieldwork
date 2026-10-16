@@ -54,8 +54,11 @@ test('choosing a ruleset pins it, takes its defaults, and names the step',async(
   // Only current versions are offered: a superseded rule is resolvable for a saved pin and is
   // not somewhere to start new work.
   const offered=await page.locator('#ruleset-choice option').evaluateAll(els=>
-    els.map(e=>e.value).filter(Boolean));
+    els.map(e=>e.value).filter(v=>v&&v!=='authored'));
   expect(offered.length,'one per identity, not one per document').toBe(4);
+  // And one more entry that is not a ruleset at all: writing rules here rather than choosing
+  // somebody else's. Added 2026-10-15, when the editor turned out to have no entry point.
+  expect(await page.locator('#ruleset-choice option[value="authored"]').count()).toBe(1);
   expect(offered.some(v=>v.endsWith('@1.0.0')&&v.includes('extent-review')),
     'the superseded extent review is not offered').toBe(false);
 

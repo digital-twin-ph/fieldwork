@@ -752,7 +752,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           value=({...(judged.table??{type:'FeatureCollection',features:judged.features,rows:judged.rows,
             kind:'authored-ruleset',centers:[],method:authored.title}),
             ...(dataIssues.length?{dataIssues,issuedBy:node.id}:{})}) as unknown as DisplayValue;
-          receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges));
+          receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges,dataIssues));
           break;
         }
         switch(projectionOf(pinned.id,pinned.version)){

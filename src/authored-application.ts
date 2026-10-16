@@ -242,23 +242,43 @@ export function authoredReceipt(
   node:{id:string;params:{label?:string}},
   authored:{title:string;mustNotBeReadAs:string;fields:FieldBinding[]},
   facts:string,rules:string,conclusions:ReasonerQuad[],unmatched:string[],
-  runId:string,edges:{to:string;from:string}[],
+  runId:string,edges:{to:string;from:string}[],dataIssues:DataIssue[]=[],
 ){
   const activity=`<${NS}run:${runId}:ruleset:${node.id}>`;
   const sources=edges.filter(e=>e.to===node.id).map(e=>`<${NS}run:${runId}:output:${e.from}>`);
   const bindings=authored.fields.map(field=>
     `${activity} fw:fieldBinding [ fw:boundAttribute ${JSON.stringify(field.attribute)}; `
     +`fw:boundPredicate ${JSON.stringify(field.predicate)}; fw:boundKind ${JSON.stringify(field.kind)} ].`).join('\n');
+  // What the records could not tell this step, in the evidence rather than only on the screen.
+  // The practitioner, 2026-10-16: *"These fail conditions must be represented also in the
+  // ontology."* A notice a reader can close is not a record. A receipt that says a quarter of
+  // the records were read as unrecorded is the difference between a result somebody can audit
+  // and a result they have to take on trust -- and the two kinds are distinguished here as they
+  // are in the interface, because a value nobody collected and a value this could not read are
+  // not the same finding.
+  const problems=dataIssues.map(issue=>
+    `${activity} fw:readingProblem [ a fw:ReadingProblem; `
+    +`fw:boundAttribute ${JSON.stringify(issue.field)}; `
+    +`fw:problemKind ${issue.why==='missing'?'fw:ValueAbsent':'fw:ValueUnreadable'}; `
+    +`fw:affectedRecordCount ${issue.count}; fw:consideredRecordCount ${issue.of} ].`).join('\n');
   const statement=`@prefix fw: <${NS}>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
     +`${activity} a fw:RuleApplication, prov:Activity; fw:ruleSource "authored"; `
     +`fw:rulesetTitle ${JSON.stringify(authored.title)}; `
     +`fw:mustNotBeReadAs ${JSON.stringify(authored.mustNotBeReadAs)}; `
     +`fw:unmatchedSubjectCount ${unmatched.length}`
     +(sources.length?`; prov:used ${sources.join(', ')}`:'')+'.\n'
-    +(bindings?bindings+'\n':'');
+    +(bindings?bindings+'\n':'')
+    +(problems?problems+'\n':'');
   return {nodeId:node.id,
     facts:statement+facts,input:statement+facts+'\n'+rules,rules,conclusions,
     method:`Applied ${authored.fields.length} bound field${authored.fields.length===1?'':'s'} to rules written in this workflow. `
-      +(unmatched.length?`${unmatched.length} record${unmatched.length===1?'':'s'} matched no rule and carry no conclusion: ${unmatched.slice(0,5).join(', ')}${unmatched.length>5?' and more':''}.`
-        :'Every record matched a rule.')};
+      +(unmatched.length?`${unmatched.length} record${unmatched.length===1?'':'s'} matched no rule and carry no conclusion: ${unmatched.slice(0,5).join(', ')}${unmatched.length>5?' and more':''}. `
+        :'Every record matched a rule. ')
+      // Stated in the method too, because a reader scanning what this step did should not have
+      // to parse N3 to learn that some of its conclusions are about absences.
+      +(dataIssues.length
+        ?dataIssues.map(issue=>`${issue.count} of ${issue.of} records had `
+          +`${issue.why==='missing'?'no value':'an unreadable value'} for ${issue.field}, and the rules were `
+          +`told it was not recorded.`).join(' ')
+        :'Every bound value was readable.')};
 }

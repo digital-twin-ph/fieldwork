@@ -759,6 +759,33 @@ fw:mustNotBeReadAs a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "What a classification must not be taken for. Required of every published ruleset and of every authored one: applying a hierarchy is not the same as being it, and a classification is not a decision anyone has taken.".
 fw:unmatchedSubjectCount a owl:DatatypeProperty; rdfs:domain fw:RuleApplication; rdfs:range xsd:nonNegativeInteger;
   rdfs:comment "How many records no rule fired on. A ruleset may decline to classify; reading that silence as a conclusion is what this count exists to prevent.".
+# What the records could not tell a rule application, declared because the application asserts
+# it. A step that applies rules to a value it cannot read tells the rules the value is not
+# recorded, which is the honest thing to do and is invisible in the result: the conclusion for
+# such a record is a conclusion about an absence, and reads exactly like a conclusion about a
+# number. The two reasons a value could not be read are distinguished, because they call for
+# different actions -- one is data nobody collected, the other is data somebody collected that
+# this step could not use.
+fw:ReadingProblem a owl:Class;
+  rdfs:label "A bound field the records could not supply";
+  rdfs:comment "Counted per field and per reason, over the records one rule application judged. Its presence does not make a result unusable; it says which part of the result is a judgement about an absence.".
+fw:readingProblem a owl:ObjectProperty; rdfs:domain fw:RuleApplication; rdfs:range fw:ReadingProblem;
+  rdfs:comment "A field this application could not read for some of its records. Absent when every bound value was readable.".
+fw:ValueProblemKind a owl:Class;
+  rdfs:label "Why a bound value could not be read";
+  rdfs:comment "A closed pair. Both produce the same fact for the reasoner -- that the value is not recorded -- and they are not the same finding for a reader.".
+fw:ValueAbsent a fw:ValueProblemKind;
+  rdfs:label "No value was recorded";
+  rdfs:comment "The record carries nothing for this attribute. Nobody collected it, or it was collected and lost before this workflow saw it.".
+fw:ValueUnreadable a fw:ValueProblemKind;
+  rdfs:label "A value was recorded that is not the declared kind";
+  rdfs:comment "The record carries something this step could not read as the kind its binding declares -- a count written as text, most often. Somebody collected this value and the rules did not see it.".
+fw:affectedRecordCount a owl:DatatypeProperty; rdfs:domain fw:ReadingProblem; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "How many of the judged records were affected.".
+fw:consideredRecordCount a owl:DatatypeProperty; rdfs:domain fw:ReadingProblem; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "How many records were judged in all, so the count above can be read as a proportion rather than as a number on its own.".
+fw:problemKind a owl:ObjectProperty; rdfs:domain fw:ReadingProblem; rdfs:range fw:ValueProblemKind;
+  rdfs:comment "Which of the two reasons applies. Recorded rather than inferred: the step knows which it found, and a reader cannot tell them apart from the result.".
 fw:fieldBinding a owl:ObjectProperty; rdfs:domain fw:RuleApplication;
   rdfs:comment "Which attribute of a record supplies which predicate the rules read. Nothing is guessed from a column name, so a ruleset over arbitrary records is possible only because this is declared.".
 fw:boundAttribute a owl:DatatypeProperty; rdfs:range xsd:string;

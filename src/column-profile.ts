@@ -1,0 +1,139 @@
+/** What a column will and will not tell you, computed from the values themselves.
+ *
+ *  [Experiment 117](../docs/experiments/117-data-quality.md). The practitioner, 2026-10-16:
+ *  *"increase awareness of data shapes, including outliers, frequency analysis, etc."*
+ *
+ *  Everything a ruleset concludes rests on values being what they were declared to be, and until
+ *  now this application found out at the last possible moment -- the rules ran, a quarter of the
+ *  records came back Unrecorded, and the step said how many afterwards. A profile is the same
+ *  facts, available before anything is concluded from them.
+ *
+ *  Nothing here is a finding. A count beyond an IQR fence is a prompt to look at seven values;
+ *  whether any of them is an outlier is a judgement about the thing measured, which this cannot
+ *  make and does not claim to.
+ */
+export type ColumnKind='number'|'boolean'|'term';
+
+export interface ColumnProfile {
+  column:string;
+  /** The kind a binding declares for this column, when one does. Absent when nothing has. */
+  declared?:ColumnKind;
+  total:number;
+  /** No value at all: absent, null, or empty. */
+  absent:number;
+  /** A value is present and is not the declared kind. Separated from `absent` because they are
+   *  different problems with different remedies -- and the rules cannot tell them apart. */
+  mismatched:number;
+  /** Up to three of the mismatched values, as they appear, so a reader recognises the column. */
+  examples:string[];
+  /** How many of the mismatched values would survive a cast to the declared kind. */
+  repairable:number;
+  /** Present when enough values read as numbers to say anything about their shape. */
+  numeric?:{min:number;median:number;max:number;
+    /** Quartiles and the 1.5x fence they imply. Rank-based, so a skewed column does not make
+     *  the fence meaningless, and no normality is assumed or claimed. */
+    q1:number;q3:number;lowerFence:number;upperFence:number;beyondFence:number};
+  /** Present for a column that reads as categories: what is in it, and how often. */
+  frequencies?:{value:string;count:number}[];
+  distinct?:number;
+}
+
+const isAbsent=(v:unknown)=>v===undefined||v===null||v==='';
+/** Numeric text is text. `Number('')` is 0 and `Number(' ')` is 0, which is why this is explicit
+ *  rather than a bare `Number(v)`. */
+const asNumber=(v:unknown):number|undefined=>{
+  if(typeof v==='number')return Number.isFinite(v)?v:undefined;
+  if(typeof v!=='string'||!v.trim())return undefined;
+  const n=Number(v.trim());
+  return Number.isFinite(n)?n:undefined;
+};
+const asBoolean=(v:unknown):boolean|undefined=>{
+  if(typeof v==='boolean')return v;
+  if(typeof v!=='string')return undefined;
+  const t=v.trim().toLowerCase();
+  return t==='true'?true:t==='false'?false:undefined;
+};
+
+/** The value at a rank, interpolating between neighbours, over a sorted list. */
+const quantile=(sorted:number[],p:number)=>{
+  if(!sorted.length)return NaN;
+  const at=(sorted.length-1)*p, low=Math.floor(at), high=Math.ceil(at);
+  return low===high?sorted[low]:sorted[low]+(sorted[high]-sorted[low])*(at-low);
+};
+
+const FREQUENCY_SHOWN=5;
+const EXAMPLES_SHOWN=3;
+
+export function profileColumn(column:string,values:unknown[],declared?:ColumnKind):ColumnProfile{
+  const total=values.length;
+  const present=values.filter(v=>!isAbsent(v));
+  const absent=total-present.length;
+
+  // What does not match the declared kind. With nothing declared, nothing mismatches: a column
+  // nobody has bound is not wrong, it is undeclared.
+  const matches=(v:unknown)=>declared===undefined?true
+    :declared==='number'?typeof v==='number'&&Number.isFinite(v)
+    :declared==='boolean'?typeof v==='boolean'
+    :true;
+  const mismatchedValues=present.filter(v=>!matches(v));
+  const repairable=mismatchedValues.filter(v=>
+    declared==='number'?asNumber(v)!==undefined
+    :declared==='boolean'?asBoolean(v)!==undefined:false).length;
+
+  const profile:ColumnProfile={column,declared,total,absent,
+    mismatched:mismatchedValues.length,
+    examples:[...new Set(mismatchedValues.map(v=>String(v)))].slice(0,EXAMPLES_SHOWN),
+    repairable};
+
+  // The shape of the numbers, read from whatever reads as a number -- including numeric text,
+  // because a reader asking "what is in this column" is not asking about its JavaScript type.
+  const numbers=present.map(asNumber).filter((n):n is number=>n!==undefined).sort((a,b)=>a-b);
+  if(numbers.length>=4){
+    const q1=quantile(numbers,0.25),q3=quantile(numbers,0.75),iqr=q3-q1;
+    const lowerFence=q1-1.5*iqr,upperFence=q3+1.5*iqr;
+    profile.numeric={min:numbers[0],max:numbers[numbers.length-1],
+      median:quantile(numbers,0.5),q1,q3,lowerFence,upperFence,
+      beyondFence:numbers.filter(n=>n<lowerFence||n>upperFence).length};
+  }
+
+  // And what is in it, for a column that is not numbers. A count of distinct values is the first
+  // thing that says whether a column is a category at all.
+  if(!profile.numeric||declared==='term'){
+    const counts=new Map<string,number>();
+    for(const v of present)counts.set(String(v),(counts.get(String(v))??0)+1);
+    profile.distinct=counts.size;
+    profile.frequencies=[...counts].sort((a,b)=>b[1]-a[1]).slice(0,FREQUENCY_SHOWN)
+      .map(([value,count])=>({value,count}));
+  }
+  return profile;
+}
+
+/** Cast the values of one column to a declared kind, reporting what it could not read.
+ *
+ *  Never automatic. The unit check set this application's precedent -- refuse rather than
+ *  convert -- and a cast that silently turned `"3"` into `3` is the same act as silently
+ *  converting minutes to hours. This runs when a practitioner asks for it, counts both sides,
+ *  and names what it left alone. */
+export interface RepairOutcome {cast:number; unreadable:string[]}
+export function castColumn(values:unknown[],to:ColumnKind):{values:unknown[];outcome:RepairOutcome}{
+  const unreadable:string[]=[];
+  let cast=0;
+  const next=values.map(value=>{
+    if(isAbsent(value))return value;
+    if(to==='number'){
+      if(typeof value==='number')return value;
+      const n=asNumber(value);
+      if(n===undefined){unreadable.push(String(value));return value;}
+      cast++;return n;
+    }
+    if(to==='boolean'){
+      if(typeof value==='boolean')return value;
+      const b=asBoolean(value);
+      if(b===undefined){unreadable.push(String(value));return value;}
+      cast++;return b;
+    }
+    if(typeof value==='string')return value;
+    cast++;return String(value);
+  });
+  return {values:next,outcome:{cast,unreadable:[...new Set(unreadable)]}};
+}

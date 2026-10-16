@@ -786,6 +786,27 @@ fw:consideredRecordCount a owl:DatatypeProperty; rdfs:domain fw:ReadingProblem; 
   rdfs:comment "How many records were judged in all, so the count above can be read as a proportion rather than as a number on its own.".
 fw:problemKind a owl:ObjectProperty; rdfs:domain fw:ReadingProblem; rdfs:range fw:ValueProblemKind;
   rdfs:comment "Which of the two reasons applies. Recorded rather than inferred: the step knows which it found, and a reader cannot tell them apart from the result.".
+# A column read as a different kind than the file held it, because a practitioner asked for it.
+# Experiment 117. Declared because the records a workflow emits after a repair are not the
+# records the file held, and a reader has to be able to learn that from the run rather than from
+# having been present when somebody pressed the button. The repair is never automatic: this
+# application refuses to convert silently, and a cast from "3" to 3 is the same class of act as
+# a unit conversion.
+fw:ColumnRepair a owl:Class;
+  rdfs:label "A column read as a kind other than the one the file held";
+  rdfs:comment "States what was cast, how much of it, and what could not be cast and was left alone. The source file is never written to; this describes what the workflow does to the records on their way through it.".
+fw:columnRepair a owl:ObjectProperty; rdfs:range fw:ColumnRepair;
+  rdfs:comment "A repair this input carries. Absent when the records are exactly as the file held them.".
+fw:repairedAs a owl:DatatypeProperty; rdfs:domain fw:ColumnRepair; rdfs:range xsd:string;
+  rdfs:comment "The kind the values were read as: number, boolean or term.".
+fw:repairedRecordCount a owl:DatatypeProperty; rdfs:domain fw:ColumnRepair; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "How many values were cast.".
+fw:unrepairedRecordCount a owl:DatatypeProperty; rdfs:domain fw:ColumnRepair; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "How many could not be read and were left exactly as they were. These records stay unrecorded to the rules, which is the honest outcome and not a failure of the repair.".
+fw:unrepairedExample a owl:DatatypeProperty; rdfs:domain fw:ColumnRepair; rdfs:range xsd:string;
+  rdfs:comment "Up to three of the values that could not be read, as they appear, so a reader recognises them without opening the file.".
+fw:repairedAt a owl:DatatypeProperty; rdfs:domain fw:ColumnRepair; rdfs:range xsd:string;
+  rdfs:comment "When the practitioner asked for it.".
 fw:fieldBinding a owl:ObjectProperty; rdfs:domain fw:RuleApplication;
   rdfs:comment "Which attribute of a record supplies which predicate the rules read. Nothing is guessed from a column name, so a ruleset over arbitrary records is possible only because this is declared.".
 fw:boundAttribute a owl:DatatypeProperty; rdfs:range xsd:string;

@@ -22,8 +22,9 @@ test('a tabular input opens its rows in a dialog, and changes nothing',async({pa
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('SIMULATED: three dates with no count recorded');
 
-  // The table's own columns: what it is keyed by, then the one thing it measures.
-  await expect(dialog.locator('th')).toHaveText(['#','date','deaths']);
+  // The table's own columns: what it is keyed by, then the one thing it measures. Each header
+  // also carries that column's profile (experiment 117), so these match on the column name.
+  await expect(dialog.locator('th')).toHaveText([/^#$/,/^date/,/^deaths/]);
   await expect(dialog.locator('tbody tr')).toHaveCount(43);
   await expect(dialog.locator('.records-rows')).toHaveText('43 of 43 rows');
   // A value nobody recorded reads as missing, not as a tidy blank: the difference is what a
@@ -55,7 +56,7 @@ test('a point input opens its records in the same dialog',async({page})=>{
   await page.locator('[data-records-quicklook]').click();
   const dialog=page.locator('#table-viewer');
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator('th')).toHaveText(['#','name','DEATHS','FID']);
+  await expect(dialog.locator('th')).toHaveText([/^#$/,/^name/,/^DEATHS/,/^FID/]);
   await expect(dialog).toContainText('250 records, 3 columns');
   await dialog.locator('#table-viewer-close').click();
   await expect(dialog).toBeHidden();

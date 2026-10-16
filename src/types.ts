@@ -22,7 +22,14 @@ export interface PointLayer extends PointCollection {sourceNodeId:string; label?
 export type PointInput = PointLayer | {layers:PointLayer[]};
 export interface SourceInfo {format:string; [key:string]:unknown}
 export interface PointParams {label:string; data:PointCollection; spatialReference?:SpatialReference}
-export interface ObservationParams extends PointParams {fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'}
+/** A column read as a different kind than the file held it, because a practitioner asked.
+ *
+ *  Experiment 117. The repair changes the records this node carries, so it is recorded on the
+ *  node and stated in the run evidence. A workflow whose data has been altered and does not say
+ *  so is the thing this application exists not to produce -- and the alteration is the same
+ *  class of act as a unit conversion, which this project refuses to do silently. */
+export interface ColumnRepair {column:string; to:'number'|'boolean'|'term'; cast:number; unreadable:string[]; at:string}
+export interface ObservationParams extends PointParams {fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'; repairs?:ColumnRepair[]}
 export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Polygon|null; spatialReference?:SpatialReference} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference};
 export interface Exclusion {sourceNodeId:string; featureId:string; signature:string; reason:string}
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';

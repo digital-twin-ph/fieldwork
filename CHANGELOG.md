@@ -5,6 +5,20 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **Column profiles, and one repair you can act on.**
+  [Experiment 117](docs/experiments/117-data-quality.md). Every column in the quick look now
+  carries what the file says about it: values that do not match a declared kind (**marked in the
+  cells**, not just counted), how many are absent, and for numbers min/median/max with a count
+  **beyond a 1.5×IQR fence** — a prompt to look, never called an outlier, because whether a value
+  is one is a judgement about what was measured. Categories show their most frequent values and
+  how many are distinct.
+  A column declared numeric that holds numeric text offers **Read N values as numbers**, stating
+  its count before you press it. The repair is never automatic — this application refuses to
+  convert silently, and `"3"` → `3` is the same class of act as a unit conversion. It reports
+  both sides, leaves what it cannot read exactly as it was, is reversed by Undo, never writes to
+  the source file, and is **stated in the run evidence** as `fw:ColumnRepair`.
+  **No repair is offered for a missing value.** Filling one is imputation, which is a modelling
+  decision belonging to the practitioner and their method, not to a widget's convenience.
 - **A rule names the column, not a label written over it.** The rule editor and the Inspector
   showed a binding's human-readable `label` — so a rule read `Deaths at this building` for a
   column the file calls `DEATHS`, and a practitioner checking the rule against their data had to

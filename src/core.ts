@@ -689,7 +689,29 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'raster_input':{if(!node.params.asset)throw new Error('Prepare the raster window before running.');const grid=await loadRaster(node.params.asset,inputs.area);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId));break;}
       case 'clip_raster':{const grid=clipRaster(inputs.raster,node.params.cutline?.geometry||inputs.area.boundary,node.params);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from));break;}
       case 'places':case 'centers':value={...node.params.data,spatialReference:structuredClone(node.params.spatialReference)};break;
-      case 'point_input':value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:structuredClone(node.params.sourceInfo),spatialReference:structuredClone(node.params.spatialReference)};break;
+      case 'point_input':{
+        value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:structuredClone(node.params.sourceInfo),spatialReference:structuredClone(node.params.spatialReference)};
+        // A repaired column is stated in the evidence. The records this node emits are no longer
+        // the records the file held, and a reader has to be able to learn that from the run
+        // rather than from having been present when somebody pressed the button. Experiment 117.
+        const repairs=node.params.repairs??[];
+        if(repairs.length){
+          const entity=`<urn:fieldwork:run:${runId}:output:${node.id}>`;
+          const quote=(v:string)=>JSON.stringify(v);
+          const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+            +`@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
+            +repairs.map(r=>`${entity} fw:columnRepair [ a fw:ColumnRepair; `
+              +`fw:boundAttribute ${quote(r.column)}; fw:repairedAs ${quote(r.to)}; `
+              +`fw:repairedRecordCount "${r.cast}"^^xsd:integer; `
+              +`fw:unrepairedRecordCount "${r.unreadable.length}"^^xsd:integer`
+              +(r.unreadable.length?`; fw:unrepairedExample ${r.unreadable.slice(0,3).map(quote).join(', ')}`:'')
+              +`; fw:repairedAt ${quote(r.at)} ].`).join('\n')+'\n';
+          receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
+            method:repairs.map(r=>`${r.column}: ${r.cast} value${r.cast===1?'':'s'} read as ${r.to}s at a practitioner's request`
+              +(r.unreadable.length?`, ${r.unreadable.length} left unreadable`:'')+'.').join(' ')
+              +' The source file is unchanged; these records are not the records it held.'});
+        }
+        break;}
       case 'rate':{const result=computeRate(fromPoints(inputs.records),node.params);value={...rateTable(result),chart:rateChart(result)} as unknown as DisplayValue;receipts.push(rateReceipt(node,result,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));break;}
       case 'case_series':{const series=node.params.source==='table'?caseSeriesFromTable(inputs.cases,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period}):caseSeries(inputs.points,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period,weightField:node.params.weightField});value={...seriesTable(series),chart:seriesChart(series)} as unknown as DisplayValue;receipts.push(seriesReceipt(node,series,runId,workflow.edges.find(e=>e.to===node.id&&(e.port==='points'||e.port==='cases'))!.from));break;}
       case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,basisKind:node.params.basisKind,familyValues:node.params.familyValues,sourceNote:node.params.sourceNote});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}

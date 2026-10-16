@@ -5,6 +5,11 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **The fail conditions are in the ontology.** A run that read a value as "not recorded" records
+  why, in the evidence: `fw:ReadingProblem` on the rule application, naming the attribute, the
+  count, the records considered, and which of `fw:ValueAbsent` or `fw:ValueUnreadable` applies.
+  Both produce the same fact for the reasoner, so the receipt is the only place they can be told
+  apart afterwards. A step that read everything says so rather than staying silent.
 - **A step says what it could not read.** A ruleset applied to records whose values it cannot
   use tells the rules those values are not recorded — which is correct, and was silent. It now
   reports them: as an amber notice after the run that names the steps and **stays until it is

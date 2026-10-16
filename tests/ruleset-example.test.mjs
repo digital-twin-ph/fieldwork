@@ -112,6 +112,34 @@ test('D · a value present but unreadable is reported as a different thing from 
   assert.match(unreadable.says,/not that/);
 });
 
+test('the fail conditions are in the evidence, not only on the screen',async()=>{
+  // The practitioner, 2026-10-16: "These fail conditions must be represented also in the
+  // ontology." A notice a reader can close is not a record. Every term here is declared in
+  // ontology/fieldwork.ttl, which the coupling gate enforces: the application may not assert a
+  // term the ontology does not define.
+  const result=await run();
+
+  // A value nobody collected.
+  const gaps=result.receipts.find(r=>r.nodeId==='gap-day').facts;
+  assert.match(gaps,/fw:readingProblem \[ a fw:ReadingProblem;/);
+  assert.match(gaps,/fw:boundAttribute "deaths"/);
+  assert.match(gaps,/fw:problemKind fw:ValueAbsent/);
+  assert.match(gaps,/fw:affectedRecordCount 3; fw:consideredRecordCount 43/);
+
+  // A value somebody collected that the step could not read. The SAME fact reaches the reasoner
+  // in both cases -- that the value is not recorded -- so the receipt is the only place the two
+  // can be told apart afterwards.
+  const text=result.receipts.find(r=>r.nodeId==='text-address').facts;
+  assert.match(text,/fw:problemKind fw:ValueUnreadable/);
+  assert.match(text,/fw:affectedRecordCount 63; fw:consideredRecordCount 250/);
+
+  // A step that read everything asserts no problem, and says so rather than staying silent --
+  // an absent statement and a clean read are not the same thing to a reader.
+  const clean=result.receipts.find(r=>r.nodeId==='day');
+  assert.ok(!clean.facts.includes('fw:readingProblem'));
+  assert.match(clean.method,/Every bound value was readable/);
+});
+
 // The three debts experiment 106 records, exercised rather than only written down. The
 // practitioner, 2026-10-15: "The three debts should go in the worked example for rulesets so
 // these can be exercised and evaluated."

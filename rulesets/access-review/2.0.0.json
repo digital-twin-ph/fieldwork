@@ -91,5 +91,162 @@
       "incompatibility": "Both input ports changed from access to distances. The widget that emitted access is retired, so a workflow pinned to 1.0.0 cannot be moved by swapping the version alone: it needs nearest with a candidate filter and travel_time in place of the one retired step.",
       "deprecates": "The access port type, and with it the walking-speed assumption that was made inside a nearest-neighbour search and never stated. travel_time states it in its own receipt."
     }
-  ]
+  ],
+  "authored": {
+    "subject": "?p",
+    "comment": "Proxy access review; not a clinical recommendation or routed travel time.",
+    "rules": [
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:accessKnown",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Unknown"
+          },
+          {
+            "predicate": "fw:zone",
+            "value": "fw:Unknown"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "greaterThan",
+                "value": {
+                  "setting": "threshold"
+                }
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Review"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "notGreaterThan",
+                "value": {
+                  "setting": "threshold"
+                }
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:NoFlag"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "notGreaterThan",
+                "value": 5
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:zone",
+            "value": "fw:Within5"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "greaterThan",
+                "value": 5
+              },
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "notGreaterThan",
+                "value": 15
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:zone",
+            "value": "fw:Within15"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "greaterThan",
+                "value": 15
+              },
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "notGreaterThan",
+                "value": 30
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:zone",
+            "value": "fw:Within30"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "greaterThan",
+                "value": 30
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:zone",
+            "value": "fw:Over30"
+          }
+        ]
+      }
+    ]
+  }
 }

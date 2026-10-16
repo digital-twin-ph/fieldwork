@@ -100,3 +100,60 @@ test('a setting is chosen by name, and the template syntax never reaches the sur
   })).toEqual({setting:'threshold'});
   expect(errors).toEqual([]);
 });
+
+// "Why can't I just get a ruleset editor?" and "The pinned rules should be editable so it's
+// reviewable in the editor." -- the practitioner, 2026-10-15, on example 09, whose step applies
+// a published ruleset. The Inspector showed its title, its description and its basis, and never
+// its rules; the only route to an editor was an option inside a dropdown, and it dropped every
+// edge on the node on the way.
+test('a published ruleset is read in the editor, and is not editable there',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=snow-extent');
+  await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
+
+  const edges=()=>page.locator('.react-flow__edge').count();
+  const before=await edges();
+  await page.locator('.react-flow__node[data-id="review"]').click();
+  await page.locator('#review-rules').click();
+  const dialog=page.locator('#rule-editor');
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('Extent review 1.1.0');
+
+  // Laid out as rules, with the published vocabulary intact and the setting named rather than
+  // written as a placeholder.
+  await expect(dialog.locator('.rule-card')).toHaveCount(3);
+  await expect(dialog.locator('[data-part="value-source"]').first()).toHaveValue('threshold');
+  expect(await dialog.innerText()).not.toContain('{{');
+
+  // Published and pinned: every control is disabled and nothing can be added or removed.
+  for(const control of await dialog.locator('.rule-editor-body input,.rule-editor-body select').all())
+    await expect(control).toBeDisabled();
+  await expect(dialog.locator('#rule-editor-add')).toHaveCount(0);
+  await expect(dialog.locator('.rule-editor-body button[data-part]')).toHaveCount(0);
+
+  await dialog.locator('#rule-editor-cancel').click();
+  await expect(dialog).toBeHidden();
+  expect(await edges(),'reading rules rewires nothing').toBe(before);
+  expect(errors).toEqual([]);
+});
+
+// Converting a step to rules of its own used to disconnect it, which left the practitioner with
+// an editor and nothing for it to read. It keeps the ruleset's port shape now, so the wiring
+// survives and the columns the connected records carry are offered.
+test('writing rules for a pinned step keeps what is wired to it',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=snow-extent');
+  await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
+
+  const before=await page.locator('.react-flow__edge').count();
+  await page.locator('.react-flow__node[data-id="review"]').click();
+  await page.locator('#author-rules').click();
+  await expect(page.locator('#rule-editor')).toBeVisible();
+  await page.locator('#rule-editor-cancel').click();
+  expect(await page.locator('.react-flow__edge').count()).toBe(before);
+  expect(errors).toEqual([]);
+});

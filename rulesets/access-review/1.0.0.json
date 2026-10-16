@@ -83,5 +83,162 @@
     "evidence": [],
     "unresolvedCitations": [],
     "note": "Three uncited numbers, not one: the review threshold, and the 5, 15 and 30 minute zone bounds, which are literals in the rules rather than parameters because they are this rulesets own banding."
+  },
+  "authored": {
+    "subject": "?p",
+    "comment": "Proxy access review; not a clinical recommendation or routed travel time.",
+    "rules": [
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:accessKnown",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Unknown"
+          },
+          {
+            "predicate": "fw:zone",
+            "value": "fw:Unknown"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "greaterThan",
+                "value": {
+                  "setting": "threshold"
+                }
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Review"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "notGreaterThan",
+                "value": {
+                  "setting": "threshold"
+                }
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:NoFlag"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "notGreaterThan",
+                "value": 5
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:zone",
+            "value": "fw:Within5"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "greaterThan",
+                "value": 5
+              },
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "notGreaterThan",
+                "value": 15
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:zone",
+            "value": "fw:Within15"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "greaterThan",
+                "value": 15
+              },
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "notGreaterThan",
+                "value": 30
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:zone",
+            "value": "fw:Within30"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:proxyMinutes",
+                "comparator": "greaterThan",
+                "value": 30
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:zone",
+            "value": "fw:Over30"
+          }
+        ]
+      }
+    ]
   }
 }

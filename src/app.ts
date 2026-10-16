@@ -26,7 +26,7 @@ import {seaLevelExample} from './sea-level-example.js';
 import {rulesetExample} from './ruleset-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openTableViewer,tableViewOf} from './table-viewer.js';
-import {castColumn} from './column-profile.js';
+import {castColumn,applyRepairs} from './column-profile.js';
 import {settingNamed} from './authored-rules.js';
 import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
@@ -621,20 +621,19 @@ function declaredKinds(workflow:Workflow,inputId:string):Record<string,'number'|
  *  quietly stay broken. Experiment 117. */
 function repairColumn(nodeId:string,column:string,to:'number'|'boolean'|'term'){
   const node=workflow.nodes.find(x=>x.id===nodeId);
-  const data=(node?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data;
-  if(!data?.features?.length)return;
-  const {outcome}=castColumn(data.features.map(f=>f.properties?.[column]),to);
+  const params=node?.params as {data?:{features?:{properties?:Record<string,unknown>}[]};repairs?:ColumnRepair[]}|undefined;
+  if(!params?.data?.features?.length)return;
+  // Measured against the records as they will be READ -- repairs already declared included --
+  // so asking twice for the same column does nothing rather than reporting it twice.
+  const seen=applyRepairs(params.data.features,params.repairs??[]);
+  const {outcome}=castColumn(seen.map(f=>f.properties?.[column]),to);
   if(!outcome.cast&&!outcome.unreadable.length)return;
+  // DECLARED, not applied to what the node holds. The records this node imported stay byte for
+  // byte what the file contained; the repair is applied to a copy on the way out, so removing
+  // the declaration brings the original back without an Undo and without a re-import.
   change(w=>{
     const target=w.nodes.find(x=>x.id===nodeId);
-    const params=target?.params as {data?:{features?:{properties?:Record<string,unknown>}[]};repairs?:ColumnRepair[]}|undefined;
-    const features=params?.data?.features??[];
-    const repaired=castColumn(features.map(f=>f.properties?.[column]),to).values;
-    features.forEach((feature,index)=>{
-      if(feature.properties&&repaired[index]!==undefined)feature.properties[column]=repaired[index];
-    });
-    // Recorded on the node, so the next run can state it. A workflow whose data has been
-    // altered and does not say so is what this application exists not to produce.
+    const params=target?.params as {repairs?:ColumnRepair[]}|undefined;
     if(params)params.repairs=[...(params.repairs??[]),
       {column,to,cast:outcome.cast,unreadable:outcome.unreadable,at:new Date().toISOString()}];
   });
@@ -1579,8 +1578,9 @@ function renderInspector(){
   // look. Point records get it for the same reason tabular ones do -- the Inspector is 292px.
   $('#inspector-content').querySelectorAll<HTMLButtonElement>('[data-records-quicklook]').forEach(el=>
     el.addEventListener('click',()=>{
-      const data=(n.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data;
-      const features=data?.features??[];
+      const held=(n.params as {data?:{features?:{properties?:Record<string,unknown>}[]};repairs?:ColumnRepair[]});
+      const repairs=held.repairs??[];
+      const features=applyRepairs(held.data?.features??[],repairs);
       const columns=[...new Set(features.flatMap(f=>Object.keys(f.properties??{})))];
       openTableViewer({title:n.params.label||TYPES[n.type].title,columns,
         rows:features.map(f=>({...f.properties})),
@@ -1589,7 +1589,10 @@ function renderInspector(){
         declared:declaredKinds(workflow,n.id),
         onRepair:(column,to)=>repairColumn(n.id,column,to),
         note:`${features.length} records, ${columns.length} column${columns.length===1?'':'s'}. `
-          +`These are the columns a rule can read; nothing is guessed from a name.`},esc);
+          +`These are the columns a rule can read; nothing is guessed from a name.`
+          +(repairs.length?` ${repairs.length} declared repair${repairs.length===1?'':'s'} `
+            +`(${repairs.map(r=>`${r.column} as ${r.to}s`).join(', ')}) are applied to what you see here. `
+            +`The records this step holds are unchanged — removing the declaration restores them.`:'')},esc);
     }));
   $('#inspector-content').querySelectorAll<HTMLSelectElement>('[data-records-rows]').forEach(el=>
     el.addEventListener('change',()=>{

@@ -152,5 +152,11 @@ test('a failing widget glows red, and is told apart from one that merely found s
   // has a caveat" must not look like "you have no answer".
   const border=id=>node(id).evaluate(e=>getComputedStyle(e).borderColor);
   expect(await border('gap-day')).not.toBe(await border('text-building'));
+  // Including WHILE the pulse runs. The keyframes carried the colour and both states shared one
+  // pair, so an alerting node rendered red for four seconds and turned amber only once the
+  // animation finished -- which no screenshot taken in that window would have shown.
+  const ring=id=>node(id).evaluate(e=>getComputedStyle(e).boxShadow);
+  expect(await ring('gap-day')).toMatch(/rgb\(165, 43, 35\)/);
+  expect(await ring('text-building')).toMatch(/rgb\(177, 118, 55\)/);
   expect(errors).toEqual([]);
 });

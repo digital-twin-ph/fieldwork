@@ -96,46 +96,60 @@ and whose values include numeric text.
 
 ## Can a quality problem arise *after* processing?
 
-The practitioner, 2026-10-16: *"What I am not sure of is if data quality issues can happen
-post-processing as a consequence."* They can, they do, and **this project has been answering it
-one widget at a time without noticing that it was one question.**
+The practitioner asked, 2026-10-16: *"What I am not sure of is if data quality issues can happen
+post-processing as a consequence."* This record first answered **yes, and they are the worse
+kind**, with a table of six widgets said to create them. The practitioner then took the table
+apart, and it did not survive. What follows is the corrected version, because the first one
+mushed four different things together under one word.
 
-| Step | What it does to the data | Recorded today |
+| Step | First claimed | What it actually is |
 | --- | --- | --- |
-| **Snap to network** | moves every site to a junction — a pump in a yard is now on the road | the distance each site moved, and an alert past the snap limit |
-| **Isochrone / catchments** | some sites reach nothing; some routes are charged a straight line | `unconnected`, `offNetwork`, as a node alert |
-| **Cases by period** | a record whose date cannot be parsed is in no bin at all | `undatedRecords` and the list of them |
-| **Apply ruleset** | a record no rule matched carries no conclusion | `fw:unmatchedSubjectCount` |
-| **Apply ruleset** (this experiment) | a value it could not read is treated as absent | `fw:ReadingProblem` |
-| **Reproject, hull, mean centre, aggregate** | produce values that were in no file | partially, per widget |
+| **Snap to network** | moves every site; a quality problem | **a redundant primitive.** Its own header reads "which network node each site attaches to, and how far that is from the site" — D2's first row, *nearest-neighbour with distance*, already implemented three times. It is a fourth, and the access leg it records is explicit, so nothing is lost to account for |
+| **Isochrone / catchments** · sites that reach nothing | a quality problem | **a finding.** The site genuinely has no road access within the budget. That is a result about the world |
+| **Isochrone / catchments** · routes charged a straight line | a quality problem | **a method artifact** — the step asserts a walk that may not exist. Not the data's fault and not a finding; a property of how the answer was produced |
+| **Cases by period** · unparseable dates | a quality problem | **a quality problem.** Stands |
+| **Apply ruleset** · no rule matched | a quality problem | **an ELSE, and still a bin.** A ruleset may decline to classify ([65](65-ruleset-as-data.md)); the record is classified as "none of these", which is a category. Reporting it as a shortfall rather than naming it as a bin is a presentation defect, not a data one |
+| **Apply ruleset** · unreadable values | a quality problem | **a quality problem, or file corruption.** Stands — it is this experiment's subject |
+| **Reproject, hull, aggregate** | "produce values that were in no file" | **badly put, and not a quality problem.** It meant that a projected coordinate, a hull, a centroid or a cell count is *computed rather than observed*. That is a derived-versus-observed provenance concern, which this project already marks, and it has no business in a table about data quality |
 
-So the answer is not merely yes. It is that **the downstream problems are the worse kind**, for
-a reason worth stating plainly:
+### What that costs the argument
 
-> An input-stage problem is visible and permanent. The `"3"` is still in the file; it can be
-> looked at tomorrow. **A processing-stage problem is destroyed by the step that creates it.**
-> Once a site is snapped, its coordinates *are* the junction's, and nothing in the output says it
-> travelled 200 m to get there. The only surviving record is whatever the step chose to keep.
+The corrected table has **two** genuine data-quality rows, and both are about values that arrived
+wrong in a file: a date that will not parse, and a number written as text. Everything else is a
+finding, a method artifact, an implicit category, or provenance — each with its own existing
+treatment.
 
-That is why `snap_to_network`'s manual says to check the snap distance every time, and why the
-step records it at all. Each of those widgets reached the same conclusion independently and
-invented its own vocabulary for it. The consolidation — one frame for "what this layer will not
-tell you", wherever the layer came from — is not built.
+So the claim this record made — that quality degrades most invisibly downstream, therefore
+inspection should be bound to anything carrying records — **does not follow from the evidence it
+cited**. The practitioner's original proposal, a data-quality dialog **per input widget**, is
+better supported: genuine quality problems overwhelmingly originate in files, and a file is what
+an input widget holds.
 
-### What follows for where the dialog lives
+### Keeping the original, which is what makes the rest safe
 
-The practitioner proposed a data-quality dialog **per input widget**. The evidence above argues
-for inspecting anything that carries records, with one asymmetry that falls out naturally:
+The practitioner, 2026-10-16: *"A processing stage problem can be mitigated by keeping the
+original file not overwriting it. Like pandas or geopandas, there is always an option to use a
+copy, not the original."*
 
-- **Inspect everywhere.** A derived layer has quality properties, and they are less visible than
-  an input's, not more.
-- **Repair only at the source.** A derived layer cannot be repaired — there is nothing to
-  correct, only a step to re-run. The repair belongs where the records are held, which is the
-  input, and on a derived layer the dialog should say where to go instead of offering a button
-  that cannot work.
+This landed on code written the same day. The repair built above **rewrote the input node's
+stored properties**: after it ran, the `"3"` the file held was gone from the saved workflow and
+the only evidence it had existed was a count in the receipt. Undo recovered it; nothing else
+did. A workflow exported at that moment carried altered records described as imported ones.
 
-Neither is built. `profileColumn` is already generic — it takes columns and rows and knows
-nothing about inputs — so the obstacle is the plumbing and the frame, not the statistics.
+A repair is a **declaration** now — which column, read as what — applied to a copy at the moment
+the records are handed on. What the node holds stays byte for byte what was imported, so
+removing the declaration restores the original without an Undo and without re-importing. The
+run still sees the repaired values, and the receipt still states what was done.
+
+That also settles the graph's wider behaviour, which was never in doubt but had not been stated:
+every step here produces a new value and the inputs persist, so no step overwrites its source.
+The repair was the one place that did, and it no longer does.
+
+The one observation worth keeping from the first version is narrower than it was stated, and is
+about method artifacts rather than quality: a straight-line charge, like a snap displacement, is
+destroyed by the step that creates it unless the step chooses to keep it. That is an argument
+for those steps recording what they did, which they already do, and not an argument about where
+data quality is inspected.
 
 **Not to be confused with [experiment 51](51-dataset-profiles.md)**, which uses "profile" for
 something else entirely: which *classes of dataset* a problem type requires. One is about
@@ -162,9 +176,11 @@ planning what to obtain; this is about what arrived.
 
 1. The three unbuilt scenarios have a stated decision each: what the application offers for
    missingness and for data shapes, or a recorded reason for offering nothing.
-0. A decision on scope: whether quality inspection is bound to input widgets, as proposed, or to
-   anything carrying records, as the evidence above argues. Until that is settled the dialog
-   should not be built, because the two answers produce different dialogs.
+0. The per-input data-quality dialog is built, on the scope the practitioner proposed and this
+   record wrongly argued against.
+0. `snap_to_network` is reconsidered against D2 rather than left as a fourth implementation of
+   nearest-neighbour-with-distance, and the outcome recorded wherever D2 is settled.
+0. A ruleset's unmatched records are presented as the bin they are, rather than as a shortfall.
 2. A repair is reachable from where the problem is *reported*, not only from the quick look —
    the alert naming 63 unreadable values should lead to the thing that fixes them.
 3. A file the project did not author is profiled, and what the profile missed is written down.

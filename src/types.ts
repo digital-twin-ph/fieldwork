@@ -83,7 +83,12 @@ export interface ParamsByType {
        *  parameter declares none, and binding then has nothing to insist on. */
       parameters?:{name:string;meaning:string;unit?:string;unitLabel?:string;
         min?:number;max?:number;decimals?:number}[];
-      rules:{any:{all:{field:string;comparator:string;value:string|number|boolean}[]}[];
+      /** A value is a literal, or `{setting:'threshold'}` -- a reference to one of the parameters
+       *  above. The compiler turns that reference into the `{{threshold}}` placeholder the
+       *  compiled rules carry, so the template syntax exists only in rule TEXT and never in the
+       *  form a practitioner edits. A `'{{threshold}}'` string is still read, because rules
+       *  authored before 2026-10-15 hold one. */
+      rules:{any:{all:{field:string;comparator:string;value:string|number|boolean|{setting:string}}[]}[];
         then:{predicate:string;value:string}[]}[];
     }};
   micro_workflow:{label:string;

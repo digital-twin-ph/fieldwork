@@ -18,7 +18,7 @@
  */
 import type {ParamsByType} from './types.js';
 import type {Escape} from './types.js';
-import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems} from './authored-rules.js';
+import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed} from './authored-rules.js';
 
 type Authored=NonNullable<ParamsByType['apply_ruleset']['authored']>;
 type Field=Authored['fields'][number];
@@ -61,9 +61,45 @@ export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorR
     let rules:Authored['rules']=JSON.parse(JSON.stringify(authored.rules));
     const fields=authored.fields,choices=readable(fields);
     const kindOf=(predicate:string)=>choices.find(c=>c.predicate===predicate)?.kind??'term';
+    const settings=authored.parameters??[];
     const unitOf=(predicate:string)=>{
       const field=fields.find(f=>f.predicate===predicate);
       return field?.unitLabel||field?.unit?.split('/').pop();
+    };
+
+    /** What a condition is compared against: a number typed here, or one of the step's settings.
+     *
+     *  A setting used to be TYPED, as `{{threshold}}`, because that is how the compiled rules
+     *  carry it -- a published ruleset's rules are text and `bindParameters` fills the
+     *  placeholders. The practitioner, 2026-10-15: *"Why are we using template syntax that not
+     *  anyone would write?"* Nobody would. It was the stored form reaching the surface, the same
+     *  mistake as printing `fwa:` at them, and the fix is the same: the condition refers to the
+     *  setting by name, and the compiler writes the placeholder at the edge where rules become
+     *  text. The syntax is now something only the reasoner ever sees. */
+    const valueControl=(kind:Field['kind'],where:string,
+      condition:Authored['rules'][number]['any'][number]['all'][number])=>{
+      if(kind==='boolean')
+        return `<select ${where} data-part="value" aria-label="Value">`
+          +`<option value="true" ${condition.value===true?'selected':''}>true</option>`
+          +`<option value="false" ${condition.value===false?'selected':''}>false</option></select>`;
+      // The unit the field is measured in, beside the box the number is typed into. A bare
+      // literal takes the field's unit and nothing can check it, so showing it is the only
+      // defence there is: the practitioner typing 10 can see whether 10 means minutes.
+      const unit=kind==='number'&&unitOf(condition.field)
+        ?`<span class="rule-unit">${esc(unitOf(condition.field)!)}</span>`:'';
+      if(kind!=='number'||!settings.length)
+        return `<input ${where} data-part="value" aria-label="Value" value="${esc(String(condition.value??''))}" `
+          +`placeholder="${kind==='number'?'a number':'a value, such as clinic'}">`+unit;
+      const setting=settingNamed(condition.value);
+      return `<select ${where} data-part="value-source" aria-label="Compared against">`
+        +`<option value="" ${setting?'':'selected'}>a number</option>`
+        +settings.map(s=>`<option value="${esc(s.name)}" ${s.name===setting?'selected':''}>the ${esc(s.name)} setting</option>`).join('')
+        +`</select>`
+        +(setting
+          // The setting's own unit, not the field's: they must agree, and authoredUnitProblems
+          // refuses the run when they do not. Showing both is what makes that refusal legible.
+          ?`<span class="rule-unit">${esc(settings.find(s=>s.name===setting)?.unitLabel||'')}</span>`
+          :`<input ${where} data-part="value" aria-label="Value" value="${esc(String(condition.value??''))}" placeholder="a number">`+unit);
     };
 
     const dialog=document.createElement('dialog');
@@ -87,13 +123,7 @@ export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorR
         +`<select ${where} data-part="comparator" aria-label="Comparator">`
         +COMPARATORS[kind].map(c=>`<option value="${c.value}" ${c.value===condition.comparator?'selected':''}>${esc(c.label)}</option>`).join('')
         +`</select>`
-        +(kind==='boolean'
-          ?`<select ${where} data-part="value" aria-label="Value"><option value="true" ${condition.value===true?'selected':''}>true</option><option value="false" ${condition.value===false?'selected':''}>false</option></select>`
-          :`<input ${where} data-part="value" aria-label="Value" value="${esc(String(condition.value??''))}" placeholder="${kind==='number'?'a number, or {{parameter}}':'a value, such as clinic'}">`
-            // The unit the field is measured in, beside the box the number is typed into. A bare
-            // literal takes the field's unit and nothing can check it, so showing it is the only
-            // defence there is: the practitioner typing 10 can see whether 10 means minutes.
-            +(kind==='number'&&unitOf(condition.field)?`<span class="rule-unit">${esc(unitOf(condition.field)!)}</span>`:''))
+        +valueControl(kind,where,condition)
         +`<button class="button small" ${where} data-part="drop-condition" aria-label="Remove this condition">Remove</button>`
         +`</div>`;
     };
@@ -188,6 +218,10 @@ export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorR
             condition.value=kindOf(condition.field)==='boolean'?value==='true'
               :kindOf(condition.field)==='number'&&value.trim()&&!value.includes('{{')?Number(value)
               :value;
+          // Switching between a typed number and a setting. Leaving a setting leaves a number
+          // behind rather than an empty box, so the rule the dialog holds stays one the compiler
+          // accepts at every keystroke -- the ceiling and the unit check run on every edit.
+          if(part==='value-source'&&condition)condition.value=value?{setting:value}:0;
           // A practitioner writes `band`, not `fwa:band`: the namespace is the application's
           // business and is added here rather than asked for.
           const prefixed=(raw:string)=>raw.trim().startsWith('fwa:')?raw.trim():`fwa:${raw.trim().replace(/[^A-Za-z0-9_]+/g,'_')}`;

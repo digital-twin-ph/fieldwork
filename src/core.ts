@@ -52,6 +52,7 @@ import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAcc
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
+import {applyRepairs} from './column-profile.js';
 import {compileAuthoredRuleset,authoredUnitProblems} from './authored-rules.js';
 import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
@@ -690,7 +691,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'clip_raster':{const grid=clipRaster(inputs.raster,node.params.cutline?.geometry||inputs.area.boundary,node.params);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from));break;}
       case 'places':case 'centers':value={...node.params.data,spatialReference:structuredClone(node.params.spatialReference)};break;
       case 'point_input':{
-        value={...node.params.data,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:structuredClone(node.params.sourceInfo),spatialReference:structuredClone(node.params.spatialReference)};
+        // Repairs are applied to a COPY, here, on the way out. What this node holds is what the
+        // file held; what it hands on is what the practitioner declared it should be read as.
+        // 2026-10-16: "there is always an option to use a copy, not the original."
+        const emitted=applyRepairs(node.params.data.features??[],node.params.repairs??[]);
+        value={...node.params.data,features:emitted,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:structuredClone(node.params.sourceInfo),spatialReference:structuredClone(node.params.spatialReference)};
         // A repaired column is stated in the evidence. The records this node emits are no longer
         // the records the file held, and a reader has to be able to learn that from the run
         // rather than from having been present when somebody pressed the button. Experiment 117.

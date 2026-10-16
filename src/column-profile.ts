@@ -137,3 +137,31 @@ export function castColumn(values:unknown[],to:ColumnKind):{values:unknown[];out
   });
   return {values:next,outcome:{cast,unreadable:[...new Set(unreadable)]}};
 }
+
+/** Apply declared repairs to a copy of some records, leaving the originals untouched.
+ *
+ *  The practitioner, 2026-10-16: *"A processing stage problem can be mitigated by keeping the
+ *  original file not overwriting it. Like pandas or geopandas, there is always an option to use
+ *  a copy, not the original."*
+ *
+ *  Exactly, and the first version of the repair did the opposite: it rewrote the input node's
+ *  stored properties, so the `"3"` the file held was gone from the saved workflow and only a
+ *  count in the receipt said it had ever existed. Undo recovered it; nothing else did.
+ *
+ *  A repair is a DECLARATION now -- which column, read as what -- and it is applied here, to a
+ *  copy, at the moment the records are handed on. What the node holds stays byte for byte what
+ *  was imported, so the declaration can be removed and the original is simply there again. */
+export function applyRepairs<T extends {properties?:Record<string,unknown>}>(
+  features:readonly T[],repairs:readonly {column:string;to:ColumnKind}[],
+):T[]{
+  if(!repairs.length)return features as T[];
+  let working=features.map(feature=>({...feature,properties:{...feature.properties}}));
+  for(const repair of repairs){
+    const {values}=castColumn(working.map(f=>f.properties[repair.column]),repair.to);
+    working=working.map((feature,index)=>{
+      if(values[index]===undefined&&!(repair.column in feature.properties))return feature;
+      return {...feature,properties:{...feature.properties,[repair.column]:values[index]}};
+    });
+  }
+  return working as T[];
+}

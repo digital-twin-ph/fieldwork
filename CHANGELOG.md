@@ -17,6 +17,9 @@ shown in a local build is not a claim that it has been published.
   convert silently, and `"3"` → `3` is the same class of act as a unit conversion. It reports
   both sides, leaves what it cannot read exactly as it was, is reversed by Undo, never writes to
   the source file, and is **stated in the run evidence** as `fw:ColumnRepair`.
+  **The repair never overwrites what the input holds.** It is a declaration — which column, read
+  as what — applied to a copy on the way out, so the records a node carries stay byte for byte
+  what was imported and removing the declaration restores them without an Undo.
   **No repair is offered for a missing value.** Filling one is imputation, which is a modelling
   decision belonging to the practitioner and their method, not to a widget's convenience.
 - **A rule names the column, not a label written over it.** The rule editor and the Inspector
@@ -45,6 +48,10 @@ shown in a local build is not a claim that it has been published.
   had already opened it, and nothing mentioned it. The workspace now records which published
   version it came from, and a newer one offers itself in one click. Nothing is replaced without
   asking: your copy keeps your edits until you choose.
+- **The alert and failure colours were split in the keyframes too.** Splitting the static rules
+  was not enough: the pulse hard-coded the danger token and runs for over four seconds, so a node
+  that had merely *found* something rendered red for the whole animation and turned amber only
+  once it stopped.
 - **A widget that fails glows red, and keeps its own colour.** A step whose run was refused used
   to keep the **running** state for ever — `onProgress(id,'done')` is the last line of the loop
   body and a throw skips it — so the canvas showed the one widget that had stopped as the one

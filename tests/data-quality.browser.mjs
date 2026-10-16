@@ -84,3 +84,51 @@ test('a repair is stated in the run evidence',async({page})=>{
   await expect(n3).toContainText('fw:unrepairedRecordCount "0"');
   expect(errors).toEqual([]);
 });
+
+// "A processing stage problem can be mitigated by keeping the original file not overwriting it.
+// Like pandas or geopandas, there is always an option to use a copy, not the original." -- the
+// practitioner, 2026-10-16, landing on code written the same day: the repair rewrote the input
+// node's stored properties, so the "3" the file held was gone from the saved workflow and only
+// a count in the receipt said it had existed.
+test('a repair never overwrites what the input holds',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=rulesets');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('#toast button').last().click();
+
+  // What the file held: one count in four is text.
+  const held=()=>page.evaluate(()=>{
+    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
+    const n=w.nodes.find(x=>x.id==='texty');
+    return {texts:n.params.data.features.filter(f=>typeof f.properties.DEATHS==='string').length,
+      repairs:(n.params.repairs||[]).length};
+  });
+  expect(await held()).toEqual({texts:63,repairs:0});
+
+  await page.locator('.react-flow__node[data-id="texty"]').click();
+  await page.locator('[data-records-quicklook]').click();
+  await page.locator('#table-viewer [data-repair]').click();
+  await expect(page.locator('#toast')).toContainText('63 values now read as numbers');
+  await page.locator('#toast button').last().click();
+
+  // The repair is DECLARED. The records are exactly as imported -- all 63 strings still there.
+  expect(await held()).toEqual({texts:63,repairs:1});
+
+  // And yet the run sees numbers: the declaration is applied to a copy on the way out.
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await expect(page.locator('#toast')).toContainText('3 records could not be read as declared');
+
+  // Reopening shows what downstream reads, says a repair is in force, and does not offer it
+  // again -- there is nothing left to repair.
+  await page.locator('.react-flow__node[data-id="texty"]').click();
+  await page.locator('[data-records-quicklook]').click();
+  const dialog=page.locator('#table-viewer');
+  await expect(dialog).toContainText('1 declared repair');
+  await expect(dialog).toContainText('The records this step holds are unchanged');
+  await expect(dialog.locator('[data-repair]')).toHaveCount(0);
+  await expect(dialog.locator('.cell-mismatch')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

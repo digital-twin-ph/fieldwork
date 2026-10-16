@@ -2,8 +2,8 @@
 
 _Created 2026-10-16 · Updated 2026-10-16_
 
-**Status:** tried — the quick look profiles every column, one repair is offered and recorded,
-and the rest of the scope below is open. The practitioner, 2026-10-16: *"We should also offer
+**Status:** tried — a **data quality dialog per input widget** profiles every column, offers one
+repair and takes it back, and the rest of the scope below is open. The practitioner, 2026-10-16: *"We should also offer
 correction options for different scenarios — missing data, missingness, mixed data types — and
 increase awareness of data shapes, including outliers, frequency analysis, etc."*
 
@@ -176,8 +176,10 @@ planning what to obtain; this is about what arrived.
 
 1. The three unbuilt scenarios have a stated decision each: what the application offers for
    missingness and for data shapes, or a recorded reason for offering nothing.
-0. The per-input data-quality dialog is built, on the scope the practitioner proposed and this
-   record wrongly argued against.
+0. ~~The per-input data-quality dialog is built~~ — done 2026-10-16, on the scope the
+   practitioner proposed and this record wrongly argued against. It inspects, repairs, and
+   **removes** a repair, because a repair that cannot be taken back is a decision a practitioner
+   cannot revisit.
 0. `snap_to_network` is reconsidered against D2 rather than left as a fourth implementation of
    nearest-neighbour-with-distance, and the outcome recorded wherever D2 is settled.
 0. A ruleset's unmatched records are presented as the bin they are, rather than as a shortfall.

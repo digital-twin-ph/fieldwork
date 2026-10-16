@@ -35,8 +35,48 @@ shown in a local build is not a claim that it has been published.
 - **The progressive-reveal playback is reachable** from the workspace bar as *Play back the
   build*, rather than only by typing `?playback=1`. It changes nothing that is saved and leaves
   the ordinary palette untouched: the reveal rule is measured and prototyped, not adopted.
-- **Validation limits.** 496 unit tests and 122 browser tests pass, with the browser suite run on
-  Chromium, Firefox and WebKit in CI. No practitioner other than the author has used any of this.
+- **Rules can be written, not only chosen.** A ruleset step can carry rules authored in the
+  workflow instead of a published ruleset picked from a list. **Edit these rules** opens a dialog:
+  conditions grouped by *and*, alternatives by *or*, a list of conclusions, add and remove
+  throughout. The rules are compiled as you write them, so the limit on how many a ruleset may
+  have — and any refusal — appears while you are writing rather than afterwards, and *Keep* stays
+  disabled while they cannot compile. Nothing is written to the step until you keep it. The
+  Inspector reads authored rules back in plain words, with the columns they read and the settings
+  they use.
+- **A measurement must state its unit.** A numeric field and a numeric setting each declare one,
+  and a comparison between two that disagree is **refused by name** rather than converted —
+  checked while you write the rule and again when the workflow runs. Where no rule can help, the
+  editor shows the field's unit beside the box its value is typed into: a bare number takes the
+  field's unit and nothing can tell what you meant by it.
+- **A new worked example: *09 · Rulesets · how a rule is put together*.** Four steps, one way of
+  writing a condition each — banding a number, alternatives reaching one conclusion, two
+  conclusions at once, matching a category, and bounds from below — over twelve synthetic service
+  points chosen so every branch of every rule has a record in it, including a missing value and a
+  category no rule names.
+- **A canvas offers the input stage first.** With nothing on the canvas the palette offers the
+  widgets that need no input, and opens fully as soon as one is placed. There is no sensible
+  process step before there is something to process.
+- **The street network download asks four Overpass instances, not one.** Every instance is asked
+  a one-line question first, so a download is not spent discovering the first three are down, and
+  the instance that answered is recorded in the run evidence. A regional mirror that answers for
+  an area it does not hold is reported as a coverage limit rather than as a study area with no
+  streets. **Migration:** none; the saved network format is unchanged.
+- **The study area suggests the metric zone**, before any step that measures exists to carry it,
+  and when the area spans more than one zone it names each candidate with the worst stretch it
+  would cost. It sets nothing.
+- **A canvas alert can be closed.** The badge on a node has an ×. Closing it keeps the finding —
+  the node still glows and the Inspector still carries every detail — and the next run raises it
+  again.
+- **Fixes.** A toast's buttons could not be clicked, so *Reload*, *Later* and *Update now* never
+  did anything; they work now. A stale cached build is named in the header — **v0.7.0 · cached** —
+  with an offer to update, and `?reset-cache=1` clears a cached build from a browser with no
+  developer tools, leaving saved workspaces untouched. The widget manual is legible in dark mode.
+- **The manual is for the person using the widget.** Each page says what kind of widget it is,
+  what it does, what to connect, how to use it, which worked examples exercise it and what it will
+  not do. The design records moved to `docs/widget-specs/`.
+- **Validation limits.** 511 unit tests and 133 browser tests pass, with the browser suite run on
+  Chromium, Firefox and WebKit in CI. No practitioner other than the author has used any of this,
+  and the rule editor in particular has been used only by the person who wrote it.
 
 ## 0.8.0 — In development
 

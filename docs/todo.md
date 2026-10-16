@@ -182,6 +182,43 @@ implied twice in two days and never written down.
 
 ## Done
 
+**The ruleset widget stopped being pinned.** Done 2026-10-15, in two halves on the
+practitioner's reports. First *"this is not the design we discussed, the rules are pinned not
+very flexible"*: experiment [106](experiments/106-rule-builder-ui.md) had specified the authored
+form on 2026-10-12 and none of it was built, so a practitioner met a dropdown of four bundled
+rulesets whose text was fixed. The compiler and B1 followed — all three shipped rulesets rebuilt
+in the authored form reach identical conclusions under the real engine. Then *"I see the ruleset
+widget but it's not editable"*, and *"perhaps the rule editor should be a modal dialog so there
+is enough space"*: `src/rule-editor.ts`. **Still open:** two comparators are offered that have
+never been executed against the real engine (B2), and conclusions are free text, so two rules
+can disagree and only a run catches it.
+
+**A measurement states its unit.** Done 2026-10-15. Numeric fields and settings declare a QUDT
+unit, a comparison whose sides disagree is refused by name rather than converted, and the check
+runs while a rule is written as well as when it runs. What no rule can catch — a bare literal
+takes the field's unit — is met by showing that unit beside the box. Closes A7, the second of
+106's three debts; the example and its tests exercise all three.
+
+**A map has layers, not modes.** Done 2026-10-15, a day after the direction was settled and
+written into the docs without the code changing — which is what
+[docs/directions.json](directions.json) now exists to catch. Every layer port is always
+declared, the renderer is read from the connections, and the node carries the layers it draws
+plus one configurable port. Basemaps became reachable on every map as a consequence: the
+interactive renderer had required polygons, which is why nine of the ten shipped maps could not
+have one.
+
+**A practitioner is told when the version they are running is not the current one**, and a stale
+cached build can be cleared without developer tools. Done 2026-10-15. The service worker served
+a cached build forever and the page could not say so; navigations are network-first with a cache
+fallback, the header names a cached version, and `?reset-cache=1` clears it from an embedded
+browser. Ruleset versions declare what they changed and whether moving is a drop-in.
+
+**The manual is for the person using the widget.** Done 2026-10-15. Four pages rewritten to one
+shape — what kind of widget, what it does, what to connect, how to use it, which examples
+exercise it, what it will not do — with the design records moved to `docs/widget-specs/` and the
+split enforced from both sides.
+
+
 **A practitioner is now told when the version they are running is not the current one.**
 Done 2026-10-15, on the practitioner's instruction of 2026-10-14: *"We should not offer up old
 widget versions in the palette, only updated versions. When new versions appear, and a workflow

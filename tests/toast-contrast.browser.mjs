@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {collectPageErrors} from './page-errors.mjs';
 
 // "When refreshing the browser I get this alert but the text on the dark green buttons can't be
 // read." -- the practitioner, 2026-10-15, with a screenshot of the update toast. The toast sets
@@ -31,3 +32,31 @@ for(const scheme of ['dark','light'])
     });
     expect(contrast).toBeGreaterThan(4.5);
   });
+
+// "This Reload button does not work." -- the practitioner, 2026-10-15, with a screenshot of the
+// update toast. It did not, and neither did any other action a toast has ever offered. The
+// toast is `pointer-events:none` so an invisible one does not swallow clicks on the canvas
+// underneath it, and the rule that makes it visible restored the opacity and the position and
+// not the pointer events. Legible since this morning and unclickable since it was written.
+test('a toast action can actually be clicked',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/?example=blank');
+  await page.evaluate(()=>{
+    window.__clicked=0;
+    const toast=document.getElementById('toast');
+    toast.textContent='A newer version of Fieldwork is ready. Reload to use it.';
+    const button=document.createElement('button');
+    button.className='button small';button.textContent='Reload';
+    button.onclick=()=>{window.__clicked++;};
+    toast.append(button);toast.classList.add('visible');
+  });
+  // The element receives pointer events, which is what was missing.
+  expect(await page.locator('#toast').evaluate(el=>getComputedStyle(el).pointerEvents)).toBe('auto');
+  await page.locator('#toast .button').click();
+  expect(await page.evaluate(()=>window.__clicked)).toBe(1);
+
+  // And a hidden toast still lets clicks through to the canvas beneath it.
+  await page.evaluate(()=>document.getElementById('toast').classList.remove('visible'));
+  expect(await page.locator('#toast').evaluate(el=>getComputedStyle(el).pointerEvents)).toBe('none');
+  expect(errors).toEqual([]);
+});

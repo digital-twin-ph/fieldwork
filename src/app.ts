@@ -143,7 +143,7 @@ const exampleKey=(w:Workflow):string=>w.exampleId?.startsWith('snow-')?w.example
 const template=(key:string)=>key==='rulesets'?rulesetExample():key==='sea-level'?seaLevelExample():key==='snow-geoprivacy'?geoprivacyExample():key==='snow-extent'?snowExtentExample():key==='snow-voronoi'||key==='snow-isochrone'?johnSnowExample(key):key==='raster'?rasterExample():key==='coverage'?coverageExercise():key==='blank'?blankWorkflow():key==='old-naledi'?oldNalediWorkflow():exampleWorkflow();
 const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='raster_input'&&!n.params.asset||n.type==='network_input'&&!n.params.data.nodes.length||n.type==='table_input'&&!n.params.data.rows.length);
 let credentials:CredentialAccess|null=null;
-let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
+let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
 /** The run whose comparison result may expand the results pane, consumed the first time it does. */
 let expandForRun:string|null=null;
@@ -224,8 +224,27 @@ function revealResultFor(nodeId:string|null|undefined){
   return true;
 }
 const hiddenMapLayers=new Map<string,Set<string>>();
-function toast(message:string,options?:{action?:{label:string;run:()=>void}}){
+/** The one-line message at the foot of the screen.
+ *
+ *  Until 2026-10-15 every one of these looked the same. "Complete in 2.1s" and "Workflow
+ *  stopped: … cannot run" arrived in the identical success green, and both faded after five
+ *  seconds whether or not anybody had finished reading. The practitioner, looking at a stopped
+ *  run: *"I cannot make sense of the green error dialog."* Of course not -- it was telling them
+ *  the colour of a success and the words of a failure.
+ *
+ *  A failure is red, and it STAYS until it is closed. A message you are given five seconds to
+ *  read is a message somebody decided you did not need. */
+function toast(message:string,options?:{action?:{label:string;run:()=>void};tone?:'failure'}){
   const element=$('#toast');element.textContent=message;element.classList.add('visible');clearTimeout(toastTimer);
+  element.classList.toggle('failure',options?.tone==='failure');
+  if(options?.tone==='failure'){
+    const close=document.createElement('button');
+    close.className='button small';close.textContent='×';
+    close.setAttribute('aria-label','Close this message');
+    close.style.marginLeft='12px';close.onclick=()=>element.classList.remove('visible');
+    element.append(close);
+    return;
+  }
   if(options?.action){
     const button=document.createElement('button');button.className='button small';button.textContent=options.action.label;
     button.style.marginLeft='10px';button.onclick=options.action.run;element.append(button);
@@ -244,7 +263,7 @@ function save(){
   catch{for(const [key,value] of previous){try{if(localStorage.getItem(key)!==value){if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}}catch{/* Storage may be unavailable even for rollback. Keep the editor draft open. */}}$('#save-status').textContent='Storage unavailable — export to keep';return false;}
 }
 function loadExample(key:string){if(busy)return;save();try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[key];workflow=saved?validateWorkflow(saved):template(key);}catch{workflow=template(key);}selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
-function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;render();return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;statuses={};}render();return persisted;}catch(e){workflow=previous;toast(errorMessage(e));render();return false;}}
+function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;render();return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}render();return persisted;}catch(e){workflow=previous;toast(errorMessage(e));render();return false;}}
 /** Which declared port a layer dropped on a map's "add a layer" port should bind to.
  *
  *  The map's one configurable port is type-free: the practitioner drops a result on it and this
@@ -367,7 +386,13 @@ function render(){
   // During a playback the canvas shows the nodes placed so far, and the edges between them.
   const shown=playbackView();
   flow?.update(shown,selected,statuses);$('#node-count').textContent=String(shown.nodes.length);$('#undo-button').disabled=!history.length||busy;$('#redo-button').disabled=!future.length||busy;
-  $('#workflow-state').textContent=busy?'Running locally…':dirty?(result?'Changed · rerun to update':'Ready to run'):'✓ Run complete';
+  // A failed run outranks "Changed · rerun to update". Both of the places that set 'Run failed'
+  // were immediately overwritten from `dirty` by the render in the run's own finally block, so
+  // the canvas invited the practitioner to press the button that had just refused and the only
+  // trace of the refusal was in the console. The flag clears when the next run starts, or when
+  // they change something -- at which point rerunning IS the next thing to do.
+  $('#workflow-state').textContent=busy?'Running locally…':runFailed?'Run failed'
+    :dirty?(result?'Changed · rerun to update':'Ready to run'):'✓ Run complete';
   $('#run-button').disabled=busy;$('#run-button').innerHTML=busy?'◌ Running…':'<span>▶</span> Run workflow';
   $('#run-summary').textContent=result?(dirty?'Previous run · settings have changed':`${result.outputs.length} outputs · ${lastRunMs===null?'':`ran in ${elapsedText(lastRunMs)} · `}${Math.round(result.trace.reduce((a,t)=>a+t.milliseconds,0))} ms computing`):'Run the workflow to see results';
   if(exampleKey(workflow)==='snow-geoprivacy')$('#run-summary').textContent=result?'Private project and run evidence contain original coordinates. Derived tabs are educational; review before sharing.':'Private source coordinates are included in this workflow.';
@@ -611,6 +636,60 @@ function renderLibrary(search=''){
   });
 }
 function title(n:WorkflowNode){const t=TYPES[n.type];return `<div class="inspector-title ${t.color}"><span class="node-icon">${t.icon}</span><div><h2>${esc(n.params.label||t.title)}</h2><p>${esc(t.group)} / ${esc(n.id)}</p></div></div>`;}
+/** How a practitioner is looking at one input's records, per node and per session.
+ *
+ *  Deliberately NOT part of the workflow. Which view somebody prefers and how many rows they
+ *  want in front of them is about reading, not about what the workflow computes, so it does not
+ *  travel in the file and does not make the workflow dirty. */
+const dataViews=new Map<string,{mode:'table'|'json';rows:number}>();
+const ROW_CHOICES=[10,25,50,200];
+
+/** The records themselves, as columns and rows or as the JSON they really are.
+ *
+ *  The practitioner, 2026-10-15, on a step whose rules would not compile: *"I cannot make sense
+ *  of the green error dialog because I cannot see the columns against which rules are made."*
+ *  This panel used to list twelve record NAMES and nothing else -- not a column, not a value --
+ *  while the Inspector next door asked which column meant which field and the rule editor asked
+ *  what to compare. Every one of those questions is about the columns, and the columns were the
+ *  one thing never shown.
+ *
+ *  As a table because that is the shape the questions are in: a row is a record, a column is a
+ *  field a rule can read, and the two line up with the bindings underneath. As JSON because a
+ *  rule reads what is actually there -- a null, a number written as text, a key nobody expected
+ *  -- and a table quietly tidies all three away. */
+function recordsPanel(nodeId:string,data:{features:{id?:string|number;properties?:Record<string,unknown>;geometry?:unknown}[]}){
+  const view=dataViews.get(nodeId)??{mode:'table' as const,rows:10};
+  const features=data.features??[];
+  const shown=features.slice(0,view.rows);
+  const columns=[...new Set(shown.flatMap(f=>Object.keys(f.properties??{})))];
+  const cell=(value:unknown)=>value===null||value===undefined||value===''
+    // A missing value is shown AS missing rather than as an empty cell, because "no waiting time
+    // recorded" is a case the rules have to handle and an empty cell reads like a tidy zero.
+    ?`<em class="record-missing">not recorded</em>`:esc(String(value));
+  const body=view.mode==='json'
+    ?`<pre class="record-json">${esc(JSON.stringify(shown,null,2))}</pre>`
+    :columns.length
+      ?`<div class="record-table"><table><thead><tr><th>#</th>`
+        +columns.map(c=>`<th>${esc(c)}</th>`).join('')+`</tr></thead><tbody>`
+        +shown.map((f,i)=>`<tr><td>${i+1}</td>`
+          +columns.map(c=>`<td>${cell(f.properties?.[c])}</td>`).join('')+`</tr>`).join('')
+        +`</tbody></table></div>`
+      :`<div class="notice">These records carry no columns beyond their location, so a rule reading a column has nothing to read.</div>`;
+  return `<span class="inspector-section">The records</span>`
+    +`<div class="record-controls">`
+    +`<div class="result-switch" role="group" aria-label="How to view the records">`
+    +(['table','json'] as const).map(mode=>`<button data-records-view="${mode}" class="${mode===view.mode?'active':''}">`
+      +`${mode==='table'?'Table':'JSON'}</button>`).join('')
+    +`</div>`
+    +`<label class="records-rows">Showing <select data-records-rows>`
+    // Every choice up to and including the first one that covers the whole set, so a set of 13
+    // offers 10 and 25 rather than only 10 -- "show me all of them" has to be reachable.
+    +ROW_CHOICES.filter((n,i)=>n<features.length||i===0||ROW_CHOICES[i-1]<features.length)
+      .map(n=>`<option value="${n}" ${n===view.rows?'selected':''}>${n}</option>`).join('')
+    +`</select> of ${features.length}</label></div>`
+    +body;
+}
+
 function renderInspector(){
   if(selected?.startsWith('result:')){renderEvidence(selected.slice(7));return;}
   if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><span class="inspector-section">Developmental evaluation · step 1</span><h2>Define the study area</h2><p class="description">Add Study area, then select the node to draw a bounding box or polygon on an online map.</p><div class="rule-preview">Predict what the selection will produce, inspect the N3 facts, then run the readiness rule.</div><p class="muted">Your other worked examples remain saved separately.</p></div>';return;}
@@ -868,7 +947,7 @@ function renderInspector(){
     if(n.sourceMigration)content+=`<p class="notice">${n.sourceMigration.fromType==='output'
       ?`The retired <strong>Visual output</strong> widget was replaced by ${TYPES[n.type].title}, chosen from the view this node saved. Its name and connections are retained.`
       :`This saved example source now uses the shared Input data editor. Its label, records and connections are retained.`}</p>`;
-    content+=`<div class="field"><label class="field-label" for="source-label">Source label</label><input id="source-label" maxlength="60" value="${esc(n.params.label||'Input data')}"></div><div class="source-card"><h3>${n.params.data.features.length} point records</h3><p>${esc(n.params.sourceInfo?.format||'Local input')} · ${n.params.data.features.filter(f=>!f.geometry).length} missing locations</p></div><button id="edit-input-data" class="button primary">Prepare input data</button><p class="description">Generate synthetic points, import CSV / GeoPackage / GeoJSON, or place pushpins with forms. Connect to Check spatial coverage before deciding how to handle outside records.</p>`;
+    content+=`<div class="field"><label class="field-label" for="source-label">Source label</label><input id="source-label" maxlength="60" value="${esc(n.params.label||'Input data')}"></div><div class="source-card"><h3>${n.params.data.features.length} point records</h3><p>${esc(n.params.sourceInfo?.format||'Local input')} · ${n.params.data.features.filter(f=>!f.geometry).length} missing locations</p></div><button id="edit-input-data" class="button primary">Prepare input data</button>${recordsPanel(n.id,n.params.data)}<p class="description">Generate synthetic points, import CSV / GeoPackage / GeoJSON, or place pushpins with forms. Connect to Check spatial coverage before deciding how to handle outside records.</p>`;
   }else if(n.type==='coverage_check'){
     content+=nodeInputs(n).map(([port])=>{const input=workflow.edges.find(e=>e.to===n.id&&e.port===port);return `<div class="field"><label class="field-label" for="coverage-${port}">${port==='area'?'Study area':'Point data '+(port==='points'?1:port.split('_')[1])}</label><select id="coverage-${port}" data-coverage-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)===(port==='area'?'area':'points')).map(x=>`<option value="${esc(x.id)}" ${input?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;}).join('');content+='<div class="notice">Inside and boundary points are included. Outside or missing-location records require review; they are not automatically classified as data errors.</div><p class="description">Run, then select a record in Coverage review or Coverage map. Exclude with a reason or edit the study boundary. Original input records are preserved.</p>';
   }else if(n.type==='measure_area'){
@@ -1068,7 +1147,7 @@ function renderInspector(){
   }else if(n.type==='alert'){
     content+=`<div class="field"><label class="field-label" for="alert-state">Heat alert status</label><select id="alert-state"><option value="true" ${n.params.active===true?'selected':''}>Active</option><option value="false" ${n.params.active===false?'selected':''}>Inactive</option><option value="null" ${n.params.active===null?'selected':''}>Unknown</option></select><label class="field-label" for="assessment-date">Assessment date</label><input id="assessment-date" type="date" value="${n.params.date}"><small>This example supplies a single alert status for all locations on the assessment date. No external alert feed is queried.</small></div>`;
   }else if((n.type==='places'||n.type==='centers')){
-    content+=`<div class="field"><label class="field-label" for="source-label">Source label</label><input id="source-label" maxlength="60" value="${esc(n.params.label)}"></div><div class="detail-row"><span>Records</span><strong>${n.params.data.features.length}</strong></div><div class="detail-row"><span>Coordinates</span><strong>Longitude, latitude · CRS84</strong></div><button id="replace-data" class="button small">↑ Replace with local GeoJSON</button><ul class="record-list">${n.params.data.features.slice(0,12).map(f=>`<li>${esc(f.properties.name)}<span>${f.geometry?'Point':'Missing location'}</span></li>`).join('')}</ul><small class="muted">Point FeatureCollections only, up to 2,000 records. Files stay in this browser.</small>`;
+    content+=`<div class="field"><label class="field-label" for="source-label">Source label</label><input id="source-label" maxlength="60" value="${esc(n.params.label)}"></div><div class="detail-row"><span>Records</span><strong>${n.params.data.features.length}</strong></div><div class="detail-row"><span>Coordinates</span><strong>Longitude, latitude · CRS84</strong></div><button id="replace-data" class="button small">↑ Replace with local GeoJSON</button>${recordsPanel(n.id,n.params.data)}<small class="muted">Point FeatureCollections only, up to 2,000 records. Files stay in this browser.</small>`;
   }else if(n.type==='measure_distance'){
     // A structured editor for the candidate filter, which is what `access`'s two selects became.
     // The comparator is a select. The FIELD and the VALUES are typed, and that is a limitation
@@ -1302,6 +1381,20 @@ function renderInspector(){
   optionalElement('#edit-study-area')?.addEventListener('click',()=>openStudyAreaEditor(getNode(workflow,n.id,'study_area'),params=>change(w=>getNode(w,n.id,'study_area').params=params)));
   optionalElement('#area-view-n3')?.addEventListener('click',()=>{renderN3();switchView('rules');});
   $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('[data-param]').forEach(el=>el.addEventListener('change',()=>change(w=>updateParam(w,n.id,required(el.dataset.param),el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value))));
+  // Reading, not editing: these redraw the Inspector and touch nothing that is saved, so they
+  // go through renderInspector rather than change().
+  $('#inspector-content').querySelectorAll<HTMLButtonElement>('[data-records-view]').forEach(el=>
+    el.addEventListener('click',()=>{
+      const held=dataViews.get(n.id)??{mode:'table' as const,rows:10};
+      dataViews.set(n.id,{...held,mode:el.dataset.recordsView as 'table'|'json'});
+      renderInspector();
+    }));
+  $('#inspector-content').querySelectorAll<HTMLSelectElement>('[data-records-rows]').forEach(el=>
+    el.addEventListener('change',()=>{
+      const held=dataViews.get(n.id)??{mode:'table' as const,rows:10};
+      dataViews.set(n.id,{...held,rows:Number(el.value)});
+      renderInspector();
+    }));
   if(n.type==='apply_ruleset'){
     wireRulesetChoice(n);
     wireAuthorRules(n);
@@ -1590,7 +1683,14 @@ function supersessionNotice(ran:Workflow):string{
   return ` Note: ${named.join('; ')}. The run used the pinned version${stale.length===1?'':'s'}, `
     +`which is what reproduces these results; the Inspector says what changed.`;
 }
-async function run(){if(busy)return;try{executionPlan(workflow);}catch(e){toast(errorMessage(e));return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;expandForRun=next.runId;renderResults();toast(`Complete in ${elapsedText(lastRunMs)}: ${result.outputs.length} output tabs updated.`+supersessionNotice(snapshot));}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`);$('#workflow-state').textContent='Run failed';console.error(e);}finally{busy=false;render();}}
+async function run(){if(busy)return;
+  // A refusal BEFORE the run starts is still a refused run, and the canvas has to say so. It
+  // returned early here without touching the state, so the workflow went on reading "Changed ·
+  // rerun to update" -- an invitation to press the button that had just refused -- while the
+  // only sign of what happened was a line in the browser console. Caught by its own test,
+  // 2026-10-15, after the practitioner could not make sense of the message that did appear.
+  runFailed=false;
+  try{executionPlan(workflow);}catch(e){toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;expandForRun=next.runId;renderResults();toast(`Complete in ${elapsedText(lastRunMs)}: ${result.outputs.length} output tabs updated.`+supersessionNotice(snapshot));}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure'});runFailed=true;console.error(e);}finally{busy=false;render();}}
 function download(name:string,text:string,type='application/json'){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 $('#release-download').onclick=()=>{const output=activeOutput();if(!output||exampleKey(workflow)!=='snow-geoprivacy'||!output.nodeId.startsWith('after-'))return;
   const features=output.polygons?.kind==='hexbin'?output.polygons.features.map(f=>({type:'Feature',id:f.id,properties:{count:f.count},geometry:f.geometry})):output.rows.map(r=>({type:'Feature',id:r.id,properties:{name:r.name},geometry:r.coordinates?{type:'Point',coordinates:r.coordinates}:null}));

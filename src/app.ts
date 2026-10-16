@@ -27,6 +27,7 @@ import {rulesetExample} from './ruleset-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openTableViewer,tableViewOf} from './table-viewer.js';
 import {castColumn,applyRepairs} from './column-profile.js';
+import {openDataQuality} from './data-quality-ui.js';
 import {settingNamed} from './authored-rules.js';
 import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
@@ -645,6 +646,35 @@ function repairColumn(nodeId:string,column:string,to:'number'|'boolean'|'term'){
     {tone:outcome.unreadable.length?'warning':'notice'});
 }
 
+/** Take a declared repair back. The originals were never overwritten, so removing the
+ *  declaration is the whole of it -- no re-import, no Undo, nothing to reconstruct. */
+function removeRepair(nodeId:string,index:number){
+  const node=workflow.nodes.find(x=>x.id===nodeId);
+  const repair=(node?.params as {repairs?:ColumnRepair[]}|undefined)?.repairs?.[index];
+  if(!repair)return;
+  change(w=>{
+    const params=w.nodes.find(x=>x.id===nodeId)?.params as {repairs?:ColumnRepair[]}|undefined;
+    if(params?.repairs)params.repairs=params.repairs.filter((_,i)=>i!==index);
+  });
+  toast(`${repair.column} is read as the file holds it again. `
+    +`The ${repair.cast} value${repair.cast===1?'':'s'} that ${repair.cast===1?'was':'were'} cast `
+    +`${repair.cast===1?'is':'are'} back as ${repair.cast===1?'it':'they'} ${repair.cast===1?'was':'were'} imported.`,
+    {tone:'notice'});
+}
+
+/** Everything the quality dialog needs about one input, in the shape it reads. */
+function qualityViewFor(n:WorkflowNode){
+  const held=n.params as {data?:{features?:{properties?:Record<string,unknown>}[]};repairs?:ColumnRepair[]};
+  const repairs=held.repairs??[];
+  const features=applyRepairs(held.data?.features??[],repairs);
+  const columns=[...new Set(features.flatMap(f=>Object.keys(f.properties??{})))];
+  return {title:`${n.params.label||TYPES[n.type].title} · data quality`,columns,
+    rows:features.map(f=>({...f.properties})),
+    declared:declaredKinds(workflow,n.id),repairs,
+    onRepair:(column:string,to:'number'|'boolean'|'term')=>repairColumn(n.id,column,to),
+    onRemoveRepair:(index:number)=>removeRepair(n.id,index)};
+}
+
 /** A published ruleset's source, shaped for the editor to display.
  *
  *  The editor reads `fields` to name a predicate and to decide which comparators fit it. A
@@ -844,6 +874,7 @@ function recordsPanel(nodeId:string,data:{features:{id?:string|number;properties
       +`${mode==='table'?'Table':'JSON'}</button>`).join('')
     +`</div>`
     +`<button class="button small" data-records-quicklook>⤢ Quick look</button>`
+    +`<button class="button small" data-records-quality>◳ Data quality</button>`
     +`<label class="records-rows">Showing <select data-records-rows>`
     // Every choice up to and including the first one that covers the whole set, so a set of 13
     // offers 10 and 25 rather than only 10 -- "show me all of them" has to be reachable.
@@ -983,7 +1014,8 @@ function renderInspector(){
     // The table itself, at a width it can be read at. The Inspector is 292px wide and this
     // offered a description of the table's shape inside it -- everything about the table except
     // the table. The practitioner's call, 2026-10-16.
-    if(p.data.rows.length)content+=`<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button></div>`
+    if(p.data.rows.length)content+=`<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button>`
+      +`<button id="table-quality" class="button">Data quality</button></div>`
       +`<p>${esc(p.source?.filename||'Imported file')}<br>${p.data.rowCount} rows, ${p.data.missingValueCount} values absent and kept as unknown.</p><details><summary>Table shape</summary><pre>${esc(JSON.stringify({keys:p.data.keys,valueField:p.data.valueField,unit:p.data.unit||'(unstated)',rows:p.data.rowCount,source:p.source},null,2))}</pre></details>`;
     else content+='<p class="description">No table imported yet. This node cannot run until a table is imported.</p>';
     content+='<div class="notice">A unit is recorded as you state it and never inferred. An absent value is kept as unknown, never read as zero. Connect a Table output to display it.</div>';
@@ -1522,6 +1554,18 @@ function renderInspector(){
     const table=getNode(workflow,n.id,'table_input').params;
     openTableViewer(tableViewOf(table.data,n.params.label||'Tabular data'),esc);
   });
+  // A table's columns are its keys plus its one value field, which is the contract the widget
+  // already declares. A ruleset reads them by those names, so the profile speaks of them too.
+  optionalElement('#table-quality')?.addEventListener('click',()=>{
+    const table=getNode(workflow,n.id,'table_input').params;
+    openDataQuality({title:`${n.params.label||'Tabular data'} · data quality`,
+      columns:[...table.data.keys,table.data.valueField],
+      rows:table.data.rows.map(row=>({...row.key,[table.data.valueField]:row.value})),
+      declared:declaredKinds(workflow,n.id),repairs:[],
+      // A tabular import casts its value column at import and refuses a non-numeric cell by row
+      // number, so a repair here would have nothing to repair: the file never got in. 117.
+      onRepair:()=>{},onRemoveRepair:()=>{}},esc);
+  });
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table',inputMode:'table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   optionalElement('#open-table')?.addEventListener('click',()=>{
     const baseline=JSON.stringify(workflow),current=getNode(workflow,n.id,'table_input').params;
@@ -1594,6 +1638,8 @@ function renderInspector(){
             +`(${repairs.map(r=>`${r.column} as ${r.to}s`).join(', ')}) are applied to what you see here. `
             +`The records this step holds are unchanged — removing the declaration restores them.`:'')},esc);
     }));
+  $('#inspector-content').querySelectorAll<HTMLButtonElement>('[data-records-quality]').forEach(el=>
+    el.addEventListener('click',()=>openDataQuality(qualityViewFor(n),esc)));
   $('#inspector-content').querySelectorAll<HTMLSelectElement>('[data-records-rows]').forEach(el=>
     el.addEventListener('change',()=>{
       const held=dataViews.get(n.id)??{mode:'table' as const,rows:10};

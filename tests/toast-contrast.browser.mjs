@@ -60,3 +60,30 @@ test('a toast action can actually be clicked',async({page})=>{
   expect(await page.locator('#toast').evaluate(el=>getComputedStyle(el).pointerEvents)).toBe('none');
   expect(errors).toEqual([]);
 });
+
+// "This is hard to read - white on light orange." -- the practitioner, 2026-10-16, on the
+// warning toast in dark mode. Measured at 2.08 against a 4.5 floor. All four tone/scheme pairs
+// failed: light warning 3.81, light failure 3.72, dark warning 2.08, dark failure 2.41 — every
+// one of them white text on a mid-tone fill, which is the same defect as the dark-green action
+// button above and the manual's code chips before that.
+//
+// So every tone is held here, in both schemes, rather than the one that was complained about.
+for(const scheme of ['dark','light'])
+  for(const tone of ['warning','failure','notice'])
+    test(`a ${tone} toast reads against its own background in ${scheme} mode`,async({page})=>{
+      await page.goto('/');
+      await page.emulateMedia({colorScheme:scheme});
+      await page.goto('/?example=blank');
+      const contrast=await page.evaluate(tone=>{
+        const toast=document.getElementById('toast');
+        toast.textContent='Complete in 534 ms: 5 output tabs updated. 66 records could not be read as declared.';
+        toast.className=`toast visible ${tone}`;
+        const parse=v=>(v.match(/\d+(\.\d+)?/g)||[0,0,0]).slice(0,3).map(Number);
+        const L=c=>{const [r,g,b]=c.map(v=>{const s=v/255;return s<=.03928?s/12.92:((s+.055)/1.055)**2.4;});
+          return .2126*r+.7152*g+.0722*b;};
+        const style=getComputedStyle(toast);
+        const a=L(parse(style.color)),b=L(parse(style.backgroundColor));
+        return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+      },tone);
+      expect(contrast,`${tone} in ${scheme}`).toBeGreaterThan(4.5);
+    });

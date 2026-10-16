@@ -132,3 +132,96 @@ test('a repair never overwrites what the input holds',async({page})=>{
   await expect(dialog.locator('.cell-mismatch')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+// "I think data quality inspection and management deserves its own modal dialog per input
+// widget, because this is where human input becomes very consequential downstream." -- the
+// practitioner, 2026-10-16, after taking apart the argument that it belonged anywhere else.
+// Management means both directions: a repair that cannot be taken back is a decision a
+// practitioner cannot revisit.
+test('the quality dialog inspects a column, repairs it, and takes the repair back',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=rulesets');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('#toast button').last().click();
+
+  const open=async()=>{
+    await page.locator('.react-flow__node[data-id="texty"]').click();
+    await page.locator('[data-records-quality]').click();
+    await expect(page.locator('#data-quality')).toBeVisible();
+  };
+  const strings=()=>page.evaluate(()=>{
+    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
+    const n=w.nodes.find(x=>x.id==='texty');
+    return {texts:n.params.data.features.filter(f=>typeof f.properties.DEATHS==='string').length,
+      repairs:(n.params.repairs||[]).length};
+  });
+
+  await open();
+  const dialog=page.locator('#data-quality');
+  // One card per column, naming what is declared and what is not. An unbound column is not
+  // wrong — there is nothing for it to be wrong against — and the dialog says exactly that
+  // rather than implying a clean bill it cannot give.
+  const deaths=dialog.locator('.quality-column').filter({hasText:'DEATHS'});
+  await expect(deaths).toContainText('declared number');
+  await expect(deaths).toContainText('63 of 250');
+  await expect(deaths).toContainText('told those values are not recorded');
+  const fid=dialog.locator('.quality-column').filter({hasText:'FID'});
+  await expect(fid).toContainText('not bound by any rule');
+  await expect(fid).toContainText('nothing here to be wrong against');
+
+  // Shape, stated as a prompt and never as a finding.
+  await expect(deaths).toContainText('Beyond 1.5×IQR');
+  await expect(dialog).toContainText('A count beyond the fence is not a finding');
+
+  // Repair from here.
+  await deaths.locator('[data-repair]').click();
+  await expect(dialog).toBeHidden();
+  await expect(page.locator('#toast')).toContainText('63 values now read as numbers');
+  await page.locator('#toast button').last().click();
+  expect(await strings()).toEqual({texts:63,repairs:1},'the records are untouched; the repair is declared');
+
+  // Reopened: the repair is listed, the column is clean, and nothing is offered twice.
+  await open();
+  await expect(dialog.locator('.quality-repairs')).toContainText('DEATHS');
+  await expect(dialog.locator('.quality-repairs')).toContainText('63 cast');
+  await expect(dialog.locator('.quality-column').filter({hasText:'DEATHS'}))
+    .toContainText('every value is a number');
+  await expect(dialog.locator('[data-repair]')).toHaveCount(0);
+
+  // And taken back. Nothing is reconstructed: the originals were never overwritten.
+  await dialog.locator('[data-remove-repair]').click();
+  await expect(page.locator('#toast')).toContainText('read as the file holds it again');
+  expect(await strings()).toEqual({texts:63,repairs:0});
+  await page.locator('#toast button').last().click();
+
+  // The run is back where it started, which is the proof the removal was real.
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await expect(page.locator('#toast')).toContainText('66 records could not be read as declared');
+  expect(errors).toEqual([]);
+});
+
+// A tabular import casts its value column at import and refuses a non-numeric cell by row
+// number, so there is nothing for a repair to repair. The dialog still profiles it.
+test('a tabular input is profiled too',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=rulesets');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('#toast button').last().click();
+
+  await page.locator('.react-flow__node[data-id="gapped"]').click();
+  await page.locator('#table-quality').click();
+  const dialog=page.locator('#data-quality');
+  await expect(dialog).toBeVisible();
+  const deaths=dialog.locator('.quality-column').filter({hasText:'deaths'});
+  // The three simulated gaps, said as absences — and no fix offered, because choosing a
+  // replacement is a modelling decision rather than a correction.
+  await expect(deaths).toContainText('3 of 43');
+  await expect(deaths).toContainText('Nothing is offered to fill them');
+  await expect(deaths).toContainText('modelling decision');
+  expect(errors).toEqual([]);
+});

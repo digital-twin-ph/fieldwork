@@ -5,6 +5,15 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **A data quality dialog, per input widget.** One card per column: what is declared, what does
+  not match it, what is absent, and the shape of what is there. It is where a repair is declared
+  **and where it is taken back** — removing the declaration restores the originals, which were
+  never overwritten. An unbound column says *"nothing has declared what they should be, so there
+  is nothing here to be wrong against"* rather than implying a clean bill it cannot give.
+- **Every toast tone was unreadable, in both themes.** White text on mid-tone fills: light
+  warning 3.81, light failure 3.72, dark warning **2.08**, dark failure 2.41, against a 4.5 floor.
+  Each tone now has a foreground token paired with its background per theme, and a test holds all
+  six tone/scheme combinations above 4.5.
 - **Column profiles, and one repair you can act on.**
   [Experiment 117](docs/experiments/117-data-quality.md). Every column in the quick look now
   carries what the file says about it: values that do not match a declared kind (**marked in the

@@ -56,6 +56,16 @@ export interface Ruleset {
   /** Declared by this version about itself. Absent on a first version, which changed nothing. */
   changes?:RulesetChange[];
   description:string; mustNotBeReadAs:string; rules:string;
+  /** The structured form `rules` was compiled from, so a practitioner can READ the rules of a
+   *  published ruleset laid out as rules rather than as N3 -- and open them in the same editor
+   *  they write their own in.
+   *
+   *  `scripts/validate-ruleset-sources.mjs` fails the build unless compiling this gives exactly
+   *  the N3 above, under consistent variable renaming. Without that gate the editor could show
+   *  one rule while the reasoner ran another, which is worse than showing nothing. */
+  authored?:{subject:string; comment?:string;
+    rules:{any:{all:{field:string;comparator:string;value:string|number|boolean|{setting:string}}[]}[];
+      then:{predicate:string;value:string}[]}[]};
   parameters:RulesetParameter[];
   inputContract:{
     factGenerator:string; subjectKind:string; expects:unknown[]; note?:string; knownDefect?:string;

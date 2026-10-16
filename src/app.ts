@@ -31,7 +31,7 @@ import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles} from './evidence-storage.js';
 import {MAX_BUNDLE_BYTES} from './evidence.js';
-import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation} from './types.js';
+import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType} from './types.js';
 import type {WorkflowRun,Receipt,Output,MapRow,PointRow,CoverageRow,CoverageValue,TableValue} from './results.js';
 import type {CanvasAPI,NodeDescription} from './canvas.js';
 import type {Connection,Edge} from '@xyflow/react';
@@ -403,7 +403,11 @@ function renderN3(){
  *  values, and a numeric column gets no unit, because this cannot know one and a number without
  *  a unit is not a measurement. The practitioner states it before the rules will run. */
 function candidateFields(workflow:Workflow,nodeId:string){
-  const edge=workflow.edges.find(e=>e.to===nodeId&&e.port==='subjects');
+  // Any incoming edge, not only one on a port called `subjects`. A step converted from a
+  // declared ruleset keeps that ruleset's port names -- `polygons` for extent-review -- and
+  // looking only for `subjects` found nothing, so the editor opened with no columns to read.
+  const edge=workflow.edges.find(e=>e.to===nodeId&&e.port==='subjects')
+    ??workflow.edges.find(e=>e.to===nodeId);
   const source=edge&&workflow.nodes.find(n=>n.id===edge.from);
   const data=(source?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data;
   const seen=new Map<string,Set<string>>();
@@ -419,25 +423,105 @@ function candidateFields(workflow:Workflow,nodeId:string){
     label:attribute}));
 }
 
+/** Turn a step into one whose rules are written here.
+ *
+ *  The practitioner, 2026-10-15: *"Why can't I just get a ruleset editor?"* They could not,
+ *  from example 09 or from any step holding a published ruleset, because this conversion was an
+ *  option inside a dropdown labelled Ruleset -- and it threw away every edge on the node on the
+ *  way, so the step then had nothing to read and no columns to offer.
+ *
+ *  It keeps the PORT SHAPE of whatever was pinned, when something was. That is what lets the
+ *  wiring survive: the step still takes what it took and gives back what it gave, and only the
+ *  rules inside it change. A step with nothing pinned starts from points, which is the shape
+ *  most records arrive in.
+ *
+ *  What it does NOT do is edit the published ruleset. That one is pinned, versioned and carries
+ *  a basis; a step that writes its own rules has forked away from it, and the Inspector says so
+ *  rather than letting a practitioner believe they changed something published. */
+function authorRulesOn(nodeId:string,label:string){
+  change(w=>{
+    const target=getNode(w,nodeId,'apply_ruleset');
+    const held=target.params.ruleset;
+    const pin=pinnedRuleset('urn:fieldwork:ruleset:outreach-criteria','1.0.0');
+    target.params.ruleset={id:pin!.id,version:pin!.version,title:'Rules written in this workflow',
+      inputs:held?.inputs??[['subjects','points']],output:held?.output??'points'};
+    target.params.parameters={};
+    target.params.authored={title:label||'Rules for this step',mustNotBeReadAs:'',
+      // The columns the connected records carry, declared for them. Nothing is guessed from a
+      // name -- the kinds come from the values -- and an empty list is the honest result when
+      // nothing is connected yet, which the Inspector already says plainly.
+      fields:candidateFields(w,nodeId) as never,parameters:[],rules:[]};
+  });
+}
+
+/** The button that gets you an editor, from any ruleset step, in one press.
+ *
+ *  Converting and then opening is one gesture rather than two: a practitioner who asked to write
+ *  rules wants to be writing them, not looking at an empty section that says they may. */
+/** A published ruleset's source, shaped for the editor to display.
+ *
+ *  The editor reads `fields` to name a predicate and to decide which comparators fit it. A
+ *  published ruleset declares its vocabulary as N3 rather than as field bindings, so the fields
+ *  are reconstructed from the rules themselves: every predicate a condition reads, its kind from
+ *  how it is compared, and its unit from the parameter it is compared against when there is one.
+ *
+ *  A `…Known` predicate is the editor's own companion to a field, so it is folded back into the
+ *  field it belongs to rather than listed as one of its own. */
+function reviewAuthored(ruleset:Ruleset):NonNullable<import('./types.js').ParamsByType['apply_ruleset']['authored']>{
+  const kinds=new Map<string,'number'|'boolean'|'term'>();
+  // The unit IRI as well as its label. The label is what a reader sees; the IRI is what the unit
+  // check compares, and a field carrying only a label is refused for stating no unit -- which is
+  // exactly what a fork of extent-review did, naming a defect that was in this reconstruction
+  // rather than in the published ruleset.
+  const units=new Map<string,{unit?:string;unitLabel?:string}>();
+  const parameters=new Map(ruleset.parameters.map(p=>[p.name,p]));
+  for(const rule of ruleset.authored?.rules??[])
+    for(const group of rule.any)
+      for(const condition of group.all){
+        const base=condition.field.replace(/Known$/,'');
+        const isKnown=base!==condition.field;
+        const kind=isKnown?undefined
+          :condition.comparator!=='equals'?'number' as const
+          :typeof condition.value==='boolean'?'boolean' as const:'term' as const;
+        if(kind&&kinds.get(base)!=='number')kinds.set(base,kind);
+        else if(!kinds.has(base))kinds.set(base,'term');
+        const setting=typeof condition.value==='object'&&condition.value
+          ?parameters.get((condition.value as {setting:string}).setting):undefined;
+        if(setting?.unit)units.set(base,{unit:setting.unit,unitLabel:setting.unitLabel});
+      }
+  return {title:`${ruleset.title} ${ruleset.version}`,mustNotBeReadAs:ruleset.mustNotBeReadAs,
+    fields:[...kinds].map(([predicate,kind])=>({attribute:predicate.slice(predicate.indexOf(':')+1),
+      predicate,kind,label:predicate.slice(predicate.indexOf(':')+1),...units.get(predicate)})),
+    parameters:ruleset.parameters.map(p=>({name:p.name,meaning:p.meaning,unit:p.unit,
+      unitLabel:p.unitLabel,min:p.min,max:p.max})),
+    rules:(ruleset.authored?.rules??[]) as never} as never;
+}
+
+function wireAuthorRules(node:WorkflowNode){
+  optionalElement('#review-rules')?.addEventListener('click',async()=>{
+    const pinned=getNode(workflow,node.id,'apply_ruleset').params.ruleset;
+    if(!pinned)return;
+    const ruleset=resolveRuleset(pinned.id,pinned.version);
+    await openRuleEditor(reviewAuthored(ruleset),esc,{
+      note:`These are the rules ${ruleset.title} ${ruleset.version} applies, laid out the way rules you write are laid out. `
+        +`Nothing here can be changed: this ruleset is published and pinned, and the run evidence names it by version.`});
+  });
+  optionalElement('#author-rules')?.addEventListener('click',async()=>{
+    authorRulesOn(node.id,node.params.label??'');
+    const authored=getNode(workflow,node.id,'apply_ruleset').params.authored;
+    if(!authored)return;
+    const edited=await openRuleEditor(authored,esc);
+    if(edited)change(w=>{getNode(w,node.id,'apply_ruleset').params.authored!.rules=edited.rules as never;});
+  });
+}
+
 function wireRulesetChoice(node:WorkflowNode){
   optionalElement('#ruleset-choice')?.addEventListener('change',event=>{
     const value=control(event).value;
     // Writing rules, rather than choosing somebody else's. Until 2026-10-15 the only way to
     // reach the editor was to open a workflow that already carried authored rules, which meant
     // the one worked example they were written for: an editor with no entry point.
-    if(value==='authored'){
-      change(w=>{
-        const target=getNode(w,node.id,'apply_ruleset');
-        const pin=pinnedRuleset('urn:fieldwork:ruleset:outreach-criteria','1.0.0');
-        target.params.ruleset={id:pin!.id,version:pin!.version,title:'Rules written in this workflow',
-          inputs:[['subjects','points']],output:'points'};
-        target.params.parameters={};
-        target.params.authored={title:target.params.label||'Rules for this step',
-          mustNotBeReadAs:'',fields:[],parameters:[],rules:[]};
-        w.edges=w.edges.filter(edge=>edge.to!==node.id&&edge.from!==node.id);
-      });
-      return;
-    }
+    if(value==='authored'){authorRulesOn(node.id,node.params.label??'');return;}
     const [id,version]=value.split('@');
     const chosen=id?bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version):undefined;
     change(w=>{
@@ -916,9 +1000,11 @@ function renderInspector(){
         +`${esc(r.title)} ${esc(r.version)} · ${esc(r.inputContract.ports.inputs.map(([,t])=>t).join(', '))} → ${esc(r.inputContract.ports.output)}</option>`).join('')
       +`</select><small>The ruleset decides what this step classifies, which inputs it takes and what it gives back. Changing it disconnects what is wired here, because the ports change with it; Undo restores them.</small></div>`;
     if(!n.params.ruleset){
-      content+=`<div class="notice">This step has nothing to apply yet. It can sit on the canvas unconfigured — the run refuses it by name until a ruleset is chosen.</div>`;
+      content+=`<div class="notice">This step has nothing to apply yet. It can sit on the canvas unconfigured — the run refuses it by name until a ruleset is chosen.</div>`
+        +`<div class="inspector-actions"><button id="author-rules" class="button">Write rules for this step</button></div>`;
       $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
       wireRulesetChoice(n);
+      wireAuthorRules(n);
       return;
     }
     const pinned=n.params.ruleset,ruleset=resolveRuleset(pinned.id,pinned.version);
@@ -955,7 +1041,28 @@ function renderInspector(){
     if(ruleset.basis.unresolvedCitations.length)
       content+=`<p class="description">Cites ${ruleset.basis.unresolvedCitations.map(c=>esc(c.citation)).join(', ')}, which this build cannot resolve to anything you can open.</p>`;
     content+=`<span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div>`
-      +`<div class="notice">${esc(ruleset.mustNotBeReadAs)}</div>`;
+      +`<div class="notice">${esc(ruleset.mustNotBeReadAs)}</div>`
+      // "Why can't I just get a ruleset editor?" -- the practitioner, 2026-10-15, on example 09.
+      // Because the only way to one was an option inside the dropdown above, and nothing said it
+      // was there. A published ruleset is not edited in place: it is pinned and versioned, and a
+      // reader of this workflow has to be able to tell which rules ran. So this FORKS -- the step
+      // stops applying the published ruleset and starts applying rules of your own, keeping what
+      // is wired to it, and this says so before you press it rather than after.
+      +`<span class="inspector-section">The rules</span>`
+      +(ruleset.authored
+        ?`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned, so its rules are not edited here — a reader of this workflow has to be able to tell which rules ran. They can be <strong>read</strong> in the same editor you write your own in.</p>`
+          // Read, not copied. Each published ruleset computes its own facts -- this one from
+          // ${esc(ruleset.inputContract.factGenerator)} -- and a step applying rules written
+          // here reads columns off records instead. The rules would look the same and be fed
+          // something different, which is the one outcome worth preventing outright.
+          +`<div class="notice">These rules can be read, not copied. ${esc(ruleset.title)} works out what it is classifying for itself — ${esc(ruleset.inputContract.factGenerator.split('#').pop()||'its own fact generator')} derives the values the rules compare — while rules written for a step read columns off the records you connect. A copy would read the same and be fed something different.</div>`
+          +`<div class="inspector-actions"><button id="review-rules" class="button">Review these rules</button>`
+          +`<button id="author-rules" class="button">Write rules for this step instead</button></div>`
+        // A ruleset shipped without a structured source. None do today, and the gate says so on
+        // every build; this is what the Inspector says honestly if one ever does, rather than
+        // offering a button that would open an empty editor.
+        :`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned. This build carries no structured form of its rules, so they cannot be laid out here. This step can stop applying it and apply rules you write instead; what is wired to the step stays wired, and Undo puts the published ruleset back.</p>`
+          +`<div class="inspector-actions"><button id="author-rules" class="button">Write rules for this step instead</button></div>`);
   }else if(n.type==='policy'){
     content+=`<span class="inspector-section">Rule settings</span><div class="field"><label class="field-label" for="threshold">Distance threshold</label><div class="input-unit"><input id="threshold" type="number" min="0" max="1000" step="0.5" value="${n.params.thresholdKm}"><span>km</span></div><small>Flag distances strictly greater than this value.</small></div><div class="rule-preview">When the heat alert is <b>active</b><br>and the nearest center is <b>more than ${n.params.thresholdKm} km away</b>,<br>flag the neighborhood for review.</div><span class="inspector-section">Missing evidence</span><p class="description">Missing coordinates, missing centers, or an unknown alert produce “Insufficient data”.</p><div class="inspector-divider"></div><span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div><div class="notice">Illustrative screening criteria. A flag is a reason to review evidence, not a risk estimate or an intervention order.</div>`;
   }else if(n.type==='alert'){
@@ -1197,6 +1304,7 @@ function renderInspector(){
   $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('[data-param]').forEach(el=>el.addEventListener('change',()=>change(w=>updateParam(w,n.id,required(el.dataset.param),el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value))));
   if(n.type==='apply_ruleset'){
     wireRulesetChoice(n);
+    wireAuthorRules(n);
     for(const parameter of (n.params.ruleset?resolveRuleset(n.params.ruleset.id,n.params.ruleset.version).parameters:[]))
       optionalElement(`#ruleset-${parameter.name}`)?.addEventListener('change',e=>{
         const value=control(e).value===''?NaN:Number(control(e).value);

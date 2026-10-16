@@ -52,9 +52,19 @@ const blankCondition=(fields:Field[]):Authored['rules'][number]['any'][number]['
 
 export interface RuleEditorResult {rules:Authored['rules']}
 
+/** Opening a PUBLISHED ruleset, to read rather than to change.
+ *
+ *  The practitioner, 2026-10-15: *"The pinned rules should be editable so it's reviewable in the
+ *  editor."* Reviewable is the word that settles it. A pinned ruleset is versioned and carries a
+ *  basis, and a reader of a workflow has to be able to tell which rules ran, so it is not edited
+ *  in place -- but it was not READABLE either: the Inspector showed its title, its description
+ *  and its basis, and never the rules. Now the same editor opens it, laid out exactly as an
+ *  authored rule is laid out, with every control disabled. It reads; it does not write. */
+export interface ReviewOptions {note:string}
+
 /** Opens the dialog. Resolves with the edited rules, or with nothing if the practitioner closes
  *  it without keeping them -- the node is not touched until they do. */
-export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorResult|undefined>{
+export function openRuleEditor(authored:Authored,esc:Escape,review?:ReviewOptions):Promise<RuleEditorResult|undefined>{
   return new Promise(resolve=>{
     // Edited on a copy. A practitioner who closes without keeping leaves the step as it was, and
     // one who keeps gets a single change that Undo reverses in one step.
@@ -137,13 +147,20 @@ export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorR
       // check at run time tells a practitioner their rules are wrong after they have written
       // them, kept them, and run the workflow.
       if(!problem){
-        const units=authoredUnitProblems({...authored,rules:rules as never});
+        // Not while reviewing a published ruleset. Its rules passed the build's own check
+        // before they shipped, and the field units reconstructed for the display are a
+        // convenience rather than a declaration -- reporting them as a defect in somebody
+        // else's published work would be telling the practitioner something untrue.
+        const units=review?[]:authoredUnitProblems({...authored,rules:rules as never});
         if(units.length)problem=units[0].says;
       }
       dialog.innerHTML=`<div class="manual-head"><h2 id="rule-editor-title">${esc(authored.title)}</h2>`
-        +`<div><button class="button" id="rule-editor-cancel">Close without keeping</button>`
-        +`<button class="button primary" id="rule-editor-keep" ${problem?'disabled':''}>Keep these rules</button></div></div>`
+        +(review
+          ?`<div><button class="button primary" id="rule-editor-cancel">Close</button></div></div>`
+          :`<div><button class="button" id="rule-editor-cancel">Close without keeping</button>`
+            +`<button class="button primary" id="rule-editor-keep" ${problem?'disabled':''}>Keep these rules</button></div></div>`)
         +`<div class="rule-editor-body">`
+        +(review?`<div class="notice">${esc(review.note)}</div>`:'')
         +`<p class="description">Every rule is checked against every record. A record that matches more than one rule takes all of their conclusions, so rules that disagree must not both match; a record that matches none keeps no conclusion, and the run says how many.</p>`
         +(problem?`<div class="inspector-alert" role="alert"><strong>These rules cannot be compiled</strong><p>${esc(problem)}</p></div>`:'')
         +rules.map((rule,r)=>`<section class="rule-card"><header><h3>Rule ${r+1}</h3>`
@@ -164,7 +181,7 @@ export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorR
             +`</div>`).join('')
           +`<button class="button small" data-rule="${r}" data-part="add-then">+ and conclude</button>`
           +`</section>`).join('')
-        +`<button class="button" id="rule-editor-add">+ Add a rule</button>`
+        +(review?'':`<button class="button" id="rule-editor-add">+ Add a rule</button>`)
         +`<p class="muted">${count} of ${RULE_CEILING} rules once compiled. Every alternative becomes a rule of its own, so alternatives multiply where conditions add.</p>`
         +`</div>`;
       wire();
@@ -173,6 +190,15 @@ export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorR
     const number=(el:HTMLElement,name:string)=>Number(el.dataset[name]);
     const wire=()=>{
       dialog.querySelector<HTMLButtonElement>('#rule-editor-cancel')!.onclick=()=>close();
+      if(review){
+        // Every control disabled rather than re-rendered as text: the rule reads identically to
+        // one being written, which is the point -- a practitioner learning the form from a
+        // published ruleset is looking at the same thing they will later edit.
+        dialog.querySelectorAll<HTMLInputElement|HTMLSelectElement>('.rule-editor-body input,.rule-editor-body select')
+          .forEach(el=>{el.disabled=true;});
+        dialog.querySelectorAll<HTMLButtonElement>('.rule-editor-body button[data-part]').forEach(el=>el.remove());
+        return;
+      }
       dialog.querySelector<HTMLButtonElement>('#rule-editor-keep')!.onclick=()=>close({rules});
       dialog.querySelector<HTMLButtonElement>('#rule-editor-add')!.onclick=()=>{
         rules=[...rules,{any:[{all:[blankCondition(fields)]}],then:[{predicate:'fwa:decision',value:'fwa:Review'}]}];

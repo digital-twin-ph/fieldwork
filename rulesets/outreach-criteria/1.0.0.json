@@ -80,5 +80,125 @@
     "evidence": [],
     "unresolvedCitations": [],
     "note": "No citation of any kind, resolvable or otherwise. The threshold is a knob with a default and no authority, and the receipt now says so rather than implying it by silence."
+  },
+  "authored": {
+    "subject": "?p",
+    "comment": "Missing evidence stays unknown. Threshold is illustrative.",
+    "rules": [
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:distanceKnown",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Unknown"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:alertKnown",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Unknown"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:distanceKm",
+                "comparator": "greaterThan",
+                "value": {
+                  "setting": "threshold"
+                }
+              },
+              {
+                "field": "fw:heatAlert",
+                "comparator": "equals",
+                "value": true
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Review"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:distanceKm",
+                "comparator": "notGreaterThan",
+                "value": {
+                  "setting": "threshold"
+                }
+              },
+              {
+                "field": "fw:heatAlert",
+                "comparator": "equals",
+                "value": true
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:NoFlag"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:distanceKnown",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:heatAlert",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:NoFlag"
+          }
+        ]
+      }
+    ]
   }
 }

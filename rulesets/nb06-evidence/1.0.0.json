@@ -97,5 +97,217 @@
       }
     ],
     "note": "This was recorded as the one ruleset with a cited basis, and restructuring the basis to carry resolvable evidence showed the claim was weaker than it looked. Three author-year strings resolve to nothing a reader can open. No locator has been invented to close the gap; the gap is recorded instead."
+  },
+  "authored": {
+    "subject": "?f",
+    "comment": "NB06 hierarchy: named evidence, then government facility type, then unknown.",
+    "rules": [
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:Marina"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:Direct"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:Onsite"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:Broadhurst"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:Contextual"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:OnsiteOrReferral"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:None"
+              },
+              {
+                "field": "fw:government",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:facilityKind",
+                "comparator": "equals",
+                "value": "fw:Hospital"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:Contextual"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:Onsite"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:None"
+              },
+              {
+                "field": "fw:government",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:facilityKind",
+                "comparator": "equals",
+                "value": "fw:Clinic"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:Inferential"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:OnsiteOrReferral"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:None"
+              },
+              {
+                "field": "fw:government",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:facilityKind",
+                "comparator": "equals",
+                "value": "fw:HealthPost"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:Inferential"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:ReferralOnly"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:None"
+              },
+              {
+                "field": "fw:government",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:None"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:Unknown"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:None"
+              },
+              {
+                "field": "fw:government",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:facilityKind",
+                "comparator": "equals",
+                "value": "fw:Other"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:None"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:Unknown"
+          }
+        ]
+      }
+    ]
   }
 }

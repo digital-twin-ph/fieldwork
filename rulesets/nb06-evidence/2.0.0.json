@@ -104,5 +104,217 @@
       "description": "Output carrier changed from gradedFacilities to points. The rules are unchanged and the conclusions are unchanged -- only what the classification is assembled into. 1.0.0 is kept because it is what reproduces the conclusions a saved workflow pinned, and because a rule change changes results while a carrier change changes connections.",
       "incompatibility": "The output port changed from gradedFacilities to points. A workflow pinned to 1.0.0 has whatever consumed gradedFacilities wired to this step; that consumer must accept a point layer and read the grading from each feature's attributes instead. Moving versions is a rewiring job, not a click."
     }
-  ]
+  ],
+  "authored": {
+    "subject": "?f",
+    "comment": "NB06 hierarchy: named evidence, then government facility type, then unknown.",
+    "rules": [
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:Marina"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:Direct"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:Onsite"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:Broadhurst"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:Contextual"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:OnsiteOrReferral"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:None"
+              },
+              {
+                "field": "fw:government",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:facilityKind",
+                "comparator": "equals",
+                "value": "fw:Hospital"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:Contextual"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:Onsite"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:None"
+              },
+              {
+                "field": "fw:government",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:facilityKind",
+                "comparator": "equals",
+                "value": "fw:Clinic"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:Inferential"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:OnsiteOrReferral"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:None"
+              },
+              {
+                "field": "fw:government",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:facilityKind",
+                "comparator": "equals",
+                "value": "fw:HealthPost"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:Inferential"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:ReferralOnly"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:None"
+              },
+              {
+                "field": "fw:government",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:None"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:Unknown"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:namedRule",
+                "comparator": "equals",
+                "value": "fw:None"
+              },
+              {
+                "field": "fw:government",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:facilityKind",
+                "comparator": "equals",
+                "value": "fw:Other"
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:evidenceLevel",
+            "value": "fw:None"
+          },
+          {
+            "predicate": "fw:service",
+            "value": "fw:Unknown"
+          }
+        ]
+      }
+    ]
+  }
 }

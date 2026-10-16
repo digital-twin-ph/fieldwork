@@ -76,5 +76,72 @@
     "evidence": [],
     "unresolvedCitations": [],
     "note": "One uncited number: the threshold. It exists to demonstrate that a rule can read a derived quantity, and carries no claim about what area is too large for any purpose."
+  },
+  "authored": {
+    "subject": "?p",
+    "comment": "Extent review over a DERIVED area. Not a judgement that large is wrong.",
+    "rules": [
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:areaKnown",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Unknown"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:areaSquareMetres",
+                "comparator": "greaterThan",
+                "value": {
+                  "setting": "threshold"
+                }
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Review"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:areaSquareMetres",
+                "comparator": "notGreaterThan",
+                "value": {
+                  "setting": "threshold"
+                }
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:NoFlag"
+          }
+        ]
+      }
+    ]
   }
 }

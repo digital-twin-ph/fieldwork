@@ -157,9 +157,18 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
    three passes so a canvas of several alerting widgets does not keep moving, and reduced motion
    gets the ring without the animation. Experiment 114. */
 @keyframes node-alerting{0%{box-shadow:0 0 0 2px var(--danger-3),0 0 14px 2px var(--danger-3)}50%{box-shadow:0 0 0 4px var(--danger-3),0 0 22px 6px var(--danger-3)}100%{box-shadow:0 0 0 2px var(--danger-3),0 0 14px 2px var(--danger-3)}}
-.node.alerting{border-color:var(--danger-3);box-shadow:0 0 0 2px var(--danger-3),0 0 14px 2px var(--danger-3);animation:node-alerting 1.4s ease-in-out 3}
+/* Two states, two colours, matching the two notices at the foot of the screen.
+   AMBER: the run finished and this step found something -- records it could not read, sites the
+   streets could not reach. There is a result, and part of it needs reading differently.
+   RED: this step did not run. There is no result from it at all.
+   They were one colour until 2026-10-16, which made "your answer has a caveat" look exactly like
+   "you have no answer". */
+.node.alerting{border-color:var(--warning-4);box-shadow:0 0 0 2px var(--warning-4),0 0 14px 2px var(--warning-4);animation:node-alerting 1.4s ease-in-out 3}
+.node.failed{border-color:var(--danger-3);box-shadow:0 0 0 2px var(--danger-3),0 0 16px 3px var(--danger-3);animation:node-alerting 1.4s ease-in-out 3}
+/* A step that did not run is not a step that found something: the red says so on its own. */
+.node.failed.alerting{border-color:var(--danger-3);box-shadow:0 0 0 2px var(--danger-3),0 0 16px 3px var(--danger-3)}
 .node.alerting.selected{border-color:var(--danger-3)}
-@media (prefers-reduced-motion:reduce){.node.alerting{animation:none}}
+@media (prefers-reduced-motion:reduce){.node.alerting,.node.failed{animation:none}}
 .node-alert{margin:0 11px 9px;padding:6px 7px;border-radius:5px;background:var(--danger-wash-1);color:var(--danger-5);font-size:9px;font-weight:650;line-height:1.5;overflow-wrap:anywhere}
 .inspector-alert{border:1.5px solid var(--danger-3);border-left-width:4px;border-radius:7px;background:var(--danger-wash-1);padding:12px;margin:0 0 18px}
 .inspector-alert strong{display:block;font-size:11px;font-weight:650;color:var(--danger-5);letter-spacing:.2px}

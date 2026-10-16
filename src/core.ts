@@ -595,7 +595,7 @@ export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:n
   const rules=bindParameters(ruleset,{threshold:Number(t)});
   return {facts:prefix+facts+'\n',rules:prefix+rules,input:prefix+facts+'\n\n'+rules,ruleset:rulesetCitation(ruleset)};
 }
-export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done')=>void=()=>{},resolveCredential?:CredentialResolver):Promise<WorkflowRun> {
+export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done'|'failed')=>void=()=>{},resolveCredential?:CredentialResolver):Promise<WorkflowRun> {
   workflow=validateWorkflow(workflow);
   // A composition runs by becoming its members, after the authored graph has been validated
   // as authored. The executor below has no composition branch: one receipt per member falls
@@ -605,6 +605,21 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   workflow=expansion.workflow;receipts.push(...expansion.receipts);
   const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];
   for(const node of plan){
+    // Which node failed, reported before the error leaves this function.
+    //
+    // A refused step used to stay 'running' for ever: `onProgress(node.id,'done')` is the last
+    // line of the loop body and a throw skips it, so nothing ever retracted the running state.
+    // The canvas then showed the one widget that had stopped as the one still working, which is
+    // the exact opposite of what happened. Found 2026-10-16 by measuring the classes on a
+    // failing node: `node purple selected running`.
+    try{
+      await runNode(node);
+    }catch(error){
+      onProgress(node.id,'failed');
+      throw error;
+    }
+  }
+  async function runNode(node:typeof plan[number]){
     onProgress(node.id,'running');const begin=performance.now();
     const inputs=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>[e.port,values.get(e.from)])) as unknown as ExecutionInputs;
     const pointInputs=():{layers:import('./types.js').PointLayer[]}=>({layers:nodeInputs(node).filter(([port])=>isPointPort(port)).map(([port])=>{const edge=workflow.edges.find(e=>e.to===node.id&&e.port===port),source=workflow.nodes.find(n=>n.id===edge!.from);return {...(inputs[port as keyof ExecutionInputs] as unknown as PointCollection),sourceNodeId:edge!.from,label:source!.params.label||TYPES[source!.type].title,attributeDefinitions:[...('fields' in source!.params?source!.params.fields||[]:[]),...('attributeRules' in source!.params?source!.params.attributeRules||[]:[])]};})});

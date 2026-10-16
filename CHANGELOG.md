@@ -5,6 +5,13 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **A widget that fails glows red, and keeps its own colour.** A step whose run was refused used
+  to keep the **running** state for ever — `onProgress(id,'done')` is the last line of the loop
+  body and a throw skips it — so the canvas showed the one widget that had stopped as the one
+  still working. It now reports which node failed, and that node is drawn in the danger colour.
+  **Alerts on a completed run moved to amber** so the two can be told apart: amber means there is
+  a result and part of it needs reading differently; red means this step produced nothing. They
+  were the same red, which made "your answer has a caveat" look like "you have no answer".
 - **The fail conditions are in the ontology.** A run that read a value as "not recorded" records
   why, in the evidence: `fw:ReadingProblem` on the rule application, naming the attribute, the
   count, the records considered, and which of `fw:ValueAbsent` or `fw:ValueUnreadable` applies.

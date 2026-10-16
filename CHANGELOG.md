@@ -5,6 +5,20 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **A step says what it could not read.** A ruleset applied to records whose values it cannot
+  use tells the rules those values are not recorded — which is correct, and was silent. It now
+  reports them: as an amber notice after the run that names the steps and **stays until it is
+  closed**, as a badge on the widget, and in the Inspector with the column, the count and what it
+  saw. It separates a value nobody collected from a value somebody collected that this step could
+  not read: both produce the same word in the output and they are not the same problem.
+- **The ruleset example carries two more workflows, over deliberately damaged data.** C is Snow's
+  Table 1 with three dates' counts removed; D is his mapped locations with a quarter of the counts
+  written as text. Both run the *identical* rules as A and B — from one factory, so they cannot
+  drift — and both inputs say in their label that the damage is simulated. The missing-value
+  branch, which Snow's own data never reaches, fires in C.
+- **Advice now fits the finding.** Every node alert ended with "Raise the snap limit or the travel
+  time… extend the street network", including alerts about undeclared fields, which have nothing
+  to do with streets.
 - **A ruleset can read a table.** The authored path took a point layer and nothing else, so rules
   could be written about places and not about rows — half of the data anybody has, and all of
   Snow's Table 1. Both ends now normalise to a record: a table row's attributes are its key

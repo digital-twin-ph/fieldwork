@@ -234,10 +234,11 @@ const hiddenMapLayers=new Map<string,Set<string>>();
  *
  *  A failure is red, and it STAYS until it is closed. A message you are given five seconds to
  *  read is a message somebody decided you did not need. */
-function toast(message:string,options?:{action?:{label:string;run:()=>void};tone?:'failure'}){
+function toast(message:string,options?:{action?:{label:string;run:()=>void};tone?:'failure'|'warning'}){
   const element=$('#toast');element.textContent=message;element.classList.add('visible');clearTimeout(toastTimer);
   element.classList.toggle('failure',options?.tone==='failure');
-  if(options?.tone==='failure'){
+  element.classList.toggle('warning',options?.tone==='warning');
+  if(options?.tone){
     const close=document.createElement('button');
     close.className='button small';close.textContent='×';
     close.setAttribute('aria-label','Close this message');
@@ -327,8 +328,31 @@ const badgeFor=(id:string)=>dismissedAlerts.has(alertKey(id))?undefined:nodeAler
 /** The two findings read differently, so they are said separately: one is an omission from the
  *  counts, the other an assumption inside them. Both are acted on the same way -- by looking at
  *  where the streets stop -- which is why they share one alert. */
+/** One line naming every step whose records it could not read, or nothing when all was read.
+ *
+ *  Names the STEPS, because the practitioner's next action is to open one. The detail lives in
+ *  the Inspector, where there is room for it and where the records themselves are a click away. */
+function dataIssueNotice(run:WorkflowRun){
+  const found=run.alerts.filter(a=>a.dataIssues?.length);
+  if(!found.length)return '';
+  const records=found.reduce((n,a)=>n+(a.dataIssues??[]).reduce((m,i)=>m+i.count,0),0);
+  const named=found.map(a=>{
+    const node=run.outputs.find(o=>o.nodeId===a.nodeId);
+    return node?.label||workflow.nodes.find(n=>n.id===a.nodeId)?.params.label||a.nodeId;
+  });
+  return `${records} record${records===1?'':'s'} could not be read as declared: `
+    +`${named.join(', ')}. Those records were classified as if the value were not recorded. `
+    +`Open the step to see which column, and how many.`;
+}
+
 function alertText(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   const said=[];
+  // Said first, because it changes how every number below it should be read: these records were
+  // classified on the basis that a value was not there.
+  if(alert.dataIssues?.length)said.push(
+    `This step applied its rules to records whose values it could not read, and told the rules `
+    +`they were not recorded. The result is complete and the conclusions for those records are `
+    +`conclusions about an absence, which is not the same as a conclusion about a number.`);
   // Declaration gaps read differently from the catchment findings: nothing is wrong with the
   // numbers, and what is missing is what a reader would need to trust them. Said first and
   // separately, and never as a reason the result is unusable -- the practitioner's decision of
@@ -342,13 +366,22 @@ function alertText(alert:NonNullable<ReturnType<typeof nodeAlert>>){
     `${alert.unconnected.length} site${alert.unconnected.length===1?'':'s'} got no result at all: the walk to the nearest street alone spends the whole travel budget. Every count and area from this widget is over the sites that reached something.`);
   if(alert.offNetwork.length)said.push(
     `${alert.offNetwork.length} site${alert.offNetwork.length===1?'':'s'} started further from the network than the snap limit allows, and ${alert.offNetwork.length===1?'its route was':'their routes were'} charged a straight line to reach it. A straight line assumes a walk that may not exist, so ${alert.offNetwork.length===1?'that result reaches':'those results reach'} further here than on the ground.`);
-  said.push('Raise the snap limit or the travel time on this widget, extend the street network where it stops short, or accept what is listed and say so in what you publish.');
+  // Catchment advice, for catchment findings. It was pushed onto EVERY alert, so a step whose
+  // only finding was an undeclared field was told to extend the street network -- and from
+  // 2026-10-16 so was a step that could not read a column. Advice that does not fit what was
+  // found teaches a reader to stop reading the advice.
+  if(alert.unconnected.length||alert.offNetwork.length)
+    said.push('Raise the snap limit or the travel time on this widget, extend the street network where it stops short, or accept what is listed and say so in what you publish.');
+  if(alert.dataIssues?.length)
+    said.push('Correct the column at its source, bind it to a kind the values actually are, or accept the count below and say in what you publish how many records it covers.');
   return said.join(' ');
 }
 /** Site, what happened to it, and the distance that decided it. One table, because a practitioner
  *  reading it is asking the same question of every row: where does the road data stop? */
 function alertRows(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   return [
+    ...(alert.dataIssues??[]).map(issue=>({name:issue.field,
+      outcome:issue.why==='missing'?'No value':'Not a number',detail:issue.says})),
     ...(alert.gaps??[]).map(gap=>({name:gap.field,outcome:'Not declared',detail:gap.says})),
     ...alert.unconnected.map(u=>({name:u.name,outcome:'No result',
       detail:`${Math.round(u.distanceM)} m to the nearest street, from a ${Math.round(u.budgetM)} m budget`})),
@@ -358,6 +391,10 @@ function alertRows(alert:NonNullable<ReturnType<typeof nodeAlert>>){
 }
 function alertHeadline(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   const parts=[];
+  // Counted in RECORDS, not in issues: "1 field had a problem" is not what a reader needs to
+  // know, and "37 records the rules could not read" is.
+  const records=(alert.dataIssues??[]).reduce((n,issue)=>n+issue.count,0);
+  if(records)parts.push(`${records} record${records===1?'':'s'} the rules could not read`);
   if(alert.gaps?.length)parts.push(`${alert.gaps.length} undeclared`);
   if(alert.unconnected.length)parts.push(`${alert.unconnected.length} with no result`);
   if(alert.offNetwork.length)parts.push(`${alert.offNetwork.length} routed off-network`);
@@ -373,7 +410,7 @@ function render(){
   const old=exampleKey(workflow)==='old-naledi';$('#example-select').value=old?'old-naledi':'heat';$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
   if(exampleKey(workflow)==='blank'){$('#example-select').value='blank';$('#project-description').textContent='Developmental evaluation · define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
   if(exampleKey(workflow)==='coverage'){$('#example-select').value='coverage';$('#project-description').textContent='Developmental evaluation · inspect spatial exceptions, exclude with a reason, or revise the boundary.';$('#example-note').textContent='Synthetic points and illustrative boundary · no patient data';$('#canvas-example').textContent='SPATIAL COVERAGE · EXPERIMENT';$('#footer-context').textContent='Synthetic coverage exercise · CRS84 · boundary included';}
-  if(exampleKey(workflow)==='rulesets'){$('#example-select').value='rulesets';$('#project-description').textContent='How a rule is put together, twice over: one workflow bands Snow\u2019s Table 1 by the deaths recorded on each date, the other bands the locations he mapped by the deaths at each address.';$('#example-note').textContent='Two workflows on one canvas, sharing nothing. Table 1 carries no place and a location carries no date, so they cannot be joined \u2014 and a rule reads neither differently. The rules are written in this workflow rather than chosen from a list, and the receipt carries them.';$('#canvas-example').textContent='RULESETS \u00b7 HOW A RULE IS PUT TOGETHER';$('#footer-context').textContent='Authored rules \u00b7 compiled to N3 \u00b7 declared field bindings';}
+  if(exampleKey(workflow)==='rulesets'){$('#example-select').value='rulesets';$('#project-description').textContent='How a rule is put together, four times over: two workflows band Snow\u2019s data as he recorded it \u2014 Table 1 by the deaths on each date, the mapped locations by the deaths at each address \u2014 and two run the identical rules over damaged copies of the same data.';$('#example-note').textContent='Four workflows on one canvas. A and B use Snow\u2019s data as recorded; C and D are SIMULATED damage, and say so on the input: three dates with no count, and a quarter of the counts written as text. C and D apply the same rules as A and B, so everything that differs is the data \u2014 and the step says what it could not read rather than banding those records Unrecorded in silence.';$('#canvas-example').textContent='RULESETS \u00b7 HOW A RULE IS PUT TOGETHER';$('#footer-context').textContent='Authored rules \u00b7 compiled to N3 \u00b7 declared field bindings';}
   if(exampleKey(workflow)==='raster'){$('#example-select').value='raster';$('#project-description').textContent='Prepare a local raster, preview and adjust the clipping boundary, then run and inspect the clipped result.';$('#example-note').textContent='1 Prepare raster / 2 Preview and adjust / 3 Run workflow';$('#canvas-example').textContent='OLD NALEDI / RASTER CLIPPING';$('#footer-context').textContent='Native raster cells / adjustable polygon mask / local file and source citation';}
   if(exampleKey(workflow)==='sea-level'){$('#example-select').value='sea-level';$('#project-description').textContent='Published AR6 sea-level projections against real Manila health facilities: which gauge, how far away.';$('#example-note').textContent='Projections are IPCC AR6, CC BY 4.0, in millimetres against the 1995\u20132014 baseline. Facilities are OpenStreetMap, ODbL. No elevation is supplied, so nothing here is compared against one \u2014 and none of it is an inundation model.';}
   if(exampleKey(workflow).startsWith('snow-')){$('#example-select').value=exampleKey(workflow);$('#project-description').textContent='Historical pump and death-location tables; explicit metric catchment computations and source evidence.';$('#example-note').textContent='250 locations / 489 deaths; network is a modern OSM snapshot, not 1854 streets';$('#canvas-example').textContent='JOHN SNOW / CATCHMENT WORKED EXAMPLE';$('#footer-context').textContent='CRS84 inputs and outputs / UTM computation / method parameters in evidence';}
@@ -700,7 +737,11 @@ function renderInspector(){
   // a site the streets could not reach and wrong for a field nobody filled in: a declaration gap
   // is not a geometry problem and the columns are not distances. 2026-10-15.
   const gapsOnly=!!alert&&!!alert.gaps?.length&&!alert.unconnected.length&&!alert.offNetwork.length;
-  if(alert)content+=`<div class="inspector-alert" role="alert"><strong>${gapsOnly?'Not declared':'Out of bounds'} · ${esc(alertHeadline(alert))}</strong><p>${esc(alertText(alert))}</p><table><thead><tr><th>${gapsOnly?'Field':'Site'}</th><th>What happened</th><th>${gapsOnly?'What is missing':'Distance'}</th></tr></thead><tbody>${alertRows(alert).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.outcome)}</td><td>${esc(r.detail)}</td></tr>`).join('')}</tbody></table>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
+  // A third heading, because a value the rules could not read is neither a geometry problem nor
+  // something nobody declared: the data is there and this step could not use it.
+  const issuesOnly=!!alert&&!!alert.dataIssues?.length&&!alert.gaps?.length
+    &&!alert.unconnected.length&&!alert.offNetwork.length;
+  if(alert)content+=`<div class="inspector-alert" role="alert"><strong>${issuesOnly?'Read as not recorded':gapsOnly?'Not declared':'Out of bounds'} · ${esc(alertHeadline(alert))}</strong><p>${esc(alertText(alert))}</p><table><thead><tr><th>${gapsOnly?'Field':'Site'}</th><th>What happened</th><th>${gapsOnly?'What is missing':'Distance'}</th></tr></thead><tbody>${alertRows(alert).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.outcome)}</td><td>${esc(r.detail)}</td></tr>`).join('')}</tbody></table>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
   content+=manualButton(n.type,esc)+diveDeeperPanel(n.type,esc);
   if(n.type==='micro_workflow'){
     const pin=n.params.composition;
@@ -1690,7 +1731,18 @@ async function run(){if(busy)return;
   // only sign of what happened was a line in the browser console. Caught by its own test,
   // 2026-10-15, after the practitioner could not make sense of the message that did appear.
   runFailed=false;
-  try{executionPlan(workflow);}catch(e){toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;expandForRun=next.runId;renderResults();toast(`Complete in ${elapsedText(lastRunMs)}: ${result.outputs.length} output tabs updated.`+supersessionNotice(snapshot));}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure'});runFailed=true;console.error(e);}finally{busy=false;render();}}
+  try{executionPlan(workflow);}catch(e){toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;expandForRun=next.runId;renderResults();const issues=dataIssueNotice(next);
+  // "we must surface the issue on the widget as a toast message that I can then read and close"
+  // -- the practitioner, 2026-10-16. A run that quietly bands a third of its records Unrecorded
+  // has answered the question and hidden the thing worth knowing.
+  //
+  // ADDED to what a successful run already says, not substituted for it. The first version
+  // replaced the line, so a run with a data issue no longer reported that it had finished or
+  // how long it took -- taking something away from the practitioner in the act of telling them
+  // something. The run succeeded; it is amber rather than red for that reason, and it stays
+  // until it is closed.
+  toast(`Complete in ${elapsedText(lastRunMs)}: ${result.outputs.length} output tabs updated.`
+    +supersessionNotice(snapshot)+(issues?` ${issues}`:''),issues?{tone:'warning'}:undefined);}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure'});runFailed=true;console.error(e);}finally{busy=false;render();}}
 function download(name:string,text:string,type='application/json'){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 $('#release-download').onclick=()=>{const output=activeOutput();if(!output||exampleKey(workflow)!=='snow-geoprivacy'||!output.nodeId.startsWith('after-'))return;
   const features=output.polygons?.kind==='hexbin'?output.polygons.features.map(f=>({type:'Feature',id:f.id,properties:{count:f.count},geometry:f.geometry})):output.rows.map(r=>({type:'Feature',id:r.id,properties:{name:r.name},geometry:r.coordinates?{type:'Point',coordinates:r.coordinates}:null}));

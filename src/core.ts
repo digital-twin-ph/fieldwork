@@ -43,7 +43,7 @@ import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
 export {RENAMED_NODE_TYPES};
 import type {Reasoner} from './worker-types.js';
 import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status} from './results.js';
-import {declarationGaps} from './results.js';
+import {declarationGaps,dataIssuesOf} from './results.js';
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
 interface ExecutionInputs extends OldInputs {polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
@@ -51,7 +51,7 @@ import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
-import {authoredFacts,authoredProjection,authoredReceipt} from './authored-application.js';
+import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
 import {compileAuthoredRuleset,authoredUnitProblems} from './authored-rules.js';
 import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
@@ -743,12 +743,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           const rules=bindParameters({...resolveRuleset(pinned.id,pinned.version),
             title:authored.title,parameters:declared as never,rules:compiled},bound);
           const conclusions=await reasoner(facts+'\n'+rules);
+          // What the records could not say, counted before anything is concluded from them.
+          const dataIssues=authoredDataIssues(subjects,authored.fields);
           const judged=authoredProjection(subjects,authored.fields,conclusions);
           // A table in, a table out -- carrying what the rules concluded as further key columns,
           // so a Table output renders the judgement beside the number it was made about. A point
           // layer in, the records back whole, as extent-review 1.1.0 returns its polygons.
-          value=(judged.table??{type:'FeatureCollection',features:judged.features,rows:judged.rows,
-            kind:'authored-ruleset',centers:[],method:authored.title}) as unknown as DisplayValue;
+          value=({...(judged.table??{type:'FeatureCollection',features:judged.features,rows:judged.rows,
+            kind:'authored-ruleset',centers:[],method:authored.title}),
+            ...(dataIssues.length?{dataIssues,issuedBy:node.id}:{})}) as unknown as DisplayValue;
           receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges));
           break;
         }
@@ -871,9 +874,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // any value, so this does not need to know which widgets report omissions.
   const alerts:WorkflowRun['alerts']=plan.flatMap(node=>{
     const value=values.get(node.id),unconnected=unconnectedSites(value),offNetwork=offNetworkSites(value);
-    const gaps=declarationGaps(value);
-    return unconnected.length||offNetwork.length||gaps.length
-      ?[{nodeId:node.id,unconnected,offNetwork,...(gaps.length?{gaps}:{})}]:[];
+    const gaps=declarationGaps(value),dataIssues=dataIssuesOf(value,node.id);
+    return unconnected.length||offNetwork.length||gaps.length||dataIssues.length
+      ?[{nodeId:node.id,unconnected,offNetwork,...(gaps.length?{gaps}:{}),
+         ...(dataIssues.length?{dataIssues}:{})}]:[];
   });
   return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString()};
 }

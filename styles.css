@@ -249,6 +249,16 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .table-viewer-table table{font-size:11px;white-space:nowrap}
 .table-viewer-table th,.table-viewer-table td{padding:7px 12px}
 .table-viewer-table tbody tr{cursor:default}
+/* What the file says about a column, above the values it says it about. Small, because it is
+   context for the rows and not the point of the dialog. Experiment 117. */
+.table-viewer-table th{vertical-align:top}
+.profile{display:block;font-weight:400;font-size:9px;line-height:1.6;color:var(--text-faint-28);
+  margin-top:3px;white-space:normal;max-width:320px}
+.profile-flag{color:var(--warning-4);font-weight:650}
+.table-viewer-table th .button{margin-top:6px;white-space:normal;text-align:left}
+/* A value that is not what its column was declared to be. Marked where it is, so a practitioner
+   can see WHICH rows are the problem rather than only how many. */
+.cell-mismatch{background:var(--warning-wash-3);color:var(--warning-4);font-weight:650}
 #table-viewer-filter{border:1px solid var(--line);background:var(--surface-raised-1);color:var(--ink);font-size:11px;padding:7px 10px;border-radius:6px;width:260px;max-width:60%}
 
 /* The records an input carries, as columns and rows. The Inspector is 292px wide and a table of
@@ -266,6 +276,8 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .toast.failure{background:var(--danger-1);color:#fff;align-items:flex-start;line-height:1.6;text-align:left}
 /* A run that succeeded and found something. Not red -- nothing failed -- and not the success
    green either, because the thing worth knowing is not that it finished. */
+/* Something changed and you may want to read what. Neutral, and it waits. */
+.toast.notice{background:var(--surface-raised-1);color:var(--ink);border:1px solid var(--line);line-height:1.6;text-align:left;max-width:min(720px,80vw)}
 .toast.warning{background:var(--warning-4);color:#fff;line-height:1.6;text-align:left;max-width:min(720px,80vw)}
 .toast .button{background:transparent;border-color:currentColor;color:inherit;font-weight:650}
 .toast .button:hover{background:color-mix(in srgb,currentColor 12%,transparent);filter:none}

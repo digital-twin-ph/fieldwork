@@ -26,13 +26,14 @@ import {seaLevelExample} from './sea-level-example.js';
 import {rulesetExample} from './ruleset-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openTableViewer,tableViewOf} from './table-viewer.js';
+import {castColumn} from './column-profile.js';
 import {settingNamed} from './authored-rules.js';
 import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles} from './evidence-storage.js';
 import {MAX_BUNDLE_BYTES} from './evidence.js';
-import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType} from './types.js';
+import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType,ColumnRepair} from './types.js';
 import type {WorkflowRun,Receipt,Output,MapRow,PointRow,CoverageRow,CoverageValue,TableValue} from './results.js';
 import type {CanvasAPI,NodeDescription} from './canvas.js';
 import type {Connection,Edge} from '@xyflow/react';
@@ -235,10 +236,15 @@ const hiddenMapLayers=new Map<string,Set<string>>();
  *
  *  A failure is red, and it STAYS until it is closed. A message you are given five seconds to
  *  read is a message somebody decided you did not need. */
-function toast(message:string,options?:{action?:{label:string;run:()=>void};tone?:'failure'|'warning'}){
+function toast(message:string,options?:{action?:{label:string;run:()=>void};tone?:'failure'|'warning'|'notice'}){
   const element=$('#toast');element.textContent=message;element.classList.add('visible');clearTimeout(toastTimer);
   element.classList.toggle('failure',options?.tone==='failure');
   element.classList.toggle('warning',options?.tone==='warning');
+  // A third tone: nothing failed and nothing needs attention, but something CHANGED and the
+  // message says what and how to undo it. Reporting a change to 63 records and taking the
+  // message away after five seconds is the same mistake as the green failure dialog, in the
+  // other direction. 2026-10-16, experiment 117.
+  element.classList.toggle('notice',options?.tone==='notice');
   if(options?.tone){
     // An action BESIDE the close, not instead of it. The first version returned here, so a
     // toned message could not offer anything to do about itself -- and the messages most worth
@@ -580,6 +586,66 @@ function authorRulesOn(nodeId:string,label:string){
  *
  *  Converting and then opening is one gesture rather than two: a practitioner who asked to write
  *  rules wants to be writing them, not looking at an empty section that says they may. */
+/** What every ruleset downstream of this input has declared its columns to be.
+ *
+ *  Read from the bindings rather than from the data, because a declaration is the only thing
+ *  that makes a value WRONG: `"3"` in a column nobody typed is a string, and in a column
+ *  declared numeric it is a problem. Experiment 117.
+ *
+ *  Several steps may bind the same column. They agree in every workflow this project ships, and
+ *  if they ever disagreed the first declaration wins here -- the profile is a reading aid, and
+ *  the run is what adjudicates. */
+function declaredKinds(workflow:Workflow,inputId:string):Record<string,'number'|'boolean'|'term'>{
+  const kinds:Record<string,'number'|'boolean'|'term'>={};
+  const reachable=new Set([inputId]);
+  // Follow the edges forward: a ruleset two steps away still reads these columns.
+  let grew=true;
+  while(grew){
+    grew=false;
+    for(const edge of workflow.edges)
+      if(reachable.has(edge.from)&&!reachable.has(edge.to)){reachable.add(edge.to);grew=true;}
+  }
+  for(const node of workflow.nodes){
+    if(node.type!=='apply_ruleset'||!reachable.has(node.id))continue;
+    for(const field of node.params.authored?.fields??[])
+      if(!(field.attribute in kinds))kinds[field.attribute]=field.kind;
+  }
+  return kinds;
+}
+
+/** Read a column's values as the kind a ruleset declared, once a practitioner has asked.
+ *
+ *  Never automatic, and never a write to the file: an ordinary change to the workflow, which
+ *  Undo reverses and the saved workflow carries. It reports both sides -- what it cast and what
+ *  it could not read -- because a repair that only mentions its successes is how 2 of 63 records
+ *  quietly stay broken. Experiment 117. */
+function repairColumn(nodeId:string,column:string,to:'number'|'boolean'|'term'){
+  const node=workflow.nodes.find(x=>x.id===nodeId);
+  const data=(node?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data;
+  if(!data?.features?.length)return;
+  const {outcome}=castColumn(data.features.map(f=>f.properties?.[column]),to);
+  if(!outcome.cast&&!outcome.unreadable.length)return;
+  change(w=>{
+    const target=w.nodes.find(x=>x.id===nodeId);
+    const params=target?.params as {data?:{features?:{properties?:Record<string,unknown>}[]};repairs?:ColumnRepair[]}|undefined;
+    const features=params?.data?.features??[];
+    const repaired=castColumn(features.map(f=>f.properties?.[column]),to).values;
+    features.forEach((feature,index)=>{
+      if(feature.properties&&repaired[index]!==undefined)feature.properties[column]=repaired[index];
+    });
+    // Recorded on the node, so the next run can state it. A workflow whose data has been
+    // altered and does not say so is what this application exists not to produce.
+    if(params)params.repairs=[...(params.repairs??[]),
+      {column,to,cast:outcome.cast,unreadable:outcome.unreadable,at:new Date().toISOString()}];
+  });
+  toast(`${column}: ${outcome.cast} value${outcome.cast===1?'':'s'} now read as ${to}s.`
+    +(outcome.unreadable.length
+      ?` ${outcome.unreadable.length} could not be read and ${outcome.unreadable.length===1?'was':'were'} left as ${outcome.unreadable.map(v=>`"${v}"`).slice(0,3).join(', ')}. Those records stay unrecorded.`
+      :' Nothing was left unreadable.')
+    +' Undo reverses this; the file itself is untouched.',
+    {tone:outcome.unreadable.length?'warning':'notice'});
+}
+
 /** A published ruleset's source, shaped for the editor to display.
  *
  *  The editor reads `fields` to name a predicate and to decide which comparators fit it. A
@@ -1518,6 +1584,10 @@ function renderInspector(){
       const columns=[...new Set(features.flatMap(f=>Object.keys(f.properties??{})))];
       openTableViewer({title:n.params.label||TYPES[n.type].title,columns,
         rows:features.map(f=>({...f.properties})),
+        // What any ruleset downstream has declared these columns to be. A column is not wrong
+        // for being untyped -- it is undeclared -- so this says nothing where nothing was said.
+        declared:declaredKinds(workflow,n.id),
+        onRepair:(column,to)=>repairColumn(n.id,column,to),
         note:`${features.length} records, ${columns.length} column${columns.length===1?'':'s'}. `
           +`These are the columns a rule can read; nothing is guessed from a name.`},esc);
     }));

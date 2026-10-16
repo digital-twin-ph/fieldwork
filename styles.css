@@ -232,7 +232,11 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 /* The rule editor. A dialog because the conditions nest and the Inspector is 320 px wide; the
    practitioner's call, 2026-10-15. Sized to hold a rule with three conditions and two
    alternatives without wrapping, which is as complex as the shipped rulesets get. */
-#rule-editor{width:min(920px,94vw);max-height:88vh;border:1px solid var(--line);border-radius:10px;
+/* `max-width` as well as `width`: a generic `dialog{max-width:520px}` rule was winning, so the
+   editor opened at 520px and every condition row wrapped -- the field, the comparison and the
+   value each on their own line, which is the opposite of reading as a rule. Measured 2026-10-15
+   after the practitioner asked to see it. */
+#rule-editor{width:min(920px,94vw);max-width:min(920px,94vw);max-height:88vh;border:1px solid var(--line);border-radius:10px;
   background:var(--surface-raised-1);color:var(--ink);padding:0;overflow:hidden}
 #rule-editor::backdrop{background:rgba(0,0,0,.45)}
 .rule-editor-body{padding:18px 22px 22px;overflow:auto;max-height:calc(88vh - 64px)}
@@ -244,7 +248,10 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .rule-condition{display:flex;gap:7px;align-items:center;margin:0 0 6px;flex-wrap:wrap}
 .rule-condition select,.rule-condition input{font-size:11px;padding:5px 7px;border:1px solid var(--line);
   border-radius:6px;background:var(--surface-raised-1);color:var(--ink);min-width:120px}
-.rule-condition input{flex:1 1 150px}
+/* A value box that grows to fill the row puts "15" in a 350px field and makes the row read as a
+   text entry with some labels, rather than as a comparison. Capped. */
+.rule-condition input{flex:0 1 220px;min-width:120px}
+.rule-condition .rule-and{flex:0 0 26px;text-align:right}
 .rule-is{font-size:10px;color:var(--text-faint-3)}
 .button.primary{background:var(--accent-9);color:var(--accent-contrast);border-color:transparent;font-weight:650}
 .button.primary:disabled{opacity:.45}

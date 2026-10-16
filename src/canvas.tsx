@@ -53,7 +53,7 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   // port is a drop target the library does not know the position of and a drag onto it does
   // nothing. Found exactly that way: the aria-label was right and the connection never formed.
   },[id,JSON.stringify(t.inputs),JSON.stringify([...connected]),JSON.stringify([...available]),updateInternals]);
-  return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.glow?'just-finished':''} ${data.flagged??data.alert?'alerting':''}`}>
+  return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.status==='failed'?'failed':''} ${data.glow?'just-finished':''} ${data.flagged??data.alert?'alerting':''}`}>
     <div className="node-heading"><span className="node-icon">{t.icon}</span><div><strong>{data.label}</strong><span className="node-id">{t.group}</span></div></div>
     <div className="node-subtitle">{data.subtitle}</div>
     {spatialPorts&&<div className="node-ports">

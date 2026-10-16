@@ -42,9 +42,16 @@ test('a site past the snap limit is routed off-network, and the widget says so',
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await expect(widget.locator('.node-alert')).toContainText('routed off-network');
-  // Red, boldly: the ring is drawn in the danger token, not the ordinary border colour.
+  // Boldly, in the warning token rather than the ordinary border colour.
+  //
+  // This asserted the DANGER token until 2026-10-16, when a second state arrived: a step that
+  // did not run at all. Both were drawn in the same red, so "your answer has a caveat" looked
+  // exactly like "you have no answer" -- and this IS a caveat. The catchment ran, its counts
+  // are usable, and what the alert says is that they are over the sites that reached something.
+  // Red is now reserved for a step that produced nothing.
   const ring=await widget.locator('.node').evaluate(n=>getComputedStyle(n).boxShadow);
-  assert.match(ring,/rgb\(165, 43, 35\)/,'the glow uses --danger-3');
+  assert.match(ring,/rgb\(177, 118, 55\)/,'the glow uses --warning-4');
+  assert.doesNotMatch(ring,/rgb\(165, 43, 35\)/,'and not the danger token, which now means a step that did not run');
   await page.screenshot({path:'test-results/unconnected-sites-alert.png'});
   await page.locator('[data-view="rules"]').click();
   await expect(page.locator('#n3-preview')).toContainText('fw:offNetworkSiteCount');

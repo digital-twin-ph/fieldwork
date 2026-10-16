@@ -114,3 +114,43 @@ test('records the rules cannot read are surfaced, and the notice can be read and
   await expect(page.locator('.inspector-alert').first()).toContainText('No value');
   expect(errors).toEqual([]);
 });
+
+// "For a failing widget do we get a red glow for it to draw attention aside from the toast?" --
+// the practitioner, 2026-10-16. The honest answer was no, and worse: the step that failed kept
+// the RUNNING state for ever, because `onProgress(id,'done')` is the last line of the loop body
+// and a throw skips it. The canvas showed the one widget that had stopped as the one still
+// working.
+test('a failing widget glows red, and is told apart from one that merely found something',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=rulesets');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  const toast=page.locator('#toast');
+  if(await toast.locator('button').count())await toast.locator('button').click();
+
+  const node=id=>page.locator(`.react-flow__node[data-id="${id}"] .node`);
+  // A step that found something on a run that COMPLETED is amber, not red: there is a result,
+  // and part of it needs reading differently.
+  await expect(node('text-address')).toHaveClass(/alerting/);
+  await expect(node('text-address')).not.toHaveClass(/failed/);
+
+  // Break one step: take the unit off the field its rules compare.
+  await page.locator('.react-flow__node[data-id="gap-day"]').click();
+  await page.locator('[data-field-unit]').first().fill('');
+  await page.locator('[data-field-unit]').first().press('Tab');
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toHaveText('Run failed',{timeout:30000});
+
+  // Red, and NOT still running.
+  await expect(node('gap-day')).toHaveClass(/failed/);
+  await expect(node('gap-day')).not.toHaveClass(/running/);
+  // A step that ran cleanly carries neither.
+  await expect(node('day')).not.toHaveClass(/failed|alerting/);
+
+  // The two states are different colours, not one colour for "something is up": "your answer
+  // has a caveat" must not look like "you have no answer".
+  const border=id=>node(id).evaluate(e=>getComputedStyle(e).borderColor);
+  expect(await border('gap-day')).not.toBe(await border('text-address'));
+  expect(errors).toEqual([]);
+});

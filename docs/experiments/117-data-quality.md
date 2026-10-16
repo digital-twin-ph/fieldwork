@@ -94,6 +94,53 @@ a judgement about the thing measured.
 **One repair.** `Read these N values as numbers`, on a column whose binding declares a number
 and whose values include numeric text.
 
+## Can a quality problem arise *after* processing?
+
+The practitioner, 2026-10-16: *"What I am not sure of is if data quality issues can happen
+post-processing as a consequence."* They can, they do, and **this project has been answering it
+one widget at a time without noticing that it was one question.**
+
+| Step | What it does to the data | Recorded today |
+| --- | --- | --- |
+| **Snap to network** | moves every site to a junction — a pump in a yard is now on the road | the distance each site moved, and an alert past the snap limit |
+| **Isochrone / catchments** | some sites reach nothing; some routes are charged a straight line | `unconnected`, `offNetwork`, as a node alert |
+| **Cases by period** | a record whose date cannot be parsed is in no bin at all | `undatedRecords` and the list of them |
+| **Apply ruleset** | a record no rule matched carries no conclusion | `fw:unmatchedSubjectCount` |
+| **Apply ruleset** (this experiment) | a value it could not read is treated as absent | `fw:ReadingProblem` |
+| **Reproject, hull, mean centre, aggregate** | produce values that were in no file | partially, per widget |
+
+So the answer is not merely yes. It is that **the downstream problems are the worse kind**, for
+a reason worth stating plainly:
+
+> An input-stage problem is visible and permanent. The `"3"` is still in the file; it can be
+> looked at tomorrow. **A processing-stage problem is destroyed by the step that creates it.**
+> Once a site is snapped, its coordinates *are* the junction's, and nothing in the output says it
+> travelled 200 m to get there. The only surviving record is whatever the step chose to keep.
+
+That is why `snap_to_network`'s manual says to check the snap distance every time, and why the
+step records it at all. Each of those widgets reached the same conclusion independently and
+invented its own vocabulary for it. The consolidation — one frame for "what this layer will not
+tell you", wherever the layer came from — is not built.
+
+### What follows for where the dialog lives
+
+The practitioner proposed a data-quality dialog **per input widget**. The evidence above argues
+for inspecting anything that carries records, with one asymmetry that falls out naturally:
+
+- **Inspect everywhere.** A derived layer has quality properties, and they are less visible than
+  an input's, not more.
+- **Repair only at the source.** A derived layer cannot be repaired — there is nothing to
+  correct, only a step to re-run. The repair belongs where the records are held, which is the
+  input, and on a derived layer the dialog should say where to go instead of offering a button
+  that cannot work.
+
+Neither is built. `profileColumn` is already generic — it takes columns and rows and knows
+nothing about inputs — so the obstacle is the plumbing and the frame, not the statistics.
+
+**Not to be confused with [experiment 51](51-dataset-profiles.md)**, which uses "profile" for
+something else entirely: which *classes of dataset* a problem type requires. One is about
+planning what to obtain; this is about what arrived.
+
 ## What this does not establish
 
 - **That the profile's summary statistics are the right ones.** Min, median, max and an IQR
@@ -115,6 +162,9 @@ and whose values include numeric text.
 
 1. The three unbuilt scenarios have a stated decision each: what the application offers for
    missingness and for data shapes, or a recorded reason for offering nothing.
+0. A decision on scope: whether quality inspection is bound to input widgets, as proposed, or to
+   anything carrying records, as the evidence above argues. Until that is settled the dialog
+   should not be built, because the two answers produce different dialogs.
 2. A repair is reachable from where the problem is *reported*, not only from the quick look —
    the alert naming 63 unreadable values should lead to the thing that fixes them.
 3. A file the project did not author is profiled, and what the profile missed is written down.

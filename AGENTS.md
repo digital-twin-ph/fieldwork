@@ -195,6 +195,22 @@ dependency; it is the wrong Node version, and the project is not at fault. Do no
 diagnose it as a code or dependency problem, and do not report gates as failing until
 they have been run on Node 22.
 
+### A test result is claimed only for the browsers it was run on
+
+`playwright.config` runs **Chromium and WebKit** by default, and says why: Tauri on macOS runs
+WKWebView, so a Chromium-only gate would report green on work that could not render there. Its
+comment ends *"a result is only claimed for the browsers actually run, so the default must not
+change silently"*.
+
+`--project=chromium` is a fair tool for a fast loop while something is being written. It is not
+a result. **A number reported to the practitioner — "159 passed" — must come from the default
+projects**, or it must name the browser it came from in the same sentence.
+
+Found 2026-10-16: a whole session of work was reported as passing on the strength of Chromium
+alone, and the gap surfaced only when a CI deploy failed on a WebKit test. Running both found no
+defect that time, which is the uncomfortable part — the habit was wrong whether or not it cost
+anything on the day, and a method that happens to be lucky is not a method.
+
 ### Generated files, and the order they are written in
 
 Several files in this repository are written by a script and checked by a gate: a generator

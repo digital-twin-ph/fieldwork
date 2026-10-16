@@ -25,6 +25,7 @@ import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
 import {rulesetExample} from './ruleset-example.js';
 import {openRuleEditor} from './rule-editor.js';
+import {settingNamed} from './authored-rules.js';
 import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
@@ -806,9 +807,11 @@ function renderInspector(){
     if(authored){
       const comparator=(c:string)=>({equals:'is',greaterThan:'is more than',notGreaterThan:'is at most',
         lessThan:'is less than',notLessThan:'is at least'}[c]??c);
-      const readable=(value:string|number|boolean)=>typeof value==='string'&&/^\{\{(.+)\}\}$/.test(value)
-        ?`the ${value.slice(2,-2)} setting below`
-        :typeof value==='string'&&value.includes(':')?value.slice(value.indexOf(':')+1):String(value);
+      const readable=(value:import('./authored-rules.js').AuthoredValue)=>{
+        const setting=settingNamed(value);
+        if(setting)return `the ${setting} setting below`;
+        return typeof value==='string'&&value.includes(':')?value.slice(value.indexOf(':')+1):String(value);
+      };
       const named=(predicate:string)=>{
         const field=authored.fields.find(f=>f.predicate===predicate||`${f.predicate}Known`===predicate);
         if(!field)return predicate.slice(predicate.indexOf(':')+1);

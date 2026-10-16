@@ -250,7 +250,15 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
   border-radius:6px;background:var(--surface-raised-1);color:var(--ink);min-width:120px}
 /* A value box that grows to fill the row puts "15" in a 350px field and makes the row read as a
    text entry with some labels, rather than as a comparison. Capped. */
-.rule-condition input{flex:0 1 220px;min-width:120px}
+.rule-condition input{flex:0 1 180px;min-width:110px}
+/* The field and the comparator are the row; what it is compared against and how it is removed
+   should not be pushed onto a second line by them. A condition comparing against a setting has
+   four controls where it used to have three, and the row has to hold all four. */
+.rule-condition select[data-part="field"]{flex:1 1 180px}
+.rule-condition select[data-part="comparator"]{flex:0 1 130px;min-width:110px}
+.rule-condition select[data-part="value-source"],
+.rule-condition select[data-part="value"]{flex:0 1 160px;min-width:110px}
+.rule-condition button{flex:0 0 auto}
 .rule-condition .rule-and{flex:0 0 26px;text-align:right}
 .rule-is{font-size:10px;color:var(--text-faint-3)}
 .button.primary{background:var(--accent-9);color:var(--accent-contrast);border-color:transparent;font-weight:650}

@@ -37,12 +37,30 @@ const BUILTIN:Record<Exclude<Comparator,'equals'>,string>={
   notLessThan:'math:notLessThan',
 };
 
+/** A reference to one of the step's declared settings.
+ *
+ *  Structured, rather than the `{{threshold}}` text the compiled rules use. The placeholder is a
+ *  real convention -- a published ruleset's rules are text that `bindParameters` fills, and the
+ *  compiler emits the same so an authored ruleset reaches the reasoner by exactly that path --
+ *  but it is a convention of the COMPILED FORM, and it had been carried into the form a
+ *  practitioner edits. They met `{{threshold}}` in a value box and, as the practitioner said on
+ *  2026-10-15, that is "template syntax that not anyone would write". The same mistake as
+ *  printing `fwa:` at them: an encoding detail reaching the surface. */
+export interface SettingReference {setting:string}
+export const isSettingReference=(value:unknown):value is SettingReference=>
+  typeof value==='object'&&value!==null&&typeof (value as SettingReference).setting==='string';
+
+/** Everything a condition or a conclusion can be compared against. */
+export type AuthoredValue=string|number|boolean|SettingReference;
+
 export interface AuthoredCondition {
   /** A predicate in CURIE form, `fw:distanceKm`. A bound role in the Inspector; a predicate here. */
   field:string;
   comparator:Comparator;
-  /** A term (`fw:Marina`), a literal (`true`, `5`), or a parameter placeholder (`{{threshold}}`). */
-  value:string|number|boolean;
+  /** A term (`fw:Marina`), a literal (`true`, `5`), or a reference to a declared setting.
+   *
+   *  A `{{name}}` string is still accepted, because rules authored before 2026-10-15 hold one. */
+  value:string|number|boolean|SettingReference;
 }
 export interface AuthoredGroup {all:AuthoredCondition[]}
 export interface AuthoredConclusion {predicate:string; value:string}
@@ -80,10 +98,17 @@ export const compiledRuleCount=(ruleset:AuthoredRuleset):number=>
 
 const isPlaceholder=(value:unknown):value is string=>
   typeof value==='string'&&/^\{\{[a-zA-Z][a-zA-Z0-9_]*\}\}$/.test(value);
+/** The name of the setting a value refers to, however it is written. */
+export const settingNamed=(value:unknown):string|undefined=>
+  isSettingReference(value)?value.setting
+  :isPlaceholder(value)?value.slice(2,-2):undefined;
 
 /** A term as it appears in N3: a CURIE and a placeholder pass through, a string literal is quoted,
  *  a number and a boolean are written bare. */
-function term(value:string|number|boolean):string{
+function term(value:string|number|boolean|SettingReference):string{
+  // A setting becomes the placeholder here, at the edge where rules become text, and nowhere
+  // else. bindParameters fills it exactly as it fills a published ruleset's.
+  if(isSettingReference(value))return `{{${value.setting}}}`;
   if(typeof value==='boolean'||typeof value==='number')return String(value);
   if(isPlaceholder(value)||/^[a-zA-Z][a-zA-Z0-9_-]*:[^\s]*$/.test(value))return value;
   return JSON.stringify(value);
@@ -144,7 +169,7 @@ export function compileAuthoredRuleset(ruleset:AuthoredRuleset):string{
         }
         const builtin=BUILTIN[condition.comparator];
         if(!builtin)throw new AuthoredRulesetError(`Unknown comparator ${JSON.stringify(condition.comparator)}.`);
-        if(typeof condition.value!=='number'&&!isPlaceholder(condition.value))
+        if(typeof condition.value!=='number'&&!isPlaceholder(condition.value)&&!isSettingReference(condition.value))
           throw new AuthoredRulesetError(`${condition.comparator} compares numbers, so its value must be a number `
             +`or a parameter placeholder, not ${JSON.stringify(condition.value)}. A term is compared with equals.`);
         let variable=bound.get(condition.field);
@@ -191,7 +216,7 @@ export interface UnitProblem {field:string; says:string}
 export function authoredUnitProblems(authored:{
   fields:{predicate:string;kind:string;label?:string;unit?:string;unitLabel?:string}[];
   parameters?:{name:string;unit?:string;unitLabel?:string}[];
-  rules:{any:{all:{field:string;comparator:string;value:string|number|boolean}[]}[]}[];
+  rules:{any:{all:{field:string;comparator:string;value:AuthoredValue}[]}[]}[];
 }):UnitProblem[]{
   const problems:UnitProblem[]=[];
   const named=(predicate:string)=>authored.fields.find(f=>f.predicate===predicate);
@@ -218,9 +243,11 @@ export function authoredUnitProblems(authored:{
         if(condition.comparator==='equals')continue;
         const field=named(condition.field);
         if(!field?.unit)continue;
-        const placeholder=typeof condition.value==='string'&&/^\{\{(.+)\}\}$/.exec(condition.value);
-        if(!placeholder)continue;
-        const parameter=(authored.parameters??[]).find(p=>p.name===placeholder[1]);
+        // Either form of a setting reference: the structured one a practitioner now edits, or
+        // the `{{name}}` text rules authored before 2026-10-15 hold.
+        const setting=settingNamed(condition.value);
+        if(!setting)continue;
+        const parameter=(authored.parameters??[]).find(p=>p.name===setting);
         if(!parameter?.unit)continue;
         const pair=`${condition.field}/${parameter.name}`;
         if(parameter.unit!==field.unit&&!reported.has(pair)){

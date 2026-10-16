@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInThisContext} from 'node:vm';
 import {compileAuthoredRuleset,compiledRuleCount,AuthoredRulesetError,RULE_CEILING,
-  resolveRuleset,bindParameters} from '../build/rulesets.js';
+  resolveRuleset,bindParameters,authoredUnitProblems} from '../build/rulesets.js';
 
 const root=new URL('../',import.meta.url);
 globalThis.self=globalThis;
@@ -75,6 +75,38 @@ test('a parameter stays a placeholder, so an authored ruleset binds like a decla
   // by exactly the same path rather than through a second mechanism that could disagree.
   const declared={...resolveRuleset('urn:fieldwork:ruleset:access-review','2.0.0'),rules:n3};
   assert.match(bindParameters(declared,{threshold:30}),/math:greaterThan 30\.0+/);
+});
+
+// "Why are we using template syntax that not anyone would write?" -- the practitioner,
+// 2026-10-15. Nobody would. The placeholder belongs to the compiled TEXT, and it had been
+// carried into the form they edit, so a condition refers to a setting by name and the compiler
+// writes the placeholder. Both forms compile identically: the old one is still read, because
+// workflows saved before that date hold it.
+test('a condition refers to a setting by name, and the placeholder is written by the compiler', () => {
+  const rules=value=>[{any:[{all:[{field:'fw:proxyMinutes',comparator:'greaterThan',value}]}],
+    then:[{predicate:'fw:decision',value:'fw:Review'}]}];
+  const structured=compileAuthoredRuleset({subject:'?p',rules:rules({setting:'threshold'})});
+  assert.match(structured,/math:greaterThan \{\{threshold\}\}/);
+  assert.equal(structured,compileAuthoredRuleset({subject:'?p',rules:rules('{{threshold}}')}),
+    'the two ways of referring to a setting compile to the same N3');
+  const declared={...resolveRuleset('urn:fieldwork:ruleset:access-review','2.0.0'),rules:structured};
+  assert.match(bindParameters(declared,{threshold:30}),/math:greaterThan 30\.0+/);
+});
+
+// The unit check reads a setting reference in either form. It did not, at first: it matched
+// `{{name}}` with a regular expression, so moving the example to the structured form would have
+// turned the refusal off silently -- a check that stops checking is worse than no check.
+test('a unit mismatch is refused whichever way the setting is referred to', () => {
+  const authored=value=>({
+    fields:[{predicate:'fw:proxyMinutes',kind:'number',label:'Wait',
+      unit:'http://qudt.org/vocab/unit/MIN',unitLabel:'minutes'}],
+    parameters:[{name:'threshold',unit:'http://qudt.org/vocab/unit/HR',unitLabel:'hours'}],
+    rules:[{any:[{all:[{field:'fw:proxyMinutes',comparator:'greaterThan',value}]}]}]});
+  for(const value of [{setting:'threshold'},'{{threshold}}']){
+    const problems=authoredUnitProblems(authored(value));
+    assert.equal(problems.length,1,`one problem for ${JSON.stringify(value)}`);
+    assert.match(problems[0].says,/measured in minutes and the threshold setting is in hours/);
+  }
 });
 
 test('A5 · a ruleset over the ceiling is refused before compiling, naming the product', () => {

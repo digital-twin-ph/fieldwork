@@ -77,6 +77,10 @@ export function openRuleEditor(authored:Authored,esc:Escape):Promise<RuleEditorR
       const kind=kindOf(condition.field);
       const where=`data-rule="${rule}" data-group="${group}" data-condition="${index}"`;
       return `<div class="rule-condition">`
+        // The connective, in the margin, as the read-only view shows it. Two conditions stacked
+        // with nothing between them read as two separate facts rather than as one rule that
+        // needs both.
+        +`<span class="rule-and">${index?'and':''}</span>`
         +`<select ${where} data-part="field" aria-label="Field">`
         +choices.map(choice=>`<option value="${esc(choice.predicate)}" ${choice.predicate===condition.field?'selected':''}>${esc(choice.label)}</option>`).join('')
         +`</select>`

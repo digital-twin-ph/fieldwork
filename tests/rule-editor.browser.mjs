@@ -51,7 +51,11 @@ test('rules can be edited in a dialog, and the edit reaches the saved workflow',
   expect(after.last.then[0].predicate).toBe('fwa:service');
   expect(after.last.then[0].value).toBe('fwa:Referral');
 
-  // And the Inspector reads the new rule back.
-  await expect(page.locator('#inspector-content')).toContainText('service is');
+  // And the Inspector reads the new rule back, laid out as a rule: the name, the comparison and
+  // the value in their own cells rather than in a sentence.
+  const last=page.locator('#inspector-content .authored-rule').last();
+  await expect(last.locator('.rule-field').last()).toHaveText('service');
+  await expect(last.locator('.rule-value').last()).toHaveText('Referral');
+  await expect(last.locator('.rule-keyword').last()).toHaveText('THEN');
   expect(errors).toEqual([]);
 });

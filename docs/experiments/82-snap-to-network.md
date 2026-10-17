@@ -1,6 +1,6 @@
 # 82 · Snap to street network
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-17_
 
 **Status:** admission review, written before the code. Third of the six
 primitives [78](78-trying-compositions-on-isochrone.md) needs, and the first

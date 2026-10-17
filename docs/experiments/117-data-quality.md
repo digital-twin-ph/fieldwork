@@ -1,6 +1,6 @@
 # 117 — Data quality: what a file will not tell you, and what to do about it
 
-_Created 2026-10-16 · Updated 2026-10-16_
+_Created 2026-10-16 · Updated 2026-10-17_
 
 **Status:** tried — a **data quality dialog per input widget** profiles every column, offers one
 repair and takes it back, and the rest of the scope below is open. The practitioner, 2026-10-16: *"We should also offer

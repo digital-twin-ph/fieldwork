@@ -10,9 +10,84 @@ project's own standard applies before anything is: a source is not usable until 
 read at the source, its provenance is recorded with a digest, and what it must not be read as is
 written down. `examples/john-snow/NOTICE.txt` is the shape to copy.
 
-**Two of the entries below were verified against the provider's own licence page in this
-session. The rest were not**, and say so. A licence claim from a tutorial, a comparison article
-or a search summary is not a licence.
+**Entries below say whether they were verified against the provider's own licence page.** A
+licence claim from a tutorial, a comparison article or a search summary is not a licence.
+
+## The question is not "open", it is which of three things
+
+Two sources landed in the same place on 2026-10-17 by different routes, and the practitioner
+named it: *"So we can use SatScan only for widget testing not distribution."* Exactly — and it is
+a standing distinction, not a remark about SaTScan, so it is stated once here rather than
+narrated per source.
+
+| | Means | Consequence for this project |
+| --- | --- | --- |
+| **Shippable** | redistribution permitted, attribution satisfiable | may be bundled in `examples/`, with a NOTICE and a digest, and works offline |
+| **Usable, not shippable** | permission to use; no redistribution right | may be fetched to a practitioner's own machine and computed on. **Never committed.** A worked example cannot be built on it, because a worked example is a file in this repository |
+| **Neither** | terms unknown or unobtainable | not usable here at all, however good the data — this application prints a licence IRI on its receipts and cannot print one it does not have |
+
+The middle row is the awkward one and it is where most epidemiology data sits. It rules out the
+thing this project does best: an example that opens, runs offline and replays identically for
+everyone. A "usable, not shippable" source can only ever be something a practitioner points the
+application at — which means **the import path must be good enough to be the whole experience**,
+with no worked example to lean on. That is a design consequence, not a licensing footnote.
+
+| Source | Classification | On what evidence |
+| --- | --- | --- |
+| geoBoundaries | **shippable** | CC BY 4.0, read from its own site |
+| OpenStreetMap / Overpass | **shippable** | ODbL, already wired and attributed |
+| GADM | **usable, not shippable** | *"Redistribution or commercial use is not allowed without prior permission"*, read from its licence page |
+| SaTScan | **usable, not shippable** | *"may be used for educational as well as research purposes"* — a permission, naming no redistribution right |
+| R `outbreaks` | **neither, as packaged** | GPL (≥ 2) against this repository's Apache-2.0. The underlying records are another matter; the package is not the route |
+| Project Tycho | **unresolved** | see below |
+| WorldPop, Natural Earth, HDX, WHO GHO | **unresolved** | not verified at source |
+
+### Project Tycho — terms could not be established from public pages
+
+Worth stating precisely, because this is the strongest candidate for closing
+[117](../experiments/117-data-quality.md)'s open condition.
+
+Its [about page](https://www.tycho.pitt.edu/about/) says the data is available *"for any
+non-commercial use under a CC BY 4.0 license"*. **That is self-contradictory**: CC BY 4.0 permits
+commercial use by definition, so either the licence is CC BY 4.0 and the non-commercial
+qualifier has no force, or the intent is CC BY-NC and the name is wrong. The
+[licence page](https://www.tycho.pitt.edu/license/) does not render its terms publicly; the
+agreement appears to be presented at registration, which is also where downloads require signing
+in. There is an API, documented at `tycho.pitt.edu/dataset/api`.
+
+**So: unresolved from public pages.** The agreement is presented at registration, and the
+difference between CC BY 4.0 and CC BY-NC decides whether a Tycho slice could ever ship in a
+worked example or only ever be fetched to a practitioner's own machine.
+
+**A key is not a licence.** The practitioner registered and placed an API key in `.secrets/` on
+2026-10-17. That settles *access* and nothing else: a credential grants the right to fetch, and
+says nothing about the right to redistribute what was fetched. Conflating the two is the precise
+error this project's receipts exist to prevent — an application that prints a licence IRI must
+print the licence, not the fact that it had permission to download. The classification above
+stays **unresolved** until the agreement's text is read.
+
+### The API, read from its documentation
+
+Verified at [tycho.pitt.edu/dataset/api](https://www.tycho.pitt.edu/dataset/api/), and recorded
+because it is specific enough to build against the moment the licence question is answered.
+
+| | |
+| --- | --- |
+| Base URL | `https://www.tycho.pitt.edu/api/` |
+| Credential | an `apikey` query parameter on every request; keys come from a registered user's Profile page |
+| Listing endpoints | `condition`, `country`, `admin1`, `admin2`, `city`, `pathogen`, `agerange`, `subpopulation`, `fatalities`, `cumulative`, `diagnosiscertainty`, `placeofacquisition`, `sourcename` — all returning **CSV** |
+| Data endpoint | `query`, requiring **one condition** and **at least one location** field |
+| Dates | `PeriodStartDate` / `PeriodEndDate`, `YYYY-MM-DD`, with `=`, `>=`, `<=` |
+| Paging | `limit` (default 5,000, max 20,000) and `offset` |
+| Gotcha | variable names are **case-sensitive** |
+| Not stated anywhere | rate limits, and any redistribution term |
+
+**What it would plug into.** CSV out is this project's `table_input` path, which already casts
+its value column at import and refuses a non-numeric cell by row number. A key goes through the
+existing credentials mechanism — the one `find_health_facilities` uses for healthsites.io, where
+the key is resolved at run time and never written into a workflow. A fetched slice is a
+long-format table keyed by condition, place and period: `case_series` and `rate` territory, with
+the structural gaps noted above intact rather than filled.
 
 ## Case data: line lists, outbreak investigations, surveillance
 

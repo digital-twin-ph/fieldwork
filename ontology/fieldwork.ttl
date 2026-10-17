@@ -289,8 +289,8 @@ fw:PolygonPointSummary a owl:Class;
   rdfs:label "Polygon point summary"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Count point memberships and optionally sum a named numeric attribute; overlaps and missing values are explicit.".
 fw:AreaBuffer a owl:Class;
-  rdfs:label "Acquisition buffer computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
-  rdfs:comment "Generate a distinct expanded acquisition boundary without changing the reporting study area.".
+  rdfs:label "Area buffer"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Expand an existing area by a stated distance, producing a second area and leaving the first unchanged. Restated 2026-10-17: this class was labelled an ACQUISITION buffer and described as generating an expanded acquisition boundary, which named one use and declared it the meaning. The practitioner settled that the study area is itself what bounds acquisition, and gave the use the narrow reading had hidden: an administrative boundary is not an epidemiological one, so an outbreak crossing a border -- Ebola from the DRC into Uganda -- is reasoned about by expanding the jurisdiction the surveillance is organised around. That is analysis, not acquisition. WHERE THE EDGE DECIDES MEMBERSHIP the approximation matters: see fw:PointBuffer, which records the fraction of the true circle its polygon covers, and note that this operation does not yet record its own.".
 fw:bufferDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
 fw:parameters a owl:DatatypeProperty.
 # Retired 2026-10-13: a second name for fw:metricCRS. Three widgets wrote this one and five wrote

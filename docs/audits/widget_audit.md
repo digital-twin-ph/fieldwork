@@ -645,3 +645,40 @@ leaves the geometry alone, and `snap_to_network` becomes declarable as retired.
 The order still matters. A retired widget never runs and the loader refuses it, so the general
 operation must emit the attributes **before** the flag is set, or a saved workflow holding the
 widget stops loading.
+
+### Worked further, 2026-10-17 — what the retirement actually costs
+
+**Done: the search is now one function.** It existed twice, character for character, in
+`isochrone` and in `snap_to_network`, the latter carrying the comment *"Same nearest-node search
+isochrone performs, kept identical so the two agree"* — a duplication admitting itself and
+relying on care. `nearestNetworkNode` in `src/catchments.ts` is the single implementation and
+both call it. The parity tests between the chain and the monolith pass unchanged, which is what
+makes the factoring safe to claim.
+
+That is D2's duplication resolved **in the code**. The widget question is separate and the
+blocker is sharper than this entry first recorded:
+
+**`reachable_nodes` cannot do the search itself, because it has no metric CRS.** Its parameters
+are `minutes`, `speedMPerMin`, `direction`, `travelMode` — no zone, no hemisphere — and it never
+calls `metric()`. `snap_to_network` takes a zone precisely because *it* does the metric work. So
+`reachable_nodes` throws today when an origin lacks `networkNodeId`: *"this origin is not on the
+network. Add a Snap to street network step before this one."* That line is the dependency.
+
+So retiring the widget is not two attributes on a general operation. In order:
+
+1. `reachable_nodes` gains a zone and hemisphere — **a parameter contract change**, needing a new
+   widget release, Inspector controls, and a migration for saved nodes that carry neither.
+2. It snaps internally via `nearestNetworkNode` when an origin arrives un-snapped, and keeps
+   reading `networkNodeId` when one is already there, so both orders of workflow keep working.
+3. The geometry overwrite goes. A point keeps its own position; the junction is derived from the
+   network by the id the point carries, and `siteLongitude`/`siteLatitude` — the shadow
+   attributes added on 2026-10-14 so `reachable_corridor` could undo the move — are no longer
+   needed by anything.
+4. Only then can the flag be set.
+
+**And one thing to decide rather than assume at step 4.** [114](../experiments/114-the-three-segments-of-a-walk.md)
+extracted this widget from `isochrone` so a displacement could be *mapped, sorted and argued
+with* — "which clinic is furthest from a road" is a question somebody may want answered without
+running a catchment at all. Retiring the widget removes that unless the general operation can
+take a network, which is the port work 103 already found blocking the other three merges. The
+disposition is still *merges*; what step 4 must not do is lose the capability silently.

@@ -75,6 +75,58 @@ That also sharpens what remains outside: omission. A map that leaves out the inc
 district still breaks no rule — but a map that leaves out what its own declared objective says it
 is for is, for the first time, something an application could notice.
 
+## An incompleteness, not a caveat
+
+The practitioner, 2026-10-17, on this record's observation that nothing here composes a sequence,
+an annotation or a caption that argues:
+
+> *"Since this is a DE project, that means the framework is not complete. There must be something
+> in the beginning that helps the user design the frames of the story … And this step precedes the
+> use of the study area widget."*
+
+**A limitation written into a caveat section is a limitation this project has accepted. A
+framework incompleteness obliges something.** That is the distinction, and under developmental
+evaluation the second is a result rather than an apology.
+
+**Where the gap is.** [The glossary](../glossary.md#workflow-stages) says a workflow has three
+stages — input, process, output — and a blank canvas offers only widgets needing no input, which
+in practice means **Study area**. The claim is that something belongs *before* that: a stage in
+which the practitioner states the frames of the account they intend to give, and only then
+chooses a study area — because a study area is already an answer to *where*, and *where* is one
+of the frames. Today the first question this application asks is a spatial one, and nothing has
+asked what the work is for.
+
+**Frames are not the medium.** The practitioner again: *"The story could be a scientific
+publication or a poster or an infographic but nevertheless needs the rigor required to achieve
+the narrative goal."* So what the account claims is one thing and the form it takes is another,
+and the rigor requirement does not vary between them. That separation is worth holding, because
+[Segel and Heer's](https://homes.cs.washington.edu/~jheer/files/narrative.pdf) narrative
+visualization framework — the standard reference, **not read here** — is criticised in later work
+for conflating the storytelling mechanism with the medium carrying it.
+
+**Candidate structures, none chosen:**
+
+- **Person, place, time.** Native: this project already reasons in them, and the Snow research
+  note's central finding is phrased in them. An epidemiological account's descriptive frame, and
+  checkable against what the data carries.
+- **STROBE.** The reporting standard for observational epidemiology: 22 items, 18 common to
+  cohort, case-control and cross-sectional designs and 4 design-specific, intended for *clear
+  reporting* rather than judging quality. Read from its summaries 2026-10-17 — and the
+  interesting part is what it does **not** cover: nothing in those 22 items concerns figures or
+  maps. The thing this application produces is precisely the thing the field's reporting standard
+  is silent about.
+- **Segel and Heer genres** — magazine style, annotated chart, partitioned poster, slide show —
+  which describe the *form*, and so belong to the medium question rather than the frame question.
+
+**The hazard, and why it may be the point.** Writing the outline before building the map risks
+fitting the data to the frame, which is what this project's whole discipline exists against. But
+a declared frame is **falsifiable in a way an unstated intention is not**: the run either
+supports it or does not, and the assurance this record is about could report *"frame 3 claimed
+the outbreak clustered around one pump; nothing in this run speaks to clustering."* An intention
+that stays in somebody's head cannot be contradicted by a receipt.
+
+**Scheduled, not built** — [TODO](../todo.md), so it does not displace housecleaning.
+
 ## What this does not establish
 
 - **That assurance is buildable here.** Nothing has been built. The three conditions are

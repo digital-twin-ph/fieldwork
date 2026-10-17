@@ -73,15 +73,19 @@
     "facility_audit"
    ],
    "recorded": "2026-10-12",
-   "lastRevisited": "2026-10-15",
+   "lastRevisited": "2026-10-17",
    "status": "standing",
    "liftTest": "A presentation-stage composition exists and comparison_map is expressed as one.",
-   "record": "no experiment yet -- the practitioner's direction of 2026-10-12, recorded in widgets/standardization.json under deferred",
+   "record": "the practitioner's direction of 2026-10-12, recorded in widgets/standardization.json under deferred. Experiment 119 now asks the question this blocker has been holding open.",
    "narrowedBy": "Revisited 2026-10-13. A day of presentation work did NOT lift this and the lift test is unchanged, but what is missing is now narrower than when it was recorded. The figure layer exists: src/presentation.ts holds one validated palette and one type scale that a map and a chart both read, maps export with a scale bar, a north arrow and a derived licence line, charts export the specification the receipt stores, and the Snow figures carry titles, subtitles, axis names and citations. So 'there is nowhere for presentation to live' is no longer true of the DRAWING. What is still missing is a composition stage: a way to express comparison_map as an arrangement of primitives rather than as a widget, which is what the lift test asks for and what nothing yet offers.",
    "revisits": [
     {
      "date": "2026-10-15",
      "found": "Re-derived against compositions/: two compositions exist, classify_extent (stage classify) and compute_walking_catchment (stage compute). No composition declares a presentation stage and comparison_map is not expressed as one, so the lift test is unmet and the claim stands unchanged."
+    },
+    {
+     "date": "2026-10-17",
+     "found": "Still unmet -- no composition declares a presentation stage and comparison_map is not expressed as one, so the claim and the lift test are unchanged. What changed is that the question now has an experiment: 119, asking whether this application can make data tell a story through maps, prompted by the practitioner's observation that experiment 118's cartographic rules blend into it. 118 does not lift this and 119 does not yet either: 118's rules are NEGATIVE, catching violations, and nothing computable notices what a map leaves out -- which is the part of the communication question a conformance report can never reach."
     }
    ]
   },

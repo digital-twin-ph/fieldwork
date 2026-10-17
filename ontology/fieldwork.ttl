@@ -901,10 +901,27 @@ fw:choiceMade a owl:DatatypeProperty; rdfs:domain fw:DesignChoice; rdfs:range xs
 fw:choiceOffered a owl:DatatypeProperty; rdfs:domain fw:DesignChoice; rdfs:range xsd:string;
   rdfs:comment "What else was available. A choice between alternatives nobody can see is a setting rather than a judgement, and recording it as a judgement would overstate it.".
 
-fw:MapTextContrast a fw:DesignRule.
-fw:MapMarkContrast a fw:DesignRule.
-fw:CategoricalPaletteIsColourBlindSafe a fw:DesignRule.
-fw:UnknownIsNotAHue a fw:DesignRule.
+# The four rules, declared in full here rather than only in the code that applies them.
+#
+# They were bare `a fw:DesignRule` lines until 2026-10-17, when the SHACL shape written the same
+# day refused them for carrying no kind and no statement -- which was the shape doing its job on
+# the first graph it was pointed at, and that graph was this one. A rule whose statement lives
+# only in TypeScript is vocabulary the ontology does not have.
+#
+# src/map-conformance.ts must agree with these, and tests/map-conformance.test.mjs checks that it
+# does: two copies with no check between them is how a declaration and its implementation drift.
+fw:MapTextContrast a fw:DesignRule; fw:ruleKind "measured";
+  rdfs:comment "Text drawn on a map must reach 4.5:1 against the ground it sits on.";
+  earl:test <https://www.w3.org/TR/WCAG22/#contrast-minimum>; fw:conformanceLevel "AA"; rdfs:seeAlso <https://www.w3.org/TR/WCAG22/#contrast-minimum>.
+fw:MapMarkContrast a fw:DesignRule; fw:ruleKind "measured";
+  rdfs:comment "A mark that carries meaning must reach 3:1 against the ground, or a reader cannot find it.";
+  earl:test <https://www.w3.org/TR/WCAG22/#non-text-contrast>; fw:conformanceLevel "AA"; rdfs:seeAlso <https://www.w3.org/TR/WCAG22/#non-text-contrast>.
+fw:CategoricalPaletteIsColourBlindSafe a fw:DesignRule; fw:ruleKind "categorical";
+  rdfs:comment "Categories are drawn from a palette chosen to remain distinguishable under the common colour vision deficiencies.";
+  dcterms:source "Brewer, on perceptual ordering and accessible palette choice; the palette itself is Okabe and Ito\u2019s".
+fw:UnknownIsNotAHue a fw:DesignRule; fw:ruleKind "categorical";
+  rdfs:comment "Absence of data is drawn in a neutral, never in a hue, because it is not a category and must not compete with one.";
+  dcterms:source "Bertin, on the visual variables: hue is selective but not ordered, so spending it on an absence makes that absence compete as a category".
 
 fw:fieldBinding a owl:ObjectProperty; rdfs:domain fw:RuleApplication;
   rdfs:comment "Which attribute of a record supplies which predicate the rules read. Nothing is guessed from a column name, so a ruleset over arbitrary records is possible only because this is declared.".

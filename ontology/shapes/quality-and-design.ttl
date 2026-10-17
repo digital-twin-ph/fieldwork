@@ -1,0 +1,95 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix dqv: <http://www.w3.org/ns/dqv#>.
+@prefix earl: <http://www.w3.org/ns/earl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# Shapes for the data-quality and design-rule terms added 2026-10-16 and 2026-10-17.
+#
+# They were declared and emitted and nothing checked them, which the ontology audit names as the
+# first of its three traps: a declaration is not a capability. A class with no shape can be
+# emitted malformed by any future change and no gate will notice.
+#
+# Every count here is `sh:minInclusive 0` rather than merely an integer, because the failure
+# these report is a COUNT OF RECORDS and a negative one would be a defect in the counter rather
+# than a finding about the data.
+
+# --- Data quality (experiment 117) ---------------------------------------------------------
+
+# A reading problem is a DQV quality measurement, so it must say which metric it measures. A
+# count with no metric is a number nobody can interpret: 63 of what, against what idea of wrong?
+fw:ReadingProblemShape a sh:NodeShape; sh:targetClass fw:ReadingProblem;
+  sh:property [ sh:path dqv:isMeasurementOf; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI;
+                sh:in ( fw:absentValues fw:unreadableValues ) ];
+  sh:property [ sh:path fw:boundAttribute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string;
+                sh:minLength 1 ];
+  # The two reasons are a closed pair on purpose: a value nobody collected and a value somebody
+  # collected that could not be read are different problems with different remedies, and the
+  # rules cannot tell them apart. If a third is ever needed it is a vocabulary decision, not a
+  # free-text field.
+  sh:property [ sh:path fw:problemKind; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI;
+                sh:in ( fw:ValueAbsent fw:ValueUnreadable ) ];
+  sh:property [ sh:path fw:affectedRecordCount; sh:minCount 1; sh:maxCount 1;
+                sh:datatype xsd:integer; sh:minInclusive 0 ];
+  # Required, so a count is always readable as a proportion. "63" alone is not a finding.
+  sh:property [ sh:path fw:consideredRecordCount; sh:minCount 1; sh:maxCount 1;
+                sh:datatype xsd:integer; sh:minInclusive 0 ].
+
+# A repair states both sides. One that mentioned only what it fixed is how 2 of 63 records stay
+# broken while the receipt reads like a success.
+fw:ColumnRepairShape a sh:NodeShape; sh:targetClass fw:ColumnRepair;
+  sh:property [ sh:path fw:boundAttribute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:repairedAs; sh:minCount 1; sh:maxCount 1;
+                sh:in ( "number" "boolean" "term" ) ];
+  sh:property [ sh:path fw:repairedRecordCount; sh:minCount 1; sh:maxCount 1;
+                sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:unrepairedRecordCount; sh:minCount 1; sh:maxCount 1;
+                sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:repairedAt; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string;
+                sh:minLength 10 ].
+
+# --- Cartographic design rules (experiment 118) --------------------------------------------
+
+# Every rule says what it stands on, and says it in a closed vocabulary. The distinction is the
+# experiment's first finding: a measured rule yields a number a reader can re-derive, a
+# categorical one yields a judgement somebody coded in, and a reader must be able to tell them
+# apart without reading the source.
+fw:DesignRuleShape a sh:NodeShape; sh:targetClass fw:DesignRule;
+  sh:property [ sh:path fw:ruleKind; sh:minCount 1; sh:maxCount 1;
+                sh:in ( "measured" "categorical" ) ];
+  # What the rule requires, in the words a reader should see. A rule with an outcome and no
+  # statement tells somebody a verdict.
+  sh:property [ sh:path rdfs:comment; sh:minCount 1; sh:datatype xsd:string; sh:minLength 20 ].
+
+# An application is an EARL assertion and is held to EARL's closed outcome set. `earl:inapplicable`
+# is in it deliberately: a rule that did not apply is reported rather than omitted, so a reader
+# can tell a rule that passed from a rule that never ran.
+fw:DesignRuleApplicationShape a sh:NodeShape; sh:targetClass fw:DesignRuleApplication;
+  sh:property [ sh:path fw:designRule; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI ];
+  sh:property [ sh:path earl:test; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI ];
+  sh:property [ sh:path earl:subject; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI ];
+  sh:property [ sh:path earl:mode; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI ];
+  sh:property [ sh:path fw:appliedTo; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path earl:result; sh:minCount 1; sh:maxCount 1; sh:node fw:DesignRuleResultShape ].
+fw:DesignRuleResultShape a sh:NodeShape; sh:targetClass earl:TestResult;
+  sh:property [ sh:path earl:outcome; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI;
+                sh:in ( earl:passed earl:failed earl:cantTell earl:inapplicable earl:untested ) ];
+  # A measurement without the threshold it was held to is a number with no verdict in it, and
+  # EARL states plainly that it does not carry one -- which is why this project supplies it.
+  # Paired: neither alone.
+  # Integer OR decimal: a ratio of 16.1 and a threshold of 3 are both legitimate, and Turtle
+  # types `3` as an integer. Pinning this to xsd:decimal refused the very first real receipt it
+  # was shown -- the mark-contrast rule, whose threshold is a whole number.
+  sh:property [ sh:path dqv:value; sh:maxCount 1;
+                sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ];
+  sh:property [ sh:path fw:conformanceThreshold; sh:maxCount 1;
+                sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ].
+
+# A choice says what was decided, what was chosen, and on what basis -- and the basis is
+# `selected`, never `preferred`. A preference is a disposition and one act cannot evidence one.
+fw:DesignChoiceShape a sh:NodeShape; sh:targetClass fw:DesignChoice;
+  sh:property [ sh:path fw:decisionBasis; sh:minCount 1; sh:maxCount 1; sh:in ( "selected" ) ];
+  sh:property [ sh:path fw:choiceSetting; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:choiceMade; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:choiceOffered; sh:datatype xsd:string ].

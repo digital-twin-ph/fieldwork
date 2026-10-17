@@ -55,9 +55,26 @@ export function studyAreaN3(node:Pick<WorkflowNode<'study_area'>,'id'|'params'>)
   validateAreaParams(node.params);const p=node.params;
   if(p.source!=='drawn'||!p.geometry)throw new Error('Select a study area on the map before running.');
   const [west,south,east,north]=geometryBounds(p.geometry);
-  const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n';
-  const subject=`<urn:fieldwork:area:${node.id}>`,geometry=`<urn:fieldwork:geometry:${node.id}>`;
-  const facts=`${prefix}\n${subject} a geo:Feature, fw:StudyArea;\n  rdfs:label ${JSON.stringify(p.label)};\n  fw:selectionMode fw:${p.selectionMode==='bbox'?'BoundingBox':p.selectionMode==='circle'?'Circle':'Polygon'};\n  geo:hasGeometry ${geometry}.\n\n${geometry} a geo:Geometry;\n  geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(p.geometry))}^^geo:wktLiteral;\n  fw:geometryValidated true;\n  fw:west ${west.toFixed(9)}; fw:south ${south.toFixed(9)};\n  fw:east ${east.toFixed(9)}; fw:north ${north.toFixed(9)}.\n`;
+  const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n';
+  // The STUDY AREA keeps one identifier across revisions -- it is the same investigation, and
+  // the practitioner chose that over minting a new one each time. Its GEOMETRY is versioned, so
+  // "did we revise our study area, and when" is answerable from the receipt alone: a current
+  // geometry carrying prov:wasRevisionOf was revised, and prov:generatedAtTime says when. No new
+  // vocabulary -- PROV already has both halves.
+  const revisions=p.revisions?.length?p.revisions:[];
+  const version=Math.max(1,revisions.length);
+  const geometryIri=(n:number)=>`<urn:fieldwork:geometry:${node.id}${n>1?`:r${n}`:''}>`;
+  const subject=`<urn:fieldwork:area:${node.id}>`,geometry=geometryIri(version);
+  const current=revisions[version-1];
+  const revisedAt=typeof current==='string'?current:current?.at;
+  const restoredFrom=typeof current==='object'&&current?.restoredFrom;
+  const history=(revisedAt?`  prov:generatedAtTime ${JSON.stringify(revisedAt)}^^xsd:dateTime;\n`:'')
+    +(version>1?`  prov:wasRevisionOf ${geometryIri(version-1)};\n`:'')
+    // Restoring an earlier extent is a revision of the one it replaced AND a derivation from the
+    // one it brings back. Both are true and PROV says both: wasRevisionOf is a sub-property of
+    // wasDerivedFrom, so a reader walking either relation gets a complete answer.
+    +(restoredFrom?`  prov:wasDerivedFrom ${geometryIri(restoredFrom)};\n`:'');
+  const facts=`${prefix}\n${subject} a geo:Feature, fw:StudyArea;\n  rdfs:label ${JSON.stringify(p.label)};\n  fw:selectionMode fw:${p.selectionMode==='bbox'?'BoundingBox':p.selectionMode==='circle'?'Circle':'Polygon'};\n  geo:hasGeometry ${geometry}.\n\n${geometry} a geo:Geometry;\n${history}  geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(p.geometry))}^^geo:wktLiteral;\n  fw:geometryValidated true;\n  fw:west ${west.toFixed(9)}; fw:south ${south.toFixed(9)};\n  fw:east ${east.toFixed(9)}; fw:north ${north.toFixed(9)}.\n`;
   const rules=`# Geometry checks run in the drawing widget. This rule consumes their explicit result.\n{ ?area a fw:StudyArea; geo:hasGeometry ?shape.\n  ?shape geo:asWKT ?wkt; fw:geometryValidated true.\n} => { ?area fw:readyForSpatialAnalysis true. }.\n`;
   return {facts,rules:prefix+rules,input:facts+'\n'+rules};
 }

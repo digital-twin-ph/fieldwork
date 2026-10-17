@@ -10,6 +10,13 @@
 # ASSESSMENT. Nothing in it concerns repairing data -- see experiment 117 -- so the repair side
 # below specialises PROV-O instead, which is where it belongs.
 @prefix dqv: <http://www.w3.org/ns/dqv#>.
+# W3C's Evaluation and Report Language, a 2011 Working Group Note. Adopted 2026-10-17 for the
+# same reason as DQV: an assertion that something passed or failed a criterion is a thing W3C
+# has already modelled, and EARL's outcome set is closed and includes earl:cantTell -- a test
+# that ran and could not decide, which is a distinction this project reached independently in
+# experiments 65 and 117. EARL says plainly it does not cover test criteria or requirements, so
+# the threshold and the rule statements below are this project's and the rest is not.
+@prefix earl: <http://www.w3.org/ns/earl#>.
 @prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix dcterms: <http://purl.org/dc/terms/>.
@@ -840,6 +847,40 @@ fw:unrepairedExample a owl:DatatypeProperty; rdfs:domain fw:ColumnRepair; rdfs:r
   rdfs:comment "Up to three of the values that could not be read, as they appear, so a reader recognises them without opening the file.".
 fw:repairedAt a owl:DatatypeProperty; rdfs:domain fw:ColumnRepair; rdfs:range xsd:string;
   rdfs:comment "When the practitioner asked for it.".
+# Cartographic design rules, applied while a visualisation is assembled and stated in its
+# receipt. The practitioner's decision, 2026-10-17: "We can embed the map or visualization design
+# rules in widgets and apply them during visualization assembly ... Then the N3 receipts can
+# include which rules were applied."
+#
+# WCAG needs no translating: its success criteria already carry stable IRIs, which is what
+# earl:test points at for a measured rule. A rule that is this project's own judgement rather
+# than a published criterion points at itself, and the difference is visible to a reader.
+fw:DesignRule a owl:Class;
+  rdfs:label "A rule a visualisation is held to";
+  rdfs:comment "Carried in the receipt rather than cited, for the same reason an authored ruleset carries its rules: there is no published artefact to point at. A reader who can see an outcome and not the rule has been told a verdict.".
+fw:DesignRuleApplication a owl:Class;
+  rdfs:subClassOf earl:Assertion;
+  rdfs:label "One design rule, applied to one thing, with its outcome";
+  rdfs:comment "Emitted for every rule including the inapplicable ones. A reader seeing four rules in one receipt and two in another cannot otherwise tell whether the missing two passed, were skipped, or do not exist.".
+fw:designRule a owl:ObjectProperty; rdfs:domain fw:DesignRuleApplication; rdfs:range fw:DesignRule;
+  rdfs:comment "Which rule was applied.".
+fw:designRuleApplication a owl:ObjectProperty; rdfs:range fw:DesignRuleApplication;
+  rdfs:comment "A rule application carried by a map specification.".
+fw:ruleKind a owl:DatatypeProperty; rdfs:domain fw:DesignRule; rdfs:range xsd:string;
+  rdfs:comment "measured or categorical. It decides what the outcome is worth: a measured rule computes a number a reader can re-derive, a categorical one reports a judgement that was coded in. Stated because every toast tone in this application failed a contrast threshold on 2026-10-17 and no categorical rule would have found it -- arithmetic did.".
+fw:conformanceThreshold a owl:DatatypeProperty; rdfs:domain earl:TestResult;
+  rdfs:comment "The value the measurement was held to. EARL records that something failed a criterion and does not carry the criterion's threshold, by its own statement of scope, so this supplies it.".
+fw:conformanceLevel a owl:DatatypeProperty; rdfs:domain fw:DesignRule; rdfs:range xsd:string;
+  rdfs:comment "The criterion's own conformance level, A, AA or AAA, where it binds to a published criterion.".
+fw:ruleStatement a owl:DatatypeProperty; rdfs:domain fw:DesignRule; rdfs:range xsd:string;
+  rdfs:comment "What the rule requires, in the words a reader should see.".
+fw:appliedTo a owl:DatatypeProperty; rdfs:domain fw:DesignRuleApplication; rdfs:range xsd:string;
+  rdfs:comment "What was tested -- a role, a layer, or a pair of colours.".
+fw:MapTextContrast a fw:DesignRule.
+fw:MapMarkContrast a fw:DesignRule.
+fw:CategoricalPaletteIsColourBlindSafe a fw:DesignRule.
+fw:UnknownIsNotAHue a fw:DesignRule.
+
 fw:fieldBinding a owl:ObjectProperty; rdfs:domain fw:RuleApplication;
   rdfs:comment "Which attribute of a record supplies which predicate the rules read. Nothing is guessed from a column name, so a ruleset over arbitrary records is possible only because this is declared.".
 fw:boundAttribute a owl:DatatypeProperty; rdfs:range xsd:string;

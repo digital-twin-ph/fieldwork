@@ -332,7 +332,19 @@ function noticeIfRepublished(key:string){
 }
 
 function loadExample(key:string){if(busy)return;save();let fromTemplate=true;try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[key];fromTemplate=!saved;workflow=saved?validateWorkflow(saved):template(key);}catch{workflow=template(key);}if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
-function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;render();return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}render();return persisted;}catch(e){
+/** Drop focus before the panel holding the focused control is rewritten.
+ *
+ *  Removing a focused input fires blur, and the blur handler re-renders underneath the removal
+ *  in progress; Chromium refuses the innerHTML assignment with "the node to be removed is no
+ *  longer a child of this node". Fixed in the ROLLBACK path on 2026-10-17 and found the same day,
+ *  hours later, on the path where the edit SUCCEEDS -- by a test that types a UTM zone into the
+ *  reachability step. A fix applied to one of two paths through the same hazard is the shape this
+ *  repository keeps rediscovering; both are covered now.
+ *
+ *  Safe to call from inside an `onchange`: the element has already fired its change, so blurring
+ *  it cannot fire another one. */
+const dropFocus=()=>{(document.activeElement as HTMLElement|null)?.blur();};
+function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;dropFocus();render();return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
   // The edit is rolled back and the panel is rewritten -- WHILE the control that made the edit
   // still holds focus. Chromium throws "The node to be removed is no longer a child of this
   // node. Perhaps it was moved in a 'blur' event handler?" from the innerHTML assignment,
@@ -340,7 +352,7 @@ function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}
   // the removal in progress. Found on 2026-10-17 by a test that clears a setting the workflow
   // requires: any refused edit typed into a field could raise it. Dropping focus first makes
   // the blur run to completion before anything is replaced.
-  workflow=previous;(document.activeElement as HTMLElement|null)?.blur();toast(errorMessage(e));render();return false;}}
+  workflow=previous;dropFocus();toast(errorMessage(e));render();return false;}}
 /** Which declared port a layer dropped on a map's "add a layer" port should bind to.
  *
  *  The map's one configurable port is type-free: the practitioner drops a result on it and this
@@ -946,7 +958,7 @@ function renderInspector(){
     if(n.type==='donut_geomask')content+=`<label class="field-label" for="privacy-innerM">Inner radius (m)</label><input id="privacy-innerM" type="number" min="0" max="5000" value="${n.params.innerM}"><label class="field-label" for="privacy-outerM">Outer radius (m)</label><input id="privacy-outerM" type="number" min="1" max="5000" value="${n.params.outerM}"><label class="field-label" for="privacy-seed">Demonstration seed</label><input id="privacy-seed" type="number" min="0" max="4294967295" value="${n.params.seed}"><p class="description">Output names and IDs are generated afresh; original attributes are not copied. The seeded generator is predictable and unsuitable as a production privacy control.</p>`;
     else content+=`<label class="field-label" for="privacy-resolution">H3 resolution</label><input id="privacy-resolution" type="number" min="0" max="15" value="${n.params.resolution}"><label class="field-label" for="privacy-minOccupancy">Minimum locations per released cell</label><input id="privacy-minOccupancy" type="number" min="2" max="100" value="${n.params.minOccupancy}"><p class="description">Counts locations, not deaths. Sparse cells are omitted; occupancy alone does not establish anonymity.</p>`;
     content+=`<label class="field-label" for="privacy-point-source">Point input</label><select id="privacy-point-source" data-map-port="points"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='points'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`;
-  }else if(Object.hasOwn(CATCHMENT_TYPES,n.type)||n.type==='buffer_area'){
+  }else if(Object.hasOwn(CATCHMENT_TYPES,n.type)||n.type==='buffer_area'||n.type==='reachable_nodes'){
     if(n.type==='buffer_area')content+='<label class="field-label" for="catchment-distanceM">Buffer distance (metres)</label><input type="number" id="catchment-distanceM" data-catchment-param="distanceM" min="0" max="5000" value="'+n.params.distanceM+'"><p class="notice">Connect this expanded boundary to Street network. Keep the original Study area for reporting and polygon clipping. A buffer reduces edge effects but does not guarantee complete access coverage.</p>';
     // The study area is handed to the Inspector so a downloaded network can be seen against the
     // ground it was asked for. previewArea throws when nothing is connected, which is a legitimate
@@ -1480,7 +1492,12 @@ function renderInspector(){
   optionalElement('#remove-point-input')?.addEventListener('click',()=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'|'table_output'|'coverage_check'>,count=node.params.pointInputCount??1;if(count>1){w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===pointPort(count-1)));node.params.pointInputCount=count-1;}}));
   document.querySelectorAll<HTMLInputElement>('#map-label,#table-label').forEach(el=>el.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title)));
   const contextToggle=document.querySelector<HTMLInputElement>('#polygon-context-toggle');if(contextToggle)contextToggle.onchange=()=>change(w=>{const target=w.nodes.find(x=>x.id===n.id);if(target?.type==='map_output'){target.params.contextPoints=contextToggle.checked;if(!contextToggle.checked)w.edges=w.edges.filter(e=>e.to!==n.id||e.port!=='context');}});
-  document.querySelectorAll<HTMLInputElement|HTMLSelectElement>('[data-catchment-param]').forEach(el=>el.onchange=()=>change(w=>{const target=required(w.nodes.find(x=>x.id===n.id));(target.params as unknown as Record<string,unknown>)[el.dataset.catchmentParam!]=el.dataset.catchmentParam==='thresholds'?(el.value.trim()?el.value.split(',').map(v=>Number(v.trim())):[]):el instanceof HTMLInputElement&&el.type==='checkbox'?el.checked:el instanceof HTMLInputElement&&el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value;}));
+  document.querySelectorAll<HTMLInputElement|HTMLSelectElement>('[data-catchment-param]').forEach(el=>el.onchange=()=>change(w=>{const target=required(w.nodes.find(x=>x.id===n.id));const params=target.params as unknown as Record<string,unknown>;
+      // An emptied OPTIONAL field means unset, not NaN and not zero. The same shape as the
+      // ruleset setting box fixed earlier today: `Number('')` is 0 and an empty number input
+      // otherwise lands here as NaN, and both are figures nobody typed.
+      if(el.dataset.optional==='true'&&el.value.trim()===''){delete params[el.dataset.catchmentParam!];return;}
+      params[el.dataset.catchmentParam!]=el.dataset.catchmentParam==='thresholds'?(el.value.trim()?el.value.split(',').map(v=>Number(v.trim())):[]):el instanceof HTMLInputElement&&el.type==='checkbox'?el.checked:el instanceof HTMLInputElement&&el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value;}));
   for(const key of ['innerM','outerM','seed','resolution','minOccupancy'])optionalElement(`#privacy-${key}`)?.addEventListener('change',e=>change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>)[key]=control(e).value===''?NaN:Number(control(e).value);}));
   optionalElement('#comparison-zone')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'compare_point_sets').params.zone=control(e).value===''?NaN:Number(control(e).value)));
   optionalElement('#comparison-hemisphere')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'compare_point_sets').params.hemisphere=control(e).value as 'north'|'south'));

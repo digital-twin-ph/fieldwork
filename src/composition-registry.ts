@@ -1,4 +1,4 @@
-import walkingCatchment from '../compositions/compute_walking_catchment/0.4.0.json';
+import walkingCatchment from '../compositions/compute_walking_catchment/0.5.0.json';
 import classifyExtent from '../compositions/classify_extent/0.1.0.json';
 import type {Composition} from './compositions.js';
 

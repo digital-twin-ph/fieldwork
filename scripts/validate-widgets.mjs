@@ -71,14 +71,26 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
       // one. Required for releases published after the coupling was mechanised; earlier
       // release files are immutable and cannot be backfilled.
       if(release.ontology.emits!==undefined){
-        const definition=release.implementation?.definition?.replace(/^src\//,'');
-        const expected=emitsFor(await emittedTerms(),definition);
         check(Array.isArray(release.ontology.emits.classes)&&Array.isArray(release.ontology.emits.properties),
           'Invalid ontology emits declaration');
-        for(const kind of ['classes','properties'])
-          check(release.ontology.emits[kind].join(',')===expected[kind].join(','),
-            `Declared ${kind} do not match what ${definition} asserts: declared `
-            +`[${release.ontology.emits[kind].join(', ')}], asserts [${expected[kind].join(', ')}]`);
+        // Compared against the source only for the CURRENT release. A release file is immutable
+        // and records what the widget emitted when it was published; a superseded one legitimately
+        // disagrees with source that has moved on, and that disagreement is the drift signal a
+        // composition pinning it should see -- not a gate failure.
+        //
+        // This read every listed release until 2026-10-17, which meant the check could only ever
+        // hold while a widget had exactly ONE release carrying `emits`. The first widget to cut a
+        // second one after the coupling was mechanised would fail on its own history, and
+        // `reachable_nodes` 0.5.0 was the first to try. Nothing had noticed because no widget had
+        // cut a second emits-bearing release in the three days since.
+        if(ref.version===entry.currentVersion){
+          const definition=release.implementation?.definition?.replace(/^src\//,'');
+          const expected=emitsFor(await emittedTerms(),definition);
+          for(const kind of ['classes','properties'])
+            check(release.ontology.emits[kind].join(',')===expected[kind].join(','),
+              `Declared ${kind} do not match what ${definition} asserts: declared `
+              +`[${release.ontology.emits[kind].join(', ')}], asserts [${expected[kind].join(', ')}]`);
+        }
       } else check(release.released<='2026-10-10',
         // The message used to read "declares ontology.emits", which states the opposite of the
         // condition: the check fires when `emits` is ABSENT. Found 2026-10-13 while adding a

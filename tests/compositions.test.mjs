@@ -6,7 +6,7 @@ import {validateComposition,openInputs,detectDrift,expandComposition,STAGE_VERBS
 import {executeWorkflow} from '../build/core.js';
 
 const load=async()=>({
-  composition:JSON.parse(await readFile('compositions/compute_walking_catchment/0.4.0.json','utf8')),
+  composition:JSON.parse(await readFile('compositions/compute_walking_catchment/0.5.0.json','utf8')),
   registry:JSON.parse(await readFile('widgets/registry.json','utf8'))});
 const clone=o=>structuredClone(o);
 
@@ -54,7 +54,7 @@ test('only registry widgets may be members, pinned to a published digest',async(
   const tampered=clone(composition);
   tampered.members[1].sha256='0'.repeat(64);
   assert.throws(()=>validateComposition(tampered,registry),
-    /pins a digest that is not reachable_nodes 0\.4\.0's\. Re-pin it rather than editing the digest\./);
+    /pins a digest that is not reachable_nodes 0\.5\.0's\. Re-pin it rather than editing the digest\./);
 });
 
 test('the name asserts the stage, and the stage cannot contradict it',async()=>{
@@ -193,7 +193,7 @@ test('a member publishing a new release makes a pinned composition report drift'
     ['snap','reach','band','corridor']);
 
   // And the shipped version, re-pinned, reports none.
-  const current=JSON.parse(await readFile('compositions/compute_walking_catchment/0.4.0.json','utf8'));
+  const current=JSON.parse(await readFile('compositions/compute_walking_catchment/0.5.0.json','utf8'));
   assert.deepEqual(detectDrift(current,registry).filter(d=>d.state!=='unchanged'),[]);
 });
 
@@ -237,7 +237,7 @@ test('as one node on a canvas it runs, and still emits one receipt per member',a
   // One record of the arrangement, which claims no computation.
   assert.equal(arrangement.length,1);
   assert.match(arrangement[0].facts,/a prov:Plan, fw:MicroWorkflow/);
-  assert.match(arrangement[0].facts,/fw:compositionVersion "0\.4\.0"/);
+  assert.match(arrangement[0].facts,/fw:compositionVersion "0\.5\.0"/);
   assert.match(arrangement[0].facts,/fw:claimsNoComputation true/);
   assert.match(arrangement[0].facts,/fw:governanceStatus "private"/);
   assert.equal((arrangement[0].facts.match(/fw:memberOf/g)||[]).length,4,'each member is associated');
@@ -266,7 +266,7 @@ test('a pinned composition this build does not carry fails by name',async()=>{
     composition:{id:composition.id,nodeType:composition.nodeType,version,title:composition.title,
       stage:composition.stage,inputs:[['sites','points']],output:'polygons'},parameters:{}}});
   assert.throws(()=>expandMicroWorkflows({schema:'fieldwork/workflow/1',nodes:[host('9.9.9')],edges:[]},
-    resolveComposition,'run'),/version 9\.9\.9, and this build carries 0\.4\.0/);
+    resolveComposition,'run'),/version 9\.9\.9, and this build carries 0\.5\.0/);
   const absent={...host('0.2.0')};
   absent.params.composition.id='urn:fieldwork:composition:summarize_nothing';
   assert.throws(()=>expandMicroWorkflows({schema:'fieldwork/workflow/1',nodes:[absent],edges:[]},

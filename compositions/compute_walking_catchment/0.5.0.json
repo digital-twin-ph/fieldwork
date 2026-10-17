@@ -1,0 +1,226 @@
+{
+  "schema": "fieldwork/composition/2",
+  "id": "urn:fieldwork:composition:compute_walking_catchment",
+  "nodeType": "compute_walking_catchment",
+  "version": "0.5.0",
+  "title": "Walking catchment",
+  "author": "Fieldwork project",
+  "released": "2026-10-17",
+  "stage": "compute",
+  "description": "The ground a person can reach on foot from each site within a travel time, following the street network. Attaches each site to its nearest junction, traverses the streets to a budget, narrows to the wanted time, and draws the corridor along the streets that can be entered. Equivalent to the isochrone widget at its single-threshold settings, measured at 2 parts in 100,000 on the John Snow network, but assembled from four steps whose intermediate results can be mapped and argued with.",
+  "mustNotBeReadAs": "Not a service area and not an access measure. The travel time is a street length divided by one assumed speed, with no gradient, crossings, waiting or difference between travellers. The two straight legs -- from the site to its junction, and off the street at the end -- are charged against the budget but assume ground that can be walked, at street speed, which is most doubtful exactly where streets are sparsest. The 25 m limit on that final walk is a claim that anywhere within it is reached, including the insides of buildings and the far side of walls. The case study it derives from assumed 4.5 km/h for pedestrians in Soho in 1854, and neither that speed nor the 25 m limit transfers to another setting without being chosen again.",
+  "governance": {
+    "status": "private",
+    "owner": "Fieldwork project",
+    "reviews": [
+      {
+        "at": "2026-10-10",
+        "by": "agent, unreviewed by a human",
+        "outcome": "Assembled and executed; its members are pinned and its ports and parameters are checked against its graph. Not admitted to the palette: admission needs a human review and an ontology expansion, neither of which exists. Status stays private."
+      },
+      {
+        "at": "2026-10-10",
+        "by": "agent, unreviewed by a human",
+        "outcome": "Re-pinned after travel_time_band published 0.3.0, which records the ontology terms it asserts. Version 0.1.0 is kept as tests/fixtures/drifted-composition-2026-10-10.json so the drift report it produces stays exercised rather than becoming a story about the past."
+      },
+      {
+        "at": "2026-10-10",
+        "by": "agent, unreviewed by a human",
+        "outcome": "Added a default for each public parameter, so that adding this to a canvas gives a node that can run and be corrected rather than one with no ports. The speed defaults to 75 metres per minute, which is the case study's 1854 Soho walking assumption -- a default, not a recommendation, and every result it produces says a speed does not transfer between settings. Version 0.2.0 was removed rather than kept, because requiring a default retroactively would have invalidated it: it was hours old, nothing depended on it, and branching the composition schema for a field added the same afternoon would have been ceremony. A version anything had depended on would have needed the schema bump instead."
+      },
+      {
+        "at": "2026-10-14",
+        "by": "agent, unreviewed by a human",
+        "outcome": "Re-pinned after all four members published releases on the same day: the walk onto the network is charged, a site beyond the snap limit is marked rather than refused, and the corridor is the whole route buffered by the leg the budget allows rather than a constant strip. Results change -- the five-minute corridor falls from 186,035 to 160,415 square metres. The drift this produced against the 0.3.0 pins is what the pinning exists for, and 0.3.0 is kept as tests/fixtures/drifted-composition-2026-10-10.json already keeps 0.1.0."
+      }
+    ]
+  },
+  "members": [
+    {
+      "node": "snap",
+      "type": "snap_to_network",
+      "version": "0.2.0",
+      "sha256": "649489d1499dcecd24157adc03f2fefea195101bf567928768858cb4059bc98b"
+    },
+    {
+      "node": "reach",
+      "type": "reachable_nodes",
+      "version": "0.5.0",
+      "sha256": "05f7293f92e4833dea907e23a4931edb0a057d13d4f8e4e0ae6c359a2cd26a2c"
+    },
+    {
+      "node": "band",
+      "type": "travel_time_band",
+      "version": "0.3.0",
+      "sha256": "ec29b5c4bb40c3cad259fb98840b8efa64a8131b7a2e909f189c16f25521877b"
+    },
+    {
+      "node": "corridor",
+      "type": "reachable_corridor",
+      "version": "0.3.0",
+      "sha256": "5187254c2a302b79f0e3bd886d0d5a482e65c3ae81cafa07ad5351bec3cf75b8"
+    }
+  ],
+  "edges": [
+    {
+      "from": "snap",
+      "to": "reach",
+      "port": "sites"
+    },
+    {
+      "from": "reach",
+      "to": "band",
+      "port": "reached"
+    },
+    {
+      "from": "band",
+      "to": "corridor",
+      "port": "reached"
+    }
+  ],
+  "ports": {
+    "inputs": [
+      {
+        "name": "sites",
+        "type": "points",
+        "members": [
+          {
+            "node": "snap",
+            "port": "sites"
+          }
+        ]
+      },
+      {
+        "name": "network",
+        "type": "network",
+        "members": [
+          {
+            "node": "snap",
+            "port": "network"
+          },
+          {
+            "node": "reach",
+            "port": "network"
+          },
+          {
+            "node": "corridor",
+            "port": "network"
+          }
+        ]
+      }
+    ],
+    "output": {
+      "node": "corridor",
+      "type": "polygons"
+    }
+  },
+  "parameters": [
+    {
+      "name": "zone",
+      "title": "UTM zone",
+      "members": [
+        {
+          "node": "snap",
+          "param": "zone"
+        },
+        {
+          "node": "corridor",
+          "param": "zone"
+        }
+      ],
+      "default": 30
+    },
+    {
+      "name": "hemisphere",
+      "title": "Hemisphere",
+      "members": [
+        {
+          "node": "snap",
+          "param": "hemisphere"
+        },
+        {
+          "node": "corridor",
+          "param": "hemisphere"
+        }
+      ],
+      "default": "north"
+    },
+    {
+      "name": "maxSnapM",
+      "title": "Furthest a site may be from a street, in metres",
+      "members": [
+        {
+          "node": "snap",
+          "param": "maxSnapM"
+        }
+      ],
+      "default": 100
+    },
+    {
+      "name": "travelMode",
+      "title": "How people travel",
+      "members": [
+        {
+          "node": "reach",
+          "param": "travelMode"
+        }
+      ],
+      "default": "walking"
+    },
+    {
+      "name": "speedMPerMin",
+      "title": "Assumed speed, in metres per minute",
+      "members": [
+        {
+          "node": "reach",
+          "param": "speedMPerMin"
+        }
+      ],
+      "default": 75
+    },
+    {
+      "name": "direction",
+      "title": "Travel from the site or to it",
+      "members": [
+        {
+          "node": "reach",
+          "param": "direction"
+        }
+      ],
+      "default": "outbound"
+    },
+    {
+      "name": "traversalMinutes",
+      "title": "Longest travel time to traverse, in minutes",
+      "members": [
+        {
+          "node": "reach",
+          "param": "minutes"
+        }
+      ],
+      "default": 15
+    },
+    {
+      "name": "minutes",
+      "title": "Travel time to draw, in minutes",
+      "members": [
+        {
+          "node": "band",
+          "param": "minutes"
+        }
+      ],
+      "default": 5
+    },
+    {
+      "name": "bufferM",
+      "title": "Corridor half-width, in metres",
+      "members": [
+        {
+          "node": "corridor",
+          "param": "bufferM"
+        }
+      ],
+      "default": 25
+    }
+  ]
+}

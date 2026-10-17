@@ -146,3 +146,31 @@ optional — rather than the widget. So the general operation gains those two at
 geometry left alone, the consumers are satisfied unchanged, and only then can the retirement flag
 be set: a retired widget never runs and the loader refuses it, so a saved workflow holding one
 stops loading the moment the flag goes on.
+
+## What changed our minds
+
+**The dependency was one error message, and the fix was smaller than the plan for it.**
+
+This widget existed because `reachable_nodes` threw *"this origin is not on the network. Add a
+Snap to street network step before this one."* The audit's plan for removing that line ran to
+four steps and predicted a widget release, Inspector controls and a migration. Steps 1 and 2
+landed together on 2026-10-17 and needed **no release and no migration**, because the parameters
+were added as optional rather than required — which is not a shortcut but the honest reading of
+this widget's own argument: nothing in the Dijkstra re-measures geometry, so a run that attaches
+nothing has nothing to project and should not be asked for a zone.
+
+What the plan under-estimated instead was the interface. `reachable_nodes` had **no Inspector
+panel at all**, for any of its parameters, since experiment 83. The estimate said "Inspector
+controls" meaning controls for the two new fields; the work was the widget's first panel.
+
+## What this does not establish
+
+That `snap_to_network` can be retired. Step 3 is untouched: `reachable_corridor` still reads the
+`siteLongitude` / `siteLatitude` shadow attributes that exist only because snapping overwrites a
+point's geometry. Until that reader is dealt with, the widget has a consumer, and a retirement
+flag set now would break it.
+
+Nor does it establish that the two attachment paths will stay in agreement. They agree today
+because they call the same function over the same projection, and a test asserts it junction for
+junction. Nothing prevents a future change to one path alone; what exists is a test that would
+fail if one were made.

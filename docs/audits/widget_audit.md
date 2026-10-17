@@ -666,15 +666,73 @@ network. Add a Snap to street network step before this one."* That line is the d
 
 So retiring the widget is not two attributes on a general operation. In order:
 
-1. `reachable_nodes` gains a zone and hemisphere — **a parameter contract change**, needing a new
-   widget release, Inspector controls, and a migration for saved nodes that carry neither.
-2. It snaps internally via `nearestNetworkNode` when an origin arrives un-snapped, and keeps
-   reading `networkNodeId` when one is already there, so both orders of workflow keep working.
+1. ~~`reachable_nodes` gains a zone and hemisphere~~ — **done 2026-10-17.**
+2. ~~It snaps internally~~ — **done in the same change**, and steps 1 and 2 turned out to be one
+   step rather than two: a zone with nothing to project is not worth adding on its own.
 3. The geometry overwrite goes. A point keeps its own position; the junction is derived from the
    network by the id the point carries, and `siteLongitude`/`siteLatitude` — the shadow
    attributes added on 2026-10-14 so `reachable_corridor` could undo the move — are no longer
-   needed by anything.
-4. Only then can the flag be set.
+   needed by anything. **Still open**, and it is now the only thing between here and step 4:
+   `reachable_corridor` is the remaining reader of those attributes.
+4. Only then can the flag be set, through `widgets/classification.json` → `retired: true`, which
+   `RETIRED_FROM_PALETTE` already reads.
+
+**What steps 1 and 2 cost, against what this entry predicted.**
+
+| Predicted | Actual |
+| --- | --- |
+| A parameter contract change | Yes — `zone`, `hemisphere` and `maxSnapM`, all three **optional** |
+| A new widget release | **Needed after all, and I said otherwise before running the gate.** Not for the parameters — for the receipt. This project versions what a widget *asserts*, and two new properties is a release: `reachable_nodes` 0.5.0, and `compute_walking_catchment` 0.5.0 re-pinned to it |
+| A migration for saved nodes | **Not needed, and that is the point of making them optional.** A saved `reachable_nodes` node is fed snapped points; nothing about it changed, so there was nothing to migrate and no zone had to be invented for it |
+| Inspector controls | **Much larger than predicted** — see below |
+
+The parameters are optional because the widget's own justification for having no zone stays true
+whenever origins arrive already snapped: *nothing in the Dijkstra re-measures geometry, so there
+is nothing to project.* Requiring a zone for a run that never projects would be demanding a
+figure the widget does not use. So completeness is a **run-time** question, asked only when an
+origin turns up that this step has to attach itself, and the refusal names those origins.
+
+**Four things the gate refused that the code alone could not show.** Worth listing, because each
+is a different kind of coupling and only one of them is about the widget:
+
+1. **Undeclared receipt vocabulary.** The first draft reached for `fw:siteCount` and
+   `fw:snapLimitMetres`. Both are `rdfs:domain fw:NetworkSnap`, so asserting them on a
+   reachability activity would have crossed a declared domain — and that site count means *every
+   site the snap widget moved*, where this means only the origins attached by this step. Declared
+   instead as `fw:attachedOriginCount` and `fw:attachmentLimitMetres`.
+2. **A prefixed term written in a code comment.** The comment explaining choice 1 named the other
+   widget's class with its prefix, and the coupling gate reads asserted terms out of source text:
+   a prefixed name in prose looks exactly like an assertion. The same trap as the withdrawn-term
+   incident of 2026-10-16.
+3. **A generated index left stale.** `widgets/release-notes.json` is produced from the releases
+   and does not regenerate itself.
+4. **A latent bug in the gate itself.** It compared *every* listed release's `emits` against
+   current source, so the first widget to cut a second emits-bearing release would fail on its own
+   history. A release file is immutable and a superseded one is *supposed* to disagree — that
+   disagreement is the drift signal, not an error. Scoped to the current release. Nothing had
+   noticed because no widget had cut a second such release in the three days since the coupling
+   was mechanised.
+
+And one the ratchet caught: a release file's `changes` array is **cumulative**, so cutting a new
+release re-states every historical entry — including, here, one that used the term withdrawn on
+2026-10-12. Copying it forward would have pushed the count over its ceiling, and the ceiling may
+be lowered and never raised. The historical files keep their original wording, which is what
+immutable means; the new document says the same thing in current vocabulary. Every release of
+every widget whose history mentions a withdrawn term will meet this, and the answer is the same
+each time.
+
+**`reachable_nodes` had no Inspector panel at all.** Not "no controls for the new parameters" —
+none for any of them. `minutes`, `speedMPerMin`, `direction` and `travelMode` have been
+declared, implemented and tested since [83](../experiments/83-reachable-junctions.md), and the
+node fell through every branch of the Inspector's type chain: `catchmentInspector` serves the
+five `CATCHMENT_TYPES` and `buffer_area`, and no generic parameter renderer exists to fall back
+on. The only way to set any of them was to edit the workflow file or add the micro-workflow that
+pins them.
+
+`palette.ts` could not have caught this. It asserts that every node type is **addable** or
+deliberately not, and the test beside it passes: `reachable_nodes` is in `ALWAYS_ADDABLE`.
+Addable is not configurable, and nothing measures the second. `snap_to_network` has no panel
+either, and will not need one now.
 
 **The capability this seemed to protect, decomposed — and it was never there.**
 

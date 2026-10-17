@@ -15,7 +15,54 @@ function networkPreview(data:{nodes:unknown[];edges:unknown[]},boundary:Boundary
     +(boundary?`<p class="${short?'notice':'muted'}">${esc(PREVIEW_SCALE_NOTE(coverage))}</p>`:'');
 }
 
+/** `reachable_nodes` had NO Inspector panel until 2026-10-17.
+ *
+ *  It is in `ALWAYS_ADDABLE`, it is implemented, it is tested, and every parameter it declares --
+ *  the travel time, the speed, the mode, the direction -- could only be set by editing the
+ *  workflow file or by adding the micro-workflow that pins them. `catchmentInspector` served the
+ *  five `CATCHMENT_TYPES` and `buffer_area`; nothing served this one, and no generic parameter
+ *  renderer exists to fall back on. The gap was found while giving the widget a UTM zone, which
+ *  is the kind of thing a palette audit cannot see: `palette.ts` asserts a widget is ADDABLE, and
+ *  addable is not configurable.
+ *
+ *  The zone, the hemisphere and the snap limit are the OPTIONAL three, and the panel says when
+ *  they are read: only for origins this step has to attach to the network itself. */
+function reachInspector(n:WorkflowNode<'reachable_nodes'>,
+  number:(key:string,label:string,value:number,min:number,max:number,step?:number)=>string):string{
+  const p=n.params;
+  const optional=(key:string,label:string,value:number|undefined,min:number,max:number)=>
+    `<div class="field"><label class="field-label" for="catchment-${key}">${label}</label>`
+    +`<input id="catchment-${key}" data-catchment-param="${key}" data-optional="true" type="number" min="${min}" max="${max}" value="${value===undefined?'':value}" placeholder="Not set"></div>`;
+  return number('minutes','Travel time (minutes)',p.minutes,.1,60,.1)
+    +number('speedMPerMin','Speed (metres/minute)',p.speedMPerMin,1,1200)
+    +`<div class="field"><label class="field-label" for="catchment-travelMode">How people travel</label>`
+    +`<select id="catchment-travelMode" data-catchment-param="travelMode">`
+    +(['walking','cycling','driving','other'] as const).map(m=>`<option value="${m}" ${p.travelMode===m?'selected':''}>${m[0].toUpperCase()+m.slice(1)}</option>`).join('')
+    +`</select><p class="muted">The mode is checked against the speed and refuses an obvious mismatch. It certifies nothing about any actual traveller, and public transport is not a mode here because it follows routes and a timetable rather than the street network.</p></div>`
+    +`<div class="field"><label class="field-label" for="catchment-direction">Travel direction</label>`
+    +`<select id="catchment-direction" data-catchment-param="direction">`
+    +`<option value="outbound" ${p.direction==='outbound'?'selected':''}>From site (outbound)</option>`
+    +`<option value="inbound" ${p.direction==='inbound'?'selected':''}>To site (inbound)</option>`
+    +`</select><p class="muted">Inbound reverses every edge, which answers who can reach the site rather than where it can get to. On one-way streets the two differ.</p></div>`
+    +`<div class="inspector-divider"></div><span class="inspector-section">Attaching origins to the network</span>`
+    +`<p class="muted">Read only for origins that arrive WITHOUT a network junction. A point snapped before this step keeps the junction and the distance it arrived with, nothing is projected, and these three are not used. Leave them unset in that case: the run says so by name if an unattached origin turns up.</p>`
+    +optional('zone','WGS84 UTM zone',p.zone,1,60)
+    +`<div class="field"><label class="field-label" for="catchment-hemisphere">Hemisphere</label>`
+    +`<select id="catchment-hemisphere" data-catchment-param="hemisphere" data-optional="true">`
+    +`<option value="" ${p.hemisphere===undefined?'selected':''}>Not set</option>`
+    +`<option value="north" ${p.hemisphere==='north'?'selected':''}>North</option>`
+    +`<option value="south" ${p.hemisphere==='south'?'selected':''}>South</option>`
+    +`</select><p class="muted">Nearest junction is measured in metres: a degree of longitude is not a degree of latitude, and nearest-in-degrees picks the wrong junction away from the equator.</p></div>`
+    +optional('maxSnapM','Snap limit: mark an origin off-network past (metres)',p.maxSnapM,0,1000)
+    +`<p class="muted">Unset means no limit, and no origin is marked as having crossed unmapped ground. An origin beyond the limit is attached anyway and marked, never dropped: the sites furthest from a mapped road are where coverage is thinnest and where the question is usually being asked. The point is not moved \u2014 it keeps its own position and the distance to its junction is charged against the budget above.</p>`
+    ;
+}
+
 export function catchmentInspector(n:WorkflowNode,esc:Escape,boundary?:Boundary):string{
+  if(n.type==='reachable_nodes')
+    return `<label class="field-label" for="catchment-label">Node label</label><input id="catchment-label" data-catchment-param="label" maxlength="60" value="${esc(n.params.label||'')}">`
+      +reachInspector(n as WorkflowNode<'reachable_nodes'>,
+        (key,label,value,min,max,step=1)=>`<div class="field"><label class="field-label" for="catchment-${key}">${label}</label><input id="catchment-${key}" data-catchment-param="${key}" type="number" min="${min}" max="${max}" step="${step}" value="${value}"></div>`);
   if(!Object.hasOwn(CATCHMENT_TYPES,n.type))return '';
   let html=`<label class="field-label" for="catchment-label">Node label</label><input id="catchment-label" data-catchment-param="label" maxlength="100" value="${esc(n.params.label||'')}"><div class="notice">Local computation. Parameters and source links appear in N3 & evidence. Outputs are modeled catchments, not observed facility use.</div>`;
   const number=(key:string,label:string,value:number,min:number,max:number,step=1)=>`<div class="field"><label class="field-label" for="catchment-${key}">${label}</label><input id="catchment-${key}" data-catchment-param="${key}" type="number" min="${min}" max="${max}" step="${step}" value="${value}"></div>`;

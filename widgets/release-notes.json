@@ -552,12 +552,12 @@
    "migrationFrom": []
   },
   "reachable_nodes": {
-   "version": "0.4.0",
-   "released": "2026-10-14",
+   "version": "0.5.0",
+   "released": "2026-10-17",
    "changes": [
     {
      "kind": "initial",
-     "description": "Street junctions within a travel budget of an origin, each carrying the budget left on arrival. Extracted from the Dijkstra inside isochrone (src/catchments.ts:76) unchanged, including the edge reversal that makes inbound a different question from outbound. Fourth of six primitives an isochrone composition needs. Settles the carrier question that stopped the decomposition in experiment 82: the truncation downstream consumes budget minus cost at the edge's start node, which is a per-node quantity, so reached junctions travel as points with a remainingM attribute and no lines port type is needed. The corridor step that follows truncates by remainingM over lengthM and never restates the minutes or the speed. Takes no UTM zone, unlike the eight metric widgets: costs are the network's own lengthM values and nothing here re-measures geometry. Travel mode is an explicit parameter -- walking, cycling, driving or other -- checked against the speed, because the 75 metres per minute this project defaulted to everywhere is 4.5 km/h from Advanced-1 NB03 cell 10, where it is an assumption about pedestrians in Soho in 1854 and was being inherited rather than chosen. Public transport is refused as a mode, because it follows routes and a timetable rather than the street network. See docs/experiments/83-reachable-junctions.md."
+     "description": "Street junctions within a travel budget of an origin, each carrying the budget left on arrival. Extracted from the Dijkstra inside isochrone (src/catchments.ts:76) unchanged, including the edge reversal that makes inbound a different question from outbound. Fourth of six primitives an isochrone composition needs. Settles the question that stopped the decomposition in experiment 82 -- what a reached junction travels as: the truncation downstream consumes budget minus cost at the edge's start node, which is a per-node quantity, so reached junctions travel as points with a remainingM attribute and no lines port type is needed. The corridor step that follows truncates by remainingM over lengthM and never restates the minutes or the speed. Takes no UTM zone, unlike the eight metric widgets: costs are the network's own lengthM values and nothing here re-measures geometry. Travel mode is an explicit parameter -- walking, cycling, driving or other -- checked against the speed, because the 75 metres per minute this project defaulted to everywhere is 4.5 km/h from Advanced-1 NB03 cell 10, where it is an assumption about pedestrians in Soho in 1854 and was being inherited rather than chosen. Public transport is refused as a mode, because it follows routes and a timetable rather than the street network. See docs/experiments/83-reachable-junctions.md."
     },
     {
      "kind": "added",
@@ -570,6 +570,10 @@
     {
      "kind": "changed",
      "description": "The walk from the site onto the network is charged against the budget. It was measured, attached to the point and then spent by nothing, so every reachable set reached further than its time allowed. An origin whose walk alone spends the budget now reaches nothing and is reported rather than silently returning an empty set. Junctions also carry the origin’s own coordinates and its snap distance, so whatever draws a corridor can draw the first leg of the route. Experiment 114."
+    },
+    {
+     "kind": "added",
+     "description": "Attaches its own origins. It refused any point without a networkNodeId and named snap_to_network as the fix, which made a whole widget a prerequisite for one nearest-neighbour search; it now finds the junction itself, by the same nearestNetworkNode over the same projection that widget uses, so the two paths agree junction for junction and metre for metre. A point arriving already snapped is used exactly as it arrives and nothing is projected. Three parameters are therefore declared -- zone, hemisphere and maxSnapM -- and all three are OPTIONAL, because this widget's reason for having no zone stays true whenever origins arrive snapped: nothing in the Dijkstra re-measures geometry, so a run that attaches nothing has nothing to project and is not asked for a frame. Completeness is refused at run time, naming the origins that needed it, which is why no saved workflow had to be migrated and no zone had to be invented for one. Unlike snap_to_network this does NOT move the point: it reads the nearest junction, charges the distance against the budget and leaves the origin where it stands. Additive -- every workflow that ran against 0.4.0 runs unchanged. Step 1 and 2 of the snap_to_network retirement; see docs/experiments/82-snap-to-network.md."
     }
    ],
    "breaking": false,

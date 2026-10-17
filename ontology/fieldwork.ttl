@@ -169,6 +169,12 @@ fw:travelMode a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:r
 fw:travelDirection a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "Whether travel was outbound from the origin or inbound to it";
   rdfs:comment "No domain, for the reason fw:originCount states. A corridor restates the direction it was given rather than choosing one.".
+fw:attachedOriginCount a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Origins this step attached to the network itself";
+  rdfs:comment "Distinct from fw:siteCount, which is domained to fw:NetworkSnap and counts every site that widget moved. This counts only the origins that arrived WITHOUT a junction and were attached here, so a run mixing attached and already-snapped origins reports a number smaller than its origin count. Reusing fw:siteCount would have read as the whole input and crossed a declared domain.".
+fw:attachmentLimitMetres a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:decimal;
+  rdfs:label "Distance past which an origin attached here is marked as crossing unmapped ground";
+  rdfs:comment "Absent means no limit was set, and no origin is marked. An origin beyond the limit is attached anyway and marked, never dropped. The snap widget's equivalent is fw:snapLimitMetres, domained to fw:NetworkSnap.".
 fw:edgeLengthSource a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:string;
   rdfs:label "Where the street lengths came from";
   rdfs:comment "This activity re-measures no geometry, so it needs no projected CRS and takes the lengths on trust. Naming the source is the only check available to a reader.".

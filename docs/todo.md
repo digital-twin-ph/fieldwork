@@ -486,6 +486,16 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**Cluster detection.** Named by the practitioner on 2026-10-17 as a future widget, with a source
+of example data attached: *"When we get into cluster detection (a future widget) SatScan.org has
+example data sets as well."* Surveyed in
+[research/data-sources.md](research/data-sources.md#satscan--for-a-cluster-detection-widget-that-does-not-exist-yet)
+— nine sets, including two **benchmarks** whose right answer is known, which is what a new
+detector needs before it is pointed at anything real. It would be the first widget here to need
+cases, denominators and places at once; the three port types exist, and `rate` already insists a
+denominator declare what it counts. Terms are "educational as well as research purposes", which
+is enough to use and not enough to ship.
+
 **An on-surface guide — a tour, and something that answers questions.** Asked for as an
 exploration by the practitioner on 2026-10-15: *"add a Clippy like agent on the UI surface as a
 guide to the UI — can provide a guided tour and answer questions."*

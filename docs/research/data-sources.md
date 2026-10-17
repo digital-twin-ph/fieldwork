@@ -79,6 +79,36 @@ finds it: a column of `NA`s looks identical whether the nulls mean "nobody wrote
 "this did not happen". Only the practitioner knows, and the application currently has no way for
 them to say so. Recorded in [117](experiments/117-data-quality.md).
 
+### SaTScan — for a cluster-detection widget that does not exist yet
+
+The practitioner, 2026-10-17: *"When we get into cluster detection (a future widget)
+SatScan.org has example data sets as well."* Recorded here against that future widget rather
+than left in a conversation.
+
+**Read from [satscan.org/datasets.html](https://www.satscan.org/datasets.html):** nine entries,
+including cancer incidence, birth defects and colorectal cancer stage in New York State, brain
+and lung cancer in New Mexico, US population age structure, and two **benchmark** sets — a
+Northeastern USA power-evaluation set and a New York City disease-outbreak set.
+
+**Terms:** the page states only that the datasets *"may be used for educational as well as
+research purposes."* That is a permission, not a licence: it names no redistribution right, no
+attribution requirement and no commercial position. Under this project's standard that is enough
+to *use* and not enough to *ship*, which is the same conclusion reached for GADM by a different
+route.
+
+**What it would exercise, when there is something to exercise.** SaTScan's scan statistics take a
+case file, a population file and a coordinate file — cases, denominators and places, held
+separately and joined by an area identifier. This project has the three as separate port types
+already (`points`, `table`, `area`), and `rate` already insists a denominator declare what it
+counts. A cluster-detection widget would be the first thing here to need all three at once, and
+these datasets are the obvious thing to try it against. The benchmark sets matter more than the
+real ones for that: a set built to evaluate statistical power is a set whose right answer is
+known, which is what a new detector needs before it is pointed at anything real.
+
+**Not verified:** file formats, per-dataset provenance, and whether the "educational and
+research" permission extends to a web application that redistributes nothing but computes on a
+practitioner's own copy. Read the User Guide before building on it.
+
 ### Kaggle and the other hosts — a discovery surface, not a source
 
 The practitioner, 2026-10-17: *"We can also look at Kaggle, and similar websites."* Worth looking

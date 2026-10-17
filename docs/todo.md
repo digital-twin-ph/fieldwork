@@ -516,6 +516,18 @@ the number nothing records today — and it is also the evidence that a prespeci
 not quietly rewritten after the fact.
 
 
+**The two buffers, and what the edge decides.** `buffer_point` imports `validateBuffer`
+from `area-buffer.ts`, so the distance knob and its 0–50,000 m range are already one thing.
+What differs is the Turf step count — 8 against 32 — justified in `buffer-point.ts` by
+*"8 … is ample when expanding an existing boundary; here the edge decides membership, so
+the finer setting is used"*. **The cross-border case breaks that premise.** Expanding a
+district to catch Ebola cases that crossed from the DRC into Uganda is an expansion whose
+edge decides membership: whether a case falls inside it decides whether it is counted. So
+8 steps is justified by an assumption that use violates, and `fw:AreaBuffer` records no
+equivalent of `fw:circleAreaFraction`, so the under-coverage is not even a number. Fix the
+approximation reporting before deciding whether the two widgets merge — a merge that
+carried the wrong step count into the cross-border case would be worse than two widgets.
+
 **Multi-member study areas.** The widget stays — `fw:studyArea` is
 `rdfs:subPropertyOf prov:used` with `rdfs:range fw:StudyArea`, so a parameter could not
 satisfy the declared range and the receipt would weaken. But `fw:StudyArea`'s own comment

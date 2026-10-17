@@ -48,8 +48,9 @@ Retired widgets are excluded. 46 of the 53 are active.
 
 | Process frame | Widgets | What the practitioner decides here |
 | --- | --- | --- |
+| **Bound** | **1** | how much ground am I willing to pull |
 | Ingest | 7 | what data do I have |
-| **Regions** | **15** | what regions am I reasoning about |
+| **Regions** | **14** | what regions am I reasoning about |
 | Assign | 7 | which region does each record belong to |
 | Summarise | 5 | how much, where |
 | Classify | 3 | what does this record count as |
@@ -59,16 +60,22 @@ Retired widgets are excluded. 46 of the 53 are active.
 | Composition | 1 | — |
 
 The practitioner's hypothesis holds on the numbers. The ends are small and settled —
-**7 ingest, 4 view, 11 together**. The middle is **30**, and **half of it is region
-construction**.
+**1 bound, 7 ingest, 4 view, 12 together**. The middle is **29**, and **half of it is
+region construction**.
 
 ## The classification
+
+### Bound · 1
+
+| Widget | Port signature | Palette group |
+| --- | --- | --- |
+| `study_area` | `— → area` | Sources |
 
 ### Ingest · 7
 
 | Widget | Port signature | Palette group |
 | --- | --- | --- |
-| `alert` | `— → alert` | (legacy) |
+| `alert` | `— → alert` | Sources |
 | `find_health_facilities` | `area → points` | Sources |
 | `network_input` | `— → network` | Sources |
 | `point_input` | `— → points` | Sources |
@@ -76,7 +83,7 @@ construction**.
 | `slr_extract_import` *(domain)* | `table → table` | Sources |
 | `table_input` | `— → table` | Sources |
 
-### Regions · 15
+### Regions · 14
 
 | Widget | Port signature | Palette group |
 | --- | --- | --- |
@@ -90,7 +97,6 @@ construction**.
 | `reachable_corridor` | `network+points → polygons` | Spatial operations |
 | `reachable_nodes` | `network+points → points` | Spatial operations |
 | `stack_polygons` | `polygons → polygons` | Spatial operations |
-| `study_area` | `— → area` | (legacy) |
 | `summarize_combined_area` | `polygons → polygons` | Summaries **·group disagrees** |
 | `summarize_hull` | `points → polygons` | Summaries **·group disagrees** |
 | `travel_time_band` | `points → points` | Spatial operations |
@@ -102,8 +108,8 @@ construction**.
 | --- | --- | --- |
 | `clip_raster` | `area+raster → raster` | Spatial operations |
 | `coverage_check` | `area+points → coverage-check` | Comparisons and checks **·group disagrees** |
-| `facilities` | `area+points → facilities` | (legacy) |
-| `measure_distance` | `points → distances` | (legacy) |
+| `facilities` | `area+points → facilities` | Spatial operations |
+| `measure_distance` | `points → distances` | Spatial operations |
 | `sample_raster` | `points+raster → points` | Spatial operations |
 | `slr_site_assignment` *(domain)* | `points+table → table` | Spatial operations |
 | `snap_to_network` | `network+points → points` | Spatial operations |
@@ -123,7 +129,7 @@ construction**.
 | Widget | Port signature | Palette group |
 | --- | --- | --- |
 | `apply_ruleset` | `— → (pinned)` | Semantic reasoning |
-| `facility_audit` | `points → decisions` | (legacy) |
+| `facility_audit` | `points → decisions` | Summaries **·group disagrees** |
 | `slr_threshold_comparison` *(domain)* | `table → decisions` | Comparisons and checks **·group disagrees** |
 
 ### View · 4
@@ -154,9 +160,32 @@ construction**.
 | Widget | Port signature | Palette group |
 | --- | --- | --- |
 | `micro_workflow` | `— → (pinned)` | Micro-workflows |
+
 ## What the classification found
 
-**1. Regions is where specialisation leaks in — 15 of 46.** Voronoi, isochrone, H3,
+**0. `study_area` is a bound, not a region — and that position was missing from the
+path.** Filed under regions in the first draft of this document. The practitioner,
+2026-10-17: *"It serves to constrain large downloads like rasters, netcdf files, street
+networks, zarr files."* That is an **acquisition constraint**, and it is what makes
+ingesting large data tractable at all — `raster_input`, `network_input` and
+`find_health_facilities` all take an `area` before they fetch anything. Its palette
+group says Sources, which was right about this and disagreed with the first draft.
+
+The widget is genuinely dual: the same boundary is also the analytical extent that
+`voronoi`, `clip_polygons`, `coverage_check` and `measure_area` reason within. But the
+constraining job comes first and nothing else does it, so the path gains a position
+ahead of ingest:
+
+```
+plan → bound → ingest → regions → assign → summarise → classify → view → communicate
+```
+
+`buffer_area` is arguable here for the same reason — its Inspector tells the
+practitioner to connect the expanded boundary to Street network, which is a download
+margin, not an analytical region. It is left under regions pending the question being
+asked properly.
+
+**1. Regions is where specialisation leaks in — 14 of 46.** Voronoi, isochrone, H3,
 buffers, hulls, grids, corridors and the four polygon-modifying steps are all answers
 to one question. The palette has no place to say that, so each new way of defining
 regions arrives as a new entry rather than as a rule inside one.
@@ -180,13 +209,14 @@ records which applies.
 polygons, points or graph nodes. The widget audit had already found three of them; the
 fourth is visible only once assignment is named as a frame.
 
-**4. Six widgets sit in a palette group that disagrees with their process frame.**
+**4. Seven widgets sit in a palette group that disagrees with their process frame.**
 Marked in the tables above. `summarize_hull` and `summarize_combined_area` are named
 and grouped as summaries and construct regions; `mean_center` and
 `compare_point_sets` are grouped as spatial operations and are summaries;
 `coverage_check` is grouped as a check and is assignment;
-`slr_threshold_comparison` is grouped as a comparison and is classification. The
-groups were not built to this structure and do not survive contact with it.
+`slr_threshold_comparison` is grouped as a comparison and is classification;
+`facility_audit` is grouped as a summary and is classification. The groups were not
+built to this structure and do not survive contact with it.
 
 **5. Only three widgets carry no defensible judgment.** `reproject`, `measure_area`
 and `travel_time` are mechanical consequences of decisions made elsewhere — the
@@ -200,6 +230,23 @@ It is recorded as its own frame of one rather than filed under a frame it does n
 belong to. The geoprivacy notebooks have never been mapped
 ([`cholera-notebooks-to-primitives.md`](../research/cholera-notebooks-to-primitives.md)
 stops at Advanced-2), so whether that frame has one member or several is not known.
+
+## A correction to this document, 2026-10-17
+
+The first version labelled five active widgets `(legacy)` — `study_area`, `alert`,
+`facilities`, `facility_audit` and `measure_distance`. **None of them is legacy.** The
+label was an artifact of the script that built the table: it read `src/core.ts` and
+`src/catchments.ts` and not `src/old-naledi.ts`, where `OLD_TYPES` holds `study_area`
+among others and is spread into the shared palette at `src/core.ts:127`; and its
+pattern did not allow the space in `alert: {title:` or `measure_distance: {title:`.
+Two bugs, one invented label, committed.
+
+It also suppressed findings. The disagreement check skipped any row marked `(legacy)`,
+so `study_area` and `facility_audit` were exempted from it — which is why this document
+first reported six disagreements where there are seven.
+
+The constant name is worth noting separately: `study_area` lives in something called
+`OLD_TYPES`, and it is the most fundamental widget in the application.
 
 ## What this does not establish
 

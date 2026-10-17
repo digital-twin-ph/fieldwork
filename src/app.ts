@@ -148,6 +148,7 @@ const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='rast
 let credentials:CredentialAccess|null=null;
 let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
+let tableSort:import('./table-output.js').TableSort|undefined;
 /** The run whose comparison result may expand the results pane, consumed the first time it does. */
 let expandForRun:string|null=null;
 let lastRunMs:number|null=null;
@@ -331,7 +332,15 @@ function noticeIfRepublished(key:string){
 }
 
 function loadExample(key:string){if(busy)return;save();let fromTemplate=true;try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[key];fromTemplate=!saved;workflow=saved?validateWorkflow(saved):template(key);}catch{workflow=template(key);}if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
-function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;render();return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}render();return persisted;}catch(e){workflow=previous;toast(errorMessage(e));render();return false;}}
+function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;render();return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}render();return persisted;}catch(e){
+  // The edit is rolled back and the panel is rewritten -- WHILE the control that made the edit
+  // still holds focus. Chromium throws "The node to be removed is no longer a child of this
+  // node. Perhaps it was moved in a 'blur' event handler?" from the innerHTML assignment,
+  // because removing the focused input fires blur, and the blur handler re-renders underneath
+  // the removal in progress. Found on 2026-10-17 by a test that clears a setting the workflow
+  // requires: any refused edit typed into a field could raise it. Dropping focus first makes
+  // the blur run to completion before anything is replaced.
+  workflow=previous;(document.activeElement as HTMLElement|null)?.blur();toast(errorMessage(e));render();return false;}}
 /** Which declared port a layer dropped on a map's "add a layer" port should bind to.
  *
  *  The map's one configurable port is type-free: the practitioner drops a result on it and this
@@ -720,6 +729,7 @@ function wireAuthorRules(node:WorkflowNode){
     if(!pinned)return;
     const ruleset=resolveRuleset(pinned.id,pinned.version);
     await openRuleEditor(reviewAuthored(ruleset),esc,{
+      settingValues:getNode(workflow,node.id,'apply_ruleset').params.parameters,
       note:`These are the rules ${ruleset.title} ${ruleset.version} applies, laid out the way rules you write are laid out. `
         +`Nothing here can be changed: this ruleset is published and pinned, and the run evidence names it by version.`});
   });
@@ -727,7 +737,7 @@ function wireAuthorRules(node:WorkflowNode){
     authorRulesOn(node.id,node.params.label??'');
     const authored=getNode(workflow,node.id,'apply_ruleset').params.authored;
     if(!authored)return;
-    const edited=await openRuleEditor(authored,esc);
+    const edited=await openRuleEditor(authored,esc,{settingValues:getNode(workflow,node.id,'apply_ruleset').params.parameters});
     if(edited)change(w=>{getNode(w,node.id,'apply_ruleset').params.authored!.rules=edited.rules as never;});
   });
 }
@@ -1175,7 +1185,12 @@ function renderInspector(){
         lessThan:'is less than',notLessThan:'is at least'}[c]??c);
       const readable=(value:import('./authored-rules.js').AuthoredValue)=>{
         const setting=settingNamed(value);
-        if(setting)return `the ${setting} setting below`;
+        if(setting){
+          const held=n.params.parameters?.[setting],declared=(authored.parameters??[]).find(p=>p.name===setting);
+          return held===undefined||held===null
+            ?`${setting} · not set`
+            :`${setting} · ${held}${declared?.unitLabel?' '+declared.unitLabel:''}`;
+        }
         return typeof value==='string'&&value.includes(':')?value.slice(value.indexOf(':')+1):String(value);
       };
       // The column, as the file spells it. Not a label somebody wrote over it: a reader checking
@@ -1275,12 +1290,17 @@ function renderInspector(){
           field.unit=code?`http://qudt.org/vocab/unit/${code}`:undefined;
         })));
       optionalElement('#edit-rules')?.addEventListener('click',async()=>{
-        const edited=await openRuleEditor(authored,esc);
+        const edited=await openRuleEditor(authored,esc,{settingValues:n.params.parameters});
         if(edited)change(w=>{getNode(w,n.id,'apply_ruleset').params.authored!.rules=edited.rules as never;});
       });
+      // An EMPTY box is an unset setting, not zero. `Number('')` is 0, so clearing this field
+      // used to band the rules against zero: `busy` declares min 1 and the run refuses it, which
+      // is why it was never seen, but a setting declaring no minimum would have run on a figure
+      // nobody typed. Clearing it now removes it, and the run says it needs a value.
       document.querySelectorAll<HTMLInputElement>('[data-ruleset-parameter]').forEach(el=>
         el.addEventListener('change',()=>change(w=>{
-          getNode(w,n.id,'apply_ruleset').params.parameters[required(el.dataset.rulesetParameter)]=Number(el.value);})));
+          const held=getNode(w,n.id,'apply_ruleset').params.parameters,name=required(el.dataset.rulesetParameter);
+          if(el.value.trim()==='')delete held[name];else held[name]=Number(el.value);})));
       return;
     }
     content+=`<span class="inspector-section">What this step applies</span>`
@@ -1767,7 +1787,7 @@ function renderResults(){
   if(output?.kind==='point-table')$('#result-metrics').innerHTML=`<span class="metric"><b>${rows.length}</b> records</span><span class="metric"><b>${rows.filter(r=>!r.coordinates).length}</b> missing coordinates</span><span class="metric">CRS84 · longitude, latitude</span>`;
   if(output?.comparison)$('#result-metrics').innerHTML=`<span class="metric"><b>${output.comparison.original.features.length}</b> locations in each set</span><span class="metric"><b>${output.comparison.pumps.features.length}</b> reference pumps</span><span class="metric"><b>${output.comparison.centerShiftM.toFixed(1)} m</b> mean-center shift</span>`;
   const table=output?.pointTable?{head:'',body:''}:output?.kind==='spatial-map'?{head:'<th>Record</th><th>Spatial relation</th>',body:rows.map(r=>`<tr data-place="${esc(r.id)}"><td>${esc(r.name)}</td><td>${esc(relationLabel(r.relation!))}</td></tr>`).join('')}:output?.kind==='spatial-coverage'?coverageTable(output as unknown as CoverageValue,esc):resultTable(output,esc,statusLabel);$('#result-head').innerHTML=table.head;$('#result-rows').innerHTML=table.body;
-  $('#result-search').value='';tablePage=0;tableAttributePage=0;
+  $('#result-search').value='';tablePage=0;tableAttributePage=0;tableSort=undefined;
   $('#result-search').placeholder=output?.pointTable?'Search all records and attributes…':'Name, evidence, or service…';
   $('#point-table-controls').hidden=!output?.pointTable;
   $('#table-panel').classList.toggle('point-table',!!output?.pointTable);
@@ -1834,10 +1854,16 @@ function renderPointTable(){
     return;
   }
   dataView.hidden=true;dataView.innerHTML='';$('#point-table-grid').hidden=false;
-  const table=pointTableMarkup(required(activeOutput()) as unknown as TableValue|CoverageValue,esc,{query:$('#result-search').value,page:tablePage,attributePage:tableAttributePage});
+  const table=pointTableMarkup(required(activeOutput()) as unknown as TableValue|CoverageValue,esc,{query:$('#result-search').value,page:tablePage,attributePage:tableAttributePage,sort:tableSort});
   $('#result-head').innerHTML=table.head;$('#result-rows').innerHTML=table.body;$('#point-table-controls').innerHTML=table.controls;
   $('#point-table-controls').querySelectorAll<HTMLButtonElement>('[data-table-page]').forEach(b=>b.onclick=()=>{tablePage=Number(b.dataset.tablePage);renderPointTable();});
   $('#point-table-controls').querySelectorAll<HTMLButtonElement>('[data-table-fields]').forEach(b=>b.onclick=()=>{tableAttributePage=Number(b.dataset.tableFields);renderPointTable();});
+  // Re-ordering returns to the first page: the point of ranking is to see the extreme, and
+  // keeping the offset would sort the table and then show the middle of it.
+  $('#result-head').querySelectorAll<HTMLButtonElement>('[data-table-sort]').forEach(b=>b.onclick=()=>{
+    tableSort={column:b.dataset.tableSort!,direction:b.dataset.tableDirection as import('./table-output.js').SortDirection};
+    tablePage=0;renderPointTable();
+  });
   $('#result-rows').querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(row=>{row.onclick=()=>selectResult(row.dataset.place!);row.onkeydown=e=>{if(e.key==='Enter')selectResult(row.dataset.place!);};});
 }
 function selectResult(id:string){selected=`result:${id}`;renderLibrary($('#node-search').value);flow?.update(playbackView(),null,statuses);renderInspector();renderMap();}

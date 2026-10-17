@@ -74,7 +74,10 @@ test('a setting is chosen by name, and the template syntax never reaches the sur
   // Step 1 bands a number against the `threshold` setting, so it is the step that used to show
   // the braces -- in the Inspector and in the editor both.
   await page.locator('.react-flow__node[data-id="day"]').click();
-  await expect(page.locator('#inspector-content')).toContainText('the busy setting below');
+  // Named, and SET TO WHAT -- "does this not look like fixed on context" was the practitioner's
+  // reading of `the cluster setting` on 2026-10-17: a phrase composed around the name, carrying
+  // nothing the name did not. The figure the rule turns on now travels with it.
+  await expect(page.locator('#inspector-content')).toContainText('busy · 20 deaths');
   expect(await page.locator('#inspector-content').innerText()).not.toContain('{{');
 
   await page.locator('#edit-rules').click();
@@ -85,7 +88,22 @@ test('a setting is chosen by name, and the template syntax never reaches the sur
   // unit -- which is what makes a unit mismatch legible rather than merely refused.
   const source=dialog.locator('[data-part="value-source"]').last();
   await expect(source).toHaveValue('busy');
-  await expect(source.locator('option')).toHaveText(['a number','the busy setting']);
+  await expect(source.locator('option')).toHaveText(['a number','busy · 20 deaths']);
+
+  // CLEARING the box is refused, and the refusal now names what is missing. `Number('')` is 0,
+  // so an emptied setting used to be stored as zero and bounce off `busy`'s declared minimum --
+  // "busy must be between 1 and 20", which is about a figure the practitioner never typed. A
+  // setting declaring no minimum would have run on that zero in silence.
+  await dialog.locator('#rule-editor-cancel').click();
+  await expect(dialog).toBeHidden();
+  await page.locator('[data-ruleset-parameter="busy"]').fill('');
+  await page.locator('[data-ruleset-parameter="busy"]').dispatchEvent('change');
+  await expect(page.locator('#toast')).toContainText('needs a value for busy');
+  expect(await page.evaluate(()=>
+    JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='day').params.parameters.busy,
+  )).toBe(20,'the refused edit is rolled back, not stored as zero');
+  await page.locator('#edit-rules').click();
+  await expect(dialog.locator('[data-part="value-source"]').last()).toHaveValue('busy');
 
   // Switching to a typed number, and back, leaves the stored form intact.
   await source.selectOption('');

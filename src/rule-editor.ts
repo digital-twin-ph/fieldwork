@@ -109,10 +109,29 @@ export interface RuleEditorResult {rules:Authored['rules']}
  *  authored rule is laid out, with every control disabled. It reads; it does not write. */
 export interface ReviewOptions {note:string}
 
+/** What the dialog is given beyond the rules themselves.
+ *
+ *  `settingValues` is what each declared setting is SET TO on this step, and it is here because
+ *  of what the practitioner saw in the editor on 2026-10-17: a condition reading *"DEATHS is at
+ *  most the cluster setting"*, and the observation that this is **fixed on context**. It is. The
+ *  name `cluster` is declared and real, but `the … setting` is a sentence composed around it,
+ *  and the sentence carries no more than the name does. A reader checking this rule against
+ *  their data wants the number -- is the band 4 deaths or 40? -- and the number was two panels
+ *  away, in the Inspector, while the rule that depends on it was on screen.
+ *
+ *  This is the third time the same shape has come back. `{{threshold}}` was the stored form
+ *  reaching the surface; *"Deaths at this address"* was a label written over a column; *"the
+ *  cluster setting"* is a phrase written over a value. Each time the fix is the same one: show
+ *  what is there. */
+export interface EditorOptions extends Partial<ReviewOptions> {
+  settingValues?:Record<string,number|string|null|undefined>;
+}
+
 /** Opens the dialog. Resolves with the edited rules, or with nothing if the practitioner closes
  *  it without keeping them -- the node is not touched until they do. */
-export function openRuleEditor(authored:Authored,esc:Escape,review?:ReviewOptions):Promise<RuleEditorResult|undefined>{
+export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptions):Promise<RuleEditorResult|undefined>{
   return new Promise(resolve=>{
+    const review=options?.note===undefined?undefined:{note:options.note};
     // Edited on a copy. A practitioner who closes without keeping leaves the step as it was, and
     // one who keeps gets a single change that Undo reverses in one step.
     let rules:Authored['rules']=JSON.parse(JSON.stringify(authored.rules));
@@ -150,7 +169,20 @@ export function openRuleEditor(authored:Authored,esc:Escape,review?:ReviewOption
       const setting=settingNamed(condition.value);
       return `<select ${where} data-part="value-source" aria-label="Compared against">`
         +`<option value="" ${setting?'':'selected'}>a number</option>`
-        +settings.map(s=>`<option value="${esc(s.name)}" ${s.name===setting?'selected':''}>the ${esc(s.name)} setting</option>`).join('')
+        +settings.map(s=>{
+          // The setting's name and what it is set to. Not "the cluster setting": that phrase is
+          // the name with English around it, and a rule is unreadable until the figure it turns
+          // on is on the same line as the condition. "not set" is a fallback rather than a state
+          // the practitioner can reach -- `validateWorkflow` refuses a step whose declared
+          // setting has no finite value, so an edit that empties one is rolled back before it is
+          // stored. It is written out rather than left blank so that a step reaching the dialog
+          // without its values says so instead of showing a name that reads like a figure.
+          const held=options?.settingValues?.[s.name];
+          const shown=held===undefined||held===null||held===''
+            ?'not set'
+            :`${held}${s.unitLabel?' '+s.unitLabel:''}`;
+          return `<option value="${esc(s.name)}" ${s.name===setting?'selected':''}>${esc(s.name)} · ${esc(shown)}</option>`;
+        }).join('')
         +`</select>`
         +(setting
           // The setting's own unit, not the field's: they must agree, and authoredUnitProblems

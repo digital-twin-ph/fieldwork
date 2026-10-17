@@ -693,14 +693,26 @@ Three steps, and only one is in dispute:
 | --- | --- | --- |
 | 1 | scope a network to the sites' area or jurisdiction | **yes** — `street_network` takes a study area and a margin |
 | 2 | nearest node and its distance, per site | **yes** — `nearestNetworkNode`, now one implementation |
-| 3 | **rank the sites by that distance** | **no** — and not in `snap_to_network` either |
+| 3 | **rank the sites by that distance** | **built 2026-10-17** — it existed nowhere, including in `snap_to_network` |
 
-**Step 3 does not exist anywhere in this application.** Result tables offer a filter box and no
-column sort; `snap_to_network` computes `greatest=Math.max(...)` for one sentence of its receipt
-note and ranks nothing. Its header has claimed sortability since 2026-10-14 that the application
-has never provided.
+**Step 3 existed nowhere in this application.** Result tables offered a filter box and no column
+sort; `snap_to_network` computes `greatest=Math.max(...)` for one sentence of its receipt note
+and ranks nothing. Its header had claimed sortability since 2026-10-14 that the application had
+never provided.
 
-So retiring the widget loses a **claimed** capability rather than a working one, and the
-decomposition names what delivering it would take: a way to rank records by an attribute, which
-is a `table_output` concern and not a spatial primitive. That removes the objection standing
-against step 4 and replaces it with a smaller, clearer piece of work in a different widget.
+So retiring the widget stood to lose a **claimed** capability rather than a working one — and the
+decomposition named what delivering it would take: a way to rank records by an attribute, which
+is a `table_output` concern and not a spatial primitive. The practitioner's own framing settled
+how much work that was: *"typically in programming one could use a loop to compare different
+lengths, or given a data set of lengths sort them short to long."* It is, and the sort shipped
+the same day.
+
+What took the thought was not the ordering but **what an order means over cells that are not all
+comparable**, since a result table holds `Scalar | null`: a record whose distance was never
+measured must not answer "farthest", so unknowns are held at the end in both directions and
+counted; and a column holding both `3` and `'3'` is compared as text rather than coerced, because
+coercing it would rank it correctly and hide the [117](../experiments/117-data-quality.md) defect
+at the moment the practitioner is looking straight at the column.
+
+**The objection against step 4 is therefore withdrawn.** The capability the retirement would have
+lost now exists in the widget it belonged to, and does not depend on `snap_to_network`.

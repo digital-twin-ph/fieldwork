@@ -5,6 +5,33 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.9.0 — In development
 
+- **Result tables rank by a column.** Every column header is a button; clicking it orders the
+  table, clicking again reverses it, and the active column declares `aria-sort`. Which matters
+  less than what an order over a result table has to decide: **records with no value for that
+  column are held at the end in both directions**, and counted in the controls, because "which
+  clinic is furthest from a road" must not be answered by a clinic nobody measured. And the
+  comparison is chosen per column from the values present — every known value a number makes it
+  numeric, anything else is compared as text with numeric-aware collation, so a column holding
+  both `3` and `'3'` is not quietly coerced into looking sound at the moment somebody is reading
+  it. Found missing while decomposing that question: `snap_to_network` had claimed since
+  2026-10-14 that its displacement was *"a point attribute a practitioner can map, sort and argue
+  with"*, and nothing in the application sorted anything.
+- **A rule says what its setting is set to.** A condition read *"DEATHS is at most the cluster
+  setting"* — the practitioner, 2026-10-17: *"does this not look like fixed on context"*. It did.
+  The name was real and declared; `the … setting` was a sentence composed around it, carrying
+  nothing the name did not, while the figure the rule turns on sat two panels away. Both the
+  editor and the Inspector now show `cluster · 4 deaths`. Third time this shape has come back,
+  after `{{threshold}}` (the stored form) and *"Deaths at this address"* (a label over a column);
+  each time the fix is to show what is there.
+- **Clearing a setting is refused by name, not by range.** `Number('')` is 0, so an emptied
+  setting box was stored as zero and bounced off the declared minimum — *"busy must be between 1
+  and 20"*, about a figure nobody typed — and a setting declaring no minimum would have run on
+  that zero in silence. The run now says it needs a value for that setting.
+- **A refused edit no longer throws while rewriting the panel.** Rolling an edit back re-rendered
+  the Inspector while the control that made it still held focus, which Chromium refuses with *"the
+  node to be removed is no longer a child of this node"*. Focus is dropped first. Any refused
+  edit typed into a field could raise it; it took a test that clears a required setting to find.
+
 - **A map says which design rules it was held to.** Four rules are applied while a visualisation
   is assembled, and its receipt states every one — including the ones that did not apply, so a
   reader can tell a rule that passed from a rule that was never run. Text and mark contrast are

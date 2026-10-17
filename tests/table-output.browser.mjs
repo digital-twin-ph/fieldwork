@@ -67,3 +67,36 @@ test('Table accepts coverage by drag, preserves decisions, and does not double-c
   const evidence=await receipt(page),table=evidence.outputs.find(o=>o.nodeId===tableId);assert.equal(table.excludedCount,0);assert.equal(table.reviewCount,3);assert.ok(table.measurement.squareMetres>0);
   assert.deepEqual(errors,[]);
 });
+
+/** Ranking a result table, which until 2026-10-17 nothing in this application could do.
+ *
+ *  `snap_to_network` had claimed since 2026-10-14 that its displacement was "a point attribute a
+ *  practitioner can map, sort and argue with", and the practitioner's decomposition of "which
+ *  clinic is furthest from a road" showed the sort was never built. This is the click that
+ *  answers it, and the assertion that an unmeasured record does not win. */
+test('A result table ranks by a column, and a record with no value never answers "farthest"',async({page})=>{
+  const errors=collectPageErrors(page);
+  const w=structuredClone(fixture);w.nodes=w.nodes.filter(n=>n.type==='observations');w.edges=[];
+  const source=w.nodes[0],sample=source.params.data.features[0];
+  const metres=[120,7,45,null,1000];
+  source.params.data.features=metres.map((m,i)=>({...structuredClone(sample),id:`clinic${i}`,
+    properties:{...sample.properties,name:`Clinic ${i}`,metresToRoad:m}}));
+  await page.goto('/?example=blank');await upload(page,w);await page.locator('[data-add="table_output"]').click();
+  const tableId=(await saved(page)).nodes.find(n=>n.type==='table_output').id;
+  await drag(page,'observations',tableId,'points');await run(page);
+  await page.getByRole('tab',{name:'Point table'}).click();
+  const names=()=>page.locator('#result-rows [data-place] td:nth-child(3)').allTextContents();
+  assert.deepEqual(await names(),['Clinic 0','Clinic 1','Clinic 2','Clinic 3','Clinic 4'],'unsorted is input order');
+
+  const header=page.locator('#result-head button[data-table-sort="attribute:metresToRoad"]');
+  await header.click();                                      // ascending: nearest the road first
+  assert.deepEqual(await names(),['Clinic 1','Clinic 2','Clinic 0','Clinic 4','Clinic 3']);
+  await expect(page.locator('#result-head th[aria-sort="ascending"]')).toHaveCount(1);
+
+  await header.click();                                      // descending: the question asked
+  assert.deepEqual(await names(),['Clinic 4','Clinic 0','Clinic 2','Clinic 1','Clinic 3'],
+    'Clinic 3 was never measured and must stay last in both directions');
+  await expect(page.locator('#point-table-controls')).toContainText('Ordered by metresToRoad, highest first');
+  await expect(page.locator('#point-table-controls')).toContainText('1 record with no value for this column held at the end');
+  assert.deepEqual(errors,[]);
+});

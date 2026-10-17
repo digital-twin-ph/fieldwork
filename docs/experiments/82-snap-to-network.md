@@ -48,7 +48,7 @@ whether it matters, rather than reading it in a note attached to a polygon.
 | Check | Answer |
 | --- | --- |
 | **D1** | Residual: the identity of the attachment node, and the distance to it. Neither follows from the site or the network alone. Practitioners ask for it by name once they have been bitten by it — "which road is this clinic on". Primitive, on the palette |
-| **D2** | No. `nearest`, `access` and `slr_site_assignment` all find a nearest something with a distance, but all three measure to another **point of interest**. This measures to a **graph node**, and returns the node's identity, which is what later routing consumes |
+| **D2** | No. `nearest`, `access` and `slr_site_assignment` all find a nearest something with a distance, but all three measure to another **point of interest**. This measures to a **graph node**, and returns the node's identity, which is what later routing consumes — **this answer was revisited on 2026-10-17 and does not survive; see below** |
 | **D3** | See the table below. Two sites may snap to the same node; that is reported, not refused |
 | **D4** | Ports: points and network in, points out. The snap limit is a parameter because it is a judgment about the data, not a property of either input |
 | **D4a** | A block, not a pre-glued assembly. The output is ordinary points: it feeds `map_output`, `table_output`, `buffer_point` or `mean_center` with no adapter, and the displacement travels as a point attribute. Nothing about it fits only the reachability widget |
@@ -93,3 +93,56 @@ changed this file; a date stamp sweep is not an update._
 | --- | --- |
 | 2026-10-10 | Add snap_to_network, and turn the decomposition around |
 | 2026-10-14 | Two of the five distinctions superseded by [114](114-the-three-segments-of-a-walk.md): the hard stop past `maxSnapM` became a mark on the point, and the uncharged walk became a charged one |
+
+## D2, revisited — the answer above does not survive 103's rule
+
+_Added 2026-10-17. The practitioner, having read OSMnx's `nearest_nodes` in the Cholera Advanced
+1 notebooks: "If there is already a function that obtains D1 and D3 distances that is a duplicate
+and needs to be removed … so the snap_to_network is a 103 problem and needs to be retired if it
+is a duplicate."_
+
+**Note on the token.** In those notebooks **D is distance** — D1 origin to the network, D2 along
+it, D3 network to destination. In *this* document D1–D10 are the primitive design audit checks.
+Same token, two subjects; the [glossary](../glossary.md#route-distance-legs) records both and
+this section writes the distance legs out.
+
+The D2 answer in the table above was given on the audit's own terms, and those terms changed
+afterwards. [103](103-duplicates-should-merge.md), on 2026-10-12, gave D2 a **follow-through**:
+when a duplicate operation is found, name the general implementation, then classify what each
+other one adds as either an **operation** or a **domain** — and *"if what it adds is domain, it
+merges. Only a distinct operation earns a widget."*
+
+Against that rule the two grounds above both fail:
+
+- *"This measures to a graph node, not a point of interest."* A graph node **is** a point. This
+  describes **what the other input is**, which is domain, not what the operation does. 103
+  classifies domain as merging.
+- *"…and returns the node's identity."* The general implementation already does. 103 states its
+  operation as *"for each point in A the nearest in B, with the distance, **which one won**"* —
+  the identity is part of the general operation, not an addition to it.
+
+So snap_to_network is a **fourth** implementation of nearest-neighbour-with-distance, where
+[the widget audit](../audits/widget_audit.md) recorded three. Its own source says as much:
+*"Same nearest-node search isochrone performs, kept identical so the two agree."*
+
+**What was really distinct, and why it should go anyway.** Relocating the geometry onto the node.
+OSMnx's `nearest_nodes` moves nothing — it returns the node and the distance, and the first
+distance leg is then an explicit term. Here that leg is already carried as `snapDistanceM` and
+the node as `networkNodeId`, so the move states nothing the attributes do not, and costs the
+site's own position. It was being worked around within three days: `siteLongitude` and
+`siteLatitude` were added on 2026-10-14 *"kept on the point that no longer stands there"*, because
+`reachable_corridor` needed the original back.
+
+**This is not a reproach of the original answer.** It was consistent with the check as written;
+the check acquired its follow-through two days later. That is exactly 103's point — a D2 without
+one turns "N implementations exist" into a fact rather than a decision, and this widget was
+admitted inside that window.
+
+**Disposition:** merges. The blocker is recorded in [the widget
+audit](../audits/widget_audit.md), and it is smaller than it first looked: **no worked example
+uses this widget**. Its consumers are `reachable_nodes` and `reachable_corridor`, and both read
+**attributes** — `networkNodeId`, and the first-leg distance which the corridor already treats as
+optional — rather than the widget. So the general operation gains those two attributes with the
+geometry left alone, the consumers are satisfied unchanged, and only then can the retirement flag
+be set: a retired widget never runs and the loader refuses it, so a saved workflow holding one
+stops loading the moment the flag goes on.

@@ -385,7 +385,9 @@ export function isochrone(input:PointCollection,network:Network,params:WorkflowN
     // D1 IS CHARGED. The walk from the site onto the network comes out of the budget.
     //
     // A route has three segments -- D1 site to nearest node, D2 network distance, D3 last node to
-    // destination. `snapDistance` above IS D1, and from 2026-10-14 the snap node starts at that
+    // destination. D is DISTANCE, and the framing is the practitioner's, from the Cholera
+    // Advanced 1 notebooks that produced the street network this project ships; it is NOT the
+    // primitive design audit's D1-D10, which are checks. See docs/glossary.md. `snapDistance` above IS D1, and from 2026-10-14 the snap node starts at that
     // cost rather than at zero, so the stated minutes pay for the walk onto the network.
     //
     // Until then it was measured, published as fw:networkSnaps, and not charged, so every

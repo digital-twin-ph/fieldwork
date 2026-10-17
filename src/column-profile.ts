@@ -206,3 +206,46 @@ export function histogram(values:unknown[],bins=12):{from:number;to:number;count
   }
   return counts.map((count,i)=>({from:min+i*width,to:min+(i+1)*width,count}));
 }
+
+/** Whether two columns tend to be unreadable in the SAME records.
+ *
+ *  missingno calls this nullity correlation. [117](../docs/experiments/117-data-quality.md) first
+ *  declined to draw it and the practitioner corrected the shape of that refusal: a refusal to
+ *  visualise should be **conditional** — stated against what the data can support, and withdrawn
+ *  when the data supports it — rather than a standing no. So it is computed, and the caller shows
+ *  it exactly when there is a pair to show.
+ *
+ *  The precondition is arithmetic, not taste. The coefficient is taken between two vectors of
+ *  readable/not-readable, one value per record. A column that is wholly readable, or wholly
+ *  unreadable, has no variance, so the correlation with it is undefined by division rather than
+ *  equal to zero — which is why `pairs` can be empty while columns remain.
+ *
+ *  What it measures is **readability**, not the values. A pair at 0.9 tends to fail together,
+ *  which is a fact about collection or about a broken export, and says nothing about whether the
+ *  things measured are related. The drawing has to say so, because it looks exactly like the
+ *  correlation matrix of the data that every reader has seen before. */
+export interface NullityPair {a:string; b:string; phi:number; together:number}
+export function nullityPairs(
+  columns:{column:string;states:CellState[]}[],
+):{pairs:NullityPair[]; constant:string[]}{
+  const varying=columns.filter(c=>c.states.some(s=>s==='ok')&&c.states.some(s=>s!=='ok'));
+  const constant=columns.filter(c=>!varying.includes(c)).map(c=>c.column);
+  const pairs:NullityPair[]=[];
+  for(let i=0;i<varying.length;i++)
+    for(let j=i+1;j<varying.length;j++){
+      // The phi coefficient: Pearson over two binary vectors, which is what this is.
+      // Annotated: inferred as (0|1)[] the reduce overloads demand a 0|1 accumulator.
+      const x:number[]=varying[i].states.map(s=>s==='ok'?0:1);
+      const y:number[]=varying[j].states.map(s=>s==='ok'?0:1);
+      const n=x.length;
+      const sx=x.reduce((a,b)=>a+b,0),sy=y.reduce((a,b)=>a+b,0);
+      const sxy=x.reduce((a,b,k)=>a+b*y[k],0);
+      const numerator=n*sxy-sx*sy;
+      const denominator=Math.sqrt(sx*(n-sx))*Math.sqrt(sy*(n-sy));
+      if(!denominator)continue;
+      pairs.push({a:varying[i].column,b:varying[j].column,
+        phi:numerator/denominator,
+        together:x.reduce((a,b,k)=>a+(b&&y[k]?1:0),0)});
+    }
+  return {pairs,constant};
+}

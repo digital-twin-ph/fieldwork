@@ -122,6 +122,10 @@ test('the fail conditions are in the evidence, not only on the screen',async()=>
   // A value nobody collected.
   const gaps=result.receipts.find(r=>r.nodeId==='gap-day').facts;
   assert.match(gaps,/fw:readingProblem \[ a fw:ReadingProblem;/);
+  // In DQV's terms too, so a reader with its tooling can read this without knowing fw:. The
+  // metric names which dimension it measures: completeness, not readability.
+  assert.match(gaps,/dqv:isMeasurementOf fw:absentValues/);
+  assert.match(gaps,/@prefix dqv:/);
   assert.match(gaps,/fw:boundAttribute "deaths"/);
   assert.match(gaps,/fw:problemKind fw:ValueAbsent/);
   assert.match(gaps,/fw:affectedRecordCount 3; fw:consideredRecordCount 43/);
@@ -131,6 +135,7 @@ test('the fail conditions are in the evidence, not only on the screen',async()=>
   // can be told apart afterwards.
   const text=result.receipts.find(r=>r.nodeId==='text-building').facts;
   assert.match(text,/fw:problemKind fw:ValueUnreadable/);
+  assert.match(text,/dqv:isMeasurementOf fw:unreadableValues/);
   assert.match(text,/fw:affectedRecordCount 63; fw:consideredRecordCount 250/);
 
   // A step that read everything asserts no problem, and says so rather than staying silent --

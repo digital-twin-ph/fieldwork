@@ -5,6 +5,11 @@
 @prefix geo: <http://www.opengis.net/ont/geosparql#>.
 @prefix prov: <http://www.w3.org/ns/prov#>.
 @prefix dcat: <http://www.w3.org/ns/dcat#>.
+# The W3C Data Quality Vocabulary, a 2016 Interest Group Note and companion to DCAT. Adopted
+# 2026-10-17 after researching whether a data-quality ontology already existed: one does, for
+# ASSESSMENT. Nothing in it concerns repairing data -- see experiment 117 -- so the repair side
+# below specialises PROV-O instead, which is where it belongs.
+@prefix dqv: <http://www.w3.org/ns/dqv#>.
 @prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix dcterms: <http://purl.org/dc/terms/>.
@@ -767,6 +772,10 @@ fw:unmatchedSubjectCount a owl:DatatypeProperty; rdfs:domain fw:RuleApplication;
 # different actions -- one is data nobody collected, the other is data somebody collected that
 # this step could not use.
 fw:ReadingProblem a owl:Class;
+  # A measurement of one metric over one resource, which is exactly what DQV models. Declared as
+  # a subclass rather than reinvented: a reader with DQV tooling can read these without knowing
+  # this ontology, and the counts below are the measurement's value.
+  rdfs:subClassOf dqv:QualityMeasurement;
   rdfs:label "A bound field the records could not supply";
   rdfs:comment "Counted per field and per reason, over the records one rule application judged. Its presence does not make a result unusable; it says which part of the result is a judgement about an absence.".
 fw:readingProblem a owl:ObjectProperty; rdfs:domain fw:RuleApplication; rdfs:range fw:ReadingProblem;
@@ -781,7 +790,26 @@ fw:ValueUnreadable a fw:ValueProblemKind;
   rdfs:label "A value was recorded that is not the declared kind";
   rdfs:comment "The record carries something this step could not read as the kind its binding declares -- a count written as text, most often. Somebody collected this value and the rules did not see it.".
 fw:affectedRecordCount a owl:DatatypeProperty; rdfs:domain fw:ReadingProblem; rdfs:range xsd:nonNegativeInteger;
-  rdfs:comment "How many of the judged records were affected.".
+  rdfs:subPropertyOf dqv:value;
+  rdfs:comment "How many of the judged records were affected. The measurement's value, in DQV's terms.".
+
+# The two metrics these measurements are of, and the dimensions they sit in. DQV deliberately
+# does not say what quality means -- it is a frame -- so the dimensions are named here.
+#
+# They are NOT the same dimension, which is the distinction a practitioner asked for on
+# 2026-10-16 and which missingno does not draw: it knows null from not-null and nothing else. A
+# count written "3" is present and unusable, which is a conformance failure rather than an
+# absence, and the two call for different actions.
+fw:completeness a dqv:Dimension;
+  rdfs:label "Whether a value was recorded at all".
+fw:readability a dqv:Dimension;
+  rdfs:label "Whether a recorded value can be read as the kind it was declared to be".
+fw:absentValues a dqv:Metric; dqv:inDimension fw:completeness;
+  dqv:expectedDataType xsd:nonNegativeInteger;
+  rdfs:comment "Records carrying no value for a bound field.".
+fw:unreadableValues a dqv:Metric; dqv:inDimension fw:readability;
+  dqv:expectedDataType xsd:nonNegativeInteger;
+  rdfs:comment "Records carrying a value that is not the declared kind. Present and unusable, which is not the same as absent.".
 fw:consideredRecordCount a owl:DatatypeProperty; rdfs:domain fw:ReadingProblem; rdfs:range xsd:nonNegativeInteger;
   rdfs:comment "How many records were judged in all, so the count above can be read as a proportion rather than as a number on its own.".
 fw:problemKind a owl:ObjectProperty; rdfs:domain fw:ReadingProblem; rdfs:range fw:ValueProblemKind;
@@ -793,6 +821,11 @@ fw:problemKind a owl:ObjectProperty; rdfs:domain fw:ReadingProblem; rdfs:range f
 # application refuses to convert silently, and a cast from "3" to 3 is the same class of act as
 # a unit conversion.
 fw:ColumnRepair a owl:Class;
+  # DQV has no term for repair -- researched 2026-10-17 against the vocabulary itself, and the
+  # nearest thing it offers is feedback ABOUT quality. PROV-O has the shape, so this specialises
+  # prov:Revision: the records handed on are a revision of the records held, and this says what
+  # the revision was.
+  rdfs:subClassOf prov:Revision;
   rdfs:label "A column read as a kind other than the one the file held";
   rdfs:comment "States what was cast, how much of it, and what could not be cast and was left alone. The source file is never written to; this describes what the workflow does to the records on their way through it.".
 fw:columnRepair a owl:ObjectProperty; rdfs:range fw:ColumnRepair;

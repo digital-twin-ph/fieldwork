@@ -1,0 +1,9 @@
+import{n as p}from"./chunk-WIQ2OPG5.js";import{j as c}from"./chunk-SO2IVJPV.js";function f(e){if(e.type!=="mean_center")return;if(typeof e.params.label!="string"||!e.params.label.trim()||e.params.label.length>60)throw new Error("Name Mean center using 1\u201360 characters.");let t=e.params;if(!Number.isInteger(t.zone)||t.zone<1||t.zone>60||!["north","south"].includes(t.hemisphere))throw new Error("Choose a WGS84 UTM zone 1\u201360 and hemisphere for Mean center.")}function h(e,t){if(f({id:"check",type:"mean_center",x:0,y:0,params:t}),!e?.features?.length)throw new Error("Mean center needs at least one point.");if(e.features.some(o=>!o.geometry))throw new Error("Mean center requires known coordinates for every point.");let n=p(t.zone,t.hemisphere),i=e.features.reduce(([o,a],s)=>{let[m,u]=n.forward(s.geometry.coordinates);return[o+m,a+u]},[0,0]),r=[i[0]/e.features.length,i[1]/e.features.length];return{coordinates:n.inverse(r),projected:r,crs:n.crs,count:e.features.length,method:"Unweighted arithmetic mean of WGS84 UTM easting and northing; center returned in CRS84."}}function g(e,t,n,i){let r=`urn:fieldwork:run:${n}:output:${e.id}`,o=`${r}:activity`,a=`<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT (${t.coordinates.join(" ")})`,s=`@prefix fw: <urn:fieldwork:>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+<${o}> a fw:MeanCenterComputation, prov:Activity; prov:used <urn:fieldwork:run:${n}:output:${i}>; ${c(t.crs)}fw:inputCount ${t.count}.
+<${r}> a fw:MeanCenterResult, prov:Entity; prov:wasGeneratedBy <${o}>; geo:hasGeometry <${r}:geometry>.
+<${r}:geometry> a geo:Geometry; geo:asWKT ${JSON.stringify(a)}^^geo:wktLiteral.
+`;return{nodeId:e.id,kind:"computation",facts:s,input:s,rules:"",conclusions:[],method:t.method}}export{f as a,h as b,g as c};
+//# sourceMappingURL=chunk-PMPV3QSG.js.map

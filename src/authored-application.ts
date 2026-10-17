@@ -256,12 +256,17 @@ export function authoredReceipt(
   // and a result they have to take on trust -- and the two kinds are distinguished here as they
   // are in the interface, because a value nobody collected and a value this could not read are
   // not the same finding.
+  // Stated in DQV's terms as well as this project's: a reading problem IS a quality
+  // measurement of one metric over one resource, and saying so lets a reader with DQV tooling
+  // read it without knowing this ontology. Researched 2026-10-17; experiment 117.
   const problems=dataIssues.map(issue=>
     `${activity} fw:readingProblem [ a fw:ReadingProblem; `
+    +`dqv:isMeasurementOf ${issue.why==='missing'?'fw:absentValues':'fw:unreadableValues'}; `
     +`fw:boundAttribute ${JSON.stringify(issue.field)}; `
     +`fw:problemKind ${issue.why==='missing'?'fw:ValueAbsent':'fw:ValueUnreadable'}; `
     +`fw:affectedRecordCount ${issue.count}; fw:consideredRecordCount ${issue.of} ].`).join('\n');
   const statement=`@prefix fw: <${NS}>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+    +(problems?`@prefix dqv: <http://www.w3.org/ns/dqv#>.\n`:'')
     +`${activity} a fw:RuleApplication, prov:Activity; fw:ruleSource "authored"; `
     +`fw:rulesetTitle ${JSON.stringify(authored.title)}; `
     +`fw:mustNotBeReadAs ${JSON.stringify(authored.mustNotBeReadAs)}; `

@@ -516,6 +516,23 @@ the number nothing records today — and it is also the evidence that a prespeci
 not quietly rewritten after the fact.
 
 
+**Multi-member study areas.** The widget stays — `fw:studyArea` is
+`rdfs:subPropertyOf prov:used` with `rdfs:range fw:StudyArea`, so a parameter could not
+satisfy the declared range and the receipt would weaken. But `fw:StudyArea`'s own comment
+already proposes membership: *"multiple named, disconnected features without requiring a
+dissolved aggregate geometry"*. That turns the three-cities comparison from three nodes
+into one area with three members — the clutter the practitioner described, removed without
+touching twelve port contracts or any receipt.
+[120](experiments/120-the-study-area-as-a-declared-resource.md).
+
+**The study area as a declared resource, not an edge.** Twelve active widgets take an
+`area` port and only three are ingest, so a picker inside ingest widgets removes a quarter
+of the wiring. [120](experiments/120-the-study-area-as-a-declared-resource.md) measures it,
+records the practitioner's lean — *"there's pros and cons to doing this but I am for
+decreasing unnecessary friction"* — and names the three things a change must not lose: the
+deliberate difference between an acquisition bound and an analytical extent, pinning and
+drift on a reused area, and the `prov:used` assertion the edge currently provides for free.
+
 **Measurement scale on a field binding.** A binding declares `kind: number | boolean | term`,
 and `term` covers both *clinic / pharmacy / health post* (unordered) and *NoDeaths / Few / Many*
 (ordered). The ruleset worked example produces the second kind and nothing records the order, so

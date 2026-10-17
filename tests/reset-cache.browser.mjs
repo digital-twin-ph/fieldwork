@@ -40,9 +40,15 @@ test('?reset-cache=1 unregisters the worker, empties the caches, and reloads cle
   expect(state.registrations,'a fresh worker may re-register after the reload').toBeLessThanOrEqual(1);
   await expect(page.locator('#app-version')).toContainText('v');
   // Exercise it after the reset, so "clean" means it works rather than only that it loaded.
-  // The workspace it returns to is whatever was saved, so this counts the change rather than
-  // the total.
-  const before=await page.locator('.react-flow__node').count();
+  //
+  // Wait for the restore to FINISH before counting. Counting straight after the reload read a
+  // canvas midway through rendering the saved workflow: `before` was 0, the seven saved nodes
+  // then arrived, and adding one made eight against an expected one. WebKit in CI is slow
+  // enough to lose that race and every local run was fast enough to win it, which is the
+  // signature of a test racing the application rather than a defect in it. 2026-10-17.
+  const before=await page.evaluate(()=>
+    JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{"nodes":[]}').nodes.length);
+  await expect(page.locator('.react-flow__node')).toHaveCount(before,{timeout:30000});
   await page.locator('#node-library [data-add]').first().click();
   await expect(page.locator('.react-flow__node')).toHaveCount(before+1);
   expect(errors).toEqual([]);

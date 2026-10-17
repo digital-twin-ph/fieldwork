@@ -574,3 +574,74 @@ experience, which only the observation in
 [experiment 63](../experiments/63-worked-example-runbooks.md) and a usability review would show. And it
 establishes nothing about the correctness of any widget's computation: this is an audit of
 design alignment, not of results.
+
+## D2, a fourth implementation — `snap_to_network`
+
+_Added 2026-10-17, after the practitioner observed that OSMnx's `nearest_nodes` is what computes
+the first and last **distance legs** either side of a network traversal, and asked whether a
+widget that obtains those distances separately is a duplicate: "If there is already a function
+that obtains D1 and D3 distances that is a duplicate and needs to be removed."_
+
+> **A collision, stated before it causes one.** In the practitioner's usage — taken from the
+> [Cholera Advanced 1 notebooks](../glossary.md#route-distance-legs), which use OSMnx and are the
+> same upstream work that produced the street network this project ships — **D stands for
+> distance**: D1 origin to the network, D2 along the network, D3 network to destination. In *this
+> document* D1–D10 are the **primitive design audit checks**, and D2 is the duplicate-operation
+> check. Same token, two meanings, both already in this repository. Below, the audit checks keep
+> the bare form and the distance legs are written out.
+
+It is. D2's table records **three** implementations of nearest-neighbour-with-distance; this is a
+fourth, and the evidence is in its own source rather than inferred.
+
+`src/network-snap.ts` opens: *"Which network node each site attaches to, and how far that is from
+the site"* — the operation, stated. Inside, above the search: *"Same nearest-node search isochrone
+performs, kept identical so the two agree."* And the header records where it came from:
+*"Extracted from `isochrone`, which does this before it does anything else."* So the computation
+exists twice by design, and a third time in `measure_distance`'s general form.
+
+**The determination D2 now requires:**
+
+1. **The general implementation** is `measure_distance` — for each point in A, the nearest in B
+   with the distance.
+2. **What `snap_to_network` adds** is two things, and they classify differently.
+   - *Nearest over a network's nodes rather than a point layer.* A network node is a point; this
+     is a port-type matter, not an operation. **Domain.**
+   - *Relocating the geometry to the chosen node.* A distinct act — and one this project should
+     not want. OSMnx's `nearest_nodes` returns the node and the distance and moves nothing; the
+     **first distance leg** is then an explicit component rather than a displacement. Here the
+     node is already carried as `networkNodeId` and that leg as `snapDistanceM`, so the move adds
+     nothing the attributes do not already say, and costs the site's own position.
+3. **Disposition: it merges.** What it adds that is real is domain; what it adds that is an
+   operation is a lossy encoding of facts it already records.
+
+**The move is already being worked around.** On 2026-10-14 the widget gained `siteLongitude` and
+`siteLatitude` as properties, with the comment *"Where the site actually is, kept on the point
+that no longer stands there … snapping overwrites the geometry with the junction's, so until now
+the only trace of the site's own position was a distance"*. `reachable_corridor` needed the
+original back to draw the first leg. A widget that overwrites a value and then carries a shadow
+copy so consumers can undo it is describing its own merge — and it is the same pattern a
+practitioner named on 2026-10-16 about data repairs: *keep the original, work on a copy.*
+
+**What blocks the retirement — smaller than first written here.** This section claimed on
+2026-10-17 that "the John Snow catchment examples wire it explicitly". **They do not.** No
+example module references `snap_to_network`; the only "snap" in `src/john-snow.ts` is the word
+*snapshot* in a layer label. The claim was asserted without being checked, and is corrected in
+place rather than quietly deleted: an audit that is wrong about what depends on a widget is
+worse than one that says nothing.
+
+What actually depends on it:
+
+| | How |
+| --- | --- |
+| `reachable_nodes` | reads `networkNodeId` from the points it is given |
+| `reachable_corridor` | reads `networkNodeId`, and `siteLongitude`/`siteLatitude`/`snapDistanceM` **when present** — `src/reachable-corridor.ts` says *"when the junctions came through `snap_to_network`"* |
+| four test files | `network-snap`, `reachable-nodes`, `stack-polygons`, `micro-workflow` |
+
+Both consumers read **attributes**, not the widget, and the corridor already treats the first-leg
+distance as optional. So whatever emits `networkNodeId` and that distance satisfies them, and the
+merge is smaller than a base-contract rewrite: the general operation gains those two attributes,
+leaves the geometry alone, and `snap_to_network` becomes declarable as retired.
+
+The order still matters. A retired widget never runs and the loader refuses it, so the general
+operation must emit the attributes **before** the flag is set, or a saved workflow holding the
+widget stops loading.

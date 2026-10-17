@@ -40,4 +40,4 @@ northing meters`+t;var d=f/2,w=0,c=0,N,P,T,E,O;return d>0&&(N=1e5/Math.pow(10,d)
 `),e.offNetwork?.length&&(f+=`<${l}> fw:offNetworkSiteCount ${e.offNetwork.length}; fw:offNetworkSites ${JSON.stringify(JSON.stringify(e.offNetwork))}.
 `);for(let d of e.features)d.offNetworkMetres!==void 0&&(f+=`<${h}:cell:${encodeURIComponent(d.id)}> fw:offNetworkMetres ${d.offNetworkMetres}.
 `)}return f+=Ji(t,e,h,l,i),{nodeId:t.id,kind:"computation",facts:f,input:f,rules:"",conclusions:[],method:a}}export{Di as a,Ui as b,m0 as c,Zr as d,g0 as e,d0 as f,hg as g,p0 as h,lg as i,fg as j,_0 as k,sn as l,Yr as m,rn as n,ug as o,cg as p,tn as q,v0 as r,en as s,x0 as t,w0 as u,mg as v,gg as w};
-//# sourceMappingURL=chunk-UB3RCO35.js.map
+//# sourceMappingURL=chunk-WIQ2OPG5.js.map

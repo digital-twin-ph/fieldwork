@@ -233,6 +233,50 @@ is itself worth knowing.
 **The dendrogram** clusters columns by nullity for datasets too wide to read as a heatmap. An
 input here has a handful of columns; the matrix shows what the dendrogram would summarise.
 
+## Is there already an ontology for this? Half of one.
+
+The practitioner, 2026-10-17: *"Perhaps we can construct a data quality repair ontology unless
+one exists already (needs research)."* Researched, from the normative documents rather than from
+memory.
+
+**For assessment, yes: [DQV](https://www.w3.org/TR/vocab-dqv/)**, the W3C Data Quality
+Vocabulary, a 2016 Interest Group Note and companion to DCAT. It gives `dqv:QualityMeasurement`
+(a `qb:Observation`), `dqv:Metric`, `dqv:Dimension`, `dqv:isMeasurementOf`, `dqv:computedOn` and
+`dqv:value`. Deliberately a *frame*: it does not define what quality means, so the dimensions
+come from a methodology somebody else chose.
+
+**For repair, no.** Read from [the vocabulary itself](https://www.w3.org/ns/dqv.ttl): nothing in
+DQV defines terms for repairing or correcting data. The nearest thing is
+`dqv:UserQualityFeedback`, which is feedback *about* quality, not a fix. So the repair side is
+ours to specialise — on PROV-O, which does have the shape: `prov:wasRevisionOf` (Entity → Entity,
+a sub-property of `prov:wasDerivedFrom`) and the `prov:Revision` class, confirmed against
+[PROV-O](https://www.w3.org/ns/prov-o).
+
+### What of DQV does missingno address?
+
+Almost none of it, and that is the interesting part.
+
+| missingno draws | What it actually produces | Expressible in DQV |
+| --- | --- | --- |
+| **bar** | one completeness figure per column | **yes** — a `dqv:QualityMeasurement` of a completeness metric, `dqv:computedOn` the column |
+| **matrix** | a mask, one mark **per record** | **no** — `dqv:QualityMeasurement` is an observation about a dataset or distribution. DQV has no term for a per-record fact |
+| **heatmap** | a figure per **pair** of columns | **not directly** — `dqv:computedOn` takes a resource, and a pair of columns is not one |
+| **dendrogram** | a clustering of columns | **no** — a derived structure, not a measurement |
+
+So missingno addresses exactly **one** quality dimension — completeness — and three of its four
+plots produce things DQV cannot say. The reason is structural: DQV models quality as *scalar
+measurements attached to a dataset*, and missingno's value is in the **pattern** — where the gaps
+fall, and which columns share them. A vocabulary of totals has no way to express a shape.
+
+That matters here because this project's two findings divide along the same line. The counts in
+`fw:ReadingProblem` map onto DQV cleanly and should. The nullity matrix does not map onto it at
+all, and inventing `fw:` terms to make it do so would be minting vocabulary for a picture.
+
+One further gap: missingno knows only null and not-null. **Readability is a different dimension
+from completeness** — a count written `"3"` is present and unusable — and sits nearer ISO 25012's
+syntactic accuracy than its completeness. `fw:ValueAbsent` and `fw:ValueUnreadable` were split
+for a practitioner's reasons on 2026-10-16, and the split turns out to be a dimensional one.
+
 ## What this does not establish
 
 - **That the profile's summary statistics are the right ones.** Min, median, max and an IQR

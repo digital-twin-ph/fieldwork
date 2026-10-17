@@ -705,7 +705,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           const quote=(v:string)=>JSON.stringify(v);
           const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
             +`@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
-            +repairs.map(r=>`${entity} fw:columnRepair [ a fw:ColumnRepair; `
+            // prov:qualifiedRevision, because a repair IS a revision: the records handed on are
+            // a revision of the records held. DQV has no term for repair, so this is PROV's.
+            +repairs.map(r=>`${entity} prov:qualifiedRevision [ a fw:ColumnRepair; `
               +`fw:boundAttribute ${quote(r.column)}; fw:repairedAs ${quote(r.to)}; `
               +`fw:repairedRecordCount "${r.cast}"^^xsd:integer; `
               +`fw:unrepairedRecordCount "${r.unreadable.length}"^^xsd:integer`

@@ -95,8 +95,15 @@ test('the Inspector says what the offered version of a widget changed',async({pa
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=snow-extent');
+  // Wait for the example to settle before selecting. Clicking a node while the workspace is
+  // still restoring leaves the Inspector on its empty state -- "Choose a node to inspect its
+  // settings" -- and the assertion below then reads that instead of the node. WebKit is slow
+  // enough to lose this and every Chromium run won it, which is the signature of a test racing
+  // the application. Found 2026-10-17 by running the suite as the gate configures it.
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('.react-flow__node[data-id="map"]').click();
   const inspector=page.locator('#inspector-content');
+  await expect(inspector).not.toContainText('Choose a node to inspect');
   await expect(inspector).toContainText('What changed in 0.10.0');
   // Folded by default for an ordinary release; the text is there once opened.
   await inspector.locator('details',{hasText:'What changed in 0.10.0'}).first().click();

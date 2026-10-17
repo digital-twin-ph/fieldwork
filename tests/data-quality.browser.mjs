@@ -78,6 +78,9 @@ test('a repair is stated in the run evidence',async({page})=>{
 
   await page.locator('[data-view="rules"]').click();
   const n3=page.locator('#n3-preview');
+  // A repair is a prov:Revision: the records handed on revise the records held. DQV has no
+  // term for repair, researched 2026-10-17, so this is PROV's shape rather than a coined one.
+  await expect(n3).toContainText('prov:qualifiedRevision');
   await expect(n3).toContainText('fw:ColumnRepair');
   await expect(n3).toContainText('fw:boundAttribute "DEATHS"');
   await expect(n3).toContainText('fw:repairedRecordCount "63"');

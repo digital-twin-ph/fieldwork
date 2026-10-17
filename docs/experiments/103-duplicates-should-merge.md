@@ -6,6 +6,14 @@ _Created 2026-10-12 · Updated 2026-10-15_
 through is extended, and the first case is worked. Nothing is merged yet; the merge is blocked on
 port work that was already blocked.
 
+> **Which D.** Every `D2`, `D5` and `D7` in this document is a **primitive design audit check**.
+> This project also uses D1, D2 and D3 for **route distance legs** — D is distance there — taken
+> from the Cholera Advanced 1 notebooks; the [glossary](../glossary.md#route-distance-legs)
+> records both. Checked on 2026-10-17 when a practitioner asked whether the D7 here was a mix-up:
+> it is not, there is no seventh distance leg, and D5 and D7 are the nulls and naming checks. The
+> ambiguous one is **D2**, which appears ten times below and is the duplicate-operation check
+> every time.
+
 ## The question asked
 
 The practitioner, on being shown that `nearest` is the general nearest-neighbour operation

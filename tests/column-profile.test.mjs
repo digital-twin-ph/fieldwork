@@ -98,3 +98,34 @@ test('equal-width bins, because a gap and a spike are properties of spacing',asy
   // Nothing to draw is nothing drawn.
   assert.deepEqual(histogram(['a',null],12),[]);
 });
+
+// 117, after the practitioner's correction: a refusal to visualise is conditional, so the thing
+// refused has to be computable before the condition can be tested.
+test('nullity correlation needs two columns that vary, and says which do not',async()=>{
+  const {nullityPairs}=await import('../build/column-profile.js');
+  const col=(column,states)=>({column,states});
+  // Perfectly together: both unreadable in exactly the same records.
+  const together=nullityPairs([
+    col('a',['ok','absent','ok','absent']),
+    col('b',['ok','absent','ok','absent'])]);
+  assert.equal(together.pairs.length,1);
+  assert.equal(together.pairs[0].phi,1);
+  assert.equal(together.pairs[0].together,2);
+
+  // Perfectly apart: never unreadable in the same record.
+  const apart=nullityPairs([
+    col('a',['absent','ok','absent','ok']),
+    col('b',['ok','absent','ok','absent'])]);
+  assert.equal(apart.pairs[0].phi,-1);
+  assert.equal(apart.pairs[0].together,0);
+
+  // A column with no variance is named rather than silently dropped: "this one is never
+  // missing" is itself worth knowing, and its absence from the plot would otherwise look
+  // like an omission.
+  const mixed=nullityPairs([
+    col('always',['ok','ok','ok','ok']),
+    col('never',['absent','absent','absent','absent']),
+    col('varies',['ok','absent','ok','absent'])]);
+  assert.deepEqual(mixed.pairs,[],'one varying column makes no pair');
+  assert.deepEqual(mixed.constant,['always','never']);
+});

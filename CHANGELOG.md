@@ -5,6 +5,13 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.8.1 — In development
 
+- **A map says which design rules it was held to.** Four rules are applied while a visualisation
+  is assembled, and its receipt states every one — including the ones that did not apply, so a
+  reader can tell a rule that passed from a rule that was never run. Text and mark contrast are
+  **measured** against WCAG SC 1.4.3 and 1.4.11 with the number in the receipt; the palette and
+  the no-data colour are **categorical** checks, and each rule declares which it is. Expressed in
+  **EARL** (the assertion), **DQV** (the measurement) and WCAG's own IRIs (the criteria) — only
+  the threshold is new vocabulary, because EARL states it does not carry one.
 - **A shapes-and-gaps tab in the data quality dialog**, with a **nullity matrix** adapted from
   [missingno](https://github.com/ResidentMario/missingno): every column against the same records,
   one mark per record in file order, plus a completeness sparkline that makes the worst *records*

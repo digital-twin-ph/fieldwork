@@ -5,6 +5,29 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.9.0 — In development
 
+- **Reachable junctions attaches its own origins.** It refused any point without a
+  `networkNodeId` and told the practitioner to add a `snap_to_network` step first, which made a
+  whole widget a prerequisite for one nearest-neighbour search. It now finds the junction itself,
+  by the same `nearestNetworkNode` over the same projection, so the two paths agree junction for
+  junction and metre for metre — asserted, not assumed. A point that arrives already snapped is
+  used exactly as it arrives. This is steps 1 and 2 of the `snap_to_network` retirement, which
+  turned out to be one step: a zone with nothing to project is not worth adding on its own.
+  **The step does not move the point** — it reads the nearest junction, charges the distance
+  against the budget, and leaves the origin where it stands.
+- **The new `zone`, `hemisphere` and `maxSnapM` are optional, so nothing had to be migrated.**
+  The widget's reason for having no zone stays true whenever origins arrive snapped: nothing in
+  the Dijkstra re-measures geometry. Requiring a zone for a run that never projects would demand
+  a figure the widget does not use, so completeness is refused at **run** time, naming the
+  origins that needed it, and every saved workflow keeps working untouched.
+- **Reachable junctions had no Inspector panel at all** — not merely none for the new parameters.
+  Its travel time, speed, mode and direction have been declared, implemented and tested since
+  experiment 83, and the only way to set any of them was to edit the workflow file. The node fell
+  through every branch of the Inspector's type chain. `palette.ts` could not have caught it: it
+  asserts a widget is **addable**, and addable is not configurable.
+- **A successful edit could throw while rewriting the Inspector.** The same focus-versus-innerHTML
+  hazard fixed in the rollback path earlier the same day, on the path where the edit succeeds.
+  Found by a test that types a UTM zone. Both paths drop focus first now.
+
 - **The Run workflow button was invisible whenever it was disabled.** Not removed — rendered at
   **1.22:1** against its own background, in both colour schemes, measured with this project's own
   `contrastRatio`. `.button.primary:disabled{opacity:.45}` dims the whole element, which moves the

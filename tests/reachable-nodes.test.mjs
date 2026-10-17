@@ -49,11 +49,20 @@ test('inbound answers a different question than outbound on a one-way street',()
   assert.deepEqual(Object.keys(toB).sort(),['a','b'],'a can reach b, so inbound from b finds a');
 });
 
-test('an origin that is not on the network names the step to add',()=>{
+// This asserted the OLD contract until 2026-10-17: an unattached origin named `snap_to_network`
+// as the step to add. The widget attaches its own origins now, so the refusal is narrower -- it
+// fires only when the step has nothing to measure nearest IN, and it offers both ways out.
+test('an origin that is not on the network is refused only when no frame is set',()=>{
   const network=net(['a'],[]);
   const loose={type:'Feature',id:'x',properties:{name:'Health post'},geometry:{type:'Point',coordinates:at(0)}};
   assert.throws(()=>reachableNodes(points(loose),network,node(),'run','src'),
-    /Health post: this origin is not on the network\. Add a Snap to street network step before this one\./);
+    e=>/Health post/.test(e.message)
+      &&/not on the network yet/.test(e.message)
+      &&/snap the sites before this step/.test(e.message));
+  // With a frame it attaches the origin itself and needs no separate widget at all.
+  const attached=reachableNodes(points(loose),network,node({zone:31,hemisphere:'north'}),'run','src');
+  assert.equal(attached.value.features.length,1,'the lone junction is reached from the attached origin');
+  assert.equal(attached.value.features[0].properties.networkNodeId,'a');
 });
 
 test('an origin snapped to a different network is refused, not silently dropped',()=>{

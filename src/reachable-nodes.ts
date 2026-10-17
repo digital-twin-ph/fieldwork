@@ -1,9 +1,10 @@
 import type {PointCollection,PointFeature,Position,WorkflowNode} from './types.js';
 import type {Network} from './catchments.js';
 import type {OffNetworkSite,UnconnectedSite} from './catchments.js';
-import {validateNetwork} from './catchments.js';
+import {validateNetwork,metric,nearestNetworkNode} from './catchments.js';
 import {defaultSpatialReference} from './spatial-reference.js';
 import type {Receipt} from './results.js';
+import {metricCRSAssertion} from './metric-crs.js';
 
 /** Which network junctions lie within a travel budget of an origin, and how much
  *  budget is left at each one.
@@ -26,10 +27,29 @@ import type {Receipt} from './results.js';
  *  a Victorian London pedestrian assumption without saying so. The mode is therefore
  *  declared rather than implied, and it is checked against the speed.
  *
- *  Takes no UTM zone, unlike the other eight metric widgets. The costs are the
- *  network's own `lengthM` values, supplied by whatever produced the network; nothing
- *  here re-measures geometry, so there is nothing to project. The trade is that those
- *  lengths are taken entirely on trust. */
+ *  Takes no UTM zone WHILE IT IS ONLY ROUTING. The costs are the network's own `lengthM`
+ *  values, supplied by whatever produced the network; nothing in the Dijkstra re-measures
+ *  geometry, so there is nothing to project. The trade is that those lengths are taken
+ *  entirely on trust.
+ *
+ *  **It also attaches origins to the network now, and that part does re-measure geometry.**
+ *  Until 2026-10-17 this widget refused any origin without a `networkNodeId` and told the
+ *  practitioner to add a `snap_to_network` step. That made a whole widget a prerequisite for
+ *  one line of arithmetic, which is what the practitioner's D1 + D2 + D3 reading found:
+ *  *"The snap to network is actually not needed if we follow the D1 + D2 + D3."*
+ *
+ *  So `zone`, `hemisphere` and `maxSnapM` are declared here, and they are **optional**. A
+ *  degree of longitude is not a degree of latitude, so finding the nearest junction needs a
+ *  metric frame -- but only for origins this widget has to attach itself. An origin arriving
+ *  with a `networkNodeId` is used exactly as it arrives, no projection happens, and demanding a
+ *  zone for a run that never projects anything would be asking for a figure the widget does not
+ *  use. The zone is therefore refused at RUN time, naming the origins that needed it, rather
+ *  than required at edit time. That is also why no migration rewrites saved workflows: a saved
+ *  `reachable_nodes` node is fed snapped points, and nothing about it changed.
+ *
+ *  Attaching here does NOT move the point. `snap_to_network` overwrites the geometry with the
+ *  junction's and carries the site's real position in shadow attributes; this reads the nearest
+ *  junction, charges the distance, and leaves the origin where it stands. */
 
 export const MAX_ORIGINS=10;
 
@@ -66,6 +86,19 @@ export function validateReachNode(node:WorkflowNode<'reachable_nodes'>):void{
     throw new Error(`${speedMPerMin} m/min is ${kmh(speedMPerMin)} km/h, which is outside the plausible range for ${travelMode}: ${band.minMPerMin} to ${band.maxMPerMin} m/min, or ${kmh(band.minMPerMin)} to ${kmh(band.maxMPerMin)} km/h. Change the speed, or change the mode to match it.`);
   if(!['outbound','inbound'].includes(direction))
     throw new Error('Choose outbound travel from the site or inbound travel to it.');
+  // Optional, and each checked ONLY ON ITS OWN. An unset zone is not an error here, and neither
+  // is half a pair: the Inspector sets one field at a time, so demanding both together made the
+  // pair unsettable through the UI -- the first edit was refused and rolled back before the
+  // second could be made. Found by the browser test on 2026-10-17. Completeness is a run-time
+  // question, asked only when an origin turns up that this step has to attach itself, and the
+  // run names those origins. What is checked here is that a declared value is a usable one.
+  const {zone,hemisphere,maxSnapM}=node.params;
+  if(zone!==undefined&&(!Number.isInteger(zone)||zone<1||zone>60))
+    throw new Error('Choose a UTM zone from 1 to 60, or leave it unset and snap the sites before this step.');
+  if(hemisphere!==undefined&&!['north','south'].includes(hemisphere))
+    throw new Error('Choose a hemisphere, north or south, or leave it unset.');
+  if(maxSnapM!==undefined&&(!Number.isFinite(maxSnapM)||maxSnapM<0||maxSnapM>1000))
+    throw new Error('Use a snap limit from 0 to 1,000 metres.');
   if(typeof node.params.label!=='string'||!node.params.label.trim()||node.params.label.length>60)
     throw new Error('Name the step using 1–60 characters.');
 }
@@ -105,13 +138,50 @@ export function reachableNodes(
   if(origins.length>MAX_ORIGINS)
     throw new Error(`Reachability handles up to ${MAX_ORIGINS} origins; this layer has ${origins.length}.`);
   const known=new Set(network.nodes.map(n=>n.id));
+  const {zone,hemisphere,maxSnapM}=node.params;
+
+  /** Where each origin joins the network, and what the first leg costs.
+   *
+   *  Two ways in, and they must not disagree. An origin that arrives with a `networkNodeId` was
+   *  attached by `snap_to_network` and is taken exactly as it arrives -- the same junction, the
+   *  same `snapDistanceM`, the same `offNetworkMetres`. One that does not is attached here, by
+   *  the same `nearestNetworkNode` search over the same projection, so the two paths agree by
+   *  construction rather than by two implementations being kept alike. */
+  const unsnapped=origins.filter(f=>typeof f.properties.networkNodeId!=='string'||!f.properties.networkNodeId);
+  if(unsnapped.length&&(zone===undefined||hemisphere===undefined))
+    throw new Error(`${unsnapped.length} origin${unsnapped.length===1?'':'s'} ${unsnapped.length===1?'is':'are'} not on the network yet: `
+      +unsnapped.slice(0,3).map(f=>String(f.properties.name)).join(', ')+(unsnapped.length>3?`, and ${unsnapped.length-3} more`:'')
+      +'. Set this step\u2019s UTM zone and hemisphere so it can find the nearest junction, or snap the sites before this step. '
+      +'Nearest has to be measured in metres: a degree of longitude is not a degree of latitude, and nearest-in-degrees picks the wrong junction away from the equator.');
+  const projection=unsnapped.length?metric(zone as number,hemisphere as 'north'|'south'):null;
+  const projected=projection?new Map(network.nodes.map(n=>[n.id,projection.forward(n.coordinates)])):null;
+  // Absent limit means no limit: every origin attaches, and none is marked as having crossed
+  // unmapped ground. The same degrading assumption snap_to_network settled on -- a site beyond
+  // the limit is attached anyway and MARKED, never dropped, because the sites furthest from a
+  // mapped road are where OSM coverage is thinnest and where access analysis is most needed.
+  const limitM=Number.isFinite(maxSnapM)?maxSnapM as number:Infinity;
+
+  interface Attachment {nodeId:string; spentM:number; offNetworkMetres?:number; site?:Position; attachedHere:boolean}
+  const attachment=new Map<PointFeature,Attachment>();
   for(const f of origins){
     const id=f.properties.networkNodeId;
-    if(typeof id!=='string'||!id)
-      throw new Error(`${f.properties.name}: this origin is not on the network. Add a Snap to street network step before this one.`);
-    if(!known.has(id))
-      throw new Error(`${f.properties.name}: network node ${id} is not in this network. The sites were snapped to a different network.`);
+    if(typeof id==='string'&&id){
+      if(!known.has(id))
+        throw new Error(`${f.properties.name}: network node ${id} is not in this network. The sites were snapped to a different network.`);
+      const d1=Number(f.properties.snapDistanceM),off=Number(f.properties.offNetworkMetres);
+      const site=Number.isFinite(Number(f.properties.siteLongitude))
+        ?[Number(f.properties.siteLongitude),Number(f.properties.siteLatitude)] as Position:undefined;
+      attachment.set(f,{nodeId:id,spentM:Number.isFinite(d1)&&d1>0?d1:0,
+        ...(Number.isFinite(off)&&off>0?{offNetworkMetres:off}:{}),...(site?{site}:{}),attachedHere:false});
+      continue;
+    }
+    const here=f.geometry!.coordinates as Position;
+    const {node:nearest,distanceM}=nearestNetworkNode(network.nodes,projected!,projection!.forward(here));
+    const metres=Number(distanceM.toFixed(2));
+    attachment.set(f,{nodeId:nearest.id,spentM:metres,
+      ...(metres>limitM?{offNetworkMetres:metres}:{}),site:[...here] as Position,attachedHere:true});
   }
+  const attachedHere=origins.filter(f=>attachment.get(f)!.attachedHere);
   const nodeAt=new Map(network.nodes.map(n=>[n.id,n.coordinates]));
   // Inbound reverses every edge, which answers "who can reach me" rather than
   // "where can I get to". On one-way streets the two sets differ.
@@ -128,7 +198,8 @@ export function reachableNodes(
   // alert on the widget. Experiment 114.
   const unconnected:UnconnectedSite[]=[],offNetwork:OffNetworkSite[]=[];
   for(const origin of origins){
-    const originNode=origin.properties.networkNodeId as string;
+    const joined=attachment.get(origin)!;
+    const originNode=joined.nodeId;
     // D1 is charged here too, so this chain and the monolithic isochrone agree. `snap_to_network`
     // attaches `snapDistanceM` to every point it moves -- the walk from where the site stood to
     // the junction it was snapped to -- and the budget pays for it before any street is walked.
@@ -138,15 +209,14 @@ export function reachableNodes(
     // chain and the monolith are what caught it, by failing when only one of the two was fixed.
     // A site that moved further than the whole budget reaches nothing, which is the honest answer
     // rather than a negative remainder. Experiment 114.
-    const d1=Number(origin.properties.snapDistanceM);
-    const spent=Number.isFinite(d1)&&d1>0?d1:0;
+    const spent=joined.spentM;
     const costs=spent>=budgetM?new Map<string,number>():costsWithin(adjacency,originNode,budgetM,spent);
     if(!costs.size)unconnected.push({siteId:String(origin.id),name:String(origin.properties.name),
       distanceM:Number(spent.toFixed(2)),budgetM:Number(budgetM.toFixed(2))});
-    const offNetworkMetres=Number(origin.properties.offNetworkMetres);
-    if(Number.isFinite(offNetworkMetres)&&offNetworkMetres>0)
+    const offNetworkMetres=joined.offNetworkMetres;
+    if(offNetworkMetres!==undefined)
       offNetwork.push({siteId:String(origin.id),name:String(origin.properties.name),
-        distanceM:offNetworkMetres,limitM:offNetworkMetres});
+        distanceM:offNetworkMetres,limitM:Number.isFinite(limitM)?limitM:offNetworkMetres});
     reachedPerOrigin.push(costs.size);
     for(const [nodeId,costM] of [...costs].sort((a,b)=>a[1]-b[1]||a[0].localeCompare(b[0]))){
       const travelled=Number(costM.toFixed(2));
@@ -158,9 +228,9 @@ export function reachableNodes(
           // of the route, carried so that whatever draws the corridor can draw that leg too.
           // Absent when the points were not snapped by `snap_to_network`, in which case the leg
           // is unknown rather than zero.
-          ...(Number.isFinite(Number(origin.properties.siteLongitude))?{
-            originLongitude:Number(origin.properties.siteLongitude),
-            originLatitude:Number(origin.properties.siteLatitude),
+          ...(joined.site?{
+            originLongitude:joined.site[0],
+            originLatitude:joined.site[1],
             originSnapDistanceM:spent}:{}),
           travelMetres:travelled,
           travelMinutes:Number((costM/speedMPerMin).toFixed(2)),
@@ -179,6 +249,16 @@ export function reachableNodes(
     'The walk from the site to its own junction (snapDistanceM, charged since 2026-10-14) comes out of the budget before any street is walked, so a site set back from the road reaches less of the network than one on it. An origin whose walk exceeds the whole budget reaches nothing.',
     `Street lengths come from the network as supplied (${network.source}) and are not re-measured here. If they are wrong, every distance and time above is wrong with them.`,
   ];
+  // Which origins this step attached itself, and in what frame. A reader has to be able to tell
+  // a junction chosen upstream from one chosen here, because the two were chosen by the same
+  // search but under different parameters, and only one of them is recorded on this node.
+  if(attachedHere.length)notes.unshift(`${attachedHere.length} of ${origins.length} origin${origins.length===1?'':'s'} `
+    +`${attachedHere.length===1?'was':'were'} attached to the network by this step, nearest junction by straight-line distance in ${projection!.crs}`
+    +`${Number.isFinite(limitM)?`, snap limit ${limitM} m`:', with no snap limit set, so none is marked as having crossed unmapped ground'}. `
+    +`Nearest is straight-line, not along the network: a junction across a railway or a river can be the nearest one. `
+    +`The point is not moved \u2014 it keeps its own position, and the distance to its junction is charged against the budget.`);
+  if(origins.length>attachedHere.length&&attachedHere.length)
+    notes.unshift(`${origins.length-attachedHere.length} origin${origins.length-attachedHere.length===1?'':'s'} arrived already snapped and ${origins.length-attachedHere.length===1?'was':'were'} used as supplied, so this result mixes two attachments made under different settings.`);
   if(offNetwork.length)notes.unshift(`${offNetwork.length} origin${offNetwork.length===1?'':'s'} reached the network across ground no street covers (`
     +offNetwork.map(u=>`${u.name}, ${Math.round(u.distanceM)} m`).join('; ')
     +`), charged as a straight line at the street speed. ${offNetwork.length===1?'That distance is':'Those distances are'} a lower bound on the real walk, so ${offNetwork.length===1?'this origin reaches':'these origins reach'} further here than on the ground.`);
@@ -200,6 +280,16 @@ export function reachableNodes(
     +`fw:travelMode ${JSON.stringify(travelMode)}; `
     +`fw:travelDirection ${JSON.stringify(direction)}; `
     +`fw:edgeLengthSource ${JSON.stringify(network.source)}; `
+    // Deliberately NOT the snap widget's site-count and snap-limit properties. Both are domained
+    // to that widget's own activity class, so asserting them here would cross a declared domain,
+    // and its site count means every site it moved where this means only the origins attached
+    // HERE. The coupling gate caught the undeclared pair on 2026-10-17, which is what it is for;
+    // writing the other widget's class name in this comment then failed the gate a second time,
+    // because it reads asserted terms out of the source text and a prefixed name in prose looks
+    // exactly like one. Named without the prefix for that reason.
+    +(attachedHere.length?`fw:attachedOriginCount ${attachedHere.length}; `
+      +(Number.isFinite(limitM)?`fw:attachmentLimitMetres ${limitM}; `:'')
+      +metricCRSAssertion(projection!.crs):'')
     +`prov:used <urn:fieldwork:run:${runId}:${sourceNodeId}>.\n`;
   return {value:{type:'FeatureCollection',features,sourceNodeId:node.id,unconnected,offNetwork,
     sourceKind:'input-points',spatialReference:defaultSpatialReference(),

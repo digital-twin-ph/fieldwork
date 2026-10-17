@@ -46,7 +46,11 @@ export interface ParamsByType {
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
   summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south'};
   snap_to_network:{label:string;zone:number;hemisphere:'north'|'south';maxSnapM:number};
-  reachable_nodes:{label:string;minutes:number;speedMPerMin:number;direction:'outbound'|'inbound';travelMode:'walking'|'cycling'|'driving'|'other'};
+  /** `zone`, `hemisphere` and `maxSnapM` are OPTIONAL: they are needed only for origins this
+   *  step has to attach to the network itself. Points arriving already snapped are used as
+   *  they arrive and nothing is projected, so a run that never attaches anything never needs
+   *  a zone. Refused at run time when an unattached origin turns up, not at edit time. */
+  reachable_nodes:{label:string;minutes:number;speedMPerMin:number;direction:'outbound'|'inbound';travelMode:'walking'|'cycling'|'driving'|'other';zone?:number;hemisphere?:'north'|'south';maxSnapM?:number};
   reachable_corridor:{label:string;bufferM:number;zone:number;hemisphere:'north'|'south'};
   travel_time_band:{label:string;minutes:number};
   stack_polygons:{label:string};

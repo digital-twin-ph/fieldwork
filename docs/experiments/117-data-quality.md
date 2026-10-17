@@ -199,13 +199,36 @@ was to do the same. The completeness sparkline down the right is theirs too — 
 
 ### What was declined, and the condition on one of them
 
-**Nullity correlation** is genuinely informative and was left out for two reasons. It is only
-defined for columns that are *partially* missing — a column with no absences, or nothing but,
-correlates with nothing — and this project's example data has one such column, which makes the
-plot degenerate rather than wrong. And it is a correlation between *indicator vectors*, not
-between the data: reading "these two columns are 0.8 correlated" as a statement about the
-measurements is an error the picture invites. It is worth building when there is data with two
-or more partially-missing columns to exercise it, and not before.
+**Nullity correlation** is genuinely informative and was left out for two reasons, one
+arithmetic and one about misreading.
+
+*There is nothing to plot.* The correlation is taken between two columns' readability — a vector
+of one value per record, readable or not. A column that is **wholly** readable, or wholly
+unreadable, has a constant vector and therefore zero variance, so the correlation with it is
+undefined by division rather than equal to zero. missingno drops such columns for this reason. A
+pair needs **both** of its columns to vary. In this project's worked example:
+
+| Input | Columns | Columns whose readability varies | Pairs that can be plotted |
+| --- | --- | --- | --- |
+| B · the buildings as recorded | 3 | 0 | 0 |
+| C · the table with three gaps | 2 | 1 — `deaths` | 0 |
+| D · the counts written as text | 3 | 1 — `DEATHS` | 0 |
+
+So the heatmap would be **empty in every case**, not merely uninformative. Building a plot whose
+only available data produces nothing to draw is how a picture that nobody can read gets shipped
+and then defended.
+
+*And it invites a misreading this project would have to correct.* The number is a correlation
+between **readability indicators**, not between the values. "`deaths` and `date` are 0.8" means
+those two columns tend to be unusable in the same records — a statement about collection, or
+about a broken export — and says nothing whatever about whether the deaths relate to the dates.
+The picture looks exactly like a correlation matrix of the data, which is the thing a reader has
+seen a hundred times, and that resemblance is the hazard.
+
+**The condition for building it:** an input carrying at least two columns whose readability
+varies, so there is at least one computable pair to exercise it against. It should then name the
+pairs it cannot compute rather than dropping them silently, since "this column is never missing"
+is itself worth knowing.
 
 **The dendrogram** clusters columns by nullity for datasets too wide to read as a heatmap. An
 input here has a handful of columns; the matrix shows what the dendrogram would summarise.

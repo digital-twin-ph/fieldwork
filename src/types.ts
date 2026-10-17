@@ -30,7 +30,29 @@ export interface PointParams {label:string; data:PointCollection; spatialReferen
  *  class of act as a unit conversion, which this project refuses to do silently. */
 export interface ColumnRepair {column:string; to:'number'|'boolean'|'term'; cast:number; unreadable:string[]; at:string}
 export interface ObservationParams extends PointParams {fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'; repairs?:ColumnRepair[]}
-export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Polygon|null; spatialReference?:SpatialReference} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference};
+/** One committed extent of a study area: the shape, how it was drawn, and when it was kept. */
+export interface AreaRevision {at:string; geometry:Polygon; selectionMode:'bbox'|'polygon'|'circle'; restoredFrom?:number}
+
+/** `revisions` is every extent this area has had, oldest first, the last being the current one.
+ *
+ *  A study area is not permanent -- the practitioner, 2026-10-17: *"it can be revisited and
+ *  expanded"*, and experiment 01 has a step called "Correct, save, and revisit". But its IRI is
+ *  node-scoped, `urn:fieldwork:area:<id>`, unlike every other area in this application, which
+ *  mints per run. So a redrawn boundary kept the same identifier with different geometry, and two
+ *  runs either side of a revision asserted one entity with two conflicting shapes and nothing
+ *  saying it had changed.
+ *
+ *  One entry means the original. More means the area was revised, and the receipt can then answer
+ *  the practitioner's two questions -- did we revise our study area, and when -- in PROV rather
+ *  than in new vocabulary.
+ *
+ *  The GEOMETRY is kept, not only the date, because the practitioner asked for the versions to be
+ *  selectable: *"so investigators can go back to previous assumptions"*. Restoring one does not
+ *  rewrite the history -- it appends a new entry carrying the old shape and `restoredFrom`, so the
+ *  record says "on this date we went back to the extent of that date" rather than quietly
+ *  shortening the chain. An investigation that narrowed its area and then widened it again is
+ *  exactly the emergent-strategy case this project means to keep. */
+export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Polygon|null; spatialReference?:SpatialReference} & {revisions?:AreaRevision[]} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference};
 export interface Exclusion {sourceNodeId:string; featureId:string; signature:string; reason:string}
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';
 export interface Measurement {squareMetres:number; value:number; unit:AreaUnit; method:string}

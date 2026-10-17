@@ -1167,6 +1167,25 @@ function renderInspector(){
   }else if(n.type==='study_area'){
     content+=`<form id="study-area-label-form" class="field"><label class="field-label" for="study-area-label">Study area label</label><input id="study-area-label" maxlength="100" required value="${esc(n.params.label||'My study area')}"><button type="submit" class="button small">Apply label</button></form>`;
     content+=n.params.source==='drawn'?`<div class="source-card"><span class="inspector-section">${n.params.geometry?'Selected geometry':'No geometry yet'}</span><h3>${esc(n.params.label)}</h3><p>${n.params.geometry?`${n.params.selectionMode==='bbox'?'Bounding box':'Polygon'} · ${n.params.geometry.coordinates[0].length-1} vertices`:'Draw a bounding box or polygon on the online map.'}</p></div><p class="description">The shape is stored in longitude, latitude order. Applying it generates N3 facts; Run workflow evaluates the readiness rule.</p>`:oldInspector(n);
+    // Every extent this area has had, newest first, each restorable. The practitioner,
+    // 2026-10-17: *"so investigators can go back to previous assumptions"*. An outbreak that
+    // crossed a border widens the area; finding it did not after all should be able to narrow it
+    // back WITHOUT losing the record that it was once wider -- which is why restoring appends
+    // rather than truncates.
+    if(n.params.source==='drawn'&&(n.params.revisions?.length??0)>1){
+      const history=n.params.revisions!;
+      content+=`<div class="inspector-divider"></div><span class="inspector-section">Extent history</span>`
+        +`<p class="muted">${history.length} extents kept. Restoring one records a new extent carrying the old shape; nothing is removed.</p>`
+        +`<ul class="record-list">`+history.map((r,i)=>{
+          const current=i===history.length-1;
+          const vertices=r.geometry?.coordinates?.[0]?.length;
+          return `<li><span>v${i+1} · ${esc(new Date(r.at).toLocaleString())}`
+            +`${r.restoredFrom?` · restored v${r.restoredFrom}`:''}`
+            +`${vertices?` · ${vertices-1} vertices`:''}</span>`
+            +(current?'<strong>current</strong>'
+              :`<button class="text-button" data-restore-extent="${i}">Restore this extent</button>`)+`</li>`;
+        }).join('')+`</ul>`;
+    }
     content+=`<button id="edit-study-area" class="button primary">${n.params.geometry?'Edit area on map':'Select area on map'}</button>${n.params.geometry?'<button id="area-view-n3" class="text-button">Inspect N3 facts and rule ↗</button>':''}<div class="notice">Evaluation prompt: what should the next workflow node receive from this selection?</div>`;
   }else if(n.type==='point_input'){
     if(n.sourceMigration)content+=`<p class="notice">${n.sourceMigration.fromType==='output'
@@ -1644,7 +1663,35 @@ function renderInspector(){
   optionalElement('#edit-input-data')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),workflow.nodes.filter((x):x is WorkflowNode<'study_area'>=>x.type==='study_area'&&(!!x.params.geometry||x.params.source!=='drawn')).map(x=>({id:x.id,label:x.params.label||'Old Naledi',geometry:x.params.geometry||oldNalediBoundary as Boundary})),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;}));
   document.querySelectorAll<HTMLSelectElement>('[data-coverage-port]').forEach(el=>el.onchange=()=>{const from=el.value,port=el.dataset.coveragePort!;change(w=>{w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===port));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port});});});
   optionalElement('#measure-area-source')?.addEventListener('change',e=>{const from=control(e).value;change(w=>{w.edges=w.edges.filter(x=>!(x.to===n.id&&x.port==='area'));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port:'area'});});});
-  optionalElement('#edit-study-area')?.addEventListener('click',()=>openStudyAreaEditor(getNode(workflow,n.id,'study_area'),params=>change(w=>getNode(w,n.id,'study_area').params=params)));
+  // A committed geometry is stamped, so the receipt can say WHEN the area was revised. Only a
+  // changed shape counts: renaming the area or switching its selection mode is not a revision of
+  // the ground it covers, and stamping those would make the history say the extent moved when it
+  // did not. Experiment 01 calls this step "Correct, save, and revisit"; until 2026-10-17 it left
+  // no trace at all, because the study area's IRI is node-scoped while every other area in this
+  // application mints per run.
+  document.querySelectorAll<HTMLButtonElement>('[data-restore-extent]').forEach(b=>b.onclick=()=>change(w=>{
+    const target=getNode(w,n.id,'study_area');
+    if(target.params.source!=='drawn')return;
+    const history=target.params.revisions??[],chosen=history[Number(b.dataset.restoreExtent)];
+    if(!chosen)return;
+    target.params.geometry=structuredClone(chosen.geometry);
+    target.params.selectionMode=chosen.selectionMode;
+    // Appended, never truncated: the chain has to be able to say the area was once wider.
+    target.params.revisions=[...history,{at:new Date().toISOString(),
+      geometry:structuredClone(chosen.geometry),selectionMode:chosen.selectionMode,
+      restoredFrom:Number(b.dataset.restoreExtent)+1}];
+  }));
+  optionalElement('#edit-study-area')?.addEventListener('click',()=>openStudyAreaEditor(getNode(workflow,n.id,'study_area'),params=>change(w=>{
+    const target=getNode(w,n.id,'study_area'),before=target.params;
+    const shape=(x:{source?:string;geometry?:unknown})=>x.source==='drawn'&&x.geometry?JSON.stringify(x.geometry):'';
+    const changed=shape(params)!==shape(before);
+    const kept=before.source==='drawn'?before.revisions??[]:[];
+    target.params=params;
+    if(params.source==='drawn'&&params.geometry)
+      target.params.revisions=changed||!kept.length
+        ?[...kept,{at:new Date().toISOString(),geometry:structuredClone(params.geometry),selectionMode:params.selectionMode}]
+        :kept;
+  })));
   optionalElement('#area-view-n3')?.addEventListener('click',()=>{renderN3();switchView('rules');});
   $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('[data-param]').forEach(el=>el.addEventListener('change',()=>change(w=>updateParam(w,n.id,required(el.dataset.param),el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value))));
   // Reading, not editing: these redraw the Inspector and touch nothing that is saved, so they

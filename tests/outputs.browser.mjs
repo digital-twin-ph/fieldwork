@@ -1,9 +1,9 @@
 import {test,expect} from '@playwright/test';
 import {exampleWorkflow} from '../build/core.js';
 import {mkdir} from 'node:fs/promises';
+import {collectPageErrors} from './page-errors.mjs';
 test("Independent result branches, tabs and offline inference",async({page,context})=>{
-const errors=[];
-page.on('pageerror',e=>errors.push(e.message));
+const errors=collectPageErrors(page);
 const done=()=>expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 const run=async()=>{await page.locator('#run-button').click();await done();};
   await page.goto('/');await done();

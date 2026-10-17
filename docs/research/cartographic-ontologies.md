@@ -136,16 +136,113 @@ answer: somebody writing `NoDeaths`, `Few`, `Many` knows they are in that order,
 no way for them to say so. Nominal, ordinal, interval and ratio are the standard four; `kind`
 already carries the type, and the scale is a second, orthogonal fact.
 
-### What to resist
+### What I argued should be resisted, and why that was wrong
 
-*"The system can learn which pathways humans select in particular contexts."* Set against this
-project's stance, that is the part to leave alone. A preference learned from past selections is
-advice no practitioner can audit, derived from a sample nobody declared, applied to a case nobody
-compared. It would also be unfalsifiable without field use, which this project has not reached —
-the same objection that retired a closing condition in [112](../experiments/112-progressive-widget-reveal.md).
-Recording what was chosen is provenance. Inferring what should be chosen next is a model, and it
-would need its own experiment, its own evidence and its own statement of what it must not be read
-as.
+This note first said that *"the system can learn which pathways humans select"* should be left
+alone — that a learned preference is *"advice no practitioner can audit, from a sample nobody
+declared, applied to a case nobody compared."*
+
+The practitioner corrected it, 2026-10-17: *"It's a user preference, and the audit is in the N3
+receipts in case anybody else wants it. FW is not multi-user, it only caters to the one user
+holding the browser, so N of 1. If a user picks certain pathways as a choice, it is a human
+judgment. The user can audit that decision him/herself."*
+
+**Each clause of the objection fails against that.** *Nobody can audit it* — the receipt carries
+it and the person who made the choice is the auditor. *A sample nobody declared* — the sample is
+that one person's own prior choices, which they made and can read back. *A case nobody compared*
+— comparing is the entire point of offering pathways. The objection was written as though the
+preference would be generalised across users, and **there are no other users.** This application
+is local-first: one browser, one workspace in `localStorage`, no accounts, no server.
+**N of 1** is an architectural fact, not a limitation to be worked around, and it changes what a
+preference *is*: not a population estimate, but a person's recorded judgement about their own
+work.
+
+### What does survive, and it is worth keeping
+
+One thing, and it is small and sharp: **a default that came from a preference must be
+distinguishable in the receipt from one that came from a rule.**
+
+Otherwise a reader — including the same practitioner six months later — cannot tell *"this map is
+sequential because the variable is ordered"* from *"this map is sequential because I usually
+choose that."* Both are legitimate; they are not the same claim, and only one of them is a
+statement about the data.
+
+That is the same distinction `fw:ruleKind` already draws between **measured** and
+**categorical**, added on 2026-10-17 because a contrast failure no categorical rule would have
+caught was found by arithmetic.
+
+### And the basis is `selected`, not `preferred`
+
+The first version of this recorded a map's knobs as `fw:decisionBasis "preferred"`. The
+practitioner caught it the same day: *"We can not even infer preference from a single mouse
+click, we can only say 'selected'. If 'selected' so happens to map to a particular pattern
+choice, then we have stronger evidence to say 'preference'."*
+
+**A preference is a disposition** — a claim that this person *tends* to choose this. One click
+cannot evidence one; it evidences one click. Writing `preferred` on a single observation is the
+same overclaim this project caught twice today in prose — "address" for a building, "degenerate"
+where a count belonged — and here it had got into a vocabulary, where it would have been asserted
+by every map ever drawn.
+
+*(A third example belonged in that list and cannot be written: the withdrawn term for a port
+type. Naming it as an example still counts as using it, and the vocabulary gate refused this
+file until it came out — which is the ratchet working on the very paragraph describing it.)*
+
+So the receipts hold the **observations**. A preference is an inference across many of them, it
+would need its own statement of what it rests on, and nothing asserts it. That is also precisely
+what makes the inference possible later: selections recorded honestly are the only evidence a
+preference could ever be drawn from, and a receipt that had already called them preferences
+would have destroyed the distinction it needed.
+
+## The canon, and which of it this application can actually use
+
+A third summary from the practitioner, 2026-10-17, naming the cartographic equivalents of Tufte
+and Cairo: **Imhof** on terrain, **Brewer** on colour, **Robinson** on projection and perception,
+**Bertin** on visual variables, **Field** on modern practice, **Nelson** and **Huffman** on
+digital design, **Monmonier** on how maps mislead.
+
+**None of these works has been read here.** What follows attributes principles as they are
+commonly stated, and says *traces to* rather than naming a page.
+
+The useful question is not which to read. It is **which of them this application can act on**,
+given that it draws points, polygons, rasters and a basemap, and draws no terrain.
+
+| | Actionable here | Why |
+| --- | --- | --- |
+| **Bertin** | **directly, and already overdue** | see below — his visual variables are the missing declaration this project found by another route |
+| **Monmonier** | **directly, and already present** | every ruleset in this application must declare what it **must not be read as**. That requirement is Monmonier's subject, arrived at here without the attribution |
+| **Brewer** | **partly, already** | the figure palette is CVD-safe and the rule checking it now cites her; ColorBrewer's sequential/diverging/qualitative split is blocked on the same gap as Bertin |
+| Robinson | marginally | projection choice is real here — widgets take a UTM zone and `zone-at-study-area` already advises on candidates with their costs — but that advice is metric, not perceptual |
+| Field, Nelson, Huffman | not yet | practice and craft for maps this application does not make |
+| Imhof | **no** | terrain shading, relief, hypsometric tints. Nothing here renders terrain. Recorded so the absence is a measurement rather than an oversight |
+
+### Bertin converges on a gap this project already found
+
+Bertin's point is that the visual variables have **properties**: position, size and value are
+*ordered*; hue is *selective* but **not ordered**. So an ordered variable must be encoded in an
+ordered visual variable, and encoding it in hue tells a reader the categories are unordered when
+they are not.
+
+That is precisely the gap recorded in TODO an hour earlier, found from the other end: a field
+binding declares `kind: number | boolean | term`, `term` covers both unordered and ordered
+categories, and the ruleset example **produces ordered ones** — `NoDeaths`, `Few`, `Many`. The
+application cannot tell them from `clinic`, `pharmacy`, `health post`.
+
+Arriving at the same missing declaration from a theory and from an example is the best evidence
+available that it is really missing. **Bertin names what the declaration is for**; the TODO entry
+says where it goes.
+
+### What changed in the code because of this
+
+The four design rules now cite where they come from. `UnknownIsNotAHue` traces to Bertin — hue is
+selective but not ordered, so spending it on an absence makes that absence compete as a category.
+`CategoricalPaletteIsColourBlindSafe` traces to Brewer, with the palette itself credited to Okabe
+and Ito. The two measured rules cite WCAG and need nothing further: a published criterion is its
+own source.
+
+A test now requires **every** rule to cite either a criterion or a principle. Three of the four
+were my own judgement with nothing behind them until this summary arrived, and a rule citing
+nothing is taste wearing a rule's clothes.
 
 ## What is not established
 

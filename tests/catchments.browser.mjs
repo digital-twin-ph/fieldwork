@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {collectPageErrors} from './page-errors.mjs';
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 
 test('Map presentation travels with interactive view, SVG and N3 evidence',async({page})=>{
@@ -34,7 +35,7 @@ test('canvas selection reveals and highlights its library primitive without addi
   await page.locator('.react-flow__pane').click({position:{x:10,y:10}});await expect(page.locator('.primitive-selected')).toHaveCount(0);
 });
 test('John Snow examples use shared primitives, persist parameters and replay offline',async({page,context,browserName})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   await page.goto('/?example=snow-voronoi');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#map [data-catchment]')).toHaveCount(8);await expect(page.locator('#result-metrics')).toContainText('250 matched');
   await page.locator('#result-tab-table').click();await expect(page.locator('#result-rows')).toContainText('340');await expect(page.locator('#result-head')).toContainText('locations');await page.locator('#result-tab-chart').click();await expect(page.locator('#bars-panel')).toContainText('Sum DEATHS');
   await page.locator('.react-flow__node[data-id="summary"]').click();await page.locator('#catchment-valueField').fill('');await page.locator('#catchment-valueField').blur();await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete');await expect(page.locator('#bars-panel')).toContainText('Location memberships');

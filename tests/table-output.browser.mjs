@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {collectPageErrors} from './page-errors.mjs';
 
 const fixture=JSON.parse(await readFile(new URL('./fixtures/coverage-workflow-2026-10-05.json',import.meta.url),'utf8'));
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
@@ -15,7 +16,7 @@ const drag=async(page,from,to,port)=>{
 const receipt=async page=>{await page.locator('[data-view="rules"]').click();const next=page.waitForEvent('download');await page.locator('#download-evidence').click();return JSON.parse(await readFile(await (await next).path(),'utf8'));};
 
 test('Table displays point attributes without a boundary, pages, searches, and reloads offline',async({page,context})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   // The fixture was saved before `observations` was renamed to `point_input`, and keeps its own
   // value: it is the frozen record the rename adapter exists for. The application migrates it on
   // load; this line reads the file, so it reads the name the file contains.
@@ -48,7 +49,7 @@ test('Table displays point attributes without a boundary, pages, searches, and r
 });
 
 test('Table accepts coverage by drag, preserves decisions, and does not double-count review alerts',async({page})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   await page.goto('/?example=blank');await upload(page,fixture);await page.locator('[data-add="table_output"]').click();
   const tableId=(await saved(page)).nodes.find(n=>n.type==='table_output').id;
   await page.locator('#table-points').selectOption('observations');await drag(page,'coverage',tableId,'coverage');await expect(page.locator('#table-coverage')).toHaveValue('coverage');

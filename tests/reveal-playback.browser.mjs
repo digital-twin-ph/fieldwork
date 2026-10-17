@@ -1,11 +1,12 @@
 import {test,expect} from '@playwright/test';
+import {collectPageErrors} from './page-errors.mjs';
 
 // Progressive reveal, played back over a worked example one widget at a time -- the practitioner's
 // own description: like running a notebook from the first cell, except that everything happens on
 // a highly abstracted canvas. Experiment 112, and the stage between proposing a rule and
 // enforcing it.
 test('a worked example replays widget by widget, and the palette follows',async({page})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   await page.goto('/?example=snow-extent&playback=1');
   await expect(page.locator('#playback-bar')).toBeVisible({timeout:45000});
   // The example auto-runs on load. Every canvas draw goes through the playback filter now, so a

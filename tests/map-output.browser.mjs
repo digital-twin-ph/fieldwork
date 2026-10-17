@@ -2,9 +2,9 @@ import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
 import {coverageExercise} from '../build/spatial-coverage.js';
+import {collectPageErrors} from './page-errors.mjs';
 test("Map connectors, layer identity, review and persistence",async({page,context})=>{
-const errors=[];
-page.on('pageerror',e=>errors.push(e.message));
+const errors=collectPageErrors(page);
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});};
 const select=async id=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"] .node-heading`).click();};

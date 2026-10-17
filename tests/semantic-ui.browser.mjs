@@ -4,9 +4,10 @@ import {Parser,Store} from 'n3';
 import {readFile} from 'node:fs/promises';
 import {loadGraph,ontologyFiles,validateGraph,summarize} from '../scripts/validate-ontology.mjs';
 import {quadToN3} from '../build/study-area.js';
+import {collectPageErrors} from './page-errors.mjs';
 
 test('N3 tab shows conforming canvas RDF for unfinished widgets',async({page})=>{
-  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const errors=collectPageErrors(page);
   await page.goto('/?example=blank');
   // Place an input first, which is what a canvas with nothing on it now offers. raster_input
   // takes an area, so it is a process step by the stage rule however much it looks like a source.
@@ -26,7 +27,7 @@ test('N3 tab shows conforming canvas RDF for unfinished widgets',async({page})=>
 });
 
 test('executed N3 tab and downloaded John Snow evidence have the same conforming graph',async({page})=>{
-  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const errors=collectPageErrors(page);
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="rules"]').click();

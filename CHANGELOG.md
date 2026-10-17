@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.8.1 — In development
+## 0.9.0 — In development
 
 - **A map says which design rules it was held to.** Four rules are applied while a visualisation
   is assembled, and its receipt states every one — including the ones that did not apply, so a
@@ -128,6 +128,8 @@ shown in a local build is not a claim that it has been published.
 - **A rule refers to a setting by name**, not by typing `{{threshold}}`. The placeholder belongs
   to the compiled rules, which are text that `bindParameters` fills; it had been carried into the
   form a practitioner edits.
+
+## 0.8.1 — In development
 
 - **A map has layers, not modes.** `map_output` no longer asks which kind of thing it is before
   it will accept one. It declares every layer port it can draw, the renderer is read from what is

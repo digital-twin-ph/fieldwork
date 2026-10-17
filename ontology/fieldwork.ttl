@@ -876,6 +876,31 @@ fw:ruleStatement a owl:DatatypeProperty; rdfs:domain fw:DesignRule; rdfs:range x
   rdfs:comment "What the rule requires, in the words a reader should see.".
 fw:appliedTo a owl:DatatypeProperty; rdfs:domain fw:DesignRuleApplication; rdfs:range xsd:string;
   rdfs:comment "What was tested -- a role, a layer, or a pair of colours.".
+# A decision the practitioner made, among alternatives that were all defensible.
+#
+# "It's a user preference, and the audit is in the N3 receipts in case anybody else wants it. FW
+# is not multi-user, it only caters to the one user holding the browser, so N of 1 ... The user
+# can audit that decision him/herself." -- 2026-10-17.
+#
+# Recorded separately from a rule not out of doubt about the judgement, but so a reader -- most
+# often the same practitioner, later -- can tell "this map is sequential because the variable is
+# ordered" from "this map is sequential because I prefer it". Both are legitimate; only one is a
+# statement about the data.
+fw:DesignChoice a owl:Class;
+  rdfs:subClassOf prov:Entity;
+  rdfs:label "A design decision taken by the practitioner";
+  rdfs:comment "A choice among alternatives the application considered defensible. Not a rule, and not a setting: a setting records a value, and this records that a judgement was exercised and what it was exercised over.".
+fw:designChoice a owl:ObjectProperty; rdfs:range fw:DesignChoice;
+  rdfs:comment "A choice carried by a map specification.".
+fw:decisionBasis a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "What a design decision stands on. A rule states measured or categorical through fw:ruleKind; a practitioner's decision states SELECTED, and never preferred. A preference is a disposition -- a claim that this person tends to choose this -- and a single act cannot evidence one: 'We can not even infer preference from a single mouse click, we can only say selected. If selected so happens to map to a particular pattern choice, then we have stronger evidence to say preference' (2026-10-17). These receipts hold the observations; a preference would be an inference across many of them, and would need its own statement of what it rests on.".
+fw:choiceSetting a owl:DatatypeProperty; rdfs:domain fw:DesignChoice; rdfs:range xsd:string;
+  rdfs:comment "What was being decided, as the Inspector names it.".
+fw:choiceMade a owl:DatatypeProperty; rdfs:domain fw:DesignChoice; rdfs:range xsd:string;
+  rdfs:comment "What the practitioner chose.".
+fw:choiceOffered a owl:DatatypeProperty; rdfs:domain fw:DesignChoice; rdfs:range xsd:string;
+  rdfs:comment "What else was available. A choice between alternatives nobody can see is a setting rather than a judgement, and recording it as a judgement would overstate it.".
+
 fw:MapTextContrast a fw:DesignRule.
 fw:MapMarkContrast a fw:DesignRule.
 fw:CategoricalPaletteIsColourBlindSafe a fw:DesignRule.

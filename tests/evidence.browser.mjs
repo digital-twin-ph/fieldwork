@@ -6,6 +6,7 @@ import {coverageExercise} from '../build/spatial-coverage.js';
 import {Parser} from 'n3';
 import {loadGraph,ontologyFiles,validateGraph,summarize} from '../scripts/validate-ontology.mjs';
 import {quadToN3} from '../build/study-area.js';
+import {collectPageErrors} from './page-errors.mjs';
 
 const pdf=Buffer.from('%PDF-1.4\nSynthetic census reference for testing\n%%EOF');
 const hash=createHash('sha256').update(pdf).digest('hex');
@@ -18,7 +19,7 @@ async function addPDF(page){await open(page);await page.locator('#reference-kind
 test.beforeEach(async({page})=>{await page.goto('/?example=blank');const w=coverageExercise();w.exampleId='blank';await upload(page,Buffer.from(JSON.stringify(w)));await expect(page.locator('.react-flow__node[data-id="observations"]')).toBeVisible();});
 
 test('input PDFs and processing URLs appear in run snapshots and parse as provenance with EYE',async({page})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));await addPDF(page);
+  const errors=collectPageErrors(page);await addPDF(page);
   await page.locator('#evidence-dialog').evaluate(el=>el.scrollTop=0);await page.screenshot({path:'test-results/evidence-editor.png'});
   const source=(await refs(page))[0];assert.equal(source.sha256,hash);assert.equal(source.bytes,pdf.length);assert.equal(source.locator,'Table 4, page 27');
   assert.deepEqual(await download(page,'[data-download]'),pdf);await page.locator('#evidence-close').click();

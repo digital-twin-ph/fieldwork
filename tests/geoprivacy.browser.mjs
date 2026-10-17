@@ -2,9 +2,10 @@ import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {auditRuntimeRun} from '../scripts/audit-runtime-n3.mjs';
+import {collectPageErrors} from './page-errors.mjs';
 
 test('geoprivacy canvas shows before/after maps and tables with editable parameters and derived export',async({page})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   await page.goto('/?example=snow-geoprivacy');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await expect(page.locator('#result-tabs [role="tab"]')).toHaveCount(7);

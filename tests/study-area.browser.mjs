@@ -1,9 +1,9 @@
 import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
+import {collectPageErrors} from './page-errors.mjs';
 test("Blank canvas, study-area drawing, labels and recovery",async({page,context})=>{
-const errors=[];
-page.on('pageerror',e=>errors.push(e.message));
+const errors=collectPageErrors(page);
 const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});};
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const open=async()=>{await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node').click();await page.locator('#edit-study-area').click();await expect(page.locator('#area-dialog')).toBeVisible();};

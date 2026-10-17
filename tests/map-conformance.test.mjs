@@ -116,3 +116,52 @@ test('a map that drew no categories still reports the category rules',async()=>{
   assert.match(n3,/earl:outcome earl:inapplicable/);
   assert.match(n3,/fw:designRule fw:CategoricalPaletteIsColourBlindSafe/);
 });
+
+test('a practitioner\'s choice is recorded as a choice, with what else was offered',async()=>{
+  const {designChoiceFacts}=await import('../build/map-conformance.js');
+  const n3=designChoiceFacts('urn:x',[
+    {setting:'presentation',chosen:'plot',alternatives:['plot','interactive']},
+    {setting:'basemap',chosen:'none',alternatives:['none','osm','topo']}]);
+
+  assert.match(n3,/a fw:DesignChoice/);
+  assert.match(n3,/fw:choiceSetting "presentation"; fw:choiceMade "plot"/);
+  // What else was available, so the decision reads as a judgement rather than a stored value.
+  assert.match(n3,/fw:choiceOffered "interactive"/);
+  assert.match(n3,/fw:choiceOffered "topo"/);
+
+  // SELECTED, never "preferred". A preference is a disposition -- a claim that this person
+  // tends to choose this -- and one click cannot evidence one; it evidences one click. The
+  // receipts hold the observations a preference could later be inferred FROM, and asserting the
+  // inference on a single act would be the same overclaim this project keeps catching in prose.
+  assert.match(n3,/fw:decisionBasis "selected"/);
+  assert.ok(!n3.includes('preferred'),'one selection is not a preference');
+  assert.ok(!n3.includes('earl:'),'a selection is not a conformance assertion');
+});
+
+test('a choice with no stated alternatives is not dressed up as a judgement',async()=>{
+  const {designChoiceFacts}=await import('../build/map-conformance.js');
+  const n3=designChoiceFacts('urn:x',[{setting:'title',chosen:'Soho, 1854'}]);
+  assert.match(n3,/fw:choiceMade "Soho, 1854"/);
+  assert.ok(!n3.includes('fw:choiceOffered'),'nothing invented to fill the field');
+});
+
+test('a rule of this project\'s own judgement cites where the principle comes from',async()=>{
+  const {designRuleDeclarations,DESIGN_RULES}=await import('../build/map-conformance.js');
+  const n3=designRuleDeclarations();
+  // A rule citing a source is checkable against that source. A rule citing nothing is taste
+  // wearing a rule's clothes, which is what these were until 2026-10-17.
+  // Matched per line: a rule's own comment contains full stops, so anything bounded by `.`
+  // stops inside it. The declaration is one line per rule.
+  const line=id=>n3.split('\n').find(l=>l.startsWith(`fw:${id} `))||'';
+  assert.match(line('UnknownIsNotAHue'),/dcterms:source "Bertin, on the visual variables/);
+  assert.match(line('CategoricalPaletteIsColourBlindSafe'),/dcterms:source "Brewer/);
+  // And a measured rule points at WCAG rather than at a person.
+  assert.match(line('MapTextContrast'),/earl:test <https:\/\/www\.w3\.org\/TR\/WCAG22\//);
+  assert.ok(!line('MapTextContrast').includes('dcterms:source'),
+    'a published criterion is its own source');
+  // A rule that binds to a published criterion needs no second source: the criterion IS one.
+  for(const rule of DESIGN_RULES){
+    assert.ok(rule.criterion||rule.tracesTo,
+      `${rule.id} must cite either a criterion or a principle`);
+  }
+});

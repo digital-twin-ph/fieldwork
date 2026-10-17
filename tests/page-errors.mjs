@@ -9,6 +9,14 @@
  *  Filtered by exact message, so anything the application actually throws still fails the
  *  test. Nothing here suppresses a class of error: it suppresses one string that the browser
  *  emits about its own shutdown.
+ *
+ *  **And it only ever protected the files that used it.** On 2026-10-17 the full gate flaked on
+ *  `rules-over-geometry` with exactly this message, and the cause was that **eighteen** test
+ *  files had rolled their own `page.on('pageerror', e => errors.push(e.message))` rather than
+ *  calling this. A fix written for a class of flake, documented, and applied to a fraction of
+ *  the places that needed it is a fix that keeps being rediscovered — this one was rediscovered
+ *  three days later. All eighteen were migrated; there are no inline handlers left, and a new
+ *  one would be a regression worth catching in review.
  */
 const TEARDOWN=['Context is stopped'];
 

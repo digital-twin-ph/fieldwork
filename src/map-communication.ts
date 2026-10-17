@@ -2,7 +2,7 @@ import type {Output,Receipt} from './results.js';
 import {outputOf} from './core.js';
 import type {WorkflowNode,Workflow} from './types.js';
 import {FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel} from './presentation.js';
-import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations} from './map-conformance.js';
+import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
 
 export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:'square'}[]; presentation:'plot'|'interactive'; basemap:'none'|'osm'|'topo';
   /** Licence and attribution for the data shown. Separate from the source note because a note is
@@ -121,8 +121,21 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
     ?[...FIGURE_PALETTE].slice(0,Math.max(1,drawn.filter(l=>l.kind==='PointsLayer'||l.kind==='PolygonsLayer').length))
     :[];
   const applied=applyDesignRules(figureDesign(categories,spec.legend&&categories.length>0));
-  const conformance=`${designRuleDeclarations()}\n${designRuleFacts(iri,applied)}\n`;
-  const prefixes=`@prefix earl: <http://www.w3.org/ns/earl#>.\n`
+  // The practitioner's own choices, recorded as CHOICES rather than as settings.
+  //
+  // "It's a user preference, and the audit is in the N3 receipts ... The user can audit that
+  // decision him/herself" -- 2026-10-17. This application is N of 1: one browser, one workspace,
+  // no accounts. A preference here is not a population estimate, it is a person's recorded
+  // judgement about their own work, and the only reason to separate it from a rule is so a
+  // reader can tell "sequential because the variable is ordered" from "sequential because I
+  // prefer it". Both are legitimate; one is a claim about the data.
+  const choices=[
+    {setting:'presentation',chosen:spec.presentation,alternatives:['plot','interactive']},
+    {setting:'basemap',chosen:spec.basemap,alternatives:['none','osm','topo']},
+  ];
+  const conformance=`${designRuleDeclarations()}\n${designRuleFacts(iri,applied)}\n`
+    +`${designChoiceFacts(iri,choices)}\n`;
+  const prefixes=`@prefix earl: <http://www.w3.org/ns/earl#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`
     +`@prefix dqv: <http://www.w3.org/ns/dqv#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n`;
   const all=prefixes+facts+layerFacts+conformance;
   receipt.facts+=all;receipt.input=receipt.facts;return all;

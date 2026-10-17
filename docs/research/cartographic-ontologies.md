@@ -73,6 +73,80 @@ ratios, colour-vision-deficiency simulation, label collision, minimum legible si
 expresses the second as rules will state confident advice it cannot support, which is worse than
 silence.
 
+## Design pathways and human choice — a second summary, assessed
+
+The practitioner supplied a further ChatGPT summary on 2026-10-17, arguing that **human selection
+among viable cartographic pathways should be an architectural feature**, not an exception to rule
+execution: rules constrain the design space, several designs remain defensible, the human
+chooses, and the choice itself is recorded.
+
+**One correction first.** The summary assumes a Rust/WASM architecture. Fieldwork is TypeScript
+compiled by esbuild; the only WASM is EYE-JS, the reasoner. The practitioner flagged this. It
+matters because an argument about what a rendering engine can afford to compute rests on what
+the engine is.
+
+### Where it is already this project's position
+
+More of it than the summary could know. *"The machine generates a defensible set of alternatives,
+explains their assumptions and trade-offs, and the human exercises informed judgment"* is close
+to a restatement of how this application already behaves elsewhere: a unit mismatch is **refused
+rather than converted**, a site past the snap limit is **marked rather than dropped**, a ruleset
+may **decline to classify**, and a data repair is **declared by a practitioner and never
+automatic**. The stance is not new here; what is new is applying it to design.
+
+Its three-way split of knowledge maps onto things that already exist, which is the useful part:
+
+| The summary's category | What it already is here |
+| --- | --- |
+| **Hard constraints** — reject invalid alternatives | `validateWorkflow` refusing a cycle; `authoredUnitProblems` refusing a run; the CSV importer refusing a non-numeric cell by row number |
+| **Heuristic rules** — recommend feasible choices | the design rules added 2026-10-17, which report and never restyle |
+| **Human preferences** — select among defensible choices | the Inspector's presentation, basemap and layer knobs — **and these are the gap**: a knob records what was chosen and nothing about what else was available or why |
+
+### The one genuinely new idea: decision provenance
+
+A map's receipt states what it drew. It does not state **what else it could have drawn, and why
+this was chosen instead**. For a project whose receipts exist so a reader can check a result,
+that asymmetry is real: a reader can see a sequential ramp was used and cannot see that a
+diverging one was rejected for want of a meaningful midpoint.
+
+That is worth having, and it is a small thing to record once the alternatives are computable —
+which they are not yet, for the reason below.
+
+### What blocks it, precisely: measurement scale is not declared
+
+The summary's own example turns on it. A sequential choropleth suits an **ordered** variable; a
+diverging one suits an ordered variable **with a meaningful reference value**; a qualitative
+palette suits an **unordered** one. Choosing between them requires knowing which.
+
+**This application cannot express the difference.** A field binding declares
+`kind: 'number' | 'boolean' | 'term'`, and `term` covers both *clinic / pharmacy / health post*
+— unordered — and *NoDeaths / Few / Many* — ordered. The ruleset worked example **produces the
+second kind**: its conclusions are `fwa:NoDeaths`, `fwa:Few`, `fwa:Many` and `fwa:Single`,
+`fwa:Several`, `fwa:Cluster`, which are bands with an unmistakable order, and nothing anywhere
+records that they are ordered.
+
+So a map drawing them today has no way to know a sequential ramp is right and a qualitative
+palette is wrong, and a cartographic advisor built on the current declarations would be guessing
+— which is the one thing this project's field bindings exist to prevent: *nothing is guessed from
+a column name.*
+
+**The enabling step is therefore not a cartographic ontology at all.** It is a declaration on the
+authored rule form, where the bands are written and where the practitioner demonstrably knows the
+answer: somebody writing `NoDeaths`, `Few`, `Many` knows they are in that order, and the form has
+no way for them to say so. Nominal, ordinal, interval and ratio are the standard four; `kind`
+already carries the type, and the scale is a second, orthogonal fact.
+
+### What to resist
+
+*"The system can learn which pathways humans select in particular contexts."* Set against this
+project's stance, that is the part to leave alone. A preference learned from past selections is
+advice no practitioner can audit, derived from a sample nobody declared, applied to a case nobody
+compared. It would also be unfalsifiable without field use, which this project has not reached —
+the same objection that retired a closing condition in [112](../experiments/112-progressive-widget-reveal.md).
+Recording what was chosen is provenance. Inferring what should be chosen next is a model, and it
+would need its own experiment, its own evidence and its own statement of what it must not be read
+as.
+
 ## What is not established
 
 - **That any of this should be built.** No practitioner has asked for cartographic advice; the

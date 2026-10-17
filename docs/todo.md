@@ -486,6 +486,16 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**Measurement scale on a field binding.** A binding declares `kind: number | boolean | term`,
+and `term` covers both *clinic / pharmacy / health post* (unordered) and *NoDeaths / Few / Many*
+(ordered). The ruleset worked example produces the second kind and nothing records the order, so
+a map drawing those bands cannot know a sequential ramp is right and a qualitative palette is
+wrong. Found 2026-10-17 while assessing cartographic design research
+([research/cartographic-ontologies.md](research/cartographic-ontologies.md)); it blocks any
+honest design advice, and the place to declare it is the authored rule form, where the bands are
+written and the practitioner already knows the answer. Nominal, ordinal, interval, ratio — a
+second fact, orthogonal to `kind`.
+
 **Cluster detection.** Named by the practitioner on 2026-10-17 as a future widget, with a source
 of example data attached: *"When we get into cluster detection (a future widget) SatScan.org has
 example data sets as well."* Surveyed in

@@ -166,3 +166,24 @@ The second was `preferred` → `selected`. That one had already got into a vocab
 would have been asserted by every map ever drawn — a stronger version of the same error this
 project caught twice that week in prose, and the reason a word in an ontology deserves more
 scrutiny than a word in a paragraph.
+
+## What changed our minds
+
+**A contrast rule that runs at visualisation assembly does not see the application's own chrome.**
+On 2026-10-17 the practitioner reported that *"some worked examples lost the Run Workflow button"*.
+Nothing had removed it: `.button.primary:disabled{opacity:.45}` rendered its label at **1.22:1**
+against its own fill, in both colour schemes. Four design rules were applied to every map this
+application assembles, two of them measured contrast against WCAG SC 1.4.3 and 1.4.11, and the
+primary control in the header was unreadable the whole time.
+
+The rules are not wrong and their scope is not an oversight — a map is what the receipt is about,
+and chrome is not in a receipt. But it marks the limit precisely: **this is conformance of the
+artefact, not of the tool that makes it.** Whatever guards the application's own surfaces has to
+be a different mechanism, and so far that mechanism is a contrast test per defect, written after
+a practitioner could not see something — the toast buttons on 2026-10-15, the toast tones the same
+day, this button two days later. Three of the same shape, each caught by a person rather than by
+a rule.
+
+This does not establish that the design rules should be extended to chrome. It establishes that
+nothing currently checks chrome, and that the three times it mattered, the report came from the
+practitioner.

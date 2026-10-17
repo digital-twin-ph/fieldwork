@@ -288,6 +288,14 @@ for a practitioner's reasons on 2026-10-16, and the split turns out to be a dime
   cannot prevent.
 - **That a practitioner would find the repair before running.** Every path to it today goes
   through the quick look, which somebody has to open.
+- **That `absent` and `unreadable` are the only two ways a value can fail to be read.** A third
+  was found on 2026-10-17 while searching for datasets: in `measles_hagelloch_1861`,
+  `date_of_death` is `NA` **for everyone who recovered**. That null is a *recorded outcome*, not a
+  gap — the value is known, and the encoding is that absence means survival. This model would
+  report it as `fw:ValueAbsent` and tell the rules the value is not there, and both are wrong.
+  No profile can find it: a column of nulls looks identical whether they mean "nobody wrote it
+  down" or "this did not happen". Only the practitioner knows, and there is currently no way for
+  them to say so. See [data-sources.md](../research/data-sources.md).
 - **That the missingness drawing says what the pattern MEANS.** It shows where marks fall in
   file order, which is the only order available. If the records are sorted by date a run is a
   period; if the order is arbitrary the same run is a coincidence, and nothing here can tell

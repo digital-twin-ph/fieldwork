@@ -1,7 +1,7 @@
 import {metricCRSAssertion} from './metric-crs.js';
 import type {PointCollection,PointFeature,Position,WorkflowNode} from './types.js';
 import type {Network} from './catchments.js';
-import {metric,validateNetwork} from './catchments.js';
+import {metric,validateNetwork,nearestNetworkNode} from './catchments.js';
 import type {OffNetworkSite} from './catchments.js';
 import {defaultSpatialReference} from './spatial-reference.js';
 import type {Receipt} from './results.js';
@@ -48,10 +48,9 @@ export function snapToNetwork(
   const offNetwork:OffNetworkSite[]=[];
   const features:PointFeature[]=located.map((f):PointFeature=>{
     const origin=projection.forward(f.geometry!.coordinates as Position);
-    // Same nearest-node search isochrone performs, kept identical so the two agree.
-    const nearest=network.nodes.reduce((a,b)=>
-      dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b);
-    const distanceM=dist(coords.get(nearest.id)!,origin);
+    // The same nearest-node search isochrone performs -- now literally the same function rather
+    // than a copy kept identical by care. Factored 2026-10-17; see nearestNetworkNode.
+    const {node:nearest,distanceM}=nearestNetworkNode(network.nodes,coords,origin);
     // ASSUMPTION, DEGRADING: see src/catchments.ts and experiment 114. A site beyond the limit
     // is snapped anyway and MARKED, not dropped. It threw until 2026-10-14 and was dropped for
     // the hours after that; both removed the sites furthest from a mapped road, which is where

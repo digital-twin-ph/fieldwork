@@ -173,6 +173,30 @@ export function metric(zone:number,hemisphere:string){
 }
 type Metric=ReturnType<typeof metric>;
 const dist=(a:Position,b:Position)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+
+/** The network node nearest a projected point, and how far that is in metres.
+ *
+ *  **One implementation.** This search existed twice, character for character, in `isochrone`
+ *  and in `snap_to_network` -- the latter carrying the comment *"Same nearest-node search
+ *  isochrone performs, kept identical so the two agree"*, which is a duplication admitting
+ *  itself and relying on care to stay true.
+ *
+ *  [D2](../docs/audits/widget_audit.md) records nearest-neighbour-with-distance as the operation
+ *  this project implements more than once, and
+ *  [103](../docs/experiments/103-duplicates-should-merge.md) requires a found duplicate to be
+ *  dispositioned rather than noted. Factoring the code is not the whole disposition -- that is a
+ *  widget question, recorded in [82](../docs/experiments/82-snap-to-network.md) -- but two copies
+ *  of a search that must agree are one copy too many whatever the widgets do.
+ *
+ *  Both callers pass coordinates already projected into a metric CRS, because nearest-in-degrees
+ *  picks the wrong node away from the equator. */
+export function nearestNetworkNode<T extends {id:string}>(
+  nodes:readonly T[],projected:ReadonlyMap<string,Position>,origin:Position,
+):{node:T;distanceM:number}{
+  const node=nodes.reduce((a,b)=>
+    dist(projected.get(a.id)!,origin)<=dist(projected.get(b.id)!,origin)?a:b);
+  return {node,distanceM:dist(projected.get(node.id)!,origin)};
+}
 function sites(input:PointCollection,max=100){if(!input?.features.length||input.features.length>max||input.features.some(f=>!f.geometry))throw new Error(`Use 1–${max} sites with known locations.`);return input.features;}
 function halfPlane(ring:Position[],a:Position,b:Position){
   const normal=[b[0]-a[0],b[1]-a[1]],mid=[(a[0]+b[0])/2,(a[1]+b[1])/2],signed=(p:Position)=>(p[0]-mid[0])*normal[0]+(p[1]-mid[1])*normal[1];
@@ -357,7 +381,7 @@ export function isochrone(input:PointCollection,network:Network,params:WorkflowN
   const edges=prepareEdges(network,params.direction,m.forward);
   const adjacency=new Map<string,typeof edges>();for(const e of edges){const list=adjacency.get(e.from)||[];list.push(e);adjacency.set(e.from,list);}
   const snaps:NonNullable<Polygons['snaps']>=[],unconnected:NonNullable<Polygons['unconnected']>=[],offNetwork:NonNullable<Polygons['offNetwork']>=[],notes=['Turf/JSTS corridor buffer in a local azimuthal equidistant projection, 8 quadrant segments. Approximate corridor polygons, not exact travel-time surfaces. Edge time uses supplied length / constant speed. All three segments of the walk are charged: the straight line onto the network (D1), the streets (D2), and the walk off the street at the end (D3), which is the leg the budget still allows up to the stated limit. The region is the whole route buffered, so it narrows to nothing where the time runs out. Both straight legs assume ground that can be walked, at street speed. Graph extent can truncate reachability. OSM snapshot is not an 1854 street reconstruction.'];
-  const features=fs.map((f,index)=>{onProgress?.(index,fs.length);const origin=m.forward(f.geometry!.coordinates),snap=network.nodes.reduce((a,b)=>dist(coords.get(a.id)!,origin)<=dist(coords.get(b.id)!,origin)?a:b),snapDistance=dist(coords.get(snap.id)!,origin);
+  const features=fs.map((f,index)=>{onProgress?.(index,fs.length);const origin=m.forward(f.geometry!.coordinates),{node:snap,distanceM:snapDistance}=nearestNetworkNode(network.nodes,coords,origin);
     /* ASSUMPTION, DEGRADING: a site further from the network than `maxSnapM` is NOT excluded. The
        crow-flies walk onto the network is charged anyway and the site is recorded in `offNetwork`,
        so a place with no mapped street nearby gets an answer that says what it assumed rather than

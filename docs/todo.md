@@ -486,6 +486,19 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**A narrative framing stage, before the first widget.** The practitioner, 2026-10-17: *"There
+must be something in the beginning that helps the user design the frames of the story … And this
+step precedes the use of the study area widget."* Recorded as a **framework incompleteness**
+rather than a caveat in [119](experiments/119-can-this-tell-a-story.md), because under
+developmental evaluation finding the framework incomplete is a result. Today the first question
+this application asks is spatial; nothing asks what the work is for. Frames are **not** the
+medium — *"could be a scientific publication or a poster or an infographic but nevertheless needs
+the rigor required to achieve the narrative goal"* — so the structure and the form are separate
+choices. Candidates: person/place/time (native, already this project's vocabulary), STROBE (22
+items, and notably silent on figures and maps), Segel and Heer's genres (form, not frame). The
+smallest useful step is one declared frame that a run reports against, **including when the run
+does not support it**.
+
 **Measurement scale on a field binding.** A binding declares `kind: number | boolean | term`,
 and `term` covers both *clinic / pharmacy / health post* (unordered) and *NoDeaths / Few / Many*
 (ordered). The ruleset worked example produces the second kind and nothing records the order, so

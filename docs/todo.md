@@ -499,6 +499,23 @@ items, and notably silent on figures and maps), Segel and Heer's genres (form, n
 smallest useful step is one declared frame that a run reports against, **including when the run
 does not support it**.
 
+Refined the same day, and this is what makes the idea safe. **A frame states a question, not a
+conclusion** — *where did the outbreak reach*, not *it clustered around one pump*. **Or, for a
+scientific publication, it declares the result as a null hypothesis**, which is the falsifiable
+form the field already has: STROBE's item 3 asks for specific objectives *"including any
+prespecified hypotheses"*, so a frames stage would be producing what the reporting standard
+already requires. Prespecification is also the recognised guard against **HARKing** —
+hypothesising after results are known — which is the formal name for the hazard of fitting data
+to a frame.
+
+**And the arc must be revisable, with the revision recorded.** Mintzberg's deliberate, emergent
+and realized strategy applied to an account: what was intended before the data was seen, what
+contact with it forced, and what the published thing actually argues. All three are provenance,
+which this project already knows how to carry. The difference between the first and the third is
+the number nothing records today — and it is also the evidence that a prespecified hypothesis was
+not quietly rewritten after the fact.
+
+
 **Measurement scale on a field binding.** A binding declares `kind: number | boolean | term`,
 and `term` covers both *clinic / pharmacy / health post* (unordered) and *NoDeaths / Few / Many*
 (ordered). The ruleset worked example produces the second kind and nothing records the order, so

@@ -5,6 +5,18 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.9.0 — In development
 
+- **The Run workflow button was invisible whenever it was disabled.** Not removed — rendered at
+  **1.22:1** against its own background, in both colour schemes, measured with this project's own
+  `contrastRatio`. `.button.primary:disabled{opacity:.45}` dims the whole element, which moves the
+  white label and the green fill *towards each other* until they meet in the same pale mint. Every
+  worked example auto-runs on load and the button is disabled while it runs, so the slower ones —
+  06, eighteen nodes — spent that whole time with no button a practitioner could see. Replaced with
+  declared `--button-disabled` / `--button-disabled-ink` tokens: **5.94:1 light, 4.77:1 dark**. The
+  generic disabled opacity went from `.4` to `.55`, which takes secondary buttons from 2.15:1 to
+  3.12:1 in light mode — better, and still short of the 4.5:1 text threshold, which is recorded
+  here rather than claimed as fixed. WCAG 1.4.3 exempts disabled controls; exempt from the
+  requirement is not an argument for unreadable.
+
 - **Result tables rank by a column.** Every column header is a button; clicking it orders the
   table, clicking again reverses it, and the active column declares `aria-sort`. Which matters
   less than what an order over a result table has to decide: **records with no value for that

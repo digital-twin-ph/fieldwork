@@ -39,32 +39,48 @@ with no worked example to lean on. That is a design consequence, not a licensing
 | GADM | **usable, not shippable** | *"Redistribution or commercial use is not allowed without prior permission"*, read from its licence page |
 | SaTScan | **usable, not shippable** | *"may be used for educational as well as research purposes"* — a permission, naming no redistribution right |
 | R `outbreaks` | **neither, as packaged** | GPL (≥ 2) against this repository's Apache-2.0. The underlying records are another matter; the package is not the route |
-| Project Tycho | **unresolved** | see below |
+| Project Tycho | **shippable** | *"All Project Tycho data is licensed under CC BY 4.0"*, read verbatim from a dataset page on its own site |
 | WorldPop, Natural Earth, HDX, WHO GHO | **unresolved** | not verified at source |
 
-### Project Tycho — terms could not be established from public pages
+### Project Tycho — CC BY 4.0, settled on the data's own page
 
-Worth stating precisely, because this is the strongest candidate for closing
-[117](../experiments/117-data-quality.md)'s open condition.
+The strongest candidate for closing [117](../experiments/117-data-quality.md)'s open condition,
+and after three attempts the licence is settled.
 
-Its [about page](https://www.tycho.pitt.edu/about/) says the data is available *"for any
-non-commercial use under a CC BY 4.0 license"*. **That is self-contradictory**: CC BY 4.0 permits
-commercial use by definition, so either the licence is CC BY 4.0 and the non-commercial
-qualifier has no force, or the intent is CC BY-NC and the name is wrong. The
-[licence page](https://www.tycho.pitt.edu/license/) does not render its terms publicly; the
-agreement appears to be presented at registration, which is also where downloads require signing
-in. There is an API, documented at `tycho.pitt.edu/dataset/api`.
+It was not settled where it should have been. The [about page](https://www.tycho.pitt.edu/about/)
+says the data is available *"for any non-commercial use under a CC BY 4.0 license"*, which is
+**self-contradictory** — CC BY 4.0 permits commercial use by definition. The
+[licence page](https://www.tycho.pitt.edu/license/) does not render its terms publicly. The
+practitioner said the agreement page existed, which sent this back for a third look, and the
+answer was on the **datasets themselves**:
+
+> **"All Project Tycho data is licensed under CC BY 4.0."**
+> — read 2026-10-17 from [`/dataset/US.6142004`](https://www.tycho.pitt.edu/dataset/US.6142004),
+> *Counts of Influenza reported in United States of America: 1919-1951*, DOI
+> `10.25337/T7/ptycho.v2.0/US.6142004`
+
+A specific, named, versioned licence stated on the data's own page, with a DOI and a recommended
+citation beside it, is a licence grant. The about page's phrasing is incoherent rather than
+restrictive, and a statement that cannot be read as written does not override one that can.
+
+**So Tycho is shippable**, and it is the first epidemiological source here that is. CC BY 4.0
+permits redistribution and commercial use; what it requires is attribution, which is
+non-negotiable and well specified — cite Van Panhuis, Cross and Burke with the dataset's DOI and
+version, exactly as `examples/john-snow/NOTICE.txt` already does for its sources.
+
+**The one caution kept.** Downloads require signing in, so an agreement is presented at
+registration that nobody here has read. It is unlikely to contradict a verbatim CC BY 4.0 grant
+on the public data pages, but "unlikely" is not "checked", and a bundled slice should carry the
+agreement's date alongside the licence IRI.
 
 **So: unresolved from public pages.** The agreement is presented at registration, and the
 difference between CC BY 4.0 and CC BY-NC decides whether a Tycho slice could ever ship in a
 worked example or only ever be fetched to a practitioner's own machine.
 
-**A key is not a licence.** The practitioner registered and placed an API key in `.secrets/` on
-2026-10-17. That settles *access* and nothing else: a credential grants the right to fetch, and
-says nothing about the right to redistribute what was fetched. Conflating the two is the precise
-error this project's receipts exist to prevent — an application that prints a licence IRI must
-print the licence, not the fact that it had permission to download. The classification above
-stays **unresolved** until the agreement's text is read.
+**A key is still not a licence**, even now the licence is known. The practitioner placed an API
+key in `.secrets/` on 2026-10-17; it is untracked and was not opened. A credential grants the
+right to *fetch*, and the CC BY 4.0 grant — separately — is what permits redistribution. The two
+happen to both be favourable here, which is exactly when the distinction is easiest to lose.
 
 ### The API, read from its documentation
 

@@ -4,9 +4,9 @@ import {readFile,mkdir} from 'node:fs/promises';
 import {blankWorkflow,newStudyArea,bboxPolygon} from '../build/study-area.js';
 import {calculateArea,formatArea,AREA_UNITS} from '../build/area-computation.js';
 import {coverageExercise} from '../build/spatial-coverage.js';
+import {collectPageErrors} from './page-errors.mjs';
 test("Area enrichment, units, evidence and offline recomputation",async({page,context})=>{
-const errors=[];
-page.on('pageerror',e=>errors.push(e.message));
+const errors=collectPageErrors(page);
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});};
 const select=async id=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"]`).click();};

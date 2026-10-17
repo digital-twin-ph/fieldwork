@@ -37,6 +37,15 @@ export interface DesignRule {
   /** `measured` computes a number and compares it. `categorical` checks a property that is true
    *  or false without arithmetic. Stated because it decides how much the outcome is worth. */
   kind:'measured'|'categorical';
+  /** Where the principle comes from, for a rule that is not a published criterion.
+   *
+   *  A rule citing a source is checkable against that source. A rule citing nothing is the
+   *  author's taste wearing a rule's clothes — and three of the four below were exactly that
+   *  until 2026-10-17, when the practitioner supplied the canon they belong to.
+   *
+   *  **None of these works has been read here.** What is attributed is the principle as it is
+   *  commonly stated, which is why this says *traces to* rather than naming a page. */
+  tracesTo?:string;
 }
 
 export interface RuleApplication {
@@ -75,8 +84,10 @@ export const DESIGN_RULES:DesignRule[]=[
   {id:'MapMarkContrast',kind:'measured',criterion:SC_1411,
     statement:'A mark that carries meaning must reach 3:1 against the ground, or a reader cannot find it.'},
   {id:'CategoricalPaletteIsColourBlindSafe',kind:'categorical',
+    tracesTo:'Brewer, on perceptual ordering and accessible palette choice; the palette itself is Okabe and Ito\u2019s',
     statement:'Categories are drawn from a palette chosen to remain distinguishable under the common colour vision deficiencies.'},
   {id:'UnknownIsNotAHue',kind:'categorical',
+    tracesTo:'Bertin, on the visual variables: hue is selective but not ordered, so spending it on an absence makes that absence compete as a category',
     statement:'Absence of data is drawn in a neutral, never in a hue, because it is not a category and must not compete with one.'},
 ];
 const ruleBy=(id:string)=>DESIGN_RULES.find(r=>r.id===id)!;
@@ -197,8 +208,59 @@ export function designRuleDeclarations():string{
   return DESIGN_RULES.map(rule=>
     `fw:${rule.id} a fw:DesignRule; fw:ruleKind ${quote(rule.kind)}; `
     +`rdfs:comment ${quote(rule.statement)}`
+    +(rule.tracesTo?`; dcterms:source ${quote(rule.tracesTo)}`:'')
     +(rule.criterion
       ?`; earl:test <${rule.criterion.iri}>; fw:conformanceLevel ${quote(rule.criterion.level)}; `
        +`rdfs:seeAlso <${rule.criterion.iri}>`
       :'')+'.').join('\n');
+}
+
+/** A decision a practitioner made, among alternatives that were all defensible.
+ *
+ *  The practitioner, 2026-10-17: *"It's a user preference, and the audit is in the N3 receipts in
+ *  case anybody else wants it. FW is not multi-user, it only caters to the one user holding the
+ *  browser, so N of 1 … The user can audit that decision him/herself."*
+ *
+ *  So a choice is recorded as a **choice**, and the reason it is recorded separately from a rule
+ *  is not doubt about the practitioner's judgement. It is that a reader — most often the same
+ *  practitioner, later — must be able to tell *"this map is sequential because the variable is
+ *  ordered"* from *"this map is sequential because I chose it"*. Both are legitimate; only one
+ *  is a statement about the data.
+ *
+ *  **It records `selected`, not `preferred`, and the difference is the point.** The practitioner,
+ *  2026-10-17: *"We can not even infer preference from a single mouse click, we can only say
+ *  'selected'. If 'selected' so happens to map to a particular pattern choice, then we have
+ *  stronger evidence to say 'preference'."*
+ *
+ *  A preference is a **disposition** — a claim that this person tends to choose this. One click
+ *  cannot evidence it; it evidences one click. Writing `preferred` on a single observation is
+ *  the same overclaim as calling three gaps a pattern, and this project has made that mistake in
+ *  prose often enough today to recognise it in a vocabulary.
+ *
+ *  What the receipts hold is therefore the **observations**. A preference is an inference across
+ *  many of them, it would need its own statement of what it rests on, and nothing here asserts
+ *  it. That is also what makes the inference possible later: selections recorded honestly are
+ *  the only evidence a preference could ever be drawn from.
+ *
+ *  So `fw:ruleKind` asks of a rule what it stands on — **measured** or **categorical** — and
+ *  `fw:decisionBasis` says of a decision that it was **selected**. */
+export interface DesignChoice {
+  /** What was being decided, as the Inspector names it. */
+  setting:string;
+  chosen:string;
+  /** What else was offered, where the application knows. A choice between alternatives nobody
+   *  can see is a setting, not a judgement, and recording it as a judgement would overstate it. */
+  alternatives?:string[];
+}
+
+export function designChoiceFacts(specificationIri:string,choices:DesignChoice[]):string{
+  const quote=(v:string)=>JSON.stringify(v);
+  return choices.map(choice=>
+    `<${specificationIri}> fw:designChoice [ a fw:DesignChoice; `
+    +`fw:decisionBasis "selected"; `
+    +`fw:choiceSetting ${quote(choice.setting)}; fw:choiceMade ${quote(choice.chosen)}`
+    +(choice.alternatives?.length
+      ?`; ${choice.alternatives.map(a=>`fw:choiceOffered ${quote(a)}`).join('; ')}`
+      :'')
+    +` ].`).join('\n');
 }

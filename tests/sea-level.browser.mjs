@@ -1,13 +1,14 @@
 import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {collectPageErrors} from './page-errors.mjs';
 
 const fixture=JSON.parse(await readFile(new URL('./fixtures/sea-level-workflow-2026-10-09.json',import.meta.url),'utf8'));
 const upload=(page,w)=>page.locator('#workflow-file').setInputFiles({name:'sea-level.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
 const run=async page=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});};
 
 test('the sea-level workflow runs, states its refusals and replays offline',async({page,context})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   await page.goto('/?example=blank');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await upload(page,fixture);

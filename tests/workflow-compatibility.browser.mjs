@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {collectPageErrors} from './page-errors.mjs';
 
 const fixture=JSON.parse(await readFile(new URL('./fixtures/coverage-workflow-2026-10-05.json',import.meta.url),'utf8'));
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
@@ -13,7 +14,7 @@ const receipt=async page=>{
 };
 
 test('frozen workflow restores typed data, area enrichment and real EYE decisions offline',async({page,context})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   await page.goto('/?example=blank');await upload(page,fixture);await run(page);
   const before=await saved(page),evidence=await receipt(page),map=evidence.outputs.find(o=>o.nodeId==='map');
   assert.deepEqual(map.rows.map(r=>[r.sourceNodeId,r.recordId,r.relation,r.decision]),[

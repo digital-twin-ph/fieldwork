@@ -1,6 +1,6 @@
 # Semantic admission and worked-example audit
 
-_Created 2026-10-10 · Updated 2026-10-15_
+_Created 2026-10-10 · Updated 2026-10-17_
 
 If the vocabulary below is unfamiliar, start with
 [the glossary](#glossary-the-semantic-vocabulary-used-in-these-documents); the
@@ -122,7 +122,8 @@ it does **not** mean.
 | DCAT | Datasets, their distributions and where they came from. |
 | Dublin Core (`dcterms:`) | Descriptive metadata: titles, identifiers, descriptions, references. |
 | SKOS | Controlled lists of concepts, for category vocabularies rather than classes. |
-| EARL | **Proposed.** Test assertions and outcomes, including `earl:untested` and `earl:inapplicable`, so coverage gaps are queryable rather than merely absent ([experiment 66](../experiments/66-ports-as-schema-binding.md)). |
+| EARL | **In use since 2026-10-17**, having been proposed in [experiment 66](../experiments/66-ports-as-schema-binding.md) for test assertions and outcomes. `fw:DesignRuleApplication rdfs:subClassOf earl:Assertion`: a map's receipt states which design rules it was held to, with `earl:outcome` from EARL's closed set — including `earl:inapplicable`, so a rule that did not apply is reported rather than silently absent, which is what 66 wanted it for. |
+| DQV | **In use since 2026-10-17.** The W3C Data Quality Vocabulary. `fw:ReadingProblem rdfs:subClassOf dqv:QualityMeasurement`, with `fw:absentValues` and `fw:unreadableValues` as `dqv:Metric`s in two declared `dqv:Dimension`s, and `fw:affectedRecordCount rdfs:subPropertyOf dqv:value`. Adopted after researching whether a data-quality ontology already existed: one does, for assessment. **Nothing in it concerns repairing data**, so a repair is `fw:ColumnRepair rdfs:subClassOf prov:Revision` instead ([117](../experiments/117-data-quality.md)). |
 
 ### Three traps these documents try to avoid
 
@@ -396,7 +397,7 @@ Every ontology figure quoted in this session came from grepping **one file of se
 | Claimed | Actual |
 | --- | --- |
 | 263 declared `fw:` terms | **462** typed `owl:*`, across 17 files |
-| **0** terms aligned to a standard | **76** — mostly `rdfs:subClassOf` and `rdfs:subPropertyOf`, which the grep never looked for |
+| **0** terms aligned to a standard | **76** — mostly `rdfs:subClassOf` and `rdfs:subPropertyOf`, which the grep never looked for. **84 on 2026-10-17**, the eight added being the DQV and EARL alignments below |
 | 3 alignments, newly added | 3 added, on top of **73 already there** |
 | `fw:PointDataset` never declared | declared at `ontology/runtime.ttl:40` |
 | carriers "typed three different ways" | one uniform role type, plus a structural type on 2 of 12 |
@@ -406,9 +407,39 @@ name, a single file or a recalled standard instead of the artifact. **The ontolo
 files and `fieldwork.ttl` is one of them**, and a count that does not say which files it covers is
 not a count.
 
-`scripts/ontology-coupling.mjs` reads all of them and was right throughout — it reports 588 terms
-typed. That its "0 undeclared" and my "0 aligned" were printed on the same day without either of us
+`scripts/ontology-coupling.mjs` reads all of them and was right throughout — it reported 588 terms
+typed on the day this was written, and **711 on 2026-10-17**, which is the point restated: a count
+is a measurement with a date on it, not a property of the ontology. That its "0 undeclared" and my "0 aligned" were printed on the same day without either of us
 noticing they could not both describe the same ontology is the part worth remembering.
+
+## What 2026-10-17 added, and one thing it rediscovered
+
+_Added 2026-10-17, after the practitioner observed that this document had gone stale._
+
+Three external vocabularies were taken up in one day, which is unusual enough to record with the
+reasoning rather than only in the table above.
+
+| | Taken up for | Rather than |
+| --- | --- | --- |
+| **DQV** | the counts in `fw:ReadingProblem` — records a step could not read, per bound field | minting `fw:` terms for a measurement W3C had already modelled |
+| **PROV**, further | `fw:ColumnRepair rdfs:subClassOf prov:Revision` — the records handed on revise the records held | inventing a repair vocabulary, after checking that **DQV has none**: its nearest term is feedback *about* quality |
+| **EARL** | `fw:DesignRuleApplication` — which design rules a map was held to, and their outcomes | a bespoke conformance shape, and WCAG needs no translating: its criteria already carry stable IRIs, which `earl:test` points at |
+
+**The rediscovery.** EARL was reached on 2026-10-17 by a route that started from a practitioner's
+question about WCAG, and it had been sitting in the table above marked *Proposed* since
+[66](../experiments/66-ports-as-schema-binding.md) — proposed for the same reason, that
+`earl:inapplicable` makes a gap queryable rather than merely absent, which is precisely what the
+design rules now use it for. Nobody noticed the proposal while adopting it.
+
+That is the cost this document names elsewhere and paid here: **a proposal recorded in a table is
+not a proposal anybody reads.** It cost nothing this time, because the independent arrival landed
+on the same vocabulary for the same reason — which is some evidence the reasoning is sound, and
+no evidence at all that the process worked.
+
+**What remains undone.** The SHACL profile has no shapes for any of the terms added today, so
+`fw:DesignRuleApplication`, `fw:DesignChoice`, `fw:ReadingProblem` and `fw:ColumnRepair` are
+declared and unvalidated — a declaration without a shape being the first of the three traps this
+document lists.
 
 ## Primitive design audit
 

@@ -2,9 +2,9 @@ import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,readFile} from 'node:fs/promises';
 import {pointGeoPackage} from './input-fixtures.mjs';
+import {collectPageErrors} from './page-errors.mjs';
 test("Input formats, pushpin schemas and spatial review",async({page,context})=>{
-const errors=[];
-page.on('pageerror',e=>errors.push(e.message));
+const errors=collectPageErrors(page);
 const done=()=>expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 const run=async()=>{await page.locator('#run-button').click();await done();};
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));

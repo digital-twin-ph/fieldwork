@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {collectPageErrors} from './page-errors.mjs';
 
 // Half A of the reproject split (experiment 111): a source reads UTM easting and northing and
 // converts before its points leave the dialog, so the common case needs no second widget.
@@ -16,8 +17,7 @@ const UTM=['id,name,easting,northing',
 const EXPECTED=[[-0.1365,51.5131],[-0.1340,51.5145]];
 
 test('a CSV of UTM easting and northing imports as CRS84 without a second widget',async({page})=>{
-  const errors=[];
-  page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   await page.goto('/?example=coverage');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('.react-flow__node[data-id="observations"]').click();

@@ -2,6 +2,7 @@ import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {syncProjectManifest} from '../build/project-manifest.js';
+import {collectPageErrors} from './page-errors.mjs';
 
 // Experiment 113: can a ruleset run over a quantity DERIVED from geometry rather than over a
 // column someone imported? The rules only evaluate under the real EYE reasoner, which is vendored
@@ -76,7 +77,7 @@ test('the same chain above the threshold does not flag, and the decision follows
 // is whether the example still wires up -- which is what the output port type decides.
 // Experiment 113.
 test('the composite replaces the hull and the ruleset, and the example keeps every edge',async({page})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=snow-extent');

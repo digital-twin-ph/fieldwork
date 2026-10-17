@@ -1,12 +1,12 @@
 import {test,expect} from '@playwright/test';
+import {collectPageErrors} from './page-errors.mjs';
 
 // Every widget offered by the palette must be addable as an unconfigured draft. Validating a
 // node's full contract on every edit makes it impossible to add at all, and change() rolls the
 // workflow back, so the canvas appears to ignore the click. Experiment 48 recorded this; three
 // widgets added on 2026-10-09 repeated it.
 test('every palette entry can be added to a blank canvas as a draft',async({page})=>{
-  const errors=[];
-  page.on('pageerror',e=>errors.push(e.message));
+  const errors=collectPageErrors(page);
   await page.goto('/?example=blank');
   // A canvas with no input offers the input stage alone, from 2026-10-15. Place one, which is
   // what the rule asks of a practitioner, and then every entry on offer must be addable -- which

@@ -516,6 +516,15 @@ the number nothing records today — and it is also the evidence that a prespeci
 not quietly rewritten after the fact.
 
 
+**Correct the geoBoundaries licence claim, in two places.** Experiment 47's table records
+geoBoundaries as *"CC BY 4.0 … attribution obligation only"*, and the glossary's **Out of
+scope** entry says *"geoBoundaries is used instead"*. Testing the service
+([probe](research/geoboundaries-probe-2026-10-17.md)) found **six distinct licences across
+eleven country-levels**, including **ODbL, which is share-alike** — and the three ODbL levels
+are the DRC and Uganda ones. The glossary sentence also reads as a capability: nothing in
+`src/` references geoBoundaries, and there is no polygon ingestion path for it to use. Both
+statements are mine to flag and the practitioner's to correct.
+
 **The two buffers, and what the edge decides.** `buffer_point` imports `validateBuffer`
 from `area-buffer.ts`, so the distance knob and its 0–50,000 m range are already one thing.
 What differs is the Turf step count — 8 against 32 — justified in `buffer-point.ts` by

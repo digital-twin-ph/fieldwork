@@ -310,6 +310,10 @@ for a practitioner's reasons on 2026-10-16, and the split turns out to be a dime
 2. A repair is reachable from where the problem is *reported*, not only from the quick look —
    the alert naming 63 unreadable values should lead to the thing that fixes them.
 3. A file the project did not author is profiled, and what the profile missed is written down.
+   Candidates are searched and recorded in [data-sources.md](../data-sources.md); **Project
+   Tycho** is the one that would close this honestly, because its gaps are a property of how
+   surveillance was collected rather than damage this project inflicted. Its licence is the
+   unverified part.
 
 ## What changed our minds
 

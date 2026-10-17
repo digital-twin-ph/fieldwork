@@ -3,4 +3,4 @@ import{a as S}from"./chunk-6GWLMVKH.js";import{l as N,n as k,o as y}from"./chunk
 @prefix dcterms: <http://purl.org/dc/terms/>.
 ${`<urn:fieldwork:run:${a}:${t.id}:snap>`} a fw:NetworkSnap, prov:Activity; fw:siteCount ${i.length}; fw:snappedNodeCount ${d}; fw:greatestSnapDistanceMetres ${u.toFixed(2)}; fw:snapLimitMetres ${t.params.maxSnapM}; `+(o.length?`fw:offNetworkSiteCount ${o.length}; fw:offNetworkSites ${JSON.stringify(JSON.stringify(o))}; `:"")+$(p.crs)+`prov:used <urn:fieldwork:run:${a}:${x}>.
 `;return{value:{type:"FeatureCollection",features:i,sourceNodeId:t.id,offNetwork:o,sourceKind:"input-points",spatialReference:S(),sourceInfo:{format:"network-snapped-points",network:r.source,notes:c}},receipt:{nodeId:t.id,kind:"computation",facts:w,input:w,rules:"",conclusions:[],method:`Nearest network node by straight-line distance in ${p.crs}; limit ${t.params.maxSnapM} m. ${c.slice(1).join(" ")}`}}}export{M as a,F as b,D as c};
-//# sourceMappingURL=chunk-C4KASUU3.js.map
+//# sourceMappingURL=chunk-XKW2P7QB.js.map

@@ -1,5 +1,5 @@
 import {crsIRIFromName} from './metric-crs.js';
-import type {NodeSpec,WorkflowNode,PointInput,Escape} from './types.js';
+import type {NodeSpec,WorkflowNode,PointInput,Escape,Scalar} from './types.js';
 import type {CoverageValue,TableValue,PointRow,CoverageRow,Receipt} from './results.js';
 export type TableInputs={coverage:CoverageValue;points?:never}|{coverage?:undefined;points:PointInput};
 import {pointLayers,layerRecords,layerSummary} from './point-layers.js';
@@ -36,17 +36,90 @@ export function tableOutput(node:WorkflowNode<'table_output'>,inputs:TableInputs
 const display=(v:unknown)=>v===null||v===undefined?'Not supplied':String(v);
 const action=(r:Partial<CoverageRow>)=>r.excluded?'Excluded':r.decision==='Review'?'Review required':r.decision==='Accept'?'Included':'';
 export const TABLE_PAGE_SIZE=100,ATTRIBUTE_PAGE_SIZE=12;
-export function pointTableMarkup(output:TableValue|CoverageValue,esc:Escape,{query='',page=0,attributePage=0}={}){
-  const allKeys=[...new Set(output.rows.flatMap(r=>Object.keys(r.attributes).filter(k=>k!=='name')))];
-  const columns=allKeys.slice(attributePage*ATTRIBUTE_PAGE_SIZE,(attributePage+1)*ATTRIBUTE_PAGE_SIZE),reviewed=output.kind==='spatial-coverage';
+
+/** Ranking a result table by one of its columns.
+ *
+ *  `snap_to_network` has claimed since 2026-10-14 that its displacement is "a point attribute a
+ *  practitioner can map, sort and argue with", and on 2026-10-17 the practitioner's decomposition
+ *  of "which clinic is furthest from a road" showed that sorting existed nowhere in the
+ *  application: these tables offered a filter box and no order. The practitioner's own framing --
+ *  *"typically in programming one could use a loop to compare different lengths, or given a data
+ *  set of lengths sort them short to long"* -- is exactly right about the mechanism, and the
+ *  mechanism was never the hard part.
+ *
+ *  What needs deciding is what an order means over cells that are not all comparable, because a
+ *  result table holds `Scalar|null` and nothing promises a column is numeric:
+ *
+ *  - **The comparison is chosen per column, from the values present.** Every known value a number
+ *    makes it a numeric column. Anything else is compared as text under
+ *    `localeCompare(..., {numeric:true})`, which still puts "3" before "10" without claiming a
+ *    column with mixed types in it is numeric. A column where some rows read `3` and others `'3'`
+ *    is the data quality problem [117](../docs/experiments/117-data-quality.md) exists to surface,
+ *    and a sort that quietly coerced them would hide it at the moment the practitioner is looking
+ *    straight at it.
+ *  - **Values that are not there are held at the end, in both directions, and counted.** "Farthest
+ *    from the road" must not be answered by a record whose distance was never measured. Reversing
+ *    the order reverses the records that have values; it does not promote an absence to the top.
+ */
+export type SortDirection='ascending'|'descending';
+export interface TableSort {column:string; direction:SortDirection}
+const known=(v:Scalar|undefined):v is Exclude<Scalar,null>=>v!==null&&v!==undefined&&v!=='';
+const rank=(v:Exclude<Scalar,null>)=>typeof v==='boolean'?(v?1:0):v;
+/** True when every value present is a number, so the column can be ordered by magnitude. */
+export const isNumericColumn=(values:readonly (Scalar|undefined)[])=>{
+  const present=values.filter(known);
+  return present.length>0&&present.every(v=>typeof v==='number');
+};
+export function sortRows<T>(rows:readonly T[],read:(row:T)=>Scalar|undefined,direction:SortDirection):{sorted:T[];unknownCount:number}{
+  const numeric=isNumericColumn(rows.map(read)),sign=direction==='ascending'?1:-1;
+  const withValue:T[]=[],without:T[]=[];
+  for(const row of rows)(known(read(row))?withValue:without).push(row);
+  withValue.sort((a,b)=>{
+    const x=rank(read(a) as Exclude<Scalar,null>),y=rank(read(b) as Exclude<Scalar,null>);
+    return sign*(numeric||typeof x!=='string'||typeof y!=='string'
+      ?(x<y?-1:x>y?1:0)
+      :x.localeCompare(y,undefined,{numeric:true}));
+  });
+  return {sorted:[...withValue,...without],unknownCount:without.length};
+}
+
+interface TableColumn {key:string; label:string; read:(r:PointRow & Partial<CoverageRow>)=>Scalar|undefined}
+export function pointTableColumns(output:TableValue|CoverageValue,{attributePage=0}={}):{columns:TableColumn[];attributeKeys:string[]}{
+  const attributeKeys=[...new Set(output.rows.flatMap(r=>Object.keys(r.attributes).filter(k=>k!=='name')))];
+  const reviewed=output.kind==='spatial-coverage';
+  return {attributeKeys,columns:[
+    {key:'layerLabel',label:'Layer',read:r=>r.layerLabel},
+    {key:'recordId',label:'Record ID',read:r=>r.recordId},
+    {key:'name',label:'Name',read:r=>r.name},
+    {key:'longitude',label:'Longitude (°)',read:r=>r.coordinates?.[0]??null},
+    {key:'latitude',label:'Latitude (°)',read:r=>r.coordinates?.[1]??null},
+    ...(reviewed?[
+      {key:'relation',label:'Spatial relation',read:(r:PointRow & Partial<CoverageRow>)=>r.relation?relationLabel(r.relation):null},
+      {key:'decision',label:'Review decision',read:(r:PointRow & Partial<CoverageRow>)=>action(r)||null},
+      {key:'exclusionReason',label:'Exclusion reason',read:(r:PointRow & Partial<CoverageRow>)=>r.exclusionReason??null},
+    ]:[]),
+    ...attributeKeys.slice(attributePage*ATTRIBUTE_PAGE_SIZE,(attributePage+1)*ATTRIBUTE_PAGE_SIZE)
+      .map(k=>({key:`attribute:${k}`,label:k,read:(r:PointRow & Partial<CoverageRow>)=>r.attributes[k]})),
+  ]};
+}
+export function pointTableMarkup(output:TableValue|CoverageValue,esc:Escape,{query='',page=0,attributePage=0,sort}:{query?:string;page?:number;attributePage?:number;sort?:TableSort}={}){
+  const {columns,attributeKeys}=pointTableColumns(output,{attributePage});
   const needle=query.trim().toLowerCase(),filtered=output.rows.filter((r:PointRow & Partial<CoverageRow>)=>!needle||[r.name,r.recordId,r.layerLabel,r.sourceNodeId,...(r.coordinates||[]),r.relation?relationLabel(r.relation):'',action(r),r.exclusionReason||'',...Object.values(r.attributes).map(display)].join(' ').toLowerCase().includes(needle));
-  const pages=Math.max(1,Math.ceil(filtered.length/TABLE_PAGE_SIZE));page=Math.min(page,pages-1);
-  const headers=['Layer','Record ID','Name','Longitude (°)','Latitude (°)',...(reviewed?['Spatial relation','Review decision','Exclusion reason']:[]),...columns];
-  const shown=filtered.slice(page*TABLE_PAGE_SIZE,(page+1)*TABLE_PAGE_SIZE);
+  const sorted=sort&&columns.some(c=>c.key===sort.column)?sortRows(filtered,columns.find(c=>c.key===sort.column)!.read,sort.direction):null;
+  const ordered=sorted?sorted.sorted:filtered;
+  const pages=Math.max(1,Math.ceil(ordered.length/TABLE_PAGE_SIZE));page=Math.min(page,pages-1);
+  const shown=ordered.slice(page*TABLE_PAGE_SIZE,(page+1)*TABLE_PAGE_SIZE);
+  const sortedColumn=sort?columns.find(c=>c.key===sort.column):undefined;
   return {
-    head:headers.map(h=>`<th scope="col">${esc(h)}</th>`).join(''),
-    body:shown.length?shown.map((r:PointRow & Partial<CoverageRow>)=>`<tr tabindex="0" data-place="${esc(r.id)}">${[r.layerLabel,r.recordId,r.name,...(r.coordinates||[null,null]),...(reviewed?[relationLabel(r.relation!),action(r),r.exclusionReason||null]:[]),...columns.map(k=>r.attributes[k])].map(v=>`<td>${esc(display(v))}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}">${output.rows.length?'No matching records.':'No point records in this input.'}</td></tr>`,
-    controls:`<div class="table-page-group"><button class="button small" data-table-page="${page-1}" ${page===0?'disabled':''}>Previous rows</button><span role="status">${filtered.length?`${page*TABLE_PAGE_SIZE+1}–${Math.min((page+1)*TABLE_PAGE_SIZE,filtered.length)}`:'0'} of ${filtered.length} records</span><button class="button small" data-table-page="${page+1}" ${page+1>=pages?'disabled':''}>Next rows</button></div>${allKeys.length>ATTRIBUTE_PAGE_SIZE?`<div class="table-page-group"><button class="button small" data-table-fields="${attributePage-1}" ${attributePage===0?'disabled':''}>Previous attributes</button><span>Attributes ${attributePage*ATTRIBUTE_PAGE_SIZE+1}–${Math.min((attributePage+1)*ATTRIBUTE_PAGE_SIZE,allKeys.length)} of ${allKeys.length}</span><button class="button small" data-table-fields="${attributePage+1}" ${(attributePage+1)*ATTRIBUTE_PAGE_SIZE>=allKeys.length?'disabled':''}>Next attributes</button></div>`:''}`,
+    head:columns.map(c=>{
+      const active=sort&&sort.column===c.key?sort.direction:'none';
+      const next=active==='ascending'?'descending':'ascending';
+      return `<th scope="col" aria-sort="${active}"><button type="button" class="column-sort" data-table-sort="${esc(c.key)}" data-table-direction="${next}">${esc(c.label)}<span aria-hidden="true" class="sort-mark">${active==='ascending'?'▲':active==='descending'?'▼':''}</span></button></th>`;
+    }).join(''),
+    body:shown.length?shown.map((r:PointRow & Partial<CoverageRow>)=>`<tr tabindex="0" data-place="${esc(r.id)}">${columns.map(c=>`<td>${esc(display(c.read(r)))}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${columns.length}">${output.rows.length?'No matching records.':'No point records in this input.'}</td></tr>`,
+    controls:`<div class="table-page-group"><button class="button small" data-table-page="${page-1}" ${page===0?'disabled':''}>Previous rows</button><span role="status">${ordered.length?`${page*TABLE_PAGE_SIZE+1}–${Math.min((page+1)*TABLE_PAGE_SIZE,ordered.length)}`:'0'} of ${ordered.length} records</span><button class="button small" data-table-page="${page+1}" ${page+1>=pages?'disabled':''}>Next rows</button></div>`
+      +(sorted&&sortedColumn?`<p class="muted" role="status">Ordered by ${esc(sortedColumn.label)}, ${sort!.direction==='ascending'?'lowest':'highest'} first${sorted.unknownCount?`. ${sorted.unknownCount} record${sorted.unknownCount===1?'':'s'} with no value for this column held at the end, in either direction.`:'.'}</p>`:'')
+      +(attributeKeys.length>ATTRIBUTE_PAGE_SIZE?`<div class="table-page-group"><button class="button small" data-table-fields="${attributePage-1}" ${attributePage===0?'disabled':''}>Previous attributes</button><span>Attributes ${attributePage*ATTRIBUTE_PAGE_SIZE+1}–${Math.min((attributePage+1)*ATTRIBUTE_PAGE_SIZE,attributeKeys.length)} of ${attributeKeys.length}</span><button class="button small" data-table-fields="${attributePage+1}" ${(attributePage+1)*ATTRIBUTE_PAGE_SIZE>=attributeKeys.length?'disabled':''}>Next attributes</button></div>`:''),
   };
 }
 export function pointTableEvidence(row:PointRow,dirty:boolean,esc:Escape){return `<div class="inspector-body"><span class="inspector-section">Point record ${dirty?'· previous run':''}</span><h2>${esc(row.name)}</h2><p>${esc(row.layerLabel)} · ${esc(row.recordId)}</p><p>${row.coordinates?'Longitude, latitude: '+row.coordinates.map(esc).join(', '):'No coordinates supplied'}</p><p class="muted">Source attributes; no spatial coverage decision has been made.</p>${Object.entries(row.attributes).map(([k,v])=>`<div class="detail-row"><span>${esc(k)}</span><strong>${esc(display(v))}</strong></div>`).join('')}</div>`;}

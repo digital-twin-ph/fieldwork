@@ -14,6 +14,11 @@ import type {Receipt} from './results.js';
  *  `isochrone` and `reachable_nodes`, and this node is where the displacement becomes a
  *  point attribute a practitioner can map, sort and argue with. Experiment 114.
  *
+ *  That sentence was written on 2026-10-14 and was not TRUE until 2026-10-17: nothing in this
+ *  application sorted a result table, so the attribute could be mapped and argued with and not
+ *  ranked. `table_output` sorts now. The claim is kept because it is what this widget is for,
+ *  with the date it became accurate recorded beside it.
+ *
  *  Measured in metres, not degrees, for the reason the other seven widgets take a
  *  zone: a degree of longitude is not a degree of latitude, and nearest-in-degrees
  *  picks the wrong node away from the equator. */

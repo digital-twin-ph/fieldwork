@@ -516,6 +516,14 @@ the number nothing records today — and it is also the evidence that a prespeci
 not quietly rewritten after the fact.
 
 
+**Rank a result table by a column.** Result tables filter and do not sort. `snap_to_network`'s
+header has claimed since 2026-10-14 that its displacement is *"a point attribute a practitioner
+can map, sort and argue with"*, and nothing in the application sorts. Found 2026-10-17 while
+decomposing "which clinic is furthest from a road", which turns out to need network scoping
+(exists), nearest-node distance (exists) and **ranking** (does not). It is a `table_output`
+concern rather than a spatial one, and it is the last piece standing between the
+[`snap_to_network` disposition](audits/widget_audit.md) and acting on it.
+
 **Measurement scale on a field binding.** A binding declares `kind: number | boolean | term`,
 and `term` covers both *clinic / pharmacy / health post* (unordered) and *NoDeaths / Few / Many*
 (ordered). The ruleset worked example produces the second kind and nothing records the order, so

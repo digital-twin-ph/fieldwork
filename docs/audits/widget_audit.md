@@ -676,9 +676,31 @@ So retiring the widget is not two attributes on a general operation. In order:
    needed by anything.
 4. Only then can the flag be set.
 
-**And one thing to decide rather than assume at step 4.** [114](../experiments/114-the-three-segments-of-a-walk.md)
-extracted this widget from `isochrone` so a displacement could be *mapped, sorted and argued
-with* — "which clinic is furthest from a road" is a question somebody may want answered without
-running a catchment at all. Retiring the widget removes that unless the general operation can
-take a network, which is the port work 103 already found blocking the other three merges. The
-disposition is still *merges*; what step 4 must not do is lose the capability silently.
+**The capability this seemed to protect, decomposed — and it was never there.**
+
+[114](../experiments/114-the-three-segments-of-a-walk.md) extracted this widget from `isochrone`
+so a displacement could be *"mapped, sorted and argued with"*, and this entry first treated
+"which clinic is furthest from a road" as a capability retirement would lose. The practitioner
+decomposed the question instead, 2026-10-17:
+
+> *"first which network is closest to a group of clinics in an area or jurisdiction, then ask the
+> second, when the road is identified which clinic when nearest nodes are ranked is farthest from
+> nearest node to those clinics?"*
+
+Three steps, and only one is in dispute:
+
+| | | Exists |
+| --- | --- | --- |
+| 1 | scope a network to the sites' area or jurisdiction | **yes** — `street_network` takes a study area and a margin |
+| 2 | nearest node and its distance, per site | **yes** — `nearestNetworkNode`, now one implementation |
+| 3 | **rank the sites by that distance** | **no** — and not in `snap_to_network` either |
+
+**Step 3 does not exist anywhere in this application.** Result tables offer a filter box and no
+column sort; `snap_to_network` computes `greatest=Math.max(...)` for one sentence of its receipt
+note and ranks nothing. Its header has claimed sortability since 2026-10-14 that the application
+has never provided.
+
+So retiring the widget loses a **claimed** capability rather than a working one, and the
+decomposition names what delivering it would take: a way to rank records by an attribute, which
+is a `table_output` concern and not a spatial primitive. That removes the objection standing
+against step 4 and replaces it with a smaller, clearer piece of work in a different widget.

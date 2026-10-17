@@ -118,12 +118,57 @@ for conflating the storytelling mechanism with the medium carrying it.
 - **Segel and Heer genres** — magazine style, annotated chart, partitioned poster, slide show —
   which describe the *form*, and so belong to the medium question rather than the frame question.
 
-**The hazard, and why it may be the point.** Writing the outline before building the map risks
-fitting the data to the frame, which is what this project's whole discipline exists against. But
-a declared frame is **falsifiable in a way an unstated intention is not**: the run either
-supports it or does not, and the assurance this record is about could report *"frame 3 claimed
-the outbreak clustered around one pump; nothing in this run speaks to clustering."* An intention
-that stays in somebody's head cannot be contradicted by a receipt.
+**The hazard, and the practitioner's answer to it.** Writing the outline before building the map
+risks fitting the data to the frame, which is what this project's whole discipline exists
+against. This record first offered a weak answer — that a declared frame is at least falsifiable.
+The practitioner gave a better one, 2026-10-17:
+
+> *"The frame should not declare a result then OR if it does, FW should have the ability to
+> change the arc of the story. It's like strategy, the frames as sequenced and mapped to sections
+> is the deliberate strategy. But a wise general once said, no plan survives contact with the
+> enemy. So the strategy emerges to the realities of the battlefield (emergent strategy), and
+> then battle is concluded, we would be the wiser to realize what was the real strategy all
+> along (realized strategy)."*
+
+Two things follow, and the second is the stronger.
+
+**A frame states a question, not a conclusion — or states the conclusion as a null hypothesis.**
+*Where did the outbreak reach* is a frame. *It clustered around one pump* is a result, and a
+frame declaring one has decided the analysis before it ran.
+
+The practitioner's refinement makes the second case legitimate rather than forbidden: *"Or
+better, declare a result as a null hypothesis in the case of a scientific publication."* That is
+the falsifiable form the field already has, and it is **already required**: STROBE's item 3 asks
+for specific objectives *"including any prespecified hypotheses"*. So a frames stage producing
+null hypotheses would be generating what the reporting standard asks for, in the form it asks for
+it — and prespecification is the recognised guard against **HARKing**, hypothesising after
+results are known, which is the formal name for the hazard this section is about.
+
+It is also checkable. A frame carrying a claim about the data is a different object from one
+carrying a question, and a claim stated as a hypothesis is a third — each distinguishable without
+understanding the subject matter.
+
+**And the arc must be revisable, with the revision recorded.** This is
+[Mintzberg's](https://en.wikipedia.org/wiki/Henry_Mintzberg) distinction — **deliberate**,
+**emergent**, **realized** strategy — applied to an account, and it fits this project's existing
+machinery almost exactly, because all three are provenance:
+
+| | In a workflow | What a receipt could carry |
+| --- | --- | --- |
+| **Deliberate** | the frames declared before the study area was chosen | what the practitioner intended to show |
+| **Emergent** | frames changed, dropped or added once the data was seen | what contact with the data forced |
+| **Realized** | the account as published | what it actually argues, and **where that differs from the intent** |
+
+The difference between the first and the third is the interesting number, and nothing in this
+application records it today. It is also the evidence that a prespecified hypothesis was not
+quietly rewritten once the results were in — which is what makes the record worth keeping rather
+than merely tidy. A framework that only let a practitioner declare frames up front
+would be a planning tool; one that lets the arc change and **says that it changed** is doing what
+the rest of this project already does with units it will not convert and classifications it
+declines to make.
+
+*(Mintzberg and Waters, 1985, is the usual attribution. Not read here — the terms are used as
+the practitioner used them.)*
 
 **Scheduled, not built** — [TODO](../todo.md), so it does not displace housecleaning.
 

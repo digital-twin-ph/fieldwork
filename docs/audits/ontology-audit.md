@@ -436,10 +436,19 @@ not a proposal anybody reads.** It cost nothing this time, because the independe
 on the same vocabulary for the same reason — which is some evidence the reasoning is sound, and
 no evidence at all that the process worked.
 
-**What remains undone.** The SHACL profile has no shapes for any of the terms added today, so
-`fw:DesignRuleApplication`, `fw:DesignChoice`, `fw:ReadingProblem` and `fw:ColumnRepair` are
-declared and unvalidated — a declaration without a shape being the first of the three traps this
-document lists.
+**Shapes, added the same day.** `ontology/shapes/quality-and-design.ttl` covers
+`fw:ReadingProblem`, `fw:ColumnRepair`, `fw:DesignRule`, `fw:DesignRuleApplication` and
+`fw:DesignChoice`, registered in `scripts/validate-ontology.mjs` and exercised with a positive
+example and three negative tests.
+
+**They caught this document's own subject on their first run.** The four design rules were
+declared as bare `fw:MapTextContrast a fw:DesignRule.` lines, carrying neither their kind nor
+their statement — so a rule's words lived only in TypeScript and the ontology knew the name and
+nothing else. That is the first trap, found by the thing written to find it, on the graph that
+shipped it. The rules are declared in full now and a test holds the code to them.
+
+**What remains undone:** no shape covers `fw:MapSpecification`, so rule outcomes could be
+well-formed and attached to a specification that is not.
 
 ## Primitive design audit
 

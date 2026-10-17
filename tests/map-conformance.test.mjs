@@ -165,3 +165,49 @@ test('a rule of this project\'s own judgement cites where the principle comes fr
       `${rule.id} must cite either a criterion or a principle`);
   }
 });
+
+test('the ontology and the code declare the same four rules',async()=>{
+  // Two copies with no check between them is how a declaration and its implementation drift.
+  // The ontology is the vocabulary; src/map-conformance.ts is what applies it.
+  const {readFile}=await import('node:fs/promises');
+  const ttl=await readFile(new URL('../ontology/fieldwork.ttl',import.meta.url),'utf8');
+  const {DESIGN_RULES}=await import('../build/map-conformance.js');
+  const declared=[...ttl.matchAll(/^fw:(\w+) a fw:DesignRule; fw:ruleKind "(\w+)";\n  rdfs:comment "((?:[^"\\]|\\.)*)"/gm)]
+    .map(m=>({id:m[1],kind:m[2],statement:JSON.parse(`"${m[3]}"`)}));
+  assert.equal(declared.length,DESIGN_RULES.length,'same number of rules in both places');
+  for(const rule of DESIGN_RULES){
+    const match=declared.find(d=>d.id===rule.id);
+    assert.ok(match,`fw:${rule.id} is applied in code and not declared in the ontology`);
+    assert.equal(match.kind,rule.kind,`${rule.id}: kind differs`);
+    assert.equal(match.statement,rule.statement,`${rule.id}: statement differs`);
+  }
+});
+
+test('the SHACL shapes accept a real receipt and refuse a malformed one',async()=>{
+  // The audit's standard for a new shape: a positive example and a negative test.
+  const {Parser,Store}=await import('n3');
+  const {validateGraph}=await import('../scripts/validate-ontology.mjs');
+  const {designRuleFacts,designChoiceFacts}=await import('../build/map-conformance.js');
+  const prefixes=`@prefix fw: <urn:fieldwork:>.\n@prefix earl: <http://www.w3.org/ns/earl#>.\n`
+    +`@prefix dqv: <http://www.w3.org/ns/dqv#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n`;
+  const applied=applyDesignRules(figureDesign(['#0072B2'],true));
+  const good=prefixes+designRuleFacts('urn:fieldwork:run:r:map-specification:m',applied)
+    +'\n'+designChoiceFacts('urn:fieldwork:run:r:map-specification:m',
+      [{setting:'basemap',chosen:'none',alternatives:['none','osm']}]);
+
+  const parse=t=>new Store(new Parser().parse(t));
+  const ok=await validateGraph(parse(good));
+  assert.equal(ok.conforms,true,ok.results.map(r=>`${r.path?.value} ${r.message}`).join('\n'));
+
+  // Negative: an outcome outside EARL's closed set must be refused. A free-text outcome is how
+  // a conformance report starts meaning whatever its author felt like.
+  assert.equal((await validateGraph(parse(good.replace('earl:passed','fw:probablyFine')))).conforms,false);
+  // Negative: a choice claiming a preference. One act cannot evidence a disposition.
+  assert.equal((await validateGraph(parse(good.replace('"selected"','"preferred"')))).conforms,false);
+  // Negative: a reading problem with a count and no denominator -- "63" with no "of 250".
+  const issue=prefixes+`<urn:x> fw:readingProblem [ a fw:ReadingProblem; `
+    +`dqv:isMeasurementOf fw:absentValues; fw:boundAttribute "deaths"; `
+    +`fw:problemKind fw:ValueAbsent; fw:affectedRecordCount 3; fw:consideredRecordCount 43 ].`;
+  assert.equal((await validateGraph(parse(issue))).conforms,true);
+  assert.equal((await validateGraph(parse(issue.replace('; fw:consideredRecordCount 43','')))).conforms,false);
+});

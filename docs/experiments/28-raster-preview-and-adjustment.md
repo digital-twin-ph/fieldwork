@@ -42,7 +42,7 @@ The clipping method remains cell-center inclusion, using native EPSG:4326 pixels
 
 The preview shows the **retained raster window**, not the national file. A proposed boundary outside that window produces a prominent coverage error and disables Apply. To expand further, edit the Study area separately and prepare the input again from the original local file. NoData within a window is not treated as missing geographic coverage.
 
-The editor supports simple polygons with at most 200 vertices. Old Naledi's single-part MultiPolygon can be copied as a Polygon without dropping coordinates. The original shared source representation is preserved; edits affect only the operation's cutline. Holes and genuinely multiple polygons are not flattened or silently discarded; editing them remains future work.
+The editor supports simple polygons, bounded by a storage budget rather than a vertex count since decision A03 was restated 2026-10-18. Old Naledi's single-part MultiPolygon can be copied as a Polygon without dropping coordinates. The original shared source representation is preserved; edits affect only the operation's cutline. Holes and genuinely multiple polygons are not flattened or silently discarded; editing them remains future work.
 
 ## Architectural decisions
 

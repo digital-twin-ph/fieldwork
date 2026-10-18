@@ -97,7 +97,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
       const label=document.createElement('span');label.textContent=name.value.trim();
       L.geoJSON(geometry,{style:{color:'#176b59',weight:2,fillColor:'#5a9b7f',fillOpacity:.2}}).bindTooltip(label,{permanent:true,direction:'center',className:'area-map-label'}).addTo(shapes);
       const b=geometryBounds(geometry);['west','south','east','north'].forEach((key,i)=>( $('#area-'+key) as HTMLInputElement).value=b[i].toFixed(7));
-      try{validateDrawnGeometry(geometry);validateClip();const n3=studyAreaN3({id:node.id,params:currentParams()});$('#area-n3').textContent=context.clip?'@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<urn:fieldwork:cutline:'+node.id+'> a geo:Geometry; geo:asWKT '+JSON.stringify('<'+CRS84+'> '+geometryWKT(geometry))+'^^geo:wktLiteral.':n3.input;$('#area-summary').textContent=`${selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometry.coordinates[0].length-1} vertices · longitude, latitude`;message(context.raster?`${previewStatus?.textContent} Apply the clip parameters, then rerun to update results.`:'Shape is valid. Apply it to the node, then run to evaluate the N3 rule.');valid=true;}
+      try{validateDrawnGeometry(geometry);validateClip();const n3=studyAreaN3({id:node.id,params:currentParams()});$('#area-n3').textContent=context.clip?'@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<urn:fieldwork:cutline:'+node.id+'> a geo:Geometry; geo:asWKT '+JSON.stringify('<'+CRS84+'> '+geometryWKT(geometry))+'^^geo:wktLiteral.':n3.input;$('#area-summary').textContent=`${selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometry.coordinates.reduce((n,r)=>n+r.length-1,0)} vertices${geometry.coordinates.length>1?` · ${geometry.coordinates.length-1} interior ring${geometry.coordinates.length>2?'s':''}`:''} · ${Math.max(1,Math.round(JSON.stringify(geometry).length/1024))} KB · longitude, latitude`;message(context.raster?`${previewStatus?.textContent} Apply the clip parameters, then rerun to update results.`:'Shape is valid. Apply it to the node, then run to evaluate the N3 rule.');valid=true;}
       catch(e){message(errorMessage(e));$('#area-feedback').classList.add('clip-preview-error');$('#area-feedback').setAttribute('role','alert');if(previewStatus)previewStatus.textContent=errorMessage(e);$('#area-n3').textContent='The draft must be valid and named before N3 is generated.';$('#area-summary').textContent='Draft needs correction';}
       const ring=geometry.coordinates[0];
       // A circle is a polygon, but it must not be edited as one: dragging one of its 128
@@ -248,21 +248,49 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   $('#area-boundary-use').onclick=()=>{
     const chosen=[...unitPick.selectedOptions].map(o=>pickedUnits[Number(o.value)]).filter(Boolean);
     if(!pickedLevel||!chosen.length){$('#area-boundary-terms').textContent='Select at least one unit.';return;}
-    // The drawn geometry is the extent of what was chosen. Members are NOT dissolved in the
-    // source data -- each keeps its name and id in `pickedUnits` -- but this dialog commits one
-    // boundary, so what it commits is their bounding extent and the membership is recorded in
-    // the status line rather than lost silently. Keeping members whole through to the node is
-    // A54's remaining half and is not built here.
-    const all=chosen.flatMap(u=>{
-      const g=u.geometry as {type:string;coordinates:unknown};
-      return g.type==='MultiPolygon'?(g.coordinates as number[][][][]).flat(2):(g.coordinates as number[][][]).flat();
-    }) as [number,number][];
-    if(!all.length){$('#area-boundary-terms').textContent='Those units carry no coordinates.';return;}
-    const xs=all.map(c=>c[0]),ys=all.map(c=>c[1]);
-    geometry=bboxPolygon(Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys));
-    selectionMode='bbox';setTool('pan');refresh();fit();
-    $('#area-boundary-terms').textContent=
-      `${chosen.map(u=>u.name).join(', ')} \u00b7 ${pickedLevel.boundaryID} \u00b7 ${pickedLevel.licence}`;
+    void (async()=>{
+      const {publishedRings,publishedNote}=await import('./boundary-source.js');
+      // ONE unit gets its OWN OUTLINE, AS PUBLISHED. "Selecting Bunia gave me a square not the
+      // jurisdictional polygon" -- it did, because a bounding box was the shortcut for combining
+      // several, and it was applied even to one. A box includes ground that is not in the
+      // jurisdiction, which for an outbreak investigation is the difference between a district
+      // and the land round it.
+      //
+      // Nothing is simplified to fit a vertex count any more. Simplifying preserved area to
+      // within 0.05% while moving up to 0.82% of a unit to the other side of its own edge, and
+      // membership at the edge is exactly what an outbreak question asks about
+      // (docs/research/vertex-contract-probe-2026-10-18.md). The budget is bytes now, so an
+      // outline is either admitted whole or refused with its size named.
+      if(chosen.length===1){
+        const rings=publishedRings(chosen[0].geometry);
+        if(!rings){$('#area-boundary-terms').textContent='That unit carries no usable outline.';return;}
+        try{geometry=validateDrawnGeometry({type:'Polygon',coordinates:rings.rings});}
+        catch(e){$('#area-boundary-terms').textContent=`${chosen[0].name}: ${errorMessage(e)}`;return;}
+        selectionMode='polygon';setTool('pan');refresh();fit();
+        $('#area-boundary-terms').textContent=
+          `${publishedNote(chosen[0].name,rings)} \u00b7 ${pickedLevel!.boundaryID} \u00b7 ${pickedLevel!.licence}`;
+        return;
+      }
+      // SEVERAL units still become their bounding extent, and the text says so rather than
+      // letting a box pass for a shape. Carrying members whole to the node is A54's other half.
+      const all=chosen.flatMap(u=>{
+        const g=u.geometry as {type:string;coordinates:unknown};
+        return g.type==='MultiPolygon'?(g.coordinates as number[][][][]).flat(2):(g.coordinates as number[][][]).flat();
+      }) as [number,number][];
+      if(!all.length){$('#area-boundary-terms').textContent='Those units carry no coordinates.';return;}
+      // Accumulated rather than spread: several published units run to tens of thousands of
+      // coordinates, and Math.min(...array) throws RangeError at that length.
+      let west=Infinity,south=Infinity,east=-Infinity,north=-Infinity;
+      for(const [x,y] of all){
+        if(x<west)west=x; if(x>east)east=x;
+        if(y<south)south=y; if(y>north)north=y;
+      }
+      geometry=bboxPolygon(west,south,east,north);
+      selectionMode='bbox';setTool('pan');refresh();fit();
+      $('#area-boundary-terms').textContent=
+        `${chosen.map(u=>u.name).join(', ')} \u00b7 A BOUNDING BOX AROUND ${chosen.length} UNITS, not their outlines: `
+        +`it includes ground in none of them. Choose one unit for its own boundary. \u00b7 ${pickedLevel!.boundaryID}`;
+    })();
   };
   $('#area-fit').onclick=fit;$('#area-old-naledi').onclick=()=>map.setView([-24.685,25.901],14);
   name.oninput=refresh;

@@ -277,6 +277,59 @@ from completeness** — a count written `"3"` is present and unusable — and si
 syntactic accuracy than its completeness. `fw:ValueAbsent` and `fw:ValueUnreadable` were split
 for a practitioner's reasons on 2026-10-16, and the split turns out to be a dimensional one.
 
+## Profiled against a file this project did not author, 2026-10-17
+
+This experiment's own closing condition was *"a file the project did not author is profiled, and
+what the profile missed is written down."* Done, against `measles_hagelloch_1861` — 188
+individual measles cases from Hagelloch in 1861, with house coordinates in metres, two onset
+dates and a family grouping. Everything this experiment had exercised until now was a copy of
+Snow's Table 1 that **this project damaged on purpose**, which is why the condition existed.
+
+### What the profile got right
+
+The counts are correct and unremarkable, which is the point: 188 rows, `infector` 4 absent,
+`gender` 11 absent, `date_of_death` 176 absent, nothing mismatched, numeric ranges and
+frequencies as the file holds them. `complications` is reported as a single category, `yes`,
+188 times. The nullity pairs correctly find **no** co-missingness — the strongest phi is 0.12 —
+which is an honest negative result on a file nobody arranged to be interesting.
+
+### What it missed, and each one is a different gap
+
+**1. An absence that is an outcome.** `date_of_death` is empty for 176 of 188 cases **because
+those patients recovered**. The profile reports "176 absent", and the quality model's vocabulary
+— `fw:ValueAbsent`, "no value was recorded" — is wrong about every one of them. This experiment
+predicted that third case before the file arrived; what the file adds is the scale. It is not an
+edge case here, it is **94% of the column**. A profiler seeing 94% null calls a column nearly
+empty; the truth is that nearly everyone lived.
+
+**2. Dates read as nominal categories.** `ColumnKind` is `number | boolean | term`, so
+`date_of_prodrome` and `date_of_rash` are profiled as `term` and reported as 36 and 35 distinct
+categories with frequency counts. True and useless: a date is ordered, and the epidemic curve
+`case_series` exists to draw is the order. The profiler offers no date kind, so the one column
+the time-series widget consumes is the one it can say least about.
+
+**3. An ordinal read as a quantity.** `class` holds 0, 1 and 2 — pre-school, first class, second
+class — and is profiled as a number with **median 1** and an IQR fence. The median of a school
+class is not a school class. This is the measurement-scale gap already in the TODO
+(nominal/ordinal/interval/ratio) meeting a real file: `kind: number` cannot say that arithmetic
+on this column is meaningless.
+
+**4. Identifiers read as quantities.** `case_ID` is profiled as a number from 1 to 188 with
+**median 94.5**; `family_ID` as 1 to 69 with median 31; `infector` as 1 to 188 with median 50.5.
+All three are identifiers, and `infector` is a foreign key into `case_ID`. A median case number
+is a number with no referent, and nothing in the profile distinguishes a quantity from a name
+that happens to be written in digits.
+
+### One thing that was not a defect
+
+The first run of this exercise reported `case_ID`, `age`, `x_loc` and others as "constant
+columns", which is plainly false — `case_ID` is 188 distinct values. `nullityPairs` returns
+`constant` for columns whose **nullity** does not vary, meaning they have no nulls at all and so
+cannot enter a correlation. The label is about the null pattern, not the values, and it is not
+surfaced in any interface — `nullityPairs` has no caller outside its own module. The misleading
+wording was in the exercise script, not in the product. Recorded because a reader of this section
+would otherwise reach for the same wrong conclusion.
+
 ## What this does not establish
 
 - **That the profile's summary statistics are the right ones.** Min, median, max and an IQR

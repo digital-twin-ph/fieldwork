@@ -156,6 +156,33 @@ workflows that share nothing, because Table 1 carries no place and a location ca
 Hagelloch joins all three. It is the dataset that would let this project build the workflow its
 own research note says the Snow data cannot support.
 
+### Decided 2026-10-17: treated as public domain
+
+The practitioner: *"If it's public domain, and has been handed over from study to study let's
+treat it as public domain."* Recorded as a judgement made deliberately, because this note
+previously declined to make one and an undecided licence reads the same as an unexamined one.
+
+**What the decision rests on.** Pfeilsticker's 1863 thesis is out of copyright by age and is
+[on archive.org](https://archive.org/details/beitrgezurpatho00pfeigoog). The records are facts
+about an 1861 outbreak — who fell ill, when, in which house — and facts are not authored. The
+data has passed openly from study to study for thirty years: Becker to Neal, into
+`surveillance`, reformatted into `outbreaks`, re-used by `epinet`, `EpiCompare` and
+`Pathogen.jl`, each citing the same two theses and none claiming rights over the table.
+
+**What it does not rest on, and a reviewer should see this.** No link in that chain states a
+data licence — checked 2026-10-17 across `surveillance`, `outbreaks` and `EpiCompare`, all of
+which give the provenance and no terms of reuse. And the structured table this project would
+use is not the 1863 document: the coordinates, the two onset dates and the transmission links
+come from **Oesterle's 1992 reanalysis**, which is not public domain by age. So the decision
+covers a 1992 digitisation of 1861 facts, on the reasoning that the facts are what is being
+used and the arrangement is not original to any one holder. That is a judgement about
+copyrightable subject matter, not a licence grant, and nothing here is legal advice.
+
+**What follows from it in practice.** Attribute the full chain on the data and in the receipt —
+Pfeilsticker 1863, Oesterle 1992, and the package the bytes came from. That is what every
+downstream re-user does, it costs nothing, and it is the behaviour the decision would have to
+justify if it were ever questioned.
+
 ### What Hagelloch would break, and why that is the point
 
 `date_of_death` is `NA` for everyone who recovered. **That `NA` is not missing data. It is a

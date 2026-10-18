@@ -1,0 +1,34 @@
+Bundled data for the Hagelloch 1861 measles example
+===================================================
+
+188 individual measles cases from Hagelloch, Germany, in the winter of 1861-62.
+
+SOURCE
+  Collected by Albert Pfeilsticker, MD thesis, Tubingen, 1863.
+  Re-analysed and augmented by Heike Oesterle, MD thesis, Tubingen, 1992.
+  The 1863 original: https://archive.org/details/beitrgezurpatho00pfeigoog
+  Reached this project through the outbreaks R package 1.9.0, which took it from
+  the surveillance package, which had it from Niels Becker via Peter J. Neal.
+
+LICENCE
+  No holder in that chain states one. Checked 2026-10-17 across surveillance,
+  outbreaks and EpiCompare: each cites the two theses and gives no terms of reuse.
+
+  This project treats the data as public domain. The 1863 source is out of
+  copyright by age; the records are facts about an outbreak; the table has passed
+  openly between studies for thirty years. That is a judgement about what is
+  copyrightable, not a licence anybody granted, and the reasoning is recorded in
+  docs/research/data-sources.md so a reader can disagree with it.
+
+  Cite the chain if you use this: Pfeilsticker 1863, Oesterle 1992, and the
+  package the bytes came from.
+
+WHAT THIS PROJECT ADDED
+  A georeference. x_loc and y_loc are metres from an arbitrary local origin, so
+  nothing could be mapped without anchoring them. They are anchored at Hagelloch,
+  a district of Tubingen, 48.54083 N 9.06056 E.
+
+  THAT ANCHOR IS OURS, NOT THE SOURCE'S. The relative positions of the houses are
+  Pfeilsticker's; where the village sits on the earth is this project's addition,
+  accurate to the village and not to the building. x_loc and y_loc travel
+  unchanged on every record, so the original frame is recoverable.

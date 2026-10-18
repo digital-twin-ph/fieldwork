@@ -1,0 +1,29 @@
+{
+  "builtAt": "2026-10-17",
+  "builtBy": "Extracted from the outbreaks R package 1.9.0 (measles_hagelloch_1861) and rewritten as a point layer. No value was altered; the georeference was added, and is recorded below.",
+  "dataset": {
+    "name": "Measles in Hagelloch, Germany, 1861",
+    "records": 188,
+    "collected": "Albert Pfeilsticker (1863), Beitrage zur Pathologie der Masern mit besonderer Berucksichtigung der statistischen Verhaltnisse, MD thesis, Eberhard-Karls-Universitat Tubingen",
+    "reanalysed": "Heike Oesterle (1992), Statistische Reanalyse einer Masernepidemie 1861 in Hagelloch, MD thesis, Eberhard-Karls-Universitat Tubingen",
+    "originalScan": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+    "distributionChain": "Niels Becker (ANU) to Peter J. Neal (Manchester), into the surveillance R package as hagelloch.df, reformatted into outbreaks 1.9.0 by Simon Frost",
+    "licence": "NONE STATED by any holder in the chain, checked 2026-10-17 across surveillance, outbreaks and EpiCompare",
+    "licenceDecision": "Treated as public domain by the practitioner on 2026-10-17. The 1863 source is out of copyright by age, the records are facts about an 1861 outbreak, and the table has passed openly between studies for thirty years with no holder claiming rights. The structured arrangement is Oesterle's 1992 reanalysis and is not public domain by age, so this is a judgement about copyrightable subject matter and not a licence grant. See docs/research/data-sources.md.",
+    "periodCovered": "1861-10-30 to 1862-01-24"
+  },
+  "georeference": {
+    "addedBy": "This project, 2026-10-17. NOT PART OF THE SOURCE.",
+    "why": "x_loc and y_loc are metres from an arbitrary local origin, not a geographic CRS. Nothing can be mapped without an anchor.",
+    "anchor": {"latitude": 48.54083, "longitude": 9.06056, "place": "Hagelloch, a district of Tubingen, Baden-Wurttemberg"},
+    "method": "Local metres treated as offsets from the anchor, converted at that latitude. Metres per degree from the standard WGS84 series at 48.54083 N.",
+    "reversible": "x_loc and y_loc travel unchanged on every record, so the original frame is recoverable and the anchor can be replaced.",
+    "doesNotEstablish": "That any house is where this places it. The source gives RELATIVE positions only; the absolute siting is this project's and is accurate to the village, not to the building. Distances and patterns within the village are the source's; the position on the earth is not."
+  },
+  "columnsThatBreakAssumptions": {
+    "date_of_death": "Empty for 176 of 188 because those patients RECOVERED. An absence that is an outcome, which this application's quality model reads as a missing value. See experiment 117.",
+    "complications": "A single value, 'yes', on all 188 records. Constant, and therefore carries no information.",
+    "class": "0, 1, 2 are pre-school, first class and second class. Ordinal, profiled as a quantity with a median.",
+    "case_ID, family_ID, infector": "Identifiers, profiled as quantities. infector is a foreign key into case_ID."
+  }
+}

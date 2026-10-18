@@ -257,13 +257,32 @@ certify a file the project is not permitted to host. GADM remains perfectly
 usable for a practitioner's own local exploration, where the file never leaves
 their machine. It cannot be a pack dependency.
 
-Two redistributable alternatives, both carrying the same CC BY obligation shape
-the AR6 data already imposes:
+Two redistributable alternatives:
 
 | Source | Licence | Levels | Note |
 | --- | --- | --- | --- |
-| geoBoundaries | CC BY 4.0 | ADM0–ADM3 | Built for redistribution; attribution obligation only |
+| geoBoundaries | **per boundary, not per source** — see below | ADM0–ADM5 | Built for redistribution; the obligation varies by country and level |
 | OCHA COD-AB via HDX | Open, PSA/NAMRIA-derived | ADM0–ADM4 | Carries official PSGC codes |
+
+**Corrected 2026-10-17.** This row read "CC BY 4.0 … attribution obligation only",
+and that was the stated reason for preferring geoBoundaries to GADM. It is not
+what the service returns. Asking the API for eleven country-levels
+([probe](../research/geoboundaries-probe-2026-10-17.md)) found **six distinct
+licences**, and three of them are **ODbL, which is share-alike** — a materially
+different obligation from attribution, and one that reaches anything derived and
+redistributed. The three ODbL levels are COD ADM1, COD ADM3 and UGA ADM1.
+
+The row was written from documentation rather than from the service, and the
+`gbOpen` release *is* described upstream as CC-BY-4.0-compliant; what that
+describes is the release policy, not the licence of each boundary in it. Every
+response carries `boundaryLicense`, `licenseDetail` and `licenseSource`, so the
+obligation can be **recorded per selected boundary** rather than assumed per
+source — which is what A52 in [14](14-gadm-jurisdiction-assets.md) already asks
+for. A pack that redistributes a boundary must carry that boundary's own licence,
+and a pack mixing ODbL and CC BY levels carries both obligations.
+
+The API also serves `current` only, so a licence or a vintage not recorded at
+download may be unrecoverable later.
 
 The design consequence is a key, not a file. A join between a projection table and
 a Philippine boundary is sound only if the table's key column holds a **PSGC

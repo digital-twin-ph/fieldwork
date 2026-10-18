@@ -17,7 +17,17 @@ test('invalid drawings fail before they can become spatial facts',()=>{
   const valid=polygon([[25.89,-24.7],[25.91,-24.7],[25.9,-24.68]]);
   assert.deepEqual(validateDrawnGeometry(valid),valid);
   assert.throws(()=>validateAreaParams({source:'drawn',label:'Area',selectionMode:'bbox',geometry:valid}),/four axis-aligned/);
-  assert.throws(()=>validateDrawnGeometry({...valid,coordinates:[...valid.coordinates,valid.coordinates[0]]}),/without holes/);
+  // A ring repeated is not an enclave: it coincides with the boundary, so it is a fault.
+  assert.throws(()=>validateDrawnGeometry({...valid,coordinates:[...valid.coordinates,valid.coordinates[0]]}),/must not cross or touch/);
+  // A genuine enclave IS admitted now. 22 of 189 DRC ADM2 units carry one, and the old contract
+  // refused all of them outright -- the practitioner, 2026-10-18: "we want to admit polygons as
+  // long as they do not overrun memory."
+  const withEnclave={type:'Polygon',coordinates:[
+    [[25.0,-24.0],[26.0,-24.0],[26.0,-23.0],[25.0,-23.0],[25.0,-24.0]],
+    [[25.4,-23.6],[25.6,-23.6],[25.6,-23.4],[25.4,-23.4],[25.4,-23.6]]]};
+  assert.deepEqual(validateDrawnGeometry(withEnclave),withEnclave);
+  assert.match(studyAreaN3({id:'area-h',params:{source:'drawn',label:'With enclave',selectionMode:'polygon',geometry:withEnclave}}).facts,
+    /POLYGON \(\(25 -24.*\), \(25.4 -23.6/,'both rings reach the receipt');
 });
 test('GeoSPARQL representation preserves feature geometry separation and CRS84 coordinate order',()=>{
   const node={...newStudyArea(),id:'area-1'};node.params={...node.params,label:'Area "A"',selectionMode:'bbox',geometry:bboxPolygon(25.89,-24.7,25.91,-24.68)};

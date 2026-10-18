@@ -13,7 +13,10 @@ const level=(over={})=>({boundaryID:'COD-ADM3-77481523',boundaryISO:'COD',bounda
   maxVertices:'9001',boundaryYearRepresented:'2010.0',
   boundaryLicense:'Open Data Commons Open Database License 1.0',
   gjDownloadURL:'https://example.invalid/cod-adm3.geojson',...over});
-const square=(x,y)=>({type:'Polygon',coordinates:[[[x,y],[x+1,y],[x+1,y+1],[x,y+1],[x,y]]]});
+// Not a rectangle: a committed study area that comes back as four corners would be the bug.
+const blob=(x,y)=>({type:'Polygon',coordinates:[[...Array.from({length:40},(_,i)=>{
+  const a=2*Math.PI*i/40,r=0.3*(1+0.2*Math.sin(a*5));
+  return [x+r*Math.cos(a),y+r*Math.sin(a)];}),[x+0.3,y]]]});
 
 async function stub(page,{levelPayload=level(),units=2}={}){
   await page.route(/geoboundaries\.org\/api/,r=>r.fulfill({
@@ -22,7 +25,7 @@ async function stub(page,{levelPayload=level(),units=2}={}){
   await page.route(/example\.invalid/,r=>r.fulfill({status:200,contentType:'application/json',
     body:JSON.stringify({features:Array.from({length:units},(_,i)=>({
       properties:{shapeID:`COD-${i}`,shapeName:['Rutshuru','Nyiragongo','Masisi'][i]??`Unit ${i}`},
-      geometry:square(29+i,-1-i)}))})}));
+      geometry:blob(29+i,-1-i)}))})}));
 }
 
 // THE SERVICE WORKER INTERCEPTS BEFORE PLAYWRIGHT'S ROUTING DOES, in WebKit, so the stubs below
@@ -66,17 +69,25 @@ test('a study area can be chosen from administrative boundaries',async({page})=>
   // And the vintage, normalised from the "2010.0" the service really returns.
   await expect(page.locator('#area-boundary-terms')).toContainText('represents 2010');
 
-  await page.locator('#area-boundary-pick').selectOption(['0','1']);
+  // ONE unit commits its OWN OUTLINE. "Selecting Bunia gave me a square not the jurisdictional
+  // polygon" -- a bounding box includes ground in no jurisdiction at all.
+  await page.locator('#area-boundary-pick').selectOption(['0']);
   await page.locator('#area-boundary-use').click();
-  await expect(page.locator('#area-boundary-terms')).toContainText('Rutshuru, Nyiragongo');
+  await expect(page.locator('#area-boundary-terms')).toContainText('Rutshuru');
+  await expect(page.locator('#area-boundary-terms')).toContainText('as published');
   await expect(page.locator('#area-boundary-terms')).toContainText('COD-ADM3-77481523');
 
   // The chosen units became the study area, and it can be applied like any other.
   await expect(page.locator('#area-apply')).toBeEnabled();
   await page.locator('#area-apply').click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
-    .nodes.find(n=>n.type==='study_area').params.geometry);
-  expect(saved.type).toBe('Polygon');
+    .nodes.find(n=>n.type==='study_area').params);
+  expect(saved.geometry.type).toBe('Polygon');
+  // The shape, not a box: 40 vertices went in and a rectangle has four. And AS PUBLISHED --
+  // every vertex the source gave, none thinned to meet a count. The practitioner, 2026-10-18:
+  // "we want to admit polygons as long as they do not overrun memory."
+  expect(saved.geometry.coordinates[0].length).toBe(41);
+  expect(saved.selectionMode).toBe('polygon');
   expect(errors).toEqual([]);
 });
 
@@ -123,4 +134,18 @@ test('an ambiguous entry refuses rather than guessing',async({page})=>{
   await page.locator('#area-iso').fill('United');
   await page.locator('#area-boundary-check').click();
   await expect(page.locator('#area-boundary-status')).toContainText('No single country matches');
+});
+
+test('several units are a bounding box, and the dialog says so instead of letting it pass',async({page})=>{
+  await stub(page,{units:3});
+  await openArea(page);
+  await page.locator('#area-iso').fill('Democratic Republic of the Congo');
+  await page.locator('#area-boundary-check').click();
+  await expect(page.locator('#area-boundary-units')).toBeVisible({timeout:20000});
+  await page.locator('#area-boundary-pick').selectOption(['0','1']);
+  await page.locator('#area-boundary-use').click();
+  // Honest rather than quiet: a box around two districts covers ground in neither.
+  await expect(page.locator('#area-boundary-terms'))
+    .toContainText('A BOUNDING BOX AROUND 2 UNITS, not their outlines');
+  await expect(page.locator('#area-boundary-terms')).toContainText('Choose one unit for its own boundary');
 });

@@ -184,3 +184,71 @@ export function selectionSummary(level:BoundaryLevel,chosen:readonly BoundaryUni
     : level.licence;
   return `${chosen.length} of ${level.units} ${level.level} units · ${vintage} · ${terms}`;
 }
+
+/** The jurisdiction's own outline, reduced to what the study-area drawing contract accepts.
+ *
+ *  The practitioner, 2026-10-18: *"selecting Bunia gave me a square not the jurisdictional
+ *  polygon."* It did, and that was a shortcut I documented instead of fixing. A bounding box
+ *  includes ground that is not in the jurisdiction at all, which for an outbreak investigation
+ *  is the difference between a district and the land around it.
+ *
+ *  **It is used as it arrives.** `validateDrawnGeometry` once accepted one exterior ring of 3 to
+ *  200 vertices and no holes -- decision A03 in [01](../docs/experiments/01-study-area.md),
+ *  explicitly a DRAWING contract: "holes, antimeridian crossings, and polar latitudes ... are
+ *  explicitly outside this drawing contract". Measured against real jurisdictions that ceiling
+ *  rejected 147 of 189 DRC ADM2 units, and 22 more carried enclaves no vertex budget reaches
+ *  (docs/research/vertex-contract-probe-2026-10-18.md).
+ *
+ *  The practitioner, 2026-10-18: *"we want to admit polygons as long as they do not overrun
+ *  memory."* So the ceiling is a measured byte budget and an outline is admitted whole. What was
+ *  admitted is still reported -- vertices, size, enclaves kept -- because the size of what a
+ *  study area now holds is a number a practitioner should see, the standard
+ *  `fw:circleAreaFraction` sets where "the approximation is a number rather than a footnote".
+ *
+ *  A MultiPolygon still keeps its largest part and says so. An island or an exclave is not
+ *  carried, because one study area holds one outline, and losing it silently would be worse. */
+export interface PublishedBoundary {
+  /** Every ring as published: the exterior first, then any interior rings. */
+  rings:[number,number][][];
+  vertices:number;
+  /** Interior rings -- enclaves. 22 of 189 DRC ADM2 units carry one. */
+  holes:number;
+  /** Parts not carried, because one study area holds one outline. */
+  partsDropped:number;
+  bytes:number;
+}
+
+/** A published outline, admitted whole. Nothing is thinned to meet a vertex count.
+ *
+ *  The practitioner, 2026-10-18: *"we want to admit polygons as long as they do not overrun
+ *  memory."* Simplifying to 200 vertices preserved area to within 0.05% while moving up to 0.82%
+ *  of a unit across its own edge, and the edge is where a cross-border question lives, so the
+ *  thinning was not a cheaper version of the boundary but a different one. The size limit now
+ *  lives in validateDrawnGeometry as a byte budget, which refuses an outline it cannot store
+ *  rather than quietly reshaping it.
+ */
+export function publishedRings(geometry:unknown):PublishedBoundary|null{
+  const g=geometry as {type?:string;coordinates?:unknown};
+  const polygons:[number,number][][][]=g?.type==='MultiPolygon'
+    ?(g.coordinates as [number,number][][][])
+    :g?.type==='Polygon'?[g.coordinates as [number,number][][]]:[];
+  if(!polygons.length)return null;
+  const usable=polygons.filter(poly=>Array.isArray(poly[0])&&poly[0].length>=4);
+  if(!usable.length)return null;
+  // The largest part by vertex count stands for the whole, which is the usual case: a mainland
+  // with islands. Measured, no DRC ADM2 unit is multi-part at all, so this is the rarer branch.
+  const chosen=usable.reduce((a,b)=>b[0].length>a[0].length?b:a);
+  const rings=chosen.filter(r=>Array.isArray(r)&&r.length>=4);
+  const vertices=rings.reduce((sum,r)=>sum+r.length-1,0);
+  return {rings,vertices,holes:rings.length-1,partsDropped:usable.length-1,
+    bytes:JSON.stringify(rings).length};
+}
+
+/** What was admitted, for the practitioner to read before applying it. */
+export function publishedNote(unit:string,b:PublishedBoundary):string{
+  const parts=b.partsDropped?` ${b.partsDropped} separate part${b.partsDropped===1?'':'s'} not carried: one outline is what a study area holds.`:'';
+  const holes=b.holes?` ${b.holes} interior ring${b.holes===1?'':'s'} kept, so enclaves stay outside the area.`:'';
+  return `${unit}: the boundary as published, ${b.vertices} vertices, ${Math.round(b.bytes/1024)} KB.`
+    +`${holes}${parts}`;
+}
+

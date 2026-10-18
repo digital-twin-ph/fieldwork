@@ -28,11 +28,23 @@ Can a practitioner specify a study area and explain how the visible selection be
 
 **Rationale:** The geographic input should be independent of the renderer and tile provider. A saved selection must remain usable when the map service is unavailable. Bounding boxes provide a quick coarse selection; polygons let participants express an irregular study boundary.
 
-**Decision A03 — validate before applying.** This slice supports one simple exterior ring with 3–200 vertices, a closed nonzero boundary, and no crossings or touching nonadjacent edges. Bounding boxes must be axis aligned. Holes, antimeridian crossings, and polar latitudes outside ±85° are explicitly outside this drawing contract. Coordinates are retained rather than silently rounded or reprojected.
+**Decision A03 — validate before applying.** ~~This slice supports one simple exterior ring with 3–200 vertices~~ … ~~Holes~~, antimeridian crossings, and polar latitudes outside ±85° are explicitly outside this drawing contract. A boundary must be closed, have nonzero area, and have no crossings or touching nonadjacent edges. Bounding boxes must be axis aligned. Coordinates are retained rather than silently rounded or reprojected.
+
+_Restated 2026-10-18._ The vertex ceiling and the refusal of holes are withdrawn. The practitioner, on finding an acquired boundary thinned to fit them: *"Well it's a contract not based on reality…"*, and then *"Simply put, we want to admit polygons as long as they do not overrun memory."*
+
+The number 200 was never measured against a boundary. This decision called itself a *drawing* contract and gave as its rationale that "drawing validation is a geometry operation" — it bounded a mouse gesture, at a time when A07 could still say the conclusion "does not mean the shape is an official administrative boundary". The boundary picker, built 2026-10-17, made that the ordinary case, and measurement ([the vertex-contract probe](../research/vertex-contract-probe-2026-10-18.md)) found the ceiling rejected **147 of 189 DRC ADM2 units (77%)** while **22 more carried enclaves that no vertex budget reaches**.
+
+What replaces it:
+
+- **A byte budget, because bytes are what run out.** Measured on this device, `localStorage` accepts **5,226,496 bytes** in both engines — `navigator.storage.estimate()` reports 1–10 GB, but that governs IndexedDB and the cache, not `localStorage`. One extent is allowed 1 MiB, and all the extents one area has had are allowed 1.5 MiB, which the two writes of a save double. Serialized length is measured, not inferred from a vertex count.
+- **Interior rings are admitted**, and a ring must lie inside the boundary and not inside another ring. An enclave is part of the jurisdiction's shape, and `geo:asWKT` already emitted every ring.
+- **The crossing check became near-linear.** This is what made the rest honest rather than nominal: the O(n²) pair scan cost 240 ms at Shabunda's 4,395 vertices but **12.2 s at 32,000**, so *time*, not memory, was the real ceiling, and a budget admitting large polygons without this would have frozen the editor instead of refusing. Edges now go into a uniform grid of about one edge per cell and only edges sharing a cell are compared.
+- **Nothing is simplified to fit.** Thinning to 200 vertices preserved area to within 0.05% while moving up to **0.82% of a unit across its own edge** — and membership at the edge is what `coverage_check` and `summarize_polygons` read, and what a cross-border question asks about. The thinning was not a cheaper version of the boundary but a different one.
+- **Drawing by hand still stops at 200 vertices.** That bound is kept where it was always true: it limits a gesture, not a study area. The contract now differs by provenance, which is what the original rationale actually supported.
 
 **Rationale:** Invalid or ambiguous shapes must not become valid-looking spatial facts. Drawing validation is a geometry operation, with actionable feedback in the widget.
 
-**Evidence to collect:** Successful selection of the intended area; ability to distinguish a box from an irregular boundary; behavior when a polygon crosses itself; whether a participant can correct a vertex or cancel without losing the saved shape.
+**Evidence to collect:** Successful selection of the intended area; ability to distinguish a box from an irregular boundary; behavior when a polygon crosses itself; whether a participant can correct a vertex or cancel without losing the saved shape; whether a refusal that names a size in KB tells a practitioner what to do next, and whether an admitted enclave reads as part of the area rather than a drawing error.
 
 ## Step 3 Inspect the translation to N3
 

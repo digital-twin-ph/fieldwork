@@ -104,3 +104,48 @@ test('the rewrite is applied when a level is read',()=>{
     gjDownloadURL:'https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/x.geojson'});
   assert.match(level.geoJsonUrl,/^https:\/\/media\.githubusercontent\.com\/media\//);
 });
+
+import {resolveCountry,COUNTRIES,alsoMatching,countryName} from '../build/boundary-source.js';
+
+// "Considering low friction, why do we not use a country dropdown or a predictive entry
+// selector?" -- the practitioner, 2026-10-18. Choosing which country to study is a judgment;
+// remembering that the DRC is COD is a lookup, and a lookup is friction with nothing behind it.
+test('the bundled list covers what the source publishes, and nothing it does not',()=>{
+  assert.equal(COUNTRIES.length,230);
+  assert.ok(COUNTRIES.every(c=>/^[A-Z]{3}$/.test(c.iso)&&c.name.length>1));
+  assert.equal(COUNTRIES.find(c=>c.iso==='COD').name,'Democratic Republic of the Congo');
+});
+
+test('a name resolves to its code, however it is typed',()=>{
+  assert.equal(resolveCountry('Democratic Republic of the Congo'),'COD');
+  assert.equal(resolveCountry('  democratic republic of the congo  '),'COD');
+  assert.equal(resolveCountry('Uganda'),'UGA');
+});
+
+test('a code still works, because somebody who knows it should not have to scroll',()=>{
+  assert.equal(resolveCountry('COD'),'COD');
+  assert.equal(resolveCountry('uga'),'UGA');
+});
+
+test('an unambiguous prefix resolves; an ambiguous one refuses',()=>{
+  assert.equal(resolveCountry('Ugan'),'UGA');
+  assert.equal(resolveCountry('Democratic Rep'),'COD');
+  assert.equal(resolveCountry('United'),null,'several countries begin United');
+});
+
+test('an exact name wins even when it is inside another name, and the near miss is named',()=>{
+  // "Congo" IS the Republic of the Congo. Resolving it is correct; the Democratic Republic of
+  // the Congo is a different country a thousand kilometres away, and experiment 47 already
+  // warned that a name-keyed match "matches the wrong polygon silently". So it resolves AND the
+  // other match is reported, for the dialog to show.
+  assert.equal(resolveCountry('Congo'),'COG');
+  assert.deepEqual(alsoMatching('Congo','COG'),['Democratic Republic of the Congo']);
+  assert.deepEqual(alsoMatching('Uganda','UGA'),[],'an unmistakable choice reports nothing');
+});
+
+test('nothing typed, and nothing matching, both resolve to nothing',()=>{
+  assert.equal(resolveCountry(''),null);
+  assert.equal(resolveCountry('   '),null);
+  assert.equal(resolveCountry('Wakanda'),null);
+  assert.equal(resolveCountry('ZZZ'),null);
+});

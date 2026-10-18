@@ -257,3 +257,58 @@ export function declarationGaps(
       : `${d.meaning} Without it a reader cannot tell what these numbers mean.`,
   }));
 }
+
+/** The roles a ruleset needs bound to columns, and the ones it derives for itself.
+ *
+ *  Experiment [65](../docs/experiments/65-ruleset-as-data.md), written before the code: *"Stages
+ *  1 and 4 are where the specificity currently hides, and both become general the moment the
+ *  ruleset declares a contract"*, and *"the ruleset declares ROLES, not field names"*. Every
+ *  bundled ruleset already carries both halves — `authored` holds the structured rules and
+ *  `inputContract.expects` holds the roles — so what was missing was never the declaration. It
+ *  was the binding, and the dispatch that would use it.
+ *
+ *  **A presence role is derived, not bound, and it says so.** `fw:distanceKnown` is not a column
+ *  anybody has; it is whether the value was readable, and the authored projection already emits
+ *  one for every bound field. Asking a practitioner to bind a column to it would be asking them
+ *  to supply an answer the application computes.
+ *
+ *  **Declared, not inferred from the spelling.** The first draft read a `Known` suffix and looked
+ *  for the stem among the other roles. That fails on the shipped rulesets and deserved to:
+ *  `fw:distanceKnown` pairs with `fw:distanceKm`, because as outreach-criteria's own note says,
+ *  "fw:distanceKm welds a unit into a predicate name", and `fw:alertKnown` pairs with
+ *  `fw:heatAlert`, which shares no stem at all. Guessing a relationship from two predicate names
+ *  is the same mistake as guessing a column's meaning from its heading, which this application
+ *  refuses everywhere else. A role that is computed declares `derived: true`. */
+export const isDerivedRole=(role:{predicate:string;derived?:boolean})=>role.derived===true;
+
+export interface RoleBinding {predicate:string; attribute:string}
+
+export function bindableRoles(ruleset:Pick<Ruleset,'inputContract'>):{predicate:string;type:string;unit?:string;derived?:boolean}[]{
+  const expects=(ruleset.inputContract?.expects??[]) as {predicate:string;type:string;unit?:string;derived?:boolean}[];
+  return expects.filter(e=>!isDerivedRole(e));
+}
+
+/** The authored-shaped field list a pinned ruleset runs on, once its roles are bound.
+ *
+ *  Refuses rather than guesses. A role left unbound, or bound to a column the records do not
+ *  carry, would reach the reasoner as a predicate nothing asserts — the rules would simply match
+ *  nothing and the run would look like a dataset full of unknowns, which is the failure
+ *  `bindParameters` already refuses for an unbound placeholder. */
+export function declaredFields(
+  ruleset:Pick<Ruleset,'inputContract'>,bindings:readonly RoleBinding[],columns?:readonly string[],
+):{attribute:string;predicate:string;kind:string;unit?:string}[]{
+  const roles=bindableRoles(ruleset);
+  const by=new Map(bindings.map(b=>[b.predicate,b.attribute.trim()]));
+  const missing=roles.filter(r=>!by.get(r.predicate));
+  if(missing.length)
+    throw new Error(`This ruleset needs ${missing.length} role${missing.length===1?'':'s'} bound to a column before it can run: `
+      +`${missing.map(r=>r.predicate).join(', ')}. A role the records do not supply reaches the reasoner as a predicate nothing asserts, and the run would report every record as unknown.`);
+  if(columns)for(const role of roles){
+    const attribute=by.get(role.predicate)!;
+    if(!columns.includes(attribute))
+      throw new Error(`${role.predicate} is bound to "${attribute}", which these records do not carry. Columns available: ${columns.join(', ')}.`);
+  }
+  return roles.map(role=>({attribute:by.get(role.predicate)!,predicate:role.predicate,
+    kind:role.type==='number'?'number':role.type==='boolean'?'boolean':'term',
+    ...(role.unit?{unit:role.unit}:{})}));
+}

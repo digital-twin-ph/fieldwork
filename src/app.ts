@@ -1965,14 +1965,38 @@ function renderMap(){
   }
   svg.style.display='';svg.setAttribute('viewBox','0 0 850 295');
   if(result?.comparison){svg.style.display='none';const host=document.createElement('div');host.id='comparison-map-host';host.innerHTML=pointComparisonMarkup(result.comparison,esc);$('#map-panel').append(host);return;}
+  // INTERACTIVE IS FOR ANY MAP, and until 2026-10-17 it was unreachable without polygons.
+  //
+  // The inner condition was widened on 2026-10-15 with a comment saying so -- "a study area with
+  // points on it is a map like any other ... Reported three times before the cause turned out to
+  // be here" -- and the ENCLOSING `if(result?.polygons)` was left in place, so the branch stayed
+  // unreachable for a points-only result. The fix was written and then fenced off by the guard
+  // above it. Reported a fourth time, on worked example 11, which is points and a study area and
+  // no polygons at all.
+  //
+  // Hoisted out, because only the interactive presentation can draw tiles: leaving it inside the
+  // polygon branch means a basemap is reachable only on a catchment.
+  if(mapNode?.params.presentation==='interactive'&&result?.view==='map'){
+    const host=document.createElement('div');host.id='catchment-map-host';
+    $('#map-panel').insertBefore(host,$('#map-communication-key'));
+    svg.style.display='none';
+    disposeCatchmentMap=mountCatchmentMap(host,result.polygons?{...result,polygons:result.polygons}:result,
+      result.contextPoints,esc,mapNode?.params.basemap||'none',
+      choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);});
+    if(result.polygons){
+      const method=document.createElement('p');method.className='muted';
+      method.textContent=result.polygons.method+' / '+result.polygons.notes.join(' ');
+      $('#map-panel').insertBefore(method,$('#map-communication-key'));
+    }
+    return;
+  }
   if(result?.polygons){
     const note=document.createElement('div');note.id='catchment-map-host';$('#map-panel').insertBefore(note,$('#map-communication-key'));
     // Interactive for ANY map, not only one that has polygons. The renderer draws the layers it is
     // given, so a study area with points on it is a map like any other -- and since only the
     // interactive presentation can draw tiles, this is what makes a basemap reachable on a map
     // that is not a catchment. Reported three times before the cause turned out to be here.
-    if(mapNode?.params.presentation==='interactive'&&result.view==='map'){svg.style.display='none';disposeCatchmentMap=mountCatchmentMap(note,result.polygons?{...result,polygons:result.polygons}:result,result.contextPoints,esc,mapNode?.params.basemap||'none',choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);});}
-    else if(result.polygons.features.some(f=>f.minutes!==undefined)){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
+    if(result.polygons.features.some(f=>f.minutes!==undefined)){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
     else svg.innerHTML=polygonSvg(result.polygons,esc);
     const method=document.createElement('p');method.className='muted';method.textContent=result.polygons.method+' / '+result.polygons.notes.join(' ');note.append(method);return;
   }

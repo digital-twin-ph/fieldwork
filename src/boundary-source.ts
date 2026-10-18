@@ -47,6 +47,51 @@ export interface BoundaryLevel {
   geoJsonUrl:string;
 }
 
+import countries from '../examples/geoboundaries/countries.json';
+
+/** Every country geoBoundaries publishes, by ISO3 and name.
+ *
+ *  Bundled rather than fetched: the ALL/ADM0 response is 410 KB and this is the two fields a
+ *  practitioner needs, 9 KB, snapshotted 2026-10-18. Only countries the SOURCE has are listed,
+ *  so the picker cannot offer one that comes back empty.
+ *
+ *  The practitioner asked why a code was being typed at all: *"considering low friction, why do
+ *  we not use a country dropdown or a predictive entry selector?"* Choosing WHICH country to
+ *  study is a judgment; remembering that the DRC is COD is a lookup, and a lookup is friction
+ *  with nothing behind it. */
+export const COUNTRIES:readonly {iso:string;name:string}[]=countries.countries;
+
+/** The ISO3 a practitioner meant, from a name or a code, or null.
+ *
+ *  Accepts the code directly, because somebody who knows it should not be made to scroll, and
+ *  matches a name case- and space-insensitively. A prefix match is accepted only when it is
+ *  unambiguous -- "Congo" matches two countries and must not silently pick one of them. */
+export const countryName=(iso:string)=>COUNTRIES.find(c=>c.iso===iso)?.name??iso;
+
+/** Other countries whose name contains what was typed. Empty when the choice is unmistakable.
+ *
+ *  "Congo" IS the Republic of the Congo's name, so resolving it is correct -- and the
+ *  Democratic Republic of the Congo is a different country a thousand kilometres away. Refusing
+ *  a correct match would be wrong; resolving it in silence is how experiment 47's warning comes
+ *  true, that a name-keyed match "matches the wrong polygon silently". So the near misses are
+ *  returned and the dialog names them. */
+export function alsoMatching(typed:string,chosen:string):readonly string[]{
+  const needle=typed.trim().toLowerCase();
+  if(!needle)return [];
+  return COUNTRIES.filter(c=>c.iso!==chosen&&c.name.toLowerCase().includes(needle)).map(c=>c.name);
+}
+
+export function resolveCountry(typed:string):string|null{
+  const needle=typed.trim().toLowerCase().replace(/\s+/g,' ');
+  if(!needle)return null;
+  const byCode=COUNTRIES.find(c=>c.iso.toLowerCase()===needle);
+  if(byCode)return byCode.iso;
+  const exact=COUNTRIES.filter(c=>c.name.toLowerCase()===needle);
+  if(exact.length===1)return exact[0].iso;
+  const prefix=COUNTRIES.filter(c=>c.name.toLowerCase().startsWith(needle));
+  return prefix.length===1?prefix[0].iso:null;
+}
+
 export const ADM_LEVELS=['ADM0','ADM1','ADM2','ADM3','ADM4','ADM5'] as const;
 
 const text=(v:unknown)=>typeof v==='string'?v.trim():typeof v==='number'?String(v):'';

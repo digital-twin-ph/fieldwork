@@ -69,7 +69,7 @@
       <p id="area-summary" class="muted">No area selected</p>
       <details id="area-boundary-source"><summary>Use an administrative boundary</summary>
       <p class="muted">Boundaries from geoBoundaries, chosen by name. The level is checked before anything is downloaded, so you can see how large it is first. Licence and year come from the source and differ by country and level.</p>
-      <div class="area-bounds"><label>Country (ISO3)<input id="area-iso" maxlength="3" placeholder="COD" autocomplete="off"></label><label>Level<select id="area-adm"><option>ADM0</option><option>ADM1</option><option selected>ADM2</option><option>ADM3</option><option>ADM4</option><option>ADM5</option></select></label></div>
+      <div class="area-bounds"><label>Country<input id="area-iso" list="area-iso-options" placeholder="Start typing a country" autocomplete="off"><datalist id="area-iso-options"></datalist></label><label>Level<select id="area-adm"><option>ADM0</option><option>ADM1</option><option selected>ADM2</option><option>ADM3</option><option>ADM4</option><option>ADM5</option></select></label></div>
       <button type="button" class="button small" id="area-boundary-check">Check this level</button>
       <p id="area-boundary-status" role="status" class="muted"></p>
       <div id="area-boundary-units" hidden><label class="field-label" for="area-boundary-pick">Units</label><select id="area-boundary-pick" multiple size="6" aria-label="Boundary units"></select><p class="muted" id="area-boundary-terms"></p><button type="button" class="button small" id="area-boundary-use">Use the selected units</button></div>

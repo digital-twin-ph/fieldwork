@@ -44,7 +44,11 @@ test('a study area can be chosen from administrative boundaries',async({page})=>
   const errors=collectPageErrors(page);
   await stub(page);
   await openArea(page);
-  await page.locator('#area-iso').fill('COD');
+  // A NAME, not a code. "Considering low friction, why do we not use a country dropdown or a
+  // predictive entry selector?" -- choosing the country is a judgment; remembering that the DRC
+  // is COD is a lookup.
+  await expect(page.locator('#area-iso-options option')).toHaveCount(230);
+  await page.locator('#area-iso').fill('Democratic Republic of the Congo');
   await page.locator('#area-adm').selectOption('ADM3');
   await page.locator('#area-boundary-check').click();
 
@@ -81,11 +85,11 @@ test('a level a country does not publish is an answer, not a failure',async({pag
   // NGA and BRA really return nothing at ADM3. A picker cannot assume a hierarchy depth.
   await stub(page,{levelPayload:null});
   await openArea(page);
-  await page.locator('#area-iso').fill('NGA');
+  await page.locator('#area-iso').fill('Nigeria');
   await page.locator('#area-adm').selectOption('ADM3');
   await page.locator('#area-boundary-check').click();
   await expect(page.locator('#area-boundary-status'))
-    .toContainText('NGA publishes no ADM3',{timeout:20000});
+    .toContainText('Nigeria (NGA) publishes no ADM3',{timeout:20000});
   await expect(page.locator('#area-boundary-units')).toBeHidden();
   expect(errors).toEqual([]);
 });
@@ -95,8 +99,28 @@ test('a permissive level does not warn about share-alike',async({page})=>{
     boundaryLicense:'CC0 1.0 Universal (CC0 1.0)',boundaryYearRepresented:'2020',
     admUnitCount:'137',boundaryID:'UGA-ADM3-73843447'})});
   await openArea(page);
-  await page.locator('#area-iso').fill('UGA');
+  await page.locator('#area-iso').fill('Uganda');
   await page.locator('#area-boundary-check').click();
   await expect(page.locator('#area-boundary-terms')).toContainText('CC0',{timeout:20000});
   await expect(page.locator('#area-boundary-terms')).not.toContainText('SHARE-ALIKE');
+});
+
+test('a country name inside another names the near miss rather than resolving in silence',async({page})=>{
+  await stub(page,{levelPayload:level({boundaryISO:'COG',boundaryName:'Congo'})});
+  await openArea(page);
+  // "Congo" IS the Republic of the Congo, so resolving it is correct -- and somebody who meant
+  // the Democratic Republic of the Congo must see that before downloading a boundary a thousand
+  // kilometres from their outbreak. Experiment 47's warning, in the one case that matters here.
+  await page.locator('#area-iso').fill('Congo');
+  await page.locator('#area-boundary-check').click();
+  await expect(page.locator('#area-boundary-status'))
+    .toContainText('Democratic Republic of the Congo also match',{timeout:20000});
+});
+
+test('an ambiguous entry refuses rather than guessing',async({page})=>{
+  await stub(page);
+  await openArea(page);
+  await page.locator('#area-iso').fill('United');
+  await page.locator('#area-boundary-check').click();
+  await expect(page.locator('#area-boundary-status')).toContainText('No single country matches');
 });

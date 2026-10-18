@@ -185,12 +185,34 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   let pickedUnits:import('./boundary-source.js').BoundaryUnit[]=[];
   const boundaryStatus=$('#area-boundary-status'),unitsBox=$('#area-boundary-units');
   const unitPick=$('#area-boundary-pick') as HTMLSelectElement;
+  // The list is filled from the bundled snapshot the moment the dialog opens, so typing
+  // "Congo" offers both Congos and the practitioner picks the one they mean.
+  void import('./boundary-source.js').then(({COUNTRIES})=>{
+    const list=$('#area-iso-options');
+    if(list.childElementCount)return;
+    list.innerHTML=COUNTRIES.map(c=>`<option value="${c.name}">${c.iso}</option>`).join('');
+  });
   $('#area-boundary-check').onclick=async()=>{
-    const iso=($('#area-iso') as HTMLInputElement).value.trim();
+    const typed=($('#area-iso') as HTMLInputElement).value;
     const adm=($('#area-adm') as HTMLSelectElement).value;
-    if(iso.length!==3){boundaryStatus.textContent='Give a three-letter ISO country code, such as COD or UGA.';return;}
+    const {resolveCountry}=await import('./boundary-source.js');
+    const iso=resolveCountry(typed);
+    if(!iso){
+      // "Congo" matches two countries. Refusing an ambiguous prefix is the point: silently
+      // picking one would choose a different nation than the practitioner meant.
+      boundaryStatus.textContent=typed.trim()
+        ?`No single country matches "${typed.trim()}". Choose one from the list \u2014 more than one may start that way.`
+        :'Choose a country, by name or by its three-letter code.';
+      return;
+    }
     unitsBox.hidden=true;pickedLevel=null;pickedUnits=[];
-    boundaryStatus.textContent=`Checking ${iso.toUpperCase()} ${adm}\u2026`;
+    // The country is NAMED, not just coded. Typing "Congo" resolves correctly to the Republic
+    // of the Congo -- and somebody who meant the Democratic Republic of the Congo has to be able
+    // to see that before they download a boundary a thousand kilometres from their outbreak.
+    const {countryName,alsoMatching}=await import('./boundary-source.js');
+    const near=alsoMatching(typed,iso);
+    boundaryStatus.textContent=`Checking ${countryName(iso)} (${iso}) ${adm}\u2026`
+      +(near.length?` \u2014 note: ${near.join(', ')} also match what you typed.`:'');
     try{
       const {levelUrl,readLevel,selectionSummary}=await import('./boundary-source.js');
       const response=await fetch(levelUrl(iso,adm));
@@ -198,7 +220,8 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
       if(!level){
         // Nigeria publishes no ADM3. An absent level is an ANSWER, not a failed request, and
         // saying so is what stops a practitioner retrying a thing that cannot work.
-        boundaryStatus.textContent=`${iso.toUpperCase()} publishes no ${adm}. Try a higher level.`;return;
+        boundaryStatus.textContent=`${countryName(iso)} (${iso}) publishes no ${adm}. Try a higher level.`
+          +(near.length?` Note: ${near.join(', ')} also match what you typed.`:'');return;
       }
       pickedLevel=level;
       boundaryStatus.textContent=`${level.units} units \u00b7 ${level.meanVertices} vertices each on average `
@@ -214,7 +237,12 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
       // is replaced as soon as the download finishes is a message they may never read.
       $('#area-boundary-terms').textContent=
         `${level.meanVertices} vertices each on average \u00b7 ${selectionSummary(level,[])}`;
-      boundaryStatus.textContent=`${pickedUnits.length} units ready. Choose the ones you need.`;
+      // The near miss OUTLIVES the lookup. Putting "another country also matches what you typed"
+      // in the transient checking message meant it was replaced the instant the download
+      // finished -- the second time in this dialog that the one thing worth reading disappeared
+      // before it could be read.
+      boundaryStatus.textContent=`${countryName(iso)} (${iso}) \u00b7 ${pickedUnits.length} units ready. Choose the ones you need.`
+        +(near.length?` Note: ${near.join(', ')} also match what you typed.`:'');
     }catch{boundaryStatus.textContent='That boundary could not be reached. The study area can still be drawn.';}
   };
   $('#area-boundary-use').onclick=()=>{

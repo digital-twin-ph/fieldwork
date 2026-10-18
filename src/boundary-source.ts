@@ -44,6 +44,13 @@ export interface BoundaryLevel {
   yearRepresented:string;
   licence:string;
   licenceSource:string;
+  /** WHO drew the line. For a contested boundary this is the whole question, and a licence names
+   *  the terms of reuse, not the authority. geoBoundaries returns it as `boundarySource`. */
+  source:string;
+  /** What kind of unit this level holds. COD ADM2 answers "territory, city" -- so Bunia (78 km2,
+   *  a city) and Irumu (7,986 km2, a territory) are peers in one flat list, two orders of
+   *  magnitude apart. The dataset declares the distinction; nothing was reading it. */
+  canonical:string;
   geoJsonUrl:string;
 }
 
@@ -120,6 +127,8 @@ export function readLevel(iso:string,level:string,payload:unknown):BoundaryLevel
     yearRepresented:text(r.boundaryYearRepresented).replace(/\.0+$/,''),
     licence:text(r.boundaryLicense)||'not stated',
     licenceSource:text(r.licenseSource),
+    source:text(r.boundarySource)||'not stated',
+    canonical:text(r.boundaryCanonical),
     geoJsonUrl:browserFetchableUrl(url),
   };
 }

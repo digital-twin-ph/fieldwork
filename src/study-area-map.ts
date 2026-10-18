@@ -19,7 +19,7 @@ import 'leaflet/dist/leaflet.css';
  *  on-demand half work at all, and a hashed chunk href resolved by hand would break on the next
  *  content change. */
 import 'maplibre-gl/dist/maplibre-gl.css';
-import {bboxPolygon,validateDrawnGeometry,geometryBounds,studyAreaN3,geometryWKT,CRS84} from './study-area.js';
+import {bboxPolygon,validateDrawnGeometry,geometryBounds,studyAreaN3,geometryWKT,boundaryFingerprint,CRS84} from './study-area.js';
 import type {RasterGrid} from './raster.js';
 import {clipRaster} from './raster.js';
 import {rasterImage} from './raster-ui.js';
@@ -86,7 +86,11 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   $('#area-online').dispatchEvent(new Event('change'));
   const ll=(p:Position)=>L.latLng(p[1],p[0]);
   function setTool(next:DrawTool){tool=next;const radiusControl=dialog.querySelector<HTMLElement>('#area-radius-control');if(radiusControl)radiusControl.hidden=next!=='circle';map.dragging[next==='pan'?'enable':'disable']();$('#area-map').classList.toggle('drawing',next!=='pan');dialog.querySelectorAll<HTMLButtonElement>('[data-draw]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.draw===next)));}
-  function currentParams():DrawnParams{return {source:'drawn',label:name.value.trim(),selectionMode,geometry};}
+  // Provenance survives editing on purpose. If a practitioner drags a vertex of an acquired
+  // boundary, the receipt must still name the source AND say the shape is no longer theirs, which
+  // it cannot do if the record is dropped the moment the shape changes.
+  let acquired:DrawnParams['boundary']=node.params.source==='drawn'?node.params.boundary:undefined;
+  function currentParams():DrawnParams{return {source:'drawn',label:name.value.trim(),selectionMode,geometry,...(acquired?{boundary:acquired}:{})};}
   function refresh(){
     $('#area-feedback').classList.remove('clip-preview-error');$('#area-feedback').setAttribute('role','status');if(previewStatus)previewStatus.textContent='Draw a valid boundary to preview the clip.';
     shapes.clearLayers();handles.clearLayers();
@@ -266,9 +270,14 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
         if(!rings){$('#area-boundary-terms').textContent='That unit carries no usable outline.';return;}
         try{geometry=validateDrawnGeometry({type:'Polygon',coordinates:rings.rings});}
         catch(e){$('#area-boundary-terms').textContent=`${chosen[0].name}: ${errorMessage(e)}`;return;}
+        acquired={boundaryID:pickedLevel!.boundaryID,unitID:chosen[0].id,unitName:chosen[0].name,
+          source:pickedLevel!.source,licence:pickedLevel!.licence,licenceSource:pickedLevel!.licenceSource,
+          yearRepresented:pickedLevel!.yearRepresented,canonical:pickedLevel!.canonical,
+          retrievedFrom:pickedLevel!.geoJsonUrl,retrievedAt:new Date().toISOString(),
+          vertices:rings.vertices,publishedHash:boundaryFingerprint(geometry)};
         selectionMode='polygon';setTool('pan');refresh();fit();
         $('#area-boundary-terms').textContent=
-          `${publishedNote(chosen[0].name,rings)} \u00b7 ${pickedLevel!.boundaryID} \u00b7 ${pickedLevel!.licence}`;
+          `${publishedNote(chosen[0].name,rings)} \u00b7 ${pickedLevel!.source} \u00b7 ${pickedLevel!.boundaryID} \u00b7 ${pickedLevel!.licence}`;
         return;
       }
       // SEVERAL units still become their bounding extent, and the text says so rather than
@@ -286,6 +295,14 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
         if(y<south)south=y; if(y>north)north=y;
       }
       geometry=bboxPolygon(west,south,east,north);
+      // A box around several units is nobody's published boundary, so it is recorded as derived
+      // from the level and NOT as published. publishedHash is deliberately a value the current
+      // geometry cannot match.
+      acquired={boundaryID:pickedLevel!.boundaryID,unitID:chosen.map(u=>u.id).join(' '),
+        unitName:chosen.map(u=>u.name).join(', '),source:pickedLevel!.source,licence:pickedLevel!.licence,
+        licenceSource:pickedLevel!.licenceSource,yearRepresented:pickedLevel!.yearRepresented,
+        canonical:pickedLevel!.canonical,retrievedFrom:pickedLevel!.geoJsonUrl,
+        retrievedAt:new Date().toISOString(),vertices:0,publishedHash:'bounding-box'};
       selectionMode='bbox';setTool('pan');refresh();fit();
       $('#area-boundary-terms').textContent=
         `${chosen.map(u=>u.name).join(', ')} \u00b7 A BOUNDING BOX AROUND ${chosen.length} UNITS, not their outlines: `

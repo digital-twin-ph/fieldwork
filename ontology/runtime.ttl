@@ -108,6 +108,7 @@ fw:toPlan a owl:ObjectProperty; rdfs:range fw:CanvasNodePlan.
 fw:inputPort a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:selectionMode a owl:ObjectProperty; rdfs:comment "Boundary drawing method, not a CRS or a geometry type.".
 fw:geometryValidated a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:comment "Passed the widget's bounded geometry checks; not general topological certification.".
+fw:geometryAsPublished a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:comment "True when the geometry is byte-for-byte what the cited source published; false when it was edited in this workflow, so the source is what it derives from and not the author of this shape.".
 fw:west a owl:DatatypeProperty; rdfs:comment "Western longitude of the CRS84 bounding envelope in degrees.".
 fw:east a owl:DatatypeProperty; rdfs:comment "Eastern longitude of the CRS84 bounding envelope in degrees.".
 fw:south a owl:DatatypeProperty; rdfs:comment "Southern latitude of the CRS84 bounding envelope in degrees.".

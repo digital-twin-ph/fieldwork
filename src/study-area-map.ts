@@ -175,6 +175,67 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   $('#area-use-bounds').onclick=()=>{try{const values=['west','south','east','north'].map(k=>( $('#area-'+k) as HTMLInputElement).value.trim()===''?NaN:Number(( $('#area-'+k) as HTMLInputElement).value));geometry=bboxPolygon(values[0],values[1],values[2],values[3]);selectionMode='bbox';setTool('pan');refresh();fit();}catch(e){message(errorMessage(e));}};
   for(const key of ['west','south','east','north'])($('#area-'+key) as HTMLInputElement).oninput=()=>{$('#area-apply').disabled=true;message('Choose Use these bounds to replace the polygon with this rectangle before applying.');};
   function fit(){const scope=geometry||context.boundary;if(scope){const b=geometryBounds(scope),bounds:L.LatLngTuple[]=[[b[1],b[0]],[b[3],b[2]]];if(context.point?.coordinates)bounds.push([context.point.coordinates[1],context.point.coordinates[0]]);map.fitBounds(bounds,{padding:[35,35],maxZoom:17});}}
+  // AN ADMINISTRATIVE BOUNDARY, CHOSEN BY NAME. Experiment 14 specified this on 2026-10-06 and
+  // recorded that jurisdiction selection was "not yet implemented"; A54 asks to select members
+  // without forcing a union. Two steps, deliberately: CHECK the level, which fetches metadata
+  // only, then download the units actually chosen. The probe of 2026-10-17 is what makes that
+  // possible -- the metadata endpoint carries admUnitCount and vertex statistics and no geometry,
+  // so the size is visible before anything large is fetched.
+  let pickedLevel:import('./boundary-source.js').BoundaryLevel|null=null;
+  let pickedUnits:import('./boundary-source.js').BoundaryUnit[]=[];
+  const boundaryStatus=$('#area-boundary-status'),unitsBox=$('#area-boundary-units');
+  const unitPick=$('#area-boundary-pick') as HTMLSelectElement;
+  $('#area-boundary-check').onclick=async()=>{
+    const iso=($('#area-iso') as HTMLInputElement).value.trim();
+    const adm=($('#area-adm') as HTMLSelectElement).value;
+    if(iso.length!==3){boundaryStatus.textContent='Give a three-letter ISO country code, such as COD or UGA.';return;}
+    unitsBox.hidden=true;pickedLevel=null;pickedUnits=[];
+    boundaryStatus.textContent=`Checking ${iso.toUpperCase()} ${adm}\u2026`;
+    try{
+      const {levelUrl,readLevel,selectionSummary}=await import('./boundary-source.js');
+      const response=await fetch(levelUrl(iso,adm));
+      const level=response.ok?readLevel(iso,adm,await response.json()):null;
+      if(!level){
+        // Nigeria publishes no ADM3. An absent level is an ANSWER, not a failed request, and
+        // saying so is what stops a practitioner retrying a thing that cannot work.
+        boundaryStatus.textContent=`${iso.toUpperCase()} publishes no ${adm}. Try a higher level.`;return;
+      }
+      pickedLevel=level;
+      boundaryStatus.textContent=`${level.units} units \u00b7 ${level.meanVertices} vertices each on average `
+        +`\u00b7 ${selectionSummary(level,[])}. Downloading the shapes next.`;
+      const shapes=await fetch(level.geoJsonUrl);
+      if(!shapes.ok)throw new Error('The boundary file could not be fetched.');
+      const {readUnits}=await import('./boundary-source.js');
+      pickedUnits=readUnits(level,await shapes.json());
+      unitPick.innerHTML=pickedUnits.map((u,i)=>`<option value="${i}">${u.name}</option>`).join('');
+      unitsBox.hidden=false;
+      // The SIZE stays on screen rather than flashing past. It is the thing that makes
+      // "only the boundaries we need" a decision the practitioner can take, and a message that
+      // is replaced as soon as the download finishes is a message they may never read.
+      $('#area-boundary-terms').textContent=
+        `${level.meanVertices} vertices each on average \u00b7 ${selectionSummary(level,[])}`;
+      boundaryStatus.textContent=`${pickedUnits.length} units ready. Choose the ones you need.`;
+    }catch{boundaryStatus.textContent='That boundary could not be reached. The study area can still be drawn.';}
+  };
+  $('#area-boundary-use').onclick=()=>{
+    const chosen=[...unitPick.selectedOptions].map(o=>pickedUnits[Number(o.value)]).filter(Boolean);
+    if(!pickedLevel||!chosen.length){$('#area-boundary-terms').textContent='Select at least one unit.';return;}
+    // The drawn geometry is the extent of what was chosen. Members are NOT dissolved in the
+    // source data -- each keeps its name and id in `pickedUnits` -- but this dialog commits one
+    // boundary, so what it commits is their bounding extent and the membership is recorded in
+    // the status line rather than lost silently. Keeping members whole through to the node is
+    // A54's remaining half and is not built here.
+    const all=chosen.flatMap(u=>{
+      const g=u.geometry as {type:string;coordinates:unknown};
+      return g.type==='MultiPolygon'?(g.coordinates as number[][][][]).flat(2):(g.coordinates as number[][][]).flat();
+    }) as [number,number][];
+    if(!all.length){$('#area-boundary-terms').textContent='Those units carry no coordinates.';return;}
+    const xs=all.map(c=>c[0]),ys=all.map(c=>c[1]);
+    geometry=bboxPolygon(Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys));
+    selectionMode='bbox';setTool('pan');refresh();fit();
+    $('#area-boundary-terms').textContent=
+      `${chosen.map(u=>u.name).join(', ')} \u00b7 ${pickedLevel.boundaryID} \u00b7 ${pickedLevel.licence}`;
+  };
   $('#area-fit').onclick=fit;$('#area-old-naledi').onclick=()=>map.setView([-24.685,25.901],14);
   name.oninput=refresh;
   $('#area-apply').onclick=()=>{try{validateDrawnGeometry(geometry);validateClip();studyAreaN3({id:node.id,params:currentParams()});if(onApply(structuredClone(currentParams()),structuredClone(clipOptions))===false)throw new Error(context.clip?'Clip parameters could not be saved. Retry Apply.':'Study area could not be saved. Retry Apply.');dialog.close();}catch(e){message(errorMessage(e));$('#area-feedback').setAttribute('role','alert');$('#area-feedback').classList.add('clip-preview-error');}};

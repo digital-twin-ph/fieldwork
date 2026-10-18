@@ -67,7 +67,13 @@
     </section><aside class="area-draft">
       <label class="field-label" for="area-name">Study area label</label><input id="area-name" maxlength="100">
       <p id="area-summary" class="muted">No area selected</p>
-      <details><summary>Enter bounding coordinates</summary><div class="area-bounds"><label>West<input id="area-west" type="number" step="any" aria-label="West longitude"></label><label>South<input id="area-south" type="number" step="any" aria-label="South latitude"></label><label>East<input id="area-east" type="number" step="any" aria-label="East longitude"></label><label>North<input id="area-north" type="number" step="any" aria-label="North latitude"></label></div><button id="area-use-bounds" class="button small">Use these bounds</button></details>
+      <details id="area-boundary-source"><summary>Use an administrative boundary</summary>
+      <p class="muted">Boundaries from geoBoundaries, chosen by name. The level is checked before anything is downloaded, so you can see how large it is first. Licence and year come from the source and differ by country and level.</p>
+      <div class="area-bounds"><label>Country (ISO3)<input id="area-iso" maxlength="3" placeholder="COD" autocomplete="off"></label><label>Level<select id="area-adm"><option>ADM0</option><option>ADM1</option><option selected>ADM2</option><option>ADM3</option><option>ADM4</option><option>ADM5</option></select></label></div>
+      <button type="button" class="button small" id="area-boundary-check">Check this level</button>
+      <p id="area-boundary-status" role="status" class="muted"></p>
+      <div id="area-boundary-units" hidden><label class="field-label" for="area-boundary-pick">Units</label><select id="area-boundary-pick" multiple size="6" aria-label="Boundary units"></select><p class="muted" id="area-boundary-terms"></p><button type="button" class="button small" id="area-boundary-use">Use the selected units</button></div>
+    </details><details><summary>Enter bounding coordinates</summary><div class="area-bounds"><label>West<input id="area-west" type="number" step="any" aria-label="West longitude"></label><label>South<input id="area-south" type="number" step="any" aria-label="South latitude"></label><label>East<input id="area-east" type="number" step="any" aria-label="East longitude"></label><label>North<input id="area-north" type="number" step="any" aria-label="North latitude"></label></div><button id="area-use-bounds" class="button small">Use these bounds</button></details>
       <span class="inspector-section">N3 draft · not yet evaluated</span><pre id="area-n3"></pre>
       <details><summary>GeoJSON coordinates</summary><pre id="area-geojson"></pre></details>
       <p class="muted">The widget validates the shape. The rule derives readiness from those facts. A valid shape does not establish an appropriate study design.</p>

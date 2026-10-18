@@ -5,6 +5,20 @@ type DrawnParams=Extract<AreaParams,{source:'drawn'}>;
 type DrawTool='pan'|'bbox'|'polygon'|'circle';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+/** MapLibre's stylesheet, linked eagerly even though its renderer loads on demand.
+ *
+ *  esbuild emits the CSS of a DYNAMIC import as a chunk stylesheet -- build/chunks/maplibre-gl-*.css
+ *  -- under a content-hashed name that nothing links: index.html loads four stylesheets and that is
+ *  not one of them. Leaflet's CSS works only because it rides in this module's bundle, which IS
+ *  linked. Without it .maplibregl-canvas-container stays position:static and an OpenFreeMap
+ *  basemap draws NOTHING while its status line reads "online" -- found by screenshotting both
+ *  basemaps on 2026-10-17: OpenStreetMap returned 228,590 bytes of detail, Liberty 24,041 bytes of
+ *  flat colour.
+ *
+ *  83 KB, against the renderer's 1,035,119. Linking the small half eagerly is what makes the
+ *  on-demand half work at all, and a hashed chunk href resolved by hand would break on the next
+ *  content change. */
+import 'maplibre-gl/dist/maplibre-gl.css';
 import {bboxPolygon,validateDrawnGeometry,geometryBounds,studyAreaN3,geometryWKT,CRS84} from './study-area.js';
 import type {RasterGrid} from './raster.js';
 import {clipRaster} from './raster.js';

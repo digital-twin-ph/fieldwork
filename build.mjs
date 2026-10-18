@@ -29,6 +29,16 @@ for(const name of await readdir('build'))if(/\.js(\.map)?$/.test(name)&&!emitted
   await rm('build/'+name);
   console.log('Removed an output no entry produces any more: build/'+name);
 }
+// MAPLIBRE DECODES TILES IN A WEB WORKER, and it resolves the worker's URL relative to its own
+// bundle. Under esbuild's chunk layout that resolution fails: "Worker failed to load. Check that
+// the worker URL is correct." The style, the TileJSON and the sprites all load -- four requests,
+// all 200 -- and then ZERO tiles are fetched, because the worker that would parse them never
+// starts. The map paints nothing while its status line reads "online". Found 2026-10-17 by
+// screenshotting two basemaps: OpenStreetMap came back 228,590 bytes of detail, OpenFreeMap
+// Liberty 24,041 bytes of flat colour.
+//
+// Copied at a stable path rather than left to the bundler, so `setWorkerUrl` can name it.
+await copyFile('node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs','build/maplibre-gl-worker.mjs');
 await copyFile('node_modules/polyclip-ts/LICENSE','build/polyclip-ts-LICENSE.txt');
 await copyFile('node_modules/proj4/LICENSE.md','build/proj4-LICENSE.txt');
 await copyFile('node_modules/geotiff/LICENSE','build/geotiff-LICENSE.txt');
@@ -46,7 +56,14 @@ for(const [source,name] of [['vendor/licenses/jsts-LICENSE_EDLv1.txt','jsts-EDL-
 const staticAssets=['./','./index.html','./styles.css','./study-area.css','./icon.svg','./manifest.webmanifest','./examples/old-naledi/data.js','./examples/old-naledi/provenance.json','./vendor/eye-21.1.24.js','./vendor/sql-wasm.js','./vendor/sql-wasm.wasm'];
 staticAssets.push(...['NOTICE.txt','upstream-LICENSE','provenance.json','network.json','soho.graphml','pumps.csv','cholera_deaths.csv'].map(name=>'./examples/john-snow/'+name));
 const generated=Object.keys({...application.metafile.outputs,...worker.metafile.outputs}).filter(path=>!path.endsWith('.map')).map(path=>'./'+path.replaceAll('\\','/'));
-const assets=[...new Set([...staticAssets,...generated])].sort();
+// ONLINE-ONLY CHUNKS ARE NOT PRECACHED. The MapLibre renderer behind the OpenFreeMap vector
+// basemaps is a megabyte, and it can only ever be used while online: the style JSON, the glyphs
+// and the tiles all come from the network. Precaching it would make every practitioner download
+// a renderer that is useless in the one situation the precache exists for. It is a dynamic
+// import, so it is fetched when a vector basemap is first chosen and the application works
+// offline without it. Measured 2026-10-17: 1,035,119 bytes, against an app.js of 293,019.
+const ONLINE_ONLY=/leaflet-maplibre-gl|maplibre/;  // renderer, worker and their chunks
+const assets=[...new Set([...staticAssets,...generated])].filter(a=>!ONLINE_ONLY.test(a)).sort();
 const hash=createHash('sha256');
 for(const asset of assets){hash.update(asset);hash.update(await readFile(asset==='./'?'index.html':asset));}
 hash.update(await readFile('src/sw.ts'));

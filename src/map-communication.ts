@@ -4,7 +4,7 @@ import type {WorkflowNode,Workflow} from './types.js';
 import {FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
 
-export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:'square'}[]; presentation:'plot'|'interactive'; basemap:'none'|'osm'|'topo';
+export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:'square'}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
   /** Licence and attribution for the data shown. Separate from the source note because a note is
    *  editorial and this is an obligation: an OSM-derived layer must say ODbL and credit
    *  contributors wherever the figure ends up, and a figure that travels without it is not
@@ -131,7 +131,10 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   // prefer it". Both are legitimate; one is a claim about the data.
   const choices=[
     {setting:'presentation',chosen:spec.presentation,alternatives:['plot','interactive']},
-    {setting:'basemap',chosen:spec.basemap,alternatives:['none','osm','topo']},
+    {setting:'basemap',chosen:spec.basemap,
+     // Every basemap actually offered. A DesignChoice records what was SELECTED beside what
+     // else was available, so a stale list understates the choice space the practitioner had.
+     alternatives:['none','osm','topo','ofm-liberty','ofm-positron','ofm-bright']},
   ];
   const conformance=`${designRuleDeclarations()}\n${designRuleFacts(iri,applied)}\n`
     +`${designChoiceFacts(iri,choices)}\n`;

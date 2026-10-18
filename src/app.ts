@@ -24,6 +24,7 @@ import {bundledCompositions,resolveComposition} from './composition-registry.js'
 import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
 import {rulesetExample} from './ruleset-example.js';
+import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openTableViewer,tableViewOf} from './table-viewer.js';
 import {castColumn,applyRepairs} from './column-profile.js';
@@ -141,9 +142,9 @@ const WORKSPACES='fieldwork-examples-v1';
 // example has an area node and was silently labelled, described and noted as Old Naledi until
 // it was added. This is the "examples are the default world" problem in TODO.md, in the one
 // place it is least visible.
-const NAMED_WORKSPACES=['blank','coverage','raster','sea-level','rulesets'];
+const NAMED_WORKSPACES=['blank','coverage','raster','sea-level','rulesets','hagelloch'];
 const exampleKey=(w:Workflow):string=>w.exampleId?.startsWith('snow-')?w.exampleId:NAMED_WORKSPACES.includes(w.exampleId as string)?w.exampleId as string:w.exampleId==='old-naledi'||w.nodes.some(n=>n.type==='study_area')?'old-naledi':'heat';
-const template=(key:string)=>key==='rulesets'?rulesetExample():key==='sea-level'?seaLevelExample():key==='snow-geoprivacy'?geoprivacyExample():key==='snow-extent'?snowExtentExample():key==='snow-voronoi'||key==='snow-isochrone'?johnSnowExample(key):key==='raster'?rasterExample():key==='coverage'?coverageExercise():key==='blank'?blankWorkflow():key==='old-naledi'?oldNalediWorkflow():exampleWorkflow();
+const template=(key:string)=>key==='hagelloch'?hagellochExample():key==='rulesets'?rulesetExample():key==='sea-level'?seaLevelExample():key==='snow-geoprivacy'?geoprivacyExample():key==='snow-extent'?snowExtentExample():key==='snow-voronoi'||key==='snow-isochrone'?johnSnowExample(key):key==='raster'?rasterExample():key==='coverage'?coverageExercise():key==='blank'?blankWorkflow():key==='old-naledi'?oldNalediWorkflow():exampleWorkflow();
 const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='raster_input'&&!n.params.asset||n.type==='network_input'&&!n.params.data.nodes.length||n.type==='table_input'&&!n.params.data.rows.length);
 let credentials:CredentialAccess|null=null;
 let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
@@ -2146,7 +2147,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});
 const requestedExample=new URLSearchParams(location.search).get('example');
-if(requestedExample&&['old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent','sea-level','rulesets'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();let openedSaved=false;try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];openedSaved=!!saved;workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}
+if(requestedExample&&['hagelloch','old-naledi','heat','blank','coverage','raster','snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent','sea-level','rulesets'].includes(requestedExample)&&requestedExample!==exampleKey(workflow)){save();let openedSaved=false;try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];openedSaved=!!saved;workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}
   // ?example= is how a worked example is usually reached -- from a link, from the manual -- so
   // the notice has to live here as well as on the picker, or the practitioner who follows a
   // link to a republished example still sees the version they already had.

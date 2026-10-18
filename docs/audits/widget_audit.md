@@ -655,6 +655,18 @@ relying on care. `nearestNetworkNode` in `src/catchments.ts` is the single imple
 both call it. The parity tests between the chain and the monolith pass unchanged, which is what
 makes the factoring safe to claim.
 
+**Decided 2026-10-17: `isochrone` stays, and so does the chain.** The practitioner, on being
+shown that the four-step chain and the monolith take the same inputs, produce the same output
+type, and are held to agree by parity tests: *"let's leave it at that as that's where the tension
+lies between frictionless / efficiency and being technically efficient."*
+
+So this is a duplication kept on purpose, which is a different disposition from every other one
+in this audit. One widget answers the common question in one step; four widgets expose the three
+segments of a walk so a practitioner can see and dispute each. Retiring either would resolve the
+tension by removing one side of it, and the tension is the point. What makes it sound rather than
+untidy is the parity evidence: both sides are checked against each other, so neither can drift
+into being a second answer.
+
 That is D2's duplication resolved **in the code**. The widget question is separate and the
 blocker is sharper than this entry first recorded:
 

@@ -516,6 +516,22 @@ the number nothing records today — and it is also the evidence that a prespeci
 not quietly rewritten after the fact.
 
 
+**Revisit the Gaborone ABM notebooks for smaller worked examples.** Worked example 02 Old
+Naledi was derived from them, and the practitioner, 2026-10-17: *"That's a complex set of
+notebooks and has a lot of potential smaller examples."* 02 currently carries two pinned
+rulesets and a whole diagnostic-access chain in one canvas; the notebooks behind it are a
+source of narrower exercises that would each demonstrate one thing. Map them the way
+[`cholera-notebooks-to-primitives.md`](research/cholera-notebooks-to-primitives.md) maps the
+cholera studies — operation by operation, against the palette — before deciding which become
+examples.
+
+**Retire worked example 01 Heat outreach.** The practitioner, 2026-10-17: *"we can get rid of
+that example as we generate better ruleset examples. That one was for starters and has outlived
+its usefulness."* It is the oldest example and the one that gave `outreach-criteria` its only
+use outside the teaching example. Retiring it needs the workspace key, the example template, the
+tests that load `?example=heat`, and `apply_ruleset`'s evidence rung all checked — the widget
+loses an example use and may drop a rung.
+
 **Correct the geoBoundaries licence claim, in two places.** Experiment 47's table records
 geoBoundaries as *"CC BY 4.0 … attribution obligation only"*, and the glossary's **Out of
 scope** entry says *"geoBoundaries is used instead"*. Testing the service

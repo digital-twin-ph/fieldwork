@@ -81,3 +81,44 @@ test('every bundled ruleset can state its bindable roles',()=>{
     assert.ok(roles.every(x=>x.type),`${r.id} has a role with no type`);
   }
 });
+
+import {specFromPin} from '../build/rulesets.js';
+import {compileAuthoredRuleset} from '../build/authored-rules.js';
+
+// The proof that a pinned ruleset IS the authored form, once its roles are bound: the structured
+// rules a published ruleset ships are the same ones the generic path compiles, so re-expressing
+// the pin must give back rules that compile to the N3 the ruleset already ships.
+// validate-ruleset-sources.mjs proves that identity in the build; this proves the re-expression
+// does not disturb it.
+test('a pinned ruleset re-expressed as a spec keeps its own rules',()=>{
+  const spec=specFromPin(outreach,[
+    {predicate:'fw:distanceKm',attribute:'distanceKm'},
+    {predicate:'fw:heatAlert',attribute:'heatAlert'},
+    {predicate:'fw:distanceKnown',attribute:'distanceKm'},
+    {predicate:'fw:alertKnown',attribute:'heatAlert'}]);
+  assert.equal(spec.title,outreach.title);
+  assert.deepEqual(spec.rules,outreach.authored.rules,'the rules are the ruleset’s, untouched');
+  // And they still compile.
+  const compiled=compileAuthoredRuleset({subject:'?s',comment:spec.title,rules:spec.rules});
+  assert.ok(compiled.includes('=>'),'the re-expressed rules compile to N3');
+});
+
+test('a spec carries the ruleset’s own parameters, with their type',()=>{
+  const spec=specFromPin(outreach,[
+    {predicate:'fw:distanceKm',attribute:'d'},{predicate:'fw:heatAlert',attribute:'a'},
+    {predicate:'fw:distanceKnown',attribute:'d'},{predicate:'fw:alertKnown',attribute:'a'}]);
+  const threshold=spec.parameters.find(p=>p.name==='threshold');
+  assert.equal(threshold.type,'number');
+  assert.match(threshold.unit,/KM$/);
+  assert.equal(threshold.meaning,outreach.parameters[0].meaning,
+    'the meaning shown to a practitioner is the ruleset’s own');
+});
+
+test('a ruleset with no structured form cannot be re-expressed, and says so by returning null',()=>{
+  assert.equal(specFromPin({...outreach,authored:undefined},[]),null);
+});
+
+test('binding failures surface through the spec, not after it',()=>{
+  assert.throws(()=>specFromPin(outreach,[{predicate:'fw:distanceKm',attribute:'d'}]),
+    /needs \d+ roles? bound/);
+});

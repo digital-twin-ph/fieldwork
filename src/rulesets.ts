@@ -312,3 +312,34 @@ export function declaredFields(
     kind:role.type==='number'?'number':role.type==='boolean'?'boolean':'term',
     ...(role.unit?{unit:role.unit}:{})}));
 }
+
+/** A pinned ruleset, re-expressed as the authored form the generic path already runs on.
+ *
+ *  This is the whole of "rules as a spec". A published ruleset carries `authored` — the
+ *  structured rules it was compiled from, which `validate-ruleset-sources.mjs` already proves
+ *  recompile to the shipped N3 — and `inputContract.expects`, the roles. Give it the
+ *  practitioner's column bindings and it becomes indistinguishable from rules written at the
+ *  node, which is exactly what makes it shareable: the same artifact runs against anybody's data
+ *  because it names roles and not columns.
+ *
+ *  Returns null when the ruleset has no structured form. Those predate the compiler and cannot be
+ *  re-expressed without recompiling, which would mean the editor showing one rule while the
+ *  reasoner ran another.
+ *
+ *  The parameters carry their own `type` and `pattern` through. The authored path synthesised
+ *  `type: 'number'` for every one, which was true of every parameter that existed before
+ *  2026-10-17 and is not true of a spec that asks for a word. */
+export function specFromPin(
+  ruleset:Ruleset,bindings:readonly RoleBinding[],columns?:readonly string[],
+):{title:string; fields:ReturnType<typeof declaredFields>;
+   rules:NonNullable<Ruleset['authored']>['rules'];
+   parameters:{name:string;meaning:string;type?:string;pattern?:string;min?:number;max?:number;decimals?:number;unit?:string;unitLabel?:string}[]}|null{
+  if(!ruleset.authored)return null;
+  return {
+    title:ruleset.title,
+    fields:declaredFields(ruleset,bindings,columns),
+    rules:ruleset.authored.rules,
+    parameters:(ruleset.parameters??[]).map(p=>({name:p.name,meaning:p.meaning,type:p.type,
+      pattern:p.pattern,min:p.min,max:p.max,decimals:p.decimals,unit:p.unit,unitLabel:p.unitLabel})),
+  };
+}

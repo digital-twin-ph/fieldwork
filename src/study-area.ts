@@ -139,6 +139,21 @@ export function validateDrawnGeometry(raw:unknown):Polygon{
   if(area<1e-10||east===west||north===south)throw new Error('The selected area is too small or has zero area.');
   return structuredClone(raw) as unknown as Polygon;
 }
+/** A stable fingerprint of a boundary's coordinates, for telling "as published" from "edited".
+ *
+ *  FNV-1a over the serialized rings: deterministic, synchronous and identical in both engines,
+ *  which `crypto.subtle` is not (it is async, and a receipt is built in one pass). This detects
+ *  modification; it is not a security digest and nothing depends on it being hard to forge. */
+export function boundaryFingerprint(g:Boundary):string{
+  const text=JSON.stringify(g.coordinates);
+  let hash=0x811c9dc5;
+  for(let i=0;i<text.length;i++){
+    hash^=text.charCodeAt(i);
+    hash=Math.imul(hash,0x01000193)>>>0;
+  }
+  return hash.toString(16).padStart(8,'0');
+}
+
 export function validateAreaParams(p:AreaParams){
   if(p.source!=='drawn')return;
   if(!['bbox','polygon','circle'].includes(p.selectionMode))throw new Error('Choose a bounding box, a polygon or a circle.');
@@ -167,7 +182,7 @@ export function studyAreaN3(node:Pick<WorkflowNode<'study_area'>,'id'|'params'>)
   validateAreaParams(node.params);const p=node.params;
   if(p.source!=='drawn'||!p.geometry)throw new Error('Select a study area on the map before running.');
   const [west,south,east,north]=geometryBounds(p.geometry);
-  const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n';
+  const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n';
   // The STUDY AREA keeps one identifier across revisions -- it is the same investigation, and
   // the practitioner chose that over minting a new one each time. Its GEOMETRY is versioned, so
   // "did we revise our study area, and when" is answerable from the receipt alone: a current
@@ -186,7 +201,44 @@ export function studyAreaN3(node:Pick<WorkflowNode<'study_area'>,'id'|'params'>)
     // one it brings back. Both are true and PROV says both: wasRevisionOf is a sub-property of
     // wasDerivedFrom, so a reader walking either relation gets a complete answer.
     +(restoredFrom?`  prov:wasDerivedFrom ${geometryIri(restoredFrom)};\n`:'');
-  const facts=`${prefix}\n${subject} a geo:Feature, fw:StudyArea;\n  rdfs:label ${JSON.stringify(p.label)};\n  fw:selectionMode fw:${p.selectionMode==='bbox'?'BoundingBox':p.selectionMode==='circle'?'Circle':'Polygon'};\n  geo:hasGeometry ${geometry}.\n\n${geometry} a geo:Geometry;\n${history}  geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(p.geometry))}^^geo:wktLiteral;\n  fw:geometryValidated true;\n  fw:west ${west.toFixed(9)}; fw:south ${south.toFixed(9)};\n  fw:east ${east.toFixed(9)}; fw:north ${north.toFixed(9)}.\n`;
+  // WHOSE BOUNDARY THIS IS, and whether it is still theirs.
+  //
+  // A boundary carrying provenance is a claim to authenticity from the source, so the receipt has
+  // to name the authority -- a licence states the terms of reuse, not who drew the line, and for
+  // a contested frontier only the second answers anything. And because a practitioner may drag a
+  // vertex or replace the outline with a box, the receipt compares the geometry against the
+  // fingerprint taken when it was acquired and says which it is. Citing the source beneath a
+  // shape we altered would attribute our line to them; CC BY requires indicating changes, so
+  // this is a licence obligation as well as an honest one.
+  //
+  // dcterms and prov already say all of this. No new vocabulary is coined for it.
+  const acquired=p.boundary;
+  let provenance='';
+  if(acquired&&p.geometry){
+    const now=boundaryFingerprint(p.geometry);
+    const unchanged=now===acquired.publishedHash;
+    const vertices=p.geometry.coordinates.reduce((n,r)=>n+r.length-1,0);
+    const state=unchanged
+      ?`Admitted as published from ${acquired.source}; the geometry was not simplified, generalised or edited.`
+      :`MODIFIED IN THIS WORKFLOW -- this is no longer ${acquired.source}'s boundary. `
+        +(acquired.publishedHash==='bounding-box'
+          ?'It is a bounding box around the chosen units, which includes ground in none of them.'
+          :vertices===acquired.vertices
+            ?`It has the published ${vertices} vertices but one or more were moved.`
+            :`The source published ${acquired.vertices} vertices; this shape has ${vertices}.`)
+        +' The source is cited for what this was derived from, not as the author of this shape.';
+    provenance=`  dcterms:source ${JSON.stringify(acquired.source)};\n`
+      +`  dcterms:identifier ${JSON.stringify(acquired.boundaryID+' / '+acquired.unitID)};\n`
+      +`  dcterms:title ${JSON.stringify(acquired.unitName)};\n`
+      +`  dcterms:license ${JSON.stringify(acquired.licence)};\n`
+      +(acquired.canonical?`  dcterms:type ${JSON.stringify(acquired.canonical)};\n`:'')
+      +(acquired.yearRepresented?`  dcterms:date ${JSON.stringify(acquired.yearRepresented)};\n`:'')
+      +`  dcterms:provenance ${JSON.stringify(state)};\n`
+      +`  fw:geometryAsPublished ${unchanged};\n`
+      +(acquired.retrievedFrom?`  prov:wasDerivedFrom <${acquired.retrievedFrom}>;\n`:'')
+      +(acquired.retrievedAt?`  prov:generatedAtTime ${JSON.stringify(acquired.retrievedAt)}^^xsd:dateTime;\n`:'');
+  }
+  const facts=`${prefix}\n${subject} a geo:Feature, fw:StudyArea;\n  rdfs:label ${JSON.stringify(p.label)};\n  fw:selectionMode fw:${p.selectionMode==='bbox'?'BoundingBox':p.selectionMode==='circle'?'Circle':'Polygon'};\n  geo:hasGeometry ${geometry}.\n\n${geometry} a geo:Geometry;\n${provenance}${history}  geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(p.geometry))}^^geo:wktLiteral;\n  fw:geometryValidated true;\n  fw:west ${west.toFixed(9)}; fw:south ${south.toFixed(9)};\n  fw:east ${east.toFixed(9)}; fw:north ${north.toFixed(9)}.\n`;
   const rules=`# Geometry checks run in the drawing widget. This rule consumes their explicit result.\n{ ?area a fw:StudyArea; geo:hasGeometry ?shape.\n  ?shape geo:asWKT ?wkt; fw:geometryValidated true.\n} => { ?area fw:readyForSpatialAnalysis true. }.\n`;
   return {facts,rules:prefix+rules,input:facts+'\n'+rules};
 }

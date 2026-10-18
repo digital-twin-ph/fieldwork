@@ -39,6 +39,45 @@ export interface PointParams {label:string; data:PointCollection; spatialReferen
 export interface ColumnRepair {column:string; to:'number'|'boolean'|'term'; cast:number; unreadable:string[]; at:string}
 export interface ObservationParams extends PointParams {fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'; repairs?:ColumnRepair[]}
 /** One committed extent of a study area: the shape, how it was drawn, and when it was kept. */
+/** Where an acquired boundary came from, carried so the receipt can say whose line it is.
+ *
+ *  The practitioner, 2026-10-18: *"The fact that a polygon when we add the provenance is a claim
+ *  to authenticity straight from the source we should not even attempt to simplify it."* The
+ *  claim runs both ways. Admitting a boundary unmodified is only half of it; a receipt that
+ *  cannot name the authority behind the line makes an unattributable claim. geoBoundaries gives
+ *  the licence AND `boundarySource` -- the licence states the terms of reuse, the source states
+ *  who drew it, and for a contested frontier only the second one answers anything.
+ */
+export interface BoundaryProvenance {
+  /** The level's content-keyed identifier, e.g. COD-ADM2-63176286. */
+  boundaryID:string;
+  /** The unit's own identifier and name within that level. */
+  unitID:string;
+  unitName:string;
+  /** The authority that drew it, e.g. "Referenciel Geographique Commun, OCHA DR Congo". */
+  source:string;
+  licence:string;
+  licenceSource:string;
+  /** The year the boundary represents, which is not the year it was published. */
+  yearRepresented:string;
+  /** What kind of unit the level holds, e.g. "territory, city". */
+  canonical:string;
+  /** The file the geometry was read from, and when. */
+  retrievedFrom:string;
+  retrievedAt:string;
+  /** Vertices as published. A receipt can be checked against this. */
+  vertices:number;
+  /** A fingerprint of the geometry AS PUBLISHED.
+   *
+   *  The practitioner, 2026-10-18: *"When the user chooses to modify a bounding box from a known
+   *  source like geoBoundaries, that modification should show up in the N3 receipts."* Dragging a
+   *  vertex, or replacing the outline with a box, makes the shape no longer the source's -- and a
+   *  receipt still citing that source would be attributing our line to them. CC BY requires
+   *  indicating that changes were made, so this is a licence obligation as much as an honesty
+   *  one. Comparing the current geometry against this is how the receipt knows which it is. */
+  publishedHash:string;
+}
+
 export interface AreaRevision {at:string; geometry:Polygon; selectionMode:'bbox'|'polygon'|'circle'; restoredFrom?:number}
 
 /** `revisions` is every extent this area has had, oldest first, the last being the current one.
@@ -60,7 +99,7 @@ export interface AreaRevision {at:string; geometry:Polygon; selectionMode:'bbox'
  *  record says "on this date we went back to the extent of that date" rather than quietly
  *  shortening the chain. An investigation that narrowed its area and then widened it again is
  *  exactly the emergent-strategy case this project means to keep. */
-export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Polygon|null; spatialReference?:SpatialReference} & {revisions?:AreaRevision[]} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference};
+export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Polygon|null; spatialReference?:SpatialReference} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference};
 export interface Exclusion {sourceNodeId:string; featureId:string; signature:string; reason:string}
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';
 export interface Measurement {squareMetres:number; value:number; unit:AreaUnit; method:string}

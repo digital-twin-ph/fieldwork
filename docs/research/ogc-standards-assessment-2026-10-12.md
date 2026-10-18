@@ -1,6 +1,6 @@
 # OGC and ISO geometry standards, assessed against what Fieldwork already does
 
-_Created 2026-10-12 · Updated 2026-10-12_
+_Created 2026-10-12 · Updated 2026-10-18_
 
 A set of recommendations was brought in from an external assistant, pitched at **Epi Info AI**,
 which the practitioner says is close in structure to this project: adopt OGC Simple Feature

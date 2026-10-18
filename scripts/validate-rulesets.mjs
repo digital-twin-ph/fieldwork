@@ -76,7 +76,22 @@ for(const {path,doc} of sets){
   // The check that would have caught the two facility names, had they been in the rules.
   if(/urn:fieldwork:(place|facility|site):/.test(doc.rules??''))
     problems.push(`${at}: the rules name a dataset instance. A ruleset classifies; it does not enumerate.`);
+  for(const declaration of doc.requiredDeclarations??[]){
+    // A declaration is NOT a parameter: the rules never read it, so it must not carry a
+    // placeholder and must not appear in the rule text. Mixing the two would let a provenance
+    // field silently change what the reasoner computes.
+    if(declaration.placeholder||(doc.rules??'').includes(`{{${declaration.name}}}`))
+      problems.push(`${at}: required declaration ${declaration.name} reaches the rules. A declaration documents the data; a parameter tunes the rules; a field that does both is neither.`);
+    if(!['doi','text','version'].includes(declaration.kind))
+      problems.push(`${at}: required declaration ${declaration.name} must state a kind of doi, text or version.`);
+    if(!['licence','interpretation'].includes(declaration.obligation))
+      problems.push(`${at}: required declaration ${declaration.name} must say WHY it is obligatory — licence or interpretation. "The licence requires it" and "a reader will want it" are different claims.`);
+    if(!String(declaration.meaning??'').trim())
+      problems.push(`${at}: required declaration ${declaration.name} states no meaning, so a practitioner is asked for something without being told what it is.`);
+  }
   for(const parameter of doc.parameters??[]){
+    if(parameter.type==='text'&&(parameter.unit||parameter.min!==undefined||parameter.max!==undefined||parameter.decimals!==undefined))
+      problems.push(`${at}: parameter ${parameter.name} is text and declares a numeric constraint.`);
     if(!parameter.unit&&parameter.type==='number')
       problems.push(`${at}: parameter ${parameter.name} is numeric and declares no unit. A threshold without its unit is not a threshold.`);
     if(!(doc.rules??'').includes(parameter.placeholder))

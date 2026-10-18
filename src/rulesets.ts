@@ -32,6 +32,9 @@ import extentReview2 from '../rulesets/extent-review/1.1.0.json' with {type:'jso
 export interface RulesetParameter {
   name:string; role:string; type:string; unit?:string; min?:number; max?:number;
   default?:number; decimals?:number; placeholder:string; meaning:string;
+  /** Text parameters only: the shape a stated value must have. A pattern checks FORM, never
+   *  truth -- it catches "TODO" and not a plausible wrong answer. */
+  pattern?:string;
   /** How the unit reads on screen. The IRI is the identity; this is the label beside the input,
    *  declared rather than derived because deriving 'km' from a QUDT IRI is a guess. */
   unitLabel?:string;
@@ -51,8 +54,37 @@ export interface RulesetChange {
   /** What this version stops supporting, for a reader who relied on it. */
   deprecates?:string;
 }
+/** Something the practitioner must STATE about the data, which the rules never read.
+ *
+ *  Not a parameter. A parameter tunes the rules and its placeholder must appear in them --
+ *  `validate-rulesets.mjs` refuses one that does not -- whereas a citation documents where the
+ *  numbers came from and changes no computed value. `sea-level.ts` draws exactly this line on one
+ *  question: *does the field say where the data came from, or how to interpret the numbers?*
+ *  Parameters are the second kind. These are the first.
+ *
+ *  Missing ones become `DeclarationGap`s, reported on the widget and never fatal. That is the
+ *  practitioner's decision of 2026-10-15 -- *"Provenance is something we can check if uploaded or
+ *  not and can be flagged as an alert, not a blocker"* -- and no provenance field changes a single
+ *  computed number, so refusing to compute would be a punishment for an unfilled form.
+ *
+ *  `obligation` records WHY it is asked for, because "the licence requires it" and "a reader will
+ *  want it" are different claims and a practitioner deciding what to fill in first needs to tell
+ *  them apart. `expectType` is the CSL type a resolved DOI should return: the three AR6 citations
+ *  resolve as `book-chapter`, `journal-article` and `dataset`, which a pattern could not have
+ *  distinguished (see docs/research/doi-resolution-probe-2026-10-17.md). */
+export interface RequiredDeclaration {
+  name:string;
+  label:string;
+  kind:'doi'|'text'|'version';
+  meaning:string;
+  obligation:'licence'|'interpretation';
+  expectType?:string;
+}
+
 export interface Ruleset {
   schema:string; id:string; version:string; title:string; released:string;
+  /** What the practitioner must state about the data. The rules never read these. */
+  requiredDeclarations?:RequiredDeclaration[];
   /** Declared by this version about itself. Absent on a first version, which changed nothing. */
   changes?:RulesetChange[];
   description:string; mustNotBeReadAs:string; rules:string;
@@ -174,12 +206,31 @@ export function resolveRuleset(id:string,version:string):Ruleset{
  *
  *  Decimals are fixed per parameter rather than chosen here, because the shipped rules were
  *  assembled with `toFixed(9)` and the byte-identity test depends on reproducing exactly that. */
-export function bindParameters(ruleset:Ruleset,values:Record<string,number>):string{
+export function bindParameters(ruleset:Ruleset,values:Record<string,number|string>):string{
   let rules=ruleset.rules;
   for(const parameter of ruleset.parameters){
     const value=values[parameter.name];
     if(value===undefined)
       throw new Error(`${ruleset.title} needs a value for ${parameter.name}: ${parameter.meaning}`);
+    // TEXT parameters. A rule can compare a field against a word the practitioner states -- which
+    // family value in this file means "includes vertical land motion" -- and not only against a
+    // number. Added 2026-10-17; every parameter shipped before it was numeric, which is why a
+    // ruleset could ask for a threshold and not for a name.
+    //
+    // Bound as an N3 string literal, with JSON.stringify doing the escaping, so a value carrying
+    // a quote cannot close the literal early and change what the rule says.
+    if(parameter.type==='text'){
+      const stated=typeof value==='string'?value.trim():'';
+      if(!stated)throw new Error(`${ruleset.title} needs a value for ${parameter.name}: ${parameter.meaning}`);
+      if(parameter.pattern&&!new RegExp(parameter.pattern).test(stated))
+        throw new Error(`${parameter.name} does not look like ${parameter.meaning} An entry of the wrong shape would reach the reasoner and match nothing.`);
+      if(!rules.includes(parameter.placeholder))
+        throw new Error(`${ruleset.title} declares the parameter ${parameter.name} and its rules never use it.`);
+      rules=rules.replaceAll(parameter.placeholder,JSON.stringify(stated));
+      continue;
+    }
+    if(typeof value!=='number')
+      throw new Error(`${parameter.name} is a number and was given ${JSON.stringify(value)}.`);
     if(!Number.isFinite(value)||(parameter.min!==undefined&&value<parameter.min)||(parameter.max!==undefined&&value>parameter.max))
       throw new Error(`${parameter.name} must be between ${parameter.min} and ${parameter.max}.`);
     if(!rules.includes(parameter.placeholder))
@@ -189,4 +240,20 @@ export function bindParameters(ruleset:Ruleset,values:Record<string,number>):str
   const unbound=rules.match(/\{\{[a-zA-Z]+\}\}/);
   if(unbound)throw new Error(`${ruleset.title} left ${unbound[0]} unbound, so its rules would match nothing.`);
   return rules;
+}
+
+/** Which required declarations are unstated, as gaps a reader can act on.
+ *
+ *  Reported, never fatal. The text names the obligation rather than scolding: a licence
+ *  obligation is a fact about the data's terms, not a preference of this application. */
+export function declarationGaps(
+  ruleset:Pick<Ruleset,'requiredDeclarations'>,stated:Record<string,string>|undefined,
+):{field:string; says:string}[]{
+  const text=(v:unknown)=>typeof v==='string'?v.trim():'';
+  return (ruleset.requiredDeclarations??[]).filter(d=>!text(stated?.[d.name])).map(d=>({
+    field:d.label,
+    says:d.obligation==='licence'
+      ? `${d.meaning} The licence this data is published under makes it obligatory, so this is a term of use and not a preference.`
+      : `${d.meaning} Without it a reader cannot tell what these numbers mean.`,
+  }));
 }

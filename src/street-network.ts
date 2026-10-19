@@ -18,17 +18,21 @@ import {pacedNetworkDownload,deferNetworkDownload,chargeNetworkDownload} from '.
  *  WHICH instance served a network is part of where the data came from, and the receipt said
  *  overpass-api.de whatever had actually answered until this was built. */
 export interface OverpassEndpoint {url:string; operator:string;
-  /** Set when the instance holds one region's data and answers for the whole world anyway. */
+  /** Set when the instance holds one region's data and answers for the whole world anyway. No
+   *  shipped instance is regional since 2026-10-19; the empty-answer handling below is general and
+   *  names the region when one says it has one. */
   regional?:string}
 export const OVERPASS_ENDPOINTS:readonly OverpassEndpoint[]=[
   {url:'https://overpass-api.de/api/interpreter',operator:'FOSSGIS'},
   {url:'https://overpass.kumi.systems/api/interpreter',operator:'Private.coffee'},
   {url:'https://overpass.private.coffee/api/interpreter',operator:'Private.coffee'},
-  // Regional. Measured 2026-10-15: it answers 200 with valid, EMPTY JSON for a bbox in
-  // Botswana, which is the most dangerous shape of failure here -- a mirror that says yes and
-  // means "not my region". Last in the list, and an empty result from it is reported as a
-  // coverage problem rather than as a study area with no streets in it.
-  {url:'https://overpass.osm.ch/api/interpreter',operator:'Swiss OpenStreetMap Association',regional:'Switzerland'},
+  // The Swiss OpenStreetMap Association's instance was here as a fourth fallback and was removed
+  // on 2026-10-19. Measured that day by asking it for a way count in five places: Zurich 1,335 and
+  // Geneva 831, against ZERO for Soho in London, Milan and Kampala -- a national extract with a
+  // hard edge, about 50 km from the frontier. It could answer for none of this project's study
+  // areas, and being asked anyway cost a request on a donated service and produced a message that
+  // blamed it for an outage belonging to the other three. The practitioner, on seeing the
+  // measurement: *"Let's remove it then from the API endpoint list."*
 ];
 /** The cheapest question an Overpass instance can be asked: one node, by id, identifiers only.
  *
@@ -99,7 +103,31 @@ export function osmQuery(boundary:Boundary,marginM:number,maxNodes?:number){
   if(!Number.isFinite(marginM)||marginM<0||marginM>2000)throw new Error('Download margin must be 0–2,000 metres.');
   const b=geometryBounds(boundary),dy=marginM/111195,dx=dy/Math.cos((b[1]+b[3])/2*Math.PI/180);
   const bounds=[b[0]-dx,b[1]-dy,b[2]+dx,b[3]+dy];
-  if(bounds.some(v=>!Number.isFinite(v))||bounds[0]<-180||bounds[2]>180||Math.abs(bounds[1])>80||Math.abs(bounds[3])>80||(bounds[2]-bounds[0])*111195*Math.cos((b[1]+b[3])/2*Math.PI/180)>6000||(bounds[3]-bounds[1])*111195>6000)throw new Error('Use a local study area with download bounds at most 6 km across.');
+  // **No span cap.** A fixed 6 km envelope stood here and refused a study area for its EXTENT,
+  // before anything about the download had been measured. It was the last of the four numbers the
+  // 2026-10-13 measurement set out to reconcile: `maxBytes` and `maxFeatures` were derived from the
+  // graph knob that day and this one was left behind, underived and unread by it, so raising the
+  // knob could not raise the envelope.
+  //
+  // It contradicted the principle written beside those caps -- *"a sparse area yields fewer
+  // junctions per byte and must not be refused for it"* -- because extent is a proxy for size and a
+  // poor one: the same box is a dense city or an empty lake. The practitioner reported it on
+  // 2026-10-19 trying to download Buvuma Island, whose bounding box is mostly Lake Victoria and
+  // whose roads are sparse: *"It just so happens that that kind of cap will stop practical work
+  // being done."*
+  //
+  // What remains is what the module already argued was right when it removed `maxsize` for the same
+  // reason: the service's own timeout is the service's budget, and the streaming byte cap below is
+  // a real limit on a real quantity. A large area is now attempted and refused on what it actually
+  // costs -- bytes, features, or the service's own partial answer -- rather than on its width.
+  //
+  // The coordinate checks stay. They catch a boundary that is not on Earth, which is a different
+  // thing from one that is large.
+  const span=(bounds[2]-bounds[0])*111195*Math.cos((b[1]+b[3])/2*Math.PI/180),height=(bounds[3]-bounds[1])*111195;
+  if(bounds.some(v=>!Number.isFinite(v))||bounds[0]<-180||bounds[2]>180||Math.abs(bounds[1])>80||Math.abs(bounds[3])>80)
+    throw new Error('The study area\'s bounds are not usable coordinates, so no request was made. '
+      +'Longitude must be within 180 degrees and latitude within 80, which is where this walking filter has been measured.');
+  if(!(span>0)||!(height>0))throw new Error('The study area has no width or no height, so there is nothing to download.');
   const [w,s,e,n]=bounds;
   // Complete ways and referenced nodes preserve edge topology at the envelope. `>;` recurses to
   // every node of the selected ways, so topology survives at the boundary.
@@ -173,7 +201,10 @@ export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pa
   return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes,pauseMs));
 }
 /** Request/normalization boundary exposed for fixture tests; UI must use paced downloadOSM. */
-export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number):Promise<Network>{
+/** `exclude` carries the instances this request has already learned cannot serve this area, so a
+ *  regional mirror that answers with nothing hands the attempt on to the next instance instead of
+ *  ending it. Internal: callers pass nothing. */
+export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number,exclude:ReadonlySet<string>=new Set()):Promise<Network>{
   const request=osmQuery(boundary,marginM,maxNodes);
   // One budget per attempt, and one for the whole thing. See ATTEMPT_MS.
   const startedAt=Date.now();
@@ -202,13 +233,23 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     const SERVER_ERRORS=[500,502,503,504];
     // The heartbeat. One short wait asked of every instance at once, so a download is not spent
     // discovering that the first three are down -- which on 2026-10-15 they were.
-    const live=await liveEndpoints(fetcher);
+    // Regional instances last: one answers for the whole world and holds part of it, so it is a
+    // fallback and never a first choice, whatever the probe says about its health.
+    const live=(await liveEndpoints(fetcher))
+      .filter(endpoint=>!exclude.has(endpoint.url))
+      .sort((a,b)=>(a.regional?1:0)-(b.regional?1:0));
     if(!live.length){
       deferNetworkDownload(null);
+      // NOT "retry". Every instance has just been asked a one-line question and none replied, so a
+      // retry now repeats a measurement taken a second ago. The practitioner, 2026-10-19: *"if API
+      // is down, why should the user retry, instead advise the user to wait till the API comes back
+      // on."* What a practitioner can act on is the saved file; what they cannot act on is the
+      // health of four public services.
       throw new Error(`No Overpass instance is answering. All ${OVERPASS_ENDPOINTS.length} were asked a `
-        +`one-line question first and none replied, so nothing was downloaded and nothing was changed. `
-        +`These are free public services and they do go down together; wait and retry, or upload a `
-        +`saved network file.`);
+        +`one-line question just now and none replied, so nothing was downloaded and nothing was `
+        +`changed. Downloading again will not help while that is true \u2014 these are free public `
+        +`services and they do go down together. Come back when one is up, or upload a saved network `
+        +`file, which needs no service at all.`);
     }
     let reached:OverpassEndpoint|undefined,lastStatus=0,unreachable=0;
     outer: for(let round=1;round<=2;round++){
@@ -234,9 +275,12 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     if(!reached){
       preferred=undefined;
       deferNetworkDownload(null);
-      throw new Error(`No Overpass instance answered. ${live.length} were answering a moment ago and were tried twice each`
+      throw new Error(`No Overpass instance answered. ${live.length} ${live.length===1?'was':'were'} answering a moment ago and `
+        +`${live.length===1?'was':'were'} tried twice`
         +`${lastStatus?`, the last reporting HTTP ${lastStatus}`:''}${unreachable?`, ${unreachable} unreachable or not serving the API`:''}. `
-        +`These are free public services and they do go down together; wait and retry, or upload a saved network file.`);
+        +`Nothing was downloaded and nothing was changed. An instance that fails a download twice in a `
+        +`row is not about to succeed on a third, so wait for one to come back rather than downloading `
+        +`again \u2014 or upload a saved network file, which needs no service at all.`);
     }
     // Reaching here means one instance answered with a usable body; failures are handled above.
     const {maxBytes}=downloadLimits(maxNodes),asMB=(n:number)=>(n/1e6).toFixed(1);
@@ -260,17 +304,36 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     // Charged once the size is known: a larger request earns a longer pause.
     chargeNetworkDownload(bytes,pauseMs);
     const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const raw=JSON.parse(new TextDecoder().decode(joined));
-    // A regional instance answers for the whole world and has data for part of it. Measured
-    // 2026-10-15: overpass.osm.ch returns 200 with an empty `elements` array for a bbox in
-    // Botswana, which `validateNetwork` would then refuse as an invalid network -- true, and
-    // about the wrong thing. An empty result from a regional mirror is a coverage problem, and
-    // saying so is the difference between a practitioner retrying and a practitioner concluding
-    // their study area has no streets in it.
-    if(reached.regional&&!(raw.elements??[]).length)
-      throw new Error(`${reached.operator}'s Overpass instance answered, and it holds `
-        +`${reached.regional} only — it reported no streets for this area, which is a limit of that `
-        +`instance rather than a fact about your study area. It was asked because the others were `
-        +`not answering. Retry in a few minutes, or upload a saved network file.`);
+    // An instance that answers 200 with an empty `elements` array has told you something, and
+    // `validateNetwork` would reject it as "a street network needs at least one junction" -- true,
+    // and about the wrong thing. It is either an instance that does not hold data for this area or
+    // a study area with no walkable streets in it, and those need different answers from a
+    // practitioner.
+    //
+    // Measured twice: overpass.osm.ch returned empty for a bbox in Botswana on 2026-10-15 and for
+    // Buvuma Island on 2026-10-19, which is what got it removed from the list. The handling stays
+    // and is now general, because the next mirror to do this will not be labelled in advance.
+    //
+    // The attempt does not end here. It ended until 2026-10-19, and the empty answer also set
+    // `preferred` -- assigned the moment an instance returns usable JSON, before anything reads
+    // what is in it -- so that instance became first choice for the rest of the session and every
+    // retry met the same well-formed nothing. The practitioner, redownloading and seeing no
+    // change: *"the hard reload should not be a requirement for shifting API endpoint for street
+    // network. If Swiss API fails, it should retry the others."*
+    if(!(raw.elements??[]).length){
+      if(preferred===reached.url)preferred=undefined;
+      const remaining=new Set([...exclude,reached.url]);
+      if(live.some(endpoint=>!remaining.has(endpoint.url)))
+        return requestOSM(boundary,marginM,fetcher,maxNodes,pauseMs,remaining);
+      throw new Error(`${reached.operator}'s Overpass instance answered and reported no walkable `
+        +`streets for this area`+(reached.regional?`, and it holds ${reached.regional} only`:'')
+        +`. Nothing was changed. Either it does not hold data for this part of the world, or the `
+        +`area genuinely has no streets this walking filter accepts \u2014 a lake, a reserve, or a `
+        +`boundary drawn over open ground. `
+        +(live.length>1?`The other instances that were answering reported the same.`
+          :`It was the only one answering, so there is nothing else to ask until another recovers.`)
+        +` Check the study area on the map, or upload a saved network file.`);
+    }
     const network=networkFromOSM(raw,maxNodes);
     network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',
       attribution:`© OpenStreetMap contributors, via ${reached.operator}`,url:reached.url,retrievedAt:new Date().toISOString(),query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;

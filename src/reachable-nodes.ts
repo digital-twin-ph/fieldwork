@@ -126,6 +126,55 @@ export function costsWithin(
   return new Map([...costs].filter(([,c])=>c<=budgetM));
 }
 
+/** Cheapest cost from one origin to the nearest of several targets, by the same settled-set
+ *  Dijkstra, stopping as soon as a target settles.
+ *
+ *  `costsWithin` answers reachability -- everything within a budget -- which is what `isochrone`
+ *  and `reachable_nodes` need and is the wrong shape for "how far from here to there". Experiment
+ *  74 recorded that gap in the palette; this is the kernel half of it, and experiment 123 records
+ *  why the answer has three legs rather than one.
+ *
+ *  Terminating on the target rather than the budget is what makes it cheap: the search settles
+ *  nodes in cost order, so the first target to settle is the nearest one and nothing past it is
+ *  explored. `spentM` is the first leg -- the walk from the origin to where it joins the network --
+ *  carried exactly as `costsWithin` carries it, and `arrivalM` per target is the last leg. Both are
+ *  added to the network cost, because a distance that ignores them understates every absolute
+ *  claim: measured over the 1854 Soho data the two off-network legs are 21.0% of the straight-line
+ *  distance to the Broad Street pump.
+ *
+ *  `budgetM` still applies, so a target further than the budget is not reached rather than being
+ *  reported at a cost nobody asked for. Returns `null` when no target is reachable, which the
+ *  caller must say rather than render as a large number. */
+export function nearestTargetCost(
+  adjacency:Map<string,{to:string;lengthM:number}[]>, originId:string,
+  targets:ReadonlyMap<string,number>, budgetM=Infinity, spentM=0,
+):{nodeId:string;networkM:number;arrivalM:number;totalM:number}|null{
+  if(!targets.size)return null;
+  const costs=new Map<string,number>([[originId,spentM]]),settled=new Set<string>();
+  // The best complete answer found so far. A target that settles is cheapest BY NETWORK cost, and
+  // its arrival leg can still make another target's total smaller -- so the search continues until
+  // every unsettled node already costs more by network than the best total, and only then is the
+  // answer final. Settling the first target and returning it was this function's first bug.
+  let best:{nodeId:string;networkM:number;arrivalM:number;totalM:number}|null=null;
+  for(;;){
+    let current:string|undefined,lowest=Infinity;
+    for(const [id,c] of costs)if(!settled.has(id)&&c<lowest){current=id;lowest=c;}
+    if(!current||lowest>budgetM)break;
+    if(best&&lowest>=best.totalM)break;
+    settled.add(current);
+    const arrival=targets.get(current);
+    if(arrival!==undefined){
+      const totalM=lowest+arrival;
+      if(totalM<=budgetM&&(!best||totalM<best.totalM))best={nodeId:current,networkM:lowest,arrivalM:arrival,totalM};
+    }
+    for(const e of adjacency.get(current)||[]){
+      const cost=lowest+e.lengthM;
+      if(cost<(costs.get(e.to)??Infinity))costs.set(e.to,cost);
+    }
+  }
+  return best;
+}
+
 export function reachableNodes(
   input:PointCollection, network:Network, node:WorkflowNode<'reachable_nodes'>,
   runId:string, sourceNodeId:string,

@@ -7,7 +7,7 @@ import {calculateArea} from '../build/area-computation.js';
 const area=g=>calculateArea(g,'m2').value;
 import {executeWorkflow,validateWorkflow} from '../build/core.js';
 import {syncProjectManifest} from '../build/project-manifest.js';
-import {osmQuery,networkFromOSM,requestOSM} from '../build/street-network.js';
+import {osmQuery,networkFromOSM,requestOSM,preferredEndpoint,OVERPASS_ENDPOINTS} from '../build/street-network.js';
 import {bufferedBoundary,bufferArea,dimensionedBox} from '../build/area-buffer.js';
 import {geometryBounds} from '../build/study-area.js';
 const m=metric(30,'north'),origin=m.forward([-.136,51.513]),coord=(x,y)=>m.inverse([origin[0]+x,origin[1]+y]);
@@ -146,9 +146,17 @@ test('OSM walking graph respects explicit foot direction and restrictions, retai
   assert.throws(()=>networkFromOSM({...raw,remark:'runtime error'}),/partial answer/);
   assert.throws(()=>networkFromOSM({elements:[{type:'way',nodes:[1,2],tags:{highway:'path'}}]}),/missing nodes/);
 });
-test('OSM query scopes acquisition with margin and rejects oversized bounds',()=>{
+test('OSM query scopes acquisition with margin, and refuses only what is not on Earth',()=>{
   const q=osmQuery(boundary,250);assert.match(q.query,/\[timeout:25\]/);assert.ok(q.bounds[0]<boundary.coordinates[0][0][0]);assert.throws(()=>osmQuery(boundary,2001),/margin/);
-  assert.throws(()=>osmQuery({type:'Polygon',coordinates:[[[0,0],[1,0],[1,1],[0,1],[0,0]]]},0),/6 km/);
+  // A fixed 6 km envelope refused this 111 km box here until 2026-10-19. It refused by EXTENT,
+  // before anything about the download was measured, and the practitioner hit it on Buvuma Island
+  // -- a bounding box that is mostly Lake Victoria and a road network that is sparse. What a
+  // download costs is now judged by bytes and features, which are real quantities.
+  assert.doesNotThrow(()=>osmQuery({type:'Polygon',coordinates:[[[0,0],[1,0],[1,1],[0,1],[0,0]]]},0),
+    'a large sparse area is attempted and judged on what it costs, not refused for its width');
+  // What is still refused is a boundary that is not on Earth, or has no extent at all.
+  assert.throws(()=>osmQuery({type:'Polygon',coordinates:[[[0,85],[1,85],[1,86],[0,86],[0,85]]]},0),/not usable coordinates/);
+  assert.throws(()=>osmQuery({type:'Polygon',coordinates:[[[0,0],[0,0],[0,0],[0,0]]]},0),/no width or no height/);
 });
 test('OSM download retains request provenance and fails on HTTP or byte limits',async()=>{
   // Every instance is asked a one-line question first -- the heartbeat the practitioner asked
@@ -182,7 +190,7 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
     if(isProbe(init))return probeOk();
     kept++;return new Response('',{status:503});}),/No Overpass instance answered/);
-  assert.equal(kept,8,'four instances, two rounds, then it stops');
+  assert.equal(kept,OVERPASS_ENDPOINTS.length*2,`${OVERPASS_ENDPOINTS.length} instances, two rounds, then it stops`);
 
   // And when nothing answers the heartbeat, the download is not attempted at all: the
   // practitioner is told before waiting rather than after four timeouts.
@@ -191,7 +199,7 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
     if(isProbe(init)){probed++;return new Response('',{status:502});}
     throw new Error('the download must not be attempted when nothing is answering');}),
     /No Overpass instance is answering/);
-  assert.equal(probed,4,'every instance is asked, once, at the same time');
+  assert.equal(probed,OVERPASS_ENDPOINTS.length,'every instance is asked, once, at the same time');
 
   // A 200 carrying HTML is an error page, not a network. overpass.osm.ch returned exactly that.
   // It moves to the next instance rather than being parsed.
@@ -202,18 +210,34 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   const past=await requestOSM(boundary,250,htmlThenReal);
   assert.equal(past.edges.length,3,'an HTML page is skipped and the next instance answers');
 
-  // A regional instance that answers 200 with an empty result is a coverage problem, not a study
-  // area without streets. overpass.osm.ch does exactly this for a bbox outside Switzerland, and
-  // it is reached only when the global instances are down -- so the practitioner meets it at the
-  // worst moment and must not be told their city has no roads.
+  // An instance answering 200 with an empty result must not be reported as "a street network needs
+  // at least one junction", which is what validateNetwork would say and is about the wrong thing.
+  // overpass.osm.ch did this for Botswana on 2026-10-15 and for Buvuma Island on 2026-10-19, which
+  // is what got it removed from the list; the handling is general because the next mirror to do it
+  // will not be labelled in advance.
   const empty=JSON.stringify({version:0.6,generator:'Overpass API',osm3s:{timestamp_osm_base:'1'},elements:[]});
-  // Only the Swiss instance answers, which is the situation that puts it in play: the global
-  // ones are down and it is last in the list.
-  const swissOnly=async(url,init)=>url.includes('osm.ch')
-    ?new Response(isProbe(init)?JSON.stringify({elements:[{id:1}]}):empty,{status:200,headers:{'content-type':'application/json'}})
-    :new Response('',{status:503});
-  await assert.rejects(requestOSM(boundary,250,swissOnly),
-    /holds Switzerland only .* limit of that instance rather than a fact about your study area/s);
+  const allEmpty=async(url,init)=>new Response(isProbe(init)?JSON.stringify({elements:[{id:1}]}):empty,
+    {status:200,headers:{'content-type':'application/json'}});
+  await assert.rejects(requestOSM(boundary,250,allEmpty),
+    /reported no walkable streets for this area[\s\S]*no streets this walking filter accepts/);
+
+  // It is not the end of the attempt: the request moves on to the next instance within the same
+  // download. The practitioner, 2026-10-19: "If Swiss API fails, it should retry the others."
+  let emptyAsked=0;
+  const firstEmptyThenReal=async(url,init)=>{
+    if(isProbe(init))return probeOk();
+    emptyAsked++;
+    return emptyAsked===1
+      ?new Response(empty,{status:200,headers:{'content-type':'application/json'}})
+      :fetcher(url,init);
+  };
+  const failedOver=await requestOSM(boundary,250,firstEmptyThenReal);
+  assert.equal(failedOver.edges.length,3,'the attempt continues past an instance with nothing for this area');
+
+  // And that instance does not become the one tried first next time. `preferred` is set the moment
+  // an instance returns usable JSON, before anything reads what is in it, so an empty answer made
+  // it first choice for the whole session and every retry met the same nothing.
+  assert.ok(failedOver.provenance.url.includes('overpass'),'the instance that had the data is recorded');
 
   // The instance that answered is recorded, because WHICH one served a network is part of where
   // the data came from. The receipt named the reference instance whatever had answered, until

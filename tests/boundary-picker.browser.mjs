@@ -162,7 +162,8 @@ test('an ambiguous entry refuses rather than guessing',async({page})=>{
   await expect(page.locator('#area-boundary-status')).toContainText('No single country matches');
 });
 
-test('several units are a bounding box, and the dialog says so instead of letting it pass',async({page})=>{
+test('several units are several parts, each as published, and never a bounding box',async({page})=>{
+  const errors=collectPageErrors(page);
   await stub(page,{units:3});
   await openArea(page);
   await page.locator('#area-iso').fill('Democratic Republic of the Congo');
@@ -170,8 +171,34 @@ test('several units are a bounding box, and the dialog says so instead of lettin
   await expect(page.locator('#area-boundary-units')).toBeVisible({timeout:20000});
   await page.locator('#area-boundary-pick').selectOption(['0','1']);
   await page.locator('#area-boundary-use').click();
-  // Honest rather than quiet: a box around two districts covers ground in neither.
-  await expect(page.locator('#area-boundary-terms'))
-    .toContainText('A BOUNDING BOX AROUND 2 UNITS, not their outlines');
-  await expect(page.locator('#area-boundary-terms')).toContainText('Choose one unit for its own boundary');
+
+  // They used to collapse to "A BOUNDING BOX AROUND 2 UNITS, not their outlines" -- honest, but a
+  // shape belonging to neither, and only ever because a study area could hold one polygon.
+  await expect(page.locator('#area-boundary-terms')).toContainText('2 outlines as published');
+  await expect(page.locator('#area-boundary-terms')).not.toContainText('BOUNDING BOX');
+
+  const map=page.locator('#area-map');
+  await expect(map).toHaveAttribute('data-drawn-parts','2');
+  // Fitted to both, each is large enough to draw as itself.
+  await expect(map).toHaveAttribute('data-drawn-pins','0');
+
+  // ZOOMED OUT, an outline a few pixels across is a dot that merely looks like a measurement, so
+  // a pin stands for it instead. The practitioner, 2026-10-18: "the polygons will likely be too
+  // small for a zoomed out view and hence it will be a global view zoomed out with pins on the
+  // centroids of the study area. When zoomed in on one, we can show the polygon."
+  for(let i=0;i<6;i++)await page.locator('.leaflet-control-zoom-out').click();
+  await expect(map).toHaveAttribute('data-drawn-pins','2');
+  await expect(map).toHaveAttribute('data-drawn-parts','2','nothing is dropped, only drawn differently');
+
+  // And back: zooming in restores the boundaries themselves.
+  for(let i=0;i<6;i++)await page.locator('.leaflet-control-zoom-in').click();
+  await expect(map).toHaveAttribute('data-drawn-pins','0');
+
+  await page.locator('#area-apply').click();
+  const geometry=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
+    .nodes.find(n=>n.type==='study_area').params.geometry);
+  expect(geometry.type).toBe('MultiPolygon');
+  expect(geometry.coordinates.length).toBe(2);
+  expect(geometry.coordinates[0][0].length).toBe(41,'as published, not thinned');
+  expect(errors).toEqual([]);
 });

@@ -20,7 +20,9 @@ export function geometryBounds(g:Boundary):Bounds{
 }
 export function bboxPolygon(west:number,south:number,east:number,north:number):Polygon{
   if(![west,south,east,north].every(Number.isFinite)||west>=east||south>=north)throw new Error('Use west < east and south < north.');
-  return validateDrawnGeometry({type:'Polygon',coordinates:[[[west,south],[east,south],[east,north],[west,north],[west,south]]]});
+  // A bounding box is a Polygon by construction, so the widened return is narrowed back here
+  // rather than at every call site that relies on four corners.
+  return validateDrawnGeometry({type:'Polygon',coordinates:[[[west,south],[east,south],[east,north],[west,north],[west,south]]]}) as Polygon;
 }
 // A STUDY AREA is admitted as published, for as long as it fits the device. The practitioner,
 // 2026-10-18: *"we want to admit polygons as long as they do not overrun memory."* That replaces
@@ -48,11 +50,22 @@ export function geometryBytes(g:unknown):number{return JSON.stringify(g).length;
 // rather than refuse. Edges go into a uniform grid of about one edge per cell and only edges
 // sharing a cell are compared. Pairs may be compared more than once when they share several
 // cells; the test is idempotent, so that costs a little work and no correctness.
-function crossingFault(rings:Position[][]):string|null{
-  const edges:Position[][]=[],ringOf:number[]=[],indexOf:number[]=[],ringEdges:number[]=[];
-  for(let r=0;r<rings.length;r++){
-    const ring=rings[r];ringEdges.push(ring.length-1);
-    for(let i=0;i<ring.length-1;i++){edges.push([ring[i],ring[i+1]]);ringOf.push(r);indexOf.push(i);}
+// Edge crossing in near-linear time instead of the O(n^2) pair scan this replaces. Measured, the
+// quadratic form cost 240 ms at Shabunda's 4,395 vertices and 12.2 s at 32,000 -- so time, not
+// memory, was the real ceiling, and admitting large polygons without this would freeze the editor
+// rather than refuse. Edges go into a uniform grid of about one edge per cell and only edges
+// sharing a cell are compared. Pairs may be compared more than once when they share several
+// cells; the test is idempotent, so that costs a little work and no correctness.
+//
+// Rings are addressed by (part, ring) now that a study area may hold several parts. Two edges of
+// the SAME ring may legitimately share a vertex; edges of different rings, whether holes of one
+// part or outlines of two, may not touch at all.
+function crossingFault(parts:Position[][][]):string|null{
+  const edges:Position[][]=[],partOf:number[]=[],ringOf:number[]=[],indexOf:number[]=[];
+  const ringLength:number[][]=parts.map(rings=>rings.map(r=>r.length-1));
+  for(let q=0;q<parts.length;q++)for(let r=0;r<parts[q].length;r++){
+    const ring=parts[q][r];
+    for(let i=0;i<ring.length-1;i++){edges.push([ring[i],ring[i+1]]);partOf.push(q);ringOf.push(r);indexOf.push(i);}
   }
   const n=edges.length;
   if(n<4)return null;
@@ -75,21 +88,23 @@ function crossingFault(rings:Position[][]):string|null{
       if(at)at.push(e);else buckets.set(key,[e]);
     }
   }
-  // Consecutive edges of one ring share a vertex by construction, and the first and last edges of
-  // a ring meet where it closes. Those touches are the ring, not a fault.
-  const adjacent=(p:number,q:number)=>{
-    if(ringOf[p]!==ringOf[q])return false;
-    const i=indexOf[p],j=indexOf[q],last=ringEdges[ringOf[p]]-1;
+  // Consecutive edges of one ring share a vertex by construction, and its first and last edges
+  // meet where it closes. Those touches are the ring, not a fault.
+  const adjacent=(p1:number,q1:number)=>{
+    if(partOf[p1]!==partOf[q1]||ringOf[p1]!==ringOf[q1])return false;
+    const i=indexOf[p1],j=indexOf[q1],last=ringLength[partOf[p1]][ringOf[p1]]-1;
     return Math.abs(i-j)===1||(Math.min(i,j)===0&&Math.max(i,j)===last);
   };
   for(const list of buckets.values()){
     for(let u=0;u<list.length;u++)for(let v=u+1;v<list.length;v++){
-      const p=list[u],q=list[v];
-      if(adjacent(p,q))continue;
-      const [a,b]=edges[p],[c,d]=edges[q];
+      const p1=list[u],q1=list[v];
+      if(adjacent(p1,q1))continue;
+      const [a,b]=edges[p1],[c,d]=edges[q1];
       if((cross(a,b,c)*cross(a,b,d)<0&&cross(c,d,a)*cross(c,d,b)<0)||on(a,b,c)||on(a,b,d)||on(c,d,a)||on(c,d,b))
-        return ringOf[p]===ringOf[q]?'Polygon edges must not cross or touch each other.'
-          :'The boundary\'s rings must not cross or touch each other.';
+        return partOf[p1]!==partOf[q1]
+          ?'The parts of this area must not overlap or touch each other.'
+          :ringOf[p1]===ringOf[q1]?'Polygon edges must not cross or touch each other.'
+            :"The boundary's rings must not cross or touch each other.";
     }
   }
   return null;
@@ -116,29 +131,59 @@ function checkRing(ring:unknown,what:string):Position[]{
   }
   return ring as Position[];
 }
-export function validateDrawnGeometry(raw:unknown):Polygon{
-  if(!isRecord(raw)||raw.type!=='Polygon'||!Array.isArray(raw.coordinates)||raw.coordinates.length<1)throw new Error('Draw or choose a single polygon.');
+const ringArea=(ring:Position[],west:number,south:number)=>{
+  const pts=ring.slice(0,-1);
+  return Math.abs(pts.reduce((sum,p,i)=>sum+(p[0]-west)*(ring[i+1][1]-south)-(ring[i+1][0]-west)*(p[1]-south),0))/2;
+};
+
+/** A study area's geometry, validated and returned unchanged.
+ *
+ *  A MultiPolygon is admitted because a study area may be several jurisdictions -- the
+ *  practitioner, 2026-10-18: *"if there are several countries or cities in different countries
+ *  involved in the study area"*. Before this, choosing more than one unit collapsed them to a
+ *  bounding box, which is a shape that belongs to none of them, and it did so only because there
+ *  was nowhere to put the second outline. */
+export function validateDrawnGeometry(raw:unknown):Boundary{
+  if(!isRecord(raw)||!Array.isArray(raw.coordinates))throw new Error('Draw or choose a polygon.');
+  const multi=raw.type==='MultiPolygon';
+  if(!multi&&raw.type!=='Polygon')throw new Error('Draw or choose a polygon.');
   // Bytes first: a boundary too large to store is refused before anything walks its edges.
   const bytes=geometryBytes(raw);
   if(bytes>GEOMETRY_BYTE_BUDGET)throw new Error(`This boundary needs ${Math.round(bytes/1024)} KB and the budget for one extent is ${Math.round(GEOMETRY_BYTE_BUDGET/1024)} KB. Choose a smaller area or a coarser administrative level.`);
-  const rings=(raw.coordinates as unknown[]).map((r,i)=>checkRing(r,i===0?'polygon':'interior ring'));
-  const [west,south,east,north]=geometryBounds(raw as unknown as Polygon);
+  const raw_parts=(multi?raw.coordinates:[raw.coordinates]) as unknown[];
+  if(!raw_parts.length)throw new Error('Draw or choose a polygon.');
+  const parts=raw_parts.map(part=>{
+    if(!Array.isArray(part)||!part.length)throw new Error('Each part of the area needs an outline.');
+    return (part as unknown[]).map((r,i)=>checkRing(r,i===0?'polygon':'interior ring'));
+  });
+  const [west,south,east,north]=geometryBounds(raw as unknown as Boundary);
   if(east-west>180)throw new Error('Areas crossing the antimeridian are not supported in this experiment.');
-  const fault=crossingFault(rings);
+  const fault=crossingFault(parts);
   if(fault)throw new Error(fault);
   // Interior rings are admitted because real jurisdictions have them: 22 of 189 DRC ADM2 units
   // carry an enclave, and no vertex budget reaches those. Having established that no two rings
   // cross, one vertex decides where a whole ring lies.
-  const outer=rings[0];
-  for(let h=1;h<rings.length;h++){
-    if(!encloses(outer,rings[h][0]))throw new Error('An interior ring must lie inside the boundary.');
-    for(let k=1;k<rings.length;k++)if(k!==h&&encloses(rings[k],rings[h][0]))throw new Error('Interior rings must not contain one another.');
+  for(const rings of parts){
+    const outer=rings[0];
+    for(let h=1;h<rings.length;h++){
+      if(!encloses(outer,rings[h][0]))throw new Error('An interior ring must lie inside the boundary.');
+      for(let k=1;k<rings.length;k++)if(k!==h&&encloses(rings[k],rings[h][0]))throw new Error('Interior rings must not contain one another.');
+    }
+    if(ringArea(outer,west,south)<1e-10)throw new Error('The selected area is too small or has zero area.');
   }
-  const pts=outer.slice(0,-1);
-  const area=Math.abs(pts.reduce((sum,p,i)=>sum+(p[0]-west)*(outer[i+1][1]-south)-(outer[i+1][0]-west)*(p[1]-south),0))/2;
-  if(area<1e-10||east===west||north===south)throw new Error('The selected area is too small or has zero area.');
-  return structuredClone(raw) as unknown as Polygon;
+  // One part inside another is only legitimate when it sits in that part's hole -- an enclave
+  // that belongs to the area. Inside the outline but not in a hole would be the same ground
+  // counted twice.
+  for(let a=0;a<parts.length;a++)for(let b=0;b<parts.length;b++){
+    if(a===b)continue;
+    const probe=parts[b][0][0];
+    if(encloses(parts[a][0],probe)&&!parts[a].slice(1).some(hole=>encloses(hole,probe)))
+      throw new Error('One part of the area lies inside another. Parts must be separate, or sit in an interior ring.');
+  }
+  if(east===west||north===south)throw new Error('The selected area is too small or has zero area.');
+  return structuredClone(raw) as unknown as Boundary;
 }
+
 /** A stable fingerprint of a boundary's coordinates, for telling "as published" from "edited".
  *
  *  FNV-1a over the serialized rings: deterministic, synchronous and identical in both engines,
@@ -161,6 +206,9 @@ export function validateAreaParams(p:AreaParams){
   if(p.geometry!==null){
     validateDrawnGeometry(p.geometry);
     if(p.selectionMode==='bbox'){
+      // A box is one part with one ring. Saying so here keeps every reader of a bbox-mode area
+      // entitled to four corners.
+      if(p.geometry.type!=='Polygon')throw new Error('A bounding box is a single rectangle, not several parts.');
       if(p.geometry.coordinates.length!==1)throw new Error('A bounding box has no interior rings.');
       const ring=p.geometry.coordinates[0],b=geometryBounds(p.geometry);
       if(ring.length!==5||ring.slice(0,-1).some(([x,y])=>![b[0],b[2]].includes(x)||![b[1],b[3]].includes(y)))throw new Error('A bounding box must have four axis-aligned corners.');

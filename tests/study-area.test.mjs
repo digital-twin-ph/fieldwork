@@ -108,6 +108,53 @@ test('the fingerprint changes with the coordinates and not with anything else',(
   assert.notEqual(boundaryFingerprint(a),boundaryFingerprint(b),'a moved vertex must show');
 });
 
+// A study area may be several jurisdictions. The practitioner, 2026-10-18: "if there are several
+// countries or cities in different countries involved in the study area". Before this, choosing
+// more than one unit collapsed them to a bounding box -- a shape belonging to none of them, and
+// only ever because there was nowhere to put the second outline.
+const square=(x,y,r=0.1)=>[[x-r,y-r],[x+r,y-r],[x+r,y+r],[x-r,y+r],[x-r,y-r]];
+
+test('two distant units are two parts, each as published',()=>{
+  const g={type:'MultiPolygon',coordinates:[[square(30,1)],[square(34,3)]]};
+  assert.deepEqual(validateDrawnGeometry(g),g,'nothing is merged, moved or boxed');
+  const facts=studyAreaN3({id:'area-1',params:{source:'drawn',label:'Two districts',
+    selectionMode:'polygon',geometry:g}}).facts;
+  assert.match(facts,/MULTIPOLYGON \(\(\(29.9 0.9/,'both parts reach the receipt as one geometry');
+  assert.ok(facts.includes('33.9 2.9'),'the second part is there too');
+});
+
+test('parts that overlap are refused rather than silently double-counting ground',()=>{
+  const g={type:'MultiPolygon',coordinates:[[square(30,1,0.2)],[square(30.1,1.1,0.2)]]};
+  assert.throws(()=>validateDrawnGeometry(g),/parts of this area must not overlap/);
+});
+
+test('a part inside another is refused, unless it sits in an interior ring',()=>{
+  const outer=[[29,0],[31,0],[31,2],[29,2],[29,0]];
+  // Wholly inside, no hole: the same ground would be counted twice.
+  assert.throws(()=>validateDrawnGeometry({type:'MultiPolygon',
+    coordinates:[[outer],[square(30,1,0.1)]]}),/lies inside another/);
+  // Inside a hole: a genuine enclave that belongs to the area.
+  const hole=[[29.7,0.7],[30.3,0.7],[30.3,1.3],[29.7,1.3],[29.7,0.7]];
+  const withEnclave={type:'MultiPolygon',coordinates:[[outer,hole],[square(30,1,0.1)]]};
+  assert.deepEqual(validateDrawnGeometry(withEnclave),withEnclave);
+});
+
+test('a bounding box is still one rectangle, not several parts',()=>{
+  // Everything downstream that reads a bbox is entitled to four corners.
+  assert.throws(()=>validateAreaParams({source:'drawn',label:'Box',selectionMode:'bbox',
+    geometry:{type:'MultiPolygon',coordinates:[[square(30,1)],[square(34,3)]]}}),
+    /single rectangle, not several parts/);
+});
+
+test('a multi-part area keeps its provenance and its as-published claim',()=>{
+  const g={type:'MultiPolygon',coordinates:[[square(30,1)],[square(34,3)]]};
+  const params={...acquiredParams(g),boundary:{...acquiredParams(g).boundary,
+    unitName:'Bunia, Aru',vertices:8,publishedHash:boundaryFingerprint(g)}};
+  const facts=studyAreaN3({id:'area-1',params}).facts;
+  assert.match(facts,/fw:geometryAsPublished true/);
+  assert.match(facts,/dcterms:source "Referenciel Geographique Commun, OCHA DR Congo"/);
+});
+
 test('a study area shown on its own does not crash the map output',()=>{
   // "I get an error on Map output view of Bunia study area" -- the practitioner, 2026-10-18, on
   // "Workflow stopped: undefined is not an object (evaluating 'c.from')". map_output DECLARES

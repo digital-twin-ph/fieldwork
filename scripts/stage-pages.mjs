@@ -24,4 +24,31 @@ for(const file of files){
   await copyFile(path.join(root,file),target);
 }
 await writeFile(path.join(destination,'.nojekyll'),'');
-console.log(`Staged ${files.size} browser assets and license files in _site.`);
+
+// WHAT IS SERVED, stated by the site itself.
+//
+// Publishing and verification run in parallel now, so "is my fix live yet?" is a question with a
+// real answer that changes minute to minute -- and the practitioner was asking it about a site
+// that had been one or two commits behind for most of a day. Answering it should not require
+// reading a workflow log, diffing an asset manifest, or asking someone who can.
+//
+// Served at /build-info.json, and deliberately plain: a commit, a subject line and a time.
+const {execSync}=await import('node:child_process');
+const git=(args,fallback='')=>{try{return execSync(`git ${args}`,{cwd:root,encoding:'utf8'}).trim();}catch{return fallback;}};
+const commit=process.env.GITHUB_SHA||git('rev-parse HEAD','unknown');
+const {version}=JSON.parse(await readFile(path.join(root,'package.json'),'utf8'));
+await writeFile(path.join(destination,'build-info.json'),JSON.stringify({
+  // A version is what a practitioner can hold in their head; a seven-character hash is not.
+  // The practitioner, 2026-10-19: "Be sure to update version so I know what I am dealing with."
+  version,
+  commit,
+  short:commit.slice(0,7),
+  subject:git('log -1 --format=%s','unknown'),
+  committedAt:git('log -1 --format=%cI',''),
+  stagedAt:new Date().toISOString(),
+  // Verification runs beside the deploy rather than before it, so a freshly published build has
+  // not necessarily passed the gate yet. Saying so here keeps the stamp from implying more than
+  // it knows.
+  note:'Published without waiting for the full gate; see the verify job for that run\u2019s result.',
+},null,1)+'\n');
+console.log(`Staged ${files.size} browser assets and license files in _site, at ${commit.slice(0,7)}.`);

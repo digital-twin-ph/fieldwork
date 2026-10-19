@@ -8,12 +8,62 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: github-pages
-  cancel-in-progress: false
-
 jobs:
+  # PUBLISHING NO LONGER WAITS FOR VERIFICATION.
+  #
+  # Measured 2026-10-18: a push took 25-41 minutes to reach the site and 30.1 of those were
+  # `npm run check` re-run here, against 0.1 minutes to publish. The practitioner was looking at a
+  # site one or two commits behind whatever had just been fixed -- "these are changes I need to
+  # see so if we make them, they are useless without human review" -- and a 31-minute lag between
+  # a fix and the chance to review it is the review loop, not a detail of it.
+  #
+  # The gate still runs on every push, in `verify` below, and still goes red. It no longer stands
+  # between a change and the person who has to judge it. What this costs: a failure that only
+  # reproduces on a clean Linux runner now reaches the site for the ~30 minutes until verify
+  # finishes. The gate is run locally before every push, and a typecheck and build still run here
+  # before anything is published, so what is uncovered is narrower than it looks -- but it is not
+  # nothing, and that is the trade.
   build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      # Typecheck and bundle. Two seconds locally, and it is the one check that can tell whether
+      # the thing about to be published is a working build at all.
+      - run: npm run build
+      - name: Stage browser assets and licenses
+        run: node scripts/stage-pages.mjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Serialised against itself only. Publishing is seconds, so a queue here costs nothing, and
+    # cancelling a deploy mid-flight is how a site ends up serving half an artifact.
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish site
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # THE GATE, unchanged, in parallel with the deploy rather than in front of it.
+  verify:
     runs-on: ubuntu-latest
     # Raised from 20 on 2026-10-14, after c316bc5 was cancelled at 20m16s. The suite grew: 490
     # unit tests and 220 browser tests across chromium and webkit, plus four validators added the
@@ -25,7 +75,14 @@ jobs:
     # deploy that looks like an infrastructure flake. It is still a bound, so a genuine hang is
     # caught -- 40 minutes is roughly three times the honest duration.
     timeout-minutes: 40
+    # A superseded verify is verifying a commit nobody is looking at any more, and two 30-minute
+    # gates queued behind each other is how the old lag was built. The newest commit is the one
+    # that gets checked; an older one that was cancelled is recorded as cancelled, not as green.
+    concurrency:
+      group: pages-verify
+      cancel-in-progress: true
     steps:
+      - uses: actions/checkout@v6
       - uses: actions/checkout@v6
       # The widget manual and the Dive Deeper panel link one notebook per widget, and
       # validate-dive-deeper confirms each link reaches a section that exists by reading this
@@ -83,23 +140,3 @@ jobs:
         run: mv validation-lab-checkout ../validation-lab
       - name: Type check, build and run regression tests
         run: npm run check
-      - name: Stage browser assets and licenses
-        run: node scripts/stage-pages.mjs
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
-        with:
-          path: _site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Publish site
-        id: deployment
-        uses: actions/deploy-pages@v4

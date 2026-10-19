@@ -623,7 +623,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   async function runNode(node:typeof plan[number]){
     onProgress(node.id,'running');const begin=performance.now();
     const inputs=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>[e.port,values.get(e.from)])) as unknown as ExecutionInputs;
-    const pointInputs=():{layers:import('./types.js').PointLayer[]}=>({layers:nodeInputs(node).filter(([port])=>isPointPort(port)).map(([port])=>{const edge=workflow.edges.find(e=>e.to===node.id&&e.port===port),source=workflow.nodes.find(n=>n.id===edge!.from);return {...(inputs[port as keyof ExecutionInputs] as unknown as PointCollection),sourceNodeId:edge!.from,label:source!.params.label||TYPES[source!.type].title,attributeDefinitions:[...('fields' in source!.params?source!.params.fields||[]:[]),...('attributeRules' in source!.params?source!.params.attributeRules||[]:[])]};})});
+    // A DECLARED PORT IS NOT A CONNECTED ONE. map_output declares `points` and `context` beside
+    // `area`, so a study area shown on its own -- the whole of experiment 01, and every area a
+    // practitioner inspects before adding data -- has point ports with no edge behind them. This
+    // asserted one anyway and threw "undefined is not an object (evaluating 'c.from')" at the
+    // practitioner, naming a minified variable in a workflow that was perfectly valid.
+    //
+    // Unconnected ports are skipped rather than defaulted: a layer standing for an input nobody
+    // supplied would be worse than its absence.
+    const pointInputs=():{layers:import('./types.js').PointLayer[]}=>({layers:nodeInputs(node).filter(([port])=>isPointPort(port)).flatMap(([port])=>{const edge=workflow.edges.find(e=>e.to===node.id&&e.port===port);if(!edge)return [];const source=workflow.nodes.find(n=>n.id===edge.from);if(!source)return [];return [{...(inputs[port as keyof ExecutionInputs] as unknown as PointCollection),sourceNodeId:edge.from,label:source.params.label||TYPES[source.type].title,attributeDefinitions:[...('fields' in source.params?source.params.fields||[]:[]),...('attributeRules' in source.params?source.params.attributeRules||[]:[])]}];})});
     let value:unknown;
     switch(node.type){
       case 'mean_center':{value=computeMeanCenter(inputs.points,node.params);receipts.push(meanCenterReceipt(node,value as MeanCenter,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from));break;}

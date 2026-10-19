@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {blankWorkflow,newStudyArea,bboxPolygon,validateDrawnGeometry,validateAreaParams,studyAreaN3,quadToN3,boundaryFingerprint,CRS84} from '../build/study-area.js';
-import {validateWorkflow,executionPlan} from '../build/core.js';
+import {validateWorkflow,executionPlan,executeWorkflow} from '../build/core.js';
 const polygon=points=>({type:'Polygon',coordinates:[[...points,points[0]]]});
 test('blank workflow has no hidden nodes and requires a selection to run',()=>{
   const w=blankWorkflow();assert.equal(validateWorkflow(w).nodes.length,0);
@@ -106,4 +106,20 @@ test('the fingerprint changes with the coordinates and not with anything else',(
   assert.equal(boundaryFingerprint(a),boundaryFingerprint(b),'same coordinates, same fingerprint');
   b.coordinates[0][1][0]=30.2900001;
   assert.notEqual(boundaryFingerprint(a),boundaryFingerprint(b),'a moved vertex must show');
+});
+
+test('a study area shown on its own does not crash the map output',()=>{
+  // "I get an error on Map output view of Bunia study area" -- the practitioner, 2026-10-18, on
+  // "Workflow stopped: undefined is not an object (evaluating 'c.from')". map_output DECLARES
+  // `points` and `context` beside `area`, and the run asserted an edge existed for every declared
+  // point port. A study area inspected before any data is added -- the whole of experiment 01 --
+  // has none, so a valid workflow failed and blamed a minified variable.
+  const w=validateWorkflow({schema:'fieldwork/workflow/1',exampleId:'blank',name:'area only',
+    nodes:[{id:'area-1',type:'study_area',x:0,y:0,params:{source:'drawn',label:'Bunia',
+        selectionMode:'polygon',geometry:bboxPolygon(30.21,1.48,30.29,1.59)}},
+      {id:'map-1',type:'map_output',x:300,y:0,params:{label:'Study area and points',view:'map'}}],
+    edges:[{id:'e1',from:'area-1',to:'map-1',port:'area'}]});
+  return executeWorkflow(w,async()=>[{subject:'urn:fieldwork:area:area-1',
+    predicate:'urn:fieldwork:readyForSpatialAnalysis',object:'true'}])
+    .then(run=>{assert.equal(run.outputs.length,1,'the area is shown, with no point layers');});
 });

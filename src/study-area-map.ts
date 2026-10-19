@@ -269,6 +269,40 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   let summarise:typeof import('./boundary-source.js').selectionSummary|null=null;
   let pickedLevel:import('./boundary-source.js').BoundaryLevel|null=null;
   let pickedUnits:import('./boundary-source.js').BoundaryUnit[]=[];
+/** Bytes a published boundary vertex costs, measured 2026-10-19 on DRC ADM2: 6,386,010 bytes over
+ *  189 units averaging 774 vertices, which is 43.7. Rounded down to 40, so the estimate shown
+ *  before a download is a little under rather than a little over -- a progress line that passes
+ *  its own estimate is better than one that stalls short of it. */
+const ESTIMATED_BYTES_PER_VERTEX=40;
+
+/** Fetch, reporting what has arrived. The same shape the street-network client uses, and for the
+ *  same reason: a multi-megabyte download with no progress is indistinguishable from a hang.
+ *  `content-length` is preferred when the server sends one; the estimate is the fallback, since
+ *  these files are served through a Git LFS redirect that may not declare a length.
+ *
+ *  The timeout is per READ, not for the whole download, so a slow connection is given as long as
+ *  it needs while a stalled one is given up on. */
+async function fetchWithProgress(url:string,estimate:number,onProgress:(read:number)=>void,stallMs=20000):Promise<string>{
+  const response=await fetch(url);
+  if(!response.ok||!response.body)throw new Error('The boundary file could not be fetched.');
+  const declared=Number(response.headers.get('content-length'))||estimate;
+  const reader=response.body.getReader(),chunks:Uint8Array[]=[];
+  let read=0;
+  for(;;){
+    const next=await Promise.race([
+      reader.read(),
+      new Promise<never>((_,reject)=>setTimeout(()=>reject(new Error(
+        `The boundary download stopped after ${(read/1e6).toFixed(1)} MB of about ${(declared/1e6).toFixed(1)} MB. `
+        +'Nothing was changed. The study area can still be drawn.')),stallMs)),
+    ]);
+    if(next.done)break;
+    chunks.push(next.value);read+=next.value.length;onProgress(read);
+  }
+  const joined=new Uint8Array(read);let offset=0;
+  for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}
+  return new TextDecoder().decode(joined);
+}
+
   const boundaryStatus=$('#area-boundary-status'),unitsBox=$('#area-boundary-units');
   const unitPick=$('#area-boundary-pick') as HTMLSelectElement;
   // The list is filled from the bundled snapshot the moment the dialog opens, so typing
@@ -310,12 +344,27 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
           +(near.length?` Note: ${near.join(', ')} also match what you typed.`:'');return;
       }
       pickedLevel=level;
+      // The SIZE, before the wait rather than after it. The level check exists so a practitioner
+      // can see how large a level is first, and it reported "189 units, 774 vertices each on
+      // average" without ever turning that into megabytes. DRC ADM2 is 6,386,010 bytes and took
+      // 15.3 seconds on a fast connection, measured 2026-10-19 -- during which this dialog said
+      // "Downloading the shapes next." and nothing else, with no progress and no timeout. The
+      // practitioner, reasonably: *"This one broke -- I cannot select an ADM unit."* It had not
+      // broken. It was working and saying nothing, which is indistinguishable.
+      //
+      // `selectionSummary(level,[])` is kept for the licence and the vintage but its leading
+      // count is dropped here: "0 of 189 ADM2 units" before anything has been chosen reads as a
+      // failure to find them.
+      const estimate=level.units*level.meanVertices*ESTIMATED_BYTES_PER_VERTEX;
+      const summary=selectionSummary(level,[]).replace(/^\d+ of /,'');
       boundaryStatus.textContent=`${level.units} units \u00b7 ${level.meanVertices} vertices each on average `
-        +`\u00b7 ${selectionSummary(level,[])}. Downloading the shapes next.`;
-      const shapes=await fetch(level.geoJsonUrl);
-      if(!shapes.ok)throw new Error('The boundary file could not be fetched.');
+        +`\u00b7 ${summary} \u00b7 downloading about ${(estimate/1e6).toFixed(1)} MB of shapes\u2026`;
+      const shapes=await fetchWithProgress(level.geoJsonUrl,estimate,read=>{
+        boundaryStatus.textContent=`Downloading ${countryName(iso)} ${adm} shapes \u2014 `
+          +`${(read/1e6).toFixed(1)} MB of about ${(estimate/1e6).toFixed(1)} MB\u2026`;
+      });
       const {readUnits}=await import('./boundary-source.js');
-      pickedUnits=readUnits(level,await shapes.json());
+      pickedUnits=readUnits(level,JSON.parse(shapes));
       unitPick.innerHTML=pickedUnits.map((u,i)=>`<option value="${i}">${u.name}</option>`).join('');
       unitsBox.hidden=false;
       // The SIZE stays on screen rather than flashing past. It is the thing that makes

@@ -1,6 +1,8 @@
 # 105 · Five directions
 
 _Created 2026-10-12 · Updated 2026-10-15_
+_Uses a term this project withdrew on 2026-10-12, named in [the withdrawn-vocabulary ledger](../withdrawn-vocabulary.json). The text stands as written — it is evidence of what was thought then, and rewording a dated record would falsify it. Live text says **port type** for what a connection is checked against._
+
 
 **Status:** tried — the record of deriving the five directions and of the sweeps made with them.
 Four produced findings; the fifth, forward, produced a direction that nothing has yet tested.

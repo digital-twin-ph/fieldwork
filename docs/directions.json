@@ -38,8 +38,8 @@
     "scripts/validate-vocabulary.mjs"
    ],
    "workItem": "docs/withdrawn-vocabulary.json#classified, and the 57 ledger uses that remain unseparated",
-   "status": "open",
-   "lastChecked": "2026-10-15",
+   "status": "built",
+   "lastChecked": "2026-10-19",
    "checks": [
     {
      "date": "2026-10-15",
@@ -48,6 +48,11 @@
     {
      "date": "2026-10-15",
      "found": "Classified, which is what the ceiling was missing. Of 146: 79 are dated records that may never be reworded, 57 are ledger entries not yet separated into record and live text, 6 are necessary mentions -- the ontology's own note that the term was withdrawn, and references to the fw:Carrier CLASS D11 rejected -- and 4 were live prose. The 4 were reworded to 'port type' and the ceiling fell 146 -> 142, the first time it has moved since the withdrawal. The remaining work is the 57."
+    },
+    {
+     "date": "2026-10-19",
+     "found": "Classified and carried out. 142 occurrences across 43 files became 131 across 40, and the ceiling fell with them. The classification the 2026-10-15 check said was missing: 111 in dated records that may not be reworded, 20 that record the withdrawal itself and cannot avoid naming it, and 11 live uses -- which are now 0. Every live one meant the thing a connection is checked against, so every one became `port type`; the ledger's other two suggestions were not needed. The file-level count that made this look like 83 files of work was wrong: widgets/blockers.json holds 21 uses and only the single STANDING entry was live, the other three being lifted, narrowed and withdrawn entries that are records. docs/audits/ontology-audit.md holds 16 and 14 are inside the dated section that withdrew the term. Reading them was the work; replacing them was not.",
+     "remaining": "131, none live. The count can now only fall when a dated record is superseded, which is not a cleanup job. A NEW use still fails the build, which is what the withdrawal was for."
     }
    ]
   },
@@ -55,7 +60,7 @@
    "id": "five-directions-as-a-method",
    "stated": "2026-10-12",
    "statedBy": "the practitioner, in experiment 105",
-   "inTheirWords": "In a DE project, we look back, we look forward, we look sideways, above and below. — and, on 2026-10-15: \"105 cannot be retired as it embodies the DE approach.\"",
+   "inTheirWords": "In a DE project, we look back, we look forward, we look sideways, above and below. \u2014 and, on 2026-10-15: \"105 cannot be retired as it embodies the DE approach.\"",
    "requiresInCode": "Nothing in code. It is the stance, not a technique: back, sideways, above, below and forward, pointed at the project periodically with the previous pass's findings in hand. What it requires is USE, and that each sweep's findings land as work items rather than as a document.",
    "recordedIn": [
     "AGENTS.md#the-five-directions",
@@ -108,7 +113,7 @@
    "id": "a-ruleset-widget-is-a-mini-program",
    "stated": "2026-10-12",
    "statedBy": "the practitioner, in the 65 amendment and experiment 106",
-   "inTheirWords": "In a nutshell, a ruleset widget is like a mini-software program with many possibilities because of how rules may be combined to produce an output. — and, on 2026-10-15, looking at the shipped Inspector: \"Regarding ruleset widgets, this is not the design we discussed, the rules are pinned not very flexible.\"",
+   "inTheirWords": "In a nutshell, a ruleset widget is like a mini-software program with many possibilities because of how rules may be combined to produce an output. \u2014 and, on 2026-10-15, looking at the shipped Inspector: \"Regarding ruleset widgets, this is not the design we discussed, the rules are pinned not very flexible.\"",
    "requiresInCode": "The authored form of 106 -- condition {field, comparator, value}, AND groups, OR of groups, a LIST of conclusions from the declared output vocabulary -- with a total compiler to the N3 subset 65 settled, a rule-count ceiling checkable from the form before compiling, and the Inspector authoring rules rather than choosing a pre-baked ruleset from a list of four.",
    "recordedIn": [
     "docs/experiments/106-rule-builder-ui.md",

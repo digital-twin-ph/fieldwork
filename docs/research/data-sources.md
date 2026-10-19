@@ -143,7 +143,7 @@ will not make. **The route is the original source, not the R package.**
 | `date_of_prodrome`, `date_of_rash` | two different onsets | `case_series`, which already asks which **kind** of date it is being given |
 | `date_of_death` | **`NA` means the patient recovered** | see below — this is the interesting one |
 | `age`, `gender`, `class`, `complications` | attributes | `apply_ruleset`, with real categories instead of invented ones |
-| `family_ID` | household grouping | `summarize_polygons`, `hex_aggregate`, and a denominator for `rate` |
+| `family_ID` | household grouping | `summarize_points_to_polygon`, `aggregate_points_to_h3_cell`, and a denominator for `rate` |
 | `infector` | putative source case | nothing we have; a transmission chain is not a widget here |
 
 It is historical, it is small enough to read, and **it has a place and a date on the same
@@ -277,7 +277,7 @@ www.geoboundaries.org prominently in a product. About 1 million boundaries acros
 offered as individual countries, global composites and simplified versions.
 
 For a project that ships its examples, this is the one that can actually be shipped. It would
-exercise `study_area`, `clip_polygons`, `summarize_polygons` and `spatial_coverage`, and give
+exercise `study_area`, `clip_polygons`, `summarize_points_to_polygon` and `spatial_coverage`, and give
 `rate` a denominator geography.
 
 ## Found, and NOT licence-verified — do not act on these without reading the source

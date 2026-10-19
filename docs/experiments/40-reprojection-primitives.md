@@ -1,6 +1,8 @@
 # Experiment 40: reprojection primitives
 
 _Created 2026-10-08 · Updated 2026-10-15_
+_Uses a term this project withdrew on 2026-10-12, named in [the withdrawn-vocabulary ledger](../withdrawn-vocabulary.json). The text stands as written — it is evidence of what was thought then, and rewording a dated record would falsify it. Live text says **port type** for what a connection is checked against._
+
 
 Date: October 7, 2026. Status: semantic admission review, with the vector slice
 implemented and the raster slice specified but not built. This closes part of the

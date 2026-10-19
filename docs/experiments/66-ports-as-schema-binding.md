@@ -1,6 +1,8 @@
 # 66 · Ports as semantic connections: syntactic, semantic and pragmatic interoperability
 
 _Created 2026-10-10 · Updated 2026-10-15_
+_Uses a term this project withdrew on 2026-10-12, named in [the withdrawn-vocabulary ledger](../withdrawn-vocabulary.json). The text stands as written — it is evidence of what was thought then, and rewording a dated record would falsify it. Live text says **port type** for what a connection is checked against._
+
 
 **Status:** reframing, with a measurement. No code changes and no implementation proposed;
 this is a base-contract reframe that supersedes advice in three earlier records and should be

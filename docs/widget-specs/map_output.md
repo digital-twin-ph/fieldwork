@@ -63,7 +63,7 @@ every one of the six gets there through one of those three.
 
 **That a layer which arrived at no port is not worth mentioning.** The isochrone map has
 two ports and draws **four** layers — a boundary, four time bands, 250 death locations and
-eight pumps. The deaths were never wired to it: `summarize_polygons` keeps the points it
+eight pumps. The deaths were never wired to it: `summarize_points_to_polygon` keeps the points it
 counted on the value it returns, so they reach the map by travelling inside the polygons.
 The run evidence records this honestly — `fw:layerCount 4`, with `fw:layerWithin "polygons"`
 on the layer that has no port of its own — but nothing in the interface says it, and a

@@ -1,6 +1,6 @@
 # Field questions
 
-_Created 2026-10-15 · Updated 2026-10-15_
+_Created 2026-10-15 · Updated 2026-10-19_
 
 **What this is.** The questions about Fieldwork that cannot be answered without a practitioner
 using it, kept in one place until there is a phase that can answer them. This project has not
@@ -67,6 +67,28 @@ check 24, and a worked example that instantiates it.
 
 **An answer would change:** whether the widget is kept, or retired as a thing that exists because
 it was separable rather than because anyone wanted it.
+
+## Does a project match how an investigation is actually organised?
+
+From [122](experiments/122-a-project-holds-many-workflows.md).
+
+**Ask:** given real work rather than a worked example, does one project per investigation and one
+workflow per question hold? The two failure directions are specific and tell you different things.
+Too coarse, if a practitioner keeps several unrelated subjects in one project because creating a
+second is friction. Too fine, if a single question needs three workflows and the project becomes a
+folder. Also worth hearing: whether anyone moves a workflow between projects after creating it,
+since membership was made optional and changeable on the assumption that they would.
+
+**Built to ask it with:** the project entity, seven built-in projects grouping the eleven worked
+examples, a project a practitioner creates and names, optional membership in both directions, and
+an **In no project** group for workflows that belong to none. The practitioner, 2026-10-19, on why
+this one is worth watching rather than concluding: *"it will be a thing to observe - a model change
+demonstrated in real world projects."*
+
+**An answer would change:** whether a project is the right size of container, or whether what is
+actually needed is a level between it and the workflow — which would be a worse outcome than
+either failure above, because this application has twice built a mechanism before the operation it
+served.
 
 ## Does a Dive Deeper section land?
 

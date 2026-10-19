@@ -29,7 +29,18 @@ export const isProjectedReference=(reference:AnySpatialReference|undefined):refe
 export interface PointLayer extends PointCollection {sourceNodeId:string; label?:string; spatialReference?:AnySpatialReference; attributeDefinitions?:AttributeDefinition[]}
 export type PointInput = PointLayer | {layers:PointLayer[]};
 export interface SourceInfo {format:string; [key:string]:unknown}
-export interface PointParams {label:string; data:PointCollection; spatialReference?:SpatialReference}
+/** `dataRef` is the digest of this node's payload, present when the payload is held once in the
+ *  project's dataset store instead of inline in every workflow that uses it (experiment 122,
+ *  phase two). It is written at the moment a practitioner reuses an input from a sibling workflow,
+ *  and read only by the storage layer: a workflow in memory ALWAYS carries its `data`, hydrated
+ *  before `validateWorkflow` sees it, so no widget, no execution path and no receipt knows the
+ *  reference exists. Measured on the four 1854 cholera workflows: 131,552 bytes of the 401,576 in
+ *  their input nodes were redundant copies, 263,104 against the double write.
+ *
+ *  Only the three ACQUIRED inputs carry it. `study_area` does not: a drawn boundary is a decision
+ *  made per question, and the four cholera workflows hold three deliberately different Soho
+ *  extents. See `SHAREABLE_INPUT_TYPES` in project.ts. */
+export interface PointParams {label:string; data:PointCollection; dataRef?:string; spatialReference?:SpatialReference}
 /** A column read as a different kind than the file held it, because a practitioner asked.
  *
  *  Experiment 117. The repair changes the records this node carries, so it is recorded on the
@@ -104,13 +115,13 @@ export interface Exclusion {sourceNodeId:string; featureId:string; signature:str
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';
 export interface Measurement {squareMetres:number; value:number; unit:AreaUnit; method:string}
 export interface ParamsByType {
-  mean_center:{label:string;zone:number;hemisphere:'north'|'south'};
+  mean_center:{label:string;zone:number;hemisphere:'north'|'south';weightField?:string};
   compare_point_sets:{label:string;zone:number;hemisphere:'north'|'south';centers?:boolean};
   comparison_map:{label:string};
   donut_geomask:{label:string;innerM:number;outerM:number;seed:number};
-  hex_aggregate:{label:string;resolution:number;minOccupancy:number};
+  aggregate_points_to_h3_cell:{label:string;resolution:number;minOccupancy:number};
   buffer_area:{label:string;distanceM:number};
-  table_input:{label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;source?:import('./data-table.js').DataTableSource};
+  table_input:{label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;dataRef?:string;source?:import('./data-table.js').DataTableSource};
   rate:{label:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
   summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south'};
@@ -194,11 +205,11 @@ export interface ParamsByType {
    *  raise the pause: the module takes the longest of the 60-second floor, the volume a response
    *  actually cost, and this. Being more respectful of a public service is always permitted;
    *  being less is not. */
-  network_input:{label:string;data:import('./catchments.js').Network;inputMethod?:'osm'|'file';marginM?:number;maxNodes?:number;pauseSeconds?:number};
+  network_input:{label:string;data:import('./catchments.js').Network;dataRef?:string;inputMethod?:'osm'|'file';marginM?:number;maxNodes?:number;pauseSeconds?:number};
   voronoi:{label:string;zone:number;hemisphere:'north'|'south'};
   isochrone:{label:string;zone:number;hemisphere:'north'|'south';minutes:number;thresholds?:number[];fillHoles?:boolean;speedMPerMin:number;bufferM:number;maxSnapM:number;direction:'inbound'|'outbound'};
   clip_polygons:{label:string};
-  summarize_polygons:{label:string;boundary:'include'|'exclude';valueField:string};
+  summarize_points_to_polygon:{label:string;boundary:'include'|'exclude';valueField:string};
   raster_input:{label:string;asset?:import('./raster.js').RasterAsset};
   clip_raster:{label:string;method:'cell-center'|'all-touched';marginPixels?:number;cutline?:{geometry:Boundary;selectionMode:'bbox'|'polygon'|'circle'}};
   places:PointParams; centers:PointParams; point_input:ObservationParams; study_area:AreaParams;
@@ -250,12 +261,19 @@ export type RecontractedNodeType='reproject';
  *  which refuses. Each entry is a public identifier that can never be removed, only kept
  *  resolving -- which is why the naming convention treats a name as a commitment made at D1 time
  *  and not a label adjusted later. */
-export type RenamedNodeType='samples'|'nearest'|'observations'|'area';
-export const RENAMED_NODE_TYPES:Record<RenamedNodeType,NodeType>={samples:'point_grid',nearest:'measure_distance',observations:'point_input',area:'study_area'};
+export type RenamedNodeType='samples'|'nearest'|'observations'|'area'|'summarize_polygons'|'hex_aggregate';
+export const RENAMED_NODE_TYPES:Record<RenamedNodeType,NodeType>={samples:'point_grid',nearest:'measure_distance',observations:'point_input',area:'study_area',summarize_polygons:'summarize_points_to_polygon',hex_aggregate:'aggregate_points_to_h3_cell'};
 
 export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType|RenamedNodeType|RecontractedNodeType; version:'1'}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}
-export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'|'raster'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'snow-extent'|'sea-level'|'rulesets'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
+/** `projectId` and `workflowKey` were added 2026-10-19, when a project stopped being a word in
+ *  the title bar and became an investigation that holds several workflows (experiment 122). A
+ *  built-in worked example needs neither: its `exampleId` names it and `BUILT_IN_PROJECTS` in
+ *  project.ts says which investigation it belongs to. A workflow a practitioner creates has no
+ *  `exampleId`, so it carries the project it belongs to and the key it is stored under -- because
+ *  the workspace map was keyed by a closed vocabulary of example ids, and a practitioner cannot
+ *  mint one of those. `outputId` stays SINGULAR and per-workflow: one question, one answer. */
+export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'|'raster'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'snow-extent'|'sea-level'|'rulesets'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; projectId?:string; workflowKey?:string; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
 // 'samples' was removed on 2026-10-12: it sat in this union and nowhere else, produced by
 // nothing and consumed by nothing. Found by surveying the inventory sideways
 // (docs/experiments/105-five-directions.md), and removed rather than counted, because a closed

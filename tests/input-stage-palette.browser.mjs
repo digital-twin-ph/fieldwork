@@ -28,8 +28,15 @@ test('a canvas with no input offers the input stage, and everything after one is
   // Place one input and the palette opens. The gate is "start with an input", not a running
   // filter: after that, judging what is sensible is the practitioner's.
   await page.locator('#node-library [data-add="study_area"]').click();
-  await expect.poll(()=>entries.count(),{timeout:15000}).toBeGreaterThan(30);
-  await expect(page.locator('#node-library [data-add="map_output"]')).toHaveCount(1);
+  // `toBeGreaterThan(30)` stood here and passed for weeks while nine widgets were addable only on
+  // the examples whose template named them. The practitioner found it by looking for one:
+  // "I don't see measure distance as a widget" ... "How do I know which widgets need work if I
+  // can't even see them." So the nine are named, and the floor is the live count rather than a
+  // number comfortably below it.
+  await expect.poll(()=>entries.count(),{timeout:15000}).toBeGreaterThanOrEqual(45);
+  for(const type of ['measure_distance','network_input','voronoi','isochrone','clip_polygons',
+    'summarize_points_to_polygon','facilities','facility_audit','alert','map_output'])
+    await expect(page.locator(`#node-library [data-add="${type}"]`)).toHaveCount(1);
   expect(errors).toEqual([]);
 });
 
@@ -38,6 +45,10 @@ test('an example that already has inputs is not restricted',async({page})=>{
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=snow-extent');
-  await expect.poll(()=>page.locator('#node-library [data-add]').count(),{timeout:20000}).toBeGreaterThan(30);
+  await expect.poll(()=>page.locator('#node-library [data-add]').count(),{timeout:20000}).toBeGreaterThanOrEqual(45);
+  // The cholera project is where the street network and the three-leg distance work belongs
+  // (experiment 123), and neither widget could be added here until 2026-10-19.
+  for(const type of ['measure_distance','network_input','snap_to_network'])
+    await expect(page.locator(`#node-library [data-add="${type}"]`)).toHaveCount(1);
   expect(errors).toEqual([]);
 });

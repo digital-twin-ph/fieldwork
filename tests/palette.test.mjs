@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {addableTypes,PALETTE_GROUPS,RETIRED_FROM_PALETTE,ADDABLE_VIA_COMPOSITION} from '../build/palette.js';
+import {addableTypes,PALETTE_GROUPS,RETIRED_FROM_PALETTE,ADDABLE_VIA_COMPOSITION,INPUT_STAGE} from '../build/palette.js';
 import {TYPES,exampleWorkflow} from '../build/core.js';
 import {oldNalediWorkflow} from '../build/old-naledi.js';
 import {johnSnowExample} from '../build/john-snow.js';
@@ -8,7 +8,6 @@ import {geoprivacyExample} from '../build/geoprivacy-example.js';
 import {blankWorkflow} from '../build/study-area.js';
 import {coverageExercise} from '../build/spatial-coverage.js';
 
-const CATCHMENTS=['voronoi','isochrone','network_input','clip_polygons','summarize_polygons'];
 const EXAMPLES=[
   ['heat',exampleWorkflow()],['old-naledi',oldNalediWorkflow()],['blank',blankWorkflow()],
   ['coverage',coverageExercise()],['snow-voronoi',johnSnowExample('snow-voronoi')],
@@ -17,11 +16,14 @@ const EXAMPLES=[
 
 // A node type reachable from no example is a widget nobody can add. It will still build,
 // validate, register and pass its own tests, so only this check catches it.
+//
+// This passed while nine widgets were addable on one example each, because it asked whether a type
+// was reachable from ANY of seven. The question that matters is whether it is reachable from the
+// one the practitioner has open, and the test below now asks that instead.
 const reachable=()=>{
   const all=new Set();
-  for(const [exampleKey,workflow] of EXAMPLES)
-    for(const type of addableTypes({exampleKey,templateTypes:workflow.nodes.map(n=>n.type),
-      workflowTypes:workflow.nodes.map(n=>n.type),catchmentTypes:CATCHMENTS})) all.add(type);
+  for(const [,workflow] of EXAMPLES)
+    for(const type of addableTypes({workflowTypes:workflow.nodes.map(n=>n.type)})) all.add(type);
   return all;
 };
 
@@ -45,12 +47,34 @@ test('every palette group has a place in the ordering',()=>{
     `these groups would sort to the front because they are absent from PALETTE_GROUPS: ${missing.join(', ')}`);
 });
 
-test('the starter canvases stay small, and the retired output is never offered',()=>{
-  const blank=addableTypes({exampleKey:'blank',templateTypes:[],workflowTypes:[],catchmentTypes:[]});
-  assert.ok(blank.has('study_area'),'a blank canvas must offer a study area');
-  assert.ok(!blank.has('xpert'),'a blank canvas does not offer one example\'s evidence hierarchy');
+test('an empty canvas offers the input stage only, and the retired output is never offered',()=>{
+  const empty=addableTypes({workflowTypes:[]});
+  assert.ok(empty.has('study_area'),'an empty canvas must offer a study area');
+  assert.ok(!empty.has('xpert'),'an empty canvas does not offer one example\'s evidence hierarchy');
+  assert.ok(!empty.has('map_output'),'there is nothing to show before there is something to process');
   for(const [exampleKey,workflow] of EXAMPLES)
-    assert.ok(!addableTypes({exampleKey,templateTypes:workflow.nodes.map(n=>n.type),
-      workflowTypes:workflow.nodes.map(n=>n.type),catchmentTypes:CATCHMENTS}).has('output'),
+    assert.ok(!addableTypes({workflowTypes:workflow.nodes.map(n=>n.type)}).has('output'),
       `${exampleKey} must not offer the superseded output node`);
+});
+
+// The defect this file could not see. "How do I know which widgets need work if I can't even see
+// them" -- the practitioner, 2026-10-19, on finding `measure_distance` absent from the palette.
+// Nine widgets were addable only where a template named them, and eight of the nine carried an
+// open evaluation obligation: four of seven pending audits, three of thirteen awaiting a lab
+// check, eight of forty-four awaiting a name review.
+test('every live widget is addable from EVERY example that holds an input',()=>{
+  const deliberate=new Set([...RETIRED_FROM_PALETTE,'places','centers',...ADDABLE_VIA_COMPOSITION,'output']);
+  const live=Object.keys(TYPES).filter(type=>!deliberate.has(type));
+  // A blank canvas holds no input, so the input-stage gate applies to it and it is covered above.
+  const withInput=EXAMPLES.filter(([,w])=>w.nodes.some(n=>INPUT_STAGE.has(n.type)));
+  assert.ok(withInput.length>=5,'most of the worked examples hold an input');
+  for(const [exampleKey,workflow] of withInput){
+    const offered=addableTypes({workflowTypes:workflow.nodes.map(n=>n.type)});
+    const missing=live.filter(type=>!offered.has(type));
+    assert.deepEqual(missing,[],`${exampleKey} cannot add: ${missing.join(', ')}`);
+    // measure_distance is the one that was reported: it appeared in a single template, the heat
+    // example, which TODO.md slates for retirement.
+    assert.ok(offered.has('measure_distance'),`${exampleKey} must be able to add Measure distance`);
+    assert.ok(offered.has('network_input'),`${exampleKey} must be able to add a street network`);
+  }
 });

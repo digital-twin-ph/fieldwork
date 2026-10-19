@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {collectPageErrors} from './page-errors.mjs';
 
-// `reachable_nodes` had no Inspector panel at all until 2026-10-17. It is in ALWAYS_ADDABLE,
+// `reachable_nodes` had no Inspector panel at all until 2026-10-17. It is addable,
 // implemented and tested, and every parameter it declares could only be set by editing the
 // workflow file or by adding the micro-workflow that pins them. `catchmentInspector` served the
 // five CATCHMENT_TYPES and buffer_area; the node fell through every branch. The gap was found

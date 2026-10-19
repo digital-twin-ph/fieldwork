@@ -8,17 +8,40 @@
    "pattern": "\\bcarriers?\\b|\\bcarrier kinds?\\b",
    "withdrawn": "2026-10-12",
    "insteadSay": "prov:Entity for the value, port type for what a connection is checked against, or the class the value already asserts",
-   "ceiling": 142,
+   "ceiling": 131,
    "why": "Defined as a prov:Entity that travels between ports, then withdrawn when no standard could be shown that defines such a class. The definition was derivable rather than new, and nothing consumed it.",
    "classified": {
-    "measuredAt": "2026-10-15",
-    "why": "The practitioner, 2026-10-15: \"It's like 'carrier' which is still out there in several files\" -- naming this debt as the same failure as a settled model that never reached the code. A ceiling that forbids a NEW use is not a plan to clear the old ones, so the count sat at 146 for three days and could have sat there indefinitely. Classifying it is what turns a cap into work.",
-    "datedRecords": 79,
-    "ledgersAndOther": 57,
-    "liveCodeAndSpec": 4,
-    "necessaryMentions": 6,
-    "note": "Dated records -- experiments, audits, research notes -- may never be reworded: a withdrawn term inside one is evidence of what was thought then, and 79 of the uses are those. Six more are necessary mentions: the ontology's own record that the term was withdrawn, and references to the fw:Carrier CLASS that D11 rejected, which is the name of a rejected artefact rather than a use of the vocabulary. The 4 live uses in ontology/fieldwork.ttl, validate-rulesets.mjs and validate-naming.mjs were reworded to 'port type' on 2026-10-15 and the ceiling fell 146 -> 142.",
-    "whatRemains": "The 57 in ledgers. widgets/blockers.json holds 21 and most are inside dated blocker entries, which are records; some are in live fields such as liftTest. Separating those is the next reduction and nobody has done it. The floor, once separated, is the dated-record count: below that the ceiling cannot fall without falsifying the record."
+    "classifiedAt": "2026-10-19",
+    "note": "The classification direction `carrier-is-withdrawn-vocabulary` asked for and the count could not fall without: which occurrences are dated records that may not be reworded, and which are live text that should be. Measured by reading all of them, not by matching paths.",
+    "datedRecord": {
+     "occurrences": 111,
+     "files": 35,
+     "whyTheyStand": "Experiment documents, dated audits and sweeps, widget and ruleset release files, and the lifted, narrowed and withdrawn entries in widgets/blockers.json. Each records what was thought on a date, and a withdrawn term inside one is the evidence. Rewording them would falsify the record."
+    },
+    "recordsTheWithdrawal": {
+     "occurrences": 20,
+     "files": 5,
+     "files_": [
+      "docs/audits/ontology-audit.md (the dated section that withdrew it)",
+      "ontology/fieldwork.ttl",
+      "ontology/shapes/runtime-receipts.ttl",
+      "src/old-naledi.ts",
+      "tests/evidence.test.mjs"
+     ],
+     "whyTheyStand": "These say the class is deliberately absent, or why a check lives elsewhere because it was rejected, or -- in src/old-naledi.ts -- that a sentence was reworded off the term. They cannot do that without naming it, for the same reason docs/glossary.md and this ledger are exempt. Not exempted here: an exemption would let new prose hide behind them, and these are few enough to read."
+    },
+    "live": {
+     "occurrences": 0,
+     "files": 0,
+     "whereTheyWere": [
+      "widgets/blockers.json (the one STANDING entry)",
+      "docs/audits/ontology-audit.md (D8a evidence, the D8 sweep count)",
+      "docs/todo.md",
+      "rulesets/ledger.json",
+      "widgets/standardization.json"
+     ],
+     "saidInstead": "port type, where the text meant what a connection is checked against -- which was every case. `prov:Entity` and 'the class the value already asserts' were not needed."
+    }
    }
   }
  ]

@@ -1,6 +1,8 @@
 # OGC and ISO geometry standards, assessed against what Fieldwork already does
 
 _Created 2026-10-12 · Updated 2026-10-18_
+_Uses a term this project withdrew on 2026-10-12, named in [the withdrawn-vocabulary ledger](../withdrawn-vocabulary.json). The text stands as written — it is evidence of what was thought then, and rewording a dated record would falsify it. Live text says **port type** for what a connection is checked against._
+
 
 A set of recommendations was brought in from an external assistant, pitched at **Epi Info AI**,
 which the practitioner says is close in structure to this project: adopt OGC Simple Feature

@@ -1,6 +1,8 @@
 # 113 — Rules over geometry, as a composition
 
 _Created 2026-10-14 · Updated 2026-10-14_
+_Uses a term this project withdrew on 2026-10-12, named in [the withdrawn-vocabulary ledger](../withdrawn-vocabulary.json). The text stands as written — it is evidence of what was thought then, and rewording a dated record would falsify it. Live text says **port type** for what a connection is checked against._
+
 
 **Status:** validated — the composite is built, substituted into the worked example and
 checked against Shapely. Three of the four predictions held; the fourth held only after a

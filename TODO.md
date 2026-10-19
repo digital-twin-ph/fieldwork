@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-10-19_
 
 Deferred work, in rough priority order. An item here is a decision to do it later, not a
 decision to do it — anything abandoned should be struck with a reason rather than deleted,
@@ -394,6 +394,170 @@ not carry, and a clean conversion does not confirm the declared zone was right �
 both already stated in the widget and worth keeping stated.
 
 Full reasoning in [40](docs/experiments/40-reprojection-primitives.md).
+
+## "Junction" counts every point in the graph, not every intersection
+
+`networkFromOSM` adds both endpoints of every consecutive pair in every accepted way, so a network
+node is each VERTEX a street is drawn with. The application calls these junctions throughout.
+
+Measured 2026-10-19 on Buvuma Island, Lake Victoria: **11,359 network nodes against 661 places
+where two streets actually meet — seventeen to one.** The practitioner met it as a download
+refused by a "Graph limit (junctions)" of 2,000, believing that allowed a 2,000-junction network;
+on that terrain it allows about 116 intersections. The 2,000 default was measured on Soho, where a
+dense grid makes the two counts nearly equal, which is why nobody noticed and why the word is most
+misleading exactly where the default binds.
+
+**Not renamed, deliberately.** A first attempt changed the eleven places that COUNT network nodes
+and left the term everywhere else, which gave one quantity two nouns. The word is load-bearing in
+more than prose:
+
+- **Ontology predicates** — `fw:junctionsInBand`, `fw:junctionsOffered`, asserted in receipts
+  and checked by `validate:ontology-coupling`.
+- **A widget title** — `reachable_nodes` is "Reachable junctions", so a rename needs a name
+  review entry and a release, and its refusals quote it ("Add a Reachable junctions step").
+- **A results field** — `coverage.junctions`, which the map caption and its tests read.
+- Roughly sixty test assertions.
+
+**Defining it is not available.** The practitioner, 2026-10-19: *"junction versus intersection,
+that's a large discrepancy for two terms that mean nearly the same."* That is the whole problem.
+`carrier` was an INVENTED term with no standard behind it, so withdrawing it was clean — nobody
+had a prior meaning to unlearn. "Junction" is an ordinary English word for where roads meet, used
+here to mean something seventeen times larger. A reader has no way to notice the redefinition,
+because the ordinary meaning reasserts itself every time. A glossary entry would be read once and
+overridden by the language thereafter.
+
+So the resolution is to align the prose to the identifiers rather than the reverse, and the code
+has already chosen: `Network.nodes`, `NETWORK_NODE_LIMIT`, and the node type `reachable_nodes`.
+Only the human-facing text says junction. **That is this morning's `summarize_polygons` problem
+inverted** — there the title was right and the identifier wrong; here the identifiers are right
+and the titles wrong.
+
+So this is a vocabulary decision of the same kind as `carrier`, not a find-and-replace: withdraw
+the term with a ledger entry and a ceiling. What shipped on 2026-10-19 is
+the Inspector saying what the number counts, with the Buvuma measurement, so the limit can be set
+knowingly in the meantime.
+
+**Also unmeasured:** whether 2,000 is the right default. It was measured against vertices; nobody
+has asked what it should be as a limit on the thing that exhausted a 4 GB heap.
+
+## Demonstrate Fieldwork importing from DHIS2
+
+Requested by the practitioner, 2026-10-19: *"Spin up a DHIS2 instance with data and demonstrate
+FW connecting to DHIS2 and importing data into a workflow."*
+
+Three pieces, and the order matters because the second is the one that can fail on grounds nothing
+in this repository controls:
+
+1. **An instance with data.** DHIS2 publishes a demo database and a containerised stack, so this is
+   a setup task rather than a research one. It has to hold organisation units with coordinates and
+   at least one aggregate or event dataset, or there is nothing a spatial workflow can do with it.
+2. **Reaching it from a browser.** Fieldwork runs entirely in the page and acquires over `fetch`,
+   so a DHIS2 import depends on that instance sending CORS headers and on an authentication method
+   a browser can use without storing a password in a workflow — the Web API supports personal
+   access tokens, which is the shape that fits how credentials are already handled here. This is
+   the same wall the geoBoundaries acquisition hit, and the resolution there was to rewrite the URL
+   rather than proxy, **because a proxy would put this project between a practitioner and their
+   source.** A DHIS2 server holding real programme data makes that principle sharper, not softer.
+3. **An import that records where it came from.** `## Input — getting the data` in the glossary is
+   explicit that **an import is not an acquisition**: an acquisition replays from its request, an
+   import can only be trusted if it records where it came from. So a DHIS2 import needs the server,
+   the API version, the org-unit level, the dataset and period, and the time of retrieval — not
+   just the rows.
+
+**What it would establish, and what it would not.** It would establish that Fieldwork can take
+data from the system most national health programmes actually keep theirs in, which is a claim
+about reach that no worked example currently supports: every example ships its data in the repository.
+It would not establish anything about *analysis* — the widgets downstream are unchanged — and a demo
+instance is not evidence that a ministry's production instance will permit a browser to read it,
+which is the question that decides whether this is useful or a demonstration. Worth recording as a
+separate field question when it gets that far.
+
+**Not started.** No experiment record yet; this is the note that precedes one.
+
+## Snow's denominator: wire up `snow-gboh`, then South London
+
+Two steps, deliberately in this order. Both came out of the practitioner asking, 2026-10-19,
+*"what other epidemiological computations are possible with Cholera Outbreak data aside from
+epidemic curve?"*
+
+### 1. Wire up the data already in the repository
+
+`examples/snow-gboh/` has been present since 2026-10-09, with a `provenance.json` that records the
+source digest, the four limits and the licence reasoning — and **no file in `src/` references it.**
+It holds `deaths_nd_by_house.csv`: 1,852 houses from the 1855 General Board of Health map,
+**including the 1,483 where nobody died**, 706 deaths (661 residents, 45 non-residents), and
+precomputed distances to the Broad Street pump, the former pest field and the nearest sewer grate.
+
+Those zero-death houses are a denominator, which is what the 250 mapped death locations do not
+have. The difference it makes, measured 2026-10-19:
+
+| band from the pump | houses | deaths | deaths/house | % houses affected |
+|---|---|---|---|---|
+| 0–50 m | 45 | 84 | **1.867** | 55.6% |
+| 50–100 m | 140 | 186 | 1.329 | 59.3% |
+| 100–150 m | 283 | 204 | 0.721 | 41.3% |
+| 150–200 m | 429 | 150 | 0.350 | 20.3% |
+| 200–300 m | 724 | 78 | 0.108 | 7.5% |
+| 300 m+ | 231 | 4 | 0.017 | 1.3% |
+
+Monotone across a 110-fold range. The same gradient computed from the 250 mapped points — which
+condition on a house having had a death — runs 3.33 down to 1.00 and is barely a gradient at all.
+**Same outbreak, same pump, and the selection decides the finding.** That contrast is a better
+teaching artifact than either table, and it is this project's "a number needs a denominator" lesson
+in its own data.
+
+Three things this makes possible that no workflow does today:
+
+- A rate with a real denominator. `validate:evidence` reports `rate` as one of four widgets at the
+  **weakest evidence rung**, and this is the example where `minimumDenominator` and `rateKind` do
+  actual work.
+- The competing 1854 hypotheses tested against each other. `dis_pestf` and `dis_sewers` are the
+  miasma explanation's own candidate exposures, sitting in the same file as `dis_bspump`.
+- Resident against non-resident deaths. 661 and 45, and the file's own limits note warns that
+  `deaths` "mixes a numerator that includes visitors with a denominator of dwellings".
+
+**Two constraints, both already recorded in that `provenance.json` and neither to be worked
+around.** The coordinates are OSGB 1936 / Airy 1830 and this application deliberately performs no
+datum shift, so the analysis is tabular and uses the distance columns — there is no map. And the
+licence is *"GPL, version not stated by the publisher"*: redistribution verbatim is aggregation and
+does not affect this repository's Apache-2.0 licence, but **"a reprojected, filtered or otherwise
+modified copy would be a modified work and would have to carry the GPL and be marked as
+modified"**. So a workflow reads these columns; it does not ship a transformed copy of them.
+
+### 2. South London, as its own repository, imported as a bundle
+
+Snow's other 1854 investigation — Southwark & Vauxhall against Lambeth, two companies whose mains
+ran down the same streets, one drawing from the sewage-laden tidal Thames and one from Thames
+Ditton after the Metropolis Water Act of 1852. Roughly 315 deaths per 10,000 houses against 37, a
+risk ratio near 8.5, with exposure assigned by a chloride test because residents often did not know
+their supplier. It is the study with the denominator, and the ancestor of the cohort design.
+
+It is **not** in this repository, and adding it as a worked example is the expensive route: example
+data is imported at build time, and a new `exampleId` touches the closed union in `types.ts`, the
+`template()` dispatch, `NAMED_WORKSPACES` twice, the static picker options in `index.html`, the
+deep-link allowlist and `loadExample`'s per-example selection — the *"examples are the default
+world"* problem in the one place it is least visible.
+
+So: a separate repository, imported as a `fieldwork/bundle/1` workflow into the **1854 Cholera
+Outbreak in London** project ([122](docs/experiments/122-a-project-holds-many-workflows.md)). A
+project holding imported workflows is the practitioner's own request from the same day — *"create
+project, import workflows into project"* — and a South London table is kilobytes against a 20 MB
+bundle ceiling. The separate repository earns its keep on licensing rather than architecture: it
+isolates third-party data and lets a derived copy carry the source's own licence without touching
+Fieldwork's.
+
+**What would have to be settled first.** Whether GitHub Pages sends
+`Access-Control-Allow-Origin` for a cross-origin fetch. If it does not, runtime loading from another
+repository hits the same wall as DHIS2 and geoBoundaries, and the answer is vendoring rather than
+fetching. Unverified; do not assume either way.
+
+**A caution worth keeping in view.** The South London study's power is not spatial — it is a 2x2
+contrast of two intermingled populations. A worked example in a semantic GIS studio whose central
+computation is a table with no map is defensible, and it is a departure. Mapping it needs 1850s
+sub-district boundaries, which is the hard acquisition; the table is the easy part.
+
+**Neither started.** Step 1 needs no acquisition, no new repository and no licence manoeuvre — only
+a workflow — which is why it comes first.
 
 ## Let practitioners compose their own routine primitives
 

@@ -1,6 +1,8 @@
 # 64 · Streamlining the widget set: a sequenced refactor
 
 _Created 2026-10-10 · Updated 2026-10-15_
+_Uses a term this project withdrew on 2026-10-12, named in [the withdrawn-vocabulary ledger](../withdrawn-vocabulary.json). The text stands as written — it is evidence of what was thought then, and rewording a dated record would falsify it. Live text says **port type** for what a connection is checked against._
+
 
 **Status:** tried — Phase 1 is done and Phases 2 to 6 are not. Confirmed as the direction by
 the practitioner on 2026-10-12, three days and twelve widgets later; see *what the delay cost*
@@ -237,6 +239,68 @@ So Phase 2 is three separate jobs that an earlier draft ran together:
    and the three rule nodes are classified `standard`, meaning *ships with the application*,
    which reads as *applies to any domain*. They are **domain** blocks. Relabelling needs no
    migration and no code change beyond the derivation rule, and it is the honest fix.
+
+   **What `facility_audit` is for, recorded 2026-10-19** because no file said and the practitioner
+   had to supply it: *"facility audit is case specific to Gaborone because we weren't sure whether
+   the facilities we obtained from healthsites, were the same ones in the Ministry of Health's list
+   and yet the same in Overture Places list."*
+
+   So it is an instrument for **source agreement on facility identity**, built case-specifically.
+   The registry describes it as "Inspect every candidate facility and its evidence basis", which
+   says what it renders and not what it is for — and a block whose purpose is unrecorded cannot be
+   judged against the essentiality test above, which is why it has sat in the audit queue.
+
+   The general question behind it is not Gaborone's. [71](71-health-facility-sources.md) already
+   established that healthsites.io and Overpass are *"the same upstream data… the same facilities
+   from the source"*, measuring 47 against 30 for one area on one day — a lag, not a disagreement.
+   Overture ingests OSM among its sources. So of the three lists named above, **two share lineage
+   and only the ministry's is independent**, and agreement between the first two is not
+   corroboration. That is the same finding the boundary work reached on 2026-10-19, where
+   geoBoundaries and GADM agreed to between 1.1 and 5.6 metres on Bunia's bounding box because both
+   descend from the OCHA Referenciel Géographique Commun, making three products two data points.
+
+   **Source agreement means nothing without source independence**, and nothing in this application
+   records lineage between sources or would notice the difference.
+
+   **And no widget can do the check.** The practitioner, 2026-10-19: *"The facility audit was
+   therefore hand checking and no widget will be able to do that."* Deciding that a facility in one
+   list is the facility in another is adjudication — names differ, coordinates differ, one list is
+   a year old — and this is the term [60](60-from-gis-studio-to-public-health-studio.md) reserved
+   as **linkage** and deliberately left undefined until the work needed it. The work needs it.
+
+   That makes `facility_audit` neither a deletion nor a domain block to finish into an operation.
+   It is a **worksheet for a judgement**, and the essentiality test asked of it — *would a
+   practitioner elsewhere ask for this by this name* — is the wrong question, because what is
+   general is the activity and not the widget. Rendering candidates side by side is mechanisable;
+   concluding they are the same facility is not.
+
+   What follows is where this gets actionable: **a hand check produces a decision, and a decision
+   needs a receipt.** The pattern already exists twice. A `ColumnRepair` is a practitioner's
+   judgement — read this column as a number, these values were unreadable, at this time — and
+   `src/core.ts` asserts it as `prov:qualifiedRevision [ a fw:ColumnRepair; … ]`. An `AreaRevision`
+   does the same for a redrawn boundary. Neither computes anything; both are recorded, dated and
+   carried into the receipt. A linkage decision is the same shape and has no equivalent.
+
+   A practitioner cannot record *"these two records are the same facility, decided by me, on this
+   basis, on this date"* in a form the run receipt carries.
+
+   **Scoped out, 2026-10-19.** The practitioner, on reading the above: *"There are just inputs that
+   will need manual validation, which are out of scope for FW, for now."* So this is a named gap and
+   not a queued job. Linkage stays undefined in
+   [60](60-from-gis-studio-to-public-health-studio.md)'s list, which is that list working as
+   intended — *"these become entries when the work needs them, not before"* — and the two existing
+   judgement records, `ColumnRepair` and `AreaRevision`, stay the only ones.
+
+   The *"for now"* is the load-bearing part, so what reopens it is worth stating: an input whose
+   validation cannot be done outside the application, or a run whose conclusion depends on a
+   linkage decision that the receipt then fails to carry. Neither has happened. Until one does, a
+   practitioner validating inputs by hand before importing them is the supported path, and nothing
+   here should be built to anticipate it.
+
+   What this leaves undecided is `facility_audit` itself: a widget whose purpose is to support an
+   activity now out of scope. That is a disposition for the audit queue to settle, with the purpose
+   recorded above rather than inferred from "Evidence register", and it should not be read off this
+   scoping decision — a worksheet for work done elsewhere may still be worth shipping.
 3. **Remove only what is not an operation at all.** `alert` is `{active, date}` — a parameter
    wearing a node type. `places` and `centers` were adapted into `observations` by
    [experiment 18](18-shared-input-standardization.md) and survive as legacy identities.

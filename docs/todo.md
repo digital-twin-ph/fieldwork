@@ -126,7 +126,7 @@ What is retirable without contradicting D1:
 
 | | |
 | --- | --- |
-| **Duplicates** | `nearest`, `access`, `slr_site_assignment` are three implementations of nearest-neighbour-with-distance. **`nearest` is the general one and the other two merge into it** ([103](experiments/103-duplicates-should-merge.md)), but it must be made general first — its ports are named `places` and `centers` after the heat demo, and the three carry three different carriers out, so this is port work ([66](experiments/66-ports-as-schema-binding.md)) and not a rename. `output` is a generic display against three typed ones. `summarize_polygons`, `hex_aggregate`, `case_series` are one group-and-aggregate over three keys, but each is asked for by name, so that is code factoring and not a palette retirement |
+| **Duplicates** | `nearest`, `access`, `slr_site_assignment` are three implementations of nearest-neighbour-with-distance. **`nearest` is the general one and the other two merge into it** ([103](experiments/103-duplicates-should-merge.md)), but it must be made general first — its ports are named `places` and `centers` after the heat demo, and the three emit three different port types, so this is port work ([66](experiments/66-ports-as-schema-binding.md)) and not a rename. `output` is a generic display against three typed ones. `summarize_points_to_polygon`, `aggregate_points_to_h3_cell`, `case_series` are one group-and-aggregate over three keys, but each is asked for by name, so that is code factoring and not a palette retirement |
 | **Example-bound** | `places`, `centers`, `alert`, `facilities`, `samples`, `xpert`, `policy`, `access_policy`, `comparison_map`. `places` and `centers` already migrate into `observations`, so seven remain |
 
 Roughly ten palette retirements, taking 51 to about 41, plus code-level factoring that changes
@@ -137,7 +137,9 @@ no palette entry.
 widget declares a `migrationFrom` adapter and only four types in the registry have one. The
 cheapest real move is making `nearest` general, after which two widgets have something to merge
 into; and four of the candidates — `alert`, `policy`, `access_policy`, `xpert` — need a general
-rule-carrier that does not exist, which would be one widget in for four out.
+rule-application widget to merge into, which would be one widget in for four out.
+*(Reworded 2026-10-19 off the withdrawn term; the claim that it does not exist predates
+`apply_ruleset` and is worth re-checking.)*
 
 **One fork needs deciding before the work starts.** 64 states flatly that **no composite leaves
 the palette**, and D1 agrees: a composite asked for by name stays, because factoring it on the

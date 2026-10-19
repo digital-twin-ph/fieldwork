@@ -1,6 +1,8 @@
 # 62 · Tracing a workflow instead of auditing the widgets
 
 _Created 2026-10-10 · Updated 2026-10-15_
+_Uses a term this project withdrew on 2026-10-12, named in [the withdrawn-vocabulary ledger](../withdrawn-vocabulary.json). The text stands as written — it is evidence of what was thought then, and rewording a dated record would falsify it. Live text says **port type** for what a connection is checked against._
+
 
 **Status:** measurement and lesson record. No mechanism is added here. Two general primitives are
 proposed, one claim in [experiment 60](60-from-gis-studio-to-public-health-studio.md) is corrected,

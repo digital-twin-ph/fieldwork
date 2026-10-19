@@ -1,6 +1,8 @@
 # 67 · Sampling a raster at points
 
 _Created 2026-10-10 · Updated 2026-10-15_
+_Uses a term this project withdrew on 2026-10-12, named in [the withdrawn-vocabulary ledger](../withdrawn-vocabulary.json). The text stands as written — it is evidence of what was thought then, and rewording a dated record would falsify it. Live text says **port type** for what a connection is checked against._
+
 
 **Status:** admission review, written before the code. Proposes one primitive, no new port type
 and no new vocabulary beyond the terms it emits.

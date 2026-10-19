@@ -65,7 +65,7 @@ performs and the palette cannot express:
 
 | Gap | Where | Why it matters |
 | --- | --- | --- |
-| **Weighted mean centre** | Basic NB02 | `mean_center` is unweighted. 250 locations carry 489 deaths, so the two centres differ |
+| **Weighted mean centre** | Basic NB02 | `mean_center` is unweighted. 250 locations carry 489 deaths, so the two centres differ. **Built 2026-10-19** as an optional weight field on `mean_center` 0.2.0; the two centres differ by 2.1 m, and the per-address and per-death mean distances to the pump differ by 7.9 m |
 | **Convex hull** | Advanced-2 NB02, Advanced-1 NB03 | A boundary derived from the data instead of drawn |
 | **Routing between two points** | Advanced-1 NB02 | `isochrone` answers reachability, not "how far from here to there" |
 

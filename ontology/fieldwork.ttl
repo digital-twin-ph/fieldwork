@@ -246,9 +246,9 @@ fw:HexCell a owl:Class;
   rdfs:comment "One indexed hexagonal cell at a stated H3 resolution. A cell is an index unit, not a nearest-site catchment.";
   rdfs:label "H3 cell"; rdfs:subClassOf geo:Feature.
 fw:MeanCenterComputation a owl:Class;
-  rdfs:label "Mean centre computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Unweighted arithmetic mean of projected point coordinates, returned as a CRS84 point.".
+  rdfs:label "Mean centre computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Arithmetic mean of projected point coordinates, returned as a CRS84 point. Unweighted unless a record attribute is named, in which case each point is weighted by it and the receipt asserts the field and the weight total.".
 fw:MeanCenterResult a owl:Class;
-  rdfs:comment "One unweighted arithmetic centre of a point set, computed in a projected CRS and returned in CRS84. Not a burden-weighted centre and not a privacy metric.";
+  rdfs:comment "One arithmetic centre of a point set, computed in a projected CRS and returned in CRS84. Weighted by a named record attribute when one is given, unweighted otherwise. Not a privacy metric.";
   rdfs:label "Mean centre result"; rdfs:subClassOf prov:Entity.
 fw:PointSetComparison a owl:Class;
   rdfs:label "Point-set comparison"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation; rdfs:comment "Compare unweighted projected mean centers and their distances with a contextual reference-point layer.".
@@ -278,6 +278,13 @@ fw:randomSeed a owl:DatatypeProperty.
 fw:h3Resolution a owl:DatatypeProperty.
 fw:minimumOccupancy a owl:DatatypeProperty.
 fw:inputCount a owl:DatatypeProperty.
+# Asserted together, and only when a weight field was named. The count is of points; the total is
+# of whatever the points carry. On the 1854 cholera data a death-weighted centre averages 250
+# addresses holding 489 deaths, so either number alone misdescribes what was summarised.
+fw:weightField a owl:DatatypeProperty;
+  rdfs:comment "The record attribute a computation weighted by, named as the practitioner's data spells it.".
+fw:weightTotal a owl:DatatypeProperty;
+  rdfs:comment "The sum of the weights actually used. Not a record count: records weighted zero are included in the count and contribute nothing to the total.".
 fw:outputCount a owl:DatatypeProperty.
 fw:NetworkInput a owl:Class; fw:implementationStatus "implemented"; rdfs:subClassOf prov:Activity;
   rdfs:label "Read prepared street network";

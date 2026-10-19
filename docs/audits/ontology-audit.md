@@ -627,7 +627,7 @@ not a label adjusted later.
 
 | Rule | Why |
 | --- | --- |
-| **Form:** `verb_object` for an operation that transforms — `clip_raster`, `buffer_area`, `summarize_polygons`. `object_role` for a source or a presentation — `table_input`, `map_output` | A reader can tell what a node does and which end of a workflow it belongs to, without opening it |
+| **Form:** `verb_object` for an operation that transforms — `clip_raster`, `buffer_area`. Where the operation has a **second operand, state it with a preposition**: `summarize_points_to_polygon`, `aggregate_points_to_h3_cell`, `snap_to_network`. `object_role` for a source or a presentation — `table_input`, `map_output` | A reader can tell what a node does and which end of a workflow it belongs to, without opening it. *Revised 2026-10-19: this row cited `summarize_polygons` as an exemplar of `verb_object` and it was the **counterexample** — the slot held the grouping the operation reduces points **to**, not what the verb acts **on**. Its sibling `hex_aggregate` put the verb after its object and left the unit unstated. Both were renamed. Nothing mechanical caught either: the title-type agreement check matches a three-character stem, so `polygons` in the type found `polygons` in the title and the question of which noun was the object was invisible to it. The practitioner raised it in review, which is what D7 is for.* |
 | **Never a product name** | `xpert` names a diagnostic platform while the operation classifies facility evidence. Nothing in it is specific to that product |
 | **Never a dataset, a place, or an example** | `places`, `centers`, `facilities` and `alert` name the content of one demonstration, not an operation |
 | **Never a bare adjective or a category noun** | `nearest` is an adjective; `policy` and `access` name categories so broad they say nothing. Which policy? Access to what? |
@@ -688,7 +688,7 @@ name claims more than the operation performs
 [47](../experiments/47-sea-level-pack.md)).
 
 _Swept partially 2026-10-12, and the sweep's result is why it had never been swept. A port-based
-pass finds 15 live widgets with two or more inputs of distinct carriers; two are presentation, five
+pass finds 15 live widgets with two or more inputs of distinct port types; two are presentation, five
 of the remaining thirteen pass on the John Snow checks, which join published 1854 point data with a
 real OSM network, and six fail by having no independent case at all. **But the two widgets D8 most
 clearly applies to declare one input port each.** `slr_threshold_comparison` joins an AR6 projected
@@ -708,7 +708,7 @@ not supply ([62](../experiments/62-workflow-traversal.md)).
 
 **D8a · Are the port cases covered, at all three levels?**
 A widget's contract lives on its ports, so the cases that make or break a connection are its
-tests. *Evidence:* for each port, a case per interoperability level — the carrier kind refused,
+tests. *Evidence:* for each port, a case per interoperability level — the port type refused,
 a role unbound or mistyped or missing its unit, and a fitness condition contradicted; plus an
 explicitly asserted unknown, and a qualifier left unstated at entry still producing a definite
 refusal that names where it was lost. *Fails if* only the accepted connection is tested.
@@ -773,7 +773,7 @@ executes once however many branches consume it.
 | Chart specification | A bounded presentation plan over a named result; mark and orientation do not change its measure |
 | Donut geomasking | Derived point displacement within a metre-valued annulus; a demonstrator, not encryption or proven anonymity |
 | H3 cell aggregate | Count of source locations in an indexed hexagonal cell; not a nearest-site catchment or an anonymity guarantee |
-| Mean center | One unweighted projected arithmetic center of a point set, returned in CRS84; not a burden-weighted center or privacy metric |
+| Mean center | One projected arithmetic center of a point set, returned in CRS84, weighted by a named record attribute when one is given and unweighted otherwise; not a privacy metric. *Revised 2026-10-19: this row read "one unweighted … not a burden-weighted center", which was accurate and had become the reason the gap stayed open. The notebooks' weighted centre was recorded as a missing primitive in [74](../experiments/74-notebook-first-worked-examples.md) and the cholera research note, and declaring it out of scope here entrenched the absence. `mean_center` 0.2.0 takes an optional weight field.* |
 | Point-set comparison | Computed unweighted projected means and pump-context distances for two point sets; a private evaluation activity, not geomasking or a privacy guarantee |
 
 ## Validation profiles

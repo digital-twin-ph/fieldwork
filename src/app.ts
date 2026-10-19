@@ -41,7 +41,7 @@ import type {CanvasAPI,NodeDescription} from './canvas.js';
 import type {Connection,Edge} from '@xyflow/react';
 import type {ReasonerQuad,ReasoningRequest,ReasoningResponse} from './worker-types.js';
 import {element as $,optionalElement,control} from './dom.js';
-import {errorMessage,required} from './guards.js';
+import {errorMessage,isRecord,required} from './guards.js';
 import {resolveRuleset,bundledRulesets,supersession} from './rulesets.js';
 import type {Ruleset} from './rulesets.js';
 import {pinnedRuleset} from './rule-application.js';
@@ -51,7 +51,7 @@ function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(
 import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
-import {OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
+import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,distanceText} from './old-naledi-ui.js';
 import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds} from './study-area.js';
 import {openStudyAreaEditor} from './study-area-map.js';
@@ -73,6 +73,7 @@ import {previewArea,prepareRasterPreview} from './raster-preview.js';
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
+import {BUILT_IN_PROJECTS,projectOfWorkflow,newProject,validateProject,siblingInputs,payloadDigest,dehydrateWorkflow,hydrateWorkflow,type Project} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
@@ -137,13 +138,74 @@ if(new URLSearchParams(location.search).has('reset-cache')){
 // Keep keyboard and scroll-to-element navigation clear of the floating controls.
 new ResizeObserver(([entry])=>document.documentElement.style.setProperty('--project-bar-height',`${entry.target.getBoundingClientRect().height+12}px`)).observe($('.project-bar'));
 const WORKSPACES='fieldwork-examples-v1';
+/** Projects a practitioner created, beside the seven built in. Stored separately from the
+ *  workflows themselves: a project names an investigation and lists the workflows in it, and a
+ *  workflow is bytes. Losing the list should not lose the work, so they fail independently. */
+const PROJECTS='fieldwork-projects-v1';
+/** Payloads a project's workflows share, held once and addressed by digest.
+ *
+ *  Content-addressed storage, project-scoped VISIBILITY. Identical bytes are stored once wherever
+ *  they came from -- that is just what a digest does -- but a workflow is only ever OFFERED the
+ *  inputs of its own project's other workflows. Sharing storage is a byte fact; sharing visibility
+ *  is a claim about which investigation data belongs to, and only the second is scoped. */
+const DATASETS='fieldwork-datasets-v1';
+function readDatasets():Record<string,unknown>{
+  try{const raw=JSON.parse(localStorage.getItem(DATASETS)||'{}');return isRecord(raw)?raw:{};}
+  catch{return {};}
+}
+function keepDataset(digest:string,payload:unknown):boolean{
+  try{const datasets=readDatasets();if(digest in datasets)return true;
+    localStorage.setItem(DATASETS,JSON.stringify({...datasets,[digest]:payload}));forgetSavedWorkflows();return true;}
+  catch{$('#save-status').textContent='Storage unavailable — export to keep';return false;}
+}
+/** Every saved workflow, with shared payloads put back.
+ *
+ *  One reader for the three callers that need saved workflows -- loading one, listing them in the
+ *  picker, and offering a sibling's inputs -- so hydration cannot be remembered in two of them and
+ *  forgotten in the third. Payloads are shared BY REFERENCE here, which is safe because these
+ *  copies are read and never edited; the workflow being edited is cloned, below. */
+/** Cached, because `renderLibrary` runs on every keystroke in the node search and this parses the
+ *  whole workspace map. Every write to that map goes through `save()` or `assignCurrentWorkflow`,
+ *  so the cache is cleared there and nowhere else needs to know it exists. */
+let savedWorkflowCache:Record<string,unknown>|null=null;
+const forgetSavedWorkflows=()=>{savedWorkflowCache=null;};
+function readSavedWorkflows():Record<string,unknown>{
+  if(savedWorkflowCache)return savedWorkflowCache;
+  let saved:Record<string,unknown>={};
+  try{const raw=JSON.parse(localStorage.getItem(WORKSPACES)||'{}');if(isRecord(raw))saved=raw;}catch{return {};}
+  const datasets=readDatasets();
+  const hydrated:Record<string,unknown>={};
+  for(const [key,value] of Object.entries(saved)){
+    try{hydrated[key]=hydrateWorkflow(value,datasets);}
+    catch{/* a workflow whose shared data is gone is left as stored; opening it reports why */}
+  }
+  savedWorkflowCache=hydrated;
+  return hydrated;
+}
+function readProjects():Project[]{
+  try{const raw=JSON.parse(localStorage.getItem(PROJECTS)||'[]');return Array.isArray(raw)?raw.flatMap(entry=>{try{return [validateProject(entry)];}catch{return [];}}):[];}
+  catch{return [];}
+}
+const allProjects=():Project[]=>[...BUILT_IN_PROJECTS,...readProjects()];
+function writeProjects(projects:Project[]):boolean{
+  try{localStorage.setItem(PROJECTS,JSON.stringify(projects));return true;}
+  catch{$('#save-status').textContent='Storage unavailable — export to keep';return false;}
+}
 // Named workspaces first, then the fallback. The fallback treats any workflow holding a study
 // area as Old Naledi, which is why a new example must be listed here: the Manila sea-level
 // example has an area node and was silently labelled, described and noted as Old Naledi until
 // it was added. This is the "examples are the default world" problem in TODO.md, in the one
 // place it is least visible.
 const NAMED_WORKSPACES=['blank','coverage','raster','sea-level','rulesets','hagelloch'];
-const exampleKey=(w:Workflow):string=>w.exampleId?.startsWith('snow-')?w.exampleId:NAMED_WORKSPACES.includes(w.exampleId as string)?w.exampleId as string:w.exampleId==='old-naledi'||w.nodes.some(n=>n.type==='study_area')?'old-naledi':'heat';
+// A workflow a practitioner created is NOT an example, and the study-area fallback below would
+// label it Old Naledi -- the "examples are the default world" problem, reached at last by a real
+// workflow rather than by a new example. `projectId` is the discriminator: it is set only on a
+// workflow that belongs to a practitioner's project, and never on a worked example.
+const exampleKey=(w:Workflow):string=>w.projectId?'blank':w.exampleId?.startsWith('snow-')?w.exampleId:NAMED_WORKSPACES.includes(w.exampleId as string)?w.exampleId as string:w.exampleId==='old-naledi'||w.nodes.some(n=>n.type==='study_area')?'old-naledi':'heat';
+/** Where a workflow is SAVED, as against which worked example's chrome it shows. They are the
+ *  same string for all twelve examples and differ for everything a practitioner makes, whose key
+ *  is minted per workflow because the example vocabulary is closed and compiled in. */
+const storageKey=(w:Workflow):string=>w.workflowKey||exampleKey(w);
 const template=(key:string)=>key==='hagelloch'?hagellochExample():key==='rulesets'?rulesetExample():key==='sea-level'?seaLevelExample():key==='snow-geoprivacy'?geoprivacyExample():key==='snow-extent'?snowExtentExample():key==='snow-voronoi'||key==='snow-isochrone'?johnSnowExample(key):key==='raster'?rasterExample():key==='coverage'?coverageExercise():key==='blank'?blankWorkflow():key==='old-naledi'?oldNalediWorkflow():exampleWorkflow();
 const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='raster_input'&&!n.params.asset||n.type==='network_input'&&!n.params.data.nodes.length||n.type==='table_input'&&!n.params.data.rows.length);
 let credentials:CredentialAccess|null=null;
@@ -275,13 +337,13 @@ function toast(message:string,options?:{action?:{label:string;run:()=>void};tone
   }
   toastTimer=setTimeout(()=>element.classList.remove('visible'),5000);
 }
-try{const saved=localStorage.getItem(KEY);if(saved)workflow=validateWorkflow(JSON.parse(saved));}catch{toast('Saved workflow could not be loaded. The example is ready.');}
+try{const saved=localStorage.getItem(KEY);if(saved)workflow=validateWorkflow(hydrateWorkflow(JSON.parse(saved),readDatasets(),true));}catch(error){toast(errorMessage(error).startsWith('Shared input data is missing')?errorMessage(error):'Saved workflow could not be loaded. The example is ready.');}
 if(!workflow.nodes.some(n=>n.id===selected))selected=exampleKey(workflow)==='raster'?'raster-input':exampleKey(workflow)==='old-naledi'?'access':workflow.nodes[0]?.id;
 function save(){
   syncProjectManifest(workflow);
   const previous=new Map<string,string|null>();
-  try{for(const key of [KEY,WORKSPACES])previous.set(key,localStorage.getItem(key));const workspaces=JSON.parse(previous.get(WORKSPACES)||'{}');workspaces[exampleKey(workflow)]=workflow;localStorage.setItem(KEY,JSON.stringify(workflow));localStorage.setItem(WORKSPACES,JSON.stringify(workspaces));$('#save-status').textContent='Saved on this device';return true;}
-  catch{for(const [key,value] of previous){try{if(localStorage.getItem(key)!==value){if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}}catch{/* Storage may be unavailable even for rollback. Keep the editor draft open. */}}$('#save-status').textContent='Storage unavailable — export to keep';return false;}
+  try{for(const key of [KEY,WORKSPACES])previous.set(key,localStorage.getItem(key));const workspaces=JSON.parse(previous.get(WORKSPACES)||'{}');const stored=dehydrateWorkflow(workflow);workspaces[storageKey(workflow)]=stored;localStorage.setItem(KEY,JSON.stringify(stored));localStorage.setItem(WORKSPACES,JSON.stringify(workspaces));forgetSavedWorkflows();$('#save-status').textContent='Saved on this device';return true;}
+  catch{forgetSavedWorkflows();for(const [key,value] of previous){try{if(localStorage.getItem(key)!==value){if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}}catch{/* Storage may be unavailable even for rollback. Keep the editor draft open. */}}$('#save-status').textContent='Storage unavailable — export to keep';return false;}
 }
 /** Which published version of a worked example a saved workspace came from.
  *
@@ -332,7 +394,13 @@ function noticeIfRepublished(key:string){
     }}});
 }
 
-function loadExample(key:string){if(busy)return;save();let fromTemplate=true;try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[key];fromTemplate=!saved;workflow=saved?validateWorkflow(saved):template(key);}catch{workflow=template(key);}if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
+/** A key that no worked example owns. `template()` falls through to the heat example for an
+ *  unknown key and `exampleRevision` would then compare a practitioner's workflow against heat's
+ *  shape and announce that their example had been republished. Neither is a hazard a worked
+ *  example could reach -- the twelve keys are compiled in -- and both arrive the moment a
+ *  practitioner's project mints a key of its own. */
+const isExampleKey=(key:string):boolean=>!key.includes('/');
+function loadExample(key:string){if(busy)return;save();let fromTemplate=true;try{const saved=readSavedWorkflows()[key];fromTemplate=!saved;workflow=saved?validateWorkflow(structuredClone(saved)):isExampleKey(key)?template(key):workflow;}catch(error){if(errorMessage(error).startsWith('Shared input data is missing')){toast(errorMessage(error),{tone:'failure'});return;}if(isExampleKey(key))workflow=template(key);}if(!isExampleKey(key)){/* nothing published to compare against */}else if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
 /** Drop focus before the panel holding the focused control is rewritten.
  *
  *  Removing a focused input fires blur, and the blur handler re-renders underneath the removal
@@ -345,7 +413,7 @@ function loadExample(key:string){if(busy)return;save();let fromTemplate=true;try
  *  Safe to call from inside an `onchange`: the element has already fired its change, so blurring
  *  it cannot fire another one. */
 const dropFocus=()=>{(document.activeElement as HTMLElement|null)?.blur();};
-function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;dropFocus();render();return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
+function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;dropFocus();render();toast('This could not be saved on this device, so it was not kept. Storage is full — export the workflow to a file, or open fewer worked examples: every one you open is kept beside this one. A downloaded street network is the largest thing a workflow holds.',{tone:'failure'});return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
   // The edit is rolled back and the panel is rewritten -- WHILE the control that made the edit
   // still holds focus. Chromium throws "The node to be removed is no longer a child of this
   // node. Perhaps it was moved in a 'blur' event handler?" from the innerHTML assignment,
@@ -496,7 +564,7 @@ function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TY
 function render(){
   const url=new URL(location.href);url.searchParams.set('example',exampleKey(workflow));window.history.replaceState(null,'',url);
   renderLibrary($('#node-search').value);
-  const old=exampleKey(workflow)==='old-naledi';$('#example-select').value=old?'old-naledi':'heat';$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
+  const old=exampleKey(workflow)==='old-naledi';$('#example-select').value=old?'old-naledi':'heat';renderProjectEyebrow();renderProjectOptions();renderAssignProject();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
   if(exampleKey(workflow)==='blank'){$('#example-select').value='blank';$('#project-description').textContent='Developmental evaluation · define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
   if(exampleKey(workflow)==='coverage'){$('#example-select').value='coverage';$('#project-description').textContent='Developmental evaluation · inspect spatial exceptions, exclude with a reason, or revise the boundary.';$('#example-note').textContent='Synthetic points and illustrative boundary · no patient data';$('#canvas-example').textContent='SPATIAL COVERAGE · EXPERIMENT';$('#footer-context').textContent='Synthetic coverage exercise · CRS84 · boundary included';}
   if(exampleKey(workflow)==='rulesets'){$('#example-select').value='rulesets';$('#project-description').textContent='How a rule is put together, four times over: two workflows band Snow\u2019s data as he recorded it \u2014 Table 1 by the deaths on each date, the mapped locations by the deaths at each address \u2014 and two run the identical rules over damaged copies of the same data.';$('#example-note').textContent='Four workflows on one canvas. A and B use Snow\u2019s data as recorded; C and D are SIMULATED damage, and say so on the input: three dates with no count, and a quarter of the counts written as text. C and D apply the same rules as A and B, so everything that differs is the data \u2014 and the step says what it could not read rather than banding those records Unrecorded in silence.';$('#canvas-example').textContent='RULESETS \u00b7 HOW A RULE IS PUT TOGETHER';$('#footer-context').textContent='Authored rules \u00b7 compiled to N3 \u00b7 declared field bindings';}
@@ -788,9 +856,7 @@ function currentRulesets():Ruleset[]{
   return [...current.values()];
 }
 function renderLibrary(search=''){
-  const allowed=addableTypes({exampleKey:exampleKey(workflow),
-    templateTypes:template(exampleKey(workflow)).nodes.map(n=>n.type),
-    workflowTypes:workflow.nodes.map(n=>n.type),catchmentTypes:Object.keys(CATCHMENT_TYPES)});
+  const allowed=addableTypes({workflowTypes:workflow.nodes.map(n=>n.type)});
   // What progressive reveal would offer at this step. Dimmed rather than removed: a hidden
   // widget can make a practitioner conclude the application cannot do something it can.
   const revealed=playbackStep===null?null:revealedTypes(playbackPlaced());
@@ -819,6 +885,46 @@ function renderLibrary(search=''){
   //
   // The basis status is shown where a practitioner decides, not buried in the Inspector. An
   // illustrative ruleset is offered and says so, for the same reason an unreviewed composition is.
+  // Input widgets already in the OTHER workflows of this project. The practitioner, 2026-10-19:
+  // *"I create a second workflow and I should then be able to see input widget from other
+  // workflows IN the same project."* And, sharpening it: *"if there are no other workflows there
+  // will be nothing on that list."*
+  //
+  // So the group is ABSENT rather than empty. It has nothing to show for a workflow in no project,
+  // for the first workflow of a new project, or for a project whose other workflows hold no
+  // acquired input -- all three ordinary states -- and a control that is empty until a second
+  // workflow exists would advertise sharing before there is anything to share.
+  const siblings=siblingInputs(storageKey(workflow),allProjects(),readSavedWorkflows())
+    .filter(input=>(input.label+' '+input.workflowName).toLowerCase().includes(search.toLowerCase()));
+  if(siblings.length){
+    $('#node-library').insertAdjacentHTML('beforeend',`<div class="library-group">From this project</div>`
+      +siblings.map((input,index)=>`<button class="palette-node" data-sibling="${index}" `
+        +`title="${esc(`From "${input.workflowName}". One copy of the data is kept for the project; this node gets its own label and position.`)}">`
+        +`<span class="palette-icon">⇥</span><span class="palette-label">${esc(input.label)}</span>`
+        +`<span class="palette-note">${esc(input.workflowName+(input.records===null?'':` · ${input.records} records`))}</span></button>`).join(''));
+  }
+  $('#node-library').querySelectorAll<HTMLButtonElement>('[data-sibling]').forEach(b=>b.onclick=async()=>{
+    const input=siblings[Number(b.dataset.sibling)];
+    if(!input||busy)return;
+    const source=readSavedWorkflows()[input.workflowKey];
+    const node=isRecord(source)&&Array.isArray(source.nodes)
+      ? source.nodes.find(n=>isRecord(n)&&String(n.id)===input.nodeId) : undefined;
+    if(!isRecord(node)||!isRecord(node.params)||node.params.data===undefined){
+      toast('That input could not be read from the other workflow.',{tone:'failure'});return;}
+    const payload=node.params.data;
+    const digest=typeof node.params.dataRef==='string'?node.params.dataRef:await payloadDigest(payload);
+    if(!keepDataset(digest,payload))return;
+    // The sibling keeps its inline copy until its own next save, when dehydration finds the digest
+    // already in the store. Nothing reaches into a workflow that is not being edited.
+    const id=`${input.type}-${Date.now()}`;
+    const copied=structuredClone(node) as Record<string,unknown>;
+    const didAdd=change(w=>{w.nodes.push({...copied,id,
+      x:180+(w.nodes.length%4)*80,y:90+(w.nodes.length%3)*80,
+      params:{...(copied.params as Record<string,unknown>),dataRef:digest}} as unknown as WorkflowNode);selected=id;});
+    if(didAdd===false)return;
+    flow?.fit();
+    toast(`"${input.label}" added from "${input.workflowName}". The project holds one copy of its data; rename this node freely.`);
+  });
   $('#node-library').querySelectorAll<HTMLButtonElement>('[data-composition]').forEach(b=>b.onclick=()=>{
     const found=bundledCompositions().find(c=>`${c.id}@${c.version}`===b.dataset.composition);
     if(!found)return;
@@ -832,8 +938,17 @@ function renderLibrary(search=''){
     toast(`${entry.title} added as one step. Connect its ports; it expands into ${found.members.length} primitives when it runs.`);
   });
   $('#node-library').querySelectorAll<HTMLButtonElement>('[data-add]').forEach(b=>b.onclick=()=>{
-    const type=b.dataset.add as NodeType,sample=structuredClone(type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
-      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Mean-center displacement',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='hex_aggregate'?{type:'hex_aggregate' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered acquisition area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected bands'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Area the points cover',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='coverage_check'?newCoverageCheck():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
+    // Four widgets reached the palette on 2026-10-19 when `addableTypes` stopped consulting a
+    // curated list, and none of them had a draft: the fallback at the end of this chain reads the
+    // OPEN example's template, so a widget absent from it could not be constructed. They were
+    // addable only where a template already contained one, which is why nobody had noticed --
+    // the same shape as the defect that hid them from the palette in the first place.
+    const type=b.dataset.add as NodeType,sample=structuredClone(type==='alert'?{type:'alert' as const,params:{active:null,date:new Date().toISOString().slice(0,10)}}
+      :type==='measure_distance'?{type:'measure_distance' as const,params:{unit:'kilometres' as const}}
+      :type==='facilities'?{type:'facilities' as const,params:{dataset:DATASET,radiusKm:5,sourceMode:'connected' as const}}
+      :type==='facility_audit'?{type:'facility_audit' as const,params:{} as Record<string,never>}
+      :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
+      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Mean-center displacement',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered acquisition area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected bands'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Area the points cover',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='coverage_check'?newCoverageCheck():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
     // in, from the mean longitude of every coordinate already configured. The parameter stays: a
@@ -948,12 +1063,12 @@ function renderInspector(){
         +`<p class="muted">Exploding replaces this node with its primitives so each can be inspected and changed. It cannot be reassembled; Undo is the way back, because once a member's parameter changes the nodes are no longer this composition at this version.</p>`:'');
   }
   if(n.type==='mean_center'){
-    content+=`<div class="notice">Unweighted mean of projected point locations. The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><label class="field-label" for="mean-center-points">Point input</label><select id="mean-center-points" data-map-port="points"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='points'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`;
+    content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote. A missing, non-numeric or negative weight is refused with the number of records it applies to, rather than read as zero; a weight of zero is kept, because a house where nobody died contributes no deaths.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><label class="field-label" for="mean-center-points">Point input</label><select id="mean-center-points" data-map-port="points"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='points'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`;
   }else if(n.type==='compare_point_sets'||n.type==='comparison_map'){
     if(n.type==='compare_point_sets')content+=`<div class="notice">Connect a Mean center widget to each branch. Both centers must use this UTM CRS and have matching source counts. Original and moved locations stay private.</div><label class="field-label" for="comparison-zone">WGS84 UTM zone</label><input id="comparison-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="comparison-hemisphere">Hemisphere</label><select id="comparison-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><p class="description">Distances to the nearest pump and between centers are measured in metres. Pump locations are geographic context.</p>`;
     else content+='<div class="notice">Private evaluation map: both panels share one extent and scale. This view displays existing comparison results and includes original coordinates.</div>';
     content+=nodeInputs(n).map(([port,type])=>`<label class="field-label" for="comparison-port-${port}">${({original:'Original points',moved:'Moved points',pumps:'Reference pumps',originalCenter:'Original mean center',movedCenter:'Moved mean center',comparison:'Comparison result'} as Record<string,string>)[port]}</label><select id="comparison-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`).join('');
-  }else if(n.type==='donut_geomask'||n.type==='hex_aggregate'){
+  }else if(n.type==='donut_geomask'||n.type==='aggregate_points_to_h3_cell'){
     content+=`<div class="notice">Educational transformation only. The private source remains in the project and run evidence. No anonymity claim.</div>`;
     content+='<details><summary>How does this geoprivacy method work? (?)</summary><p>See the <a href="https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library" target="_blank" rel="noopener noreferrer">geoprivacy notebooks</a> for worked examples and evaluation. Map encryption and its calibration controls are planned, not executable here.</p></details>';
     if(n.type==='donut_geomask')content+=`<label class="field-label" for="privacy-innerM">Inner radius (m)</label><input id="privacy-innerM" type="number" min="0" max="5000" value="${n.params.innerM}"><label class="field-label" for="privacy-outerM">Outer radius (m)</label><input id="privacy-outerM" type="number" min="1" max="5000" value="${n.params.outerM}"><label class="field-label" for="privacy-seed">Demonstration seed</label><input id="privacy-seed" type="number" min="0" max="4294967295" value="${n.params.seed}"><p class="description">Output names and IDs are generated afresh; original attributes are not copied. The seeded generator is predictable and unsuitable as a production privacy control.</p>`;
@@ -2137,6 +2252,129 @@ $('#redo-button').onclick=()=>{if(busy||!future.length)return;history.push(struc
 $('#reset-button').onclick=()=>{change(w=>{const key=exampleKey(w);replaceWorkflow(w,template(key));selected=key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';});renderLibrary();flow?.fit();};
 $('#example-select').onchange=e=>loadExample(control(e).value);
 $('#blank-add').onclick=()=>$('#node-library [data-add="study_area"]')?.click();
+/** The eyebrow above the workflow's name: the investigation it belongs to, and how many
+ *  workflows that investigation holds. Said rather than implied, because the whole finding behind
+ *  experiment 122 is that four workflows about one outbreak looked like four unrelated workspaces. */
+function renderProjectEyebrow(){
+  const key=storageKey(workflow),project=workflow.projectId?allProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,allProjects());
+  $('#project-name').textContent=(project?project.name:'No project').toUpperCase();
+  const held=project?project.workflows.length:0;
+  $('#project-workflow-count').textContent=!project?'this workflow belongs to no investigation':held===1?'1 workflow':`${held} workflows`;
+  $('#project-name').title=project?project.subject:'A project is one investigation. Create one to say what these workflows are asking about.';
+}
+/** Create a project, then give it its first workflow.
+ *
+ *  The practitioner, 2026-10-19: *"the first step is not even study area - it's create a project."*
+ *  So this runs BEFORE any geography: it names the investigation, then opens one empty canvas
+ *  belonging to it. The study area is step two, inside that workflow, where it always was. */
+function openProjectDialog(){
+  if(busy)return;
+  $('#project-name-input').value='';$('#project-subject-input').value='';
+  $('#project-dialog').showModal();$('#project-name-input').focus();
+}
+function createProjectFromDialog(){
+  const name=$('#project-name-input').value.trim();
+  if(!name){$('#project-name-input').focus();toast('A project needs a name: what are you investigating?');return;}
+  const stored=readProjects(),project=newProject(name,$('#project-subject-input').value,allProjects());
+  const key=`${project.id}/w1`;
+  project.workflows=[key];
+  if(!writeProjects([...stored,project])){$('#project-dialog').close();return;}
+  $('#project-dialog').close();
+  save();
+  workflow={...blankWorkflow(),name:`${project.name} · first question`,projectId:project.id,workflowKey:key,exampleId:undefined};
+  selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
+  save();renderProjectOptions();renderLibrary();renderResults();render();switchView('workflow');
+  toast(`Project "${project.name}" created with one empty workflow. Add a workflow for each question you want to ask about it.`);
+}
+/** Stored projects in the picker, grouped exactly as the built-in seven are in index.html.
+ *  Without this a created project persists and becomes unreachable, which is worse than refusing
+ *  to create one. Rebuilt wholesale rather than patched: there are at most a few dozen. */
+function renderProjectOptions(){
+  const select=$('#example-select');
+  for(const group of [...select.querySelectorAll('optgroup[data-stored]')])group.remove();
+  const saved=readSavedWorkflows();
+  for(const project of readProjects()){
+    const group=document.createElement('optgroup');
+    group.label=project.name;group.dataset.stored='1';
+    for(const key of project.workflows){
+      const option=document.createElement('option');
+      option.value=key;
+      const held=saved[key] as {name?:string}|undefined;
+      option.textContent=held?.name||`${project.name} · untitled workflow`;
+      group.append(option);
+    }
+    if(group.children.length)select.append(group);
+  }
+  // Membership in a project is OPTIONAL, which only holds if an unfiled workflow can still be
+  // reached. Any minted key no project claims is listed here rather than disappearing.
+  const claimed=new Set(readProjects().flatMap(p=>p.workflows));
+  const unfiled=Object.keys(saved).filter(key=>!isExampleKey(key)&&!claimed.has(key)).sort();
+  if(unfiled.length){
+    const group=document.createElement('optgroup');
+    group.label='In no project';group.dataset.stored='1';
+    for(const key of unfiled){
+      const option=document.createElement('option');
+      option.value=key;option.textContent=(saved[key] as {name?:string}|undefined)?.name||key;
+      group.append(option);
+    }
+    select.append(group);
+  }
+  select.value=storageKey(workflow);
+}
+/** The investigation this workflow is in, and the way to change it.
+ *
+ *  The practitioner, 2026-10-19: *"users can create workflows and can import them into projects.
+ *  Maybe make that optional?"* So it is optional in both directions -- a workflow may belong to no
+ *  project, and one that does can be moved out again. The seven built-in projects are the worked
+ *  examples and are compiled in, so they are shown but cannot be edited: adding your workflow to
+ *  "John Snow, Soho, 1854" would change a published example, and that is the one case where a
+ *  practitioner's work and the project's own records would disagree about what an example is. */
+function renderAssignProject(){
+  const select=$('#assign-project'),key=storageKey(workflow),builtIn=projectOfWorkflow(key,BUILT_IN_PROJECTS),stored=readProjects();
+  select.innerHTML=`<option value="">— No project —</option>`
+    +stored.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')
+    +(builtIn?`<option value="${esc(builtIn.id)}">${esc(builtIn.name)} · worked example</option>`:'');
+  select.value=workflow.projectId||builtIn?.id||'';
+  // A worked example's membership is published, not chosen; so is the absence of a project when
+  // there is none to move into yet.
+  select.disabled=busy||!!builtIn||(!stored.length&&!workflow.projectId);
+  select.title=builtIn?`${builtIn.name} is a worked example: its workflows are published together and are not reassigned here.`
+    :stored.length||workflow.projectId?'Which investigation this workflow belongs to. Optional, and changeable at any time.'
+    :'No projects yet. Create one, then this workflow can join it.';
+}
+/** Move the current workflow into a project, or out of every project.
+ *
+ *  Minting a key is what makes membership possible at all: the workspace map was keyed by a closed
+ *  vocabulary of example ids, so a workflow saved under `blank` would be overwritten by the next
+ *  blank canvas. On joining a project it gets a key of its own, and keeps it on leaving -- the old
+ *  `blank` entry is cleared so the two do not both claim to be this workflow. */
+function assignCurrentWorkflow(projectId:string){
+  if(busy)return;
+  const stored=readProjects(),previousKey=storageKey(workflow);
+  if(projectId&&!stored.some(p=>p.id===projectId))return;
+  for(const project of stored)project.workflows=project.workflows.filter(k=>k!==previousKey);
+  let key=workflow.workflowKey;
+  if(projectId&&!key){
+    const taken=new Set([...stored.flatMap(p=>p.workflows)]);
+    for(let n=1;!key||taken.has(key);n++)key=`${projectId}/w${n}`;
+  }
+  const target=stored.find(p=>p.id===projectId);
+  if(target&&key)target.workflows=[...target.workflows,key];
+  if(!writeProjects(stored)){renderAssignProject();return;}
+  if(key&&key!==previousKey&&isExampleKey(previousKey))
+    try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}');delete saved[previousKey];localStorage.setItem(WORKSPACES,JSON.stringify(saved));forgetSavedWorkflows();}
+    catch{/* the stale entry is harmless; the minted key is what this workflow is saved under now */}
+  workflow.projectId=projectId||undefined;
+  workflow.workflowKey=key;
+  if(projectId)workflow.exampleId=undefined;
+  dirty=true;save();renderProjectOptions();render();
+  toast(target?`This workflow is now in "${target.name}".`:'This workflow is in no project.');
+}
+$('#assign-project').onchange=e=>assignCurrentWorkflow(control(e).value);
+$('#new-project').onclick=openProjectDialog;
+$('#blank-project').onclick=openProjectDialog;
+$('#project-create').onclick=createProjectFromDialog;
+for(const id of ['#project-cancel','#project-dialog-close'] as const)$(id).onclick=()=>$('#project-dialog').close();
 $('#new-workflow').onclick=()=>{if(busy)return;loadExample('blank');change(w=>{replaceWorkflow(w,blankWorkflow());selected=null;});result=null;runWorkflow=null;activeOutputId=null;renderResults();render();switchView('workflow');};
 $('#result-search').oninput=e=>{if(activeOutput()?.pointTable){tablePage=0;renderPointTable();return;}$('#result-rows').querySelectorAll('tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(control(e).value.toLowerCase()));};
 $('#expand-results').onclick=()=>{const expanded=$('.work-area').classList.toggle('results-expanded');$('#expand-results').textContent=expanded?'↙ Split view':'⛶ Expand';$('#expand-results').setAttribute('aria-expanded',String(expanded));};

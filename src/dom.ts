@@ -10,6 +10,17 @@ export interface SelectorElements {
   '#undo-button':HTMLButtonElement;
   '#redo-button':HTMLButtonElement;
   '#blank-add':HTMLButtonElement;
+  '#blank-project':HTMLButtonElement;
+  '#new-project':HTMLButtonElement;
+  '#project-dialog':HTMLDialogElement;
+  '#project-dialog-close':HTMLButtonElement;
+  '#project-cancel':HTMLButtonElement;
+  '#project-create':HTMLButtonElement;
+  '#project-name-input':HTMLInputElement;
+  '#mean-center-weight':HTMLInputElement;
+  '#project-subject-input':HTMLTextAreaElement;
+  '#project-name':HTMLElement;
+  '#project-workflow-count':HTMLElement;
   '#chart-download-svg':HTMLButtonElement;
   '#chart-communication':HTMLElement;
   '#zoom-out':HTMLButtonElement;
@@ -54,6 +65,7 @@ export interface SelectorElements {
   '#pin-save':HTMLButtonElement;
   '#pin-add-pair':HTMLButtonElement;
   '#example-select':HTMLSelectElement;
+  '#assign-project':HTMLSelectElement;
   '#measure-area-source':HTMLSelectElement;
   '#area-unit':HTMLSelectElement;
   '#alert-state':HTMLSelectElement;

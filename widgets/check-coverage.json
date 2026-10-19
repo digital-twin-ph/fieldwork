@@ -107,7 +107,7 @@
       "reason": "It does compute -- a confidence threshold, a kind filter and a name requirement -- but its input comes from a live external source, so an independent recomputation cannot be pinned to a fixture without first freezing a response. The selection logic is unit-tested. Needs a frozen-response fixture before a lab check means anything."
     },
     {
-      "nodeType": "hex_aggregate",
+      "nodeType": "aggregate_points_to_h3_cell",
       "expectation": "parity",
       "check": "21-hex"
     },
@@ -231,7 +231,7 @@
       "check": "10-hull"
     },
     {
-      "nodeType": "summarize_polygons",
+      "nodeType": "summarize_points_to_polygon",
       "expectation": "parity",
       "check": "14-summarize-polygons"
     },

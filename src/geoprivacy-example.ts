@@ -19,7 +19,7 @@ export function geoprivacyExample():Workflow{
     {id:'moved-center',type:'mean_center',x:940,y:505,params:{label:'Moved mean center',zone:30,hemisphere:'north'}},
     {id:'compare',type:'compare_point_sets',x:1240,y:290,params:{label:'Mean-center displacement',zone:30,hemisphere:'north',centers:true},references:[ref('donut-evaluation','Donut geomasking evaluation notebook',notebookUrl+'/-/blob/948eeda/00b-donut-geomasking-evaluation.ipynb','method','Adapted mean-center comparison; unweighted projected location means and pump context, not a privacy test.')]},
     {id:'comparison-map',type:'comparison_map',x:1540,y:290,params:{label:'PRIVATE · original vs moved centers'}},
-    {id:'group',type:'hex_aggregate',x:330,y:610,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2},references:[ref('hex-notebook','Hex grid binning notebook',notebookUrl+'/-/blob/948eeda/00c-hex-grid-binning.ipynb','method','H3 cells and minimum occupancy; occupancy does not ensure anonymity.')]},
+    {id:'group',type:'aggregate_points_to_h3_cell',x:330,y:610,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2},references:[ref('hex-notebook','Hex grid binning notebook',notebookUrl+'/-/blob/948eeda/00c-hex-grid-binning.ipynb','method','H3 cells and minimum occupancy; occupancy does not ensure anonymity.')]},
     {id:'after-group-map',type:'map_output',x:640,y:630,params:{label:'AFTER · H3 cells map',inputMode:'polygons',presentation:'plot'}},
     {id:'after-group-table',type:'table_output',x:640,y:790,params:{label:'AFTER · H3 cells table',inputMode:'polygons'}}
   ];

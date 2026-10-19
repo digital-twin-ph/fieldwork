@@ -123,12 +123,12 @@ export function offNetworkSites(value:unknown):OffNetworkSite[]{
   return Array.isArray(list)?list as OffNetworkSite[]:[];
 }
 export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;features:Catchment[];sites:PointFeature[];method:string;crs:string;boundary?:Boundary;notes:string[];observations?:PointCollection;summary?:{records:number;matched:number;unmatched:number;missingLocation:number;multiple:number;valueField:string};snaps?:{siteId:string;nodeId:string;distanceM:number}[];unconnected?:UnconnectedSite[];offNetwork?:OffNetworkSite[]}
-export const CATCHMENT_TYPES:Record<'voronoi'|'network_input'|'isochrone'|'clip_polygons'|'summarize_polygons',NodeDefinition>={
+export const CATCHMENT_TYPES:Record<'voronoi'|'network_input'|'isochrone'|'clip_polygons'|'summarize_points_to_polygon',NodeDefinition>={
   voronoi:{title:'Voronoi catchments',group:'Spatial operations',icon:'◇',color:'teal',description:'Allocate an extent to the nearest site in a metric CRS',inputs:[['area','area'],['sites','points']],output:'polygons'},
   network_input:{title:'Street network',group:'Sources',icon:'⌁',color:'blue',description:'Download OSM by study area or upload a directed graph',inputs:[['area','area']],output:'network'},
   isochrone:{title:'Network isochrone',group:'Spatial operations',icon:'◷',color:'teal',description:'Buffer reachable network segments for a time budget',inputs:[['sites','points'],['network','network']],output:'polygons'},
   clip_polygons:{title:'Clip polygons',group:'Spatial operations',icon:'✂',color:'teal',description:'Intersect each polygon with the study area',inputs:[['area','area'],['polygons','polygons']],output:'polygons'},
-  summarize_polygons:{title:'Summarize points in polygons',group:'Summaries',icon:'∑',color:'teal',description:'Count locations and optionally sum a numeric attribute',inputs:[['polygons','polygons'],['points','points']],output:'polygons'}
+  summarize_points_to_polygon:{title:'Summarize points to polygons',group:'Summaries',icon:'∑',color:'teal',description:'Count locations and optionally sum a numeric attribute',inputs:[['polygons','polygons'],['points','points']],output:'polygons'}
 };
 const validId=(s:unknown)=>typeof s==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(s);
 const coordinate=(p:unknown):p is Position=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=180&&Math.abs(p[1])<=80;
@@ -165,7 +165,7 @@ export function validateCatchmentNode(n:WorkflowNode){
   if(n.type==='voronoi'||n.type==='isochrone'){if(!Number.isInteger(n.params.zone)||n.params.zone<1||n.params.zone>60||!['north','south'].includes(n.params.hemisphere))throw new Error('Choose a UTM zone 1–60 and hemisphere.');}
   if(n.type==='isochrone'){const p=n.params;if(![p.minutes,p.speedMPerMin,p.bufferM,p.maxSnapM].every(Number.isFinite)||p.minutes<.1||p.minutes>60||p.speedMPerMin<1||p.speedMPerMin>200||p.bufferM<1||p.bufferM>100||p.maxSnapM<0||p.maxSnapM>1000||!['outbound','inbound'].includes(p.direction))throw new Error('Use 0.1–60 minutes, 1–200 m/min, 1–100 m buffer and 0–1,000 m snap limit.');}
   if(n.type==='isochrone'){const p=n.params;if(p.thresholds!==undefined&&(!Array.isArray(p.thresholds)||p.thresholds.length>6||p.thresholds.some((t,i,a)=>!Number.isFinite(t)||t<.1||t>60||(i>0&&t<=a[i-1]))))throw new Error('Use up to six increasing, unique time thresholds between 0.1 and 60 minutes.');if(p.fillHoles!==undefined&&typeof p.fillHoles!=='boolean')throw new Error('Invalid infill option.');}
-  if(n.type==='summarize_polygons'&&(!['include','exclude'].includes(n.params.boundary)||typeof n.params.valueField!=='string'||n.params.valueField.length>100))throw new Error('Choose boundary inclusion and a numeric field name (or leave empty).');
+  if(n.type==='summarize_points_to_polygon'&&(!['include','exclude'].includes(n.params.boundary)||typeof n.params.valueField!=='string'||n.params.valueField.length>100))throw new Error('Choose boundary inclusion and a numeric field name (or leave empty).');
 }
 export function metric(zone:number,hemisphere:string){
   const definition=`+proj=utm +zone=${zone} ${hemisphere==='south'?'+south ':''}+datum=WGS84 +units=m +no_defs`,p=proj4('EPSG:4326',definition),central=zone*6-183;
@@ -460,7 +460,7 @@ export function isochrone(input:PointCollection,network:Network,params:WorkflowN
     +'. Any count over these catchments is over the sites that reached something, not over all of them.');
   return {features,sites:structuredClone(fs),crs:m.crs,method:`Dijkstra ${params.direction}; ${params.minutes} min; ${params.speedMPerMin} m/min; partial edges; D1+D2+D3 buffered, final leg up to ${params.bufferM} m`,notes,snaps,unconnected,offNetwork};
 }
-export function summarizePolygons(input:Polygons,points:PointCollection,params:WorkflowNode<'summarize_polygons'>['params']):Polygons{
+export function summarizePolygons(input:Polygons,points:PointCollection,params:WorkflowNode<'summarize_points_to_polygon'>['params']):Polygons{
   const features=input.features.map(f=>({...structuredClone(f),count:0,total:0,missingValues:0}));let matched=0,unmatched=0,missingLocation=0,multiple=0;
   for(const p of points.features){if(!p.geometry){missingLocation++;continue;}const hits=features.filter(f=>{const r=pointRelation(p.geometry!.coordinates,f.geometry);return r==='Inside'||params.boundary==='include'&&r==='Boundary';});if(!hits.length){unmatched++;continue;}matched++;if(hits.length>1)multiple++;for(const f of hits){f.count++;if(params.valueField){const value=p.properties[params.valueField];if(typeof value==='number'&&Number.isFinite(value))f.total+=value;else f.missingValues++;}}}
   if(features.some(f=>!Number.isFinite(f.total)))throw new Error('Numeric total overflow; review the input values.');
@@ -472,11 +472,11 @@ export function catchmentReceipt(node:WorkflowNode,value:Polygons|Network,runId:
   // Both state the CRS they computed in with the OGC identifier instead, and the absence of
   // fw:metricCRS is itself the fact: nothing was projected. Found 2026-10-13 by querying the
   // receipts for the run's projection and getting "OGC:CRS84" back as a metric answer.
-  const geographic=node.type==='clip_polygons'||node.type==='summarize_polygons';
+  const geographic=node.type==='clip_polygons'||node.type==='summarize_points_to_polygon';
   const operationCRS=geographic?'':'features' in value?value.crs:'';
   const conformsTo=geographic?CRS84_IRI:crsIRIFromName(operationCRS);
-  const operationMethod=node.type==='clip_polygons'?'Polygon intersection in CRS84; empty intersections omitted':node.type==='summarize_polygons'?'Point membership in CRS84 with explicit boundary policy; all memberships retained':'features' in value?value.method:'Validated directed network input; supplied metre lengths';
-  const entity=`urn:fieldwork:run:${runId}:output:${node.id}`,activity=`${entity}:activity`,classes:Record<string,string>={voronoi:'VoronoiComputation',isochrone:'NetworkIsochrone',clip_polygons:'PolygonClipping',summarize_polygons:'PolygonPointSummary',network_input:'NetworkInput'};
+  const operationMethod=node.type==='clip_polygons'?'Polygon intersection in CRS84; empty intersections omitted':node.type==='summarize_points_to_polygon'?'Point membership in CRS84 with explicit boundary policy; all memberships retained':'features' in value?value.method:'Validated directed network input; supplied metre lengths';
+  const entity=`urn:fieldwork:run:${runId}:output:${node.id}`,activity=`${entity}:activity`,classes:Record<string,string>={voronoi:'VoronoiComputation',isochrone:'NetworkIsochrone',clip_polygons:'PolygonClipping',summarize_points_to_polygon:'PolygonPointSummary',network_input:'NetworkInput'};
   let facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n'+`<${activity}> a prov:Activity, fw:${classes[node.type]}; fw:parameters ${JSON.stringify(JSON.stringify(node.type==='network_input'?{source:(value as Network).source,inputMethod:node.params.inputMethod,marginM:node.params.marginM}:node.params))}.\n<${entity}> a prov:Entity; prov:wasGeneratedBy <${activity}>.\n`;
   for(const source of sources)facts+=`<${activity}> prov:used <urn:fieldwork:run:${runId}:output:${source}>.\n`;
   if('nodes' in value)facts+=`<${entity}> fw:sourceDescription ${JSON.stringify(value.source)}; fw:networkMetadata ${JSON.stringify(JSON.stringify(value.provenance||{}))}; fw:networkNodeCount ${value.nodes.length}; fw:networkEdgeCount ${value.edges.length}.\n`;

@@ -16,6 +16,10 @@
       "retired": true
     },
     {
+      "nodeType": "aggregate_points_to_h3_cell",
+      "classification": "standard"
+    },
+    {
       "nodeType": "alert",
       "classification": "standard"
     },
@@ -82,10 +86,6 @@
     },
     {
       "nodeType": "find_health_facilities",
-      "classification": "standard"
-    },
-    {
-      "nodeType": "hex_aggregate",
       "classification": "standard"
     },
     {
@@ -199,7 +199,7 @@
       "classification": "standard"
     },
     {
-      "nodeType": "summarize_polygons",
+      "nodeType": "summarize_points_to_polygon",
       "classification": "standard"
     },
     {

@@ -71,11 +71,11 @@ import {projectionExtract,projectionTable,readExtract,assignSites,assignmentTabl
 import {distanceKm,nearestOf,satisfies} from './nearest-neighbour.js';
 export const NS = 'urn:fieldwork:';
 export const TYPES:Record<NodeType,NodeDefinition> = {
-  mean_center:{title:'Mean center',group:'Spatial operations',icon:'⊙',color:'teal',description:'Compute the unweighted center of point locations in a metric CRS',inputs:[['points','points']],output:'mean-center'},
+  mean_center:{title:'Mean center',group:'Spatial operations',icon:'⊙',color:'teal',description:'Compute the center of point locations in a metric CRS, optionally weighted by a record attribute',inputs:[['points','points']],output:'mean-center'},
   compare_point_sets:{title:'Compare point sets',group:'Spatial operations',icon:'⊕',color:'teal',description:'Compare two mean centers and locate them against reference pumps',inputs:[['original','points'],['moved','points'],['pumps','points']],output:'point-comparison'},
   comparison_map:{title:'Comparison map',group:'Outputs',icon:'◈',color:'green',description:'Show original and moved locations side by side with their mean centers and pumps',inputs:[['comparison','point-comparison']],output:null},
   donut_geomask:{title:'Move points in a donut',group:'Spatial operations',icon:'◎',color:'teal',description:'Shift points within a configured distance band; educational preview, not a privacy guarantee',inputs:[['points','points']],output:'points'},
-  hex_aggregate:{title:'Aggregate points in hexagons',group:'Spatial operations',icon:'⬡',color:'teal',description:'Count points in hexagonal cells and omit sparse cells',inputs:[['points','points']],output:'polygons'},
+  aggregate_points_to_h3_cell:{title:'Aggregate points to H3 cells',group:'Spatial operations',icon:'⬡',color:'teal',description:'Count points in hexagonal cells and omit sparse cells. Hexbinning, onto the fixed H3 index',inputs:[['points','points']],output:'polygons'},
   buffer_area:{title:'Buffer study area',group:'Spatial operations',icon:'◎',color:'teal',description:'Expand an acquisition boundary without changing the reporting area',inputs:[['area','area']],output:'area'},
   ...CATCHMENT_TYPES,
   table_input:{title:'Tabular data',group:'Sources',icon:'▤',color:'blue',description:'Import a long-format table keyed by declared columns; no geometry',inputs:[],output:'table'},
@@ -637,7 +637,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'mean_center':{value=computeMeanCenter(inputs.points,node.params);receipts.push(meanCenterReceipt(node,value as MeanCenter,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from));break;}
       case 'compare_point_sets':{value=comparePointSets(inputs.original,inputs.moved,inputs.pumps,node.params,node.params.centers?inputs.originalCenter:undefined,node.params.centers?inputs.movedCenter:undefined);const sources=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>[e.port,e.from])) as {original:string;moved:string;pumps:string;originalCenter?:string;movedCenter?:string};receipts.push(comparisonReceipt(node,value as PointComparison,runId,sources));break;}
       case 'comparison_map':{const shown=comparisonMap(node,inputs.comparison,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='comparison')!.from);value=shown.value;receipts.push(shown.receipt);break;}
-      case 'donut_geomask':case 'hex_aggregate':{
+      case 'donut_geomask':case 'aggregate_points_to_h3_cell':{
         value=node.type==='donut_geomask'?moveDonut(inputs.points,node.params):aggregateHex(inputs.points,node.params);
         receipts.push(privacyReceipt(node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from,inputs.points.features.length,value as PointCollection|Polygons));break;
       }
@@ -688,8 +688,20 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           raster:workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from}));break;
       }
       case 'buffer_area':{const buffered=bufferArea(node,inputs.area,runId);value=buffered.value;receipts.push(buffered.receipt);break;}
-      case 'network_input':case 'voronoi':case 'isochrone':case 'clip_polygons':case 'summarize_polygons':{
-        if(node.type==='network_input')validateNetwork(node.params.data);
+      case 'network_input':case 'voronoi':case 'isochrone':case 'clip_polygons':case 'summarize_points_to_polygon':{
+        if(node.type==='network_input'){
+          // An EMPTY network is almost always one that has not been downloaded, and acquiring it
+          // is a separate, explicit action -- a button in the Inspector, not part of Run. Saying
+          // only what the value lacks sent the practitioner round three times on 2026-10-19,
+          // redownloading an area the span cap had refused and reading "needs at least one
+          // junction" each time. The refusal now names the action.
+          const network=node.params.data;
+          if(!network?.nodes?.length&&!network?.edges?.length)
+            throw new Error(node.params.inputMethod==='file'
+              ?`"${node.params.label}" has no street network yet. Select it and upload a GraphML or JSON file; running does not import one.`
+              :`"${node.params.label}" has no street network yet. Select it and press "Download and save OSM network" \u2014 running the workflow does not start the download.`);
+          validateNetwork(network);
+        }
         value=node.type==='network_input'?structuredClone(node.params.data):node.type==='voronoi'?voronoi(inputs.sites,inputs.area.boundary,node.params.zone,node.params.hemisphere):node.type==='isochrone'?await computeIsochrone(inputs.sites,inputs.network,node.params):node.type==='clip_polygons'?clipPolygons(inputs.polygons,inputs.area.boundary):summarizePolygons(inputs.polygons,inputs.points,node.params);
         if(node.type==='voronoi'||node.type==='isochrone')(value as Polygons).siteSourceNodeId=workflow.edges.find(e=>e.to===node.id&&e.port==='sites')!.from;
         receipts.push(catchmentReceipt(node,value as Polygons|Network,runId,workflow.edges.filter(e=>e.to===node.id).map(e=>e.from)));break;

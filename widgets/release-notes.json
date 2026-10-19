@@ -317,10 +317,14 @@
     }
    ]
   },
-  "hex_aggregate": {
-   "version": "0.1.1",
-   "released": "2026-10-13",
+  "aggregate_points_to_h3_cell": {
+   "version": "0.2.0",
+   "released": "2026-10-19",
    "changes": [
+    {
+     "kind": "minor",
+     "description": "Renamed from `hex_aggregate` to `aggregate_points_to_h3_cell`. The old identifier keeps resolving: a saved workflow naming `hex_aggregate` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. The verb came after its object and the areal unit was unstated, while its sibling said verb first. Both now read as one operation over a named unit: aggregate points to H3 cells. The unit is the ontology's own term (fw:HexCell, 'H3 cell'), not 'hexbin', because a plotting library's hexbin is a lattice fitted to its data and these cells come from a fixed global index. No contract change: ports, output, parameters and behaviour are identical."
+    },
     {
      "kind": "patch",
      "description": "Retitled from \"Group points in H3 cells\". The node type names hexagonal aggregation and the title named the indexing method instead, so the two shared no word and a reader had to know that H3 cells are hexagons to connect them. Flagged by the naming ratchet added 2026-10-13 under title-type-agreement; the convention's own rule is that the node type and the title must say the same thing. No contract change: ports, output, parameters and behaviour are identical, which is why this is a patch."
@@ -370,12 +374,12 @@
    ]
   },
   "mean_center": {
-   "version": "0.1.0",
-   "released": "2026-10-07",
+   "version": "0.2.0",
+   "released": "2026-10-19",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Reusable unweighted projected mean center of a point set."
+     "kind": "feature",
+     "description": "Optional weightField: each point is weighted by a named record attribute, with the field and the weight total asserted in the receipt beside the unchanged point count. Unweighted when no field is given."
     }
    ],
    "breaking": false,
@@ -713,10 +717,14 @@
    "breaking": false,
    "migrationFrom": []
   },
-  "summarize_polygons": {
-   "version": "0.1.0",
-   "released": "2026-10-07",
+  "summarize_points_to_polygon": {
+   "version": "0.2.0",
+   "released": "2026-10-19",
    "changes": [
+    {
+     "kind": "minor",
+     "description": "Renamed from `summarize_polygons` to `summarize_points_to_polygon`. The old identifier keeps resolving: a saved workflow naming `summarize_polygons` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. The node type named its grouping as if it were the object: the operation reduces POINTS, and the polygons are the areal units it reduces them to. summarize_combined_area is the widget that genuinely summarizes polygons. No contract change: ports, output, parameters and behaviour are identical."
+    },
     {
      "kind": "initial",
      "description": "Reusable local catchment primitive; see docs/experiments/32-john-snow-primitives.md. Bounded prototype, not an exact notebook replay."

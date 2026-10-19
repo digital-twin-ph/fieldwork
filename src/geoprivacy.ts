@@ -4,7 +4,7 @@ import type {Polygons} from './catchments.js';
 import type {Receipt} from './results.js';
 
 export function validatePrivacyNode(node:WorkflowNode):void {
-  if(node.type!=='donut_geomask'&&node.type!=='hex_aggregate')return;
+  if(node.type!=='donut_geomask'&&node.type!=='aggregate_points_to_h3_cell')return;
   if(typeof node.params.label!=='string'||!node.params.label.trim()||node.params.label.length>100)throw new Error('Name the geoprivacy operation using 1–100 characters.');
   if(node.type==='donut_geomask'){
     const {innerM,outerM,seed}=node.params;
@@ -26,13 +26,13 @@ export function moveDonut(input:PointCollection,params:WorkflowNode<'donut_geoma
     return {type:'Feature' as const,id:`moved-${i+1}`,properties:{name:`Moved location ${i+1}`},geometry:{type:'Point' as const,coordinates:[((x*180/Math.PI+540)%360)-180,y*180/Math.PI]}};
   })};
 }
-export function aggregateHex(input:PointCollection,params:WorkflowNode<'hex_aggregate'>['params']):Polygons{
-  validatePrivacyNode({id:'check',type:'hex_aggregate',x:0,y:0,params});const groups=new Map<string,number>();
+export function aggregateHex(input:PointCollection,params:WorkflowNode<'aggregate_points_to_h3_cell'>['params']):Polygons{
+  validatePrivacyNode({id:'check',type:'aggregate_points_to_h3_cell',x:0,y:0,params});const groups=new Map<string,number>();
   for(const f of located(input)){const [lon,lat]=f.geometry!.coordinates,id=latLngToCell(lat,lon,params.resolution);groups.set(id,(groups.get(id)||0)+1);}
   const kept=[...groups].filter(([,count])=>count>=params.minOccupancy).sort(([a],[b])=>a.localeCompare(b));
   return {kind:'hexbin',features:kept.map(([id,count])=>({id,siteId:id,name:`H3 cell ${id}`,count,geometry:{type:'Polygon',coordinates:[cellToBoundary(id,true) as Position[]]}})),sites:kept.map(([id])=>{const [lat,lon]=cellToLatLng(id);return {type:'Feature',id,properties:{name:`H3 cell ${id}`},geometry:{type:'Point',coordinates:[lon,lat]}};}),crs:'OGC:CRS84',method:`H3 cell aggregation, resolution ${params.resolution}; minimum occupancy ${params.minOccupancy}`,notes:[`${groups.size-kept.length} sparse cells omitted. Occupancy is not an anonymity guarantee.`],summary:{records:input.features.length,matched:kept.reduce((sum,[,count])=>sum+count,0),unmatched:input.features.length-kept.reduce((sum,[,count])=>sum+count,0),missingLocation:0,multiple:0,valueField:''}};
 }
-export function privacyReceipt(node:WorkflowNode<'donut_geomask'|'hex_aggregate'>,runId:string,sourceId:string,inputCount:number,output:PointCollection|Polygons):Receipt{
+export function privacyReceipt(node:WorkflowNode<'donut_geomask'|'aggregate_points_to_h3_cell'>,runId:string,sourceId:string,inputCount:number,output:PointCollection|Polygons):Receipt{
   const activity=`urn:fieldwork:run:${runId}:output:${node.id}:activity`,entity=`urn:fieldwork:run:${runId}:output:${node.id}`;
   const type=node.type==='donut_geomask'?'DonutGeomasking':'HexAggregation';
   const features=node.type==='donut_geomask'?(output as PointCollection).features:(output as Polygons).features;
@@ -41,7 +41,7 @@ export function privacyReceipt(node:WorkflowNode<'donut_geomask'|'hex_aggregate'
   let facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix qudt: <http://qudt.org/schema/qudt/>.\n<${activity}> a fw:${type}, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${sourceId}>; ${parameters}; fw:inputCount ${inputCount}; fw:outputCount ${outputCount}.\n<${entity}> a ${node.type==='donut_geomask'?'fw:MovedPointDataset':'fw:HexCellDataset'}, geo:FeatureCollection, prov:Entity; fw:recordCount ${outputCount}; prov:wasGeneratedBy <${activity}>; prov:wasDerivedFrom <urn:fieldwork:run:${runId}:output:${sourceId}>.\n`;
   for(const feature of features){const item=`${entity}:feature:${feature.id}`,geometry=`${item}:geometry`;
     const wkt=node.type==='donut_geomask'?`POINT (${(feature as PointFeature).geometry!.coordinates.join(' ')})`:`POLYGON (${(feature as Polygons['features'][number]).geometry.type==='Polygon'?(feature as Polygons['features'][number]).geometry.coordinates.map(r=>`(${r.map(c=>c.join(' ')).join(', ')})`).join(', '):''})`;
-    facts+=`<${entity}> fw:member <${item}>.\n<${item}> a ${node.type==='donut_geomask'?'fw:MovedPoint':'fw:HexCell'}, geo:Feature; geo:hasGeometry <${geometry}>${node.type==='hex_aggregate'?`; fw:recordCount ${(feature as Polygons['features'][number]).count}`:''}.\n<${geometry}> a geo:Geometry; geo:asWKT ${JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> '+wkt)}^^geo:wktLiteral.\n`;
+    facts+=`<${entity}> fw:member <${item}>.\n<${item}> a ${node.type==='donut_geomask'?'fw:MovedPoint':'fw:HexCell'}, geo:Feature; geo:hasGeometry <${geometry}>${node.type==='aggregate_points_to_h3_cell'?`; fw:recordCount ${(feature as Polygons['features'][number]).count}`:''}.\n<${geometry}> a geo:Geometry; geo:asWKT ${JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> '+wkt)}^^geo:wktLiteral.\n`;
   }
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:node.type==='donut_geomask'?'Reproducible educational displacement; seeded noncryptographic generator; no privacy guarantee.':'H3 aggregation with sparse-cell omission; no anonymity guarantee.'};
 }

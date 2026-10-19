@@ -73,7 +73,7 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   //
   // Asserted as ports first, on 2026-10-14, and corrected the same day: "layer count should be
   // about layers not ports." The isochrone map has two ports and draws four things -- a boundary,
-  // four time bands, 250 death locations and eight pumps -- because `summarize_polygons` keeps
+  // four time bands, 250 death locations and eight pumps -- because `summarize_points_to_polygon` keeps
   // the points it counted on the value it returns, so they reach the map without being wired.
   // Counting ports reported 2 for a picture a reader sees four layers in.
   //

@@ -1,0 +1,72 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:aggregate_points_to_h3_cell",
+  "nodeType": "aggregate_points_to_h3_cell",
+  "version": "0.2.0",
+  "title": "Aggregate points to H3 cells",
+  "released": "2026-10-19",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['aggregate_points_to_h3_cell']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      }
+    ],
+    "output": "polygons"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:HexAggregation",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "PROV computation activity with typed SHACL runtime receipt; configuration and privacy effectiveness require separate validation.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/geoprivacy.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Renamed from `hex_aggregate` to `aggregate_points_to_h3_cell`. The old identifier keeps resolving: a saved workflow naming `hex_aggregate` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. The verb came after its object and the areal unit was unstated, while its sibling said verb first. Both now read as one operation over a named unit: aggregate points to H3 cells. The unit is the ontology's own term (fw:HexCell, 'H3 cell'), not 'hexbin', because a plotting library's hexbin is a lattice fitted to its data and these cells come from a fixed global index. No contract change: ports, output, parameters and behaviour are identical."
+    },
+    {
+      "kind": "patch",
+      "description": "Retitled from \"Group points in H3 cells\". The node type names hexagonal aggregation and the title named the indexing method instead, so the two shared no word and a reader had to know that H3 cells are hexagons to connect them. Flagged by the naming ratchet added 2026-10-13 under title-type-agreement; the convention's own rule is that the node type and the title must say the same thing. No contract change: ports, output, parameters and behaviour are identical, which is why this is a patch."
+    },
+    {
+      "kind": "initial",
+      "description": "Bounded geoprivacy worked example; see docs/experiments/35-cholera-geoprivacy-workflow.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Structural and deterministic checks only. No privacy guarantee or independent scientific certification."
+  }
+}

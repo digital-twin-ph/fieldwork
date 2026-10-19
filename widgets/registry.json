@@ -356,20 +356,28 @@
       ]
     },
     {
-      "id": "urn:fieldwork:widget:hex_aggregate",
-      "nodeType": "hex_aggregate",
-      "currentVersion": "0.1.1",
+      "id": "urn:fieldwork:widget:aggregate_points_to_h3_cell",
+      "nodeType": "aggregate_points_to_h3_cell",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
-          "path": "widgets/releases/hex_aggregate/0.1.0.json",
+          "path": "widgets/releases/aggregate_points_to_h3_cell/0.1.0.json",
           "sha256": "5ae72b9523f6990798da8f9afbf4a19947173dd1ada66b6500106e2ad28c8ee1"
         },
         {
           "version": "0.1.1",
-          "path": "widgets/releases/hex_aggregate/0.1.1.json",
+          "path": "widgets/releases/aggregate_points_to_h3_cell/0.1.1.json",
           "sha256": "1b55ee4bb0a72a12390ad6d7f73b4d2133ae4cecc96a364588f8fd6a074f12a0"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/aggregate_points_to_h3_cell/0.2.0.json",
+          "sha256": "1fddd50265037d7e986f8b7251780e0aaf3c8ef276485b633758777ddc0f85b2"
         }
+      ],
+      "previousNodeTypes": [
+        "hex_aggregate"
       ]
     },
     {
@@ -459,12 +467,17 @@
     {
       "id": "urn:fieldwork:widget:mean_center",
       "nodeType": "mean_center",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/mean_center/0.1.0.json",
           "sha256": "7ef06f9e35bce9922d0a600e75ae32eda723bded6413782180483f06ce0b793e"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/mean_center/0.2.0.json",
+          "sha256": "27f837ef26cb76be8923bd2c095a01a37134a6e6ffd326bb8ffac2d7fbce78cf"
         }
       ]
     },
@@ -877,15 +890,23 @@
       ]
     },
     {
-      "id": "urn:fieldwork:widget:summarize_polygons",
-      "nodeType": "summarize_polygons",
-      "currentVersion": "0.1.0",
+      "id": "urn:fieldwork:widget:summarize_points_to_polygon",
+      "nodeType": "summarize_points_to_polygon",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
-          "path": "widgets/releases/summarize_polygons/0.1.0.json",
+          "path": "widgets/releases/summarize_points_to_polygon/0.1.0.json",
           "sha256": "8f45adde2229b5a79328bd12f9b860df0004bd56616c096c85c75a8296f3887a"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/summarize_points_to_polygon/0.2.0.json",
+          "sha256": "7863083d0e013f60c9fb186f7b3ffd2e775ce8bcec5a556b9ef2556da57d7aff"
         }
+      ],
+      "previousNodeTypes": [
+        "summarize_polygons"
       ]
     },
     {

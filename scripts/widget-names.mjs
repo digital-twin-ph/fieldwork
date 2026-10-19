@@ -32,18 +32,18 @@ export async function palette(){
 
 export function rows({definitions,classification,palette:p}){
   const byType=Object.fromEntries(classification.widgets.map(w=>[w.nodeType,w]));
-  const always=new Set(p.ALWAYS_ADDABLE), starter=new Set(p.STARTER_TYPES);
+  const inputStage=new Set(p.INPUT_STAGE);
   const viaComposition=new Set([...p.ADDABLE_VIA_COMPOSITION,...p.ADDABLE_VIA_RULESET]);
   const order=p.PALETTE_GROUPS;
   return Object.entries(definitions)
     .filter(([type])=>!byType[type]?.retired)
     .map(([nodeType,definition])=>{
-      // Where a practitioner meets it. A widget in neither list is offered only on the examples
-      // whose template names it, which is worth seeing beside the name.
-      const offered=always.has(nodeType)?'always'
-        :starter.has(nodeType)?'teaching canvases'
-        :viaComposition.has(nodeType)?'via a composition or ruleset'
-        :'example templates only';
+      // Where a practitioner meets it, derived from the one gate rather than from a list. The
+      // fourth value here was 'example templates only', and it reported nine widgets for weeks
+      // before anyone read it as a defect; there is no longer a state it can describe.
+      const offered=viaComposition.has(nodeType)?'via a composition or ruleset'
+        :inputStage.has(nodeType)?'input stage, offered first'
+        :'once the canvas holds an input';
       const row={nodeType,title:definition.title,group:definition.group,
         classification:byType[nodeType]?.classification??'unclassified',
         pack:byType[nodeType]?.pack??null,offered,

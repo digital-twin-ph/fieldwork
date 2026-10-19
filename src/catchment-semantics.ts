@@ -27,7 +27,7 @@ export function catchmentSemantics(node:WorkflowNode,value:Network|Polygons,enti
     for(const snap of value.snaps||[])facts+=`<${activity}> fw:snap [ a fw:NetworkSnap; fw:siteId ${lit(snap.siteId)}; fw:networkVertexId ${lit(snap.nodeId)}; fw:snapDistance ${quantity(snap.distanceM,'M')} ].\n`;
   }
   if(node.type==='clip_polygons'&&value.boundary)facts+=`<${activity}> fw:clipGeometry [ a geo:Geometry; geo:asWKT ${lit('<'+CRS84+'> '+geometryWKT(value.boundary))}^^geo:wktLiteral ].\n`;
-  if(node.type==='summarize_polygons'&&value.summary){const s=value.summary;
+  if(node.type==='summarize_points_to_polygon'&&value.summary){const s=value.summary;
     facts+=`<${activity}> fw:boundaryPolicy ${lit(node.params.boundary)}; fw:valueField ${lit(s.valueField)}.\n<${entity}> fw:inputRecordCount ${s.records}; fw:matchedRecordCount ${s.matched}; fw:outsideRecordCount ${s.unmatched}; fw:missingLocationCount ${s.missingLocation}; fw:multipleMembershipCount ${s.multiple}.\n`;
   }
   return facts;

@@ -1,11 +1,13 @@
-// Applies a node-type rename across the widget ledgers, which is the mechanical half of the
-// migration the naming convention describes. The source edits and the RENAMED_NODE_TYPES entry are
-// done by hand, because they need judgement; everything here is bookkeeping that was identical for
-// `samples` and would have been retyped for each of the three that followed.
+// Applies a node-type rename across the widget ledgers AND regenerates every artifact derived from
+// them, which together are the mechanical half of the migration the naming convention describes.
+// The source edits and the RENAMED_NODE_TYPES entry are done by hand, because they need judgement;
+// everything here is bookkeeping that was identical for `samples` and would have been retyped for
+// each of the three that followed.
 //
 // Usage: node scripts/rename-widget.mjs <from> <to> "<why>"
 import {readFileSync,writeFileSync,renameSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
 import {emittedTerms,emitsFor} from './ontology-coupling.mjs';
 import {sourceDefinitions} from './validate-widgets.mjs';
 
@@ -82,6 +84,34 @@ for(const r of reviews.reviews)if(r.nodeType===from){
   delete r.note;
 }
 write('widgets/name-review.json',reviews);
+
+// 7. the DERIVED artifacts, regenerated rather than listed in a comment for someone to remember.
+//
+//  These are computed from the registry and the sources, so a rename invalidates every one of
+//  them and none needs judgement. Two renames on 2026-10-19 failed the gate twice over exactly
+//  this -- first `widgets/evidence.json`, then `ontology/widgets.ttl` -- and the other three were
+//  only regenerated because the stale names were hunted by hand afterwards.
+//
+//  `widgets/evidence.json` is the one worth understanding. It is already in the step-4 loop above,
+//  which rewrites `"nodeType": "<from>"` wherever it appears, so the script touched it, printed
+//  that it had rewritten it, and left it SEMANTICALLY stale: the identifiers were patched and the
+//  derived summary -- rungs, counts, most-used -- was not recomputed. A file that looks handled
+//  and is not is worse than one the script never claimed.
+const DERIVED=[
+  ['scripts/widget-evidence.mjs','widgets/evidence.json'],
+  ['scripts/widget-manual.mjs','ontology/widgets.ttl and widgets/manual-pages.json'],
+  ['scripts/port-contracts.mjs','widgets/port-contracts.json'],
+  ['scripts/release-notes.mjs','widgets/release-notes.json'],
+  ['scripts/widget-names.mjs','docs/widget-names.md'],
+];
+for(const [script,target] of DERIVED){
+  const result=spawnSync(process.execPath,[script,'--write'],{encoding:'utf8'});
+  if(result.status!==0){
+    console.error(`  could not regenerate ${target}: ${script} exited ${result.status}`);
+    console.error(result.stderr?.trim()||result.stdout?.trim()||'(no output)');
+    process.exitCode=1;
+  } else console.log(`  regenerated ${target}`);
+}
 
 console.log(`${from} -> ${to}: release ${version}, ${cleared.length} naming violation(s) cleared, `
   +`ceiling now ${naming.maxKnownViolations}`);

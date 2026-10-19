@@ -4,7 +4,7 @@ import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
 export function polygonDisplay(p:Polygons,view:'map'|'table'|'chart'):DisplayValue{
   if(p.kind==='hexbin'){
     if(view==='chart')throw new Error('H3 cell charts are not configured in this example.');
-    return {kind:'point-table',polygons:p,pointTable:true,centers:[],rows:p.features.map(f=>({id:f.id,recordId:f.id,name:f.name,coordinates:p.sites.find(s=>s.id===f.id)?.geometry?.coordinates||null,sourceNodeId:'hex_aggregate',layerLabel:'H3 aggregate cells (centroids)',attributeTypes:{count:'integer'},attributes:{count:f.count??0}}))};
+    return {kind:'point-table',polygons:p,pointTable:true,centers:[],rows:p.features.map(f=>({id:f.id,recordId:f.id,name:f.name,coordinates:p.sites.find(s=>s.id===f.id)?.geometry?.coordinates||null,sourceNodeId:'aggregate_points_to_h3_cell',layerLabel:'H3 aggregate cells (centroids)',attributeTypes:{count:'integer'},attributes:{count:f.count??0}}))};
   }
   if(view==='chart'&&!p.summary)throw new Error('Connect Summarize points in polygons before a catchment chart.');
   if(view==='chart'&&p.summary?.valueField&&p.features.some(f=>f.total!<0))throw new Error('This chart supports nonnegative totals; use Table for signed summaries.');

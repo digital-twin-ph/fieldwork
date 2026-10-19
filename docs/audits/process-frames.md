@@ -91,7 +91,7 @@ region construction**.
 | `buffer_point` | `points → area` | Spatial operations |
 | `clip_polygons` | `area+polygons → polygons` | Spatial operations |
 | `fill_interior_gaps` | `polygons → polygons` | Spatial operations |
-| `hex_aggregate` | `points → polygons` | Spatial operations |
+| `aggregate_points_to_h3_cell` | `points → polygons` | Spatial operations |
 | `isochrone` | `network+points → polygons` | Spatial operations |
 | `point_grid` | `area → points` | Spatial operations |
 | `reachable_corridor` | `network+points → polygons` | Spatial operations |
@@ -122,7 +122,7 @@ region construction**.
 | `compare_point_sets` | `mean-center+points → point-comparison` | Spatial operations **·group disagrees** |
 | `mean_center` | `points → mean-center` | Spatial operations **·group disagrees** |
 | `rate` | `points → table` | Summaries |
-| `summarize_polygons` | `points+polygons → polygons` | Summaries |
+| `summarize_points_to_polygon` | `points+polygons → polygons` | Summaries |
 
 ### Classify · 3
 

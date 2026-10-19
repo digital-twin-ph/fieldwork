@@ -16,7 +16,7 @@ unmatched as a candidate derived from a real analysis.
 | --- | --- | --- |
 | NB01 Folium map, part 1 | Read death and pump locations from CSV; draw a Soho basemap; add mortality as circle markers | `observations`, `map_output` |
 | NB02 Folium map, part 2 | Compute the mean centre of mortality locations; add it to the map | `mean_center` |
-| NB02, final section | **Weighted mean centre** | **none** |
+| NB02, final section | **Weighted mean centre** | `mean_center` (weighted, 0.2.0 — built 2026-10-19; **none** when this was written) |
 
 29 code cells against 76 of narrative in NB01. The teaching is most of the file.
 
@@ -97,9 +97,18 @@ read.
 | NB02 Convex hulls | **Convex hull** of the death locations, buffered, as a boundary for the diagram | **none** |
 | NB03 Voronoi polygons | Voronoi from pump locations, clipped to the boundary; spatial join | `voronoi`, `clip_polygons` |
 | NB04 Interactive map | Voronoi cells on a Folium map, joined to attributes | `map_output` (interactive) |
-| NB05 Buildings in cells | Spatial join of buildings to cells, centroids, counts per cell | `summarize_polygons` |
+| NB05 Buildings in cells | Spatial join of buildings to cells, centroids, counts per cell | `summarize_points_to_polygon` |
 
 ## Three gaps, derived rather than asserted
+
+**Weighted mean centre — built 2026-10-19, `mean_center` 0.2.0.** The gap below stood for twelve
+days after it was derived, was restated in
+[74](../experiments/74-notebook-first-worked-examples.md), and was then declared out of scope by
+the ontology audit, which recorded `mean_center` as "not a burden-weighted center". Measured when
+it was finally built: on this data the two centres are **2.1 m apart**, so the centre itself was
+robust — but the mean distance to the Broad Street pump is **125.9 m per address against 118.0 m
+per death**. The gap was real and in a different place than the note below supposed. What follows
+is the note as written.
 
 **Weighted mean centre.** `mean_center` records its method as "Unweighted
 arithmetic". The Snow data is 250 locations carrying 489 deaths, so the centre of

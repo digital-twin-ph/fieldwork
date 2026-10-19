@@ -69,9 +69,35 @@ test('a study area can be chosen from administrative boundaries',async({page})=>
   // And the vintage, normalised from the "2010.0" the service really returns.
   await expect(page.locator('#area-boundary-terms')).toContainText('represents 2010');
 
+  // The dialog has to ADMIT the selection. It wrote this summary once with a hard-coded empty
+  // list, so it read "0 of 189 ADM2 units" however many were chosen -- the dialog denying a
+  // selection it had in fact registered. The practitioner, 2026-10-18: "This selection does not
+  // work even if offered."
+  await expect(page.locator('#area-boundary-terms')).toContainText('none chosen yet');
+
+  // THE MAP FOLLOWS THE CHOICE. "if I select the country the map should go there, and if I
+  // select an ADM unit, the map should go there, less friction." The dialog could otherwise sit
+  // over Gaborone while units in the DRC were being picked.
+  const lookingAt=()=>page.locator('#area-map').getAttribute('data-looking-at');
+  // The map goes to the COUNTRY as soon as its units are known, rather than staying at the
+  // default view over Gaborone.
+  const country=(await lookingAt()).split(',').map(Number);
+  expect(country[0],'west of the country extent').toBeGreaterThan(28);
+  expect(country[0]).toBeLessThan(31);
+
+  await page.locator('#area-boundary-pick').selectOption(['0']);
+  // And to the UNIT when one is chosen: a tighter extent inside the country's.
+  const unit=(await lookingAt()).split(',').map(Number);
+  expect(unit[2]-unit[0],'the unit is narrower than the whole level')
+    .toBeLessThan(country[2]-country[0]);
+  expect(unit[0]).toBeGreaterThanOrEqual(country[0]);
+  await expect(page.locator('#area-boundary-terms')).toContainText('1 of');
+  // Named, not just counted: Bunia (a city) sits beside Irumu (a territory a hundred times
+  // larger) under the same ADM2 label, so a count does not say which was chosen.
+  await expect(page.locator('#area-boundary-terms')).toContainText('Rutshuru');
+
   // ONE unit commits its OWN OUTLINE. "Selecting Bunia gave me a square not the jurisdictional
   // polygon" -- a bounding box includes ground in no jurisdiction at all.
-  await page.locator('#area-boundary-pick').selectOption(['0']);
   await page.locator('#area-boundary-use').click();
   await expect(page.locator('#area-boundary-terms')).toContainText('Rutshuru');
   await expect(page.locator('#area-boundary-terms')).toContainText('as published');

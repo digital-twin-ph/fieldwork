@@ -194,7 +194,7 @@ export function selectionSummary(level:BoundaryLevel,chosen:readonly BoundaryUni
   return `${chosen.length} of ${level.units} ${level.level} units · ${vintage} · ${terms}`;
 }
 
-/** The jurisdiction's own outline, reduced to what the study-area drawing contract accepts.
+/** The jurisdiction's own outline, exactly as its source published it.
  *
  *  The practitioner, 2026-10-18: *"selecting Bunia gave me a square not the jurisdictional
  *  polygon."* It did, and that was a shortcut I documented instead of fixing. A bounding box

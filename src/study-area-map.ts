@@ -185,6 +185,11 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   // only, then download the units actually chosen. The probe of 2026-10-17 is what makes that
   // possible -- the metadata endpoint carries admUnitCount and vertex statistics and no geometry,
   // so the size is visible before anything large is fetched.
+  // The summary is rebuilt whenever the selection changes. It used to be written once, with a
+  // hard-coded empty list, so it read "0 of 189 ADM2 units" however many a practitioner had
+  // clicked -- the dialog actively denied a selection it had in fact registered. The practitioner,
+  // 2026-10-18: *"This selection does not work even if offered."*
+  let summarise:typeof import('./boundary-source.js').selectionSummary|null=null;
   let pickedLevel:import('./boundary-source.js').BoundaryLevel|null=null;
   let pickedUnits:import('./boundary-source.js').BoundaryUnit[]=[];
   const boundaryStatus=$('#area-boundary-status'),unitsBox=$('#area-boundary-units');
@@ -239,8 +244,12 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
       // The SIZE stays on screen rather than flashing past. It is the thing that makes
       // "only the boundaries we need" a decision the practitioner can take, and a message that
       // is replaced as soon as the download finishes is a message they may never read.
-      $('#area-boundary-terms').textContent=
-        `${level.meanVertices} vertices each on average \u00b7 ${selectionSummary(level,[])}`;
+      summarise=selectionSummary;
+      showSelection();
+      // THE COUNTRY, as soon as its units are known. There is no country outline to fit before
+      // the download -- the bundled list carries names and codes, not geometry -- so the extent
+      // of every unit at this level is the country's extent.
+      lookAt(pickedUnits);
       // The near miss OUTLIVES the lookup. Putting "another country also matches what you typed"
       // in the transient checking message meant it was replaced the instant the download
       // finished -- the second time in this dialog that the one thing worth reading disappeared
@@ -249,8 +258,44 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
         +(near.length?` Note: ${near.join(', ')} also match what you typed.`:'');
     }catch{boundaryStatus.textContent='That boundary could not be reached. The study area can still be drawn.';}
   };
+  function chosenUnits(){return [...unitPick.selectedOptions].map(o=>pickedUnits[Number(o.value)]).filter(Boolean);}
+  // THE MAP FOLLOWS THE CHOICE. The practitioner, 2026-10-18: *"if I select the country the map
+  // should go there, and if I select an ADM unit, the map should go there, less friction."* The
+  // dialog could sit over Gaborone while a practitioner picked units in the DRC, which left them
+  // choosing a study area they could not see.
+  //
+  // This moves the CAMERA only; it commits no geometry. Nothing is applied to the node until
+  // "Use the selected units", so looking somewhere is not the same as choosing it.
+  function lookAt(units:readonly {geometry:Boundary}[]){
+    let west=Infinity,south=Infinity,east=-Infinity,north=-Infinity;
+    for(const u of units){
+      const [w,s2,e,n]=geometryBounds(u.geometry);
+      if(w<west)west=w; if(e>east)east=e;
+      if(s2<south)south=s2; if(n>north)north=n;
+    }
+    if(!Number.isFinite(west)||!Number.isFinite(south))return;
+    map.fitBounds([[south,west],[north,east]],{padding:[35,35],maxZoom:17});
+    // The extent the camera was sent to, recorded on the element. Leaflet keeps its view in a
+    // closure, so without this there is nothing outside the map that can state where it is --
+    // neither a test nor anyone reading the DOM to find out why they are looking at Gaborone.
+    const el=$('#area-map');
+    el.dataset.lookingAt=`${west.toFixed(4)},${south.toFixed(4)},${east.toFixed(4)},${north.toFixed(4)}`;
+  }
+  // Naming what is selected, not just counting it: with 189 units in a six-row list, "1 of 189"
+  // still leaves open WHICH one, and Bunia (a city) sits beside Irumu (a territory a hundred
+  // times larger) under the same ADM2 label.
+  function showSelection(){
+    if(!pickedLevel||!summarise)return;
+    const chosen=chosenUnits();
+    const names=chosen.length
+      ? ` \u00b7 ${chosen.slice(0,4).map(u=>u.name).join(', ')}${chosen.length>4?` and ${chosen.length-4} more`:''}`
+      : ' \u00b7 none chosen yet';
+    $('#area-boundary-terms').textContent=
+      `${pickedLevel.meanVertices} vertices each on average \u00b7 ${summarise(pickedLevel,chosen)}${names}`;
+  }
+  unitPick.onchange=()=>{showSelection();const chosen=chosenUnits();if(chosen.length)lookAt(chosen);};
   $('#area-boundary-use').onclick=()=>{
-    const chosen=[...unitPick.selectedOptions].map(o=>pickedUnits[Number(o.value)]).filter(Boolean);
+    const chosen=chosenUnits();
     if(!pickedLevel||!chosen.length){$('#area-boundary-terms').textContent='Select at least one unit.';return;}
     void (async()=>{
       const {publishedRings,publishedNote}=await import('./boundary-source.js');

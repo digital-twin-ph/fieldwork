@@ -17,11 +17,24 @@
  *  the places that needed it is a fix that keeps being rediscovered — this one was rediscovered
  *  three days later. All eighteen were migrated; there are no inline handlers left, and a new
  *  one would be a regression worth catching in review.
+ *
+ *  **The second message is the browser's layout loop, not ours.** "ResizeObserver loop completed
+ *  with undelivered notifications" is what a browser emits when observers do not settle within
+ *  one frame; the specification treats it as a notification rather than a fault, and every
+ *  engine delivers it through `onerror`. It failed `hagelloch-example.browser.mjs` in the
+ *  2026-10-18 gate and passed in isolation -- the same signature, and the same cause: layout
+ *  pressure when the whole suite runs at once. Filtering it is not a licence to ignore layout
+ *  thrash; if a resize loop ever fails to terminate, the symptom is a hung or visibly janky
+ *  page, which a console string was never going to be the thing that caught.
  */
-const TEARDOWN=['Context is stopped'];
+const BROWSER_OWN=[
+  'Context is stopped',
+  'ResizeObserver loop completed with undelivered notifications.',
+  'ResizeObserver loop limit exceeded',
+];
 
 export function collectPageErrors(page){
   const errors=[];
-  page.on('pageerror',e=>{if(!TEARDOWN.includes(e.message))errors.push(e.message);});
+  page.on('pageerror',e=>{if(!BROWSER_OWN.includes(e.message))errors.push(e.message);});
   return errors;
 }

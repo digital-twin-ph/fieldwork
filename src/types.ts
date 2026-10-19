@@ -78,7 +78,7 @@ export interface BoundaryProvenance {
   publishedHash:string;
 }
 
-export interface AreaRevision {at:string; geometry:Polygon; selectionMode:'bbox'|'polygon'|'circle'; restoredFrom?:number}
+export interface AreaRevision {at:string; geometry:Boundary; selectionMode:'bbox'|'polygon'|'circle'; restoredFrom?:number}
 
 /** `revisions` is every extent this area has had, oldest first, the last being the current one.
  *
@@ -99,7 +99,7 @@ export interface AreaRevision {at:string; geometry:Polygon; selectionMode:'bbox'
  *  record says "on this date we went back to the extent of that date" rather than quietly
  *  shortening the chain. An investigation that narrowed its area and then widened it again is
  *  exactly the emergent-strategy case this project means to keep. */
-export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Polygon|null; spatialReference?:SpatialReference} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference};
+export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Boundary|null; spatialReference?:SpatialReference} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference};
 export interface Exclusion {sourceNodeId:string; featureId:string; signature:string; reason:string}
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';
 export interface Measurement {squareMetres:number; value:number; unit:AreaUnit; method:string}
@@ -200,7 +200,7 @@ export interface ParamsByType {
   clip_polygons:{label:string};
   summarize_polygons:{label:string;boundary:'include'|'exclude';valueField:string};
   raster_input:{label:string;asset?:import('./raster.js').RasterAsset};
-  clip_raster:{label:string;method:'cell-center'|'all-touched';marginPixels?:number;cutline?:{geometry:Polygon;selectionMode:'bbox'|'polygon'|'circle'}};
+  clip_raster:{label:string;method:'cell-center'|'all-touched';marginPixels?:number;cutline?:{geometry:Boundary;selectionMode:'bbox'|'polygon'|'circle'}};
   places:PointParams; centers:PointParams; point_input:ObservationParams; study_area:AreaParams;
   alert:{active:boolean|null; date:string};
   // The unit is a knob because baking one in is how three widgets came to implement one

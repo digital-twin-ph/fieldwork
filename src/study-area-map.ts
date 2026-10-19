@@ -29,7 +29,7 @@ import {dimensionedBox,circleAround} from './area-buffer.js';
 export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(params:DrawnParams,options?:RasterClipOptions)=>void|boolean,context:{boundary?:Boundary;point?:{coordinates:Position|null;name:string};raster?:RasterGrid;clip?:boolean;clipOptions?:RasterClipOptions}={}){
   const clipOptions:RasterClipOptions={method:context.clipOptions?.method||'cell-center',marginPixels:context.clipOptions?.marginPixels||0};
   const dialog=element('#area-dialog'),$=<S extends string>(s:S)=>element(s,dialog);
-  let geometry:Polygon|null=node.params.source==='drawn'&&node.params.geometry?structuredClone(node.params.geometry):null,selectionMode:DrawnParams['selectionMode']=node.params.source==='drawn'?node.params.selectionMode:'polygon';
+  let geometry:Boundary|null=node.params.source==='drawn'&&node.params.geometry?structuredClone(node.params.geometry):null,selectionMode:DrawnParams['selectionMode']=node.params.source==='drawn'?node.params.selectionMode:'polygon';
   let tool:DrawTool='pan',centre:Position|null=null,vertices:Position[]=[],firstCorner:Position|null=null,down:L.LeafletMouseEvent|null=null,ignoreClickUntil=0,map:L.Map,loaded=0,failed=0;
   const name=$('#area-name');name.value=node.params.label||'My study area';
   const nameLabel=dialog.querySelector('label[for="area-name"]')!,eyebrow=dialog.querySelector('.eyebrow')!,draftLabel=dialog.querySelector('.area-draft .inspector-section')!;
@@ -99,10 +99,16 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
     let valid=false;
     if(geometry){
       const label=document.createElement('span');label.textContent=name.value.trim();
-      L.geoJSON(geometry,{style:{color:'#176b59',weight:2,fillColor:'#5a9b7f',fillOpacity:.2}}).bindTooltip(label,{permanent:true,direction:'center',className:'area-map-label'}).addTo(shapes);
+      drawParts(geometry,label);
       const b=geometryBounds(geometry);['west','south','east','north'].forEach((key,i)=>( $('#area-'+key) as HTMLInputElement).value=b[i].toFixed(7));
       try{validateDrawnGeometry(geometry);validateClip();const n3=studyAreaN3({id:node.id,params:currentParams()});$('#area-n3').textContent=context.clip?'@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<urn:fieldwork:cutline:'+node.id+'> a geo:Geometry; geo:asWKT '+JSON.stringify('<'+CRS84+'> '+geometryWKT(geometry))+'^^geo:wktLiteral.':n3.input;$('#area-summary').textContent=`${selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometry.coordinates.reduce((n,r)=>n+r.length-1,0)} vertices${geometry.coordinates.length>1?` · ${geometry.coordinates.length-1} interior ring${geometry.coordinates.length>2?'s':''}`:''} · ${Math.max(1,Math.round(JSON.stringify(geometry).length/1024))} KB · longitude, latitude`;message(context.raster?`${previewStatus?.textContent} Apply the clip parameters, then rerun to update results.`:'Shape is valid. Apply it to the node, then run to evaluate the N3 rule.');valid=true;}
       catch(e){message(errorMessage(e));$('#area-feedback').classList.add('clip-preview-error');$('#area-feedback').setAttribute('role','alert');if(previewStatus)previewStatus.textContent=errorMessage(e);$('#area-n3').textContent='The draft must be valid and named before N3 is generated.';$('#area-summary').textContent='Draft needs correction';}
+      // VERTEX HANDLES ARE FOR A SINGLE-PART SHAPE. A study area may now hold several parts --
+      // two jurisdictions, possibly in different countries -- and dragging a vertex of one of
+      // them is not an operation this dialog offers: the outlines came from a source as
+      // published, and editing one by hand is what the provenance records as a modification.
+      // The parts are still drawn; they just carry no handles.
+      if(geometry.type==='Polygon'){
       const ring=geometry.coordinates[0];
       // A circle is a polygon, but it must not be edited as one: dragging one of its 128
       // vertices would deform it into something that is no longer a radius around a centre.
@@ -116,6 +122,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
         marker.on('dragend',()=>{const v=marker.getLatLng(),next=[v.lng,v.lat];if(selectionMode==='bbox'){const other=points[1-i];geometry={type:'Polygon',coordinates:[[[Math.min(next[0],other[0]),Math.min(next[1],other[1])],[Math.max(next[0],other[0]),Math.min(next[1],other[1])],[Math.max(next[0],other[0]),Math.max(next[1],other[1])],[Math.min(next[0],other[0]),Math.max(next[1],other[1])],[Math.min(next[0],other[0]),Math.min(next[1],other[1])]]]};}else{const r=ring.slice(0,-1);r[i]=next;geometry={type:'Polygon',coordinates:[[...r,r[0]]]};}refresh();});
       });
       }
+      }
     }else{
       const draft=tool==='bbox'&&firstCorner?[firstCorner]:vertices;
       if(draft.length)L.polyline(draft.map(ll),{color:'#176b59',dashArray:'5 5'}).addTo(shapes);
@@ -126,6 +133,76 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
     }
     $('#area-apply').disabled=!valid;
   }
+  /** Below this many pixels across, a part is drawn as a pin instead of an outline.
+   *
+   *  The practitioner, 2026-10-18: *"if there are several countries or cities in different
+   *  countries involved in the study area, the polygons will likely be too small for a zoomed out
+   *  view and hence it will be a global view zoomed out with pins on the centroids of the study
+   *  area. When zoomed in on one, we can show the polygon."*
+   *
+   *  14 px is about the size of the pin itself, so the rule is simply: never draw a shape smaller
+   *  than the marker that would stand for it. An outline that renders as three pixels of fill is
+   *  not a boundary a reader can judge -- it is a dot that merely looks like a measurement. The
+   *  same rule covers polygons, circles and bounding boxes, because all three are rings here. */
+  const PIN_BELOW_PX=14;
+  const partsOf=(g:Boundary):Position[][][]=>g.type==='Polygon'?[g.coordinates]:g.coordinates;
+  /** A point guaranteed to be INSIDE the ring, not merely its average.
+   *
+   *  A centroid falls outside a crescent or a horseshoe, and a pin outside the jurisdiction it
+   *  stands for would be worse than no pin. The average is used when it lands inside, and a
+   *  scanline midpoint through the ring's middle when it does not. */
+  function representativePoint(ring:Position[]):Position{
+    const pts=ring.slice(0,-1);
+    const avg:Position=[pts.reduce((t,p)=>t+p[0],0)/pts.length,pts.reduce((t,p)=>t+p[1],0)/pts.length];
+    if(pointInRing(avg,ring))return avg;
+    const ys=pts.map(p=>p[1]),y=(Math.min(...ys)+Math.max(...ys))/2;
+    const xs:number[]=[];
+    for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+      const [xi,yi]=pts[i],[xj,yj]=pts[j];
+      if((yi>y)!==(yj>y))xs.push(xi+(y-yi)/(yj-yi)*(xj-xi));
+    }
+    xs.sort((a,b)=>a-b);
+    return xs.length>=2?[(xs[0]+xs[1])/2,y]:avg;
+  }
+  function pointInRing(p:Position,ring:Position[]){
+    let inside=false;
+    for(let i=0,j=ring.length-2;i<ring.length-1;j=i++){
+      const [xi,yi]=ring[i],[xj,yj]=ring[j];
+      if(((yi>p[1])!==(yj>p[1]))&&(p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi))inside=!inside;
+    }
+    return inside;
+  }
+  /** Each part at the size it actually occupies: an outline when that is legible, a pin when it
+   *  is not. Re-evaluated on every zoom, so zooming in on a pin turns it into its boundary. */
+  function drawParts(g:Boundary,label?:HTMLElement){
+    const parts=partsOf(g);
+    let labelled=false,pins=0;
+    for(const rings of parts){
+      const ring=rings[0];
+      let w=Infinity,s2=Infinity,e=-Infinity,n2=-Infinity;
+      for(const [x,y] of ring){if(x<w)w=x;if(x>e)e=x;if(y<s2)s2=y;if(y>n2)n2=y;}
+      const a=map.latLngToContainerPoint([s2,w]),b=map.latLngToContainerPoint([n2,e]);
+      const across=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y));
+      if(across<PIN_BELOW_PX){
+        pins++;
+        const at=representativePoint(ring);
+        const pin=L.circleMarker(ll(at),{radius:6,color:'#176b59',weight:2,fillColor:'#5a9b7f',fillOpacity:.9})
+          .addTo(shapes);
+        if(label&&!labelled){pin.bindTooltip(label,{permanent:true,direction:'top',className:'area-map-label'});labelled=true;}
+      }else{
+        const shape=L.geoJSON({type:'Polygon',coordinates:rings} as Boundary,
+          {style:{color:'#176b59',weight:2,fillColor:'#5a9b7f',fillOpacity:.2}}).addTo(shapes);
+        if(label&&!labelled){shape.bindTooltip(label,{permanent:true,direction:'center',className:'area-map-label'});labelled=true;}
+      }
+    }
+    const el=$('#area-map');
+    el.dataset.drawnParts=String(parts.length);
+    el.dataset.drawnPins=String(pins);
+  }
+  // Zooming changes which representation is honest, so the shapes are redrawn, and only the
+  // shapes -- revalidating and re-serialising the N3 on every zoom would rebuild a 166 KB string
+  // to move a camera.
+  map.on('zoomend',()=>{if(geometry){shapes.clearLayers();const label=document.createElement('span');label.textContent=name.value.trim();drawParts(geometry,label);}});
   const radiusInput=()=>dialog.querySelector<HTMLInputElement>('#area-radius');
   function drawCircle(){
     if(!centre)return;
@@ -325,33 +402,34 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
           `${publishedNote(chosen[0].name,rings)} \u00b7 ${pickedLevel!.source} \u00b7 ${pickedLevel!.boundaryID} \u00b7 ${pickedLevel!.licence}`;
         return;
       }
-      // SEVERAL units still become their bounding extent, and the text says so rather than
-      // letting a box pass for a shape. Carrying members whole to the node is A54's other half.
-      const all=chosen.flatMap(u=>{
-        const g=u.geometry as {type:string;coordinates:unknown};
-        return g.type==='MultiPolygon'?(g.coordinates as number[][][][]).flat(2):(g.coordinates as number[][][]).flat();
-      }) as [number,number][];
-      if(!all.length){$('#area-boundary-terms').textContent='Those units carry no coordinates.';return;}
-      // Accumulated rather than spread: several published units run to tens of thousands of
-      // coordinates, and Math.min(...array) throws RangeError at that length.
-      let west=Infinity,south=Infinity,east=-Infinity,north=-Infinity;
-      for(const [x,y] of all){
-        if(x<west)west=x; if(x>east)east=x;
-        if(y<south)south=y; if(y>north)north=y;
+      // SEVERAL UNITS ARE SEVERAL PARTS, each as published. They used to collapse to a bounding
+      // box around all of them -- a shape belonging to none, and the practitioner reported it
+      // twice -- and that was only ever because a study area could hold one polygon. It can hold
+      // several now, so there is nothing left to collapse.
+      const parts:[number,number][][][]=[];
+      const kept:typeof chosen=[];
+      for(const u of chosen){
+        const r=publishedRings(u.geometry);
+        if(r)       {parts.push(r.rings);kept.push(u);}
       }
-      geometry=bboxPolygon(west,south,east,north);
-      // A box around several units is nobody's published boundary, so it is recorded as derived
-      // from the level and NOT as published. publishedHash is deliberately a value the current
-      // geometry cannot match.
-      acquired={boundaryID:pickedLevel!.boundaryID,unitID:chosen.map(u=>u.id).join(' '),
-        unitName:chosen.map(u=>u.name).join(', '),source:pickedLevel!.source,licence:pickedLevel!.licence,
+      if(!parts.length){$('#area-boundary-terms').textContent='Those units carry no usable outline.';return;}
+      try{geometry=validateDrawnGeometry({type:'MultiPolygon',coordinates:parts});}
+      catch(e){$('#area-boundary-terms').textContent=`${kept.map(u=>u.name).join(', ')}: ${errorMessage(e)}`;return;}
+      selectionMode='polygon';
+      acquired={boundaryID:pickedLevel!.boundaryID,unitID:kept.map(u=>u.id).join(' '),
+        unitName:kept.map(u=>u.name).join(', '),source:pickedLevel!.source,licence:pickedLevel!.licence,
         licenceSource:pickedLevel!.licenceSource,yearRepresented:pickedLevel!.yearRepresented,
         canonical:pickedLevel!.canonical,retrievedFrom:pickedLevel!.geoJsonUrl,
-        retrievedAt:new Date().toISOString(),vertices:0,publishedHash:'bounding-box'};
-      selectionMode='bbox';setTool('pan');refresh();fit();
+        retrievedAt:new Date().toISOString(),
+        vertices:parts.reduce((n,rings)=>n+rings.reduce((m,r)=>m+r.length-1,0),0),
+        publishedHash:boundaryFingerprint(geometry)};
+      setTool('pan');refresh();fit();
+      const dropped=chosen.length-kept.length;
       $('#area-boundary-terms').textContent=
-        `${chosen.map(u=>u.name).join(', ')} \u00b7 A BOUNDING BOX AROUND ${chosen.length} UNITS, not their outlines: `
-        +`it includes ground in none of them. Choose one unit for its own boundary. \u00b7 ${pickedLevel!.boundaryID}`;
+        `${kept.map(u=>u.name).join(', ')} \u00b7 ${kept.length} outlines as published, `
+        +`${parts.reduce((n,rings)=>n+rings.reduce((m,r)=>m+r.length-1,0),0)} vertices`
+        +`${dropped?`, ${dropped} unit${dropped===1?'':'s'} carried no usable outline`:''} \u00b7 `
+        +`${pickedLevel!.source} \u00b7 ${pickedLevel!.boundaryID} \u00b7 ${pickedLevel!.licence}`;
     })();
   };
   $('#area-fit').onclick=fit;$('#area-old-naledi').onclick=()=>map.setView([-24.685,25.901],14);

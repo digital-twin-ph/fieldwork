@@ -35,6 +35,17 @@
  ],
  "widgets": [
   {
+   "nodeType": "aggregate_points_to_h3_cell",
+   "exampleUses": [
+    "geoprivacy"
+   ],
+   "exampleUseCount": 1,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "example+parity"
+  },
+  {
    "nodeType": "alert",
    "exampleUses": [
     "heat"
@@ -214,17 +225,6 @@
    "labOwed": true,
    "fieldUse": [],
    "rung": "example only"
-  },
-  {
-   "nodeType": "hex_aggregate",
-   "exampleUses": [
-    "geoprivacy"
-   ],
-   "exampleUseCount": 1,
-   "lab": "parity",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example+parity"
   },
   {
    "nodeType": "isochrone",
@@ -484,7 +484,7 @@
    "rung": "parity only"
   },
   {
-   "nodeType": "summarize_polygons",
+   "nodeType": "summarize_points_to_polygon",
    "exampleUses": [
     "snow-epidemic-curve",
     "snow-geoprivacy",

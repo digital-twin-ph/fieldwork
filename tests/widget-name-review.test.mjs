@@ -76,21 +76,24 @@ test('the shipped ledger passes and covers every live widget', ()=>{
 test('the generated table shows the palette words beside the identifier', ()=>{
   const definitions={clip_raster:{title:'Clip raster',group:'Spatial operations',icon:'x',color:'t',
     description:'d',inputs:[['raster','raster']],output:'raster'}};
-  const palette={PALETTE_GROUPS:['Spatial operations'],ALWAYS_ADDABLE:['clip_raster'],
-    STARTER_TYPES:[],ADDABLE_VIA_COMPOSITION:[],ADDABLE_VIA_RULESET:[]};
+  const palette={PALETTE_GROUPS:['Spatial operations'],INPUT_STAGE:new Set(['point_input']),
+    ADDABLE_VIA_COMPOSITION:[],ADDABLE_VIA_RULESET:[]};
   const list=rows({definitions,classification:{widgets:[{nodeType:'clip_raster',classification:'standard'}]},palette});
-  assert.equal(list[0].offered,'always');
+  assert.equal(list[0].offered,'once the canvas holds an input');
   const text=markdown({rows:list,review:{reviews:[]},stampedAt:'2026-10-13'});
   assert.match(text,/\| `clip_raster` \| Clip raster \|/);
   assert.match(text,/never reviewed/);
 });
 
-test('a domain widget offered always is visible in the table, not merely recorded', ()=>{
+test('a domain widget offered everywhere is visible in the table, not merely recorded', ()=>{
   // The contradiction this table is meant to surface: widgets/classification.json types the three
-  // slr_ widgets as domain while src/palette.ts offers them whatever example is loaded.
+  // slr_ widgets as domain while src/palette.ts offers them whatever example is loaded. Sharper
+  // since 2026-10-19, not resolved: addableTypes stopped consulting a curated list and now offers
+  // every live widget once the canvas holds an input, so a domain widget is offered in every
+  // workflow by rule rather than by having been listed.
   const classification=JSON.parse(readFileSync(new URL('../widgets/classification.json',import.meta.url),'utf8'));
   const text=readFileSync(new URL('../docs/widget-names.md',import.meta.url),'utf8');
   for(const widget of classification.widgets.filter(w=>w.classification==='domain'&&!w.retired))
-    assert.match(text,new RegExp(`\`${widget.nodeType}\`.*domain.*always`),
-      `${widget.nodeType} should be visible as a domain widget offered always`);
+    assert.match(text,new RegExp(`\`${widget.nodeType}\`.*domain.*once the canvas holds an input`),
+      `${widget.nodeType} should be visible as a domain widget offered in every workflow`);
 });

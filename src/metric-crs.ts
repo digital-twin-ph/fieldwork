@@ -42,7 +42,7 @@ export const crsIRI=(choice:MetricChoice):string=>
   `http://www.opengis.net/def/crs/EPSG/0/${epsgCode(choice)}`;
 
 /** The OGC identifier for CRS84, for an operation that computes in degrees and projects nothing.
- *  `clip_polygons` and `summarize_polygons` do: they intersect and count on longitude and latitude
+ *  `clip_polygons` and `summarize_points_to_polygon` do: they intersect and count on longitude and latitude
  *  directly, which their parity note states rather than hides. */
 export const CRS84_IRI='http://www.opengis.net/def/crs/OGC/1.3/CRS84';
 

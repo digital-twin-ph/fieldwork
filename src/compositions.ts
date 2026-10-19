@@ -34,7 +34,7 @@ import type {Receipt} from './results.js';
  *  stage verb. Compositions are all new, so every one can follow it from birth.
  *
  *  Spelled `summarize`, not `summarise` as experiment 76 wrote it. Node types in this
- *  project take `-ize` — `summarize_polygons` predates all of this and `summarize_hull` was
+ *  project take `-ize` — `summarize_points_to_polygon` predates all of this and `summarize_hull` was
  *  renamed to match it earlier today — so a composition called `summarise_*` sitting beside
  *  widgets called `summarize_*` would be the defect, not the fix. The stage is still
  *  "summarise" in prose and in the glossary; this is the identifier spelling. */

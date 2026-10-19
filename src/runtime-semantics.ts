@@ -8,8 +8,8 @@ import {HOST_REGISTRY} from './pack-catalog.js';
 /** Explicit bindings to receipt writers, not a parser or runtime version dispatcher. */
 export function receiptActivities(node:WorkflowNode,runId:string):string[]{
   const base=`urn:fieldwork:run:${runId}:`,id=node.id;
-  if(['network_input','voronoi','isochrone','clip_polygons','summarize_polygons'].includes(node.type))return [base+'output:'+id+':activity'];
-  if(node.type==='donut_geomask'||node.type==='hex_aggregate')return [base+'output:'+id+':activity'];
+  if(['network_input','voronoi','isochrone','clip_polygons','summarize_points_to_polygon'].includes(node.type))return [base+'output:'+id+':activity'];
+  if(node.type==='donut_geomask'||node.type==='aggregate_points_to_h3_cell')return [base+'output:'+id+':activity'];
   if(node.type==='compare_point_sets')return [base+'output:'+id+':activity'];
   if(node.type==='mean_center')return [base+'output:'+id+':activity'];
   if(node.type==='comparison_map')return [base+'output:'+id+':view'];

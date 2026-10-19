@@ -16,7 +16,7 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
     iso?{id:'catchments',type:'isochrone',x:320,y:200,params:{label:'Walking-time catchment',zone:30,hemisphere:'north',minutes:5,thresholds:[1,5,10,15],fillHoles:true,speedMPerMin:75,bufferM:25,maxSnapM:100,direction:'outbound'},references:[reference('iso-method','John Snow isochrone notebook',isoSource+'NB03-Cholera-Case-Study-Isochrone-Map.ipynb','method','Conceptual adaptation; Fieldwork interpolates partial edges, preserves curved geometry and holes, and does not reproduce notebook infill. See local method review.')]}
       :{id:'catchments',type:'voronoi',x:320,y:200,params:{label:'Nearest pump catchments',zone:30,hemisphere:'north'},references:[reference('voronoi-method','John Snow Voronoi notebook',voronoiSource+'NB03-Constructing-Voronoi-Polygons.ipynb','method','Independent half-plane implementation in WGS84 UTM zone 30N. Original notebook uses angular coordinates; results need not match.')]},
     {id:'clip',type:'clip_polygons',x:620,y:30,params:{label:'Clip to reporting area'}},
-    {id:'summary',type:'summarize_polygons',x:910,y:100,params:{label:'Locations and deaths by catchment',boundary:'include',valueField:'DEATHS'}},
+    {id:'summary',type:'summarize_points_to_polygon',x:910,y:100,params:{label:'Locations and deaths by catchment',boundary:'include',valueField:'DEATHS'}},
     // Configured for a reader who was not in the room. Everything a figure needs to stand alone is
     // stated here rather than left to fall back on the node's label and a list of upstream node
     // names: a title that says what is shown and where, a subtitle that says what the reader is

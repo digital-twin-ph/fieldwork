@@ -1,0 +1,73 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:summarize_points_to_polygon",
+  "nodeType": "summarize_points_to_polygon",
+  "version": "0.2.0",
+  "title": "Summarize points to polygons",
+  "released": "2026-10-19",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['summarize_points_to_polygon']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "polygons",
+        "type": "polygons"
+      },
+      {
+        "name": "points",
+        "type": "points"
+      }
+    ],
+    "output": "polygons"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:PolygonPointSummary",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. Configuration SHACL is future work.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/catchments.ts",
+      "src/street-network.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Renamed from `summarize_polygons` to `summarize_points_to_polygon`. The old identifier keeps resolving: a saved workflow naming `summarize_polygons` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. The node type named its grouping as if it were the object: the operation reduces POINTS, and the polygons are the areal units it reduces them to. summarize_combined_area is the widget that genuinely summarizes polygons. No contract change: ports, output, parameters and behaviour are identical."
+    },
+    {
+      "kind": "initial",
+      "description": "Reusable local catchment primitive; see docs/experiments/32-john-snow-primitives.md. Bounded prototype, not an exact notebook replay."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Synthetic numerical contracts and pinned source regression cases; no independent scientific certification."
+  }
+}

@@ -44,6 +44,19 @@ not a practitioner in the field.
 
 ## Urgent
 
+**Storage is capped by the smallest store the browser offers, and nothing chose it.**
+The study-area budgets in decision A03 — 1 MiB per extent, 1.5 MiB across revisions — are sized
+against `localStorage`, measured at 5,226,496 bytes in both engines. The same probe measured
+IndexedDB, Cache and OPFS at **10.7 GB in Chromium and 1.0 GB in WebKit**: 200x to 2,000x more.
+The practitioner, 2026-10-19: *"Just curious can be we storage that can store bigger sizes of
+artifacts?"* Recorded as [121](experiments/121-storage-beyond-local-storage.md).
+
+The blocking unknown is not capacity but persistence: nothing has measured what
+`navigator.storage.persist()` grants in either engine, and a study area that is silently evicted
+would be worse than one refused up front. That probe is what 121 names as its closing condition,
+and it also decides where a PMTiles extract should live.
+
+
 **A mechanism for "below": nothing compares a release's claims to its code.**
 The practitioner's method is to look back, forward, sideways, above and below
 ([105](experiments/105-five-directions.md)). Back and forward were mechanised on 2026-10-12;

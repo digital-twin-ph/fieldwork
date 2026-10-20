@@ -46,8 +46,27 @@ It does not download while you run the workflow. Acquisition is always something
 
 It does not guess your area. Without a connected study area there is nothing to bound the request.
 
-It is a walking network. Distances along it are walking distances, and a network downloaded today
-describes the streets today, not the streets of whatever period your data comes from.
+It downloads one travel mode at a time. Choose walking or driving before you download, because the
+two are different graphs and not two labels on one:
+
+| | Walking keeps | Driving keeps |
+| --- | --- | --- |
+| Footways, paths, steps, pedestrian ways | yes | no |
+| Motorways, trunk roads and their slip roads | no | yes |
+| Ordinary streets — residential, unclassified, tertiary to primary | yes | yes |
+| One-way restrictions it obeys | the ones that apply on foot | vehicle one-ways, and roundabouts |
+
+A saved graph keeps the mode it was downloaded for, and the widget says which. To change mode,
+change it here and download again: the new graph replaces the old one. A widget further down the
+workflow that asks for a mode this graph cannot carry refuses the run and says so, rather than
+reporting minutes for a journey the streets do not support.
+
+Distances along it are distances on those streets, and a network downloaded today describes the
+streets today, not the streets of whatever period your data comes from.
+
+A driving graph carries no speed limits, no junction delay and no congestion. Travel time over it
+is one speed applied to every street, which is the same model walking uses and a weaker one for a
+car.
 
 ## Worked examples that use it
 

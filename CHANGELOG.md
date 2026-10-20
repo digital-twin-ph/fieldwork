@@ -5,6 +5,19 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **A street network is downloaded for walking or for driving.** There was one filter and it was a
+  walking one, while the reachability widget already offered walking, cycling, driving or other —
+  so a driving question was asked of a graph that excluded motorways and trunk roads and included
+  steps, and nothing objected. On the Soho graph this repository ships, 56.7% of edges and 48.1% of
+  edge length are types a driving filter excludes, and 28.1% carry a vehicle one-way restriction
+  the walking parser ignores. Driving now keeps motorways and trunk roads, drops footways, paths
+  and steps, honours vehicle one-ways and roundabouts, and reads `motor_vehicle` and `motorcar`
+  restrictions; the highway exclusions follow OSMnx's drive filter so the two are comparable. The
+  mode is part of the request, so a cached walking graph cannot be served to a driving download; it
+  is saved with the graph, shown on the widget and asserted in the receipt; and a downstream widget
+  asking for a mode the graph cannot carry is refused rather than answered. Walking remains the
+  default. A driving graph still carries no speed limits, no junction delay and no congestion —
+  travel time is one speed applied to every street.
 - **A project is an investigation, and holds several workflows.** "Project" had been a word in the
   title bar bound to the current workflow's name. It is now an entity: a subject, and a workflow
   for each question asked about it. The four cholera workflows are one project; Old Naledi's two

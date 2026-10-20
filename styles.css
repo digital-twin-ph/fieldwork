@@ -214,6 +214,17 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 @media(max-width:530px){
   .app-header{min-width:0}
   .brand,.workspace-name{min-width:0}
+  /* The MARK gives way, not the version badge, and the badge is inside the mark.
+     `min-width:0` let `.brand` shrink, and its contents then overflowed it to the right: the name
+     never truncated, so the badge kept its position while the controls slid left underneath it.
+     Measured on 2026-10-20 in WebKit here -- at 330px the badge overlaps the header controls by
+     94px², at 300px by 403px² -- which is the failure CI's Linux WebKit had been reporting at
+     375px for half a day, where wider font metrics bring it forward. The name truncating is the
+     thing that was missing; the badge must not shrink, because a clipped version number is worse
+     than a clipped wordmark. */
+  .brand>span:not(.app-version){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brand-sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brand img,.app-version{flex-shrink:0}
   .header-right{min-width:0;flex-shrink:1}
   .header-right .connection{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }

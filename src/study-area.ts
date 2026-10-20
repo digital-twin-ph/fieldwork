@@ -42,6 +42,33 @@ export const GEOMETRY_BYTE_BUDGET=1048576;
 /** Every extent one area has had. Doubled by the two writes, this leaves ~40% of the quota free. */
 export const AREA_BYTE_BUDGET=1572864;
 
+/** Why a save was refused, in terms the practitioner can act on -- which means telling the truth
+ *  about whether acting is possible.
+ *
+ *  The old message said "Storage is full -- export the workflow to a file, or open fewer worked
+ *  examples". That is sound advice when a workflow would fit beside less company and is WRONG
+ *  advice when it would not fit in an empty store, which is the case this widget now produces:
+ *  the practitioner downloaded Bunia on 2026-10-20 and the graph alone is several times the whole
+ *  quota. Clearing every other example would not have helped, and the message sent them to do it.
+ *
+ *  localStorage accepts 5,226,496 bytes measured on this device, and a workflow is written twice
+ *  on every save -- the open workflow and the saved workspaces -- so what one workflow may cost is
+ *  half of that. See docs/experiments/121-storage-beyond-local-storage.md, where the stores that
+ *  would hold it are measured at 10.7 GB in Chromium and 1.0 GB in WebKit. */
+export function storageRefusal(bytes:number):string{
+  const mb=(value:number)=>(value/1e6).toFixed(1);
+  const affordable=STORAGE_QUOTA_BYTES/2;
+  if(bytes>affordable)
+    return `This workflow is ${mb(bytes)} MB and this device keeps workflows in a store that holds `
+      +`${mb(STORAGE_QUOTA_BYTES)} MB in total, written twice on each save. It will not fit however `
+      +`much else you clear, so it was not kept. Export it to a file to keep it, or cover a smaller `
+      +`area: a saved street network can carry roughly ${Math.round(affordable/332).toLocaleString()} `
+      +`junctions, which is well under the graph limit this widget offers.`;
+  return 'This could not be saved on this device, so it was not kept. The workflow store is full — '
+    +'export the workflow to a file, or open fewer worked examples: every one you open is kept '
+    +'beside this one. A downloaded street network is the largest thing a workflow holds.';
+}
+
 export function geometryBytes(g:unknown):number{return JSON.stringify(g).length;}
 
 // Edge crossing in near-linear time instead of the O(n^2) pair scan this replaces. Measured, the

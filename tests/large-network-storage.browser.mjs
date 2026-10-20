@@ -1,0 +1,76 @@
+import {test,expect} from '@playwright/test';
+import assert from 'node:assert/strict';
+import {payload} from './payload-store.mjs';
+
+// The case this exists for, 2026-10-20: the practitioner downloaded Bunia and was told "This could
+// not be saved on this device, so it was not kept." The download had worked and the SAVE had not,
+// and because a network is kept only if it persists, the graph was rolled back. localStorage
+// accepts 5,226,496 bytes measured in both engines and a workflow is written twice per save; Bunia
+// is an estimated 14.2 MB. See docs/experiments/121-storage-beyond-local-storage.md.
+//
+// So this builds a graph that provably could not have been kept before -- larger than the WHOLE
+// localStorage quota -- and requires that it survives a reload.
+// The service worker serves this application's fetches, and a routed stub does not reach them in
+// WebKit -- so without this the download went to the REAL overpass-api.de and the test measured
+// central London. The other download test blocks the worker for the same reason.
+test.use({serviceWorkers:'block'});
+const QUOTA=5226496,NODES=40000;
+const chain=()=>{
+  const elements=[];
+  for(let i=0;i<NODES;i++)elements.push({type:'node',id:i+1,lon:-0.14+i*0.000002,lat:51.5134+i*0.0000005});
+  for(let i=1;i<NODES;i++)elements.push({type:'way',id:1000000+i,nodes:[i,i+1],tags:{highway:'residential'}});
+  return {version:0.6,elements};
+};
+
+test('a street network larger than the whole localStorage quota is kept and survives a reload',async({page})=>{
+  test.slow();
+  const body=JSON.stringify(chain());
+  await page.goto('/?example=snow-isochrone');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  // A catch-all refusal FIRST, so that a stub which fails to match can never reach a donated
+  // public service. It caught exactly that here. Playwright matches the most recently registered
+  // route first, so the specific stubs below still win.
+  await page.route(/^https:\/\//,route=>route.abort());
+  for(const host of ['overpass-api.de','overpass.kumi.systems','overpass.private.coffee'])
+    await page.route(`https://${host}/api/status`,route=>
+      route.fulfill({body:'Rate limit: 2\n2 slots available now.\n',contentType:'text/plain'}));
+  await page.route('https://overpass-api.de/api/interpreter',route=>
+    (route.request().postData()||'').includes('node%281%29')
+      ?route.fulfill({json:{version:0.6,elements:[]}})
+      :route.fulfill({body,contentType:'application/json'}));
+  await page.locator('.react-flow__node[data-id="network"]').click();
+  await page.locator('#network-input-method').selectOption('osm');
+  await page.locator('#download-network').click();
+  await expect(page.locator('#inspector-content')).toContainText(`${NODES} nodes`,{timeout:120000});
+
+  const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
+  const node=stored.nodes.find(n=>n.type==='network_input');
+  assert.equal(node.params.data,undefined,'the graph is not in the workflow');
+  const graph=await payload(page,node.params.dataRef);
+  const bytes=JSON.stringify(graph).length;
+  assert.ok(bytes>QUOTA,`the graph is ${bytes} bytes, which must exceed the ${QUOTA}-byte store it used to live in`);
+  assert.equal(graph.nodes.length,NODES);
+
+  // The workflow itself stays small, which is the whole point: localStorage holds a workflow and
+  // not a street network.
+  const workflowBytes=await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1').length);
+  // Measured 2026-10-20 in Chromium: an 8,096,643-byte graph beside a 64,924-byte workflow.
+  assert.ok(workflowBytes<400000,`the saved workflow is ${workflowBytes} bytes`);
+
+  // And the reference resolves: a reload hydrates the graph back out of the large store.
+  await page.reload();
+  // A COMPLETED RUN is the proof that hydration worked, and it is the engine-independent one. A
+  // reference whose payload is missing is a refusal: the workflow would have been rejected at
+  // boot and replaced by a default one, taking the network node with it. So a run that completes
+  // over a workflow still holding this node is a run that read the graph back out of the store.
+  //
+  // Asserted this way rather than by opening the node on the canvas, which is a measurement of
+  // how quickly forty thousand junctions render -- 33 s in WebKit, where the canvas is still
+  // re-rendering when a click arrives.
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:240000});
+  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
+  assert.ok(after.nodes.some(n=>n.id==='network'),'the workflow survived the reload');
+  assert.equal(after.nodes.find(n=>n.type==='network_input').params.dataRef,node.params.dataRef);
+  const rehydrated=await payload(page,node.params.dataRef);
+  assert.equal(rehydrated.nodes.length,NODES,'and the graph is still in the store after a reload');
+});

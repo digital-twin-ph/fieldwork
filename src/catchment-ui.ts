@@ -1,6 +1,7 @@
 import type {WorkflowNode,Escape} from './types.js';
 import {CATCHMENT_TYPES,downloadLimits} from './catchments.js';
 import {recommendedPauseSeconds} from './network-throttle.js';
+import {payloadStoreKind} from './payload-store.js';
 import {networkPreviewSvg,networkPreviewCaption,networkCoverage,PREVIEW_SCALE_NOTE} from './network-preview.js';
 import type {Boundary} from './types.js';
 /** The picture, its measurement, and -- when it matters -- the sentence saying the download did not
@@ -80,6 +81,7 @@ export function catchmentInspector(n:WorkflowNode,esc:Escape,boundary?:Boundary)
     +[1e6,2e6,4e6,8e6,16e6,30e6].map(b=>`<tr><td>${b/1e6} MB</td><td>${recommendedPauseSeconds(b)} s</td></tr>`).join('')
     +`</tbody></table><p class="muted">The pause a download earns is applied whether or not the knob is set this high; setting it means knowing the wait before it happens rather than after.</p></details>`
     +`<p class="muted">Counts every point in the graph, including each bend \u2014 not only where streets meet.</p>`
+    +(payloadStoreKind()==='indexeddb'?'':`<p class="notice" id="network-store-warning">This device is keeping saved data in the small store, which holds about 5 MB in total. A street network for anything larger than a neighbourhood will be refused. Export the workflow to a file to keep one.</p>`)
     +`<button class="button primary" id="download-network">Download and save OSM network</button><p>Uses the connected Study area's bounding box plus margin. Whole ways may extend beyond it. Sends those bounds to overpass-api.de; no key required. Retains topology rather than cutting edges at the polygon. The response and feature limits follow the graph limit below: at 2,000 junctions they are 2 MB and 15,000 features.</p>`:'')+number('maxNodes','Graph limit (junctions); segments allowed at 2.5x this',n.params.maxNodes??50000,500,50000)
     +`<p class="muted">The size of graph this will accept. Lower it to refuse a large download before it starts.</p>`
     +networkPreview(n.params.data,boundary,esc)

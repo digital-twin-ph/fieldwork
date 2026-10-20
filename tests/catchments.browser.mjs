@@ -2,6 +2,7 @@ import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {collectPageErrors} from './page-errors.mjs';
+import {payload} from './payload-store.mjs';
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 
 test('Map presentation travels with interactive view, SVG and N3 evidence',async({page})=>{
@@ -57,7 +58,10 @@ test('John Snow examples use shared primitives, persist parameters and replay of
 test('Street network imports GraphML and rejects invalid uploads without replacing saved data',async({page})=>{
   await page.goto('/?example=blank');await page.locator('[data-add="network_input"]').click();
   const xml='<graphml><key id="crs" attr.name="crs"/><key id="x" attr.name="x"/><key id="y" attr.name="y"/><key id="l" attr.name="length"/><graph edgedefault="directed"><data key="crs">EPSG:4326</data><node id="a"><data key="x">-.136</data><data key="y">51.513</data></node><node id="b"><data key="x">-.135</data><data key="y">51.513</data></node><edge source="a" target="b"><data key="l">70</data></edge></graph></graphml>';
-  await page.locator('#network-upload').setInputFiles({name:'tiny.graphml',mimeType:'application/xml',buffer:Buffer.from(xml)});await expect(page.locator('#inspector-content')).toContainText('2 nodes');const w=await saved(page),node=w.nodes.find(n=>n.type==='network_input');assert.equal(node.params.data.edges.length,1);assert.equal(node.params.data.provenance.sha256.length,64);
+  await page.locator('#network-upload').setInputFiles({name:'tiny.graphml',mimeType:'application/xml',buffer:Buffer.from(xml)});await expect(page.locator('#inspector-content')).toContainText('2 nodes');const w=await saved(page),node=w.nodes.find(n=>n.type==='network_input');
+  // An uploaded graph is kept in the large store like a downloaded one, so the saved workflow
+  // holds its digest and not its edges.
+  assert.equal(node.params.data,undefined);const graph=await payload(page,node.params.dataRef);assert.equal(graph.edges.length,1);assert.equal(graph.provenance.sha256.length,64);
   await page.locator('#network-upload').setInputFiles({name:'invalid.graphml',mimeType:'application/xml',buffer:Buffer.from(xml.replace('EPSG:4326','EPSG:3857'))});await expect(page.locator('#toast')).toContainText('WGS84');assert.deepEqual((await saved(page)).nodes,w.nodes);
 });
 // This test replaces the Overpass response with a fixture, so it needs request interception.
@@ -86,7 +90,11 @@ test('Street network downloads bounded OSM data explicitly, preserves failed dow
     const sent=route.request().postData()||'';
     if(sent.includes('node%281%29')){probes++;await route.fulfill({json:{version:0.6,elements:[]}});return;}
     requests++;assert.match(sent,/data=/);await route.fulfill({json:{elements:[{type:'node',id:1,lon:-.136668,lat:51.513341},{type:'node',id:2,lon:-.135,lat:51.513341},{type:'way',id:3,nodes:[1,2],tags:{highway:'footway'}}]}});});
-  await page.locator('.react-flow__node[data-id="network"]').click();await page.locator('#network-input-method').selectOption('osm');assert.equal(requests,0);await page.locator('#download-network').click();await expect(page.locator('#inspector-content')).toContainText('2 nodes');assert.equal(requests,1);const w=await saved(page),data=w.nodes.find(n=>n.type==='network_input').params.data;assert.equal(data.provenance.provider,'OpenStreetMap');assert.ok(data.provenance.bounds[0]<-.142);assert.ok(data.provenance.boundary.coordinates.length);
+  await page.locator('.react-flow__node[data-id="network"]').click();await page.locator('#network-input-method').selectOption('osm');assert.equal(requests,0);await page.locator('#download-network').click();await expect(page.locator('#inspector-content')).toContainText('2 nodes');assert.equal(requests,1);const w=await saved(page),node=w.nodes.find(n=>n.type==='network_input');
+  // The saved workflow holds a REFERENCE; the graph itself is in the large store. A street network
+  // in localStorage is what stopped Bunia being kept at all on 2026-10-20.
+  assert.equal(node.params.data,undefined);assert.match(node.params.dataRef,/^[0-9a-f]{16,}$/);
+  const data=await payload(page,node.params.dataRef);assert.equal(data.provenance.provider,'OpenStreetMap');assert.ok(data.provenance.bounds[0]<-.142);assert.ok(data.provenance.boundary.coordinates.length);
   await expect(page.locator('#download-network')).toBeDisabled();await expect(page.locator('#network-download-status')).toContainText('seconds');await page.clock.fastForward(61000);await expect(page.locator('#download-network')).toBeEnabled();
   await page.unroute('https://overpass-api.de/api/interpreter');await page.route('https://overpass-api.de/api/interpreter',route=>
     (route.request().postData()||'').includes('node%281%29')

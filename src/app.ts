@@ -53,7 +53,8 @@ import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,distanceText} from './old-naledi-ui.js';
-import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds} from './study-area.js';
+import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds,storageRefusal} from './study-area.js';
+import {loadPayloads,putPayload,cachedPayloads,payloadStoreKind,payloadBytes,onStoreDegraded} from './payload-store.js';
 import {openStudyAreaEditor} from './study-area-map.js';
 import {newAreaMeasurement,areaUnitOptions,formatArea,AREA_UNITS} from './area-measurement.js';
 import {coverageExercise,newObservations,newCoverageCheck,relationLabel} from './spatial-coverage.js';
@@ -153,15 +154,17 @@ const PROJECTS='fieldwork-projects-v1';
  *  they came from -- that is just what a digest does -- but a workflow is only ever OFFERED the
  *  inputs of its own project's other workflows. Sharing storage is a byte fact; sharing visibility
  *  is a claim about which investigation data belongs to, and only the second is scoped. */
-const DATASETS='fieldwork-datasets-v1';
-function readDatasets():Record<string,unknown>{
-  try{const raw=JSON.parse(localStorage.getItem(DATASETS)||'{}');return isRecord(raw)?raw:{};}
-  catch{return {};}
-}
-function keepDataset(digest:string,payload:unknown):boolean{
-  try{const datasets=readDatasets();if(digest in datasets)return true;
-    localStorage.setItem(DATASETS,JSON.stringify({...datasets,[digest]:payload}));forgetSavedWorkflows();return true;}
-  catch{$('#save-status').textContent='Storage unavailable — export to keep';return false;}
+const readDatasets=():Record<string,unknown>=>cachedPayloads();
+/** Keep a payload where it will fit, and report whether it is kept rather than assuming it.
+ *
+ *  Both callers are already async -- a download and an import both await something -- so this
+ *  awaits the durable write BEFORE the workflow records a reference to it. The alternative, a
+ *  reference written now and a payload written later, is a workflow that reloads into a refusal. */
+async function keepDataset(digest:string,payload:unknown):Promise<boolean>{
+  const where=await putPayload(digest,payload);
+  forgetSavedWorkflows();
+  if(!where)$('#save-status').textContent='Storage unavailable — export to keep';
+  return where!==null;
 }
 /** Every saved workflow, with shared payloads put back.
  *
@@ -358,12 +361,25 @@ function toast(message:string,options?:{action?:{label:string;run:()=>void};tone
   }
   toastTimer=setTimeout(()=>element.classList.remove('visible'),5000);
 }
+// Before anything is hydrated: a reference whose payload is missing is a refusal, so the payloads
+// have to be read out of IndexedDB first. Top-level await, in an ES module bundle that already
+// uses it, rather than a render that shows a workflow with its inputs missing.
+//
+// The handler is registered FIRST so that a store which degrades during the load -- the migration
+// is the first thing that writes -- is reported rather than discovered later. One toast, failure
+// tone, because a silent fallback is the hazard: it turns a 10 GB ceiling back into a 5 MB one
+// while the application goes on saying "Saved on this device".
+onStoreDegraded((_kind,why)=>toast(`${why} Large street networks will be refused until it is. Export anything you need to keep.`,{tone:'failure'}));
+await loadPayloads();
 try{const saved=localStorage.getItem(KEY);if(saved)workflow=validateWorkflow(hydrateWorkflow(JSON.parse(saved),readDatasets(),true));}catch(error){toast(errorMessage(error).startsWith('Shared input data is missing')?errorMessage(error):'Saved workflow could not be loaded. The example is ready.');}
 if(!workflow.nodes.some(n=>n.id===selected))selected=exampleKey(workflow)==='raster'?'raster-input':exampleKey(workflow)==='old-naledi'?'access':workflow.nodes[0]?.id;
 function save(){
   syncProjectManifest(workflow);
   const previous=new Map<string,string|null>();
-  try{for(const key of [KEY,WORKSPACES])previous.set(key,localStorage.getItem(key));const workspaces=JSON.parse(previous.get(WORKSPACES)||'{}');const stored=dehydrateWorkflow(workflow);workspaces[storageKey(workflow)]=stored;localStorage.setItem(KEY,JSON.stringify(stored));localStorage.setItem(WORKSPACES,JSON.stringify(workspaces));forgetSavedWorkflows();$('#save-status').textContent='Saved on this device';return true;}
+  try{for(const key of [KEY,WORKSPACES])previous.set(key,localStorage.getItem(key));const workspaces=JSON.parse(previous.get(WORKSPACES)||'{}');const stored=dehydrateWorkflow(workflow);workspaces[storageKey(workflow)]=stored;localStorage.setItem(KEY,JSON.stringify(stored));localStorage.setItem(WORKSPACES,JSON.stringify(workspaces));forgetSavedWorkflows();
+    // WHICH store, when it is not the large one. A practitioner whose payloads are back under the
+    // 5 MB cap needs to know before a download, not after it is refused.
+    $('#save-status').textContent=payloadStoreKind()==='indexeddb'?'Saved on this device':'Saved on this device — small store only';return true;}
   catch{forgetSavedWorkflows();for(const [key,value] of previous){try{if(localStorage.getItem(key)!==value){if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}}catch{/* Storage may be unavailable even for rollback. Keep the editor draft open. */}}$('#save-status').textContent='Storage unavailable — export to keep';return false;}
 }
 /** Which published version of a worked example a saved workspace came from.
@@ -434,7 +450,7 @@ function loadExample(key:string){if(busy)return;save();let fromTemplate=true;try
  *  Safe to call from inside an `onchange`: the element has already fired its change, so blurring
  *  it cannot fire another one. */
 const dropFocus=()=>{(document.activeElement as HTMLElement|null)?.blur();};
-function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){workflow=previous;dropFocus();render();toast('This could not be saved on this device, so it was not kept. Storage is full — export the workflow to a file, or open fewer worked examples: every one you open is kept beside this one. A downloaded street network is the largest thing a workflow holds.',{tone:'failure'});return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
+function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){const bytes=JSON.stringify(workflow).length;workflow=previous;dropFocus();render();toast(storageRefusal(bytes),{tone:'failure'});return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
   // The edit is rolled back and the panel is rewritten -- WHILE the control that made the edit
   // still holds focus. Chromium throws "The node to be removed is no longer a child of this
   // node. Perhaps it was moved in a 'blur' event handler?" from the innerHTML assignment,
@@ -934,7 +950,7 @@ function renderLibrary(search=''){
       toast('That input could not be read from the other workflow.',{tone:'failure'});return;}
     const payload=node.params.data;
     const digest=typeof node.params.dataRef==='string'?node.params.dataRef:await payloadDigest(payload);
-    if(!keepDataset(digest,payload))return;
+    if(!await keepDataset(digest,payload))return;
     // The sibling keeps its inline copy until its own next save, when dehydration finds the digest
     // already in the store. Nothing reaches into a workflow that is not being edited.
     const id=`${input.type}-${Date.now()}`;
@@ -1683,7 +1699,7 @@ function renderInspector(){
   optionalElement('#catchment-output-mode')?.addEventListener('change',e=>change(w=>{const target=required(w.nodes.find(x=>x.id===n.id));(target.params as unknown as Record<string,unknown>).inputMode=control(e).value;w.edges=w.edges.filter(edge=>edge.to!==n.id);}));
   optionalElement('#polygon-output-label')?.addEventListener('change',e=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value;}));
   optionalElement('#save-network')?.addEventListener('click',()=>{try{const text=(document.querySelector('#network-json') as HTMLTextAreaElement).value;if(text.length>2000000)throw new Error('Network JSON exceeds 2 MB.');const data=JSON.parse(text);change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true});}catch(e){toast(errorMessage(e));}});
-  for(const selector of ['#network-file','#network-upload'])document.querySelector<HTMLInputElement>(selector)?.addEventListener('change',async e=>{const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;const baseline=JSON.stringify(workflow);try{const data=await importNetwork(file,getNode(workflow,n.id,'network_input').params.maxNodes);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed; import again.');change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true});}catch(e){toast(errorMessage(e));}});
+  for(const selector of ['#network-file','#network-upload'])document.querySelector<HTMLInputElement>(selector)?.addEventListener('change',async e=>{const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;const baseline=JSON.stringify(workflow);try{const data=await importNetwork(file,getNode(workflow,n.id,'network_input').params.maxNodes);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed; import again.');const digest=await payloadDigest(data);if(!await keepDataset(digest,data))throw new Error(`This ${(payloadBytes(data)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved. Export the workflow to a file to keep it.`);change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true});}catch(e){toast(errorMessage(e));}});
   // The status panel. Rendered from the LAST check, so it survives the Inspector being redrawn,
   // and asked for only on click: every check is a request to a donated service.
   const paintEndpoints=()=>{
@@ -1711,7 +1727,13 @@ function renderInspector(){
     finally{button.disabled=false;button.textContent='Check endpoint status';paintEndpoints();}
   });
   paintEndpoints();
-  optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';try{const {boundary}=previewArea(workflow,n.id);const node=getNode(workflow,n.id,'network_input');const data=await downloadOSM(boundary,node.params.marginM??250,node.params.maxNodes,(node.params.pauseSeconds??60)*1000,!!node.params.data?.nodes?.length,(phase,fraction)=>{networkDownloadPhase=phase;const line=document.querySelector<HTMLElement>('#network-download-status');if(line)line.textContent=phase;const bar=document.querySelector<HTMLButtonElement>('#download-network');if(bar){bar.textContent=phase;bar.style.backgroundImage=fraction===undefined?'':`linear-gradient(to right, var(--accent) ${Math.round(Math.min(1,fraction)*100)}%, transparent ${Math.round(Math.min(1,fraction)*100)}%)`;}},node.params.travelMode??'walking');if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed during download; retry with the current boundary.');if(change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true})){networkDownloadError=null;toast('OSM network saved on this device. Run the workflow to update results.');}}catch(e){networkDownloadError=errorMessage(e);toast(errorMessage(e),{tone:'failure'});}finally{button.disabled=false;button.textContent='Download and save OSM network';button.style.backgroundImage='';networkDownloadPhase=null;}});
+  optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';try{const {boundary}=previewArea(workflow,n.id);const node=getNode(workflow,n.id,'network_input');const data=await downloadOSM(boundary,node.params.marginM??250,node.params.maxNodes,(node.params.pauseSeconds??60)*1000,!!node.params.data?.nodes?.length,(phase,fraction)=>{networkDownloadPhase=phase;const line=document.querySelector<HTMLElement>('#network-download-status');if(line)line.textContent=phase;const bar=document.querySelector<HTMLButtonElement>('#download-network');if(bar){bar.textContent=phase;bar.style.backgroundImage=fraction===undefined?'':`linear-gradient(to right, var(--accent) ${Math.round(Math.min(1,fraction)*100)}%, transparent ${Math.round(Math.min(1,fraction)*100)}%)`;}},node.params.travelMode??'walking');if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed during download; retry with the current boundary.');
+    // The graph goes to the payload store and the workflow keeps a reference, so what localStorage
+    // holds is a workflow and not a street network. Bunia is an estimated 14.2 MB against a
+    // 5,226,496-byte store written twice per save; see docs/experiments/121.
+    const digest=await payloadDigest(data);
+    if(!await keepDataset(digest,data))throw new Error(`This ${(payloadBytes(data)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved. Export the workflow to a file to keep it, or cover a smaller area.`);
+    if(change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true})){networkDownloadError=null;toast('OSM network saved on this device. Run the workflow to update results.');}}catch(e){networkDownloadError=errorMessage(e);toast(errorMessage(e),{tone:'failure'});}finally{button.disabled=false;button.textContent='Download and save OSM network';button.style.backgroundImage='';networkDownloadPhase=null;}});
   document.querySelectorAll<HTMLSelectElement>('[data-map-port]').forEach(el=>el.onchange=()=>change(w=>setConnection(w,el.value,n.id,el.dataset.mapPort!)));
   // Applying the suggested zone, so the advice is actionable rather than only stated. It sets
   // both the zone and the hemisphere together: a zone number without its hemisphere is half an

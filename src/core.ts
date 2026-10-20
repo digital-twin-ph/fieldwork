@@ -489,6 +489,17 @@ export function validateWorkflow(raw:unknown):Workflow {
 /** Nodes the plan is built backwards from. A node with no output that nothing consumes is
  *  invisible to the walk, so a terminal node must be named here or it never runs. */
 function resultNodes(w:Pick<Workflow,'nodes'>){return w.nodes.filter(n=>['output','measure_area','coverage_check','map_output','table_output','chart_output','comparison_map'].includes(n.type));}
+/** A workflow that is NOT FINISHED, which is not a workflow that went wrong.
+ *
+ *  The practitioner, 2026-10-20, on a red failure toast over a canvas holding a study area and a
+ *  street network: *"There is an error toast which does not seem to be an error. The lack of an
+ *  output is not an error, it's an incomplete workflow."* Right, and the difference is not
+ *  cosmetic: a failure says something broke and invites a bug report, while an unfinished workflow
+ *  is the ordinary state of a canvas halfway through being built. The refusals that mean "add the
+ *  next thing" carry this type, and the interface reads it rather than inferring tone from the
+ *  fact that something was thrown. */
+export class IncompleteWorkflow extends Error {}
+
 export function executionPlan(workflow:Workflow) {
   const w=validateWorkflow(workflow), outputs=resultNodes(w);
   if(!outputs.length){
@@ -498,26 +509,26 @@ export function executionPlan(workflow:Workflow) {
     // message, there is already a study area."* The study-area clause describes an EXEMPTION, not
     // a step: a canvas of nothing but study areas runs without an output so its N3 can be read.
     if(!w.nodes.length)
-      throw new Error('This canvas is empty. Add an input to start \u2014 a Study area, Point data, '
+      throw new IncompleteWorkflow('This canvas is empty. Add an input to start \u2014 a Study area, Point data, '
         +'Tabular data or a Street network.');
     if(!w.nodes.every(n=>n.type==='study_area'))
-      throw new Error(`Nothing here displays a result, so there is nothing for a run to produce. `
+      throw new IncompleteWorkflow(`Nothing here displays a result, so there is nothing for a run to produce. `
         +`This workflow holds ${[...new Set(w.nodes.map(n=>TYPES[n.type]?.title??n.type))].join(', ')}. `
         +`Add a Map, Table or Chart output and connect it to the step whose result you want to see. `
         +`(A canvas holding only Study area nodes is the exception: it runs without an output, so its `
         +`N3 facts can be inspected.)`);
     outputs.push(...w.nodes);
   }
-  for(const n of w.nodes)if(n.type==='study_area'&&n.params.source==='drawn'&&!n.params.geometry)throw new Error('Select a study area on the map before running.');
+  for(const n of w.nodes)if(n.type==='study_area'&&n.params.source==='drawn'&&!n.params.geometry)throw new IncompleteWorkflow('Select a study area on the map before running.');
   // Same shape as the line above: a node may be on the canvas before it has been told what to do,
   // and the refusal names the node rather than the type, because a workflow can hold several.
   for(const n of w.nodes)if(n.type==='apply_ruleset'&&!n.params.ruleset)
-    throw new Error(`Choose a ruleset for "${n.params.label||n.id}" before running. It decides what the step classifies and which inputs it takes.`);
+    throw new IncompleteWorkflow(`Choose a ruleset for "${n.params.label||n.id}" before running. It decides what the step classifies and which inputs it takes.`);
   const result:WorkflowNode[]=[], done=new Set<string>();
   function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=requiredInputs(node,{coverageConnected:w.edges.some(e=>e.to===node.id&&e.port==='coverage')});for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;
       // The area is optional here: a country names the scope instead. Required only when the
       // practitioner has asked for the study area to bound the request.
-      const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new Error(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));}
+      const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new IncompleteWorkflow(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));}
       // Everything else actually wired, so the plan follows the EDGES and not only the ports a
       // node insists on. A map insists on nothing from 2026-10-15 -- it draws the layers it is
       // given -- and ordering by required ports alone put it in the plan BEFORE its own sources,

@@ -45,6 +45,9 @@ not a practitioner in the field.
 ## Urgent
 
 **Storage is capped by the smallest store the browser offers, and nothing chose it.**
+_Acted on 2026-10-20 for payloads: street networks now live in IndexedDB and the workflow keeps a
+digest. What remains is below — the study-area budgets are still sized against `localStorage`,
+nothing is ever deleted from the payload store, and the write has not been timed._
 The study-area budgets in decision A03 — 1 MiB per extent, 1.5 MiB across revisions — are sized
 against `localStorage`, measured at 5,226,496 bytes in both engines. The same probe measured
 IndexedDB, Cache and OPFS at **10.7 GB in Chromium and 1.0 GB in WebKit**: 200x to 2,000x more.

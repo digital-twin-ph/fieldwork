@@ -5,6 +5,17 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **A downloaded street network no longer has to fit in a 5 MB store.** Workflows are kept in
+  `localStorage`, which accepts 5,226,496 bytes measured in both engines and is written twice on
+  every save — and the graph was inside the workflow. A town-sized download therefore succeeded
+  and was then discarded, because a network is kept only if it persists. Payloads now live in
+  IndexedDB and the workflow keeps a digest that points at one; measured, an 8,096,643-byte graph
+  beside a 64,924-byte workflow, surviving a reload. Proving it turned up a second copy: the
+  project manifest inventoried every junction id and every edge pair, 2.25 MB for a 40,000-junction
+  graph, and now carries counts and the payload's own SHA-256 instead. Where the large store is
+  blocked or refuses a write, the Street network widget says so **above the Download button**, and
+  a toast says it the moment it happens: a fallback nobody is told about turns the larger ceiling
+  back into the smaller one while the application goes on reporting that everything was saved.
 - **A street network is downloaded for walking or for driving.** There was one filter and it was a
   walking one, while the reachability widget already offered walking, cycling, driving or other —
   so a driving question was asked of a graph that excluded motorways and trunk roads and included

@@ -19,7 +19,7 @@ test('a widget added to a workflow takes the zone that workflow is in',async({pa
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('#node-search').fill('Convex hull');
   await page.locator('[data-add="summarize_hull"]').click();
-  await expect(page.locator('.react-flow__node').filter({hasText:'Area the points cover'})).toHaveCount(1);
+  await expect(page.locator('.react-flow__node').filter({hasText:'Convex hull'})).toHaveCount(1);
   const saved=()=>page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1'));
     return w.nodes.find(n=>n.type==='summarize_hull').params;
@@ -36,7 +36,7 @@ test('a zone that disagrees with the data is reported, with what it costs and a 
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('#node-search').fill('Convex hull');
   await page.locator('[data-add="summarize_hull"]').click();
-  const hull=page.locator('.react-flow__node').filter({hasText:'Area the points cover'});
+  const hull=page.locator('.react-flow__node').filter({hasText:'Convex hull'});
   await expect(hull).toHaveCount(1);
   await hull.click();
 
@@ -49,7 +49,7 @@ test('a zone that disagrees with the data is reported, with what it costs and a 
   });
   await page.reload();
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
-  await page.locator('.react-flow__node').filter({hasText:'Area the points cover'}).click();
+  await page.locator('.react-flow__node').filter({hasText:'Convex hull'}).click();
 
   const advice=page.locator('[data-utm-advice]');
   await expect(advice).toContainText('data is in UTM zone 35S');

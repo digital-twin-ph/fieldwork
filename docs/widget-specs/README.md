@@ -61,6 +61,47 @@ understanding is already loaded, and nobody comes back for them afterwards.
    button's accessible name is its text. The Inspector is 292px wide, so a control that only works
    at a comfortable width does not work.
 
+6. **Check the default label names the widget.** The label a freshly added node carries is the
+   first thing a practitioner reads about it, and it is where one example's specifics leak into the
+   general thing: every Map was born called *Study area and points*, which is the heat example's
+   label, so a Map added to a cholera workflow announced itself as a study area. The same leak as a
+   widget named after one demonstration. `tests/default-labels.test.mjs` compares each constructed
+   default against its own widget title; templates stay free to label their own nodes anything,
+   because "250 death locations (489 deaths)" is a good label for one example's input and a bad
+   default for every input.
+
+7. **Check its catalogue entry is true.** The Widget catalogue is what a practitioner opens to ask
+   *what is this and can I trust it*, and `src/catalog-ui.ts` assembles it from six files:
+   `widgets/registry.json`, `release-notes.json`, `parity.json`, `classification.json`,
+   `packs.json` and the definition in `core.ts`. A change that lands in the code and not in those
+   leaves the catalogue describing the previous widget.
+
+   In practice: the current release needs a `changes` entry saying what changed **in the words a
+   practitioner would use**, because that text is rendered as *What changed in x.y.z*; the digest
+   must match the file, which `validate:widgets` checks; `release-notes.json` must match the
+   current releases, which `validate:release-notes` checks and `npm run notes:releases` fixes; and
+   the parity entry's `coversRelease` tells the truth about which release was independently
+   checked. Leaving that stale is right — it renders as *agrees · earlier release*, which is
+   honest — but claiming it covers the new one is not.
+
+8. **Bump the version and write the changelog, so the evolution is legible.** Two changelogs, and
+   they are independent: the widget's own `changes` array in its release file, which is what the
+   catalogue renders and `npm run notes:releases` compiles, and `CHANGELOG.md` for the
+   application. The policy in [AGENTS.md](../../AGENTS.md) governs the second — MINOR for a new
+   user-visible capability or a meaningful change to workflow behaviour, PATCH for fixes and small
+   interface improvements, MAJOR reserved for an intentionally incompatible contract with a
+   documented migration — and `npm version <x.y.z> --no-git-tag-version` moves `package.json` and
+   the lockfile together, which is the only source of truth.
+
+   A changelog entry carries the user-visible change, the migration effect, and the validation
+   limits. Where a widget's contract changed, the release says `breaking` and names its
+   `migrationFrom`, and an identifier that was renamed keeps resolving through
+   `RENAMED_NODE_TYPES` so a saved workflow opens.
+
+   The failure this guards against is specific: on 2026-10-20 `package.json` read 0.10.0 while the
+   newest section in `CHANGELOG.md` was 0.9.0, so an entire version's worth of user-visible change
+   existed only in commit messages. The version had moved and the account of it had not.
+
 Where the material goes is the same split this file already describes: controls in the Inspector,
 the practitioner's understanding in the manual, the measurements and the history here. What the
 widget asserts goes in the ontology and the receipt, which is the only place a claim survives the

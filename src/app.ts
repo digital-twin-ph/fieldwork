@@ -2142,7 +2142,15 @@ function renderMap(){
       download(`${result!.nodeId}-map.svg`,standaloneMapSvg(content,viewBox,spec,frame),'image/svg+xml');};
   }
   // A network is drawn as itself: the streets, at the size of the panel, with nothing inferred.
-  if(result?.network){
+  //
+  // UNLESS the map was set to be interactive, in which case this `return` is what stopped it. The
+  // practitioner, 2026-10-20: *"Map widget settings (e.g., interactive and basemap) not being
+  // implemented ... That looks like a regression."* It is the FIFTH time this exact shape has been
+  // found in this function -- see the note below, where a fix was written and then fenced off by a
+  // guard above it. Here the guard is an early return: interactive maps were made to work on "any
+  // map" on 2026-10-17, below a branch added on 2026-10-13 that returns first. The behaviour never
+  // regressed; the CLAIM did, which is worse, because it is the claim a practitioner acts on.
+  if(result?.network&&mapNode?.params.presentation!=='interactive'){
     const coverage=networkCoverage(result.network);
     $('#map-panel').querySelector('#map-note')!.textContent=networkPreviewCaption(coverage);
     svg.style.display='';svg.setAttribute('viewBox','0 0 252 168');
@@ -2163,6 +2171,7 @@ function renderMap(){
   // Hoisted out, because only the interactive presentation can draw tiles: leaving it inside the
   // polygon branch means a basemap is reachable only on a catchment.
   if(mapNode?.params.presentation==='interactive'&&result?.view==='map'){
+    if(result.network)$('#map-panel').querySelector('#map-note')!.textContent=networkPreviewCaption(networkCoverage(result.network));
     const host=document.createElement('div');host.id='catchment-map-host';
     $('#map-panel').insertBefore(host,$('#map-communication-key'));
     svg.style.display='none';

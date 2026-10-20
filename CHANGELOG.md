@@ -5,6 +5,14 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **The wordmark gives way before the version badge does.** On a narrow window the header's
+  mark could not shrink, so its contents overflowed and the version badge sat on top of the
+  controls — 94px² of overlap at 330px here, 403px² at 300px, and far enough forward on Linux
+  WebKit's wider fonts to hit at 375px, where it had been failing CI and blocking publication for
+  half a day. The name now truncates and the badge and icon hold their size. The check that was
+  meant to catch it compared left edges, which is only an overlap test while two things share a
+  row; it measures the intersection now, prints both rectangles when it fails, and runs at the
+  widths where the layout is actually under pressure.
 - **A downloaded street network no longer has to fit in a 5 MB store.** Workflows are kept in
   `localStorage`, which accepts 5,226,496 bytes measured in both engines and is written twice on
   every save — and the graph was inside the workflow. A town-sized download therefore succeeded

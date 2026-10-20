@@ -492,7 +492,20 @@ function resultNodes(w:Pick<Workflow,'nodes'>){return w.nodes.filter(n=>['output
 export function executionPlan(workflow:Workflow) {
   const w=validateWorkflow(workflow), outputs=resultNodes(w);
   if(!outputs.length){
-    if(!w.nodes.length||!w.nodes.every(n=>n.type==='study_area'))throw new Error('Add a visual output before running, or start with a Study area node.');
+    // Two different situations shared one sentence, so the one that fires most said the wrong
+    // thing. A canvas holding a Study area and a Street network was told to "start with a Study
+    // area node" -- advice it had already taken. The practitioner, 2026-10-19: *"note error
+    // message, there is already a study area."* The study-area clause describes an EXEMPTION, not
+    // a step: a canvas of nothing but study areas runs without an output so its N3 can be read.
+    if(!w.nodes.length)
+      throw new Error('This canvas is empty. Add an input to start \u2014 a Study area, Point data, '
+        +'Tabular data or a Street network.');
+    if(!w.nodes.every(n=>n.type==='study_area'))
+      throw new Error(`Nothing here displays a result, so there is nothing for a run to produce. `
+        +`This workflow holds ${[...new Set(w.nodes.map(n=>TYPES[n.type]?.title??n.type))].join(', ')}. `
+        +`Add a Map, Table or Chart output and connect it to the step whose result you want to see. `
+        +`(A canvas holding only Study area nodes is the exception: it runs without an output, so its `
+        +`N3 facts can be inspected.)`);
     outputs.push(...w.nodes);
   }
   for(const n of w.nodes)if(n.type==='study_area'&&n.params.source==='drawn'&&!n.params.geometry)throw new Error('Select a study area on the map before running.');

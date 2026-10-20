@@ -21,7 +21,10 @@ test('legacy output defaults to map and missing outputs are rejected',()=>{
   assert.equal(validateWorkflow(w).nodes.at(-1).type,'map_output');
   assert.equal(executionPlan(w).length,6);
   w.nodes=w.nodes.filter(n=>!['output','map_output','table_output'].includes(n.type));w.edges=w.edges.filter(e=>e.to!=='map');delete w.outputId;
-  assert.throws(()=>executionPlan(w),/Add a visual output/);
+  // The refusal NAMES what is on the canvas, because the message it replaced told a workflow
+  // that already had a study area to start with one.
+  assert.throws(()=>executionPlan(w),/Nothing here displays a result/);
+  assert.throws(()=>executionPlan(w),/Add a Map, Table or Chart output/);
 });
 
 test('each output requires connected dependencies and a supported display',()=>{

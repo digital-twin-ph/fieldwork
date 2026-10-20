@@ -72,9 +72,16 @@ test.describe('bounded network download',()=>{
 test('Street network downloads bounded OSM data explicitly, preserves failed downloads and acquisition provenance',async({page})=>{
   await page.clock.install();
   await page.goto('/?example=snow-isochrone');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
-  // Every instance is asked a one-line question before any download, so a probe and a download
-  // both arrive here. Counted separately: the heartbeat was added 2026-10-15 and this test
-  // asserts how many DOWNLOADS happen, which is the thing that costs anybody anything.
+  // Each instance's /api/status is read before any download, and WAITED for: it carries the pause
+  // the service asks for, and a client that will not wait for the answer is not following it. The
+  // mock answers it so the test is not measuring the real service's latency; it is not shortened
+  // in the application to suit the test.
+  let statuses=0;
+  for(const host of ['overpass-api.de','overpass.kumi.systems','overpass.private.coffee'])
+    await page.route(`https://${host}/api/status`,async route=>{
+      statuses++;await route.fulfill({body:'Rate limit: 2\n2 slots available now.\n',contentType:'text/plain'});});
+  // Counted separately from downloads: this test asserts how many DOWNLOADS happen, which is the
+  // thing that costs anybody anything.
   let requests=0,probes=0;await page.route('https://overpass-api.de/api/interpreter',async route=>{
     const sent=route.request().postData()||'';
     if(sent.includes('node%281%29')){probes++;await route.fulfill({json:{version:0.6,elements:[]}});return;}

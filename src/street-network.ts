@@ -34,41 +34,112 @@ export const OVERPASS_ENDPOINTS:readonly OverpassEndpoint[]=[
   // blamed it for an outage belonging to the other three. The practitioner, on seeing the
   // measurement: *"Let's remove it then from the API endpoint list."*
 ];
-/** The cheapest question an Overpass instance can be asked: one node, by id, identifiers only.
+/** Responses already fetched, so a repeated question is not a repeated request.
  *
- *  The practitioner, 2026-10-15: *"So the important first step for a street network download is
- *  to check if the API is alive, like a heartbeat ping."* Right, and the obvious candidate --
- *  `/api/status` -- is not usable: measured the same afternoon it timed out on overpass-api.de,
- *  returned 500 on kumi.systems and 400 on overpass.osm.ch, which does not appear to serve it at
- *  all. A probe has to exercise the path that matters, so it is a real query, just the smallest
- *  one. It answered in under half a second on every instance that was answering at all. */
-export const OVERPASS_PROBE='[out:json][timeout:5];node(1);out ids;';
+ *  OSMnx caches by default (`use_cache=True`) and the practitioner asked for the same. It is a
+ *  reliability measure and a courtesy at once: the fastest request is the one not made, and these
+ *  are free public services.
+ *
+ *  The Cache API rather than `localStorage`. These responses are megabytes -- Bunia's ways alone
+ *  are 2.4 MB -- against a store measured at 5,226,496 bytes that already holds every saved
+ *  workspace (experiment 121). The Cache API is built for HTTP responses, has no such ceiling, and
+ *  this project already uses it for the offline build.
+ *
+ *  The key is the QUERY, not the URL: the same bounding box asked of two instances is the same
+ *  question, and the answer does not depend on who answered. Keyed through a synthetic URL because
+ *  that is what the Cache API takes.
+ *
+ *  **A cache hit does not claim to be a fresh retrieval.** The provenance carries the original
+ *  `retrievedAt` and says the bytes came from this device, because a receipt that reports the
+ *  moment of reading as the moment of acquisition is wrong about the one thing it exists to
+ *  record. */
+const OSM_CACHE='fieldwork-osm-v1';
+const cacheKey=(query:string)=>`https://fieldwork.invalid/osm?q=${encodeURIComponent(query)}`;
+type CacheLike={match(k:string):Promise<Response|undefined>;put(k:string,r:Response):Promise<void>};
+const openOSMCache=async():Promise<CacheLike|null>=>{
+  try{return (globalThis as {caches?:{open(n:string):Promise<CacheLike>}}).caches
+    ? await (globalThis as unknown as {caches:{open(n:string):Promise<CacheLike>}}).caches.open(OSM_CACHE) : null;}
+  catch{return null;}
+};
+/** The cached body for this query, with when it was first retrieved, or null. */
+export async function cachedOSM(query:string,cache?:CacheLike|null):Promise<{text:string;retrievedAt:string}|null>{
+  const store=cache===undefined?await openOSMCache():cache;
+  if(!store)return null;
+  try{
+    const hit=await store.match(cacheKey(query));
+    if(!hit)return null;
+    return {text:await hit.text(),retrievedAt:hit.headers.get('x-fieldwork-retrieved')||'unknown'};
+  }catch{return null;}
+}
+/** Keep a response against its query. Failure is silent and harmless: the next run re-requests. */
+export async function keepOSM(query:string,text:string,retrievedAt:string,cache?:CacheLike|null):Promise<void>{
+  const store=cache===undefined?await openOSMCache():cache;
+  if(!store)return;
+  try{await store.put(cacheKey(query),new Response(text,
+    {headers:{'content-type':'application/json','x-fieldwork-retrieved':retrievedAt}}));}
+  catch{/* a full or unavailable cache costs a request, not a result */}
+}
 
-/** Which instances are answering right now, in the order they are preferred.
+/** What an instance says about itself, read from its own `/api/status`.
  *
- *  Asked of all of them at once, because the point is to spend one short wait rather than four
- *  long ones: a dead instance otherwise costs the full download timeout before the next is
- *  tried. An instance that answers anything other than JSON is not answering. */
-export async function liveEndpoints(fetcher:typeof fetch=fetch,timeoutMs=6000):Promise<OverpassEndpoint[]>{
-  const ordered=preferred
-    ?[...OVERPASS_ENDPOINTS].sort((a,b)=>(b.url===preferred?1:0)-(a.url===preferred?1:0))
-    :OVERPASS_ENDPOINTS;
-  const results=await Promise.all(ordered.map(async endpoint=>{
+ *  Better than a ping, which returns a boolean. This returns the rate limit, how many slots are
+ *  free, and when the next one frees -- the server's own answer to "when should I come back",
+ *  which is what makes OSMnx reliable where a client-side guess is not. Measured 2026-10-19 while
+ *  Fieldwork was reporting the service dead: `2 slots available now`.
+ *
+ *  The format is plain text and has no version guarantee, so every field is optional and a shape
+ *  this cannot read is reported as unknown rather than as unavailable. Not knowing and being down
+ *  are different, and only one of them is a reason not to try. */
+export interface OverpassStatus {
+  url:string; operator:string; reachable:boolean;
+  rateLimit?:number; slotsAvailable?:number; waitSeconds?:number; runningQueries?:number;
+  announcedEndpoint?:string; raw?:string; error?:string;
+}
+export function readOverpassStatus(text:string):Omit<OverpassStatus,'url'|'operator'|'reachable'>{
+  const out:Omit<OverpassStatus,'url'|'operator'|'reachable'>={raw:text};
+  const limit=text.match(/^Rate limit:\s*(\d+)/m);
+  if(limit)out.rateLimit=Number(limit[1]);
+  const slots=text.match(/^(\d+)\s+slots?\s+available now/m);
+  if(slots)out.slotsAvailable=Number(slots[1]);
+  // "Slot available after: <iso>, in N seconds." -- several lines when several are queued, and the
+  // soonest is the one worth waiting for.
+  const waits=[...text.matchAll(/Slot available after:[^,]*,\s*in\s+(-?\d+)\s+seconds/g)]
+    .map(m=>Number(m[1])).filter(Number.isFinite);
+  if(waits.length)out.waitSeconds=Math.max(0,Math.min(...waits));
+  if(out.slotsAvailable===undefined&&waits.length)out.slotsAvailable=0;
+  const running=text.match(/^Currently running queries[^\n]*\n([\s\S]*)$/m);
+  if(running)out.runningQueries=running[1].split('\n').filter(line=>/^\s*\d+\s/.test(line)).length;
+  const announced=text.match(/^Announced endpoint:\s*(\S+)/m);
+  if(announced)out.announcedEndpoint=announced[1];
+  return out;
+}
+/** Ask every instance how it is, in parallel. One small GET each, and the answer is the server's
+ *  own, so it costs a request to learn what guessing cannot tell you. */
+/** How long one status read may take. Twelve seconds, not the six the removed ping used: that was
+ *  a healthy service's latency, and the measured one under load was 14 to 27 seconds. A status
+ *  that times out costs only that its instance is tried after the ones that answered. */
+export const STATUS_MS=12000;
+export async function overpassStatuses(fetcher:typeof fetch=fetch,timeoutMs=STATUS_MS):Promise<OverpassStatus[]>{
+  return Promise.all(OVERPASS_ENDPOINTS.map(async endpoint=>{
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
     try{
-      const response=await fetcher(endpoint.url,{method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:new URLSearchParams({data:OVERPASS_PROBE}),signal:controller.signal,
-        credentials:'omit',referrerPolicy:'origin'});
-      if(!response.ok)return null;
-      const kind=response.headers.get('content-type')??'';
-      if(!kind.includes('json')&&!kind.includes('text/plain'))return null;
-      return endpoint;
-    }catch{return null;}
+      const response=await fetcher(endpoint.url.replace(/\/interpreter$/,'/status'),
+        {signal:controller.signal,credentials:'omit',referrerPolicy:'origin'});
+      if(!response.ok)return {url:endpoint.url,operator:endpoint.operator,reachable:false,error:`HTTP ${response.status}`};
+      return {url:endpoint.url,operator:endpoint.operator,reachable:true,...readOverpassStatus(await response.text())};
+    }catch(error){return {url:endpoint.url,operator:endpoint.operator,reachable:false,
+      error:(error as Error)?.name==='AbortError'?`no answer within ${Math.round(timeoutMs/1000)} s`:'unreachable'};}
     finally{clearTimeout(timer);}
   }));
-  return results.filter((endpoint):endpoint is OverpassEndpoint=>!!endpoint);
 }
+
+
+/** `liveEndpoints` and `OVERPASS_PROBE` stood here and were removed on 2026-10-19, replaced by
+ *  `overpassStatuses`. The practitioner: *"/api/status is better than ping because it returns
+ *  useful information."* It does -- the rate limit, the free slots and when the next one frees --
+ *  where the probe returned only that something answered, and answered too slowly to be believed:
+ *  a one-line probe to a healthy instance took 14.2 s, 27.3 s and 26.3 s that day against a
+ *  six-second budget. A boolean that is wrong under load is worse than no boolean. */
 
 /** The instance that answered last, tried first next time.
  *
@@ -84,8 +155,13 @@ export const preferredEndpoint=()=>preferred;
  *  meant an instance that hung for thirty seconds left five seconds for the other three -- the
  *  failover added on 2026-10-15 was being cut short by a timeout written before it existed. A
  *  practitioner saw that as "the download is flaky", and it was, partly on our side. */
-const ATTEMPT_MS=20000;
-const TOTAL_MS=75000;
+// Raised 2026-10-19 from 20,000 and 75,000. Those were measured against a responsive service; a
+// one-line PROBE to overpass-api.de took 14.2 s, 27.3 s and 26.3 s that afternoon while answering
+// 200 every time, so a 2 MB query had no chance inside twenty seconds. OSMnx, which the
+// practitioner reports as reliable, uses a 180-second request timeout -- matched here, because
+// being slow is how Overpass expresses load and giving up is how a client turns load into failure.
+const ATTEMPT_MS=180000;
+const TOTAL_MS=300000;
 
 /** The reference instance. Kept as a name because receipts and tests cite it. */
 export const OVERPASS=OVERPASS_ENDPOINTS[0].url;
@@ -196,15 +272,20 @@ export function networkFromOSM(raw:unknown,maxNodes?:number):Network{
   }
   const network:Network={nodes:[...used].map(id=>({id:'osm-'+id,coordinates:positions.get(id)!})),edges,source:'OpenStreetMap contributors, ODbL; prototype walking filter v1. Uses explicit foot restrictions; excludes conditional ways and unapproved barriers. No turn restrictions, grade, stairs cost or wheelchair model. Vehicle oneway does not imply foot oneway.',limits:graphLimits(maxNodes)};validateNetwork(network,maxNodes);return network;
 }
-export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pauseMs?:number):Promise<Network>{
+/** `refresh` is what the button means when the node already holds a network: fetch it again. The
+ *  cache exists to spare a request nobody needs -- a node with nothing in it, a workflow reopened,
+ *  the same area asked for twice -- and not to answer a practitioner who pressed Download BECAUSE
+ *  what they have is wrong or stale. Serving that from cache would make the button look broken in
+ *  the one case where it has to work. */
+export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pauseMs?:number,refresh=false,onPhase?:(message:string)=>void):Promise<Network>{
   osmQuery(boundary,marginM,maxNodes); // Invalid local input must not consume the public-service pause.
-  return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes,pauseMs));
+  return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes,pauseMs,undefined,undefined,undefined,refresh,onPhase));
 }
 /** Request/normalization boundary exposed for fixture tests; UI must use paced downloadOSM. */
 /** `exclude` carries the instances this request has already learned cannot serve this area, so a
  *  regional mirror that answers with nothing hands the attempt on to the next instance instead of
  *  ending it. Internal: callers pass nothing. */
-export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number,exclude:ReadonlySet<string>=new Set()):Promise<Network>{
+export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number,exclude:ReadonlySet<string>=new Set(),onWait?:(w:{operator:string;seconds:number})=>void,cacheStore?:CacheLike|null,refresh=false,onPhase?:(message:string)=>void):Promise<Network>{
   const request=osmQuery(boundary,marginM,maxNodes);
   // One budget per attempt, and one for the whole thing. See ATTEMPT_MS.
   const startedAt=Date.now();
@@ -235,9 +316,74 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     // discovering that the first three are down -- which on 2026-10-15 they were.
     // Regional instances last: one answers for the whole world and holds part of it, so it is a
     // fallback and never a first choice, whatever the probe says about its health.
-    const live=(await liveEndpoints(fetcher))
+    // The probe ORDERS the attempts; it does not veto them. It used to: an empty probe result threw
+    // "No Overpass instance is answering" and the download never started. Measured 2026-10-19,
+    // three one-line probes to overpass-api.de answered 200 in 14.2 s, 27.3 s and 26.3 s against a
+    // 6-second probe budget -- so a service that was up, and that curl and OSMnx both reached from
+    // this machine, was declared dead for being slow. The practitioner: *"It cannot be it works
+    // with hand surgery but FW does not."*
+    //
+    // Overpass is slow exactly when it is queuing, which is exactly when waiting is the right
+    // move, so a budget tuned for a healthy service rejects the case the failover exists for. The
+    // probe keeps its purpose -- spend one short wait to try a responsive instance first -- and
+    // loses the power to refuse. A download attempt already has its own 20-second budget and the
+    // whole thing has 75 seconds; nothing is unbounded.
+    // The cheapest request is the one not made. Checked before the status read, because a hit
+    // means no service is touched at all.
+    const hit=refresh?null:await cachedOSM(request.query,cacheStore);
+    if(hit){
+      const network=networkFromOSM(JSON.parse(hit.text),maxNodes);
+      network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',
+        attribution:'\u00a9 OpenStreetMap contributors',fromCache:true,
+        retrievedAt:hit.retrievedAt,query:request.query,bounds:request.bounds,marginM:request.marginM};
+      return network;
+    }
+
+    // Ask each instance how it is, rather than whether it answers. `/api/status` reports the rate
+    // limit, the free slots and when the next one frees, which is the server's own answer to the
+    // only question worth asking -- and it is what OSMnx reads to be reliable where a client-side
+    // guess is not. An instance with a free slot is tried first; one with none is tried after,
+    // not refused, because the status is advice and the attempt is the test.
+    // Read in full, and waited for. A first version capped this at three seconds so a download
+    // would start sooner, which quietly abandoned the only thing that makes the client courteous:
+    // if the read times out, the pause the service asked for is never learned and the request goes
+    // anyway. The practitioner: *"If we are going to be respectful of the API we should follow
+    // what it says."* A pause this client invents is not the service's pause, and a status it
+    // declined to wait for might as well not have been read.
+    //
+    // The cost is seconds before a download on a loaded service, and the answer to that is to SAY
+    // so -- `onPhase` reports what is being waited on -- not to stop asking.
+    onPhase?.('Asking each instance how busy it is\u2026');
+    const statuses=await overpassStatuses(fetcher);
+    const rank=(url:string)=>{
+      const status=statuses.find(entry=>entry.url===url);
+      if(!status||!status.reachable)return 2;
+      return (status.slotsAvailable??1)>0?0:1;
+    };
+    const live=OVERPASS_ENDPOINTS
       .filter(endpoint=>!exclude.has(endpoint.url))
-      .sort((a,b)=>(a.regional?1:0)-(b.regional?1:0));
+      .sort((a,b)=>(a.regional?1:0)-(b.regional?1:0)||rank(a.url)-rank(b.url));
+
+    // WAIT for the slot the server named, rather than refusing because it is busy. This is what
+    // OSMnx does -- `_get_overpass_pause` reads /api/status and sleeps until a slot frees, falling
+    // back to 60 s only on a fatal error -- and the practitioner's reason for pointing at it:
+    // "I have known OSMNx to work reliably most of the time." Being busy is a schedule, not a
+    // refusal, and a client that treats the two alike turns a queue into a failure.
+    //
+    // Bounded by the total budget and taken only when EVERY instance is busy: if one has a slot,
+    // it is first in `live` already and there is nothing to wait for.
+    const soonest=live.map(endpoint=>statuses.find(entry=>entry.url===endpoint.url))
+      .filter(entry=>entry?.reachable&&typeof entry.waitSeconds==='number')
+      .sort((a,b)=>a!.waitSeconds!-b!.waitSeconds!)[0];
+    const anyFree=live.some(endpoint=>(statuses.find(entry=>entry.url===endpoint.url)?.slotsAvailable??1)>0);
+    if(!anyFree&&soonest){
+      const waitMs=Math.min(soonest.waitSeconds!*1000+1000,Math.max(0,TOTAL_MS-(Date.now()-startedAt)));
+      if(waitMs>0){
+        onWait?.({operator:soonest.operator,seconds:Math.round(waitMs/1000)});
+        onPhase?.(`${soonest.operator} has no free slot; waiting the ${soonest.waitSeconds} s it asked for\u2026`);
+        await new Promise(resolve=>setTimeout(resolve,waitMs));
+      }
+    }
     if(!live.length){
       deferNetworkDownload(null);
       // NOT "retry". Every instance has just been asked a one-line question and none replied, so a
@@ -245,11 +391,9 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
       // is down, why should the user retry, instead advise the user to wait till the API comes back
       // on."* What a practitioner can act on is the saved file; what they cannot act on is the
       // health of four public services.
-      throw new Error(`No Overpass instance is answering. All ${OVERPASS_ENDPOINTS.length} were asked a `
-        +`one-line question just now and none replied, so nothing was downloaded and nothing was `
-        +`changed. Downloading again will not help while that is true \u2014 these are free public `
-        +`services and they do go down together. Come back when one is up, or upload a saved network `
-        +`file, which needs no service at all.`);
+      throw new Error(`Every Overpass instance has already been tried for this area and none could `
+        +`serve it, so nothing was downloaded and nothing was changed. Upload a saved network file, `
+        +`which needs no service at all.`);
     }
     let reached:OverpassEndpoint|undefined,lastStatus=0,unreachable=0;
     outer: for(let round=1;round<=2;round++){
@@ -275,6 +419,14 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     if(!reached){
       preferred=undefined;
       deferNetworkDownload(null);
+      // The server's own wait, where it gave one. "Come back in 42 seconds" is a fact from the
+      // service; "wait a few minutes" was this client's guess.
+      const soonest=statuses.filter(entry=>entry.reachable&&typeof entry.waitSeconds==='number')
+        .sort((a,b)=>a.waitSeconds!-b.waitSeconds!)[0];
+      if(soonest)throw new Error(`Every Overpass instance is busy. ${soonest.operator} reports no free slot `
+        +`and the next one in ${soonest.waitSeconds} seconds, out of ${soonest.rateLimit??'its'} `
+        +`concurrent queries. Nothing was downloaded and nothing was changed. That is the service's own `
+        +`answer, so waiting for it is the whole remedy \u2014 or upload a saved network file.`);
       throw new Error(`No Overpass instance answered. ${live.length} ${live.length===1?'was':'were'} answering a moment ago and `
         +`${live.length===1?'was':'were'} tried twice`
         +`${lastStatus?`, the last reporting HTTP ${lastStatus}`:''}${unreachable?`, ${unreachable} unreachable or not serving the API`:''}. `
@@ -303,7 +455,7 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>maxBytes){controller.abort();throw tooLarge(bytes);}chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
     // Charged once the size is known: a larger request earns a longer pause.
     chargeNetworkDownload(bytes,pauseMs);
-    const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const raw=JSON.parse(new TextDecoder().decode(joined));
+    const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const body=new TextDecoder().decode(joined);const raw=JSON.parse(body);
     // An instance that answers 200 with an empty `elements` array has told you something, and
     // `validateNetwork` would reject it as "a street network needs at least one junction" -- true,
     // and about the wrong thing. It is either an instance that does not hold data for this area or
@@ -324,7 +476,7 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
       if(preferred===reached.url)preferred=undefined;
       const remaining=new Set([...exclude,reached.url]);
       if(live.some(endpoint=>!remaining.has(endpoint.url)))
-        return requestOSM(boundary,marginM,fetcher,maxNodes,pauseMs,remaining);
+        return requestOSM(boundary,marginM,fetcher,maxNodes,pauseMs,remaining,onWait,cacheStore,refresh,onPhase);
       throw new Error(`${reached.operator}'s Overpass instance answered and reported no walkable `
         +`streets for this area`+(reached.regional?`, and it holds ${reached.regional} only`:'')
         +`. Nothing was changed. Either it does not hold data for this part of the world, or the `
@@ -335,8 +487,10 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
         +` Check the study area on the map, or upload a saved network file.`);
     }
     const network=networkFromOSM(raw,maxNodes);
+    const retrievedAt=new Date().toISOString();
+    await keepOSM(request.query,body,retrievedAt,cacheStore);
     network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',
-      attribution:`© OpenStreetMap contributors, via ${reached.operator}`,url:reached.url,retrievedAt:new Date().toISOString(),query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
+      attribution:`© OpenStreetMap contributors, via ${reached.operator}`,url:reached.url,retrievedAt,query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
   }finally{clearTimeout(timer);}
 }
 export function parseGraphML(text:string,filename:string,maxNodes?:number):Network{

@@ -74,11 +74,30 @@ export function catchmentInspector(n:WorkflowNode,esc:Escape,boundary?:Boundary)
     +`<details><summary>Recommended pause by response size</summary><table><thead><tr><th>Response</th><th>Recommended pause</th></tr></thead><tbody>`
     +[1e6,2e6,4e6,8e6,16e6,30e6].map(b=>`<tr><td>${b/1e6} MB</td><td>${recommendedPauseSeconds(b)} s</td></tr>`).join('')
     +`</tbody></table><p class="muted">The pause a download earns is applied whether or not the knob is set this high; setting it means knowing the wait before it happens rather than after.</p></details>`
-    +`<p class="muted">"Junction" here counts every POINT in the graph, including each bend a street is drawn with \u2014 not only the places two streets meet. Measured 2026-10-19: Buvuma Island in Lake Victoria normalizes to 11,359 of them and has 661 real intersections, seventeen to one. The 2,000 default was measured on Soho, where a dense grid makes the two counts nearly equal, so this limit is tighter than it reads anywhere a road follows a coastline.</p>`
-    +`<button class="button primary" id="download-network">Download and save OSM network</button><p>Uses the connected Study area's bounding box plus margin. A large or sparse area is attempted and judged on what it actually returns — bytes and features against the graph limit — rather than refused for its width. Whole ways may extend beyond it. Sends those bounds to overpass-api.de; no key required. Retains topology rather than cutting edges at the polygon. The response and feature limits follow the graph limit below: at 2,000 junctions they are 2 MB and 15,000 features.</p>`:'')+number('maxNodes','Graph limit (junctions); segments allowed at 2.5x this',n.params.maxNodes??2000,500,50000)
+    +`<p class="muted">Counts every point in the graph, including each bend \u2014 not only where streets meet.</p>`
+    +`<button class="button primary" id="download-network">Download and save OSM network</button><p>Uses the connected Study area's bounding box plus margin. Whole ways may extend beyond it. Sends those bounds to overpass-api.de; no key required. Retains topology rather than cutting edges at the polygon. The response and feature limits follow the graph limit below: at 2,000 junctions they are 2 MB and 15,000 features.</p>`:'')+number('maxNodes','Graph limit (junctions); segments allowed at 2.5x this',n.params.maxNodes??2000,500,50000)
     +`<p class="muted">2,000 is the measured default. A 1 km square of central London needs about 5,250, and at that size isochrone construction exhausted a 4 GB heap when measured on 2026-10-13 — so above roughly 3,000 this is untested rather than merely slower. Raising it is safe to try: the isochrone runs in a worker with a 45-second timeout, so too large a graph fails that one step rather than the tab.</p>`
     +networkPreview(n.params.data,boundary,esc)
     +`<p>${n.params.data.nodes.length} nodes · ${n.params.data.edges.length} directed edges</p><p>${esc(n.params.data.source)}</p><label class="field-label" for="network-upload">Upload GraphML or JSON</label><input id="network-upload" type="file" accept=".json,.graphml"><p>Files retain their existing network extent. Attach a URL or PDF reference below for citation.</p><details><summary>Edit bounded network JSON</summary><label class="field-label" for="network-json">Network JSON: nodes, edges, source</label><textarea id="network-json" rows="10">${esc(JSON.stringify(n.params.data,null,2))}</textarea><button class="button" id="save-network">Save network edits</button><label class="field-label" for="network-file">Upload GraphML / JSON (up to 2 MB)</label><input id="network-file" type="file" accept=".json,.graphml,application/json,application/xml"><p>Directed edges require from, to, lengthM and optional CRS84 geometry. Reverse travel requires a reverse edge. Full contract: worked-example guide.</p></details>`;
-  if(n.type==='network_input')html+='<p id="network-download-status" role="status"></p><p class="muted">One OSM request at a time; at least 60 seconds between attempts. No automatic retries. Saved networks remain usable offline. Changing the boundary or buffer does not expand a saved graph.</p>';
+  if(n.type==='network_input'){
+    // WHO can serve this, before the download rather than after it fails. The practitioner:
+    // "We build an endpoint ping that shows up on the widget before download and show whether API
+    // endpoint is live or not and which one worked if it did (receipts)" -- and then, on the
+    // mechanism: "/api/status is better than ping because it returns useful information." It is:
+    // the rate limit, the free slots, the queries running and when the next slot frees. A ping
+    // returns a boolean, and on 2026-10-19 that boolean was wrong -- a healthy instance took 14 to
+    // 27 seconds to answer a one-line probe, so the client called it dead.
+    //
+    // Asked only when the practitioner asks, because every check is a request to a donated service.
+    html+='<div class="field"><button class="button" id="check-endpoints">Check endpoint status</button>'
+      +'<div id="endpoint-status"></div>'
+      +'<p class="muted">Reads each instance\'s own status: free slots, and when the next one frees.</p></div>';
+    // WHICH ONE SERVED the graph that is saved, which is provenance and not decoration.
+    const held=n.params.data?.provenance as Record<string,unknown>|undefined;
+    if(held)html+=`<p class="muted">Saved graph: ${held.fromCache
+      ?`served from this device's cache, first retrieved ${esc(String(held.retrievedAt??'at an unrecorded time'))}`
+      :`${esc(String(held.attribution??'OpenStreetMap contributors'))}, retrieved ${esc(String(held.retrievedAt??'at an unrecorded time'))}`}.</p>`;
+    html+='<p id="network-download-status" role="status"></p><p class="muted">One OSM request at a time; at least 60 seconds between attempts. No automatic retries. Saved networks remain usable offline. Changing the boundary or buffer does not expand a saved graph.</p>';
+  }
   return html;
 }

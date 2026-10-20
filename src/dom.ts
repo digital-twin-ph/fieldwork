@@ -11,6 +11,8 @@ export interface SelectorElements {
   '#redo-button':HTMLButtonElement;
   '#blank-add':HTMLButtonElement;
   '#blank-project':HTMLButtonElement;
+  '#check-endpoints':HTMLButtonElement;
+  '#endpoint-status':HTMLElement;
   '#new-project':HTMLButtonElement;
   '#project-dialog':HTMLDialogElement;
   '#project-dialog-close':HTMLButtonElement;

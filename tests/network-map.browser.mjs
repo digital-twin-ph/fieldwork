@@ -32,6 +32,23 @@ test('a downloaded network can be seen in the Inspector and sent to the Map',asy
   await expect(page.locator('#map path')).toHaveCount(1);
   await expect(page.locator('#map-note')).toContainText('junctions');
 
+  // A study area connected BESIDE the network is drawn with it. The practitioner, 2026-10-20:
+  // "When I add both the study area and street network to the Map, the study area polygon does
+  // not show up." A map is single-MODE, and the mode that won dropped every other layer from the
+  // value before a renderer saw it.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="map"]').click();
+  // Whatever the layer picker offers for the study area -- the option is the source node, so the
+  // test asks the control rather than assuming a value.
+  const areaOption=await page.locator('#map-add-layer option').evaluateAll(options=>
+    (options.find(o=>/ \u00b7 area$/.test((o.textContent||'').trim()))||{}).value);
+  await page.locator('#map-add-layer').selectOption(areaOption);
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('#result-tabs [data-output="map"]').click();
+  // Two paths now: the streets, and the area behind them, in one frame.
+  await expect(page.locator('#map path')).toHaveCount(2);
+
   // And the map's own settings apply to it. The practitioner, 2026-10-20: "Map widget settings
   // (e.g., interactive and basemap) not being implemented ... That looks like a regression." The
   // static branch returned before the interactive one was reached, so a Map showing a network
@@ -58,5 +75,6 @@ test('a downloaded network can be seen in the Inspector and sent to the Map',asy
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('#result-tabs [data-output="map"]').click();
   await expect(page.locator('#catchment-map-host')).toHaveCount(0);
-  await expect(page.locator('#map path')).toHaveCount(1);
+  // Two again: the area is still connected, and static draws both.
+  await expect(page.locator('#map path')).toHaveCount(2);
 });

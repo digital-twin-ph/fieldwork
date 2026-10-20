@@ -36,7 +36,7 @@ import {assertProjectManifest,syncProjectManifest} from './project-manifest.js';
 import {migrateOutputNodes,decisionPresentation} from './output-contract.js';
 import {referencedPDFs,evidenceProvenance} from './evidence.js';
 import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,RenamedNodeType,CandidateCondition} from './types.js';
-import {RENAMED_NODE_TYPES,isProjectedReference} from './types.js';
+import {RENAMED_NODE_TYPES,isProjectedReference,BASEMAP_CHOICES} from './types.js';
 import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
 // Re-exported so the registry validator can cross-check a declared rename against the one the
 // application actually performs, from the same bundle it already reads TYPES out of.
@@ -420,7 +420,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     // figures configured for an outside reader: the Snow subtitles need 176 and 200 characters to
     // say what the figure shows AND what it does not claim, and a full citation with its licence
     // runs to 253. The title stays at 120, because something longer than that is not a title.
-    if(n.type==='map_output'&&((n.params.showLegend!==undefined&&typeof n.params.showLegend!=='boolean')||(n.params.basemap!==undefined&&!['none','osm','topo'].includes(n.params.basemap))||(['mapTitle','mapSubtitle','mapSourceNote'] as const).some(key=>n.params[key]!==undefined&&(typeof n.params[key]!=='string'||n.params[key]!.length>({mapTitle:120,mapSubtitle:280,mapSourceNote:500}[key])))))throw new Error('Invalid map presentation settings.');
+    if(n.type==='map_output'&&((n.params.showLegend!==undefined&&typeof n.params.showLegend!=='boolean')||(n.params.basemap!==undefined&&!(BASEMAP_CHOICES as readonly string[]).includes(n.params.basemap))||(['mapTitle','mapSubtitle','mapSourceNote'] as const).some(key=>n.params[key]!==undefined&&(typeof n.params[key]!=='string'||n.params[key]!.length>({mapTitle:120,mapSubtitle:280,mapSourceNote:500}[key])))))throw new Error('Invalid map presentation settings.');
     if(n.type==='chart_output'&&n.params.inputMode!==undefined&&!['decisions','polygons','series'].includes(n.params.inputMode))throw new Error('Invalid chart input mode.');
     if(n.type==='chart_output'&&n.params.bandMeasure!==undefined&&!['cumulative','difference'].includes(n.params.bandMeasure))throw new Error('Choose cumulative band counts or the difference between neighbouring bands.');
     // A difference is computed by the Vega-Lite specification, so it needs that renderer.
@@ -917,10 +917,21 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const network=inputs.network as import('./catchments.js').Network;
         if(!network?.nodes?.length)throw new Error('Connect a Street network: this Map is set to show a network and none is connected.');
         const source=workflow.edges.find(e=>e.to===node.id&&e.port==='network')!.from;
-        value={kind:'network-map',network:structuredClone(network),rows:[],centers:[]} as unknown as DisplayValue;
+        // The study area is drawn WITH the streets when both are connected. The practitioner,
+        // 2026-10-20: *"When I add both the study area and street network to the Map, the study
+        // area polygon does not show up."* It did not, because this value carried the network
+        // alone: a map is single-MODE, and the mode that wins drops every other layer from the
+        // value before any renderer sees it. The Inspector's own network preview has drawn the
+        // area behind the streets since it existed, which is what made the omission visible.
+        const drawnArea=inputs.area as {boundary?:unknown;bounds?:unknown}|undefined;
+        value={kind:'network-map',network:structuredClone(network),
+          ...(drawnArea?.boundary?{boundary:structuredClone(drawnArea.boundary),bounds:drawnArea.bounds}:{}),
+          rows:[],centers:[]} as unknown as DisplayValue;
         const activity=`<urn:fieldwork:run:${runId}:map:${node.id}>`;
         const facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n'
           +`${activity} a fw:MapView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; `
+          +(workflow.edges.find(e=>e.to===node.id&&e.port==='area')
+            ?`prov:used <urn:fieldwork:run:${runId}:output:${workflow.edges.find(e=>e.to===node.id&&e.port==='area')!.from}>; `:'')
           +`fw:networkJunctionCount ${network.nodes.length}; fw:networkSegmentCount ${network.edges.length}.\n`
           +`<urn:fieldwork:run:${runId}:output:${node.id}> a prov:Entity; prov:wasGeneratedBy ${activity}.\n`;
         receipts.push({nodeId:node.id,kind:'presentation',facts,input:facts,rules:'',conclusions:[],

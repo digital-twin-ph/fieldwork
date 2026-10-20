@@ -2,7 +2,7 @@ import L from 'leaflet';
 import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
-import type {BasemapChoice} from './types.js';
+import {BASEMAP_CHOICES,type BasemapChoice} from './types.js';
 export type {BasemapChoice};
 
 /** OpenFreeMap serves VECTOR tiles, not raster, so these cannot be an `L.tileLayer` URL.
@@ -44,6 +44,31 @@ const BASEMAPS={
   topo:{label:'OpenTopoMap terrain',url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attribution:'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC BY-SA)',maxZoom:17}
 } as const;
 
+/** THE basemap list, for every control that offers one.
+ *
+ *  The practitioner, 2026-10-20: *"I also still do not see why we do not yet have OpenFreeMap as
+ *  a Basemap option in the Map widget."* It was there -- three styles, drawing since 2026-10-17 --
+ *  in the map's own toolbar, and not in the widget's Inspector, which carried its own hand-written
+ *  list of three options written before the vector styles existed. The project's recurring defect,
+ *  again: a derivation replaced by a copy somebody has to remember to update.
+ *
+ *  One source now, used by both selects. What still needs a human is the `BasemapChoice` union in
+ *  types.ts, which cannot import this module because the workers build types.ts without Leaflet. */
+const BASEMAP_LABELS:Record<BasemapChoice,string>={
+  none:'None \u00b7 local geometry, works offline',
+  osm:BASEMAPS.osm.label,
+  topo:BASEMAPS.topo.label,
+  'ofm-liberty':VECTOR_BASEMAPS['ofm-liberty'].label,
+  'ofm-positron':VECTOR_BASEMAPS['ofm-positron'].label,
+  'ofm-bright':VECTOR_BASEMAPS['ofm-bright'].label,
+};
+export const BASEMAP_OPTIONS:readonly {value:BasemapChoice;label:string}[]=
+  BASEMAP_CHOICES.map(value=>({value,label:BASEMAP_LABELS[value]}));
+/** The options as markup, so the two selects cannot drift in their labels either. */
+export const basemapOptions=(selected:BasemapChoice|undefined):string=>BASEMAP_OPTIONS
+  .map(option=>`<option value="${option.value}" ${(selected||'none')===option.value?'selected':''}>${option.label}</option>`)
+  .join('');
+
 /** What an interactive map can draw. Every field optional, because a map draws the layers it is
  *  given: the practitioner's model of 2026-10-14, reaching the renderer on 2026-10-15.
  *
@@ -72,7 +97,9 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     ?{polygons:source as Polygons}:source as MapLayers;
   const p:Polygons=layers.polygons??{features:[],sites:[],observations:undefined} as unknown as Polygons;
   const toolbar=document.createElement('div');toolbar.className='catchment-map-toolbar';
-  toolbar.innerHTML='<button class="button small" data-fit>Fit all layers</button><button class="button small" data-fullscreen>Full screen</button><label>Basemap <select data-basemap aria-label="Interactive map basemap"><option value="none">Local geometry (offline)</option><option value="osm">OpenStreetMap streets</option><option value="topo">OpenTopoMap terrain</option><option value="ofm-liberty">OpenFreeMap Liberty</option><option value="ofm-positron">OpenFreeMap Positron (muted)</option><option value="ofm-bright">OpenFreeMap Bright</option></select></label><span data-tile-status role="status">Local layers work offline</span>';
+  toolbar.innerHTML='<button class="button small" data-fit>Fit all layers</button><button class="button small" data-fullscreen>Full screen</button><label>Basemap <select data-basemap aria-label="Interactive map basemap">'
+    +basemapOptions(basemap)
+    +'</select></label><span data-tile-status role="status">Local layers work offline</span>';
   const canvas=document.createElement('div');canvas.className='catchment-leaflet';canvas.setAttribute('aria-label','Interactive catchment map');
   host.append(toolbar,canvas);
   // Views can disappear immediately on tab/workspace changes. Avoid delayed zoom

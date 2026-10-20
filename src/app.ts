@@ -11,7 +11,7 @@ import {geoprivacyExample} from './geoprivacy-example.js';
 import {pointComparisonMarkup} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
-import {mountCatchmentMap} from './catchment-map.js';
+import {mountCatchmentMap,basemapOptions,BASEMAP_OPTIONS} from './catchment-map.js';
 import {catchmentPlot,polygonSvg,catchmentFrame} from './catchment-output.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
@@ -100,7 +100,7 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label class="field-label" for="map-subtitle">Subtitle / context</label><input id="map-subtitle" maxlength="280" value="${esc(p.mapSubtitle||'')}" placeholder="Optional scope or limitation">
     <label><input id="map-legend-toggle" type="checkbox" ${p.showLegend!==false?'checked':''}> Show map key</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
-    <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap"><option value="none" ${!p.basemap||p.basemap==='none'?'selected':''}>None · local geometry, works offline</option><option value="osm" ${p.basemap==='osm'?'selected':''}>OpenStreetMap streets</option><option value="topo" ${p.basemap==='topo'?'selected':''}>OpenTopoMap terrain</option></select>
+    <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap)}</select>
     <p class="description">A basemap is layer 0, under everything the workflow produced. Choosing one switches this map to the interactive presentation, which is the only one that can draw tiles. ${p.presentation==='interactive'?'':'This map is a static plot today, so picking one will change how it is drawn.'}</p>
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
 }
@@ -1847,6 +1847,17 @@ function renderInspector(){
   optionalElement('#reset-clip-boundary')?.addEventListener('click',()=>change(w=>{delete getNode(w,n.id,'clip_raster').params.cutline;},{requirePersistence:true}));
   optionalElement('#study-area-label-form')?.addEventListener('submit',e=>{e.preventDefault();const input=$('#study-area-label'),label=input.value.trim();if(!label){input.setCustomValidity('Enter a label for the study area.');input.reportValidity();return;}change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=label);});
   optionalElement('#study-area-label')?.addEventListener('input',e=>control(e).setCustomValidity(''));
+  // The same gesture for every other widget. The field already saves on change, so this is the
+  // affordance rather than the mechanism: pressing it confirms, and an empty label is refused
+  // here rather than silently writing one nobody can read on the canvas.
+  optionalElement('#catchment-label-form')?.addEventListener('submit',e=>{
+    e.preventDefault();
+    const input=$('#catchment-label') as HTMLInputElement,label=input.value.trim();
+    if(!label){input.setCustomValidity('Enter a label for this widget.');input.reportValidity();return;}
+    input.setCustomValidity('');
+    change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>).label=label;});
+  });
+  optionalElement('#catchment-label')?.addEventListener('input',e=>control(e).setCustomValidity(''));
   optionalElement('#edit-input-data')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),workflow.nodes.filter((x):x is WorkflowNode<'study_area'>=>x.type==='study_area'&&(!!x.params.geometry||x.params.source!=='drawn')).map(x=>({id:x.id,label:x.params.label||'Old Naledi',geometry:x.params.geometry||oldNalediBoundary as Boundary})),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;}));
   document.querySelectorAll<HTMLSelectElement>('[data-coverage-port]').forEach(el=>el.onchange=()=>{const from=el.value,port=el.dataset.coveragePort!;change(w=>{w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===port));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port});});});
   optionalElement('#measure-area-source')?.addEventListener('change',e=>{const from=control(e).value;change(w=>{w.edges=w.edges.filter(x=>!(x.to===n.id&&x.port==='area'));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port:'area'});});});
@@ -2154,7 +2165,8 @@ function renderMap(){
     const coverage=networkCoverage(result.network);
     $('#map-panel').querySelector('#map-note')!.textContent=networkPreviewCaption(coverage);
     svg.style.display='';svg.setAttribute('viewBox','0 0 252 168');
-    svg.innerHTML=networkPreviewSvg(result.network).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
+    // The area goes in the same frame as the streets, as the Inspector's preview has always done.
+    svg.innerHTML=networkPreviewSvg(result.network,result.boundary as never).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
     return;
   }
   svg.style.display='';svg.setAttribute('viewBox','0 0 850 295');

@@ -108,6 +108,44 @@ So the pattern already exists and was not noticed as a pattern. A Dive Deeper
 section is: **vary the assumption the widget inherits, and show what it does to
 the answer.**
 
+## What a Dive Deeper section owes, revised 2026-10-20
+
+This record defined the section as **vary the assumption the widget inherits, and show what it does
+to the answer**. That is one ingredient and not the whole thing. The practitioner, on the notebooks
+being teaching material rather than evidence:
+
+> *"the deeper dive notebooks are pedagogical so they come with their own requirements — learning
+> objectives, what are the underlying geospatial processes that are under the hood that helps the
+> learner understand what the widget does, notebook example runs of those processes, etc.
+> references, links to other notebooks."*
+
+So a section carries:
+
+- **Stated learning objectives.** What a reader will be able to do or judge afterwards, written
+  before the cells rather than inferred from them. A section whose objectives cannot be stated is
+  a demonstration, not a lesson.
+- **The process under the hood, named.** The widget hides a geospatial operation — a Dijkstra over
+  edge lengths, a planar partition, a projection to metres, a point-in-polygon test. The section
+  names it in the terms the discipline uses, so a reader can recognise it elsewhere and look it up
+  without this project's vocabulary.
+- **That process run on its own**, in cells, on real data, before or beside the widget's version.
+  Reading that an isochrone walks outward until a budget runs out teaches less than watching the
+  frontier advance. This is the half the existing checks already do by accident: 07 varies walking
+  speed and the reached set goes from 69 junctions to 246; 08 varies the corridor half-width and
+  the area goes 0.51× at 10 m to 1.53× at 60 m.
+- **The assumption varied**, which is what this record originally asked for and is now one step of
+  several rather than the whole of it.
+- **References** a reader can follow outward: the method's own literature, the data's source, the
+  standard where one exists. A notebook that cites only this repository teaches the tool and not
+  the subject.
+- **Links to the other notebooks** whose material it depends on or extends. Deferred until there
+  are enough sections for the links to mean anything, and recorded here so the ordering is a
+  decision rather than an omission.
+
+The parity half is unchanged and still answers to a reviewer. The two live in one notebook because
+they share the setup, not because they are the same work, and a section written only to satisfy
+`validate:dive-deeper` satisfies a count.
+
 ## What this changes
 
 **The 26 widgets without a lab check** ([docs/todo.md](../todo.md), item 2) were
@@ -140,7 +178,11 @@ what they learned, which needs field testing, a phase this project has not reach
 
 ## What this does not establish
 
-That the notebooks teach either. They are long, they require a kernel, and
+- **That the pedagogical requirements above have been tried.** They were stated on 2026-10-20 and
+  no section has yet been written against them; the twenty that exist predate them and meet the
+  original, narrower definition. Whether a notebook can carry a lesson and a parity check without
+  serving neither well is exactly what writing one will show.
+- That the notebooks teach either. They are long, they require a kernel, and
 nobody has watched a practitioner read one. The claim moved from the canvas to
 the lab, and it is no better evidenced there; what has improved is that it is
 now in a medium that can carry an explanation, which the canvas could not.

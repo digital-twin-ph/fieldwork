@@ -1,0 +1,77 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:network_input",
+ "nodeType": "network_input",
+ "version": "0.3.0",
+ "title": "Street network",
+ "released": "2026-10-20",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['network_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "network",
+  "optionalInputs": [
+   "area"
+  ],
+  "note": "Area is acquisition context for OSM; file inputs do not require it."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:NetworkInput",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. The mode the graph was filtered for is asserted as fw:travelMode on the network entity -- the term reachability already uses for the mode it assumes -- from src/catchments.ts, so it is declared on the release whose definition is that module rather than here. Configuration SHACL is future work.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/catchments.ts",
+   "src/street-network.ts",
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "feature",
+   "description": "A download is now made for walking or for driving, and the two are different graphs rather than different labels. Walking keeps footways, paths and steps and reads the one-way restrictions that apply on foot; driving keeps motorways and trunk roads, drops footways, paths and steps, honours vehicle one-ways and roundabouts, and reads motor_vehicle and motorcar restrictions. The highway exclusions follow OSMnx's drive filter so a graph here and a graph from OSMnx of the same area are comparable. The mode is part of the request, so a cached walking graph is never served to a driving download; it is saved with the graph, shown on the widget, and written into the receipt; and a widget further down the workflow that asks for a mode the graph cannot carry is refused instead of answered. Walking stays the default, so an existing workflow downloads what it always did."
+  },
+  {
+   "kind": "feature",
+   "description": "Downloads are judged on what they cost rather than on how wide the area is: the fixed 6 km envelope is gone, and the byte and feature limits are their own numbers instead of following the isochrone graph limit. The default graph size is 50,000 network nodes, which admits a real town. Each instance's /api/status is read before downloading -- free slots, rate limit, and when the next slot frees -- and a busy service is waited for rather than treated as a failure. Responses are kept on the device and reused for the same query; pressing Download again when a network is already saved fetches a fresh one. The widget shows endpoint status before a download, progress on the button while it runs, which instance served the saved graph, and why a download failed."
+  },
+  {
+   "kind": "initial",
+   "description": "Reusable local catchment primitive; see docs/experiments/32-john-snow-primitives.md. Bounded prototype, not an exact notebook replay."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Acquisition only; the graph it produces is checked where it is used. The pacing follows the service's own /api/status rather than a client-side guess, measured against OSMnx's behaviour on 2026-10-19."
+ }
+}

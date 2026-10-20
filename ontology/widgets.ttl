@@ -12,7 +12,8 @@
 <urn:fieldwork:widget:access_policy> a fw:WidgetDefinition; fw:nodeType "access_policy"; rdfs:label "Access review".
 <urn:fieldwork:widget:alert> a fw:WidgetDefinition; fw:nodeType "alert"; rdfs:label "Heat alert".
 <urn:fieldwork:widget:apply_ruleset> a fw:WidgetDefinition; fw:nodeType "apply_ruleset"; rdfs:label "Apply ruleset".
-<urn:fieldwork:widget:study_area> a fw:WidgetDefinition; fw:nodeType "study_area"; rdfs:label "Study area".
+<urn:fieldwork:widget:study_area> a fw:WidgetDefinition; fw:nodeType "study_area"; rdfs:label "Study area";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/study_area.md>.
 <urn:fieldwork:widget:buffer_area> a fw:WidgetDefinition; fw:nodeType "buffer_area"; rdfs:label "Buffer study area".
 <urn:fieldwork:widget:buffer_point> a fw:WidgetDefinition; fw:nodeType "buffer_point"; rdfs:label "Area around a point".
 <urn:fieldwork:widget:case_series> a fw:WidgetDefinition; fw:nodeType "case_series"; rdfs:label "Cases by period".
@@ -37,8 +38,10 @@
 <urn:fieldwork:widget:measure_area> a fw:WidgetDefinition; fw:nodeType "measure_area"; rdfs:label "Calculate area".
 <urn:fieldwork:widget:micro_workflow> a fw:WidgetDefinition; fw:nodeType "micro_workflow"; rdfs:label "Micro-workflow".
 <urn:fieldwork:widget:measure_distance> a fw:WidgetDefinition; fw:nodeType "measure_distance"; rdfs:label "Measure distance".
-<urn:fieldwork:widget:network_input> a fw:WidgetDefinition; fw:nodeType "network_input"; rdfs:label "Street network".
-<urn:fieldwork:widget:point_input> a fw:WidgetDefinition; fw:nodeType "point_input"; rdfs:label "Point data".
+<urn:fieldwork:widget:network_input> a fw:WidgetDefinition; fw:nodeType "network_input"; rdfs:label "Street network";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/network_input.md>.
+<urn:fieldwork:widget:point_input> a fw:WidgetDefinition; fw:nodeType "point_input"; rdfs:label "Point data";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/point_input.md>.
 <urn:fieldwork:widget:output> a fw:WidgetDefinition; fw:nodeType "output"; rdfs:label "Visual output".
 <urn:fieldwork:widget:places> a fw:WidgetDefinition; fw:nodeType "places"; rdfs:label "Neighborhoods".
 <urn:fieldwork:widget:policy> a fw:WidgetDefinition; fw:nodeType "policy"; rdfs:label "Outreach criteria".

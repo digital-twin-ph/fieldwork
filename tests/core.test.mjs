@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exampleWorkflow,validateWorkflow,executionPlan,executeWorkflow,NS} from '../build/core.js';
+import {exampleWorkflow,validateWorkflow,executionPlan,executeWorkflow,NS,IncompleteWorkflow} from '../build/core.js';
 
 test('all outputs run and share one upstream inference',async()=>{
   const w=exampleWorkflow();let calls=0;
@@ -25,6 +25,11 @@ test('legacy output defaults to map and missing outputs are rejected',()=>{
   // that already had a study area to start with one.
   assert.throws(()=>executionPlan(w),/Nothing here displays a result/);
   assert.throws(()=>executionPlan(w),/Add a Map, Table or Chart output/);
+  // And it is INCOMPLETE, not broken. The practitioner, 2026-10-20: "The lack of an output is not
+  // an error, it's an incomplete workflow." The interface reads the type rather than inferring a
+  // tone from the fact that something was thrown.
+  assert.throws(()=>executionPlan(w),error=>error instanceof IncompleteWorkflow);
+  assert.throws(()=>executionPlan({...w,nodes:[],edges:[]}),error=>error instanceof IncompleteWorkflow);
 });
 
 test('each output requires connected dependencies and a supported display',()=>{

@@ -64,6 +64,11 @@ reporting minutes for a journey the streets do not support.
 Distances along it are distances on those streets, and a network downloaded today describes the
 streets today, not the streets of whatever period your data comes from.
 
+A saved network is kept beside the workflow rather than inside it, in the larger store your
+browser offers, so the size of a graph is no longer limited by what a workflow may hold. If that
+store is unavailable — private browsing, for instance — the application says "small store only"
+when it saves, and a large network may then be refused.
+
 A driving graph carries no speed limits, no junction delay and no congestion. Travel time over it
 is one speed applied to every street, which is the same model walking uses and a weaker one for a
 car.

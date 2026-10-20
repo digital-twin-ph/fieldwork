@@ -383,7 +383,7 @@
   {
    "id": "urn:fieldwork:widget:isochrone",
    "nodeType": "isochrone",
-   "currentVersion": "0.3.0",
+   "currentVersion": "0.4.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -399,6 +399,11 @@
      "version": "0.3.0",
      "path": "widgets/releases/isochrone/0.3.0.json",
      "sha256": "0e7ce19e1fbbea6fb44d49fd88ac18d0e8ee96099026811447269253f1a4a71c"
+    },
+    {
+     "version": "0.4.0",
+     "path": "widgets/releases/isochrone/0.4.0.json",
+     "sha256": "d5f4f2670bc7ca70ee3ff11698663c2da4aded10c3fc1edd2217702593f595d2"
     }
    ]
   },
@@ -543,7 +548,7 @@
   {
    "id": "urn:fieldwork:widget:network_input",
    "nodeType": "network_input",
-   "currentVersion": "0.2.0",
+   "currentVersion": "0.3.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -554,6 +559,11 @@
      "version": "0.2.0",
      "path": "widgets/releases/network_input/0.2.0.json",
      "sha256": "dc0e4c8c3b48835d125a1fe3758afb0e19a7d44fdfad0a61bb15b5380400fe02"
+    },
+    {
+     "version": "0.3.0",
+     "path": "widgets/releases/network_input/0.3.0.json",
+     "sha256": "2018d6a6fd9fc757d003994bdd2780909aed734fe4c08e132da9f65bd7961d27"
     }
    ]
   },

@@ -338,9 +338,13 @@
    "migrationFrom": []
   },
   "isochrone": {
-   "version": "0.3.0",
-   "released": "2026-10-14",
+   "version": "0.4.0",
+   "released": "2026-10-20",
    "changes": [
+    {
+     "kind": "changed",
+     "description": "Declares fw:travelMode, which src/catchments.ts began asserting when street networks gained a walking or driving mode: the mode a graph was filtered for is now on the network entity in the receipt. Nothing about how an isochrone is computed changed. This widget reads the mode rather than setting it, and a graph downloaded for driving is refused by the reachability step it is built on if that step says walking."
+    },
     {
      "kind": "minor",
      "description": "Optional bounded list of cumulative time thresholds and explicit interior-hole infill; preserves single-time corridor defaults."
@@ -430,9 +434,13 @@
    "migrationFrom": []
   },
   "network_input": {
-   "version": "0.2.0",
+   "version": "0.3.0",
    "released": "2026-10-20",
    "changes": [
+    {
+     "kind": "feature",
+     "description": "A download is now made for walking or for driving, and the two are different graphs rather than different labels. Walking keeps footways, paths and steps and reads the one-way restrictions that apply on foot; driving keeps motorways and trunk roads, drops footways, paths and steps, honours vehicle one-ways and roundabouts, and reads motor_vehicle and motorcar restrictions. The highway exclusions follow OSMnx's drive filter so a graph here and a graph from OSMnx of the same area are comparable. The mode is part of the request, so a cached walking graph is never served to a driving download; it is saved with the graph, shown on the widget, and written into the receipt; and a widget further down the workflow that asks for a mode the graph cannot carry is refused instead of answered. Walking stays the default, so an existing workflow downloads what it always did."
+    },
     {
      "kind": "feature",
      "description": "Downloads are judged on what they cost rather than on how wide the area is: the fixed 6 km envelope is gone, and the byte and feature limits are their own numbers instead of following the isochrone graph limit. The default graph size is 50,000 network nodes, which admits a real town. Each instance's /api/status is read before downloading -- free slots, rate limit, and when the next slot frees -- and a busy service is waited for rather than treated as a failure. Responses are kept on the device and reused for the same query; pressing Download again when a network is already saved fetches a fresh one. The widget shows endpoint status before a download, progress on the button while it runs, which instance served the saved graph, and why a download failed."

@@ -11,10 +11,13 @@
  *  So the link is generated from the ledger rather than written per widget, and it is rendered
  *  near the top, beside the description of what the widget does. */
 import parityRecord from '../widgets/parity.json';
+import lessonRecord from '../widgets/dive-deeper.json';
 import {METRIC_NODE_TYPES,PROJECTION_NOTEBOOK} from './metric-crs.js';
 
 const LAB='https://digital-twin-ph.github.io/validation-lab/lab/index.html?path=';
 export const notebookURL=(notebook:string):string=>LAB+encodeURIComponent(notebook);
+/** The lessons live in their own repository from 2026-10-20, with their own site. */
+export const lessonURL=(notebook:string):string=>lessonRecord.repository.site+encodeURIComponent(notebook);
 
 export interface DiveDeeper {notebook:string; heading:string; url:string; why:string}
 interface ParityEntry {widget:string; check:string; notebook?:string; diveDeeper?:string}
@@ -24,6 +27,14 @@ interface ParityEntry {widget:string; check:string; notebook?:string; diveDeeper
 export function diveDeeperFor(nodeType:string):DiveDeeper[] {
   const found:DiveDeeper[]=[];
   const seen=new Set<string>();
+  // A lesson written against the pedagogical requirements comes FIRST, before a section that
+  // predates them. Both are offered while both exist; the ledger's ceiling is what records how
+  // many are still in the older form.
+  for(const lesson of lessonRecord.entries as {widget:string;notebook:string;title:string;teaches:string}[]){
+    if(lesson.widget.split(':').pop()!==nodeType)continue;
+    seen.add(lesson.notebook);
+    found.push({notebook:lesson.notebook,heading:lesson.title,url:lessonURL(lesson.notebook),why:lesson.teaches});
+  }
   for(const entry of parityRecord.entries as ParityEntry[]){
     if(entry.widget.split(':').pop()!==nodeType||!entry.diveDeeper||!entry.notebook)continue;
     if(seen.has(entry.notebook))continue;
@@ -45,6 +56,6 @@ export function diveDeeperPanel(nodeType:string,esc:(value:string)=>string):stri
   return '<details class="explainer dive-deeper"><summary>Dive Deeper</summary>'
     +entries.map(entry=>`<p><a href="${entry.url}" target="_blank" rel="noopener noreferrer">`
       +`${esc(entry.heading.replace(/^Dive deeper · /i,''))}</a><br>${esc(entry.why)}</p>`).join('')
-    +'<p class="muted">Opens the Validation Lab, which runs the notebook in your browser. Needs a connection.</p>'
+    +'<p class="muted">Opens the notebook in your browser and runs it there. Needs a connection.</p>'
     +'</details>';
 }

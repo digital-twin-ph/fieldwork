@@ -74,6 +74,28 @@ export type TravelMode=keyof typeof MODE_SPEED_BANDS;
 
 const kmh=(mPerMin:number)=>(mPerMin*60/1000).toFixed(1);
 
+/** A graph downloaded for one mode cannot answer for the other, and until 2026-10-20 it was asked
+ *  to: `travelMode` was declared here while the only graph obtainable was a walking one, so
+ *  "driving" relabelled a walk. The graph now records the mode it was filtered for, and a
+ *  contradiction is refused rather than computed.
+ *
+ *  Only a KNOWN contradiction. An imported file carries no mode, and an unknown mode cannot
+ *  disagree with anything -- refusing it would lock out every network prepared outside this
+ *  application, including the Soho graph the 1854 example ships. Cycling and `other` have no
+ *  download of their own, so neither contradicts a graph: what they claim about their speed is
+ *  the practitioner's to defend and is recorded in the receipt either way. */
+export function refuseModeMismatch(network:Network,declared:string):void{
+  const graphMode=(network.provenance as Record<string,unknown>|undefined)?.travelMode;
+  if(typeof graphMode!=='string')return;
+  const conflicts:Record<string,readonly string[]>={walking:['driving'],driving:['walking','cycling']};
+  if(!conflicts[graphMode]?.includes(declared))return;
+  throw new Error(`This street network was downloaded for ${graphMode}, and "How people travel" `
+    +`says ${declared}. A ${graphMode} graph ${graphMode==='walking'
+      ?'keeps footways, paths and steps and leaves out motorways and trunk roads, and its one-way restrictions are the ones that apply on foot'
+      :'leaves out footways, paths and steps, so journeys on foot would be measured along roads only'}`
+    +`, so the minutes would not be the journey you asked for. Change this widget to ${graphMode}, `
+    +`or set the Street network widget to ${declared} and press "Download and save OSM network" again.`);
+}
 export function validateReachNode(node:WorkflowNode<'reachable_nodes'>):void{
   const {minutes,speedMPerMin,direction,travelMode}=node.params;
   if(!Number.isFinite(minutes)||minutes<0.1||minutes>60)
@@ -181,6 +203,7 @@ export function reachableNodes(
 ):{value:PointCollection&{sourceNodeId:string};receipt:Receipt}{
   validateReachNode(node);
   validateNetwork(network);
+  refuseModeMismatch(network,node.params.travelMode);
   const {minutes,speedMPerMin,direction,travelMode}=node.params;
   const origins=input.features.filter(f=>f.geometry);
   if(!origins.length)throw new Error('Reachability needs at least one origin with a known location.');

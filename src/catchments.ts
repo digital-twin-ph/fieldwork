@@ -15,6 +15,13 @@ import {prepareEdges} from './network-edges.js';
  *  raised the knob is not refused later by a step that re-validates against the default. The
  *  limit travels on the value for the same reason the distance unit travels on `nearest`'s
  *  output: a graph of 4,000 junctions is not interpretable without knowing it was allowed. */
+/** The travel modes a street network can be DOWNLOADED for. Not the four `reachable_nodes`
+ *  offers: cycling needs its own highway list and its own restriction tags, and `other` names no
+ *  filter at all, so offering either on the download would be a label over an unchanged graph.
+ *  The filters themselves live in street-network.ts; the vocabulary lives here because this
+ *  module is the one a worker can see. */
+export const NETWORK_TRAVEL_MODES=['walking','driving'] as const;
+export type NetworkTravelMode=typeof NETWORK_TRAVEL_MODES[number];
 export interface Network {nodes:{id:string;coordinates:Position}[];edges:{from:string;to:string;lengthM:number;geometry?:Position[]}[];source:string;provenance?:Record<string,unknown>;limits?:{maxNodes:number;maxEdges:number}}
 
 /** The default graph ceiling, and the only value measured. Raising it is a knob rather than a
@@ -515,6 +522,12 @@ export function catchmentReceipt(node:WorkflowNode,value:Polygons|Network,runId:
   let facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n'+`<${activity}> a prov:Activity, fw:${classes[node.type]}; fw:parameters ${JSON.stringify(JSON.stringify(node.type==='network_input'?{source:(value as Network).source,inputMethod:node.params.inputMethod,marginM:node.params.marginM}:node.params))}.\n<${entity}> a prov:Entity; prov:wasGeneratedBy <${activity}>.\n`;
   for(const source of sources)facts+=`<${activity}> prov:used <urn:fieldwork:run:${runId}:output:${source}>.\n`;
   if('nodes' in value)facts+=`<${entity}> fw:sourceDescription ${JSON.stringify(value.source)}; fw:networkMetadata ${JSON.stringify(JSON.stringify(value.provenance||{}))}; fw:networkNodeCount ${value.nodes.length}; fw:networkEdgeCount ${value.edges.length}.\n`;
+  // The mode the graph was FILTERED for, as a term rather than a string inside the metadata blob,
+  // because a reader asking "was this a driving network" is asking the receipt a question and
+  // should not have to parse JSON to answer it. `fw:travelMode` is the term reachability already
+  // asserts for the mode it was told to assume; this is the mode the graph can actually carry.
+  if('nodes' in value&&typeof (value.provenance as Record<string,unknown>|undefined)?.travelMode==='string')
+    facts+=`<${entity}> fw:travelMode ${JSON.stringify(String((value.provenance as Record<string,unknown>).travelMode))}.\n`;
   if('features' in value){facts+=`<${activity}> ${operationCRS?`fw:metricCRS ${JSON.stringify(operationCRS)}; `:''}${conformsTo?`dcterms:conformsTo <${conformsTo}>; `:''}fw:method ${JSON.stringify(operationMethod)}; fw:caveats ${JSON.stringify(value.notes.join(' '))}.\n`;for(const f of value.features){const id=`${entity}:cell:${encodeURIComponent(f.id)}`,wkt='MULTIPOLYGON ('+multi(f.geometry).map(p=>'('+p.map(r=>'('+r.map(c=>c.join(' ')).join(', ')+')').join(', ')+')').join(', ')+')';facts+=`<${entity}> fw:member <${id}>.\n<${id}> a geo:Feature; fw:siteId ${JSON.stringify(f.siteId)}; geo:hasGeometry [ a geo:Geometry; geo:asWKT ${JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> '+wkt)}^^geo:wktLiteral ].\n`;if(f.minutes!==undefined)facts+=`<${id}> fw:travelTimeMinutes ${f.minutes}.\n`;if(f.count!==undefined)facts+=`<${id}> fw:recordCount ${f.count}; fw:missingValueCount ${f.missingValues}.\n`;}if(value.summary?.valueField)for(const f of value.features)facts+=`<${entity}:cell:${encodeURIComponent(f.id)}> fw:numericTotal ${f.total}.\n`;if(value.summary)facts+=`<${entity}> fw:summary ${JSON.stringify(JSON.stringify(value.summary))}.\n`;if(value.snaps)facts+=`<${activity}> fw:networkSnaps ${JSON.stringify(JSON.stringify(value.snaps))}.\n`;if(value.unconnected?.length)facts+=`<${activity}> fw:unconnectedSiteCount ${value.unconnected.length}; fw:unconnectedSites ${JSON.stringify(JSON.stringify(value.unconnected))}.\n`;if(value.offNetwork?.length)facts+=`<${activity}> fw:offNetworkSiteCount ${value.offNetwork.length}; fw:offNetworkSites ${JSON.stringify(JSON.stringify(value.offNetwork))}.\n`;for(const f of value.features)if(f.offNetworkMetres!==undefined)facts+=`<${entity}:cell:${encodeURIComponent(f.id)}> fw:offNetworkMetres ${f.offNetworkMetres}.\n`;}
   facts+=catchmentSemantics(node,value,entity,activity,runId);
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:operationMethod};

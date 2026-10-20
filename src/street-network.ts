@@ -4,6 +4,8 @@ import {validateNetwork,graphLimits,downloadLimits} from './catchments.js';
 import {geometryBounds} from './study-area.js';
 import {isRecord} from './guards.js';
 import {pacedNetworkDownload,deferNetworkDownload,chargeNetworkDownload} from './network-throttle.js';
+import {NETWORK_TRAVEL_MODES,type NetworkTravelMode} from './catchments.js';
+export {NETWORK_TRAVEL_MODES,type NetworkTravelMode};
 /** The Overpass instances this client will ask, in order.
  *
  *  Named by the practitioner on 2026-10-15, after reporting that the download was broken. It was,
@@ -175,7 +177,59 @@ export const OVERPASS=OVERPASS_ENDPOINTS[0].url;
 export const WALKABLE_HIGHWAYS=['residential','living_street','pedestrian','footway','path','steps',
   'service','unclassified','tertiary','tertiary_link','secondary','secondary_link','primary',
   'primary_link','track'] as const;
-export function osmQuery(boundary:Boundary,marginM:number,maxNodes?:number){
+/** The highway values a DRIVING download accepts. Added 2026-10-20: the practitioner, reading the
+ *  manual page, found it spoke only of walking -- *"OSMNx designates a download as walk or drive
+ *  ... Do we make that distinction when we download an OSM street network?"* We did not, and the
+ *  gap was wider than the wording. The walking list EXCLUDES motorway and trunk, so a driving
+ *  question asked of a walking graph was not merely unfiltered: the roads that carry cars were
+ *  absent. Measured the same day on the Soho walk graph this repository ships, 56.7% of its edges
+ *  and 48.1% of its length are types a driving filter excludes, and 28.1% carry a vehicle one-way
+ *  restriction the walking parser ignores because it reads `oneway:foot`.
+ *
+ *  The exclusions follow OSMnx's `drive` filter rather than being invented here, so a Fieldwork
+ *  graph and an OSMnx graph of the same area are comparable: footway, path, steps, pedestrian,
+ *  cycleway, track, service, bridleway, busway, corridor and the lifecycle values are out.
+ *  `road` -- an unclassified classification, not a road that is unclassified -- is kept, as OSMnx
+ *  keeps it. */
+export const DRIVABLE_HIGHWAYS=['motorway','motorway_link','trunk','trunk_link','primary',
+  'primary_link','secondary','secondary_link','tertiary','tertiary_link','unclassified',
+  'residential','living_street','road'] as const;
+/** What a mode changes. Every difference between a walking and a driving download is one row
+ *  here, so the two cannot drift into two parsers. */
+export interface ModeFilter {
+  /** The `highway` values admitted, used by the query AND the parser. */
+  highways:readonly string[];
+  /** The access tags that permit or forbid this mode on a way, most specific first. */
+  permitTags:readonly string[];
+  /** Values of those tags that forbid the way outright. */
+  forbids:readonly string[];
+  /** Values that permit it even where a general `access` restriction would not. */
+  permits:readonly string[];
+  /** The tag carrying one-way direction FOR THIS MODE. A vehicle one-way does not bind a walker,
+   *  which is why the walking filter reads `oneway:foot` and not `oneway`. */
+  onewayTag:string;
+  /** Whether `junction=roundabout|circular` implies one-way with no `oneway` tag, as it does for
+   *  vehicles in OSM practice and in OSMnx. */
+  roundaboutIsOneWay:boolean;
+  /** The sentence saved on the graph. It states the filter and what the graph does NOT model,
+   *  because that is what a reader needs before quoting a travel time off it. */
+  source:string;
+}
+export const MODE_FILTERS:Record<NetworkTravelMode,ModeFilter>={
+  walking:{highways:WALKABLE_HIGHWAYS,permitTags:['foot'],forbids:['no','private','use_sidepath'],
+    permits:['yes','designated','permissive'],onewayTag:'oneway:foot',roundaboutIsOneWay:false,
+    source:'OpenStreetMap contributors, ODbL; prototype walking filter v1. Uses explicit foot restrictions; excludes conditional ways and unapproved barriers. No turn restrictions, grade, stairs cost or wheelchair model. Vehicle oneway does not imply foot oneway.'},
+  driving:{highways:DRIVABLE_HIGHWAYS,permitTags:['motor_vehicle','motorcar'],forbids:['no','private'],
+    permits:['yes','designated','permissive','destination'],onewayTag:'oneway',roundaboutIsOneWay:true,
+    source:'OpenStreetMap contributors, ODbL; prototype driving filter v1. Highway exclusions follow OSMnx\u2019s drive filter; uses explicit motor_vehicle and motorcar restrictions; excludes conditional ways and unapproved barriers. Vehicle oneway and roundabouts are honoured as direction. No turn restrictions, no posted speed limits, no junction delay and no congestion: a travel time over this graph is one speed applied to every edge.'},
+};
+const modeFilter=(mode:NetworkTravelMode):ModeFilter=>{
+  const filter=MODE_FILTERS[mode];
+  if(!filter)throw new Error(`"${mode}" is not a street network travel mode. This widget downloads ${NETWORK_TRAVEL_MODES.join(' or ')}.`);
+  return filter;
+};
+export function osmQuery(boundary:Boundary,marginM:number,maxNodes?:number,mode:NetworkTravelMode='walking'){
+  const filter=modeFilter(mode);
   if(!Number.isFinite(marginM)||marginM<0||marginM>2000)throw new Error('Download margin must be 0–2,000 metres.');
   const b=geometryBounds(boundary),dy=marginM/111195,dx=dy/Math.cos((b[1]+b[3])/2*Math.PI/180);
   const bounds=[b[0]-dx,b[1]-dy,b[2]+dx,b[3]+dy];
@@ -202,7 +256,7 @@ export function osmQuery(boundary:Boundary,marginM:number,maxNodes?:number){
   const span=(bounds[2]-bounds[0])*111195*Math.cos((b[1]+b[3])/2*Math.PI/180),height=(bounds[3]-bounds[1])*111195;
   if(bounds.some(v=>!Number.isFinite(v))||bounds[0]<-180||bounds[2]>180||Math.abs(bounds[1])>80||Math.abs(bounds[3])>80)
     throw new Error('The study area\'s bounds are not usable coordinates, so no request was made. '
-      +'Longitude must be within 180 degrees and latitude within 80, which is where this walking filter has been measured.');
+      +'Longitude must be within 180 degrees and latitude within 80, which is where these filters have been measured.');
   if(!(span>0)||!(height>0))throw new Error('The study area has no width or no height, so there is nothing to download.');
   const [w,s,e,n]=bounds;
   // Complete ways and referenced nodes preserve edge topology at the envelope. `>;` recurses to
@@ -222,14 +276,17 @@ export function osmQuery(boundary:Boundary,marginM:number,maxNodes?:number){
   // continue" -- a query whose answer is well inside 2 MB still needs more than that to compute.
   // The service's own default is the right budget; what protects this client is the streaming byte
   // cap below, which is a real limit on a real quantity.
-  const highways=WALKABLE_HIGHWAYS.join('|');
+  const highways=filter.highways.join('|');
   const query=`[out:json][timeout:25];way["highway"~"^(${highways})$"]`
     +`(${s.toFixed(7)},${w.toFixed(7)},${n.toFixed(7)},${e.toFixed(7)});out body qt;>;out skel qt;`
     +`node._["barrier"];out tags qt;`;
-  return {query,bounds,marginM};
+  // The mode is IN the query text, which is the cache key, so a driving download can never be
+  // served a walking graph that was cached for the same bounds.
+  return {query,bounds,marginM,mode};
 }
 function metres(a:Position,b:Position){const r=Math.PI/180,dlat=(b[1]-a[1])*r,dlon=(b[0]-a[0])*r,h=Math.sin(dlat/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dlon/2)**2;return 12742017.6*Math.asin(Math.sqrt(Math.min(1,h)));}
-export function networkFromOSM(raw:unknown,maxNodes?:number):Network{
+export function networkFromOSM(raw:unknown,maxNodes?:number,mode:NetworkTravelMode='walking'):Network{
+  const filter=modeFilter(mode);
   // `raw` is unknown until the guard passes, so the count is read after narrowing rather than
   // inside the condition, where it would be reported as `unknown`.
   // Three different failures used to share one sentence -- "incomplete, too large, or contains a
@@ -259,34 +316,47 @@ export function networkFromOSM(raw:unknown,maxNodes?:number):Network{
     const id=String(e.id);
     if(Number.isFinite(e.lon)&&Number.isFinite(e.lat))positions.set(id,[e.lon as number,e.lat as number]);
     const t=isRecord(e.tags)?e.tags:{};
-    if(t.barrier&&!['no','entrance'].includes(String(t.barrier))&&!['yes','designated','permissive'].includes(String(t.foot)))blocked.add(id);
+    // A barrier blocks unless this mode is explicitly let through it. The tag consulted is the
+    // mode's own: a bollard stops a car and not a walker, and `foot=yes` on a gate says nothing
+    // about a vehicle.
+    if(t.barrier&&!['no','entrance'].includes(String(t.barrier))
+      &&!filter.permitTags.some(tag=>filter.permits.includes(String(t[tag]))))blocked.add(id);
   }
   const edges:Network['edges']=[],used=new Set<string>();
-  const allowed=new Set<string>(WALKABLE_HIGHWAYS);
+  const allowed=new Set<string>(filter.highways);
   for(const item of raw.elements){if(!isRecord(item)||item.type!=='way'||!Array.isArray(item.nodes))continue;const t=isRecord(item.tags)?item.tags:{};
-    if(!allowed.has(String(t.highway))||['no','private','use_sidepath'].includes(String(t.foot))||(['no','private'].includes(String(t.access))&&!['yes','designated','permissive'].includes(String(t.foot)))||Object.keys(t).some(k=>k.endsWith(':conditional')))continue;
-    const direction=String(t['oneway:foot']||'no');if(!['yes','1','true','-1','no','0','false'].includes(direction))continue;
+    const forbidden=filter.permitTags.some(tag=>filter.forbids.includes(String(t[tag])));
+    const permitted=filter.permitTags.some(tag=>filter.permits.includes(String(t[tag])));
+    if(!allowed.has(String(t.highway))||forbidden||(['no','private'].includes(String(t.access))&&!permitted)||Object.keys(t).some(k=>k.endsWith(':conditional')))continue;
+    // `reverse` is a legal spelling of -1 and appears in the database. An unrecognised value --
+    // `alternating`, `reversible` -- drops the way rather than guessing a direction for it, which
+    // is the convention the walking filter already set and is the conservative one: a missing
+    // street understates reach, an invented direction misstates it.
+    const roundabout=filter.roundaboutIsOneWay&&['roundabout','circular'].includes(String(t.junction));
+    const tagged=String(t[filter.onewayTag]??(roundabout?'yes':'no'));
+    const direction=tagged==='reverse'?'-1':tagged;
+    if(!['yes','1','true','-1','no','0','false'].includes(direction))continue;
     for(let i=1;i<item.nodes.length;i++){const from=String(item.nodes[i-1]),to=String(item.nodes[i]);if(!positions.has(from)||!positions.has(to))throw new Error('OSM way references missing nodes; retry the download.');if(blocked.has(from)||blocked.has(to))continue;const lengthM=metres(positions.get(from)!,positions.get(to)!);if(!Number.isFinite(lengthM)||lengthM<=0)continue;
       const edge={from:'osm-'+from,to:'osm-'+to,lengthM};if(direction!=='-1')edges.push(edge);if(!['yes','1','true'].includes(direction))edges.push({...edge,from:edge.to,to:edge.from});used.add(from);used.add(to);
     }
   }
-  const network:Network={nodes:[...used].map(id=>({id:'osm-'+id,coordinates:positions.get(id)!})),edges,source:'OpenStreetMap contributors, ODbL; prototype walking filter v1. Uses explicit foot restrictions; excludes conditional ways and unapproved barriers. No turn restrictions, grade, stairs cost or wheelchair model. Vehicle oneway does not imply foot oneway.',limits:graphLimits(maxNodes)};validateNetwork(network,maxNodes);return network;
+  const network:Network={nodes:[...used].map(id=>({id:'osm-'+id,coordinates:positions.get(id)!})),edges,source:filter.source,limits:graphLimits(maxNodes)};validateNetwork(network,maxNodes);return network;
 }
 /** `refresh` is what the button means when the node already holds a network: fetch it again. The
  *  cache exists to spare a request nobody needs -- a node with nothing in it, a workflow reopened,
  *  the same area asked for twice -- and not to answer a practitioner who pressed Download BECAUSE
  *  what they have is wrong or stale. Serving that from cache would make the button look broken in
  *  the one case where it has to work. */
-export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pauseMs?:number,refresh=false,onPhase?:(message:string,fraction?:number)=>void):Promise<Network>{
-  osmQuery(boundary,marginM,maxNodes); // Invalid local input must not consume the public-service pause.
-  return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes,pauseMs,undefined,undefined,undefined,refresh,onPhase));
+export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pauseMs?:number,refresh=false,onPhase?:(message:string,fraction?:number)=>void,mode:NetworkTravelMode='walking'):Promise<Network>{
+  osmQuery(boundary,marginM,maxNodes,mode); // Invalid local input must not consume the public-service pause.
+  return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes,pauseMs,undefined,undefined,undefined,refresh,onPhase,mode));
 }
 /** Request/normalization boundary exposed for fixture tests; UI must use paced downloadOSM. */
 /** `exclude` carries the instances this request has already learned cannot serve this area, so a
  *  regional mirror that answers with nothing hands the attempt on to the next instance instead of
  *  ending it. Internal: callers pass nothing. */
-export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number,exclude:ReadonlySet<string>=new Set(),onWait?:(w:{operator:string;seconds:number})=>void,cacheStore?:CacheLike|null,refresh=false,onPhase?:(message:string,fraction?:number)=>void):Promise<Network>{
-  const request=osmQuery(boundary,marginM,maxNodes);
+export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number,exclude:ReadonlySet<string>=new Set(),onWait?:(w:{operator:string;seconds:number})=>void,cacheStore?:CacheLike|null,refresh=false,onPhase?:(message:string,fraction?:number)=>void,mode:NetworkTravelMode='walking'):Promise<Network>{
+  const request=osmQuery(boundary,marginM,maxNodes,mode);
   // One budget per attempt, and one for the whole thing. See ATTEMPT_MS.
   const startedAt=Date.now();
   let controller=new AbortController(),timer=setTimeout(()=>controller.abort(),ATTEMPT_MS);
@@ -332,9 +402,9 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     // means no service is touched at all.
     const hit=refresh?null:await cachedOSM(request.query,cacheStore);
     if(hit){
-      const network=networkFromOSM(JSON.parse(hit.text),maxNodes);
+      const network=networkFromOSM(JSON.parse(hit.text),maxNodes,mode);
       network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',
-        attribution:'\u00a9 OpenStreetMap contributors',fromCache:true,
+        attribution:'\u00a9 OpenStreetMap contributors',fromCache:true,travelMode:mode,
         retrievedAt:hit.retrievedAt,query:request.query,bounds:request.bounds,marginM:request.marginM};
       return network;
     }
@@ -487,11 +557,11 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
           :`It was the only one answering, so there is nothing else to ask until another recovers.`)
         +` Check the study area on the map, or upload a saved network file.`);
     }
-    const network=networkFromOSM(raw,maxNodes);
+    const network=networkFromOSM(raw,maxNodes,mode);
     const retrievedAt=new Date().toISOString();
     await keepOSM(request.query,body,retrievedAt,cacheStore);
     network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',
-      attribution:`© OpenStreetMap contributors, via ${reached.operator}`,url:reached.url,retrievedAt,query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
+      attribution:`© OpenStreetMap contributors, via ${reached.operator}`,url:reached.url,retrievedAt,travelMode:mode,query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
   }finally{clearTimeout(timer);}
 }
 export function parseGraphML(text:string,filename:string,maxNodes?:number):Network{

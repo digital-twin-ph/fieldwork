@@ -1,4 +1,4 @@
-import {isochrone,NETWORK_NODE_LIMIT} from './catchments.js';
+import {isochrone,ISOCHRONE_MEASURED_NODES} from './catchments.js';
 import type {Network,Polygons} from './catchments.js';
 import type {PointCollection,ParamsByType} from './types.js';
 /** The whole operation's budget. */
@@ -22,14 +22,14 @@ export function computeIsochrone(sites:PointCollection,network:Network,params:Pa
     const size=`${network.nodes.length} junctions and ${network.edges.length} segments`;
     // Above the measured ceiling, memory is the likeliest cause of a run that does not come back,
     // so the timeout says so instead of blaming time alone.
-    const large=network.nodes.length>NETWORK_NODE_LIMIT;
+    const large=network.nodes.length>ISOCHRONE_MEASURED_NODES;
     const finish=()=>{clearTimeout(timer);clearTimeout(boot);worker.terminate();};
     const boot=setTimeout(()=>{finish();reject(new Error(
       'The isochrone worker did not start, so nothing was computed. Reload the page; if it '
       +'persists, the offline cache may be incomplete.'));},BOOT_MS);
     const timer=setTimeout(()=>{finish();reject(new Error(
       `The isochrone did not finish within ${ISOCHRONE_TIMEOUT_MS/1000} seconds on a network of ${size}`
-      +(large?`, which is above the ${NETWORK_NODE_LIMIT}-junction size this has been measured at. `
+      +(large?`, which is above the ${ISOCHRONE_MEASURED_NODES}-junction size this has been measured at. `
         +`A graph this large can also exhaust the browser's memory, which looks the same from here. `
         +`Lower the graph limit on the Street network widget`
         :`. Reduce the sites or the time budget`)

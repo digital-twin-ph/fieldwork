@@ -474,6 +474,38 @@ separate field question when it gets that far.
 
 **Not started.** No experiment record yet; this is the note that precedes one.
 
+## Stress-test the remaining caps, and find the examples that do it
+
+[125](docs/experiments/125-caps-below-the-limit-we-are-testing.md) separated the caps that are
+measurements from the caps that are guesses. Two of the guesses were corrected on 2026-10-20 — the
+street-network graph limit, which measured isochrone memory and was applied to downloads, and the
+download byte floor, which refused an extent this project ships. The rest are listed here with what
+would actually stress them, because the practitioner's reason for wanting them loosened is the
+project's reason for existing: *"we are here to develop a framework that tests the limits of the
+browser — how are we going to make progress if we don't reach the limits?"*
+
+A cap raised without a measurement trades a clean refusal for a hung tab, which is the one failure
+worse than a refusal. So each of these wants a real artifact that reaches it, not a bigger number.
+
+| cap | now | what would reach it |
+|---|---|---|
+| `MAX_TABLE_ROWS` | 2,000 | A real surveillance line list. Hagelloch is 188 rows; a national weekly series or a Project Tycho extract is tens of thousands. The table view, the data-quality profile and `case_series` all walk it. |
+| `MAX_RASTER_CELLS` | 262,144 (512×512) | A WorldPop 100 m population raster for a district. The Old Naledi raster example already carries one; a province-sized window is the stress. |
+| `GEOMETRY_BYTE_BUDGET` / `AREA_BYTE_BUDGET` | 1 MiB / 1.5 MiB | **Philippines ADM2.** An archipelago is the worst case for vertex count, it is this project's own domain, and DRC ADM2 at 6,386,010 bytes already shows a single level can exceed the whole store. Measured against `localStorage` when IndexedDB reports 200–2,000× more ([121](docs/experiments/121-storage-beyond-localstorage.md)). |
+| workflow size | 50 nodes, 100 edges | An inline literal in `validateWorkflow` with no constant and no comment. A bundled composition explodes into its members, so exploding two or three in one canvas reaches it; the rulesets example is already four workflows on one canvas. |
+| `MAX_POINT_LAYERS` / `MAX_POLYGON_LAYERS` | 8 / 6 | A map carrying every layer a cholera workflow produces — deaths, pumps, catchments, hull, network, reachable nodes, corridor. |
+| `MAX_FACILITY_RECORDS` | 20,000 | Measured on Metro Manila. A country-level `find_health_facilities` query is the stress, and is also the courtesy question: whether this application should ever ask for one. |
+| `OSM_PAUSE_MS` | 60,000 | Superseded rather than stressed: `/api/status` now reports the pause the service wants, so the fixed floor should become the fallback for when that read fails, which is what OSMnx uses it for. |
+
+**What closing this looks like.** For each row, an artifact in `examples/` or a recorded acquisition,
+the measurement of where the browser actually fails, and then a number — or a declaration in the
+code that the number is a guess, which is honest and revisitable where an unexplained constant is
+neither.
+
+**Not started.** The two corrected on 2026-10-20 are the pattern: both turned out to be a downstream
+widget's constraint applied upstream, which is worth checking for in each of these before assuming
+the number itself is the problem.
+
 ## Snow's denominator: wire up `snow-gboh`, then South London
 
 Two steps, deliberately in this order. Both came out of the practitioner asking, 2026-10-19,

@@ -28,7 +28,24 @@ export interface Network {nodes:{id:string;coordinates:Position}[];edges:{from:s
  *  normalizes to 5,249 junctions, which exhausted a 4 GB heap during isochrone construction. So
  *  anything above about 3,000 is untested ground and the interface says so rather than pretending
  *  the range is uniform. */
-export const NETWORK_NODE_LIMIT=2000;
+/** Where ISOCHRONE construction was measured to strain memory. Kept at the measured number and
+ *  used for the warning the isochrone raises when a run does not return, because that is the only
+ *  thing it was ever a measurement of. */
+export const ISOCHRONE_MEASURED_NODES=2000;
+/** What a network node is allowed to hold, by default.
+ *
+ *  2,000 until 2026-10-20, which refused every real street network to protect a step that already
+ *  protects itself: the isochrone runs in a worker with a boot check and a timeout that names
+ *  memory, so too large a graph fails THAT step rather than the tab. Meanwhile Buvuma Island
+ *  normalizes to 11,359 network nodes and Bunia to 42,796, so the default refused both -- and the
+ *  practitioner's purpose is the opposite: *"we are here to develop a framework that tests the
+ *  limits of the browser -- how are we going to make progress if we don't reach the limits?"*
+ *
+ *  So the data limit is the ceiling a practitioner could already raise it to by hand, and the
+ *  measured isochrone threshold keeps its own name above. A graph that is drawn, snapped to or
+ *  routed over now works at the size the area really is; one that is then sent to an isochrone is
+ *  warned where the measurement says to warn. */
+export const NETWORK_NODE_LIMIT=50000;
 /** Directed segments per junction, from the shipped 2,000/5,000 pair. Measured on real street
  *  data the ratio is 2.19 (11,497 segments over 5,249 junctions), so 2.5 leaves headroom and one
  *  knob governs both rather than asking a practitioner to calibrate two numbers that move
@@ -50,9 +67,27 @@ export const BYTES_PER_NODE=600;
 export const FEATURES_PER_NODE=4;
 /** Never tighter than the limits that shipped, so raising the knob can only widen what is accepted
  *  and a practitioner who never touches it sees exactly the previous behaviour. */
+/** The floor a download is allowed, whatever the graph limit says.
+ *
+ *  It was 2,000,000 bytes, and on 2026-10-20 a practitioner's download arrived at 2,014,475 and was
+ *  discarded for being 0.7% over -- a request made in full to a free public service and then thrown
+ *  away, which is the least courteous outcome available.
+ *
+ *  Two limits had been tied together that answer different questions. `maxNodes` exists because
+ *  ISOCHRONE construction exhausted a 4 GB heap at 5,249 nodes; a network that is drawn on a map,
+ *  snapped to, or routed over with Dijkstra never meets that, and the isochrone step carries its
+ *  own worker and boot guard regardless. So the download floor is set from what a download costs,
+ *  and the graph knob still raises it above this for anyone who needs more.
+ *
+ *  16 MB because the largest extent this repository has measured is its own isochrone extent at
+ *  7.39 MB and 50,791 features (the table above), and a floor below that refuses an example the
+ *  project ships. Twice that leaves room for a denser one without being a number nobody can
+ *  justify. It bounds the tab, which is what a byte cap is for. */
+export const DOWNLOAD_FLOOR_BYTES=16_000_000;
+export const DOWNLOAD_FLOOR_FEATURES=120_000;
 export const downloadLimits=(maxNodes=NETWORK_NODE_LIMIT)=>({
-  maxBytes:Math.max(2_000_000,maxNodes*BYTES_PER_NODE),
-  maxFeatures:Math.max(15_000,maxNodes*FEATURES_PER_NODE),
+  maxBytes:Math.max(DOWNLOAD_FLOOR_BYTES,maxNodes*BYTES_PER_NODE),
+  maxFeatures:Math.max(DOWNLOAD_FLOOR_FEATURES,maxNodes*FEATURES_PER_NODE),
 });
 export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
   ({maxNodes,maxEdges:Math.round(maxNodes*SEGMENTS_PER_NODE)});

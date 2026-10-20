@@ -7,6 +7,7 @@ import {calculateArea} from '../build/area-computation.js';
 const area=g=>calculateArea(g,'m2').value;
 import {executeWorkflow,validateWorkflow} from '../build/core.js';
 import {syncProjectManifest} from '../build/project-manifest.js';
+import * as cm from '../build/catchments.js';
 import {osmQuery,networkFromOSM,requestOSM,preferredEndpoint,OVERPASS_ENDPOINTS} from '../build/street-network.js';
 import {bufferedBoundary,bufferArea,dimensionedBox} from '../build/area-buffer.js';
 import {geometryBounds} from '../build/study-area.js';
@@ -275,8 +276,16 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
     if(isStatus(url))return statusOk();
     throttled++;return new Response('',{status:429});}),/HTTP 429/);
   assert.equal(throttled,1,'rate limiting is deferred to, not retried against');
-  await assert.rejects(requestOSM(boundary,0,async(url,init)=>
-    isProbe(init)?probeOk():new Response(' '.repeat(2000001))),/over the [\d,]+ bytes this download accepts/);
+  const {maxBytes}=cm.downloadLimits();
+  await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
+    if(isStatus(url))return statusOk();
+    return new Response('{}',{headers:{'content-length':String(maxBytes+1)}});
+  }),/over the [\d,.]+ (?:bytes|MB) this download accepts/);
+  // And a body that overruns without declaring a length is stopped while it streams.
+  await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
+    if(isStatus(url))return statusOk();
+    return new Response(' '.repeat(1001),{headers:{'content-length':String(maxBytes+1)}});
+  }),/over the/);
 });
 test('buffer creates a distinct area and expands acquisition without carrying old area measurements',()=>{
   const snapshot=structuredClone(boundary),source={boundary,label:'Reporting area',areaId:'urn:test:source',geometryId:'urn:test:shape',measurement:{squareMetres:100,value:100,unit:'m2',method:'fixture'}};

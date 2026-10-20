@@ -1,0 +1,19 @@
+{
+ "schema": "fieldwork/dive-deeper/1",
+ "description": "Lessons: what a widget's method IS, named in the discipline's terms, run on its own data, with the assumption it inherits varied and the effect shown as a number. Separate from widgets/parity.json because the two answer to different readers and fail in different ways -- a parity notebook fails by disagreeing, a lesson fails by teaching the tool instead of the subject -- and because parity results are pinned by commit and digest into a release's evidence, so improving an explanation used to move that pin. See docs/experiments/94-where-explanation-belongs.md.",
+ "repository": {
+  "url": "https://github.com/digital-twin-ph/dive-deeper",
+  "commit": "04b22ab58e901e9551f38b9694d34b37fcec6f8c",
+  "site": "https://digital-twin-ph.github.io/dive-deeper/lab/index.html?path="
+ },
+ "legacyNote": "The twenty sections still living as trailing cells in validation-lab notebooks are recorded on widgets/parity.json's `diveDeeper` field and counted below. They predate the pedagogical requirements and meet the older, narrower definition -- vary the assumption -- so rewriting one against the requirements is new work and not a file move. The ceiling may fall and never rise.",
+ "legacyCeiling": 20,
+ "entries": [
+  {
+   "widget": "urn:fieldwork:widget:mean_center",
+   "notebook": "mean-center.ipynb",
+   "title": "Where the centre of an outbreak is, and what moves it",
+   "teaches": "The mean centre as the centroid of a point mass system; why it is projected to metres first; and what the weighting, the choice of mean against median centre, and the projection each cost -- 2.10 m, 6.62 m and 0.001 m on Snow's 250 addresses."
+  }
+ ]
+}

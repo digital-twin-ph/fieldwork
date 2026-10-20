@@ -187,6 +187,29 @@
      "found": "Scope corrected the same day, before anything was built on the earlier reading. 126 had made the licence of a worst-case speed source a question for this project to settle; it is not. What is: every configurable speed in the application today -- isochrone's speedMPerMin, reachable_nodes', travel_time's, access' -- is a bare number with no note of where it came from, so in a receipt it is indistinguishable from a figure this application derived. That is the gap to close, and it is open now rather than when per-edge speeds arrive."
     }
    ]
+  },
+  {
+   "id": "dive-deeper-notebooks-have-their-own-repository",
+   "stated": "2026-10-20",
+   "statedBy": "the practitioner",
+   "inTheirWords": "I created a dive-deeper repo on GitHub so the dive deeper notebooks do not mix with the validation lab's. \u2014 and, when nothing had changed in the code a day later: \"are we using the dive deeper repo for the dive deeper pedagogy notebooks?\"",
+   "requiresInCode": "A ledger of its own -- widgets/dive-deeper.json -- pinning the second repository, because parity results are pinned by commit and digest into a release's evidence and improving an explanation must not move that pin. The application links the new site for a widget that has a lesson; scripts/validate-dive-deeper.mjs verifies lesson notebooks against ../dive-deeper/content and refuses a lesson no widget links; and the sections still living inside lab notebooks are counted against a ceiling that may fall and never rise.",
+   "recordedIn": [
+    "docs/experiments/94-where-explanation-belongs.md"
+   ],
+   "workItem": "94, whose closing condition is whether the notebook is the right surface at all",
+   "status": "built",
+   "lastChecked": "2026-10-20",
+   "checks": [
+    {
+     "date": "2026-10-20",
+     "found": "Recorded and not built, which is the failure this ledger exists to catch. The split was written into experiment 94 with its costs and its ratchet, and the code still read ../validation-lab/content, linked the Lab's site, and carried `diveDeeper` as a heading inside a parity notebook. The repository had been created that morning and was EMPTY. I had not even recorded it here, so no clock was running on it; four defect reports came in and it went unlooked-at until the practitioner asked."
+    },
+    {
+     "date": "2026-10-20",
+     "found": "Built the same day. digital-twin-ph/dive-deeper is seeded: README stating what a notebook owes, Apache-2.0, JupyterLite config pinned to the Lab's builder versions, a Pages workflow that executes every notebook before publishing, and the first lesson -- the mean centre on Snow's 250 addresses. It meets the pedagogical requirements rather than the older narrower definition, and its three measured numbers are the lesson: weighting by deaths moves the centre 2.10 m, mean against median centre 6.62 m, UTM 30N against British National Grid 0.001 m. So the weighting a practitioner reaches for first matters least -- a weighted mean only moves when the weights are spatially structured, which the notebook then shows by weighting eastward and moving it 46 m -- and the summary nobody questions matters most, the mean centre having a breakdown point of zero. In Fieldwork: widgets/dive-deeper.json pins the repo at 04b22ab, the validator checks lessons against ../dive-deeper/content and holds the legacy count at 20, and the Inspector links the new site. What is NOT done: twenty sections remain inside lab notebooks, and rewriting one is new work rather than a file move."
+    }
+   ]
   }
  ]
 }

@@ -63,3 +63,18 @@ test('the headings shown are the ones the ledger records, and a widget without o
   await page.locator('.react-flow__node[data-id="table"]').click();
   await expect(page.locator('#inspector-content details.dive-deeper')).toHaveCount(0);
 });
+
+// The lessons moved to their own repository on 2026-10-20, so the link has to leave for the new
+// site rather than the Lab's. The practitioner had asked whether the repo was being used: it was
+// created, recorded as a decision, and nothing pointed at it.
+test('a widget with a lesson links the dive-deeper site, not the lab',async({page})=>{
+  await page.goto('/?example=snow-geoprivacy');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('.react-flow__node[data-id="original-center"]').click();
+
+  const link=page.locator('#inspector-content details.dive-deeper a').first();
+  await expect(link).toHaveAttribute('href',/digital-twin-ph\.github\.io\/dive-deeper\/lab\/index\.html\?path=mean-center\.ipynb/);
+  await expect(link).toHaveText('Where the centre of an outbreak is, and what moves it');
+  // What it teaches is the ledger's sentence, not a generic one written per widget.
+  await expect(page.locator('#inspector-content details.dive-deeper')).toContainText('2.10 m');
+});

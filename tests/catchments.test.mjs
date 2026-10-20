@@ -164,9 +164,16 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   // recognisable by the query it carries.
   // `node(1)` rather than `out ids`: a URLSearchParams body encodes the space as `+`, so
   // matching on a phrase with a space in it silently never matches.
+  // A download attempt is neither the one-line probe nor the /api/status read added on
+  // 2026-10-19. Both are asked of every instance before any download, so a mock that counts them
+  // as attempts reports more failover than happened.
+  const isStatus=url=>String(url).endsWith('/status');
   const isProbe=init=>String(init?.body??'').includes('node%281%29');
   const probeOk=()=>new Response(JSON.stringify({version:0.6,elements:[]}));
-  const fetcher=async(url,init)=>{assert.equal(init.credentials,'omit');assert.match(String(init.body),/data=/);
+  const statusOk=()=>new Response('Rate limit: 2\n2 slots available now.\n',{status:200});
+  const fetcher=async(url,init)=>{
+    if(isStatus(url))return statusOk();
+    assert.equal(init.credentials,'omit');assert.match(String(init.body),/data=/);
     return isProbe(init)?probeOk():new Response(JSON.stringify(raw));};
   const n=await requestOSM(boundary,250,fetcher);assert.equal(n.edges.length,3);assert.equal(n.provenance.sha256.length,64);assert.deepEqual(n.provenance.boundary,boundary);
   await assert.rejects(requestOSM(boundary,0,async(url,init)=>
@@ -177,7 +184,7 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   // attempt meets that two times in three and reports it as if the practitioner had done
   // something wrong.
   let attempts=0;
-  const flaky=async(url,init)=>{if(isProbe(init))return probeOk();
+  const flaky=async(url,init)=>{if(isStatus(url))return statusOk();if(isProbe(init))return probeOk();
     attempts++;return attempts<3?new Response('',{status:502}):fetcher(url,init);};
   const recovered=await requestOSM(boundary,250,flaky);
   assert.equal(attempts,3,'two server errors are retried, the third attempt succeeds');
@@ -188,23 +195,40 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   // unhealthy at the same moment, so this is the case that actually happens.
   let kept=0;
   await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
+    if(isStatus(url))return statusOk();
     if(isProbe(init))return probeOk();
     kept++;return new Response('',{status:503});}),/No Overpass instance answered/);
   assert.equal(kept,OVERPASS_ENDPOINTS.length*2,`${OVERPASS_ENDPOINTS.length} instances, two rounds, then it stops`);
 
-  // And when nothing answers the heartbeat, the download is not attempted at all: the
-  // practitioner is told before waiting rather than after four timeouts.
-  let probed=0;
+  // A silent heartbeat no longer refuses the download. It used to: an empty probe result threw
+  // before anything was tried, and on 2026-10-19 three one-line probes to a HEALTHY
+  // overpass-api.de took 14.2 s, 27.3 s and 26.3 s against a six-second budget -- so a service
+  // that curl and OSMnx both reached was declared dead for being slow. The probe orders the
+  // attempts; the attempt is the test.
+  let asked=0,attempted=0;
   await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
-    if(isProbe(init)){probed++;return new Response('',{status:502});}
-    throw new Error('the download must not be attempted when nothing is answering');}),
-    /No Overpass instance is answering/);
-  assert.equal(probed,OVERPASS_ENDPOINTS.length,'every instance is asked, once, at the same time');
+    if(isStatus(url)){asked++;return new Response('',{status:504});}
+    attempted++;return new Response('',{status:503});}),/No Overpass instance answered/);
+  assert.equal(asked,OVERPASS_ENDPOINTS.length,'every instance is asked how it is, once, at the same time');
+  assert.equal(attempted,OVERPASS_ENDPOINTS.length*2,
+    'and every one is tried anyway, because a slow service is not a dead one');
+
+  // Busy is a SCHEDULE, not a refusal. OSMnx reads /api/status and sleeps until a slot frees;
+  // this does the same, and says whose queue it is waiting in. A client that treats "come back in
+  // 42 seconds" as failure turns a queue into an outage.
+  const busy=seconds=>`Rate limit: 2\nSlot available after: 2026-10-20T02:03:53Z, in ${seconds} seconds.\n`;
+  const waits=[];
+  const afterWait=await requestOSM(boundary,0,async(url,init)=>{
+    if(isStatus(url))return new Response(busy(0),{status:200});
+    return new Response(JSON.stringify(raw));},undefined,undefined,undefined,w=>waits.push(w));
+  assert.equal(afterWait.edges.length,3,'it waits and then downloads, rather than refusing');
+  assert.equal(waits.length,1,'and says once that it is waiting');
+  assert.match(waits[0].operator,/\S/,'naming whose queue');
 
   // A 200 carrying HTML is an error page, not a network. overpass.osm.ch returned exactly that.
   // It moves to the next instance rather than being parsed.
   let served=0;
-  const htmlThenReal=async(url,init)=>{if(isProbe(init))return probeOk();
+  const htmlThenReal=async(url,init)=>{if(isStatus(url))return statusOk();if(isProbe(init))return probeOk();
     served++;
     return served===1?new Response('<html>down</html>',{status:200,headers:{'content-type':'text/html'}}):fetcher(url,init);};
   const past=await requestOSM(boundary,250,htmlThenReal);
@@ -224,7 +248,7 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   // It is not the end of the attempt: the request moves on to the next instance within the same
   // download. The practitioner, 2026-10-19: "If Swiss API fails, it should retry the others."
   let emptyAsked=0;
-  const firstEmptyThenReal=async(url,init)=>{
+  const firstEmptyThenReal=async(url,init)=>{if(isStatus(url))return statusOk();
     if(isProbe(init))return probeOk();
     emptyAsked++;
     return emptyAsked===1
@@ -248,7 +272,7 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   // 429 means this client is asking too often, so it is NOT retried: waiting is the answer.
   let throttled=0;
   await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
-    if(isProbe(init))return probeOk();
+    if(isStatus(url))return statusOk();
     throttled++;return new Response('',{status:429});}),/HTTP 429/);
   assert.equal(throttled,1,'rate limiting is deferred to, not retried against');
   await assert.rejects(requestOSM(boundary,0,async(url,init)=>

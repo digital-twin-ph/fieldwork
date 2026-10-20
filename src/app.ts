@@ -120,6 +120,11 @@ $('#app-version').textContent=`v${appPackage.version}`;
  *  it owns, and reloads with a one-time cache-busting parameter so the HTTP cache cannot answer
  *  either. The saved workspaces are in localStorage and are deliberately untouched: this clears
  *  the APPLICATION, not the practitioner's work.
+ *
+ *  One exception, added 2026-10-19: the OSM response cache (`fieldwork-osm-v1`) is a cache and
+ *  goes with the rest. Losing it costs a request, not a result -- the saved graph lives in the
+ *  workflow, not here -- so it is re-fetchable by definition. Named because it is the one thing
+ *  cleared here that a practitioner paid a public service for.
  */
 if(new URLSearchParams(location.search).has('reset-cache')){
   (async()=>{
@@ -208,6 +213,22 @@ const exampleKey=(w:Workflow):string=>w.projectId?'blank':w.exampleId?.startsWit
 const storageKey=(w:Workflow):string=>w.workflowKey||exampleKey(w);
 const template=(key:string)=>key==='hagelloch'?hagellochExample():key==='rulesets'?rulesetExample():key==='sea-level'?seaLevelExample():key==='snow-geoprivacy'?geoprivacyExample():key==='snow-extent'?snowExtentExample():key==='snow-voronoi'||key==='snow-isochrone'?johnSnowExample(key):key==='raster'?rasterExample():key==='coverage'?coverageExercise():key==='blank'?blankWorkflow():key==='old-naledi'?oldNalediWorkflow():exampleWorkflow();
 const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='raster_input'&&!n.params.asset||n.type==='network_input'&&!n.params.data.nodes.length||n.type==='table_input'&&!n.params.data.rows.length);
+/** Why the last OSM download failed, kept until one succeeds.
+ *
+ *  The status line under the button reported only throttle state -- in progress, next available
+ *  in N seconds, ready -- while the REASON went to a toast that clears after five seconds. So a
+ *  failed download left the Inspector saying "Next OSM download available in 60 seconds", which
+ *  reads as working. The practitioner, 2026-10-19, with every Overpass instance returning 502:
+ *  *"OSM download did not work"* -- and nothing on screen said why, or that the service was down
+ *  rather than the application. A failure that scrolls away is a failure nobody can act on. */
+let networkDownloadError:string|null=null;
+/** What a download is waiting on right now, so a pause the service asked for reads as a pause
+ *  rather than as nothing happening. */
+let networkDownloadPhase:string|null=null;
+/** The last endpoint check, kept so the panel survives an Inspector redraw. Not fetched on render:
+ *  a status read is a request to a free public service, and rendering is not a reason to make one. */
+let endpointStatuses:import('./street-network.js').OverpassStatus[]|null=null;
+let endpointsCheckedAt:string|null=null;
 let credentials:CredentialAccess|null=null;
 let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
@@ -1663,7 +1684,34 @@ function renderInspector(){
   optionalElement('#polygon-output-label')?.addEventListener('change',e=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value;}));
   optionalElement('#save-network')?.addEventListener('click',()=>{try{const text=(document.querySelector('#network-json') as HTMLTextAreaElement).value;if(text.length>2000000)throw new Error('Network JSON exceeds 2 MB.');const data=JSON.parse(text);change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true});}catch(e){toast(errorMessage(e));}});
   for(const selector of ['#network-file','#network-upload'])document.querySelector<HTMLInputElement>(selector)?.addEventListener('change',async e=>{const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;const baseline=JSON.stringify(workflow);try{const data=await importNetwork(file,getNode(workflow,n.id,'network_input').params.maxNodes);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed; import again.');change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true});}catch(e){toast(errorMessage(e));}});
-  optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';try{const {boundary}=previewArea(workflow,n.id);const node=getNode(workflow,n.id,'network_input');const data=await downloadOSM(boundary,node.params.marginM??250,node.params.maxNodes,(node.params.pauseSeconds??60)*1000);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed during download; retry with the current boundary.');if(change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true}))toast('OSM network saved on this device. Run the workflow to update results.');}catch(e){toast(errorMessage(e));}finally{button.disabled=false;button.textContent='Download and save OSM network';}});
+  // The status panel. Rendered from the LAST check, so it survives the Inspector being redrawn,
+  // and asked for only on click: every check is a request to a donated service.
+  const paintEndpoints=()=>{
+    const box=optionalElement('#endpoint-status');if(!box)return;
+    if(!endpointStatuses){box.innerHTML='';return;}
+    box.innerHTML=endpointStatuses.map(s=>{
+      const host=s.url.replace(/^https?:\/\//,'').replace(/\/api.*$/,'');
+      const state=!s.reachable?`not answering \u2014 ${esc(s.error||'no reply')}`
+        :s.slotsAvailable===undefined?'answering; it did not say how busy it is'
+        :s.slotsAvailable>0?`${s.slotsAvailable} of ${s.rateLimit??s.slotsAvailable} slots free now`
+        :`busy${typeof s.waitSeconds==='number'?`, next slot in ${s.waitSeconds} s`:''}`;
+      const running=s.runningQueries?`, ${s.runningQueries} running`:'';
+      return `<p><strong>${esc(s.operator)}</strong> \u00b7 ${esc(state)}${esc(running)}`
+        +`<br><span class="muted">${esc(host)}</span></p>`;
+    }).join('')+`<p class="muted">Checked ${esc(endpointsCheckedAt??'')}. Each answer is that instance's own.</p>`;
+  };
+  optionalElement('#check-endpoints')?.addEventListener('click',async e=>{
+    const button=e.currentTarget as HTMLButtonElement;
+    button.disabled=true;button.textContent='Asking each instance\u2026';
+    try{
+      const {overpassStatuses}=await import('./street-network.js');
+      endpointStatuses=await overpassStatuses();
+      endpointsCheckedAt=new Date().toLocaleTimeString();
+    }catch(error){toast(errorMessage(error),{tone:'failure'});}
+    finally{button.disabled=false;button.textContent='Check endpoint status';paintEndpoints();}
+  });
+  paintEndpoints();
+  optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';try{const {boundary}=previewArea(workflow,n.id);const node=getNode(workflow,n.id,'network_input');const data=await downloadOSM(boundary,node.params.marginM??250,node.params.maxNodes,(node.params.pauseSeconds??60)*1000,!!node.params.data?.nodes?.length,phase=>{networkDownloadPhase=phase;const line=document.querySelector<HTMLElement>('#network-download-status');if(line)line.textContent=phase;});if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed during download; retry with the current boundary.');if(change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true})){networkDownloadError=null;toast('OSM network saved on this device. Run the workflow to update results.');}}catch(e){networkDownloadError=errorMessage(e);toast(errorMessage(e),{tone:'failure'});}finally{button.disabled=false;button.textContent='Download and save OSM network';networkDownloadPhase=null;}});
   document.querySelectorAll<HTMLSelectElement>('[data-map-port]').forEach(el=>el.onchange=()=>change(w=>setConnection(w,el.value,n.id,el.dataset.mapPort!)));
   // Applying the suggested zone, so the advice is actionable rather than only stated. It sets
   // both the zone and the hemisphere together: a zone number without its hemisphere is half an
@@ -2490,4 +2538,4 @@ if('serviceWorker' in navigator){
 }else{$('#offline-status').textContent='Offline cache unsupported';}
 if(canAutoRun(workflow))setTimeout(run,350);
 
-setInterval(()=>{const button=document.querySelector<HTMLButtonElement>('#download-network'),message=document.querySelector<HTMLElement>('#network-download-status');if(!button||!message)return;const state=networkDownloadStatus();button.disabled=busy||state.inFlight||state.waitSeconds>0;message.textContent=state.inFlight?'One OSM request is in progress.':state.waitSeconds?'Next OSM download available in '+state.waitSeconds+' seconds. Saved graphs are available offline.':'Ready for one bounded OSM request; no automatic refresh.';},1000);
+setInterval(()=>{const button=document.querySelector<HTMLButtonElement>('#download-network'),message=document.querySelector<HTMLElement>('#network-download-status');if(!button||!message)return;const state=networkDownloadStatus();button.disabled=busy||state.inFlight||state.waitSeconds>0;message.textContent=state.inFlight?(networkDownloadPhase??'One OSM request is in progress.'):networkDownloadError?networkDownloadError+(state.waitSeconds?' Next attempt available in '+state.waitSeconds+' seconds.':''):state.waitSeconds?'Next OSM download available in '+state.waitSeconds+' seconds. Saved graphs are available offline.':'Ready for one bounded OSM request; no automatic refresh.';},1000);

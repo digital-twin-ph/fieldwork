@@ -1,6 +1,6 @@
 # 94 · Where explanation belongs
 
-_Created 2026-10-11 · Updated 2026-10-15_
+_Created 2026-10-11 · Updated 2026-10-20_
 
 **Status:** asked — a finding that retires a claim three earlier experiments were
 carrying, and replaces it with a better question. The replacement answer — that
@@ -176,8 +176,51 @@ _Restated 2026-10-15. This section had required one practitioner who did not wri
 what they learned, which needs field testing, a phase this project has not reached. Kept as a
 [field question](../field-questions.md#does-a-dive-deeper-section-land)._
 
+## The two separate, 2026-10-20
+
+The section above says *"the two live in one notebook because they share the setup"*. That is now
+reversed. The practitioner:
+
+> *"I created a dive-deeper repo on GitHub so the dive deeper notebooks do not mix with the
+> validation lab's."*
+
+The reason this record gave for cohabitation was shared setup, and it has to be answered rather
+than dropped. It is true and it is cheap: the shared part is reading a fixture, verifying its
+digest and projecting to metres — tens of lines, already duplicated across the lab's own twenty-six
+notebooks, and nothing a learner is reading the notebook to see.
+
+What is not shared is the reader and the acceptance test:
+
+| | Parity notebook | Dive Deeper notebook |
+| --- | --- | --- |
+| Reader | a reviewer checking a number | a practitioner learning a method |
+| Passes when | an independent implementation agrees within a stated tolerance | a reader can name the operation, run it, and say what the assumption costs |
+| Fails usefully by | disagreeing, published with both values | explaining the tool and not the subject |
+| Lives in | `digital-twin-ph/validation-lab` | `digital-twin-ph/dive-deeper` |
+
+Those are different failure modes, and a single document is graded on whichever one the author had
+in mind that day. The amendment above made this concrete without naming it: once a section owes
+stated learning objectives, the operation named in the discipline's terms, that operation run on
+its own, the assumption varied and outward references, it is longer than the check it was appended
+to. Seventeen notebooks carry a section of three to five trailing cells. The requirements do not
+fit in three to five trailing cells.
+
+**What the split costs.** A second repository to pin and keep pinned, a second Pages site to
+build, the fixture-reading preamble written twice, and seventeen sections that are now in the
+wrong repository. The last is debt, not a migration: they stay where they are, `widgets/dive-deeper.json`
+counts them, and the count may fall and never rise — the same ratchet
+[98](98-the-coverage-ratchet.md) uses, because a section rewritten against the requirements above
+is new work and not a file move.
+
+**What the split buys that cohabitation could not.** A notebook that is wrong for a learner can be
+rewritten without touching evidence a release depends on. Parity results are pinned by commit and
+digest into `widgets/parity.json`; until today, improving an explanation moved that pin.
+
 ## What this does not establish
 
+- **That separating the repositories helps a reader.** It separates two acceptance tests, which
+  is an authoring benefit and measurable here. Whether a learner is better served by a notebook
+  that holds only a lesson is a field question and not answered by the split.
 - **That the pedagogical requirements above have been tried.** They were stated on 2026-10-20 and
   no section has yet been written against them; the twenty that exist predate them and meet the
   original, narrower definition. Whether a notebook can carry a lesson and a parity check without
@@ -203,3 +246,5 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-11 | Cite the gamification experiment I missed, and measure parsimony instead |
 | 2026-10-11 | Give the experiment document a form, and a ratchet to hold it |
 | 2026-10-12 | Make the total a signed number, and make an open experiment say what closes it |
+| 2026-10-20 | State what a Dive Deeper section owes as pedagogy |
+| 2026-10-20 | Separate the Dive Deeper notebooks into their own repository, against this record |

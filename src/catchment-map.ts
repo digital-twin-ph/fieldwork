@@ -58,6 +58,10 @@ export interface MapLayers {
   /** Points carried on a value rather than arriving at a port of their own. */
   rows?:{id:string;name:string;coordinates?:Position|null;status?:string;relation?:string;excluded?:boolean}[];
   centers?:{id?:string;name?:string;geometry?:{coordinates:Position}|null}[];
+  /** A street graph, drawn as itself. Added 2026-10-20: a Map showing a network could not be made
+   *  interactive and could carry no basemap, because the static branch returned before the
+   *  interactive one was reached. */
+  network?:{nodes:{id:string;coordinates:Position}[];edges:{from:string;to:string;geometry?:Position[]}[]};
 }
 
 /** Presentation only: never changes polygons, memberships, or source points. */
@@ -84,6 +88,26 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const layer=L.geoJSON(f.geometry,{style:{color:'#39779e',weight:1,fillColor:'#1f77b4',fillOpacity:.2}});
     layer.bindPopup(`<b>${esc(f.name)}</b>${f.minutes===undefined?'':`<br>Within ${f.minutes} minutes (cumulative)`}${f.count===undefined?'':`<br>${f.count} locations${p.summary?.valueField?`<br>${esc(p.summary.valueField)}: ${f.total}`:''}`}`);
     layer.addTo(map);all.addLayer(layer);const label=esc(f.name);overlays[Object.hasOwn(overlays,label)?`${label} (${esc(f.id)})`:label]=layer;
+  }
+  // The streets, as ONE multi-polyline on a canvas renderer rather than a layer per segment.
+  // A town-sized graph is tens of thousands of segments -- Bunia is an estimated 94,000 directed
+  // ones -- and a Leaflet layer each would not draw. Each undirected segment arrives twice, once
+  // per direction, so only one of the pair is drawn.
+  if(layers.network?.nodes?.length){
+    const at=new Map(layers.network.nodes.map(n=>[n.id,n.coordinates]));
+    const lines:[number,number][][]=[];
+    for(const edge of layers.network.edges){
+      if(edge.from>edge.to)continue;
+      const a=at.get(edge.from),b=at.get(edge.to);
+      if(!a||!b)continue;
+      lines.push(edge.geometry?.length
+        ?edge.geometry.map(([lon,lat])=>[lat,lon] as [number,number])
+        :[[a[1],a[0]],[b[1],b[0]]]);
+    }
+    if(lines.length){
+      const streets=L.polyline(lines,{color:'#55706a',weight:1,opacity:.9,interactive:false,renderer:L.canvas()});
+      streets.addTo(map);all.addLayer(streets);overlays['Street network']=streets;
+    }
   }
   const observations=L.featureGroup();
   for(const f of p.observations?.features||[]){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates,n=f.properties.DEATHS;

@@ -59,13 +59,27 @@ function reachInspector(n:WorkflowNode<'reachable_nodes'>,
     ;
 }
 
+/** The node label, with an Apply button.
+ *
+ *  The practitioner, 2026-10-20: *"The label for the Street Network widget should have an Apply
+ *  Label button like the Study Area's. It does save the custom label even without the button but
+ *  we want that in-widget workflow to be consistent across widgets."* It did save on change, and
+ *  that stays -- nothing typed is lost by not pressing the button. What was missing is the
+ *  affordance: a practitioner who has typed a name has no way to say so, and two widgets behaved
+ *  differently for the same job. One control here, so every widget this inspector builds gets it.
+ */
+export function labelField(label:string,maxLength:number,esc:Escape):string{
+  return `<form id="catchment-label-form" class="field"><label class="field-label" for="catchment-label">Node label</label>`
+    +`<input id="catchment-label" data-catchment-param="label" maxlength="${maxLength}" value="${esc(label)}">`
+    +`<button type="submit" class="button small">Apply label</button></form>`;
+}
 export function catchmentInspector(n:WorkflowNode,esc:Escape,boundary?:Boundary):string{
   if(n.type==='reachable_nodes')
-    return `<label class="field-label" for="catchment-label">Node label</label><input id="catchment-label" data-catchment-param="label" maxlength="60" value="${esc(n.params.label||'')}">`
+    return labelField(n.params.label||'',60,esc)
       +reachInspector(n as WorkflowNode<'reachable_nodes'>,
         (key,label,value,min,max,step=1)=>`<div class="field"><label class="field-label" for="catchment-${key}">${label}</label><input id="catchment-${key}" data-catchment-param="${key}" type="number" min="${min}" max="${max}" step="${step}" value="${value}"></div>`);
   if(!Object.hasOwn(CATCHMENT_TYPES,n.type))return '';
-  let html=`<label class="field-label" for="catchment-label">Node label</label><input id="catchment-label" data-catchment-param="label" maxlength="100" value="${esc(n.params.label||'')}"><div class="notice">Local computation. Parameters and source links appear in N3 & evidence. Outputs are modeled catchments, not observed facility use.</div>`;
+  let html=labelField(n.params.label||'',100,esc)+`<div class="notice">Local computation. Parameters and source links appear in N3 & evidence. Outputs are modeled catchments, not observed facility use.</div>`;
   const number=(key:string,label:string,value:number,min:number,max:number,step=1)=>`<div class="field"><label class="field-label" for="catchment-${key}">${label}</label><input id="catchment-${key}" data-catchment-param="${key}" type="number" min="${min}" max="${max}" step="${step}" value="${value}"></div>`;
   if(n.type==='voronoi'||n.type==='isochrone')html+=number('zone','Computation CRS: WGS84 UTM zone',n.params.zone,1,60)+`<label class="field-label" for="catchment-hemisphere">Hemisphere</label><select id="catchment-hemisphere" data-catchment-param="hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><p class="muted">Input/output: CRS84. Computation projects to the selected UTM CRS. Restricted to a local zone; no global distance claim.</p>`;
   if(n.type==='isochrone')html+='<p class="muted">Large graphs are the limit here: about 5,250 network nodes is where this has been measured to strain memory. It runs in a worker, so too large a graph fails this step rather than the tab.</p>'

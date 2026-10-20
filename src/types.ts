@@ -11,7 +11,14 @@ export type Scalar = string | number | boolean | null;
  *  module into the worker compile, which has no DOM library, and the build refused it. The
  *  renderer imports this instead. The `ofm-` entries are OpenFreeMap vector styles and need
  *  MapLibre; the others are raster XYZ and need nothing beyond Leaflet. */
-export type BasemapChoice='none'|'osm'|'topo'|'ofm-liberty'|'ofm-positron'|'ofm-bright';
+/** The values, as DATA, because three places had each written their own copy of this list and the
+ *  shortest one decided what a practitioner could keep. On 2026-10-20 the validator still allowed
+ *  only none, osm and topo, so choosing an OpenFreeMap style was refused and rolled back -- which
+ *  is why the practitioner reported not having OpenFreeMap three days after it was built and
+ *  drawing. The union is derived from this, the validator reads it, and the renderer owes every
+ *  member a label by a Record type that will not compile if one is missing. */
+export const BASEMAP_CHOICES=['none','osm','topo','ofm-liberty','ofm-positron','ofm-bright'] as const;
+export type BasemapChoice=typeof BASEMAP_CHOICES[number];
 export type AttributeType = 'text' | 'number' | 'integer' | 'boolean' | 'date';
 export interface AttributeDefinition {key:string; type:AttributeType; allowedValues?:Scalar[]; defaultValue?:Scalar; label?:string}
 export interface FormField extends AttributeDefinition {label:string}

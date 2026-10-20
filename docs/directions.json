@@ -140,6 +140,53 @@
      "found": "Built. The practitioner opened the published example -- \"I see the ruleset widget but it's not editable\" -- and then chose the shape: \"Perhaps the rule editor should be a modal dialog so there is enough space.\" src/rule-editor.ts edits 106's authored form in a dialog: conditions grouped by and, alternatives by or, a list of conclusions, add and remove throughout. The compiler runs on every edit, so the rule ceiling and any refusal appear while authoring rather than at the end, and Keep is disabled while the rules cannot compile. Comparators are filtered by the field's kind, so a category cannot be given `is more than`, and the fwa: namespace is added for the practitioner rather than typed by them. Three debts recorded in 106 rather than hidden: two comparators are offered that have never been executed against the real engine, nothing catches an incommensurable unit at authoring time, and conclusions are free text so two rules can disagree -- caught at run time, which is late."
     }
    ]
+  },
+  {
+   "id": "street-network-declares-a-travel-mode",
+   "stated": "2026-10-20",
+   "statedBy": "the practitioner, reading the network_input manual page",
+   "inTheirWords": "Regarding street network, OSMNx designates a download as walk or drive. I noticed in the widget manual that it talks about walk but it could be drive. Do we make that distinction when we download an OSM street network? \u2014 and, settling the scope: \"For 1854 Soho, driving speed limits does not matter. For current day investigations, these speed limits matter as a ceiling (best case travel time).\"",
+   "requiresInCode": "A travelMode chosen on `network_input` at download time, which selects the highway list (driving adds motorway, trunk and their links and drops footway, path, steps, pedestrian and cycleway), the restriction tags read (motor_vehicle, motorcar and access rather than foot and oneway:foot) and the direction tag that makes an edge one-way. The graph records its mode in `source` and in the download receipt, and a downstream widget whose `travelMode` disagrees with the graph's mode refuses rather than computes.",
+   "recordedIn": [
+    "docs/experiments/126-travel-time-as-a-bound.md",
+    "docs/widgets/network_input.md"
+   ],
+   "workItem": "126, whose first half is the mode; the bound semantics are the second half and are a separate direction",
+   "status": "built",
+   "lastChecked": "2026-10-20",
+   "checks": [
+    {
+     "date": "2026-10-20",
+     "found": "Nothing of it is built, and the gap is wider than the manual page. `WALKABLE_HIGHWAYS` in src/street-network.ts is one list used twice -- in the Overpass query and again in networkFromOSM -- and it excludes motorway, trunk and their links entirely, so a driving network is not merely unfiltered here, it is missing the roads that carry cars. Restrictions read are foot ones (foot=no|private|use_sidepath, barrier nodes, oneway:foot), and the source string says outright that vehicle oneway does not imply foot oneway. Meanwhile `reachable_nodes` ALREADY takes travelMode walking|cycling|driving|other with per-mode speed bands that refuse an implausible speed, and the Inspector offers it as \"How people travel\" -- so the mode is declared where it cannot be honoured and absent where it would be. Measured on examples/john-snow/soho.graphml, the OSMnx walk graph this repository ships: of 1,619 directed edges and 50.63 km, 918 edges and 24.34 km (56.7% of edges, 48.1% of length) are types OSMnx's drive filter excludes, and 455 edges (28.1%) carry oneway=True whose direction we ignore because we read oneway:foot only. A driving isochrone on that graph routes over footways, up steps, and the wrong way down a quarter of the one-way streets. Not established: how wrong the resulting time is, which is unmeasured; Soho is half a square kilometre of dense centre so the shares elsewhere will differ; and OSMnx's drive filter is one project's definition, not a standard."
+    },
+    {
+     "date": "2026-10-20",
+     "found": "Built the same day, on the practitioner's go-ahead: \"So before I download Bunia again, I want to be able to set driving mode on the street network.\" MODE_FILTERS in src/street-network.ts is one table with a row per difference -- highway list, the access tags consulted, the values that forbid and permit, the one-way tag, whether a roundabout implies direction, and the sentence saved on the graph -- so the two modes cannot drift into two parsers. Driving follows OSMnx's drive exclusions so the two implementations stay comparable, and keeps `road`, as OSMnx does. The mode is in the query text, which is the cache key, so a driving download cannot be served a cached walking graph; it is written into provenance, shown on the widget, and asserted as fw:travelMode on the network entity rather than only inside the metadata blob. refuseModeMismatch in src/reachable-nodes.ts refuses a declared mode the graph cannot carry and names the way out, but only a KNOWN contradiction: an imported file carries no mode, and cycling or `other` have no download of their own, so neither is locked out. Walking is the default, so a saved workflow downloads what it always did. Ten unit tests in tests/street-network-mode.test.mjs and one browser test for the control. One list claim I had to correct against the data: nine of the fifteen walkable highway values are also drivable, so the LISTS mostly agree -- it is the edges that diverge, 56.7% of them on the Soho graph. network_input 0.3.0, manual page rewritten with a comparison table, CHANGELOG under 0.10.0. What is NOT built: the graph carries no speed limits, no junction delay and no congestion, so a driving travel time is one speed over every street, which is the subject of the other direction and of 126."
+    }
+   ]
+  },
+  {
+   "id": "travel-time-from-a-posted-limit-is-a-best-case",
+   "stated": "2026-10-20",
+   "statedBy": "the practitioner, on whether OSM carries speed limits",
+   "inTheirWords": "For 1854 Soho, driving speed limits does not matter. For current day investigations, these speed limits matter as a ceiling (best case travel time). Worst case travel time can be researched. \u2014 and, on where the obligation falls: \"Do not worry about the local trip time license, that is the user's problem, the thing to worry about is if it is recorded in the widget, a provenance note goes with it for the benefit of accurate reporting, for example during publications.\"",
+   "requiresInCode": "Any travel time derived from a per-edge posted limit is reported as a BOUND and named as one -- in the result field, in the N3 receipt and in the Inspector -- rather than as an estimate, with the edges that had no limit and fell back to a declared speed counted in both. A widget that can produce only a best case refuses the claim a best case cannot support: a free-flow time can rule a site out of a catchment and cannot rule one in, so \"not reachable even at best\" is sound and \"reachable\" is not. And a speed or trip time a practitioner supplies carries a PROVENANCE NOTE that travels with it into the receipt, the evidence panel and any export, so a figure quoted in a publication can be attributed. Not a licence check: whose data it is remains the practitioner's to answer. This applies to the single speedMPerMin that already exists and carries no note today, not only to a future per-edge speed.",
+   "recordedIn": [
+    "docs/experiments/126-travel-time-as-a-bound.md"
+   ],
+   "workItem": "126, whose closing condition is a bound named in the result and the receipt, plus best and worst computed over one current-day graph and differing by a measured amount",
+   "status": "open",
+   "lastChecked": "2026-10-20",
+   "checks": [
+    {
+     "date": "2026-10-20",
+     "found": "Nothing to label yet, because no widget reads a posted limit: `maxspeed` appears nowhere in src/, docs/ or scripts/, although the Overpass query asks for way tags and the tag arrives in the response and is dropped. Travel time is one scalar everywhere -- minutes x speedMPerMin over every edge identically -- and src/reachable-nodes.ts already says so in the receipt it writes, which is the honest version of the current model and not the thing this direction changes. What this direction adds to the earlier framing, and what 126 records, is the asymmetry: an access claim is conservative in the WORST case, so coverage computed from a ceiling overstates access, invisibly, because the output is a number of minutes like any other. Measured on examples/john-snow/soho.graphml: 499 of 1,619 edges carry maxspeed (30.8%), or 469 of 701 drive-usable edges (66.9%) and 17.54 of 26.29 km (66.7%), with values `30 mph` and `20 mph` -- free text with units, where the wider database legally holds 50, RU:urban, walk, none and signals. So a third of the drivable length in a well-mapped city centre needs a declared fallback. Not established: that posted limits would make a driving time more accurate, which is unmeasured against any observed trip, and that 66.9% generalises -- it is one half-square-kilometre graph read from a file we ship."
+    },
+    {
+     "date": "2026-10-20",
+     "found": "Scope corrected the same day, before anything was built on the earlier reading. 126 had made the licence of a worst-case speed source a question for this project to settle; it is not. What is: every configurable speed in the application today -- isochrone's speedMPerMin, reachable_nodes', travel_time's, access' -- is a bare number with no note of where it came from, so in a receipt it is indistinguishable from a figure this application derived. That is the gap to close, and it is open now rather than when per-edge speeds arrive."
+    }
+   ]
   }
  ]
 }

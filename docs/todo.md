@@ -501,6 +501,19 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**The street network has no travel mode, and a travel time has no bound.** The download applies
+one walking filter, while `reachable_nodes` already offers walking, cycling, driving or other with
+per-mode speed bands — the mode is declared where it cannot be honoured and absent where it would
+be. On the Soho walk graph this repository ships, 56.7% of edges and 48.1% of edge length are
+types a driving filter excludes, and 28.1% carry a vehicle one-way restriction the parser ignores.
+The practitioner, 2026-10-20: *"For current day investigations, these speed limits matter as a
+ceiling (best case travel time). Worst case travel time can be researched."* So a time computed
+from a posted limit is a bound, and the bound points the wrong way for an access claim: it can
+rule a site out of a catchment and cannot rule one in. `maxspeed` is read nowhere today, is free
+text where it exists, and covers 66.9% of drive-usable edges in central London. Recorded as
+[126](experiments/126-travel-time-as-a-bound.md), with the two directions
+`street-network-declares-a-travel-mode` and `travel-time-from-a-posted-limit-is-a-best-case`.
+
 **A narrative framing stage, before the first widget.** The practitioner, 2026-10-17: *"There
 must be something in the beginning that helps the user design the frames of the story … And this
 step precedes the use of the study area widget."* Recorded as a **framework incompleteness**

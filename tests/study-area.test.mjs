@@ -5,7 +5,7 @@ import {validateWorkflow,executionPlan,executeWorkflow} from '../build/core.js';
 const polygon=points=>({type:'Polygon',coordinates:[[...points,points[0]]]});
 test('blank workflow has no hidden nodes and requires a selection to run',()=>{
   const w=blankWorkflow();assert.equal(validateWorkflow(w).nodes.length,0);
-  assert.throws(()=>executionPlan(w),/Add a visual output/);
+  assert.throws(()=>executionPlan(w),/This canvas is empty/,'an empty canvas is told to add an input, not an output');
   w.nodes.push({...newStudyArea(),id:'area-1',x:0,y:0});
   assert.throws(()=>executionPlan(w),/Select a study area/);
   w.nodes[0].params.geometry=bboxPolygon(25.89,-24.7,25.91,-24.68);

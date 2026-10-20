@@ -430,9 +430,13 @@
    "migrationFrom": []
   },
   "network_input": {
-   "version": "0.1.0",
-   "released": "2026-10-07",
+   "version": "0.2.0",
+   "released": "2026-10-20",
    "changes": [
+    {
+     "kind": "feature",
+     "description": "Downloads are judged on what they cost rather than on how wide the area is: the fixed 6 km envelope is gone, and the byte and feature limits are their own numbers instead of following the isochrone graph limit. The default graph size is 50,000 network nodes, which admits a real town. Each instance's /api/status is read before downloading -- free slots, rate limit, and when the next slot frees -- and a busy service is waited for rather than treated as a failure. Responses are kept on the device and reused for the same query; pressing Download again when a network is already saved fetches a fresh one. The widget shows endpoint status before a download, progress on the button while it runs, which instance served the saved graph, and why a download failed."
+    },
     {
      "kind": "initial",
      "description": "Reusable local catchment primitive; see docs/experiments/32-john-snow-primitives.md. Bounded prototype, not an exact notebook replay."

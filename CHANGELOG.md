@@ -3,6 +3,54 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.10.0 — In development
+
+- **A project is an investigation, and holds several workflows.** "Project" had been a word in the
+  title bar bound to the current workflow's name. It is now an entity: a subject, and a workflow
+  for each question asked about it. The four cholera workflows are one project; Old Naledi's two
+  are another. Membership is optional in both directions and a workflow in no project is still
+  reachable. Starting an empty canvas now asks what you are investigating before it asks where.
+  A payload used by several workflows is held once, and the reference exists only on disk — a
+  workflow in memory always carries its data, so nothing downstream changed.
+- **The palette offers every widget once the canvas holds an input.** Four hand-curated lists
+  decided what was addable, and nine widgets were reachable only from the examples whose templates
+  named them — `measure_distance` among them, on one example that is slated for retirement. Eight
+  of the nine carried an open evaluation obligation, so the gate was asking for judgement on
+  widgets a practitioner could not open.
+- **Street networks are judged on what they cost.** A fixed 6 km envelope refused a study area for
+  its width before anything was measured; Buvuma Island's bounding box is mostly Lake Victoria.
+  The byte and feature limits are now their own numbers rather than following the isochrone's
+  memory limit, and the default graph size admits a real town — 50,000 network nodes, where 2,000
+  refused Buvuma's 11,359 and Bunia's 42,796.
+- **The OSM client follows the service.** Each instance's `/api/status` is read — free slots, rate
+  limit, when the next slot frees — and a busy service is waited for rather than treated as
+  failed. A six-second health check had been declaring a live service dead for answering slowly,
+  which is how Overpass expresses load. Responses are kept on the device and reused for the same
+  query; pressing Download again when a network is already saved fetches a fresh one. The widget
+  shows endpoint status before a download, progress on the button during it, which instance served
+  the saved graph, and why a download failed.
+- **Mean center can be weighted by a record attribute.** 250 addresses carrying 489 deaths have two
+  different centres; the receipt asserts the field and the weight total beside the unchanged point
+  count. A weight that is missing, non-numeric or negative is refused with the count of records it
+  applies to; a weight of zero is kept.
+- **Two widgets renamed to say what they act on.** `summarize_polygons` became
+  `summarize_points_to_polygon` and `hex_aggregate` became `aggregate_points_to_h3_cell`. Saved
+  workflows naming the old identifiers are rewritten on open.
+- **Refusals name the action.** A workflow holding a study area was told to add a study area; an
+  empty street network did not say the download is a separate button; a six-megabyte boundary
+  download reported nothing while it ran. Each said what the state was and not what to do.
+- **Manual pages for Study area, Street network and Point data**, and a default label now names its
+  widget: every Map was born called "Study area and points", which was one example's label.
+
+**Migration.** None required. The two renamed node types migrate on open and keep their
+connections; `projectId`, `workflowKey` and `dataRef` are optional and absent from every saved
+workflow written before this version.
+
+**Validation limits.** The caps that are measurements are separated from the caps that are guesses
+in `docs/experiments/125-caps-below-the-limit-we-are-testing.md`; four remain unmeasured and are
+listed in TODO.md with the artifact that would stress each. Parity for the renamed widgets and for
+`mean_center` still covers their previous release, and the catalogue says so.
+
 ## 0.9.0 — In development
 
 - **Reachable junctions attaches its own origins.** It refused any point without a

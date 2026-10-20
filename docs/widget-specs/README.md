@@ -44,6 +44,24 @@ understanding is already loaded, and nobody comes back for them afterwards.
    heading where the notebook carries one. The lab is the separate `digital-twin-ph/validation-lab`
    repository and `widgets/parity.json` pins the commit it is checked against, so a notebook added
    there needs the pin moved here.
+4. **Check its ontology mapping and what its receipt asserts.** Every `fw:` term a module emits
+   must be declared in `ontology/`, and `npm run validate:ontology-coupling` gates that at zero
+   undeclared — a new predicate added to a receipt and not declared fails the build, which is the
+   intended cost. The release file's `ontology.emits` must equal what the definition actually
+   asserts, so a widget that gains or loses a term and does not say so is caught. If the widget
+   computes anything, it owes a receipt: what it used, what it produced, and the method, in terms
+   the ontology defines. `scripts/audit-runtime-n3.mjs` parses a whole run's receipts and
+   conclusions against the ontology and SHACL shapes, and the worked-example browser tests call it.
+5. **Check the panel as a user-facing surface, not only as markup.** `tests/contrast.browser.mjs`
+   measures WCAG 2.1 AA on what is actually rendered — the effective foreground after alpha
+   compositing over the nearest opaque ancestor, 4.5:1 for normal text and 3:1 for large — in both
+   themes, with `disabled-button-contrast` and `toast-contrast` covering the states that are easy
+   to forget. A new control is reachable and operable by keyboard, and says what it is to a screen
+   reader: a status that changes needs `role="status"`, an input needs a `<label for>`, and a
+   button's accessible name is its text. The Inspector is 292px wide, so a control that only works
+   at a comfortable width does not work.
 
 Where the material goes is the same split this file already describes: controls in the Inspector,
-the practitioner's understanding in the manual, the measurements and the history here.
+the practitioner's understanding in the manual, the measurements and the history here. What the
+widget asserts goes in the ontology and the receipt, which is the only place a claim survives the
+session.

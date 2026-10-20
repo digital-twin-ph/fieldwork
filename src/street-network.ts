@@ -277,7 +277,7 @@ export function networkFromOSM(raw:unknown,maxNodes?:number):Network{
  *  the same area asked for twice -- and not to answer a practitioner who pressed Download BECAUSE
  *  what they have is wrong or stale. Serving that from cache would make the button look broken in
  *  the one case where it has to work. */
-export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pauseMs?:number,refresh=false,onPhase?:(message:string)=>void):Promise<Network>{
+export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pauseMs?:number,refresh=false,onPhase?:(message:string,fraction?:number)=>void):Promise<Network>{
   osmQuery(boundary,marginM,maxNodes); // Invalid local input must not consume the public-service pause.
   return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes,pauseMs,undefined,undefined,undefined,refresh,onPhase));
 }
@@ -285,7 +285,7 @@ export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pa
 /** `exclude` carries the instances this request has already learned cannot serve this area, so a
  *  regional mirror that answers with nothing hands the attempt on to the next instance instead of
  *  ending it. Internal: callers pass nothing. */
-export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number,exclude:ReadonlySet<string>=new Set(),onWait?:(w:{operator:string;seconds:number})=>void,cacheStore?:CacheLike|null,refresh=false,onPhase?:(message:string)=>void):Promise<Network>{
+export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number,exclude:ReadonlySet<string>=new Set(),onWait?:(w:{operator:string;seconds:number})=>void,cacheStore?:CacheLike|null,refresh=false,onPhase?:(message:string,fraction?:number)=>void):Promise<Network>{
   const request=osmQuery(boundary,marginM,maxNodes);
   // One budget per attempt, and one for the whole thing. See ATTEMPT_MS.
   const startedAt=Date.now();
@@ -452,7 +452,8 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     };
     if(Number(response.headers.get('content-length'))>maxBytes)throw tooLarge(Number(response.headers.get('content-length')));
     if(!response.body)throw new Error('OSM response has no readable body.');const reader=response.body.getReader(),chunks:Uint8Array[]= [];let bytes=0;
-    try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>maxBytes){controller.abort();throw tooLarge(bytes);}chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
+    const declared=Number(response.headers.get('content-length'))||0;
+    try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>maxBytes){controller.abort();throw tooLarge(bytes);}chunks.push(value);onPhase?.(declared?`Receiving \u2014 ${(bytes/1e6).toFixed(1)} of ${(declared/1e6).toFixed(1)} MB`:`Receiving \u2014 ${(bytes/1e6).toFixed(1)} MB`,declared?bytes/declared:undefined);}}finally{await reader.cancel().catch(()=>{});}
     // Charged once the size is known: a larger request earns a longer pause.
     chargeNetworkDownload(bytes,pauseMs);
     const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const body=new TextDecoder().decode(joined);const raw=JSON.parse(body);

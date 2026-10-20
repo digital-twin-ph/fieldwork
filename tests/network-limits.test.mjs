@@ -14,10 +14,15 @@ const graph=(n)=>({
   edges:Array.from({length:n-1},(_,i)=>({from:'n'+i,to:'n'+(i+1),lengthM:10})),
   source:'test graph'});
 
-test('the default graph limit is the measured 2,000 junctions', ()=>{
-  assert.equal(cm.NETWORK_NODE_LIMIT,2000);
-  assert.deepEqual(cm.graphLimits(),{maxNodes:2000,maxEdges:5000},
-    'the shipped 2,000/5,000 pair must be what the default derives');
+test('the default graph limit admits a real street network', ()=>{
+  // 2,000 until 2026-10-20, which refused every real area: Buvuma Island normalizes to 11,359
+  // network nodes and Bunia to 42,796. It was protecting ISOCHRONE construction, which protects
+  // itself -- a worker, a boot check and a timeout that names memory, so an oversized graph fails
+  // that step rather than the tab. The measured isochrone number keeps its own name.
+  assert.equal(cm.NETWORK_NODE_LIMIT,50000);
+  assert.equal(cm.ISOCHRONE_MEASURED_NODES,2000,'the measurement is unchanged; only its scope was');
+  assert.ok(cm.graphLimits().maxNodes>42796,'Bunia must fit without touching the knob');
+  assert.deepEqual(cm.graphLimits(),{maxNodes:50000,maxEdges:125000});
 });
 
 test('one knob governs both numbers, at the ratio real street data shows', ()=>{
@@ -27,8 +32,9 @@ test('one knob governs both numbers, at the ratio real street data shows', ()=>{
 });
 
 test('a graph over the limit is refused, and the message names the knob', ()=>{
-  assert.throws(()=>cm.validateNetwork(graph(2500)),/2500 junctions/);
-  assert.throws(()=>cm.validateNetwork(graph(2500)),/knob on the Street network widget/);
+  assert.throws(()=>cm.validateNetwork(graph(60000)),/60000 junctions/);
+  assert.throws(()=>cm.validateNetwork(graph(60000)),/knob on the Street network widget/);
+  assert.doesNotThrow(()=>cm.validateNetwork(graph(42796)),'a town-sized network is not refused');
   // ...and the same graph is accepted once the knob is raised.
   assert.doesNotThrow(()=>cm.validateNetwork(graph(2500),4000));
 });
@@ -36,11 +42,11 @@ test('a graph over the limit is refused, and the message names the knob', ()=>{
 test('the accepted limit travels on the network, so a later step does not refuse it', ()=>{
   // This is the failure the recorded limit prevents: raise the knob, accept a graph, then have
   // isochrone re-validate it against the default and refuse what was just allowed.
-  const big={...graph(2500),limits:cm.graphLimits(4000)};
+  const big={...graph(60000),limits:cm.graphLimits(70000)};
   assert.doesNotThrow(()=>cm.validateNetwork(big),
     'a network carrying its own ceiling must validate without the argument being repeated');
-  const unmarked=graph(2500);
-  assert.throws(()=>cm.validateNetwork(unmarked),/limit is 2000/);
+  const unmarked=graph(60000);
+  assert.throws(()=>cm.validateNetwork(unmarked),/limit is 50000/);
 });
 
 test('an explicit argument still wins over the recorded ceiling', ()=>{
@@ -99,7 +105,7 @@ test('an OSM download records the ceiling it was accepted under', ()=>{
     {type:'node',id:1,lat:51.5100,lon:-0.1400},
     {type:'node',id:2,lat:51.5101,lon:-0.1401},
     {type:'way',id:9,nodes:[1,2],tags:{highway:'residential'}}]};
-  assert.deepEqual(sn.networkFromOSM(raw).limits,{maxNodes:2000,maxEdges:5000});
+  assert.deepEqual(sn.networkFromOSM(raw).limits,{maxNodes:50000,maxEdges:125000});
   assert.deepEqual(sn.networkFromOSM(raw,4000).limits,{maxNodes:4000,maxEdges:10000});
 });
 
@@ -227,10 +233,17 @@ test('the pause knob is validated, and 60 is the lowest it accepts', ()=>{
 
 // --- the download caps now follow the graph knob ---
 
-test('the download caps are never tighter than the ones that shipped', ()=>{
-  assert.deepEqual(cm.downloadLimits(),{maxBytes:2_000_000,maxFeatures:15_000});
-  assert.deepEqual(cm.downloadLimits(500),{maxBytes:2_000_000,maxFeatures:15_000},
-    'lowering the graph knob must not tighten the download below the shipped limits');
+test('the download floor is what a DOWNLOAD costs, not what an isochrone can hold', ()=>{
+  // The floor was 2,000,000 bytes and a real download arrived at 2,014,475 -- received in full
+  // from a free public service, then discarded for being 0.7% over. The graph knob exists because
+  // isochrone construction exhausted a 4 GB heap at 5,249 nodes; a network that is drawn, snapped
+  // to or routed over never meets that, so the two no longer share a number.
+  assert.equal(cm.downloadLimits().maxBytes,Math.max(cm.DOWNLOAD_FLOOR_BYTES,cm.NETWORK_NODE_LIMIT*cm.BYTES_PER_NODE));
+  assert.deepEqual(cm.downloadLimits(500),{maxBytes:cm.DOWNLOAD_FLOOR_BYTES,maxFeatures:cm.DOWNLOAD_FLOOR_FEATURES},
+    'lowering the graph knob must not tighten the download');
+  assert.ok(cm.DOWNLOAD_FLOOR_BYTES>7.39e6,
+    'a floor below this project\'s own measured isochrone extent would refuse an example it ships');
+  assert.ok(cm.downloadLimits().maxBytes>2_014_475,'and the download that prompted this now fits');
 });
 
 test('raising the graph knob widens the download enough for the measured cost', ()=>{

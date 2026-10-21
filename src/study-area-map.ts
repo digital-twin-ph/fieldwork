@@ -115,6 +115,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   // boundary, the receipt must still name the source AND say the shape is no longer theirs, which
   // it cannot do if the record is dropped the moment the shape changes.
   let acquired:DrawnParams['boundary']=node.params.source==='drawn'?node.params.boundary:undefined;
+  const chosenUnitName=()=>acquired?.unitName||acquired?.unitID||'This published outline';
   function currentParams():DrawnParams{return {source:'drawn',label:name.value.trim(),selectionMode,geometry,...(acquired?{boundary:acquired}:{})};}
   let lastShape:Boundary|null=null,lastName='',lastSettings='',lastN3:ReturnType<typeof studyAreaN3>|null=null;
   function refresh(){
@@ -170,8 +171,25 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
       // first place -- the geometry is as published, and editing it is what the provenance
       // records as a modification -- so an outline above the limit is drawn without them and says
       // so, rather than building controls nobody can use out of the interface's own budget.
-      if(points.length>HANDLE_LIMIT){
-        $('#area-summary').textContent=`${points.length.toLocaleString()} vertices as published \u00b7 drag handles are not shown above ${HANDLE_LIMIT.toLocaleString()}`;
+      // AN ACQUIRED OUTLINE IS NOT DRAGGABLE, WHATEVER ITS SIZE. The practitioner, 2026-10-20:
+      // *"If it's a jurisdictional polygon as a study area, I don't think we should make the
+      // vertices draggable. That would be changing the shape, provenance and authoritativeness of
+      // the polygon."* A first version capped handles by VERTEX COUNT, which answered the
+      // performance question and got the principle wrong: a small district -- 40 vertices, well
+      // under any cap -- would still have offered the gesture. The question is not how many
+      // vertices there are, it is whose shape it is.
+      //
+      // The provenance machinery stays as it was: a boundary that is modified by some other route
+      // keeps naming its source and records `fw:geometryAsPublished false`, because a shape that
+      // was edited and says nothing is worse than one that was edited and says so. What changes
+      // is that this dialog no longer invites the edit.
+      if(acquired){
+        $('#area-summary').textContent=`${chosenUnitName()} as published \u00b7 ${points.length.toLocaleString()} vertices \u00b7 not editable by hand`;
+        message('This outline is a published jurisdiction, so its vertices cannot be dragged. Draw your own shape if you need a different area.');
+      }else if(points.length>HANDLE_LIMIT){
+        // Nobody draws four hundred vertices by hand; a geometry this size arrived some other way,
+        // and one draggable marker per vertex is what froze this dialog and killed WebKit.
+        $('#area-summary').textContent=`${points.length.toLocaleString()} vertices \u00b7 drag handles are not shown above ${HANDLE_LIMIT.toLocaleString()}`;
       }else{
       points.forEach((p,i)=>{
         const marker=L.marker(ll(p),{draggable:true,icon:L.divIcon({className:'area-vertex',iconSize:[12,12],iconAnchor:[6,6]}),title:`Move ${selectionMode==='bbox'?'corner':'vertex'} ${i+1}`,keyboard:true}).addTo(handles);

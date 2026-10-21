@@ -202,3 +202,36 @@ test('several units are several parts, each as published, and never a bounding b
   expect(geometry.coordinates[0][0].length).toBe(41,'as published, not thinned');
   expect(errors).toEqual([]);
 });
+
+// "If it's a jurisdictional polygon as a study area, I don't think we should make the vertices
+// draggable. That would be changing the shape, provenance and authoritativeness of the polygon."
+//
+// The unit in this stub carries 40 vertices -- far below any performance limit -- so this pins
+// the PRINCIPLE rather than the size: whose shape it is, not how many points it has.
+test('an acquired jurisdiction carries no drag handles, and says why',async({page})=>{
+  await stub(page);
+  await openArea(page);
+  await page.locator('#area-iso').fill('Democratic Republic of the Congo');
+  await page.locator('#area-boundary-check').click();
+  await expect(page.locator('#area-boundary-units')).toBeVisible({timeout:30000});
+  await page.locator('#area-boundary-pick').selectOption({index:0});
+  await page.locator('#area-boundary-use').click();
+
+  await expect(page.locator('#area-summary')).toContainText('as published');
+  await expect(page.locator('#area-summary')).toContainText('not editable by hand');
+  await expect(page.locator('#area-feedback')).toContainText('cannot be dragged');
+  await expect(page.locator('.area-vertex')).toHaveCount(0);
+  // The outline is still drawn, and still applies.
+  await expect(page.locator('#area-map')).toHaveAttribute('data-drawn-parts','1');
+  await expect(page.locator('#area-apply')).toBeEnabled();
+});
+
+test('a shape you drew yourself is still editable by its vertices',async({page})=>{
+  await openArea(page);
+  await page.locator('[data-draw="bbox"]').click();
+  const map=page.locator('#area-map');
+  await map.click({position:{x:120,y:120}});
+  await map.click({position:{x:260,y:230}});
+  await expect(page.locator('.area-vertex')).toHaveCount(2);
+  await expect(page.locator('#area-feedback')).not.toContainText('cannot be dragged');
+});

@@ -25,7 +25,9 @@ shown in a local build is not a claim that it has been published.
   Chromium and a **crashed page** in WebKit. Found by profiling, after four plausible guesses that
   measured as nothing. Handles are capped at 400, which is far more than anybody draws by hand,
   and a larger outline is drawn without them and says so: **0.7 s** in Chromium, **0.6 s** in
-  WebKit. Each phase of Apply also names itself, and validation and the N3 preview are recomputed
+  WebKit. A **published jurisdiction carries no handles at any size** — dragging a vertex of one
+  would change the shape, the provenance and the authoritativeness of an outline that is somebody
+  else's — and the dialog says so rather than omitting them silently. Each phase of Apply also names itself, and validation and the N3 preview are recomputed
   only when the shape, its name or the clip settings change rather than on every map movement.
 - **An encrypted project can carry what the browser can now hold.** The package refused a
   workflow over 5 MB — a number set when a workflow could not be much larger, because its payloads

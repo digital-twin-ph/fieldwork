@@ -233,6 +233,25 @@
      "found": "Not finished, and the practitioner found the gap before the gate did. The fields existed only inside a collapsed disclosure at the bottom of the project bar, which is somewhere to PUT a control rather than somewhere a practitioner looks -- and the shape chosen on the day was `edit in place`, whose sketch showed `click title to rename`. Both titles are controls now: the project name in the eyebrow and the workflow name in the heading, with a cursor, a hover, a tooltip, a focus ring and a keyboard route in; Enter applies, Escape abandons, an empty name is abandoned rather than written, and a built-in project says why its name is fixed instead of doing nothing. The disclosure keeps what is not a title: the subject, the membership, the id and the two destructive actions. One defect found in the building: Enter inside the inline editor bubbled back to the title that opened it, which applied the name and then immediately reopened the editor -- so the heading looked empty and the rename looked to have failed although it was already saved."
     }
    ]
+  },
+  {
+   "id": "an-acquired-outline-is-not-editable-by-hand",
+   "stated": "2026-10-20",
+   "statedBy": "the practitioner, on the handle limit built an hour earlier",
+   "inTheirWords": "If it's a jurisdictional polygon as a study area, I don't think we should make the vertices draggable. That would be changing the shape, provenance and authoritativeness of the polygon.",
+   "requiresInCode": "The study-area dialog offers no vertex handles for a geometry that carries an acquisition record, whatever its size, and says why rather than silently omitting them. The provenance machinery is unchanged: a boundary modified by any other route still names its source and records fw:geometryAsPublished false, because a shape that was edited and says nothing is worse than one that was edited and says so.",
+   "recordedIn": [
+    "docs/experiments/125-caps-below-the-limit-we-are-testing.md"
+   ],
+   "workItem": "the study-area widget's own checklist pass, where the drawing surface is reviewed",
+   "status": "built",
+   "lastChecked": "2026-10-20",
+   "checks": [
+    {
+     "date": "2026-10-20",
+     "found": "Built, and it corrected a fix made an hour earlier for a different reason. Profiling had shown that one draggable Leaflet marker per vertex was what froze the dialog on North Kivu's 16,548 vertices and killed WebKit, so handles were capped at 400 -- which answered the PERFORMANCE question and got the principle wrong: a district of 40 vertices sits far below any cap and would still have offered the gesture. The question is not how many vertices there are, it is whose shape it is. Handles are now refused for any geometry carrying an acquisition record, with a line saying the outline is a published jurisdiction and that drawing your own shape is the way to a different area. The 400 limit stays beneath it for a large geometry that arrived some other way, since nobody draws four hundred vertices by hand. Pinned by a test on a 40-vertex unit, so it measures the principle and not the size."
+    }
+   ]
   }
  ]
 }

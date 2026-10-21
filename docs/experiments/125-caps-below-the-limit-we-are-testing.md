@@ -148,6 +148,14 @@ at 17 ms.
 Handles are capped at 400, which is far more than anybody draws by hand, and an outline above it
 is drawn without them and says so.
 
+**And that cap was the wrong rule, stated an hour later by the practitioner:** *"If it's a
+jurisdictional polygon as a study area, I don't think we should make the vertices draggable. That
+would be changing the shape, provenance and authoritativeness of the polygon."* A limit by vertex
+count answers the performance question and misses the point — a district of 40 vertices sits far
+below any cap and would still have offered the gesture. **Whose shape it is** decides, not how
+many points it has. An acquired outline now carries no handles at whatever size, and says so; the
+400 remains beneath it for a large geometry that arrived by some other route.
+
 | | Before | After |
 | --- | --- | --- |
 | Apply North Kivu, Chromium | 8.2 s | **0.7 s** |

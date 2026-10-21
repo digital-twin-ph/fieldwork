@@ -9,7 +9,8 @@ test('the ruleset example is offered, runs, and shows each condition kind',async
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=rulesets');
-  await expect(page.locator('#example-select')).toHaveValue('rulesets');
+  await expect(page.locator('#workflow-select')).toHaveValue('rulesets');
+  await expect(page.locator('#project-select')).toHaveValue('rulesets');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
 
   // Two workflows on one canvas: one over a table, one over a point layer. Neither reads the

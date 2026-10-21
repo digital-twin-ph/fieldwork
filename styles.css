@@ -228,6 +228,19 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
   .header-right{min-width:0;flex-shrink:1}
   .header-right .connection{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
+/* A title that can be renamed looks like one, without becoming a form. The affordance is the
+   hover, the cursor and the focus ring; the input only appears once asked for. */
+#project-name[role="button"],#project-title[role="button"]{cursor:text;border-radius:5px;padding:0 4px;margin-left:-4px}
+#project-name[role="button"]:hover,#project-title[role="button"]:hover{background:var(--surface-tint-1)}
+#project-name[role="button"]:focus-visible,#project-title[role="button"]:focus-visible{outline:2px solid var(--accent-muted-1);outline-offset:2px}
+.inline-rename{font:inherit;color:inherit;background:var(--surface-raised-1);border:1px solid var(--accent-muted-1);border-radius:5px;padding:0 4px;width:min(100%,26ch)}
+#project-title .inline-rename{width:min(100%,32ch)}
+.project-detail-grid{display:grid;gap:4px;margin:12px 0 10px;max-width:560px}
+.project-detail-grid input,.project-detail-grid select{width:100%;border:1px solid var(--line-soft-2);background:var(--surface-raised-1);padding:7px;font-size:12px;color:var(--ink);border-radius:6px}
+.project-detail-actions{display:flex;gap:8px;margin-top:6px}
+#project-details summary{font-size:10px;color:var(--text-faint-7);cursor:pointer;margin-top:6px}
+#project-stats{font-size:10px;margin:6px 0 0}
+
 /* The reveal playback: a worked example replayed one widget at a time, like running a notebook
    from the first cell, on a canvas instead of in a column. It is a view over an example that
    already exists -- nothing is saved and leaving restores the canvas -- so the rule can be

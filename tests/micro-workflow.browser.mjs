@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {collectPageErrors} from './page-errors.mjs';
+import {openWorkflow} from './open-workflow.mjs';
 
 // The composition as a practitioner meets it: on the palette, added as one step, inspected,
 // and exploded into the primitives it arranges. Experiment 89 claimed a composition is
@@ -185,8 +186,8 @@ test('a worked example can be reset, and an exploded canvas can be laid out',asy
   await expect(page.locator('body')).toContainText('Already laid out in order');
 
   // Reselecting the workspace keeps the edit, which is why a reset exists.
-  await page.selectOption('#example-select','snow-voronoi');
-  await page.selectOption('#example-select','snow-isochrone');
+  await openWorkflow(page,'snow-voronoi');
+  await openWorkflow(page,'snow-isochrone');
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original+4);
 
   // Reset returns it to the published example.

@@ -3,27 +3,28 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,multiWorkflowProjects,newProject,validateProject,siblingInputs,SHAREABLE_INPUT_TYPES,payloadDigest,dehydrateWorkflow,hydrateWorkflow} from '../build/project.js';
 
-const indexHtml=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-const pickerKeys=()=>{
-  const select=indexHtml.match(/<select id="example-select">([\s\S]*?)<\/select>/);
-  assert.ok(select,'the picker is in index.html');
-  return [...select[1].matchAll(/<option value="([^"]+)"/g)].map(m=>m[1]);
-};
-
-// The example vocabulary is written in four places -- the `exampleId` union, the deep-link
-// allowlist, the picker's options and now this registry. The first three predate the project and
-// are checked by other means; this turns the fourth into an invariant instead of a copy that can
-// drift silently.
-test('every project workflow is an option in the picker, and every option but blank is in a project',()=>{
-  const keys=pickerKeys();
+// The picker was a FOURTH copy of the example vocabulary -- the `exampleId` union, the deep-link
+// allowlist, the options in index.html and the project registry -- and this test existed to keep
+// the third from drifting from the fourth. Since 2026-10-20 the picker is built from the registry
+// in renderProjectOptions, so there is no copy left to compare: the markup holds two empty
+// selects. What remains comparable is the label map, which is still written by hand.
+test('every workflow in a project has a label, and every label belongs to a project',()=>{
   for(const project of BUILT_IN_PROJECTS)
     for(const key of project.workflows)
-      assert.ok(keys.includes(key),`${project.id} lists ${key}, which the picker does not offer`);
-  for(const key of keys){
+      assert.ok(WORKFLOW_LABELS[key],`${project.id} lists ${key}, which has no label`);
+  for(const key of Object.keys(WORKFLOW_LABELS)){
     if(key==='blank')continue; // a new empty canvas belongs to no investigation until one is created
-    assert.ok(projectOfWorkflow(key),`the picker offers ${key}, which belongs to no project`);
+    assert.ok(projectOfWorkflow(key),`${key} has a label and belongs to no project`);
   }
-  for(const key of keys)assert.ok(WORKFLOW_LABELS[key],`${key} has no label`);
+});
+
+test('the picker is built rather than written, so the markup carries no example list',()=>{
+  const indexHtml=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  assert.ok(!indexHtml.includes('id="example-select"'),'the single picker is gone');
+  assert.match(indexHtml,/<select id="project-select"[^>]*><\/select>/);
+  assert.match(indexHtml,/<select id="workflow-select"[^>]*><\/select>/);
+  for(const key of Object.keys(WORKFLOW_LABELS))
+    assert.ok(!indexHtml.includes(`value="${key}"`),`index.html still names the workflow ${key}`);
 });
 
 test('no workflow is in two projects at once',()=>{
@@ -126,8 +127,13 @@ test('a referenced payload is dropped on the way out and put back on the way in'
     {id:'own',type:'point_input',params:{label:'Pumps',data:{type:'FeatureCollection',features:[{id:'p'}]}}},
     {id:'area',type:'study_area',params:{label:'Soho',geometry:{type:'Polygon',coordinates:[]}}}],edges:[]};
 
-  const stored=dehydrateWorkflow(workflow);
-  assert.equal(stored.nodes[0].params.data,undefined,'a referenced payload is not written');
+  // The store has to SAY it holds the payload. Dehydrating against a store that does not is how
+  // an imported project lost its data on the first save: the reference was written and the bytes
+  // were not, and the next load refused the workflow.
+  const held=digest=>digest==='abc123';
+  assert.ok(dehydrateWorkflow(workflow).nodes[0].params.data,'nothing is stripped without a store to vouch for it');
+  const stored=dehydrateWorkflow(workflow,held);
+  assert.equal(stored.nodes[0].params.data,undefined,'a referenced payload the store holds is not written');
   assert.equal(stored.nodes[0].params.dataRef,'abc123','the reference is');
   assert.equal(stored.nodes[0].params.label,'Deaths','its own label survives — the geoprivacy case');
   assert.ok(stored.nodes[1].params.data,'an unreferenced payload is written inline');

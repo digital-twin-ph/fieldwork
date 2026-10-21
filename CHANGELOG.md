@@ -27,6 +27,20 @@ shown in a local build is not a claim that it has been published.
   that is what a public instance says when an area is beyond it. This is not the span cap that was
   removed on purpose: that refused an area for its width before anything was measured, and this is
   a measurement the service makes.
+- **A layer is named for where its points came from.** With a *Keep points inside the area* step
+  between a search and the map, two searches of two different registries both announced themselves
+  as **"Points inside the area"** — the clip's label — and the map's receipt attributed every record
+  to the clip rather than to the registry. A layer's identity was being re-derived from what was
+  plugged in, while the identity the data carries travelled correctly and was ignored. The data's
+  wins now; what is connected is the fallback for points that carry none. The mark also changes
+  from the *first* layer instead of once the six hues are exhausted, so two sources differ in both
+  channels and not just in colour.
+- **What the fill channel means is carried by the map, not compiled into it.** The renderer read
+  `relation`, `status` and `excluded` and decided filled, hollow or grey itself, which fixed that
+  channel to one variable for ever. The map now resolves its own rows and hands the renderer an
+  encoding that says which variable the channel carries and what each class means; the renderer
+  draws classes. The legend reads the same encoding and lists **only the values the map drew**, so
+  a map where nothing was clipped no longer offers a key for points a clip set aside.
 - **A point layer is drawn as itself.** Two Find health facilities widgets wired to one map — one
   reading OSM, the other Overture Places — drew in the same colour, and the layer control had
   nothing to list, so there was no way to see which points came from which source. Hue now carries

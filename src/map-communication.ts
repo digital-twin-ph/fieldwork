@@ -2,7 +2,7 @@ import type {Output,Receipt} from './results.js';
 import {outputOf} from './core.js';
 import type {WorkflowNode,Workflow} from './types.js';
 import type {LayerShape} from './presentation.js';
-import {markPath,resolveLayerSymbol,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel} from './presentation.js';
+import {markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
 
 export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:LayerShape;hollow?:boolean}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
@@ -36,9 +36,18 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
       const symbol=resolveLayerSymbol(index,node.params.layerSymbols?.[layer.sourceNodeId]);
       return {label:`${layer.label} (${layer.count})`,color:symbol.colour,shape:symbol.shape};
     });
-    items.push({label:'Inside / on the boundary (filled)',color:R.ink},
-      {label:'Outside the boundary (hollow)',color:R.ink,hollow:true},
-      {label:'Missing location (not plotted)',color:R.unknown});
+    // The fill entries are the map's own encoding, printed. They used to be three literals here
+    // and three more decisions in the renderer, which is two places to change a meaning and one
+    // of them silent.
+    const encoding=(output as {fillEncoding?:typeof SPATIAL_RELATION_FILL}).fillEncoding||SPATIAL_RELATION_FILL;
+    // Only the values this map actually drew. A legend that lists every value the vocabulary
+    // allows tells the reader a clip set points aside on a map where nothing was clipped.
+    const present=new Set((output.rows||[]).map(row=>{
+      const r=row as {relation?:string;status?:string;excluded?:boolean};
+      return r.excluded?'Excluded':r.relation??r.status??'';
+    }));
+    for(const category of encoding.categories.filter(c=>present.has(c.value)))
+      items.push({label:category.label,color:category.fill==='absent'?R.unknown:R.ink,hollow:category.fill==='hollow'});
   }
   else items=[{label:'Review',color:R.attention},{label:'No flag',color:R.agreement},{label:'Unknown',color:R.unknown},{label:'Facility',color:R.site,shape:'square'}];
   const interactive=node.params.presentation==='interactive'&&!!output.polygons;
@@ -146,16 +155,19 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   //
   //   hue   -> which source layer    Okabe-Ito, colour-universal by design
   //   mark  -> which source layer    OGC Symbology Encoding WellKnownName, the standard's own term
-  //   fill  -> the spatial relation  solid inside, hollow outside
+  //   fill  -> whatever the map's own fillEncoding says, read from the value rather than assumed
   //
   // The mark and hue say the same thing on purpose: colour alone is not an encoding everybody can
   // read, and WCAG 1.4.1 is the rule this answers rather than a preference.
   const symbols=(output as {layerSymbols?:Record<string,{colour:string;shape:string;chosen:{colour:boolean;shape:boolean}}>;layerNames?:Record<string,string>}).layerSymbols;
   const names=(output as {layerNames?:Record<string,string>}).layerNames||{};
+  const fill=(output as {fillEncoding?:typeof SPATIAL_RELATION_FILL}).fillEncoding||SPATIAL_RELATION_FILL;
   const encodingFacts=symbols?`<${iri}> fw:encoding [ fw:visualChannel "hue"; fw:encodesVariable "source layer"; `
       +`fw:palette ${JSON.stringify(FIGURE_PALETTE_NAME)}; fw:paletteAuthority <${FIGURE_PALETTE_AUTHORITY}>; fw:colourVisionSafe true ], `
       +`[ fw:visualChannel "graphic mark"; fw:encodesVariable "source layer"; fw:markVocabulary <${MARK_VOCABULARY}> ], `
-      +`[ fw:visualChannel "fill"; fw:encodesVariable "spatial relation"; fw:fillMeaning "solid is inside the study area, hollow is outside" ].\n`
+      +`[ fw:visualChannel "fill"; fw:encodesVariable ${JSON.stringify(fill.variable)}`
+      +(fill.vocabulary?`; fw:markVocabulary <${fill.vocabulary}>`:'')
+      +fill.categories.map(c=>`; fw:fillMeaning ${JSON.stringify(`${c.fill} is ${c.value}`)}`).join('')+` ].\n`
     +Object.entries(symbols).map(([source,symbol])=>
       `<${iri}> fw:layerSymbol [ fw:layerSource ${JSON.stringify(source)}; fw:layerLabel ${JSON.stringify(names[source]||source)}; `
       +`fw:mark ${JSON.stringify(symbol.shape)}; fw:markVocabulary <${MARK_VOCABULARY}>; fw:symbolColour ${JSON.stringify(symbol.colour)}; `

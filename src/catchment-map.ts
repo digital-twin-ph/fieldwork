@@ -4,7 +4,8 @@ import type {PointCollection,Escape,Position} from './types.js';
 
 import {BASEMAP_CHOICES,type BasemapChoice} from './types.js';
 import {layerSymbol,markPath} from './presentation.js';
-import type {LayerShape} from './presentation.js';
+import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
+import {fillClass,SPATIAL_RELATION_FILL} from './presentation.js';
 export type {BasemapChoice};
 
 /** OpenFreeMap serves VECTOR tiles, not raster, so these cannot be an `L.tileLayer` URL.
@@ -83,7 +84,10 @@ export interface MapLayers {
   /** A study area, drawn as the ground the rest sits on. */
   boundary?:{type:string;coordinates:unknown};
   /** Points carried on a value rather than arriving at a port of their own. */
-  rows?:{id:string;name:string;coordinates?:Position|null;status?:string;relation?:string;excluded?:boolean;sourceNodeId?:string}[];
+  rows?:{id:string;name:string;coordinates?:Position|null;status?:string;relation?:string;excluded?:boolean;sourceNodeId?:string;fill?:FillClass}[];
+  /** What the fill channel stands for. The renderer prints the words and draws the classes; it
+   *  does not know which variable produced them. */
+  fillEncoding?:FillEncoding;
   /** What each source is called, so a layer control names the widget rather than its node id. */
   layerNames?:Record<string,string>;
   /** The symbol each source is drawn with, resolved from the practitioner's choice where they
@@ -189,9 +193,15 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       const group=L.featureGroup();
       for(const row of rows){
         if(!row.coordinates)continue;
-        const [lon,lat]=row.coordinates,state=row.excluded?'Excluded':row.relation??row.status??'';
-        const inside=!(state==='Outside'||state==='Review'||state==='Excluded');
-        const ink=state==='Excluded'?'#8C8C8C':symbol.colour;
+        const [lon,lat]=row.coordinates;
+        // The class the map resolved, not a variable this renderer knows. A row from an older
+        // value carries none, so the encoding is applied here instead -- which is the same table,
+        // read in the same place, rather than a second opinion hard-coded in the drawing code.
+        const encoding=layers.fillEncoding||SPATIAL_RELATION_FILL;
+        const state=row.excluded?'Excluded':row.relation??row.status??'';
+        const paint=row.fill??fillClass(encoding,state);
+        const ink=paint==='absent'?'#8C8C8C':symbol.colour;
+        const inside=paint==='solid';
         // The mark is DRAWN, not just named. The layer control said "(square)" while every point
         // on the map was a circleMarker, so the mark channel existed in the label and the receipt
         // and nowhere a reader could see it. A circle stays a circleMarker because it is the same

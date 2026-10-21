@@ -20,12 +20,16 @@ test('Map presentation is independent of geometry and emits a validated, source-
   // hue carried before one overlay per source arrived.
   assert.equal(spec.items[0].label,'Synthetic coverage records (4)');
   assert.equal(spec.items[0].shape,'circle');
+  // The fill entries are the map's own encoding, filtered to the values it drew. This exercise's
+  // four records sit inside, on the boundary, outside, and one has no location -- so four entries
+  // and not the five the vocabulary allows: nothing here was set aside by a clip.
   assert.deepEqual(spec.items.slice(1).map(i=>i.label),
-    ['Inside / on the boundary (filled)','Outside the boundary (hollow)','Missing location (not plotted)']);
-  assert.equal(spec.items.find(i=>i.hollow)?.label,'Outside the boundary (hollow)');
+    ['Inside the study area (filled)','On the boundary (filled)','Outside the study area (hollow)',
+      'Missing location (not plotted)']);
+  assert.equal(spec.items.find(i=>i.hollow)?.label,'Outside the study area (hollow)');
   const svg=standaloneMapSvg('<rect width="850" height="295"/>','0 0 850 295',spec);
   assert.match(svg,/<title>Old Naledi &amp; observations<\/title>/);assert.match(svg,/Synthetic data &lt;local&gt;/);
-  assert.match(svg,/Inside \/ on the boundary/);
+  assert.match(svg,/Inside the study area/);
   // The export draws the marks, not a rectangle-or-circle choice: one path per legend entry.
   assert.equal([...svg.matchAll(/<path d="M/g)].length>=spec.items.length,true);
   assert.deepEqual(output,before);

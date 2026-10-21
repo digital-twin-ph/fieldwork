@@ -127,6 +127,12 @@
    "description": "Each point layer on a map is drawn as its own layer, with its own hue and its own mark, and the mark can be chosen per layer. The spatial relation moved to the fill channel -- filled inside the study area, hollow outside, grey where there is no usable location -- so hue is free to carry which source a point came from. Two sources wired to one map could not be told apart before: both drew in the same colour and the layer control had nothing to list. The ordered bands of a catchment use a ColorBrewer sequential ramp rather than the categorical palette. The legend lists one entry per layer in that layer's own mark, and the receipt records the encoding: which channel carries which variable, the palette and its authority, and each layer's mark and colour with whether it was chosen or derived.",
    "incompatibility": "A map drawn before this release looks different: point colour means the source rather than the spatial relation, and the legend's three relation entries are replaced by one entry per layer plus the fill meanings. A figure already published from this application and its caption no longer agree.",
    "migration": "None required. A map with no chosen marks derives them from the layer order, so a saved workflow redraws without being edited."
+  },
+  {
+   "kind": "minor",
+   "description": "A layer is named for where its points came from, not for whatever is plugged into the map. With a Keep points inside the area step in between, two searches of two different registries both announced themselves as \"Points inside the area\" -- the clip's own label -- and the receipt attributed every record to the clip. The identity the data carries wins; the connected node is the fallback. The mark now changes from the first layer rather than once the palette is exhausted, so two sources differ in both channels. And what the fill channel stands for is carried on the map as data: the renderer draws solid, hollow and grey without knowing which variable produced them, and the legend lists only the values the map actually drew.",
+   "incompatibility": "A map's layer labels and its receipt's dcterms:isPartOf subjects change where a widget sits between a source and the map: they now name the source. A reader comparing a new receipt with an older one will find the same records attributed to a different node.",
+   "migration": "None required. Identity is resolved at run time from the data, so re-running a saved workflow is enough."
   }
  ],
  "evidence": {

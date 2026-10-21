@@ -76,6 +76,49 @@ for one a practitioner creates. A project is deliberately a layer **above** the 
   even study area - it's create a project."* It now asks what you are investigating, and names the
   study area as step 2.
 
+## The surfaces, 2026-10-20
+
+The model shipped with no way to manage it. A project could be created and then never renamed,
+never described, never looked at; its subject existed only as a tooltip; and its workflows were
+reachable only as optgroup labels inside the worked-example picker. The practitioner, using it:
+
+> *"Right now I have no way of editing Project Title nor viewing Project metadata. I can only view
+> the workflows through the worked example dropdown which seems to be the wrong place to locate
+> projects."*
+
+The shape was chosen before anything was written, from three offered: **split the selector and
+edit in place**, with the worked examples listed as the built-in projects they already are.
+
+| | |
+| --- | --- |
+| Choosing | `Project` then `Workflow` — two selects, two questions |
+| Reading | a details disclosure in the project bar: name, subject, the workflows it holds, the id |
+| Editing | **click the title** — the project name in the eyebrow, the workflow name in the heading; Enter applies, Escape abandons, built-in projects say why they are fixed |
+| The rest | the same disclosure: subject, membership, the id |
+| Adding | `+ Add workflow` creates a canvas inside the project, named for the question it answers |
+| Deleting | removes the grouping; the workflows stay openable under *No project* |
+
+
+**The disclosure was not enough, and the practitioner said so:** *"There is still no way to edit
+project (e.g., title) or workflow (e.g., title) metadata."* It was there, behind a collapsed
+`<details>` at the bottom of the bar — somewhere to put a control rather than somewhere anyone
+looks. The option chosen on the day said *edit in place*, and its sketch showed a title with
+`← click title to rename` beside it; a disclosure is not that. Both titles are now controls, with
+a cursor, a hover, a tooltip and a keyboard route in.
+
+Building it produced a small lesson about delegated events. The first version put a `keydown`
+handler on the title and opened an input inside it — so Enter in the editor applied the name, the
+render redrew the heading, and **the same keystroke bubbled back to the title and opened a fresh
+editor**. The title then looked empty, and the rename looked as though it had failed when it had
+already been saved. Events from the editor are ignored by the control that opened it.
+
+Two things this found. The picker was a **fourth copy of the example vocabulary** — the
+`exampleId` union, the deep-link allowlist, the options in `index.html` and this registry — and
+building it from the registry deleted the copy along with the unit test whose only job was keeping
+it honest. And *No project* has to be offered **always**, not only while the open canvas is in
+none: without it an unfiled workflow becomes unreachable the moment a project is selected, which
+is a navigation trap rather than a tidy list.
+
 ## What this does not establish
 
 - **It does not share any data.** The four copies of Snow's points are still four copies, and the

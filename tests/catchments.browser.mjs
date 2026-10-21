@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {collectPageErrors} from './page-errors.mjs';
 import {payload} from './payload-store.mjs';
+import {openWorkflow} from './open-workflow.mjs';
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 
 test('Map presentation travels with interactive view, SVG and N3 evidence',async({page})=>{
@@ -40,7 +41,7 @@ test('John Snow examples use shared primitives, persist parameters and replay of
   await page.goto('/?example=snow-voronoi');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#map [data-catchment]')).toHaveCount(8);await expect(page.locator('#result-metrics')).toContainText('250 matched');
   await page.locator('#result-tab-table').click();await expect(page.locator('#result-rows')).toContainText('340');await expect(page.locator('#result-head')).toContainText('locations');await page.locator('#result-tab-chart').click();await expect(page.locator('#bars-panel')).toContainText('Sum DEATHS');
   await page.locator('.react-flow__node[data-id="summary"]').click();await page.locator('#catchment-valueField').fill('');await page.locator('#catchment-valueField').blur();await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete');await expect(page.locator('#bars-panel')).toContainText('Location memberships');
-  const before=await saved(page);await page.locator('#example-select').selectOption('snow-isochrone');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#map [data-catchment]')).toHaveCount(4);await expect(page.locator('#result-metrics')).toContainText('250 matched');await expect(page.locator('#map [data-plot-site]')).toHaveCount(8);await expect(page.locator('#map [data-plot-observation]')).toHaveCount(250);
+  const before=await saved(page);await openWorkflow(page,'snow-isochrone');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#map [data-catchment]')).toHaveCount(4);await expect(page.locator('#result-metrics')).toContainText('250 matched');await expect(page.locator('#map [data-plot-site]')).toHaveCount(8);await expect(page.locator('#map [data-plot-observation]')).toHaveCount(250);
   const downloadPromise=page.waitForEvent('download');await page.locator('#map-download-svg').click();assert.equal((await downloadPromise).suggestedFilename(),'map-map.svg');await page.locator('#expand-results').click();await page.screenshot({path:'test-results/nb04-fieldwork-plot.png'});
   // Which provider URL a request went to can only be observed where route interception sees it.
   // Measured 2026-10-09: in WebKit a page controlled by a service worker has its image loads
@@ -53,7 +54,7 @@ test('John Snow examples use shared primitives, persist parameters and replay of
   await page.locator('.react-flow__node[data-id="catchments"]').click();await expect(page.locator('#catchment-minutes')).toHaveValue('5');await page.locator('#catchment-thresholds').fill('');await page.locator('#catchment-thresholds').blur();await page.locator('#catchment-minutes').fill('1');await page.locator('#catchment-minutes').blur();await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#map-note')).toContainText('1 min');
   await page.screenshot({path:'test-results/john-snow-isochrone.png'});
   await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:30000});await page.context().setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#map-note')).toContainText('1 min');await page.locator('#result-tab-interactive').click();await expect(page.locator('.catchment-leaflet')).toBeVisible();await expect(page.locator('.catchment-site-marker')).toHaveCount(8);await page.locator('.leaflet-control-zoom-in').click();
-  await page.locator('#example-select').selectOption('snow-voronoi');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});assert.deepEqual((await saved(page)).nodes,before.nodes);await page.screenshot({path:'test-results/john-snow-voronoi.png'});assert.deepEqual(errors,[]);
+  await openWorkflow(page,'snow-voronoi');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});assert.deepEqual((await saved(page)).nodes,before.nodes);await page.screenshot({path:'test-results/john-snow-voronoi.png'});assert.deepEqual(errors,[]);
 });
 test('Street network imports GraphML and rejects invalid uploads without replacing saved data',async({page})=>{
   await page.goto('/?example=blank');await page.locator('[data-add="network_input"]').click();
@@ -86,11 +87,16 @@ test('Street network downloads bounded OSM data explicitly, preserves failed dow
       statuses++;await route.fulfill({body:'Rate limit: 2\n2 slots available now.\n',contentType:'text/plain'});});
   // Counted separately from downloads: this test asserts how many DOWNLOADS happen, which is the
   // thing that costs anybody anything.
-  let requests=0,probes=0;await page.route('https://overpass-api.de/api/interpreter',async route=>{
+  let requests=0,probes=0,counts=0;await page.route('https://overpass-api.de/api/interpreter',async route=>{
     const sent=route.request().postData()||'';
     if(sent.includes('node%281%29')){probes++;await route.fulfill({json:{version:0.6,elements:[]}});return;}
+    // The COUNT, asked before the download since 2026-10-20: one cheap request that asks the
+    // service how much is there, so an area it cannot answer for is refused before six attempts
+    // are spent finding out. It is not a download and is not counted as one.
+    if(sent.includes('out+count')||sent.includes('out%20count')){counts++;
+      await route.fulfill({json:{version:0.6,elements:[{type:'count',id:0,tags:{ways:'3',total:'3'}}]}});return;}
     requests++;assert.match(sent,/data=/);await route.fulfill({json:{elements:[{type:'node',id:1,lon:-.136668,lat:51.513341},{type:'node',id:2,lon:-.135,lat:51.513341},{type:'way',id:3,nodes:[1,2],tags:{highway:'footway'}}]}});});
-  await page.locator('.react-flow__node[data-id="network"]').click();await page.locator('#network-input-method').selectOption('osm');assert.equal(requests,0);await page.locator('#download-network').click();await expect(page.locator('#inspector-content')).toContainText('2 nodes');assert.equal(requests,1);const w=await saved(page),node=w.nodes.find(n=>n.type==='network_input');
+  await page.locator('.react-flow__node[data-id="network"]').click();await page.locator('#network-input-method').selectOption('osm');assert.equal(requests,0);await page.locator('#download-network').click();await expect(page.locator('#inspector-content')).toContainText('2 nodes');assert.equal(requests,1);assert.equal(counts,1,'the count is asked once, before the download');const w=await saved(page),node=w.nodes.find(n=>n.type==='network_input');
   // The saved workflow holds a REFERENCE; the graph itself is in the large store. A street network
   // in localStorage is what stopped Bunia being kept at all on 2026-10-20.
   assert.equal(node.params.data,undefined);assert.match(node.params.dataRef,/^[0-9a-f]{16,}$/);

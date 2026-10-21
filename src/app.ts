@@ -74,7 +74,7 @@ import {previewArea,prepareRasterPreview} from './raster-preview.js';
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
-import {BUILT_IN_PROJECTS,projectOfWorkflow,newProject,validateProject,siblingInputs,payloadDigest,dehydrateWorkflow,hydrateWorkflow,type Project} from './project.js';
+import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,newProject,validateProject,siblingInputs,payloadDigest,dehydrateWorkflow,hydrateWorkflow,type Project} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
@@ -376,7 +376,21 @@ if(!workflow.nodes.some(n=>n.id===selected))selected=exampleKey(workflow)==='ras
 function save(){
   syncProjectManifest(workflow);
   const previous=new Map<string,string|null>();
-  try{for(const key of [KEY,WORKSPACES])previous.set(key,localStorage.getItem(key));const workspaces=JSON.parse(previous.get(WORKSPACES)||'{}');const stored=dehydrateWorkflow(workflow);workspaces[storageKey(workflow)]=stored;localStorage.setItem(KEY,JSON.stringify(stored));localStorage.setItem(WORKSPACES,JSON.stringify(workspaces));forgetSavedWorkflows();
+  try{for(const key of [KEY,WORKSPACES])previous.set(key,localStorage.getItem(key));const workspaces=JSON.parse(previous.get(WORKSPACES)||'{}');// A payload that arrived with an imported workflow is written to the store on the way past, so
+    // the reference it carries resolves on the next load rather than refusing.
+    //
+    // The snapshot of what the store holds is taken AFTER this loop, not before. Taken before, a
+    // payload written here was not yet in it, so the workflow was dehydrated as though the
+    // reference were unbacked -- which keeps the data INLINE and sends an eight-megabyte workflow
+    // into a five-megabyte store. The save then failed and an imported project could not be kept
+    // at all. Found 2026-10-20 by the large-project round trip, in the fix for the round trip.
+    for(const node of workflow.nodes){
+      const params=node.params as unknown as Record<string,unknown>;
+      if(typeof params.dataRef==='string'&&params.data!==undefined&&!Object.hasOwn(cachedPayloads(),params.dataRef))
+        void putPayload(params.dataRef,params.data);
+    }
+    const kept=cachedPayloads();
+    const stored=dehydrateWorkflow(workflow,digest=>Object.hasOwn(kept,digest));workspaces[storageKey(workflow)]=stored;localStorage.setItem(KEY,JSON.stringify(stored));localStorage.setItem(WORKSPACES,JSON.stringify(workspaces));forgetSavedWorkflows();
     // WHICH store, when it is not the large one. A practitioner whose payloads are back under the
     // 5 MB cap needs to know before a download, not after it is refused.
     $('#save-status').textContent=payloadStoreKind()==='indexeddb'?'Saved on this device':'Saved on this device — small store only';return true;}
@@ -601,13 +615,14 @@ function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TY
 function render(){
   const url=new URL(location.href);url.searchParams.set('example',exampleKey(workflow));window.history.replaceState(null,'',url);
   renderLibrary($('#node-search').value);
-  const old=exampleKey(workflow)==='old-naledi';$('#example-select').value=old?'old-naledi':'heat';renderProjectEyebrow();renderProjectOptions();renderAssignProject();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
-  if(exampleKey(workflow)==='blank'){$('#example-select').value='blank';$('#project-description').textContent='Developmental evaluation · define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
-  if(exampleKey(workflow)==='coverage'){$('#example-select').value='coverage';$('#project-description').textContent='Developmental evaluation · inspect spatial exceptions, exclude with a reason, or revise the boundary.';$('#example-note').textContent='Synthetic points and illustrative boundary · no patient data';$('#canvas-example').textContent='SPATIAL COVERAGE · EXPERIMENT';$('#footer-context').textContent='Synthetic coverage exercise · CRS84 · boundary included';}
-  if(exampleKey(workflow)==='rulesets'){$('#example-select').value='rulesets';$('#project-description').textContent='How a rule is put together, four times over: two workflows band Snow\u2019s data as he recorded it \u2014 Table 1 by the deaths on each date, the mapped locations by the deaths at each address \u2014 and two run the identical rules over damaged copies of the same data.';$('#example-note').textContent='Four workflows on one canvas. A and B use Snow\u2019s data as recorded; C and D are SIMULATED damage, and say so on the input: three dates with no count, and a quarter of the counts written as text. C and D apply the same rules as A and B, so everything that differs is the data \u2014 and the step says what it could not read rather than banding those records Unrecorded in silence.';$('#canvas-example').textContent='RULESETS \u00b7 HOW A RULE IS PUT TOGETHER';$('#footer-context').textContent='Authored rules \u00b7 compiled to N3 \u00b7 declared field bindings';}
-  if(exampleKey(workflow)==='raster'){$('#example-select').value='raster';$('#project-description').textContent='Prepare a local raster, preview and adjust the clipping boundary, then run and inspect the clipped result.';$('#example-note').textContent='1 Prepare raster / 2 Preview and adjust / 3 Run workflow';$('#canvas-example').textContent='OLD NALEDI / RASTER CLIPPING';$('#footer-context').textContent='Native raster cells / adjustable polygon mask / local file and source citation';}
-  if(exampleKey(workflow)==='sea-level'){$('#example-select').value='sea-level';$('#project-description').textContent='Published AR6 sea-level projections against real Manila health facilities: which gauge, how far away.';$('#example-note').textContent='Projections are IPCC AR6, CC BY 4.0, in millimetres against the 1995\u20132014 baseline. Facilities are OpenStreetMap, ODbL. No elevation is supplied, so nothing here is compared against one \u2014 and none of it is an inundation model.';}
-  if(exampleKey(workflow).startsWith('snow-')){$('#example-select').value=exampleKey(workflow);$('#project-description').textContent='Historical pump and death-location tables; explicit metric catchment computations and source evidence.';$('#example-note').textContent='250 locations / 489 deaths; network is a modern OSM snapshot, not 1854 streets';$('#canvas-example').textContent='JOHN SNOW / CATCHMENT WORKED EXAMPLE';$('#footer-context').textContent='CRS84 inputs and outputs / UTM computation / method parameters in evidence';}
+  const old=exampleKey(workflow)==='old-naledi';
+  renderProjectEyebrow();renderProjectOptions();renderProjectDetails();renderAssignProject();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
+  if(exampleKey(workflow)==='blank'){$('#project-description').textContent='Developmental evaluation · define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
+  if(exampleKey(workflow)==='coverage'){$('#project-description').textContent='Developmental evaluation · inspect spatial exceptions, exclude with a reason, or revise the boundary.';$('#example-note').textContent='Synthetic points and illustrative boundary · no patient data';$('#canvas-example').textContent='SPATIAL COVERAGE · EXPERIMENT';$('#footer-context').textContent='Synthetic coverage exercise · CRS84 · boundary included';}
+  if(exampleKey(workflow)==='rulesets'){$('#project-description').textContent='How a rule is put together, four times over: two workflows band Snow\u2019s data as he recorded it \u2014 Table 1 by the deaths on each date, the mapped locations by the deaths at each address \u2014 and two run the identical rules over damaged copies of the same data.';$('#example-note').textContent='Four workflows on one canvas. A and B use Snow\u2019s data as recorded; C and D are SIMULATED damage, and say so on the input: three dates with no count, and a quarter of the counts written as text. C and D apply the same rules as A and B, so everything that differs is the data \u2014 and the step says what it could not read rather than banding those records Unrecorded in silence.';$('#canvas-example').textContent='RULESETS \u00b7 HOW A RULE IS PUT TOGETHER';$('#footer-context').textContent='Authored rules \u00b7 compiled to N3 \u00b7 declared field bindings';}
+  if(exampleKey(workflow)==='raster'){$('#project-description').textContent='Prepare a local raster, preview and adjust the clipping boundary, then run and inspect the clipped result.';$('#example-note').textContent='1 Prepare raster / 2 Preview and adjust / 3 Run workflow';$('#canvas-example').textContent='OLD NALEDI / RASTER CLIPPING';$('#footer-context').textContent='Native raster cells / adjustable polygon mask / local file and source citation';}
+  if(exampleKey(workflow)==='sea-level'){$('#project-description').textContent='Published AR6 sea-level projections against real Manila health facilities: which gauge, how far away.';$('#example-note').textContent='Projections are IPCC AR6, CC BY 4.0, in millimetres against the 1995\u20132014 baseline. Facilities are OpenStreetMap, ODbL. No elevation is supplied, so nothing here is compared against one \u2014 and none of it is an inundation model.';}
+  if(exampleKey(workflow).startsWith('snow-')){$('#project-description').textContent='Historical pump and death-location tables; explicit metric catchment computations and source evidence.';$('#example-note').textContent='250 locations / 489 deaths; network is a modern OSM snapshot, not 1854 streets';$('#canvas-example').textContent='JOHN SNOW / CATCHMENT WORKED EXAMPLE';$('#footer-context').textContent='CRS84 inputs and outputs / UTM computation / method parameters in evidence';}
   if(exampleKey(workflow)==='snow-geoprivacy'){$('#project-description').textContent='Compare private source points with moved points and H3 cell aggregates.';$('#example-note').textContent='Before views and workflow exports contain source coordinates; after views are educational transformations, not privacy guarantees';$('#canvas-example').textContent='JOHN SNOW / GEOPRIVACY EXPERIMENT';$('#footer-context').textContent='CRS84 · seeded donut · H3 aggregation · hide and map encryption remain TODO';}
   $('#blank-canvas').hidden=workflow.nodes.length!==0||exampleKey(workflow)!=='blank';
   // The bar is refreshed here rather than only when a control is used, because the workflow can
@@ -628,8 +643,8 @@ function render(){
   $('#run-button').disabled=busy;$('#run-button').innerHTML=busy?'◌ Running…':'<span>▶</span> Run workflow';
   $('#run-summary').textContent=result?(dirty?'Previous run · settings have changed':`${result.outputs.length} outputs · ${lastRunMs===null?'':`ran in ${elapsedText(lastRunMs)} · `}${Math.round(result.trace.reduce((a,t)=>a+t.milliseconds,0))} ms computing`):'Run the workflow to see results';
   if(exampleKey(workflow)==='snow-geoprivacy')$('#run-summary').textContent=result?'Private project and run evidence contain original coordinates. Derived tabs are educational; review before sharing.':'Private source coordinates are included in this workflow.';
-  $('#example-select').disabled=busy;document.body.classList.toggle('busy',busy);flow?.setBusy(busy);renderInspector();
-  $('#run-button').disabled=busy||!workflow.nodes.length;$('#new-workflow').disabled=busy;$('#reset-example').disabled=busy||!workflow.nodes.length;$('#tidy-button').disabled=busy||workflow.nodes.length<2;
+  ($('#project-select') as HTMLSelectElement).disabled=busy;($('#workflow-select') as HTMLSelectElement).disabled=busy;document.body.classList.toggle('busy',busy);flow?.setBusy(busy);renderInspector();
+  $('#run-button').disabled=busy||!workflow.nodes.length;$('#new-workflow').disabled=busy;($('#add-workflow') as HTMLButtonElement).disabled=busy;$('#reset-example').disabled=busy||!workflow.nodes.length;$('#tidy-button').disabled=busy||workflow.nodes.length<2;
   if(!workflow.nodes.length)$('#workflow-state').textContent='Add Study area to begin';
   renderN3();
   renderCoverageAlert();
@@ -2004,7 +2019,28 @@ function renderInspector(){
   $('#duplicate-node').onclick=()=>change(w=>{const copy=structuredClone(n);copy.id=`${n.type}-${Date.now()}`;copy.x+=40;copy.y+=90;w.nodes.push(copy);selected=copy.id;});
   if(busy)$('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement|HTMLButtonElement>('input,select,textarea,button').forEach(el=>el.disabled=true);
 }
-function removeNodes(ids:string[]){change(w=>{w.nodes=w.nodes.filter(n=>!ids.includes(n.id));w.edges=w.edges.filter(e=>!ids.includes(e.from)&&!ids.includes(e.to));if(ids.includes(w.outputId||''))w.outputId=w.nodes.find(n=>n.type==='output')?.id;if(ids.includes(selected||''))selected=null;});}
+function removeNodes(ids:string[]){
+  change(w=>{w.nodes=w.nodes.filter(n=>!ids.includes(n.id));w.edges=w.edges.filter(e=>!ids.includes(e.from)&&!ids.includes(e.to));if(ids.includes(w.outputId||''))w.outputId=w.nodes.find(n=>n.type==='output')?.id;if(ids.includes(selected||''))selected=null;});
+  // A RESULT OUTLIVES THE NODE THAT MADE IT, and it should not. The practitioner, 2026-10-20:
+  // *"when I deleted the Map, Street Network and Study Area, Result Map was still there."* It
+  // was: the canvas read "Workflow 0" and the Results panel went on drawing a map of a study
+  // area that no longer existed anywhere.
+  //
+  // This is NOT the same as keeping results while a parameter changes, which is deliberate --
+  // "Previous run · settings have changed" lets a practitioner compare before and after. There
+  // the node is still there to rerun. Here the thing that produced the result is gone, so the
+  // result is an orphan, and an orphan on screen is a claim about a workflow that cannot be
+  // rerun to check it.
+  if(!result)return;
+  const live=new Set(workflow.nodes.map(node=>node.id));
+  const outputs=result.outputs.filter(output=>live.has(output.nodeId.replace(/-(map|table)$/,'')));
+  if(!outputs.length){result=null;runWorkflow=null;activeOutputId=null;}
+  else if(outputs.length!==result.outputs.length){
+    result={...result,outputs};
+    if(activeOutputId&&!outputs.some(output=>output.nodeId===activeOutputId))activeOutputId=outputs[0].nodeId;
+  }
+  renderResults();render();
+}
 function renderEvidence(id:string){
   const result=activeOutput(),row=result?.rows.find(r=>r.id===id);if(!result||!row){selected=null;renderInspector();return;}
   if(result.kind==='point-table'){$('#inspector-content').innerHTML=pointTableEvidence(row as PointRow,dirty,esc);return;}
@@ -2347,7 +2383,19 @@ $('#reset-example').onclick=()=>{
 $('#undo-button').onclick=()=>{if(busy||!history.length)return;future.push(structuredClone(workflow));workflow=history.pop()!;dirty=true;statuses={};save();render();};
 $('#redo-button').onclick=()=>{if(busy||!future.length)return;history.push(structuredClone(workflow));workflow=future.pop()!;dirty=true;statuses={};save();render();};
 $('#reset-button').onclick=()=>{change(w=>{const key=exampleKey(w);replaceWorkflow(w,template(key));selected=key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';});renderLibrary();flow?.fit();};
-$('#example-select').onchange=e=>loadExample(control(e).value);
+$('#workflow-select').onchange=e=>loadExample(control(e).value);
+/** Switching project opens one of its workflows, because a project is not a thing you can look at
+ *  on the canvas -- the canvas holds a question, and a project holds the questions. The first one
+ *  that exists is opened; a project whose workflows have all been deleted opens an empty canvas
+ *  belonging to it rather than refusing. */
+$('#project-select').onchange=e=>{
+  const id=control(e).value,project=allProjects().find(p=>p.id===id);
+  if(!project){loadExample('blank');return;}
+  const saved=readSavedWorkflows();
+  const first=project.workflows.find(key=>saved[key])||project.workflows[0];
+  if(first)loadExample(first);
+  else addWorkflowToProject(project.id);
+};
 $('#blank-add').onclick=()=>$('#node-library [data-add="study_area"]')?.click();
 /** The eyebrow above the workflow's name: the investigation it belongs to, and how many
  *  workflows that investigation holds. Said rather than implied, because the whole finding behind
@@ -2387,36 +2435,44 @@ function createProjectFromDialog(){
  *  Without this a created project persists and becomes unreachable, which is worse than refusing
  *  to create one. Rebuilt wholesale rather than patched: there are at most a few dozen. */
 function renderProjectOptions(){
-  const select=$('#example-select');
-  for(const group of [...select.querySelectorAll('optgroup[data-stored]')])group.remove();
-  const saved=readSavedWorkflows();
-  for(const project of readProjects()){
-    const group=document.createElement('optgroup');
-    group.label=project.name;group.dataset.stored='1';
-    for(const key of project.workflows){
-      const option=document.createElement('option');
-      option.value=key;
-      const held=saved[key] as {name?:string}|undefined;
-      option.textContent=held?.name||`${project.name} · untitled workflow`;
-      group.append(option);
-    }
-    if(group.children.length)select.append(group);
-  }
-  // Membership in a project is OPTIONAL, which only holds if an unfiled workflow can still be
-  // reached. Any minted key no project claims is listed here rather than disappearing.
-  const claimed=new Set(readProjects().flatMap(p=>p.workflows));
-  const unfiled=Object.keys(saved).filter(key=>!isExampleKey(key)&&!claimed.has(key)).sort();
-  if(unfiled.length){
-    const group=document.createElement('optgroup');
-    group.label='In no project';group.dataset.stored='1';
-    for(const key of unfiled){
-      const option=document.createElement('option');
-      option.value=key;option.textContent=(saved[key] as {name?:string}|undefined)?.name||key;
-      group.append(option);
-    }
-    select.append(group);
-  }
-  select.value=storageKey(workflow);
+  // TWO selects, because they are two questions. The practitioner, 2026-10-20: *"I can only view
+  // the workflows through the worked example dropdown which seems to be the wrong place to locate
+  // projects."* It was: one control listed every shipped example and every created project's
+  // workflows together, so a project existed only as an optgroup label and could not be chosen,
+  // renamed or looked at. Now the first select chooses the investigation and the second chooses
+  // the question, and the worked examples appear as what they already are -- seven built-in
+  // projects holding eleven workflows, listed beside yours and marked.
+  const projects=$('#project-select') as HTMLSelectElement,workflows=$('#workflow-select') as HTMLSelectElement;
+  const saved=readSavedWorkflows(),stored=readProjects();
+  const key=storageKey(workflow);
+  const current=workflow.projectId?allProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,allProjects());
+  const unfiled=Object.keys(saved).filter(k=>!allProjects().some(p=>p.workflows.includes(k)));
+
+  const optionFor=(value:string,label:string,workflowKeys?:readonly string[])=>
+    `<option value="${esc(value)}"${workflowKeys?` data-workflows="${esc(workflowKeys.join(' '))}"`:''}>${esc(label)}</option>`;
+  const group=(label:string,body:string)=>body?`<optgroup label="${esc(label)}">${body}</optgroup>`:'';
+  const count=(project:Project)=>project.workflows.length===1?'1 workflow':`${project.workflows.length} workflows`;
+  // "No project" is ALWAYS offered, not only while the open canvas is in none. Without it a
+  // workflow belonging to no investigation -- the blank canvas among them -- became unreachable
+  // the moment a project was selected, which is a navigation trap rather than a tidy list.
+  projects.innerHTML=
+    group('Your projects',stored.map(p=>optionFor(p.id,`${p.name} · ${count(p)}`,p.workflows)).join(''))
+    +group('Built in',BUILT_IN_PROJECTS.map(p=>optionFor(p.id,`${p.name} · ${count(p)}`,p.workflows)).join(''))
+    +optionFor('','— No project —',['blank',...unfiled]);
+  projects.value=current?current.id:'';
+
+  // The workflows of the chosen project, plus -- only when the open canvas belongs to none --
+  // the unfiled ones, so a workflow can never become unreachable by having no project.
+  const keys=current?current.workflows:[...new Set(['blank',...unfiled])];
+  workflows.innerHTML=keys.map(k=>optionFor(k,(saved[k] as {name?:string}|undefined)?.name||workflowTitle(k))).join('')
+    +(keys.includes(key)?'':optionFor(key,workflow.name||'This canvas'));
+  workflows.value=key;
+}
+/** What a workflow is called before it has been opened and saved under its own name. Built-in
+ *  workflows carry the example's own title; a created one carries whatever it was named. */
+function workflowTitle(key:string):string{
+  const labels=WORKFLOW_LABELS as Record<string,string|undefined>;
+  return labels[key]||key;
 }
 /** The investigation this workflow is in, and the way to change it.
  *
@@ -2426,6 +2482,127 @@ function renderProjectOptions(){
  *  examples and are compiled in, so they are shown but cannot be edited: adding your workflow to
  *  "John Snow, Soho, 1854" would change a published example, and that is the one case where a
  *  practitioner's work and the project's own records would disagree about what an example is. */
+/** Click the name, type the name. The practitioner chose "edit in place" and then reported, on
+ *  what I built: *"There is still no way to edit project (e.g., title) or workflow (e.g., title)
+ *  metadata."* It was there -- behind a collapsed disclosure at the bottom of the bar, which is
+ *  somewhere to PUT a control rather than somewhere a practitioner looks. A title you can click
+ *  is the gesture the choice implied, and the disclosure keeps the things that are not a title:
+ *  the subject, the workflow list, the id, and the two destructive actions.
+ *
+ *  Escape abandons, Enter and blur apply. An empty name is abandoned rather than written, because
+ *  a project called "" is unfindable in the very selector this was built for. */
+function editInPlace(element:HTMLElement,current:string,apply:(value:string)=>void,refuse?:string){
+  if(refuse){toast(refuse,{tone:'warning'});return;}
+  if(busy||element.querySelector('input'))return;
+  const input=document.createElement('input');
+  input.className='inline-rename';input.value=current;input.maxLength=80;
+  input.setAttribute('aria-label',element.dataset.renameLabel||'Rename');
+  const previous=element.textContent||'';
+  element.textContent='';element.append(input);input.focus();input.select();
+  let done=false;
+  const finish=(write:boolean)=>{
+    if(done)return;done=true;
+    const value=input.value.trim();
+    element.textContent=previous;
+    if(write&&value&&value!==current)apply(value);else render();
+  };
+  input.addEventListener('keydown',event=>{
+    if(event.key==='Enter'){event.preventDefault();finish(true);}
+    if(event.key==='Escape'){event.preventDefault();finish(false);}
+  });
+  input.addEventListener('blur',()=>finish(true));
+}
+/** Rename the investigation this canvas belongs to, from the eyebrow that names it. */
+function renameProjectInPlace(){
+  const key=storageKey(workflow);
+  const project=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,readProjects());
+  const builtIn=projectOfWorkflow(key,BUILT_IN_PROJECTS)||(workflow.projectId?BUILT_IN_PROJECTS.find(p=>p.id===workflow.projectId):undefined);
+  editInPlace($('#project-name'),project?project.name:'',value=>{
+    if(!writeProjects(readProjects().map(p=>p.id===project!.id?{...p,name:value}:p)))return;
+    forgetSavedWorkflows();render();toast(`Project renamed to "${value}".`);
+  },project?undefined:builtIn
+    ?'This project ships with the application, so its name is fixed. Create a project of your own to name it.'
+    :'This canvas belongs to no investigation yet. Create a project, or choose one under Project details.');
+}
+/** Rename the question this canvas answers, from the heading that states it. */
+function renameWorkflowInPlace(){
+  editInPlace($('#project-title'),workflow.name||'',value=>{
+    change(w=>{w.name=value;},{spatial:false});toast(`Workflow renamed to "${value}".`);
+  });
+}
+/** The project's own fields, and the one place they can be changed.
+ *
+ *  Until 2026-10-20 a project could be created and never edited: no rename, no subject change, no
+ *  deletion, and the subject was visible only as a tooltip on the eyebrow. The practitioner:
+ *  *"Right now I have no way of editing Project Title nor viewing Project metadata."* */
+function renderProjectDetails(){
+  const key=storageKey(workflow);
+  const project=workflow.projectId?allProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,allProjects());
+  const builtIn=!!project&&BUILT_IN_PROJECTS.some(p=>p.id===project.id);
+  const saved=readSavedWorkflows();
+  ($('#project-name-edit') as HTMLInputElement).value=project?project.name:'';
+  ($('#project-subject-edit') as HTMLInputElement).value=project?project.subject:'';
+  ($('#workflow-name-edit') as HTMLInputElement).value=workflow.name||'';
+  for(const id of ['#project-name-edit','#project-subject-edit'])
+    ($(id) as HTMLInputElement).disabled=!project||builtIn;
+  ($('#project-delete') as HTMLButtonElement).disabled=!project||builtIn;
+  $('#project-readonly').hidden=!builtIn;
+  const held=project?project.workflows:[];
+  const named=held.map(k=>(saved[k] as {name?:string}|undefined)?.name||workflowTitle(k));
+  $('#project-stats').textContent=project
+    ?`${held.length===1?'1 workflow':`${held.length} workflows`}: ${named.join(' · ')}. Project id ${project.id}.`
+    :'This canvas belongs to no investigation. Choose one below, or create a project to group the questions you are asking.';
+}
+function applyProjectDetails(){
+  const key=storageKey(workflow);
+  const project=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,readProjects());
+  const name=($('#project-name-edit') as HTMLInputElement).value.trim();
+  const subject=($('#project-subject-edit') as HTMLInputElement).value.trim();
+  const workflowName=($('#workflow-name-edit') as HTMLInputElement).value.trim();
+  if(workflowName&&workflowName!==workflow.name)change(w=>{w.name=workflowName;},{spatial:false});
+  if(project){
+    if(!name){toast('A project needs a name: what are you investigating?',{tone:'warning'});return;}
+    const next=readProjects().map(p=>p.id===project.id?{...p,name,subject}:p);
+    if(!writeProjects(next))return;
+  }
+  forgetSavedWorkflows();render();renderResults();
+  toast(project?`Project "${name}" updated.`:'Workflow renamed.');
+}
+/** Deleting a project does NOT delete its workflows. They become unfiled and stay openable, which
+ *  is the conservative reading of "delete": a practitioner removing a grouping has not asked to
+ *  lose the work inside it. */
+function deleteCurrentProject(){
+  const key=storageKey(workflow);
+  const project=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,readProjects());
+  if(!project)return;
+  const held=project.workflows.length;
+  if(!confirm(`Delete the project "${project.name}"? Its ${held===1?'workflow stays':`${held} workflows stay`} on this device and can still be opened; only the grouping is removed.`))return;
+  if(!writeProjects(readProjects().filter(p=>p.id!==project.id)))return;
+  change(w=>{delete w.projectId;},{spatial:false});
+  render();toast(`Project "${project.name}" deleted. Its workflows are still here, in no project.`);
+}
+/** A new canvas inside this investigation, which is the gesture the model implies and the one
+ *  nothing offered: adding a second question meant creating an unrelated canvas and then
+ *  assigning it. */
+function addWorkflowToProject(projectId?:string){
+  if(busy)return;
+  const id=projectId??(workflow.projectId||projectOfWorkflow(storageKey(workflow),readProjects())?.id);
+  const project=id?readProjects().find(p=>p.id===id):undefined;
+  if(!project){
+    toast(BUILT_IN_PROJECTS.some(p=>p.id===id)
+      ?'Built-in projects ship with the application. Create a project of your own to add workflows to it.'
+      :'This canvas belongs to no project yet. Create one, or choose one under Project details.',{tone:'warning'});
+    return;
+  }
+  save();
+  const index=project.workflows.length+1;
+  const key=`${project.id}/w${index}`;
+  if(!writeProjects(readProjects().map(p=>p.id===project.id?{...p,workflows:[...p.workflows,key]}:p)))return;
+  workflow={...blankWorkflow(),name:`${project.name} · question ${index}`,projectId:project.id,workflowKey:key,exampleId:undefined};
+  selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
+  save();renderLibrary();renderResults();render();switchView('workflow');
+  toast(`A new workflow in "${project.name}". Name it for the question it answers.`);
+}
 function renderAssignProject(){
   const select=$('#assign-project'),key=storageKey(workflow),builtIn=projectOfWorkflow(key,BUILT_IN_PROJECTS),stored=readProjects();
   select.innerHTML=`<option value="">— No project —</option>`
@@ -2469,6 +2646,30 @@ function assignCurrentWorkflow(projectId:string){
 }
 $('#assign-project').onchange=e=>assignCurrentWorkflow(control(e).value);
 $('#new-project').onclick=openProjectDialog;
+$('#add-workflow').onclick=()=>addWorkflowToProject();
+// The two titles are controls, and say so: a pointer, a tooltip, and a keyboard route in.
+for(const [id,label,run] of [['#project-name','Rename this project',renameProjectInPlace],
+                             ['#project-title','Rename this workflow',renameWorkflowInPlace]] as const){
+  const element=$(id);
+  element.dataset.renameLabel=label;element.title=label+' \u2014 click to edit';
+  element.tabIndex=0;element.setAttribute('role','button');
+  // Events from the input this opens BUBBLE back to the title. Without this guard, Enter inside
+  // the editor reopened the editor: the first Enter applied the name, the render redrew the
+  // heading, and the same keystroke arriving here replaced it with a fresh input -- so the title
+  // looked empty and the rename appeared not to have happened, although it had been saved.
+  const fromEditor=(event:Event)=>(event.target as HTMLElement|null)?.classList.contains('inline-rename');
+  element.addEventListener('click',event=>{if(!fromEditor(event))run();});
+  element.addEventListener('keydown',event=>{
+    if(fromEditor(event))return;
+    const key=(event as KeyboardEvent).key;
+    if(key==='Enter'||key===' '){event.preventDefault();run();}
+  });
+}
+$('#project-apply').onclick=applyProjectDetails;
+$('#project-delete').onclick=deleteCurrentProject;
+// Enter in any of the detail fields applies them, which is what Enter means in a form.
+for(const id of ['#project-name-edit','#project-subject-edit','#workflow-name-edit'])
+  $(id).addEventListener('keydown',event=>{if((event as KeyboardEvent).key==='Enter'){event.preventDefault();applyProjectDetails();}});
 $('#blank-project').onclick=openProjectDialog;
 $('#project-create').onclick=createProjectFromDialog;
 for(const id of ['#project-cancel','#project-dialog-close'] as const)$(id).onclick=()=>$('#project-dialog').close();

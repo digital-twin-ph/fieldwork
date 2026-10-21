@@ -3,6 +3,7 @@ import {useClassicBars} from './classic-bars.mjs';
 import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
 import {collectPageErrors} from './page-errors.mjs';
+import {openWorkflow} from './open-workflow.mjs';
 test("Old Naledi evidence and diagnostic access workflows",async({page,context})=>{
 const errors=collectPageErrors(page);
 const done=()=>expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
@@ -45,12 +46,12 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   await select('facilities');await number('#param-radiusKm',1);await run();
   await expect(page.locator('#result-metrics .unknown b')).toHaveText('21');
   // Switching examples preserves their independent local edits.
-  await page.locator('#example-select').selectOption('heat');await done();
+  await openWorkflow(page,'heat');await done();
   await number('#ruleset-threshold',7);await run();
-  await page.locator('#example-select').selectOption('old-naledi');await done();
+  await openWorkflow(page,'old-naledi');await done();
   await select('facilities');await expect(page.locator('#param-radiusKm')).toHaveValue('1');
-  await page.locator('#example-select').selectOption('heat');await done();await expect(page.locator('#ruleset-threshold')).toHaveValue('7');
-  await page.locator('#example-select').selectOption('old-naledi');await done();
+  await openWorkflow(page,'heat');await done();await expect(page.locator('#ruleset-threshold')).toHaveValue('7');
+  await openWorkflow(page,'old-naledi');await done();
   await page.locator('#reset-button').click();await run();
   await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('fw:evidenceLevel');
   const downloadPromise=page.waitForEvent('download');await page.locator('#download-evidence').click();const download=await downloadPromise;

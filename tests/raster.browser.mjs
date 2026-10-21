@@ -4,6 +4,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {fromFile,fromArrayBuffer} from 'geotiff';
 import {encodeRaster} from '../build/raster.js';
 import {oldNalediWorkflow} from '../build/old-naledi.js';
+import {openWorkflow} from './open-workflow.mjs';
 const real=process.env.FIELDWORK_WORLDPOP_FILE;
 test('all-touched margin is adjustable, saved on Clip raster and masked at display edges',async({page})=>{
  await page.goto('/?example=raster');
@@ -24,15 +25,15 @@ test('all-touched margin is adjustable, saved on Clip raster and masked at displ
 });
 test('raster worked workspace starts connected, preserves other workspaces and runs after local preparation',async({page})=>{
  await page.goto('/?example=blank');await page.locator('[data-add="study_area"]').click();await page.locator('#study-area-label').fill('Keep my separate study');await page.locator('#study-area-label-form button').click();
- await page.locator('#example-select').selectOption('raster');await expect(page.locator('#prepare-raster')).toBeVisible();await expect(page.locator('.react-flow__node')).toHaveCount(4);await expect(page.locator('#project-title')).toHaveText('Old Naledi · raster clipping');
+ await openWorkflow(page,'raster');await expect(page.locator('#prepare-raster')).toBeVisible();await expect(page.locator('.react-flow__node')).toHaveCount(4);await expect(page.locator('#project-title')).toHaveText('Old Naledi · raster clipping');
  const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));const initial=await saved();assert.equal(initial.exampleId,'raster');assert.equal(initial.edges.length,4);assert.equal(initial.nodes.find(n=>n.type==='raster_input').params.asset,undefined);assert.ok(initial.nodes.find(n=>n.type==='clip_raster').params.cutline);
- await expect(page.locator('#offline-status')).toContainText('Available offline');await page.reload();await expect(page.locator('#prepare-raster')).toBeVisible();await expect(page.locator('#example-select')).toHaveValue('raster');
+ await expect(page.locator('#offline-status')).toContainText('Available offline');await page.reload();await expect(page.locator('#prepare-raster')).toBeVisible();await expect(page.locator('#workflow-select')).toHaveValue('raster');
  const metadata={width:60,height:60,origin:[25.88,-24.67],resolution:[.001,-.001]},values=Array.from({length:3600},(_,i)=>i%23===0?null:i/10);
  await page.locator('#prepare-raster').click();await page.locator('#raster-file').setInputFiles(real||{name:'worked-example.tif',mimeType:'image/tiff',buffer:Buffer.from(encodeRaster({metadata,values}))});await expect(page.locator('#raster-save')).toBeEnabled();if(real)await page.locator('#raster-worldpop').click();await page.locator('#raster-save').click();await expect(page.locator('#raster-dialog')).toHaveCount(0);
  await page.locator('[data-raster-step="raster-clip"]').click();await expect(page.locator('#raster-raster')).toHaveValue('raster-input');await page.locator('#preview-raster-clip').click();await expect(page.locator('#raster-preview-status')).toContainText('cells selected');await page.locator('#area-apply').click();await expect(page.locator('#area-dialog')).not.toBeVisible();
  await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#map image')).toHaveCount(1);const prepared=await saved();
- await page.locator('#example-select').selectOption('blank');await page.locator('.react-flow__node').click();await expect(page.locator('#study-area-label')).toHaveValue('Keep my separate study');
- await page.locator('#example-select').selectOption('raster');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});assert.deepEqual((await saved()).nodes,prepared.nodes);
+ await openWorkflow(page,'blank');await page.locator('.react-flow__node').click();await expect(page.locator('#study-area-label')).toHaveValue('Keep my separate study');
+ await openWorkflow(page,'raster');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});assert.deepEqual((await saved()).nodes,prepared.nodes);
  await page.context().setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#map image')).toHaveCount(1);await page.screenshot({path:'test-results/raster-worked-workspace.png'});
  await page.locator('[data-raster-step="raster-clip"]').click();await expect(page.locator('[data-clip-parameters]')).toBeVisible();await expect(page.locator('#inspector-content')).toContainText('Clip extent (degrees)');await page.screenshot({path:'test-results/raster-parameters-inspector.png'});
  await page.locator('[data-raster-step="raster-map"]').click();await expect(page.locator('[data-clip-parameters]')).toHaveCount(0);await expect(page.locator('#preview-raster-clip')).toHaveCount(0);await expect(page.locator('#map image')).toHaveCount(1);

@@ -26,6 +26,31 @@ import {rasterImage} from './raster-ui.js';
 import type {RasterClipOptions,RasterMaskMethod} from './raster-mask.js';
 import {dimensionedBox,circleAround} from './area-buffer.js';
 
+/** A text preview a browser can lay out.
+ *
+ *  A published jurisdiction is megabytes of text: North Kivu pretty-prints to about 1 MB of
+ *  GeoJSON and 370 kB of N3, and this dialog put BOTH into the DOM on every refresh. The
+ *  assignment is fast -- 3 ms measured -- and the LAYOUT is not: the dialog kept resizing, the
+ *  Apply button kept moving, and it could not be pressed for about seven seconds after a boundary
+ *  landed. Measured 2026-10-20, which is what the practitioner reported as a hang.
+ *
+ *  So the panel shows the head of it and says what it is not showing. The whole thing is on the
+ *  node, in the export and in the N3 tab; this is a preview and now says so. */
+/** How many vertex handles this dialog will build.
+ *
+ *  Measured 2026-10-20: each is a Leaflet marker, a div and a set of listeners, and a published
+ *  jurisdiction carries thousands -- North Kivu 16,548 -- which freezes the interface for seconds
+ *  in Chromium and kills the page in WebKit. Four hundred is comfortably more than anybody draws
+ *  by hand and far below where the cost shows. */
+const HANDLE_LIMIT=400;
+const PREVIEW_LINES=60;
+function preview(text:string,what:string):string{
+  const lines=text.split('\n');
+  if(lines.length<=PREVIEW_LINES)return text;
+  return lines.slice(0,PREVIEW_LINES).join('\n')
+    +`\n\u2026 ${(lines.length-PREVIEW_LINES).toLocaleString()} more lines of ${what}, `
+    +`${(text.length/1e6).toFixed(1)} MB in all. The whole of it is kept on the widget and in every export.`;
+}
 export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(params:DrawnParams,options?:RasterClipOptions)=>void|boolean,context:{boundary?:Boundary;point?:{coordinates:Position|null;name:string};raster?:RasterGrid;clip?:boolean;clipOptions?:RasterClipOptions}={}){
   const clipOptions:RasterClipOptions={method:context.clipOptions?.method||'cell-center',marginPixels:context.clipOptions?.marginPixels||0};
   const dialog=element('#area-dialog'),$=<S extends string>(s:S)=>element(s,dialog);
@@ -77,7 +102,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
     const opacity=rasterControls.querySelector<HTMLInputElement>('#raster-preview-opacity')!;opacity.oninput=()=>overlay.setOpacity(Number(opacity.value)/100);
     rasterControls.querySelector<HTMLButtonElement>('#raster-preview-fit')!.onclick=()=>{const b=L.latLngBounds(bounds);if(geometry){const g=geometryBounds(geometry);b.extend([[g[1],g[0]],[g[3],g[2]]]);}map.fitBounds(b,{padding:[25,25],maxZoom:19});};
   }
-  if(context.boundary&&node.params.source!=='drawn')L.geoJSON(context.boundary,{interactive:false,style:{color:'#68877b',dashArray:'5 5',fillOpacity:.05}}).addTo(map);
+  if(context.boundary&&node.params.source!=='drawn')L.geoJSON(context.boundary,{renderer:L.canvas(),interactive:false,style:{color:'#68877b',dashArray:'5 5',fillOpacity:.05}} as L.GeoJSONOptions).addTo(map);
   if(context.point?.coordinates){const p=context.point.coordinates,label=document.createElement('span');label.textContent=context.point.name+' · record under review';L.circleMarker([p[1],p[0]],{radius:7,color:'#ad6027',fillOpacity:1}).bindTooltip(label,{permanent:true,direction:'top'}).addTo(map);}
   const message=(text:string)=>$('#area-feedback').textContent=text;
   const tileStatus=()=>{$('#area-tile-status').textContent=!$('#area-online').checked?'Basemap off · geometry stays local':!navigator.onLine?'Offline · saved geometry remains available':failed?'Some map tiles are unavailable · geometry editing still works':loaded?'Online map · OpenStreetMap':'Loading online map…';};
@@ -91,17 +116,31 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   // it cannot do if the record is dropped the moment the shape changes.
   let acquired:DrawnParams['boundary']=node.params.source==='drawn'?node.params.boundary:undefined;
   function currentParams():DrawnParams{return {source:'drawn',label:name.value.trim(),selectionMode,geometry,...(acquired?{boundary:acquired}:{})};}
+  let lastShape:Boundary|null=null,lastName='',lastSettings='',lastN3:ReturnType<typeof studyAreaN3>|null=null;
   function refresh(){
     $('#area-feedback').classList.remove('clip-preview-error');$('#area-feedback').setAttribute('role','status');if(previewStatus)previewStatus.textContent='Draw a valid boundary to preview the clip.';
     shapes.clearLayers();handles.clearLayers();
-    $('#area-geojson').textContent=geometry?JSON.stringify(geometry,null,2):'No geometry selected.';
+    $('#area-geojson').textContent=geometry?preview(JSON.stringify(geometry,null,2),'coordinates'):'No geometry selected.';
     $('#area-finish').disabled=tool!=='polygon'||vertices.length<3;$('#area-undo-point').disabled=!vertices.length&&!firstCorner;
     let valid=false;
     if(geometry){
       const label=document.createElement('span');label.textContent=name.value.trim();
       drawParts(geometry,label);
       const b=geometryBounds(geometry);['west','south','east','north'].forEach((key,i)=>( $('#area-'+key) as HTMLInputElement).value=b[i].toFixed(7));
-      try{validateDrawnGeometry(geometry);validateClip();const n3=studyAreaN3({id:node.id,params:currentParams()});$('#area-n3').textContent=context.clip?'@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<urn:fieldwork:cutline:'+node.id+'> a geo:Geometry; geo:asWKT '+JSON.stringify('<'+CRS84+'> '+geometryWKT(geometry))+'^^geo:wktLiteral.':n3.input;$('#area-summary').textContent=`${selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometry.coordinates.reduce((n,r)=>n+r.length-1,0)} vertices${geometry.coordinates.length>1?` · ${geometry.coordinates.length-1} interior ring${geometry.coordinates.length>2?'s':''}`:''} · ${Math.max(1,Math.round(JSON.stringify(geometry).length/1024))} KB · longitude, latitude`;message(context.raster?`${previewStatus?.textContent} Apply the clip parameters, then rerun to update results.`:'Shape is valid. Apply it to the node, then run to evaluate the N3 rule.');valid=true;}
+      // VALIDATION AND N3 ARE RECOMPUTED ONLY WHEN THE SHAPE OR ITS NAME CHANGES. refresh() runs
+      // on map movement too, and for a published jurisdiction each run costs about 1.3 s --
+      // 16,548 vertices walked for the crossing check and written out as WKT -- for an answer
+      // that cannot have changed, because whether a polygon is valid does not depend on where
+      // the camera is. Measured 2026-10-20.
+      // The clip parameters have to be part of the key. They change WITHOUT the shape changing --
+      // a margin typed into the raster clip preview is exactly that -- and skipping validateClip
+      // for an unchanged shape left Apply enabled on an invalid margin. Caught by the raster
+      // test, 2026-10-20, which is the test that exists for that control.
+      const settingsKey=JSON.stringify(clipOptions);
+      const shapeKey=geometry===lastShape&&name.value===lastName&&settingsKey===lastSettings;
+      try{if(!shapeKey){validateDrawnGeometry(geometry);validateClip();}
+        const n3=(shapeKey&&lastN3)?lastN3:studyAreaN3({id:node.id,params:currentParams()});
+        lastShape=geometry;lastName=name.value;lastSettings=settingsKey;lastN3=n3;$('#area-n3').textContent=preview(context.clip?'@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<urn:fieldwork:cutline:'+node.id+'> a geo:Geometry; geo:asWKT '+JSON.stringify('<'+CRS84+'> '+geometryWKT(geometry))+'^^geo:wktLiteral.':n3.input,'facts and rules');$('#area-summary').textContent=`${selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometry.coordinates.reduce((n,r)=>n+r.length-1,0)} vertices${geometry.coordinates.length>1?` · ${geometry.coordinates.length-1} interior ring${geometry.coordinates.length>2?'s':''}`:''} · ${Math.max(1,Math.round(JSON.stringify(geometry).length/1024))} KB · longitude, latitude`;message(context.raster?`${previewStatus?.textContent} Apply the clip parameters, then rerun to update results.`:'Shape is valid. Apply it to the node, then run to evaluate the N3 rule.');valid=true;}
       catch(e){message(errorMessage(e));$('#area-feedback').classList.add('clip-preview-error');$('#area-feedback').setAttribute('role','alert');if(previewStatus)previewStatus.textContent=errorMessage(e);$('#area-n3').textContent='The draft must be valid and named before N3 is generated.';$('#area-summary').textContent='Draft needs correction';}
       // VERTEX HANDLES ARE FOR A SINGLE-PART SHAPE. A study area may now hold several parts --
       // two jurisdictions, possibly in different countries -- and dragging a vertex of one of
@@ -116,11 +155,30 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
       if(selectionMode==='circle'){circleHandles(ring);}
       else{
       const points=selectionMode==='bbox'?[ring[0],ring[2]]:ring.slice(0,-1);
+      // A HANDLE PER VERTEX, AND A PUBLISHED JURISDICTION HAS THOUSANDS.
+      //
+      // This is the cause of what the practitioner reported as a hang. Profiled 2026-10-20 while
+      // applying North Kivu: of 6.5 s sampled, 3.3 s is the browser's own layout and 492 ms is
+      // Leaflet's `_listens`, with `_initIcon` and `_setIconStyles` beneath it -- one draggable
+      // marker, one div and one set of listeners for each of 16,547 vertices. The arithmetic this
+      // dialog does is nothing beside it: `crossingFault` is 35 ms and `validateDrawnGeometry`
+      // 17 ms. It is also why WebKit does not survive the same boundary while Kwango's 15,236
+      // vertices apply in 5.7 s.
+      //
+      // Handles are for a shape somebody DREW: a box has two, a hand-drawn polygon a few dozen.
+      // Dragging one vertex of an acquired outline is not an operation this dialog offers in the
+      // first place -- the geometry is as published, and editing it is what the provenance
+      // records as a modification -- so an outline above the limit is drawn without them and says
+      // so, rather than building controls nobody can use out of the interface's own budget.
+      if(points.length>HANDLE_LIMIT){
+        $('#area-summary').textContent=`${points.length.toLocaleString()} vertices as published \u00b7 drag handles are not shown above ${HANDLE_LIMIT.toLocaleString()}`;
+      }else{
       points.forEach((p,i)=>{
         const marker=L.marker(ll(p),{draggable:true,icon:L.divIcon({className:'area-vertex',iconSize:[12,12],iconAnchor:[6,6]}),title:`Move ${selectionMode==='bbox'?'corner':'vertex'} ${i+1}`,keyboard:true}).addTo(handles);
         marker.on('dragstart',()=>setTool('pan'));
         marker.on('dragend',()=>{const v=marker.getLatLng(),next=[v.lng,v.lat];if(selectionMode==='bbox'){const other=points[1-i];geometry={type:'Polygon',coordinates:[[[Math.min(next[0],other[0]),Math.min(next[1],other[1])],[Math.max(next[0],other[0]),Math.min(next[1],other[1])],[Math.max(next[0],other[0]),Math.max(next[1],other[1])],[Math.min(next[0],other[0]),Math.max(next[1],other[1])],[Math.min(next[0],other[0]),Math.min(next[1],other[1])]]]};}else{const r=ring.slice(0,-1);r[i]=next;geometry={type:'Polygon',coordinates:[[...r,r[0]]]};}refresh();});
       });
+      }
       }
       }
     }else{
@@ -190,8 +248,13 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
           .addTo(shapes);
         if(label&&!labelled){pin.bindTooltip(label,{permanent:true,direction:'top',className:'area-map-label'});labelled=true;}
       }else{
+        // CANVAS, not SVG. A published jurisdiction is tens of thousands of vertices -- North
+        // Kivu is 16,548 -- and an SVG path that long is what makes applying one feel like a
+        // hang: measured 2026-10-20, the JavaScript in Apply totals 400 ms while the wall clock
+        // is 8.3 s, and the difference is the browser painting this path. The same change the
+        // street network needed, for the same reason.
         const shape=L.geoJSON({type:'Polygon',coordinates:rings} as Boundary,
-          {style:{color:'#176b59',weight:2,fillColor:'#5a9b7f',fillOpacity:.2}}).addTo(shapes);
+          {renderer:L.canvas(),style:{color:'#176b59',weight:2,fillColor:'#5a9b7f',fillOpacity:.2}} as L.GeoJSONOptions).addTo(shapes);
         if(label&&!labelled){shape.bindTooltip(label,{permanent:true,direction:'center',className:'area-map-label'});labelled=true;}
       }
     }
@@ -424,6 +487,18 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
     const chosen=chosenUnits();
     if(!pickedLevel||!chosen.length){$('#area-boundary-terms').textContent='Select at least one unit.';return;}
     void (async()=>{
+      // The same silence as Apply, in the phase WebKit spends it in: measured 2026-10-20, taking
+      // North Kivu's 16,548 vertices through this button costs 7.7 s in WebKit and 0.1 s in
+      // Chromium, while Apply costs 7.9 s in Chromium and little in WebKit. The work is the same
+      // and the engines schedule it differently, so both phases have to say what they are doing.
+      const chosenVertices=chosen.reduce((n,unit)=>{
+        const g=unit.geometry as {type:string;coordinates:unknown};
+        const rings=g.type==='Polygon'?g.coordinates as Position[][]:(g.coordinates as Position[][][]).flat();
+        return n+rings.reduce((m,ring)=>m+ring.length,0);},0);
+      if(chosenVertices>2000){
+        $('#area-feedback').textContent=`Drawing ${chosen.length===1?chosen[0].name:`${chosen.length} units`} \u2014 ${chosenVertices.toLocaleString()} vertices\u2026`;
+        await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
+      }
       const {publishedRings,publishedNote}=await import('./boundary-source.js');
       // ONE unit gets its OWN OUTLINE, AS PUBLISHED. "Selecting Bunia gave me a square not the
       // jurisdictional polygon" -- it did, because a bounding box was the shortcut for combining
@@ -483,7 +558,41 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
   };
   $('#area-fit').onclick=fit;$('#area-old-naledi').onclick=()=>map.setView([-24.685,25.901],14);
   name.oninput=refresh;
-  $('#area-apply').onclick=()=>{try{validateDrawnGeometry(geometry);validateClip();studyAreaN3({id:node.id,params:currentParams()});if(onApply(structuredClone(currentParams()),structuredClone(clipOptions))===false)throw new Error(context.clip?'Clip parameters could not be saved. Retry Apply.':'Study area could not be saved. Retry Apply.');dialog.close();}catch(e){message(errorMessage(e));$('#area-feedback').setAttribute('role','alert');$('#area-feedback').classList.add('clip-preview-error');}};
+  /** Applying a published boundary is SLOW and was silent.
+   *
+   *  "I tried to download North Kivu ADM1 study area and I think process hangs." It does not
+   *  hang. Measured 2026-10-20 with the level served from a fixture: the download and the unit
+   *  list take 0.5 s, choosing takes 0.1 s, and APPLY takes 7.6 s -- North Kivu is 16,548
+   *  vertices admitted whole, and every step that follows walks them. Seven seconds with a frozen
+   *  dialog, nothing disabled and no message is indistinguishable from a crash, which is the
+   *  lesson the download itself learned in October and this surface had not.
+   *
+   *  Each phase says what it is doing and yields to the browser so the words appear. That does
+   *  not make it faster: it makes it legible, and it tells a practitioner where the time went. */
+  const paint=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
+  $('#area-apply').onclick=async()=>{
+    const button=$('#area-apply') as HTMLButtonElement;
+    if(button.disabled)return;
+    const label=button.textContent||'Apply';
+    const vertices=!geometry?0:(geometry.type==='Polygon'
+      ?(geometry.coordinates as Position[][]).reduce((n,ring)=>n+ring.length,0)
+      :(geometry.coordinates as Position[][][]).reduce((n,part)=>n+part.reduce((m,ring)=>m+ring.length,0),0));
+    const heavy=vertices>2000;
+    button.disabled=true;button.textContent='Applying\u2026';
+    const began=Date.now();
+    try{
+      if(heavy){message(`Checking the outline \u2014 ${vertices.toLocaleString()} vertices\u2026`);await paint();}
+      validateDrawnGeometry(geometry);validateClip();
+      if(heavy){message('Writing the facts for this area\u2026');await paint();}
+      studyAreaN3({id:node.id,params:currentParams()});
+      if(heavy){message('Saving it to this device\u2026');await paint();}
+      if(onApply(structuredClone(currentParams()),structuredClone(clipOptions))===false)
+        throw new Error(context.clip?'Clip parameters could not be saved. Retry Apply.':'Study area could not be saved. Retry Apply.');
+      if(heavy)message(`Applied in ${((Date.now()-began)/1000).toFixed(1)} s.`);
+      dialog.close();
+    }catch(e){message(errorMessage(e));}
+    finally{button.disabled=false;button.textContent=label;}
+  };
   $('#area-cancel').onclick=()=>dialog.close();$('#area-close').onclick=()=>dialog.close();
   window.addEventListener('offline',tileStatus);window.addEventListener('online',tileStatus);
   let layoutTimer:ReturnType<typeof setTimeout>;

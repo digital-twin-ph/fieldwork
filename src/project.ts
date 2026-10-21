@@ -169,11 +169,21 @@ export async function payloadDigest(payload:unknown):Promise<string>{
  *  written once to the dataset store instead of once per workflow that uses it. Returns a shallow
  *  rebuild rather than mutating: the workflow in memory must keep its payload, because everything
  *  except the storage layer expects it to be there. */
-export function dehydrateWorkflow<T extends {nodes:unknown[]}>(workflow:T):T{
+/** `held` answers whether a digest is actually in the payload store.
+ *
+ *  Stripping a payload the store does not hold writes a workflow that cannot be read back. That
+ *  is not hypothetical: an encrypted project arrives from another device carrying BOTH the data
+ *  and the reference, and its payload has never been seen here. Dehydrating it on the first save
+ *  left a reference pointing at nothing, and the next reload refused the workflow -- correctly,
+ *  since a missing payload is a refusal rather than an empty input, which made an imported
+ *  project look like it had vanished. Found 2026-10-20 while testing the round trip the
+ *  practitioner asked for. Called without `held`, nothing is stripped, which is the safe default
+ *  for every caller that does not know what the store contains. */
+export function dehydrateWorkflow<T extends {nodes:unknown[]}>(workflow:T,held:(digest:string)=>boolean=()=>false):T{
   return {...workflow,nodes:workflow.nodes.map(node=>{
     if(!isRecord(node)||!isRecord(node.params))return node;
     const params=node.params;
-    if(typeof params.dataRef!=='string'||params.data===undefined)return node;
+    if(typeof params.dataRef!=='string'||params.data===undefined||!held(params.dataRef))return node;
     const {data:_omitted,...rest}=params;
     return {...node,params:rest};
   })};

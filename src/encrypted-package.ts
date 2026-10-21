@@ -8,7 +8,26 @@ import {contentHash} from './project-files.js';
 import {isRecord} from './guards.js';
 import {assertProjectManifest,syncProjectManifest,sameProjectManifest} from './project-manifest.js';
 
-const SCHEMA='fieldwork/encrypted-project/1',WORKFLOW_LIMIT=5_000_000,MANIFEST_LIMIT=1_000_000;
+/** What a workflow may weigh inside a package, and WHY the two directions differ.
+ *
+ *  One number did both jobs until 2026-10-20, and it was 5,000,000 bytes -- set when a workflow
+ *  could not be much larger than that, because its payloads had to fit in a 5,226,496-byte
+ *  localStorage. Payloads moved to IndexedDB that morning and a town-sized street network became
+ *  possible: Bunia is an estimated 14.2 MB. The export cap then refused the very thing the storage
+ *  work had just made downloadable. The practitioner: *"we are setting caps that have not met
+ *  reality yet and this is a DE project to test the limits of browser based field operations."*
+ *
+ *  So they are two numbers now, because they protect against different things.
+ *
+ *  EXPORT protects nothing. The data is already in memory, already the practitioner's, and
+ *  already on their machine; refusing to write it to a file they asked for is a cap on their own
+ *  work. What limits it is what the browser can hold while serialising, encrypting and zipping,
+ *  and the ceiling below is measured rather than assumed -- see docs/experiments/125.
+ *
+ *  IMPORT is a defence. A package arriving from elsewhere is untrusted, and a crafted ZIP that
+ *  advertises a small compressed size and decompresses into gigabytes is the attack this guards.
+ *  It is set at the export ceiling, so anything this application can write it can read back. */
+const SCHEMA='fieldwork/encrypted-project/1',WORKFLOW_EXPORT_LIMIT=64_000_000,WORKFLOW_IMPORT_LIMIT=64_000_000,MANIFEST_LIMIT=1_000_000;
 const encoder=new TextEncoder();
 const options={useWebWorkers:false,useCompressionStream:true};
 function requireValue(value:unknown,message:string):asserts value{if(!value)throw new Error(message);}
@@ -21,7 +40,7 @@ export async function createEncryptedPackage(workflow:Workflow,files:Map<string,
   requireValue(password.length>=12,'Use a passphrase of at least 12 characters.');
   assertProjectManifest(workflow);workflow=structuredClone(workflow);syncProjectManifest(workflow);
   const refs=projectFiles(workflow);requireValue(files.size===refs.size,'Package must include every referenced PDF.');
-  const workflowBytes=encoder.encode(JSON.stringify(workflow));requireValue(workflowBytes.length<=WORKFLOW_LIMIT,'Workflow exceeds the 5 MB package limit.');
+  const workflowBytes=encoder.encode(JSON.stringify(workflow));requireValue(workflowBytes.length<=WORKFLOW_EXPORT_LIMIT,`This workflow is ${(workflowBytes.length/1e6).toFixed(1)} MB, more than the ${WORKFLOW_EXPORT_LIMIT/1e6} MB a package can carry. Export it as a workflow file instead, or cover a smaller area.`);
   const assets:Descriptor[]=[],entries=new Map<string,Uint8Array<ArrayBuffer>>([['workflow.json',workflowBytes]]);
   for(const [hash,ref] of refs){const bytes=files.get(hash);requireValue(bytes&&bytes.length===ref.bytes,'PDF/raster missing or inconsistent with its reference.');await verifyProjectFile(ref,bytes);const path=`assets/${String(assets.length).padStart(4,'0')}.bin`;assets.push({path,bytes:bytes.length,sha256:hash,mediaType:ref.mediaType});entries.set(path,bytes);}
   const manifest=encoder.encode(JSON.stringify({schema:assets.some(a=>a.mediaType==='image/tiff')?'fieldwork/encrypted-project/2':SCHEMA,project:workflow.manifest,workflow:{path:'workflow.json',bytes:workflowBytes.length,sha256:await contentHash(workflowBytes),mediaType:'application/json'},assets}));
@@ -40,9 +59,9 @@ export async function readEncryptedPackage(blob:Blob,password:string,validate:(v
       requireValue(entries.size<102&&!entry.directory&&!entries.has(entry.filename),'Unexpected or duplicate package entry.');
       requireValue(entry.filename==='manifest.json'||entry.filename==='workflow.json'||/^assets\/[0-9]{4}\.bin$/.test(entry.filename),'Unexpected package path.');
       requireValue(entry.encrypted&&entry.extraFieldAES?.strength===3&&entry.extraFieldAES.vendorVersion===2&&entry.compressionMethod===0,'Package requires AES-256 AE-2 encrypted, uncompressed entries.');
-      const cap=entry.filename==='manifest.json'?MANIFEST_LIMIT:entry.filename==='workflow.json'?WORKFLOW_LIMIT:MAX_PDF_BYTES;
+      const cap=entry.filename==='manifest.json'?MANIFEST_LIMIT:entry.filename==='workflow.json'?WORKFLOW_IMPORT_LIMIT:MAX_PDF_BYTES;
       requireValue(Number.isSafeInteger(entry.uncompressedSize)&&entry.uncompressedSize<=cap,'Package entry exceeds its size limit.');
-      advertised+=entry.uncompressedSize;requireValue(advertised<=MANIFEST_LIMIT+WORKFLOW_LIMIT+MAX_WORKFLOW_PDF_BYTES,'Package contents exceed the total limit.');entries.set(entry.filename,entry);
+      advertised+=entry.uncompressedSize;requireValue(advertised<=MANIFEST_LIMIT+WORKFLOW_IMPORT_LIMIT+MAX_WORKFLOW_PDF_BYTES,'Package contents exceed the total limit.');entries.set(entry.filename,entry);
     }
     async function extract(path:string,limit:number):Promise<Uint8Array<ArrayBuffer>>{
       const entry=entries.get(path);requireValue(entry,'Missing package entry.');let size=0;const chunks:Uint8Array[]=[];
@@ -52,7 +71,7 @@ export async function readEncryptedPackage(blob:Blob,password:string,validate:(v
     const manifest:unknown=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await extract('manifest.json',MANIFEST_LIMIT)));
     requireValue(isRecord(manifest)&&[SCHEMA,'fieldwork/encrypted-project/2'].includes(String(manifest.schema))&&Array.isArray(manifest.assets),'Unsupported encrypted project manifest.');
     const workflowDescriptor=descriptor(manifest.workflow),assets=manifest.assets.map(descriptor);
-    requireValue(workflowDescriptor.path==='workflow.json'&&workflowDescriptor.mediaType==='application/json'&&workflowDescriptor.bytes<=WORKFLOW_LIMIT,'Invalid workflow descriptor.');
+    requireValue(workflowDescriptor.path==='workflow.json'&&workflowDescriptor.mediaType==='application/json'&&workflowDescriptor.bytes<=WORKFLOW_IMPORT_LIMIT,'Invalid workflow descriptor.');
     const paths=new Set(['manifest.json','workflow.json']),hashes=new Set<string>();let pdfBytes=0;
     for(const asset of assets){requireValue(/^assets\/[0-9]{4}\.bin$/.test(asset.path)&&!paths.has(asset.path)&&!hashes.has(asset.sha256)&&(asset.mediaType==='application/pdf'||manifest.schema==='fieldwork/encrypted-project/2'&&asset.mediaType==='image/tiff')&&asset.bytes<=MAX_PDF_BYTES,'Invalid PDF asset descriptor.');paths.add(asset.path);hashes.add(asset.sha256);pdfBytes+=asset.bytes;}
     requireValue(pdfBytes<=MAX_WORKFLOW_PDF_BYTES&&paths.size===entries.size&&[...paths].every(path=>entries.has(path)),'Package inventory does not match its manifest.');

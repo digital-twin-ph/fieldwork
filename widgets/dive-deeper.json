@@ -3,7 +3,7 @@
  "description": "Lessons: what a widget's method IS, named in the discipline's terms, run on its own data, with the assumption it inherits varied and the effect shown as a number. Separate from widgets/parity.json because the two answer to different readers and fail in different ways -- a parity notebook fails by disagreeing, a lesson fails by teaching the tool instead of the subject -- and because parity results are pinned by commit and digest into a release's evidence, so improving an explanation used to move that pin. See docs/experiments/94-where-explanation-belongs.md.",
  "repository": {
   "url": "https://github.com/digital-twin-ph/dive-deeper",
-  "commit": "04b22ab58e901e9551f38b9694d34b37fcec6f8c",
+  "commit": "ea5a5ff0df129125038ce16ac93464defd87058f",
   "site": "https://digital-twin-ph.github.io/dive-deeper/lab/index.html?path="
  },
  "legacyNote": "The twenty sections still living as trailing cells in validation-lab notebooks are recorded on widgets/parity.json's `diveDeeper` field and counted below. They predate the pedagogical requirements and meet the older, narrower definition -- vary the assumption -- so rewriting one against the requirements is new work and not a file move. The ceiling may fall and never rise.",
@@ -14,6 +14,12 @@
    "notebook": "mean-center.ipynb",
    "title": "Where the centre of an outbreak is, and what moves it",
    "teaches": "The mean centre as the centroid of a point mass system; why it is projected to metres first; and what the weighting, the choice of mean against median centre, and the projection each cost -- 2.10 m, 6.62 m and 0.001 m on Snow's 250 addresses."
+  },
+  {
+   "widget": "urn:fieldwork:widget:network_input",
+   "notebook": "street-network.ipynb",
+   "title": "What a street network is, and what the filter decided",
+   "teaches": "A street network as a directed graph -- order, size, degree, components, length in metres -- and what the mode filter decides: on the Soho snapshot a driving filter drops 918 of 1,619 edges and 24.35 of 50.30 km, and 455 edges carry a vehicle one-way a walking graph ignores."
   }
  ]
 }

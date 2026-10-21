@@ -64,6 +64,12 @@ reporting minutes for a journey the streets do not support.
 Distances along it are distances on those streets, and a network downloaded today describes the
 streets today, not the streets of whatever period your data comes from.
 
+Before anything large is downloaded, the widget asks the service **how much is there**. Overpass
+answers that question directly, and an area holding more street data than this widget can take is
+refused with the number — after one cheap request rather than after several large ones that fail.
+An area so large that the service will not even count it is refused the same way, because that is
+what a public instance says when an area is beyond what it will process.
+
 A saved network is kept beside the workflow rather than inside it, in the larger store your
 browser offers, so the size of a graph is no longer limited by what a workflow may hold. If that
 store is unavailable — private browsing, for instance — the application says "small store only"

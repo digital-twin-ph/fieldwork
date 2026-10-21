@@ -53,7 +53,7 @@ test('an unreadable status is unknown rather than unavailable',()=>{
 
 test('every instance is asked, and one that fails is reported rather than omitted',async()=>{
   const asked=[];
-  const fetcher=async url=>{
+  const fetcher=async(url,init)=>{
     asked.push(url);
     if(url.includes('kumi'))return new Response('',{status:504});
     if(url.includes('private.coffee'))throw new Error('boom');
@@ -108,7 +108,7 @@ const osm={version:0.6,elements:[
 test('a cache hit reaches no service at all, and says the bytes came from this device',async()=>{
   const cache=fakeCache();
   let requests=0;
-  const fetcher=async url=>{
+  const fetcher=async(url,init)=>{
     requests++;
     if(String(url).endsWith('/status'))return new Response('Rate limit: 2\n2 slots available now.\n',{status:200});
     return new Response(JSON.stringify(osm),{status:200});
@@ -133,8 +133,12 @@ test('a cache hit reaches no service at all, and says the bytes came from this d
 test('a forced refresh goes to the service even when the answer is cached',async()=>{
   const cache=fakeCache();
   let downloads=0;
-  const fetcher=async url=>{
+  const fetcher=async(url,init)=>{
     if(String(url).endsWith('/status'))return new Response('Rate limit: 2\n2 slots available now.\n',{status:200});
+    // The count asked before each download is not a download: it asks the service how much is
+    // there so an area beyond it can be refused in one request rather than six.
+    if(/out\+count|out%20count/.test(String(init?.body??'')))
+      return new Response(JSON.stringify({elements:[{type:'count',id:0,tags:{ways:'3',total:'3'}}]}),{status:200});
     downloads++;return new Response(JSON.stringify(osm),{status:200});
   };
   await requestOSM(boundary,0,fetcher,undefined,undefined,undefined,undefined,cache);
@@ -152,12 +156,14 @@ test('a forced refresh goes to the service even when the answer is cached',async
 test('the requested pause is honoured, and what is being waited on is said',async()=>{
   const phases=[],waited=[];
   let asked=0,downloaded=0;
-  const fetcher=async url=>{
+  const fetcher=async(url,init)=>{
     if(String(url).endsWith('/status')){
       asked++;
       // No free slot, and the service names the wait itself.
       return new Response('Rate limit: 2\nSlot available after: 2026-10-20T02:03:53Z, in 0 seconds.\n',{status:200});
     }
+    if(/out\+count|out%20count/.test(String(init?.body??'')))
+      return new Response(JSON.stringify({elements:[{type:'count',id:0,tags:{ways:'3',total:'3'}}]}),{status:200});
     downloaded++;return new Response(JSON.stringify(osm),{status:200});
   };
   const got=await requestOSM(boundary,0,fetcher,undefined,undefined,undefined,
@@ -167,5 +173,7 @@ test('the requested pause is honoured, and what is being waited on is said',asyn
   assert.equal(downloaded,1);
   assert.equal(waited.length,1,'the wait the service named was taken');
   assert.match(phases[0],/how busy/i,'and the practitioner is told what is being waited on');
+  assert.ok(phases.some(p=>/how much street data/i.test(p)),
+    `the count is announced too, because it is a request the service pays for: ${phases.join(' | ')}`);
   assert.ok(phases.some(p=>/asked for/.test(p)),`the pause is attributed to the service: ${phases.join(' | ')}`);
 });

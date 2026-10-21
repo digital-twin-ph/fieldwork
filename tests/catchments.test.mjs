@@ -171,14 +171,19 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   const isStatus=url=>String(url).endsWith('/status');
   const isProbe=init=>String(init?.body??'').includes('node%281%29');
   const probeOk=()=>new Response(JSON.stringify({version:0.6,elements:[]}));
+  // The COUNT asked before every download since 2026-10-20: the service's own answer to how much
+  // street data is in the area, so one cheap request can refuse what six expensive ones would.
+  const isCount=init=>/out\+count|out%20count/.test(String(init?.body??''));
+  const countOk=(ways=3)=>new Response(JSON.stringify({version:0.6,elements:[{type:'count',id:0,tags:{ways:String(ways),total:String(ways)}}]}));
   const statusOk=()=>new Response('Rate limit: 2\n2 slots available now.\n',{status:200});
   const fetcher=async(url,init)=>{
     if(isStatus(url))return statusOk();
     assert.equal(init.credentials,'omit');assert.match(String(init.body),/data=/);
+    if(isCount(init))return countOk();
     return isProbe(init)?probeOk():new Response(JSON.stringify(raw));};
   const n=await requestOSM(boundary,250,fetcher);assert.equal(n.edges.length,3);assert.equal(n.provenance.sha256.length,64);assert.deepEqual(n.provenance.boundary,boundary);
   await assert.rejects(requestOSM(boundary,0,async(url,init)=>
-    isProbe(init)?probeOk():new Response('',{status:429})),/HTTP 429/);
+    isProbe(init)?probeOk():isCount(init)?countOk():new Response('',{status:429})),/HTTP 429/);
 
   // Overpass fails on its own account. Measured on 2026-10-15 after a report that the download
   // was broken: three identical requests to overpass-api.de returned 502, 200, 502. A single
@@ -198,6 +203,9 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
     if(isStatus(url))return statusOk();
     if(isProbe(init))return probeOk();
+    // A 503 on the COUNT is an instance having a bad moment, not a verdict on the area, so the
+    // count is answered and the download attempts are what this counts.
+    if(isCount(init))return countOk();
     kept++;return new Response('',{status:503});}),/No Overpass instance answered/);
   assert.equal(kept,OVERPASS_ENDPOINTS.length*2,`${OVERPASS_ENDPOINTS.length} instances, two rounds, then it stops`);
 
@@ -209,6 +217,7 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   let asked=0,attempted=0;
   await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
     if(isStatus(url)){asked++;return new Response('',{status:504});}
+    if(isCount(init))return countOk();
     attempted++;return new Response('',{status:503});}),/No Overpass instance answered/);
   assert.equal(asked,OVERPASS_ENDPOINTS.length,'every instance is asked how it is, once, at the same time');
   assert.equal(attempted,OVERPASS_ENDPOINTS.length*2,
@@ -274,6 +283,9 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
   let throttled=0;
   await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
     if(isStatus(url))return statusOk();
+    // A 429 on the count is this client asking too often, which the probe reads as no answer at
+    // all; the download below is what the deferral is about.
+    if(isCount(init))return new Response('',{status:429});
     throttled++;return new Response('',{status:429});}),/HTTP 429/);
   assert.equal(throttled,1,'rate limiting is deferred to, not retried against');
   const {maxBytes}=cm.downloadLimits();

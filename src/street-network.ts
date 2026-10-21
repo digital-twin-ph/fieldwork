@@ -284,6 +284,59 @@ export function osmQuery(boundary:Boundary,marginM:number,maxNodes?:number,mode:
   // served a walking graph that was cached for the same bounds.
   return {query,bounds,marginM,mode};
 }
+/** ASK WHAT IT WOULD COST, BEFORE ASKING FOR IT.
+ *
+ *  The practitioner drew a study area across the DRC-Uganda border and got, after four requests
+ *  to three donated services: *"No Overpass instance answered ... the last reporting HTTP 504."*
+ *  A 504 there is the service saying it gave up computing the answer -- the box is some 600 km
+ *  across and a walking network for it is motorways to footpaths across two countries. Nothing
+ *  was wrong with the client; it asked for something no public instance will return, and learned
+ *  that by spending six attempts on the question.
+ *
+ *  Overpass answers `out count;` with the number of elements a query would return. That is the
+ *  service's own answer to "how much is there", and it replaces the thing this project removed on
+ *  purpose: a client-side span cap, which refused an area for its WIDTH before anything about it
+ *  had been measured. A count is measured. It is also one request instead of six, and it is the
+ *  same courtesy the status read already follows. */
+/** What a public Overpass instance returns when its own gateway gives up. Shared by the count
+ *  probe and the download loop, because "the server could not finish" means the same thing to
+ *  both. */
+const SERVER_ERRORS=[500,502,503,504];
+/** One count request. Three answers, and they are not the same: a number, a refusal the service
+ *  made deliberately (its gateway gave up), or nothing usable -- an unreachable instance, a
+ *  non-JSON body, an engine that does not implement `out count;`. Only the first two decide
+ *  anything; the third carries on to the download, because a probe that could not be taken is not
+ *  evidence about the area. */
+export async function countWays(url:string,query:string,fetcher:typeof fetch,signal?:AbortSignal):
+  Promise<{kind:'counted';ways:number}|{kind:'refused';status:number}|{kind:'unknown'}>{
+  try{
+    const response=await fetcher(url,{method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({data:query}),signal});
+    // ONLY A GATEWAY TIMEOUT is evidence about the AREA. 500, 502 and 503 are an instance having
+    // a bad moment -- the download loop already retries across instances for exactly that -- and
+    // treating them as "too large" would refuse a perfectly ordinary area because one server
+    // hiccuped. 504 is the gateway saying the query ran past its time, which is what an area
+    // beyond the service's reach produces.
+    if(!response.ok)return response.status===504?{kind:'refused',status:504}:{kind:'unknown'};
+    const ways=readOverpassCount(await response.json().catch(()=>null));
+    return ways===null?{kind:'unknown'}:{kind:'counted',ways};
+  }catch{return {kind:'unknown'};}
+}
+export function countQuery(boundary:Boundary,marginM:number,maxNodes?:number,mode:NetworkTravelMode='walking'){
+  const request=osmQuery(boundary,marginM,maxNodes,mode);
+  const [w,s,e,n]=request.bounds,filter=modeFilter(mode).highways.join('|');
+  return {...request,query:`[out:json][timeout:25];way["highway"~"^(${filter})$"]`
+    +`(${s.toFixed(7)},${w.toFixed(7)},${n.toFixed(7)},${e.toFixed(7)});out count;`};
+}
+/** The number of ways the query would return, or null when the answer is not a count. */
+export function readOverpassCount(raw:unknown):number|null{
+  if(!isRecord(raw)||!Array.isArray(raw.elements))return null;
+  const first=raw.elements[0];
+  if(!isRecord(first)||first.type!=='count'||!isRecord(first.tags))return null;
+  const ways=Number(first.tags.ways??first.tags.total);
+  return Number.isFinite(ways)?ways:null;
+}
 function metres(a:Position,b:Position){const r=Math.PI/180,dlat=(b[1]-a[1])*r,dlon=(b[0]-a[0])*r,h=Math.sin(dlat/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dlon/2)**2;return 12742017.6*Math.asin(Math.sqrt(Math.min(1,h)));}
 export function networkFromOSM(raw:unknown,maxNodes?:number,mode:NetworkTravelMode='walking'):Network{
   const filter=modeFilter(mode);
@@ -381,7 +434,6 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     //
     // 429 stops everything: it means this client is asking too often, and asking a DIFFERENT
     // public instance instead would be discourteous rather than clever.
-    const SERVER_ERRORS=[500,502,503,504];
     // The heartbeat. One short wait asked of every instance at once, so a download is not spent
     // discovering that the first three are down -- which on 2026-10-15 they were.
     // Regional instances last: one answers for the whole world and holds part of it, so it is a
@@ -465,6 +517,33 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
         +`serve it, so nothing was downloaded and nothing was changed. Upload a saved network file, `
         +`which needs no service at all.`);
     }
+    // THE COUNT, before the download. One request to the instance most likely to serve the real
+    // one; an unreachable probe is not an answer and does not stop anything.
+    onPhase?.('Asking the service how much street data is there\u2026');
+    const {maxFeatures}=downloadLimits(maxNodes);
+    // Two instances at most, and a refusal needs BOTH of them: one timeout is a server, two are
+    // the area. Still two cheap requests against six expensive failures.
+    const countText=countQuery(boundary,marginM,maxNodes,mode).query;
+    const probes:Awaited<ReturnType<typeof countWays>>[]=[];
+    for(const endpoint of live.slice(0,2)){
+      const outcome=await countWays(endpoint.url,countText,fetcher,freshAttempt());
+      probes.push(outcome);
+      if(outcome.kind==='counted')break;
+      if(outcome.kind==='unknown')break;
+    }
+    const counted=probes.find(outcome=>outcome.kind==='counted')??probes[probes.length-1]??{kind:'unknown' as const};
+    const refusedByAll=probes.length>1&&probes.every(outcome=>outcome.kind==='refused');
+    if(counted.kind==='counted'&&counted.ways>maxFeatures)
+      throw new Error(`This area holds ${counted.ways.toLocaleString()} street ways, and this `
+        +`widget normalizes up to ${maxFeatures.toLocaleString()} features. ${live[0].operator} was `
+        +`asked to count them rather than to send them, so nothing large was downloaded. Draw a `
+        +`smaller area, raise the graph limit, or upload a network file prepared outside the browser.`);
+    if(refusedByAll)
+      throw new Error(`Two instances could not even COUNT the streets in this area within their `
+        +`own time limits, which is what they say when an area is beyond what they will process. `
+        +`Nothing was downloaded. Draw a smaller study area \u2014 a border region several hundred `
+        +`kilometres across is more than a public Overpass instance will answer for.`);
+
     let reached:OverpassEndpoint|undefined,lastStatus=0,unreachable=0;
     outer: for(let round=1;round<=2;round++){
       for(const endpoint of live){

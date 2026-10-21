@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
 import {blankWorkflow,newStudyArea,bboxPolygon} from '../build/study-area.js';
 import {calculateArea,formatArea,AREA_UNITS} from '../build/area-computation.js';
-import {coverageExercise} from '../build/spatial-coverage.js';
+import {clipExercise} from '../build/clip-points.js';
 import {collectPageErrors} from './page-errors.mjs';
 test("Area enrichment, units, evidence and offline recomputation",async({page,context})=>{
 const errors=collectPageErrors(page);
@@ -46,30 +46,37 @@ const select=async id=>{await page.locator('[data-view="workflow"]').click();awa
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:'test-results/area-computation-mobile.png',fullPage:true});
   await context.setOffline(false);await page.setViewportSize({width:1600,height:1100});
-  await page.locator('#workflow-file').setInputFiles({name:'coverage.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(coverageExercise()))});
+  await page.locator('#workflow-file').setInputFiles({name:'coverage.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(clipExercise()))});
   await expect(page.locator('#run-button')).toBeEnabled();await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="measure_area"]').click();
   await page.locator('#measure-area-source').selectOption('scope');
   const chainedId=(await saved()).nodes.find(n=>n.type==='measure_area').id;
-  await select('coverage');await page.locator('#coverage-area').selectOption(chainedId);await run();
-  await expect(page.locator('.react-flow__edge')).toHaveCount(3);
-  await expect(page.locator('#coverage-alert')).toContainText('2 records');
+  // Chained through the MAP's area port. It was the coverage check's until that widget was
+  // retired on 2026-10-21; what is under test is the measurement reaching the consumer, and the
+  // map consumes the same area the check did.
+  await select('map');await page.locator('#map-area').selectOption(chainedId);await run();
+  await expect(page.locator('#result-tabs button')).toHaveCount(2);
   const downloadChain=async()=>{await page.locator('[data-view="rules"]').click();const pending=page.waitForEvent('download');await page.locator('#download-evidence').click();return JSON.parse(await readFile(await (await pending).path(),'utf8'));};
-  const chained=await downloadChain(),check=chained.outputs.find(o=>o.kind==='spatial-coverage');
-  assert.equal(check.areaId,'urn:fieldwork:area:scope');assert.equal(check.areaNodeId,'scope');assert.equal(check.geometryId,'urn:fieldwork:geometry:scope');
+  const chained=await downloadChain(),check=chained.outputs.find(o=>o.kind==='spatial-map');
+  assert.equal(check.areaId,'urn:fieldwork:area:scope');assert.equal(check.geometryId,'urn:fieldwork:geometry:scope');
   assert.equal(check.measurement.squareMetres,calculateArea(geometry).squareMetres);
-  assert.deepEqual(check.rows.map(r=>r.decision),['Accept','Accept','Review','Review']);
-  assert.match(chained.receipts.find(r=>r.nodeId==='coverage').input,/geo:hasMetricArea/);
+  // The clip passes on what is inside and carries what it set aside, so the map holds all four
+  // records with their relation rather than a review decision each. The fourth has no coordinates:
+  // it is listed as unplaceable and not drawn, which is a different thing from being outside.
+  assert.deepEqual(check.rows.map(r=>r.relation).sort(),['Boundary','Inside','MissingLocation','Outside']);
+  assert.match(chained.receipts.find(r=>r.nodeId==='map').input,/geo:hasMetricArea/);
   await select('scope');await page.locator('#edit-study-area').click();await page.locator('#area-online').uncheck();
   await page.getByText('Enter bounding coordinates',{exact:true}).click();await page.locator('#area-east').fill('25.925');await page.locator('#area-use-bounds').click();await page.locator('#area-apply').click();await run();
-  await expect(page.locator('#coverage-alert')).toContainText('1 records');
-  const expanded=await downloadChain(),expandedCheck=expanded.outputs.find(o=>o.kind==='spatial-coverage');
+  const expanded=await downloadChain(),expandedCheck=expanded.outputs.find(o=>o.kind==='spatial-map');
   assert.ok(expandedCheck.measurement.squareMetres>check.measurement.squareMetres);
-  assert.equal(expandedCheck.rows.find(r=>r.id==='outside').decision,'Accept');
-  await select('coverage');await page.screenshot({path:'test-results/area-enriched-coverage.png',fullPage:true});
+  // Widening the boundary moves the outside record inside, which is the point of the chain.
+  assert.equal(expandedCheck.rows.find(r=>r.recordId==='outside').relation,'Inside');
+  await select('map');await page.screenshot({path:'test-results/area-enriched-coverage.png',fullPage:true});
   const chainWorkflow=await saved();await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   assert.deepEqual((await saved()).edges,chainWorkflow.edges);
   await page.locator('#workflow-file').setInputFiles({name:'enriched-area.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(chainWorkflow))});await run();
-  await expect(page.locator('#coverage-alert')).toContainText('1 records');
+  // The re-imported workflow runs and still holds its chained measurement. `#coverage-alert` was
+  // the coverage check's banner and is never filled now that the widget is retired.
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete');
   assert.deepEqual(errors,[]);console.log('PASS: separate area computation, visible connector, all six units, GeoSPARQL facts, boundary invalidation, receipt, export/import, offline recomputation and mobile layout.');
 });

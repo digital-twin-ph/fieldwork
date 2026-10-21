@@ -20,9 +20,27 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
   const asCircles=await drawn.count();
   expect(asCircles).toBeGreaterThan(0);
 
-  // The first layer's default mark is a circle, so the control says so and nothing is a divIcon.
+  // The first layer's default mark is a circle, and it is drawn as a mark like every other one:
+  // a circleMarker has a single stroke, which cannot be both the dark halo and the layer hue.
   await expect(page.locator('.catchment-leaflet .leaflet-control-layers-list')).toContainText('(circle)');
-  await expect(page.locator('.catchment-point-mark')).toHaveCount(0);
+  await expect(page.locator('.catchment-point-mark')).toHaveCount(asCircles);
+  // Every mark carries the halo: a dark path drawn first and wider than the coloured one, so the
+  // symbol reads over a terrain basemap.
+  const halo=page.locator('.catchment-point-mark svg path').first();
+  expect(await halo.getAttribute('stroke')).toBe('#1A1A1A');
+  expect(Number(await halo.getAttribute('stroke-width'))).toBeGreaterThan(2);
+  // And it can be switched off, for a pale ground or a printed figure.
+  await page.locator('.react-flow__node[data-id="map"]').click();
+  await page.locator('#map-halo-toggle').uncheck();
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  const bare=page.locator('.catchment-point-mark svg path').first();
+  expect(await bare.getAttribute('stroke')).not.toBe('#1A1A1A');
+  expect(await page.locator('.catchment-point-mark').first().locator('path').count()).toBe(1);
+  await page.locator('.react-flow__node[data-id="map"]').click();
+  await page.locator('#map-halo-toggle').check();
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 
   const mark=page.locator('[data-layer-mark]').first();
   await expect(mark).toHaveCount(1);

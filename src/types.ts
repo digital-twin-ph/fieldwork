@@ -246,12 +246,21 @@ export interface ParamsByType {
   measure_distance:{unit:DistanceUnit; candidateFilter?:CandidateCondition[]};
   travel_time:{label:string; speedMPerMin:number};
   policy:{thresholdKm:number};
-  measure_area:{unit:AreaUnit}; coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
+  measure_area:{unit:AreaUnit};
+  /** RETIRED 2026-10-21, kept the way every other retired widget is kept: the definition and its
+   *  parameters stay so the registry entry resolves and a saved workflow that still names the type
+   *  can be migrated rather than refused. Nothing adds one, nothing runs one. */
+  coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
   map_output:{label:string; pointInputCount?:number;
     /** How each point layer is drawn, keyed by the node that produced it -- a source keeps its
      *  symbol when layers are rewired or reordered. Absent means derived from the layer's
      *  position, which is what every map did before a practitioner could choose. */
-    layerSymbols?:Record<string,{mark?:import('./presentation.js').LayerShape;colour?:string}>; inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'};
+    layerSymbols?:Record<string,{mark?:import('./presentation.js').LayerShape;colour?:string}>;
+    /** Whether every point mark is drawn over a dark halo. On by default, because the reason it
+     *  exists is a terrain basemap: a mark in the palette's own values over OpenTopoMap was hard
+     *  to pick out. It is a checkbox rather than a rule because a map on a pale ground, or one
+     *  going into a printed figure, may not want it. */
+    markHalo?:boolean; inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'};
   chart_output:{label:string;inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference'};
   output:{label?:string; view:'map'|'table'|'bars'};
   facilities:{dataset:string; radiusKm:number; sourceMode?:'connected'}; point_grid:{spacingM:number};
@@ -263,7 +272,7 @@ export type NodeType = keyof ParamsByType;
 export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:ParamsByType[T] & {label?:string}}}[K];
 /** The node types a saved workflow may still name and no canvas may still hold. A retired widget
  *  never runs, so loading one is a rewrite that must say so, or a refusal that names it. */
-export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert';
+export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert'|'coverage_check';
 /** A node type that still exists but whose contract changed, so a node saved under the old one is
  *  migrated to a different type. `reproject` was a Source holding an imported file; from
  *  2026-10-13 it is a points-to-points transform, and the saved nodes become the `point_input`
@@ -279,7 +288,12 @@ export type RecontractedNodeType='reproject';
 export type RenamedNodeType='samples'|'nearest'|'observations'|'area'|'summarize_polygons'|'hex_aggregate';
 export const RENAMED_NODE_TYPES:Record<RenamedNodeType,NodeType>={samples:'point_grid',nearest:'measure_distance',observations:'point_input',area:'study_area',summarize_polygons:'summarize_points_to_polygon',hex_aggregate:'aggregate_points_to_h3_cell'};
 
-export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType|RenamedNodeType|RecontractedNodeType; version:'1'}};
+/** `carriedExclusions` is what a retirement could not translate. `coverage_check` let a reviewer
+ *  exclude a record BY JUDGEMENT with a written reason; `clip_points_to_area`, which replaces its
+ *  spatial half, has no such thing. The judgements ride along in the file and the Inspector says
+ *  they are inert, because dropping them on open would be the silent rewrite retirement exists
+ *  to prevent. */
+export type WorkflowNode<K extends NodeType = NodeType> = NodeSpec<K> & {id:string; x:number; y:number; references?:EvidenceReference[]; sourceMigration?:{fromType:RetiredNodeType|RenamedNodeType|RecontractedNodeType; version:'1'; carriedExclusions?:Exclusion[]}};
 export interface WorkflowEdge {id:string; from:string; to:string; port:string}
 /** `projectId` and `workflowKey` were added 2026-10-19, when a project stopped being a word in
  *  the title bar and became an investigation that holds several workflows (experiment 122). A

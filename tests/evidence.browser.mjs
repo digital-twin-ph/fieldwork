@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
-import {coverageExercise} from '../build/spatial-coverage.js';
+import {clipExercise} from '../build/clip-points.js';
 import {Parser} from 'n3';
 import {loadGraph,ontologyFiles,validateGraph,summarize} from '../scripts/validate-ontology.mjs';
 import {quadToN3} from '../build/study-area.js';
@@ -16,14 +16,14 @@ const upload=(page,buffer)=>page.locator('#workflow-file').setInputFiles({name:'
 const open=async(page,id='observations')=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"]`).click();await page.locator('#manage-references').click();};
 const download=async(page,selector)=>{const event=page.waitForEvent('download');await page.locator(selector).click();return readFile(await (await event).path());};
 async function addPDF(page){await open(page);await page.locator('#reference-kind').selectOption('pdf');await page.locator('#reference-pdf').setInputFiles({name:'annual-census.pdf',mimeType:'application/pdf',buffer:pdf});await page.locator('#reference-title').fill('Annual census 2022');await page.locator('#reference-authors').fill('Census office');await page.locator('#reference-published').fill('2022');await page.locator('#reference-locator').fill('Table 4, page 27');await page.locator('#reference-notes').fill('Denominator for the population model.');await page.locator('#reference-save').click();await expect(page.locator('#evidence-status')).toContainText('Reference saved');}
-test.beforeEach(async({page})=>{await page.goto('/?example=blank');const w=coverageExercise();w.exampleId='blank';await upload(page,Buffer.from(JSON.stringify(w)));await expect(page.locator('.react-flow__node[data-id="observations"]')).toBeVisible();});
+test.beforeEach(async({page})=>{await page.goto('/?example=blank');const w=clipExercise();w.exampleId='blank';await upload(page,Buffer.from(JSON.stringify(w)));await expect(page.locator('.react-flow__node[data-id="observations"]')).toBeVisible();});
 
 test('input PDFs and processing URLs appear in run snapshots and parse as provenance with EYE',async({page})=>{
   const errors=collectPageErrors(page);await addPDF(page);
   await page.locator('#evidence-dialog').evaluate(el=>el.scrollTop=0);await page.screenshot({path:'test-results/evidence-editor.png'});
   const source=(await refs(page))[0];assert.equal(source.sha256,hash);assert.equal(source.bytes,pdf.length);assert.equal(source.locator,'Table 4, page 27');
   assert.deepEqual(await download(page,'[data-download]'),pdf);await page.locator('#evidence-close').click();
-  await open(page,'coverage');await expect(page.locator('#reference-role')).toHaveValue('method');
+  await open(page,'clip');await expect(page.locator('#reference-role')).toHaveValue('method');
   await page.locator('#reference-title').fill('Boundary inclusion policy');await page.locator('#reference-url').fill('https://example.org/methods/coverage');await page.locator('#reference-notes').fill('Include points on the boundary.');await page.locator('#reference-save').click();await expect(page.locator('#evidence-status')).toContainText('Reference saved');await page.locator('#evidence-close').click();
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await page.locator('[data-view="rules"]').click();
   await expect(page.locator('#n3-preview')).toContainText('REFERENCE PROVENANCE');await expect(page.locator('#n3-preview')).toContainText('Annual census 2022');

@@ -283,12 +283,17 @@
   {
    "id": "urn:fieldwork:widget:coverage_check",
    "nodeType": "coverage_check",
-   "currentVersion": "0.1.0",
+   "currentVersion": "0.2.0",
    "releases": [
     {
      "version": "0.1.0",
      "path": "widgets/releases/coverage_check/0.1.0.json",
      "sha256": "38f72d2e657fb2d64e92d6d94b9d405f2be502ca22e14adba58b818d48abbfba"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/coverage_check/0.2.0.json",
+     "sha256": "3e785e3c78ffcf7113dfb531188f39d2f60ca52fd4be9fc02993c22ac21fb326"
     }
    ]
   },
@@ -397,7 +402,7 @@
   {
    "id": "urn:fieldwork:widget:map_output",
    "nodeType": "map_output",
-   "currentVersion": "0.10.0",
+   "currentVersion": "0.12.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -453,6 +458,11 @@
      "version": "0.10.0",
      "path": "widgets/releases/map_output/0.10.0.json",
      "sha256": "9a78b0382e32552b544e03135832fed24eeea324331311003575966c053219f6"
+    },
+    {
+     "version": "0.12.0",
+     "path": "widgets/releases/map_output/0.12.0.json",
+     "sha256": "9d4dfd1b35fb25ec3f76fdd6092588517cb1897c5b9a3b5a1d00c6960a447e80"
     }
    ]
   },

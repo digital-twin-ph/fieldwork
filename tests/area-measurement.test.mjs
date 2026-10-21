@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {calculateArea,AREA_UNITS} from '../build/area-computation.js';
 import {bboxPolygon,newStudyArea,blankWorkflow,studyAreaN3} from '../build/study-area.js';
 import {newAreaMeasurement,measureArea} from '../build/area-measurement.js';
-import {coverageExercise,coverageFacts} from '../build/spatial-coverage.js';
+import {clipExercise,clipPointsToArea,clipPointsReceipt} from '../build/clip-points.js';
 import {executeWorkflow,executionPlan,validateWorkflow} from '../build/core.js';
 const close=(actual,expected)=>assert.ok(Math.abs(actual-expected)<=Math.max(1,Math.abs(expected))*1e-10,`${actual} differs from ${expected}`);
 test('spherical area agrees with analytic latitude-longitude rectangle and respects polygon shape',()=>{
@@ -44,7 +44,7 @@ test('area computation requires a boundary, shares its identity, and never uses 
 });
 
 test('area enrichment preserves source attributes and can feed downstream spatial operations',()=>{
-  const w=coverageExercise(),geometry=w.nodes[0].params.geometry;
+  const w=clipExercise(),geometry=w.nodes[0].params.geometry;
   const source={kind:'study-area',areaId:'urn:fieldwork:area:scope',geometryId:'urn:fieldwork:geometry:scope',boundary:geometry,label:'My area',ready:true,metadata:{owner:'Example'}};
   const before=structuredClone(source),node={...newAreaMeasurement(),id:'measure',x:200,y:0};
   const enriched=measureArea(node,source,'test').value;
@@ -53,10 +53,15 @@ test('area enrichment preserves source attributes and can feed downstream spatia
   assert.equal(enriched.label,source.label);assert.equal(enriched.ready,true);
   assert.equal(enriched.geometryId,source.geometryId);assert.equal(enriched.areaId,source.areaId);
   const points={...w.nodes[1].params.data,sourceNodeId:'observations'};
-  const plain=coverageFacts(w.nodes[2],source,points,'plain'),measured=coverageFacts(w.nodes[2],enriched,points,'measured');
-  assert.deepEqual(measured.rows,plain.rows);assert.match(measured.input,/geo:hasMetricArea/);
+  // The downstream operation was the coverage check until it was retired on 2026-10-21; the clip
+  // asks the same spatial question, so the property under test is unchanged: enriching an area
+  // with its measurement must not move a single point across the boundary.
+  const plain=clipPointsToArea(points,source.boundary,true),measured=clipPointsToArea(points,enriched.boundary,true);
+  assert.deepEqual(measured.collection.features.map(f=>f.id),plain.collection.features.map(f=>f.id));
+  assert.equal(measured.inside,plain.inside);assert.equal(measured.outside,plain.outside);
+  assert.match(clipPointsReceipt(w.nodes[2],measured,'measured','measure','observations',enriched.areaFacts).facts,/geo:hasMetricArea/);
   w.nodes.push(node);w.edges.find(e=>e.port==='area').from='measure';w.edges.push({id:'measure-link',from:'scope',to:'measure',port:'area'});
-  assert.deepEqual(executionPlan(w).map(n=>n.id),['scope','measure','observations','coverage']);
+  assert.deepEqual(executionPlan(w).map(n=>n.id),['scope','measure','observations','clip','map']);
   enriched.metadata.owner='Changed';enriched.boundary.coordinates[0][0][0]=0;assert.deepEqual(source,before);
   w.nodes.push({...newAreaMeasurement(),id:'second',x:500,y:0});w.edges.push({id:'second-link',from:'measure',to:'second',port:'area'});
   assert.doesNotThrow(()=>validateWorkflow(w));

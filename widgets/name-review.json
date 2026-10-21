@@ -123,15 +123,6 @@
    "reviewedBy": null
   },
   {
-   "nodeType": "coverage_check",
-   "title": "Check spatial coverage",
-   "group": "Comparisons and checks",
-   "fingerprint": "318b29094c61",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
    "nodeType": "donut_geomask",
    "title": "Move points in a donut",
    "group": "Spatial operations",

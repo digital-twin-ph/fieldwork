@@ -8,9 +8,9 @@
  },
  "measuredAt": "2026-10-20",
  "counts": {
-  "widgets": 47,
+  "widgets": 46,
   "covered": 20,
-  "awaiting": 14,
+  "awaiting": 13,
   "none": 12,
   "blocked": 1
  },
@@ -79,12 +79,6 @@
    "nodeType": "comparison_map",
    "expectation": "none",
    "reason": "Draws what it is given and derives no value."
-  },
-  {
-   "nodeType": "coverage_check",
-   "expectation": "parity",
-   "check": null,
-   "computes": "Decides which of an area's parts contain a point, and reports what is uncovered."
   },
   {
    "nodeType": "donut_geomask",

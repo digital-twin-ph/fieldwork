@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {coverageExercise} from '../build/spatial-coverage.js';
+import {clipExercise} from '../build/clip-points.js';
 import {newTableOutput,tableOutput,pointTableMarkup} from '../build/table-output.js';
 import {executeWorkflow,executionPlan,validateWorkflow,nodeInputs} from '../build/core.js';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function directWorkflow(){const w=coverageExercise();w.nodes=[w.nodes[1],{...newTableOutput(),id:'table',x:350,y:50}];w.edges=[{id:'points',from:'observations',to:'table',port:'points'}];return w;}
+function directWorkflow(){const w=clipExercise();w.nodes=[w.nodes[1],{...newTableOutput(),id:'table',x:350,y:50}];w.edges=[{id:'points',from:'observations',to:'table',port:'points'}];return w;}
 
 test('Table executes point data without a study area or invented review decisions',async()=>{
   const w=directWorkflow();Object.assign(w.nodes[0].params.data.features[0].properties,{count:0,confirmed:false,notes:null});const before=structuredClone(w);
@@ -19,13 +19,33 @@ test('Table executes point data without a study area or invented review decision
   w.edges=[];assert.throws(()=>executionPlan(w),/points input connected/);
 });
 
-test('Table retains coverage decisions and source identity without mutating or filtering reviewed data',()=>{
-  const coverage={kind:'spatial-coverage',checkNodeId:'coverage',pointLayers:[{sourceNodeId:'observations',label:'Visits',count:2}],rows:[{id:'a',excluded:true,decision:'Excluded',exclusionReason:'Verified error'},{id:'b',decision:'Review',coordinates:null}],measurement:{squareMetres:40},canProceed:false};
-  const {value,receipt}=tableOutput({...newTableOutput(),id:'table'},{coverage},'run');
-  assert.deepEqual(value,{...coverage,pointTable:true});value.rows[0].excluded=false;assert.equal(coverage.rows[0].excluded,true);
-  assert.match(receipt.facts,/prov:wasInformedBy <urn:fieldwork:run:run:coverage:coverage>/);
-  const w=coverageExercise();w.nodes.push({...newTableOutput(),id:'table',x:0,y:0});w.edges.push({id:'reviewed',from:'coverage',to:'table',port:'coverage'});
-  assert.doesNotThrow(()=>executionPlan(w));w.edges.push({id:'mixed',from:'observations',to:'table',port:'points'});assert.throws(()=>validateWorkflow(w),/either a coverage check/);
+test('a saved table fed by a coverage check opens as one fed by a clip',()=>{
+  // `coverage_check` was retired on 2026-10-21. It had its own result kind, which a table copied
+  // through with its review decisions and exclusion reasons; a table now receives points like
+  // everything else. What this pins is that a workflow saved under the old contract still opens:
+  // the node becomes a clip, and the edge that fed the table's `coverage` port becomes a points
+  // edge rather than a connection to a port that no longer exists.
+  const saved={schema:'fieldwork/workflow/1',id:'w',label:'Saved',nodes:[
+    {id:'scope',type:'study_area',x:0,y:0,params:{source:'drawn',label:'Area',selectionMode:'bbox',
+      geometry:{type:'Polygon',coordinates:[[[25.89,-24.7],[25.91,-24.7],[25.91,-24.68],[25.89,-24.68],[25.89,-24.7]]]}}},
+    {id:'observations',type:'point_input',x:0,y:0,params:{label:'Records',data:{type:'FeatureCollection',features:[]}}},
+    {id:'coverage',type:'coverage_check',x:0,y:0,params:{label:'Check spatial coverage',
+      exclusions:[{sourceNodeId:'observations',featureId:'a',signature:'sig',reason:'Verified error'}]}},
+    {id:'table',type:'table_output',x:0,y:0,params:{label:'Table'}},
+  ],edges:[
+    {id:'e1',from:'scope',to:'coverage',port:'area'},{id:'e2',from:'observations',to:'coverage',port:'points'},
+    {id:'e3',from:'coverage',to:'table',port:'coverage'},
+  ]};
+  const opened=validateWorkflow(saved);
+  const migrated=opened.nodes.find(n=>n.id==='coverage');
+  assert.equal(migrated.type,'clip_points_to_area');
+  assert.equal(migrated.sourceMigration.fromType,'coverage_check');
+  assert.equal(opened.edges.find(e=>e.id==='e3').port,'points');
+  // A table has no area port, so nothing is added for it; a map in the same position gets one.
+  // The judgement could not be translated, so it is carried rather than dropped.
+  assert.equal(migrated.sourceMigration.carriedExclusions.length,1);
+  assert.equal(migrated.sourceMigration.carriedExclusions[0].reason,'Verified error');
+  assert.equal(migrated.params.exclusions,undefined);
 });
 
 test('Table combines layers with duplicate record IDs while preserving attributes',async()=>{

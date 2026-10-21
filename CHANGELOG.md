@@ -5,6 +5,27 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **Check spatial coverage is retired.** It asked where each point stood in relation to the study
+  area and passed every one of them on, labelled. *Keep points inside the area* asks the same
+  question and acts on the answer, and a map draws inside and outside without being asked — so two
+  widgets had grown into the question this one existed to answer. A saved workflow migrates on
+  open: the node becomes a clip, an edge into a map's or table's *coverage* port becomes an
+  ordinary points edge, and the rewrite is stamped so the change is visible rather than silent. A
+  check that held **more than one point layer** cannot become one clip, so the loader refuses and
+  names the node instead of quietly dropping a layer. **What goes with it:** the ability to exclude
+  a single record by judgement with a written reason, pinned to a signature of the record's content
+  so that editing the record lapsed the exclusion. Nothing replaces that; exclusions in saved files
+  are carried in the migration stamp, inert, and the gap is recorded in the TODO.
+- **Point symbols carry a dark outline.** Over a terrain basemap, whose colours run through the
+  same values as the categorical palette, a hollow mark was nearly invisible. The outline is a
+  neutral rather than a seventh hue, and a checkbox on the Map turns it off for a pale ground or a
+  printed figure.
+- **The example ledger read a copy of the example list.** `scripts/widget-evidence.mjs` held a
+  hand-written map of nine examples while the application offers twelve, and counted one John Snow
+  example four times under four keys. So the ledger reported that `coverage_check` had no worked
+  example while the Spatial coverage exercise was built around it, and inflated `voronoi`,
+  `clip_polygons`, `reproject` and `summarize_points_to_polygon`. There is now one list,
+  `src/example-templates.ts`, which the application and the ledger both read.
 - **A new primitive: Keep points inside the area.** A health-facility search over North Kivu
   returned 961 places, of which **526 stood in Uganda and Rwanda** — every source is bounded by a
   rectangle, and a rectangle is not a jurisdiction. The membership test existed in five modules

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {coverageExercise,coverageFacts,checkCoverage,featureSignature} from '../build/spatial-coverage.js';
+import {clipExercise} from '../build/clip-points.js';
 import {newMapOutput,mapOutput} from '../build/map-output.js';
 import {executeWorkflow,executionPlan,validateWorkflow,nodeInputs} from '../build/core.js';
 import {pointLayers} from '../build/point-layers.js';
@@ -8,7 +8,7 @@ import {defaultSpatialReference} from '../build/spatial-reference.js';
 import {newAreaMeasurement} from '../build/area-measurement.js';
 
 test('Map displays enriched study area and every record without inferring acceptance or dropping outside points',async()=>{
-  const w=coverageExercise();w.nodes=w.nodes.slice(0,2);w.edges=[];
+  const w=clipExercise();w.nodes=w.nodes.slice(0,2);w.edges=[];
   w.nodes.push({...newAreaMeasurement(),id:'measure',x:300,y:0},{...newMapOutput(),id:'map',x:600,y:0});
   w.edges=[{id:'a',from:'scope',to:'measure',port:'area'},{id:'b',from:'measure',to:'map',port:'area'},{id:'c',from:'observations',to:'map',port:'points'}];
   let calls=0;const run=await executeWorkflow(w,async()=>{calls++;return [{subject:'urn:fieldwork:area:scope',predicate:'urn:fieldwork:readyForSpatialAnalysis',object:'true'}];});
@@ -27,32 +27,71 @@ test('Map displays enriched study area and every record without inferring accept
 });
 
 test('geographic sources default to WGS84 with explicit serialization order and reject unsupported relabeling',()=>{
-  const w=validateWorkflow(coverageExercise());for(const n of w.nodes.filter(n=>['area','observations'].includes(n.type)))assert.deepEqual(n.params.spatialReference,defaultSpatialReference());
+  const w=validateWorkflow(clipExercise());for(const n of w.nodes.filter(n=>['area','observations'].includes(n.type)))assert.deepEqual(n.params.spatialReference,defaultSpatialReference());
   w.nodes[0].params.spatialReference.geodeticCRS='EPSG:3857';assert.throws(()=>validateWorkflow(w),/changing a CRS label/);
   w.nodes[0].params.spatialReference=defaultSpatialReference();w.nodes[1].params.spatialReference.axisOrder='latitude-longitude';assert.throws(()=>validateWorkflow(w),/longitude\/latitude/);
 });
 
-test('expandable point inputs preserve layer identity and exclusions when record IDs overlap',async()=>{
-  const w=coverageExercise(),second=structuredClone(w.nodes[1]);second.id='second';second.params.label='Second layer';w.nodes.push(second);w.nodes[2].params.pointInputCount=2;
-  assert.throws(()=>executionPlan(w),/points_2 input connected/);w.edges.push({id:'extra',from:'second',to:'coverage',port:'points_2'});
-  assert.deepEqual(nodeInputs(w.nodes[2]).map(([port])=>port),['area','points','points_2']);assert.doesNotThrow(()=>executionPlan(w));
-  const layers=[w.nodes[1],second].map(n=>({...n.params.data,sourceNodeId:n.id,label:n.params.label})),area={areaId:'urn:fieldwork:area:scope',geometryId:'urn:fieldwork:geometry:scope',boundary:w.nodes[0].params.geometry};
-  const outside=layers[0].features.find(f=>f.id==='outside');w.nodes[2].params.exclusions=[{sourceNodeId:'observations',featureId:'outside',signature:featureSignature(outside),reason:'Layer-specific error'}];
-  const facts=coverageFacts(w.nodes[2],area,{layers},'test');assert.equal(new Set(facts.rows.map(r=>r.id)).size,8);assert.equal(new Set(facts.rows.map(r=>r.iri)).size,8);
-  assert.equal(facts.rows.filter(r=>r.excluded).length,1);assert.equal(facts.rows.find(r=>r.sourceNodeId==='second'&&r.recordId==='outside').excluded,false);
-  const computed=await checkCoverage(w.nodes[2],area,{layers},async()=>facts.rows.map(r=>({subject:r.iri,predicate:'urn:fieldwork:coverageDecision',object:'urn:fieldwork:'+(r.excluded?'Excluded':['Outside','MissingLocation'].includes(r.relation)?'Review':'Accept')})),'test');
-  assert.equal(computed.value.retainedLayers[0].data.features.length,3);assert.equal(computed.value.retainedLayers[1].data.features.length,4);assert.equal(computed.value.retainedData.features.length,7);assert.equal(computed.value.reviewCount,3);
-  assert.equal(computed.value.retainedLayers[1].data.features[2].id,'outside');
-  w.edges.at(-1).from='observations';assert.throws(()=>validateWorkflow(w),/once per operation/);
-  w.nodes[2].params.pointInputCount=9;assert.throws(()=>validateWorkflow(w),/1–8/);
+test('expandable point inputs preserve layer identity when record IDs overlap',async()=>{
+  // Written against `coverage_check` until it was retired on 2026-10-21. The dynamic point ports
+  // are `map_output`'s too, and the property under test -- two layers whose records share ids stay
+  // distinct -- belongs to the port machinery rather than to the widget that used to expand it.
+  // What is gone with the widget is the exclusion half: these layers can no longer carry a
+  // reviewer's judgement, and nothing asserts one.
+  const w=clipExercise();
+  const second=structuredClone(w.nodes[1]);second.id='second';second.params.label='Second layer';w.nodes.push(second);
+  const map=w.nodes.find(n=>n.type==='map_output');map.params.pointInputCount=2;
+  // A map SKIPS an unconnected point port rather than refusing, which is what it did before the
+  // coverage check was retired; the refusal this test used to make was that widget's.
+  assert.doesNotThrow(()=>executionPlan(w));
+  w.edges.push({id:'extra',from:'second',to:map.id,port:'points_2'});
+  assert.deepEqual(nodeInputs(map).map(([port])=>port).filter(p=>p==='points'||/^points_\d+$/.test(p)),['points','points_2']);
+  assert.doesNotThrow(()=>executionPlan(w));
+  const layers=[w.nodes[1],second].map(n=>({...n.params.data,sourceNodeId:n.id,label:n.params.label}));
+  const area={areaId:'urn:fieldwork:area:scope',geometryId:'urn:fieldwork:geometry:scope',boundary:w.nodes[0].params.geometry,label:'Area'};
+  const drawn=mapOutput(map,{area,points:{layers}},'test').value;
+  assert.equal(new Set(drawn.rows.map(r=>r.id)).size,8,'eight records across two layers, none colliding');
+  assert.equal(drawn.rows.filter(r=>r.recordId==='outside').length,2,'the same record id in both layers');
+  assert.deepEqual(drawn.pointLayers.map(l=>l.sourceNodeId),['observations','second']);
+  // The map's own `points` port is fed by the clip here, so duplicating THAT is what the refusal
+  // is about: one source may not occupy two of a map's point slots.
+  w.edges.at(-1).from=w.nodes.find(n=>n.type==='clip_points_to_area').id;
+  assert.throws(()=>validateWorkflow(w),/once per operation/);
+  map.params.pointInputCount=9;assert.throws(()=>validateWorkflow(w),/1–8/);
+  const outside=layers[0].features.find(f=>f.id==='outside');
   assert.throws(()=>pointLayers({layers:[{sourceNodeId:'large',features:Array(2001).fill(outside)}]}),/2,000 records combined/);
 });
 
-test('Map accepts a coverage check as the sole input and preserves decisions without recomputation',()=>{
-  const w=coverageExercise();w.nodes.push({...newMapOutput(),id:'map',x:700,y:0});w.edges.push({id:'review',from:'coverage',to:'map',port:'coverage'});
-  assert.deepEqual(executionPlan(w).map(n=>n.id),['scope','observations','coverage','map']);
-  const coverage={kind:'spatial-coverage',rows:[{id:'outside',relation:'Outside',excluded:true,exclusionReason:'Verified error'}],checkNodeId:'coverage',areaNodeId:'scope',measurement:{squareMetres:4}};
-  const {value,receipt}=mapOutput(w.nodes.at(-1),{coverage},'test');assert.deepEqual(value,coverage);assert.equal(receipt.kind,'presentation');assert.equal(receipt.rules,'');assert.match(receipt.facts,/fw:MapView/);
-  value.rows[0].excluded=false;assert.equal(coverage.rows[0].excluded,true);
-  w.edges.push({id:'mixed',from:'scope',to:'map',port:'area'});assert.throws(()=>validateWorkflow(w),/either a coverage check/);
+test('a map saved with a coverage check opens with the clip that replaced it',()=>{
+  // A map used to take a coverage value as its SOLE input and pass its review decisions through
+  // without recomputing them. `coverage_check` was retired on 2026-10-21, nothing produces such a
+  // value, and the port went with it: a port nothing can fill is not a port a map owes anybody.
+  const saved=structuredClone(clipExercise());
+  const clip=saved.nodes.find(n=>n.type==='clip_points_to_area');
+  clip.type='coverage_check';clip.params={label:'Check spatial coverage',exclusions:[]};
+  saved.edges.find(e=>e.from===clip.id&&e.port==='points').port='coverage';
+  const opened=validateWorkflow(saved);
+  assert.equal(opened.nodes.find(n=>n.id===clip.id).type,'clip_points_to_area');
+  assert.equal(opened.edges.find(e=>e.from===clip.id).port,'points');
+  assert.doesNotThrow(()=>executionPlan(opened));
+  // And the map declares no coverage port for anything to connect to.
+  const map=opened.nodes.find(n=>n.type==='map_output');
+  assert.equal(nodeInputs(map).some(([,type])=>type==='coverage-check'),false);
+});
+
+test('a map fed only by a coverage check keeps its boundary after migration',()=>{
+  // The coverage value CARRIED the study area, so a map wired to it alone had no `area` edge.
+  // Rewriting the port and stopping there left the map with points and no boundary, and the run
+  // stopped on "Cannot read properties of undefined (reading 'boundary')" -- found on the frozen
+  // v1 fixture, which is exactly this shape.
+  const saved=structuredClone(clipExercise());
+  const clip=saved.nodes.find(n=>n.type==='clip_points_to_area');
+  clip.type='coverage_check';clip.params={label:'Check spatial coverage',exclusions:[]};
+  saved.edges=saved.edges.filter(e=>!(e.to==='map'&&e.port==='area'));
+  saved.edges.find(e=>e.from===clip.id&&e.port==='points').port='coverage';
+  const opened=validateWorkflow(saved);
+  const area=opened.edges.find(e=>e.to==='map'&&e.port==='area');
+  assert.ok(area,'the map was given the area the clip reads');
+  assert.equal(area.from,opened.edges.find(e=>e.to===clip.id&&e.port==='area').from);
+  assert.doesNotThrow(()=>executionPlan(opened));
 });

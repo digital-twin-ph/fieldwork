@@ -40,6 +40,18 @@ test('a CSV of UTM easting and northing imports as CRS84 without a second widget
   await expect(page.locator('#input-summary')).toContainText('2 draft');
   await page.locator('#input-apply').click();
 
+  // The two imported points are in UTM zone 30, off West Africa, and the exercise's study area is
+  // a box in Gaborone -- so the `clip_points_to_area` the Spatial coverage exercise gained on
+  // 2026-10-21 has nothing to keep and refuses the run by design. This test is about the INGEST,
+  // so the clip and the map it feeds come off the canvas rather than the refusal being weakened.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="clip"]').click();
+  await page.locator('#delete-node').click();
+  // The map keeps its area and takes the records directly, so the workflow still has something to
+  // display -- a workflow with no output is "Not ready to run".
+  await page.locator('.react-flow__node[data-id="map"]').click();
+  await page.locator('#map-add-layer').selectOption('observations');
+
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   const node=saved.nodes.find(n=>n.id==='observations');
   const got=node.params.data.features.map(f=>f.geometry.coordinates);

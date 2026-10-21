@@ -11,12 +11,13 @@ const SQUARE={type:'Polygon',coordinates:[[[0,0],[2,0],[2,2],[0,2],[0,0]]]};
 const point=(id,lon,lat)=>({type:'Feature',id,properties:{name:id},geometry:lon===undefined?null:{type:'Point',coordinates:[lon,lat]}});
 const layer=(...features)=>({type:'FeatureCollection',features});
 
-test('the points inside come out, and the three relations are counted apart',()=>{
+test('the points inside come out, and the four outcomes are counted apart',()=>{
   const got=clipPointsToArea(layer(point('in',1,1),point('on',2,1),point('out',5,5),point('nowhere')),SQUARE,true);
   assert.deepEqual(got.collection.features.map(f=>f.id),['in','on']);
   assert.equal(got.inside,1);
   assert.equal(got.boundary,1,'a point ON the outline is its own relation, not a rounding of the other two');
-  assert.equal(got.outside,2,'outside and unplaceable both fail the test, and the receipt says which');
+  assert.equal(got.outside,1,'strictly outside');
+  assert.equal(got.missing,1,'unplaceable, which is a different failure and a different fix');
 });
 
 test('strict containment is the other defensible answer, and it is a choice',()=>{
@@ -44,7 +45,7 @@ test('the receipt names the predicate, the choice and the counts',()=>{
   assert.match(receipt.facts,/fw:insideCount 1; fw:boundaryCount 1; fw:outsideCount 1/);
   assert.match(receipt.facts,/fw:recordCount 2/);
   assert.match(receipt.facts,/prov:used <urn:fieldwork:run:run1:output:area>, <urn:fieldwork:run:run1:output:points>/);
-  assert.match(receipt.method,/the same one the coverage check and the map use/);
+  assert.match(receipt.method,/the same one the map uses/);
 });
 
 // "clip_points_to_area can have a knob that shows which points are outside but still exclude them
@@ -56,10 +57,16 @@ test('the excluded points come back for drawing, separately from what is passed 
   assert.deepEqual(got.excluded.map(f=>f.id),['out','far'],'and what was set aside is available to draw');
 });
 
-test('a record with no coordinates is counted, and is not offered for drawing',()=>{
+test('a record with no coordinates is counted apart, and still travels',()=>{
   const got=clipPointsToArea(layer(point('in',1,1),point('nowhere')),SQUARE,true);
-  assert.equal(got.outside,1,'unplaceable fails the test like anything else');
-  assert.deepEqual(got.excluded.map(f=>f.id),[],'but there is nowhere to draw it, so it is not pretended otherwise');
+  // Not outside: unplaceable. A record nobody could locate and a record outside the area are
+  // different failures and call for different work, and the receipt says both numbers.
+  assert.equal(got.outside,0);
+  assert.equal(got.missing,1);
+  // Carried, so a map can LIST it as a record it could not plot. It used to be dropped here, and
+  // the only trace left downstream was a number -- which is the silent loss a clip exists to
+  // prevent, not to commit.
+  assert.deepEqual(got.excluded.map(f=>f.id),['nowhere']);
 });
 
 test('a boundary point refused by the strict setting is still shown',()=>{

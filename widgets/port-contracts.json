@@ -861,10 +861,6 @@
               "decisions"
             ],
             [
-              "coverage",
-              "coverage-check"
-            ],
-            [
               "raster",
               "raster"
             ],

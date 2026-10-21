@@ -504,6 +504,27 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**A record can no longer be excluded by judgement, and nothing replaces that.** `coverage_check`
+was retired on 2026-10-21 at the practitioner's decision, as redundant with `clip_points_to_area`
+and the map — which it was, for the SPATIAL question. It also did something no widget now does:
+
+- A reviewer could exclude one record with a **written reason**, and the reason travelled into the
+  N3 as `fw:exclusionReason`.
+- The exclusion was pinned to a **signature of the record's whole content**, so editing the record
+  lapsed the exclusion instead of letting a stale judgement ride on changed data.
+- The decision came from an **N3 rule the reasoner evaluated** — `{ ?r fw:excluded true. } => { ?r
+  fw:coverageDecision fw:Excluded. }` — rather than from code, which is one of the few places this
+  application reasoned rather than computed.
+
+A clip answers "is this point in the area". It cannot answer "this record is wrong, and here is
+why", and the two are different questions. Saved workflows that held exclusions carry them in the
+migration stamp, inert, so nothing was lost from a file — but there is no way to make a new one.
+
+What would settle it: whether the capability belongs to a widget of its own (a record review that
+takes any point layer and emits decisions with reasons), to the existing `apply_ruleset`, or
+nowhere because a judgement about a record belongs in the source data. That is a question for the
+practitioner, and it is recorded here rather than assumed.
+
 **Worked examples as repositories, starting with Snow's South London water supply study.** The
 practitioner, 2026-10-20: *"We also have the potential to set up a downloadable worked example from
 a repo - the water provider study by John Snow in South London"*, and *"worked examples do not have

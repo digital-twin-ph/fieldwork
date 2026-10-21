@@ -45,6 +45,8 @@ export interface MapValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-m
   /** What the fill channel stands for on this map, so the renderer draws classes rather than
    *  knowing the variable. */
   fillEncoding?:FillEncoding;
+  /** Whether point marks are drawn over a dark halo, so they read on any basemap. */
+  markHalo?:boolean;
   layerNames?:Record<string,string>; pointLayers:LayerSummary[]; sourceNodeId:string|null}
 export interface TableValue {kind:'point-table'; rows:PointRow[]; centers:never[]; spatialReference:AnySpatialReference; pointLayers:LayerSummary[]; pointTable?:boolean}
 export interface Receipt {nodeId:string; references?:EvidenceReference[]; ruleset?:import('./rulesets.js').RulesetCitation; kind?:'computation'|'presentation'; facts:string; rules:string; input:string; conclusions:ReasonerQuad[]; source?:string; method?:string; measurement?:Measurement; areaId?:string; geometryId?:string; exclusions?:Exclusion[]}

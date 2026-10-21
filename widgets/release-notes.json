@@ -244,16 +244,19 @@
    "migrationFrom": []
   },
   "coverage_check": {
-   "version": "0.1.0",
-   "released": "2026-10-06",
+   "version": "0.2.0",
+   "released": "2026-10-21",
    "changes": [
     {
-     "kind": "baseline",
-     "description": "First registry snapshot of existing behavior; no implementation change or historical version reconstruction."
+     "kind": "major",
+     "description": "Retired. It asked where each point stood in relation to the study area and passed every one of them on, labelled; `clip_points_to_area` asks the same question and acts on the answer, and a map draws inside and outside without being asked. Two widgets had grown into the question this one existed to answer, so it was answering nothing on its own. The practitioner, 2026-10-21, closing admission criterion D2: \"Let's retire coverage check.\" A saved node migrates to `clip_points_to_area`, stamped, and an edge into a map's `coverage` port becomes an ordinary `points` edge. The Spatial coverage exercise it was built around keeps its four records -- inside, on the boundary, outside, and one with no location -- and now demonstrates the clip.",
+     "breaking": true,
+     "migration": "Automatic and stamped. Recorded exclusions cannot be translated -- the replacement has nowhere to put a judgement -- so they travel in the migration stamp as `carriedExclusions` and the Inspector says they are inert. They are preserved rather than acted on, because dropping them on open would be the silent rewrite retirement exists to prevent."
     }
    ],
-   "breaking": false,
-   "migrationFrom": []
+   "breaking": true,
+   "migrationFrom": [],
+   "replacementCandidate": "urn:fieldwork:widget:clip_points_to_area"
   },
   "donut_geomask": {
    "version": "0.1.0",
@@ -354,14 +357,26 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.10.0",
-   "released": "2026-10-15",
+   "version": "0.12.0",
+   "released": "2026-10-21",
    "changes": [
     {
      "kind": "major",
-     "description": "A map declares every layer port it can draw and the practitioner wires what they have. The inputMode parameter no longer decides which ports exist, which presentation is offered or whether a basemap can be chosen; the renderer is read from the connections. The practitioner's direction of 2026-10-14 -- \"there is no such thing as mode, only layers\" -- which had been written into docs/widgets/map_output.md and into the layer vocabulary of the receipts while the interface kept asking the question.",
+     "description": "The `coverage` port is gone with the widget that filled it: `coverage_check` was retired on 2026-10-21 and nothing produces a coverage value, so a map no longer offers a port nothing can fill. A map that was fed a coverage check now draws the clip's points like any other layer.",
      "breaking": true,
-     "migration": "None required for a saved workflow. The stored inputMode is read last and never written."
+     "migration": "Automatic and stamped, where the coverage check held one point layer. Where it held more, the loader refuses and names the node: one clip takes one layer."
+    },
+    {
+     "kind": "minor",
+     "description": "Point symbols are drawn over a dark outline, so they read on any basemap. Over OpenTopoMap terrain, whose colours run through the same values as the categorical palette, a hollow mark was nearly invisible. The outline is a neutral rather than a seventh hue -- it separates the symbol from the ground without competing with the layer colours -- and it is a checkbox, on by default, because a pale ground or a printed figure may not want it.",
+     "breaking": true,
+     "migration": "None. A saved map has no `markHalo` and draws the outline."
+    },
+    {
+     "kind": "patch",
+     "description": "Corrects 0.11.0's ontology.emits, which listed the encoding terms asserted by src/map-communication.ts. A release declares what the module named in implementation.definition asserts, and this widget's definition is src/core.ts#TYPES.",
+     "breaking": true,
+     "migration": "None."
     }
    ],
    "breaking": true,

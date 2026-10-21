@@ -31,20 +31,20 @@
  * Usage: node scripts/widget-evidence.mjs [--write]
  */
 import {readFileSync,writeFileSync} from 'node:fs';
-import {exampleWorkflow} from '../build/core.js';
-import {johnSnowExample} from '../build/john-snow.js';
-import {oldNalediWorkflow} from '../build/old-naledi.js';
-import {geoprivacyExample} from '../build/geoprivacy-example.js';
-import {seaLevelExample} from '../build/sea-level-example.js';
-import {rasterExample} from '../build/raster-example.js';
+import {WORKED_EXAMPLE_KEYS,EXAMPLE_TEMPLATES} from '../build/example-templates.js';
 
 const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');
 const read=path=>JSON.parse(readFileSync(`${root}/${path}`,'utf8'));
 
-const examples={heat:exampleWorkflow(),'old-naledi':oldNalediWorkflow(),geoprivacy:geoprivacyExample(),
-  'sea-level':seaLevelExample(),raster:rasterExample()};
-for(const key of ['snow-voronoi','snow-isochrone','snow-geoprivacy','snow-epidemic-curve'])
-  try{examples[key]=johnSnowExample(key);}catch{/* an example this build does not carry */}
+// EVERY worked example the application offers, read from the registry the application itself
+// uses. This was a hand-written map of nine, and the application had twelve: `coverage`,
+// `hagelloch`, `rulesets` and `snow-extent` were missing, so this ledger reported that
+// `coverage_check` had no example use while the Spatial coverage exercise was built around it.
+// A ledger that reads a copy of a list reports on the copy.
+const examples=Object.fromEntries(WORKED_EXAMPLE_KEYS.flatMap(key=>{
+  try{return [[key,EXAMPLE_TEMPLATES[key]()]];}
+  catch{return [];/* an example this build does not carry */}
+}));
 
 /** A micro_workflow node is its members, so its members are used wherever it is. */
 const membersOf=node=>(node.params?.composition?.members??[]).map(member=>member.type??member.nodeType)

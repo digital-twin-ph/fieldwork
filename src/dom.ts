@@ -30,6 +30,7 @@ export interface SelectorElements {
   '#fit-button':HTMLButtonElement;
   '#download-evidence':HTMLButtonElement;
   '#result-count':HTMLSpanElement;
+  '#result-quality':HTMLButtonElement;
   '#area-close':HTMLButtonElement;
   '#draw-bbox':HTMLButtonElement;
   '#draw-polygon':HTMLButtonElement;

@@ -1,8 +1,8 @@
 {
  "schema": "fieldwork/admission-state/1",
  "note": "Admission is a claim made at a point in time against a stated standard, not a permanent property. This is a developmental evaluation: the criteria change as lessons are learned, so what passed D1 at widget 20 may fail the D1 of widget 51. Treating admission as permanent is what left three implementations of one operation, nine example-bound widgets and four port names encoding a use in a registry whose every member had passed its own review honestly. The widget audit's own Method section is where the permanence came from: D3 and D4 were sampled because 'doing it retroactively for all of them is a separate task', and D5, D6, D8 and D9 were declared 'not applicable retroactively'. That separate task was never scheduled. So each criterion now records when it last CHANGED and when the set was last SWEPT against it. A criterion changed after its last sweep is a re-admission debt: validate:admission fails, and the only ways to clear it are to sweep or to record why the change does not reach the existing set.",
- "measuredAt": "2026-10-20",
- "widgets": 54,
+ "measuredAt": "2026-10-21",
+ "widgets": 55,
  "criteria": [
   {
    "id": "D1",
@@ -123,10 +123,10 @@
   }
  ],
  "setChanged": {
-  "at": "2026-10-20",
-  "registry": 54,
+  "at": "2026-10-21",
+  "registry": 55,
   "live": 47,
-  "retired": 7,
-  "note": "clip_points_to_area added: the point-in-polygon OPERATION, which existed as a predicate in five modules and as a report in two widgets and as a step in none. The set has changed, so every criterion swept before today was swept against a set that no longer exists -- D1 (what it is), D2 (whether it duplicates another), D7 and D10 in particular, because a new primitive is exactly the kind of thing those ask about. None has been re-swept here; recording the change is what this field is for, and the sweeps are the work it names. What can be said without a sweep: it is primitive, it duplicates no widget's output -- coverage_check emits a review and summarize_points_to_polygon a table -- and it shares its predicate with five modules rather than adding a sixth implementation."
+  "retired": 8,
+  "note": "TWO changes in one day. coverage_check retired into clip_points_to_area, closing D2 on the practitioner's decision: a widget that REPORTED a membership and a widget that ACTED on one were the same question asked twice. And deduplicate_points added, which D2 should be asked about directly -- it is near compare_point_sets, which pairs two layers BY ARRAY POSITION for geoprivacy and is not a record matcher, and near measure_distance, whose nearest-neighbour search it reuses rather than repeats. That reading was done when the widget was built and is recorded in its release; it has not been swept as a criterion here. D1, D7 and D10 were last swept against a set that no longer exists."
  }
 }

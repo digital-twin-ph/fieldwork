@@ -1,0 +1,107 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:deduplicate_points",
+ "version": "0.1.0",
+ "nodeType": "deduplicate_points",
+ "title": "Deduplicate point records",
+ "released": "2026-10-21",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['deduplicate_points']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   },
+   {
+    "name": "points_2",
+    "type": "points"
+   }
+  ],
+  "output": "points",
+  "dynamicInputs": {
+   "kind": "point-layers",
+   "minimum": 2,
+   "maximum": 8,
+   "implementation": "src/core.ts#nodeInputs"
+  },
+  "note": "Two layers is the floor, not the shape: comparison is across sources, so one layer has nothing to compare with."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:RecordDeduplication",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:LinkageCandidate",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "The vocabulary follows EPIAI RECORDLINK in the epi-info-ai repository rather than inventing a second set of words: candidate, class, thresholds, decision. Every threshold the run used is asserted, and every pair that was not a non-match is named with its score, its distance and its name similarity.",
+  "emits": {
+   "classes": [
+    "LinkageCandidate",
+    "PointDataset",
+    "RecordDeduplication"
+   ],
+   "properties": [
+    "awaitingDecisionCount",
+    "blockDistanceM",
+    "blockedPairCount",
+    "candidateClass",
+    "candidateScore",
+    "comparedPairCount",
+    "decisionReason",
+    "fuzzyThreshold",
+    "linkageCandidate",
+    "matchThreshold",
+    "matchedDistanceM",
+    "matchedName",
+    "matchedPairCount",
+    "mergedRecordCount",
+    "nameComparable",
+    "nameField",
+    "nameMatchMethod",
+    "nearDistanceM",
+    "recordCount",
+    "reviewThreshold"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/deduplicate-points.ts",
+   "src/deduplicate-ui.ts"
+  ],
+  "definition": "src/deduplicate-points.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Two sources over one study area draw the same hospital twice, and a count of facilities is then wrong by however many of those there are. This compares records ACROSS sources and merges the pairs that agree, by the contracts of EPIAI RECORDLINK: blocking first, so pairs beyond a declared distance are never compared; binary contributions, so a similarity of 0.87 against a threshold of 0.88 contributes nothing rather than 0.87; and three classes rather than merge-or-not. A pair that passes both tests merges on its own. A pair that passes one WAITS FOR A PERSON and stays two records until somebody answers with a reason, which is pinned to a signature of the pair so that editing either record lapses the judgement. Missing never agrees with missing. Every threshold is a parameter and every parameter reaches the receipt. The review band is adjudicated in a dialog that shows both records side by side with every attribute each carries, the agreeing fields marked apart from the differing ones: the first version listed the pairs in the 292-pixel Inspector with two names and a distance, and the practitioner's answer was that it was unclear what was being adjudicated.",
+   "incompatibility": null,
+   "migration": "None; a new widget."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Jaro-Winkler is checked against the textbook values for martha/marhta and dwayne/duane, and the blocking, the three classes, the one-record-per-source rule and the lapsing of a decision are each pinned by a test. What is NOT established is the thresholds: the ones that ship are proposals, and what they should be is a measurement on the practitioner's own sources rather than a default worth trusting."
+ }
+}

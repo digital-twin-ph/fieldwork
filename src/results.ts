@@ -134,4 +134,9 @@ export function dataIssuesOf(value:unknown,nodeId:string):import('./authored-app
   if(entity?.issuedBy!==nodeId)return [];
   return Array.isArray(entity.dataIssues)?entity.dataIssues as import('./authored-application.js').DataIssue[]:[];
 }
-export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; provenanceN3:string; outputs:Output[]; trace:{nodeId:string; type:string; milliseconds:number}[]; receipts:Receipt[]; runId:string; engine:string; runAt:string}
+/** `linkages` is what a deduplication found, keyed by the node that found it. A display node's
+ *  result is in `outputs`; this is the first INTERMEDIATE result the interface has to show,
+ *  because the review band is a question the widget asks and the answer belongs on the node
+ *  rather than in whichever result tab happens to be open. */
+export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; provenanceN3:string; outputs:Output[]; trace:{nodeId:string; type:string; milliseconds:number}[]; receipts:Receipt[]; runId:string; engine:string; runAt:string;
+  linkages?:Record<string,import('./deduplicate-points.js').DeduplicateResult>}

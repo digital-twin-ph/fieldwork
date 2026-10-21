@@ -5,6 +5,36 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **A result table no longer supplies a value for a missing one.** Cells with nothing in them read
+  *"Not supplied"* — a phrase a reader cannot tell from a source that contains those words, which
+  sorted and matched the row filter as if it were data, and which said the same thing about a field
+  a record **does not have** as about a field it has and left **empty**. The cell is now empty and
+  marked as absent, the two kinds are kept apart, and how many are absent is a property of the
+  column, reported where a column is reported. The receipt was silent about an absent field while
+  the table showed a confident phrase for it; it now asserts `fw:fieldAbsent` for a field the
+  record does not have and `fw:missingValue` for one it has and left empty, **for every column of
+  every record**.
+- **An output table gets the data-quality check an input gets.** The same dialog — the column
+  profiles, the mismatches, and the *Shapes and gaps* view with its missingness and its co-absence
+  between columns — opens over a result table, which is the last point before a figure or a count
+  leaves the application, and is where OSM's many absent fields are actually read. It opens as a
+  **report**: a result is not repaired, you repair the input it came from, so there is nothing to
+  press.
+- **A new primitive: Deduplicate point records.** Two sources over one study area draw the same
+  hospital twice, and a count of facilities is then wrong by however many of those there are.
+  This compares records **across** sources and merges the pairs that agree. It asks two questions
+  of each pair — do the names agree, and are they in the same place — and each agreement is worth
+  one point. **Two merges on its own; one asks you.** A pair in the review band stays two records
+  until somebody answers with a reason, and that reason is pinned to the records as they were, so
+  editing either one lapses the judgement rather than letting a stale answer ride on changed data.
+  The method is the one in the practitioner's own `EPIAI RECORDLINK`: blocking first, so pairs
+  beyond a declared distance are never compared; binary contributions, so a similarity of 0.87
+  against a threshold of 0.88 contributes nothing rather than 0.87; and a missing value that never
+  agrees with another missing value. Every threshold is a knob, and the receipt carries all of
+  them plus each candidate's score, distance and name similarity — so a figure reporting a
+  deduplicated count can say what produced it. **The thresholds that ship are proposals, not
+  measurements:** what they should be is a property of your sources, and the first run on real
+  data is what answers it.
 - **Results is a tab, beside Workflow and N3.** *"It would be easier to see the whole workflow or
   the whole Result panel than to see half of each."* One view is on screen at a time, so the canvas
   gets the work area it had been sharing — 767 pixels where the split gave it 432, at a

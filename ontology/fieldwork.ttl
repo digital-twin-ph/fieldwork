@@ -712,7 +712,12 @@ fw:exclusionReason a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:attribute a owl:ObjectProperty;
   rdfs:comment "Links a feature to an input attribute described by a local field key and rdf:value, or an explicit missing-value flag. User field keys are not assumed to be shared domain concepts.".
 fw:fieldKey a owl:DatatypeProperty; rdfs:range xsd:string.
-fw:missingValue a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:missingValue a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:comment "The record HAS this field and it is null or empty. Somebody wrote the column and left it blank.".
+fw:fieldAbsent a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:comment "The record does not have this field at all. Distinct from fw:missingValue because the two are different findings with different remedies, and because a reader of a receipt must not have to assume which one a silence meant. Added 2026-10-21, when a table was showing the words 'Not supplied' for both while the receipt asserted neither.".
+fw:absentFieldCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+fw:emptyValueCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
 
 fw:TableView a owl:Class;
   rdfs:subClassOf prov:Activity;
@@ -1170,3 +1175,38 @@ fw:tableMissingValueCount a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs
 
 # A keyed table is not a point dataset. This is the distinction the admission review turns on.
 fw:DataTable owl:disjointWith fw:PointDataset.
+
+# RECORD LINKAGE. The vocabulary follows `EPIAI RECORDLINK` in the epi-info-ai repository, which
+# the practitioner wrote and pointed this work at on 2026-10-21 rather than let it invent a second
+# set of words for the same thing. A candidate is a pair the blocking rule retained; a class is
+# what the thresholds proposed; a decision is what a person answered where the proposal was not
+# confident enough to act on.
+fw:RecordDeduplication a owl:Class; rdfs:subClassOf prov:Activity;
+  rdfs:label "Record deduplication";
+  rdfs:comment "Comparing records across point sources and merging the pairs that agree. Compares across sources only: duplicates within one source are not looked for.".
+fw:LinkageCandidate a owl:Class;
+  rdfs:label "Linkage candidate";
+  rdfs:comment "One pair of records the blocking rule retained, with what each comparison said about it. A candidate is not a finding: the class it was given says whether the thresholds were confident enough to act.".
+fw:nameField a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:nameMatchMethod a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "Either exact after normalisation, or the Jaro-Winkler similarity: four-character prefix, scaling 0.1, applied when the Jaro similarity exceeds 0.7.".
+fw:fuzzyThreshold a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:blockDistanceM a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:comment "Pairs further apart than this were never compared.".
+fw:nearDistanceM a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:matchThreshold a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:reviewThreshold a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:comparedPairCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+fw:blockedPairCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+fw:matchedPairCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+fw:awaitingDecisionCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "Pairs in the review band that nobody has decided. They stay two records.".
+fw:mergedRecordCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+fw:linkageCandidate a owl:ObjectProperty; rdfs:range fw:LinkageCandidate.
+fw:candidateClass a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:candidateScore a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:matchedName a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:matchedDistanceM a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:nameComparable a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:comment "False where a record has no name: a missing value never agrees with another missing value.".
+fw:decisionReason a owl:DatatypeProperty; rdfs:range xsd:string.

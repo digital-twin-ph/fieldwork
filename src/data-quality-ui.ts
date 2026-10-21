@@ -25,11 +25,15 @@ export interface QualityView {
   /** The records as they will be READ: declared repairs already applied. */
   rows:Record<string,unknown>[];
   declared:Record<string,ColumnKind>;
-  repairs:QualityRepair[];
-  onRepair:(column:string,to:ColumnKind)=>void;
+  /** A RESULT CANNOT BE REPAIRED -- you repair the input it came from. An output table opens this
+   *  same dialog as a REPORT: the profiles, the missingness and the shapes, with nothing to press.
+   *  Absent where the view is read-only, which is how the dialog knows. Added 2026-10-21, when the
+   *  practitioner asked for the input tables' data-quality check over an output table too. */
+  repairs?:QualityRepair[];
+  onRepair?:(column:string,to:ColumnKind)=>void;
   /** Taking a repair back. The records a node holds were never overwritten, so this restores
    *  the originals rather than re-reading a file. */
-  onRemoveRepair:(index:number)=>void;
+  onRemoveRepair?:(index:number)=>void;
 }
 
 const trim=(n:number)=>Number.isInteger(n)?String(n):n.toFixed(2);
@@ -53,8 +57,16 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
       +`. A rule reading this column is told ${p.mismatched===1?'that value is':'those values are'} not recorded.</li>`);
     // Said, never offered a fix. Filling a gap is imputation: a modelling decision that belongs
     // to the practitioner and their method, not to a widget's convenience. 117 records why.
+    // THE TWO ABSENCES, APART. A field the record does not have and a field it has and left empty
+    // are different findings with different remedies -- the first is a question for the source,
+    // the second for whoever filled the form. They were one number until 2026-10-21.
     if(p.absent)said.push(`<li class="quality-problem"><strong>${p.absent} of ${p.total}</strong> `
-      +`${p.absent===1?'record has':'records have'} no value here. Nothing is offered to fill ${p.absent===1?'it':'them'}: `
+      +`${p.absent===1?'record has':'records have'} no value here`
+      +(p.missing&&p.empty?` — ${p.missing} ${p.missing===1?'does':'do'} not have the field at all, `
+        +`${p.empty} ${p.empty===1?'has':'have'} it and left it empty`
+        :p.empty?` — the field is there and empty`
+        :` — the field is not there at all`)
+      +`. Nothing is offered to fill ${p.absent===1?'it':'them'}: `
       +`choosing a replacement is a modelling decision, not a correction.</li>`);
     // What "clean" means depends on whether anything was declared. Telling a practitioner that
     // every value is what the column was declared to be, when nothing declared it, is a claim
@@ -226,11 +238,11 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
         :`<p class="description">What this input will and will not tell the steps that read it. `
       +`A column is only ever <em>wrong</em> against something declared: where no rule has bound a `
       +`column, it is undeclared rather than mistaken, and nothing below calls it a problem.</p>`
-      +(view.repairs.length
+      +(view.repairs?.length
         ?`<section class="quality-repairs"><h3>Declared repairs</h3>`
          +`<p class="description">Applied to a copy when the records are handed on. What this step `
          +`holds is exactly what was imported, so removing one restores the original values.</p>`
-         +`<ul>`+view.repairs.map((r,index)=>`<li><code>${esc(r.column)}</code> read as ${esc(r.to)}s — `
+         +`<ul>`+view.repairs!.map((r,index)=>`<li><code>${esc(r.column)}</code> read as ${esc(r.to)}s — `
            +`${r.cast} cast${r.unreadable.length?`, ${r.unreadable.length} left unreadable`:''}`
            +` <button class="button small" data-remove-repair="${index}">Remove</button></li>`).join('')
          +`</ul></section>`
@@ -240,7 +252,7 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
         +`<span class="quality-declared">${p.declared?`declared ${esc(p.declared)}`:'not bound by any rule'}</span></header>`
         +problems(p)
         +shape(p)
-        +(p.declared&&p.repairable
+        +(view.onRepair&&p.declared&&p.repairable
           ?`<div class="inspector-actions"><button class="button" data-repair="${esc(p.column)}">`
            +`Read ${p.repairable} value${p.repairable===1?'':'s'} as ${esc(p.declared)}s</button></div>`
           :'')
@@ -260,11 +272,11 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
         const declared=view.declared[column];
         if(!declared)return;
         close();
-        view.onRepair(column,declared);
+        view.onRepair?.(column,declared);
       };
     });
     dialog.querySelectorAll<HTMLButtonElement>('[data-remove-repair]').forEach(button=>{
-      button.onclick=()=>{close();view.onRemoveRepair(Number(button.dataset.removeRepair));};
+      button.onclick=()=>{close();view.onRemoveRepair?.(Number(button.dataset.removeRepair));};
     });
   };
 

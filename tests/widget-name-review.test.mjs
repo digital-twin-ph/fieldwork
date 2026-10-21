@@ -73,8 +73,10 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // 47 on 2026-10-20, when clip_points_to_area arrived -- the point-in-polygon operation that
   // existed as a predicate in five modules and as a report in two, and as a widget nowhere.
   // 46 on 2026-10-21, when coverage_check was retired into it: a widget that reports a membership
-  // and a widget that acts on one were the same question asked twice.
-  assert.equal(review.reviews.length,46);
+  // and a widget that acts on one were the same question asked twice. 47 the same day, with
+  // deduplicate_points: two sources over one area draw the same hospital twice, and nothing could
+  // say which records were the same place.
+  assert.equal(review.reviews.length,47);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

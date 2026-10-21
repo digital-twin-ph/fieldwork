@@ -207,6 +207,14 @@ export interface ParamsByType {
    *  exists to name: a point exactly ON the outline is in that jurisdiction's edge, and folding
    *  it silently into either side would answer a question nobody asked. */
   clip_points_to_area:{label:string;keepBoundary:boolean;showExcluded:boolean};
+  /** Record linkage across point layers. Every threshold is a knob and every knob reaches the
+   *  receipt: the practitioner, 2026-10-21, *"Thresholds are knobs and settings should show up in
+   *  N3 receipts."* `decisions` holds the review band's human answers, each pinned to a signature
+   *  of the pair it was made about, so editing either record lapses the judgement. */
+  deduplicate_points:{label:string; pointInputCount?:number; nameField:string;
+    nameMatch:import('./deduplicate-points.js').NameMatch; fuzzyThreshold:number;
+    blockDistanceM:number; nearDistanceM:number; matchThreshold:number; reviewThreshold:number;
+    decisions:import('./deduplicate-points.js').PairDecision[]};
   reproject:{label:string;zone:number;hemisphere:'north'|'south';data?:PointCollection;spatialReference?:SpatialReference;source?:import('./reproject.js').ReprojectSource;provenance?:import('./reproject.js').ReprojectProvenance};
   /** `maxNodes` is the graph ceiling, a knob rather than a fixed cap: the contract does not move
    *  with it (ports, output port type and behaviour are unchanged, only what is admitted changes) and

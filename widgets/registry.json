@@ -298,6 +298,18 @@
    ]
   },
   {
+   "id": "urn:fieldwork:widget:deduplicate_points",
+   "nodeType": "deduplicate_points",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/deduplicate_points/0.1.0.json",
+     "sha256": "8385fa43aeb14d2a9e256301462704c368e72f5cd458acfb3cb3fe0d79edf4a7"
+    }
+   ]
+  },
+  {
    "id": "urn:fieldwork:widget:donut_geomask",
    "nodeType": "donut_geomask",
    "currentVersion": "0.1.0",

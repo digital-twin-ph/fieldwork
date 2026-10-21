@@ -123,6 +123,16 @@
    "reviewedBy": null
   },
   {
+   "nodeType": "deduplicate_points",
+   "title": "Deduplicate point records",
+   "group": "Comparisons and checks",
+   "fingerprint": "58ef45f0c0d2",
+   "verdict": "accepted",
+   "reviewed": "2026-10-21",
+   "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
+   "note": "A transform verb and what it acts on, which is the rule this ledger states: deduplicate_points beside clip_points_to_area and compare_point_sets. The palette says \"Deduplicate point records\" rather than \"Link records\" because the practitioner asked for deduplication and that is the sentence they are holding; RECORD LINKAGE is the method and is named as such in the receipt and the manual, where the distinction is worth drawing. It is in Comparisons and checks rather than Spatial operations because the question it answers is about two records being one thing, which the distance only helps decide."
+  },
+  {
    "nodeType": "donut_geomask",
    "title": "Move points in a donut",
    "group": "Spatial operations",

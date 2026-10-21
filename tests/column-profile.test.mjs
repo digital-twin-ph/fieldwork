@@ -78,10 +78,14 @@ test('a cast never invents a value for an absent one',()=>{
 
 test('a cell state is marked per record, so clustering can be seen rather than totalled',async()=>{
   const {columnStates}=await import('../build/column-profile.js');
+  // `absent` is the field the record does not have; `empty` is the field it has and left blank.
+  // They were one state until 2026-10-21, when the practitioner asked of a table cell "was the
+  // data missing or field empty value" and nothing had kept them apart.
   assert.deepEqual(columnStates([1,null,'3',4,''],'number'),
-    ['ok','absent','mismatched','ok','absent']);
+    ['ok','empty','mismatched','ok','empty']);
+  assert.deepEqual(columnStates([1,undefined,null],'number'),['ok','absent','empty']);
   // Undeclared: present is all that can be said, so nothing is called a mismatch.
-  assert.deepEqual(columnStates([1,'x',null],undefined),['ok','ok','absent']);
+  assert.deepEqual(columnStates([1,'x',null],undefined),['ok','ok','empty']);
 });
 
 test('equal-width bins, because a gap and a spike are properties of spacing',async()=>{

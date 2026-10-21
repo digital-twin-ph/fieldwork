@@ -19,8 +19,16 @@ export interface ColumnProfile {
   /** The kind a binding declares for this column, when one does. Absent when nothing has. */
   declared?:ColumnKind;
   total:number;
-  /** No value at all: absent, null, or empty. */
+  /** No value at all. Kept as the sum of the two below, because every reader of this number means
+   *  "how much of this column is unusable". */
   absent:number;
+  /** The record does not have the field. For OSM that is the common case: a tag nobody added. */
+  missing:number;
+  /** The record HAS the field and it is null or empty. Somebody wrote the column and left it
+   *  blank, which is a different finding and a different fix -- and the two were one number until
+   *  2026-10-21, when the practitioner asked of a table cell: *"was the data missing or field
+   *  empty value?"* The answer could not be given, because nothing had kept them apart. */
+  empty:number;
   /** A value is present and is not the declared kind. Separated from `absent` because they are
    *  different problems with different remedies -- and the rules cannot tell them apart. */
   mismatched:number;
@@ -68,6 +76,8 @@ export function profileColumn(column:string,values:unknown[],declared?:ColumnKin
   const total=values.length;
   const present=values.filter(v=>!isAbsent(v));
   const absent=total-present.length;
+  const missing=values.filter(v=>v===undefined).length;
+  const empty=absent-missing;
 
   // What does not match the declared kind. With nothing declared, nothing mismatches: a column
   // nobody has bound is not wrong, it is undeclared.
@@ -80,7 +90,7 @@ export function profileColumn(column:string,values:unknown[],declared?:ColumnKin
     declared==='number'?asNumber(v)!==undefined
     :declared==='boolean'?asBoolean(v)!==undefined:false).length;
 
-  const profile:ColumnProfile={column,declared,total,absent,
+  const profile:ColumnProfile={column,declared,total,absent,missing,empty,
     mismatched:mismatchedValues.length,
     examples:[...new Set(mismatchedValues.map(v=>String(v)))].slice(0,EXAMPLES_SHOWN),
     repairable};
@@ -177,10 +187,11 @@ export function applyRepairs<T extends {properties?:Record<string,unknown>}>(
  *  **In file order**, which is the only order available here and may carry meaning or none. A
  *  file sorted by date makes a run of absences a period; a file in arbitrary order makes the same
  *  run a coincidence. The drawing says so rather than implying the order is time. */
-export type CellState='ok'|'absent'|'mismatched';
+export type CellState='ok'|'absent'|'empty'|'mismatched';
 export function columnStates(values:unknown[],declared?:ColumnKind):CellState[]{
   return values.map(value=>{
-    if(isAbsent(value))return 'absent';
+    if(value===undefined)return 'absent';
+    if(isAbsent(value))return 'empty';
     if(declared===undefined)return 'ok';
     if(declared==='number')return typeof value==='number'&&Number.isFinite(value)?'ok':'mismatched';
     if(declared==='boolean')return typeof value==='boolean'?'ok':'mismatched';

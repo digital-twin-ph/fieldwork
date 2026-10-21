@@ -258,6 +258,20 @@
    "migrationFrom": [],
    "replacementCandidate": "urn:fieldwork:widget:clip_points_to_area"
   },
+  "deduplicate_points": {
+   "version": "0.1.0",
+   "released": "2026-10-21",
+   "changes": [
+    {
+     "kind": "minor",
+     "description": "Two sources over one study area draw the same hospital twice, and a count of facilities is then wrong by however many of those there are. This compares records ACROSS sources and merges the pairs that agree, by the contracts of EPIAI RECORDLINK: blocking first, so pairs beyond a declared distance are never compared; binary contributions, so a similarity of 0.87 against a threshold of 0.88 contributes nothing rather than 0.87; and three classes rather than merge-or-not. A pair that passes both tests merges on its own. A pair that passes one WAITS FOR A PERSON and stays two records until somebody answers with a reason, which is pinned to a signature of the pair so that editing either record lapses the judgement. Missing never agrees with missing. Every threshold is a parameter and every parameter reaches the receipt. The review band is adjudicated in a dialog that shows both records side by side with every attribute each carries, the agreeing fields marked apart from the differing ones: the first version listed the pairs in the 292-pixel Inspector with two names and a distance, and the practitioner's answer was that it was unclear what was being adjudicated.",
+     "breaking": true,
+     "migration": "None; a new widget."
+    }
+   ],
+   "breaking": true,
+   "migrationFrom": []
+  },
   "donut_geomask": {
    "version": "0.1.0",
    "released": "2026-10-07",

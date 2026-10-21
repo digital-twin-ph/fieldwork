@@ -181,8 +181,9 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
       if(nodeInputs)check(JSON.stringify(nodeInputs({type:entry.nodeType,params:{inputMode:'polygons'}}))===JSON.stringify([['polygons','polygons']]),'Polygon port contract drift');
     }
     // `coverage_check` was here until it was retired on 2026-10-21. A retired widget expands
-    // nothing, because nothing adds one.
-    const dynamic=['map_output','table_output'].includes(entry.nodeType);
+    // nothing, because nothing adds one. `deduplicate_points` joined the same day: it compares
+    // ACROSS sources, so its floor is two layers rather than one.
+    const dynamic=['map_output','table_output','deduplicate_points'].includes(entry.nodeType);
     check(dynamic===Boolean(current.ports.dynamicInputs),'Dynamic port contract drift');
     if(entry.nodeType==='table_output'){
       check(current.ports.reasoningInput?.parameter==='inputMode'&&current.ports.reasoningInput.value==='decisions','Missing reasoning input mode');
@@ -190,12 +191,13 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
     }
     if(dynamic){
       const d=current.ports.dynamicInputs;
-      check(d.kind==='point-layers'&&d.minimum===1&&d.maximum===8,'Dynamic port limits drift');
+      const floor=entry.nodeType==='deduplicate_points'?2:1;
+      check(d.kind==='point-layers'&&d.minimum===floor&&d.maximum===8,'Dynamic port limits drift');
       // Counted by port NAME, not by type. A map gained an always-present `context` port on
       // 2026-10-15 which is points-typed and is not one of the point-layer slots, so counting by
       // type reported one slot too many. The slots are what pointInputCount creates: points,
       // points_2, and so on.
-      if(nodeInputs)for(const count of [1,8])check(nodeInputs({type:entry.nodeType,params:{pointInputCount:count}})
+      if(nodeInputs)for(const count of [floor,8])check(nodeInputs({type:entry.nodeType,params:{pointInputCount:count}})
         .filter(([name])=>name==='points'||/^points_\d+$/.test(name)).length===count,'Dynamic port expansion drift');
     }
     for(const path of [current.configuration.typescriptFile,...current.implementation.files,current.implementation.definition.split('#')[0]])await access(localPath(path));

@@ -38,6 +38,26 @@
    "migrationFrom": [],
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
+  "aggregate_points_to_h3_cell": {
+   "version": "0.2.0",
+   "released": "2026-10-19",
+   "changes": [
+    {
+     "kind": "minor",
+     "description": "Renamed from `hex_aggregate` to `aggregate_points_to_h3_cell`. The old identifier keeps resolving: a saved workflow naming `hex_aggregate` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. The verb came after its object and the areal unit was unstated, while its sibling said verb first. Both now read as one operation over a named unit: aggregate points to H3 cells. The unit is the ontology's own term (fw:HexCell, 'H3 cell'), not 'hexbin', because a plotting library's hexbin is a lattice fitted to its data and these cells come from a fixed global index. No contract change: ports, output, parameters and behaviour are identical."
+    },
+    {
+     "kind": "patch",
+     "description": "Retitled from \"Group points in H3 cells\". The node type names hexagonal aggregation and the title named the indexing method instead, so the two shared no word and a reader had to know that H3 cells are hexagons to connect them. Flagged by the naming ratchet added 2026-10-13 under title-type-agreement; the convention's own rule is that the node type and the title must say the same thing. No contract change: ports, output, parameters and behaviour are identical, which is why this is a patch."
+    },
+    {
+     "kind": "initial",
+     "description": "Bounded geoprivacy worked example; see docs/experiments/35-cholera-geoprivacy-workflow.md."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
   "alert": {
    "version": "0.1.0",
    "released": "2026-10-06",
@@ -77,22 +97,6 @@
      "implementation": "src/core.ts#validateWorkflow"
     }
    ]
-  },
-  "study_area": {
-   "version": "0.3.0",
-   "released": "2026-10-13",
-   "changes": [
-    {
-     "kind": "minor",
-     "description": "Renamed from `area` to `study_area`. The old identifier keeps resolving: a saved workflow naming `area` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `area` is a category noun -- which area? It is the study area, and the widget's own title has said \"Study area\" all along, so the type and the title disagreed. The port type and the port name stay `area`: a port carrying a study area is still an area, and a rename changes a node type, never a port. No contract change: ports, output, parameters and behaviour are identical."
-    },
-    {
-     "kind": "minor",
-     "description": "Add dimensioned square and rectangular bounding boxes; persisted CRS84 geometry and existing polygons are unchanged."
-    }
-   ],
-   "breaking": false,
-   "migrationFrom": []
   },
   "buffer_area": {
    "version": "0.1.0",
@@ -168,6 +172,18 @@
      "implementation": "src/output-contract.ts#migrateOutputNodes"
     }
    ]
+  },
+  "clip_points_to_area": {
+   "version": "0.1.0",
+   "released": "2026-10-20",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Keeps the points of a layer that fall inside the connected study area, and counts what fell outside. The predicate existed -- pointRelation, used by five modules -- and the OPERATION did not: eleven widgets emit a point layer and none of them answered \"keep the ones inside this area\", so the decision was made privately inside whichever widget needed it, with no node on the canvas and no receipt. A point exactly on the outline is kept by default and the choice is a parameter, because strict containment is what GeoSPARQL's sfWithin means and the two give different counts on the data where it matters. The points it sets aside are carried for DRAWING, not for passing on: a connected map shows them in the colour it already uses for outside, while every widget downstream receives only what is in the area. A count says how many were lost; seeing them says whether losing them was right, because a cluster across one border reads differently from a scatter in every direction."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
   },
   "clip_polygons": {
    "version": "0.1.0",
@@ -317,26 +333,6 @@
     }
    ]
   },
-  "aggregate_points_to_h3_cell": {
-   "version": "0.2.0",
-   "released": "2026-10-19",
-   "changes": [
-    {
-     "kind": "minor",
-     "description": "Renamed from `hex_aggregate` to `aggregate_points_to_h3_cell`. The old identifier keeps resolving: a saved workflow naming `hex_aggregate` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. The verb came after its object and the areal unit was unstated, while its sibling said verb first. Both now read as one operation over a named unit: aggregate points to H3 cells. The unit is the ontology's own term (fw:HexCell, 'H3 cell'), not 'hexbin', because a plotting library's hexbin is a lattice fitted to its data and these cells come from a fixed global index. No contract change: ports, output, parameters and behaviour are identical."
-    },
-    {
-     "kind": "patch",
-     "description": "Retitled from \"Group points in H3 cells\". The node type names hexagonal aggregation and the title named the indexing method instead, so the two shared no word and a reader had to know that H3 cells are hexagons to connect them. Flagged by the naming ratchet added 2026-10-13 under title-type-agreement; the convention's own rule is that the node type and the title must say the same thing. No contract change: ports, output, parameters and behaviour are identical, which is why this is a patch."
-    },
-    {
-     "kind": "initial",
-     "description": "Bounded geoprivacy worked example; see docs/experiments/35-cholera-geoprivacy-workflow.md."
-    }
-   ],
-   "breaking": false,
-   "migrationFrom": []
-  },
   "isochrone": {
    "version": "0.4.0",
    "released": "2026-10-20",
@@ -401,22 +397,6 @@
    "breaking": false,
    "migrationFrom": []
   },
-  "micro_workflow": {
-   "version": "0.2.0",
-   "released": "2026-10-10",
-   "changes": [
-    {
-     "kind": "initial",
-     "description": "A composition used as one step. One node type serves every composition: the node pins the composition's id, version, title, stage, ports and output type, so nodeInputs and outputOf read the contract from the node rather than the type table, and a saved workflow validates and reports drift without the composition file being present. Runs by expansion after the authored workflow is validated, so the executor has no composition branch and one receipt per member falls out of running ordinary nodes. Not addable from the palette yet: the palette offers admitted compositions, and none is admitted. Its params are the first thing in a saved workflow to record a version, against the not-yet-persisted claim every other release makes -- which is deliberate, because without a version there is nothing for drift detection to check when the file is reopened."
-    },
-    {
-     "kind": "added",
-     "description": "Records the arrangement. 0.1.0 declared an ontology gap: the node expanded before execution and emitted nothing, so a run showed four member activities with nothing saying they came from one composition at one version. Now the expansion emits a PROV association rather than invented vocabulary -- the composition is a prov:Plan and each member is associated with it -- and the members' receipts are unchanged, which is the other half of the requirement: a run of a composition must read as a run of the primitives. Also makes the node addable: the palette offers one entry per bundled composition with its governance status on the entry, replacing the reading that only an admitted composition may be added at all. That reading gated trying on review, and so gated the learning the review exists to protect."
-    }
-   ],
-   "breaking": false,
-   "migrationFrom": []
-  },
   "measure_distance": {
    "version": "0.5.0",
    "released": "2026-10-13",
@@ -428,6 +408,22 @@
     {
      "kind": "minor",
      "description": "A candidate filter, which is what `access` added over this widget. Held as a KNOB rather than built as a widget, by the test experiment 107 derived the same day: a knob is honest when the contract does not move with it. This leaves both ports and the output carrier untouched and changes only which candidates are eligible, which is what a threshold does too. Its language is experiment 106's authored condition -- a field, a comparator, a value -- so the rule builder's form now serves a third caller, after classification and the role binding experiment 61 proposes.\n\nThe comparators are `in` and `notIn` over a declared set, deliberately, and not an ordinal `>=`. Old Naledi asks for 'evidence at least Contextual', an ordinal comparison on a categorical, and over a finite declared vocabulary that compiles to the set {Direct, Contextual} -- the same move by which OR compiles to one rule per disjunct. An authoring surface may offer 'at least Contextual'; what is stored and executed is the set.\n\nA candidate missing the attribute a condition names FAILS the condition rather than passing it: an unrecorded evidence level has not met a minimum evidence level, and the looser reading would quietly widen the search.\n\nThe filter's two counts -- how many candidates were located and how many survived narrowing -- are reported in this widget's own receipt and method string, so the exclusion and the search cannot disagree about what was considered. That is what holding the filter here buys over a separate node, and the note on when a node would earn its place instead is in docs/experiments/103-duplicates-should-merge.md.\n\nVerified against the real Old Naledi data: the knob's conditions select the identical eligible set to `access`'s own predicate, 1 of 122 graded facilities. This does not yet retire `access`, which also derives proxy minutes and receives its candidates on the gradedFacilities carrier."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
+  "micro_workflow": {
+   "version": "0.2.0",
+   "released": "2026-10-10",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "A composition used as one step. One node type serves every composition: the node pins the composition's id, version, title, stage, ports and output type, so nodeInputs and outputOf read the contract from the node rather than the type table, and a saved workflow validates and reports drift without the composition file being present. Runs by expansion after the authored workflow is validated, so the executor has no composition branch and one receipt per member falls out of running ordinary nodes. Not addable from the palette yet: the palette offers admitted compositions, and none is admitted. Its params are the first thing in a saved workflow to record a version, against the not-yet-persisted claim every other release makes -- which is deliberate, because without a version there is nothing for drift detection to check when the file is reopened."
+    },
+    {
+     "kind": "added",
+     "description": "Records the arrangement. 0.1.0 declared an ontology gap: the node expanded before execution and emitted nothing, so a run showed four member activities with nothing saying they came from one composition at one version. Now the expansion emits a PROV association rather than invented vocabulary -- the composition is a prov:Plan and each member is associated with it -- and the members' receipts are unchanged, which is the other half of the requirement: a run of a composition must read as a run of the primitives. Also makes the node addable: the palette offers one entry per bundled composition with its governance status on the entry, replacing the reading that only an admitted composition may be added at all. That reading gated trying on review, and so gated the learning the review exists to protect."
     }
    ],
    "breaking": false,
@@ -461,33 +457,6 @@
    "breaking": false,
    "migrationFrom": []
   },
-  "point_input": {
-   "version": "0.3.0",
-   "released": "2026-10-13",
-   "changes": [
-    {
-     "kind": "minor",
-     "description": "Renamed from `observations` to `point_input`. The old identifier keeps resolving: a saved workflow naming `observations` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `observations` is a category noun, and the title \"Input data\" said \"input\" where the identifier did not and shared no word with it -- so a reader had to learn a mapping that carried no information. The operation is importing observed points, and the title is now \"Point data\", which matches `table_input` and \"Tabular data\". Clears three violations: audited-name, role-word-in-title and title-type-agreement. No contract change: ports, output, parameters and behaviour are identical."
-    },
-    {
-     "kind": "minor",
-     "description": "Heat examples use shared input editing. Legacy places and centers normalize on load without changing IDs, labels, references, geometry or scalar attributes; sourceMigration records adapter version 1."
-    }
-   ],
-   "breaking": false,
-   "migrationFrom": [
-    {
-     "nodeType": "places",
-     "adapterVersion": "1",
-     "implementation": "src/core.ts#validateWorkflow"
-    },
-    {
-     "nodeType": "centers",
-     "adapterVersion": "1",
-     "implementation": "src/core.ts#validateWorkflow"
-    }
-   ]
-  },
   "output": {
    "version": "0.2.0",
    "released": "2026-10-12",
@@ -517,6 +486,49 @@
    "breaking": false,
    "migrationFrom": [],
    "replacementCandidate": "urn:fieldwork:widget:observations"
+  },
+  "point_grid": {
+   "version": "0.3.0",
+   "released": "2026-10-13",
+   "changes": [
+    {
+     "kind": "minor",
+     "description": "Renamed from `samples` to `point_grid`. The old identifier keeps resolving: a saved workflow naming `samples` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `samples` named the content of one demonstration rather than the operation, and this widget's own title had said \"Point grid\" all along, so the type and the title disagreed -- which the naming convention forbids. Flagged by the ratchet added 2026-10-13 under audited-name and title-type-agreement; this clears both. No contract change: ports, output, parameters and behaviour are identical."
+    },
+    {
+     "kind": "minor",
+     "description": "Generalised in place. The computation was always general -- a bounding extent, a metre spacing converted to degrees at the extent's mid-latitude, and an even-odd containment test -- but the widget declared itself example-specific and earned it three ways: it was titled 'Sample locations', described as generating 'demonstration points', and defined inside one worked example's module in OLD_TYPES. It also stamped samplingBasis 'demonstration-grid' onto every point it produced, which is a claim about a demonstration rather than about a grid. The operation now lives in src/point-grid.ts with no default geometry, the title is 'Point grid', the stamp reads 'regular-grid', and the widget is on the shared palette instead of one example's template. No new node type and no migration: a saved workflow holding this node loads unchanged and no example's node count moves. The spacing range check moved to src/core.ts with it, because validateOldNode only runs for OLD_TYPES members and leaving it behind would have silently stopped enforcing 150-1000 m."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
+  "point_input": {
+   "version": "0.3.0",
+   "released": "2026-10-13",
+   "changes": [
+    {
+     "kind": "minor",
+     "description": "Renamed from `observations` to `point_input`. The old identifier keeps resolving: a saved workflow naming `observations` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `observations` is a category noun, and the title \"Input data\" said \"input\" where the identifier did not and shared no word with it -- so a reader had to learn a mapping that carried no information. The operation is importing observed points, and the title is now \"Point data\", which matches `table_input` and \"Tabular data\". Clears three violations: audited-name, role-word-in-title and title-type-agreement. No contract change: ports, output, parameters and behaviour are identical."
+    },
+    {
+     "kind": "minor",
+     "description": "Heat examples use shared input editing. Legacy places and centers normalize on load without changing IDs, labels, references, geometry or scalar attributes; sourceMigration records adapter version 1."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": [
+    {
+     "nodeType": "places",
+     "adapterVersion": "1",
+     "implementation": "src/core.ts#validateWorkflow"
+    },
+    {
+     "nodeType": "centers",
+     "adapterVersion": "1",
+     "implementation": "src/core.ts#validateWorkflow"
+    }
+   ]
   },
   "policy": {
    "version": "0.2.1",
@@ -633,22 +645,6 @@
    "breaking": false,
    "migrationFrom": []
   },
-  "point_grid": {
-   "version": "0.3.0",
-   "released": "2026-10-13",
-   "changes": [
-    {
-     "kind": "minor",
-     "description": "Renamed from `samples` to `point_grid`. The old identifier keeps resolving: a saved workflow naming `samples` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `samples` named the content of one demonstration rather than the operation, and this widget's own title had said \"Point grid\" all along, so the type and the title disagreed -- which the naming convention forbids. Flagged by the ratchet added 2026-10-13 under audited-name and title-type-agreement; this clears both. No contract change: ports, output, parameters and behaviour are identical."
-    },
-    {
-     "kind": "minor",
-     "description": "Generalised in place. The computation was always general -- a bounding extent, a metre spacing converted to degrees at the extent's mid-latitude, and an even-odd containment test -- but the widget declared itself example-specific and earned it three ways: it was titled 'Sample locations', described as generating 'demonstration points', and defined inside one worked example's module in OLD_TYPES. It also stamped samplingBasis 'demonstration-grid' onto every point it produced, which is a claim about a demonstration rather than about a grid. The operation now lives in src/point-grid.ts with no default geometry, the title is 'Point grid', the stamp reads 'regular-grid', and the widget is on the shared palette instead of one example's template. No new node type and no migration: a saved workflow holding this node loads unchanged and no example's node count moves. The spacing range check moved to src/core.ts with it, because validateOldNode only runs for OLD_TYPES members and leaving it behind would have silently stopped enforcing 150-1000 m."
-    }
-   ],
-   "breaking": false,
-   "migrationFrom": []
-  },
   "slr_extract_import": {
    "version": "0.1.0",
    "released": "2026-10-09",
@@ -708,6 +704,22 @@
     {
      "kind": "initial",
      "description": "Gathers up to six polygon layers into one with nothing merged, ordered largest area first so smaller polygons draw on top. Needed because the isochrone rings arrive as one corridor per band and every output node takes a single polygons input: unioning them with summarize_combined_area would give one blob the size of the largest band with the walking times gone. Numbered ports follow the point-layer convention in src/point-layers.ts, capped at six because isochrone accepts at most six thresholds. Takes no UTM zone: ring extent in degrees decides draw order and is never reported, so there is no area to get wrong. Refuses layers computed in different coordinate systems, and refuses polygons sharing an identifier, which could not be told apart once collected."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
+  "study_area": {
+   "version": "0.3.0",
+   "released": "2026-10-13",
+   "changes": [
+    {
+     "kind": "minor",
+     "description": "Renamed from `area` to `study_area`. The old identifier keeps resolving: a saved workflow naming `area` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `area` is a category noun -- which area? It is the study area, and the widget's own title has said \"Study area\" all along, so the type and the title disagreed. The port type and the port name stay `area`: a port carrying a study area is still an area, and a rename changes a node type, never a port. No contract change: ports, output, parameters and behaviour are identical."
+    },
+    {
+     "kind": "minor",
+     "description": "Add dimensioned square and rectangular bounding boxes; persisted CRS84 geometry and existing polygons are unchanged."
     }
    ],
    "breaking": false,

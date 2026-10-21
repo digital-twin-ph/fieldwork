@@ -1,266 +1,273 @@
 {
-  "schema": "fieldwork/check-coverage/1",
-  "note": "Which widgets owe the Validation Lab an independent check, and which do not. Hand written and reviewed, not derived: implementation.definition names src/core.ts#TYPES for 39 of 51 widgets, so the registry does not record where most widgets are implemented and the computing/presentational line cannot be read off it. The validator enforces that every widget appears exactly once, that a claimed check exists in parity.json, and that the awaiting count only falls. It does not enforce the judgement, which is the part a person has to make and defend in the reason.",
-  "expectations": {
-    "parity": "Computes a value an independent implementation could recompute. Owes a lab check; `check` names it once it exists.",
-    "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
-    "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
+ "schema": "fieldwork/check-coverage/1",
+ "note": "Which widgets owe the Validation Lab an independent check, and which do not. Hand written and reviewed, not derived: implementation.definition names src/core.ts#TYPES for 39 of 51 widgets, so the registry does not record where most widgets are implemented and the computing/presentational line cannot be read off it. The validator enforces that every widget appears exactly once, that a claimed check exists in parity.json, and that the awaiting count only falls. It does not enforce the judgement, which is the part a person has to make and defend in the reason.",
+ "expectations": {
+  "parity": "Computes a value an independent implementation could recompute. Owes a lab check; `check` names it once it exists.",
+  "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
+  "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
+ },
+ "measuredAt": "2026-10-20",
+ "counts": {
+  "widgets": 47,
+  "covered": 20,
+  "awaiting": 14,
+  "none": 12,
+  "blocked": 1
+ },
+ "widgets": [
+  {
+   "nodeType": "aggregate_points_to_h3_cell",
+   "expectation": "parity",
+   "check": "21-hex"
   },
-  "measuredAt": "2026-10-12",
-  "counts": {
-    "widgets": 46,
-    "covered": 20,
-    "awaiting": 13,
-    "none": 12,
-    "blocked": 1
+  {
+   "nodeType": "alert",
+   "expectation": "none",
+   "reason": "A declared status. Nothing is derived from anything."
   },
-  "widgets": [
-    {
-      "nodeType": "alert",
-      "expectation": "none",
-      "reason": "A declared status. Nothing is derived from anything."
-    },
-    {
-      "nodeType": "apply_ruleset",
-      "expectation": "parity",
-      "check": "23-rulesets",
-      "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter with its unit, evaluates N3, and extracts a classification against the ruleset's declared vocabulary.",
-      "reason": "Checked by the Lab exhaustively rather than by sample: all three rulesets have finite input spaces, 46 cells in total, and check 23 reproduces every conclusion with a Python decision table and verifies the emitted receipt."
-    },
-    {
-      "nodeType": "study_area",
-      "expectation": "none",
-      "reason": "A study-area input: the boundary is supplied or drawn, not computed."
-    },
-    {
-      "nodeType": "buffer_area",
-      "expectation": "parity",
-      "check": "18-buffer-area"
-    },
-    {
-      "nodeType": "buffer_point",
-      "expectation": "parity",
-      "check": "17-buffer-point"
-    },
-    {
-      "nodeType": "case_series",
-      "expectation": "parity",
-      "check": "22-case-series"
-    },
-    {
-      "nodeType": "chart_output",
-      "expectation": "none",
-      "reason": "Draws what it is given and derives no value; its receipt is a presentation receipt."
-    },
-    {
-      "nodeType": "clip_polygons",
-      "expectation": "parity",
-      "check": "13-clip-polygons"
-    },
-    {
-      "nodeType": "clip_raster",
-      "expectation": "parity",
-      "check": "02-clip"
-    },
-    {
-      "nodeType": "compare_point_sets",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Computes the displacement between two point sets and the centre of each."
-    },
-    {
-      "nodeType": "comparison_map",
-      "expectation": "none",
-      "reason": "Draws what it is given and derives no value."
-    },
-    {
-      "nodeType": "coverage_check",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Decides which of an area's parts contain a point, and reports what is uncovered."
-    },
-    {
-      "nodeType": "donut_geomask",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Displaces each point by a seeded random distance within an annulus."
-    },
-    {
-      "nodeType": "facilities",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Selects facilities within a radius of an area, which is a distance computation."
-    },
-    {
-      "nodeType": "facility_audit",
-      "expectation": "none",
-      "reason": "Restates graded evidence as a register. It selects and presents; it derives no value."
-    },
-    {
-      "nodeType": "fill_interior_gaps",
-      "expectation": "parity",
-      "check": "11-fill-gaps"
-    },
-    {
-      "nodeType": "find_health_facilities",
-      "expectation": "blocked",
-      "reason": "It does compute -- a confidence threshold, a kind filter and a name requirement -- but its input comes from a live external source, so an independent recomputation cannot be pinned to a fixture without first freezing a response. The selection logic is unit-tested. Needs a frozen-response fixture before a lab check means anything."
-    },
-    {
-      "nodeType": "aggregate_points_to_h3_cell",
-      "expectation": "parity",
-      "check": "21-hex"
-    },
-    {
-      "nodeType": "isochrone",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Dijkstra traversal, part-way edges and a corridor buffer, in one widget."
-    },
-    {
-      "nodeType": "map_output",
-      "expectation": "none",
-      "reason": "Draws what it is given and derives no value."
-    },
-    {
-      "nodeType": "mean_center",
-      "expectation": "parity",
-      "check": "06-mean-center"
-    },
-    {
-      "nodeType": "measure_area",
-      "expectation": "parity",
-      "check": "05-area"
-    },
-    {
-      "nodeType": "micro_workflow",
-      "expectation": "none",
-      "reason": "Expands to its members and asserts fw:claimsNoComputation. The members carry the checks."
-    },
-    {
-      "nodeType": "measure_distance",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Computes the distance from each point to the nearest centre."
-    },
-    {
-      "nodeType": "network_input",
-      "expectation": "none",
-      "reason": "Validates a supplied graph against its stated endpoints and lengths. The validation is unit-tested; nothing is recomputed from data."
-    },
-    {
-      "nodeType": "point_input",
-      "expectation": "none",
-      "reason": "Supplied point data."
-    },
-    {
-      "nodeType": "raster_input",
-      "expectation": "none",
-      "reason": "A supplied GeoTIFF, retained as given."
-    },
-    {
-      "nodeType": "rate",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Divides a numerator by a denominator and scales it, with a minimum denominator."
-    },
-    {
-      "nodeType": "reachable_corridor",
-      "expectation": "parity",
-      "check": "08-corridor"
-    },
-    {
-      "nodeType": "reachable_nodes",
-      "expectation": "parity",
-      "check": "07-reachability"
-    },
-    {
-      "nodeType": "reproject",
-      "expectation": "parity",
-      "check": "24-project-forward",
-      "note": "Two checks cover this widget. 01-reproject recomputes the INVERSE transform, which the widget performed until release 0.1.0; 24-project-forward recomputes the FORWARD projection it performs from 0.2.0. The check named here is the one covering the current release, because this field answers whether what ships is checked. The validator reads one check per widget from parity.json and keeps the last entry, so a widget with two checks is recorded accurately in parity.json and narrowed to the live one here."
-    },
-    {
-      "nodeType": "sample_raster",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Reads a raster value at each point's position."
-    },
-    {
-      "nodeType": "point_grid",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Generates a regular grid at a stated spacing in a projection."
-    },
-    {
-      "nodeType": "slr_extract_import",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Converts projected values between millimetres and metres and keys them."
-    },
-    {
-      "nodeType": "slr_site_assignment",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Assigns each record to the nearest projection site and reports the distance."
-    },
-    {
-      "nodeType": "slr_threshold_comparison",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Compares a projected change with a supplied elevation."
-    },
-    {
-      "nodeType": "snap_to_network",
-      "expectation": "parity",
-      "check": "19-snap"
-    },
-    {
-      "nodeType": "stack_polygons",
-      "expectation": "parity",
-      "check": "16-stack-polygons"
-    },
-    {
-      "nodeType": "summarize_combined_area",
-      "expectation": "parity",
-      "check": "12-combined-area"
-    },
-    {
-      "nodeType": "summarize_hull",
-      "expectation": "parity",
-      "check": "10-hull"
-    },
-    {
-      "nodeType": "summarize_points_to_polygon",
-      "expectation": "parity",
-      "check": "14-summarize-polygons"
-    },
-    {
-      "nodeType": "table_input",
-      "expectation": "none",
-      "reason": "A supplied long-format CSV, retained as given."
-    },
-    {
-      "nodeType": "table_output",
-      "expectation": "none",
-      "reason": "Draws what it is given and derives no value."
-    },
-    {
-      "nodeType": "travel_time",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Walking minutes from each distance at a stated speed, reading each row's declared unit.",
-      "reason": "A division, so the arithmetic is not the interesting part. What a lab check would establish is that the unit is read rather than assumed -- a metre reading divided by metres-per-minute against a kilometre reading, which differ by a thousand. Owed."
-    },
-    {
-      "nodeType": "travel_time_band",
-      "expectation": "parity",
-      "check": "20-band"
-    },
-    {
-      "nodeType": "voronoi",
-      "expectation": "parity",
-      "check": "15-voronoi"
-    }
-  ]
+  {
+   "nodeType": "apply_ruleset",
+   "expectation": "parity",
+   "check": "23-rulesets",
+   "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter with its unit, evaluates N3, and extracts a classification against the ruleset's declared vocabulary.",
+   "reason": "Checked by the Lab exhaustively rather than by sample: all three rulesets have finite input spaces, 46 cells in total, and check 23 reproduces every conclusion with a Python decision table and verifies the emitted receipt."
+  },
+  {
+   "nodeType": "buffer_area",
+   "expectation": "parity",
+   "check": "18-buffer-area"
+  },
+  {
+   "nodeType": "buffer_point",
+   "expectation": "parity",
+   "check": "17-buffer-point"
+  },
+  {
+   "nodeType": "case_series",
+   "expectation": "parity",
+   "check": "22-case-series"
+  },
+  {
+   "nodeType": "chart_output",
+   "expectation": "none",
+   "reason": "Draws what it is given and derives no value; its receipt is a presentation receipt."
+  },
+  {
+   "nodeType": "clip_points_to_area",
+   "expectation": "parity",
+   "computes": "Point-in-polygon membership against the study area's outline, with the three relations kept apart -- inside, on the boundary, outside -- and the boundary case admitted or refused by a declared choice.",
+   "reason": "Worth recomputing independently because the answer decides what the rest of a workflow sees, and because the edge cases are where implementations differ: a point exactly on a vertex, a point on a segment between two vertices, and a point inside an enclave that the outer ring contains. Shapely's `contains` and `touches` answer all three and can be compared directly against this widget's counts. The predicate itself is shared with the coverage check, so a disagreement here is a disagreement there.",
+   "awaiting": true
+  },
+  {
+   "nodeType": "clip_polygons",
+   "expectation": "parity",
+   "check": "13-clip-polygons"
+  },
+  {
+   "nodeType": "clip_raster",
+   "expectation": "parity",
+   "check": "02-clip"
+  },
+  {
+   "nodeType": "compare_point_sets",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Computes the displacement between two point sets and the centre of each."
+  },
+  {
+   "nodeType": "comparison_map",
+   "expectation": "none",
+   "reason": "Draws what it is given and derives no value."
+  },
+  {
+   "nodeType": "coverage_check",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Decides which of an area's parts contain a point, and reports what is uncovered."
+  },
+  {
+   "nodeType": "donut_geomask",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Displaces each point by a seeded random distance within an annulus."
+  },
+  {
+   "nodeType": "facilities",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Selects facilities within a radius of an area, which is a distance computation."
+  },
+  {
+   "nodeType": "facility_audit",
+   "expectation": "none",
+   "reason": "Restates graded evidence as a register. It selects and presents; it derives no value."
+  },
+  {
+   "nodeType": "fill_interior_gaps",
+   "expectation": "parity",
+   "check": "11-fill-gaps"
+  },
+  {
+   "nodeType": "find_health_facilities",
+   "expectation": "blocked",
+   "reason": "It does compute -- a confidence threshold, a kind filter and a name requirement -- but its input comes from a live external source, so an independent recomputation cannot be pinned to a fixture without first freezing a response. The selection logic is unit-tested. Needs a frozen-response fixture before a lab check means anything."
+  },
+  {
+   "nodeType": "isochrone",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Dijkstra traversal, part-way edges and a corridor buffer, in one widget."
+  },
+  {
+   "nodeType": "map_output",
+   "expectation": "none",
+   "reason": "Draws what it is given and derives no value."
+  },
+  {
+   "nodeType": "mean_center",
+   "expectation": "parity",
+   "check": "06-mean-center"
+  },
+  {
+   "nodeType": "measure_area",
+   "expectation": "parity",
+   "check": "05-area"
+  },
+  {
+   "nodeType": "measure_distance",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Computes the distance from each point to the nearest centre."
+  },
+  {
+   "nodeType": "micro_workflow",
+   "expectation": "none",
+   "reason": "Expands to its members and asserts fw:claimsNoComputation. The members carry the checks."
+  },
+  {
+   "nodeType": "network_input",
+   "expectation": "none",
+   "reason": "Validates a supplied graph against its stated endpoints and lengths. The validation is unit-tested; nothing is recomputed from data."
+  },
+  {
+   "nodeType": "point_grid",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Generates a regular grid at a stated spacing in a projection."
+  },
+  {
+   "nodeType": "point_input",
+   "expectation": "none",
+   "reason": "Supplied point data."
+  },
+  {
+   "nodeType": "raster_input",
+   "expectation": "none",
+   "reason": "A supplied GeoTIFF, retained as given."
+  },
+  {
+   "nodeType": "rate",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Divides a numerator by a denominator and scales it, with a minimum denominator."
+  },
+  {
+   "nodeType": "reachable_corridor",
+   "expectation": "parity",
+   "check": "08-corridor"
+  },
+  {
+   "nodeType": "reachable_nodes",
+   "expectation": "parity",
+   "check": "07-reachability"
+  },
+  {
+   "nodeType": "reproject",
+   "expectation": "parity",
+   "check": "24-project-forward",
+   "note": "Two checks cover this widget. 01-reproject recomputes the INVERSE transform, which the widget performed until release 0.1.0; 24-project-forward recomputes the FORWARD projection it performs from 0.2.0. The check named here is the one covering the current release, because this field answers whether what ships is checked. The validator reads one check per widget from parity.json and keeps the last entry, so a widget with two checks is recorded accurately in parity.json and narrowed to the live one here."
+  },
+  {
+   "nodeType": "sample_raster",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Reads a raster value at each point's position."
+  },
+  {
+   "nodeType": "slr_extract_import",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Converts projected values between millimetres and metres and keys them."
+  },
+  {
+   "nodeType": "slr_site_assignment",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Assigns each record to the nearest projection site and reports the distance."
+  },
+  {
+   "nodeType": "slr_threshold_comparison",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Compares a projected change with a supplied elevation."
+  },
+  {
+   "nodeType": "snap_to_network",
+   "expectation": "parity",
+   "check": "19-snap"
+  },
+  {
+   "nodeType": "stack_polygons",
+   "expectation": "parity",
+   "check": "16-stack-polygons"
+  },
+  {
+   "nodeType": "study_area",
+   "expectation": "none",
+   "reason": "A study-area input: the boundary is supplied or drawn, not computed."
+  },
+  {
+   "nodeType": "summarize_combined_area",
+   "expectation": "parity",
+   "check": "12-combined-area"
+  },
+  {
+   "nodeType": "summarize_hull",
+   "expectation": "parity",
+   "check": "10-hull"
+  },
+  {
+   "nodeType": "summarize_points_to_polygon",
+   "expectation": "parity",
+   "check": "14-summarize-polygons"
+  },
+  {
+   "nodeType": "table_input",
+   "expectation": "none",
+   "reason": "A supplied long-format CSV, retained as given."
+  },
+  {
+   "nodeType": "table_output",
+   "expectation": "none",
+   "reason": "Draws what it is given and derives no value."
+  },
+  {
+   "nodeType": "travel_time",
+   "expectation": "parity",
+   "check": null,
+   "computes": "Walking minutes from each distance at a stated speed, reading each row's declared unit.",
+   "reason": "A division, so the arithmetic is not the interesting part. What a lab check would establish is that the unit is read rather than assumed -- a metre reading divided by metres-per-minute against a kilometre reading, which differ by a thousand. Owed."
+  },
+  {
+   "nodeType": "travel_time_band",
+   "expectation": "parity",
+   "check": "20-band"
+  },
+  {
+   "nodeType": "voronoi",
+   "expectation": "parity",
+   "check": "15-voronoi"
+  }
+ ]
 }

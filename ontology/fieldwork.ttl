@@ -997,6 +997,66 @@ fw:countBin a owl:ObjectProperty; rdfs:range fw:CountBin.
 fw:groupingField a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:categoryKey a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:recordCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+# How many records a source returned that stand outside the study area's own outline. Every
+# facility source is bounded by a RECTANGLE -- Overpass takes one, Overture is read by extent, a
+# country export is clipped to one -- and a rectangle is not a jurisdiction: on North Kivu, 526 of
+# 961 stood in Uganda and Rwanda. The widget keeps what is inside the outline and states here what
+# it set aside, because "how many did the source return that were not in my area" is a question a
+# reviewer asks of a figure like this.
+fw:outsideStudyAreaCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+
+# Keeping the points that are in the area, as an operation rather than as a report.
+#
+# The predicate has existed since the coverage check -- `pointRelation`, with the OGC names below
+# -- and the OPERATION did not: eleven widgets emit a point layer and none of them answered "keep
+# the ones inside this area", so the decision was made privately inside whichever widget needed
+# it. The practitioner, 2026-10-20: "We do not have a point in polygon process ... I mean widget."
+fw:PointInPolygonClip a owl:Class; rdfs:subClassOf prov:Activity;
+  rdfs:comment "Keeping the points of a layer that fall inside an area, by the same test the coverage check and the map use."@en.
+# Which OGC Simple Features predicate the kept set answers to: sfWithin for strictly inside, and
+# boundary points are sfTouches, which is why whether they are kept is stated rather than assumed.
+fw:spatialPredicate a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:boundaryPointsKept a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:insideCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+fw:boundaryCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+fw:outsideCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+
+# HOW a map distinguished one thing from another, not only WHAT it drew.
+#
+# The practitioner, 2026-10-20: "in the ontology do we have UI representations of differences?" and
+# then "make sure there are N3 receipts for them". A map already asserted its layers; it did not
+# assert what its channels were claiming, so a reader could see two sources in two colours and had
+# no way to check what the colours meant.
+#
+# The marks are OGC Symbology Encoding's own WellKnownName terms, cited rather than minted. What
+# is minted here is the BINDING -- which channel carries which variable, under which palette, and
+# whether a practitioner chose it -- because SE says how to draw and has no vocabulary for what the
+# drawing asserts. SymCore (18-067r3) is the conceptual model above SE and is deliberately not
+# implemented: it assumes a styling pipeline applying symbolizers to features, and these maps are
+# drawn by a renderer reading ports.
+fw:encoding a owl:ObjectProperty;
+  rdfs:comment "A binding of one visual channel to one variable, with the vocabulary it uses."@en.
+fw:visualChannel a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:encodesVariable a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:palette a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:paletteAuthority a owl:ObjectProperty.
+# Whether the palette is published as distinguishable under the common colour vision deficiencies.
+# Stated because a map that needs it and does not have it is a map a reader may not be able to use.
+fw:colourVisionSafe a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:fillMeaning a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:layerSymbol a owl:ObjectProperty;
+  rdfs:comment "How one layer was drawn: its mark, its colour, and whether each was chosen or derived."@en.
+fw:layerSource a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:layerLabel a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:mark a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "A graphic mark, named by the vocabulary fw:markVocabulary gives -- OGC Symbology Encoding 1.1 WellKnownName: square, circle, triangle, star, cross, x."@en.
+fw:markVocabulary a owl:ObjectProperty.
+fw:symbolColour a owl:DatatypeProperty; rdfs:range xsd:string.
+# Chosen by a practitioner, or derived from the layer's position. "A triangle because somebody
+# chose a triangle" and "a triangle because it was the second layer" are different claims about
+# the same picture, and a reader auditing a figure needs to tell them apart.
+fw:markChosen a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:colourChosen a owl:DatatypeProperty; rdfs:range xsd:boolean.
 
 fw:RasterDataset a owl:Class;
   rdfs:comment "A raster held as a bounded window of native cells with its metadata. Cell values are not automatically interpretable as population or any other measure."; rdfs:subClassOf prov:Entity; rdfs:label "Raster dataset".

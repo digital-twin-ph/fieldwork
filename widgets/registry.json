@@ -47,6 +47,31 @@
    ]
   },
   {
+   "id": "urn:fieldwork:widget:aggregate_points_to_h3_cell",
+   "nodeType": "aggregate_points_to_h3_cell",
+   "currentVersion": "0.2.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/aggregate_points_to_h3_cell/0.1.0.json",
+     "sha256": "5ae72b9523f6990798da8f9afbf4a19947173dd1ada66b6500106e2ad28c8ee1"
+    },
+    {
+     "version": "0.1.1",
+     "path": "widgets/releases/aggregate_points_to_h3_cell/0.1.1.json",
+     "sha256": "1b55ee4bb0a72a12390ad6d7f73b4d2133ae4cecc96a364588f8fd6a074f12a0"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/aggregate_points_to_h3_cell/0.2.0.json",
+     "sha256": "1fddd50265037d7e986f8b7251780e0aaf3c8ef276485b633758777ddc0f85b2"
+    }
+   ],
+   "previousNodeTypes": [
+    "hex_aggregate"
+   ]
+  },
+  {
    "id": "urn:fieldwork:widget:alert",
    "nodeType": "alert",
    "currentVersion": "0.1.0",
@@ -68,31 +93,6 @@
      "path": "widgets/releases/apply_ruleset/0.1.0.json",
      "sha256": "addf81a11b0b3971d16b8c2b5b365a0e50b9a9573f3fd75d8aa7ce504a7913a9"
     }
-   ]
-  },
-  {
-   "id": "urn:fieldwork:widget:study_area",
-   "nodeType": "study_area",
-   "currentVersion": "0.3.0",
-   "releases": [
-    {
-     "version": "0.1.0",
-     "path": "widgets/releases/study_area/0.1.0.json",
-     "sha256": "bb24afb87dc5478136dba95aa5a66a93fc9d19547784c2bc630bdd231dbb7fbd"
-    },
-    {
-     "version": "0.2.0",
-     "path": "widgets/releases/study_area/0.2.0.json",
-     "sha256": "35c27341f2860d1a8e6f6b261f22fdeaa33472d34426f98ff718f6f374b5fb31"
-    },
-    {
-     "version": "0.3.0",
-     "path": "widgets/releases/study_area/0.3.0.json",
-     "sha256": "7d0082a698969bd5e03398650d9425d7ca15234fdb58ced9f7713b88fa097ebd"
-    }
-   ],
-   "previousNodeTypes": [
-    "area"
    ]
   },
   {
@@ -187,6 +187,18 @@
      "version": "0.6.0",
      "path": "widgets/releases/chart_output/0.6.0.json",
      "sha256": "21f639ca8c10edae929d22e859832a9789434c14cd5295eda8f13409e49a288f"
+    }
+   ]
+  },
+  {
+   "id": "urn:fieldwork:widget:clip_points_to_area",
+   "nodeType": "clip_points_to_area",
+   "currentVersion": "0.1.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/clip_points_to_area/0.1.0.json",
+     "sha256": "7a3f988398c6b35badcbc89ad6c92df0a58323acf379b3bc30d52eeb31a6abc4"
     }
    ]
   },
@@ -356,31 +368,6 @@
    ]
   },
   {
-   "id": "urn:fieldwork:widget:aggregate_points_to_h3_cell",
-   "nodeType": "aggregate_points_to_h3_cell",
-   "currentVersion": "0.2.0",
-   "releases": [
-    {
-     "version": "0.1.0",
-     "path": "widgets/releases/aggregate_points_to_h3_cell/0.1.0.json",
-     "sha256": "5ae72b9523f6990798da8f9afbf4a19947173dd1ada66b6500106e2ad28c8ee1"
-    },
-    {
-     "version": "0.1.1",
-     "path": "widgets/releases/aggregate_points_to_h3_cell/0.1.1.json",
-     "sha256": "1b55ee4bb0a72a12390ad6d7f73b4d2133ae4cecc96a364588f8fd6a074f12a0"
-    },
-    {
-     "version": "0.2.0",
-     "path": "widgets/releases/aggregate_points_to_h3_cell/0.2.0.json",
-     "sha256": "1fddd50265037d7e986f8b7251780e0aaf3c8ef276485b633758777ddc0f85b2"
-    }
-   ],
-   "previousNodeTypes": [
-    "hex_aggregate"
-   ]
-  },
-  {
    "id": "urn:fieldwork:widget:isochrone",
    "nodeType": "isochrone",
    "currentVersion": "0.4.0",
@@ -499,23 +486,6 @@
    ]
   },
   {
-   "id": "urn:fieldwork:widget:micro_workflow",
-   "nodeType": "micro_workflow",
-   "currentVersion": "0.2.0",
-   "releases": [
-    {
-     "version": "0.1.0",
-     "path": "widgets/releases/micro_workflow/0.1.0.json",
-     "sha256": "3a19bad2d2d21d859b3bc1bc0e24cc11ec5e16d75fb4ffa762ac37bf15dfdf45"
-    },
-    {
-     "version": "0.2.0",
-     "path": "widgets/releases/micro_workflow/0.2.0.json",
-     "sha256": "9bd40c164c6010294e45dcbbebba91d1b5e9fdd52cd47d7058cd981a4a4a8046"
-    }
-   ]
-  },
-  {
    "id": "urn:fieldwork:widget:measure_distance",
    "nodeType": "measure_distance",
    "currentVersion": "0.5.0",
@@ -543,6 +513,23 @@
    ],
    "previousNodeTypes": [
     "nearest"
+   ]
+  },
+  {
+   "id": "urn:fieldwork:widget:micro_workflow",
+   "nodeType": "micro_workflow",
+   "currentVersion": "0.2.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/micro_workflow/0.1.0.json",
+     "sha256": "3a19bad2d2d21d859b3bc1bc0e24cc11ec5e16d75fb4ffa762ac37bf15dfdf45"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/micro_workflow/0.2.0.json",
+     "sha256": "9bd40c164c6010294e45dcbbebba91d1b5e9fdd52cd47d7058cd981a4a4a8046"
+    }
    ]
   },
   {
@@ -575,31 +562,6 @@
      "path": "widgets/releases/network_input/0.5.0.json",
      "sha256": "facd39d245c4dfde24886321bfb633e8ce6f2e6110518062b42dae2ef7d47e27"
     }
-   ]
-  },
-  {
-   "id": "urn:fieldwork:widget:point_input",
-   "nodeType": "point_input",
-   "currentVersion": "0.3.0",
-   "releases": [
-    {
-     "version": "0.1.0",
-     "path": "widgets/releases/point_input/0.1.0.json",
-     "sha256": "c49c093b8c0f331b8ecd3410ace9f275a01631f257ad9be66127cc1b5b38e597"
-    },
-    {
-     "version": "0.2.0",
-     "path": "widgets/releases/point_input/0.2.0.json",
-     "sha256": "7a52b52999bc2cada3ec1f0b8471f46dac7c9bf24da1023dd0f3918c884ba201"
-    },
-    {
-     "version": "0.3.0",
-     "path": "widgets/releases/point_input/0.3.0.json",
-     "sha256": "eb395f70a6a8545376d9550e75f40dea8b69cba38cb3043749076680d9d7b7a6"
-    }
-   ],
-   "previousNodeTypes": [
-    "observations"
    ]
   },
   {
@@ -649,6 +611,61 @@
      "path": "widgets/releases/places/0.2.0.json",
      "sha256": "b9c0e07d025b1368eabbb3d5e4094631ae3ff1ae9da50d8d6149c112cdffdc46"
     }
+   ]
+  },
+  {
+   "id": "urn:fieldwork:widget:point_grid",
+   "nodeType": "point_grid",
+   "currentVersion": "0.3.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/point_grid/0.1.0.json",
+     "sha256": "e3ba8b6b62fe650ef620c560d266be500008daced8f6b335e325bd2d6cc64a8f"
+    },
+    {
+     "version": "1.0.0",
+     "path": "widgets/releases/point_grid/1.0.0.json",
+     "sha256": "c9639e3c496f8b096ee35f695f668f55327df722e9514a0ed814cfed56433dcb"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/point_grid/0.2.0.json",
+     "sha256": "627c451e3023c579542648639019a5588345ec6ad486f716c41025cabd5d3e06"
+    },
+    {
+     "version": "0.3.0",
+     "path": "widgets/releases/point_grid/0.3.0.json",
+     "sha256": "e77ef8452e2f84331a925f7b531d31900e7ada9374eb55fb369bb0fa2b82e598"
+    }
+   ],
+   "previousNodeTypes": [
+    "samples"
+   ]
+  },
+  {
+   "id": "urn:fieldwork:widget:point_input",
+   "nodeType": "point_input",
+   "currentVersion": "0.3.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/point_input/0.1.0.json",
+     "sha256": "c49c093b8c0f331b8ecd3410ace9f275a01631f257ad9be66127cc1b5b38e597"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/point_input/0.2.0.json",
+     "sha256": "7a52b52999bc2cada3ec1f0b8471f46dac7c9bf24da1023dd0f3918c884ba201"
+    },
+    {
+     "version": "0.3.0",
+     "path": "widgets/releases/point_input/0.3.0.json",
+     "sha256": "eb395f70a6a8545376d9550e75f40dea8b69cba38cb3043749076680d9d7b7a6"
+    }
+   ],
+   "previousNodeTypes": [
+    "observations"
    ]
   },
   {
@@ -796,36 +813,6 @@
    ]
   },
   {
-   "id": "urn:fieldwork:widget:point_grid",
-   "nodeType": "point_grid",
-   "currentVersion": "0.3.0",
-   "releases": [
-    {
-     "version": "0.1.0",
-     "path": "widgets/releases/point_grid/0.1.0.json",
-     "sha256": "e3ba8b6b62fe650ef620c560d266be500008daced8f6b335e325bd2d6cc64a8f"
-    },
-    {
-     "version": "1.0.0",
-     "path": "widgets/releases/point_grid/1.0.0.json",
-     "sha256": "c9639e3c496f8b096ee35f695f668f55327df722e9514a0ed814cfed56433dcb"
-    },
-    {
-     "version": "0.2.0",
-     "path": "widgets/releases/point_grid/0.2.0.json",
-     "sha256": "627c451e3023c579542648639019a5588345ec6ad486f716c41025cabd5d3e06"
-    },
-    {
-     "version": "0.3.0",
-     "path": "widgets/releases/point_grid/0.3.0.json",
-     "sha256": "e77ef8452e2f84331a925f7b531d31900e7ada9374eb55fb369bb0fa2b82e598"
-    }
-   ],
-   "previousNodeTypes": [
-    "samples"
-   ]
-  },
-  {
    "id": "urn:fieldwork:widget:slr_extract_import",
    "nodeType": "slr_extract_import",
    "currentVersion": "0.1.0",
@@ -888,6 +875,31 @@
      "path": "widgets/releases/stack_polygons/0.1.0.json",
      "sha256": "50f6efb19833968a2272ede978a4b57a5a835cf0dabcc75a557eb6885773461e"
     }
+   ]
+  },
+  {
+   "id": "urn:fieldwork:widget:study_area",
+   "nodeType": "study_area",
+   "currentVersion": "0.3.0",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "path": "widgets/releases/study_area/0.1.0.json",
+     "sha256": "bb24afb87dc5478136dba95aa5a66a93fc9d19547784c2bc630bdd231dbb7fbd"
+    },
+    {
+     "version": "0.2.0",
+     "path": "widgets/releases/study_area/0.2.0.json",
+     "sha256": "35c27341f2860d1a8e6f6b261f22fdeaa33472d34426f98ff718f6f374b5fb31"
+    },
+    {
+     "version": "0.3.0",
+     "path": "widgets/releases/study_area/0.3.0.json",
+     "sha256": "7d0082a698969bd5e03398650d9425d7ca15234fdb58ced9f7713b88fa097ebd"
+    }
+   ],
+   "previousNodeTypes": [
+    "area"
    ]
   },
   {

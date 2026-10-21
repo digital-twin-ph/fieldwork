@@ -98,10 +98,16 @@ fw:CanvasConnectionShape a sh:NodeShape; sh:targetClass fw:CanvasConnection;
   sh:property [ sh:path fw:fromPlan; sh:minCount 1; sh:maxCount 1; sh:class fw:CanvasNodePlan ];
   sh:property [ sh:path fw:toPlan; sh:minCount 1; sh:maxCount 1; sh:class fw:CanvasNodePlan ];
   sh:property [ sh:path fw:inputPort; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ].
+# A point dataset is a dataset OF POINTS, however it was produced. This shape required the
+# generating activity to be a fw:PointInput, which held while reading a file was the only way to
+# get one. `clip_points_to_area` produces one from an existing layer, and its receipt failed this
+# shape the first time an example put a clip in front of a map -- 2026-10-21, after the widget had
+# shipped. The constraint that matters is that something generated it and said so, which is what
+# the ProvenanceShape above already asks of every entity.
 fw:PointDatasetShape a sh:NodeShape; sh:targetClass fw:PointDataset;
   sh:property [ sh:path fw:recordCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
   sh:property [ sh:path fw:member; sh:class geo:Feature ];
-  sh:property [ sh:path prov:wasGeneratedBy; sh:minCount 1; sh:maxCount 1; sh:class fw:PointInput ].
+  sh:property [ sh:path prov:wasGeneratedBy; sh:minCount 1; sh:maxCount 1; sh:class prov:Activity ].
 fw:PolygonClipReceiptShape a sh:NodeShape; sh:targetClass fw:PolygonClipping;
   sh:property [ sh:path fw:clipGeometry; sh:minCount 1; sh:maxCount 1; sh:node fw:RuntimeGeometryShape ].
 fw:RasterReceiptShape a sh:NodeShape; sh:targetClass fw:RasterInputReading, fw:RasterClipping;

@@ -1,7 +1,7 @@
 import {crsIRIFromName} from './metric-crs.js';
 import type {NodeSpec,WorkflowNode,PointInput,Escape,Scalar} from './types.js';
 import type {CoverageValue,TableValue,PointRow,CoverageRow,Receipt} from './results.js';
-export type TableInputs={coverage:CoverageValue;points?:never}|{coverage?:undefined;points:PointInput};
+export type TableInputs={points:PointInput};
 import {pointLayers,layerRecords,layerSummary} from './point-layers.js';
 import {attributeLiteral} from './attribute-schema.js';
 import {defaultSpatialReference} from './spatial-reference.js';
@@ -9,18 +9,17 @@ import {relationLabel} from './spatial-coverage.js';
 import {CRS84} from './study-area.js';
 
 export const newTableOutput=():NodeSpec<'table_output'>=>({type:'table_output',params:{label:'Point table'}});
-export function tableOutput(node:WorkflowNode<'table_output'>,inputs:TableInputs,runId:string):{value:TableValue|CoverageValue;receipt:Receipt}{
-  const layers=inputs.coverage?null:pointLayers(inputs.points);
-  const value:TableValue|CoverageValue=inputs.coverage?structuredClone(inputs.coverage):{
-    kind:'point-table',rows:layerRecords(layers!).map(({feature,...identity})=>({...identity,name:feature.properties.name,attributes:structuredClone(feature.properties),coordinates:structuredClone(feature.geometry?.coordinates||null)})),
-    pointLayers:layerSummary(layers!),spatialReference:structuredClone(layers![0]?.spatialReference||defaultSpatialReference()),centers:[],
+export function tableOutput(node:WorkflowNode<'table_output'>,inputs:TableInputs,runId:string):{value:TableValue;receipt:Receipt}{
+  const layers=pointLayers(inputs.points);
+  const value:TableValue={
+    kind:'point-table',rows:layerRecords(layers).map(({feature,...identity})=>({...identity,name:feature.properties.name,attributes:structuredClone(feature.properties),coordinates:structuredClone(feature.geometry?.coordinates||null)})),
+    pointLayers:layerSummary(layers),spatialReference:structuredClone(layers[0]?.spatialReference||defaultSpatialReference()),centers:[],
   };
   value.pointTable=true;
   const activity=`<urn:fieldwork:run:${runId}:table:${node.id}>`,entity=`<urn:fieldwork:run:${runId}:table-result:${node.id}>`;
   let facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n';
   facts+=`${activity} a fw:TableView, prov:Activity; prov:generated ${entity}; prov:used ${value.pointLayers.map(l=>`<urn:fieldwork:source:${l.sourceNodeId}>`).join(', ')}.\n${entity} a prov:Entity; rdfs:label ${JSON.stringify(node.params.label)}; prov:wasGeneratedBy ${activity}.\n`;
-  if(inputs.coverage)facts+=`${activity} prov:wasInformedBy <urn:fieldwork:run:${runId}:coverage:${inputs.coverage.checkNodeId}>.\n`;
-  else for(const row of value.rows){
+  for(const row of value.rows){
     const record=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}>`,geometry=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}:geometry>`;
     facts+=`${record} a geo:Feature; rdfs:label ${JSON.stringify(row.name)}; <http://purl.org/dc/terms/isPartOf> <urn:fieldwork:source:${row.sourceNodeId}>.\n`;
     // The WKT names the frame the coordinates are actually in. It was hardcoded to CRS84, which
@@ -122,4 +121,4 @@ export function pointTableMarkup(output:TableValue|CoverageValue,esc:Escape,{que
       +(attributeKeys.length>ATTRIBUTE_PAGE_SIZE?`<div class="table-page-group"><button class="button small" data-table-fields="${attributePage-1}" ${attributePage===0?'disabled':''}>Previous attributes</button><span>Attributes ${attributePage*ATTRIBUTE_PAGE_SIZE+1}–${Math.min((attributePage+1)*ATTRIBUTE_PAGE_SIZE,attributeKeys.length)} of ${attributeKeys.length}</span><button class="button small" data-table-fields="${attributePage+1}" ${(attributePage+1)*ATTRIBUTE_PAGE_SIZE>=attributeKeys.length?'disabled':''}>Next attributes</button></div>`:''),
   };
 }
-export function pointTableEvidence(row:PointRow,dirty:boolean,esc:Escape){return `<div class="inspector-body"><span class="inspector-section">Point record ${dirty?'· previous run':''}</span><h2>${esc(row.name)}</h2><p>${esc(row.layerLabel)} · ${esc(row.recordId)}</p><p>${row.coordinates?'Longitude, latitude: '+row.coordinates.map(esc).join(', '):'No coordinates supplied'}</p><p class="muted">Source attributes; no spatial coverage decision has been made.</p>${Object.entries(row.attributes).map(([k,v])=>`<div class="detail-row"><span>${esc(k)}</span><strong>${esc(display(v))}</strong></div>`).join('')}</div>`;}
+export function pointTableEvidence(row:PointRow,dirty:boolean,esc:Escape){return `<div class="inspector-body"><span class="inspector-section">Point record ${dirty?'· previous run':''}</span><h2>${esc(row.name)}</h2><p>${esc(row.layerLabel)} · ${esc(row.recordId)}</p><p>${row.coordinates?'Longitude, latitude: '+row.coordinates.map(esc).join(', '):'No coordinates supplied'}</p><p class="muted">Attributes as the source gave them. Nothing here is a judgement about the record.</p>${Object.entries(row.attributes).map(([k,v])=>`<div class="detail-row"><span>${esc(k)}</span><strong>${esc(display(v))}</strong></div>`).join('')}</div>`;}

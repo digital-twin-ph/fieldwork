@@ -270,6 +270,13 @@ export function resolveLayerSymbol(index:number,
  *  A map now resolves its own rows to a fill class and hands the renderer an encoding that says
  *  which variable it stands for and what each class means. The renderer draws classes. Giving the
  *  fill channel a different variable becomes a change where the semantics live, not in the map. */
+/** The dark outline every point mark is drawn over, so a symbol reads on any ground: a terrain
+ *  basemap runs through the palette's own values, and a hollow mark over one was nearly invisible.
+ *  It is a NEUTRAL rather than a seventh hue, for the same reason absence of data is: it must
+ *  separate the symbol from the ground without competing with the layers. Near-black rather than
+ *  black, which is the figure ink this project already uses. */
+export const MARK_HALO='#1A1A1A';
+
 export type FillClass='solid'|'hollow'|'absent';
 export interface FillEncoding {
   /** The variable the channel carries, in words a legend can print. */

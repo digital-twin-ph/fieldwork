@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {readFileSync} from 'node:fs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // The practitioner's instruction, 2026-10-14: "We should not offer up old widget versions in the
@@ -104,10 +105,15 @@ test('the Inspector says what the offered version of a widget changed',async({pa
   await page.locator('.react-flow__node[data-id="map"]').click();
   const inspector=page.locator('#inspector-content');
   await expect(inspector).not.toContainText('Choose a node to inspect');
-  await expect(inspector).toContainText('What changed in 0.10.0');
+  // The version is READ from the registry, not typed here. It said 0.10.0 until map_output cut
+  // 0.11.0 and 0.12.0 on consecutive days, and a test that names a version fails on the release
+  // after the one it was written for -- which says nothing about the feature under test.
+  const current=JSON.parse(readFileSync(new URL('../widgets/registry.json',import.meta.url),'utf8'))
+    .widgets.find(w=>w.nodeType==='map_output').currentVersion;
+  await expect(inspector).toContainText(`What changed in ${current}`);
   // Folded by default for an ordinary release; the text is there once opened.
-  await inspector.locator('details',{hasText:'What changed in 0.10.0'}).first().click();
-  await expect(inspector).toContainText('declares every layer port it can draw');
+  await inspector.locator('details',{hasText:`What changed in ${current}`}).first().click();
+  await expect(inspector).toContainText('coverage');
   await expect(inspector).toContainText('Earlier releases stay in the registry');
   expect(errors).toEqual([]);
 });

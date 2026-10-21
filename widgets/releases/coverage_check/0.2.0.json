@@ -1,0 +1,70 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:coverage_check",
+ "version": "0.2.0",
+ "nodeType": "coverage_check",
+ "title": "Check spatial coverage",
+ "released": "2026-10-21",
+ "implementationStatus": "retired",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['coverage_check']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "coverage-check"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:SpatialCoverageCheck",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Retired 2026-10-21. The module that asserted fw:SpatialCoverageCheck, fw:checkedRecord, fw:exclusionReason and fw:coverageDecision is gone, so this release emits nothing. The terms stay declared in the ontology: a receipt written by an earlier run still uses them and must remain readable.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES",
+  "note": "Retired 2026-10-21. src/coverage-ui.ts was deleted and src/spatial-coverage.ts keeps only the relation helpers every map and table uses. What remains of this widget is an archived definition, so a saved workflow naming the type can be migrated rather than refused."
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": "urn:fieldwork:widget:clip_points_to_area"
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "Retired. It asked where each point stood in relation to the study area and passed every one of them on, labelled; `clip_points_to_area` asks the same question and acts on the answer, and a map draws inside and outside without being asked. Two widgets had grown into the question this one existed to answer, so it was answering nothing on its own. The practitioner, 2026-10-21, closing admission criterion D2: \"Let's retire coverage check.\" A saved node migrates to `clip_points_to_area`, stamped, and an edge into a map's `coverage` port becomes an ordinary `points` edge. The Spatial coverage exercise it was built around keeps its four records -- inside, on the boundary, outside, and one with no location -- and now demonstrates the clip.",
+   "incompatibility": "The node type is gone, with its `coverage-check` port type, the `coverage` port on Map and Table, and the `spatial-coverage` result kind. WHAT IS LOST IS THE REVIEW: this widget let a reviewer exclude a record by judgement with a written reason, pinned to a content signature so the exclusion lapsed if the record changed, and it reached that decision through an N3 rule the reasoner evaluated rather than through code. No widget does that now, and the clip's spatial test is not a substitute for it.",
+   "migration": "Automatic and stamped. Recorded exclusions cannot be translated -- the replacement has nowhere to put a judgement -- so they travel in the migration stamp as `carriedExclusions` and the Inspector says they are inert. They are preserved rather than acted on, because dropping them on open would be the silent rewrite retirement exists to prevent."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

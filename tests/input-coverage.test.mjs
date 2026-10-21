@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseCSV,csvPoints,syntheticPoints,geoPackageLayers,geoPackagePoints,decodeGeoPackagePoint,geoJSONDeclaredCRS} from '../build/input-data.js';
-import {pointRelation,coverageFacts,coverageExercise,featureSignature} from '../build/spatial-coverage.js';
+import {pointRelation} from '../build/spatial-coverage.js';
+import {clipExercise} from '../build/clip-points.js';
 import {bboxPolygon} from '../build/study-area.js';
 import {validateGeoJSON,validateWorkflow} from '../build/core.js';
 import {pointGeoPackage} from './input-fixtures.mjs';
@@ -51,13 +52,13 @@ test('GeoPackage parser reads point geometry and attributes, rejects unsupported
   other.close();
   assert.throws(()=>decodeGeoPackagePoint(new Uint8Array(10),4326),/header/);
 });
-test('coverage exclusions match the source and complete record snapshot, without altering input',()=>{
-  const w=coverageExercise(),node=w.nodes[2],points={...w.nodes[1].params.data,sourceNodeId:'observations'},area={boundary:w.nodes[0].params.geometry,areaId:'urn:fieldwork:area:scope',geometryId:'urn:fieldwork:geometry:scope'};
-  const f=points.features.find(f=>f.id==='outside');node.params.exclusions=[{sourceNodeId:'observations',featureId:f.id,signature:featureSignature(f),reason:'Verified coordinate entry error'}];validateWorkflow(w);
-  assert.equal(coverageFacts(node,area,points,'test').rows.find(r=>r.id===f.id).excluded,true);
-  const changed=structuredClone(points);changed.features.find(r=>r.id===f.id).properties.verified=true;
-  assert.equal(coverageFacts(node,area,changed,'test').rows.find(r=>r.id===f.id).excluded,false);assert.equal(points.features.length,4);
-});
+// A test stood here until 2026-10-21: `coverage_check` let a reviewer exclude a record by
+// judgement with a written reason, pinned to a SIGNATURE of the record's whole content, so that
+// editing the record lapsed the exclusion rather than letting a stale judgement ride on changed
+// data. The widget was retired that day and nothing replaces that mechanism, so the test went
+// with it rather than being weakened into something the code still does. What remains is the
+// spatial half, covered by tests/clip-points.test.mjs. See docs/todo.md, which records the
+// capability as missing rather than as replaced.
 
 test('attribute data types and value sets validate values, defaults and imported records without coercion',()=>{
   assert.equal(parseAttributeValue('5','integer'),5);assert.equal(parseAttributeValue('yes','boolean'),true);assert.equal(parseAttributeValue('2024-02-29','date'),'2024-02-29');
@@ -71,7 +72,7 @@ test('attribute data types and value sets validate values, defaults and imported
   assert.match(attributeLiteral('2026-10-05','date'),/XMLSchema#date/);assert.match(attributeLiteral(5,'integer'),/XMLSchema#integer/);
 });
 test('pin ID strategy is optional for older workflows and rejects unsupported generation modes',()=>{
-  const w=coverageExercise();assert.doesNotThrow(()=>validateWorkflow(w));
+  const w=clipExercise();assert.doesNotThrow(()=>validateWorkflow(w));
   for(const strategy of ['uuid','sequential']){w.nodes[1].params.pinIdStrategy=strategy;assert.equal(validateWorkflow(w).nodes[1].params.pinIdStrategy,strategy);}
   w.nodes[1].params.pinIdStrategy='replace-existing';assert.throws(()=>validateWorkflow(w),/identifiers for new pins/);
 });

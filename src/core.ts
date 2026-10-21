@@ -35,7 +35,7 @@ import {mapSpecificationFacts} from './map-communication.js';
 import {assertProjectManifest,syncProjectManifest} from './project-manifest.js';
 import {migrateOutputNodes,decisionPresentation} from './output-contract.js';
 import {referencedPDFs,evidenceProvenance} from './evidence.js';
-import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,RenamedNodeType,CandidateCondition} from './types.js';
+import type {Exclusion,Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,RenamedNodeType,CandidateCondition} from './types.js';
 import {RENAMED_NODE_TYPES,isProjectedReference,BASEMAP_CHOICES} from './types.js';
 import {clipPointsToArea,clipPointsReceipt} from './clip-points.js';
 import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
@@ -58,7 +58,6 @@ import {compileAuthoredRuleset,authoredUnitProblems} from './authored-rules.js';
 import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
 import {measureArea,validateAreaUnit} from './area-measurement.js';
-import {checkCoverage,validateCoverageParams} from './spatial-coverage.js';
 import {mapOutput} from './map-output.js';
 import {tableOutput} from './table-output.js';
 import {MAX_POINT_LAYERS,pointPort,isPointPort} from './point-layers.js';
@@ -133,8 +132,11 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   point_grid:{title:'Point grid',group:'Spatial operations',icon:'▦',color:'teal',description:'Generate a regular grid of points inside a boundary at a stated spacing',inputs:[['area','area']],output:'points'},
   measure_area:{title:'Calculate area',group:'Spatial operations',icon:'▱',color:'teal',description:'Attach an area measurement to the study area',inputs:[['area','area']],output:'area'},
   point_input:{title:'Point data',group:'Sources',icon:'▦',color:'blue',description:'Import point observations or generate synthetic records',inputs:[],output:'points'},
-  coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Identify observations outside the study boundary',inputs:[['area','area'],['points','points']],output:'coverage-check'},
-  map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['decisions','decisions'],['coverage','coverage-check'],['raster','raster'],['network','network']],output:null},
+  // Retired 2026-10-21 and archived here, not deleted: a registry entry must resolve to a
+  // definition, and a saved workflow that still names this type is migrated to
+  // `clip_points_to_area` on open. It is in the retired list, so the palette never offers it.
+  coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Retired — use Keep points inside the area',inputs:[['area','area'],['points','points']],output:'coverage-check'},
+  map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['decisions','decisions'],['raster','raster'],['network','network']],output:null},
   table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display point coordinates, attributes and available review decisions',inputs:[['points','points'],['coverage','coverage-check']],output:null},
   chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Count reasoning results by decision, access zone or evidence tier',inputs:[['decisions','decisions']],output:null},
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
@@ -226,14 +228,14 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   if(node.type==='map_output')return [['area','area'],
     ...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points'] as [string,PortType]),
     ['polygons','polygons'],['context','points'],['decisions','decisions'],
-    ['coverage','coverage-check'],['raster','raster'],['network','network']];
+    ['raster','raster'],['network','network']];
   if(['table_output','chart_output'].includes(node.type)&&'inputMode' in node.params&&node.params.inputMode==='polygons')return [['polygons','polygons']];
   if(node.type==='table_output'&&node.params.inputMode==='table')return [['table','table']];
   // A street network is a thing to look at, not only a thing to route over. Four widgets consume a
   // `network` and none of them was an output, so a downloaded network could not be seen.
   if(node.type==='table_output'&&node.params.inputMode==='decisions')return [['decisions','decisions']];
   // map_output returned above with every layer port it can draw, so only these two reach here.
-  if(node.type!=='table_output'&&node.type!=='coverage_check')return TYPES[node.type].inputs;
+  if(node.type!=='table_output')return TYPES[node.type].inputs;
   return [...(node.type==='table_output'?[]:[['area','area']]),...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points']),...(node.type==='table_output'?[['coverage','coverage-check']]:[])] as [string,PortType][];
 }
 export function exampleWorkflow():Workflow {
@@ -292,6 +294,107 @@ export function validateWorkflow(raw:unknown):Workflow {
          data:(n.params as {data:PointCollection}).data,
          sourceInfo:{format:'reprojected-points',...(n.params as {source?:object}).source,...(n.params as {provenance?:object}).provenance}} as ParamsByType['point_input'],
        sourceMigration:{fromType:'reproject' as const,version:'1' as const}} : n);
+  // `coverage_check` asked where points stood in relation to the study area and passed every one
+  // of them on, labelled. `clip_points_to_area` asks the same question and acts on the answer, and
+  // a map draws inside and outside without being asked, so the check was answering a question two
+  // other widgets had started answering for it. Retired 2026-10-21 on the practitioner's decision.
+  //
+  // The spatial half migrates exactly. What does NOT migrate is the review: a coverage check let
+  // someone exclude a record by JUDGEMENT, with a written reason pinned to a content signature.
+  // Those are findings, not geometry, and the clip has nowhere to put them -- so they travel in
+  // the migration stamp and the Inspector says they are inert. Dropping them here would be the
+  // silent rewrite that retirement exists to prevent.
+  // A check could hold up to eight point layers; a clip holds one. Where it held more, the
+  // rewrite would have to invent nodes, so it refuses and names the node instead -- which is the
+  // other thing the retirement contract allows, and better than opening a workflow that quietly
+  // lost layers.
+  for(const n of w.nodes){
+    if(!n||(n.type as string)!=='coverage_check')continue;
+    const fed=w.edges.filter(e=>e&&e.to===n.id&&isPointPort(e.port));
+    if(fed.length>1)throw new Error(`"${(n.params as {label?:string}).label||'Check spatial coverage'}" is a retired `
+      +`Check spatial coverage widget holding ${fed.length} point layers. It is replaced by `
+      +`"Keep points inside the area", which takes one layer, so this one cannot be rewritten `
+      +`automatically. Add one Keep points inside the area per layer, connect each to the study `
+      +`area, and send them to the map's point inputs.`);
+  }
+  w.nodes=w.nodes.map(n=>{
+    if(!n||(n.type as string)!=='coverage_check')return n;
+    const params=(n as {params?:unknown}).params as {label?:string;exclusions?:Exclusion[]}|undefined||{};
+    const carried=Array.isArray(params.exclusions)?params.exclusions:[];
+    return {...(n as object),type:'clip_points_to_area' as const,
+      params:{label:params.label||'Keep points inside the area',keepBoundary:true,showExcluded:true},
+      sourceMigration:{fromType:'coverage_check' as const,version:'1' as const,
+        ...(carried.length?{carriedExclusions:structuredClone(carried)}:{})}};
+  }) as typeof w.nodes;
+  // A coverage check fed its own result to a map through the `coverage` port, which a clip does
+  // not have: its points go out the way every other point source's do.
+  //
+  // AND THE MAP NEEDS ITS AREA. A coverage value carried the study area with it, so a map fed only
+  // by a check had no `area` edge of its own; rewriting the port alone left it with points and no
+  // boundary, and the run stopped on "Cannot read properties of undefined". The area comes from
+  // the same place the clip gets it, which is the only answer that cannot be wrong.
+  for(const edge of w.edges){
+    if(!edge||edge.port!=='coverage')continue;
+    const clip=w.nodes.find(n=>n&&n.id===edge.from&&(n.type as string)==='clip_points_to_area');
+    if(!clip)continue;
+    edge.port='points';
+    const target=w.nodes.find(n=>n&&n.id===edge.to);
+    if(target?.type!=='map_output'||w.edges.some(e=>e&&e.to===target.id&&e.port==='area'))continue;
+    const area=w.edges.find(e=>e&&e.to===clip.id&&e.port==='area');
+    if(area)w.edges.push({id:`${edge.id}-area`,from:area.from,to:target.id,port:'area'});
+  }
+
+  // `coverage_check` asked where points stood in relation to the study area and passed every one
+  // of them on, labelled. `clip_points_to_area` asks the same question and acts on the answer, and
+  // a map draws inside and outside without being asked, so the check was answering a question two
+  // other widgets had started answering for it. Retired 2026-10-21 on the practitioner's decision.
+  //
+  // The spatial half migrates exactly. What does NOT migrate is the review: a coverage check let
+  // someone exclude a record by JUDGEMENT, with a written reason pinned to a content signature.
+  // Those are findings, not geometry, and the clip has nowhere to put them -- so they travel in
+  // the migration stamp and the Inspector says they are inert. Dropping them here would be the
+  // silent rewrite that retirement exists to prevent.
+  // A check could hold up to eight point layers; a clip holds one. Where it held more, the
+  // rewrite would have to invent nodes, so it refuses and names the node instead -- which is the
+  // other thing the retirement contract allows, and better than opening a workflow that quietly
+  // lost layers.
+  for(const n of w.nodes){
+    if(!n||(n.type as string)!=='coverage_check')continue;
+    const fed=w.edges.filter(e=>e&&e.to===n.id&&isPointPort(e.port));
+    if(fed.length>1)throw new Error(`"${(n.params as {label?:string}).label||'Check spatial coverage'}" is a retired `
+      +`Check spatial coverage widget holding ${fed.length} point layers. It is replaced by `
+      +`"Keep points inside the area", which takes one layer, so this one cannot be rewritten `
+      +`automatically. Add one Keep points inside the area per layer, connect each to the study `
+      +`area, and send them to the map's point inputs.`);
+  }
+  w.nodes=w.nodes.map(n=>{
+    if(!n||(n.type as string)!=='coverage_check')return n;
+    const params=(n as {params?:unknown}).params as {label?:string;exclusions?:Exclusion[]}|undefined||{};
+    const carried=Array.isArray(params.exclusions)?params.exclusions:[];
+    return {...(n as object),type:'clip_points_to_area' as const,
+      params:{label:params.label||'Keep points inside the area',keepBoundary:true,showExcluded:true},
+      sourceMigration:{fromType:'coverage_check' as const,version:'1' as const,
+        ...(carried.length?{carriedExclusions:structuredClone(carried)}:{})}};
+  }) as typeof w.nodes;
+  // A coverage check fed its own result to a map through the `coverage` port, which a clip does
+  // not have: its points go out the way every other point source's do.
+  //
+  // AND THE MAP NEEDS ITS AREA. A coverage value carried the study area with it, so a map fed only
+  // by a check had no `area` edge of its own; rewriting the port alone left it with points and no
+  // boundary, and the run stopped on "Cannot read properties of undefined". The area comes from
+  // the same place the clip gets it, which is the only answer that cannot be wrong.
+  for(const edge of w.edges){
+    if(!edge||edge.port!=='coverage')continue;
+    const clip=w.nodes.find(n=>n&&n.id===edge.from&&(n.type as string)==='clip_points_to_area');
+    if(!clip)continue;
+    edge.port='points';
+    const target=w.nodes.find(n=>n&&n.id===edge.to);
+    if(target?.type!=='map_output'||w.edges.some(e=>e&&e.to===target.id&&e.port==='area'))continue;
+    const area=w.edges.find(e=>e&&e.to===clip.id&&e.port==='area');
+    if(area)w.edges.push({id:`${edge.id}-area`,from:area.from,to:target.id,port:'area'});
+  }
+
+
   // `nearest`'s input ports were renamed from the heat demo's `places`/`centers` to the general
   // `points`/`candidates`. A saved workflow still names the old ones, and an edge whose port no
   // longer exists is refused, so it is rewritten here rather than failing to open.
@@ -455,8 +558,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
     if(Object.hasOwn(OLD_TYPES,n.type))validateOldNode(n);
     if(n.type==='measure_area')validateAreaUnit(n.params.unit);
-    if(n.type==='coverage_check')validateCoverageParams(n.params);
-    if((n.type==='map_output'||n.type==='table_output'||n.type==='coverage_check')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
+    if((n.type==='map_output'||n.type==='table_output')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='chart_output')&&(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>60))throw new Error(`${TYPES[n.type].title} names must be text of 1–60 characters.`);
   }
   const edgeIds=new Set(), ports=new Set();
@@ -476,11 +578,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(w.nodes.find(x=>x.id===center)?.type!=='mean_center'||!w.edges.some(e=>e.to===center&&e.port==='points'&&e.from===point))throw new Error('Each Mean center must use the same point source as its comparison branch.');
   }
   const visited=new Set(), stack=new Set();
-  for(const n of w.nodes.filter(n=>(n.type==='map_output'||n.type==='table_output'||n.type==='coverage_check'))){const sources=w.edges.filter(e=>e.to===n.id&&isPointPort(e.port)).map(e=>e.from);if(new Set(sources).size!==sources.length)throw new Error('Connect each point source once per operation.');}
-  for(const n of w.nodes.filter(n=>(n.type==='map_output'||n.type==='table_output'))){const inputs=w.edges.filter(e=>e.to===n.id);/* A connected raster used to require that the map had ALREADY been told it was a raster
-    map, which is the refusal the practitioner met as "the port a connection needs may not
-    exist". The connection now decides, so the rule is gone rather than moved: table_output
-    has no raster mode and never had a raster port. See drawnMode. */ if(inputs.some(e=>e.port==='coverage')&&inputs.length>1)throw new Error(`${TYPES[n.type].title} accepts either a coverage check or separate ${n.type==='map_output'?'area and ':''}points. Disconnect the other inputs first.`);}
+  for(const n of w.nodes.filter(n=>(n.type==='map_output'||n.type==='table_output'))){const sources=w.edges.filter(e=>e.to===n.id&&isPointPort(e.port)).map(e=>e.from);if(new Set(sources).size!==sources.length)throw new Error('Connect each point source once per operation.');}
   function visit(id:string) {if(stack.has(id)) throw new Error('Workflow cycles are not supported. Keep inference inside the rule node.');if(visited.has(id))return;stack.add(id);w.edges.filter(e=>e.to===id).forEach(e=>visit(e.from));stack.delete(id);visited.add(id);}
   w.nodes.forEach(n=>visit(n.id));
   if(w.outputId && !w.nodes.some(n=>n.id===w.outputId && ['output','map_output','table_output','chart_output','comparison_map'].includes(n.type))) throw new Error('Selected output does not exist.');
@@ -795,11 +893,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const clipped=clipPointsToArea(inputs.points,inputs.area.boundary,node.params.keepBoundary!==false);
         if(!clipped.collection.features.length)throw new Error(
           `No points fall inside "${inputs.area.label||'the study area'}". `
-          +`${clipped.outside} of ${clipped.inside+clipped.boundary+clipped.outside} are outside it or carry no coordinates. `
+          +`${clipped.outside} of ${clipped.inside+clipped.boundary+clipped.outside+clipped.missing} are outside it`
+          +(clipped.missing?` and ${clipped.missing} carry no usable location`:'')+`. `
           +`Check that the area is the one you meant.`);
         const areaEdge=workflow.edges.find(e=>e.to===node.id&&e.port==='area');
         const pointsEdge=workflow.edges.find(e=>e.to===node.id&&e.port==='points');
-        receipts.push(clipPointsReceipt(node,clipped,runId,areaEdge?.from??node.id,pointsEdge?.from??node.id));
+        receipts.push(clipPointsReceipt(node,clipped,runId,areaEdge?.from??node.id,pointsEdge?.from??node.id,inputs.area.areaFacts));
         const from=inputs.points as unknown as {sourceNodeId?:string;sourceKind?:string};
         value={...clipped.collection,sourceNodeId:from.sourceNodeId??node.id,
           sourceKind:from.sourceKind??'input-points',
@@ -978,10 +1077,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push({nodeId:node.id,kind:'presentation',facts,input:facts,rules:'',conclusions:[],
           method:'Draw the downloaded street graph as itself; no routing, no simplification and no new inference.'});
         break;}
-      if(mode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const mapped=mapOutput(node,inputs.coverage?{coverage:inputs.coverage}:{area:inputs.area,points:pointInputs()},runId);value=mapped.value;if(mapped.receipt)receipts.push(mapped.receipt);break;}
-      case 'table_output':{if(node.params.inputMode==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(node.params.inputMode==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const table=tableOutput(node,inputs.coverage?{coverage:inputs.coverage}:{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
+      if(mode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);value=mapped.value;if(mapped.receipt)receipts.push(mapped.receipt);break;}
+      case 'table_output':{if(node.params.inputMode==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(node.params.inputMode==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const table=tableOutput(node,{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
       case 'measure_area':{const computed=measureArea(node,inputs.area,runId);value=computed.value;receipts.push(computed.receipt);break;}
-      case 'coverage_check':{const checked=await checkCoverage(node,inputs.area,pointInputs(),reasoner,runId);value=checked.value;receipts.push(checked.receipt);break;}
       case 'study_area':{
         if(node.params.source!=='drawn'){value={...await executeOldNode(node,inputs,reasoner,receipts,distanceKm,runId),areaId:`urn:fieldwork:area:${node.id}`,geometryId:`urn:fieldwork:geometry:${node.id}`,label:node.params.label||'Old Naledi',rows:[],centers:[]};break;}
         const n3=studyAreaN3(node),conclusions=await reasoner(n3.input);
@@ -998,7 +1096,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   const outputNodes=resultNodes({nodes:plan});
   const display=(id:string)=>required(values.get(id)) as DisplayValue;
   const outputs:Output[]=outputNodes.length?outputNodes.flatMap((n):Output[]=>{
-    if(n.type==='coverage_check')return (['table','map'] as const).map(view=>({...display(n.id),nodeId:n.id+'-'+view,label:view==='table'?'Coverage review':'Coverage map',view}));
     const view=n.type==='output'?n.params.view:n.type==='table_output'?'table':n.type==='chart_output'?'bars':'map';
     return [{...display(n.id),nodeId:n.id,label:n.params.label||(n.type==='measure_area'?'Area · '+display(n.id).label:(view==='table'?'Table':'Map')+' · '+n.id),view}];
   }):plan.filter(n=>n.type==='study_area').map(n=>({...display(n.id),kind:'study-area',rows:[],centers:[],nodeId:n.id,label:n.params.label||'Study area preview',view:'map'}));

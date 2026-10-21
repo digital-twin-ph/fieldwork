@@ -170,7 +170,9 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         check(!current.ports[stale],`map_output still declares ${stale}: a map has layers, not modes`);
       if(nodeInputs)for(const inputMode of ['network','raster','polygons','decisions','spatial',undefined]){
         const types=nodeInputs({type:'map_output',params:{inputMode,pointInputCount:1}}).map(([,t])=>t);
-        for(const needed of ['area','points','polygons','decisions','coverage-check','raster','network'])
+        // `coverage-check` left this list on 2026-10-21 with the widget that produced one: a
+        // port nothing can fill is not a port a map owes anybody.
+        for(const needed of ['area','points','polygons','decisions','raster','network'])
           check(types.includes(needed),`map_output must offer a ${needed} port whatever inputMode says`);
       }
     }
@@ -178,7 +180,9 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
       check(current.ports.polygonInput?.value==='polygons','Missing polygon input mode');
       if(nodeInputs)check(JSON.stringify(nodeInputs({type:entry.nodeType,params:{inputMode:'polygons'}}))===JSON.stringify([['polygons','polygons']]),'Polygon port contract drift');
     }
-    const dynamic=['coverage_check','map_output','table_output'].includes(entry.nodeType);
+    // `coverage_check` was here until it was retired on 2026-10-21. A retired widget expands
+    // nothing, because nothing adds one.
+    const dynamic=['map_output','table_output'].includes(entry.nodeType);
     check(dynamic===Boolean(current.ports.dynamicInputs),'Dynamic port contract drift');
     if(entry.nodeType==='table_output'){
       check(current.ports.reasoningInput?.parameter==='inputMode'&&current.ports.reasoningInput.value==='decisions','Missing reasoning input mode');

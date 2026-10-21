@@ -66,6 +66,10 @@ off the other.
 - **Each layer also gets a mark**: circle, square, triangle, star, cross or X. A mark is chosen per
   layer in this widget's settings, and the legend draws the same mark the map draws. Colour alone
   is not readable by every reader, and a figure printed in greyscale has no colour at all.
+- **Every symbol carries a dark outline**, so it reads over any basemap — a terrain basemap runs
+  through the same colours the palette uses, and a hollow mark over one is hard to pick out. It is
+  a neutral, not a seventh colour, and a checkbox turns it off for a pale ground or a printed
+  figure.
 - **Ordered values use an ordered ramp.** Travel-time bands run light to dark through one hue,
   which is a ColorBrewer sequential scheme. A category palette on an ordered variable invites the
   reader to see difference where there is sequence.

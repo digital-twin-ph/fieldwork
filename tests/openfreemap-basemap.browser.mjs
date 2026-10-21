@@ -56,7 +56,14 @@ test('an OpenFreeMap vector style draws under the workflow layers, and is credit
   // layer did nothing and the control read "Leaflet" alone, which is this map drawing somebody
   // else's data with no credit.
   const credit=page.locator('.leaflet-control-attribution');
-  await expect(credit).toContainText('OpenFreeMap');
+  // THIS ASSERTION WAITS ON A THIRD PARTY. The credit is surfaced from the style's own TileJSON,
+  // so it arrives when that fetch and parse complete, and the default ten seconds measures
+  // OpenFreeMap's latency rather than this application's behaviour. Measured on WebKit
+  // 2026-10-21: tiles drawing at 3 seconds, the credit appearing between 8 and 15 in one run and
+  // past 30 in another, with the whole test taking 42 seconds. Given a generous bound on purpose
+  // -- the alternative is a flake that says nothing, and the project has twice recorded tests
+  // that measured the environment instead of the code.
+  await expect(credit).toContainText('OpenFreeMap',{timeout:90000});
   await expect(credit).toContainText('OpenMapTiles');
   await expect(credit).toContainText('OpenStreetMap');
 

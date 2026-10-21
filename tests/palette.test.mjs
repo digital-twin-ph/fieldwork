@@ -6,11 +6,11 @@ import {oldNalediWorkflow} from '../build/old-naledi.js';
 import {johnSnowExample} from '../build/john-snow.js';
 import {geoprivacyExample} from '../build/geoprivacy-example.js';
 import {blankWorkflow} from '../build/study-area.js';
-import {coverageExercise} from '../build/spatial-coverage.js';
+import {clipExercise} from '../build/clip-points.js';
 
 const EXAMPLES=[
   ['heat',exampleWorkflow()],['old-naledi',oldNalediWorkflow()],['blank',blankWorkflow()],
-  ['coverage',coverageExercise()],['snow-voronoi',johnSnowExample('snow-voronoi')],
+  ['coverage',clipExercise()],['snow-voronoi',johnSnowExample('snow-voronoi')],
   ['snow-isochrone',johnSnowExample('snow-isochrone')],['snow-geoprivacy',geoprivacyExample()],
 ];
 

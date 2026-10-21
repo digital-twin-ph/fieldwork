@@ -1,7 +1,0 @@
-import{a as d,b as c}from"./chunk-DX3LJVK7.js";function l(t,e,n){let i=[],r=[],s=0,u=0,a=0;for(let o of t.features||[]){let p=d(o.geometry?.coordinates,e);if(p==="Inside"){s++,i.push(o);continue}if(p==="Boundary"){u++,n?i.push(o):r.push(o);continue}a++,o.geometry&&r.push(o)}return{collection:{...t,features:i},inside:s,boundary:u,outside:a,excluded:r}}function y(t,e,n,i,r){let s=`urn:fieldwork:run:${n}:output:${t.id}`,u=`${s}:activity`,a=e.inside+(t.params.keepBoundary?e.boundary:0),o=`@prefix fw: <urn:fieldwork:>.
-@prefix geo: <http://www.opengis.net/ont/geosparql#>.
-@prefix prov: <http://www.w3.org/ns/prov#>.
-<${u}> a fw:PointInPolygonClip, prov:Activity; prov:used <urn:fieldwork:run:${n}:output:${i}>, <urn:fieldwork:run:${n}:output:${r}>; fw:spatialPredicate ${JSON.stringify(c.Inside)}; fw:boundaryPointsKept ${t.params.keepBoundary}; fw:insideCount ${e.inside}; fw:boundaryCount ${e.boundary}; fw:outsideCount ${e.outside}.
-<${s}> a fw:PointDataset, prov:Entity; fw:recordCount ${a}; prov:wasGeneratedBy <${u}>.
-`;return{nodeId:t.id,kind:"presentation",facts:o,input:o,rules:"",conclusions:[],method:`Point-in-polygon against the study area: ${e.inside} inside, ${e.boundary} on the boundary (${t.params.keepBoundary?"kept":"dropped"}), ${e.outside} outside or without coordinates. The test is the same one the coverage check and the map use, so a point counted inside here is inside there.`}}export{l as a,y as b};
-//# sourceMappingURL=chunk-UZBIK2TR.js.map

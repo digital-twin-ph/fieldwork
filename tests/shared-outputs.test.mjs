@@ -13,7 +13,9 @@ test('legacy map/table outputs normalize idempotently and retain the reasoning d
   // rather than the only one a decisions-mode map has.
   const mapPorts=nodeInputs(w.nodes.find(n=>n.id==='map'));
   assert.ok(mapPorts.some(([name,type])=>name==='decisions'&&type==='decisions'));
-  assert.equal(mapPorts.length,8);
+  // Seven, not eight: the `coverage` port left with `coverage_check` on 2026-10-21.
+  assert.equal(mapPorts.length,7);
+  assert.equal(mapPorts.some(([name])=>name==='coverage'),false);
   assert.deepEqual(validateWorkflow(w),w);
   // Points alongside decisions used to be refused as Incompatible, because a decisions-mode map
   // had no points port to aim at. It is a map with two layers, and that is now what it is.

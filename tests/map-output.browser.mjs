@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
-import {coverageExercise} from '../build/spatial-coverage.js';
+import {clipExercise} from '../build/clip-points.js';
 import {collectPageErrors} from './page-errors.mjs';
 test("Map connectors, layer identity, review and persistence",async({page,context})=>{
 const errors=collectPageErrors(page);
@@ -22,7 +22,7 @@ const connect=async(from,to,port)=>{
 };
 const receipt=async()=>{await page.locator('[data-view="rules"]').click();const pending=page.waitForEvent('download');await page.locator('#download-evidence').click();return JSON.parse(await readFile(await (await pending).path(),'utf8'));};
   await mkdir('test-results',{recursive:true});await page.goto('/?example=blank');
-  const w=coverageExercise();w.exampleId='blank';w.name='Map widget experiment';w.nodes=w.nodes.slice(0,2);w.edges=[];
+  const w=clipExercise();w.exampleId='blank';w.name='Map widget experiment';w.nodes=w.nodes.slice(0,2);w.edges=[];
   await page.locator('#workflow-file').setInputFiles({name:'map-start.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('[data-add="map_output"]').click();
   await page.locator('#map-label').fill('Boundary and observations');await page.locator('#map-label').press('Tab');
@@ -49,55 +49,30 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   await page.locator('[data-map-record="missing"]').click();await expect(page.locator('#inspector-content')).toContainText('cannot be plotted');
   await select(mapId);await page.screenshot({path:'test-results/map-output-desktop.png',fullPage:true});
   const raw=await receipt();assert.equal(raw.outputs[0].kind,'spatial-map');assert.equal(raw.outputs[0].rows.length,4);assert.match(raw.receipts.find(r=>r.nodeId===mapId).facts,/geo:sfDisjoint/);
-  await select(mapId);await page.locator('[data-add="coverage_check"]').click();
-  const checkId=(await saved()).nodes.find(n=>n.type==='coverage_check').id;
-  await expect(page.locator(`.react-flow__node[data-id="${checkId}"] .node`)).toHaveCSS('background-color','rgb(255, 240, 221)');
-  // Separate the newly added node from Map before exercising visible connectors.
-  const heading=page.locator(`.react-flow__node[data-id="${checkId}"] .node-heading`);
-  await heading.hover();const box=await heading.boundingBox();
-  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
-  await page.mouse.move(box.x+box.width/2+220,box.y+box.height/2-30,{steps:15});await page.mouse.up();
-  await page.locator('#fit-button').click();
-  await page.locator('#coverage-area').selectOption('scope');await page.locator('#coverage-points').selectOption('observations');
-  await select(mapId);await page.locator('#fit-button').click();await page.waitForTimeout(300);
-  await connect(checkId,mapId,'coverage');
-  await expect(page.locator('#map-coverage')).toHaveValue(checkId);
-  assert.deepEqual((await saved()).edges.filter(e=>e.to===mapId).map(e=>e.port),['coverage']);
-  await expect(page.locator(`.react-flow__node[data-id="${mapId}"] .alternative-input`)).toHaveText('Or: Coverage result');
-  await page.locator('#undo-button').click();
-  assert.deepEqual((await saved()).edges.filter(e=>e.to===mapId).map(e=>e.port),['area','points']);
-  await connect(checkId,mapId,'coverage');await expect(page.locator('#map-coverage')).toHaveValue(checkId);
-  // Also exercise the reported empty Map. There is no wrong socket to reject any more: the one
-  // configurable port takes anything the map can draw and binds it to the port its TYPE belongs
-  // to, so a coverage result aimed anywhere on the node lands on `coverage`. This used to assert
-  // that the same drop changed nothing, which was true when a practitioner had to pick the socket
-  // themselves and could pick the wrong one.
-  await page.locator('#map-coverage').selectOption('');
-  assert.equal((await saved()).edges.filter(e=>e.to===mapId).length,0);
-  await connect(checkId,mapId,'area');
-  assert.deepEqual((await saved()).edges.filter(e=>e.to===mapId).map(e=>e.port),['coverage']);
-  await page.locator('#map-coverage').selectOption('');
-  await connect(checkId,mapId,'coverage');await expect(page.locator('#map-coverage')).toHaveValue(checkId);
-  // Switching back to direct inputs uses the same replacement rule; Undo restores the reviewed result.
-  await connect('scope',mapId,'area');await expect(page.locator('#map-area')).toHaveValue('scope');
-  assert.deepEqual((await saved()).edges.filter(e=>e.to===mapId).map(e=>e.port),['area']);
-  await page.locator('#undo-button').click();await expect(page.locator('#map-coverage')).toHaveValue(checkId);
-  await page.screenshot({path:'test-results/coverage-map-connectors.png',fullPage:true});await run();
-  await page.getByRole('tab',{name:'Boundary and observations'}).click();await outside.click();
-  await page.locator('#exclusion-reason').fill('Verified test coordinate error');await page.locator('#coverage-exclude-form button').click();await run();
-  await expect(outside).toHaveAttribute('aria-label',/Excluded/);await expect(page.locator('#map [data-place]')).toHaveCount(3);
-  const reviewed=await receipt();assert.equal(reviewed.outputs.find(o=>o.nodeId===mapId).rows.find(r=>r.id==='outside').excluded,true);
-  const download=page.waitForEvent('download');await page.locator('#export-button').click();const bytes=await readFile(await (await download).path());
-  await page.locator('#new-workflow').click();await page.locator('#workflow-file').setInputFiles({name:'map-saved.json',mimeType:'application/json',buffer:bytes});await run();
-  await page.getByRole('tab',{name:'Boundary and observations'}).click();await expect(outside).toHaveAttribute('aria-label',/Excluded/);
+  // A block stood here exercising the coverage check's connectors and its record review: adding
+  // the widget, dragging it clear, wiring it to the map's `coverage` port, undoing, and excluding
+  // a record with a reason. `coverage_check` was retired on 2026-10-21 and the map's `coverage`
+  // port went with it. What survives is the persistence half, which was never about that widget.
+  await run();
+  const exported=page.waitForEvent('download');await page.locator('#export-button').click();
+  const bytes=await readFile(await (await exported).path());
+  await page.locator('#new-workflow').click();
+  await page.locator('#workflow-file').setInputFiles({name:'map-saved.json',mimeType:'application/json',buffer:bytes});
+  await run();
+  await page.getByRole('tab',{name:'Boundary and observations'}).click();
+  // Three drawn, not four: the fourth record has no coordinates, so it is listed rather than
+  // plotted -- which the inspection above has already checked.
+  await expect(page.locator('#map [data-place]')).toHaveCount(3);
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.getByRole('tab',{name:'Boundary and observations'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(3);
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'test-results/map-output-mobile.png',fullPage:true});
   await context.setOffline(false);await page.setViewportSize({width:1600,height:1100});
-  const multi=coverageExercise(),second=structuredClone(multi.nodes[1]);second.id='second';second.params.label='Second dataset';second.x=40;second.y=400;multi.nodes.push(second);
+  const multi=clipExercise(),second=structuredClone(multi.nodes[1]);second.id='second';second.params.label='Second dataset';second.x=40;second.y=400;multi.nodes.push(second);
   await page.locator('#workflow-file').setInputFiles({name:'layers.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(multi))});
   await expect(page.locator('#run-button')).toBeEnabled();await page.locator('[data-view="workflow"]').click();await page.locator('[data-add="map_output"]').click();
-  const multiMapId=(await saved()).nodes.find(n=>n.type==='map_output').id;
+  // The clip exercise ships with a map of its own, so the one just added is the LAST one. It was
+  // `find` while the exercise had none.
+  const multiMapId=(await saved()).nodes.filter(n=>n.type==='map_output').at(-1).id;
   await page.locator('#map-label').fill('Layer comparison');await page.locator('#map-label').press('Tab');
   await page.locator('#map-add-layer').selectOption('scope');await page.locator('#map-add-layer').selectOption('observations');
   // A second point source needs no "add point input" click: the configurable port sees that
@@ -108,20 +83,20 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   await page.getByRole('tab',{name:'Layer comparison'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(6);await expect(page.locator('#map-layer-list input')).toHaveCount(2);await expect(page.locator('#map-missing-records button')).toHaveCount(2);
   await page.locator('[data-map-layer="second"]').uncheck();await expect(page.locator('#map [data-layer="second"]:visible')).toHaveCount(0);await expect(page.locator('#map [data-layer="observations"]:visible')).toHaveCount(3);await page.locator('[data-map-layer="second"]').check();
   await select(multiMapId);await page.locator('#remove-point-input').click();assert.equal((await saved()).edges.filter(e=>e.to===multiMapId).length,2);await page.locator('#undo-button').click();await expect(page.locator('#map-points_2')).toHaveValue('second');
-  await select('coverage');await page.locator('#add-point-input').click();await page.locator('#coverage-points_2').selectOption('second');
-  // Not drawn yet, so the coverage result is added through the configurable picker.
-  await select(multiMapId);await page.locator('#map-add-layer').selectOption('coverage');
-  await expect(page.locator('#map-coverage')).toHaveValue('coverage');await run();await page.getByRole('tab',{name:'Layer comparison'}).click();
-  // Coincident points from the two datasets can be inspected by toggling layers.
-  await page.locator('[data-map-layer="second"]').uncheck();await page.locator('#map [data-layer="observations"][aria-label^="Outside example"]').click();await page.locator('#exclusion-reason').fill('Error in first dataset only');await page.locator('#coverage-exclude-form button').click();await run();await page.locator('[data-map-layer="second"]').check();
-  await expect(page.locator('#map [data-layer="observations"][aria-label^="Outside example"]')).toHaveAttribute('aria-label',/Excluded/);await expect(page.locator('#map [data-layer="second"][aria-label^="Outside example"]')).toHaveAttribute('aria-label',/Outside/);
-  const multiReceipt=await receipt(),multiView=multiReceipt.outputs.find(o=>o.nodeId===multiMapId);assert.equal(multiView.rows.length,8);assert.equal(multiView.excludedCount,1);assert.equal(multiView.reviewCount,3);assert.equal(multiView.retainedLayers[1].data.features.length,4);
+  // The coverage result was added here as a third layer and a record excluded by clicking it.
+  // Both went with the widget on 2026-10-21; what the map does with several point layers is
+  // below and is unaffected.
+  await run();await page.getByRole('tab',{name:'Layer comparison'}).click();
+  const multiReceipt=await receipt(),multiView=multiReceipt.outputs.find(o=>o.nodeId===multiMapId);assert.equal(multiView.rows.length,8);
+  // Two layers of four records each, kept apart by their source. `reviewCount` and
+  // `retainedLayers` were the coverage check's, and went with it.
+  assert.deepEqual(multiView.pointLayers.map(l=>l.count),[4,4]);
   await select(multiMapId);await page.screenshot({path:'test-results/map-multiple-layers.png',fullPage:true});
   const savedMulti=await saved();await page.locator('#new-workflow').click();await page.locator('#workflow-file').setInputFiles({name:'multiple-layers.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(savedMulti))});await run();
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
-  await select('coverage');await expect(page.locator('#coverage-points_2')).toHaveValue('second');await page.getByRole('tab',{name:'Layer comparison'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(6);
+  await page.getByRole('tab',{name:'Layer comparison'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(6);
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-  assert.deepEqual(errors,[]);console.log('PASS: Map node, polygon/point connections, visible outside and missing records, keyboard inspection, coverage/exclusions, saved workflow, offline reload and mobile layout.');
+  assert.deepEqual(errors,[]);console.log('PASS: Map node, polygon/point connections, visible outside and missing records, keyboard inspection, saved workflow, offline reload and mobile layout.');
 });
 
 // The receipts answer how many layers a map draws and of what kinds, asserted rather than left

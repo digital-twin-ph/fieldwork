@@ -19,7 +19,13 @@ import {OLD_TYPES} from '../build/old-naledi.js';
 // D4a's vocabulary is used deliberately. An earlier version of this file called them "private
 // pipes", which named nothing: the canvas has nodes, ports and connectors, and a single-producer
 // single-consumer relationship is a property of a port type rather than a new kind of object.
-const CUSTOM_STUDS_TODAY=6;
+// Raised from 6 to 7 on 2026-10-21, deliberately, and this is the reason. `coverage-check` had a
+// producer and a consumer: the coverage check made one and a map drew it. The widget was retired,
+// the map's port went with it, and the type is now produced by an archived definition and consumed
+// by nothing -- which is what a stud is. It is not a new coupling; it is an old one losing its far
+// end. It falls back to 6 when the archived definition is dropped, which this project does not do
+// while a saved workflow may still name the type.
+const CUSTOM_STUDS_TODAY=7;
 
 const definitions={...TYPES,...OLD_TYPES};
 const union=[...new Set(readFileSync(new URL('../src/types.ts',import.meta.url),'utf8')

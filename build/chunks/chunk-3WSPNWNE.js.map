@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../src/spatial-coverage.ts"],
+  "sourcesContent": ["import type {SpatialRelation,NodeSpec} from './types.js';\nimport {pointRelation} from './spatial-predicates.js';\nexport {pointRelation};\n\n/** What is left of the spatial coverage widget after it was retired on 2026-10-21: the two things\n *  that were never about the widget. `pointRelation` answers where a point stands in relation to\n *  an area, and every map and table says it in these words. The widget itself -- the pass-through\n *  that labelled records and let a reviewer exclude one by judgement -- is gone, replaced for its\n *  spatial half by `clip_points_to_area`. See widgets/releases/coverage_check/0.2.0.json. */\nexport const relationLabel=(r:SpatialRelation)=>({Inside:'Inside',Boundary:'On boundary',Outside:'Outside study area',MissingLocation:'Missing coordinates'}[r]);\nexport const newObservations=():NodeSpec<'point_input'>=>({type:'point_input',params:{label:'Point observations',data:{type:'FeatureCollection' as const,features:[]}}});\n"],
+  "mappings": "AASO,IAAMA,EAAeC,IAAqB,CAAC,OAAO,SAAS,SAAS,cAAc,QAAQ,qBAAqB,gBAAgB,qBAAqB,GAAEA,CAAC,EACjJC,EAAgB,KAA6B,CAAC,KAAK,cAAc,OAAO,CAAC,MAAM,qBAAqB,KAAK,CAAC,KAAK,oBAA6B,SAAS,CAAC,CAAC,CAAC,CAAC",
+  "names": ["relationLabel", "r", "newObservations"]
+}

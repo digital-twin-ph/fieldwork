@@ -28,14 +28,14 @@ test('the Map declares every layer port it can draw, whatever it was last set to
     .map(([,type])=>type);
   for(const mode of ['network','raster','polygons','decisions','spatial',undefined]){
     const types=ports(mode);
-    for(const needed of ['area','points','polygons','decisions','coverage-check','raster','network'])
+    for(const needed of ['area','points','polygons','decisions','raster','network'])
       assert.ok(types.includes(needed),`${mode}: a map must offer a ${needed} port`);
   }
   // The static contract says the same thing the node does. It used to list four ports while a
   // node could have eight, which is how a declared contract and a live node disagreed about what
   // a map is; the only thing still node-dependent is how MANY point layers, which pointInputCount
   // creates and a type table cannot know.
-  for(const needed of ['area','points','polygons','decisions','coverage-check','raster','network'])
+  for(const needed of ['area','points','polygons','decisions','raster','network'])
     assert.ok(TYPES.map_output.inputs.some(([,t])=>t===needed),`the static contract declares ${needed}`);
 });
 

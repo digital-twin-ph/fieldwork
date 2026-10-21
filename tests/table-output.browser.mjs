@@ -48,23 +48,37 @@ test('Table displays point attributes without a boundary, pages, searches, and r
   assert.deepEqual(errors,[]);
 });
 
-test('Table accepts coverage by drag, preserves decisions, and does not double-count review alerts',async({page})=>{
+test('a table takes point layers directly, searches them and survives a round trip',async({page})=>{
+  // Until 2026-10-21 this test dragged a `coverage_check` into the table's `coverage` port and
+  // checked that review decisions and exclusion reasons came through. That widget is retired and
+  // the port is gone; a table takes point layers like everything else. The round trip, the search
+  // and the attribute columns were never about the check and are what remains under test.
   const errors=collectPageErrors(page);
-  await page.goto('/?example=blank');await upload(page,fixture);await page.locator('[data-add="table_output"]').click();
+  const w=structuredClone(fixture);
+  w.edges=w.edges.filter(e=>e.port!=='points_2');
+  w.nodes=w.nodes.filter(n=>n.id!=='second');
+  delete w.nodes.find(n=>n.id==='coverage').params.pointInputCount;
+  await page.goto('/?example=blank');await upload(page,w);await page.locator('[data-add="table_output"]').click();
   const tableId=(await saved(page)).nodes.find(n=>n.type==='table_output').id;
-  await page.locator('#table-points').selectOption('observations');await drag(page,'coverage',tableId,'coverage');await expect(page.locator('#table-coverage')).toHaveValue('coverage');
-  assert.deepEqual((await saved(page)).edges.filter(e=>e.to===tableId).map(e=>e.port),['coverage']);
-  await page.locator('#undo-button').click();await expect(page.locator('#table-points')).toHaveValue('observations');await drag(page,'coverage',tableId,'coverage');await run(page);
-  await page.getByRole('tab',{name:/Point table$/}).click();await expect(page.locator('#result-rows [data-place]')).toHaveCount(6);
-  await expect(page.locator('#result-head')).toContainText('Review decision');await expect(page.locator('#result-head')).toContainText('household_size');
-  await expect(page.locator('#coverage-alert')).toContainText('2 records');
-  await page.locator('#result-search').fill('Confirmed synthetic coordinate error');await expect(page.locator('#result-rows [data-place]')).toHaveCount(1);
-  await page.locator('#result-rows [data-place]').click();await expect(page.locator('#inspector-content')).toContainText('Point attributes');await expect(page.locator('#inspector-content')).toContainText('Outside example');await page.locator('#coverage-restore').click();await run(page);await expect(page.locator('#coverage-alert')).toContainText('3 records');
-  await page.getByRole('tab',{name:/Point table$/}).click();await expect(page.locator('#result-rows [data-place]')).toHaveCount(6);
-  const download=page.waitForEvent('download');await page.locator('#export-button').click();const bytes=await readFile(await (await download).path());
-  await page.locator('#new-workflow').click();await page.locator('#workflow-file').setInputFiles({name:'table-roundtrip.json',mimeType:'application/json',buffer:bytes});await run(page);
-  await page.getByRole('tab',{name:/Point table$/}).click();await expect(page.locator('#result-rows [data-place]')).toHaveCount(6);
-  const evidence=await receipt(page),table=evidence.outputs.find(o=>o.nodeId===tableId);assert.equal(table.excludedCount,0);assert.equal(table.reviewCount,3);assert.ok(table.measurement.squareMetres>0);
+  await page.locator('#table-points').selectOption('observations');
+  assert.deepEqual((await saved(page)).edges.filter(e=>e.to===tableId).map(e=>e.port),['points']);
+  await run(page);
+  await page.getByRole('tab',{name:/Point table$/}).click();
+  await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
+  await expect(page.locator('#result-head')).toContainText('household_size');
+  await page.locator('#result-search').fill('Outside example');
+  await expect(page.locator('#result-rows [data-place]')).toHaveCount(1);
+  await page.locator('#result-rows [data-place]').click();
+  await expect(page.locator('#inspector-content')).toContainText('Attributes as the source gave them');
+  await page.getByRole('tab',{name:/Point table$/}).click();
+  await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
+  const download=page.waitForEvent('download');await page.locator('#export-button').click();
+  const bytes=await readFile(await (await download).path());
+  await page.locator('#new-workflow').click();
+  await page.locator('#workflow-file').setInputFiles({name:'table-roundtrip.json',mimeType:'application/json',buffer:bytes});
+  await run(page);
+  await page.getByRole('tab',{name:/Point table$/}).click();
+  await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
   assert.deepEqual(errors,[]);
 });
 

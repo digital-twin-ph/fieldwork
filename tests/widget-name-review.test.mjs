@@ -70,9 +70,11 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   const live=classification.widgets.filter(w=>!w.retired).map(w=>w.nodeType).sort();
   assert.deepEqual(review.reviews.map(r=>r.nodeType).sort(),live,
     'every live widget has a review entry and no retired one does');
-  // 47 since 2026-10-20: clip_points_to_area, the point-in-polygon operation that existed as a
-  // predicate in five modules and as a report in two, and as a widget nowhere.
-  assert.equal(review.reviews.length,47);
+  // 47 on 2026-10-20, when clip_points_to_area arrived -- the point-in-polygon operation that
+  // existed as a predicate in five modules and as a report in two, and as a widget nowhere.
+  // 46 on 2026-10-21, when coverage_check was retired into it: a widget that reports a membership
+  // and a widget that acts on one were the same question asked twice.
+  assert.equal(review.reviews.length,46);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

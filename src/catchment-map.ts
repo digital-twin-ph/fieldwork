@@ -5,7 +5,7 @@ import type {PointCollection,Escape,Position} from './types.js';
 import {BASEMAP_CHOICES,type BasemapChoice} from './types.js';
 import {layerSymbol,markPath} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
-import {fillClass,SPATIAL_RELATION_FILL} from './presentation.js';
+import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
 export type {BasemapChoice};
 
 /** OpenFreeMap serves VECTOR tiles, not raster, so these cannot be an `L.tileLayer` URL.
@@ -88,6 +88,7 @@ export interface MapLayers {
   /** What the fill channel stands for. The renderer prints the words and draws the classes; it
    *  does not know which variable produced them. */
   fillEncoding?:FillEncoding;
+  markHalo?:boolean;
   /** What each source is called, so a layer control names the widget rather than its node id. */
   layerNames?:Record<string,string>;
   /** The symbol each source is drawn with, resolved from the practitioner's choice where they
@@ -116,6 +117,11 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // Views can disappear immediately on tab/workspace changes. Avoid delayed zoom
   // transition callbacks that outlive Leaflet's removed panes.
   const map=L.map(canvas,{scrollWheelZoom:false,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false}),all=L.featureGroup(),overlays:Record<string,L.Layer>=Object.create(null);
+  // POINT MARKS GET THEIR OWN PANE, under the markers. They used to be circleMarkers, which
+  // Leaflet draws in the overlay pane -- below every marker. Drawing each mark as an icon so it
+  // could carry a halo put them in the MARKER pane instead, where a dense facility layer covered
+  // the pump and site markers and swallowed their clicks. One pane, one z-index below markers,
+  // restores the stacking the circleMarkers had.
   // Ground first, under everything the workflow produced.
   if(layers.boundary){
     // Canvas for the same reason the streets use it: a published boundary can be tens of
@@ -162,7 +168,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   if(observations.getLayers().length){observations.addTo(map);all.addLayer(observations);overlays['Observations (red circles)']=observations;}
   const pumps=L.featureGroup(),points=context?.features||p.sites;
   for(const f of points){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates;
-    const marker=L.marker([lat,lon],{icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
+    const marker=L.marker([lat,lon],{zIndexOffset:1000,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
     marker.on('add',()=>{const icon=marker.getElement();if(icon){L.DomEvent.disableClickPropagation(icon);icon.addEventListener('mousedown',event=>event.preventDefault());icon.addEventListener('click',event=>{event.stopPropagation();marker.openPopup();});}});
   }
   if(pumps.getLayers().length){pumps.addTo(map);all.addLayer(pumps);overlays['Sites / context (blue squares)']=pumps;}
@@ -204,15 +210,22 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         const inside=paint==='solid';
         // The mark is DRAWN, not just named. The layer control said "(square)" while every point
         // on the map was a circleMarker, so the mark channel existed in the label and the receipt
-        // and nowhere a reader could see it. A circle stays a circleMarker because it is the same
-        // picture for less DOM, and a layer can hold thousands of points.
-        (symbol.shape==='circle'
-          ? L.circleMarker([lat,lon],{radius:4,color:ink,weight:1.6,fillColor:ink,fillOpacity:inside?.85:0})
-          : L.marker([lat,lon],{title:row.name,icon:L.divIcon({className:'catchment-point-mark',
-              iconSize:[14,14],iconAnchor:[7,7],
-              html:`<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">`
-                +`<path d="${markPath(symbol.shape,7,7,5)}" fill="${inside?ink:'none'}" `
-                +`stroke="${ink}" stroke-width="1.5"/></svg>`})}))
+        // and nowhere a reader could see it.
+        //
+        // EVERY mark carries a dark halo, drawn first and wider, so the symbol reads on any
+        // ground. The practitioner, 2026-10-21, over OpenTopoMap: *"we can add a dark border to
+        // the symbols so they are easier to see on any basemap."* A terrain basemap runs through
+        // the same values as the palette, and a hollow mark over it was nearly invisible. The halo
+        // is a neutral, not a seventh hue: it separates the symbol from the ground without
+        // competing with the layer colours. A circle no longer takes the cheaper circleMarker
+        // path, because one stroke cannot be both the halo and the hue.
+        L.marker([lat,lon],{title:row.name,icon:L.divIcon({className:'catchment-point-mark',
+          iconSize:[16,16],iconAnchor:[8,8],
+          html:`<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">`
+            +(layers.markHalo===false?'':`<path d="${markPath(symbol.shape,8,8,5)}" fill="none" `
+              +`stroke="${MARK_HALO}" stroke-width="3.4" stroke-linejoin="round"/>`)
+            +`<path d="${markPath(symbol.shape,8,8,5)}" fill="${inside?ink:'none'}" `
+            +`stroke="${ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`})})
           .bindPopup(`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}`
             +`<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`)
           .addTo(group);
@@ -232,7 +245,12 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     for(const center of layers.centers){
       if(!center.geometry)continue;
       const [lon,lat]=center.geometry.coordinates;
-      L.marker([lat,lon],{icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:center.name})
+      // ABOVE the point marks. Facility marks became icons on 2026-10-21 so they could carry a
+      // halo, which moved them from the overlay pane into the marker pane -- where a dense layer
+      // covered the site markers and swallowed their clicks. A custom pane fixed the stacking and
+      // broke the vector basemap's attribution, which arrives through the bridge into Leaflet's
+      // control; `zIndexOffset` orders them inside the one pane and leaves that alone.
+      L.marker([lat,lon],{zIndexOffset:1000,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:center.name})
         .bindPopup(`<b>${esc(center.name??'Center')}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`).addTo(group);
     }
     if(group.getLayers().length){group.addTo(map);all.addLayer(group);overlays['Centers']=group;}

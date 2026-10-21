@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import {Parser,Store,DataFactory} from 'n3';
 import {mapPresentation,standaloneMapSvg,mapSpecificationFacts} from '../build/map-communication.js';
 import {mapOutput} from '../build/map-output.js';
-import {coverageExercise} from '../build/spatial-coverage.js';
+import {clipExercise} from '../build/clip-points.js';
 import {validateGraph} from '../scripts/validate-ontology.mjs';
 
 test('Map presentation is independent of geometry and emits a validated, source-linked plan',async()=>{
-  const workflow=coverageExercise();workflow.nodes=workflow.nodes.slice(0,2);
+  const workflow=clipExercise();workflow.nodes=workflow.nodes.slice(0,2);
   const node={id:'map',type:'map_output',x:0,y:0,params:{label:'Result tab',mapTitle:'Old Naledi & observations',mapSubtitle:'Synthetic teaching records',mapSourceNote:'Synthetic data <local>; method: point-in-polygon',showLegend:true}};
   workflow.nodes.push(node);workflow.edges=[{id:'a',from:'scope',to:'map',port:'area'},{id:'b',from:'observations',to:'map',port:'points'}];
   const boundary=workflow.nodes[0].params.geometry,points=workflow.nodes[1].params.data;
@@ -51,7 +51,7 @@ test('Map presentation is independent of geometry and emits a validated, source-
 // was a property of the specification and absent from fw:layerCount. A basemap is displayed, so
 // it is a layer, and it is the ground one.
 test('A basemap in use is layer 0, named by the service it is fetched from',async()=>{
-  const workflow=coverageExercise();workflow.nodes=workflow.nodes.slice(0,2);
+  const workflow=clipExercise();workflow.nodes=workflow.nodes.slice(0,2);
   const node={id:'map',type:'map_output',x:0,y:0,params:{label:'Catchments',mapTitle:'Walking catchments',
     mapSubtitle:'',mapSourceNote:'Synthetic; method: network distance',showLegend:true,
     inputMode:'polygons',presentation:'interactive',basemap:'topo'}};

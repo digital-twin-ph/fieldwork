@@ -2,12 +2,14 @@
  "schema": "fieldwork/widget-evidence/1",
  "measuredAt": "2026-10-12",
  "examplesShipped": [
-  "geoprivacy",
+  "coverage",
+  "hagelloch",
   "heat",
   "old-naledi",
   "raster",
+  "rulesets",
   "sea-level",
-  "snow-epidemic-curve",
+  "snow-extent",
   "snow-geoprivacy",
   "snow-isochrone",
   "snow-voronoi"
@@ -23,11 +25,11 @@
  "weakest": "exampleUseCount 0 and a lab check still owed. That is the bottom of the ladder and the population the pending exemption is about.",
  "note": "Derived by scripts/widget-evidence.mjs from the shipped example workflows and widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a micro_workflow node is its members. Field use is declared and empty: an empty top rung is a measurement, a missing one is a flattering omission.",
  "counts": {
-  "declared only": 5,
-  "example only": 10,
-  "parity only": 10,
+  "declared only": 3,
+  "example only": 11,
+  "parity only": 9,
   "example, lab not applicable": 11,
-  "example+parity": 10,
+  "example+parity": 11,
   "neither applies": 1
  },
  "compositionsUsedByNoExample": [
@@ -37,7 +39,7 @@
   {
    "nodeType": "aggregate_points_to_h3_cell",
    "exampleUses": [
-    "geoprivacy"
+    "snow-geoprivacy"
    ],
    "exampleUseCount": 1,
    "lab": "parity",
@@ -60,9 +62,11 @@
    "nodeType": "apply_ruleset",
    "exampleUses": [
     "heat",
-    "old-naledi"
+    "old-naledi",
+    "rulesets",
+    "snow-extent"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 4,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -91,8 +95,8 @@
   {
    "nodeType": "case_series",
    "exampleUses": [
-    "snow-epidemic-curve",
-    "snow-geoprivacy",
+    "hagelloch",
+    "snow-extent",
     "snow-isochrone",
     "snow-voronoi"
    ],
@@ -105,9 +109,9 @@
   {
    "nodeType": "chart_output",
    "exampleUses": [
+    "hagelloch",
     "old-naledi",
-    "snow-epidemic-curve",
-    "snow-geoprivacy",
+    "snow-extent",
     "snow-isochrone",
     "snow-voronoi"
    ],
@@ -119,22 +123,22 @@
   },
   {
    "nodeType": "clip_points_to_area",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "coverage"
+   ],
+   "exampleUseCount": 1,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
-   "rung": "declared only"
+   "rung": "example only"
   },
   {
    "nodeType": "clip_polygons",
    "exampleUses": [
-    "snow-epidemic-curve",
-    "snow-geoprivacy",
     "snow-isochrone",
     "snow-voronoi"
    ],
-   "exampleUseCount": 4,
+   "exampleUseCount": 2,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -154,7 +158,7 @@
   {
    "nodeType": "compare_point_sets",
    "exampleUses": [
-    "geoprivacy"
+    "snow-geoprivacy"
    ],
    "exampleUseCount": 1,
    "lab": "awaiting",
@@ -165,7 +169,7 @@
   {
    "nodeType": "comparison_map",
    "exampleUses": [
-    "geoprivacy"
+    "snow-geoprivacy"
    ],
    "exampleUseCount": 1,
    "lab": "none",
@@ -174,18 +178,9 @@
    "rung": "example, lab not applicable"
   },
   {
-   "nodeType": "coverage_check",
-   "exampleUses": [],
-   "exampleUseCount": 0,
-   "lab": "awaiting",
-   "labOwed": true,
-   "fieldUse": [],
-   "rung": "declared only"
-  },
-  {
    "nodeType": "donut_geomask",
    "exampleUses": [
-    "geoprivacy"
+    "snow-geoprivacy"
    ],
    "exampleUseCount": 1,
    "lab": "awaiting",
@@ -249,17 +244,19 @@
   {
    "nodeType": "map_output",
    "exampleUses": [
-    "geoprivacy",
+    "coverage",
+    "hagelloch",
     "heat",
     "old-naledi",
     "raster",
+    "rulesets",
     "sea-level",
-    "snow-epidemic-curve",
+    "snow-extent",
     "snow-geoprivacy",
     "snow-isochrone",
     "snow-voronoi"
    ],
-   "exampleUseCount": 9,
+   "exampleUseCount": 11,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -268,7 +265,7 @@
   {
    "nodeType": "mean_center",
    "exampleUses": [
-    "geoprivacy"
+    "snow-geoprivacy"
    ],
    "exampleUseCount": 1,
    "lab": "parity",
@@ -331,16 +328,18 @@
   {
    "nodeType": "point_input",
    "exampleUses": [
-    "geoprivacy",
+    "coverage",
+    "hagelloch",
     "heat",
     "old-naledi",
+    "rulesets",
     "sea-level",
-    "snow-epidemic-curve",
+    "snow-extent",
     "snow-geoprivacy",
     "snow-isochrone",
     "snow-voronoi"
    ],
-   "exampleUseCount": 8,
+   "exampleUseCount": 10,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -387,12 +386,10 @@
   {
    "nodeType": "reproject",
    "exampleUses": [
-    "snow-epidemic-curve",
-    "snow-geoprivacy",
     "snow-isochrone",
     "snow-voronoi"
    ],
-   "exampleUseCount": 4,
+   "exampleUseCount": 2,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -459,16 +456,17 @@
   {
    "nodeType": "study_area",
    "exampleUses": [
-    "geoprivacy",
+    "coverage",
+    "hagelloch",
     "old-naledi",
     "raster",
+    "rulesets",
     "sea-level",
-    "snow-epidemic-curve",
     "snow-geoprivacy",
     "snow-isochrone",
     "snow-voronoi"
    ],
-   "exampleUseCount": 8,
+   "exampleUseCount": 9,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -485,22 +483,22 @@
   },
   {
    "nodeType": "summarize_hull",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "snow-extent"
+   ],
+   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "parity only"
+   "rung": "example+parity"
   },
   {
    "nodeType": "summarize_points_to_polygon",
    "exampleUses": [
-    "snow-epidemic-curve",
-    "snow-geoprivacy",
     "snow-isochrone",
     "snow-voronoi"
    ],
-   "exampleUseCount": 4,
+   "exampleUseCount": 2,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -509,9 +507,9 @@
   {
    "nodeType": "table_input",
    "exampleUses": [
+    "rulesets",
     "sea-level",
-    "snow-epidemic-curve",
-    "snow-geoprivacy",
+    "snow-extent",
     "snow-isochrone",
     "snow-voronoi"
    ],
@@ -524,16 +522,17 @@
   {
    "nodeType": "table_output",
    "exampleUses": [
-    "geoprivacy",
+    "hagelloch",
     "heat",
     "old-naledi",
+    "rulesets",
     "sea-level",
-    "snow-epidemic-curve",
+    "snow-extent",
     "snow-geoprivacy",
     "snow-isochrone",
     "snow-voronoi"
    ],
-   "exampleUseCount": 8,
+   "exampleUseCount": 9,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -562,11 +561,9 @@
   {
    "nodeType": "voronoi",
    "exampleUses": [
-    "snow-epidemic-curve",
-    "snow-geoprivacy",
     "snow-voronoi"
    ],
-   "exampleUseCount": 3,
+   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

@@ -3,7 +3,7 @@
 import type {NodeSpec,WorkflowNode,PointCollection,SpatialReference} from '../src/types.js';
 import type {ReasoningRequest,ReasoningResponse} from '../src/worker-types.js';
 import {mapOutput} from '../src/map-output.js';
-import type {CoverageValue} from '../src/results.js';
+import type {AreaValue} from '../src/results.js';
 
 const area:NodeSpec<'measure_area'>={type:'measure_area',params:{unit:'km2'}};
 void area;
@@ -27,7 +27,10 @@ if(node.type==='point_input'){
   node.params.unit;
 }
 declare const map:WorkflowNode<'map_output'>;
-declare const reviewed:CoverageValue;
-mapOutput(map,{coverage:reviewed},'run');
-// @ts-expect-error Reviewed coverage and raw point layers are alternative inputs.
-mapOutput(map,{coverage:reviewed,points:{layers:[]}},'run');
+declare const studyArea:AreaValue;
+mapOutput(map,{area:studyArea,points:{layers:[]}},'run');
+// A map takes an area and point layers. It used to take EITHER those or a reviewed coverage
+// value, which `coverage_check` produced; that widget was retired on 2026-10-21 and nothing
+// produces one any more, so the alternative is gone rather than merely unused.
+// @ts-expect-error A map needs its area; reviewed coverage no longer supplies one.
+mapOutput(map,{points:{layers:[]}},'run');

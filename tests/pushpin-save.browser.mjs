@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {coverageExercise} from '../build/spatial-coverage.js';
+import {clipExercise} from '../build/clip-points.js';
 
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const source=w=>w.nodes.find(n=>n.id==='observations').params;
@@ -10,7 +10,7 @@ const open=async page=>{
   await page.locator('#input-mode').selectOption('pins');await page.locator('#pins-online').uncheck();await page.locator('#pin-record').selectOption('inside');
 };
 test.beforeEach(async({page})=>{
-  await page.goto('/?example=blank');const w=coverageExercise();w.exampleId='blank';
+  await page.goto('/?example=blank');const w=clipExercise();w.exampleId='blank';
   await page.locator('#workflow-file').setInputFiles({name:'pin-save.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});await open(page);
 });
 

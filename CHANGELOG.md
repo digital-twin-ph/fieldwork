@@ -20,6 +20,20 @@ shown in a local build is not a claim that it has been published.
   leaves the application, and is where OSM's many absent fields are actually read. It opens as a
   **report**: a result is not repaired, you repair the input it came from, so there is nothing to
   press.
+- **A workflow can be taken as a template.** *"Can the workflow be imported as a template to be
+  filled up?"* — with North Kivu built and Ituri to build. Exporting and re-importing carries the
+  material **and the identity**: a 16,547-vertex boundary, 961 retrieved records, 48 decisions, and
+  the storage key of the workflow it came from, which the import would then overwrite. **From a
+  template…** beside *Add workflow* copies the shape of the investigation instead — which widgets,
+  how they are wired, and every decision about *how* to work — into a workflow of its own. The
+  **sources are kept**: ask OpenStreetMap, Overture and HDX again, at the same radius, with the
+  same clip and the same deduplication thresholds. What a run happened to acquire is cleared: the
+  geometry, the records, the street graph, the raster, and the judgements made about those
+  records. It says how much it cleared and in how many widgets, because a template that silently
+  emptied something is worse than one that says so. **One thing it does not do:** an acquired study
+  area keeps no half of its provenance record. The level is a source and the unit is material, but
+  the record is one thing, and writing it with the unit fields emptied would be a record of a
+  retrieval that did not happen — so the study area is chosen again.
 - **A new primitive: Deduplicate point records.** Two sources over one study area draw the same
   hospital twice, and a count of facilities is then wrong by however many of those there are.
   This compares records **across** sources and merges the pairs that agree. It asks two questions

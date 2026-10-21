@@ -31,6 +31,7 @@ export interface SelectorElements {
   '#download-evidence':HTMLButtonElement;
   '#result-count':HTMLSpanElement;
   '#result-quality':HTMLButtonElement;
+  '#workflow-template':HTMLSelectElement;
   '#area-close':HTMLButtonElement;
   '#draw-bbox':HTMLButtonElement;
   '#draw-polygon':HTMLButtonElement;

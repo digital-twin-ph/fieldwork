@@ -504,6 +504,56 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**Worked examples as repositories, starting with Snow's South London water supply study.** The
+practitioner, 2026-10-20: *"We also have the potential to set up a downloadable worked example from
+a repo - the water provider study by John Snow in South London"*, and *"worked examples do not have
+to occupy space in the downloaded app, we can set them up as repos read from a curated manifest."*
+
+Recorded in [experiment 127](experiments/127-examples-as-repositories.md) with the measurement and
+the rule analysis. Three things are known and are the reason it is here rather than in progress:
+
+- **The rule already permits it.** Experiment 49 records that preparation may download *resources*,
+  never widget *definitions*; an example declares no node type, so `runtimeFetching: "none"` does
+  not reach it. No admission rule has to change, and nobody should propose amending one.
+- **The saving is 9% today.** 1.0 MB of an 11.25 MB precache is example data, 640 KB of it a single
+  GraphML. The case rests on the examples not yet written — the cross-border archetype's would carry
+  ten countries of boundaries, rasters and routes.
+- **The cheapest first step is a read, not a build.** `examples/snow-gboh/provenance.json` pins
+  `snow.zip` at a digest and its documentation names **8 datasets**, of which 2 were extracted. If
+  the sub-district table is among them, the licence analysis and the NOTICE already exist. This has
+  not been checked, and it needs network this environment does not have.
+
+The example would be the first in the project to divide by a population: `rate` has zero example
+uses, and it already refuses to compute without `numeratorPeriod` and `denominatorVintage`. The
+geographic frame — 1851 registration sub-districts — is the piece most likely to carry
+non-commercial terms, which is the GADM problem again.
+
+**A deduplication primitive, after the data says how to match.** The practitioner, 2026-10-20,
+with an OpenStreetMap search and an Overture Places search on one map: *"The other primitive we
+would need is a deduplication widget. For example, health facilities can be deduplicated by name
+and point location. By name can be algorithmic match or exact match, but we can study the OSM and
+Overture Places data sets before we decide what would work."*
+
+The need is visible already: two sources over one study area draw the same hospital twice, and a
+count of facilities is wrong by however many of those there are. What is NOT yet known is the rule,
+and that is the point of recording it here rather than building it:
+
+- **Name.** Exact match is cheap and will miss "Hôpital Général de Référence de Goma" against
+  "HGR Goma". A token or edit-distance match will join things that are not the same clinic. Which
+  errs where is a property of these two datasets, not of the algorithm.
+- **Location.** Two records of one facility sit metres or hundreds of metres apart depending on
+  whether a source digitised the building, the compound or the signpost. The threshold is a
+  measurement, not a default.
+- **What the study would produce:** on one real area — North Kivu is already loaded — how many
+  pairs match exactly by name, how many within an edit distance, the distance distribution between
+  candidate pairs, and how many are in one source only. That is the evidence a matching rule can be
+  argued from.
+
+Asked up front, because the project keeps finding the same defect: `compare_point_sets` already
+pairs two point layers and `nearest-neighbour` already measures proximity. A deduplication widget
+either uses those or duplicates them, and D2 should settle which before a third implementation
+exists.
+
 **The street network has no travel mode, and a travel time has no bound.** The download applies
 one walking filter, while `reachable_nodes` already offers walking, cycling, driving or other with
 per-mode speed bands — the mode is declared where it cannot be honoured and absent where it would

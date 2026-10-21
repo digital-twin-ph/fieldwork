@@ -2,9 +2,9 @@
 
 _Created 2026-10-20 · Updated 2026-10-20_
 
-**Status:** asked — the framing is settled and nothing is built. No widget reports a travel time
-as a bound today, and the street network a practitioner can download cannot support the mode the
-question is about.
+**Status:** asked — half built. The mode the question is about can now be downloaded; the bound
+semantics this record is for are not built. No widget reports a travel time as a bound today, and
+no speed carries a provenance note.
 
 ## What was asked, and what was settled
 
@@ -28,6 +28,30 @@ reported:
 A posted limit is a **ceiling**, so a time computed from it is a **best case** — not an estimate
 of how long the trip takes. That is a statement about what the number means, and it has a
 consequence this project has to act on before it computes one.
+
+## What was built, 2026-10-20
+
+The first half of the question — *does the download distinguish walk from drive* — is answered in
+code. `src/street-network.ts` holds `MODE_FILTERS`, one row per mode, and each row carries only
+the things that differ: the highway list (`DRIVABLE_HIGHWAYS` adds motorway, trunk and their links
+and drops footway, path, steps, pedestrian and cycleway), the access tags read (`motor_vehicle`
+and `motorcar` rather than `foot`), the tag that makes an edge one-way (`oneway`, not
+`oneway:foot`), whether a roundabout is directional, and the `source` string the graph is stamped
+with. The mode is part of the query text, so it is part of the cache key: a mode change is a
+different download, not the same one reinterpreted.
+
+The refusal is built too. `refuseModeMismatch` in `src/reachable-nodes.ts` reads `travelMode` off
+the graph's provenance and throws when a downstream widget's declared mode conflicts with it —
+walking minutes over a driving graph, or the reverse — naming both modes and what the graph would
+and would not contain. A disagreement is reported rather than computed.
+
+Covered by `tests/street-network-mode.test.mjs` and `tests/network-mode.browser.mjs`.
+
+**What that leaves.** Everything below. A driving graph is now obtainable and a travel time over it
+is still `minutes × speedMPerMin` with one speed on every edge, so the bound is unnamed in the
+result and in the receipt, `maxspeed` is still discarded, and `speedMPerMin` still carries no
+provenance note. The direction `street-network-declares-a-travel-mode` is built;
+`travel-time-from-a-posted-limit-is-a-best-case` is not.
 
 ## The consequence: the ceiling is the wrong end for the commonest claim
 

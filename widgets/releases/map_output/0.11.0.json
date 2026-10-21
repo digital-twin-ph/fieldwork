@@ -1,0 +1,136 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:map_output",
+ "version": "0.11.0",
+ "nodeType": "map_output",
+ "title": "Map",
+ "released": "2026-10-20",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['map_output']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "points",
+    "type": "points"
+   },
+   {
+    "name": "polygons",
+    "type": "polygons"
+   },
+   {
+    "name": "context",
+    "type": "points"
+   },
+   {
+    "name": "decisions",
+    "type": "decisions"
+   },
+   {
+    "name": "coverage",
+    "type": "coverage-check"
+   },
+   {
+    "name": "raster",
+    "type": "raster"
+   },
+   {
+    "name": "network",
+    "type": "network"
+   }
+  ],
+  "output": null,
+  "dynamicInputs": {
+   "kind": "point-layers",
+   "minimum": 1,
+   "maximum": 8,
+   "implementation": "src/core.ts#nodeInputs"
+  },
+  "note": "Every layer port, on every map, whatever its parameters say. The ports used to vary with an inputMode parameter -- reasoningInput, rasterInput, polygonInput, networkInput were four separate declarations of that -- so the port a connection needed might not exist on the node. Which renderer draws is now read from what is wired: src/core.ts#drawnMode."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:MapView",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "configuration",
+    "iri": "urn:fieldwork:MapSpecification",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Map presentation plan and MapView activity are implemented; broader map artifact and cartographic contracts remain open.",
+  "emits": {
+   "classes": [
+    "urn:fieldwork:MapSpecification"
+   ],
+   "properties": [
+    "urn:fieldwork:colourChosen",
+    "urn:fieldwork:colourVisionSafe",
+    "urn:fieldwork:encodesVariable",
+    "urn:fieldwork:encoding",
+    "urn:fieldwork:fillMeaning",
+    "urn:fieldwork:layerLabel",
+    "urn:fieldwork:layerSource",
+    "urn:fieldwork:layerSymbol",
+    "urn:fieldwork:mark",
+    "urn:fieldwork:markChosen",
+    "urn:fieldwork:markVocabulary",
+    "urn:fieldwork:palette",
+    "urn:fieldwork:paletteAuthority",
+    "urn:fieldwork:symbolColour",
+    "urn:fieldwork:visualChannel"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/raster.ts",
+   "src/raster-workflow.ts",
+   "src/raster-ui.ts",
+   "src/app.ts",
+   "src/canvas.tsx",
+   "src/catchment-output.ts",
+   "src/catchment-map.ts",
+   "src/map-communication.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "output",
+    "adapterVersion": "1",
+    "implementation": "src/output-contract.ts#migrateOutputNodes"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Each point layer on a map is drawn as its own layer, with its own hue and its own mark, and the mark can be chosen per layer. The spatial relation moved to the fill channel -- filled inside the study area, hollow outside, grey where there is no usable location -- so hue is free to carry which source a point came from. Two sources wired to one map could not be told apart before: both drew in the same colour and the layer control had nothing to list. The ordered bands of a catchment use a ColorBrewer sequential ramp rather than the categorical palette. The legend lists one entry per layer in that layer's own mark, and the receipt records the encoding: which channel carries which variable, the palette and its authority, and each layer's mark and colour with whether it was chosen or derived.",
+   "incompatibility": "A map drawn before this release looks different: point colour means the source rather than the spatial relation, and the legend's three relation entries are replaced by one entry per layer plus the fill meanings. A figure already published from this application and its caption no longer agree.",
+   "migration": "None required. A map with no chosen marks derives them from the layer order, so a saved workflow redraws without being edited."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

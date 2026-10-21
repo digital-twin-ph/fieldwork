@@ -1,6 +1,7 @@
 import type {NodeEvidence,EvidenceReference} from './evidence.js';
 import type {Boundary,Bounds,Exclusion,Measurement,ParamsByType,PointFeature,PointCollection,Position,Scalar,SpatialReference,AnySpatialReference,SpatialRelation,AttributeType,DistanceUnit} from './types.js';
 import type {ReasonerQuad} from './worker-types.js';
+import type {LayerSymbol} from './presentation.js';
 export type Status='Review'|'NoFlag'|'Unknown';
 export type Tier='Direct'|'Contextual'|'Inferential'|'None';
 export type Service='Onsite'|'OnsiteOrReferral'|'ReferralOnly'|'Unknown';
@@ -35,7 +36,11 @@ export interface MapRow extends PointRow {relation:SpatialRelation; status:Statu
 export interface CoverageRow extends MapRow {excluded:boolean; exclusionReason:string; signature:string; iri:string; decision:'Accept'|'Review'|'Excluded'}
 export interface AreaValue {boundary:Boundary; areaId:string; geometryId:string; label:string; spatialReference?:SpatialReference; areaFacts?:string; measurement?:Measurement; bounds?:Bounds; ready?:boolean; source?:string; dataset?:string; kind?:'study-area'; rows?:never[]; centers?:never[]}
 export interface CoverageValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-coverage'; rows:CoverageRow[]; centers:never[]; checkNodeId:string; areaNodeId:string; sourceNodeId:string|null; pointLayers:LayerSummary[]; reviewCount:number; excludedCount:number; canProceed:boolean; retainedLayers:{sourceNodeId:string; label:string; data:PointCollection}[]; retainedData:PointCollection; pointTable?:boolean}
-export interface MapValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-map'; rows:MapRow[]; centers:never[]; pointLayers:LayerSummary[]; sourceNodeId:string|null}
+export interface MapValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-map'; rows:MapRow[]; centers:never[];
+  /** How each point layer is drawn, resolved once so the plot, the interactive map, the legend
+   *  and the receipt cannot disagree about it. */
+  layerSymbols?:Record<string,LayerSymbol>;
+  layerNames?:Record<string,string>; pointLayers:LayerSummary[]; sourceNodeId:string|null}
 export interface TableValue {kind:'point-table'; rows:PointRow[]; centers:never[]; spatialReference:AnySpatialReference; pointLayers:LayerSummary[]; pointTable?:boolean}
 export interface Receipt {nodeId:string; references?:EvidenceReference[]; ruleset?:import('./rulesets.js').RulesetCitation; kind?:'computation'|'presentation'; facts:string; rules:string; input:string; conclusions:ReasonerQuad[]; source?:string; method?:string; measurement?:Measurement; areaId?:string; geometryId?:string; exclusions?:Exclusion[]}
 export interface RegistryValue {boundary:Boundary; facilities:Facility[]; radiusKm:number; facilitySource?:{nodeId?:string; sourceInfo?:import('./types.js').SourceInfo; inputCount:number; missingLocationCount:number}}

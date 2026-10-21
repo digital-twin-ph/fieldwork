@@ -53,6 +53,8 @@ import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,distanceText} from './old-naledi-ui.js';
+import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
+import {isPointPort} from './point-layers.js';
 import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds,storageRefusal} from './study-area.js';
 import {loadPayloads,putPayload,cachedPayloads,payloadStoreKind,payloadBytes,onStoreDegraded} from './payload-store.js';
 import {openStudyAreaEditor} from './study-area-map.js';
@@ -1001,7 +1003,7 @@ function renderLibrary(search=''){
       :type==='facilities'?{type:'facilities' as const,params:{dataset:DATASET,radiusKm:5,sourceMode:'connected' as const}}
       :type==='facility_audit'?{type:'facility_audit' as const,params:{} as Record<string,never>}
       :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
-      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='coverage_check'?newCoverageCheck():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
+      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='coverage_check'?newCoverageCheck():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
     // in, from the mean longitude of every coordinate already configured. The parameter stays: a
@@ -1075,6 +1077,18 @@ function recordsPanel(nodeId:string,data:{features:{id?:string|number;properties
     +body;
 }
 
+/** The node label, as a form with an Apply button.
+ *
+ *  The practitioner, 2026-10-20: *"The Find Health Facilities widget label cannot be changed like
+ *  Study Area, Street Network and Map. Let's move to standardize the labeling with 'Apply Label'
+ *  button."* Three different controls existed -- a study-area form, the catchment inspector's
+ *  shared field, and a plain `source-label` input on the input widgets -- and a fourth widget had
+ *  none at all. One shape now, so a practitioner learns the gesture once. */
+function labelForm(id:string,caption:string,value:string,maxLength=60):string{
+  return `<form class="field" data-label-form="${id}"><label class="field-label" for="${id}">${caption}</label>`
+    +`<input id="${id}" maxlength="${maxLength}" value="${esc(value)}">`
+    +`<button type="submit" class="button small">Apply label</button></form>`;
+}
 function renderInspector(){
   if(selected?.startsWith('result:')){renderEvidence(selected.slice(7));return;}
   if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><span class="inspector-section">Developmental evaluation · step 1</span><h2>Define the study area</h2><p class="description">Add Study area, then select the node to draw a bounding box or polygon on an online map.</p><div class="rule-preview">Predict what the selection will produce, inspect the N3 facts, then run the readiness rule.</div><p class="muted">Your other worked examples remain saved separately.</p></div>';return;}
@@ -1169,6 +1183,26 @@ function renderInspector(){
           +`<select id="map-add-layer"><option value="">Choose a result to draw…</option>`
           +candidates.map(x=>`<option value="${esc(x.id)}">${esc(x.params.label||TYPES[x.type].title)} · ${esc(String(outputOf(x)))}</option>`).join('')
           +`</select><small>Any result this map can draw. The layer is connected to the port its type belongs to; a second point layer gets a slot of its own.</small></div>`;
+      })()
+      // A SYMBOL PER LAYER, chosen or left to the default. The practitioner, 2026-10-20: "So each
+      // potential point layer in the map gets a configurable/selectable symbol." Only the point
+      // layers actually wired are offered, because a control for a layer that does not exist is
+      // a setting nobody can check against the picture.
+      +(()=>{
+        const sources=workflow.edges.filter(edge=>edge.to===n.id&&isPointPort(edge.port))
+          .map(edge=>workflow.nodes.find(node=>node.id===edge.from)).filter(Boolean) as WorkflowNode[];
+        if(!sources.length)return '';
+        const chosen=n.params.layerSymbols||{};
+        return `<span class="inspector-section">Layer symbols</span>`
+          +`<p class="muted">Hue and mark say which source a point came from; whether it is filled says whether it is inside the study area. Marks are named as OGC Symbology Encoding names them.</p>`
+          +sources.map((source,index)=>{
+            const held=chosen[source.id],resolved=resolveLayerSymbol(index,held);
+            return `<div class="field"><label class="field-label" for="layer-mark-${esc(source.id)}">${esc(source.params.label||TYPES[source.type].title)}</label>`
+              +`<select id="layer-mark-${esc(source.id)}" data-layer-mark="${esc(source.id)}">`
+              +`<option value="">Default \u00b7 ${esc(resolved.shape)}</option>`
+              +LAYER_SHAPES.map(shape=>`<option value="${shape}" ${held?.mark===shape?'selected':''}>${shape}</option>`).join('')
+              +`</select></div>`;
+          }).join('');
       })()
       +`<div class="field"><label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation" data-catchment-param="presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select></div>`
       +`<div class="field"><label class="field-label" for="map-label">Results tab name</label><input id="map-label" maxlength="60" value="${esc(n.params.label)}"></div>`
@@ -1286,9 +1320,20 @@ function renderInspector(){
       +'</section>'
       +'<p class="description">Projects connected longitude/latitude points into this UTM zone, in metres. The result is a projected dataset: it can be shown in a table and exported, and it is refused by the steps that measure, because those project for themselves.</p>';
     content+=nodeInputs(n).map(([port])=>`<div class="field"><label class="field-label" for="reproject-port-${port}">Points input</label><select id="reproject-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select></div>`).join('');
+  }else if(n.type==='clip_points_to_area'){
+    content+=labelForm('clip-points-label','Node label',n.params.label||'Points inside the area')
+      +`<p class="description">Keeps the points that fall inside the connected study area. The test is the one the coverage check and the map use, so a point counted inside here is inside there.</p>`
+      +`<label class="field-option"><input type="checkbox" data-param="keepBoundary"${n.params.keepBoundary!==false?' checked':''}> Keep points that sit exactly on the outline</label>`
+      +`<p class="muted">A point on the border is in that jurisdiction's edge. Unticked, only points strictly within are kept \u2014 which is what GeoSPARQL's sfWithin means, and it gives a different count on the data where it matters.</p>`
+      +`<label class="field-option"><input type="checkbox" data-param="showExcluded"${n.params.showExcluded!==false?' checked':''}> Show the excluded points on a connected map</label>`
+      +`<p class="muted">They are drawn in the colour the map already uses for outside, and are not passed to anything downstream. A count tells you how many were set aside; seeing them tells you whether setting them aside was right.</p>`;
   }else if(n.type==='find_health_facilities'){
     const p=n.params,descriptor=FACILITY_SOURCES[p.source];
-    content+='<p class="description">Health facilities inside the study area, from a source this application can actually reach. Both sources are OpenStreetMap-derived and both are under the Open Database License.</p>'
+    // THIS WIDGET HAD NO LABEL CONTROL AT ALL, which is how the practitioner found the
+    // inconsistency: "The Find Health Facilities widget label cannot be changed like Study Area,
+    // Street Network and Map."
+    content+=labelForm('hf-label','Node label',p.label||'Find health facilities')
+      +'<p class="description">Health facilities inside the study area, from a source this application can actually reach. Both sources are OpenStreetMap-derived and both are under the Open Database License.</p>'
       +`<div class="field"><label class="field-label" for="hf-source">Source</label><select id="hf-source" data-hf="source">`
       +FACILITY_SOURCE_KEYS.map(key=>`<option value="${key}"${p.source===key?' selected':''}>${esc(FACILITY_SOURCES[key].label)}</option>`).join('')
       +'</select></div>'
@@ -1360,7 +1405,7 @@ function renderInspector(){
     if(n.sourceMigration)content+=`<p class="notice">${n.sourceMigration.fromType==='output'
       ?`The retired <strong>Visual output</strong> widget was replaced by ${TYPES[n.type].title}, chosen from the view this node saved. Its name and connections are retained.`
       :`This saved example source now uses the shared Input data editor. Its label, records and connections are retained.`}</p>`;
-    content+=`<div class="field"><label class="field-label" for="source-label">Source label</label><input id="source-label" maxlength="60" value="${esc(n.params.label||'Input data')}"></div><div class="source-card"><h3>${n.params.data.features.length} point records</h3><p>${esc(n.params.sourceInfo?.format||'Local input')} · ${n.params.data.features.filter(f=>!f.geometry).length} missing locations</p></div><button id="edit-input-data" class="button primary">Prepare input data</button>${recordsPanel(n.id,n.params.data)}<p class="description">Generate synthetic points, import CSV / GeoPackage / GeoJSON, or place pushpins with forms. Connect to Check spatial coverage before deciding how to handle outside records.</p>`;
+    content+=labelForm('source-label','Source label',n.params.label||'Input data')+`<div class="source-card"><h3>${n.params.data.features.length} point records</h3><p>${esc(n.params.sourceInfo?.format||'Local input')} · ${n.params.data.features.filter(f=>!f.geometry).length} missing locations</p></div><button id="edit-input-data" class="button primary">Prepare input data</button>${recordsPanel(n.id,n.params.data)}<p class="description">Generate synthetic points, import CSV / GeoPackage / GeoJSON, or place pushpins with forms. Connect to Check spatial coverage before deciding how to handle outside records.</p>`;
   }else if(n.type==='coverage_check'){
     content+=nodeInputs(n).map(([port])=>{const input=workflow.edges.find(e=>e.to===n.id&&e.port===port);return `<div class="field"><label class="field-label" for="coverage-${port}">${port==='area'?'Study area':'Point data '+(port==='points'?1:port.split('_')[1])}</label><select id="coverage-${port}" data-coverage-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)===(port==='area'?'area':'points')).map(x=>`<option value="${esc(x.id)}" ${input?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;}).join('');content+='<div class="notice">Inside and boundary points are included. Outside or missing-location records require review; they are not automatically classified as data errors.</div><p class="description">Run, then select a record in Coverage review or Coverage map. Exclude with a reason or edit the study boundary. Original input records are preserved.</p>';
   }else if(n.type==='measure_area'){
@@ -1579,7 +1624,7 @@ function renderInspector(){
   }else if(n.type==='alert'){
     content+=`<div class="field"><label class="field-label" for="alert-state">Heat alert status</label><select id="alert-state"><option value="true" ${n.params.active===true?'selected':''}>Active</option><option value="false" ${n.params.active===false?'selected':''}>Inactive</option><option value="null" ${n.params.active===null?'selected':''}>Unknown</option></select><label class="field-label" for="assessment-date">Assessment date</label><input id="assessment-date" type="date" value="${n.params.date}"><small>This example supplies a single alert status for all locations on the assessment date. No external alert feed is queried.</small></div>`;
   }else if((n.type==='places'||n.type==='centers')){
-    content+=`<div class="field"><label class="field-label" for="source-label">Source label</label><input id="source-label" maxlength="60" value="${esc(n.params.label)}"></div><div class="detail-row"><span>Records</span><strong>${n.params.data.features.length}</strong></div><div class="detail-row"><span>Coordinates</span><strong>Longitude, latitude · CRS84</strong></div><button id="replace-data" class="button small">↑ Replace with local GeoJSON</button>${recordsPanel(n.id,n.params.data)}<small class="muted">Point FeatureCollections only, up to 2,000 records. Files stay in this browser.</small>`;
+    content+=labelForm('source-label','Source label',n.params.label)+`<div class="detail-row"><span>Records</span><strong>${n.params.data.features.length}</strong></div><div class="detail-row"><span>Coordinates</span><strong>Longitude, latitude · CRS84</strong></div><button id="replace-data" class="button small">↑ Replace with local GeoJSON</button>${recordsPanel(n.id,n.params.data)}<small class="muted">Point FeatureCollections only, up to 2,000 records. Files stay in this browser.</small>`;
   }else if(n.type==='measure_distance'){
     // A structured editor for the candidate filter, which is what `access`'s two selects became.
     // The comparator is a select. The FIELD and the VALUES are typed, and that is a limitation
@@ -1904,6 +1949,19 @@ function renderInspector(){
       target.params.revisions=changed||!kept.length
         ?[...kept,{at:new Date().toISOString(),geometry:structuredClone(params.geometry),selectionMode:params.selectionMode}]
         :kept;
+    // SAY IT LANDED. The practitioner, 2026-10-20, after acquiring North Kivu: *"What's missing
+    // is the feedback that the download completed."* The dialog had one -- "Applied in 0.7 s" --
+    // written into a panel that closes in the same breath, so nobody ever read it. Confirmation
+    // belongs where the practitioner is afterwards, which is the canvas, and it names what landed
+    // rather than saying "done": the unit, its size, and that it is the published outline.
+    const area=params.source==='drawn'?params:undefined;
+    const ring=area?.geometry?.type==='Polygon'
+      ?(area.geometry.coordinates as number[][][])[0]?.length??0
+      :(area?.geometry?.coordinates as number[][][][]|undefined)?.reduce((n,part)=>n+(part[0]?.length??0),0)??0;
+    if(area?.boundary)
+      toast(`${area.boundary.unitName||'Boundary'} applied as published \u00b7 ${ring.toLocaleString()} vertices \u00b7 `
+        +`${area.boundary.licence||'see the evidence panel for terms'}`);
+    else if(ring)toast(`Study area applied \u00b7 ${ring.toLocaleString()} vertices.`);
   })));
   optionalElement('#area-view-n3')?.addEventListener('click',()=>{renderN3();switchView('rules');});
   $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('[data-param]').forEach(el=>el.addEventListener('change',()=>change(w=>updateParam(w,n.id,required(el.dataset.param),el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value))));
@@ -1983,6 +2041,23 @@ function renderInspector(){
   optionalElement('#source-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title));
   optionalElement('#replace-data')?.addEventListener('click',()=>{importNode=n.id;$('#geojson-file').click();});
   optionalElement('#output-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()));
+  // Every label form, one handler. Saving on change stays -- nothing typed is lost by not
+  // pressing the button -- and an empty label is refused rather than written onto the canvas.
+  document.querySelectorAll<HTMLFormElement>('[data-label-form]').forEach(form=>{
+    const input=form.querySelector('input')!;
+    form.addEventListener('submit',event=>{
+      event.preventDefault();
+      const label=input.value.trim();
+      if(!label){input.setCustomValidity('Enter a label for this widget.');input.reportValidity();return;}
+      input.setCustomValidity('');
+      change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>).label=label;});
+    });
+    input.addEventListener('input',()=>input.setCustomValidity(''));
+    input.addEventListener('change',()=>{
+      const label=input.value.trim();
+      if(label)change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>).label=label;});
+    });
+  });
   // Switching back to the classic bars drops to a mark that renderer can draw, and touches nothing
   // else. It used to force orientation to horizontal as well, which was already wrong for a case
   // series -- it left the shipped Snow curve with no columns -- and became wrong for every chart
@@ -2004,6 +2079,19 @@ function renderInspector(){
   optionalElement('#map-add-layer')?.addEventListener('change',e=>{
     const chosen=control(e).value;
     if(chosen)change(w=>setConnection(w,chosen,n.id,'layer'));
+  });
+  document.querySelectorAll<HTMLSelectElement>('[data-layer-mark]').forEach(select=>{
+    select.addEventListener('change',()=>{
+      const source=select.dataset.layerMark!,mark=select.value as LayerShape|'';
+      change(w=>{
+        const target=getNode(w,n.id,'map_output'),held={...(target.params.layerSymbols||{})};
+        // An empty choice REMOVES the entry rather than storing a blank: the receipt distinguishes
+        // a mark somebody chose from one the layer's position gave it, and an empty string stored
+        // as a choice would make that distinction lie.
+        if(mark)held[source]={...held[source],mark};else{const {[source]:_dropped,...rest}=held;target.params.layerSymbols=rest;return;}
+        target.params.layerSymbols=held;
+      });
+    });
   });
   optionalElement('#map-basemap')?.addEventListener('change',e=>{
     const choice=control(e).value as 'none'|'osm'|'topo';
@@ -2176,7 +2264,10 @@ function renderMap(){
   if(spec){
     $('#map-communication-title').textContent=spec.title;$('#map-communication-subtitle').textContent=spec.subtitle;
     $('#map-communication-source').textContent=spec.sourceNote;$('#map-communication-header-source').textContent=spec.sourceNote;
-    const key=spec.legend?spec.items.map(item=>`<span><i class="map-key-symbol" style="background:${item.color};border-radius:${item.shape==='square'?'2px':'50%'}"></i>${esc(item.label)}</span>`).join(''):'';
+    // The key draws the same mark the map draws. A coloured <i> could only ever be a circle or a
+    // square, so a triangle or a star on the map had no legend entry that matched it.
+    const key=spec.legend?spec.items.map(item=>`<span><svg class="map-key-mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">`
+      +`<path d="${markPath(item.shape||'circle',7,7,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.color}" stroke-width="1.5"/></svg>${esc(item.label)}</span>`).join(''):'';
     $('#map-communication-key').innerHTML=key;$('#map-communication-header-key').innerHTML=key;
     $('#map-download-svg').onclick=()=>{const content=result?.polygons&&result.polygonPresentation==='interactive'?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonSvg(result.polygons,esc)):svg.innerHTML;
       const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':svg.getAttribute('viewBox')||'0 0 850 295';

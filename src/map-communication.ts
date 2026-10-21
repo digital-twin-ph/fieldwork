@@ -1,10 +1,11 @@
 import type {Output,Receipt} from './results.js';
 import {outputOf} from './core.js';
 import type {WorkflowNode,Workflow} from './types.js';
-import {FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel} from './presentation.js';
+import type {LayerShape} from './presentation.js';
+import {markPath,resolveLayerSymbol,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
 
-export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:'square'}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
+export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:LayerShape;hollow?:boolean}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
   /** Licence and attribution for the data shown. Separate from the source note because a note is
    *  editorial and this is an obligation: an OSM-derived layer must say ODbL and credit
    *  contributors wherever the figure ends up, and a figure that travels without it is not
@@ -26,7 +27,19 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
       {label:'Sites / context',color:R.site,shape:'square'}
     ]:[{label:'Modeled catchment',color:R.primary},{label:'Observations',color:R.secondary},{label:'Sites',color:R.site,shape:'square'}];
   }else if(output.raster)items=[{label:'Relative cell value (see scale)',color:R.primary},{label:'NoData / outside mask',color:R.unknown}];
-  else if(output.kind==='spatial-map')items=[{label:'Outside boundary',color:R.attention},{label:'Inside / boundary',color:R.agreement},{label:'Missing location (not plotted)',color:R.unknown}];
+  else if(output.kind==='spatial-map'){
+    // The legend has to say what the map now does. Hue stopped meaning the spatial relation when
+    // one overlay per source arrived, and this list went on naming three relations in three hues
+    // -- a legend for an encoding the renderer no longer used. One entry per LAYER in that layer's
+    // hue and mark, then the relations in the fill channel, where they live.
+    items=(output.pointLayers||[]).map((layer,index)=>{
+      const symbol=resolveLayerSymbol(index,node.params.layerSymbols?.[layer.sourceNodeId]);
+      return {label:`${layer.label} (${layer.count})`,color:symbol.colour,shape:symbol.shape};
+    });
+    items.push({label:'Inside / on the boundary (filled)',color:R.ink},
+      {label:'Outside the boundary (hollow)',color:R.ink,hollow:true},
+      {label:'Missing location (not plotted)',color:R.unknown});
+  }
   else items=[{label:'Review',color:R.attention},{label:'No flag',color:R.agreement},{label:'Unknown',color:R.unknown},{label:'Facility',color:R.site,shape:'square'}];
   const interactive=node.params.presentation==='interactive'&&!!output.polygons;
   const basemap=interactive?node.params.basemap||'none':'none';
@@ -56,7 +69,9 @@ export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentat
   const width=850,height=Number(viewBox.trim().split(/\s+/)[3])||295,base=52+titleLines.length*24+subtitleLines.length*16,legendRows=spec.legend?Math.ceil(spec.items.length/2):0,noteLines=lines(spec.sourceNote,110);
   const creditLines=spec.attribution?lines(spec.attribution,110):[];
   const footer=38+legendRows*22+(noteLines.length+creditLines.length)*16,total=base+height+footer;
-  const legend=spec.legend?spec.items.map((item,i)=>{const x=28+(i%2)*402,y=base+height+24+Math.floor(i/2)*22;return `${item.shape==='square'?`<rect x="${x}" y="${y-9}" width="10" height="10" fill="${item.color}"/>`:`<circle cx="${x+5}" cy="${y-4}" r="5" fill="${item.color}" stroke="${FIGURE_ROLE.quietInk}"/>`}<text x="${x+17}" y="${y}" font-size="${t.legend}" fill="${FIGURE_ROLE.ink}">${escape(item.label)}</text>`;}).join(''):'';
+  const legend=spec.legend?spec.items.map((item,i)=>{const x=28+(i%2)*402,y=base+height+24+Math.floor(i/2)*22;
+    return `<path d="${markPath(item.shape||'circle',x+5,y-4,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.hollow?item.color:FIGURE_ROLE.quietInk}" stroke-width="1.4"/>`
+      +`<text x="${x+17}" y="${y}" font-size="${t.legend}" fill="${FIGURE_ROLE.ink}">${escape(item.label)}</text>`;}).join(''):'';
   const noteY=base+height+30+legendRows*22;
   // Placed over the plot's lower-left, inside the mapped frame rather than in the footer, which is
   // where a reader looks for them and where they stay if the figure is cropped to the map.
@@ -121,6 +136,33 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
     ?[...FIGURE_PALETTE].slice(0,Math.max(1,drawn.filter(l=>l.kind==='PointsLayer'||l.kind==='PolygonsLayer').length))
     :[];
   const applied=applyDesignRules(figureDesign(categories,spec.legend&&categories.length>0));
+  // WHAT EACH CHANNEL CARRIES, as facts rather than as pixels.
+  //
+  // The practitioner, 2026-10-20: *"in the ontology do we have UI representations of
+  // differences?"* and then *"make sure there are N3 receipts for them"*. A map asserts what it
+  // drew; until now it did not assert HOW it distinguished one thing from another, so a reader
+  // could see that two sources were different colours and could not check what the colours were
+  // claiming. Three bindings, each naming its vocabulary and its authority:
+  //
+  //   hue   -> which source layer    Okabe-Ito, colour-universal by design
+  //   mark  -> which source layer    OGC Symbology Encoding WellKnownName, the standard's own term
+  //   fill  -> the spatial relation  solid inside, hollow outside
+  //
+  // The mark and hue say the same thing on purpose: colour alone is not an encoding everybody can
+  // read, and WCAG 1.4.1 is the rule this answers rather than a preference.
+  const symbols=(output as {layerSymbols?:Record<string,{colour:string;shape:string;chosen:{colour:boolean;shape:boolean}}>;layerNames?:Record<string,string>}).layerSymbols;
+  const names=(output as {layerNames?:Record<string,string>}).layerNames||{};
+  const encodingFacts=symbols?`<${iri}> fw:encoding [ fw:visualChannel "hue"; fw:encodesVariable "source layer"; `
+      +`fw:palette ${JSON.stringify(FIGURE_PALETTE_NAME)}; fw:paletteAuthority <${FIGURE_PALETTE_AUTHORITY}>; fw:colourVisionSafe true ], `
+      +`[ fw:visualChannel "graphic mark"; fw:encodesVariable "source layer"; fw:markVocabulary <${MARK_VOCABULARY}> ], `
+      +`[ fw:visualChannel "fill"; fw:encodesVariable "spatial relation"; fw:fillMeaning "solid is inside the study area, hollow is outside" ].\n`
+    +Object.entries(symbols).map(([source,symbol])=>
+      `<${iri}> fw:layerSymbol [ fw:layerSource ${JSON.stringify(source)}; fw:layerLabel ${JSON.stringify(names[source]||source)}; `
+      +`fw:mark ${JSON.stringify(symbol.shape)}; fw:markVocabulary <${MARK_VOCABULARY}>; fw:symbolColour ${JSON.stringify(symbol.colour)}; `
+      // CHOSEN or DERIVED, kept apart. "A triangle because somebody chose a triangle" and "a
+      // triangle because it was the second layer" are different claims about the same picture.
+      +`fw:markChosen ${symbol.chosen.shape}; fw:colourChosen ${symbol.chosen.colour} ].\n`).join('')
+    :'';
   // The practitioner's own choices, recorded as CHOICES rather than as settings.
   //
   // "It's a user preference, and the audit is in the N3 receipts ... The user can audit that
@@ -140,6 +182,6 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
     +`${designChoiceFacts(iri,choices)}\n`;
   const prefixes=`@prefix earl: <http://www.w3.org/ns/earl#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`
     +`@prefix dqv: <http://www.w3.org/ns/dqv#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n`;
-  const all=prefixes+facts+layerFacts+conformance;
+  const all=prefixes+facts+layerFacts+encodingFacts+conformance;
   receipt.facts+=all;receipt.input=receipt.facts;return all;
 }

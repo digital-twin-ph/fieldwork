@@ -5,6 +5,19 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **A new primitive: Keep points inside the area.** A health-facility search over North Kivu
+  returned 961 places, of which **526 stood in Uganda and Rwanda** — every source is bounded by a
+  rectangle, and a rectangle is not a jurisdiction. The membership test existed in five modules
+  and was *reported* by two widgets, but no widget answered "keep the ones inside this area", so
+  the decision could only be made privately inside whichever widget needed it. `clip_points_to_area`
+  takes an area and a point layer and passes on the points inside, with a receipt naming the OGC
+  predicate, whether boundary points were kept, and the counts inside, on the boundary and
+  outside. A point exactly on the outline is kept by default, and the opposite choice — strict
+  `sfWithin` — is a tick box, because the two give different counts on the data where it matters.
+  The facility sources clip to the outline too, and say how many they set aside.
+- **Every widget that can be labelled is labelled the same way.** Find health facilities had no
+  label control at all; three different shapes existed elsewhere. One form, one **Apply label**
+  button, one handler.
 - **A street network download asks what it would cost before asking for it.** A study area across
   the DRC–Uganda border — some 600 km — spent three instances, two attempts each, and ended on
   `HTTP 504`: the service saying it gave up computing the answer. Overpass will answer `out count;`
@@ -14,6 +27,27 @@ shown in a local build is not a claim that it has been published.
   that is what a public instance says when an area is beyond it. This is not the span cap that was
   removed on purpose: that refused an area for its width before anything was measured, and this is
   a measurement the service makes.
+- **A point layer is drawn as itself.** Two Find health facilities widgets wired to one map — one
+  reading OSM, the other Overture Places — drew in the same colour, and the layer control had
+  nothing to list, so there was no way to see which points came from which source. Hue now carries
+  **which layer** and the fill carries **where the point stands**: filled inside the study area,
+  hollow outside, grey where there is no usable location. Each layer also gets a **mark** — circle,
+  square, triangle, star, cross or X, named as OGC Symbology Encoding names them — which can be
+  chosen per layer in the Map widget's settings, because colour alone is not an encoding everybody
+  can read. The marks are drawn on the map and repeated in the legend, which now lists one entry
+  per layer instead of three spatial relations in three hues. The ordered bands of a catchment use
+  a **ColorBrewer** sequential ramp rather than the categorical palette, since minutes are ordered
+  and categories are not. The map receipt records the encoding itself: which channel carries which
+  variable, the palette and the authority it comes from, and each layer's mark and colour with
+  whether it was chosen or derived.
+- **Full screen fills the screen.** Both full-screen controls — the one on the results panel and
+  the one in the map's own toolbar — sized the container and left the map at its authored height,
+  so the map sat in a band at the top of an otherwise empty screen in both Safari and Chrome. The
+  map now takes the room: measured at a 1,100-pixel viewport, 520 pixels of map before and 691
+  after, with the rest being the panel's own heading, tabs, figure title, toolbar and source note.
+  The map toolbar's button also says *Exit full screen* while full screen is on, uses the WebKit
+  names where those are the only ones, and says so rather than appearing to work where neither
+  exists.
 - **A map's layer control lists only layers that hold something.** *Observations* and *Sites /
   context* were offered on maps that had neither, which claims the workflow holds data it does not.
 - **A result no longer outlives the node that made it.** Deleting the widgets that produced a run

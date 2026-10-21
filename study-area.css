@@ -25,7 +25,6 @@
 .catchment-map-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 0}
 .catchment-site-marker{background:var(--info-3);border:1px solid var(--text-2)}
 #catchment-map-host:fullscreen{background:var(--surface-raised-1);padding:16px;overflow:auto}
-#catchment-map-host:fullscreen .catchment-leaflet{height:calc(100vh - 140px)}
 .comparison-results{height:auto;min-height:560px}.comparison-results #map-panel{height:auto;min-height:450px;overflow:auto;background:var(--surface-raised-1)}.comparison-results .map-legend{display:none}#comparison-map-host{padding:12px}.comparison-summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin:0 0 12px}.comparison-summary strong{color:var(--semantic-4);font-size:15px}.comparison-summary span,.comparison-caveat{font-size:11px;color:var(--text-muted-15)}.comparison-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.comparison-card{border:1px solid var(--line-soft-18);border-radius:7px;background:var(--surface-raised-1);padding:10px;min-width:0}.comparison-card h3{font-size:12px;margin:0 0 8px}.comparison-card p{font-size:10px;line-height:1.5;color:var(--text-muted-16);margin:8px 0 0}.comparison-map{display:block;width:100%;height:auto;background:var(--surface-raised-19)}.comparison-map text{fill:var(--text-muted-17);font-family:Studio,'Segoe UI',sans-serif}.comparison-caveat{margin:12px 0 2px;line-height:1.5}
 @media(max-width:760px){.comparison-grid{grid-template-columns:1fr}}
 .palette-node.primitive-selected{outline:3px solid var(--info-4);outline-offset:1px;background:var(--info-wash-1)!important;box-shadow:0 0 0 5px var(--shadow-18)}
@@ -47,5 +46,29 @@ body.focus-workbench .work-area #workflow-view:not([hidden]),body.focus-workbenc
 body.focus-results .work-area .canvas-toolbar,body.focus-results .work-area .canvas-view,body.focus-results .work-area .rules-view,body.focus-results .work-area .results-divider{display:none!important}
 body.focus-results .work-area .results-panel,body.focus-results main.resizable-panels .work-area .results-panel{display:flex!important;flex:1 1 auto;height:100%;min-height:0;max-height:none;overflow:auto}
 body.focus-results .work-area .results-heading{position:sticky;top:0;z-index:7;background:var(--surface-raised-1)}
-body.focus-results .work-area #map-panel{flex:none}
+/* Full screen is a RENDER, not a container. Reported 2026-10-20: *"whether in Safari or Chrome,
+   the full screen is not a real full screen render."* Both paths put the CONTAINER at viewport size
+   -- the results panel through body.focus-results, the map toolbar through requestFullscreen -- and
+   left the map at its authored height, so the map sat in a band at the top of an empty screen. The
+   fixed `flex:none` below was the whole of the first bug. The second was a selector written for the
+   wrong element: the rule said `#catchment-map-host:fullscreen` while the element passed to
+   requestFullscreen is `#map-panel`, so it never matched anything.
+   Leaflet is told about the new size by the ResizeObserver mountCatchmentMap keeps on the canvas. */
+body.focus-results .work-area .results-panel{overflow:hidden}
+body.focus-results .work-area #map-panel:not([hidden]){display:flex;flex-direction:column;flex:1 1 auto;min-height:0;height:auto;max-height:none;overflow:auto}
+body.focus-results #map-panel:not([hidden]) #catchment-map-host{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+body.focus-results #map-panel:not([hidden]) .catchment-leaflet{flex:1 1 auto;height:auto;min-height:260px}
+body.focus-results #map-panel:not([hidden])>#map{flex:1 1 auto;height:auto;min-height:260px;max-height:none;aspect-ratio:auto}
+body.focus-results #map-panel:not([hidden]) #map-communication{flex:none}
+
+#map-panel:fullscreen{display:flex;flex-direction:column;height:100%;max-height:none;overflow:auto;background:var(--surface-raised-1);padding:0}
+#map-panel:fullscreen #catchment-map-host{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+#map-panel:fullscreen .catchment-leaflet{flex:1 1 auto;height:auto;min-height:260px}
+#map-panel:fullscreen>#map{flex:1 1 auto;height:auto;min-height:260px;max-height:none;aspect-ratio:auto}
+#map-panel:-webkit-full-screen{display:flex;flex-direction:column;height:100%;max-height:none;overflow:auto;background:var(--surface-raised-1)}
+#map-panel:-webkit-full-screen #catchment-map-host{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+#map-panel:-webkit-full-screen .catchment-leaflet{flex:1 1 auto;height:auto;min-height:260px}
+#map-panel:-webkit-full-screen>#map{flex:1 1 auto;height:auto;min-height:260px;max-height:none;aspect-ratio:auto}
 @media(max-width:850px){main.studio.library-collapsed{display:block}.studio.library-collapsed>.library{display:none}.canvas-toolbar{height:auto;min-height:48px;flex-wrap:wrap;gap:4px}.toolbar-actions{flex-wrap:wrap;justify-content:flex-end}#toggle-library,#fullscreen-workbench,#fullscreen-results{font-size:10px}}
+/* A divIcon is a white box with a border by default, which would frame every mark. */
+.catchment-point-mark{background:none;border:0}

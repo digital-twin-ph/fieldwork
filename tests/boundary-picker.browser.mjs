@@ -38,6 +38,7 @@ test.use({serviceWorkers:'block'});
 const openArea=async page=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=hagelloch');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="village"]').click();
   await page.locator('#edit-study-area').click();
   await page.locator('#area-boundary-source summary').click();

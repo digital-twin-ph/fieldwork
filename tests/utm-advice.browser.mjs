@@ -9,6 +9,7 @@ test('a widget added to a workflow takes the zone that workflow is in',async({pa
 
   // Soho is zone 30N, which is also the old hardcoded default, so this example cannot tell a
   // derived zone from a lucky one. It establishes the agreeing case and the note that says so.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="catchments"]').click();
   await expect(page.locator('[data-utm-advice]')).toContainText('zone 30N matches this workflow');
   await expect(page.locator('[data-utm-advice]')).toContainText('configured coordinate');
@@ -18,7 +19,9 @@ test('a widget added to a workflow takes the zone that workflow is in',async({pa
   await page.goto('/?example=old-naledi');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('#node-search').fill('Convex hull');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="summarize_hull"]').click();
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node').filter({hasText:'Convex hull'})).toHaveCount(1);
   const saved=()=>page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1'));
@@ -35,6 +38,7 @@ test('a zone that disagrees with the data is reported, with what it costs and a 
   await page.goto('/?example=old-naledi');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('#node-search').fill('Convex hull');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="summarize_hull"]').click();
   const hull=page.locator('.react-flow__node').filter({hasText:'Convex hull'});
   await expect(hull).toHaveCount(1);
@@ -49,6 +53,7 @@ test('a zone that disagrees with the data is reported, with what it costs and a 
   });
   await page.reload();
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').filter({hasText:'Convex hull'}).click();
 
   const advice=page.locator('[data-utm-advice]');

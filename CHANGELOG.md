@@ -5,6 +5,30 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **Results is a tab, beside Workflow and N3.** *"It would be easier to see the whole workflow or
+  the whole Result panel than to see half of each."* One view is on screen at a time, so the canvas
+  gets the work area it had been sharing — 767 pixels where the split gave it 432, at a
+  1,100-pixel viewport — and the results panel gets the same when you select it. Three controls
+  went with the split, because they existed to manage a compromise a tab removes: the **Expand**
+  button that decided which half won, the **divider** between the panels, and the remembered
+  results **height**. The two *Full screen* buttons became one, which applies to whichever tab is
+  showing and follows you if you switch while in it. A finished run does not move you; the count on
+  the Results tab says there is something to look at.
+- **The map takes the panel.** It had a fixed 320-pixel band inside a 335-pixel panel — numbers
+  chosen when the results were the lower half of a split. It is 438 pixels now, and 771 in full
+  screen.
+- **A run no longer stops on one unreadable coordinate.** A source whose coordinate column would
+  not parse produced `[NaN, NaN]`; the point-in-polygon test answers *false* for anything it cannot
+  place, so the record was called **Outside**, carried to the map, and handed to Leaflet, which
+  refused it and took the whole run with it — *"Workflow stopped: Invalid LatLng object: (NaN,
+  NaN)"*. *Outside* is a finding about a place; a coordinate that is not a number is a finding
+  about the data. Such a record is now counted apart, listed as unplaceable, and the run finishes.
+- **Three stale map controls removed.** The checkboxes under the map set `display:none` on the
+  static plot's marks, so over an interactive map — which has Leaflet's own layer control — they
+  did nothing; they are shown only for the plot now. The amber notice named a colour the map
+  stopped using when hue was given to the source layer, and repeated counts that sit above the map;
+  what remains is the part they do not carry, that a record with no usable location is listed
+  rather than plotted.
 - **Check spatial coverage is retired.** It asked where each point stood in relation to the study
   area and passed every one of them on, labelled. *Keep points inside the area* asks the same
   question and acts on the answer, and a map draws inside and outside without being asked — so two

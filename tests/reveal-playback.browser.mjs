@@ -18,6 +18,7 @@ test('a worked example replays widget by widget, and the palette follows',async(
   // Step 0: an empty canvas. Only the widgets that need no input are offered.
   await expect(page.locator('#playback-step')).toHaveText('Step 0 of 9');
   await expect(page.locator('#playback-reason')).toContainText('offers only the widgets that need no input');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(0);
   const atStart=await page.locator('.palette-node:not(.unrevealed)').count();
   expect(atStart,'something must be addable on an empty canvas').toBeGreaterThan(0);
@@ -27,6 +28,7 @@ test('a worked example replays widget by widget, and the palette follows',async(
   // Step 1 places the death locations, which emit points.
   await page.locator('#playback-next').click();
   await expect(page.locator('#playback-step')).toHaveText('Step 1 of 9');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(1);
   await expect(page.locator('#playback-reason')).toContainText('emits points');
   const afterPoints=await page.locator('.palette-node:not(.unrevealed)').count();
@@ -43,6 +45,7 @@ test('a worked example replays widget by widget, and the palette follows',async(
   // Run it forward to the end: every node of the example arrives, in an order the rule allows.
   for(let step=0;step<9;step++)await page.locator('#playback-next').click();
   await expect(page.locator('#playback-step')).toHaveText('Step 9 of 9');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(9);
   await expect(page.locator('#playback-next')).toBeDisabled();
 
@@ -50,6 +53,7 @@ test('a worked example replays widget by widget, and the palette follows',async(
   await page.locator('#playback-exit').click();
   await expect(page.locator('#playback-bar')).toBeHidden();
   await expect(page.locator('.palette-node.unrevealed')).toHaveCount(0);
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(9);
   expect(errors).toEqual([]);
 });

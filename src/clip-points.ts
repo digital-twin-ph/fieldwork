@@ -51,7 +51,10 @@ export function clipPointsToArea(points:PointCollection,area:Boundary,keepBounda
     // own and CARRIED, so a map lists it as a record it could not plot. Dropping it here made it
     // disappear from everything downstream except a number -- which is the silent loss a clip is
     // supposed to prevent, not commit.
-    if(feature.geometry)outside++;else missing++;
+    // Keyed on the RELATION, not on whether a geometry object exists. A feature carrying
+    // `[NaN,NaN]` has a geometry and no location, and counting it outside said something about a
+    // place when the finding was about the data.
+    if(relation==='MissingLocation')missing++;else outside++;
     excluded.push(feature);
   }
   return {collection:{...points,features:kept},inside,boundary,outside,missing,excluded};

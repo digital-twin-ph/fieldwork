@@ -19,31 +19,40 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
 
   // 43 daily bins between 19 August and 30 September 1854, totalling 616 deaths.
   await expect(page.locator('#bars-panel')).toContainText('Cases by day of date of death');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('616 records');
   // Columns, not rows: an epidemic curve runs vertically by default, with the periods along
   // the bottom, because that is how an outbreak report draws one. The Inspector offers
   // horizontal for anyone who wants it, exercised at the end of this file.
   await expect(page.locator('#bars-panel .bar-column')).toHaveCount(43);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column').first()).toContainText('1854-08-19');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column').last()).toContainText('1854-09-30');
   // The peak is 2 September, with 127 deaths.
   await expect(page.locator('#bars-panel .bar-column').filter({hasText:'1854-09-02'})).toContainText('127');
 
   // Changing the declared kind of date changes what the chart says it is, not just a label.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
   await expect(page.locator('#series-kind')).toHaveValue('death');
   await expect(page.locator('.inspector')).toContainText('not a curve by date of onset');
   await page.locator('#series-kind').selectOption('onset');
   await run(page);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('Cases by day of date of onset');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
   await page.locator('#series-kind').selectOption('death');
 
   // A week is a different series of the same data, and empty periods survive aggregation.
   await page.locator('#series-period').selectOption('week');
   await run(page);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('Cases by week of date of death');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column')).toHaveCount(7);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column').filter({hasText:'1854-08-28'})).toContainText('279');
   await page.locator('#series-period').selectOption('day');
   await run(page);
@@ -59,6 +68,7 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
   await context.setOffline(true);
   await page.reload();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('616 records',{timeout:45000});
   await page.screenshot({path:'test-results/snow-epidemic-curve.png',fullPage:true});
   assert.deepEqual(errors,[]);
@@ -70,14 +80,21 @@ test('the John Snow workspace shows place and time together, and refuses to join
   await useClassicBars(page,'epidemic');
 
   // The catchment map and the epidemic curve are results of one workspace.
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="map"]').click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map-panel')).toBeVisible();
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="epidemic"]').click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('Cases by day of date of death');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('616 records');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column')).toHaveCount(43);
 
   // Selecting the curve's source states what was excluded and why.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="dates"]').click();
   await expect(page.locator('.inspector')).toContainText('616 rows'.replace('616','43'));
   await expect(page.locator('.inspector')).toContainText('Snow 1855 Table 1');
@@ -94,18 +111,27 @@ test('the John Snow workspace shows place and time together, and refuses to join
 test('the epidemic curve can be turned on its side, and reports the same counts',async({page})=>{
   await page.goto('/?example=snow-isochrone');
   await page.locator('#run-button').click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output="epidemic"]')).toBeVisible({timeout:30000});
   await useClassicBars(page,'epidemic');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="epidemic"]').click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column')).toHaveCount(43);
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="epidemic"]').click();
   await expect(page.locator('#series-orientation')).toHaveValue('vertical');
   await page.locator('#series-orientation').selectOption('horizontal');
   await page.locator('#run-button').click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output="epidemic"]')).toBeVisible({timeout:30000});
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="epidemic"]').click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-row')).toHaveCount(43);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column')).toHaveCount(0);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('616 records');
 });

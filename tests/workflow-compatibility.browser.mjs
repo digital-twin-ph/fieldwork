@@ -74,6 +74,7 @@ test('rejected imports leave the current workflow and completed results intact',
     await expect(page.locator('#toast')).toContainText(message);
     assert.deepEqual(await saved(page),before);
     await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete');
+  await page.locator('[data-view="results"]').click();
     await expect(page.getByRole('tab',{name:'Regression map'})).toBeVisible();
   }
 });
@@ -88,11 +89,13 @@ test('all eight point inputs remain connectable and survive removal and Undo',as
   for(let i=2;i<=8;i++)w.nodes.push({...structuredClone(source),id:`layer${i}`,x:40,y:230,params:{...structuredClone(source.params),label:`Layer ${i}`}});
   w.edges=[{id:'area',from:'scope',to:'map',port:'area'},{id:'points',from:'observations',to:'map',port:'points'}];
   await page.goto('/?example=blank');await upload(page,w);
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   // The configurable port opens the next slot itself when the current one is taken, which is how
   // a practitioner adds a layer; `#add-point-input` is the explicit form of the same thing.
   for(let i=2;i<=8;i++){
     await page.locator('#map-add-layer').selectOption(`layer${i}`);
+  await page.locator('[data-view="workflow"]').click();
     await expect(page.locator(`.react-flow__node[data-id="map"] [data-handleid="points_${i}"]`)).toBeVisible();
     await expect(page.locator(`#map-points_${i}`)).toHaveValue(`layer${i}`);
   }

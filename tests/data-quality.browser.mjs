@@ -17,6 +17,7 @@ test('a column profile names the problem, and the repair is offered where the va
   await page.locator('#toast button').last().click();
 
   // D · the damaged copy. Open the rows, where the offending values are.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="texty"]').click();
   await page.locator('[data-records-quicklook]').click();
   const dialog=page.locator('#table-viewer');
@@ -56,6 +57,7 @@ test('a column profile names the problem, and the repair is offered where the va
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await expect(toast).toContainText('3 records could not be read as declared');
   await expect(toast).not.toContainText('counts it cannot read');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="text-building"] .node')).not.toHaveClass(/alerting/);
   expect(errors).toEqual([]);
 });
@@ -69,6 +71,7 @@ test('a repair is stated in the run evidence',async({page})=>{
   await page.goto('/?example=rulesets');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('#toast button').last().click();
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="texty"]').click();
   await page.locator('[data-records-quicklook]').click();
   await page.locator('#table-viewer [data-repair]').click();
@@ -110,6 +113,7 @@ test('a repair never overwrites what the input holds',async({page})=>{
   });
   expect(await held()).toEqual({texts:63,repairs:0});
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="texty"]').click();
   await page.locator('[data-records-quicklook]').click();
   await page.locator('#table-viewer [data-repair]').click();
@@ -126,6 +130,7 @@ test('a repair never overwrites what the input holds',async({page})=>{
 
   // Reopening shows what downstream reads, says a repair is in force, and does not offer it
   // again -- there is nothing left to repair.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="texty"]').click();
   await page.locator('[data-records-quicklook]').click();
   const dialog=page.locator('#table-viewer');
@@ -150,6 +155,7 @@ test('the quality dialog inspects a column, repairs it, and takes the repair bac
   await page.locator('#toast button').last().click();
 
   const open=async()=>{
+  await page.locator('[data-view="workflow"]').click();
     await page.locator('.react-flow__node[data-id="texty"]').click();
     await page.locator('[data-records-quality]').click();
     await expect(page.locator('#data-quality')).toBeVisible();
@@ -216,6 +222,7 @@ test('a tabular input is profiled too',async({page})=>{
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('#toast button').last().click();
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="gapped"]').click();
   await page.locator('#table-quality').click();
   const dialog=page.locator('#data-quality');
@@ -240,6 +247,7 @@ test('the shapes tab shows where values are missing, not just how many',async({p
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('#toast button').last().click();
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="texty"]').click();
   await page.locator('[data-records-quality]').click();
   const dialog=page.locator('#data-quality');
@@ -292,6 +300,7 @@ test('a clean input says there is no pattern to show',async({page})=>{
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('#toast button').last().click();
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="buildings"]').click();
   await page.locator('[data-records-quality]').click();
   await page.locator('#data-quality [data-quality-tab="shapes"]').click();

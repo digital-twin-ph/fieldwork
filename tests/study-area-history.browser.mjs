@@ -27,6 +27,7 @@ test('a study area keeps every extent, and an earlier one can be restored',async
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="study_area"]').click();
 
   await bounds(page,'25.90');

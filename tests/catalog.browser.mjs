@@ -86,9 +86,12 @@ test('the widget catalog shows identities, digests and independent checks, and w
   // A process widget is offered once the canvas holds an input, from 2026-10-15, so place one
   // first -- which is what the rule asks of a practitioner too.
   if(!await page.locator('[data-add="reproject"]').count()){
+  await page.locator('[data-view="workflow"]').click();
     await page.locator('[data-add="point_input"]').click();
+  await page.locator('[data-view="workflow"]').click();
     await expect(page.locator('[data-add="reproject"]')).toHaveCount(1);
   }
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="reproject"]').click();
   await expect(page.locator('.inspector')).toContainText('Definition');
   await expect(page.locator('.inspector')).toContainText(`reproject ${reproject.currentVersion}`);
@@ -98,6 +101,7 @@ test('the widget catalog shows identities, digests and independent checks, and w
   await expect(page.locator('.inspector')).toContainText('maximum separation');
 
   // A domain widget says which pack's domain it belongs to, in the same place.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="slr_site_assignment"]').click();
   await expect(page.locator('.inspector')).toContainText('Domain widget · Sea-level rise');
 

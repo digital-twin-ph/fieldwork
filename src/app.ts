@@ -240,7 +240,6 @@ let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
 let tableSort:import('./table-output.js').TableSort|undefined;
 /** The run whose comparison result may expand the results pane, consumed the first time it does. */
-let expandForRun:string|null=null;
 let lastRunMs:number|null=null;
 /** Nodes that finished within the last moment, so the canvas can show it happening.
  *  A run is otherwise silent until it ends, and on a slow step there is nothing to say
@@ -2141,10 +2140,12 @@ function statusLabel(status:string|undefined){return ({Review:'Review',NoFlag:'N
 function renderResults(){
   disposeVegaChart();
   const output=activeOutput();$('.results-panel').classList.toggle('catchment-results',!!output?.polygons);$('.results-panel').classList.toggle('comparison-results',!!output?.comparison);activeOutputId=output?.nodeId||null;
-  if(output?.comparison&&expandForRun===result?.runId&&!$('.work-area').classList.contains('results-expanded')){
-    $('.work-area').classList.add('results-expanded');$('#expand-results').textContent='↙ Split view';$('#expand-results').setAttribute('aria-expanded','true');
-  }
-  expandForRun=null;
+  // A comparison used to take over the lower half of the split for one run. A tab needs no such
+  // exception: the whole panel is the result when the practitioner asks for it, and nothing else
+  // is competing for the height.
+  // What the Results tab says it holds, derived rather than announced.
+  const outputs=result?.outputs.length||0;
+  $('#result-count').textContent=outputs?String(outputs):'';
   $('#release-download').hidden=!(exampleKey(workflow)==='snow-geoprivacy'&&!!output&&output.nodeId.startsWith('after-'));
   $('.results-panel').classList.toggle('spatial-results',['spatial-map','spatial-coverage'].includes(output?.kind||''));
   const ownedTabs=new Set(outputsOf(selected).map(o=>o.nodeId));
@@ -2202,12 +2203,26 @@ function renderResults(){
     $('#review-legend').textContent='Outside boundary';$('#clear-legend').textContent='Inside / on boundary';$('#unknown-legend').textContent='Missing coordinates (not plotted)';$('#facility-legend').parentElement!.hidden=true;$('#map-note').textContent='Local map · all located points remain visible';
   }
   const spatial=['spatial-map','spatial-coverage'].includes(output?.kind||''),missing=spatial?rows.filter(r=>!r.coordinates):[],outside=output?.kind==='spatial-map'?rows.filter(r=>r.relation==='Outside').length:0;
-  $('#map-spatial-notice').hidden=output?.view!=='map'||(!outside&&!missing.length);
-  $('#map-spatial-notice').textContent=`${outside?`${outside} outside ${outside===1?'point':'points'} shown in amber. `:''}${missing.length?`${missing.length} ${missing.length===1?'record has':'records have'} no coordinates and cannot be plotted. `:''}Outside does not establish a data-quality problem.`;
+  // The amber sentence went on 2026-10-21. It named a colour the map stopped using when hue was
+  // given to the source layer, and it repeated counts that now sit above the map in
+  // `#result-metrics` -- *"both probably stale ... and also above the map ... and incorrect (there
+  // are no amber points)"*. What is left is the part the counts do not carry: a record with no
+  // coordinates is not on the map at all, so the reader is told where it went instead.
+  $('#map-spatial-notice').hidden=output?.view!=='map'||!missing.length;
+  $('#map-spatial-notice').textContent=missing.length
+    ?`${missing.length} ${missing.length===1?'record has':'records have'} no usable location and ${missing.length===1?'is':'are'} listed below rather than plotted.`
+    :'';
   $('#map-missing-records').innerHTML=missing.map(r=>`<button class="button small" data-map-record="${esc(r.id)}">${esc(r.name)} · missing coordinates</button>`).join('');
   $('#map-missing-records').hidden=output?.view!=='map';
   $('#map-missing-records').querySelectorAll<HTMLButtonElement>('[data-map-record]').forEach(el=>el.onclick=()=>selectResult(el.dataset.mapRecord!));
-  $('#map-layer-list').hidden=output?.view!=='map'||!output.pointLayers?.length;
+  // ONLY WHERE IT WORKS. These checkboxes hide layers by setting `display:none` on the SVG plot's
+  // marks, which an interactive map does not have -- it has Leaflet's own layer control, in the
+  // corner of the map. Shown on an interactive map they were three checkboxes that did nothing.
+  // Reported 2026-10-21: *"those three checkboxes at the bottom of the map about the facilities
+  // do not seem to perform any role."*
+  // Hidden by default and turned on by `renderMap`, which is the only place that knows which
+  // renderer drew: reading the DOM here asked before the map was built.
+  $('#map-layer-list').hidden=true;
   $('#map-layer-list').innerHTML=(output?.pointLayers||[]).map(layer=>`<label><input type="checkbox" data-map-layer="${esc(layer.sourceNodeId)}" ${hiddenMapLayers.get(output!.nodeId)?.has(layer.sourceNodeId)?'':'checked'}> ${esc(layer.label)} (${layer.count})</label>`).join('');
   $('#map-layer-list').querySelectorAll<HTMLInputElement>('[data-map-layer]').forEach(el=>el.onchange=()=>{const hidden=hiddenMapLayers.get(output!.nodeId)||new Set();if(el.checked)hidden.delete(el.dataset.mapLayer!);else hidden.add(el.dataset.mapLayer!);hiddenMapLayers.set(output!.nodeId,hidden);renderMap();});
   $('#result-rows').querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});
@@ -2244,7 +2259,15 @@ function renderPointTable(){
 }
 function selectResult(id:string){selected=`result:${id}`;renderLibrary($('#node-search').value);flow?.update(playbackView(),null,statuses);renderInspector();renderMap();}
 let disposeCatchmentMap:(()=>void)|undefined;
+/** A MAP IS NOT BUILT INTO A HIDDEN PANEL. With the results as a tab, rendering while the canvas
+ *  is on screen mounts Leaflet into a container of zero size, and its scale control computes
+ *  `containerPointToLatLng` on that -- "Invalid LatLng object: (NaN, NaN)", which the run's catch
+ *  reported as the WORKFLOW stopping. Reported 2026-10-21 on a map of three facility sources, and
+ *  reproduced on the measles example the same day. The map is drawn when its tab is the one being
+ *  shown, and `switchView` renders on arrival. */
+function resultsOnScreen(){return $('.work-area').classList.contains('showing-results');}
 function renderMap(){
+  if(!resultsOnScreen())return;
   disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#comparison-map-host')?.remove();
   const result=activeOutput(),svg=$('#map'), rows=result?.rows||[], centers=result?.centers||[], points=[...rows.filter(r=>r.coordinates).map(r=>r.coordinates!),...centers.filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
   const mapNode=runWorkflow?.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result?.nodeId&&n.type==='map_output');
@@ -2287,6 +2310,8 @@ function renderMap(){
     return;
   }
   svg.style.display='';svg.setAttribute('viewBox','0 0 850 295');
+  // The static plot is what those checkboxes act on: they set display:none on its marks.
+  $('#map-layer-list').hidden=!activeOutput()?.pointLayers?.length;
   if(result?.comparison){svg.style.display='none';const host=document.createElement('div');host.id='comparison-map-host';host.innerHTML=pointComparisonMarkup(result.comparison,esc);$('#map-panel').append(host);return;}
   // INTERACTIVE IS FOR ANY MAP, and until 2026-10-17 it was unreachable without polygons.
   //
@@ -2303,7 +2328,7 @@ function renderMap(){
     if(result.network)$('#map-panel').querySelector('#map-note')!.textContent=networkPreviewCaption(networkCoverage(result.network));
     const host=document.createElement('div');host.id='catchment-map-host';
     $('#map-panel').insertBefore(host,$('#map-communication-key'));
-    svg.style.display='none';
+    svg.style.display='none';$('#map-layer-list').hidden=true;
     disposeCatchmentMap=mountCatchmentMap(host,result.polygons?{...result,polygons:result.polygons}:result,
       result.contextPoints,esc,mapNode?.params.basemap||'none',
       choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);});
@@ -2385,7 +2410,7 @@ async function run(){if(busy)return;
   // a state line that says what is true -- not "Run failed", which claims something went wrong.
   try{executionPlan(workflow);}catch(e){
     if(e instanceof IncompleteWorkflow){runIncomplete=true;toast(errorMessage(e),{tone:'notice'});render();return;}
-    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;expandForRun=next.runId;renderResults();const issues=dataIssueNotice(next);
+    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;renderResults();const issues=dataIssueNotice(next);
   // "we must surface the issue on the widget as a toast message that I can then read and close"
   // -- the practitioner, 2026-10-16. A run that quietly bands a third of its records Unrecorded
   // has answered the question and hidden the thing worth knowing.
@@ -2396,7 +2421,16 @@ async function run(){if(busy)return;
   // something. The run succeeded; it is amber rather than red for that reason, and it stays
   // until it is closed.
   toast(`Complete in ${elapsedText(lastRunMs)}: ${result.outputs.length} output tabs updated.`
-    +supersessionNotice(snapshot)+(issues?` ${issues}`:''),issues?{tone:'warning'}:undefined);}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure'});runFailed=true;console.error(e);}finally{busy=false;render();}}
+    +supersessionNotice(snapshot)+(issues?` ${issues}`:''),issues?{tone:'warning'}:undefined);}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure'});runFailed=true;console.error(e);}
+  finally{
+    busy=false;
+    // A FINISHED RUN DOES NOT MOVE THE PRACTITIONER. The first version of the tab switched to
+    // Results when a run completed, on the reasoning that the split had always shown them. It
+    // reads differently in use: someone adding a node, running, and adjusting it is thrown off
+    // the canvas every time, and being moved is the opposite of choosing which view you are in.
+    // The run summary and the count on the Results tab say that there is something to look at.
+    render();
+  }}
 function download(name:string,text:string,type='application/json'){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 $('#release-download').onclick=()=>{const output=activeOutput();if(!output||exampleKey(workflow)!=='snow-geoprivacy'||!output.nodeId.startsWith('after-'))return;
   const features=output.polygons?.kind==='hexbin'?output.polygons.features.map(f=>({type:'Feature',id:f.id,properties:{count:f.count},geometry:f.geometry})):output.rows.map(r=>({type:'Feature',id:r.id,properties:{name:r.name},geometry:r.coordinates?{type:'Point',coordinates:r.coordinates}:null}));
@@ -2414,7 +2448,35 @@ function wireThemeControl(){
     if(!saveThemePreference(chosen))toast('This device would not store the theme; it applies until reload.');
   });
 }
-function switchView(view:string){$('.work-area').classList.remove('results-expanded');$('#expand-results').textContent='⛶ Expand';$('#expand-results').setAttribute('aria-expanded','false');$('#workflow-view').hidden=view!=='workflow';$('#rules-view').hidden=view!=='rules';document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));}
+/** RESULTS IS A TAB, not the lower half of a split. The practitioner, 2026-10-21: *"can we make
+ *  the Results Panel a tab alongside Workflow ... It would be easier to see the whole workflow or
+ *  the whole Result panel than to see half of each."* The split had a divider, a remembered
+ *  height and an Expand button that toggled which half won; all three existed to manage a
+ *  compromise that a tab removes. The order is the order of the work: build it, read it, then
+ *  inspect how it was derived. */
+let currentView='workflow';
+function switchView(view:string){
+  // SELECTING THE TAB YOU ARE ON CHANGES NOTHING. Rebuilding the results on every click threw
+  // away the map and everything it held -- the vector basemap just chosen, and the pan and zoom
+  // the practitioner had set. Found 2026-10-21 when a redundant click erased a MapLibre canvas.
+  if(view===currentView)return;
+  currentView=view;
+  const work=$('.work-area');
+  work.classList.toggle('showing-results',view==='results');
+  $('#workflow-view').hidden=view!=='workflow';
+  $('#rules-view').hidden=view!=='rules';
+  document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>{
+    const active=b.dataset.view===view;
+    b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));
+  });
+  if(fullScreen)setFullScreen(true);
+  // Built on arrival, because it could not be built while the panel was hidden. SYNCHRONOUSLY:
+  // the class above has already made the panel visible, and Leaflet reads clientWidth, which
+  // forces the layout it needs. Deferred to a frame, anything that looked at the map in the
+  // same turn as the tab click found no map -- a race in the application, not only in a test.
+  if(view==='results')renderMap();
+  if(view==='workflow')requestAnimationFrame(()=>flow?.fit());
+}
 function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id===c.source),b=workflow.nodes.find(n=>n.id===c.target);if(!a||!b||a.id===b.id||!outputOf(a))return false;
   // The map's one configurable port accepts anything the map can draw; which declared port it
   // becomes is decided on connection, by what the source emits. Without this the drop is refused
@@ -2756,22 +2818,28 @@ $('#project-create').onclick=createProjectFromDialog;
 for(const id of ['#project-cancel','#project-dialog-close'] as const)$(id).onclick=()=>$('#project-dialog').close();
 $('#new-workflow').onclick=()=>{if(busy)return;loadExample('blank');change(w=>{replaceWorkflow(w,blankWorkflow());selected=null;});result=null;runWorkflow=null;activeOutputId=null;renderResults();render();switchView('workflow');};
 $('#result-search').oninput=e=>{if(activeOutput()?.pointTable){tablePage=0;renderPointTable();return;}$('#result-rows').querySelectorAll('tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(control(e).value.toLowerCase()));};
-$('#expand-results').onclick=()=>{const expanded=$('.work-area').classList.toggle('results-expanded');$('#expand-results').textContent=expanded?'↙ Split view':'⛶ Expand';$('#expand-results').setAttribute('aria-expanded',String(expanded));};
 const libraryToggle=$('#toggle-library'),library=$('.library');
 library.id='layout-library';
 libraryToggle.onclick=()=>{const collapsed=$('.studio').classList.toggle('library-collapsed');libraryToggle.textContent=collapsed?'Show widgets':'Hide widgets';libraryToggle.setAttribute('aria-expanded',String(!collapsed));};
-type FocusPanel='workbench'|'results'|null;
-let focusPanel:FocusPanel=null;
-function setPanelFocus(panel:FocusPanel){
-  focusPanel=panel;
-  document.body.classList.toggle('focus-workbench',panel==='workbench');
-  document.body.classList.toggle('focus-results',panel==='results');
-  for(const [id,active] of [['fullscreen-workbench',panel==='workbench'],['fullscreen-results',panel==='results']] as const){const button=$(`#${id}`);button.setAttribute('aria-pressed',String(active));button.textContent=active?'Exit full screen':'Full screen';}
-  if(panel==='workbench')requestAnimationFrame(()=>flow?.fit());
+/** ONE FULL-SCREEN CONTROL, because there is one view on screen. There were two -- fill the
+ *  screen with the workbench, fill it with the results -- which made sense while both were on
+ *  screen at once and the question was which half won. With the tab, the second was a button
+ *  beside another button with the same word on it: *"the second screenshot has 2 full screen
+ *  buttons but only one is useful"*, 2026-10-21. This one puts whatever the tab is showing into
+ *  the screen, and Escape takes it back. */
+let fullScreen=false;
+function setFullScreen(on:boolean){
+  fullScreen=on;
+  const showingResults=$('.work-area').classList.contains('showing-results');
+  document.body.classList.toggle('focus-workbench',on&&!showingResults);
+  document.body.classList.toggle('focus-results',on&&showingResults);
+  const button=$('#fullscreen-workbench');
+  button.setAttribute('aria-pressed',String(on));
+  button.textContent=on?'Exit full screen':'Full screen';
+  if(on&&!showingResults)requestAnimationFrame(()=>flow?.fit());
 }
-$('#fullscreen-workbench').onclick=()=>setPanelFocus(focusPanel==='workbench'?null:'workbench');
-$('#fullscreen-results').onclick=()=>setPanelFocus(focusPanel==='results'?null:'results');
-document.addEventListener('keydown',event=>{if(event.key==='Escape'&&focusPanel){setPanelFocus(null);event.preventDefault();}});
+$('#fullscreen-workbench').onclick=()=>setFullScreen(!fullScreen);
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&fullScreen){setFullScreen(false);event.preventDefault();}});
 credentials=installCredentials(document.querySelector<HTMLButtonElement>('#credentials-button')!);
 const showCatalog=()=>{try{openCatalogDialog(esc,servingBuild);}catch(error){toast(errorMessage(error));}};
 $('#open-catalog').onclick=showCatalog;

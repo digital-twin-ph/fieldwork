@@ -8,11 +8,16 @@ test('legacy heat inputs use shared editors, preserve labels and save attributes
   await page.locator('#workflow-file').setInputFiles({name:'legacy-heat.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(legacy))});
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics .review b')).toHaveText('5');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('[data-add="places"]')).toHaveCount(0);
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('[data-add="centers"]')).toHaveCount(0);
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('[data-add="point_input"]')).toHaveCount(1);
   for(const [id,record] of [['neighborhoods','oakwood'],['centers','library']]){
+  await page.locator('[data-view="workflow"]').click();
     await page.locator(`.react-flow__node[data-id="${id}"]`).click();
     await page.locator('#edit-input-data').click();
     await expect(page.locator('#input-mode option')).toHaveCount(5);
@@ -30,6 +35,7 @@ test('legacy heat inputs use shared editors, preserve labels and save attributes
   await expect(page.locator('#offline-status')).toContainText('Available offline');
   await context.setOffline(true);await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics .review b')).toHaveText('5');
   assert.deepEqual((await saved(page)).nodes,w.nodes);
 });

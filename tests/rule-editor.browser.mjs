@@ -12,6 +12,7 @@ test('rules can be edited in a dialog, and the edit reaches the saved workflow',
   await page.goto('/?example=rulesets');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="building"]').click();
   await page.locator('#edit-rules').click();
   const dialog=page.locator('#rule-editor');
@@ -73,6 +74,7 @@ test('a setting is chosen by name, and the template syntax never reaches the sur
 
   // Step 1 bands a number against the `threshold` setting, so it is the step that used to show
   // the braces -- in the Inspector and in the editor both.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="day"]').click();
   // Named, and SET TO WHAT -- "does this not look like fixed on context" was the practitioner's
   // reading of `the cluster setting` on 2026-10-17: a phrase composed around the name, carrying
@@ -133,6 +135,7 @@ test('a published ruleset is read in the editor, and is not editable there',asyn
 
   const edges=()=>page.locator('.react-flow__edge').count();
   const before=await edges();
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="review"]').click();
   await page.locator('#review-rules').click();
   const dialog=page.locator('#rule-editor');
@@ -168,6 +171,7 @@ test('writing rules for a pinned step keeps what is wired to it',async({page})=>
   await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
 
   const before=await page.locator('.react-flow__edge').count();
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="review"]').click();
   await page.locator('#author-rules').click();
   await expect(page.locator('#rule-editor')).toBeVisible();

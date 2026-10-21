@@ -21,14 +21,17 @@ test('a points-only map can be interactive, and draw tiles',async({page})=>{
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   expect(saved.nodes.some(n=>n.type==='voronoi'||n.type==='isochrone')).toBe(false);
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   await page.locator('#polygon-presentation').selectOption('interactive');
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 
-  // The interactive map mounts and the static SVG steps aside.
+  // The interactive map mounts and the static SVG steps aside -- on the tab that shows it.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('.leaflet-container')).toHaveCount(1);
   await expect(page.locator('#map')).toBeHidden();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('.leaflet-marker-icon, .leaflet-interactive')).toHaveCount(188);
 
   // And the basemap is reachable, which it was not before: only the interactive presentation

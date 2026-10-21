@@ -6,7 +6,9 @@ test('shared output modes migrate legacy views, recover with Undo and preserve e
   const w=exampleWorkflow();for(const n of w.nodes.filter(n=>['map_output','table_output'].includes(n.type))){const view=n.type==='map_output'?'map':'table';n.type='output';n.params={label:n.params.label,view};}
   await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'legacy-output.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});};
+  await page.locator('[data-view="results"]').click();
   await run();await expect(page.locator('#result-metrics .review b')).toHaveText('5');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   // No mode selector, and no mode to be in: the decisions are wired to the decisions port and the
   // map also offers an area port and a point-layer adder, because a map draws what it is given.
@@ -21,5 +23,6 @@ test('shared output modes migrate legacy views, recover with Undo and preserve e
   assert.deepEqual(receipt.outputs[0].rows,receipt.outputs[1].rows);
   assert.equal(receipt.receipts.filter(r=>r.kind==='presentation').length,2);
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics .review b')).toHaveText('5');
 });

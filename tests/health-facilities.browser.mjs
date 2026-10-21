@@ -23,6 +23,7 @@ const load=async page=>{
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles(
     {name:'facilities.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(workflow()))});
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="hf"]')).toBeVisible();
 };
 
@@ -100,6 +101,7 @@ test.describe('retrieval',()=>{
 
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+    await page.locator('[data-view="results"]').click();
     await expect(page.locator('#map [data-place]')).toHaveCount(2,
       {message:'both retained facilities reach the map as places'});
   });
@@ -136,6 +138,7 @@ test('a stored retrieval replays with the network off, and asks no source for an
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles(
     {name:'stored.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(stored))});
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="hf"]')).toBeVisible();
   await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:60000});
 
@@ -146,11 +149,13 @@ test('a stored retrieval replays with the network off, and asks no source for an
   await context.setOffline(true);
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map [data-place]')).toHaveCount(2);
   assert.deepEqual(reached,[],'the run used stored facilities and reached no source');
 
   // And the receipt still carries the licence, because a shareable record of an offline run must
   // state the obligations that came with the data.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="hf"]').click();
   await expect(page.locator('#inspector-content')).toContainText(/2 facilities/);
 });

@@ -10,10 +10,15 @@ test('generated samples feed shared outputs and the nearest search accepts ordin
   w.edges.find(e=>e.to==='access'&&e.port==='points').from='custom';
   await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'shared-samples.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Generated sample table'}).click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#table-panel')).toContainText('Sample 21');
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Generated sample map'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(21);
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Access table'}).click();await expect(page.locator('#result-rows tr')).toHaveCount(2);await expect(page.locator('#result-metrics')).toContainText('2 input locations');
+  await page.locator('[data-view="results"]').click();
   const missing=page.locator('#result-rows tr').filter({hasText:'Unlocated observation'});await missing.click();
   await expect(page.locator('#inspector-content')).toContainText('no coordinates');await expect(page.locator('#inspector-content')).toContainText('Connected input point');
   await page.locator('[data-view="rules"]').click();const pending=page.waitForEvent('download');await page.locator('#download-evidence').click();const receipt=JSON.parse(await readFile(await (await pending).path(),'utf8'));
@@ -23,5 +28,6 @@ test('generated samples feed shared outputs and the nearest search accepts ordin
   assert.match(receipt.receipts.find(r=>r.nodeId==='samples').facts,/fw:GridSampleGeneration/);
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Generated sample table'}).click();await expect(page.locator('#table-panel')).toContainText('Sample 21');
 });

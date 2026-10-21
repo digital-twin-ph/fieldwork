@@ -13,6 +13,7 @@ test('a study area suggests the zone before any widget carries one',async({page}
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=coverage');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="scope"]').click();
   const advice=page.locator('[data-zone-advice]');
   await expect(advice).toBeVisible();
@@ -29,6 +30,7 @@ test('an area spanning two zones names each candidate and what it costs',async({
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="study_area"]').click();
   // A box straddling the zone 30/31 boundary at 6°E. No single zone is right for it, which is
   // the case the practitioner asked about.
@@ -44,6 +46,7 @@ test('an area spanning two zones names each candidate and what it costs',async({
     workspaces.blank=w;localStorage.setItem('fieldwork-examples-v1',JSON.stringify(workspaces));
   });
   await page.reload();
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').first().click();
   const advice=page.locator('[data-zone-advice]');
   await expect(advice).toContainText('no single zone is right');

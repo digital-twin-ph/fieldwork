@@ -14,13 +14,16 @@ const select=async id=>{await page.locator('[data-view="workflow"]').click();awa
   w.nodes=[{...newStudyArea(),id:'area-test',x:50,y:70}];w.nodes[0].params={...w.nodes[0].params,label:'Area experiment',selectionMode:'bbox',geometry};
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles({name:'area.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="measure_area"]').click();
   await expect(page.locator('#area-unit')).toHaveValue('km2');
   await page.locator('#measure-area-source').selectOption('area-test');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
   const measureId=(await saved()).nodes.find(n=>n.type==='measure_area').id;
   for(const unit of Object.keys(AREA_UNITS)){
     await page.locator('#area-unit').selectOption(unit);await run();
+  await page.locator('[data-view="results"]').click();
     await expect(page.locator('#result-metrics')).toContainText(formatArea(calculateArea(geometry,unit)));
   }
   await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('COMPUTED FACTS (not inferred)');await expect(page.locator('#n3-preview')).toContainText('geo:hasMetricArea');
@@ -42,6 +45,7 @@ const select=async id=>{await page.locator('[data-view="workflow"]').click();awa
   const exported=page.waitForEvent('download');await page.locator('#export-button').click();const workflowBytes=await readFile(await (await exported).path());
   await page.locator('#new-workflow').click();await page.locator('#workflow-file').setInputFiles({name:'saved-area.json',mimeType:'application/json',buffer:workflowBytes});await run();
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await select(measureId);await expect(page.locator('#area-unit')).toHaveValue('acre');await expect(page.locator('#result-metrics')).toContainText(formatArea(calculateArea(smaller,'acre')));
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:'test-results/area-computation-mobile.png',fullPage:true});
@@ -55,6 +59,7 @@ const select=async id=>{await page.locator('[data-view="workflow"]').click();awa
   // retired on 2026-10-21; what is under test is the measurement reaching the consumer, and the
   // map consumes the same area the check did.
   await select('map');await page.locator('#map-area').selectOption(chainedId);await run();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs button')).toHaveCount(2);
   const downloadChain=async()=>{await page.locator('[data-view="rules"]').click();const pending=page.waitForEvent('download');await page.locator('#download-evidence').click();return JSON.parse(await readFile(await (await pending).path(),'utf8'));};
   const chained=await downloadChain(),check=chained.outputs.find(o=>o.kind==='spatial-map');

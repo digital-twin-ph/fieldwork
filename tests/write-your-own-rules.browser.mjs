@@ -13,6 +13,7 @@ test('a ruleset step can be given rules written here, from a standing start',asy
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
 
   // Add a ruleset step to a canvas that already has records on it.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="apply_ruleset"]').click();
   const chooser=page.locator('#ruleset-choice');
   await expect(chooser).toBeVisible();
@@ -39,6 +40,7 @@ test('a ruleset step can be given rules written here, from a standing start',asy
   },added);
   await page.reload();
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator(`.react-flow__node[data-id="${added}"]`).click();
 
   const inspector=page.locator('#inspector-content');

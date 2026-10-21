@@ -11,6 +11,7 @@ test('an input shows its records as columns and rows, and as the JSON they are',
   await page.goto('/?example=rulesets');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="buildings"]').click();
   const table=page.locator('.record-table');
   await expect(table).toBeVisible();
@@ -54,6 +55,7 @@ test('a stopped run is reported as a failure, and stays until it is closed',asyn
   await expect(toast).not.toHaveClass(/visible/);
 
   // Take the unit off a field the rules compare, which the run refuses by name.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="gap-day"]').click();
   await page.locator('[data-field-unit]').first().fill('');
   await page.locator('[data-field-unit]').first().press('Tab');
@@ -98,6 +100,7 @@ test('records the rules cannot read are surfaced, and the notice can be read and
   await expect(toast).not.toHaveClass(/visible/);
 
   // And the step carries the same finding, with the detail the toast has no room for.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="text-building"]').click();
   const alert=page.locator('.inspector-alert').first();
   await expect(alert).toContainText('Read as not recorded');
@@ -110,6 +113,7 @@ test('records the rules cannot read are surfaced, and the notice can be read and
   await expect(alert).not.toContainText('street network');
 
   // The other step reports the other problem, in its own terms.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="gap-day"]').click();
   await expect(page.locator('.inspector-alert').first()).toContainText('No value');
   expect(errors).toEqual([]);
@@ -136,6 +140,7 @@ test('a failing widget glows red, and is told apart from one that merely found s
   await expect(node('text-building')).not.toHaveClass(/failed/);
 
   // Break one step: take the unit off the field its rules compare.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="gap-day"]').click();
   await page.locator('[data-field-unit]').first().fill('');
   await page.locator('[data-field-unit]').first().press('Tab');

@@ -11,32 +11,41 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
   await page.goto('/?example=hagelloch');
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   await page.locator('#polygon-presentation').selectOption('interactive');
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 
+  await page.locator('[data-view="results"]').click();
   const drawn=page.locator('.leaflet-marker-icon, .leaflet-interactive');
   const asCircles=await drawn.count();
   expect(asCircles).toBeGreaterThan(0);
 
   // The first layer's default mark is a circle, and it is drawn as a mark like every other one:
   // a circleMarker has a single stroke, which cannot be both the dark halo and the layer hue.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('.catchment-leaflet .leaflet-control-layers-list')).toContainText('(circle)');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('.catchment-point-mark')).toHaveCount(asCircles);
   // Every mark carries the halo: a dark path drawn first and wider than the coloured one, so the
   // symbol reads over a terrain basemap.
+  await page.locator('[data-view="results"]').click();
   const halo=page.locator('.catchment-point-mark svg path').first();
   expect(await halo.getAttribute('stroke')).toBe('#1A1A1A');
   expect(Number(await halo.getAttribute('stroke-width'))).toBeGreaterThan(2);
   // And it can be switched off, for a pale ground or a printed figure.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   await page.locator('#map-halo-toggle').uncheck();
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   const bare=page.locator('.catchment-point-mark svg path').first();
   expect(await bare.getAttribute('stroke')).not.toBe('#1A1A1A');
+  await page.locator('[data-view="results"]').click();
   expect(await page.locator('.catchment-point-mark').first().locator('path').count()).toBe(1);
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   await page.locator('#map-halo-toggle').check();
   await page.locator('#run-button').click();
@@ -49,8 +58,11 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 
   // Every point that was a circle is now a star: the same points, drawn with the chosen mark.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('.catchment-point-mark')).toHaveCount(asCircles);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('.catchment-leaflet .leaflet-control-layers-list')).toContainText('(star)');
+  await page.locator('[data-view="results"]').click();
   const path=await page.locator('.catchment-point-mark svg path').first().getAttribute('d');
   expect(path.split('L').length).toBeGreaterThan(8); // ten points, not an arc
 
@@ -66,6 +78,7 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
   await expect(key).not.toContainText('Set aside by a clip');
   // And the old encoding, where hue carried the relation, is gone.
   await expect(key).not.toContainText('Outside boundary');
+  await page.locator('[data-view="results"]').click();
   const marks=key.locator('.map-key-mark path');
   expect(await marks.count()).toBe(2); // one layer, one fill value
 });

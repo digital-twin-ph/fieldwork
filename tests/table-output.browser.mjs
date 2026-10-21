@@ -9,6 +9,7 @@ const upload=(page,w)=>page.locator('#workflow-file').setInputFiles({name:'table
 const run=async page=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});};
 const select=async(page,id)=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"]`).click();};
 const drag=async(page,from,to,port)=>{
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#fit-button').click();await page.waitForTimeout(300);
   const a=await page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`).boundingBox(),b=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).boundingBox();
   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
@@ -27,12 +28,19 @@ test('Table displays point attributes without a boundary, pages, searches, and r
   await page.locator('#table-label').fill('Field visits table');await page.locator('#table-label').press('Tab');
   await expect(page.locator('#table-area')).toHaveCount(0);await drag(page,'observations',tableId,'points');await expect(page.locator('#table-points')).toHaveValue('observations');
   await page.locator('#add-point-input').click();await page.locator('#table-points_2').selectOption('second');await run(page);
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Field visits table'}).click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows [data-place]')).toHaveCount(100);await expect(page.locator('#result-head')).toContainText('Longitude (°)');await expect(page.locator('#result-head')).not.toContainText('Review decision');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#point-table-controls')).toContainText('1–100 of 107 records');await page.getByRole('button',{name:'Next rows',exact:true}).click();await expect(page.locator('#result-rows [data-place]')).toHaveCount(7);
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-search').fill('needle104');await expect(page.locator('#result-rows [data-place]')).toHaveCount(1);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows')).toContainText('Not supplied');
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('button',{name:'Next attributes',exact:true}).click();await expect(page.locator('#result-head')).toContainText('notes');await expect(page.locator('#result-rows')).toContainText('<script>needle104</script>');await expect(page.locator('#result-rows script')).toHaveCount(0);
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-rows [data-place]').press('Enter');await expect(page.locator('#inspector-content')).toContainText('No coordinates supplied');await expect(page.locator('#inspector-content')).toContainText('false');
   const evidence=await receipt(page);assert.equal(evidence.outputs[0].rows.length,107);
   await expect(page.locator('#n3-preview')).toContainText('PRESENTATION NODE');
@@ -42,6 +50,7 @@ test('Table displays point attributes without a boundary, pages, searches, and r
   const quads=await page.evaluate(input=>new Promise((resolve,reject)=>{const worker=new Worker('./build/reasoning-worker.js');const timeout=setTimeout(()=>{worker.terminate();reject(new Error('Table RDF validation timed out'));},45000);worker.onmessage=({data})=>{clearTimeout(timeout);worker.terminate();data.error?reject(new Error(data.error)):resolve(data.quads);};worker.onerror=e=>{clearTimeout(timeout);worker.terminate();reject(new Error(e.message));};worker.postMessage({id:1,input});}),ontology+'\n'+facts+'\n{ ?v a <urn:fieldwork:TableView>. } => { ?v <urn:fieldwork:tableFactsParsed> true. }.');
   assert.ok(quads.some(q=>q.predicate==='urn:fieldwork:tableFactsParsed'));
   await expect(page.locator('#offline-status')).toContainText('Available offline');const before=await saved(page);await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});assert.deepEqual(await saved(page),before);
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Field visits table'}).click();await expect(page.locator('#result-rows [data-place]')).toHaveCount(100);
   await page.screenshot({path:'test-results/point-table-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'test-results/point-table-mobile.png',fullPage:true});
@@ -63,21 +72,31 @@ test('a table takes point layers directly, searches them and survives a round tr
   await page.locator('#table-points').selectOption('observations');
   assert.deepEqual((await saved(page)).edges.filter(e=>e.to===tableId).map(e=>e.port),['points']);
   await run(page);
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:/Point table$/}).click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-head')).toContainText('household_size');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-search').fill('Outside example');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows [data-place]')).toHaveCount(1);
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-rows [data-place]').click();
   await expect(page.locator('#inspector-content')).toContainText('Attributes as the source gave them');
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:/Point table$/}).click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
   const download=page.waitForEvent('download');await page.locator('#export-button').click();
   const bytes=await readFile(await (await download).path());
   await page.locator('#new-workflow').click();
   await page.locator('#workflow-file').setInputFiles({name:'table-roundtrip.json',mimeType:'application/json',buffer:bytes});
   await run(page);
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:/Point table$/}).click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
   assert.deepEqual(errors,[]);
 });
@@ -98,13 +117,17 @@ test('A result table ranks by a column, and a record with no value never answers
   await page.goto('/?example=blank');await upload(page,w);await page.locator('[data-add="table_output"]').click();
   const tableId=(await saved(page)).nodes.find(n=>n.type==='table_output').id;
   await drag(page,'observations',tableId,'points');await run(page);
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Point table'}).click();
+  await page.locator('[data-view="results"]').click();
   const names=()=>page.locator('#result-rows [data-place] td:nth-child(3)').allTextContents();
   assert.deepEqual(await names(),['Clinic 0','Clinic 1','Clinic 2','Clinic 3','Clinic 4'],'unsorted is input order');
 
+  await page.locator('[data-view="results"]').click();
   const header=page.locator('#result-head button[data-table-sort="attribute:metresToRoad"]');
   await header.click();                                      // ascending: nearest the road first
   assert.deepEqual(await names(),['Clinic 1','Clinic 2','Clinic 0','Clinic 4','Clinic 3']);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-head th[aria-sort="ascending"]')).toHaveCount(1);
 
   await header.click();                                      // descending: the question asked

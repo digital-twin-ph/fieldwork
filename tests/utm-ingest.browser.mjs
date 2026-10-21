@@ -20,6 +20,7 @@ test('a CSV of UTM easting and northing imports as CRS84 without a second widget
   const errors=collectPageErrors(page);
   await page.goto('/?example=coverage');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="observations"]').click();
   await page.locator('#edit-input-data').click();
   await page.locator('#input-mode').selectOption('csv');
@@ -49,6 +50,7 @@ test('a CSV of UTM easting and northing imports as CRS84 without a second widget
   await page.locator('#delete-node').click();
   // The map keeps its area and takes the records directly, so the workflow still has something to
   // display -- a workflow with no output is "Not ready to run".
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   await page.locator('#map-add-layer').selectOption('observations');
 
@@ -90,6 +92,7 @@ test('a wrong zone cannot be caught from the numbers, and the import does not pr
   // the projection explainer exists to tell the practitioner before they choose.
   await page.goto('/?example=coverage');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="observations"]').click();
   await page.locator('#edit-input-data').click();
   await page.locator('#input-mode').selectOption('csv');

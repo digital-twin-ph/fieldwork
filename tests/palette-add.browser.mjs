@@ -11,7 +11,9 @@ test('every palette entry can be added to a blank canvas as a draft',async({page
   // A canvas with no input offers the input stage alone, from 2026-10-15. Place one, which is
   // what the rule asks of a practitioner, and then every entry on offer must be addable -- which
   // is what this test is about.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="study_area"]').click();
+  await page.locator('[data-view="workflow"]').click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(1);
   const types=await page.locator('#node-library [data-add]').evaluateAll(
     els=>els.map(e=>e.dataset.add));
@@ -19,7 +21,9 @@ test('every palette entry can be added to a blank canvas as a draft',async({page
   const refused=[];
   for(const type of types){
     const before=await page.locator('.react-flow__node').count();
+  await page.locator('[data-view="workflow"]').click();
     await page.locator(`#node-library [data-add="${type}"]`).click();
+  await page.locator('[data-view="workflow"]').click();
     await expect.poll(()=>page.locator('.react-flow__node').count()).toBeGreaterThanOrEqual(before);
     if(await page.locator('.react-flow__node').count()===before)refused.push(type);
   }

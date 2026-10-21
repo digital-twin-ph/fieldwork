@@ -53,6 +53,7 @@ test('the largest published DRC province can be acquired, and every phase is tim
   await page.route(/example\.invalid/,r=>r.fulfill({status:200,contentType:'application/json',body:shapes}));
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=hagelloch');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="village"]').click();
   await page.locator('#edit-study-area').click();
   await page.locator('#area-boundary-source summary').click();

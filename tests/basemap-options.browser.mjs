@@ -20,10 +20,13 @@ test('the Inspector offers every basemap the map itself can draw',async({page})=
   await page.locator('#map-basemap').selectOption('ofm-positron');
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="interactive"]').click();
+  await page.locator('[data-view="results"]').click();
   const toolbar=page.locator('.catchment-map-toolbar [data-basemap] option');
   const fromToolbar=await toolbar.evaluateAll(o=>o.map(x=>`${x.value}=${x.textContent.trim()}`));
   expect(fromToolbar).toEqual(fromInspector);
   // And the choice made in the Inspector is the one the map opens with.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('.catchment-map-toolbar [data-basemap]')).toHaveValue('ofm-positron');
 });

@@ -6,7 +6,7 @@ import {collectPageErrors} from './page-errors.mjs';
 test("Map connectors, layer identity, review and persistence",async({page,context})=>{
 const errors=collectPageErrors(page);
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
-const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});};
+const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});await page.locator('[data-view="results"]').click();};
 const select=async id=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"] .node-heading`).click();};
 // A map shows the layers it draws and ONE port to add another, so a layer that is not yet
 // connected is dropped on `layer` and bound to its real port by what the source emits.
@@ -24,6 +24,7 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   await mkdir('test-results',{recursive:true});await page.goto('/?example=blank');
   const w=clipExercise();w.exampleId='blank';w.name='Map widget experiment';w.nodes=w.nodes.slice(0,2);w.edges=[];
   await page.locator('#workflow-file').setInputFiles({name:'map-start.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="map_output"]').click();
   await page.locator('#map-label').fill('Boundary and observations');await page.locator('#map-label').press('Tab');
   // A new map draws nothing, so it has no per-layer pickers yet -- it has the configurable one.
@@ -34,18 +35,30 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   await page.locator('#map-add-layer').selectOption('observations');
   await expect(page.locator('#map-points')).toHaveValue('observations');
   const mapId=(await saved()).nodes.find(n=>n.type==='map_output').id;
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="scope"] .node')).toHaveCSS('background-color','rgb(237, 240, 242)');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator(`.react-flow__node[data-id="${mapId}"] .node`)).toHaveCSS('background-color','rgb(229, 243, 229)');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__handle.target').first()).toHaveCSS('background-color','rgb(37, 99, 235)');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__handle.source').first()).toHaveCSS('background-color','rgb(220, 38, 38)');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__edge')).toHaveCount(2);await run();
+  await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab',{name:'Boundary and observations'})).toBeVisible();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map [data-place]')).toHaveCount(3);await expect(page.locator('#map path[fill-rule="evenodd"]')).toHaveCount(1);
-  await expect(page.locator('#map-spatial-notice')).toContainText('1 outside point');await expect(page.locator('#map-spatial-notice')).toContainText('1 record has no coordinates');
+  await page.locator('[data-view="results"]').click();
+  // The notice no longer names outside points: the counts above the map say that, and hue stopped
+  // meaning the relation. What it carries is the thing the counts do not -- a record nobody could
+  // place is not on the map at all.
+  await expect(page.locator('#map-spatial-notice')).toContainText('1 record has no usable location');
   const outside=page.locator('#map [data-place="outside"]');await expect(outside).toHaveAttribute('aria-label',/Outside/);
   await expect(outside.locator('circle')).toHaveAttribute('fill','#c18b4f');
   for(const circle of await page.locator('#map [data-place] circle').all()){const x=Number(await circle.getAttribute('cx')),y=Number(await circle.getAttribute('cy'));assert.ok(x>=0&&x<=850&&y>=0&&y<=295);}
   await outside.focus();await outside.press('Enter');await expect(page.locator('#inspector-content')).toContainText('Outside study area');
+  await page.locator('[data-view="results"]').click();
   await page.locator('[data-map-record="missing"]').click();await expect(page.locator('#inspector-content')).toContainText('cannot be plotted');
   await select(mapId);await page.screenshot({path:'test-results/map-output-desktop.png',fullPage:true});
   const raw=await receipt();assert.equal(raw.outputs[0].kind,'spatial-map');assert.equal(raw.outputs[0].rows.length,4);assert.match(raw.receipts.find(r=>r.nodeId===mapId).facts,/geo:sfDisjoint/);
@@ -59,11 +72,14 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   await page.locator('#new-workflow').click();
   await page.locator('#workflow-file').setInputFiles({name:'map-saved.json',mimeType:'application/json',buffer:bytes});
   await run();
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Boundary and observations'}).click();
   // Three drawn, not four: the fourth record has no coordinates, so it is listed rather than
   // plotted -- which the inspection above has already checked.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map [data-place]')).toHaveCount(3);
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Boundary and observations'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(3);
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'test-results/map-output-mobile.png',fullPage:true});
   await context.setOffline(false);await page.setViewportSize({width:1600,height:1100});
@@ -78,14 +94,18 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   // A second point source needs no "add point input" click: the configurable port sees that
   // `points` is taken and opens the next slot itself.
   await page.locator('#map-add-layer').selectOption('second');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator(`.react-flow__node[data-id="${multiMapId}"] [data-handleid="points_2"]`)).toHaveCount(1);
   await expect(page.locator('#map-points_2')).toHaveValue('second');await run();
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Layer comparison'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(6);await expect(page.locator('#map-layer-list input')).toHaveCount(2);await expect(page.locator('#map-missing-records button')).toHaveCount(2);
+  await page.locator('[data-view="results"]').click();
   await page.locator('[data-map-layer="second"]').uncheck();await expect(page.locator('#map [data-layer="second"]:visible')).toHaveCount(0);await expect(page.locator('#map [data-layer="observations"]:visible')).toHaveCount(3);await page.locator('[data-map-layer="second"]').check();
   await select(multiMapId);await page.locator('#remove-point-input').click();assert.equal((await saved()).edges.filter(e=>e.to===multiMapId).length,2);await page.locator('#undo-button').click();await expect(page.locator('#map-points_2')).toHaveValue('second');
   // The coverage result was added here as a third layer and a record excluded by clicking it.
   // Both went with the widget on 2026-10-21; what the map does with several point layers is
   // below and is unaffected.
+  await page.locator('[data-view="results"]').click();
   await run();await page.getByRole('tab',{name:'Layer comparison'}).click();
   const multiReceipt=await receipt(),multiView=multiReceipt.outputs.find(o=>o.nodeId===multiMapId);assert.equal(multiView.rows.length,8);
   // Two layers of four records each, kept apart by their source. `reviewCount` and
@@ -94,6 +114,7 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   await select(multiMapId);await page.screenshot({path:'test-results/map-multiple-layers.png',fullPage:true});
   const savedMulti=await saved();await page.locator('#new-workflow').click();await page.locator('#workflow-file').setInputFiles({name:'multiple-layers.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(savedMulti))});await run();
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Layer comparison'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(6);
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.deepEqual(errors,[]);console.log('PASS: Map node, polygon/point connections, visible outside and missing records, keyboard inspection, saved workflow, offline reload and mobile layout.');
@@ -141,6 +162,7 @@ test('the manual is legible in dark mode and is the page on disk',async({page})=
   await page.evaluate(()=>localStorage.clear());
   await page.emulateMedia({colorScheme:'dark'});
   await page.goto('/?example=snow-extent');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   await page.locator('#open-manual').click();
   const dialog=page.locator('#manual-dialog');

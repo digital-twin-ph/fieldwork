@@ -11,8 +11,11 @@ test('Reproject points is a transform: it declares its target frame and takes a 
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   // A process widget is offered once the canvas holds an input, from 2026-10-15. Reproject takes
   // points, so points are what a practitioner would place first anyway.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="point_input"]').click();
+  await page.locator('[data-view="workflow"]').click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(1);
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="reproject"]').click();
 
   const inspector=page.locator('.inspector');
@@ -33,8 +36,10 @@ test('a projected result is refused by a widget that measures, in the applicatio
   // than adding a second. The Voronoi measures, so feeding it metres must be refused by name.
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="projected"]')).toHaveCount(1);
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="catchments"]').click();
   await page.locator('.inspector select[data-map-port="sites"]').selectOption('projected');
   await page.locator('#run-button').click();

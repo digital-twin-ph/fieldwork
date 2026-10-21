@@ -8,21 +8,30 @@ test('shared Chart supports migration, source selection, view switching, evidenc
   const w=exampleWorkflow();w.nodes.push({id:'chart',type:'output',x:850,y:420,params:{label:'Legacy counts',view:'bars'}});
   w.edges.push({id:'chart-edge',from:'criteria',to:'chart',port:'decisions'});
   await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'chart.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
-  const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});};
+  const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await page.locator('[data-view="results"]').click();};
+  await page.locator('[data-view="workflow"]').click();
   await run();await expect(page.locator('[data-add="chart_output"]')).toBeVisible();await expect(page.locator('[data-add="output"]')).toHaveCount(0);
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="chart"]')).toContainText('Reasoning result');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="map"]')).toContainText('Reasoning result');
   // The assertions below read the classic bars' markup; Vega-Lite is the default renderer now.
   await useClassicBars(page,'chart');
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Legacy counts'}).click();await expect(page.locator('#bars-panel .bar-column').filter({hasText:'Review'}).locator('b')).toHaveText('5');
+  await page.locator('[data-view="results"]').click();
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="chart"]').click();await expect(page.locator('#chart-decisions')).toHaveValue('criteria');
   await page.locator('#output-label').fill('Decision counts');await page.locator('#output-label').press('Tab');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#chart-decisions').selectOption('');await page.locator('#chart-decisions').selectOption('criteria');
   await page.locator('#output-view').selectOption('table');await expect(page.locator('#table-decisions')).toHaveValue('criteria');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#output-view').selectOption('bars');await expect(page.locator('#chart-decisions')).toHaveValue('criteria');await run();
   // The view switches above re-save the node, so the classic bars are selected again before the
   // caption they produce is read: the Vega caption says "8 input records" instead.
   await useClassicBars(page,'chart');
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Decision counts'}).click();await expect(page.locator('#bars-panel')).toContainText('8 records');
   await page.locator('[data-view="rules"]').click();const pending=page.waitForEvent('download');await page.locator('#download-evidence').click();
   const receipt=JSON.parse(await readFile(await (await pending).path(),'utf8'));
@@ -31,6 +40,7 @@ test('shared Chart supports migration, source selection, view switching, evidenc
   assert.match(receipt.receipts.find(r=>r.nodeId==='chart').facts,/CategoricalCount/);
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Decision counts'}).click();await expect(page.locator('#bars-panel')).toContainText('8 records');
 });
 
@@ -39,17 +49,28 @@ test('Vega-Lite Chart enhancement renders from local count bins and reopens offl
   w.edges.push({id:'enhanced-edge',from:'criteria',to:'enhanced',port:'decisions'});
   await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'enhanced.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Enhanced counts'}).click();
   await expect(page.locator('#vega-chart svg.marks')).toBeVisible({timeout:30000});
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('Underlying chart values');
+  await page.locator('[data-view="results"]').click();
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="enhanced"]').click();await expect(page.locator('#chart-renderer')).toHaveValue('vega-lite');await expect(page.locator('#chart-mark')).toHaveValue('point');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#chart-title').fill('Heat screening decisions');await page.locator('#chart-title').press('Tab');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#chart-subtitle').fill('Demonstration records');await page.locator('#chart-subtitle').press('Tab');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#chart-x-axis').fill('Number of records');await page.locator('#chart-x-axis').press('Tab');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#chart-y-axis').fill('Decision');await page.locator('#chart-y-axis').press('Tab');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#chart-legend').check();
+  await page.locator('[data-view="results"]').click();
   await page.locator('#chart-source-note').fill('Source: synthetic heat fixture');await page.locator('#chart-source-note').press('Tab');
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Enhanced counts'}).click();await expect(page.locator('#vega-chart svg.marks')).toContainText('Heat screening decisions');
   await expect(page.locator('#vega-chart svg.marks')).toContainText('Source: synthetic heat fixture');
   await expect(page.locator('#vega-chart svg.marks')).toContainText('Decision');
@@ -59,5 +80,6 @@ test('Vega-Lite Chart enhancement renders from local count bins and reopens offl
   await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('fw:ChartSpecification');
   await expect(page.locator('#n3-preview')).toContainText('fw:chartLegend true');
   await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Enhanced counts'}).click();await expect(page.locator('#vega-chart svg.marks')).toBeVisible({timeout:30000});
 });

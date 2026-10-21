@@ -28,5 +28,6 @@ test('each widget is marked as it finishes, and the run reports how long it took
 
   // Wall clock for the run, beside the time the widgets themselves accounted for.
   // The two differ, and reporting only the sum would understate what a person waited.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#run-summary')).toContainText(/ran in \d+(\.\d+)? (ms|s) · \d+ ms computing/);
 });

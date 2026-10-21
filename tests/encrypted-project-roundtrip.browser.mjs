@@ -29,6 +29,7 @@ test('an encrypted project carrying a downloaded network opens on a clean device
 
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
   await page.locator('#network-input-method').selectOption('osm');
   await page.locator('#download-network').click();
@@ -58,6 +59,7 @@ test('an encrypted project carrying a downloaded network opens on a clean device
     await target.locator('#package-submit').click();
     await expect(target.locator('#package-dialog')).toHaveCount(0,{timeout:45000});
 
+  await page.locator('[data-view="workflow"]').click();
     await target.locator('.react-flow__node[data-id="network"]').click();
     await expect(target.locator('#inspector-content')).toContainText('3 nodes');
 
@@ -65,6 +67,7 @@ test('an encrypted project carrying a downloaded network opens on a clean device
     // the reference resolved to nothing, so this is where an imported project disappeared.
     await target.reload();
     await expect(target.locator('#workflow-state')).toBeVisible({timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
     await target.locator('.react-flow__node[data-id="network"]').click();
     await expect(target.locator('#inspector-content')).toContainText('3 nodes');
     await expect(target.locator('#toast')).not.toContainText('Shared input data');

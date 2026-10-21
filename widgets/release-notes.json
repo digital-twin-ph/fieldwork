@@ -434,9 +434,13 @@
    "migrationFrom": []
   },
   "network_input": {
-   "version": "0.4.0",
+   "version": "0.5.0",
    "released": "2026-10-20",
    "changes": [
+    {
+     "kind": "feature",
+     "description": "Before downloading, the widget asks the service how much street data is in the area -- Overpass answers `out count;` with the number of ways a query would return -- and refuses an area beyond what it normalizes with that number, after ONE request instead of six. A study area spanning the DRC-Uganda border, some 600 km across, previously cost three instances two attempts each and ended on HTTP 504, which is the service saying it gave up computing the answer. A count the service itself declines to compute is treated the same way and says so. This replaces nothing that was removed on purpose: the client-side span cap refused an area for its WIDTH before anything was measured, while a count is a measurement the service makes."
+    },
     {
      "kind": "feature",
      "description": "A downloaded or uploaded street network is kept in the browser's large store and the workflow keeps only a digest that points at it. Before this, the graph was written inside the workflow into a store holding 5,226,496 bytes, written twice on every save, so a network for a town-sized area could not be saved at all -- the download succeeded, the save was refused, and the graph was discarded. A graph is now written to the store BEFORE the workflow records the reference, so a saved workflow never reloads into a missing payload. Where the large store is unavailable or refuses a write, the widget says so above the Download button rather than leaving it to be discovered, because a fallback nobody is told about turns the larger ceiling back into the smaller one while the application goes on reporting that everything was saved."

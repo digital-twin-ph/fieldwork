@@ -210,6 +210,29 @@
      "found": "Built the same day. digital-twin-ph/dive-deeper is seeded: README stating what a notebook owes, Apache-2.0, JupyterLite config pinned to the Lab's builder versions, a Pages workflow that executes every notebook before publishing, and the first lesson -- the mean centre on Snow's 250 addresses. It meets the pedagogical requirements rather than the older narrower definition, and its three measured numbers are the lesson: weighting by deaths moves the centre 2.10 m, mean against median centre 6.62 m, UTM 30N against British National Grid 0.001 m. So the weighting a practitioner reaches for first matters least -- a weighted mean only moves when the weights are spatially structured, which the notebook then shows by weighting eastward and moving it 46 m -- and the summary nobody questions matters most, the mean centre having a breakdown point of zero. In Fieldwork: widgets/dive-deeper.json pins the repo at 04b22ab, the validator checks lessons against ../dive-deeper/content and holds the legacy count at 20, and the Inspector links the new site. What is NOT done: twenty sections remain inside lab notebooks, and rewriting one is new work rather than a file move."
     }
    ]
+  },
+  {
+   "id": "projects-are-managed-in-the-interface",
+   "stated": "2026-10-20",
+   "statedBy": "the practitioner, after using the project model built in 122",
+   "inTheirWords": "Right now I have no way of editing Project Title nor viewing Project metadata. I can only view the workflows through the worked example dropdown which seems to be the wrong place to locate projects. Let's figure out how to seamlessly manage projects within the UI first in such a way that it's intuitive for the user to do it. \u2014 and, on the first version: \"There is still no way to edit project (e.g., title) or workflow (e.g., title) metadata.\"",
+   "requiresInCode": "Two selectors rather than one -- the investigation, then the question -- with the worked examples listed as the built-in projects they already are. The project's own fields readable and editable where it is named: name, subject, the workflows it holds, and the id. One gesture to add a workflow INSIDE a project, which previously meant creating an unrelated canvas and then assigning it. Deleting a project removes the grouping and not the work.",
+   "recordedIn": [
+    "docs/experiments/122-a-project-holds-many-workflows.md"
+   ],
+   "workItem": "122, whose phase two is sharing data between a project's workflows",
+   "status": "built",
+   "lastChecked": "2026-10-20",
+   "checks": [
+    {
+     "date": "2026-10-20",
+     "found": "Built on the practitioner's choice of shape, taken before any code: split the selector and edit in place, with worked examples as built-in projects listed beside the practitioner's own. index.html now carries two empty selects and no example list at all -- the picker was the FOURTH copy of the example vocabulary and is now derived from the project registry, which deleted a unit test whose whole job was keeping the copy honest. The project bar gained a details disclosure: name, subject, the workflow list, the project id, Apply and Delete, with built-in projects shown read-only and saying why. `+ Add workflow` creates a canvas inside the project and names it for the question. Deleting a project leaves its workflows openable under `No project`, which is also always offered -- without it an unfiled workflow became unreachable the moment a project was selected, a navigation trap found while updating the tests. What is NOT done: no project-level export, no reordering of workflows, and the data sharing that 122 calls phase two is untouched."
+    },
+    {
+     "date": "2026-10-20",
+     "found": "Not finished, and the practitioner found the gap before the gate did. The fields existed only inside a collapsed disclosure at the bottom of the project bar, which is somewhere to PUT a control rather than somewhere a practitioner looks -- and the shape chosen on the day was `edit in place`, whose sketch showed `click title to rename`. Both titles are controls now: the project name in the eyebrow and the workflow name in the heading, with a cursor, a hover, a tooltip, a focus ring and a keyboard route in; Enter applies, Escape abandons, an empty name is abandoned rather than written, and a built-in project says why its name is fixed instead of doing nothing. The disclosure keeps what is not a title: the subject, the membership, the id and the two destructive actions. One defect found in the building: Enter inside the inline editor bubbled back to the title that opened it, which applied the name and then immediately reopened the editor -- so the heading looked empty and the rename looked to have failed although it was already saved."
+    }
+   ]
   }
  ]
 }

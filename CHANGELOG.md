@@ -5,6 +5,52 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **A street network download asks what it would cost before asking for it.** A study area across
+  the DRC–Uganda border — some 600 km — spent three instances, two attempts each, and ended on
+  `HTTP 504`: the service saying it gave up computing the answer. Overpass will answer `out count;`
+  instead, with the number of ways a query would return, so the widget now asks that first and
+  refuses an area beyond what it normalizes **with the number**, after one cheap request instead of
+  six expensive failures. A count the service itself declines to compute is read the same way —
+  that is what a public instance says when an area is beyond it. This is not the span cap that was
+  removed on purpose: that refused an area for its width before anything was measured, and this is
+  a measurement the service makes.
+- **A map's layer control lists only layers that hold something.** *Observations* and *Sites /
+  context* were offered on maps that had neither, which claims the workflow holds data it does not.
+- **A result no longer outlives the node that made it.** Deleting the widgets that produced a run
+  clears their outputs; deleting all of them clears the panel. Changing a *parameter* still keeps
+  the previous run, which is how you compare before and after.
+- **A large published boundary applies in under a second, instead of freezing or crashing.** The
+  study-area dialog built one draggable marker per vertex, so acquiring North Kivu — 16,548
+  vertices, admitted whole — meant 16,547 divs with listeners: **8.2 s** of frozen interface in
+  Chromium and a **crashed page** in WebKit. Found by profiling, after four plausible guesses that
+  measured as nothing. Handles are capped at 400, which is far more than anybody draws by hand,
+  and a larger outline is drawn without them and says so: **0.7 s** in Chromium, **0.6 s** in
+  WebKit. Each phase of Apply also names itself, and validation and the N3 preview are recomputed
+  only when the shape, its name or the clip settings change rather than on every map movement.
+- **An encrypted project can carry what the browser can now hold.** The package refused a
+  workflow over 5 MB — a number set when a workflow could not be much larger, because its payloads
+  lived in a 5,226,496-byte store. Payloads moved to IndexedDB the same day, so the export cap
+  refused the street network the storage work had just made downloadable. One cap was doing two
+  jobs: export protects nothing (the data is already yours, already in memory), while import
+  defends against a crafted ZIP that decompresses into gigabytes. They are two numbers now, and
+  the refusal says what the workflow weighs. Measured in Chromium on a 40,000-junction graph: an
+  **8.17 MB package written in 2.4 s**, opened, verified and saved on a clean device in **1.5 s**.
+  Carrying a real project between two browsers found two defects in the morning's storage work
+  that no unit test reached — an imported payload was dropped on the first save, and then, once
+  written, was kept inline because the store was asked what it held before the write rather than
+  after.
+- **Projects are chosen, read and edited where they are named.** A project could be created and
+  then never renamed or described, its subject existed only as a tooltip, and its workflows were
+  reachable only as optgroup labels inside the worked-example picker — one control doing two
+  unrelated jobs. There are now two: **Project**, then **Workflow** within it, with the eleven
+  worked examples listed as the seven built-in projects they already were. The project bar carries
+  a details disclosure — name, subject, the workflows it holds, the project id — editable for your
+  own projects and read-only for the built-in ones, which say so. **Both titles are renamed by
+  clicking them** — the project name in the eyebrow, the workflow name in the heading, with Enter
+  to apply and Escape to abandon. `+ Add workflow` creates a canvas
+  inside the project instead of an unrelated one you then assign. Deleting a project removes the
+  grouping and leaves the work. The picker was the fourth copy of the example vocabulary; it is
+  built from the project registry now, so `index.html` names no example at all.
 - **The wordmark gives way before the version badge does.** On a narrow window the header's
   mark could not shrink, so its contents overflowed and the version badge sat on top of the
   controls — 94px² of overlap at 330px here, 403px² at 300px, and far enough forward on Linux

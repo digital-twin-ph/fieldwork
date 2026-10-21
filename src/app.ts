@@ -56,6 +56,7 @@ import {oldInspector,oldEvidence,resultTable,oldMap,distanceText} from './old-na
 import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
 import {isPointPort} from './point-layers.js';
 import {EXAMPLE_TEMPLATES,hasExampleTemplate} from './example-templates.js';
+import {templateFrom} from './workflow-template.js';
 import {pairSignature} from './deduplicate-points.js';
 import {openDeduplicateReview} from './deduplicate-ui.js';
 import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds,storageRefusal} from './study-area.js';
@@ -2737,6 +2738,19 @@ function renderProjectOptions(){
   const keys=current?current.workflows:[...new Set(['blank',...unfiled])];
   workflows.innerHTML=keys.map(k=>optionFor(k,(saved[k] as {name?:string}|undefined)?.name||workflowTitle(k))).join('')
     +(keys.includes(key)?'':optionFor(key,workflow.name||'This canvas'));
+
+  // THE TEMPLATE PICKER lists every workflow on this device that has something to copy, because a
+  // method is worth reusing across projects as well as inside one -- the next province is a new
+  // question, and sometimes a new investigation. A workflow with no widgets is not offered: there
+  // would be nothing to fill.
+  const template=$('#workflow-template');
+  const candidates=Object.entries(saved)
+    .filter(([k,w])=>k!==key&&((w as {nodes?:unknown[]}).nodes?.length||0)>0)
+    .map(([k,w])=>[k,(w as {name?:string}).name||workflowTitle(k)] as const);
+  template.innerHTML=`<option value="">＋ From a template…</option>`
+    +candidates.map(([k,label])=>optionFor(k,label)).join('');
+  template.hidden=!candidates.length;
+  template.disabled=busy;
   workflows.value=key;
 }
 /** What a workflow is called before it has been opened and saved under its own name. Built-in
@@ -2874,6 +2888,39 @@ function addWorkflowToProject(projectId?:string){
   save();renderLibrary();renderResults();render();switchView('workflow');
   toast(`A new workflow in "${project.name}". Name it for the question it answers.`);
 }
+
+/** THE METHOD, WITHOUT THE MATERIAL. The practitioner, 2026-10-21, with North Kivu built and Ituri
+ *  to build: *"can the workflow be imported as a template to be filled up?"* Not exported and
+ *  re-imported, which carries the records, the geometry, the decisions and the storage key of the
+ *  workflow it came from -- the shape of the investigation, ready to be filled with another
+ *  place's data. */
+function addWorkflowFromTemplate(sourceKey:string){
+  if(busy)return;
+  const projects=readProjects();
+  const id=workflow.projectId||projectOfWorkflow(storageKey(workflow),projects)?.id;
+  const project=id?projects.find(p=>p.id===id):undefined;
+  if(!project){toast('A template becomes a workflow in a project. Create one first.',{tone:'warning'});return;}
+  const saved=readSavedWorkflows()[sourceKey];
+  if(!saved){toast('That workflow could not be read from this device.',{tone:'failure'});return;}
+  save();
+  const index=project.workflows.length+1;
+  const key=`${project.id}/w${index}`;
+  if(!writeProjects(readProjects().map(p=>p.id===project.id?{...p,workflows:[...p.workflows,key]}:p)))return;
+  let report;
+  try{report=templateFrom(validateWorkflow(structuredClone(saved)),
+    {name:`${(saved as {name?:string}).name||'Workflow'} · template`,projectId:project.id,workflowKey:key});}
+  catch(error){toast(errorMessage(error),{tone:'failure'});return;}
+  workflow=report.workflow;
+  selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
+  save();renderLibrary();renderResults();render();switchView('workflow');
+  const cleared=report.cleared.reduce((n,c)=>n+c.keys.length,0);
+  // What it cleared, counted, because a template that silently emptied something is worse than
+  // one that says so: the practitioner is about to fill exactly these.
+  toast(`A template of "${(saved as {name?:string}).name||'that workflow'}": the widgets and their `
+    +`settings, with ${cleared} acquired ${cleared===1?'input':'inputs'} cleared across `
+    +`${report.cleared.length} ${report.cleared.length===1?'widget':'widgets'}. `
+    +`The study area is chosen again; the sources are already set.`,{tone:'notice'});
+}
 function renderAssignProject(){
   const select=$('#assign-project'),key=storageKey(workflow),builtIn=projectOfWorkflow(key,BUILT_IN_PROJECTS),stored=readProjects();
   select.innerHTML=`<option value="">— No project —</option>`
@@ -2918,6 +2965,11 @@ function assignCurrentWorkflow(projectId:string){
 $('#assign-project').onchange=e=>assignCurrentWorkflow(control(e).value);
 $('#new-project').onclick=openProjectDialog;
 $('#add-workflow').onclick=()=>addWorkflowToProject();
+$('#workflow-template').onchange=e=>{
+  const select=control(e) as HTMLSelectElement,source=select.value;
+  select.value='';
+  if(source)addWorkflowFromTemplate(source);
+};
 // The two titles are controls, and say so: a pointer, a tooltip, and a keyboard route in.
 for(const [id,label,run] of [['#project-name','Rename this project',renameProjectInPlace],
                              ['#project-title','Rename this workflow',renameWorkflowInPlace]] as const){

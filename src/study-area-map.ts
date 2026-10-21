@@ -51,7 +51,11 @@ function preview(text:string,what:string):string{
     +`\n\u2026 ${(lines.length-PREVIEW_LINES).toLocaleString()} more lines of ${what}, `
     +`${(text.length/1e6).toFixed(1)} MB in all. The whole of it is kept on the widget and in every export.`;
 }
-export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(params:DrawnParams,options?:RasterClipOptions)=>void|boolean,context:{boundary?:Boundary;point?:{coordinates:Position|null;name:string};raster?:RasterGrid;clip?:boolean;clipOptions?:RasterClipOptions}={}){
+export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(params:DrawnParams,options?:RasterClipOptions)=>void|boolean,context:{boundary?:Boundary;point?:{coordinates:Position|null;name:string};raster?:RasterGrid;clip?:boolean;clipOptions?:RasterClipOptions;
+  /** Why a refused save was refused, in the caller's words. "Retry Apply" is not advice when the
+   *  store is full: the retry fails identically, and what the practitioner needs is the size and
+   *  what to do about it. */
+  refusal?:(fallback:string)=>string}={}){
   const clipOptions:RasterClipOptions={method:context.clipOptions?.method||'cell-center',marginPixels:context.clipOptions?.marginPixels||0};
   const dialog=element('#area-dialog'),$=<S extends string>(s:S)=>element(s,dialog);
   let geometry:Boundary|null=node.params.source==='drawn'&&node.params.geometry?structuredClone(node.params.geometry):null,selectionMode:DrawnParams['selectionMode']=node.params.source==='drawn'?node.params.selectionMode:'polygon';
@@ -610,7 +614,9 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       studyAreaN3({id:node.id,params:currentParams()});
       if(heavy){message('Saving it to this device\u2026');await paint();}
       if(onApply(structuredClone(currentParams()),structuredClone(clipOptions))===false)
-        throw new Error(context.clip?'Clip parameters could not be saved. Retry Apply.':'Study area could not be saved. Retry Apply.');
+        throw new Error((context.refusal??(m=>m))(context.clip
+          ?'Clip parameters could not be saved. Retry Apply.'
+          :'Study area could not be saved. Retry Apply.'));
       // No "applied in N s" here: this panel closes in the same breath, so the confirmation is
       // raised on the canvas instead, where the practitioner is afterwards.
       dialog.close();

@@ -1,9 +1,12 @@
 # 121 · Storage beyond localStorage
 
-_Created 2026-10-19 · Updated 2026-10-20_
+_Created 2026-10-19 · Updated 2026-10-21_
 
-**Status:** tried — the payload store is built and in use; what it costs in time, and what happens under eviction, is still unmeasured. What a study area may
-hold is currently decided by the smallest store the browser offers, which nothing chose.
+**Status:** tried — the payload store is built and in use, and holds a node's `data` and nothing
+else: geometry, revisions, repairs, decisions and raster assets still sit in `localStorage`, written
+twice per save. What it costs in time, and what happens under eviction, is still unmeasured. What a
+study area may hold is still decided by the smallest store the browser offers, which nothing
+chose.
 
 ## The question
 
@@ -133,8 +136,34 @@ save: *"This device is keeping saved data in the small store, which holds about 
 A silent fallback is the hazard, because it turns a 10 GB ceiling back into a 5 MB one while the
 application goes on reporting "Saved on this device".
 
+## The geometry never moved, 2026-10-21
+
+The practitioner built an Ituri workflow beside the North Kivu one and was told *"Study area could
+not be saved."* That is this experiment's ceiling reached from the other direction: the payload
+store holds a node's `data` behind a `dataRef`, and that is **all** it holds. `dehydrateWorkflow`
+drops exactly one field, and only when the large store confirms the digest. A study area's
+geometry, its revisions, a repair, a decision and a raster asset all stay in `localStorage`, written
+twice on each save, beside every other workspace in the project. So the 200×–2,000× headroom this
+experiment measured is not available to the thing that most often runs out: an administrative
+outline, which is 39.2 bytes per vertex and which the practitioner acquires rather than clicks.
+
+Two separate guards exist and neither covers the case. `validateAreaParams` refuses an area whose
+extents exceed 1.5 MiB, which the Ituri outline did not, and `storageRefusal` explains a full store
+— but `save()` caught the failure, rolled back, returned `false`, and discarded the reason, so every
+caller could say only *"Retry Apply."* Retrying fails identically when the cause is a full store.
+Fixed the same day: the reason is kept and the refusal names it. That is a better report, not a
+larger store, and the store is what the practitioner needs.
+
+What this adds to the direction: moving `data` was the easy half, because a digest already
+identified it and a reference already stood in for it. The rest of a workflow has no such handle,
+so the asynchronous `save()` this experiment calls "not a tweak" is the only route for geometry.
+Until that is built, a project with two acquired provincial outlines is at the ceiling.
+
 ## What this does not establish
 
+- **Whether the Ituri refusal was the store being full or something else.** The reason is now
+  reported rather than discarded, and the quota branch is covered by a test that leaves no
+  headroom. What the practitioner's device actually reported has not been read back.
 - **That Bunia now works.** It establishes that a graph larger than the old quota is kept and
   reloads. Nobody has downloaded Bunia since the store was built; the practitioner's next attempt
   is the test, and the graph has still never been serialized and weighed.

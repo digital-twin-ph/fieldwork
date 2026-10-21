@@ -378,6 +378,15 @@ onStoreDegraded((_kind,why)=>toast(`${why} Large street networks will be refused
 await loadPayloads();
 try{const saved=localStorage.getItem(KEY);if(saved)workflow=validateWorkflow(hydrateWorkflow(JSON.parse(saved),readDatasets(),true));}catch(error){toast(errorMessage(error).startsWith('Shared input data is missing')?errorMessage(error):'Saved workflow could not be loaded. The example is ready.');}
 if(!workflow.nodes.some(n=>n.id===selected))selected=exampleKey(workflow)==='raster'?'raster-input':exampleKey(workflow)==='old-naledi'?'access':workflow.nodes[0]?.id;
+/** What the last refused save knew, so a caller can say something a practitioner can act on. */
+let lastSaveFailure:{name:string;bytes:number}|null=null;
+/** The refusal in words: the quota message when the store is full, and the caller's own sentence
+ *  when it was something else, because inventing a cause is worse than naming none. */
+function saveFailureMessage(fallback:string):string{
+  if(!lastSaveFailure)return fallback;
+  const quota=/quota|exceed|full/i.test(lastSaveFailure.name);
+  return quota?storageRefusal(lastSaveFailure.bytes):`${fallback} The device reported ${lastSaveFailure.name}.`;
+}
 function save(){
   syncProjectManifest(workflow);
   const previous=new Map<string,string|null>();
@@ -398,8 +407,16 @@ function save(){
     const stored=dehydrateWorkflow(workflow,digest=>Object.hasOwn(kept,digest));workspaces[storageKey(workflow)]=stored;localStorage.setItem(KEY,JSON.stringify(stored));localStorage.setItem(WORKSPACES,JSON.stringify(workspaces));forgetSavedWorkflows();
     // WHICH store, when it is not the large one. A practitioner whose payloads are back under the
     // 5 MB cap needs to know before a download, not after it is refused.
+    lastSaveFailure=null;
     $('#save-status').textContent=payloadStoreKind()==='indexeddb'?'Saved on this device':'Saved on this device — small store only';return true;}
-  catch{forgetSavedWorkflows();for(const [key,value] of previous){try{if(localStorage.getItem(key)!==value){if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}}catch{/* Storage may be unavailable even for rollback. Keep the editor draft open. */}}$('#save-status').textContent='Storage unavailable — export to keep';return false;}
+  catch(error){
+    // WHY IT FAILED, KEPT. This caught and rolled back and returned false, and every caller could
+    // then say only "could not be saved. Retry Apply." -- which is useless advice when the cause
+    // is a full store, because retrying fails identically. Reported 2026-10-21 on an Ituri study
+    // area of 7,759 vertices, applied into a device already holding North Kivu's 16,547.
+    lastSaveFailure={name:(error as Error)?.name||'Error',
+      bytes:(()=>{try{return JSON.stringify(dehydrateWorkflow(workflow,()=>true)).length;}catch{return 0;}})()};
+    forgetSavedWorkflows();for(const [key,value] of previous){try{if(localStorage.getItem(key)!==value){if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}}catch{/* Storage may be unavailable even for rollback. Keep the editor draft open. */}}$('#save-status').textContent='Storage unavailable — export to keep';return false;}
 }
 /** Which published version of a worked example a saved workspace came from.
  *
@@ -1958,7 +1975,7 @@ function renderInspector(){
         if(clip.params.cutline&&options.method===clip.params.method&&(options.marginPixels||0)===(clip.params.marginPixels||0)&&params.label===draft.params.label&&params.selectionMode===draft.params.selectionMode&&JSON.stringify(params.geometry)===JSON.stringify(draft.params.geometry))return true;
         if(!params.geometry)throw new Error('Define a clipping boundary.');
         return change(w=>{const target=getNode(w,n.id,'clip_raster');target.params.cutline={geometry:params.geometry!,selectionMode:params.selectionMode};target.params.label=params.label;target.params.method=options.method||clip.params.method;target.params.marginPixels=options.marginPixels||0;},{requirePersistence:true});
-      },{raster,clip:true,clipOptions:clip.params});
+      },{raster,clip:true,clipOptions:clip.params,refusal:saveFailureMessage});
     }catch(error){toast(errorMessage(error));}finally{button.disabled=false;button.textContent='Preview and adjust';}
   });
   document.querySelector<HTMLSelectElement>('#clip-method')?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'clip_raster').params.method=control(e).value as 'cell-center'|'all-touched';},{requirePersistence:true}));
@@ -2021,7 +2038,7 @@ function renderInspector(){
       toast(`${area.boundary.unitName||'Boundary'} applied as published \u00b7 ${ring.toLocaleString()} vertices \u00b7 `
         +`${area.boundary.licence||'see the evidence panel for terms'}`);
     else if(ring)toast(`Study area applied \u00b7 ${ring.toLocaleString()} vertices.`);
-  })));
+  },{requirePersistence:true}),{refusal:saveFailureMessage}));
   optionalElement('#area-view-n3')?.addEventListener('click',()=>{renderN3();switchView('rules');});
   // The knobs, and the decisions the review band asks for. A decision is stored WITH a signature
   // of the pair it was made about, so editing either record lapses it rather than letting a stale

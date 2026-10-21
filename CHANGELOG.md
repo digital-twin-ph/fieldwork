@@ -5,6 +5,14 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **A refused save says why it was refused.** Applying a study area into a device whose store is
+  full reported only *"Study area could not be saved. Retry Apply."* — advice that cannot work,
+  because the next Apply fails identically. Reported 2026-10-21 on an Ituri outline applied beside
+  North Kivu's. The refusal now names the cause: the store's own wording when the store is full
+  (what to export, and that every worked example opened is kept beside this one), or the name the
+  device reported for anything else. The outline stays in the editor either way, so the work is not
+  lost with the refusal.
+
 - **A result table no longer supplies a value for a missing one.** Cells with nothing in them read
   *"Not supplied"* — a phrase a reader cannot tell from a source that contains those words, which
   sorted and matched the row filter as if it were data, and which said the same thing about a field

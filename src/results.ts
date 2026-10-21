@@ -1,7 +1,7 @@
 import type {NodeEvidence,EvidenceReference} from './evidence.js';
 import type {Boundary,Bounds,Exclusion,Measurement,ParamsByType,PointFeature,PointCollection,Position,Scalar,SpatialReference,AnySpatialReference,SpatialRelation,AttributeType,DistanceUnit} from './types.js';
 import type {ReasonerQuad} from './worker-types.js';
-import type {LayerSymbol} from './presentation.js';
+import type {LayerSymbol,FillEncoding,FillClass} from './presentation.js';
 export type Status='Review'|'NoFlag'|'Unknown';
 export type Tier='Direct'|'Contextual'|'Inferential'|'None';
 export type Service='Onsite'|'OnsiteOrReferral'|'ReferralOnly'|'Unknown';
@@ -32,7 +32,9 @@ export interface HeatRow extends NearestRow {status:Status; explanation:string}
 export interface AccessRow extends Omit<Sample,'coordinates'> {coordinates:Position|null; attributes?:Record<string,Scalar>;distanceKm:number|null; minutes:number|null; center:GradedFacility|null; status?:Status; zone?:Zone; explanation?:string}
 export interface LayerSummary {sourceNodeId:string; label:string; count:number}
 export interface PointRow {id:string; recordId:string; sourceNodeId:string; layerLabel:string; attributeTypes:Record<string,AttributeType>; name:string; attributes:Record<string,Scalar>; coordinates:Position|null}
-export interface MapRow extends PointRow {relation:SpatialRelation; status:Status}
+/** `fill` is the class the map RESOLVED this row to, by its own fillEncoding. The renderer draws
+ *  the class; it does not read the variable. */
+export interface MapRow extends PointRow {relation:SpatialRelation; status:Status; fill?:FillClass}
 export interface CoverageRow extends MapRow {excluded:boolean; exclusionReason:string; signature:string; iri:string; decision:'Accept'|'Review'|'Excluded'}
 export interface AreaValue {boundary:Boundary; areaId:string; geometryId:string; label:string; spatialReference?:SpatialReference; areaFacts?:string; measurement?:Measurement; bounds?:Bounds; ready?:boolean; source?:string; dataset?:string; kind?:'study-area'; rows?:never[]; centers?:never[]}
 export interface CoverageValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-coverage'; rows:CoverageRow[]; centers:never[]; checkNodeId:string; areaNodeId:string; sourceNodeId:string|null; pointLayers:LayerSummary[]; reviewCount:number; excludedCount:number; canProceed:boolean; retainedLayers:{sourceNodeId:string; label:string; data:PointCollection}[]; retainedData:PointCollection; pointTable?:boolean}
@@ -40,6 +42,9 @@ export interface MapValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-m
   /** How each point layer is drawn, resolved once so the plot, the interactive map, the legend
    *  and the receipt cannot disagree about it. */
   layerSymbols?:Record<string,LayerSymbol>;
+  /** What the fill channel stands for on this map, so the renderer draws classes rather than
+   *  knowing the variable. */
+  fillEncoding?:FillEncoding;
   layerNames?:Record<string,string>; pointLayers:LayerSummary[]; sourceNodeId:string|null}
 export interface TableValue {kind:'point-table'; rows:PointRow[]; centers:never[]; spatialReference:AnySpatialReference; pointLayers:LayerSummary[]; pointTable?:boolean}
 export interface Receipt {nodeId:string; references?:EvidenceReference[]; ruleset?:import('./rulesets.js').RulesetCitation; kind?:'computation'|'presentation'; facts:string; rules:string; input:string; conclusions:ReasonerQuad[]; source?:string; method?:string; measurement?:Measurement; areaId?:string; geometryId?:string; exclusions?:Exclusion[]}
@@ -59,7 +64,7 @@ export interface DisplayRow {
   // decision table. A unit welded into a field name has to leave the type when it leaves the data.
   distance?:number|null; unit?:DistanceUnit; minutes?:number|null; center?:Sample & Partial<GradedFacility>|null;
   owner?:string; serviceType?:string; service?:Service; tier?:Tier; reference?:string; zone?:Zone;
-  recordId?:string; sourceNodeId?:string; layerLabel?:string; attributeTypes?:Record<string,AttributeType>; attributes?:Record<string,Scalar>;
+  recordId?:string; sourceNodeId?:string; layerLabel?:string; fill?:FillClass; attributeTypes?:Record<string,AttributeType>; attributes?:Record<string,Scalar>;
   relation?:SpatialRelation; decision?:CoverageRow['decision']; excluded?:boolean; exclusionReason?:string; signature?:string;
 }
 /** `order` places a bin on a scale its label does not carry — a band's travel time, so

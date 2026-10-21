@@ -657,7 +657,26 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     //
     // Unconnected ports are skipped rather than defaulted: a layer standing for an input nobody
     // supplied would be worse than its absence.
-    const pointInputs=():{layers:import('./types.js').PointLayer[]}=>({layers:nodeInputs(node).filter(([port])=>isPointPort(port)).flatMap(([port])=>{const edge=workflow.edges.find(e=>e.to===node.id&&e.port===port);if(!edge)return [];const source=workflow.nodes.find(n=>n.id===edge.from);if(!source)return [];return [{...(inputs[port as keyof ExecutionInputs] as unknown as PointCollection),sourceNodeId:edge.from,label:source.params.label||TYPES[source.type].title,attributeDefinitions:[...('fields' in source.params?source.params.fields||[]:[]),...('attributeRules' in source.params?source.params.attributeRules||[]:[])]}];})});
+    // WHOSE points these are, read from the data rather than from the wire. A layer used to be
+    // named after the node PLUGGED INTO the map, so a `clip_points_to_area` in between made two
+    // searches of two different registries both announce themselves as "Points inside the area" --
+    // the clip's own label -- and the receipt attributed every record to the clip. Reported
+    // 2026-10-20: *"Map still does not distinguish the two facility sources as layers."*
+    //
+    // The identity was already travelling correctly and was being ignored: a facility search
+    // stamps its collection with its own `sourceNodeId`, and the clip carries it forward. Two
+    // notions of identity existed -- the edge's `from` and the one the data holds -- and they
+    // disagree exactly when a widget sits in between. The data's wins; `from` is the fallback for
+    // a collection that carries none.
+    const layerIdentity=(w:Workflow,from:string,collection:PointCollection,connected:WorkflowNode):{sourceNodeId:string;label:string}=>{
+      const carried=(collection as unknown as {sourceNodeId?:string}).sourceNodeId;
+      const origin=typeof carried==='string'?w.nodes.find(n=>n.id===carried):undefined;
+      return origin
+        ?{sourceNodeId:origin.id,label:origin.params.label||TYPES[origin.type].title}
+        :{sourceNodeId:from,label:connected.params.label||TYPES[connected.type].title};
+    };
+    const pointInputs=():{layers:import('./types.js').PointLayer[]}=>({layers:nodeInputs(node).filter(([port])=>isPointPort(port)).flatMap(([port])=>{const edge=workflow.edges.find(e=>e.to===node.id&&e.port===port);if(!edge)return [];const source=workflow.nodes.find(n=>n.id===edge.from);if(!source)return [];return [{...(inputs[port as keyof ExecutionInputs] as unknown as PointCollection),
+      ...layerIdentity(workflow,edge.from,inputs[port as keyof ExecutionInputs] as unknown as PointCollection,source),attributeDefinitions:[...('fields' in source.params?source.params.fields||[]:[]),...('attributeRules' in source.params?source.params.attributeRules||[]:[])]}];})});
     let value:unknown;
     switch(node.type){
       case 'mean_center':{value=computeMeanCenter(inputs.points,node.params);receipts.push(meanCenterReceipt(node,value as MeanCenter,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from));break;}

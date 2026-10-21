@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {MAX_POINT_LAYERS as MAX_LAYERS} from '../build/point-layers.js';
 import {resolveLayerSymbol,layerSymbol,LAYER_SHAPES,MARK_VOCABULARY,orderedSteps,ORDERED_PALETTE,FIGURE_PALETTE} from '../build/presentation.js';
 
 // "They are both rendered same color when inside the polygon and there is no layer to check or
@@ -8,11 +9,17 @@ import {resolveLayerSymbol,layerSymbol,LAYER_SHAPES,MARK_VOCABULARY,orderedSteps
 test('hue and mark both carry the layer, so neither has to be read alone',()=>{
   const first=layerSymbol(0),second=layerSymbol(1);
   assert.notEqual(first.colour,second.colour,'two sources are two hues');
-  assert.equal(first.shape,second.shape,'and the mark only changes once the hues run out');
-  // Six hues before a mark repeats, so twenty-four layers are distinguishable and the map refuses
-  // more than eight.
-  assert.equal(layerSymbol(FIGURE_PALETTE.length).colour,first.colour);
-  assert.notEqual(layerSymbol(FIGURE_PALETTE.length).shape,first.shape);
+  // BOTH channels change from the first layer. This assertion used to say the opposite -- that the
+  // mark changes only once the hues run out -- which made the first eight layers all circles and
+  // left the redundancy unbuilt while the comment claimed it. Two facility sources on one map were
+  // reported as indistinguishable on 2026-10-20.
+  assert.notEqual(first.shape,second.shape,'and two sources are two marks');
+  // Six hues and six marks would repeat the PAIR after six while a map accepts eight layers, so
+  // the mark takes an extra step each lap and the hue comes back round on its own.
+  assert.equal(layerSymbol(FIGURE_PALETTE.length).colour,first.colour,'the hue laps');
+  assert.notEqual(layerSymbol(FIGURE_PALETTE.length).shape,first.shape,'the pair does not');
+  const pairs=new Set(Array.from({length:MAX_LAYERS},(_,i)=>{const s=layerSymbol(i);return `${s.colour}/${s.shape}`;}));
+  assert.equal(pairs.size,MAX_LAYERS,'every layer a map accepts is a distinct hue-and-mark pair');
 });
 
 test('the marks are the standard’s names, not ours',()=>{

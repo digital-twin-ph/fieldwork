@@ -39,11 +39,15 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
   // And the legend says what the map does: one entry per layer, with that layer's mark, and the
   // spatial relation in the fill channel rather than in a hue of its own.
   const key=page.locator('#map-communication-header-key');
-  await expect(key).toContainText('Inside / on the boundary (filled)');
-  await expect(key).toContainText('Outside the boundary (hollow)');
+  await expect(key).toContainText('188 measles cases, one per child (188)');
+  await expect(key).toContainText('Inside the study area (filled)');
+  // Every case in this example is inside, so the legend says only that. It lists the values the
+  // map DREW, not every value the vocabulary allows -- a legend naming points a clip set aside,
+  // on a map where nothing was clipped, tells the reader something untrue.
+  await expect(key).not.toContainText('hollow');
+  await expect(key).not.toContainText('Set aside by a clip');
+  // And the old encoding, where hue carried the relation, is gone.
   await expect(key).not.toContainText('Outside boundary');
   const marks=key.locator('.map-key-mark path');
-  expect(await marks.count()).toBeGreaterThan(2);
-  const fills=await marks.evaluateAll(p=>p.map(x=>x.getAttribute('fill')));
-  expect(fills).toContain('none'); // the hollow entry is actually hollow
+  expect(await marks.count()).toBe(2); // one layer, one fill value
 });

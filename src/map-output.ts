@@ -1,6 +1,6 @@
 import type {NodeSpec,WorkflowNode,PointInput,Escape,SpatialRelation} from './types.js';
 import {GEOSPARQL_PREDICATE} from './spatial-predicates.js';
-import {resolveLayerSymbol,MARK_VOCABULARY,type LayerSymbol} from './presentation.js';
+import {resolveLayerSymbol,fillClass,SPATIAL_RELATION_FILL,MARK_VOCABULARY,type LayerSymbol} from './presentation.js';
 import type {AreaValue,CoverageValue,MapValue,MapRow,Receipt} from './results.js';
 export type MapInputs={coverage:CoverageValue;area?:never;points?:never}|{coverage?:undefined;area:AreaValue;points:PointInput};
 import {pointRelation,relationLabel} from './spatial-coverage.js';
@@ -12,7 +12,7 @@ export function mapOutput(node:WorkflowNode<'map_output'>,inputs:MapInputs,runId
   // A reviewed input already includes the area, points and explicit decisions.
   if(inputs.coverage){const activity=`<urn:fieldwork:run:${runId}:map:${node.id}>`,source=`<urn:fieldwork:run:${runId}:output:${inputs.coverage.checkNodeId}>`,output=`<urn:fieldwork:run:${runId}:output:${node.id}>`;const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n${activity} a fw:MapView, prov:Activity; prov:used ${source}.\n${output} a prov:Entity; prov:wasGeneratedBy ${activity}; prov:wasDerivedFrom ${source}.\n`;return {value:structuredClone(inputs.coverage),receipt:{nodeId:node.id,kind:'presentation',facts,input:facts,rules:'',conclusions:[],method:'Display existing coverage decisions without reclassification.'}};}
   const area=inputs.area,layers=pointLayers(inputs.points);
-  const rows=layerRecords(layers).map(({feature:f,...identity}):MapRow=>{const relation=pointRelation(f.geometry?.coordinates,area.boundary);return {...identity,name:f.properties.name,attributes:structuredClone(f.properties),coordinates:f.geometry?.coordinates||null,relation,status:relation==='Outside'?'Review':relation==='MissingLocation'?'Unknown':'NoFlag'};});
+  const rows=layerRecords(layers).map(({feature:f,...identity}):MapRow=>{const relation=pointRelation(f.geometry?.coordinates,area.boundary);return {...identity,name:f.properties.name,attributes:structuredClone(f.properties),coordinates:f.geometry?.coordinates||null,relation,fill:fillClass(SPATIAL_RELATION_FILL,relation),status:relation==='Outside'?'Review':relation==='MissingLocation'?'Unknown':'NoFlag'};});
   const activity=`<urn:fieldwork:run:${runId}:map:${node.id}>`;
 
   // POINTS A CLIP SET ASIDE are drawn, not received. A `clip_points_to_area` step upstream passes
@@ -25,7 +25,7 @@ export function mapOutput(node:WorkflowNode<'map_output'>,inputs:MapInputs,runId
     for(const feature of carried||[])
       rows.push({sourceNodeId:layer.sourceNodeId,recordId:String(feature.id),id:`excluded_${layer.sourceNodeId}_${feature.id}`,
         name:feature.properties?.name||'(unnamed)',attributes:{...feature.properties,excludedByArea:true},
-        coordinates:feature.geometry?.coordinates||null,relation:'Outside',excludedByArea:true} as unknown as MapRow);
+        coordinates:feature.geometry?.coordinates||null,relation:'Outside',fill:fillClass(SPATIAL_RELATION_FILL,'Excluded'),excludedByArea:true} as unknown as MapRow);
   }
   let facts=(area.areaFacts||'')+'@prefix fw: <urn:fieldwork:>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n'+
     `${activity} a fw:MapView, prov:Activity; prov:used <${area.areaId}>${layers.map(l=>`, <urn:fieldwork:source:${l.sourceNodeId}>`).join('')}.\n`+
@@ -40,6 +40,6 @@ export function mapOutput(node:WorkflowNode<'map_output'>,inputs:MapInputs,runId
   const layerSymbols=Object.fromEntries(layers.map((layer,index)=>
     [layer.sourceNodeId,resolveLayerSymbol(index,node.params.layerSymbols?.[layer.sourceNodeId])]));
   const layerNames=Object.fromEntries(layers.map(layer=>[layer.sourceNodeId,layer.label||layer.sourceNodeId]));
-  return {value:{...structuredClone(area),kind:'spatial-map',rows,centers:[],pointLayers:layerSummary(layers),layerSymbols,layerNames,sourceNodeId:layers.length===1?layers[0].sourceNodeId:null},receipt:{nodeId:node.id,kind:'computation',input:facts,facts,rules:'',conclusions:[],method:'Turf point-in-polygon for display; no acceptance or exclusion decision'}};
+  return {value:{...structuredClone(area),kind:'spatial-map',rows,centers:[],pointLayers:layerSummary(layers),layerSymbols,layerNames,fillEncoding:SPATIAL_RELATION_FILL,sourceNodeId:layers.length===1?layers[0].sourceNodeId:null},receipt:{nodeId:node.id,kind:'computation',input:facts,facts,rules:'',conclusions:[],method:'Turf point-in-polygon for display; no acceptance or exclusion decision'}};
 }
 export function mapEvidence(row:MapRow,dirty:boolean,esc:Escape){return `<div class="inspector-body"><span class="inspector-section">Map record ${dirty?'· previous run':''}</span><h2>${esc(row.name)}</h2><p class="muted">${esc(row.layerLabel)} · record ${esc(row.recordId)}</p><div class="source-card"><h3>${esc(relationLabel(row.relation))}</h3><p>${row.coordinates?row.coordinates.map(v=>v.toFixed(6)).join(', '):'No coordinates supplied; this record cannot be plotted.'}</p></div><p class="description">Outside the boundary is a spatial mismatch, not proof of a data-quality problem. Connect Check spatial coverage to this Map for exclusion and boundary-review actions.</p>${Object.entries(row.attributes).map(([key,value])=>`<div class="detail-row"><span>${esc(key)}</span><strong>${esc(value===null?'Not supplied':value)}</strong></div>`).join('')}</div>`;}

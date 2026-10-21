@@ -112,9 +112,20 @@ export function orderedSteps(n:number):string[]{
 export const LAYER_SHAPES=['circle','square','triangle','star','cross','x'] as const;
 export type LayerShape=typeof LAYER_SHAPES[number];
 export const MARK_VOCABULARY='http://www.opengis.net/se/1.1/WellKnownName';
+/** Hue and mark both change with the layer, which is what makes the mark REDUNDANT with the
+ *  colour rather than decorative: a reader who cannot separate two hues still has two shapes, and
+ *  a figure printed in greyscale keeps one channel.
+ *
+ *  The mark used to advance only once the palette was exhausted -- `floor(index/6)` -- so the
+ *  first six layers were all circles and the redundancy this comment promised did not exist until
+ *  a seventh layer appeared. Reported 2026-10-20 on two facility sources that drew identically.
+ *
+ *  Six hues and six marks advancing together would repeat the PAIR after six, while a map accepts
+ *  eight layers, so the mark takes one extra step each time it laps: the pair stays unique across
+ *  all eight, and adjacent layers still differ in both channels. */
 export const layerSymbol=(index:number):{colour:string;shape:LayerShape}=>({
   colour:FIGURE_PALETTE[index%FIGURE_PALETTE.length],
-  shape:LAYER_SHAPES[Math.floor(index/FIGURE_PALETTE.length)%LAYER_SHAPES.length]});
+  shape:LAYER_SHAPES[(index+Math.floor(index/LAYER_SHAPES.length))%LAYER_SHAPES.length]});
 
 export const FIGURE_ROLE={
   primary:FIGURE_PALETTE[0],
@@ -249,6 +260,47 @@ export function resolveLayerSymbol(index:number,
     shape:chosen?.mark||derived.shape,
     chosen:{colour:!!chosen?.colour,shape:!!chosen?.mark}};
 }
+/** WHAT THE FILL CHANNEL MEANS, as data rather than as code.
+ *
+ *  The renderer used to decide this itself: it read `row.relation`, `row.status` and `row.excluded`
+ *  and chose filled, hollow or grey. That compiled ONE VARIABLE into the drawing code, so the fill
+ *  channel could never mean anything but the spatial relation. The practitioner, 2026-10-20:
+ *  *"only inside and outside, which is hardcoded in the map, which I think loses abstraction."*
+ *
+ *  A map now resolves its own rows to a fill class and hands the renderer an encoding that says
+ *  which variable it stands for and what each class means. The renderer draws classes. Giving the
+ *  fill channel a different variable becomes a change where the semantics live, not in the map. */
+export type FillClass='solid'|'hollow'|'absent';
+export interface FillEncoding {
+  /** The variable the channel carries, in words a legend can print. */
+  variable:string;
+  /** Where the values come from, when they come from somewhere. */
+  vocabulary?:string;
+  /** One row per value a reader may meet, in legend order. */
+  categories:{value:string; fill:FillClass; label:string}[];
+}
+
+/** The default encoding: the relation a point has to the study area. It is a DEFAULT, which is a
+ *  different thing from a rule -- this is the variable a map carries when nobody has chosen one. */
+export const SPATIAL_RELATION_FILL:FillEncoding={
+  variable:'spatial relation to the study area',
+  vocabulary:'http://www.opengis.net/ont/geosparql#',
+  categories:[
+    {value:'Inside',fill:'solid',label:'Inside the study area (filled)'},
+    {value:'Boundary',fill:'solid',label:'On the boundary (filled)'},
+    {value:'Outside',fill:'hollow',label:'Outside the study area (hollow)'},
+    {value:'Excluded',fill:'absent',label:'Set aside by a clip (grey)'},
+    {value:'MissingLocation',fill:'absent',label:'Missing location (not plotted)'},
+  ],
+};
+
+/** Which class a value falls in, by the encoding's own table. An unknown value is drawn hollow
+ *  rather than filled: a point whose membership nobody established must not look established. */
+export function fillClass(encoding:FillEncoding,value:string|undefined):FillClass{
+  const matched=encoding.categories.find(c=>c.value===value);
+  return matched?matched.fill:'hollow';
+}
+
 /** The SVG for one mark, centred on (x,y). Filled when the point is in the area, hollow when it
  *  is not: hue carries WHICH SOURCE and fill carries WHETHER IT IS IN, so neither variable has to
  *  share a channel with the other. */

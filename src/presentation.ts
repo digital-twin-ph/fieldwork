@@ -35,6 +35,10 @@
  *  chart ships beside a Table output, and the exported figure labels its bars directly.
  *
  *  References: Okabe M, Ito K, "Color Universal Design", 2008, https://jfly.uni-koeln.de/color/ */
+/** The palette's own name and authority, carried into receipts so a reader can check the claim
+ *  rather than take the hexes on trust. */
+export const FIGURE_PALETTE_NAME='Okabe-Ito colour-universal set (six of eight)';
+export const FIGURE_PALETTE_AUTHORITY='https://jfly.uni-koeln.de/color/';
 export const FIGURE_PALETTE=[
   '#0072B2', // blue
   '#D55E00', // vermillion
@@ -47,6 +51,71 @@ export const FIGURE_PALETTE=[
 /** Roles, so a legend and a chart agree about what a colour MEANS and not merely which colours
  *  exist. A reader who learns that vermillion is the thing being reviewed on the map should not
  *  find it meaning something else on the chart beside it. */
+/** The ordered palette: ColorBrewer's YlGnBu, for quantities that have an order.
+ *
+ *  Added 2026-10-20 on the practitioner's direction -- *"This is where we apply Color Brewer"* --
+ *  and it belongs to a different job from the categorical six above. Okabe--Ito answers "which
+ *  CATEGORY is this", and nothing in it is ordered: its blue is not less than its vermillion. A
+ *  travel-time band, a cell count and a raster value are ORDERED, and until today this project
+ *  drew the isochrone bands with six hand-written hex literals -- `#3686a8`, `#c7773b`, `#719d47`
+ *  and three more -- a categorical set standing in for a sequence. A reader could not tell five
+ *  minutes from twenty-five by hue, because the hues carried no order to read.
+ *
+ *  ColorBrewer is the published answer to exactly that, and YlGnBu is one of the schemes its own
+ *  tool flags as **colourblind safe**, **print friendly** and **photocopy safe** at five classes,
+ *  which is the set this application needs: lightness falls monotonically, so the order survives
+ *  greyscale and the common colour vision deficiencies alike.
+ *
+ *  Nine would be available and five is taken deliberately: past five classes a reader stops
+ *  ranking hues and starts matching them against the key, which is the moment a choropleth
+ *  becomes a lookup table. Where more bands exist than hues, the tail shares the darkest class
+ *  and the legend says so rather than inventing a sixth step.
+ *
+ *  References: Brewer C A, Harrower M and The Pennsylvania State University, ColorBrewer 2.0,
+ *  https://colorbrewer2.org/ -- scheme YlGnBu, 5-class sequential. */
+export const ORDERED_PALETTE=['#ffffcc','#a1dab4','#41b6c4','#2c7fb8','#253494'] as const;
+export const ORDERED_PALETTE_NAME='ColorBrewer YlGnBu (5-class sequential)';
+export const ORDERED_PALETTE_AUTHORITY='https://colorbrewer2.org/';
+/** `n` steps of the ordered palette, darkest last. Beyond its length the tail repeats the darkest
+ *  class, which the legend states: a sequence a reader cannot rank is worse than a shared step. */
+export function orderedSteps(n:number):string[]{
+  if(n<=0)return [];
+  if(n<=ORDERED_PALETTE.length){
+    // Spread across the scheme rather than taking the first n, so three bands use light, middle
+    // and dark rather than three pale neighbours.
+    const last=ORDERED_PALETTE.length-1;
+    return Array.from({length:n},(_,i)=>ORDERED_PALETTE[n===1?last:Math.round(i*last/(n-1))]);
+  }
+  return Array.from({length:n},(_,i)=>ORDERED_PALETTE[Math.min(i,ORDERED_PALETTE.length-1)]);
+}
+
+/** One layer, one look: a hue that says WHICH SOURCE, and a shape that says it again.
+ *
+ *  The practitioner, 2026-10-20, with two facility sources on one map: *"they are both rendered
+ *  same color when inside the polygon and there is no layer to check or uncheck to assess which
+ *  points come from which source."* Hue had been spent on the spatial relation -- inside, outside,
+ *  unplaceable -- leaving provenance with no channel at all.
+ *
+ *  So hue carries the layer and fill carries the relation, and the shape repeats the layer because
+ *  colour alone is not an encoding anybody is obliged to be able to read (WCAG 1.4.1). Six hues
+ *  from Okabe--Ito and four shapes give twenty-four distinguishable layers before anything
+ *  repeats, and the map refuses more than eight. */
+/** The marks, named as OGC Symbology Encoding names them.
+ *
+ *  SE 1.1 (OGC 05-077r4) publishes a `WellKnownName` set -- square, circle, triangle, star, cross,
+ *  x -- and a receipt that says `fw:mark "triangle"` against that vocabulary is a term a reader can
+ *  look up, where `"diamond"` would be one this project invented. A first version used diamond,
+ *  which is a common extension and not in the standard; swapping it for star costs nothing and
+ *  buys the citation. SymCore (18-067r3) is the conceptual model above it and is deliberately NOT
+ *  implemented here: it assumes a styling pipeline applying symbolizers to features, and these
+ *  maps are drawn by a renderer reading ports. */
+export const LAYER_SHAPES=['circle','square','triangle','star','cross','x'] as const;
+export type LayerShape=typeof LAYER_SHAPES[number];
+export const MARK_VOCABULARY='http://www.opengis.net/se/1.1/WellKnownName';
+export const layerSymbol=(index:number):{colour:string;shape:LayerShape}=>({
+  colour:FIGURE_PALETTE[index%FIGURE_PALETTE.length],
+  shape:LAYER_SHAPES[Math.floor(index/FIGURE_PALETTE.length)%LAYER_SHAPES.length]});
+
 export const FIGURE_ROLE={
   primary:FIGURE_PALETTE[0],
   attention:FIGURE_PALETTE[1],
@@ -163,3 +232,40 @@ export const TUFTE_AXIS={
   labelPadding:6,
   titlePadding:10,
 } as const;
+
+/** The symbol a layer is drawn with: the practitioner's choice where they made one, and the
+ *  derived default where they did not.
+ *
+ *  Both cases are reported in the receipt, and reported DIFFERENTLY. "Triangle because somebody
+ *  chose a triangle" and "triangle because it was the second layer" are different claims, and a
+ *  reader auditing a figure needs to know which they are looking at -- the same separation the map
+ *  receipt already makes between a design rule and a preference. */
+export interface LayerSymbol {colour:string; shape:LayerShape; chosen:{colour:boolean;shape:boolean}}
+export function resolveLayerSymbol(index:number,
+  chosen?:{mark?:LayerShape;colour?:string}):LayerSymbol{
+  const derived=layerSymbol(index);
+  return {
+    colour:chosen?.colour||derived.colour,
+    shape:chosen?.mark||derived.shape,
+    chosen:{colour:!!chosen?.colour,shape:!!chosen?.mark}};
+}
+/** The SVG for one mark, centred on (x,y). Filled when the point is in the area, hollow when it
+ *  is not: hue carries WHICH SOURCE and fill carries WHETHER IT IS IN, so neither variable has to
+ *  share a channel with the other. */
+export function markPath(shape:LayerShape,x:number,y:number,r:number):string{
+  const p=(points:number[][])=>`M${points.map(([a,b])=>`${a.toFixed(1)},${b.toFixed(1)}`).join('L')}Z`;
+  switch(shape){
+    case 'square':return p([[x-r,y-r],[x+r,y-r],[x+r,y+r],[x-r,y+r]]);
+    case 'triangle':return p([[x,y-r*1.2],[x+r*1.1,y+r*0.9],[x-r*1.1,y+r*0.9]]);
+    case 'star':{
+      const points:number[][]=[];
+      for(let i=0;i<10;i++){const a=Math.PI/2+i*Math.PI/5,d=i%2?r*0.5:r*1.25;
+        points.push([x+Math.cos(a)*d,y-Math.sin(a)*d]);}
+      return p(points);}
+    case 'cross':return p([[x-r/3,y-r],[x+r/3,y-r],[x+r/3,y-r/3],[x+r,y-r/3],[x+r,y+r/3],[x+r/3,y+r/3],
+      [x+r/3,y+r],[x-r/3,y+r],[x-r/3,y+r/3],[x-r,y+r/3],[x-r,y-r/3],[x-r/3,y-r/3]]);
+    case 'x':{const s=r*0.42;return p([[x-r+s,y-r],[x,y-s*1.4],[x+r-s,y-r],[x+r,y-r+s],[x+s*1.4,y],
+      [x+r,y+r-s],[x+r-s,y+r],[x,y+s*1.4],[x-r+s,y+r],[x-r,y+r-s],[x-s*1.4,y],[x-r,y-r+s]]);}
+    default:return `M${(x-r).toFixed(1)},${y.toFixed(1)}a${r},${r} 0 1,0 ${2*r},0a${r},${r} 0 1,0 ${-2*r},0Z`;
+  }
+}

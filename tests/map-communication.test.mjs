@@ -14,9 +14,20 @@ test('Map presentation is independent of geometry and emits a validated, source-
   const mapped=mapOutput(node,{area:{boundary,areaId:'urn:fieldwork:area:scope',geometryId:'urn:fieldwork:geometry:scope',label:'Old Naledi'},points:{sourceNodeId:'observations',label:'Synthetic coverage records',features:points.features}},'run');
   const output={...mapped.value,nodeId:'map',label:'Result tab',view:'map'},before=structuredClone(output);
   const spec=mapPresentation(node,output,workflow);
-  assert.equal(spec.title,'Old Naledi & observations');assert.equal(spec.items[0].label,'Outside boundary');
+  assert.equal(spec.title,'Old Naledi & observations');
+  // The legend is the LAYERS first, each in its own mark and hue, then the relations in the fill
+  // channel. It used to open with 'Outside boundary' in a hue of its own, which was the encoding
+  // hue carried before one overlay per source arrived.
+  assert.equal(spec.items[0].label,'Synthetic coverage records (4)');
+  assert.equal(spec.items[0].shape,'circle');
+  assert.deepEqual(spec.items.slice(1).map(i=>i.label),
+    ['Inside / on the boundary (filled)','Outside the boundary (hollow)','Missing location (not plotted)']);
+  assert.equal(spec.items.find(i=>i.hollow)?.label,'Outside the boundary (hollow)');
   const svg=standaloneMapSvg('<rect width="850" height="295"/>','0 0 850 295',spec);
-  assert.match(svg,/<title>Old Naledi &amp; observations<\/title>/);assert.match(svg,/Synthetic data &lt;local&gt;/);assert.match(svg,/Inside \/ boundary/);
+  assert.match(svg,/<title>Old Naledi &amp; observations<\/title>/);assert.match(svg,/Synthetic data &lt;local&gt;/);
+  assert.match(svg,/Inside \/ on the boundary/);
+  // The export draws the marks, not a rectangle-or-circle choice: one path per legend entry.
+  assert.equal([...svg.matchAll(/<path d="M/g)].length>=spec.items.length,true);
   assert.deepEqual(output,before);
   mapSpecificationFacts(node,output,workflow,'run',mapped.receipt);
   const graph=new Store(new Parser().parse(mapped.receipt.facts));

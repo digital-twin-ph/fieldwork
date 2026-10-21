@@ -3,6 +3,8 @@ import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
 import {BASEMAP_CHOICES,type BasemapChoice} from './types.js';
+import {layerSymbol,markPath} from './presentation.js';
+import type {LayerShape} from './presentation.js';
 export type {BasemapChoice};
 
 /** OpenFreeMap serves VECTOR tiles, not raster, so these cannot be an `L.tileLayer` URL.
@@ -81,7 +83,12 @@ export interface MapLayers {
   /** A study area, drawn as the ground the rest sits on. */
   boundary?:{type:string;coordinates:unknown};
   /** Points carried on a value rather than arriving at a port of their own. */
-  rows?:{id:string;name:string;coordinates?:Position|null;status?:string;relation?:string;excluded?:boolean}[];
+  rows?:{id:string;name:string;coordinates?:Position|null;status?:string;relation?:string;excluded?:boolean;sourceNodeId?:string}[];
+  /** What each source is called, so a layer control names the widget rather than its node id. */
+  layerNames?:Record<string,string>;
+  /** The symbol each source is drawn with, resolved from the practitioner's choice where they
+   *  made one and from the layer's position where they did not. */
+  layerSymbols?:Record<string,{colour:string;shape:LayerShape}>;
   centers?:{id?:string;name?:string;geometry?:{coordinates:Position}|null}[];
   /** A street graph, drawn as itself. Added 2026-10-20: a Map showing a network could not be made
    *  interactive and could carry no basemap, because the static branch returned before the
@@ -158,17 +165,57 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // Points a value carried rather than a port delivered -- a spatial map's rows, and the centers
   // it measured against. Drawn with the status each row was given, because that is what the map
   // is about.
+  // ONE OVERLAY PER SOURCE, and hue says which source it is.
+  //
+  // The practitioner, 2026-10-20, with an OpenStreetMap search and an Overture search on one map:
+  // *"they are both rendered same color when inside the polygon and there is no layer to check or
+  // uncheck to assess which points come from which source."* Hue had been spent on the spatial
+  // relation, so provenance had no channel and the layer control had nothing to list.
+  //
+  // Hue now carries the LAYER, fill carries the RELATION -- solid inside, hollow outside, grey
+  // where there is no usable location -- and the mark repeats the layer, because colour alone is
+  // not an encoding everybody can read. The marks are named as OGC Symbology Encoding names them,
+  // and a practitioner can choose one per layer on the Map widget.
   if(layers.rows?.length){
-    const group=L.featureGroup();
+    const bySource=new Map<string,typeof layers.rows>();
     for(const row of layers.rows){
-      if(!row.coordinates)continue;
-      const [lon,lat]=row.coordinates,state=row.excluded?'Excluded':row.relation??row.status??'';
-      L.circleMarker([lat,lon],{radius:4,color:'#222',weight:1,
-        fillColor:state==='Outside'||state==='Review'?'#d62f2f':state==='Excluded'?'#999':'#39779e',fillOpacity:.85})
-        .bindPopup(`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`)
-        .addTo(group);
+      const key=String((row as {sourceNodeId?:string}).sourceNodeId||'records');
+      const held=bySource.get(key)||[];held.push(row);bySource.set(key,held);
     }
-    if(group.getLayers().length){group.addTo(map);all.addLayer(group);overlays['Records']=group;}
+    const named=layers.layerNames||{};
+    let index=0;
+    for(const [source,rows] of bySource){
+      const symbol=layers.layerSymbols?.[source]??layerSymbol(index);
+      const group=L.featureGroup();
+      for(const row of rows){
+        if(!row.coordinates)continue;
+        const [lon,lat]=row.coordinates,state=row.excluded?'Excluded':row.relation??row.status??'';
+        const inside=!(state==='Outside'||state==='Review'||state==='Excluded');
+        const ink=state==='Excluded'?'#8C8C8C':symbol.colour;
+        // The mark is DRAWN, not just named. The layer control said "(square)" while every point
+        // on the map was a circleMarker, so the mark channel existed in the label and the receipt
+        // and nowhere a reader could see it. A circle stays a circleMarker because it is the same
+        // picture for less DOM, and a layer can hold thousands of points.
+        (symbol.shape==='circle'
+          ? L.circleMarker([lat,lon],{radius:4,color:ink,weight:1.6,fillColor:ink,fillOpacity:inside?.85:0})
+          : L.marker([lat,lon],{title:row.name,icon:L.divIcon({className:'catchment-point-mark',
+              iconSize:[14,14],iconAnchor:[7,7],
+              html:`<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">`
+                +`<path d="${markPath(symbol.shape,7,7,5)}" fill="${inside?ink:'none'}" `
+                +`stroke="${ink}" stroke-width="1.5"/></svg>`})}))
+          .bindPopup(`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}`
+            +`<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`)
+          .addTo(group);
+      }
+      if(group.getLayers().length){
+        group.addTo(map);all.addLayer(group);
+        // Two widgets born with the same default label are the common case, so the key can
+        // collide; the node id is what tells them apart when the label does not.
+        const key=`${named[source]||source} (${symbol.shape})`;
+        overlays[Object.hasOwn(overlays,key)?`${key} · ${esc(source)}`:key]=group;
+      }
+      index++;
+    }
   }
   if(layers.centers?.length){
     const group=L.featureGroup();
@@ -183,7 +230,30 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   L.control.layers({},overlays,{collapsed:false}).addTo(map);L.control.scale({imperial:false}).addTo(map);
   const fit=()=>{if(all.getBounds().isValid())map.fitBounds(all.getBounds(),{padding:[20,20]});else map.setView([0,0],2);};fit();
   toolbar.querySelector<HTMLButtonElement>('[data-fit]')!.onclick=fit;
-  toolbar.querySelector<HTMLButtonElement>('[data-fullscreen]')!.onclick=async()=>{const panel=host.closest<HTMLElement>('#map-panel')||host;if(document.fullscreenElement===panel)await document.exitFullscreen();else await panel.requestFullscreen().catch(()=>{status.textContent='Full screen unavailable; use Expand Results.';});requestAnimationFrame(()=>map.invalidateSize());};
+  // Full screen, on the element the CSS is written for. Safari before 16.4 has only the webkit
+  // names, and an iPhone has neither on a div, so the button says so rather than appearing to work.
+  // The button carries its own state: it used to keep saying "Full screen" while full screen was on.
+  const fullscreenButton=toolbar.querySelector<HTMLButtonElement>('[data-fullscreen]')!;
+  type WebkitElement=HTMLElement&{webkitRequestFullscreen?:()=>Promise<void>|void};
+  type WebkitDocument=Document&{webkitFullscreenElement?:Element|null;webkitExitFullscreen?:()=>Promise<void>|void};
+  const panel=()=>host.closest<HTMLElement>('#map-panel')||host;
+  const fullscreenNow=()=>document.fullscreenElement||(document as WebkitDocument).webkitFullscreenElement||null;
+  const markFullscreen=()=>{const on=fullscreenNow()===panel();
+    fullscreenButton.textContent=on?'Exit full screen':'Full screen';
+    fullscreenButton.setAttribute('aria-pressed',String(on));
+    requestAnimationFrame(()=>map.invalidateSize());};
+  markFullscreen();
+  for(const event of ['fullscreenchange','webkitfullscreenchange'])document.addEventListener(event,markFullscreen);
+  fullscreenButton.onclick=async()=>{
+    const target=panel() as WebkitElement;
+    try{
+      if(fullscreenNow()===target)await (document.exitFullscreen?.()??(document as WebkitDocument).webkitExitFullscreen?.());
+      else if(target.requestFullscreen)await target.requestFullscreen();
+      else if(target.webkitRequestFullscreen)await target.webkitRequestFullscreen();
+      else throw new Error('unsupported');
+    }catch{status.textContent='Full screen unavailable in this browser; use Full screen on the results panel.';}
+    markFullscreen();
+  };
   const status=toolbar.querySelector<HTMLElement>('[data-tile-status]')!,select=toolbar.querySelector<HTMLSelectElement>('[data-basemap]')!;
   let tiles:L.TileLayer|undefined,pending=0;
   const setBasemap=(choice:BasemapChoice)=>{
@@ -240,6 +310,8 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   select.value=basemap;setBasemap(basemap);
   select.onchange=()=>{const choice=select.value as BasemapChoice;setBasemap(choice);onBasemapChange?.(choice);};
   const note=document.createElement('p');note.className='muted';note.textContent='Blue nested regions: cumulative travel times. Red circles: observations (DEATHS radius capped at 20 px); blue squares: sites/context. Use layer controls and click features for details.';host.append(note);
-  let disposed=false;const observer=new ResizeObserver(()=>{if(!disposed)map.invalidateSize();});observer.observe(canvas);
-  return ()=>{disposed=true;observer.disconnect();map.stop();map.remove();host.replaceChildren();};
+  let disposed=false;const observer=new ResizeObserver(()=>{if(!disposed)map.invalidateSize();});observer.observe(canvas);observer.observe(panel());
+  return ()=>{disposed=true;observer.disconnect();
+    for(const event of ['fullscreenchange','webkitfullscreenchange'])document.removeEventListener(event,markFullscreen);
+    map.stop();map.remove();host.replaceChildren();};
 }

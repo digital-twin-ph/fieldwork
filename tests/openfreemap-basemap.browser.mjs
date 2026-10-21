@@ -24,12 +24,15 @@ test('an OpenFreeMap vector style draws under the workflow layers, and is credit
 
   // Six basemaps: offline, two raster, three vector designs.
   await expect(page.locator('[data-basemap] option')).toHaveText([
-    'Local geometry (offline)','OpenStreetMap streets','OpenTopoMap terrain',
+    'None \u00b7 works offline','OpenStreetMap streets','OpenTopoMap terrain',
     'OpenFreeMap Liberty','OpenFreeMap Positron (muted)','OpenFreeMap Bright']);
 
   await page.locator('[data-basemap]').selectOption('ofm-positron');
   await expect(page.locator('[data-tile-status]')).toContainText('OpenFreeMap Positron',{timeout:30000});
-  await expect(page.locator('.leaflet-container canvas')).toHaveCount(1);
+  // The VECTOR BASEMAP's own canvas, named rather than counted: since 2026-10-20 the workflow's
+  // boundary is canvas-rendered too, so "one canvas in the map" stopped meaning "the basemap
+  // drew". MapLibre's canvas carries its own class.
+  await expect(page.locator('.maplibregl-canvas')).toHaveCount(1);
   expect(requested.some(u=>u.includes('/styles/positron'))).toBe(true);
 
   // THAT IT MOUNTED IS NOT THAT IT DREW, and the first two attempts at this assertion were both

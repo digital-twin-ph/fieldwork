@@ -5,6 +5,7 @@ import {test,expect} from '@playwright/test';
 // no point layer to buffer. See TODO, "The study area is Botswana-shaped".
 test('a study area can be drawn as a point with an adjustable radius',async({page})=>{
   await page.goto('/?example=blank');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="study_area"]').click();
   await page.locator('#edit-study-area').click();
   await expect(page.locator('#area-map')).toBeVisible();
@@ -42,6 +43,7 @@ test('a study area can be drawn as a point with an adjustable radius',async({pag
 // a radius around a centre. It gets two handles: move, and resize.
 test('a circle offers two handles, not one per vertex',async({page})=>{
   await page.goto('/?example=blank');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="study_area"]').click();
   await page.locator('#edit-study-area').click();
   await page.locator('[data-draw="circle"]').click();

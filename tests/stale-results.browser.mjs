@@ -9,38 +9,51 @@ import {test,expect} from '@playwright/test';
 test('deleting the nodes that produced a result removes the result',async({page})=>{
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output]').first()).toBeVisible();
 
   const ids=await page.locator('.react-flow__node').evaluateAll(nodes=>nodes.map(n=>n.dataset.id));
   for(const id of ids){
+  await page.locator('[data-view="workflow"]').click();
     await page.locator(`.react-flow__node[data-id="${id}"]`).click();
     await page.locator('#delete-node').click();
   }
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(0);
 
   // Nothing to show, and nothing shown.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output]')).toHaveCount(0);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map-panel')).toBeHidden();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#run-summary')).toContainText('Run the workflow to see results');
 });
 
 test('deleting one output leaves the others, and a parameter change still keeps the previous run',async({page})=>{
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="results"]').click();
   const before=await page.locator('#result-tabs [data-output]').count();
   expect(before).toBeGreaterThan(1);
 
+  await page.locator('[data-view="results"]').click();
   const victim=await page.locator('#result-tabs [data-output]').first().getAttribute('data-output');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator(`.react-flow__node[data-id="${victim}"]`).click();
   await page.locator('#delete-node').click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output]')).toHaveCount(before-1);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator(`#result-tabs [data-output="${victim}"]`)).toHaveCount(0);
 
   // The deliberate half: change a setting and the previous run stays, because the node is still
   // there to rerun.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="catchments"]').click();
   await page.locator('#catchment-zone').fill('31');
   await page.locator('#catchment-zone').blur();
   await expect(page.locator('#workflow-state')).toContainText('Changed');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output]')).toHaveCount(before-1);
 });

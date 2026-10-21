@@ -16,6 +16,7 @@ test('a tabular input opens its rows in a dialog, and changes nothing',async({pa
   const before=await saved();
 
   // The SIMULATED copy, so the gaps are visible in the rows themselves.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="gapped"]').click();
   await page.locator('#quick-look').click();
   const dialog=page.locator('#table-viewer');
@@ -52,6 +53,7 @@ test('a point input opens its records in the same dialog',async({page})=>{
   await page.goto('/?example=rulesets');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="buildings"]').click();
   await page.locator('[data-records-quicklook]').click();
   const dialog=page.locator('#table-viewer');

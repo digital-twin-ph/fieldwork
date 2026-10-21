@@ -5,15 +5,24 @@ import {collectPageErrors} from './page-errors.mjs';
 test("Independent result branches, tabs and offline inference",async({page,context})=>{
 const errors=collectPageErrors(page);
 const done=()=>expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
-const run=async()=>{await page.locator('#run-button').click();await done();};
+const run=async()=>{await page.locator('#run-button').click();await done();await page.locator('[data-view="results"]').click();};
   await page.goto('/');await done();
+  await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab')).toHaveCount(2);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map-panel')).toBeVisible();
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Decision table'}).click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows tr')).toHaveCount(8);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#table-panel')).toBeVisible();
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Decision table'}).press('ArrowLeft');
+  // No tab click between the keypress and the assertion: clicking the view tab takes the focus
+  // this is about.
   await expect(page.getByRole('tab',{name:'Outreach map'})).toBeFocused();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map-panel')).toBeVisible();
 
   // Actual EYE inference on two independent branches, with shared geography.
@@ -23,34 +32,48 @@ const run=async()=>{await page.locator('#run-button').click();await done();};
   w.edges.push({id:'e7',from:'nearest',to:'criteria2',port:'distances'},{id:'e8',from:'alert',to:'criteria2',port:'alert'});
   await page.locator('#workflow-file').setInputFiles({name:'branches.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await run();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics .review b')).toHaveText('5');
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Decision table'}).click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics .review b')).toHaveText('0');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-rows tr').first().click();
   await expect(page.locator('#inspector-content')).toContainText('100 km');
 
   // Configure the output through the inspector, rerun, and remove it.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="table"]').click();
   await page.locator('#table-label').fill('Second map');await page.locator('#table-label').press('Tab');
   await page.locator('#output-view').selectOption('map');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#run-summary')).toContainText('Previous run');
   await run();
+  await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab',{name:'Second map'})).toHaveAttribute('aria-selected','true');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map-panel')).toBeVisible();
   await page.locator('#delete-node').click();await run();
+  await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab')).toHaveCount(1);
+  await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab',{name:'Outreach map'})).toHaveAttribute('aria-selected','true');
 
   await expect(page.locator('#offline-status')).toContainText('Available offline');
   await context.setOffline(true);await page.reload();await done();
+  await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab')).toHaveCount(1);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics .review b')).toHaveText('5');
   await context.setOffline(false);
   await page.locator('#reset-button').click();await run();
   await mkdir('test-results',{recursive:true});
   await page.screenshot({path:'test-results/output-tabs-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Decision table'}).click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#table-panel')).toBeVisible();
   if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Mobile horizontal overflow');
   await page.screenshot({path:'test-results/output-tabs-mobile.png',fullPage:true});

@@ -9,6 +9,7 @@ test('a mean centre can be weighted by a record attribute, and the receipt says 
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
   // The original branch carries Snow's DEATHS attribute: 250 addresses holding 489 deaths.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="original-center"]').click();
   await expect(page.locator('#mean-center-weight')).toHaveValue('');
   await expect(page.locator('.inspector')).toContainText('Unweighted mean of projected point locations');
@@ -31,6 +32,7 @@ test('a mean centre can be weighted by a record attribute, and the receipt says 
   // It survives a reload, because it is a saved parameter and not a session choice.
   await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="original-center"]').click();
   await expect(page.locator('#mean-center-weight')).toHaveValue('DEATHS');
 
@@ -48,6 +50,7 @@ test('weighting the masked branch is refused with a count, because geomasking dr
   collectPageErrors(page);
   await page.goto('/?example=snow-geoprivacy');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="moved-center"]').click();
   await page.locator('#mean-center-weight').fill('DEATHS');
   await page.locator('#mean-center-weight').press('Tab');

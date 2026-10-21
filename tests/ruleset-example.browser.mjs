@@ -21,11 +21,13 @@ test('the ruleset example is offered, runs, and shows each condition kind',async
 
   // The rules are on the node, not chosen from a list: the Inspector shows what this step
   // applies and names it as written here.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="day"]').click();
   await expect(page.locator('#inspector-content')).toContainText('A day, banded by how many died on it');
 
   // A · the table half, which a ruleset could not read at all before 2026-10-16. The judgement
   // arrives as a column beside the number it was made about.
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'A · Days, banded'}).click();
   const panel=page.locator('#result-panel, .result-body, main').first();
   await expect(panel).toContainText('1854-08-19');
@@ -33,6 +35,7 @@ test('the ruleset example is offered, runs, and shows each condition kind',async
   await expect(panel).toContainText('Few');
 
   // B · the point half, through the same rule form.
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'B · Buildings, listed'}).click();
   await expect(panel).toContainText('Single');
   await expect(panel).toContainText('Cluster');

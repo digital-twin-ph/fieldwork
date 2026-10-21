@@ -10,6 +10,7 @@ test('a street network download can be set to driving, and the choice is saved',
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
   // The example ships a prepared file, so the mode control is not offered until a download is.
   await expect(page.locator('#network-travel-mode')).toHaveCount(0);
@@ -24,6 +25,7 @@ test('a street network download can be set to driving, and the choice is saved',
   // A saved parameter, not a session choice: the next download must use what was chosen here.
   await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
   await expect(page.locator('#network-travel-mode')).toHaveValue('driving');
 
@@ -57,6 +59,7 @@ test('an area the service will not answer for is refused before it is downloaded
     downloads++;return route.fulfill({json:{elements:[]}});
   });
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
   await page.locator('#network-input-method').selectOption('osm');
   await page.locator('#download-network').click();

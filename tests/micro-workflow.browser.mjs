@@ -42,14 +42,18 @@ test('a micro-workflow is offered, added as one step, and explodes into its prim
 
   const before=await settledNodes(page);
   await entry.click();
+  await page.locator('[data-view="workflow"]').click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(before+1);
 
   // It has ports on the canvas. The node's output type comes from the composition it
   // carries, so a canvas drawing handles from the static type table gives it inputs and no
   // output at all -- which is how this was found.
   const node=page.locator('.react-flow__node').filter({hasText:'Walking catchment'}).first();
+  await page.locator('[data-view="workflow"]').click();
   await expect(node.locator('.react-flow__handle-left')).toHaveCount(2);
+  await page.locator('[data-view="workflow"]').click();
   await expect(node.locator('.react-flow__handle-right')).toHaveCount(1);
+  await page.locator('[data-view="workflow"]').click();
   await expect(node.locator('.react-flow__handle-right')).toHaveAttribute('title','polygons output');
 
   // The Inspector states what it is pinned to, and its parameters are the composition's.
@@ -84,6 +88,7 @@ test('a micro-workflow is offered, added as one step, and explodes into its prim
 
   // Exploding replaces the one node with the four it arranges.
   await page.locator('#micro-explode').click();
+  await page.locator('[data-view="workflow"]').click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(before+4);
   // Selection lands on the first member, which is now an ordinary widget with its own
   // release and digest: the composition has stopped being one step and become the steps.
@@ -99,6 +104,7 @@ test('a micro-workflow is offered, added as one step, and explodes into its prim
 
   // Undo is the way back, as the Inspector says.
   await page.keyboard.press('Control+z');
+  await page.locator('[data-view="workflow"]').click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(before+1);
   expect(errors).toEqual([]);
 });
@@ -169,8 +175,10 @@ test('a worked example can be reset, and an exploded canvas can be laid out',asy
 
   // Edit it: add the composition, then explode it.
   await page.locator('#node-library [data-composition]').first().click();
+  await page.locator('[data-view="workflow"]').click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original+1);
   await page.locator('#micro-explode').click();
+  await page.locator('[data-view="workflow"]').click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original+4);
 
   // Tidy: every node lands on the column grid, and nothing is lost.
@@ -188,10 +196,12 @@ test('a worked example can be reset, and an exploded canvas can be laid out',asy
   // Reselecting the workspace keeps the edit, which is why a reset exists.
   await openWorkflow(page,'snow-voronoi');
   await openWorkflow(page,'snow-isochrone');
+  await page.locator('[data-view="workflow"]').click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original+4);
 
   // Reset returns it to the published example.
   await page.locator('#reset-example').click();
+  await page.locator('[data-view="workflow"]').click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original);
   expect(await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');

@@ -29,7 +29,7 @@ export interface SelectorElements {
   '#zoom-in':HTMLButtonElement;
   '#fit-button':HTMLButtonElement;
   '#download-evidence':HTMLButtonElement;
-  '#expand-results':HTMLButtonElement;
+  '#result-count':HTMLSpanElement;
   '#area-close':HTMLButtonElement;
   '#draw-bbox':HTMLButtonElement;
   '#draw-polygon':HTMLButtonElement;

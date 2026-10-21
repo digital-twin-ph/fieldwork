@@ -8,6 +8,7 @@ import {test,expect} from '@playwright/test';
 test('full screen renders the map at viewport height',async({page})=>{
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="interactive"]').click();
   const canvas=page.locator('.catchment-leaflet');
   await expect(canvas).toBeVisible();
@@ -16,8 +17,8 @@ test('full screen renders the map at viewport height',async({page})=>{
   const before=(await canvas.boundingBox()).height;
   expect(before).toBeLessThan(viewport*0.8);
 
-  await page.locator('#fullscreen-results').click();
-  await expect(page.locator('#fullscreen-results')).toHaveText('Exit full screen');
+  await page.locator('#fullscreen-workbench').click();
+  await expect(page.locator('#fullscreen-workbench')).toHaveText('Exit full screen');
   await expect(async()=>{
     const box=await canvas.boundingBox();
     // The map takes the room full screen gained: it grows, and it grows by most of what the
@@ -45,7 +46,7 @@ test('full screen renders the map at viewport height',async({page})=>{
   expect(pane).toBeGreaterThan(grown.height*0.9);
 
   await page.keyboard.press('Escape');
-  await expect(page.locator('#fullscreen-results')).toHaveText('Full screen');
+  await expect(page.locator('#fullscreen-workbench')).toHaveText('Full screen');
   await expect(async()=>expect((await canvas.boundingBox()).height).toBeLessThan(viewport*0.8)).toPass({timeout:5000});
 });
 
@@ -54,7 +55,9 @@ test('full screen renders the map at viewport height',async({page})=>{
 test('the map toolbar full-screen button reports its own state',async({page})=>{
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="interactive"]').click();
+  await page.locator('[data-view="results"]').click();
   const button=page.locator('.catchment-map-toolbar [data-fullscreen]');
   await expect(button).toHaveText('Full screen');
   await expect(button).toHaveAttribute('aria-pressed','false');

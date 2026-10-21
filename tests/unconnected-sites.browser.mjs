@@ -21,6 +21,7 @@ test('a site past the snap limit is routed off-network, and the widget says so',
   // The run completed and the catchments are still drawn: this is a finding, not a failed run.
   await expect(widget.locator('.node')).toHaveClass(/alerting/);
   await expect(widget.locator('.node-alert')).toContainText('routed off-network');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map [data-catchment]')).not.toHaveCount(0);
   const alert=page.locator('.inspector-alert');
   await expect(alert).toContainText('Out of bounds');
@@ -32,6 +33,7 @@ test('a site past the snap limit is routed off-network, and the widget says so',
   // The badge closes. It covers the node it is about, and once it has been read it is in the
   // way -- the practitioner asked for an x on 2026-10-15. Closing it keeps the finding: the
   // Inspector still carries the whole alert, and the node still glows.
+  await page.locator('[data-view="workflow"]').click();
   await widget.locator('.node-alert-close').click();
   await expect(widget.locator('.node-alert')).toHaveCount(0);
   await expect(page.locator('.inspector-alert')).toContainText('Out of bounds');
@@ -73,6 +75,7 @@ test('a site past the snap limit is routed off-network, and the widget says so',
 test('a site whose walk spends the budget gets no result, and the omission travels downstream',async({page})=>{
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="catchments"]').click();
   await page.locator('#catchment-maxSnapM').fill('1000');
   await page.locator('#catchment-maxSnapM').blur();
@@ -89,6 +92,7 @@ test('a site whose walk spends the budget gets no result, and the omission trave
   await expect(alert).toContainText('with no result');
   await expect(alert).toContainText('No result');
   await expect(alert).toContainText('spends the whole travel budget');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="summary"] .node')).toHaveClass(/alerting/);
   await page.locator('[data-view="rules"]').click();
   await expect(page.locator('#n3-preview')).toContainText('fw:unconnectedSiteCount');

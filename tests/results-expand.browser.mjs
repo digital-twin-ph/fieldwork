@@ -1,45 +1,50 @@
 import {test,expect} from '@playwright/test';
 
-const expanded=page=>page.locator('.work-area').evaluate(el=>el.classList.contains('results-expanded'));
-
-test('selecting a comparison node shows its result without taking over the screen',async({page})=>{
+// This file tested the SPLIT: a `results-expanded` class, an Expand button that decided which
+// half won, and a comparison run that took the lower half over once. Results became a tab on
+// 2026-10-21 and all three went with it. What survives is the property they were protecting --
+// selecting a node shows its result and does not move the practitioner -- which is now the
+// ordinary behaviour of a tab rather than an exception a comparison had to be given.
+test('selecting a comparison node marks its result, and does not change the view',async({page})=>{
   await page.goto('/?example=snow-geoprivacy');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
 
-  // A run that produces a side-by-side comparison may expand the pane once. Put the layout back,
-  // which is what a reader does when they want the canvas again.
-  if(await expanded(page))await page.locator('#expand-results').click();
-  expect(await expanded(page)).toBe(false);
-
-  // Selecting the comparison node must show its result and leave the layout alone: the click was
-  // aimed at a node, not at the window.
+  // The click was aimed at a node, not at the window: the canvas is still what is on screen.
   await page.locator('.react-flow__node[data-id="comparison-map"]').click();
+  await expect(page.locator('#workflow-view')).toBeVisible();
+  await expect(page.locator('.results-panel')).toBeHidden();
+
+  // And the result it selected is the one the Results tab opens on.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output="comparison-map"]')).toHaveAttribute('aria-selected','true');
-  expect(await expanded(page)).toBe(false);
-  await expect(page.locator('#canvas')).toBeVisible();
 
-  // Selecting away and back must not expand it either.
+  // Selecting away and back behaves the same, from either side.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="before-map"]').click();
-  await page.locator('.react-flow__node[data-id="comparison-map"]').click();
-  expect(await expanded(page)).toBe(false);
-
-  // Choosing the tab directly behaves the same way.
-  await page.locator('#result-tabs [data-output="before-map"]').click();
+  await expect(page.locator('#workflow-view')).toBeVisible();
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('#result-tabs [data-output="before-map"]')).toHaveAttribute('aria-selected','true');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="comparison-map"]').click();
-  expect(await expanded(page)).toBe(false);
-
-  // Expanding is still available on purpose.
-  await page.locator('#expand-results').click();
-  expect(await expanded(page)).toBe(true);
-  await expect(page.locator('#expand-results')).toHaveAttribute('aria-expanded','true');
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('#result-tabs [data-output="comparison-map"]')).toHaveAttribute('aria-selected','true');
+  await expect(page.locator('#workflow-view')).toBeHidden();
 });
 
-test('a fresh run of the comparison still expands the pane once',async({page})=>{
+test('a fresh run leaves the practitioner where they are',async({page})=>{
   await page.goto('/?example=snow-geoprivacy');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
-  if(await expanded(page))await page.locator('#expand-results').click();
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="comparison-map"]').click();
   await page.locator('#run-button').click();
-  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
-  expect(await expanded(page)).toBe(true);
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
+  // Still on the results, because that is where they were. A comparison used to take the screen
+  // over for one run, which is the kind of exception a whole-view tab makes unnecessary.
+  await expect(page.locator('.results-panel')).toBeVisible();
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('#result-tabs [data-output="comparison-map"]')).toHaveAttribute('aria-selected','true');
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
+  await expect(page.locator('#workflow-view')).toBeVisible();
 });

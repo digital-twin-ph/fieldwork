@@ -27,6 +27,7 @@ test('a canvas with no input offers the input stage, and everything after one is
 
   // Place one input and the palette opens. The gate is "start with an input", not a running
   // filter: after that, judging what is sensible is the practitioner's.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="study_area"]').click();
   // `toBeGreaterThan(30)` stood here and passed for weeks while nine widgets were addable only on
   // the examples whose template named them. The practitioner found it by looking for one:

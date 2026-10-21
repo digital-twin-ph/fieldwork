@@ -38,6 +38,7 @@ test('a street network larger than the whole localStorage quota is kept and surv
     (route.request().postData()||'').includes('node%281%29')
       ?route.fulfill({json:{version:0.6,elements:[]}})
       :route.fulfill({body,contentType:'application/json'}));
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
   await page.locator('#network-input-method').selectOption('osm');
   await page.locator('#download-network').click();

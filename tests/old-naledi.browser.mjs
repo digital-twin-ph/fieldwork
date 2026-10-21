@@ -7,23 +7,33 @@ import {openWorkflow} from './open-workflow.mjs';
 test("Old Naledi evidence and diagnostic access workflows",async({page,context})=>{
 const errors=collectPageErrors(page);
 const done=()=>expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
-const run=async()=>{await page.locator('#run-button').click();await done();};
+const run=async()=>{await page.locator('#run-button').click();await done();await page.locator('[data-view="results"]').click();};
 const select=async id=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"]`).click();};
 const number=async(id,value)=>{await page.locator(id).fill(String(value));await page.locator(id).press('Tab');};
   await page.goto('/?example=old-naledi');await done();
+  await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab')).toHaveCount(4);
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics .review b')).toHaveText('21');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map path[fill-rule="evenodd"]')).toHaveCount(1);
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Facility evidence'}).click();
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-search').fill('Old Naledi');await expect(page.locator('#result-rows tr:visible')).toHaveCount(1);
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-search').fill('');
+  await page.locator('[data-view="results"]').click();
   const clinic=page.locator('#result-rows tr').filter({hasText:'Old Naledi Clinic'});
   await expect(clinic).toContainText('Inferential');await expect(clinic).toContainText('Onsite or referral');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows tr').filter({hasText:'Princess Marina Hospital'})).toContainText('Direct');
   await clinic.click();await expect(page.locator('#inspector-content')).toContainText('Dickinson 2017');
   // These read the classic bars' markup; Vega-Lite is the default renderer now.
   await useClassicBars(page,'access-chart');
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Access zones'}).click();await expect(page.locator('#bars-panel')).toBeVisible();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column').filter({hasText:'> 30 min'}).locator('b')).toHaveText('21');
   // Widening eligibility, through the candidate-filter editor that replaced `access`'s two
   // selects. The widget was decomposed on 2026-10-12: the narrowing is now a knob on nearest,
@@ -36,14 +46,19 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   await select('access');await page.locator('#filter-values-1').fill('Unknown');
   await page.locator('#filter-values-1').press('Tab');
   await run();
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Access map'}).click();await expect(page.locator('#result-metrics .review b')).toHaveText('0');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#map [data-place="sample-1"]').click();await expect(page.locator('#inspector-content')).toContainText('Generated grid location');
-  await page.locator('#expand-results').click();await expect(page.locator('#workflow-view')).toBeHidden();
-  await page.locator('#expand-results').click();await expect(page.locator('#workflow-view')).toBeVisible();
+  await page.locator('[data-view="workflow"]').click();
+  // Expanding the results is now choosing the tab, and going back is choosing the other one.
+  await page.locator('[data-view="results"]').click();await expect(page.locator('#workflow-view')).toBeHidden();
+  await page.locator('[data-view="workflow"]').click();await expect(page.locator('#workflow-view')).toBeVisible();
   // Narrowing back to Direct-only evidence, through the filter editor.
   await select('access');await page.locator('#filter-values-0').fill('Direct');
   await page.locator('#filter-values-0').press('Tab');
   await select('facilities');await number('#param-radiusKm',1);await run();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics .unknown b')).toHaveText('21');
   // Switching examples preserves their independent local edits.
   await openWorkflow(page,'heat');await done();
@@ -70,9 +85,12 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   assert.deepEqual([0,1,2,3,4,5].map(i=>value(i,'zone')),['Unknown','Within5','Within5','Within15','Within30','Over30']);
   assert.deepEqual([0,1,2,3,4,5].map(i=>value(i,'decision')),['Unknown','NoFlag','NoFlag','NoFlag','NoFlag','Review']);
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await done();
+  await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab')).toHaveCount(4);await expect(page.locator('#result-metrics .review b')).toHaveText('21');
   await context.setOffline(false);await mkdir('test-results',{recursive:true});await page.screenshot({path:'test-results/old-naledi-desktop.png',fullPage:true});
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Access zones'}).click();await page.screenshot({path:'test-results/old-naledi-chart.png',fullPage:true});
+  await page.locator('[data-view="results"]').click();
   await page.setViewportSize({width:390,height:844});await page.getByRole('tab',{name:'Facility evidence'}).click();
   if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Mobile horizontal overflow');
   await page.screenshot({path:'test-results/old-naledi-mobile.png',fullPage:true});

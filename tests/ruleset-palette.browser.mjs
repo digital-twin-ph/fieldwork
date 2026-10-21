@@ -24,6 +24,7 @@ const identities=async()=>{
 test('the palette offers one rule-application widget, not one per ruleset',async({page})=>{
   await page.goto('/?example=snow-extent');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('#node-library [data-add="apply_ruleset"]')).toHaveCount(1);
   await expect(page.locator('#node-library [data-ruleset]')).toHaveCount(0);
   const expected=await identities();
@@ -34,6 +35,7 @@ test('adding one gives a node that says it has nothing to apply yet',async({page
   // On the worked example, because a blank canvas offers only the starter widgets.
   await page.goto('/?example=snow-extent');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="apply_ruleset"]').click();
 
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
@@ -49,6 +51,7 @@ test('adding one gives a node that says it has nothing to apply yet',async({page
 test('choosing a ruleset pins it, takes its defaults, and names the step',async({page})=>{
   await page.goto('/?example=snow-extent');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="apply_ruleset"]').click();
 
   // Only current versions are offered: a superseded rule is resolvable for a saved pin and is

@@ -35,6 +35,7 @@ test('a project holding a graph larger than the old 5 MB cap packages, opens and
       ?route.fulfill({json:{version:0.6,elements:[]}})
       :route.fulfill({body,contentType:'application/json'}));
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
   await page.locator('#network-input-method').selectOption('osm');
   await page.locator('#download-network').click();

@@ -13,6 +13,7 @@ const forWidget=type=>parity.entries.filter(e=>e.widget.split(':').pop()===type&
 test('a widget with a notebook offers it in the Inspector, above the fold',async({page})=>{
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="catchments"]').click();
 
   const panel=page.locator('#inspector-content details.dive-deeper');
@@ -52,6 +53,7 @@ test('the headings shown are the ones the ledger records, and a widget without o
 
   // The link text comes from the notebook's own section heading, so a practitioner reads what
   // the section is called rather than a label written separately and left to drift.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="clip"]').click();
   const panel=page.locator('#inspector-content details.dive-deeper');
   await panel.locator('summary').click();
@@ -60,6 +62,7 @@ test('the headings shown are the ones the ledger records, and a widget without o
   await expect(panel).toContainText(recorded[0].diveDeeper.replace(/^Dive deeper · /i,''));
 
   // A table output computes nothing and has no notebook; it must not claim one.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="table"]').click();
   await expect(page.locator('#inspector-content details.dive-deeper')).toHaveCount(0);
 });
@@ -70,6 +73,7 @@ test('the headings shown are the ones the ledger records, and a widget without o
 test('a widget with a lesson links the dive-deeper site, not the lab',async({page})=>{
   await page.goto('/?example=snow-geoprivacy');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="original-center"]').click();
 
   const link=page.locator('#inspector-content details.dive-deeper a').first();

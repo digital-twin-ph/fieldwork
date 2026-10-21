@@ -14,6 +14,7 @@ test('a basemap can be chosen on a static plot, and the map becomes one that can
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=snow-extent');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:30000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
 
   // Offered on a static plot, which is how every shipped map starts.
@@ -56,6 +57,7 @@ test('a map with no polygons can still take a basemap',async({page})=>{
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=old-naledi');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access-map"]').click();
 
   // Offered. It was absent entirely on this map before: decisions, not polygons.

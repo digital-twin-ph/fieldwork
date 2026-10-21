@@ -6,7 +6,7 @@ import {collectPageErrors} from './page-errors.mjs';
 test("Input formats and pushpin schemas",async({page,context})=>{
 const errors=collectPageErrors(page);
 const done=()=>expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
-const run=async()=>{await page.locator('#run-button').click();await done();};
+const run=async()=>{await page.locator('#run-button').click();await done();await page.locator('[data-view="results"]').click();};
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const row=id=>page.locator(`#result-rows [data-place="${id}"]`);
 const select=async id=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"]`).click();};
@@ -16,17 +16,21 @@ const input=async mode=>{await select('observations');await page.locator('#edit-
   // restoring it, and opening the study area from a record to widen it -- went with
   // `coverage_check` on 2026-10-21. The input half below was never about that widget: it is the
   // formats a practitioner can bring, and the typed attributes that must survive each of them.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
+  await page.locator('[data-view="results"]').click();
   await input('synthetic');await page.locator('#synthetic-inside').fill('3');await page.locator('#synthetic-outside').fill('1');await page.locator('#generate-input').click();await page.locator('#input-apply').click();await run();await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
   await input('csv');await page.locator('#input-file').setInputFiles({name:'points.csv',mimeType:'text/csv',buffer:Buffer.from('id,name,longitude,latitude,notes\na,"Clinic, A",25.90,-24.69,example\nb,Outside CSV,25.94,-24.69,review\n')});
   await expect(page.locator('#input-summary')).toContainText('2 draft');await page.locator('#input-apply').click();await run();
   // Both CSV records reach the map: the one with coordinates is drawn, and the one without is
   // listed as unplaceable under the id the clip carried it out with.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows [data-place]')).toHaveCount(2);assert.equal((await saved()).nodes.find(n=>n.id==='observations').params.data.features[0].properties.notes,'example');
   const gpkg=await pointGeoPackage();await input('gpkg');await page.locator('#input-file').setInputFiles({name:'points.gpkg',mimeType:'application/geopackage+sqlite3',buffer:Buffer.from(gpkg.bytes)});
   await expect(page.locator('#input-summary')).toContainText('2 draft');await expect(page.locator('#input-apply')).toBeEnabled();await page.locator('#input-apply').click();await run();
   // 'Review required' was the coverage check's word for a record outside the area. The map says
   // where the record stands and leaves the judgement to the reader.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows')).toContainText('Outside study area');assert.equal((await saved()).nodes.find(n=>n.id==='observations').params.data.features[0].properties.case_count,3);
   await input('pins');await page.locator('#pins-online').uncheck();const map=await page.locator('#pin-map').boundingBox();await page.mouse.click(map.x+map.width*.7,map.y+map.height*.7);
   await page.locator('#pin-name').fill('Field pin');await page.locator('#pin-longitude').fill('25.9');await page.locator('#pin-latitude').fill('-24.69');await page.locator('#pin-attr-0').fill('Community visit');await page.locator('[data-pin-key="notes"]').fill('First line\nSecond line');
@@ -46,6 +50,7 @@ const input=async mode=>{await select('observations');await page.locator('#edit-
   // The pin reached the output under its own id; which rows are SHOWN depends on the tab and any
   // search in force, which is not what this test is about.
   await expect(row(pin.id)).toHaveCount(1);
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Map'}).click();await page.screenshot({path:'test-results/coverage-map.png',fullPage:true});
   assert.equal(pin.properties.notes,'First line\nSecond line');
   assert.equal(pin.properties.visit_outcome,'Completed');assert.equal(pin.properties.visit_status,undefined);assert.equal(pin.properties.temporary,undefined);assert.equal((await saved()).nodes.find(n=>n.id==='observations').params.data.features[0].properties.visit_outcome,undefined);

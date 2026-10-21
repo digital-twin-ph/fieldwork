@@ -4,14 +4,16 @@ import {readFile,mkdir} from 'node:fs/promises';
 import {collectPageErrors} from './page-errors.mjs';
 test("Blank canvas, study-area drawing, labels and recovery",async({page,context})=>{
 const errors=collectPageErrors(page);
-const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});};
+const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});await page.locator('[data-view="results"]').click();};
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const open=async()=>{await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node').click();await page.locator('#edit-study-area').click();await expect(page.locator('#area-dialog')).toBeVisible();};
 const points=async(list)=>{const b=await page.locator('#area-map').boundingBox();for(const [x,y] of list)await page.mouse.click(b.x+b.width*x,b.y+b.height*y);};
   await mkdir('test-results',{recursive:true});
   await page.goto('/?example=blank');
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(0);await expect(page.locator('#run-button')).toBeDisabled();
   await page.screenshot({path:'test-results/study-area-empty.png',fullPage:true});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#blank-add').click();await expect(page.locator('.react-flow__node')).toHaveCount(1);
   assert.equal((await saved()).nodes[0].params.geometry,null);
   await page.locator('#edit-study-area').click();
@@ -29,12 +31,17 @@ const points=async(list)=>{const b=await page.locator('#area-map').boundingBox()
   const areaId=(await saved()).nodes[0].id,label='Old Naledi <pilot> & study';
   await page.locator('#study-area-label').fill(label);await page.locator('#study-area-label-form button').click();
   assert.equal((await saved()).nodes[0].id,areaId);assert.deepEqual((await saved()).nodes[0].params.geometry,box);
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toContainText(label);
   await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('not executed evidence');
   await run();await expect(page.locator('#area-semantic-graph')).toContainText('Ready for spatial analysis');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#n3-preview')).toContainText(`rdfs:label "${label}"`);await expect(page.locator('#map')).toContainText(label);
   await expect(page.locator('#n3-preview')).toContainText('"true"^^<http://www.w3.org/2001/XMLSchema#boolean>');
+  await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab')).toHaveCount(1);
+  // The run receipt is downloaded from the N3 & evidence view, which is its own tab now.
+  await page.locator('[data-view="rules"]').click();
   const receiptDownload=page.waitForEvent('download');await page.locator('#download-evidence').click();
   const receipt=JSON.parse(await readFile(await (await receiptDownload).path(),'utf8'));
   assert.equal(receipt.outputs[0].ready,true);assert.equal(receipt.receipts.length,1);
@@ -51,7 +58,9 @@ const points=async(list)=>{const b=await page.locator('#area-map').boundingBox()
   await page.locator('#undo-button').click();assert.deepEqual((await saved()).nodes[0].params.geometry,box);
   await page.locator('#redo-button').click();assert.deepEqual((await saved()).nodes[0].params.geometry,polygon);
   const workflowDownload=page.waitForEvent('download');await page.locator('#export-button').click();const exported=await readFile(await (await workflowDownload).path());
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#new-workflow').click();await expect(page.locator('.react-flow__node')).toHaveCount(0);
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#workflow-file').setInputFiles({name:'study.json',mimeType:'application/json',buffer:exported});await expect(page.locator('.react-flow__node')).toHaveCount(1);assert.deepEqual((await saved()).nodes[0].params.geometry,polygon);
   await run();await expect(page.locator('#offline-status')).toContainText('Available offline');
   await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});

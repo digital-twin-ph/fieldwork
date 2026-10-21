@@ -16,13 +16,19 @@ test('the sea-level workflow runs, states its refusals and replays offline',asyn
 
   // Clinic A: 0.77 m projected against 0.90 m supplied, so it stays below. Clinic B: 0.58 against
   // 0.40, so it reaches. The unlocated clinic has no site and therefore no comparison.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('1 flagged for review');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('1 no flag');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('1 insufficient data');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows')).toContainText('Clinic A');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows')).toContainText('Clinic B');
 
   // The inspector states what the comparison is and is not.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').filter({hasText:'Compare level to elevation'}).click();
   await expect(page.locator('.inspector')).toContainText('comparison of two numbers');
   await expect(page.locator('.inspector')).toContainText('never be presented as a flood extent');
@@ -30,6 +36,7 @@ test('the sea-level workflow runs, states its refusals and replays offline',asyn
   await expect(page.locator('#slr-elevation')).toHaveValue('elevation_m');
 
   // The extract's obligations are visible on its own node.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').filter({hasText:'AR6 extract'}).click();
   await expect(page.locator('.inspector')).toContainText('three citations obligatory');
   await expect(page.locator('#slr-baseline')).toHaveValue('1995-2014');
@@ -49,6 +56,7 @@ test('the sea-level workflow runs, states its refusals and replays offline',asyn
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('1 flagged for review');
   await page.screenshot({path:'test-results/sea-level-comparison.png',fullPage:true});
   assert.deepEqual(errors,[]);

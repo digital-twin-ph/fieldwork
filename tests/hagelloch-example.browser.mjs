@@ -31,9 +31,11 @@ test('Hagelloch runs offline, and its awkward columns are not cleaned up',async(
   // And the original local frame is still on every record, so the georeference is reversible.
   expect(cases.params.data.features.every(f=>typeof f.properties.x_loc==='number')).toBe(true);
 
+  await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Epidemic curve · by day of prodrome'}).click();
   // 1861-10-30 to 1862-01-24 is 87 days, one bin each: the curve is drawn from the same 188
   // records the map below is drawn from, which is what this example exists to show.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('87 rows');
 
   // Offline, like every other example.

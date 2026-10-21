@@ -28,10 +28,13 @@ test('a republished worked example says so, and nothing is replaced without aski
   await expect(toast).toHaveClass(/warning/);
   // The saved workspace is untouched until they ask. Discarding somebody's work in order to
   // deliver news is not an improvement on withholding the news.
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(1);
 
   await toast.getByText('Load the published version').click();
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(14,{timeout:20000});
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node').filter({hasText:'Snow 1855 Table 1'}).first()).toBeVisible();
 
   // And it does not nag afterwards: the workspace now records which published version it came

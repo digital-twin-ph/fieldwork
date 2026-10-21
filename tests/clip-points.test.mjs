@@ -74,3 +74,20 @@ test('a boundary point refused by the strict setting is still shown',()=>{
   assert.deepEqual(got.collection.features,[]);
   assert.deepEqual(got.excluded.map(f=>f.id),['on']);
 });
+
+test('a coordinate that is not a number is no location, and does not stop the run',()=>{
+  // Reported 2026-10-21 on a map of three facility sources: "Workflow stopped: Invalid LatLng
+  // object: (NaN, NaN)". A source whose coordinate column would not parse produced [NaN,NaN];
+  // booleanPointInPolygon answers false for it as it answers false for anything it cannot place,
+  // so the record was called OUTSIDE, carried as an excluded point, and handed to Leaflet, which
+  // refused it and took the whole run with it. Outside is a finding about a place; a coordinate
+  // that is not a number is a finding about the data.
+  const broken={type:'Feature',id:'broken',properties:{name:'Unparsed'},
+    geometry:{type:'Point',coordinates:[Number.NaN,Number.NaN]}};
+  const got=clipPointsToArea({type:'FeatureCollection',features:[point('in',1,1),broken]},SQUARE,true);
+  assert.equal(got.inside,1);
+  assert.equal(got.outside,0,'not outside: nobody could place it');
+  assert.equal(got.missing,1);
+  assert.deepEqual(got.collection.features.map(f=>f.id),['in'],'and it is not kept');
+  assert.deepEqual(got.excluded.map(f=>f.id),['broken'],'but it still travels, to be listed');
+});

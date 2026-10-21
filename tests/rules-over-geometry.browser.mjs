@@ -42,12 +42,15 @@ const run=async(page,w)=>{
 };
 
 const decision=async page=>{
+  // Results is a tab since 2026-10-21, so reading one means opening it first.
+  await page.locator('[data-view="results"]').click();
   // The DECISION, read from the results table -- not from the page text. The N3 panel prints the
   // rules, and those contain the words "Review", "NoFlag" and "Unknown" whatever the run
   // concluded, so matching the body passes for the wrong reason and fails for the wrong reason.
   const tabs=page.locator('#result-tabs [data-output]');
   for(let i=0;i<await tabs.count();i++)
     if(/decision/i.test((await tabs.nth(i).textContent())||'')){await tabs.nth(i).click();break;}
+  await page.locator('[data-view="results"]').click();
   const row=page.locator('#result-rows tr').first();
   await expect(row).toBeVisible({timeout:15000});
   return (await row.textContent())||'';
@@ -84,6 +87,7 @@ test('the composite replaces the hull and the ruleset, and the example keeps eve
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
   // The hand-wired answer, to compare against.
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tab-decisions').click();
   // The hull encloses 0.139 km2 against a 0.250 km2 threshold, so the answer is NoFlag with the
   // comparison spelled out. Both travel on the polygon now, which is why they are in this table.
@@ -125,12 +129,17 @@ test('the composite replaces the hull and the ruleset, and the example keeps eve
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
   // One node on the canvas, four edges intact, and the same answer.
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="composite"]')).toBeVisible();
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tab-decisions').click();
+  await page.locator('[data-view="results"]').click();
   const after=await page.locator('#result-rows').textContent();
   expect(after).toContain('NoFlag');
   expect(after).toContain('Encloses 0.139 km²');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-tab-map').click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map path')).not.toHaveCount(0);
 
   // One receipt per member, which is what a composition owes: it may not claim its members' work.

@@ -14,6 +14,7 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await page.goto('/?example=blank');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
 
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="table_input"]').click();
   await expect(page.locator('.inspector')).toContainText('none chosen');
   await expect(page.locator('.inspector')).toContainText('None; a table is not a point set');
@@ -54,9 +55,13 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
 
   await page.locator('#add-table-view').click();
   await page.locator('#run-button').click();
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs')).toContainText('Imported table',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('6 rows');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('1 values absent');
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('value in metre');
 
   const grid=page.locator('#data-table-view');
@@ -68,9 +73,11 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await expect(grid.locator('tbody tr').last().locator('td').last()).toHaveText('unknown');
   await expect(grid.locator('tbody tr').nth(0).locator('td').last()).toHaveText('0.21');
 
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-search').fill('0303500000');
   await expect(grid.locator('tbody tr')).toHaveCount(2);
   await expect(grid.locator('.table-meta')).toContainText('2 of 6 rows');
+  await page.locator('[data-view="results"]').click();
   await page.locator('#result-search').fill('');
   await expect(grid.locator('tbody tr')).toHaveCount(6);
 
@@ -84,6 +91,7 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
   await context.setOffline(true);
   await page.reload();
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node').filter({hasText:'Tabular data'})).toContainText('6 rows');
   await page.screenshot({path:'test-results/table-input.png',fullPage:true});
 });
@@ -91,6 +99,7 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
 test('a table that is not long format is refused with a recoverable draft',async({page})=>{
   await page.goto('/?example=blank');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="table_input"]').click();
   await page.locator('#open-table').click();
 

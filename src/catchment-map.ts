@@ -157,6 +157,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   }
   const observations=L.featureGroup();
   for(const f of p.observations?.features||[]){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates,n=f.properties.DEATHS;
+    if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
     const radius=typeof n==='number'&&Number.isFinite(n)&&n>0?Math.max(2,Math.min(20,n)):3;
     L.circleMarker([lat,lon],{radius,color:'#222',weight:1,fillColor:'#d62f2f',fillOpacity:.85}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${typeof n==='number'?`<br>Deaths: ${n}`:''}`).addTo(observations);
   }
@@ -168,6 +169,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   if(observations.getLayers().length){observations.addTo(map);all.addLayer(observations);overlays['Observations (red circles)']=observations;}
   const pumps=L.featureGroup(),points=context?.features||p.sites;
   for(const f of points){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates;
+    if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
     const marker=L.marker([lat,lon],{zIndexOffset:1000,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
     marker.on('add',()=>{const icon=marker.getElement();if(icon){L.DomEvent.disableClickPropagation(icon);icon.addEventListener('mousedown',event=>event.preventDefault());icon.addEventListener('click',event=>{event.stopPropagation();marker.openPopup();});}});
   }
@@ -200,6 +202,9 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       for(const row of rows){
         if(!row.coordinates)continue;
         const [lon,lat]=row.coordinates;
+        // Belt and braces for a row from a run saved before the relation was fixed: Leaflet
+        // throws on a non-finite pair, and a stored result must not be able to stop a render.
+        if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
         // The class the map resolved, not a variable this renderer knows. A row from an older
         // value carries none, so the encoding is applied here instead -- which is the same table,
         // read in the same place, rather than a second opinion hard-coded in the drawing code.
@@ -245,6 +250,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     for(const center of layers.centers){
       if(!center.geometry)continue;
       const [lon,lat]=center.geometry.coordinates;
+      if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
       // ABOVE the point marks. Facility marks became icons on 2026-10-21 so they could carry a
       // halo, which moved them from the overlay pane into the marker pane -- where a dense layer
       // covered the site markers and swallowed their clicks. A custom pane fixed the stacking and

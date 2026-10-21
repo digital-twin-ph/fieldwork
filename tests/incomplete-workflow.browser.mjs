@@ -12,6 +12,7 @@ test('a workflow with nothing to display is unfinished, not failed',async({page}
   const errors=collectPageErrors(page);
   await page.goto('/?example=blank');
   await expect(page.locator('#workflow-state')).toBeVisible({timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="network_input"]').click();
   await page.locator('#run-button').click();
 

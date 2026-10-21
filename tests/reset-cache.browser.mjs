@@ -48,8 +48,10 @@ test('?reset-cache=1 unregisters the worker, empties the caches, and reloads cle
   // signature of a test racing the application rather than a defect in it. 2026-10-17.
   const before=await page.evaluate(()=>
     JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{"nodes":[]}').nodes.length);
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(before,{timeout:30000});
   await page.locator('#node-library [data-add]').first().click();
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(before+1);
   expect(errors).toEqual([]);
 });

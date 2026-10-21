@@ -43,8 +43,7 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
   .resizable-panels>.work-area{min-width:0;min-height:0;overflow:hidden}
   .resizable-panels>.library,.resizable-panels>.inspector{min-width:0;overflow:auto}
   .resizable-panels .canvas-view,.resizable-panels .rules-view{flex:1 1 0;min-height:180px;max-height:none}
-  main.resizable-panels .work-area .results-panel{height:var(--results-size,335px);min-height:200px;overflow:auto;flex:0 0 var(--results-size,335px)}
-  main.resizable-panels .work-area.results-expanded .results-panel{height:auto;flex:1;min-height:0}
+  main.resizable-panels .work-area .results-panel{height:auto;min-height:0;flex:1 1 auto;overflow:auto}
   .resizable-panels .panel-divider{display:block;touch-action:none;background:var(--surface-tint-14);z-index:6;outline-offset:-2px}
   .panel-divider::after{content:'';position:absolute;background:var(--line-8);border-radius:3px}
   .panel-divider:hover,.panel-divider:focus-visible{background:var(--line-soft-11);outline:2px solid var(--accent-1)}
@@ -52,9 +51,6 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
   .library-divider{left:calc(var(--library-size) - 4px)}
   .inspector-divider.panel-divider{right:calc(var(--inspector-size) - 4px)}
   .library-divider::after,.inspector-divider.panel-divider::after{height:34px;width:2px;top:50%;left:3px}
-  .results-divider{position:relative;height:8px;flex:0 0 8px;cursor:row-resize}
-  .results-divider::after{width:34px;height:2px;top:3px;left:calc(50% - 17px)}
-  .results-expanded .results-divider{display:none}
   .resizing-panels,.resizing-panels *{user-select:none!important}
 }
 @media(max-width:850px){#reset-layout{display:none}}
@@ -445,3 +441,10 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .rule-field{font-weight:600}
 .rule-op{color:var(--text-faint-3)}
 .rule-value{font-weight:700;background:var(--surface-tint-1);border-radius:4px;padding:1px 5px}
+
+/* RESULTS IS A TAB. One of the three views is on screen at a time, so the canvas and the results
+   never share the height and neither is half-visible. */
+.work-area.showing-results>.canvas-view,.work-area.showing-results>.rules-view{display:none!important}
+.work-area:not(.showing-results)>.results-panel{display:none}
+.work-area.showing-results>.results-panel{display:flex;flex:1 1 auto;min-height:0;height:auto;max-height:none;overflow:auto}
+.work-area.showing-results>.results-panel>.results-heading{position:sticky;top:0;z-index:7;background:var(--surface-raised-1)}

@@ -11,9 +11,13 @@ test('N3 tab shows conforming canvas RDF for unfinished widgets',async({page})=>
   await page.goto('/?example=blank');
   // Place an input first, which is what a canvas with nothing on it now offers. raster_input
   // takes an area, so it is a process step by the stage rule however much it looks like a source.
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="study_area"]').click();
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(1);
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="raster_input"]').click();
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(2);
   await page.locator('[data-view="rules"]').click();
   const shown=await page.locator('#n3-preview').innerText();

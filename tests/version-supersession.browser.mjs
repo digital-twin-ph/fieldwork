@@ -44,6 +44,7 @@ test('a step pinned to a superseded ruleset says so, and says what moving costs'
     localStorage.setItem('fieldwork-examples-v1',JSON.stringify(workspaces));
   });
   await page.reload();
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="review"]').click();
 
   // Named as not a drop-in, because the ports moved: that decides whether the practitioner is
@@ -102,6 +103,7 @@ test('the Inspector says what the offered version of a widget changed',async({pa
   // enough to lose this and every Chromium run won it, which is the signature of a test racing
   // the application. Found 2026-10-17 by running the suite as the gate configures it.
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   const inspector=page.locator('#inspector-content');
   await expect(inspector).not.toContainText('Choose a node to inspect');

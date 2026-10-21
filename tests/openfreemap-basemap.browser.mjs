@@ -17,11 +17,14 @@ test('an OpenFreeMap vector style draws under the workflow layers, and is credit
   await page.goto('/?example=hagelloch');
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   await page.locator('#polygon-presentation').selectOption('interactive');
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 
+  // The basemap control is in the map's own toolbar, so it is on the results tab.
+  await page.locator('[data-view="results"]').click();
   // Six basemaps: offline, two raster, three vector designs.
   await expect(page.locator('[data-basemap] option')).toHaveText([
     'None \u00b7 works offline','OpenStreetMap streets','OpenTopoMap terrain',
@@ -32,6 +35,7 @@ test('an OpenFreeMap vector style draws under the workflow layers, and is credit
   // The VECTOR BASEMAP's own canvas, named rather than counted: since 2026-10-20 the workflow's
   // boundary is canvas-rendered too, so "one canvas in the map" stopped meaning "the basemap
   // drew". MapLibre's canvas carries its own class.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('.maplibregl-canvas')).toHaveCount(1);
   expect(requested.some(u=>u.includes('/styles/positron'))).toBe(true);
 
@@ -50,11 +54,13 @@ test('an OpenFreeMap vector style draws under the workflow layers, and is credit
     .toBeGreaterThan(0);
 
   // The workflow's own layers are untouched: only layer 0 changed.
+  await page.locator('[data-view="results"]').click();
   await expect(page.locator('.leaflet-marker-icon, .leaflet-interactive')).toHaveCount(188);
 
   // ATTRIBUTION IS A LICENCE TERM. The bridge does not carry it -- passing `attribution` to the
   // layer did nothing and the control read "Leaflet" alone, which is this map drawing somebody
   // else's data with no credit.
+  await page.locator('[data-view="results"]').click();
   const credit=page.locator('.leaflet-control-attribution');
   // THIS ASSERTION WAITS ON A THIRD PARTY. The credit is surfaced from the style's own TileJSON,
   // so it arrives when that fetch and parse complete, and the default ten seconds measures

@@ -42,6 +42,7 @@ test('a browser with no large store says so on the widget, before a download rat
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   assert.match(await toasts(page),/would not open the large store/);
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
   await page.locator('#network-input-method').selectOption('osm');
   await expect(page.locator('#network-store-warning')).toContainText('about 5 MB in total');
@@ -50,6 +51,7 @@ test('a browser with no large store says so on the widget, before a download rat
 
 test('the warning is absent where the large store works, so it means something when it appears',async({page})=>{
   await page.goto('/?example=snow-isochrone');
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
   await page.locator('#network-input-method').selectOption('osm');
   await expect(page.locator('#network-store-warning')).toHaveCount(0);

@@ -7,7 +7,7 @@
 .input-editor-body textarea{width:100%;padding:8px;border:1px solid var(--line);border-radius:5px;font:inherit;resize:vertical}
 .map-missing-records{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.map-missing-records[hidden]{display:none}.map-missing-records button{white-space:normal;text-align:left;max-width:100%}
 .map-layer-list{display:flex;flex-wrap:wrap;gap:8px 16px;margin:12px 0;font-size:11px}.map-layer-list[hidden]{display:none}.map-layer-list label{overflow-wrap:anywhere}.pin-attribute{padding:8px 0;border-bottom:1px solid var(--line-soft-15)}.pin-new-pair{margin:16px 0;padding:10px;border:1px solid var(--line-soft-16);border-radius:6px;min-width:0}.pin-new-pair legend{font-size:12px}.pin-new-pair small{display:block;margin-top:8px}
-.results-panel.spatial-results{height:auto;min-height:420px}.spatial-results #map-panel{flex:none;height:320px;min-height:320px}.results-expanded .spatial-results #map-panel{height:60vh}.spatial-results #map-layer-list,.spatial-results #map-missing-records{margin:8px 18px}.spatial-results #map-spatial-notice{margin:8px 18px}
+.results-panel.spatial-results{height:auto;min-height:420px}.spatial-results #map-panel{flex:none;height:320px;min-height:320px}.spatial-results #map-layer-list,.spatial-results #map-missing-records{margin:8px 18px}.spatial-results #map-spatial-notice{margin:8px 18px}
 .studio:has(.spatial-results){height:auto}.pin-attribute small{display:block;margin:5px 0}.pin-attribute .text-button{margin-top:4px}
 .pin-record-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:12px 0}.pin-record-actions label{font-size:12px}.pin-field-help{font-size:11px!important;line-height:1.5!important;margin:5px 0 8px!important;color:var(--text-muted-4)!important}#input-dialog .area-dialog-actions{flex-wrap:wrap}#input-discard-prompt{flex-basis:100%;padding:8px;border:1px solid var(--warning-wash-7);border-radius:6px;background:var(--warning-wash-3)}#input-discard-prompt p{margin:0 0 8px}#input-discard-prompt button{margin-right:8px}
 #input-dialog #input-error{flex-basis:100%;display:flex;align-items:flex-start;gap:12px;margin:0;padding:12px 14px;border:2px solid var(--danger-5);border-left-width:6px;border-radius:7px;background:var(--danger-wash-3);color:var(--danger-10);line-height:1.4;box-shadow:0 2px 8px var(--shadow-16)}
@@ -43,7 +43,10 @@ body.focus-workbench,body.focus-results{overflow:hidden}
 body.focus-workbench .work-area,body.focus-results .work-area{position:fixed;inset:0;z-index:100;background:var(--surface-raised-1);min-width:0;min-height:0;overflow:hidden}
 body.focus-workbench .work-area .results-panel,body.focus-workbench .work-area .results-divider{display:none!important}
 body.focus-workbench .work-area #workflow-view:not([hidden]),body.focus-workbench .work-area #rules-view:not([hidden]){display:block!important;flex:1 1 auto;height:auto;min-height:0;max-height:none}
-body.focus-results .work-area .canvas-toolbar,body.focus-results .work-area .canvas-view,body.focus-results .work-area .rules-view,body.focus-results .work-area .results-divider{display:none!important}
+/* The TAB STRIP STAYS. It carries the only full-screen control and the three tabs, and hiding it
+   left full screen with no way out but Escape -- a control that hides itself. The canvas and
+   the N3 view are what full screen is clearing away. */
+body.focus-results .work-area .canvas-view,body.focus-results .work-area .rules-view{display:none!important}
 body.focus-results .work-area .results-panel,body.focus-results main.resizable-panels .work-area .results-panel{display:flex!important;flex:1 1 auto;height:100%;min-height:0;max-height:none;overflow:auto}
 body.focus-results .work-area .results-heading{position:sticky;top:0;z-index:7;background:var(--surface-raised-1)}
 /* Full screen is a RENDER, not a container. Reported 2026-10-20: *"whether in Safari or Chrome,
@@ -72,3 +75,14 @@ body.focus-results #map-panel:not([hidden]) #map-communication{flex:none}
 @media(max-width:850px){main.studio.library-collapsed{display:block}.studio.library-collapsed>.library{display:none}.canvas-toolbar{height:auto;min-height:48px;flex-wrap:wrap;gap:4px}.toolbar-actions{flex-wrap:wrap;justify-content:flex-end}#toggle-library,#fullscreen-workbench,#fullscreen-results{font-size:10px}}
 /* A divIcon is a white box with a border by default, which would frame every mark. */
 .catchment-point-mark{background:none;border:0}
+
+/* THE MAP TAKES THE PANEL. Reported 2026-10-21: *"the map extent sits at about half the results
+   panel, not utilizing available screen real estate."* The map was given a fixed 320px band and
+   the canvas inside it 520px, numbers chosen when the results were the lower half of a split and
+   the panel itself was 335px tall. The panel is now a whole view, so the map grows into it and
+   the heading, the figure title, the toolbar and the source note take what they need. */
+.work-area.showing-results .results-panel.spatial-results{display:flex;flex-direction:column;min-height:0}
+.work-area.showing-results .spatial-results #map-panel:not([hidden]){display:flex;flex-direction:column;flex:1 1 auto;height:auto;min-height:260px;overflow:auto}
+.work-area.showing-results #map-panel:not([hidden]) #catchment-map-host{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.work-area.showing-results #map-panel:not([hidden]) .catchment-leaflet{flex:1 1 auto;height:auto;min-height:260px}
+.work-area.showing-results #map-panel:not([hidden])>#map{flex:1 1 auto;height:auto;min-height:260px;max-height:none;aspect-ratio:auto}

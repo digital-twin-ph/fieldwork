@@ -37,7 +37,10 @@ test('Table displays point attributes without a boundary, pages, searches, and r
   await page.locator('[data-view="results"]').click();
   await page.locator('#result-search').fill('needle104');await expect(page.locator('#result-rows [data-place]')).toHaveCount(1);
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('#result-rows')).toContainText('Not supplied');
+  // An absent cell reads as absent since 2026-10-21, not as the words "Not supplied": it is not
+  // a value, so it does not sort as one and the row filter does not match it.
+  await expect(page.locator('#result-rows')).not.toContainText('Not supplied');
+  await expect(page.locator('#result-rows td[data-absent]').first()).toBeVisible();
   await page.locator('[data-view="results"]').click();
   await page.getByRole('button',{name:'Next attributes',exact:true}).click();await expect(page.locator('#result-head')).toContainText('notes');await expect(page.locator('#result-rows')).toContainText('<script>needle104</script>');await expect(page.locator('#result-rows script')).toHaveCount(0);
   await page.locator('[data-view="results"]').click();

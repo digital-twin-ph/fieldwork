@@ -336,6 +336,25 @@
         }
       ]
     },
+    "deduplicate_points": {
+      "output": "points",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "points",
+              "points"
+            ],
+            [
+              "points_2",
+              "points"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "clip_points_to_area": {
       "output": "points",
       "contracts": [

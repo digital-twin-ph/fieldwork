@@ -549,6 +549,48 @@ uses, and it already refuses to compute without `numeratorPeriod` and `denominat
 geographic frame — 1851 registration sub-districts — is the piece most likely to carry
 non-commercial terms, which is the GADM problem again.
 
+**Built 2026-10-21: `deduplicate_points`.** The practitioner asked for it on 2026-10-20 — *"health
+facilities can be deduplicated by name and point location. By name can be algorithmic match or
+exact match, but we can study the OSM and Overture Places data sets before we decide what would
+work"* — and this entry said the rule was the unknown and should be measured first.
+
+What changed is where the rule came from. On 2026-10-21 the practitioner pointed at `EPIAI
+RECORDLINK` in their own `epi-info-ai` repository, where the contracts were already settled:
+blocking before comparison, binary contributions rather than a blended score, three classes rather
+than merge-or-not, missing never agreeing with missing, and an authority boundary that classifies
+without deciding. The widget takes those and adds the spatial comparison.
+
+So the rule is not guessed — but **the thresholds still are**, and the release says so: they are
+proposals, not measurements. What this entry asked for is still owed, and is now cheaper to get
+because the widget reports it: run it over North Kivu's OSM, Overture and HDX layers with a
+generous blocking distance, and read off how many pairs match exactly by name, how many only after
+normalisation, and the distance distribution of the candidates. That is the evidence the defaults
+should be set from.
+
+**Worked examples as repositories, starting with Snow's South London water supply study.** The
+practitioner, 2026-10-20: *"We also have the potential to set up a downloadable worked example from
+a repo - the water provider study by John Snow in South London"*, and *"worked examples do not have
+to occupy space in the downloaded app, we can set them up as repos read from a curated manifest."*
+
+Recorded in [experiment 127](experiments/127-examples-as-repositories.md) with the measurement and
+the rule analysis. Three things are known and are the reason it is here rather than in progress:
+
+- **The rule already permits it.** Experiment 49 records that preparation may download *resources*,
+  never widget *definitions*; an example declares no node type, so `runtimeFetching: "none"` does
+  not reach it. No admission rule has to change, and nobody should propose amending one.
+- **The saving is 9% today.** 1.0 MB of an 11.25 MB precache is example data, 640 KB of it a single
+  GraphML. The case rests on the examples not yet written — the cross-border archetype's would carry
+  ten countries of boundaries, rasters and routes.
+- **The cheapest first step is a read, not a build.** `examples/snow-gboh/provenance.json` pins
+  `snow.zip` at a digest and its documentation names **8 datasets**, of which 2 were extracted. If
+  the sub-district table is among them, the licence analysis and the NOTICE already exist. This has
+  not been checked, and it needs network this environment does not have.
+
+The example would be the first in the project to divide by a population: `rate` has zero example
+uses, and it already refuses to compute without `numeratorPeriod` and `denominatorVintage`. The
+geographic frame — 1851 registration sub-districts — is the piece most likely to carry
+non-commercial terms, which is the GADM problem again.
+
 **A deduplication primitive, after the data says how to match.** The practitioner, 2026-10-20,
 with an OpenStreetMap search and an Overture Places search on one map: *"The other primitive we
 would need is a deduplication widget. For example, health facilities can be deduplicated by name

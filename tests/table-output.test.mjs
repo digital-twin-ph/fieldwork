@@ -61,7 +61,11 @@ test('Table paging and search include off-page rows and attributes and escape us
   const output={kind:'point-table',rows},first=pointTableMarkup(output,esc);
   assert.equal((first.body.match(/data-place=/g)||[]).length,100);assert.match(first.controls,/1–100 of 105/);assert.doesNotMatch(first.head,/field14/);
   const next=pointTableMarkup(output,esc,{page:1,attributePage:1});assert.equal((next.body.match(/data-place=/g)||[]).length,5);
-  assert.match(next.head,/field14/);assert.match(next.body,/&lt;script&gt;/);assert.match(next.body,/<td>false<\/td>/);assert.match(next.body,/<td>0<\/td>/);assert.match(next.body,/Not supplied/);
+  assert.match(next.head,/field14/);assert.match(next.body,/&lt;script&gt;/);assert.match(next.body,/<td>false<\/td>/);assert.match(next.body,/<td>0<\/td>/);
+  // `false` and `0` are VALUES and are drawn; an absent cell is not, and says which kind of
+  // absence it is. It used to read "Not supplied", which a reader could not tell from data.
+  assert.doesNotMatch(next.body,/Not supplied/);
+  assert.match(next.body,/data-absent="empty"/);
   const search=pointTableMarkup(output,esc,{query:'alert(1)'});assert.equal((search.body.match(/data-place=/g)||[]).length,1);assert.match(search.body,/Visit 104/);
   assert.match(pointTableMarkup(output,esc,{query:'not-a-record'}).body,/No matching records/);
   assert.match(pointTableMarkup({rows:[]},esc).body,/No point records/);

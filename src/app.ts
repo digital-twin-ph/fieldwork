@@ -56,6 +56,8 @@ import {oldInspector,oldEvidence,resultTable,oldMap,distanceText} from './old-na
 import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
 import {isPointPort} from './point-layers.js';
 import {EXAMPLE_TEMPLATES,hasExampleTemplate} from './example-templates.js';
+import {pairSignature} from './deduplicate-points.js';
+import {openDeduplicateReview} from './deduplicate-ui.js';
 import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds,storageRefusal} from './study-area.js';
 import {loadPayloads,putPayload,cachedPayloads,payloadStoreKind,payloadBytes,onStoreDegraded} from './payload-store.js';
 import {openStudyAreaEditor} from './study-area-map.js';
@@ -1002,7 +1004,7 @@ function renderLibrary(search=''){
       :type==='facilities'?{type:'facilities' as const,params:{dataset:DATASET,radiusKm:5,sourceMode:'connected' as const}}
       :type==='facility_audit'?{type:'facility_audit' as const,params:{} as Record<string,never>}
       :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
-      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
+      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
     // in, from the mean longitude of every coordinate already configured. The parameter stays: a
@@ -1326,7 +1328,66 @@ function renderInspector(){
       +`<p class="muted">A point on the border is in that jurisdiction's edge. Unticked, only points strictly within are kept \u2014 which is what GeoSPARQL's sfWithin means, and it gives a different count on the data where it matters.</p>`
       +`<label class="field-option"><input type="checkbox" data-param="showExcluded"${n.params.showExcluded!==false?' checked':''}> Show the excluded points on a connected map</label>`
       +`<p class="muted">They are drawn in the colour the map already uses for outside, and are not passed to anything downstream. A count tells you how many were set aside; seeing them tells you whether setting them aside was right.</p>`;
-  }else if(n.type==='find_health_facilities'){
+  }else if(n.type==='deduplicate_points'){
+    const p=n.params,linkage=result?.linkages?.[n.id];
+    content+=labelForm('dedup-label','Node label',p.label||'Deduplicated records')
+      +`<p class="description">Finds records in two or more sources that are the same place. A pair must pass BOTH tests to merge on its own; passing one asks you.</p>`
+      +`<label class="field-label" for="dedup-name-field">Name attribute</label>`
+      +`<input id="dedup-name-field" data-dedup="nameField" maxlength="60" value="${esc(p.nameField)}">`
+      +`<label class="field-label" for="dedup-name-match">Name comparison</label>`
+      +`<select id="dedup-name-match" data-dedup="nameMatch">`
+      +`<option value="fuzzy" ${p.nameMatch==='fuzzy'?'selected':''}>Jaro-Winkler similarity</option>`
+      +`<option value="exact" ${p.nameMatch==='exact'?'selected':''}>Exact, after normalising</option>`
+      +`</select>`
+      +(p.nameMatch==='fuzzy'?`<label class="field-label" for="dedup-fuzzy">Similarity at or above</label>`
+        +`<input id="dedup-fuzzy" data-dedup="fuzzyThreshold" type="number" min="0.5" max="1" step="0.01" value="${p.fuzzyThreshold}">`:'')
+      +`<label class="field-label" for="dedup-block">Compare pairs within (m)</label>`
+      +`<input id="dedup-block" data-dedup="blockDistanceM" type="number" min="1" max="50000" step="10" value="${p.blockDistanceM}">`
+      +`<p class="muted">Pairs further apart than this are never compared. It is the blocking rule, and the receipt says how many pairs it withheld.</p>`
+      +`<label class="field-label" for="dedup-near">Count as the same place within (m)</label>`
+      +`<input id="dedup-near" data-dedup="nearDistanceM" type="number" min="1" max="50000" step="5" value="${p.nearDistanceM}">`
+      +`<p class="muted">Two sources digitise a building, a compound and a signpost differently, so this is a measurement on your data rather than a default worth trusting.</p>`
+      +`<label class="field-label" for="dedup-match">Merge automatically at a score of</label>`
+      +`<input id="dedup-match" data-dedup="matchThreshold" type="number" min="1" max="2" step="1" value="${p.matchThreshold}">`
+      +`<label class="field-label" for="dedup-review">Ask me at a score of</label>`
+      +`<input id="dedup-review" data-dedup="reviewThreshold" type="number" min="0" max="2" step="1" value="${p.reviewThreshold}">`
+      +`<p class="muted">A pair scores one point for the name and one for the distance. Two means both agreed; one means they disagree about something and the answer is yours.</p>`;
+    if(linkage){
+      const waiting=linkage.candidates.filter(c=>c.classification==='review'&&!c.decided);
+      const review=linkage.candidates.filter(c=>c.classification==='review').length;
+      const considered=linkage.compared+linkage.blocked;
+      // EVERY OUTCOME IN ONE TABLE, each against the two denominators that mean something: how
+      // much of the whole comparison it was, and how much of what was actually compared. The
+      // practitioner, 2026-10-21, with 48 pairs waiting outside the summary that reported the run:
+      // *"the 48 review pairs should be included in the THIS RUN summary ... as a table with
+      // percentage over total and percentage over pairs compared."* 379 matched reads differently
+      // at 69% of what was compared than at 0.3% of what was considered, and both are true.
+      // Two decimals only where one would read as zero: 0.29% of 132,317 pairs is a real
+      // quantity and "0.3%" hides how small it is, while a plain zero is a zero.
+      const share=(n:number,of:number)=>!of?'—':!n?'0%':`${(n/of*100).toFixed(n/of<0.01?2:1)}%`;
+      const row=(label:string,count:number,{compared=true,emphasis=false}={})=>
+        `<tr${emphasis?' class="emphasis"':''}><th scope="row">${label}</th><td>${count.toLocaleString()}</td>`
+        +`<td>${share(count,considered)}</td><td>${compared?share(count,linkage.compared):'—'}</td></tr>`;
+      content+=`<div class="inspector-divider"></div><span class="inspector-section">This run</span>`
+        +`<table class="dedup-summary"><thead><tr><th>Pairs</th><th>Count</th><th title="Of every pair considered">% all</th><th title="Of the pairs actually compared">% compared</th></tr></thead><tbody>`
+        +row('Considered',considered,{compared:false})
+        +row('Never compared',linkage.blocked,{compared:false})
+        +row('Compared',linkage.compared)
+        +row('Matched',linkage.matched,{emphasis:true})
+        +row('In review',review)
+        +row('Awaiting you',waiting.length,{emphasis:!!waiting.length})
+        +row('Not a match',linkage.compared-linkage.matched-review)
+        +`</tbody></table>`
+        +`<table class="dedup-summary"><thead><tr><th>Records</th><th>Count</th><th title="Of the records that came in">% all</th><th></th></tr></thead><tbody>`
+        +`<tr><th scope="row">Came in</th><td>${linkage.inputCount.toLocaleString()}</td><td>100%</td><td></td></tr>`
+        +`<tr class="emphasis"><th scope="row">Merged away</th><td>${linkage.merged.toLocaleString()}</td><td>${share(linkage.merged,linkage.inputCount)}</td><td></td></tr>`
+        +`<tr><th scope="row">Came out</th><td>${(linkage.inputCount-linkage.merged).toLocaleString()}</td><td>${share(linkage.inputCount-linkage.merged,linkage.inputCount)}</td><td></td></tr>`
+        +`</tbody></table>`;
+      if(waiting.length)content+=`<button id="dedup-review-open" class="button primary">Review ${waiting.length} ${waiting.length===1?'pair':'pairs'}</button>`
+        +`<p class="muted">Each stays two records until it is decided. The dialog shows both records side by side with every attribute each one carries, which is what the decision actually rests on.</p>`;
+      if(p.decisions.length)content+=`<p class="muted">${p.decisions.length} ${p.decisions.length===1?'decision':'decisions'} recorded. Editing either record lapses the one made about it.</p>`;
+    }
+    }else if(n.type==='find_health_facilities'){
     const p=n.params,descriptor=FACILITY_SOURCES[p.source];
     // THIS WIDGET HAD NO LABEL CONTROL AT ALL, which is how the practitioner found the
     // inconsistency: "The Find Health Facilities widget label cannot be changed like Study Area,
@@ -1961,6 +2022,41 @@ function renderInspector(){
     else if(ring)toast(`Study area applied \u00b7 ${ring.toLocaleString()} vertices.`);
   })));
   optionalElement('#area-view-n3')?.addEventListener('click',()=>{renderN3();switchView('rules');});
+  // The knobs, and the decisions the review band asks for. A decision is stored WITH a signature
+  // of the pair it was made about, so editing either record lapses it rather than letting a stale
+  // judgement ride on changed data -- the device the retired coverage check used, in the place
+  // where a judgement is genuinely required.
+  $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement>('[data-dedup]').forEach(el=>
+    el.addEventListener('change',()=>change(w=>{
+      const node=getNode(w,n.id,'deduplicate_points');
+      const key=required(el.dataset.dedup) as 'nameField';
+      const value=(el as HTMLInputElement).type==='number'?Number(el.value):el.value;
+      (node.params as unknown as Record<string,unknown>)[key]=value;
+    })));
+  optionalElement('#dedup-review-open')?.addEventListener('click',()=>{
+    const linkage=result?.linkages?.[n.id];
+    if(!linkage)return;
+    const node=workflow.nodes.find(x=>x.id===n.id);
+    if(node?.type!=='deduplicate_points')return;
+    const waiting=linkage.candidates.filter(c=>c.classification==='review');
+    const decided=new Map(node.params.decisions.map(d=>[d.key,{decision:d.decision,reason:d.reason}]));
+    openDeduplicateReview({
+      title:node.params.label,candidates:waiting,decided,
+      onDecide:(key,decision,reason)=>{
+        const candidate=waiting.find(c=>c.key===key);
+        if(!candidate)return;
+        change(w=>{
+          const target=getNode(w,n.id,'deduplicate_points');
+          target.params.decisions=[...target.params.decisions.filter(d=>d.key!==key),
+            {key,decision,reason,signature:pairSignature(candidate)}];
+        });
+      },
+      onClear:key=>change(w=>{
+        const target=getNode(w,n.id,'deduplicate_points');
+        target.params.decisions=target.params.decisions.filter(d=>d.key!==key);
+      }),
+    },esc);
+  });
   $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('[data-param]').forEach(el=>el.addEventListener('change',()=>change(w=>updateParam(w,n.id,required(el.dataset.param),el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value))));
   // Reading, not editing: these redraw the Inspector and touch nothing that is saved, so they
   // go through renderInspector rather than change().
@@ -2225,6 +2321,22 @@ function renderResults(){
   $('#map-layer-list').hidden=true;
   $('#map-layer-list').innerHTML=(output?.pointLayers||[]).map(layer=>`<label><input type="checkbox" data-map-layer="${esc(layer.sourceNodeId)}" ${hiddenMapLayers.get(output!.nodeId)?.has(layer.sourceNodeId)?'':'checked'}> ${esc(layer.label)} (${layer.count})</label>`).join('');
   $('#map-layer-list').querySelectorAll<HTMLInputElement>('[data-map-layer]').forEach(el=>el.onchange=()=>{const hidden=hiddenMapLayers.get(output!.nodeId)||new Set();if(el.checked)hidden.delete(el.dataset.mapLayer!);else hidden.add(el.dataset.mapLayer!);hiddenMapLayers.set(output!.nodeId,hidden);renderMap();});
+  // THE SAME CHECK AN INPUT GETS, over the table a practitioner actually reads. An output table
+  // is the last point before a figure or a count leaves this application, and OSM is known for
+  // fields that are mostly absent -- the practitioner, 2026-10-21, asking for the input tables'
+  // data-quality check here too. As a REPORT: you repair an input, not a result, so the dialog
+  // opens with the profiles, the missingness and the shapes, and nothing to press.
+  const quality=$('#result-quality');
+  const shown=activeOutput() as (import('./results.js').Output&{pointTable?:boolean;rows?:{attributes?:Record<string,unknown>}[];sourceNodeId?:string|null})|undefined;
+  const tabular=!!shown?.pointTable&&(shown.rows?.length||0)>0;
+  quality.hidden=!tabular;
+  quality.onclick=()=>{
+    const rows=(shown?.rows||[]).map(row=>({...row.attributes}));
+    const columns=[...new Set(rows.flatMap(row=>Object.keys(row)))];
+    if(!columns.length){toast('This table has no attributes to profile.');return;}
+    openDataQuality({title:`${shown?.label||'Results'} · data quality`,columns,rows,
+      declared:runWorkflow&&shown?declaredKinds(runWorkflow,shown.sourceNodeId||shown.nodeId):{}},esc);
+  };
   $('#result-rows').querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});
   const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e));}};if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${raster.values.filter(v=>v!==null).length} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
   if(output?.polygons){const p=output.polygons;$('.map-legend').hidden=true;$('#map-note').textContent=p.method;$('#result-metrics').textContent=p.kind==='hexbin'?`${p.features.length} released H3 cells / ${p.summary?.matched} locations represented / ${p.summary?.unmatched} locations in omitted sparse cells`:p.summary?`${p.summary.records} locations / ${p.summary.matched} matched / ${p.summary.unmatched} outside / ${p.summary.missingLocation} missing location / ${p.summary.multiple} multiple memberships`:p.features.length+' catchments';$('#map-note').textContent=p.method+' / '+p.notes.join(' ');}
@@ -2255,6 +2367,22 @@ function renderPointTable(){
     tableSort={column:b.dataset.tableSort!,direction:b.dataset.tableDirection as import('./table-output.js').SortDirection};
     tablePage=0;renderPointTable();
   });
+  // THE SAME CHECK AN INPUT GETS, over the table a practitioner actually reads. An output table
+  // is the last point before a figure or a count leaves this application, and OSM is known for
+  // fields that are mostly absent -- the practitioner, 2026-10-21, asking for the input tables'
+  // data-quality check here too. As a REPORT: you repair an input, not a result, so the dialog
+  // opens with the profiles, the missingness and the shapes, and nothing to press.
+  const quality=$('#result-quality');
+  const shown=activeOutput() as (import('./results.js').Output&{pointTable?:boolean;rows?:{attributes?:Record<string,unknown>}[];sourceNodeId?:string|null})|undefined;
+  const tabular=!!shown?.pointTable&&(shown.rows?.length||0)>0;
+  quality.hidden=!tabular;
+  quality.onclick=()=>{
+    const rows=(shown?.rows||[]).map(row=>({...row.attributes}));
+    const columns=[...new Set(rows.flatMap(row=>Object.keys(row)))];
+    if(!columns.length){toast('This table has no attributes to profile.');return;}
+    openDataQuality({title:`${shown?.label||'Results'} · data quality`,columns,rows,
+      declared:runWorkflow&&shown?declaredKinds(runWorkflow,shown.sourceNodeId||shown.nodeId):{}},esc);
+  };
   $('#result-rows').querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(row=>{row.onclick=()=>selectResult(row.dataset.place!);row.onkeydown=e=>{if(e.key==='Enter')selectResult(row.dataset.place!);};});
 }
 function selectResult(id:string){selected=`result:${id}`;renderLibrary($('#node-search').value);flow?.update(playbackView(),null,statuses);renderInspector();renderMap();}

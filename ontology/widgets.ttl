@@ -25,6 +25,8 @@
 <urn:fieldwork:widget:compare_point_sets> a fw:WidgetDefinition; fw:nodeType "compare_point_sets"; rdfs:label "Compare point sets".
 <urn:fieldwork:widget:comparison_map> a fw:WidgetDefinition; fw:nodeType "comparison_map"; rdfs:label "Comparison map".
 <urn:fieldwork:widget:coverage_check> a fw:WidgetDefinition; fw:nodeType "coverage_check"; rdfs:label "Check spatial coverage".
+<urn:fieldwork:widget:deduplicate_points> a fw:WidgetDefinition; fw:nodeType "deduplicate_points"; rdfs:label "Deduplicate point records";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/deduplicate_points.md>.
 <urn:fieldwork:widget:donut_geomask> a fw:WidgetDefinition; fw:nodeType "donut_geomask"; rdfs:label "Move points in a donut".
 <urn:fieldwork:widget:facilities> a fw:WidgetDefinition; fw:nodeType "facilities"; rdfs:label "Select nearby facilities".
 <urn:fieldwork:widget:facility_audit> a fw:WidgetDefinition; fw:nodeType "facility_audit"; rdfs:label "Evidence register".

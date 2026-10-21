@@ -95,3 +95,20 @@ test('a map fed only by a coverage check keeps its boundary after migration',()=
   assert.equal(area.from,opened.edges.find(e=>e.to===clip.id&&e.port==='area').from);
   assert.doesNotThrow(()=>executionPlan(opened));
 });
+
+test('a map of points without an area says so, instead of failing on nothing',()=>{
+  // Reported 2026-10-21, on a Map wired to a deduplication and nothing else: "Workflow stopped:
+  // Cannot read properties of undefined (reading 'boundary')". A map places its points by their
+  // relation to an area, so points alone have nothing to be placed against -- which is a thing to
+  // say, not a property to read off undefined.
+  const saved=structuredClone(clipExercise());
+  saved.edges=saved.edges.filter(e=>!(e.to==='map'&&e.port==='area'));
+  const opened=validateWorkflow(saved);
+  const map=opened.nodes.find(n=>n.type==='map_output');
+  const area={areaId:'urn:fieldwork:area:scope',geometryId:'urn:fieldwork:geometry:scope',
+    boundary:opened.nodes[0].params.geometry,label:'Area'};
+  // The refusal names the node and what to connect.
+  assert.throws(()=>mapOutput(map,{points:{layers:[]}},'test'),/./);
+  // And with an area it draws, which is what makes the message the right one.
+  assert.doesNotThrow(()=>mapOutput(map,{area,points:{layers:[]}},'test'));
+});

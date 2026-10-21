@@ -37,6 +37,8 @@ import {migrateOutputNodes,decisionPresentation} from './output-contract.js';
 import {referencedPDFs,evidenceProvenance} from './evidence.js';
 import type {Exclusion,Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,RenamedNodeType,CandidateCondition} from './types.js';
 import {RENAMED_NODE_TYPES,isProjectedReference,BASEMAP_CHOICES} from './types.js';
+import {deduplicatePoints,deduplicateReceipt} from './deduplicate-points.js';
+import type {DeduplicateResult} from './deduplicate-points.js';
 import {clipPointsToArea,clipPointsReceipt} from './clip-points.js';
 import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
 // Re-exported so the registry validator can cross-check a declared rename against the one the
@@ -85,6 +87,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   slr_site_assignment:{title:'Assign projection site',group:'Spatial operations',icon:'⊕',color:'teal',description:'Assign each point its nearest published projection site and record the distance',inputs:[['points','points'],['sites','points'],['projections','table']],output:'table'},
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
   reproject:{title:'Reproject points',group:'Spatial operations',icon:'⇄',color:'blue',description:'Project longitude/latitude points into a UTM zone, in metres',inputs:[['points','points']],output:'points'},
+  deduplicate_points:{title:'Deduplicate point records',group:'Comparisons and checks',icon:'⧉',color:'purple',
+    description:'Find records in two sources that are the same place, and merge the ones that agree',
+    inputs:[['points','points'],['points_2','points']],output:'points'},
   clip_points_to_area:{title:'Keep points inside the area',group:'Spatial operations',icon:'⊂',color:'teal',description:'Keep the points that fall inside the study area, and count what fell outside',inputs:[['area','area'],['points','points']],output:'points'},
   raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
   // Extracted from `access`, which derived proxy minutes inside a nearest-neighbour search. A
@@ -234,6 +239,11 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // A street network is a thing to look at, not only a thing to route over. Four widgets consume a
   // `network` and none of them was an output, so a downloaded network could not be seen.
   if(node.type==='table_output'&&node.params.inputMode==='decisions')return [['decisions','decisions']];
+  // Deduplication compares ACROSS sources, so two layers is its floor rather than its shape: a
+  // practitioner with OSM, Overture and HDX over one area has three.
+  if(node.type==='deduplicate_points')
+    return Array.from({length:Math.max(2,Math.min(MAX_POINT_LAYERS,node.params.pointInputCount??2))},
+      (_,i)=>[pointPort(i),'points']) as [string,PortType][];
   // map_output returned above with every layer port it can draw, so only these two reach here.
   if(node.type!=='table_output')return TYPES[node.type].inputs;
   return [...(node.type==='table_output'?[]:[['area','area']]),...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points']),...(node.type==='table_output'?[['coverage','coverage-check']]:[])] as [string,PortType][];
@@ -558,7 +568,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
     if(Object.hasOwn(OLD_TYPES,n.type))validateOldNode(n);
     if(n.type==='measure_area')validateAreaUnit(n.params.unit);
-    if((n.type==='map_output'||n.type==='table_output')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
+    if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='chart_output')&&(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>60))throw new Error(`${TYPES[n.type].title} names must be text of 1–60 characters.`);
   }
   const edgeIds=new Set(), ports=new Set();
@@ -578,7 +588,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(w.nodes.find(x=>x.id===center)?.type!=='mean_center'||!w.edges.some(e=>e.to===center&&e.port==='points'&&e.from===point))throw new Error('Each Mean center must use the same point source as its comparison branch.');
   }
   const visited=new Set(), stack=new Set();
-  for(const n of w.nodes.filter(n=>(n.type==='map_output'||n.type==='table_output'))){const sources=w.edges.filter(e=>e.to===n.id&&isPointPort(e.port)).map(e=>e.from);if(new Set(sources).size!==sources.length)throw new Error('Connect each point source once per operation.');}
+  for(const n of w.nodes.filter(n=>(n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points'))){const sources=w.edges.filter(e=>e.to===n.id&&isPointPort(e.port)).map(e=>e.from);if(new Set(sources).size!==sources.length)throw new Error('Connect each point source once per operation.');}
   function visit(id:string) {if(stack.has(id)) throw new Error('Workflow cycles are not supported. Keep inference inside the rule node.');if(visited.has(id))return;stack.add(id);w.edges.filter(e=>e.to===id).forEach(e=>visit(e.from));stack.delete(id);visited.add(id);}
   w.nodes.forEach(n=>visit(n.id));
   if(w.outputId && !w.nodes.some(n=>n.id===w.outputId && ['output','map_output','table_output','chart_output','comparison_map'].includes(n.type))) throw new Error('Selected output does not exist.');
@@ -726,6 +736,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // as authored. The executor below has no composition branch: one receipt per member falls
   // out of running ordinary nodes, which is what experiment 75 requires of it.
   const runId=crypto.randomUUID(), receipts:Receipt[]=[];
+  // What each deduplication found, so the node can show the band it is waiting on.
+  const linkages:Record<string,DeduplicateResult>={};
   const expansion=expandMicroWorkflows(workflow,resolveComposition,runId);
   workflow=expansion.workflow;receipts.push(...expansion.receipts);
   const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];
@@ -889,6 +901,20 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'slr_threshold_comparison':{const table=inputs.assignments;if(!table?.assignments)throw new Error('Connect Assign projection site: a comparison needs the assignments, not a plain table.');const comparison=compareToElevation(table.assignments,{selection:{scenario:node.params.scenario,basis:node.params.basis,family:node.params.family,year:node.params.year,quantile:node.params.quantile},elevationField:node.params.elevationField,verticalDatum:node.params.verticalDatum,elevationReference:node.params.elevationReference});value=comparison as unknown as DisplayValue;receipts.push(thresholdReceipt(node,comparison,table.assignments,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='assignments')!.from));break;}
       case 'table_input':{if(!node.params.data.rows.length)throw new Error('Import a long-format table before running.');const imported=tableReceipt(node,node.params.data,runId);value=imported.value;receipts.push(imported.receipt);break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
+      case 'deduplicate_points':{
+        const layers=pointInputs().layers;
+        if(layers.length<2)throw new Error('Deduplication compares records ACROSS sources, so it needs at least two point layers.');
+        const linked=deduplicatePoints(layers,node.params,node.params.decisions);
+        linkages[node.id]=linked;
+        value={...linked.collection,sourceNodeId:node.id,sourceKind:'input-points',
+          sourceInfo:{format:'deduplicated-points',
+            notes:[`${linked.merged} records merged from ${linked.inputCount}`,
+              `${linked.awaiting} pairs awaiting a decision`]},
+          linkage:{candidates:linked.candidates,compared:linked.compared,blocked:linked.blocked,
+            matched:linked.matched,awaiting:linked.awaiting,merged:linked.merged}} as unknown as DisplayValue;
+        receipts.push(deduplicateReceipt(node,linked,runId,layers.map(l=>l.sourceNodeId)));
+        break;
+      }
       case 'clip_points_to_area':{
         const clipped=clipPointsToArea(inputs.points,inputs.area.boundary,node.params.keepBoundary!==false);
         if(!clipped.collection.features.length)throw new Error(
@@ -1077,7 +1103,16 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push({nodeId:node.id,kind:'presentation',facts,input:facts,rules:'',conclusions:[],
           method:'Draw the downloaded street graph as itself; no routing, no simplification and no new inference.'});
         break;}
-      if(mode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);value=mapped.value;if(mapped.receipt)receipts.push(mapped.receipt);break;}
+      if(mode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}// A MAP OF POINTS NEEDS SOMETHING TO PUT THEM ON. The relation every row carries -- inside,
+        // on the boundary, outside -- is a relation TO the study area, so without one there is no
+        // map to draw and `mapOutput` read `boundary` off nothing: "Cannot read properties of
+        // undefined (reading 'boundary')", reported 2026-10-21 on a Map wired to a deduplication
+        // and nothing else. A refusal that names the node and the port is the least this owes.
+        if(!inputs.area)throw new Error(`Connect a study area to "${node.params.label||node.id}". `
+          +`A Map places its points by their relation to an area -- inside it, on its boundary, or `
+          +`outside -- so points alone have nothing to be placed against. The same Study area the `
+          +`rest of this workflow uses will do.`);
+        const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);value=mapped.value;if(mapped.receipt)receipts.push(mapped.receipt);break;}
       case 'table_output':{if(node.params.inputMode==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(node.params.inputMode==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const table=tableOutput(node,{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
       case 'measure_area':{const computed=measureArea(node,inputs.area,runId);value=computed.value;receipts.push(computed.receipt);break;}
       case 'study_area':{
@@ -1116,5 +1151,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       ?[{nodeId:node.id,unconnected,offNetwork,...(gaps.length?{gaps}:{}),
          ...(dataIssues.length?{dataIssues}:{})}]:[];
   });
-  return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString()};
+  return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString(),
+    ...(Object.keys(linkages).length?{linkages}:{})};
 }

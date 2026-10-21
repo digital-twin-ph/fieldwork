@@ -25,7 +25,7 @@
  "weakest": "exampleUseCount 0 and a lab check still owed. That is the bottom of the ladder and the population the pending exemption is about.",
  "note": "Derived by scripts/widget-evidence.mjs from the shipped example workflows and widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a micro_workflow node is its members. Field use is declared and empty: an empty top rung is a measurement, a missing one is a flattering omission.",
  "counts": {
-  "declared only": 3,
+  "declared only": 4,
   "example only": 11,
   "parity only": 9,
   "example, lab not applicable": 11,
@@ -176,6 +176,15 @@
    "labOwed": false,
    "fieldUse": [],
    "rung": "example, lab not applicable"
+  },
+  {
+   "nodeType": "deduplicate_points",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "declared only"
   },
   {
    "nodeType": "donut_geomask",

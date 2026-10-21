@@ -19,6 +19,9 @@ export function tableOutput(node:WorkflowNode<'table_output'>,inputs:TableInputs
   const activity=`<urn:fieldwork:run:${runId}:table:${node.id}>`,entity=`<urn:fieldwork:run:${runId}:table-result:${node.id}>`;
   let facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n';
   facts+=`${activity} a fw:TableView, prov:Activity; prov:generated ${entity}; prov:used ${value.pointLayers.map(l=>`<urn:fieldwork:source:${l.sourceNodeId}>`).join(', ')}.\n${entity} a prov:Entity; rdfs:label ${JSON.stringify(node.params.label)}; prov:wasGeneratedBy ${activity}.\n`;
+  // The union across the table, so a record's silence about a field is a fact about that record
+  // rather than an absence of facts.
+  const columnKeys=[...new Set(value.rows.flatMap(row=>Object.keys(row.attributes||{})))];
   for(const row of value.rows){
     const record=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}>`,geometry=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}:geometry>`;
     facts+=`${record} a geo:Feature; rdfs:label ${JSON.stringify(row.name)}; <http://purl.org/dc/terms/isPartOf> <urn:fieldwork:source:${row.sourceNodeId}>.\n`;
@@ -27,12 +30,35 @@ export function tableOutput(node:WorkflowNode<'table_output'>,inputs:TableInputs
     // northing, a fixed CRS84 would label metres as degrees -- the same defect the receipts were
     // cleared of on 2026-10-13, reintroduced at the last step of the chain.
     if(row.coordinates)facts+=`${record} geo:hasGeometry ${geometry}.\n${geometry} a geo:Geometry; geo:asWKT ${JSON.stringify('<'+(crsIRIFromName(value.spatialReference?.geometryCRS??'')??CRS84)+'> POINT ('+row.coordinates.join(' ')+')')}^^geo:wktLiteral.\n`;
-    for(const [key,v] of Object.entries(row.attributes))if(key!=='name')facts+=`${record} fw:attribute [ fw:fieldKey ${JSON.stringify(key)}; ${v===null?'fw:missingValue true':'<http://www.w3.org/1999/02/22-rdf-syntax-ns#value> '+attributeLiteral(v,row.attributeTypes[key])} ].\n`;
+    // EVERY COLUMN, FOR EVERY RECORD. The loop ran over the attributes a record HAS, so a field a
+    // record does not have was silent in the receipt while the table showed a confident phrase for
+    // it. The screen asserted more than the provenance did. Absence is now asserted, and the two
+    // kinds are kept apart: `fw:fieldAbsent` where the record has no such field, `fw:missingValue`
+    // where it has the field and left it empty.
+    for(const key of columnKeys){
+      if(key==='name')continue;
+      const held=Object.hasOwn(row.attributes,key);
+      const v=held?row.attributes[key]:undefined;
+      const body=!held?'fw:fieldAbsent true'
+        :(v===null||v==='')?'fw:missingValue true'
+        :'<http://www.w3.org/1999/02/22-rdf-syntax-ns#value> '+attributeLiteral(v as Scalar,row.attributeTypes?.[key]);
+      facts+=`${record} fw:attribute [ fw:fieldKey ${JSON.stringify(key)}; ${body} ].\n`;
+    }
   }
   return {value,receipt:{nodeId:node.id,kind:'presentation',input:facts,facts,rules:'',conclusions:[],method:'Tabular presentation of source records; no new spatial classification or exclusion'}};
 }
 
-const display=(v:unknown)=>v===null||v===undefined?'Not supplied':String(v);
+/** AN ABSENT VALUE IS NOT A VALUE. This returned the words "Not supplied", which a reader cannot
+ *  tell from a source that contains those words, which sorts and matches the row filter as if it
+ *  were data, and which says the same thing about a field the record does not have as about a
+ *  field it has and left empty. The practitioner, 2026-10-21: *"was the data missing or field
+ *  empty value and we supplied that value as a replacement? The data quality implications are
+ *  enormous even if the table were an output. It's also a provenance issue."*
+ *
+ *  The cell is now empty, marked for a screen reader and for the stylesheet. How many are absent
+ *  is a property of the COLUMN and belongs in the quality report, not repeated in every cell. */
+const ABSENT='<span class="absent-cell" aria-label="no value">—</span>';
+const display=(v:unknown)=>v===null||v===undefined||v===''?null:String(v);
 const action=(r:Partial<CoverageRow>)=>r.excluded?'Excluded':r.decision==='Review'?'Review required':r.decision==='Accept'?'Included':'';
 export const TABLE_PAGE_SIZE=100,ATTRIBUTE_PAGE_SIZE=12;
 
@@ -115,7 +141,13 @@ export function pointTableMarkup(output:TableValue|CoverageValue,esc:Escape,{que
       const next=active==='ascending'?'descending':'ascending';
       return `<th scope="col" aria-sort="${active}"><button type="button" class="column-sort" data-table-sort="${esc(c.key)}" data-table-direction="${next}">${esc(c.label)}<span aria-hidden="true" class="sort-mark">${active==='ascending'?'▲':active==='descending'?'▼':''}</span></button></th>`;
     }).join(''),
-    body:shown.length?shown.map((r:PointRow & Partial<CoverageRow>)=>`<tr tabindex="0" data-place="${esc(r.id)}">${columns.map(c=>`<td>${esc(display(c.read(r)))}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${columns.length}">${output.rows.length?'No matching records.':'No point records in this input.'}</td></tr>`,
+    body:shown.length?shown.map((r:PointRow & Partial<CoverageRow>)=>`<tr tabindex="0" data-place="${esc(r.id)}">${columns.map(c=>{
+      const shownValue=display(c.read(r));
+      // `data-absent` says WHICH kind of absence, because they call for different work: a field
+      // the record does not have at all, and a field it has and left empty.
+      const absence=c.read(r)===undefined?'missing':'empty';
+      return shownValue===null?`<td data-absent="${absence}">${ABSENT}</td>`:`<td>${esc(shownValue)}</td>`;
+    }).join('')}</tr>`).join(''):`<tr><td colspan="${columns.length}">${output.rows.length?'No matching records.':'No point records in this input.'}</td></tr>`,
     controls:`<div class="table-page-group"><button class="button small" data-table-page="${page-1}" ${page===0?'disabled':''}>Previous rows</button><span role="status">${ordered.length?`${page*TABLE_PAGE_SIZE+1}–${Math.min((page+1)*TABLE_PAGE_SIZE,ordered.length)}`:'0'} of ${ordered.length} records</span><button class="button small" data-table-page="${page+1}" ${page+1>=pages?'disabled':''}>Next rows</button></div>`
       +(sorted&&sortedColumn?`<p class="muted" role="status">Ordered by ${esc(sortedColumn.label)}, ${sort!.direction==='ascending'?'lowest':'highest'} first${sorted.unknownCount?`. ${sorted.unknownCount} record${sorted.unknownCount===1?'':'s'} with no value for this column held at the end, in either direction.`:'.'}</p>`:'')
       +(attributeKeys.length>ATTRIBUTE_PAGE_SIZE?`<div class="table-page-group"><button class="button small" data-table-fields="${attributePage-1}" ${attributePage===0?'disabled':''}>Previous attributes</button><span>Attributes ${attributePage*ATTRIBUTE_PAGE_SIZE+1}–${Math.min((attributePage+1)*ATTRIBUTE_PAGE_SIZE,attributeKeys.length)} of ${attributeKeys.length}</span><button class="button small" data-table-fields="${attributePage+1}" ${(attributePage+1)*ATTRIBUTE_PAGE_SIZE>=attributeKeys.length?'disabled':''}>Next attributes</button></div>`:''),

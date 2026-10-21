@@ -37,6 +37,7 @@ import {migrateOutputNodes,decisionPresentation} from './output-contract.js';
 import {referencedPDFs,evidenceProvenance} from './evidence.js';
 import type {Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,RenamedNodeType,CandidateCondition} from './types.js';
 import {RENAMED_NODE_TYPES,isProjectedReference,BASEMAP_CHOICES} from './types.js';
+import {clipPointsToArea,clipPointsReceipt} from './clip-points.js';
 import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
 // Re-exported so the registry validator can cross-check a declared rename against the one the
 // application actually performs, from the same bundle it already reads TYPES out of.
@@ -85,6 +86,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   slr_site_assignment:{title:'Assign projection site',group:'Spatial operations',icon:'⊕',color:'teal',description:'Assign each point its nearest published projection site and record the distance',inputs:[['points','points'],['sites','points'],['projections','table']],output:'table'},
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
   reproject:{title:'Reproject points',group:'Spatial operations',icon:'⇄',color:'blue',description:'Project longitude/latitude points into a UTM zone, in metres',inputs:[['points','points']],output:'points'},
+  clip_points_to_area:{title:'Keep points inside the area',group:'Spatial operations',icon:'⊂',color:'teal',description:'Keep the points that fall inside the study area, and count what fell outside',inputs:[['area','area'],['points','points']],output:'points'},
   raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
   // Extracted from `access`, which derived proxy minutes inside a nearest-neighbour search. A
   // widget and not a knob: a minutes column changes every row for every consumer of `distances`,
@@ -770,6 +772,26 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'slr_threshold_comparison':{const table=inputs.assignments;if(!table?.assignments)throw new Error('Connect Assign projection site: a comparison needs the assignments, not a plain table.');const comparison=compareToElevation(table.assignments,{selection:{scenario:node.params.scenario,basis:node.params.basis,family:node.params.family,year:node.params.year,quantile:node.params.quantile},elevationField:node.params.elevationField,verticalDatum:node.params.verticalDatum,elevationReference:node.params.elevationReference});value=comparison as unknown as DisplayValue;receipts.push(thresholdReceipt(node,comparison,table.assignments,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='assignments')!.from));break;}
       case 'table_input':{if(!node.params.data.rows.length)throw new Error('Import a long-format table before running.');const imported=tableReceipt(node,node.params.data,runId);value=imported.value;receipts.push(imported.receipt);break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
+      case 'clip_points_to_area':{
+        const clipped=clipPointsToArea(inputs.points,inputs.area.boundary,node.params.keepBoundary!==false);
+        if(!clipped.collection.features.length)throw new Error(
+          `No points fall inside "${inputs.area.label||'the study area'}". `
+          +`${clipped.outside} of ${clipped.inside+clipped.boundary+clipped.outside} are outside it or carry no coordinates. `
+          +`Check that the area is the one you meant.`);
+        const areaEdge=workflow.edges.find(e=>e.to===node.id&&e.port==='area');
+        const pointsEdge=workflow.edges.find(e=>e.to===node.id&&e.port==='points');
+        receipts.push(clipPointsReceipt(node,clipped,runId,areaEdge?.from??node.id,pointsEdge?.from??node.id));
+        const from=inputs.points as unknown as {sourceNodeId?:string;sourceKind?:string};
+        value={...clipped.collection,sourceNodeId:from.sourceNodeId??node.id,
+          sourceKind:from.sourceKind??'input-points',
+          // SHOWN, NOT PASSED ON. The excluded points ride on the value so a map can draw them in
+          // the Outside colour it already has, while every widget downstream receives only the
+          // features that are in the area. A count says how many were lost; the points say
+          // whether losing them was right, and a cluster over one border reads differently from
+          // a scatter in all directions.
+          ...(node.params.showExcluded!==false&&clipped.excluded.length?{excludedPoints:clipped.excluded}:{}),
+        } as unknown as DisplayValue;
+        break;}
       case 'reproject':{
         const source=inputs.points;
         if(isProjectedReference(source.spatialReference))throw new Error(`${TYPES[node.type].title} projects longitude and latitude into a UTM zone. Its input is already projected into ${source.spatialReference.geometryCRS}; projecting twice is not a conversion between zones.`);

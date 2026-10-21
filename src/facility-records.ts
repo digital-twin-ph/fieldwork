@@ -1,4 +1,5 @@
-import type {PointCollection,PointFeature,Scalar} from './types.js';
+import type {PointCollection,PointFeature,Scalar,Position,Boundary} from './types.js';
+import {pointRelation} from './spatial-predicates.js';
 
 /** Turning source records into a point layer, for every shape the health-facility sources use.
  *
@@ -13,7 +14,11 @@ import type {PointCollection,PointFeature,Scalar} from './types.js';
  *  keeping it would overstate coverage. Nothing is invented: no centroid is guessed and no kind
  *  inferred from a name. */
 
-export interface FacilityDropCounts {kind:number; coordinates:number; name:number}
+export interface FacilityDropCounts {kind:number; coordinates:number; name:number;
+  /** Records the source returned that fall OUTSIDE the study area's own outline. Counted rather
+   *  than silently kept: the widget says it finds facilities inside the study area, and a
+   *  practitioner is owed the number it had to set aside to make that true. */
+  outside:number}
 export interface ParsedFacilities {collection:PointCollection; kept:number; dropped:FacilityDropCounts}
 
 /** Which field states the kind, in precedence order.
@@ -91,6 +96,14 @@ export interface ParseOptions {
   /** Keep only records inside this bounding box, as [west, south, east, north]. A whole-country
    *  export needs clipping to the study area; a bounded query does not. */
   within?:readonly number[];
+  /** Keep only records inside this OUTLINE, decided by `pointRelation`. Every source this application has is bounded by a
+   *  BOX -- Overpass takes one, Overture is read by extent, the country export is clipped to one
+   *  -- and a box is not a jurisdiction. The practitioner, 2026-10-20, on North Kivu: *"I also
+   *  noticed that the health facilities retrieved despite the study area boundary many were
+   *  outside the boundary."* They were: 526 of 961, in Uganda and Rwanda, because the province is
+   *  long and curved and its bounding box covers both. The widget's own words are "facilities
+   *  inside the study area", so the outline decides. */
+  boundary?:{type:string;coordinates:unknown};
 }
 
 export function parseFacilityRecords(records:readonly unknown[],options:ParseOptions):ParsedFacilities {
@@ -98,7 +111,7 @@ export function parseFacilityRecords(records:readonly unknown[],options:ParseOpt
   const requireName=options.requireName!==false;
   const box=options.within&&options.within.length===4&&options.within.every(Number.isFinite)
     ?options.within as readonly [number,number,number,number]:null;
-  const dropped:FacilityDropCounts={kind:0,coordinates:0,name:0};
+  const dropped:FacilityDropCounts={kind:0,coordinates:0,name:0,outside:0};
   const features:PointFeature[]=[];
   for(const entry of records){
     if(!entry||typeof entry!=='object')continue;
@@ -110,6 +123,20 @@ export function parseFacilityRecords(records:readonly unknown[],options:ParseOpt
     const coordinates=coordinatesOf(record);
     if(!coordinates){dropped.coordinates++;continue;}
     if(box&&(coordinates[0]<box[0]||coordinates[0]>box[2]||coordinates[1]<box[1]||coordinates[1]>box[3])){dropped.coordinates++;continue;}
+    // The outline, after the box, through THE PROJECT'S OWN PREDICATE.
+    //
+    // A first version hand-rolled ray casting here, which was a sixth implementation of something
+    // this repository already decided once -- the practitioner: *"We do not have a point in
+    // polygon process."* It has one: `pointRelation` in spatial-predicates.ts, used by
+    // catchments, the map, input data, the raster mask and the coverage check, and mapped to the
+    // OGC predicates GeoSPARQL exposes. Writing a sixth also threw away the distinction that
+    // module exists to make: a point exactly ON the border is `Boundary`, not inside or outside,
+    // and hand-rolled ray casting decides it arbitrarily.
+    //
+    // A facility on the border IS in the jurisdiction's edge, so Boundary is kept and only
+    // Outside is set aside.
+    if(options.boundary&&pointRelation(coordinates as Position,options.boundary as Boundary)==='Outside'){
+      dropped.outside++;continue;}
     const name=typeof tags.name==='string'?tags.name.trim():'';
     if(!name&&requireName){dropped.name++;continue;}
     const properties:Record<string,Scalar>&{name:string}={name:name||'(unnamed)',kind};

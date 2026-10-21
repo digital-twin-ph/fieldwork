@@ -1,0 +1,70 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:clip_points_to_area",
+ "nodeType": "clip_points_to_area",
+ "version": "0.1.0",
+ "title": "Keep points inside the area",
+ "released": "2026-10-20",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['clip_points_to_area']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "points",
+  "note": "Both are required: the decision is about these points against that area."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:PointInPolygonClip",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Asserts the OGC predicate the kept set answers to (sfWithin, with boundary points being sfTouches), whether boundary points were kept, and the three counts. The predicate itself is pointRelation in src/spatial-predicates.ts, shared with the coverage check, the map, input data, the raster mask and catchments.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/clip-points.ts",
+   "src/spatial-predicates.ts",
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "Keeps the points of a layer that fall inside the connected study area, and counts what fell outside. The predicate existed -- pointRelation, used by five modules -- and the OPERATION did not: eleven widgets emit a point layer and none of them answered \"keep the ones inside this area\", so the decision was made privately inside whichever widget needed it, with no node on the canvas and no receipt. A point exactly on the outline is kept by default and the choice is a parameter, because strict containment is what GeoSPARQL's sfWithin means and the two give different counts on the data where it matters. The points it sets aside are carried for DRAWING, not for passing on: a connected map shows them in the colour it already uses for outside, while every widget downstream receives only what is in the area. A count says how many were lost; seeing them says whether losing them was right, because a cluster across one border reads differently from a scatter in every direction."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "The membership test is the one the coverage check and the map already use, and the lab checks it there. What is new here is the operation and its receipt, not the arithmetic."
+ }
+}

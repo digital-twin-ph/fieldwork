@@ -220,8 +220,19 @@ export async function downloadFacilities(
     `That source returned ${records.length.toLocaleString()} records, over the ${MAX_FACILITY_RECORDS.toLocaleString()} this holds. Narrow the study area or the facility kinds.`);
   // The live query is already bounded by the server, so clipping it again would only hide a bug in
   // the bounding box. The country export is not bounded at all and must be clipped here.
+  //
+  // AND EVERY SOURCE IS CLIPPED TO THE OUTLINE, which is a different thing from the box. Overpass
+  // takes a bounding box, Overture is read by extent, the export is clipped to a box -- and a box
+  // is not a jurisdiction. On North Kivu, 526 of 961 facilities the source returned stood in
+  // Uganda and Rwanda, because the province is long and curved. This widget's own sentence is
+  // "facilities inside the study area", so the outline decides and the number set aside is
+  // reported rather than discarded quietly.
   const parsed=parseFacilityRecords(records,
-    {kinds,requireName,...(source==='hdx-hot-export'?{within:bounds}:{})});
+    {kinds,requireName,boundary,...(source==='hdx-hot-export'?{within:bounds}:{})});
+  if(!parsed.kept&&parsed.dropped.outside)throw new Error(
+    `${records.length.toLocaleString()} facilities were returned for this area and every one of them `
+    +`falls outside the study area's outline. The source is bounded by a rectangle around your area, `
+    +`and the area itself decides what is kept. Check that the boundary is the one you meant.`);
   if(!parsed.kept)throw new Error(
     `No facilities of the requested kinds were found in the study area. ${records.length.toLocaleString()} records were read and all were dropped: ${parsed.dropped.kind} of another kind, ${parsed.dropped.coordinates} outside the area or without coordinates, ${parsed.dropped.name} unnamed.`);
   return {parsed,retrieval:{source,sourceLabel:descriptor.label,licence:descriptor.licence,
@@ -270,9 +281,16 @@ export function facilitiesValue(
   const shareAlike=got.licence.startsWith('ODbL');
   const entity=`<urn:fieldwork:run:${runId}:${node.id}:facilities>`;
   const dataset=`<${got.origin}#health-facilities>`;
+  // `outside` is optional on a retrieval stored before the outline clip existed: a workflow saved
+  // yesterday has no such count, and an absent count is not zero facilities set aside.
+  const outside=got.dropped.outside??0;
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n@prefix dcat: <http://www.w3.org/ns/dcat#>.\n`
     +`${entity} a fw:PointDataset, prov:Entity; `
     +`fw:recordCount ${data.features.length}; `
+    // What the outline set aside, in the receipt as well as in the method sentence. A count that
+    // only appears in prose cannot be queried, and "how many did the source return that were not
+    // in my area" is exactly the question a reviewer asks of a figure like this.
+    +(outside?`fw:outsideStudyAreaCount ${outside}; `:'')
     +`fw:requestOrigin <${got.origin}>; `
     +(got.release?`dcterms:hasVersion ${JSON.stringify(got.release)}; `:'')
     +(got.filename?`fw:filename ${JSON.stringify(got.filename)}; `:'')
@@ -285,10 +303,10 @@ export function facilitiesValue(
     +`${dataset} a dcat:Dataset; `
     +`dcterms:title ${JSON.stringify(got.sourceLabel)}; `
     +`dcterms:license <${got.licenceIRI}>.\n`;
-  const lost=got.dropped.kind+got.dropped.coordinates+got.dropped.name;
+  const lost=got.dropped.kind+got.dropped.coordinates+got.dropped.name+outside;
   const overture=got.source==='overture-places';
   const method=`Retrieved ${got.kept} health facilities from ${got.sourceLabel} on ${got.at.slice(0,10)}, scope: ${got.scope}. `
-    +(lost?`Dropped ${lost} records: ${got.dropped.kind} of a kind that was not requested, ${got.dropped.coordinates} outside the study area or without usable coordinates, ${got.dropped.name} without a name. `:'Dropped no records. ')
+    +(lost?`Dropped ${lost} records: ${got.dropped.kind} of a kind that was not requested, ${got.dropped.coordinates} without usable coordinates, ${outside} standing outside the study area's outline, ${got.dropped.name} without a name. `:'Dropped no records. ')
     +(overture
       ?`Overture states a confidence for each place and ${got.belowConfidence??0} fell below the ${got.minConfidence??OVERTURE_DEFAULT_CONFIDENCE} threshold set here; a further ${got.unmappedCategory??0} carried a health-related category this does not map to a facility kind. `
         +'Overture catalogues commercial places, which is a broader idea than a health facility: measured in a Manila study area, its categories included individual practitioners, a wellness spa and a training course, and it reported several times as many places under "hospital" as an OpenStreetMap query returned hospitals and clinics together. Its category has been mapped onto this application\u2019s facility kinds as a declared equivalence, not an identity, and each facility carries Overture\u2019s own category and confidence so the mapping can be checked. Counts from this source are not comparable with counts from the OpenStreetMap sources. '

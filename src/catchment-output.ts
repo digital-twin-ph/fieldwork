@@ -1,3 +1,4 @@
+import {orderedSteps} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
 import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
@@ -39,7 +40,7 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   }
   const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
   const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]),cos=Math.cos((south+north)/2*Math.PI/180),scale=Math.min(790/Math.max((east-west)*cos,.00001),235/Math.max(north-south,.00001));
-  const project=(c:Position)=>[425+(c[0]-(east+west)/2)*cos*scale,145-(c[1]-(north+south)/2)*scale],colors=['#3686a8','#c7773b','#719d47','#966bad','#c35b70','#4d9e94'];
+  const project=(c:Position)=>[425+(c[0]-(east+west)/2)*cos*scale,145-(c[1]-(north+south)/2)*scale],colors=orderedSteps(p.features.length);
   return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;return `<path data-catchment="${esc(f.id)}" d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${colors[i%colors.length]}" fill-opacity=".22" fill-rule="evenodd" stroke="${colors[i%colors.length]}" stroke-width="1"><title>${esc(f.name)}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+'<text x="20" y="282" font-size="10">Squares: sites · dots: observations · polygons: modeled catchments</text>';
 }
 

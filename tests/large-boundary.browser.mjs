@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 // "I tried to download North Kivu ADM1 study area and I think process hangs."
@@ -39,8 +40,13 @@ test('the largest published DRC province can be acquired, and every phase is tim
   // replaced cannot be raced for.
   await page.addInitScript(()=>{
     const seen=[];Object.defineProperty(window,'__phases',{get:()=>seen});
-    const watch=()=>{const el=document.querySelector('#area-feedback');if(!el)return setTimeout(watch,20);
-      new MutationObserver(()=>seen.push(el.textContent||'')).observe(el,{childList:true,subtree:true,characterData:true});};
+    // Both lines: the dialog's feedback AND the boundary status, because the one sentence that
+    // marks the download finishing is replaced by the selection summary a moment later.
+    const watch=()=>{
+      const elements=['#area-feedback','#area-boundary-status'].map(s=>document.querySelector(s));
+      if(elements.some(el=>!el))return setTimeout(watch,20);
+      for(const el of elements)
+        new MutationObserver(()=>seen.push(el.textContent||'')).observe(el,{childList:true,subtree:true,characterData:true});};
     watch();
   });
   await page.route(/geoboundaries\.org\/api/,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(meta)}));
@@ -68,6 +74,10 @@ test('the largest published DRC province can be acquired, and every phase is tim
   await expect(page.locator('#area-boundary-terms')).toContainText(/vertices|North Kivu/,{timeout:120000});
   console.log(`MEASURED use these boundaries: ${((Date.now()-used)/1000).toFixed(1)} s`);
 
+  // The download says it finished, in its own sentence, before the units are read.
+  await expect(page.locator('#area-boundary-status')).toContainText(/Downloaded [\d.]+ MB/);
+  await expect(page.locator('#area-boundary-status')).toContainText('26 units ready');
+
   const applied=Date.now();
   await page.locator('#area-apply').click();
   // The phases SAY what they are, instead of a frozen dialog. This is the half that was missing.
@@ -84,8 +94,32 @@ test('the largest published DRC province can be acquired, and every phase is tim
     return area?{vertices:area.params.geometry.coordinates[0].length,bytes:JSON.stringify(area.params.geometry).length}:null;
   });
   console.log('MEASURED stored:',JSON.stringify(stored));
+  // AS PUBLISHED, and the record says so. The point of admitting 16,548 vertices whole rather
+  // than simplifying them is that the outline is still the jurisdiction's; that claim is only
+  // worth something if the acquisition record survives the round trip and the run agrees.
+  const acquisition=await page.evaluate(()=>{
+    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1'));
+    const area=(w.nodes||[]).find(n=>n.type==='study_area'&&n.params.boundary);
+    return area?area.params.boundary:null;
+  });
+  assert.ok(acquisition,'the acquisition record survived Apply');
+  assert.equal(acquisition.unitName,'North Kivu');
+  // 16,547, not 16,548: the record counts the ring's POSITIONS, and the closing position repeats
+  // the first. The stored geometry carries both, which is what a closed ring is. Taking the two
+  // numbers as given rather than reconciling them is the honest reading -- they count different
+  // things and each is right about its own.
+  assert.equal(acquisition.vertices,16547,'and it records what it took, whole');
+  assert.equal(stored.vertices,16548,'the ring itself closes');
+  assert.match(acquisition.boundaryID,/^COD-ADM1-/);
+  assert.match(acquisition.licence,/Open Database License/);
+  await page.locator('[data-view="rules"]').click();
+  await expect(page.locator('#n3-preview')).toContainText('fw:geometryAsPublished true',{timeout:60000});
   // Whichever phase was the slow one, it said so rather than freezing in silence.
   const phases=(await page.evaluate(()=>window.__phases)).join(' | ');
   expect(phases).toMatch(/Drawing .*vertices|Checking the outline|Writing the facts|Saving it/i);
   console.log('MEASURED phases said:',phases.slice(0,200));
+  // And the canvas says what landed, after the dialog that said it is gone.
+  await expect(page.locator('#toast')).toContainText('North Kivu applied as published');
+  await expect(page.locator('#toast')).toContainText('16,548 vertices');
+  await expect(page.locator('#toast')).toContainText('Open Database License');
 });

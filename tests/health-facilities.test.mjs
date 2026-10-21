@@ -82,8 +82,44 @@ test('a country export is clipped to the study area, and every drop is counted b
     {kinds:['hospital'],within:boundsOf(AREA)});
   assert.equal(kept,1);
   assert.equal(collection.features[0].properties.name,'Inside');
-  assert.deepEqual(dropped,{kind:1,coordinates:2,name:1},
-    'outside the area and missing coordinates are the same kind of failure: unplaceable');
+  assert.deepEqual(dropped,{kind:1,coordinates:2,name:1,outside:0},
+    'outside the BOX and missing coordinates are the same kind of failure: unplaceable');
+});
+
+// And the box is not the area. The practitioner, 2026-10-20, on North Kivu: "I also noticed that
+// the health facilities retrieved despite the study area boundary many were outside the
+// boundary." Every source this application has is bounded by a rectangle -- Overpass takes one,
+// Overture is read by extent, the export is clipped to one -- and a long curved province's
+// rectangle covers two neighbouring countries. The widget's own sentence is "facilities inside
+// the study area", so the OUTLINE decides, and what it sets aside is counted rather than dropped
+// quietly or left on the map.
+test('the outline decides, not its bounding box, and the difference is counted',()=>{
+  // An L-shaped area: the bounding box covers the notch, the outline does not.
+  const L={type:'Polygon',coordinates:[[[0,0],[2,0],[2,1],[1,1],[1,2],[0,2],[0,0]]]};
+  const records=[
+    {tags:{name:'In the long arm',amenity:'hospital'},lat:0.5,lon:0.5},
+    {tags:{name:'In the notch',amenity:'hospital'},lat:1.5,lon:1.5},
+    {tags:{name:'In the short arm',amenity:'hospital'},lat:1.5,lon:0.5}];
+  const inBox=parseFacilityRecords(records,{kinds:['hospital'],within:boundsOf(L)});
+  assert.equal(inBox.kept,3,'the box keeps the notch, which is not in the area');
+
+  const inArea=parseFacilityRecords(records,{kinds:['hospital'],boundary:L});
+  assert.equal(inArea.kept,2);
+  assert.equal(inArea.dropped.outside,1,'and the one it set aside is counted by reason');
+  assert.deepEqual(inArea.collection.features.map(f=>f.properties.name),['In the long arm','In the short arm']);
+});
+
+test('an enclave is a hole in the area, not a part of it',()=>{
+  const withHole={type:'Polygon',coordinates:[
+    [[0,0],[4,0],[4,4],[0,4],[0,0]],
+    [[1,1],[2,1],[2,2],[1,2],[1,1]]]};
+  const records=[
+    {tags:{name:'In the area',amenity:'hospital'},lat:3,lon:3},
+    {tags:{name:'In the enclave',amenity:'hospital'},lat:1.5,lon:1.5}];
+  const {kept,dropped,collection}=parseFacilityRecords(records,{kinds:['hospital'],boundary:withHole});
+  assert.equal(kept,1);
+  assert.equal(collection.features[0].properties.name,'In the area');
+  assert.equal(dropped.outside,1,'a facility in the enclave is not in the jurisdiction around it');
 });
 
 test('unnamed facilities are kept when the practitioner says so',()=>{

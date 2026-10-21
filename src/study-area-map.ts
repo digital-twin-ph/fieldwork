@@ -438,8 +438,8 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       // failure to find them.
       const estimate=level.units*level.meanVertices*ESTIMATED_BYTES_PER_VERTEX;
       const summary=selectionSummary(level,[]).replace(/^\d+ of /,'');
-      boundaryStatus.textContent=`${level.units} units \u00b7 ${level.meanVertices} vertices each on average `
-        +`\u00b7 ${summary} \u00b7 downloading about ${(estimate/1e6).toFixed(1)} MB of shapes\u2026`;
+      const describe=(lead:string)=>`${lead} \u00b7 ${level.units} units \u00b7 ${level.meanVertices} vertices each on average \u00b7 ${summary}`;
+      boundaryStatus.textContent=describe(`Downloading about ${(estimate/1e6).toFixed(1)} MB of shapes\u2026`);
       const shapes=await fetchWithProgress(level.geoJsonUrl,estimate,read=>{
         boundaryStatus.textContent=`Downloading ${countryName(iso)} ${adm} shapes \u2014 `
           +`${(read/1e6).toFixed(1)} MB of about ${(estimate/1e6).toFixed(1)} MB\u2026`;
@@ -461,7 +461,12 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       // in the transient checking message meant it was replaced the instant the download
       // finished -- the second time in this dialog that the one thing worth reading disappeared
       // before it could be read.
-      boundaryStatus.textContent=`${countryName(iso)} (${iso}) \u00b7 ${pickedUnits.length} units ready. Choose the ones you need.`
+      // AND IT SAYS THE DOWNLOAD FINISHED. The practitioner, 2026-10-20: *"What's missing is the
+      // feedback that the download completed."* A first attempt announced it in a line of its
+      // own, which the next assignment replaced in the same task -- it flashed for milliseconds,
+      // and feedback nobody can read is not feedback. It belongs in the sentence that stays.
+      boundaryStatus.textContent=`Downloaded ${(shapes.length/1e6).toFixed(1)} MB \u00b7 ${countryName(iso)} (${iso}) `
+        +`\u00b7 ${pickedUnits.length} units ready. Choose the ones you need.`
         +(near.length?` Note: ${near.join(', ')} also match what you typed.`:'');
     }catch{boundaryStatus.textContent='That boundary could not be reached. The study area can still be drawn.';}
   };
@@ -606,7 +611,8 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       if(heavy){message('Saving it to this device\u2026');await paint();}
       if(onApply(structuredClone(currentParams()),structuredClone(clipOptions))===false)
         throw new Error(context.clip?'Clip parameters could not be saved. Retry Apply.':'Study area could not be saved. Retry Apply.');
-      if(heavy)message(`Applied in ${((Date.now()-began)/1000).toFixed(1)} s.`);
+      // No "applied in N s" here: this panel closes in the same breath, so the confirmation is
+      // raised on the canvas instead, where the practitioner is afterwards.
       dialog.close();
     }catch(e){message(errorMessage(e));}
     finally{button.disabled=false;button.textContent=label;}

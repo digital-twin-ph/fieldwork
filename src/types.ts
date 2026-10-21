@@ -194,7 +194,7 @@ export interface ParamsByType {
       inputs:[string,PortType][];output:PortType};
     parameters:Record<string,string|number|boolean>};
   summarize_hull:{label:string;zone:number;hemisphere:'north'|'south'};
-  find_health_facilities:{label:string;source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';kinds:string[];requireName:boolean;country:string;minConfidence:number;data:PointCollection|null;retrieved:{source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';sourceLabel:string;licence:string;licenceIRI:string;sourceIRI:string;attribution:string;origin:string;kept:number;dropped:{kind:number;coordinates:number;name:number};at:string;scope:string;filename?:string;sha256?:string;bytes?:number;release?:string;belowConfidence?:number;unmappedCategory?:number;minConfidence?:number}|null};
+  find_health_facilities:{label:string;source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';kinds:string[];requireName:boolean;country:string;minConfidence:number;data:PointCollection|null;retrieved:{source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';sourceLabel:string;licence:string;licenceIRI:string;sourceIRI:string;attribution:string;origin:string;kept:number;dropped:{kind:number;coordinates:number;name:number;outside?:number};at:string;scope:string;filename?:string;sha256?:string;bytes?:number;release?:string;belowConfidence?:number;unmappedCategory?:number;minConfidence?:number}|null};
   buffer_point:{label:string;pointId:string;distanceM:number};
   sample_raster:{label:string;attribute:string;valueUnit:string};
   slr_extract_import:{label:string;datasetIRI:string;datasetVersion:string;baselinePeriod:string;citations:string[];basisKind:''|'workflow'|'confidence-pbox';familyValues:{withVerticalLandMotion:string;withoutVerticalLandMotion:string};sourceNote?:string};
@@ -203,6 +203,10 @@ export interface ParamsByType {
   // From 2026-10-13 a transform, not a source: it takes points and returns points. `data`, `source`
   // and `provenance` remain OPTIONAL so a workflow saved before that date still parses; they are
   // the discriminator the migration reads, and nothing writes them any more.
+  /** Keep the points that are in the area. `keepBoundary` decides the one case the predicate
+   *  exists to name: a point exactly ON the outline is in that jurisdiction's edge, and folding
+   *  it silently into either side would answer a question nobody asked. */
+  clip_points_to_area:{label:string;keepBoundary:boolean;showExcluded:boolean};
   reproject:{label:string;zone:number;hemisphere:'north'|'south';data?:PointCollection;spatialReference?:SpatialReference;source?:import('./reproject.js').ReprojectSource;provenance?:import('./reproject.js').ReprojectProvenance};
   /** `maxNodes` is the graph ceiling, a knob rather than a fixed cap: the contract does not move
    *  with it (ports, output port type and behaviour are unchanged, only what is admitted changes) and
@@ -243,7 +247,11 @@ export interface ParamsByType {
   travel_time:{label:string; speedMPerMin:number};
   policy:{thresholdKm:number};
   measure_area:{unit:AreaUnit}; coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
-  map_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'};
+  map_output:{label:string; pointInputCount?:number;
+    /** How each point layer is drawn, keyed by the node that produced it -- a source keeps its
+     *  symbol when layers are rewired or reordered. Absent means derived from the layer's
+     *  position, which is what every map did before a practitioner could choose. */
+    layerSymbols?:Record<string,{mark?:import('./presentation.js').LayerShape;colour?:string}>; inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'};
   chart_output:{label:string;inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference'};
   output:{label?:string; view:'map'|'table'|'bars'};
   facilities:{dataset:string; radiusKm:number; sourceMode?:'connected'}; point_grid:{spacingM:number};

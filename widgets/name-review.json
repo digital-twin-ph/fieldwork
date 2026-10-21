@@ -12,6 +12,16 @@
  },
  "reviews": [
   {
+   "nodeType": "aggregate_points_to_h3_cell",
+   "title": "Aggregate points to H3 cells",
+   "group": "Spatial operations",
+   "fingerprint": "44ca30c6580b",
+   "verdict": "accepted",
+   "reviewed": "2026-10-19",
+   "reviewedBy": "practitioner",
+   "note": "Renamed from `hex_aggregate` on 2026-10-19, as the sibling of the above: same operation, different areal unit, and it had the verb after its object with the unit unstated. The unit is the ontology's own term (`fw:HexCell`, \"H3 cell\") rather than \"hexbin\", because a plotting library's hexbin is a lattice fitted to its data and these cells come from a fixed global index at a stated resolution. Hexbin is what practitioners say, so it is a glossary pointer to H3 cell and sits in the widget's description, which is what the palette search matches."
+  },
+  {
    "nodeType": "alert",
    "title": "Heat alert",
    "group": "Sources",
@@ -22,75 +32,10 @@
    "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
   },
   {
-   "nodeType": "study_area",
-   "title": "Study area",
-   "group": "Sources",
-   "fingerprint": "2357dce21929",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "find_health_facilities",
-   "title": "Find health facilities",
-   "group": "Sources",
-   "fingerprint": "b239f0bd9433",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "network_input",
-   "title": "Street network",
-   "group": "Sources",
-   "fingerprint": "8a50b03b1cba",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "point_input",
-   "title": "Point data",
-   "group": "Sources",
-   "fingerprint": "ec45be738aa6",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "raster_input",
-   "title": "Raster input",
-   "group": "Sources",
-   "fingerprint": "4fe81b5361ac",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "reproject",
-   "title": "Reproject points",
-   "group": "Spatial operations",
-   "fingerprint": "0717fdbb9716",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null,
-   "note": "Re-pinned 2026-10-13 after the split in experiment 111 changed the contract: the widget stopped importing its own data and became a points-to-points transform, so it moved from Sources to Spatial operations and the title gained the object it acts on. Both mechanical naming violations cleared with it and the ceiling went 6 -> 4. STILL PENDING review: the row was never accepted under the old name either, and re-pinning records what the palette now says, not that anyone has agreed with it."
-  },
-  {
-   "nodeType": "slr_extract_import",
-   "title": "Sea-level projection extract",
-   "group": "Sources",
-   "fingerprint": "15bb332b6ed8",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null,
-   "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
-  },
-  {
-   "nodeType": "table_input",
-   "title": "Tabular data",
-   "group": "Sources",
-   "fingerprint": "139e1d3526c1",
+   "nodeType": "apply_ruleset",
+   "title": "Apply ruleset",
+   "group": "Semantic reasoning",
+   "fingerprint": "271a02e20aa5",
    "verdict": "pending",
    "reviewed": null,
    "reviewedBy": null
@@ -112,6 +57,34 @@
    "verdict": "pending",
    "reviewed": null,
    "reviewedBy": null
+  },
+  {
+   "nodeType": "case_series",
+   "title": "Cases by period",
+   "group": "Summaries",
+   "fingerprint": "842d3ba3a182",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "chart_output",
+   "title": "Chart",
+   "group": "Outputs",
+   "fingerprint": "b725f6ecc432",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "clip_points_to_area",
+   "title": "Keep points inside the area",
+   "group": "Spatial operations",
+   "fingerprint": "4a4fffba69b2",
+   "verdict": "accepted",
+   "reviewed": "2026-10-20",
+   "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
+   "note": "Named against the rule this ledger states: a transform verb, then what it acts on, with the second operand carried by a preposition -- clip_points_to_area beside summarize_points_to_polygon and snap_to_network. The palette words say the result rather than the operation, \"Keep points inside the area\", because that is the sentence a practitioner is holding when they look for it; the identifier keeps the discipline's verb."
   },
   {
    "nodeType": "clip_polygons",
@@ -141,6 +114,24 @@
    "reviewedBy": null
   },
   {
+   "nodeType": "comparison_map",
+   "title": "Comparison map",
+   "group": "Outputs",
+   "fingerprint": "88bab83947ac",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "coverage_check",
+   "title": "Check spatial coverage",
+   "group": "Comparisons and checks",
+   "fingerprint": "318b29094c61",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
    "nodeType": "donut_geomask",
    "title": "Move points in a donut",
    "group": "Spatial operations",
@@ -160,6 +151,16 @@
    "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
   },
   {
+   "nodeType": "facility_audit",
+   "title": "Evidence register",
+   "group": "Summaries",
+   "fingerprint": "783d2a6aaaf7",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null,
+   "note": "Purpose supplied by the practitioner 2026-10-19 and recorded in experiment 64, phase 2: built for Gaborone, to check whether facilities from healthsites.io, the Ministry of Health's list and Overture Places were the same facilities. The registry description says what it renders, not what it is for. The name is pending review until that purpose is settled: \"Evidence register\" names a presentation, and the operation may be source agreement rather than inspection. Manual validation of inputs was scoped out of Fieldwork on 2026-10-19 (\"out of scope for FW, for now\"), so the activity this widget supports is deliberately not being built toward; its disposition is for the audit queue, not a consequence of that decision."
+  },
+  {
    "nodeType": "fill_interior_gaps",
    "title": "Fill interior gaps",
    "group": "Spatial operations",
@@ -169,20 +170,28 @@
    "reviewedBy": null
   },
   {
-   "nodeType": "aggregate_points_to_h3_cell",
-   "title": "Aggregate points to H3 cells",
-   "group": "Spatial operations",
-   "fingerprint": "44ca30c6580b",
-   "verdict": "accepted",
-   "reviewed": "2026-10-19",
-   "reviewedBy": "practitioner",
-   "note": "Renamed from `hex_aggregate` on 2026-10-19, as the sibling of the above: same operation, different areal unit, and it had the verb after its object with the unit unstated. The unit is the ontology's own term (`fw:HexCell`, \"H3 cell\") rather than \"hexbin\", because a plotting library's hexbin is a lattice fitted to its data and these cells come from a fixed global index at a stated resolution. Hexbin is what practitioners say, so it is a glossary pointer to H3 cell and sits in the widget's description, which is what the palette search matches."
+   "nodeType": "find_health_facilities",
+   "title": "Find health facilities",
+   "group": "Sources",
+   "fingerprint": "b239f0bd9433",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
   },
   {
    "nodeType": "isochrone",
    "title": "Network isochrone",
    "group": "Spatial operations",
    "fingerprint": "81ecde16de25",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "map_output",
+   "title": "Map",
+   "group": "Outputs",
+   "fingerprint": "86ca10007463",
    "verdict": "pending",
    "reviewed": null,
    "reviewedBy": null
@@ -215,6 +224,60 @@
    "reviewedBy": null
   },
   {
+   "nodeType": "micro_workflow",
+   "title": "Micro-workflow",
+   "group": "Micro-workflows",
+   "fingerprint": "102c1f1a5f37",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "network_input",
+   "title": "Street network",
+   "group": "Sources",
+   "fingerprint": "8a50b03b1cba",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "point_grid",
+   "title": "Point grid",
+   "group": "Spatial operations",
+   "fingerprint": "15dc526b7b7e",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "point_input",
+   "title": "Point data",
+   "group": "Sources",
+   "fingerprint": "ec45be738aa6",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "raster_input",
+   "title": "Raster input",
+   "group": "Sources",
+   "fingerprint": "4fe81b5361ac",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "rate",
+   "title": "Rate with a denominator",
+   "group": "Summaries",
+   "fingerprint": "c314cf6a9dc1",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
    "nodeType": "reachable_corridor",
    "title": "Reachable corridor",
    "group": "Spatial operations",
@@ -233,6 +296,16 @@
    "reviewedBy": null
   },
   {
+   "nodeType": "reproject",
+   "title": "Reproject points",
+   "group": "Spatial operations",
+   "fingerprint": "0717fdbb9716",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null,
+   "note": "Re-pinned 2026-10-13 after the split in experiment 111 changed the contract: the widget stopped importing its own data and became a points-to-points transform, so it moved from Sources to Spatial operations and the title gained the object it acts on. Both mechanical naming violations cleared with it and the ceiling went 6 -> 4. STILL PENDING review: the row was never accepted under the old name either, and re-pinning records what the palette now says, not that anyone has agreed with it."
+  },
+  {
    "nodeType": "sample_raster",
    "title": "Sample raster at points",
    "group": "Spatial operations",
@@ -242,19 +315,29 @@
    "reviewedBy": null
   },
   {
-   "nodeType": "point_grid",
-   "title": "Point grid",
-   "group": "Spatial operations",
-   "fingerprint": "15dc526b7b7e",
+   "nodeType": "slr_extract_import",
+   "title": "Sea-level projection extract",
+   "group": "Sources",
+   "fingerprint": "15bb332b6ed8",
    "verdict": "pending",
    "reviewed": null,
-   "reviewedBy": null
+   "reviewedBy": null,
+   "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
   },
   {
    "nodeType": "slr_site_assignment",
    "title": "Assign projection site",
    "group": "Spatial operations",
    "fingerprint": "ecb55da38088",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "slr_threshold_comparison",
+   "title": "Compare level to elevation",
+   "group": "Comparisons and checks",
+   "fingerprint": "4c389a09b00e",
    "verdict": "pending",
    "reviewed": null,
    "reviewedBy": null
@@ -278,83 +361,10 @@
    "reviewedBy": null
   },
   {
-   "nodeType": "travel_time",
-   "title": "Travel time from distance",
-   "group": "Spatial operations",
-   "fingerprint": "815247bbea2f",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "travel_time_band",
-   "title": "Travel time band",
-   "group": "Spatial operations",
-   "fingerprint": "cf220573a25a",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "voronoi",
-   "title": "Voronoi catchments",
-   "group": "Spatial operations",
-   "fingerprint": "ea377e7899f3",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "coverage_check",
-   "title": "Check spatial coverage",
-   "group": "Comparisons and checks",
-   "fingerprint": "318b29094c61",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "slr_threshold_comparison",
-   "title": "Compare level to elevation",
-   "group": "Comparisons and checks",
-   "fingerprint": "4c389a09b00e",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "apply_ruleset",
-   "title": "Apply ruleset",
-   "group": "Semantic reasoning",
-   "fingerprint": "271a02e20aa5",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "case_series",
-   "title": "Cases by period",
-   "group": "Summaries",
-   "fingerprint": "842d3ba3a182",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "facility_audit",
-   "title": "Evidence register",
-   "group": "Summaries",
-   "fingerprint": "783d2a6aaaf7",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null,
-   "note": "Purpose supplied by the practitioner 2026-10-19 and recorded in experiment 64, phase 2: built for Gaborone, to check whether facilities from healthsites.io, the Ministry of Health's list and Overture Places were the same facilities. The registry description says what it renders, not what it is for. The name is pending review until that purpose is settled: \"Evidence register\" names a presentation, and the operation may be source agreement rather than inspection. Manual validation of inputs was scoped out of Fieldwork on 2026-10-19 (\"out of scope for FW, for now\"), so the activity this widget supports is deliberately not being built toward; its disposition is for the audit queue, not a consequence of that decision."
-  },
-  {
-   "nodeType": "rate",
-   "title": "Rate with a denominator",
-   "group": "Summaries",
-   "fingerprint": "c314cf6a9dc1",
+   "nodeType": "study_area",
+   "title": "Study area",
+   "group": "Sources",
+   "fingerprint": "2357dce21929",
    "verdict": "pending",
    "reviewed": null,
    "reviewedBy": null
@@ -388,37 +398,10 @@
    "note": "Renamed from `summarize_polygons` on 2026-10-19 after the practitioner asked whether it should be \"summarize points or summarize polygons\". Neither alone: the operation reduces POINTS and the polygons are the areal units it reduces them to, so both operands are named and the second carries a preposition. `summarize_combined_area` is the widget that genuinely summarizes polygons. The mechanical gate recorded no violation for the old name, which is why this ledger exists."
   },
   {
-   "nodeType": "micro_workflow",
-   "title": "Micro-workflow",
-   "group": "Micro-workflows",
-   "fingerprint": "102c1f1a5f37",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "chart_output",
-   "title": "Chart",
-   "group": "Outputs",
-   "fingerprint": "b725f6ecc432",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "comparison_map",
-   "title": "Comparison map",
-   "group": "Outputs",
-   "fingerprint": "88bab83947ac",
-   "verdict": "pending",
-   "reviewed": null,
-   "reviewedBy": null
-  },
-  {
-   "nodeType": "map_output",
-   "title": "Map",
-   "group": "Outputs",
-   "fingerprint": "86ca10007463",
+   "nodeType": "table_input",
+   "title": "Tabular data",
+   "group": "Sources",
+   "fingerprint": "139e1d3526c1",
    "verdict": "pending",
    "reviewed": null,
    "reviewedBy": null
@@ -428,6 +411,33 @@
    "title": "Table",
    "group": "Outputs",
    "fingerprint": "61fab00f2451",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "travel_time",
+   "title": "Travel time from distance",
+   "group": "Spatial operations",
+   "fingerprint": "815247bbea2f",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "travel_time_band",
+   "title": "Travel time band",
+   "group": "Spatial operations",
+   "fingerprint": "cf220573a25a",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "voronoi",
+   "title": "Voronoi catchments",
+   "group": "Spatial operations",
+   "fingerprint": "ea377e7899f3",
    "verdict": "pending",
    "reviewed": null,
    "reviewedBy": null

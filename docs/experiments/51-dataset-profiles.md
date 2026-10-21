@@ -279,6 +279,77 @@ It would also test something the sea-level pack cannot: whether the governance
 machinery is usable by someone adding a pack that is purely vocabulary. One pack is a
 feature; two is a process.
 
+## Measured: which archetypes the corpus actually instantiates
+
+Asked 2026-10-20 — *"I am looking at experiment 51 and wondering if we have open data examples of
+each of those archetype"* — and read off the eleven worked examples, their `provenance.json`
+licences and `widgets/evidence.json`, rather than from the names of the examples.
+
+The record's own rule is that **an archetype earns its place when two independent worked examples
+instantiate it**. By that rule none of the six has earned it, and two have no instance at all.
+
+| Archetype | Instantiated by | Licence of the data | Earned? |
+| --- | --- | --- | --- |
+| Coverage assessment | 03 · Spatial coverage exercise | synthetic, generated in the browser | no |
+| Access or catchment analysis | 05 · John Snow Voronoi catchments, 06 · John Snow network isochrones, 02 · Old Naledi diagnostic access | Soho: HistData via Rdatasets and the GeoDa Center, no stated terms; street network OSM ODbL-1.0. Old Naledi: coordinates from a CDC repository, not redistributable | no — 05 and 06 are one corpus, not two independent examples |
+| Exposure or hazard assessment | 08 · Manila coastal exposure, 01 · Heat outreach, 04 · Old Naledi raster clipping | 08: IPCC AR6 CC-BY-4.0 and OSM ODbL-1.0 — **the one unambiguously open instance**. 01: synthetic. 04: names a WorldPop raster and ships none | no |
+| Outbreak or cluster investigation | 09 · John Snow outbreak extent, 11 · Measles in Hagelloch, 1861 | 09 as above; 11 **NONE STATED by any holder in the chain**, checked 2026-10-17 across surveillance, outbreaks and EpiCompare | two instances, neither carrying terms that permit redistribution |
+| Outbreak response with cross-border risk | nothing | — | no instance |
+| Facility audit | 02 · Old Naledi diagnostic access, through `facility_audit` | not redistributable | no |
+
+Two of the five classes have **no instance anywhere in the corpus**:
+
+- **Denominator.** `rate` has zero example uses, as do `coverage_check` and `sample_raster`. No
+  worked example divides anything by a population, so the class this record puts first — and the
+  vintage triple that goes with it — has never been exercised against data. The agreement a profile
+  is meant to force has therefore never been tested by a worked example.
+- **Pathway.** No airports, air or ferry routes, border crossings or adjacent-jurisdiction
+  boundaries appear in any example. The archetype that needed this class to be invented is the one
+  archetype with nothing instantiating it.
+
+That second gap is the sharp one, because the cross-border archetype is what the project is
+**field-testing right now**: a Bunia ADM2 study area, a North Kivu ADM1 study area, a street
+network across the DRC–Uganda border, and health facilities from OSM and Overture Places of which
+526 of 961 stood in Uganda and Rwanda. The archetype with no worked example is the archetype the
+practitioner is working in, which is the opposite of the order this record assumed — profiles
+extracted from a corpus, then applied to the field.
+
+### What each gap would need, from sources already vetted here
+
+The classes each gap needs are open and global; it is the case data that is not.
+
+| Gap | Frame | Denominator / hazard | Pathway | Case or service data |
+| --- | --- | --- | --- | --- |
+| Coverage assessment | geoBoundaries or OCHA COD-AB via HDX, CC BY 4.0 | WorldPop, CC BY 4.0 | — | immunisation or service coverage, terms vary per country |
+| Cross-border outbreak response | geoBoundaries for the affected country **and every neighbour** | WorldPop per country | OurAirports (public domain), OSM roads, ferries and crossings (ODbL-1.0); **scheduled traffic volumes are commercial** | WHO AFRO or situation-report line lists, terms vary per release |
+| Facility audit | geoBoundaries | — | — | OSM or Overture Places as the registry, with functioning status unobtainable — which is the refusal this archetype already carries |
+
+> **Where this went next, the same day.** The practitioner proposed filling the denominator gap
+> with Snow's South London water supply study, and proposed that worked examples need not occupy
+> space in the download at all — [experiment 127](127-examples-as-repositories.md) measures what
+> they cost today, finds that the rules already permit an example to be a fetched resource, and
+> records what has to be read before that example can be built.
+
+So an open-data instance of the cross-border archetype is buildable **today** for everything except
+the case counts and the flow volumes, and those two are exactly what the archetype must refuse to
+claim: a route is not a flow, and absence of reports is not absence of cases. An example that
+carried the frame, the denominators and the pathway for DRC and its neighbours, and refused the
+importation estimate in its receipt, would instantiate the archetype honestly rather than wait for
+data that is not redistributable.
+
+### What this does not establish
+
+- **That the licence states are current.** Each was read from the example's own `provenance.json`,
+  recorded when the example was added. Hagelloch's was checked 2026-10-17 and the Soho chain has
+  never had terms stated by anyone.
+- **That an archetype with two instances would be right.** The two-example rule is a floor against
+  invention, not evidence that the taxonomy carves the field correctly. The disconfirming
+  observation is still the one in the table above: whether a practitioner recognises their problem
+  in an archetype at all.
+- **That a missing instance means a missing capability.** `rate` and `coverage_check` are built and
+  tested; what they lack is a worked example with real denominators, which is a corpus gap rather
+  than a code gap.
+
 ## Competency questions
 
 Answerable, if profiles exist:
@@ -333,3 +404,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-08 | Correct experiment 51: relevance extends past the study area, and tiles do not scale |
 | 2026-10-08 | Measure cacheable basemaps: one file, not 8.6 million requests |
 | 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-20 | Read the corpus against the archetypes: two of five classes have no instance, and the cross-border archetype being field-tested has no worked example |

@@ -8,7 +8,9 @@ import type {ChartSummary,Receipt} from './results.js';
  *  denominator counts — people, houses, households, person-time — and a proportion is a different
  *  quantity from a ratio: the share of houses with a death cannot exceed one, while deaths per house
  *  can. Both appear in John Snow's data and conflating them is easy.
- *  See docs/experiments/51-dataset-profiles.md and 62-rates-with-denominators.md. */
+ *  See docs/experiments/51-dataset-profiles.md for the denominator class and the vintage triple,
+ *  and 127-examples-as-repositories.md for the worked example that would exercise this widget:
+ *  no example uses it today, so the units and the vintage refusals are untested against data. */
 export const DENOMINATOR_UNITS=['people','houses','households','person-time','other'] as const;
 export type DenominatorUnit=typeof DENOMINATOR_UNITS[number];
 export const RATE_KINDS=['proportion','ratio'] as const;

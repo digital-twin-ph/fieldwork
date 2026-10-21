@@ -14,6 +14,14 @@ const measure=page=>page.evaluate(()=>{
     if(![...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))return;
     const s=getComputedStyle(el);
     if(s.visibility==='hidden'||s.display==='none'||Number(s.opacity)<0.3)return;
+    // Text inside a CLOSED <details> is not painted, and Chromium does not keep its computed
+    // style current: after a theme switch those elements still report the previous theme's
+    // colours while reporting a box. Measuring them compares a dark foreground against a light
+    // background that nobody is looking at. Found 2026-10-20, when the project details' buttons
+    // failed in a full-suite run, passed in isolation, and reported their own background as white
+    // while --surface-raised-1 resolved to #19211e. The disclosures below are opened before
+    // measuring, so these controls are still checked -- in the state a practitioner sees them.
+    if(el.closest('details:not([open])'))return;
     const box=el.getBoundingClientRect();if(box.width<2||box.height<2)return;
     examined++;
     const size=parseFloat(s.fontSize),weight=Number(s.fontWeight)||400;
@@ -21,7 +29,15 @@ const measure=page=>page.evaluate(()=>{
     const required=size>=24||(size>=18.66&&weight>=700)?3:4.5;
     const r=ratio(fg,bg);
     if(r<required)failures.push({pair:`rgb(${fg.slice(0,3).map(Math.round)}) on rgb(${bg.slice(0,3)})`,
-      ratio:Math.round(r*100)/100,required,size,text:(el.textContent||'').trim().slice(0,30)});
+      ratio:Math.round(r*100)/100,required,size,text:(el.textContent||'').trim().slice(0,30),
+      // WHERE it is and WHAT it resolved, because on 2026-10-20 this failed in a full-suite run
+      // and passed in isolation, reporting a white background behind two buttons whose own
+      // background is opaque in every state anybody could reproduce. A ratio alone cannot settle
+      // that; the element's identity and the value its own custom property resolved to can.
+      where:`${el.tagName.toLowerCase()}${el.id?'#'+el.id:''}${el.className&&typeof el.className==='string'?'.'+el.className.trim().replace(/\s+/g,'.'):''}`,
+      ownBackground:s.backgroundColor,
+      surface:getComputedStyle(document.documentElement).getPropertyValue('--surface-raised-1').trim()||'(unset)',
+      theme:document.documentElement.getAttribute('data-theme')||'(none)'});
   });
   return {examined,failures,pairs:[...new Set(failures.map(f=>f.pair))]};
 });
@@ -30,10 +46,12 @@ test('dark meets WCAG AA for every rendered text element',async({page})=>{
   await page.goto('/?example=old-naledi');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('#theme-select').selectOption('dark');
+  // Every disclosure open, so what hides behind one is measured rather than skipped.
+  await page.evaluate(()=>document.querySelectorAll('details').forEach(d=>{d.open=true;}));
   await page.waitForTimeout(400);
   const {examined,failures}=await measure(page);
   expect(examined).toBeGreaterThan(150);
-  expect(failures.map(f=>`${f.ratio} ${f.pair} "${f.text}"`)).toEqual([]);
+  expect(failures.map(f=>`${f.ratio} ${f.pair} "${f.text}" at ${f.where} own=${f.ownBackground} --surface-raised-1=${f.surface} theme=${f.theme}`)).toEqual([]);
 });
 
 test('light does not get worse than its recorded baseline',async({page})=>{

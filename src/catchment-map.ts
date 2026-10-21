@@ -55,7 +55,7 @@ const BASEMAPS={
  *  One source now, used by both selects. What still needs a human is the `BasemapChoice` union in
  *  types.ts, which cannot import this module because the workers build types.ts without Leaflet. */
 const BASEMAP_LABELS:Record<BasemapChoice,string>={
-  none:'None \u00b7 local geometry, works offline',
+  none:'None \u00b7 works offline',
   osm:BASEMAPS.osm.label,
   topo:BASEMAPS.topo.label,
   'ofm-liberty':VECTOR_BASEMAPS['ofm-liberty'].label,
@@ -107,7 +107,9 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   const map=L.map(canvas,{scrollWheelZoom:false,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false}),all=L.featureGroup(),overlays:Record<string,L.Layer>=Object.create(null);
   // Ground first, under everything the workflow produced.
   if(layers.boundary){
-    const area=L.geoJSON(layers.boundary as never,{interactive:false,style:{color:'#176b59',weight:2,fillColor:'#dbe8d6',fillOpacity:.25}});
+    // Canvas for the same reason the streets use it: a published boundary can be tens of
+    // thousands of vertices, and an SVG path that long is seconds of paint on every redraw.
+    const area=L.geoJSON(layers.boundary as never,{renderer:L.canvas(),interactive:false,style:{color:'#176b59',weight:2,fillColor:'#dbe8d6',fillOpacity:.25}} as L.GeoJSONOptions);
     area.addTo(map);all.addLayer(area);overlays['Study area']=area;
   }
   const sorted=[...p.features].sort((a,b)=>(b.minutes||0)-(a.minutes||0));
@@ -141,13 +143,18 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const radius=typeof n==='number'&&Number.isFinite(n)&&n>0?Math.max(2,Math.min(20,n)):3;
     L.circleMarker([lat,lon],{radius,color:'#222',weight:1,fillColor:'#d62f2f',fillOpacity:.85}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${typeof n==='number'?`<br>Deaths: ${n}`:''}`).addTo(observations);
   }
-  observations.addTo(map);all.addLayer(observations);overlays['Observations (red circles)']=observations;
+  // ONLY IF THERE IS SOMETHING IN IT. The practitioner, 2026-10-20, on a map of a border study
+  // area and its streets: *"Stale UI artifacts --- Observations (red circles) and Sites (blue
+  // squares)."* Both were listed, both were empty, and a layer control that offers a layer which
+  // cannot appear is a claim that the workflow has data it does not have -- on a map whose whole
+  // job is to say what is there. The two below already guard this way; these two did not.
+  if(observations.getLayers().length){observations.addTo(map);all.addLayer(observations);overlays['Observations (red circles)']=observations;}
   const pumps=L.featureGroup(),points=context?.features||p.sites;
   for(const f of points){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates;
     const marker=L.marker([lat,lon],{icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
     marker.on('add',()=>{const icon=marker.getElement();if(icon){L.DomEvent.disableClickPropagation(icon);icon.addEventListener('mousedown',event=>event.preventDefault());icon.addEventListener('click',event=>{event.stopPropagation();marker.openPopup();});}});
   }
-  pumps.addTo(map);all.addLayer(pumps);overlays['Sites / context (blue squares)']=pumps;
+  if(pumps.getLayers().length){pumps.addTo(map);all.addLayer(pumps);overlays['Sites / context (blue squares)']=pumps;}
   // Points a value carried rather than a port delivered -- a spatial map's rows, and the centers
   // it measured against. Drawn with the status each row was given, because that is what the map
   // is about.

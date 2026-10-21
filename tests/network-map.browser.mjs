@@ -62,8 +62,10 @@ test('a downloaded network can be seen in the Inspector and sent to the Map',asy
   await expect(page.locator('#catchment-map-host')).toBeVisible();
   await expect(page.locator('.catchment-leaflet')).toBeVisible();
   // The streets are one canvas-rendered multi-polyline, not a layer per segment: a town-sized
-  // graph is tens of thousands of them.
-  await expect(page.locator('.catchment-leaflet canvas')).toHaveCount(1);
+  // graph is tens of thousands of them. Asserted as "nothing is in the SVG pane" rather than by
+  // counting canvases, because the boundary is canvas-rendered too since 2026-10-20.
+  await expect(page.locator('.catchment-leaflet canvas').first()).toBeVisible();
+  await expect(page.locator('.catchment-leaflet .leaflet-overlay-pane path')).toHaveCount(0);
   await expect(page.locator('#map-note')).toContainText('junctions');
   // The basemap control is reachable, which is the half of the report that was unreachable.
   await expect(page.locator('.catchment-map-toolbar [data-basemap]')).toBeVisible();
@@ -77,4 +79,25 @@ test('a downloaded network can be seen in the Inspector and sent to the Map',asy
   await expect(page.locator('#catchment-map-host')).toHaveCount(0);
   // Two again: the area is still connected, and static draws both.
   await expect(page.locator('#map path')).toHaveCount(2);
+});
+
+// "Stale UI artifacts --- Observations (red circles) and Sites (blue squares)." A map of a study
+// area and its streets listed two layers that held nothing. A layer control that offers a layer
+// which cannot appear claims the workflow has data it does not have.
+test('the layer control lists only layers that hold something',async({page})=>{
+  await page.goto('/?example=snow-isochrone');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="map"]').click();
+  await page.locator('#map-add-layer').selectOption('network');
+  await page.locator('#polygon-presentation').selectOption('interactive');
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('#result-tabs [data-output="map"]').click();
+  await expect(page.locator('.catchment-leaflet')).toBeVisible();
+
+  const layers=await page.locator('.leaflet-control-layers-overlays label').allInnerTexts();
+  expect(layers.join(' | ')).toContain('Street network');
+  expect(layers.join(' | ')).not.toContain('Observations');
+  expect(layers.join(' | ')).not.toContain('Sites / context');
 });

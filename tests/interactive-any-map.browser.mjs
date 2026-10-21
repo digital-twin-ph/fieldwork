@@ -37,7 +37,7 @@ test('a points-only map can be interactive, and draw tiles',async({page})=>{
   await expect(basemap).toHaveCount(1);
   // The offline default and at least one raster source. The full list is the OpenFreeMap test's
   // business; this one is about the interactive presentation being reachable at all.
-  await expect(basemap.locator('option')).toContainText(['Local geometry (offline)']);
+  await expect(basemap.locator('option')).toContainText(['None · works offline']);
   await basemap.selectOption('osm');
   await expect.poll(()=>page.locator('.leaflet-tile').count(),{timeout:20000}).toBeGreaterThan(0);
 

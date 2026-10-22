@@ -1,4 +1,6 @@
 import {metricCRSAssertion} from './metric-crs.js';
+import type {AreaValue} from './results.js';
+import {geometryBounds} from './study-area.js';
 import type {Boundary,Position,WorkflowNode} from './types.js';
 import type {Catchment,Polygons} from './catchments.js';
 import {metric} from './catchments.js';
@@ -78,4 +80,58 @@ export function combinedArea(
     +`prov:used <urn:fieldwork:run:${runId}:${sourceNodeId}>.\n`;
   return {value,receipt:{nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
     method:`${value.method}. ${notes.slice(1).join(' ')}`}};
+}
+
+/** TWO STUDY AREAS ARE ONE STUDY AREA — the area half of the Combined area widget.
+ *
+ *  The practitioner, 2026-10-22: *"Can two adjacent study areas be merged as one polygon?"*, then,
+ *  on being told the union widget could not be fed one: *"But a study area is a polygon."*, then
+ *  *"So two study area polygons combined should still be a study area."*
+ *
+ *  All three sentences are the specification. The union that already existed -- Combined area --
+ *  takes a POLYGONS result and returns one, which cannot then be given to the street network, the
+ *  facilities or the clip, every one of which wants an AREA. So the merge is an area-to-area
+ *  operation or it is of no use.
+ *
+ *  **Touching outlines are not dissolved.** Two provinces that share a border come in as two rings
+ *  and stay as two rings: a published outline is somebody's record of where a boundary is, and
+ *  welding two of them along a line they each describe slightly differently would invent a third
+ *  line that no authority drew. For every question this application asks of a study area --
+ *  is this point inside, what does the extract clip to, what is the bounding box -- a MultiPolygon
+ *  of both answers exactly as a dissolved outline would. What it does not do is pretend the border
+ *  is gone. */
+export function combineAreas(node:WorkflowNode<'summarize_combined_area'>,parts:AreaValue[],runId:string):
+  {value:AreaValue;receipt:Receipt}{
+  const named=parts.filter(part=>part?.boundary);
+  if(named.length<2)throw new Error('Connect two study areas to combine them.');
+  const rings:Position[][][]=[];
+  for(const part of named){
+    const geometry=part.boundary;
+    if(geometry.type==='Polygon')rings.push(geometry.coordinates as Position[][]);
+    else for(const polygon of geometry.coordinates as Position[][][])rings.push(polygon);
+  }
+  const boundary:Boundary={type:'MultiPolygon',coordinates:rings};
+  const areaId=`urn:fieldwork:run:${runId}:output:${node.id}`;
+  const geometryId=`${areaId}:geometry`,activity=`${areaId}:combine`;
+  const label=node.params.label?.trim()||named.map(part=>part.label).join(' + ');
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+    +`@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n`
+    +`<${activity}> a fw:AreaCombination, prov:Activity; `
+    +`fw:method "Outlines carried through unchanged as the parts of one MultiPolygon; touching "`
+    +`"borders are not dissolved, because a published outline is a record of where a boundary is "`
+    +`"and welding two of them would invent a line no authority drew".\n`
+    +named.map(part=>`<${activity}> prov:used <${part.areaId}>.\n`).join('')
+    +`<${areaId}> a fw:StudyArea, prov:Entity; prov:wasGeneratedBy <${activity}>; `
+    +`rdfs:label ${JSON.stringify(label)}; fw:partCount ${named.length}; `
+    +`geo:hasGeometry <${geometryId}>.\n`
+    +`<${geometryId}> a geo:Geometry; fw:ringCount ${rings.length}.\n`;
+  // The spatial reference of the first part: combining areas in different projections is a
+  // question nobody has asked yet, and guessing an answer would bury it.
+  return {
+    value:{kind:'study-area',boundary,areaId,geometryId,label,bounds:geometryBounds(boundary),
+      rows:[],centers:[],spatialReference:structuredClone(named[0].spatialReference)},
+    receipt:{nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
+      method:`${named.length} study areas carried through as ${rings.length} rings of one `
+        +`MultiPolygon; touching borders are not dissolved`},
+  };
 }

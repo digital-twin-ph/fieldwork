@@ -110,12 +110,21 @@ test('the Inspector says what the offered version of a widget changed',async({pa
   // The version is READ from the registry, not typed here. It said 0.10.0 until map_output cut
   // 0.11.0 and 0.12.0 on consecutive days, and a test that names a version fails on the release
   // after the one it was written for -- which says nothing about the feature under test.
-  const current=JSON.parse(readFileSync(new URL('../widgets/registry.json',import.meta.url),'utf8'))
-    .widgets.find(w=>w.nodeType==='map_output').currentVersion;
+  const registry=JSON.parse(readFileSync(new URL('../widgets/registry.json',import.meta.url),'utf8'))
+    .widgets.find(w=>w.nodeType==='map_output');
+  const current=registry.currentVersion;
   await expect(inspector).toContainText(`What changed in ${current}`);
   // Folded by default for an ordinary release; the text is there once opened.
   await inspector.locator('details',{hasText:`What changed in ${current}`}).first().click();
-  await expect(inspector).toContainText('coverage');
+  // READ from the release too, for the same reason the version is. This asserted the word
+  // "coverage" -- a word out of 0.12.0's note -- so cutting 0.13.0 failed a test about whether
+  // the note is SHOWN, which says nothing about the feature under test. Words rather than a
+  // phrase, so punctuation and escaping in a future note cannot break it either.
+  const release=JSON.parse(readFileSync(
+    new URL('../'+registry.releases.find(r=>r.version===current).path,import.meta.url),'utf8'));
+  const words=[...new Set((release.changes[0].description.match(/[A-Za-z]{6,}/g)||[]))].slice(0,3);
+  expect(words.length).toBeGreaterThan(0);
+  for(const word of words)await expect(inspector).toContainText(word);
   await expect(inspector).toContainText('Earlier releases stay in the registry');
   expect(errors).toEqual([]);
 });

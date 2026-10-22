@@ -27,7 +27,11 @@ test('a blocker revisited inside the window passes', ()=>{
   // blocker was stale but because the pinned clock was then BEHIND measuredAt, which the
   // validator refuses for its own reason. A date before the file was written is not a test of
   // the window.
-  const {ok,out}=run('2026-10-20');
+  // Moved again on 2026-10-22, when six blockers were re-derived and the ledger's measuredAt
+  // advanced with them. The pin has to sit at or after measuredAt and before the oldest standing
+  // blocker's window closes -- which is a dependency on two dates inside the file under test, and
+  // is why this pin has now moved twice.
+  const {ok,out}=run('2026-10-23');
   assert.equal(ok,true,out);
 });
 

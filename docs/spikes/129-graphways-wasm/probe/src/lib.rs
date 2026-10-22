@@ -27,6 +27,20 @@ pub extern "C" fn alloc(len: usize) -> *mut u8 {
     pointer
 }
 
+/// The study area itself, as `[lon, lat, ...]` with `(NaN, NaN)` between rings.
+#[no_mangle]
+pub extern "C" fn set_polygon(pointer: *const f64, values: usize) {
+    if values == 0 { graphways::pbf::clear_polygon(); return; }
+    let points = unsafe { std::slice::from_raw_parts(pointer, values) };
+    graphways::pbf::set_polygon(points);
+}
+
+/// Is this point inside the study area as set? The clip, asked one point at a time.
+#[no_mangle]
+pub extern "C" fn point_inside(lon: f64, lat: f64) -> i32 {
+    if graphways::pbf::point_inside(lon, lat) { 1 } else { 0 }
+}
+
 #[no_mangle]
 pub extern "C" fn set_bbox(west: f64, south: f64, east: f64, north: f64) {
     graphways::pbf::set_bbox(west, south, east, north);
@@ -211,4 +225,25 @@ pub extern "C" fn scan_only(pointer: *mut u8, len: usize, drive: i32) -> i32 {
     let read = if two_pass { graphways::pbf::read_pbf_bytes_two_pass(bytes, network) }
                else { graphways::pbf::read_pbf_bytes(bytes, network) };
     match read { Ok((data, _pois)) => data.nodes.len() as i32, Err(_) => -1 }
+}
+
+/// Build from an OSM XML document already in memory. The PBF path needs a
+/// published extract; this one needs nothing, which is what a test needs.
+#[no_mangle]
+pub extern "C" fn graph_from_xml(pointer: *mut u8, len: usize, drive: i32) -> i32 {
+    let bytes = unsafe { std::slice::from_raw_parts(pointer, len) };
+    let Ok(xml) = std::str::from_utf8(bytes) else { return -3 };
+    let network = if drive != 0 { NetworkType::Drive } else { NetworkType::Walk };
+    let retain = *RETAIN_ALL.lock().unwrap();
+    let mut options = graphways::profile::BuildOptions::retain_all(retain);
+    let speed = *WALK_KPH.lock().unwrap();
+    if speed > 0.0 { options.profile.walk_speed_kph = speed; }
+    match SpatialGraph::from_osm_with(xml, network, &options) {
+        Ok(graph) => {
+            let count = graph.graph.node_count() as i32;
+            *GRAPH.lock().unwrap() = Some(graph);
+            count
+        }
+        Err(_) => -1,
+    }
 }

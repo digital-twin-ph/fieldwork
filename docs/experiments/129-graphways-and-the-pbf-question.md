@@ -150,6 +150,11 @@ picker for the extract, the study area's bbox applied during the parse, and only
 kept. Nothing is re-downloaded, nothing is duplicated, and an extract downloaded once works offline
 forever after — which is what this project claims to be for.
 
+The extracts these measurements were taken from are kept at `~/Downloads/drc.osm.pbf` (397 MB, OSM
+data to 2026-10-21), `rwanda.osm.pbf` and `andorra.osm.pbf`, deliberately outside the repository:
+they are published files that Geofabrik already hosts, under ODbL, and a copy in git would be a
+copy forever. They are where a file picker would find them, which is the point of the direction.
+
 Two things to check before building it. Chromium's File System Access API can keep a handle with
 permission across sessions, so "choose it once" is possible there; WebKit has no such API, and a
 plain `<input type="file">` means choosing the file again each session, which is a different

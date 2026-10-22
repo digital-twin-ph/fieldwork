@@ -760,7 +760,7 @@
     {
       "id": "urn:fieldwork:widget:raster_input",
       "nodeType": "raster_input",
-      "currentVersion": "0.3.1",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -781,6 +781,11 @@
           "version": "0.3.1",
           "path": "widgets/releases/raster_input/0.3.1.json",
           "sha256": "e48850b7e01da4cc5a96556b4610258c56a47f59a55aa0eede1ac2dc5c1ba253"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/raster_input/0.4.0.json",
+          "sha256": "7b8f6c7392d080d7adb61c60023e262cde34df4e95bfac98e639e7b97f38cdc5"
         }
       ]
     },

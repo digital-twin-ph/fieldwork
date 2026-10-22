@@ -229,7 +229,9 @@ export interface ParamsByType {
   isochrone:{label:string;zone:number;hemisphere:'north'|'south';minutes:number;thresholds?:number[];fillHoles?:boolean;speedMPerMin:number;bufferM:number;maxSnapM:number;direction:'inbound'|'outbound'};
   clip_polygons:{label:string};
   summarize_points_to_polygon:{label:string;boundary:'include'|'exclude';valueField:string};
-  raster_input:{label:string;asset?:import('./raster.js').RasterAsset};
+  /** `populationYear` is which published WorldPop year the download button offers; it chooses a
+   *  link, never the data, which arrives only when a file is prepared. */
+  raster_input:{label:string;asset?:import('./raster.js').RasterAsset;populationYear?:string};
   clip_raster:{label:string;method:'cell-center'|'all-touched';marginPixels?:number;cutline?:{geometry:Boundary;selectionMode:'bbox'|'polygon'|'circle'}};
   places:PointParams; centers:PointParams; point_input:ObservationParams; study_area:AreaParams;
   alert:{active:boolean|null; date:string};

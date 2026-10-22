@@ -112,10 +112,10 @@ export function catchmentInspector(n:WorkflowNode,esc:Escape,boundary?:Boundary,
       // them itself. What it did not do was LOOK like that: the URLs were small text links
       // joined by a middot, above a file input, with nothing saying one leads to the other.
       return `<label class="field-label">Don't have one? Download an extract covering this area</label>`
-        +`<p class="extract-links">`+regions.map(region=>
+        +`<div class="extract-links">`+regions.map(region=>
           `<a class="button" href="${esc(region.pbf)}" download target="_blank" rel="noopener noreferrer">`
           +`↓ ${esc(region.name)}</a>`).join('')
-        +`</p><small>Your browser downloads it from ${esc(new URL(regions[0].pbf).host)}; `
+        +`</div><small>Your browser downloads it from ${esc(new URL(regions[0].pbf).host)}; `
         +`this application cannot fetch it for you, as that host sends no CORS header. `
         +`Catalogue of ${EXTRACT_CATALOGUE_TAKEN}; ODbL. Sizes are not published, and a country `
         +`is typically hundreds of megabytes. Come back to the file box above once it has landed.`

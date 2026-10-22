@@ -73,6 +73,8 @@ import {standaloneChartSvg} from './chart-figure.js';
 import {networkPreviewSvg,networkCoverage,networkPreviewCaption} from './network-preview.js';
 import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,downloadRaster} from './raster-ui.js';
+import {populationRastersFor,WORLDPOP_LICENCE,WORLDPOP_TAKEN} from './worldpop-catalogue.js';
+import type {BoundaryProvenance} from './types.js';
 import {openTableEditor,dataTableMarkup} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
@@ -1502,7 +1504,31 @@ function renderInspector(){
       +'<div class="notice">A cell value is not a measurement at the point: it is the value of the containing cell, at the raster\u2019s resolution, with no interpolation. No-data cells, points outside the raster and points without coordinates carry no value and are counted; none is treated as zero. An attribute already on the layer is never overwritten.</div>';
   }else if(n.type==='raster_input'||n.type==='clip_raster'){
     content+=nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="raster-${port}">${port==='area'?'Study area':'Raster input'}</label><select id="raster-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('');
-    if(n.type==='raster_input'){content+='<button id="prepare-raster" class="button primary">Prepare GeoTIFF input</button><p class="description">Acquire a rectangular window and enter source metadata/citation. Reopen to edit metadata without re-uploading. Use Clip raster to apply the polygon mask.</p>';if(n.params.asset)content+=`<p>${esc(n.params.asset.source.filename)}<br>${n.params.asset.source.metadata.width} x ${n.params.asset.source.metadata.height} source cells; retained ${n.params.asset.metadata.width} x ${n.params.asset.metadata.height}.</p><details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(n.params.asset,null,2))}</pre></details>`;}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
+    // WHICH POPULATION RASTER COVERS THIS STUDY AREA, before asking for a file nobody has yet.
+    // The same shape as the street network widget's published extracts: this application works
+    // out the file and the browser fetches it, because data.worldpop.org sends no CORS header
+    // and ignores a Range request. Offered only where the study area STATES its country --
+    // a boundary acquired from geoBoundaries carries COD-ADM2-... -- because a population
+    // denominator attributed to the wrong country is worse than no denominator, and a province
+    // on a border is exactly where a guess from coordinates would be wrong and invisible.
+    if(n.type==='raster_input'){
+      const area=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
+      const rasters=populationRastersFor((area?.params as {boundary?:{provenance?:BoundaryProvenance}})?.boundary?.provenance);
+      if(rasters.length){
+        const chosen=rasters.find(r=>r.year===(n.params.populationYear??rasters[0].year))??rasters[0];
+        content+=`<label class="field-label" for="population-year">Population raster (WorldPop)</label>`
+          +`<select id="population-year" data-raster-param="populationYear">`
+          +rasters.map(r=>`<option value="${r.year}" ${r.year===chosen.year?'selected':''}>${r.year}</option>`).join('')
+          +`</select>`
+          +`<div class="extract-links"><a class="button" href="${esc(chosen.url)}" download target="_blank" rel="noopener noreferrer">`
+          +`\u2193 ${esc(chosen.iso3)} \u00b7 ${esc(chosen.year)}${chosen.bytes?` \u00b7 ${(chosen.bytes/1e6).toFixed(0)} MB`:''}</a></div>`
+          +`<small>Your browser downloads it from data.worldpop.org; this application cannot fetch `
+          +`it for you, as that host sends no CORS header. Unconstrained population, 100 m. `
+          +`${esc(WORLDPOP_LICENCE)} Catalogue of ${esc(WORLDPOP_TAKEN)}.`
+          +`${chosen.bytes?'':' Size unread at snapshot time, so unstated rather than guessed.'}`
+          +`</small>`;
+      }
+      content+='<button id="prepare-raster" class="button primary">Prepare GeoTIFF input</button><p class="description">Acquire a rectangular window and enter source metadata/citation. Reopen to edit metadata without re-uploading. Use Clip raster to apply the polygon mask.</p>';if(n.params.asset)content+=`<p>${esc(n.params.asset.source.filename)}<br>${n.params.asset.source.metadata.width} x ${n.params.asset.source.metadata.height} source cells; retained ${n.params.asset.metadata.width} x ${n.params.asset.metadata.height}.</p><details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(n.params.asset,null,2))}</pre></details>`;}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
     if(n.type==='clip_raster'){content+='<div class="field"><label class="field-label" for="clip-method">Pixel inclusion</label><select id="clip-method"><option value="all-touched" '+(n.params.method==='all-touched'?'selected':'')+'>All touched</option><option value="cell-center" '+(n.params.method==='cell-center'?'selected':'')+'>Cell center inside</option></select><label class="field-label" for="clip-margin">Outer margin (native pixels, 0-1)</label><input id="clip-margin" type="number" min="0" max="1" step="0.25" value="'+(n.params.marginPixels||0)+'"><small>All touched includes a cell when the boundary covers part of its area or crosses it, so a boundary running exactly along a cell border does not pull in the cell outside it. This matches GDAL except where a boundary vertex lies exactly on a cell border. For an outward margin, prepare the GeoTIFF with one pixel of extra source coverage; a margin is a grid distance with no GDAL equivalent. NoData is never filled.</small></div>';content+='<p class="description">'+(n.params.cutline?'Saved clip boundary; independent of Study area edits.':'Boundary will be initialized from the connected Study area.')+'</p><button id="reset-clip-boundary" class="button small" '+(!n.params.cutline?'disabled':'')+'>Use Study area boundary</button>';if(n.params.cutline)content+='<div class="source-card"><span class="inspector-section">Clip extent (degrees)</span>'+geometryBounds(n.params.cutline.geometry).map((value,i)=>'<div class="detail-row"><span>'+['West','South','East','North'][i]+'</span><strong>'+value.toFixed(6)+'</strong></div>').join('')+'</div>';}
   }else if(n.type==='study_area'){
     content+=`<form id="study-area-label-form" class="field"><label class="field-label" for="study-area-label">Study area label</label><input id="study-area-label" maxlength="100" required value="${esc(n.params.label||'My study area')}"><button type="submit" class="button small">Apply label</button></form>`;
@@ -2050,6 +2076,11 @@ function renderInspector(){
     },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit}:undefined);
   });
   optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
+  // The year chooses which link the button carries, so the panel redraws to carry it.
+  optionalElement('#population-year')?.addEventListener('change',event=>change(w=>{
+    const target=getNode(w,n.id,'raster_input');
+    target.params.populationYear=(event.target as HTMLSelectElement).value;
+  }));
   optionalElement('#prepare-raster')?.addEventListener('click',()=>{
     let source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);const visited=new Set<string>();
     while(source?.type==='measure_area'&&!visited.has(source.id)){visited.add(source.id);source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===source!.id&&e.port==='area')?.from);}

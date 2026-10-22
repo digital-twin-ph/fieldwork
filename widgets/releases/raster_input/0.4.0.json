@@ -1,0 +1,71 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:raster_input",
+ "version": "0.4.0",
+ "nodeType": "raster_input",
+ "title": "Raster input",
+ "released": "2026-10-22",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['raster_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "raster"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:RasterDataset",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:RasterInputReading",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined. Emits is empty because the terms this widget's provenance asserts are written by src/raster-provenance.ts, while implementation.definition names src/core.ts#TYPES; the release declares what the defining module asserts, which is nothing of its own.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/raster.ts",
+   "src/raster-workflow.ts",
+   "src/raster-ui.ts",
+   "src/raster-provenance.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "added",
+   "description": "The widget says which published population raster covers this study area and links to it. WorldPop keys its data by ISO3, and a study area acquired from geoBoundaries states its country in its own provenance -- COD-ADM1-... -- so the country is read from the boundary rather than inferred from coordinates. A polygon drawn by hand states no country and is offered nothing: a denominator attributed to the wrong country is worse than no denominator, and a province on a border is exactly where a guess would be wrong and invisible. Every published year is offered, newest first, with the file size where it could be read -- the DRC is 1,184 MB. data.worldpop.org sends no CORS header and ignores a Range request, both measured 2026-10-22, so the browser downloads the file and the widget reads a window out of it on this device."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

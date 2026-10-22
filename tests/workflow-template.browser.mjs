@@ -26,12 +26,18 @@ test('a workflow can be taken as a template, and the original is untouched',asyn
   await expect(picker.locator('option')).not.toHaveCount(1);
   await picker.selectOption(before.workflowKey);
 
-  // The same widgets and wiring, in a workflow of its own.
+  // The same widgets and wiring, in the empty canvas that was waiting for them. Until 2026-10-21
+  // this minted a THIRD workflow named after the source and left the empty one beside it, which
+  // is not what was asked: "can I import the North Kivu workflow into this blank one?"
   await expect(page.locator('#workflow-state')).toBeVisible();
   const made=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   expect(made.nodes.map(n=>n.type).sort()).toEqual(['clip_points_to_area','study_area']);
   expect(made.workflowKey).not.toBe(before.workflowKey);
-  expect(made.name).toContain('template');
+  // The canvas keeps the name it was given for its own question; the source's name is not imposed
+  // on the province it is about to be filled for.
+  expect(made.name).toBe('Facilities and Networks · question 2');
+  // And no extra row was created for it.
+  expect(await page.locator('#workflow-select option').count()).toBe(2);
 
   // And the workflow it was taken from is still there, unchanged.
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-examples-v1')||'{}'));

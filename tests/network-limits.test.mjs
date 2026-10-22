@@ -31,37 +31,28 @@ test('one knob governs both numbers, at the ratio real street data shows', ()=>{
   assert.ok(cm.SEGMENTS_PER_NODE>2.19,'the ratio must exceed what real data produces');
 });
 
-test('a graph over the limit is refused, and the message names the knob', ()=>{
-  assert.throws(()=>cm.validateNetwork(graph(60000)),/60000 junctions/);
-  assert.throws(()=>cm.validateNetwork(graph(60000)),/knob on the Street network widget/);
-  assert.doesNotThrow(()=>cm.validateNetwork(graph(42796)),'a town-sized network is not refused');
-  // ...and the same graph is accepted once the knob is raised.
-  assert.doesNotThrow(()=>cm.validateNetwork(graph(2500),4000));
+test('a street network is not refused for the isochrone\'s reason', ()=>{
+  // It was, and the number it cited was measured on ISOCHRONE construction in central London --
+  // enforced on every network, after the download, the parse and the normalization, where a
+  // refusal protects nothing. 2026-10-21, on a province that finally downloaded and was then
+  // discarded at 1,837,939 junctions: "I don't think the isochrone exercise in London should
+  // dictate a cap. That is a totally unrelated problem to this one, and an isochrone activity is
+  // not even assumed at this point."
+  assert.doesNotThrow(()=>cm.validateNetwork(graph(60000)));
+  assert.doesNotThrow(()=>cm.validateNetwork(graph(60000),1000),
+    'not even when a smaller ceiling is passed: what bounds a download is the byte cap');
+  assert.doesNotThrow(()=>cm.validateNetwork({...graph(2500),limits:cm.graphLimits(1000)}));
+  // What IS still refused is a graph that is not a graph.
+  assert.throws(()=>cm.validateNetwork({nodes:[],edges:[],source:'x'}),/at least one junction/);
+  assert.throws(()=>cm.validateNetwork({nodes:[{id:'a',coordinates:[0,0]}],edges:[{from:'a',to:'b',lengthM:1}],source:'x'}),
+    /known endpoints/);
 });
 
-test('the accepted limit travels on the network, so a later step does not refuse it', ()=>{
-  // This is the failure the recorded limit prevents: raise the knob, accept a graph, then have
-  // isochrone re-validate it against the default and refuse what was just allowed.
-  const big={...graph(60000),limits:cm.graphLimits(70000)};
-  assert.doesNotThrow(()=>cm.validateNetwork(big),
-    'a network carrying its own ceiling must validate without the argument being repeated');
-  const unmarked=graph(60000);
-  assert.throws(()=>cm.validateNetwork(unmarked),/limit is 50000/);
-});
-
-test('an explicit argument still wins over the recorded ceiling', ()=>{
-  const marked={...graph(2500),limits:cm.graphLimits(4000)};
-  assert.throws(()=>cm.validateNetwork(marked,1000),/limit is 1000/);
-});
-
-test('the knob range is validated on the node', ()=>{
-  const node=(maxNodes)=>({id:'n',type:'network_input',x:0,y:0,
-    params:{label:'Street network',data:{nodes:[],edges:[]},maxNodes}});
-  assert.throws(()=>cm.validateCatchmentNode(node(100)),/between 500 and 50000/);
-  assert.throws(()=>cm.validateCatchmentNode(node(50001)),/between 500 and 50000/);
-  assert.throws(()=>cm.validateCatchmentNode(node(2000.5)),/between 500 and 50000/);
-  assert.doesNotThrow(()=>cm.validateCatchmentNode(node(2000)));
-  assert.doesNotThrow(()=>cm.validateCatchmentNode(node(undefined)));
+test('the knob still governs what a DOWNLOAD accepts, which is where a size can be refused in time', ()=>{
+  // The division the old cap blurred: bytes are refused before they are spent, junctions are
+  // counted after everything has been.
+  assert.ok(cm.downloadLimits(500000).maxBytes>=300e6);
+  assert.deepEqual(cm.graphLimits(4000),{maxNodes:4000,maxEdges:10000},'the pair is still computed and still reported');
 });
 
 test('the walking filter is one list, used for the request and the response', ()=>{
@@ -289,4 +280,44 @@ test('the recommendation matches the download the graph knob allows', ()=>{
   assert.ok(th.recommendedPauseSeconds(cm.downloadLimits(50000).maxBytes)
     >th.recommendedPauseSeconds(cm.downloadLimits(2000).maxBytes),
     'a bigger allowance must earn a longer recommended pause');
+});
+
+// "Change the default to driving at ADM1 level" -- 2026-10-21, after a province's walking network
+// would not download and the practitioner pointed out that walking was never the question there.
+test('the travel mode a study area defaults to follows its published level',()=>{
+  assert.equal(cm.defaultTravelMode('COD-ADM1-63176286'),'driving');
+  assert.equal(cm.defaultTravelMode('COD-ADM0-12345678'),'driving');
+  assert.equal(cm.defaultTravelMode('COD-ADM2-63176286'),'walking');
+  assert.equal(cm.defaultTravelMode('cod-adm1-63176286'),'driving','the identifier case is not a decision');
+  // A DRAWN BOX HAS NO LEVEL, and its extent is not evidence of intent: a box can be any size.
+  assert.equal(cm.defaultTravelMode(undefined),'walking');
+  assert.equal(cm.defaultTravelMode(''),'walking');
+  assert.equal(cm.defaultTravelMode('not-an-identifier'),'walking');
+});
+
+
+// A PICTURE OF A PROVINCE. The panel drawing is a 292-pixel figure, and the network behind it is
+// now allowed to be the size the area is: 1,837,939 junctions and 3,755,832 segments were measured
+// on 2026-10-21. Spreading that into Math.min overflows the call stack, and one path element for
+// every segment is tens of megabytes of SVG.
+test('the preview draws a sample of a very large network, and says it did',async()=>{
+  const {networkPreviewSvg,networkCoverage,networkPreviewCaption,PREVIEW_SEGMENT_LIMIT}=
+    await import('../build/network-preview.js');
+  const size=300000;
+  const nodes=Array.from({length:size},(_,i)=>({id:`n${i}`,coordinates:[29+i/size,1+i/size]}));
+  const edges=Array.from({length:size-1},(_,i)=>({from:`n${i}`,to:`n${i+1}`,lengthM:10}));
+  const network={nodes,edges,source:'fixture'};
+  // COVERAGE TOO, which was missed when the picture was fixed: it spread every junction into
+  // Math.min and overflowed the stack at the end of a 300 MB download. 2026-10-22.
+  const covered=networkCoverage(network,{type:'Polygon',coordinates:[[[29,1],[30,1],[30,2],[29,2],[29,1]]]});
+  assert.ok(covered.boundaryCovered!==null&&covered.boundaryCovered>0,'coverage is computed, not thrown');
+  assert.equal(covered.junctions,size);
+  const svg=networkPreviewSvg(network);
+  assert.match(svg,/^<svg/,'a large network still produces a picture rather than an overflow');
+  const strokes=(svg.match(/M/g)||[]).length;
+  assert.ok(strokes<=PREVIEW_SEGMENT_LIMIT+1,`drew ${strokes} segments, over the drawing limit`);
+  // The numbers are the whole network; the caption says the drawing is not.
+  const caption=networkPreviewCaption(networkCoverage(network));
+  assert.match(caption,/299,999 directed segments/);
+  assert.match(caption,/drawn from about 20,000 of them/);
 });

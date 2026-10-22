@@ -1,0 +1,74 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:network_input",
+ "nodeType": "network_input",
+ "version": "0.6.0",
+ "title": "Street network",
+ "released": "2026-10-21",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['network_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "network",
+  "optionalInputs": [
+   "area"
+  ],
+  "note": "Area is acquisition context for OSM; file inputs do not require it."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:NetworkInput",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. The mode the graph was filtered for is asserted as fw:travelMode on the network entity -- the term reachability already uses for the mode it assumes -- from src/catchments.ts, so it is declared on the release whose definition is that module rather than here. Configuration SHACL is future work.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/catchments.ts",
+   "src/core.ts",
+   "src/payload-store.ts",
+   "src/street-network.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "feature",
+   "description": "The graph limit can be RAISED, not only lowered. Its ceiling was the default itself -- 50,000 junctions -- so the download byte cap derived from it, 30.0 MB, was a hard limit on every download from a number that was modelled rather than met. A province download stopped at exactly that figure. The ceiling is now one million junctions, the default is unchanged, and above the largest graph this project has actually downloaded and drawn (27,181 junctions from a 7.4 MB response) the widget says what is not known rather than refusing: the tab may stop responding, and that failure is the measurement."
+  },
+  {
+   "kind": "fix",
+   "description": "A download stopped at the byte cap no longer reports the cap as the size of the response. A service that declares a length is refused with that length and the junction setting that would accept it; a stream cut at the cap says the size was never read. The bytes received are charged against the pause before the next request, because the service sent them whether or not any were kept."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Acquisition only; the graph it produces is checked where it is used. The pacing follows the service's own /api/status rather than a client-side guess, measured against OSMnx's behaviour on 2026-10-19."
+ }
+}

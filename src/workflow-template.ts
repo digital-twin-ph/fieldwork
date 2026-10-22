@@ -38,10 +38,50 @@ const MATERIAL=['data','dataRef','asset','assetRef','retrieved','geometry','revi
  *  all -- so it is excluded from the clearing even though it looks like held content. */
 const KEEP_ANYWAY=new Set(['composition']);
 
+/** The two material keys that hold a SCALAR: a digest standing in for content kept elsewhere. */
+const MATERIAL_SCALARS=new Set(['dataRef','assetRef']);
+
+/** Material is HELD CONTENT -- an object or an array -- and never a word.
+ *
+ *  The comment above claims a key means the same thing everywhere, and `boundary` disproves it:
+ *  on a study area it is the provenance record of a fetched outline, and on Summarize points to
+ *  polygon it is the setting `'include' | 'exclude'`, which is exactly the kind of decision a
+ *  template exists to carry. Clearing it by name emptied a setting and made the template invalid,
+ *  which is how a template of the isochrone example could not be made at all. Found 2026-10-21
+ *  while fixing the template that would not load. */
+const isHeldContent=(key:string,held:unknown):boolean=>
+  MATERIAL_SCALARS.has(key)||held===null||held===undefined||typeof held==='object';
+
 export interface TemplateReport {
   workflow:Workflow;
   /** What was cleared, per node, so the practitioner is told rather than left to notice. */
   cleared:{nodeId:string;label:string;keys:string[]}[];
+}
+
+/** The EMPTY VALUE OF THE SAME SHAPE, because a template has to be a workflow.
+ *
+ *  Deleting the key was wrong wherever a reader expects the key to be there. A street network's
+ *  `data` is `{nodes,edges}` and a table's is `{rows,columns}`, so deleting it made
+ *  `params.data.nodes.length` throw while the canvas rendered; a drawn study area's `geometry` is
+ *  `Boundary | null` and deleting it made `validateWorkflow` refuse the whole workflow. The
+ *  template was never validated, so it saved anyway and then could not be opened: *"The Health
+ *  Facilities North Kivu · template workflow won't load so can't be deleted"*, 2026-10-21.
+ *
+ *  A geometry empties to null, which is what "no area chosen yet" is spelled as. A collection
+ *  empties its features, an array empties to nothing, and a record of arrays empties each array
+ *  and keeps the rest -- a table's columns and its value field are settings, and only its rows are
+ *  material. Anything else has no empty form and is removed, which is what an optional provenance
+ *  record wants. */
+function emptyOfSameShape(key:string,held:unknown):{known:true;value:unknown}|{known:false}{
+  if(key==='geometry')return {known:true,value:null};
+  if(Array.isArray(held))return {known:true,value:[]};
+  if(held&&typeof held==='object'){
+    const record=held as Record<string,unknown>;
+    if(Array.isArray(record.features))return {known:true,value:{...record,features:[]}};
+    const arrays=Object.keys(record).filter(name=>Array.isArray(record[name]));
+    if(arrays.length)return {known:true,value:{...record,...Object.fromEntries(arrays.map(name=>[name,[]]))}};
+  }
+  return {known:false};
 }
 
 /** A copy of the workflow's method, with a new identity, ready to be filled. */
@@ -54,15 +94,19 @@ export function templateFrom(workflow:Workflow,options:{name:string;projectId?:s
     for(const key of MATERIAL){
       if(KEEP_ANYWAY.has(key)||!Object.hasOwn(params,key))continue;
       const held=params[key];
+      if(!isHeldContent(key,held))continue;
       // An already-empty parameter is not something that was cleared, and saying it was would
       // overstate what the template did.
       const empty=held===null||held===undefined
         ||(Array.isArray(held)&&!held.length)
         ||(typeof held==='object'&&'features' in (held as object)&&!((held as {features:unknown[]}).features||[]).length);
       if(!empty)keys.push(key);
-      if(key==='data'&&held&&typeof held==='object'&&'features' in (held as object))
-        params[key]={...(held as object),features:[]};
-      else if(Array.isArray(held))params[key]=[];
+      // A COLLECTION TRAVELS WITH ITS ACCOUNT. Find health facilities refuses to hold records with
+      // no record of where they came from, and an empty collection is still a collection: a
+      // retrieval that kept nothing is a finding, and its provenance is the whole of it. So where
+      // the retrieval record is being cleared, the collection goes rather than being emptied.
+      const blank=key==='data'&&Object.hasOwn(params,'retrieved')?{known:false} as const:emptyOfSameShape(key,held);
+      if(blank.known)params[key]=blank.value;
       else delete params[key];
     }
     if(keys.length)cleared.push({nodeId:node.id,label:String(params.label||node.id),keys});

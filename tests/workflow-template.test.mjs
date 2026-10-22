@@ -50,10 +50,14 @@ test('settings are kept, including the sources the practitioner asked to keep',(
 test('material is cleared: a geometry, records, and judgements about those records',()=>{
   const {workflow:t,cleared}=templateFrom(workflow,{name:'Ituri',workflowKey:'p1/w2'});
   const node=id=>t.nodes.find(n=>n.id===id).params;
-  assert.equal(node('scope').geometry,undefined,'another province is another outline');
+  // null, not absent: "no area chosen yet" is what a drawn study area spells as null, and the
+  // validator requires the key to be there.
+  assert.equal(node('scope').geometry,null,'another province is another outline');
   assert.equal(node('scope').boundary,undefined);
   assert.deepEqual(node('scope').revisions,[]);
-  assert.deepEqual(node('osm').data.features,[],'the records are what will be fetched again');
+  // The collection goes WITH its retrieval record: Find health facilities refuses to hold records
+  // with no account of where they came from, and an empty collection is still a collection.
+  assert.equal(node('osm').data,undefined,'the records are what will be fetched again');
   assert.equal(node('osm').retrieved,undefined);
   assert.deepEqual(node('dedup').decisions,[],'a judgement was about those records, not these');
   // And it says what it cleared rather than leaving it to be noticed.
@@ -68,4 +72,38 @@ test('a parameter that was already empty is not reported as cleared',()=>{
   bare.edges=[];
   const {cleared}=templateFrom(bare,{name:'Ituri',workflowKey:'p1/w2'});
   assert.deepEqual(cleared,[],'saying it cleared something it did not would overstate the template');
+});
+
+// EVERY TEMPLATE MUST BE A WORKFLOW. Reported 2026-10-21: "The Health Facilities North Kivu ·
+// template workflow won't load so can't be deleted." Clearing by deleting the key left a street
+// network without `data.nodes`, a drawn study area without the `geometry` the validator requires,
+// and Summarize points to polygon without its `boundary` SETTING -- and nothing validated the
+// result, so it was saved and could then never be opened.
+test('a template of every worked example is a workflow the application will open',async()=>{
+  const {EXAMPLE_TEMPLATES}=await import('../build/example-templates.js');
+  const {validateWorkflow}=await import('../build/core.js');
+  for(const [key,build] of Object.entries(EXAMPLE_TEMPLATES)){
+    const source=validateWorkflow(build());
+    const {workflow:made}=templateFrom(source,{name:`${key} · template`,projectId:'p1',workflowKey:'p1/w9'});
+    assert.doesNotThrow(()=>validateWorkflow(structuredClone(made)),`${key} produced a template the validator refuses`);
+    assert.equal(made.nodes.length,source.nodes.length,`${key} lost nodes`);
+  }
+});
+
+test('a setting that shares a name with material is kept', ()=>{
+  const source={schema:'fieldwork/workflow/1',id:'w',name:'n',nodes:[
+    {id:'s',type:'summarize_points_to_polygon',x:0,y:0,params:{label:'Summarize',boundary:'include',valueField:''}}],edges:[]};
+  const {workflow:made}=templateFrom(source,{name:'t',workflowKey:'p1/w2'});
+  assert.equal(made.nodes[0].params.boundary,'include');
+});
+
+test('cleared material keeps the shape its readers expect',()=>{
+  const source={schema:'fieldwork/workflow/1',id:'w',name:'n',nodes:[
+    {id:'net',type:'network_input',x:0,y:0,params:{label:'Street network',data:{nodes:[{id:1}],edges:[{a:1}]},maxNodes:9000}},
+    {id:'area',type:'study_area',x:0,y:0,params:{label:'Area',source:'drawn',selectionMode:'polygon',
+      geometry:{type:'Polygon',coordinates:[[[0,0],[0,1],[1,1],[0,0]]]}}}],edges:[]};
+  const {workflow:made}=templateFrom(source,{name:'t',workflowKey:'p1/w3'});
+  assert.deepEqual(made.nodes[0].params.data,{nodes:[],edges:[]});
+  assert.equal(made.nodes[0].params.maxNodes,9000);
+  assert.equal(made.nodes[1].params.geometry,null);
 });

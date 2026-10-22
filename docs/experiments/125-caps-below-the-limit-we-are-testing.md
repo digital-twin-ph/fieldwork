@@ -1,6 +1,6 @@
 # 125 · Caps below the limit we are testing
 
-_Created 2026-10-19 · Updated 2026-10-19_
+_Created 2026-10-19 · Updated 2026-10-21_
 
 **Status:** asked — an inventory, with the measured caps separated from the guessed ones. What to
 do about the guessed ones is the open question, and it is a different answer per cap.
@@ -26,7 +26,7 @@ record shows a number somebody chose rather than a number the platform imposed.
 
 | cap | value | measured? |
 |---|---|---|
-| `NETWORK_NODE_LIMIT` / `_MAX` | 2,000 / 50,000 | **yes** — two real extents, 2026-10-13 |
+| `NETWORK_NODE_LIMIT` / `_MAX` | 50,000 / 1,000,000 | default **yes** — two real extents, 2026-10-13; ceiling **no**, and see below: it was 50,000, the default itself, until 2026-10-21 |
 | `downloadLimits` bytes, features | derived from the graph knob | **yes** — derived from that same measurement, with headroom |
 | `MAX_FACILITY_RECORDS` | 20,000 | **yes** — a HOT export and an Overpass query over Metro Manila |
 | `MAX_SNAP_SITES` | 100 | **yes** |
@@ -165,7 +165,140 @@ So the limit was never the data, the browser or the vertex contract. It was a co
 per vertex, and the measurement that found it took one profile after half a day of plausible
 reasoning about the wrong things.
 
+## The ceiling was the default, 2026-10-21
+
+The inventory above records `NETWORK_NODE_LIMIT / _MAX` as **2,000 / 50,000** and marks it
+**measured**. The default was raised to 50,000 on 2026-10-20 for exactly this experiment's reason.
+What nobody checked that day is that `NETWORK_NODE_LIMIT_MAX` was also 50,000 — *the ceiling and
+the default were the same number*. So the knob could be lowered and never raised, and the byte cap
+derived from it, `50,000 x 600 = 30.0 MB`, was a hard limit on every download in the application.
+
+It was met on 2026-10-21:
+
+> *"The street network download for Ituri province capped at 30MB and stopped."*
+
+and then the argument, which is the one this experiment exists to carry:
+
+> *"And if we can't download street networks for provinces we will never know how far this
+> application can go because of an imagined cap."*
+
+Imagined is the right word for it. 600 bytes per junction is roughly double the 270–272 B/junction
+measured on two extents, carried as headroom; nothing was ever measured at 30 MB, so the cap was a
+projection of a measurement, enforced as a boundary, with no way past it. The largest graph this
+project has actually downloaded, parsed and drawn remains the isochrone extent: **7.39 MB, 50,791
+features, 27,181 junctions**. Everything above that is unknown, and the cap guaranteed it stayed
+unknown.
+
+**What changed.** `NETWORK_NODE_LIMIT_MAX` is now 1,000,000 junctions — about 600 MB at the padded
+rate, which the large store can hold and which a public Overpass instance is unlikely to serve in
+one request anyway. The default is untouched at 50,000, so nobody who leaves the knob alone sees a
+difference. Above `NETWORK_MEASURED_NODES` the widget states what is not known — that the tab may
+stop responding, that a failed download saves nothing, and that this is the experiment rather than
+a reason to refuse — instead of enforcing a number nobody derived.
+
+**The pattern, stated once more.** Two of the caps in the table above were raised by this argument
+and a third was removed by it. The one that bit this time was not in the table at all, because the
+inventory recorded the pair as one row and read the measured half. A ceiling equal to its own
+default is invisible in any list that prints the default.
+
+## A number, at last: Ituri is over 60 MB, 2026-10-21
+
+The ceiling was raised the same day, and the practitioner immediately used it: graph limit from
+50,000 to 100,000, which moves the byte cap from 30.0 MB to 60.0 MB. The download was cut again.
+
+> *"Doubling to 100000 did not help."*
+
+That is the first measurement past the isochrone extent this project has ever had, and it is worth
+writing down plainly: **a walking street network for Ituri Province is more than 60 MB of Overpass
+JSON.** Not "too large" — over 60,000,000 bytes, read off a stream that was stopped there. How much
+more is still unknown.
+
+It also shows what doubling costs. Each attempt is a complete download of a donated public service's
+work, up to the cap, thrown away: 30 MB, then 60 MB, with no way to tell what the next guess should
+be. A client that can refuse but cannot say how much would be enough makes the practitioner pay for
+the search in someone else's bandwidth.
+
+**The count was already there and was counting the wrong thing.** Since 2026-10-20 the widget asks
+Overpass `out count;` before every download. It counted the WAYS the filter matches — and a street
+download returns the ways plus every node they reference, which is most of the bytes. So a ways
+count can sit well inside every limit for an area whose response is 60 MB, which is exactly what
+happened twice. The count now recurses (`>;out count;`) and reports the elements that would actually
+be sent, which costs the service a recursion and saves it a serialization.
+
+With that number, 150 bytes per element — measured, unpadded, on the same two extents that gave the
+per-junction rate — turns the count into megabytes, and megabytes into the graph limit that would
+accept it. The refusal names it: *this area holds N ways and M elements, about X MB, set the graph
+limit to Y junctions or draw a smaller area.* One cheap request instead of a sequence of expensive
+ones, and the answer rather than a direction to guess in.
+
+**And the mode was never in the conversation.** Said straight after, on the same download:
+
+> *"At the province level we are not even looking at walking mode. It will be driving mode."*
+
+Right, and the client had no way to say so. Walking keeps footways, paths and steps and driving
+drops all three, so the two modes are different sizes for the same bounds — and the count is
+already mode-specific, because the count query carries the same filter the download does. So a
+refusal now spends one more count on the other mode and reports it: whether it fits at the current
+setting, or that neither does. The mode a province needs is now a number the practitioner is given
+rather than one they would discover by downloading 60 MB in the wrong mode.
+
+**What is still a projection.** 150 B/element comes from two extents of 1.42 MB and 7.39 MB. Ituri
+is at least eight times the larger one, and nothing says the rate holds there — denser tagging, more
+nodes per way, different mix of highway classes. The refusal says so in its own words rather than
+presenting a prediction as a measurement.
+
+## One number, one question, 2026-10-21
+
+The province downloaded. At a graph limit of 500,000 the byte cap is 300 MB, the count passed, the
+response arrived, it parsed, and it normalized to **1,837,939 junctions and 3,755,832 directed
+segments** — and `validateNetwork` threw it away, citing the knob.
+
+> *"Still did not work, and I don't think the isochrone exercise in London should dictate a cap.
+> That is a totally unrelated problem to this one, and an isochrone activity is not even assumed at
+> this point."*
+
+Both halves are right, and this file had already written the first one down. The comment above
+`NETWORK_NODE_LIMIT` says the limit exists because isochrone construction exhausted a 4 GB heap at
+5,249 junctions, that a network which is drawn, snapped to or routed over never meets that cost,
+and that the isochrone carries its own worker, boot check and timeout. Having said all of it, the
+code then enforced the isochrone's number on every network in every workflow.
+
+And it enforced it in the worst possible place: **after** the download, the stream, the parse and
+the normalization. Every byte and every allocation had already been paid for. A cap that fires
+there is not a guard; it is a way of spending the cost and refusing the result.
+
+**The division, stated.** A download is bounded by the byte cap, before the bytes are spent, by a
+number the practitioner sets. An isochrone is bounded by the isochrone. A saved graph is bounded by
+the store, which refuses in its own words. A graph in memory, between those, is allowed to be the
+size the area is.
+
+**What the province measured, which nothing here had.** 300 MB for 1,837,939 junctions is about
+**163 bytes per junction**, against the 600 this project derives its download cap from — padded by
+nearly four times at this scale. The segment ratio is 2.04 against the assumed 2.5, which holds.
+Both are now one-extent measurements of a province rather than projections from a neighbourhood,
+and they say the byte cap is far more conservative than it reads.
+
+**What came with it.** The 30,000-vertex cap on edge geometry, same shape and same place. And the
+Inspector picture, which would have built a path element per segment and spread 1.8 million
+coordinates through `Math.min`: it now folds the bounds and draws an even sample of 20,000
+segments, with the caption saying the drawing is a sample while the numbers are the network. That
+is a limit on a 292-pixel figure, which is a real limit on a real thing.
+
 ## What this does not establish
+
+- **That a province-scale download works.** It establishes that one can now be attempted, and
+  that Ituri's is over 60 MB. Nothing above 7.39 MB and 27,181 junctions has been downloaded in
+  full, parsed, drawn, routed over or saved by this application.
+- **That the province graph is usable.** It downloads, parses and normalizes. Nothing has drawn
+  it on the map, routed over it, snapped to it or saved it to the store, and each of those is its
+  own measurement.
+- **How large Ituri actually is.** The earlier streams were stopped at the cap, so 60 MB was a
+  floor and not a size; 300 MB at a 500,000 knob is the first complete response. The element count from the recursed count request would give a prediction;
+  nobody has read one for this area yet.
+- **That 1,000,000 junctions is a measured ceiling.** It is a number chosen to be past what a
+  public service will serve in one request, so that the service and the device do the refusing
+  instead of this client. It is the same kind of number as the one it replaced, and it is marked
+  as such here rather than in a comment.
 
 - **That any specific unmeasured cap is wrong.** 2,000 table rows may be exactly right. The claim
   is that nobody knows, not that the number is bad, and four of these were set without a recorded

@@ -154,6 +154,28 @@ export async function putPayload(digest:string,payload:unknown):Promise<PayloadS
   }catch{return null;}
 }
 
+/** Take one back out, for a payload nothing refers to.
+ *
+ *  A download writes its payload to the store and THEN asks the workflow to accept it. When the
+ *  workflow refuses -- validation, a full workspace store, a changed workflow -- the bytes stayed
+ *  behind, referred to by nothing and counted in the storage figure forever. Measured 2026-10-21:
+ *  a device showing "data 416.2 MB" beside a Street network widget reading "0 nodes, 0 directed
+ *  edges". There is no way to reach such a payload from the application, so it has to be removed
+ *  where it was written. */
+export async function dropPayload(digest:string):Promise<void>{
+  memory.delete(digest);
+  if(database)
+    try{
+      const tx=database.transaction(STORE,'readwrite');
+      tx.objectStore(STORE).delete(digest);
+      await committed(tx);
+    }catch{/* A store that will not delete keeps the payload; it is still unreferenced. */}
+  try{
+    const legacy=readLegacy();
+    if(digest in legacy){const {[digest]:_dropped,...rest}=legacy;localStorage.setItem(LEGACY,JSON.stringify(rest));}
+  }catch{/* nothing to clear */}
+}
+
 /** What a payload costs, so a refusal can quote it. Serialized length, not an estimate from a
  *  record count: the same rule `geometryBytes` follows, for the same reason. */
 export const payloadBytes=(payload:unknown):number=>JSON.stringify(payload).length;

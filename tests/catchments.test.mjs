@@ -298,6 +298,22 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
     if(isStatus(url))return statusOk();
     return new Response(' '.repeat(1001),{headers:{'content-length':String(maxBytes+1)}});
   }),/over the/);
+  // A refused download now costs the pause it earned, so the pacing is cleared before the next
+  // case -- which is itself the evidence that the charge is made.
+  const {resetNetworkPacing}=await import('../build/network-throttle.js');
+  assert.ok(cm.downloadLimits().maxBytes>0);
+  resetNetworkPacing();
+  // A CUT STREAM HAS NO SIZE. Reported 2026-10-21 on Ituri Province, whose response declared no
+  // length and was stopped at the cap: the refusal must not state a size nobody read to the end,
+  // and must not name a junction setting derived from one.
+  await assert.rejects(requestOSM(boundary,0,async(url,init)=>{
+    if(isStatus(url))return statusOk();
+    if(isProbe(init))return probeOk();
+    if(isCount(init))return countOk();
+    return new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode(' '.repeat(maxBytes+10)));c.close();}}),{headers:{'content-type':'application/json'}});
+  }),err=>/over [\d,.]+ (?:bytes|MB), which is what this download accepts/.test(err.message)
+    &&/never read/.test(err.message)
+    &&!/Raise the graph limit on this widget to about/.test(err.message));
 });
 test('buffer creates a distinct area and expands acquisition without carrying old area measurements',()=>{
   const snapshot=structuredClone(boundary),source={boundary,label:'Reporting area',areaId:'urn:test:source',geometryId:'urn:test:shape',measurement:{squareMetres:100,value:100,unit:'m2',method:'fixture'}};

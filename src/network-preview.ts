@@ -50,25 +50,44 @@ export function networkCoverage(network:Network,boundary?:Boundary):NetworkCover
   let boundaryCovered:number|null=null;
   if(boundary&&network.nodes.length){
     const [w,s,e,n]=geometryBounds(boundary);
-    const lons=network.nodes.map(p=>p.coordinates[0]),lats=network.nodes.map(p=>p.coordinates[1]);
+    // FOLDED, NOT SPREAD. `Math.min(...lons)` passes every junction as an ARGUMENT: at 1,837,939
+    // of them the call stack overflows before any coverage is computed, and the practitioner sees
+    // "Maximum call stack size exceeded" at the end of a 300 MB download. 2026-10-22. The same
+    // mistake was fixed in the picture below the day before and this one was missed, because the
+    // picture is what was being looked at.
+    let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
+    for(const node of network.nodes){
+      const [lon,lat]=node.coordinates;
+      if(lon<west)west=lon;if(lon>east)east=lon;
+      if(lat<south)south=lat;if(lat>north)north=lat;
+    }
     const overlap=(lowA:number,highA:number,lowB:number,highB:number)=>
       Math.max(0,Math.min(highA,highB)-Math.max(lowA,lowB));
     const area=Math.max(1e-12,(e-w)*(n-s));
-    boundaryCovered=Math.min(1,
-      (overlap(w,e,Math.min(...lons),Math.max(...lons))*overlap(s,n,Math.min(...lats),Math.max(...lats)))/area);
+    boundaryCovered=Math.min(1,(overlap(w,e,west,east)*overlap(s,n,south,north))/area);
   }
   return {junctions:network.nodes.length,segments:network.edges.length,totalMetres,boundaryCovered};
 }
 
+/** How many segments the picture draws. Not a limit on the network: a limit on a 292-pixel panel,
+ *  where a province's 3,755,832 segments would be a path string of tens of megabytes and several
+ *  thousand strokes per pixel. Beyond this the picture is drawn from an even sample and the
+ *  caption says so, which is the difference between a bounded drawing and a bounded dataset. */
+export const PREVIEW_SEGMENT_LIMIT=20000;
 export function networkPreviewSvg(network:Network,boundary?:Boundary):string{
   if(!network?.nodes?.length)return '';
-  const points=network.nodes.map(n=>n.coordinates);
   const ring=boundary?(boundary.type==='Polygon'?boundary.coordinates:boundary.coordinates.flat()).flat():[];
   // The frame holds both, so a network that misses the area shows as a gap rather than as a
   // picture of streets that happens to be somewhere else.
-  const all=[...points,...ring as Position[]];
-  const west=Math.min(...all.map(p=>p[0])),east=Math.max(...all.map(p=>p[0]));
-  const south=Math.min(...all.map(p=>p[1])),north=Math.max(...all.map(p=>p[1]));
+  //
+  // Folded rather than spread: `Math.min(...array)` passes every element as an ARGUMENT, and a
+  // province's 1.8 million junctions overflow the call stack before any picture is attempted.
+  let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
+  const extend=(c:Position)=>{
+    if(c[0]<west)west=c[0];if(c[0]>east)east=c[0];
+    if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];};
+  for(const node of network.nodes)extend(node.coordinates);
+  for(const c of ring as Position[])extend(c);
   const cos=Math.cos(((south+north)/2)*Math.PI/180);
   const pad=10,usableW=PREVIEW_WIDTH-pad*2,usableH=PREVIEW_HEIGHT-pad*2;
   const scale=Math.min(usableW/Math.max((east-west)*cos,1e-9),usableH/Math.max(north-south,1e-9));
@@ -81,7 +100,9 @@ export function networkPreviewSvg(network:Network,boundary?:Boundary):string{
   // 11,497 segments, and 11,497 DOM nodes in an Inspector panel is not a preview.
   const seen=new Set<string>();
   let d='';
-  for(const edge of network.edges){
+  const step=Math.max(1,Math.ceil(network.edges.length/PREVIEW_SEGMENT_LIMIT));
+  for(let index=0;index<network.edges.length;index+=step){
+    const edge=network.edges[index];
     const key=edge.from<edge.to?`${edge.from}|${edge.to}`:`${edge.to}|${edge.from}`;
     if(seen.has(key))continue;
     seen.add(key);
@@ -110,6 +131,10 @@ export function networkPreviewCaption(coverage:NetworkCoverage):string{
   const parts=[`${coverage.junctions.toLocaleString('en')} junctions`,
     `${coverage.segments.toLocaleString('en')} directed segments`,
     `${length} of street`];
+  // A SAMPLED PICTURE SAYS SO. The numbers above are the whole network; the drawing above them
+  // may not be, and a reader comparing the two deserves to know which.
+  if(coverage.segments>PREVIEW_SEGMENT_LIMIT)
+    parts.push(`drawn from about ${PREVIEW_SEGMENT_LIMIT.toLocaleString('en')} of them`);
   if(coverage.boundaryCovered===null)
     parts.push('no study area connected, so coverage is unknown');
   else if(coverage.boundaryCovered>=0.999)parts.push('covering the study area');

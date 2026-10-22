@@ -73,7 +73,14 @@ export function convexHull(
   const ring=hullOf(located.map(f=>projection.forward(f.geometry!.coordinates as Position)));
   if(!ring)throw new Error('These points are collinear, so they enclose no area. A line is not a hull.');
   const areaM2=ringAreaM2(ring);
-  const spanM=Math.max(...ring.flatMap((a,i)=>ring.slice(i+1).map(b=>Math.hypot(a[0]-b[0],a[1]-b[1]))));
+  // The widest pair, folded. Still a pair-by-pair walk -- a hull ring is short -- but it no longer
+  // builds one array of every pairwise distance and spreads it into Math.max.
+  let spanM=0;
+  for(let i=0;i<ring.length;i++)
+    for(let j=i+1;j<ring.length;j++){
+      const distance=Math.hypot(ring[i][0]-ring[j][0],ring[i][1]-ring[j][1]);
+      if(distance>spanM)spanM=distance;
+    }
   const geometry:Boundary={type:'Polygon',coordinates:[ring.map(p=>projection.inverse(p))]};
   const feature:Catchment={id:'hull',name:node.params.label,siteId:'hull',geometry,
     areaSquareMetres:Number(areaM2.toFixed(2)),spanMetres:Number(spanM.toFixed(1))};

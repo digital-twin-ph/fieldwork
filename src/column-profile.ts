@@ -207,7 +207,10 @@ export function columnStates(values:unknown[],declared?:ColumnKind):CellState[]{
 export function histogram(values:unknown[],bins=12):{from:number;to:number;count:number}[]{
   const numbers=values.map(asNumber).filter((n):n is number=>n!==undefined);
   if(numbers.length<2)return [];
-  const min=Math.min(...numbers),max=Math.max(...numbers);
+  // Folded rather than spread: a column of a hundred thousand values is an argument list of a
+  // hundred thousand, and the stack gives out before the histogram does.
+  let min=Infinity,max=-Infinity;
+  for(const value of numbers){if(value<min)min=value;if(value>max)max=value;}
   if(min===max)return [{from:min,to:max,count:numbers.length}];
   const width=(max-min)/bins;
   const counts=new Array(bins).fill(0);

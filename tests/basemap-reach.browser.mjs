@@ -21,7 +21,7 @@ test('a basemap can be chosen on a static plot, and the map becomes one that can
   const basemap=page.locator('#map-basemap');
   await expect(basemap).toBeVisible();
   await expect(basemap).toHaveValue('none');
-  await expect(page.locator('#inspector-content')).toContainText('This map is a static plot today');
+  await expect(page.locator('#inspector-content')).toContainText('switches this map to the interactive presentation');
   await expect(page.locator('#polygon-presentation')).toHaveValue('plot');
 
   await basemap.selectOption('osm');

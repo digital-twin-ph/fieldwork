@@ -15,6 +15,7 @@ export interface SelectorElements {
   '#endpoint-status':HTMLElement;
   '#new-project':HTMLButtonElement;
   '#project-dialog':HTMLDialogElement;
+  '#projects-dialog':HTMLDialogElement;
   '#project-dialog-close':HTMLButtonElement;
   '#project-cancel':HTMLButtonElement;
   '#project-create':HTMLButtonElement;

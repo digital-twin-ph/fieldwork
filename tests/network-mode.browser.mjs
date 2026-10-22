@@ -64,7 +64,9 @@ test('an area the service will not answer for is refused before it is downloaded
   await page.locator('#network-input-method').selectOption('osm');
   await page.locator('#download-network').click();
   await expect(page.locator('#toast')).toContainText('1,840,000 street ways',{timeout:60000});
-  await expect(page.locator('#toast')).toContainText('Draw a smaller area');
-  expect(counts).toBe(1);
+  await expect(page.locator('#toast')).toContainText('draw a smaller study area');
+  // Two counts and no download: the area's own, and the other travel mode's, which the refusal
+  // reports so a province is not re-attempted in the mode that will never fit. 2026-10-21.
+  expect(counts).toBe(2);
   expect(downloads).toBe(0);
 });

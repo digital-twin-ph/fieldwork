@@ -295,6 +295,25 @@
      "found": "Nothing is built. Measured the premise: the precache is 247 files and 11.25 MB, of which 0.89 MB is example files by name -- 640 KB of it one GraphML -- plus Hagelloch's 63 KB case list compiled into build/app.js, Manila's facilities in a 72 KB chunk and Old Naledi's 43 KB data module, so roughly 1.0 MB of 11.25 MB is worked-example data. Confirmed the rule permits it: experiment 49 records that preparation may download RESOURCES, never widget DEFINITIONS, and experiment 43 corrected the same misreading on 2026-10-09. Also found examples/snow-gboh/deaths_nd_by_house.csv -- 236 KB, retrieved, digested and NOTICE'd on 2026-10-09 -- is in no build output and used by no example key."
     }
    ]
+  },
+  {
+   "id": "building-footprints-are-a-widget",
+   "stated": "2026-10-21",
+   "statedBy": "the practitioner",
+   "inTheirWords": "We have not even downloaded building footprints yet. And that should be an upcoming widget",
+   "requiresInCode": "A widget that acquires building footprints for a study area, with the source as a setting and a retrieval record of its own, and a download cap derived from a measured bytes-per-feature rather than invented. Until one extent has been downloaded and weighed, nothing here is sized.",
+   "recordedIn": [
+    "docs/experiments/128-building-footprints.md"
+   ],
+   "workItem": "docs/experiments/128-building-footprints.md, whose closing condition is one extent downloaded, measured and written down; weighed against widgets/budget.json, which stands at 46 live against a target of 41.",
+   "status": "open",
+   "lastChecked": "2026-10-21",
+   "checks": [
+    {
+     "date": "2026-10-21",
+     "found": "Stated and recorded the same day. Nothing built and nothing downloaded: the application has never acquired a footprint layer, so every limit it would meet -- response size, feature count, parse, store, renderer -- is a guess. Recorded as an experiment rather than started, because the widget budget is 5 over target and experiment 64 names the retirements that would pay for it."
+    }
+   ]
   }
  ]
 }

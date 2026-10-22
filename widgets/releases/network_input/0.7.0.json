@@ -1,0 +1,90 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:network_input",
+ "nodeType": "network_input",
+ "version": "0.7.0",
+ "title": "Street network",
+ "released": "2026-10-21",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['network_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "network",
+  "optionalInputs": [
+   "area"
+  ],
+  "note": "Area is acquisition context for OSM; file inputs do not require it."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:NetworkInput",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. The mode the graph was filtered for is asserted as fw:travelMode on the network entity -- the term reachability already uses for the mode it assumes -- from src/catchments.ts, so it is declared on the release whose definition is that module rather than here. Configuration SHACL is future work.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/catchments.ts",
+   "src/core.ts",
+   "src/payload-store.ts",
+   "src/street-network.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "A street network is no longer refused for its SIZE. The ceiling came from the graph knob, and the number behind it was measured on ISOCHRONE construction in central London in 2026-10-13 -- enforced on every network, in every workflow, whether or not an isochrone exists in it, and enforced after the response was downloaded, parsed and normalized, where a refusal protects nothing and discards everything. A province downloaded on 2026-10-21 was thrown away at 1,837,939 junctions and 3,755,832 directed segments for that reason. What bounds a download is the byte cap the practitioner sets, before the bytes are spent; what bounds an isochrone is the isochrone's own worker, boot check and timeout; what bounds a saved graph is the store, which reports its own refusal. The 30,000-vertex cap on edge geometry went with it, for the same reason. The panel drawing now samples at 20,000 segments and the caption says so, because a 292-pixel figure is a limit on a picture and not on a dataset."
+  },
+  {
+   "kind": "fix",
+   "description": "The last size cap went: network provenance was refused over 100,000 characters, and the record carries the study area's own outline, so a province's 7,759 vertices failed it -- measured after the response had been downloaded and parsed, like the others. Provenance is now checked for being a record and not for its length. A download the workflow then refuses also takes its payload back out of the store: the bytes were written before the workflow was asked, so every late refusal left a payload nothing referred to, and a device was measured holding 416.2 MB beside a widget reading 0 nodes."
+  },
+  {
+   "kind": "feature",
+   "description": "The service is asked to count what it would SEND, not just the ways it would match, and the download is refused on that count with the graph limit it would need. Counting ways alone left an area whose response was over 60 MB sitting inside every limit, because most of a street download is the nodes the ways reference. A refusal now reads: this area holds N ways and M elements, about X MB at the measured 150 bytes each, set the graph limit to Y junctions or draw a smaller area -- and says plainly that a prediction from two small extents is not a measurement of a large one. Nothing is downloaded and nothing of the service's work is spent to learn it."
+  },
+  {
+   "kind": "feature",
+   "description": "A refusal reports what the OTHER TRAVEL MODE would cost, counted the same way. At province scale the mode decides whether there is a download at all -- footways, paths and steps are most of what a walking network holds -- and the practitioner was choosing it blind: 'At the province level we are not even looking at walking mode. It will be driving mode.' When an area is refused, one more count request answers whether the other mode fits at the current setting, and the message says which mode to switch to or that neither fits."
+  },
+  {
+   "kind": "changed",
+   "description": "An acquired ADM1 or ADM0 study area defaults the travel mode to DRIVING. The default used to be walking everywhere, which is right for a neighbourhood and wrong for a province: nobody walks across one, and a walking network is mostly footways, paths and steps, which is most of what makes a province's download too large. The level is read from the boundary's own identifier, so it applies only where a published unit was acquired; a drawn box has no level and stays on walking, because a box can be any size and its extent is not evidence of intent. An explicit choice is never overridden, and the panel says why the default is what it is."
+  },
+  {
+   "kind": "fix",
+   "description": "The panel no longer quotes the response and feature limits for a graph limit of 2,000 when the widget is set to something else; it states them for the current setting."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Acquisition only; the graph it produces is checked where it is used. The pacing follows the service's own /api/status rather than a client-side guess, measured against OSMnx's behaviour on 2026-10-19."
+ }
+}

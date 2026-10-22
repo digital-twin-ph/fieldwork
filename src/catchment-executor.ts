@@ -31,7 +31,9 @@ export function computeIsochrone(sites:PointCollection,network:Network,params:Pa
       `The isochrone did not finish within ${ISOCHRONE_TIMEOUT_MS/1000} seconds on a network of ${size}`
       +(large?`, which is above the ${ISOCHRONE_MEASURED_NODES}-junction size this has been measured at. `
         +`A graph this large can also exhaust the browser's memory, which looks the same from here. `
-        +`Lower the graph limit on the Street network widget`
+        +`This is a limit of the ISOCHRONE step, not of the network: the graph is intact and every `
+        +`other step still has it. Give this step a smaller area, or build the isochrone from a `
+        +`network downloaded for one`
         :`. Reduce the sites or the time budget`)
       +'. Nothing was changed.'));},ISOCHRONE_TIMEOUT_MS);
     worker.onmessage=({data}:MessageEvent<{value?:Polygons;error?:string;alive?:boolean}>)=>{

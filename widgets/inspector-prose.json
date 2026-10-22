@@ -1,6 +1,6 @@
 {
   "schema": "fieldwork/inspector-prose/1",
-  "note": "The Inspector is a control surface, not a record. Measured 2026-10-20 at 11,838 characters across 80 paragraphs; measured again 2026-10-21 at 22,855 across 160, which is what the practitioner was looking at when they said \"there are too many commentaries in the Inspector panel. That is not the place to keep development or agent notes.\" This holds the measurement so it can only fall. A paragraph that explains WHY belongs in docs/widgets/<node_type>.md, which every panel now links to from a control-sized button at the top.",
+  "note": "The Inspector is a control surface, not a record. Measured 2026-10-20 at 11,838 characters across 80 paragraphs; measured again 2026-10-21 at 22,855 across 160, which is what the practitioner was looking at when they said \"there are too many commentaries in the Inspector panel. That is not the place to keep development or agent notes.\" This holds the measurement so it can only fall. A paragraph that explains WHY belongs in docs/widgets/<node_type>.md, which every panel now links to from a control-sized button at the top. Lowered 2026-10-22 to 21,115: the isochrone panel's method paragraph moved to docs/widgets/isochrone.md, which paid for the street network widget's refusal to serialise a province into a hidden textarea.",
   "files": [
     "src/app.ts",
     "src/catchment-ui.ts",
@@ -11,8 +11,8 @@
     "src/table-output.ts"
   ],
   "scope": "Every <p> these renderers emit, classed or not: a rule that can be dodged by leaving the class off is not a rule. Numbers rendered as a paragraph count too, which is a known overstatement of a few hundred characters and is left in rather than carved out by hand.",
-  "characterCeiling": 21459,
+  "characterCeiling": 21115,
   "slack": 1500,
   "ceilingRule": "It may be lowered freely and may never be raised. The slack is the headroom a measurement is allowed to sit under the ceiling before the ceiling itself must be lowered, so a trim is recorded rather than banked.",
-  "measuredAt": "2026-10-21"
+  "measuredAt": "2026-10-22"
 }

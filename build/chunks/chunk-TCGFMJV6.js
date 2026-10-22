@@ -1,4 +1,4 @@
-import{a as hi}from"./chunk-M5JSOBQI.js";import{c as Ji}from"./chunk-TBDA2OKI.js";import{a as Vi}from"./chunk-DL3DUSHY.js";import{e as $i,f as ji}from"./chunk-43HFGMR3.js";import{c as Wi,d as Hi}from"./chunk-SVPK7IAY.js";import{a as Oe,d as Ui,n as zi}from"./chunk-3NXA63XE.js";var Et=JSON.stringify,Wt=(t,e)=>`[ a qudt:QuantityValue; qudt:numericValue "${t}"^^xsd:double; qudt:unit <http://qudt.org/vocab/unit/${e}> ]`;function Ki(t,e,i,r,s){let n=`@prefix qudt: <http://qudt.org/schema/qudt/>.
+import{a as hi}from"./chunk-M5JSOBQI.js";import{c as Ji}from"./chunk-TBDA2OKI.js";import{a as Vi}from"./chunk-DL3DUSHY.js";import{e as $i,f as ji}from"./chunk-43HFGMR3.js";import{c as Wi,d as Hi}from"./chunk-Z5CEJ5NY.js";import{a as Oe,d as Ui,n as zi}from"./chunk-3NXA63XE.js";var Et=JSON.stringify,Wt=(t,e)=>`[ a qudt:QuantityValue; qudt:numericValue "${t}"^^xsd:double; qudt:unit <http://qudt.org/vocab/unit/${e}> ]`;function Ki(t,e,i,r,s){let n=`@prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix dcterms: <http://purl.org/dc/terms/>.
 `;if("nodes"in e){n+=`<${i}> a fw:StreetNetwork; fw:directed true.
@@ -41,4 +41,4 @@ northing meters`+t;var d=f/2,w=0,c=0,N,b,T,E,O;return d>0&&(N=1e5/Math.pow(10,d)
 `),e.offNetwork?.length&&(f+=`<${l}> fw:offNetworkSiteCount ${e.offNetwork.length}; fw:offNetworkSites ${JSON.stringify(JSON.stringify(e.offNetwork))}.
 `);for(let d of e.features)d.offNetworkMetres!==void 0&&(f+=`<${h}:cell:${encodeURIComponent(d.id)}> fw:offNetworkMetres ${d.offNetworkMetres}.
 `)}return"nodes"in e&&(f+=Hi(l,Wi({maxNodes:t.params.maxNodes}))),f+=Ki(t,e,h,l,i),{nodeId:t.id,kind:"computation",facts:f,input:f,rules:"",conclusions:[],method:a}}export{qi as a,pg as b,_g as c,yg as d,nn as e,p0 as f,Zr as g,Mg as h,vg as i,_0 as j,xg as k,y0 as l,wg as m,tn as n,M0 as o,v0 as p,x0 as q,Eg as r,w0 as s,Sg as t,Pg as u,E0 as v,an as w,en as x,on as y,P0 as z,bg as A,Gg as B,sn as C,G0 as D,rn as E,N0 as F,A0 as G,Ng as H,Ag as I};
-//# sourceMappingURL=chunk-G7C6MABB.js.map
+//# sourceMappingURL=chunk-TCGFMJV6.js.map

@@ -5,7 +5,25 @@ import {rasterCellPredicate,validateClipOptions} from './raster-mask.js';
 import type {RasterClipOptions,RasterMaskMethod} from './raster-mask.js';
 export {validateClipOptions};
 
-export const MAX_RASTER_CELLS=262144;
+/** THE WINDOW A STUDY AREA MAY TAKE OUT OF A RASTER, in cells.
+ *
+ *  262,144 -- a 512 by 512 window -- until 2026-10-22, carrying no evidence, no stated basis and
+ *  no lift test, because src/raster.ts was not in the caps ledger's watched files. The
+ *  practitioner met it the way they met the download clocks: by being refused. *"Is that another
+ *  cap?"* It was.
+ *
+ *  Measured that day in a Chromium tab against WorldPop Botswana 2025 at 100 m, a real
+ *  11,248 x 10,953 LZW GeoTIFF: a 512 window read in 77 ms, 14.4M cells in 1,217 ms, 36M in
+ *  2,625 ms, and the whole 123.2M-cell raster in 8,382 ms with every value touched and held.
+ *  Nothing degraded and nothing failed at any size the file could offer. The old number was
+ *  about four hundred and seventy times below what a browser does comfortably.
+ *
+ *  16,777,216 is 4,096 by 4,096 and 67 MB of float32. It is set here rather than higher because
+ *  what was measured is the READ: Ituri at 100 m is about 3,700 by 3,900 = 14.4M cells, so this
+ *  covers a province with room, and the costs beyond the read -- keeping a grid in the payload
+ *  store, carrying it through an export, drawing it -- are not yet measured. That measurement is
+ *  this cap's lift test, not a reason to leave a province refused in the meantime. */
+export const MAX_RASTER_CELLS=16_777_216;
 export interface RasterMetadata {width:number;height:number;bands:number;bounds:Bounds;origin:[number,number];resolution:[number,number];crs:'EPSG:4326';rasterType:'PixelIsArea';noData:number|string|null;bits:number;sampleFormat:number;compression:number;blockWidth:number;blockHeight:number;bytesPerPixel:number;geoKeys:Record<string,unknown>;gdal:Record<string,unknown>|null;band:Record<string,unknown>|null;description:string}
 export interface RasterAsset {sha256:string;bytes:number;mediaType:'image/tiff';filename:string;provenance?:import('./raster-provenance.js').RasterProvenance;metadata:RasterMetadata;source:{filename:string;bytes:number;lastModified:number;metadata:RasterMetadata};window:[number,number,number,number]}
 export interface RasterGrid {metadata:RasterMetadata;values:(number|null)[];asset:RasterAsset;boundary?:Boundary;mask?:{method:RasterMaskMethod;marginPixels?:number;inside:number;valid:number;outside:number}}

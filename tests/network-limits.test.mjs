@@ -45,7 +45,7 @@ test('a street network is not refused for the isochrone\'s reason', ()=>{
   // What IS still refused is a graph that is not a graph.
   assert.throws(()=>cm.validateNetwork({nodes:[],edges:[],source:'x'}),/at least one junction/);
   assert.throws(()=>cm.validateNetwork({nodes:[{id:'a',coordinates:[0,0]}],edges:[{from:'a',to:'b',lengthM:1}],source:'x'}),
-    /known endpoints/);
+    /junctions this network does not contain/);
 });
 
 test('the knob still governs what a DOWNLOAD accepts, which is where a size can be refused in time', ()=>{
@@ -320,4 +320,39 @@ test('the preview draws a sample of a very large network, and says it did',async
   const caption=networkPreviewCaption(networkCoverage(network));
   assert.match(caption,/299,999 directed segments/);
   assert.match(caption,/drawn from about 20,000 of them/);
+});
+
+// The edge-length check is a UNIT check, not a judgement about roads. It was 100 km, and a
+// province's driving network built from an extract on 2026-10-22 had 2 segments of 314,955 over
+// it, the longest 100,723 m: collapsing the chain between two junctions is what simplification
+// does, and in rural Ituri a chain is genuinely that long.
+test('a long rural segment is accepted; a length in the wrong unit is not',()=>{
+  const twoNodes=(metres)=>({nodes:[{id:'a',coordinates:[29,1]},{id:'b',coordinates:[30,2]}],
+    edges:[{from:'a',to:'b',lengthM:metres}],source:'fixture'});
+  assert.doesNotThrow(()=>cm.validateNetwork(twoNodes(100_723)),'100.7 km was measured in Ituri');
+  assert.doesNotThrow(()=>cm.validateNetwork(twoNodes(cm.MAX_EDGE_METRES)));
+  // Kilometres read as metres, or degrees, land orders of magnitude out and are still caught.
+  assert.throws(()=>cm.validateNetwork(twoNodes(cm.MAX_EDGE_METRES+1)),/past the 1,000 km/);
+  assert.throws(()=>cm.validateNetwork(twoNodes(0)),/not a positive number of metres/);
+  assert.throws(()=>cm.validateNetwork(twoNodes(Number.NaN)),/not a positive number of metres/);
+});
+
+// "signal is aborted without reason" reached a practitioner as a toast on 2026-10-22, while a
+// province was downloading. The budget that aborted it is this client's, so the sentence should
+// be too.
+test('an attempt that runs past its budget says so in this application\'s words',async()=>{
+  const {abortMessage,ATTEMPT_MS}=await import('../build/street-network.js');
+  assert.equal(ATTEMPT_MS,180000);
+  for(const raw of ['signal is aborted without reason',new Error('The operation was aborted.'),
+    new DOMException('Aborted','AbortError')]){
+    const said=abortMessage(raw);
+    assert.match(said,/did not answer within 180 seconds/);
+    assert.match(said,/nothing was changed/);
+    // And it names the path that asks no service, which is the one that works for a province.
+    assert.match(said,/\.osm\.pbf extract on this device/);
+    assert.doesNotMatch(said,/signal is aborted/);
+  }
+  // Anything that is not an abort is passed through untouched: inventing a timeout for an
+  // unrelated failure would be worse than the DOM's own words.
+  assert.equal(abortMessage(new Error('HTTP 429')),'HTTP 429');
 });

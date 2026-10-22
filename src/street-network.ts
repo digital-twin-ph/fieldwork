@@ -162,8 +162,39 @@ export const preferredEndpoint=()=>preferred;
 // 200 every time, so a 2 MB query had no chance inside twenty seconds. OSMnx, which the
 // practitioner reports as reliable, uses a 180-second request timeout -- matched here, because
 // being slow is how Overpass expresses load and giving up is how a client turns load into failure.
-const ATTEMPT_MS=180000;
-const TOTAL_MS=300000;
+export const ATTEMPT_MS=180000;
+export const TOTAL_MS=300000;
+/** SILENCE, not duration. The practitioner, 2026-10-22, watching a province download stop at
+ *  59.4 MB: *"If the upcoming constraints are response timeouts, why use them to stop ongoing
+ *  downloads already, meaning the API already responded?!"*
+ *
+ *  They had it exactly. ATTEMPT_MS is a RESPONSE timeout, borrowed from OSMnx where it measures
+ *  the wait for an answer. Here it was armed before the fetch and never cleared when the response
+ *  arrived, so it went on running through the body and aborted a transfer that was working: at
+ *  59.4 MB in 180 s, about 0.33 MB/s, against a panel offering 300 MB. The clock forbade roughly
+ *  four fifths of what the widget said it accepts, and the toast then reported that the service
+ *  "did not answer" -- of a service that had answered and sent 59.4 MB.
+ *
+ *  So the response timeout ends where the response begins, and nothing replaces it. The
+ *  practitioner, when a stall timeout was offered in its place: *"It's not applicable to ongoing
+ *  downloads, period."* It is not. The only thing that ends an arriving download is the
+ *  practitioner pressing Stop.
+ *
+ *  Which makes this a different number: when the panel says IN SO MANY WORDS that the service has
+ *  gone quiet. It was 180,000 here too, inherited from the budget it replaced. Ninety seconds is
+ *  the practitioner's: *"180s may be too long to wait to say it's stalled. 90s, time to give
+ *  feedback."* Comfortably past the gaps a working transfer shows, and half the wait it replaces.
+ *
+ *  It is the slow half of the feedback. The fast half is RATE_WINDOW_MS, which does not wait for
+ *  a threshold at all. */
+export const STALL_MS=90000;
+/** THE SPEED, SAID EVERY SECOND. The practitioner: *"Feedback could also be bytes/sec download
+ *  speed. If the user sees it going down, that's immediate feedback."* A rate over the last few
+ *  seconds decays on its own the moment chunks stop arriving, so a transfer in trouble looks
+ *  different within a second or two rather than at ninety. Five seconds of history: long enough
+ *  that the number is not noise between chunks, short enough that it falls while someone watches.
+ *  It bounds nothing. */
+export const RATE_WINDOW_MS=5000;
 
 /** The reference instance. Kept as a name because receipts and tests cite it. */
 export const OVERPASS=OVERPASS_ENDPOINTS[0].url;
@@ -414,21 +445,70 @@ export function networkFromOSM(raw:unknown,maxNodes?:number,mode:NetworkTravelMo
  *  the same area asked for twice -- and not to answer a practitioner who pressed Download BECAUSE
  *  what they have is wrong or stale. Serving that from cache would make the button look broken in
  *  the one case where it has to work. */
-export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pauseMs?:number,refresh=false,onPhase?:(message:string,fraction?:number)=>void,mode:NetworkTravelMode='walking'):Promise<Network>{
+export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pauseMs?:number,refresh=false,onPhase?:(message:string,fraction?:number)=>void,mode:NetworkTravelMode='walking',stopSignal?:AbortSignal):Promise<Network>{
   osmQuery(boundary,marginM,maxNodes,mode); // Invalid local input must not consume the public-service pause.
-  return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes,pauseMs,undefined,undefined,undefined,refresh,onPhase,mode));
+  // The abort is translated HERE, at the edge a widget calls, so every caller gets this client's
+  // sentence rather than the browser's.
+  return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes,pauseMs,undefined,undefined,undefined,refresh,onPhase,mode,stopSignal)
+    .catch(error=>{throw new Error(abortMessage(error));}));
 }
 /** Request/normalization boundary exposed for fixture tests; UI must use paced downloadOSM. */
 /** `exclude` carries the instances this request has already learned cannot serve this area, so a
  *  regional mirror that answers with nothing hands the attempt on to the next instance instead of
  *  ending it. Internal: callers pass nothing. */
-export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number,exclude:ReadonlySet<string>=new Set(),onWait?:(w:{operator:string;seconds:number})=>void,cacheStore?:CacheLike|null,refresh=false,onPhase?:(message:string,fraction?:number)=>void,mode:NetworkTravelMode='walking'):Promise<Network>{
+/** WHOSE WORDS THE PRACTITIONER READS. An attempt that runs past its budget aborts its fetch, and
+ *  the browser rejects with "signal is aborted without reason" -- which reached a practitioner as
+ *  a toast on 2026-10-22. The budget is this client's, so the sentence should be too. */
+export const abortMessage=(error:unknown,attemptSeconds=ATTEMPT_MS/1000):string=>{
+  const text=error instanceof Error?error.message:String(error);
+  // Only ever said of a request that never began to answer. Nothing ends an arriving download
+  // but the practitioner, and that has its own sentence where the byte count is known.
+  return /abort/i.test(text)
+    ?`The street service did not answer within ${attemptSeconds} seconds, so this attempt was `
+      +`stopped and nothing was changed. Overpass expresses load by being slow: wait and try again, `
+      +`draw a smaller study area, or read a published .osm.pbf extract on this device, which asks `
+      +`no service at all.`
+    :text;
+};
+export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number,exclude:ReadonlySet<string>=new Set(),onWait?:(w:{operator:string;seconds:number})=>void,cacheStore?:CacheLike|null,refresh=false,onPhase?:(message:string,fraction?:number)=>void,mode:NetworkTravelMode='walking',stopSignal?:AbortSignal):Promise<Network>{
   const request=osmQuery(boundary,marginM,maxNodes,mode);
   // One budget per attempt, and one for the whole thing. See ATTEMPT_MS.
   const startedAt=Date.now();
   let controller=new AbortController(),timer=setTimeout(()=>controller.abort(),ATTEMPT_MS);
   const freshAttempt=()=>{clearTimeout(timer);controller=new AbortController();
     timer=setTimeout(()=>controller.abort(),ATTEMPT_MS);return controller.signal;};
+  // Called when the response arrives and again on every chunk of it. From here NO clock can end
+  // this download: the response budget is cleared and nothing takes its place. See STALL_MS.
+  let receiving=false,lastByteAt=Date.now(),receivedSoFar=0,declaredBytes=0,
+    silenceWatch:ReturnType<typeof setInterval>|undefined;
+  const rateSamples:{at:number;bytes:number}[]=[];
+  const megabytesPerSecond=()=>{
+    const now=Date.now();
+    while(rateSamples.length>1&&now-rateSamples[0].at>RATE_WINDOW_MS)rateSamples.shift();
+    const first=rateSamples[0];if(!first)return 0;
+    const seconds=(now-first.at)/1000;
+    // Measured against NOW, not against the last chunk: a transfer that stops shows a falling
+    // number every second it stays stopped, which is the feedback asked for.
+    return seconds>0?(receivedSoFar-first.bytes)/1e6/seconds:0;
+  };
+  const progress=()=>{
+    const quiet=Date.now()-lastByteAt;
+    const got=`${(receivedSoFar/1e6).toFixed(1)}${declaredBytes?` of ${(declaredBytes/1e6).toFixed(1)}`:''} MB`;
+    return quiet>=STALL_MS
+      ? `No data for ${Math.round(quiet/1000)} s · ${got} received — still waiting. `
+        +`Press Stop to give up on it.`
+      : `Receiving — ${got} · ${megabytesPerSecond().toFixed(2)} MB/s`;
+  };
+  const say=()=>onPhase?.(progress(),declaredBytes?receivedSoFar/declaredBytes:undefined);
+  const stillAlive=()=>{
+    clearTimeout(timer);lastByteAt=Date.now();
+    rateSamples.push({at:lastByteAt,bytes:receivedSoFar});
+    // Every second, whether or not a chunk arrived. A line that only updates on arrival cannot
+    // show an absence of arrivals.
+    silenceWatch??=setInterval(say,1000);
+  };
+  // THE ONLY THING THAT ENDS AN ARRIVING DOWNLOAD. A practitioner's decision, not a number.
+  stopSignal?.addEventListener('abort',()=>controller.abort(),{once:true});
   const outOfTime=()=>Date.now()-startedAt>TOTAL_MS;
   try{
     let response!:Response;
@@ -599,7 +679,7 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     outer: for(let round=1;round<=2;round++){
       for(const endpoint of live){
         if(outOfTime())break outer;
-        try{response=await fetcher(endpoint.url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data:request.query}),signal:freshAttempt(),credentials:'omit',referrerPolicy:'origin'});}
+        try{response=await fetcher(endpoint.url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({data:request.query}),signal:freshAttempt(),credentials:'omit',referrerPolicy:'origin'});stillAlive();}
         catch{unreachable++;continue;}
         if(response.ok){
           // A 200 carrying HTML is an error page, and parsing it as a network would fail far from
@@ -667,12 +747,24 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     if(Number(response.headers.get('content-length'))>maxBytes)throw tooLarge(Number(response.headers.get('content-length')),true);
     if(!response.body)throw new Error('OSM response has no readable body.');const reader=response.body.getReader(),chunks:Uint8Array[]= [];let bytes=0;
     const declared=Number(response.headers.get('content-length'))||0;
-    try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>maxBytes){controller.abort();
+    try{for(;;){const {value,done}=await reader.read();if(done)break;receiving=true;bytes+=value.length;receivedSoFar=bytes;stillAlive();if(bytes>maxBytes){controller.abort();
       // CHARGED FOR WHAT WAS RECEIVED, although none of it is kept. The service did the work and
       // sent the bytes; a refusal here used to charge nothing, so the next attempt was available
       // at once and the failing request could be repeated without pause.
       chargeNetworkDownload(bytes,pauseMs);
-      throw tooLarge(bytes,declared>0);}chunks.push(value);onPhase?.(declared?`Receiving \u2014 ${(bytes/1e6).toFixed(1)} of ${(declared/1e6).toFixed(1)} MB`:`Receiving \u2014 ${(bytes/1e6).toFixed(1)} MB`,declared?bytes/declared:undefined);}}finally{await reader.cancel().catch(()=>{});}
+      throw tooLarge(bytes,declared>0);}chunks.push(value);declaredBytes=declared;say();}}
+    // A STREAM THAT WENT QUIET, said as that and not as "did not answer". The byte count only
+    // exists here, so the sentence is built here rather than at downloadOSM's generic edge.
+    catch(error){
+      if(receiving&&/abort/i.test(error instanceof Error?error.message:String(error))){
+        chargeNetworkDownload(bytes,pauseMs);
+        throw new Error(`Stopped at ${(bytes/1e6).toFixed(1)} MB. Nothing was changed and what `
+          +`arrived was not kept. The same request can be made again, after the pause this one `
+          +`earned.`);
+      }
+      throw error;
+    }
+    finally{clearInterval(silenceWatch);await reader.cancel().catch(()=>{});}
     // Charged once the size is known: a larger request earns a longer pause.
     chargeNetworkDownload(bytes,pauseMs);
     const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const body=new TextDecoder().decode(joined);const raw=JSON.parse(body);
@@ -696,7 +788,7 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
       if(preferred===reached.url)preferred=undefined;
       const remaining=new Set([...exclude,reached.url]);
       if(live.some(endpoint=>!remaining.has(endpoint.url)))
-        return requestOSM(boundary,marginM,fetcher,maxNodes,pauseMs,remaining,onWait,cacheStore,refresh,onPhase);
+        return requestOSM(boundary,marginM,fetcher,maxNodes,pauseMs,remaining,onWait,cacheStore,refresh,onPhase,mode,stopSignal);
       throw new Error(`${reached.operator}'s Overpass instance answered and reported no walkable `
         +`streets for this area`+(reached.regional?`, and it holds ${reached.regional} only`:'')
         +`. Nothing was changed. Either it does not hold data for this part of the world, or the `
@@ -711,7 +803,7 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     await keepOSM(request.query,body,retrievedAt,cacheStore);
     network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',
       attribution:`© OpenStreetMap contributors, via ${reached.operator}`,url:reached.url,retrievedAt,travelMode:mode,query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
-  }finally{clearTimeout(timer);}
+  }finally{clearTimeout(timer);clearInterval(silenceWatch);}
 }
 export function parseGraphML(text:string,filename:string,maxNodes?:number):Network{
   if(/<!DOCTYPE|<!ENTITY/i.test(text))throw new Error('GraphML external entities and document types are unsupported.');

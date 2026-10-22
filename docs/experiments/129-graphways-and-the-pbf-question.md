@@ -299,6 +299,38 @@ any road is an `OffNetworkSite` and a site that reaches nothing in the budget is
 A spike that collapsed them produced a sentence about a road network from a fact about where points
 were put, which is exactly the error the two types exist to prevent.
 
+## Spike 6: Soho, both engines, 2026-10-22
+
+The isochrone this project already ships, computed twice from the Broad Street pump at
+`[-0.136668, 51.513341]`. The engine's walking speed was set to the example's own 75 m/min
+(4.5 km/h) rather than its 5 km/h default, so the comparison is not about kilometres per hour.
+
+| minutes | this application · 738 junctions | Graphways · 29,777 junctions |
+|---|---|---|
+| 1 | 7,381 m² · 0.04 s | **8,721 m²** · < 0.01 s |
+| 5 | 164,677 m² · 0.33 s | **251,993 m²** · < 0.01 s |
+| 10 | 681,266 m² · 1.43 s | **1,064,944 m²** · < 0.01 s |
+| 15 | 899,461 m² · 1.62 s | **2,530,999 m²** · 0.01 s |
+
+Graphways built Soho from the 124 MB Greater London extract in 4.4 s, holding 1,068 MB.
+
+**At one minute they agree** — 7,381 against 8,721 m², eighteen per cent apart on an area a few
+streets across. **By fifteen they do not**, and the reason is not the algorithm: this application's
+example ships a curated 738-junction network covering Soho, so a fifteen-minute walk reaches the
+edge of the graph and stops. The widget says so already — *"Graph extent may truncate coverage"* —
+and here is that sentence as a number: 899,461 m² against 2,530,999 on a graph that does not end.
+The 25 m corridor and the hole-filling this application adds, which Graphways does not, push the
+other way and are the likeliest reason it is the larger of the two at one minute.
+
+**The timings are the other half.** 1.6 seconds over 738 junctions against a hundredth of a second
+over 29,777 — three orders of magnitude of headroom in an operation this project currently caps at
+2,000 junctions on a measured 4 GB failure.
+
+**What this is not.** Not a validation: two engines agreeing or disagreeing on an area says nothing
+about which matches a walk in 1854 Soho, and the notebook this example adapts is a third answer
+again. It establishes that the two are computing the same kind of thing at the same scale, and that
+the difference at large budgets is the extent of a graph rather than a disagreement about walking.
+
 ## What would close it
 
 For the first, now done for Andorra and Rwanda: what remains is the DRC's own 397 MB extract,

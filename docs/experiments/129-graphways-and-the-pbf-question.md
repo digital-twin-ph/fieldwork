@@ -204,6 +204,46 @@ instead of 473 MB and a change to every widget that reads a network.
 **WebKit matched Chromium throughout** and built the objects three times faster. It reports no
 `performance.memory`, so the heap column is empty there rather than guessed.
 
+## Spike 2 and 3: through this application's machinery, 2026-10-22
+
+The same Ituri graph — 1,152,974 junctions, 2,376,576 directed segments — handed to the code that
+already exists here. Chromium.
+
+| step | seconds | outcome |
+|---|---|---|
+| `validateNetwork` | **1.0** | accepted |
+| `payloadDigest` (`JSON.stringify` + SHA-256) | **0.9** | `f5d57197e1bb` |
+| **the payload store, as this application writes it** | **> 720** | never returned |
+
+The first two are the surprise: the validator walks 1.15 million nodes into a set and checks 2.38
+million edges against it in a second, and the whole graph serializes and hashes in under one. The
+size refusals removed on 2026-10-21 were the only thing standing between this application and a
+province; nothing else in that path objects.
+
+**The store is where it dies, and the reason is the representation.** IndexedDB keeps a value by
+the structured clone algorithm, which walks the object graph: `Network` is `{id, coordinates}` per
+junction and `{from, to, lengthM}` per segment, so the clone visits **3,529,550 objects**. The 85 MB
+of actual numbers is beside the point; the object count is the cost.
+
+Four ways to keep the same graph, measured against each other:
+
+| | write | read |
+|---|---|---|
+| **A** · typed arrays in IndexedDB | **0.2 s** | 0.1 s |
+| **B** · one packed `Blob` in IndexedDB | **< 0.1 s** | < 0.1 s |
+| **C** · one file in the origin private file system | **0.1 s** | < 0.1 s |
+| **D** · the objects this application uses today | **> 300 s, abandoned** | — |
+
+Eighty-five megabytes move in under a second by any of the three; the current shape does not finish
+in five minutes. OPFS is available in both engines and needs no clone at all. A `Blob` is written
+out of line and read back as a file.
+
+**So this is not a storage problem.** `Network` became three and a half million objects when a
+graph was five thousand junctions, and the choice has been invisible ever since. Changing it to
+typed arrays fixes the write, the 388 MB of object heap and the digest together — and costs every
+widget that reads a network: the snap, the isochrone, the edges, the preview. That is the next
+decision, and it is about this application rather than about Graphways.
+
 ## What would close it
 
 For the first, now done for Andorra and Rwanda: what remains is the DRC's own 397 MB extract,
@@ -221,9 +261,12 @@ exists, it is a library that runs somewhere this application does not.
 - **That PBF is smaller for Ituri.** It is 7 to 9 times smaller per junction on two extracts that
   are not the DRC, against a per-junction rate measured once on Ituri. The DRC's extract has not
   been read.
-- **That fieldwork can USE the graph.** It now exists in the browser as `Network`-shaped objects.
-  Nothing has saved it to the payload store, drawn it, snapped to it or routed over it, and the
+- **That fieldwork can USE the graph.** It validates, hashes, and can be written and read back as
+  typed arrays, a blob or a file. Nothing has drawn it, snapped to it or routed over it, and the
   isochrone still refuses graphs this size by its own measured guard.
+- **That A, B or C is the right one.** Three ways each move 85 MB in under a second; which belongs
+  in this application depends on what else must hold the graph, which is unmeasured. The timings
+  are one run each on one machine, in one engine.
 - **That 4.5 GB in a tab is acceptable.** It completed on this machine in both engines. What
   happens on a laptop with less memory, or beside other tabs, is unmeasured, and wasm memory never
   shrinks: the module holds 3,587 MB until it is discarded entirely.

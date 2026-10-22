@@ -40,7 +40,14 @@ pub extern "C" fn graph_from_pbf(pointer: *mut u8, len: usize, drive: i32) -> i3
         Ok(value) => value,
         Err(_) => return -1,
     };
-    let graph = SpatialGraph::from_osm_data(data, network, true);
+    let speed = *WALK_KPH.lock().unwrap();
+    let graph = if speed > 0.0 {
+        let mut options = graphways::profile::BuildOptions::retain_all(true);
+        options.profile.walk_speed_kph = speed;
+        SpatialGraph::from_osm_data_with(data, network, &options).expect("profile")
+    } else {
+        SpatialGraph::from_osm_data(data, network, true)
+    };
     let count = graph.graph.node_count() as i32;
     *GRAPH.lock().unwrap() = Some(graph);
     count
@@ -98,6 +105,12 @@ pub extern "C" fn drop_buffers() {
 // ---------------------------------------------------------------------------
 
 static ANSWER: Mutex<Vec<f64>> = Mutex::new(Vec::new());
+static WALK_KPH: Mutex<f64> = Mutex::new(0.0);
+
+/// Match another engine's walking speed, so a comparison is about the graph and
+/// the algorithm rather than about kilometres per hour.
+#[no_mangle]
+pub extern "C" fn set_walk_speed_kph(kph: f64) { *WALK_KPH.lock().unwrap() = kph; }
 
 #[no_mangle]
 pub extern "C" fn answer_values() -> usize { ANSWER.lock().unwrap().len() }

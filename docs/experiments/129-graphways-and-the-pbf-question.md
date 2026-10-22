@@ -244,6 +244,38 @@ typed arrays fixes the write, the 388 MB of object heap and the digest together 
 widget that reads a network: the snap, the isochrone, the edges, the preview. That is the next
 decision, and it is about this application rather than about Graphways.
 
+## Spike 4: ask the graph instead of handing it over, 2026-10-22
+
+Spikes 2 and 3 showed the cost is in moving a province graph into JavaScript and keeping it there.
+This asks whether it has to move at all. Four exports on the probe — `snap_points`, `isochrone`,
+`travel_matrix`, and a buffer for the answers — against APIs the crate already has. The graph stays
+in the module; only answers cross, a few hundred doubles at a time.
+
+| question | Chromium | WebKit | answer |
+|---|---|---|---|
+| build the graph | 19.9 s | 18.2 s | 1,152,974 junctions |
+| snap 200 sites, 2 km limit | **< 0.01 s** | 0.01 s | 63 on the network, farthest 1,807 m |
+| **one 15-minute isochrone** | **0.14 s** | **0.09 s** | a 74-point ring |
+| 5 × 20 travel-time matrix | 1.07 s | 0.95 s | 10 of 100 pairs reachable |
+
+**The isochrone is the result.** This application's own implementation is guarded at 2,000
+junctions and was measured exhausting a 4 GB heap at 5,249; the message it raises says so. Here one
+is drawn over **1,152,974** junctions in **0.14 seconds**, in both engines, with the JS heap holding
+no graph at all — the 460 MB Chromium reports is the extract's own `ArrayBuffer`, still alive from
+the download.
+
+So the architecture question has an answer. Leaving the graph in WebAssembly and asking it
+questions avoids the clone, the object heap and the store together, and brings a capability this
+application does not have at any size it cares about. Making `Network` typed arrays would fix the
+same three costs and bring nothing new.
+
+**Two numbers in that table need explaining before anyone leans on them.** Only **63 of 200** points
+snapped within 2 km, which is what a regular grid over a province does: it lands in forest, on
+water, and between roads. And only **10 of 100** origin–destination pairs were reachable, which
+says the driving graph of Ituri is not one connected component — or that the grid points snapped
+onto isolated stubs. Either is a finding about the data and neither has been looked into. A routing
+claim made on this would be wrong.
+
 ## What would close it
 
 For the first, now done for Andorra and Rwanda: what remains is the DRC's own 397 MB extract,
@@ -264,6 +296,10 @@ exists, it is a library that runs somewhere this application does not.
 - **That fieldwork can USE the graph.** It validates, hashes, and can be written and read back as
   typed arrays, a blob or a file. Nothing has drawn it, snapped to it or routed over it, and the
   isochrone still refuses graphs this size by its own measured guard.
+- **That routing over this graph is sound.** 10 of 100 pairs reachable is unexplained, and until
+  it is, nothing about travel times on a province graph should be reported.
+- **That the sites are real.** The 200 points are a grid over the bbox, not Ituri's health
+  facilities. The snap and matrix figures are about the graph's shape, not about access to care.
 - **That A, B or C is the right one.** Three ways each move 85 MB in under a second; which belongs
   in this application depends on what else must hold the graph, which is unmeasured. The timings
   are one run each on one machine, in one engine.

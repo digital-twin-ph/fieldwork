@@ -41,13 +41,10 @@ pub extern "C" fn graph_from_pbf(pointer: *mut u8, len: usize, drive: i32) -> i3
         Err(_) => return -1,
     };
     let speed = *WALK_KPH.lock().unwrap();
-    let graph = if speed > 0.0 {
-        let mut options = graphways::profile::BuildOptions::retain_all(true);
-        options.profile.walk_speed_kph = speed;
-        SpatialGraph::from_osm_data_with(data, network, &options).expect("profile")
-    } else {
-        SpatialGraph::from_osm_data(data, network, true)
-    };
+    let retain = *RETAIN_ALL.lock().unwrap();
+    let mut options = graphways::profile::BuildOptions::retain_all(retain);
+    if speed > 0.0 { options.profile.walk_speed_kph = speed; }
+    let graph = SpatialGraph::from_osm_data_with(data, network, &options).expect("profile");
     let count = graph.graph.node_count() as i32;
     *GRAPH.lock().unwrap() = Some(graph);
     count
@@ -106,6 +103,12 @@ pub extern "C" fn drop_buffers() {
 
 static ANSWER: Mutex<Vec<f64>> = Mutex::new(Vec::new());
 static WALK_KPH: Mutex<f64> = Mutex::new(0.0);
+/// `retain_all` keeps every OSM node; false lets graphways merge nearby
+/// intersections and collapse chains of road between junctions. The spikes
+/// before 2026-10-22 all passed true, which is the most expensive choice.
+static RETAIN_ALL: Mutex<bool> = Mutex::new(true);
+#[no_mangle]
+pub extern "C" fn set_retain_all(retain: i32) { *RETAIN_ALL.lock().unwrap() = retain != 0; }
 
 /// Match another engine's walking speed, so a comparison is about the graph and
 /// the algorithm rather than about kilometres per hour.
@@ -176,4 +179,17 @@ pub extern "C" fn travel_matrix(pointer: *const f64, origins: usize, destination
     let mut out = Vec::with_capacity(origins * destinations);
     for row in &matrix.durations_s { for cell in row { out.push(cell.unwrap_or(-1.0)); } }
     publish(out)
+}
+
+/// Read the extract and stop: no graph, no simplification. Where the ceiling is
+/// met is the question, and this answers whether it is met before any graph
+/// exists. Returns the nodes the scan kept.
+#[no_mangle]
+pub extern "C" fn scan_only(pointer: *mut u8, len: usize, drive: i32) -> i32 {
+    let bytes = unsafe { std::slice::from_raw_parts(pointer, len) };
+    let network = if drive != 0 { NetworkType::Drive } else { NetworkType::Walk };
+    match graphways::pbf::read_pbf_bytes(bytes, network) {
+        Ok((data, _pois)) => data.nodes.len() as i32,
+        Err(_) => -1,
+    }
 }

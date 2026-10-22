@@ -5,6 +5,71 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **Two study areas can be combined into one study area.** Combined area takes areas as well as
+  polygons and yields whichever kind it was given, so two adjacent provinces become one area that
+  the street network, the facility sources, the clip and the buffer all accept. Before, its only
+  output was a polygons result, which nothing that wants an area will take — the widget that does
+  exactly this was one port type away from being usable for it. No new widget: the existing one
+  recognises areas. Combining areas keeps each published outline as a part rather than dissolving
+  the shared border, because two authorities describe that border differently and welding them
+  would assert a line neither drew.
+
+- **Street network says which published extracts cover your study area, and links to them.**
+  Finding the right `.osm.pbf` was an errand outside the application; it is now a line in the panel,
+  matched geographically and smallest first — Soho is offered Greater London before England, and an
+  area straddling a border is told that no single country covers it rather than offered the
+  neighbour. The catalogue is Geofabrik's own index taken at build time and dated, because that
+  host serves neither its index nor its files with a CORS header. That is also why the download is
+  your browser's own: nothing passes through fieldwork, and the file lands on your computer, where
+  every province after the first can use it.
+
+- **A street network read from an extract is clipped to the study area, not to its bounding box.**
+  A box is a convenience owed to services that only accept one; it is not what anybody drew, and on
+  a province-shaped area the difference is a network of two countries — Ituri's box reaches into
+  Uganda. The engine indexes the outline by latitude band, so a province's nodes are each tested
+  against the handful of edges crossing their own band rather than against 7,759 of them: the box
+  still rejects most of a country in two comparisons and the outline decides the rest. The same
+  extract gives 122,061 junctions for Ituri's box and 41,425 for a wedge inside it, at comparable
+  time.
+
+- **Reading an extract no longer freezes the page.** A province is twenty to thirty seconds of
+  synchronous WebAssembly; on the main thread that is twenty to thirty seconds in which the page
+  answers nothing, and Chrome offers to kill it. It runs in a worker now, with the extract
+  transferred rather than copied in and the graph transferred back out, so neither crossing
+  duplicates the bytes and the status line keeps reporting throughout.
+- **"signal is aborted without reason" is gone.** A download whose attempt ran past its three-minute
+  budget rejected with the browser's own words, which reached a practitioner as a toast while a
+  province was downloading. The budget belongs to this client, so the sentence does now: it names
+  the 180 seconds, says nothing was changed, and points at the extract path, which asks no service
+  at all. The three time budgets are declared caps like the rest.
+- **Every cap is declared, queryable, and sorted by whether it is reasonable.** Six magnitude
+  limits refused a practitioner's work in sequence over two days, each discovered only after the
+  cost of the previous had been paid, because nothing could list them: blockers and directions have
+  had a ledger and a validator since October, and caps had a prose inventory. `widgets/caps.json`
+  now declares all twenty — value, unit, what it refuses, where the number came from, and the test
+  that would replace it with a measurement — `npm run check` fails on any magnitude constant that
+  is not in it, and each one is an `fw:Cap` individual in the ontology, so a street-network receipt
+  now asserts `fw:governedBy` for the caps that bound the run with `fw:capValueInForce` for what a
+  knob was actually set to.
+  **And they are sorted by kind.** An *artefact* cap bounds something this application makes — a
+  292-pixel drawing, a batch size — and is reasonable by construction. A *platform* cap reports a
+  limit the environment imposes. A *discovery* cap bounds what a practitioner can find out, and
+  decides in advance the answer to a question this project exists to ask. Only the last kind is
+  ratcheted, and only where the number was chosen rather than measured: that count stands at **2**
+  — the graph-limit ceiling and the edge-length check — and may fall and never rise.
+
+- **A street network can be read from an extract you already have.** Street network gains a third
+  input method: choose a published `.osm.pbf` — a Geofabrik country file, say — and it is read where
+  it sits, clipped to the study area as it is decoded, with only the resulting network kept. The
+  file is never copied into either browser store, and because most countries publish no
+  province-level extract, the same file serves every province and every workflow after the first.
+  Nothing is downloaded twice and no service is asked. The work is done by Graphways' Rust core
+  compiled to WebAssembly and shipped in this build (`vendor/street-engine.wasm`, MIT, see
+  `vendor/street-engine-NOTICE.txt`); OpenStreetMap data stays © OpenStreetMap contributors under
+  ODbL 1.0, and the attribution travels in the network's own source line. Measured 2026-10-22: a
+  province's driving network, 122,061 junctions, from a 416 MB extract; and the engine is precached,
+  so a network can be built with no connection at all.
+
 - **A province-sized network no longer overflows the call stack.** `Math.min(...coordinates)`
   passes every junction as an argument, so at 1,837,939 of them a 300 MB download ended in
   "Maximum call stack size exceeded" while computing how much of the study area it covered. The

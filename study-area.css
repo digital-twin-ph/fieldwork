@@ -81,8 +81,13 @@ body.focus-results #map-panel:not([hidden]) #map-communication{flex:none}
    the canvas inside it 520px, numbers chosen when the results were the lower half of a split and
    the panel itself was 335px tall. The panel is now a whole view, so the map grows into it and
    the heading, the figure title, the toolbar and the source note take what they need. */
-.work-area.showing-results .results-panel.spatial-results{display:flex;flex-direction:column;min-height:0}
-.work-area.showing-results .spatial-results #map-panel:not([hidden]){display:flex;flex-direction:column;flex:1 1 auto;height:auto;min-height:260px;overflow:auto}
+/* Keyed on there being a map on screen, not on the result's kind. Until 2026-10-22 these two
+   rules asked for `.spatial-results`, which app.ts sets for `spatial-map` and `spatial-coverage`
+   only; a `network-map` (the Ituri street network), a `raster-map`, a `study-area` or an `extent`
+   got the growth rule below with no flex column to grow in, so the SVG sized to its own content
+   and sat in a 355px band under a 784px panel. */
+.work-area.showing-results .results-panel:has(#map-panel:not([hidden])){display:flex;flex-direction:column;min-height:0}
+.work-area.showing-results #map-panel:not([hidden]){display:flex;flex-direction:column;flex:1 1 auto;height:auto;min-height:260px;overflow:auto}
 .work-area.showing-results #map-panel:not([hidden]) #catchment-map-host{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 .work-area.showing-results #map-panel:not([hidden]) .catchment-leaflet{flex:1 1 auto;height:auto;min-height:260px}
 .work-area.showing-results #map-panel:not([hidden])>#map{flex:1 1 auto;height:auto;min-height:260px;max-height:none;aspect-ratio:auto}

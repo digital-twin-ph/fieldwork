@@ -413,7 +413,7 @@ works at are a district and a neighbourhood — Soho is 29,777 junctions and bui
 Naledi is smaller again. Measuring walking at 1.8 million junctions was chasing a case that does not
 exist, and the one real question it raised — the panic — is a bug report rather than a limit.
 
-## The two-pass read, which is a real saving
+## The two-pass read, which is a real saving (and see the correction below)
 
 | Ituri, driving, simplified | one pass | two passes |
 |---|---|---|
@@ -425,6 +425,40 @@ Reading the ways first and keeping only the nodes they reference removes 1,389 M
 1,141 MB from the peak — **32% of the ceiling** — and costs a second pass over blobs that are
 already in memory. The patch is in the spike folder.
 
+## The panic was mine, 2026-10-22
+
+Triage, asked for after the walking build trapped at every size. Bisecting the failing 2 km box
+into quadrants: **all four panicked alike**, which is not what one bad way looks like.
+
+**The bbox dropped nodes and never dropped ways.** `inside()` was applied to nodes as they were
+decoded and to nothing else, so every build carried **the whole extract's road ways** — a country's
+worth — however small the study area was, with refs pointing mostly at nodes that had been dropped.
+That is why a 2 km box cost the same as a province, why the time was flat at about 13 seconds
+whatever was asked for, and why the walking build, which keeps several times as many ways, blew a
+capacity computation while the driving build survived.
+
+One line fixes it: after the coordinates are known, keep a way only if the box holds some of it.
+
+**Everything measured before that is wrong, and here is the correction.** Ituri, two-pass read:
+
+| | before (ways unclipped) | after | |
+|---|---|---|---|
+| driving, simplified | 2,446 MB | **1,412 MB** | 122,061 junctions |
+| driving, every node kept | 3,587 MB | **1,932 MB** | 1,152,974 junctions |
+| **walking, simplified** | **panic** | **2,381 MB** | **245,637 junctions** |
+| walking, every node kept | panic | **1,889 MB** | 2,295,994 junctions |
+
+**Walking at province scale works.** It was never the 4 GB ceiling and it was never the engine. The
+largest graph here — 2,295,994 junctions, every node of a province's walking network — builds in
+1,889 MB, less than half the address space. The ceiling has not been reached by anything measured
+since the bug was fixed.
+
+What stands from the earlier spikes: the isochrone timings, the export measurements and the store
+comparison were all taken on graphs that were real, if larger than they should have been. What
+falls: every statement in this document about the 4 GB ceiling being met, about walking being
+impossible, and about where the memory went. The two-pass saving is also smaller than reported,
+because most of what it was saving was ways that should never have been there.
+
 ## What would close it
 
 For the first, now done for Andorra and Rwanda: what remains is the DRC's own 397 MB extract,
@@ -434,6 +468,19 @@ saves.
 For the second: `cargo build --target wasm32-unknown-unknown` against graphways 0.5.0, and if it
 builds, one province graph loaded in a browser with its memory high-water mark measured. Until that
 exists, it is a library that runs somewhere this application does not.
+
+## Other engines, named 2026-10-22
+
+The practitioner relayed a suggestion of three Rust crates, with a division of labour: **par-osm-rust**
+for downloading and caching OSM, **osm4routing** for extracting routable topology, and **graphways**
+for the higher-level analysis — plus the idea of a Rust-native OSMnx whose graph operations compile
+to WebAssembly while acquisition stays on a server.
+
+Recorded, not assessed. Nothing here has run par-osm-rust or osm4routing, and the measurements
+above say the acquisition half is already solved without any of them: a published extract read in
+the browser, by this project's own reader or by graphways, with no server and no service. The part
+of that suggestion worth weighing is the division itself — acquisition, topology and analysis are
+three jobs, and this application currently asks one widget to do all three.
 
 ## What this does not establish
 

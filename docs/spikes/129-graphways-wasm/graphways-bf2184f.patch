@@ -1,8 +1,8 @@
 diff --git a/src/pbf.rs b/src/pbf.rs
-index 32af0af..5177036 100644
+index 32af0af..bf8949c 100644
 --- a/src/pbf.rs
 +++ b/src/pbf.rs
-@@ -112,9 +112,108 @@ fn pbf_error(error: impl ToString) -> OsmGraphError {
+@@ -112,9 +112,118 @@ fn pbf_error(error: impl ToString) -> OsmGraphError {
      OsmGraphError::PbfError(error.to_string())
  }
  
@@ -50,6 +50,16 @@ index 32af0af..5177036 100644
 +        }
 +    }
 +    coords.sort_unstable_by_key(|&(id, ..)| id);
++
++    // A WAY IS KEPT ONLY IF THE BOX HOLDS SOME OF IT. The bbox dropped nodes and
++    // not ways, so every build carried the whole extract's road ways however
++    // small the study area was -- which is why a 2 km box cost the same as a
++    // province and why the walking build panicked at any size. Found 2026-10-22
++    // by bisecting a failing box and finding all four quadrants failed alike.
++    roads.retain(|way| way.refs.iter().any(|id| coords.binary_search_by_key(id, |&(id, ..)| id).is_ok()));
++    let mut needed: Vec<i64> = roads.iter().flat_map(|w| w.refs.iter().copied()).collect();
++    needed.sort_unstable();
++    needed.dedup();
 +
 +    let nodes = needed
 +        .iter()
@@ -113,7 +123,7 @@ index 32af0af..5177036 100644
          .enumerate()
          .par_bridge()
          .map(|(position, blob)| {
-@@ -152,6 +251,23 @@ fn scan_pbf(path: &Path, network_types: &[NetworkType]) -> Result<PbfScan, OsmGr
+@@ -152,6 +261,23 @@ fn scan_pbf(path: &Path, network_types: &[NetworkType]) -> Result<PbfScan, OsmGr
      Ok(scan)
  }
  
@@ -137,7 +147,7 @@ index 32af0af..5177036 100644
  fn scan_block(block: &PrimitiveBlock, network_types: &[NetworkType]) -> PbfScan {
      let mut chunk = PbfScan {
          roads: network_types.iter().map(|_| Vec::new()).collect(),
-@@ -167,11 +283,13 @@ fn scan_block(block: &PrimitiveBlock, network_types: &[NetworkType]) -> PbfScan
+@@ -167,11 +293,13 @@ fn scan_block(block: &PrimitiveBlock, network_types: &[NetworkType]) -> PbfScan
      for element in block.elements() {
          let (id, lat, lon) = match &element {
              Element::Node(node) => {

@@ -69,7 +69,7 @@
    ],
    "workItem": "A sweep. Findings go to docs/todo.md, widgets/blockers.json or this register, per AGENTS.md.",
    "status": "open",
-   "lastChecked": "2026-10-15",
+   "lastChecked": "2026-10-22",
    "checks": [
     {
      "date": "2026-10-15",
@@ -78,6 +78,10 @@
     {
      "date": "2026-10-15",
      "found": "Corrected by the practitioner: \"105 cannot be retired as it embodies the DE approach.\" This entry had offered retirement as an option and 105's own closing condition had put the whole method on the same hook as its forward prediction, so a stance read as a technique on trial. The five directions moved into AGENTS.md where the method is; 105 keeps the derivation, the three readings it first got wrong, and the dated sweeps, and its closing condition is narrowed to the prediction alone. The gap itself is unchanged and is the reason this stays open: two sweeps, both 2026-10-12, none since, through three days in which the widget set, the ruleset layer, the map model and the blocker ledger all moved."
+    },
+    {
+     "date": "2026-10-22",
+     "found": "Checked by use rather than by reading. Three sweeps landed as work items in the seven days to 2026-10-22: looking BELOW produced experiment 125's finding that the graph-limit ceiling was its own default and that the byte cap was a projection enforced as a boundary; looking SIDEWAYS at another engine produced experiment 129, the spike folder and the street engine now shipped; looking BACK at this project's own caps retired the isochrone-derived refusal, the 30,000-vertex cap and the 100,000-character provenance cap. None of those landed as a document alone. The stance is in use and the direction stays open, because use is the only thing that keeps it true."
     }
    ]
   },
@@ -93,7 +97,7 @@
    ],
    "workItem": "112, whose closing condition is now a decision: adopt the rule and under which of the three readings",
    "status": "open",
-   "lastChecked": "2026-10-15",
+   "lastChecked": "2026-10-22",
    "checks": [
     {
      "date": "2026-10-15",
@@ -106,6 +110,10 @@
     {
      "date": "2026-10-15",
      "found": "The practitioner: \"What are the three readings? This decision seems vague to make.\" It was, and checking why found a false premise. 112 dismissed the port rule and emptied the stage rule on the same ground -- that the first placement is already handled by STARTER_TYPES, which offers 5. Measured in the running application: a blank canvas shows 41 of 53. addableTypes starts from the starter set and then adds ALWAYS_ADDABLE (32) and the catchment types unconditionally, so the starter set is overridden two lines after it is applied. Nobody had measured the palette, only the list. So there is no three-way choice: the port rule's own numbers still dismiss it (57-82% of the palette open through a build), the receipt rule's prerequisites are unchanged, and the stage rule has content after all -- 41 to 7 on a blank canvas, which is exactly the behaviour reported missing."
+    },
+    {
+     "date": "2026-10-22",
+     "found": "Re-derived from src/app.ts:3528. Unchanged: the reveal is still behind ?playback=1 with a control in the workspace bar, and nothing about the ordinary palette changes. What the week added is a reason to be glad of that -- the palette now carries a third acquisition method on Street network, and a reveal rule that hid it until a study area existed would have hidden the one path that needs no service. The direction stays open and unbuilt; the playback remains the instrument rather than the behaviour."
     }
    ]
   },
@@ -350,6 +358,44 @@
     {
      "date": "2026-10-22",
      "found": "Stated while the DRC extract was weighed at 416.3 MB with no province extracts published. Measured the same day: Ituri's driving graph builds from that file in 23.7 s and 3,587 MB of wasm memory, and the walking graph does not fit in the 4 GB wasm32 space at all. Nothing built; the picker, the handle persistence and the blob-by-blob read are all unwritten."
+    }
+   ]
+  },
+  {
+   "id": "a-study-area-clips-to-its-polygon",
+   "stated": "2026-10-22",
+   "statedBy": "the practitioner",
+   "inTheirWords": "The clip to the polygon study area is what we need as that has been the intent for the study area all along. I have longer workflows because what was intended was not what was implemented -- in the North Kivu health facilities, I needed a clip points to polygon widget for three sources because the study area clip was not implemented.",
+   "requiresInCode": "Every widget that acquires by a study area clips to the AREA, not to its bounding box: the street network read from an extract, the OSM street download, and the facility sources. A bounding box is an acquisition convenience owed to the services that only take one, and must not reach the practitioner as the result. Where a bbox is all that was done, the receipt and the source line say bounding box rather than study area.",
+   "recordedIn": [
+    "docs/experiments/129-graphways-and-the-pbf-question.md"
+   ],
+   "workItem": "The engine's second pass tests each node against the polygon, which needs the ring indexed to be affordable at province scale; the acquiring widgets in src/ clip their own results; and widgets/standardization.json records what happens to clip_points_to_area once its common case is gone.",
+   "status": "open",
+   "lastChecked": "2026-10-22",
+   "checks": [
+    {
+     "date": "2026-10-22",
+     "found": "Stated on seeing Ituri's street network drawn across the Ugandan border: the engine clips to the study area's bounding box plus margin, as the OSM download always has. The cost is visible in the practitioner's own workflows -- North Kivu carries three clip_points_to_area widgets doing downstream what the study area was meant to do at the source. Nothing built yet; the engine's polygon clip is the first piece."
+    }
+   ]
+  },
+  {
+   "id": "a-study-area-is-a-polygon",
+   "stated": "2026-10-22",
+   "statedBy": "the practitioner",
+   "inTheirWords": "But a study area is a polygon.",
+   "requiresInCode": "The `area` and `polygons` port types stop being two unrelated things. An area carries a Boundary -- a Polygon or MultiPolygon -- and Combined area ('Overlapping and touching areas become one') refuses it because its port says `polygons`. Either the union takes areas and returns an area, or an area is readable wherever a polygon is. What must not stand is a widget that does exactly what the practitioner asked for, one port type away from the thing they have.",
+   "recordedIn": [
+    "docs/experiments/66-ports-as-schema-binding.md"
+   ],
+   "workItem": "docs/experiments/66-ports-as-schema-binding.md, which opened the question of what a port type promises; and the blocker no-points-within-area-selection, lifted the same day, which was the same shape: a capability one port type away from where it was needed.",
+   "status": "open",
+   "lastChecked": "2026-10-22",
+   "checks": [
+    {
+     "date": "2026-10-22",
+     "found": "Stated on being told that two adjacent study areas cannot be merged after the fact. They can be merged AT ACQUISITION -- the boundary picker takes several units at one level and builds a MultiPolygon with provenance naming each -- but the Combined area widget, whose whole description is 'overlapping and touching areas become one', takes a polygons result and so cannot be fed a study area. The distinction between the two types is this application's, not the domain's: an area is a boundary with provenance, a Polygons is features with a method, and a study area is a polygon in both readings. Nothing built."
     }
    ]
   }

@@ -372,29 +372,15 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.12.0",
-   "released": "2026-10-21",
+   "version": "0.13.0",
+   "released": "2026-10-22",
    "changes": [
     {
-     "kind": "major",
-     "description": "The `coverage` port is gone with the widget that filled it: `coverage_check` was retired on 2026-10-21 and nothing produces a coverage value, so a map no longer offers a port nothing can fill. A map that was fed a coverage check now draws the clip's points like any other layer.",
-     "breaking": true,
-     "migration": "Automatic and stamped, where the coverage check held one point layer. Where it held more, the loader refuses and names the node: one clip takes one layer."
-    },
-    {
-     "kind": "minor",
-     "description": "Point symbols are drawn over a dark outline, so they read on any basemap. Over OpenTopoMap terrain, whose colours run through the same values as the categorical palette, a hollow mark was nearly invisible. The outline is a neutral rather than a seventh hue -- it separates the symbol from the ground without competing with the layer colours -- and it is a checkbox, on by default, because a pale ground or a printed figure may not want it.",
-     "breaking": true,
-     "migration": "None. A saved map has no `markHalo` and draws the outline."
-    },
-    {
-     "kind": "patch",
-     "description": "Corrects 0.11.0's ontology.emits, which listed the encoding terms asserted by src/map-communication.ts. A release declares what the module named in implementation.definition asserts, and this widget's definition is src/core.ts#TYPES.",
-     "breaking": true,
-     "migration": "None."
+     "kind": "fix",
+     "description": "Points wired beside a street network are drawn with it instead of being thrown away. A wired network sent the map down a network-only path that built its value with rows:[], so every point layer was dropped before a renderer saw one -- the Leaflet layer control offered two layers for three wired ports and the review counts above the map read zero. This is the same defect as the study area's, reported 2026-10-20 and fixed then by carrying the boundary alone. The map is now built as the spatial map it is and the network joins it as a layer, which also restores the records table and the counts. The static plot still draws the streets in a frame of their own size, so with points on it the plot draws the points and the note says where the streets are."
     }
    ],
-   "breaking": true,
+   "breaking": false,
    "migrationFrom": [
     {
      "nodeType": "output",
@@ -460,36 +446,43 @@
    "migrationFrom": []
   },
   "network_input": {
-   "version": "0.7.0",
-   "released": "2026-10-21",
+   "version": "0.13.0",
+   "released": "2026-10-22",
    "changes": [
     {
-     "kind": "major",
-     "description": "A street network is no longer refused for its SIZE. The ceiling came from the graph knob, and the number behind it was measured on ISOCHRONE construction in central London in 2026-10-13 -- enforced on every network, in every workflow, whether or not an isochrone exists in it, and enforced after the response was downloaded, parsed and normalized, where a refusal protects nothing and discards everything. A province downloaded on 2026-10-21 was thrown away at 1,837,939 junctions and 3,755,832 directed segments for that reason. What bounds a download is the byte cap the practitioner sets, before the bytes are spent; what bounds an isochrone is the isochrone's own worker, boot check and timeout; what bounds a saved graph is the store, which reports its own refusal. The 30,000-vertex cap on edge geometry went with it, for the same reason. The panel drawing now samples at 20,000 segments and the caption says so, because a 292-pixel figure is a limit on a picture and not on a dataset.",
-     "breaking": true
-    },
-    {
      "kind": "fix",
-     "description": "The last size cap went: network provenance was refused over 100,000 characters, and the record carries the study area's own outline, so a province's 7,759 vertices failed it -- measured after the response had been downloaded and parsed, like the others. Provenance is now checked for being a record and not for its length. A download the workflow then refuses also takes its payload back out of the store: the bytes were written before the workflow was asked, so every late refusal left a payload nothing referred to, and a device was measured holding 416.2 MB beside a widget reading 0 nodes."
+     "description": "No clock ends a download that is arriving. ATTEMPT_MS was armed before the fetch and never cleared when the response came, so it ran on through the body and stopped a working transfer: a province download was cut at 59.4 MB, about 0.33 MB/s, from a panel offering 300 MB -- the clock forbade roughly four fifths of what the widget said it accepts, and the toast then reported that the service 'did not answer'. The three minutes was borrowed from OSMnx, where it is passed to Python requests and fires only when no bytes have arrived for that long; it was imported here as a total elapsed deadline. The practitioner: 'If nothing ever arrives, that means there is no download. But there is an ongoing download -- this is where we are applying that wrong cap.' The response budget now ends where the response begins and nothing replaces it."
     },
     {
-     "kind": "feature",
-     "description": "The service is asked to count what it would SEND, not just the ways it would match, and the download is refused on that count with the graph limit it would need. Counting ways alone left an area whose response was over 60 MB sitting inside every limit, because most of a street download is the nodes the ways reference. A refusal now reads: this area holds N ways and M elements, about X MB at the measured 150 bytes each, set the graph limit to Y junctions or draw a smaller area -- and says plainly that a prediction from two small extents is not a measurement of a large one. Nothing is downloaded and nothing of the service's work is spent to learn it."
-    },
-    {
-     "kind": "feature",
-     "description": "A refusal reports what the OTHER TRAVEL MODE would cost, counted the same way. At province scale the mode decides whether there is a download at all -- footways, paths and steps are most of what a walking network holds -- and the practitioner was choosing it blind: 'At the province level we are not even looking at walking mode. It will be driving mode.' When an area is refused, one more count request answers whether the other mode fits at the current setting, and the message says which mode to switch to or that neither fits."
+     "kind": "added",
+     "description": "A Stop button beside the download, because nothing else can end one now. It is hidden until a download starts, and ending one says what had arrived: 'Stopped at 59.4 MB. Nothing was changed and what arrived was not kept.' If the service goes quiet the status line reports how long it has been silent and keeps waiting; the decision to give up is the practitioner's."
     },
     {
      "kind": "changed",
-     "description": "An acquired ADM1 or ADM0 study area defaults the travel mode to DRIVING. The default used to be walking everywhere, which is right for a neighbourhood and wrong for a province: nobody walks across one, and a walking network is mostly footways, paths and steps, which is most of what makes a province's download too large. The level is read from the boundary's own identifier, so it applies only where a published unit was acquired; a drawn box has no level and stays on walking, because a box can be any size and its extent is not evidence of intent. An explicit choice is never overridden, and the panel says why the default is what it is."
+     "description": "The network preview says it is the graph saved on the node, and on the download path that a download replaces it only when it finishes. It had read as the result of a download in progress."
+    },
+    {
+     "kind": "changed",
+     "description": "The panel shows the controls of the chosen input method and no others. The hand-edit JSON box, its GraphML/JSON file input and the note about an uploaded file keeping its own extent were rendered for all three methods, so choosing Geofabrik or OpenStreetMap still presented the controls of a path not taken. The practitioner: 'The dropdown selection should declutter the UI of controls for other options.' The clip margin moved the other way: it governs the extract clip exactly as it governs the download, and it was settable only on the download, so a setting in force on this path could not be seen or changed from it."
+    },
+    {
+     "kind": "changed",
+     "description": "The published-extract path asks for the file first and offers the download under it, rather than numbering them Step 1 and Step 2. The practitioner: 'A downloaded Geofabrik file may come from another user for example.' Numbering them said the only way to hold a .pbf is to have fetched it here. The input is a published extract, wherever it came from; the links are help for not having one."
     },
     {
      "kind": "fix",
-     "description": "The panel no longer quotes the response and feature limits for a graph limit of 2,000 when the widget is set to something else; it states them for the current setting."
+     "description": "The network-file upload states which formats it takes -- GraphML with its CRS declared as EPSG:4326, raw Overpass JSON, or a network JSON this application exported, and not GeoPackage, shapefile or OSM XML -- and its real size ceiling. It was labelled 'up to 2 MB' while the enforced limit is downloadLimits().maxBytes: 30 MB at the default graph limit and 300 MB at 500,000 junctions. A stated limit that low stops someone trying a file the application would have accepted."
+    },
+    {
+     "kind": "added",
+     "description": "An area too large for one Overpass request is asked for in as many as it takes, automatically. The single request is still made first, so a town costs exactly what it cost before and no extra count is spent on an area that never needed one; only the predictive SIZE refusal -- raised from the service's own count before any bytes are sent -- turns into a plan. The grid comes from that count divided by what one response carries, never from a chosen tile size, so density decides and a sparse area stays one request. Tiles overlap by the download margin so that a way crossing a seam keeps both its ends, tiles that miss the study outline are never requested, and the responses merge by OSM id with any edge whose far end never arrived counted and reported. Stop ends the whole sequence; the pause is charged once for the total rather than per tile. The practitioner, asked whether to make it a mode to choose: 'Let's try the first approach -- this is about discovery.'"
+    },
+    {
+     "kind": "fix",
+     "description": "A downloaded network is clipped to the study area polygon, not to its bounding box. Overpass is asked about a box because that is how it is asked about an area at all, and until now the box was what arrived: the practitioner saw 'network outside the study area bounds' on the Ituri map, and had been building longer workflows with separate clip widgets to compensate. Point-in-polygon over a province needs an index rather than a loop -- an outline of 7,759 vertices against hundreds of thousands of junctions -- so the clip uses 512 latitude bands, the same shape of index the street engine uses on the .pbf path. A junction is kept when it is inside the outline OR within the download margin of it, and a segment when both its ends are. The margin is not an oversight: the widget downloads beyond the study bounds on purpose, so a journey starting near the border can leave and come back, and clipping to the bare outline would make that control a lie. Set the margin to zero and the clip is the polygon exactly. Both drop counts are in the provenance."
     }
    ],
-   "breaking": true,
+   "breaking": false,
    "migrationFrom": []
   },
   "output": {
@@ -761,12 +754,16 @@
    "migrationFrom": []
   },
   "summarize_combined_area": {
-   "version": "0.1.0",
-   "released": "2026-10-10",
+   "version": "0.2.0",
+   "released": "2026-10-22",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Overlapping and touching areas become one; separate areas stay separate. GIS calls it dissolve. Derived from the isochrone decomposition: Advanced-1 NB03 buffers the reachable segments, hulls them, then unions the result, and Fieldwork's isochrone already calls polygonClipping.union inside itself to fill holes, so the operation was in the codebase and never a widget. Second of six primitives an isochrone composition needs, taken second because the decomposition is built backwards from its output: summarize_hull emits polygons, which is what this takes. Takes a UTM zone to report an area, which makes seven widgets that each ask for one. See docs/experiments/81-combined-area.md."
+     "kind": "feature",
+     "description": "The widget takes STUDY AREAS as well as polygons, and yields whichever kind it was given. Two adjacent provinces combine into one study area that can be handed to the street network, the facility sources, the clip and the buffer -- which was impossible before, because the only output was a polygons result and nothing that wants an area will take one. The practitioner, 2026-10-22: 'But a study area is a polygon', and 'two study area polygons combined should still be a study area'. No new widget was added: the one whose description already said overlapping and touching areas become one simply recognises areas now."
+    },
+    {
+     "kind": "changed",
+     "description": "Combining AREAS does not dissolve a touching border, where combining polygons does. A published outline is an authority's record of where a boundary lies and two authorities describe a shared border differently; welding them would assert a third line that neither drew while citing both. The parts answer every question this application asks of a study area identically. A catchment, by contrast, is this application's own construction, so two that touch are one reachable region and are merged as before."
     }
    ],
    "breaking": false,

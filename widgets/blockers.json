@@ -1,7 +1,7 @@
 {
  "schema": "fieldwork/blockers/1",
  "note": "A blocker is a dated claim, not a property of the world. The practitioner's rule of 2026-10-12: even blockers are not permanent, and each should be revisited in DE mode. This file exists because the two blockers recorded in TODO.md went unexamined and both were wrong when finally re-derived on the day this file was written -- one had been lifted by a widget that shipped, and the other was half true and had been stopping work it did not actually block. A blocker nobody re-derives does the same damage as an admission nobody re-reviews: it looks like a fact and acts like a decision. Every entry must therefore carry a liftTest -- the check that would show it has gone -- because a blocker with no stated lift test cannot be falsified and is only a mood. The ratchet is the revisit window: scripts/validate-blockers.mjs fails when a standing blocker has not been revisited within it.\n\nRe-derived in full on 2026-10-15, on the practitioner's instruction that blockers should make sense and be actionable rather than an obstacle to progress. All nine standing claims were tested against the code that day and all nine were still true -- so the audit found no stale CLAIM. What it found was two wrong STATUSES and one ungameable rule missing. `undeclared-rule-applications` and `table-to-points-conversion-missing` block nothing and nothing is gated on them, so `standing` was claiming queued work that did not exist; both are now `finding`, which carries no clock, and both are carried in docs/todo.md where work is actually chosen. And the revisit clock could be satisfied by editing one date: a standing blocker now needs a dated `revisits` note whose newest date IS lastRevisited, so the date cannot move unless somebody writes what they found. An entry may raise its own window above the ledger default by stating windowReason, because a weekly re-derivation of a claim waiting on a mechanism nobody is building buys nothing and is exactly the ceremony that makes a ledger an obstacle. Entries stated before 2026-10-12 use a term this project withdrew that day, named in docs/withdrawn-vocabulary.json. Their text stands: a blocker is a dated claim and rewording one would falsify it. Two entry ids carry it too -- nothing references them, so they are handles and not claims. The one STANDING entry was reworded on 2026-10-19 because a standing claim is live text; live text says port type for what a connection is checked against.",
- "measuredAt": "2026-10-15",
+ "measuredAt": "2026-10-22",
  "revisitWindowDays": 7,
  "windowBasis": "This project adds and retires widgets in days, not months: twelve widgets arrived in three days and three were retired in one. A blocker older than a week has outlived the conditions it was recorded under.",
  "blockers": [
@@ -96,7 +96,7 @@
     "alert"
    ],
    "recorded": "2026-10-12",
-   "lastRevisited": "2026-10-15",
+   "lastRevisited": "2026-10-22",
    "status": "standing",
    "liftTest": "A ruleset 2.0.0 exists whose predicates name no domain and carry no unit in their names, with the unit on the declaration, and 1.0.0 is kept because it is what reproduces the shipped conclusions.",
    "narrowedTo": "What replaced ruleset-as-declared-data for alert alone. Declaring a condition and the date it applies to is irreducible, so alert survives as a primitive; only its name and its predicate are domain, and the predicate is now in a versioned artefact rather than in a template literal, which is what makes this a version bump rather than a code change.",
@@ -105,18 +105,20 @@
     {
      "date": "2026-10-15",
      "found": "Re-derived against rulesets/outreach-criteria/: 1.0.0 is still the only version, and its rules read fw:heatAlert and fw:distanceKm four times each. No 2.0.0 exists, so the claim stands unchanged."
+    },
+    {
+     "date": "2026-10-22",
+     "found": "Re-derived from src/rulesets.ts: outreach-criteria still asserts fw:heatAlert and fw:distanceKm, and the file's own comment at line 277 restates the problem rather than resolving it -- fw:distanceKnown pairs with fw:distanceKm and fw:alertKnown with fw:heatAlert, a relationship no reader can derive from the names. Nothing has changed. The alert widget is still not generic over a domain."
     }
    ]
   },
   {
    "id": "no-points-within-area-selection",
    "claim": "No widget takes an area and a point layer and outputs the points inside it. coverage_check does the geometry and its output carries the `coverage-check` port type, which only map_output and table_output accept, so a spatial selection cannot be chained into anything.",
-   "blocks": [
-    "facilities"
-   ],
+   "blocks": [],
    "recorded": "2026-10-12",
-   "lastRevisited": "2026-10-15",
-   "status": "standing",
+   "lastRevisited": "2026-10-22",
+   "status": "lifted",
    "liftTest": "A primitive takes (area, points) and outputs points, and the Old Naledi example produces its facility set from buffer_area plus that selection, with the difference from the shipped selection stated rather than discovered.",
    "measured": "Measured across buffer distances 2026-10-12, after the cap was raised. Shipped: a 6 km circle at the boundary's bounding-box centre selects 122 of 214 facilities. Boundary widened by 4,000 m: 93, all of them inside the shipped set. 4,500 m: 109, all inside. 5,000 m: 122, agreeing on 121 with one differing each way. 5,500 m: 139, containing all 122 and 17 more. 6,000 m: 150, containing all 122 and 28 more. So the closest equivalent to the shipped selection is a 5,000 m margin around the boundary, which is a 1-in-122 difference, and that value was inside the old cap all along.",
    "alsoFound": "The 5,000 m cap on validateBuffer was an unjustified knob range -- the geometry helpers in the same module accept 50,000, and validateBufferPointNode delegates to the same function, so one number governed both buffer widgets. Raised to 50,000 on the practitioner's point that it is a knob. It was NOT blocking this replacement, which is a claim recorded an hour earlier and withdrawn by the measurement: 6,000 m over-selects by 28 facilities and 5,000 m is the best match, so the cap never stood in the way.",
@@ -142,8 +144,13 @@
     {
      "date": "2026-10-15",
      "found": "Re-derived against the type table: no widget declares area and points as inputs with points as output. Claim stands unchanged."
+    },
+    {
+     "date": "2026-10-22",
+     "found": "LIFTED. The widget now exists: clip_points_to_area, 'Keep points inside the area' in Spatial operations, takes an area and a point layer and returns the points inside with a count of what fell outside, a boundary rule and a missing-location class. coverage_check, whose coverage-check port type was the obstruction this blocker named, was retired on 2026-10-21 with a stamped migration. The blocker's own condition -- a widget that takes an area and points and outputs the points inside -- is met. The two entries gated on it -- facilities in widgets/naming.json and in widgets/standardization.json -- are ungated as of this date; what remains for that widget is the work itself, not a missing primitive."
     }
-   ]
+   ],
+   "whatChanged": "The widget the claim said did not exist was built. clip_points_to_area -- 'Keep points inside the area', Spatial operations -- takes an area and a point layer and returns the points inside, with a count of what fell outside, a boundary rule, and a missing-location class for records that cannot be placed. The obstruction the claim named is gone too: coverage_check, whose coverage-check port type only map_output and table_output accepted, was retired on 2026-10-21 with a stamped migration. Lifted 2026-10-22 by re-derivation, not by the clock."
   },
   {
    "id": "undeclared-rule-applications",
@@ -208,7 +215,7 @@
     "slr_site_assignment"
    ],
    "recorded": "2026-10-13",
-   "lastRevisited": "2026-10-15",
+   "lastRevisited": "2026-10-22",
    "status": "standing",
    "liftTest": "A CandidateCondition can bind its values to a column of a connected input, and the sea-level example produces its assignments from `nearest` with that binding, agreeing row for row with `slr_site_assignment` on the 194 Manila facilities.",
    "measured": "Measured 2026-10-13 against src/sea-level-example.ts: the extract's site ids and the site layer's site ids are the identical set of eight (145, 260, 394, 522, 537, 664, 1708, 1711), so the validity rule that is this widget's entire domain residue excludes nothing in the only workflow that runs it. That is a property of this example's data and not a guarantee, which is why the filter must be bindable rather than dropped.",
@@ -218,6 +225,10 @@
     {
      "date": "2026-10-15",
      "found": "Re-derived against src/types.ts: CandidateCondition is still {field, comparator, values: Scalar[]} -- literal values only, with no way to bind values to a column of a connected input. Claim stands unchanged."
+    },
+    {
+     "date": "2026-10-22",
+     "found": "Re-derived from src/types.ts: candidateFilter on measure_distance is still CandidateCondition[], literal values a person authored, with no way to read them from a connected port at run time. slr_site_assignment still cannot filter by extract.siteIds. Unchanged."
     }
    ]
   },
@@ -228,8 +239,8 @@
     "slr_extract_import"
    ],
    "recorded": "2026-10-13",
-   "lastRevisited": "2026-10-15",
-   "status": "standing",
+   "lastRevisited": "2026-10-22",
+   "status": "narrowed",
    "liftTest": "A check in scripts/validate-naming.mjs requires a widget grouped under Sources to acquire something -- no inputs, or acquired data carried in its params as `find_health_facilities` does -- and both widgets either move group or change contract so the check passes without an exemption.",
    "measured": "slr_extract_import declares inputs:[['projections','table']] and holds no data parameter; the table arrives from table_input. reproject declares inputs:[] and holds params.data, so it genuinely acquires -- but it also reprojects, which is why the split recorded in docs/todo.md gives the sources an output CRS and leaves reproject a points-to-points transform.",
    "alsoFound": "The naming ratchet added 2026-10-13 catches reproject through its transform verb and misses slr_extract_import entirely, because that rule keys on the verb rather than on the contract. A rule that asks whether a source acquires would catch both, and would not depend on a verb list staying complete.",
@@ -239,10 +250,15 @@
     {
      "date": "2026-10-15",
      "found": "Re-derived against the type table. Narrowed by measurement: of the ten widgets grouped under Sources, four declare an input -- network_input, raster_input and find_health_facilities each take an `area` to acquire WITHIN, which is acquisition, and slr_extract_import takes a `table` on a port and acquires nothing. So this is now true of one widget rather than two, reproject having been resolved by experiment 111's split. The liftTest's check is unwritten."
+    },
+    {
+     "date": "2026-10-22",
+     "found": "NARROWED to one widget. reproject has moved out: src/core.ts now groups it under Spatial operations as 'Reproject points', so its group no longer denies the transform its name promises. slr_extract_import is still group 'Sources' while acquiring nothing -- it declares an imported table. Half the claim is resolved; the half that names a widget acquiring nothing under Sources stands."
     }
    ],
    "narrowedTo": "One widget, not two, as of 2026-10-15. `reproject` was resolved by experiment 111's split -- it changed contract rather than taking an exemption. Of the ten Sources widgets, network_input, raster_input and find_health_facilities each take an `area` to acquire WITHIN, which is acquisition; slr_extract_import takes a `table` on a port and acquires nothing.",
-   "preferredLift": "Decomposition rather than a group change, designed 2026-10-15 in docs/experiments/115-decomposing-the-projection-extract.md. Read operation by operation, none of slr_extract_import's five operations is about sea level: four are assertions about a table -- required key columns, an admissible unit, a closed domain for one column -- and one derives a column's distinct values. The sea-level knowledge is entirely in its parameters. So the widget does not need to move group or change contract; it needs to stop being a widget, which lifts this blocker by removing the thing it is about and takes the live count from 46 toward the target of 41 rather than away from it. Blocked on typed-field-schema, which this makes a third caller for."
+   "preferredLift": "Decomposition rather than a group change, designed 2026-10-15 in docs/experiments/115-decomposing-the-projection-extract.md. Read operation by operation, none of slr_extract_import's five operations is about sea level: four are assertions about a table -- required key columns, an admissible unit, a closed domain for one column -- and one derives a column's distinct values. The sea-level knowledge is entirely in its parameters. So the widget does not need to move group or change contract; it needs to stop being a widget, which lifts this blocker by removing the thing it is about and takes the live count from 46 toward the target of 41 rather than away from it. Blocked on typed-field-schema, which this makes a third caller for.",
+   "whatChanged": "reproject has left the group: src/core.ts groups it under Spatial operations, so its name no longer promises a transform its group denies. slr_extract_import is still under Sources while acquiring nothing. One of the two widgets the claim named is resolved. Re-derived 2026-10-22."
   },
   {
    "id": "isochrone-does-not-scale",
@@ -265,7 +281,7 @@
     "Experiment 113's composite, which fixes a ruleset pin"
    ],
    "recorded": "2026-10-14",
-   "lastRevisited": "2026-10-15",
+   "lastRevisited": "2026-10-22",
    "status": "standing",
    "liftTest": "A receipt carries a digest of the ruleset document it applied, and resolving a pin checks it, so a changed ruleset at an unchanged version fails rather than runs. Composition members already work this way: a member pin is {node, type, version, sha256} and validateComposition refuses a mismatch.",
    "why": "Found 2026-10-14 by asking whether a pin is unique. It is unique as a lookup key within a build and not as a content identity, which is the sense reproducibility needs.",
@@ -273,6 +289,10 @@
     {
      "date": "2026-10-15",
      "found": "Re-derived against src/rule-application.ts: a pin is still {id, version, title, inputs, output} with no digest, and nothing checks one. Claim stands unchanged. Noted while building supersession alerting the same day: the alert can name a newer version precisely because versions are data in one build, which is the same property that makes an unverified pin resolvable to different text in two builds."
+    },
+    {
+     "date": "2026-10-22",
+     "found": "Re-derived from src/rulesets.ts: rulesetCitation still returns {id, version, title, basis} and nothing else. No digest of the rule text is recorded by a pin or by a receipt, so neither can prove WHICH TEXT was applied. Unchanged."
     }
    ]
   },
@@ -284,16 +304,21 @@
     "Revealing an output widget by its type, which does not say what it takes"
    ],
    "recorded": "2026-10-14",
-   "lastRevisited": "2026-10-15",
-   "status": "standing",
+   "lastRevisited": "2026-10-22",
+   "status": "narrowed",
    "liftTest": "Dragging a connection to an output widget whose current mode does not accept it switches the mode when exactly one mode accepts that port type, and asks which the practitioner meant when more than one does. Measured: 2 of 3 output widgets need no question at all. NOTE 2026-10-14: the Map widget page (docs/widget-specs/map_output.md) records that the mode model is itself the defect -- a map has layers, not modes -- so automating the switch would entrench what it would remove. Read that page before lifting this.",
    "why": "Raised by the practitioner on 2026-10-14: the output widgets depend on the shape of the process widget outputs for inputs.",
    "revisits": [
     {
      "date": "2026-10-15",
      "found": "Re-derived against src/types.ts: map_output still declares inputMode with five values and draws the ports its current mode gives it. Claim stands unchanged. Read docs/widget-specs/map_output.md before lifting: the practitioner's direction of 2026-10-14 is that a map has layers and not modes, which would dissolve this blocker rather than lift it."
+    },
+    {
+     "date": "2026-10-22",
+     "found": "NARROWED to the widgets that still have a mode. map_output no longer chooses its ports by mode: every layer port is declared and the stored inputMode is read LAST, only so a workflow saved before the change still opens (src/core.ts:201-215). chart_output and table_output still key their ports off inputMode -- series, polygons, table -- so a connection may still need a port the node does not have. The claim holds for those two and no longer for the map."
     }
-   ]
+   ],
+   "whatChanged": "map_output stopped choosing its ports by mode on 2026-10-20: every layer port is declared and the stored inputMode is read last, only so a workflow saved before the change still opens. The claim now holds for chart_output and table_output alone, which still key their ports off inputMode -- series, polygons, table -- so a connection can still need a port the node does not have. Re-derived 2026-10-22 from src/core.ts:201-238."
   }
  ]
 }

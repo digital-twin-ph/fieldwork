@@ -10,7 +10,7 @@
     "test": "npm run build && node scripts/test-unit.mjs",
     "test:browser": "playwright test",
     "test:report": "playwright show-report",
-    "check": "npm run build && npm run validate:docs && npm run validate:experiments && npm run validate:check-coverage && npm run validate:evidence && npm run validate:rulesets && npm run validate:blockers && npm run validate:directions && npm run validate:standardization && npm run validate:naming && npm run validate:names && npm run validate:widget-budget && npm run validate:admission && npm run validate:ontology-coupling && npm run validate:dive-deeper && npm run validate:manual && npm run validate:inspector-prose && npm run validate:port-contracts && npm run validate:release-notes && npm run validate:vocabulary && npm run validate:audit-queue && npm run validate:packs && node scripts/test-unit.mjs && npm run test:browser",
+    "check": "npm run build && npm run validate:docs && npm run validate:experiments && npm run validate:check-coverage && npm run validate:evidence && npm run validate:rulesets && npm run validate:blockers && npm run validate:directions && npm run validate:standardization && npm run validate:naming && npm run validate:names && npm run validate:widget-budget && npm run validate:admission && npm run validate:ontology-coupling && npm run validate:dive-deeper && npm run validate:manual && npm run validate:inspector-prose && npm run validate:caps && npm run validate:extracts && npm run validate:port-contracts && npm run validate:release-notes && npm run validate:vocabulary && npm run validate:audit-queue && npm run validate:packs && node scripts/test-unit.mjs && npm run test:browser",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.workers.json --noEmit",
     "validate:ontology": "node scripts/validate-ontology.mjs",
     "validate:widgets": "node scripts/validate-widgets.mjs",
@@ -49,7 +49,10 @@
     "validate:release-notes": "node scripts/release-notes.mjs",
     "validate:directions": "node scripts/validate-directions.mjs",
     "validate:ruleset-sources": "node scripts/validate-ruleset-sources.mjs",
-    "validate:inspector-prose": "node scripts/validate-inspector-prose.mjs"
+    "validate:inspector-prose": "node scripts/validate-inspector-prose.mjs",
+    "validate:caps": "node scripts/validate-caps.mjs",
+    "notes:extracts": "node scripts/geofabrik-catalogue.mjs --write",
+    "validate:extracts": "node scripts/geofabrik-catalogue.mjs"
   },
   "engines": {
     "node": ">=22"

@@ -18,8 +18,7 @@
       "nodeType": "facilities",
       "rule": "audited-name",
       "reason": "Names the content of one demonstration. It is a radius filter, not a facility list.",
-      "gatedOn": "no-points-within-area-selection",
-      "clearedBy": "Replace with a points-within-area selection honouring totality, then retire."
+      "clearedBy": "Replace with clip_points_to_area, which exists since 2026-10-21 and honours totality; then retire. The blocker that stood here was lifted 2026-10-22: nothing is missing but the work."
     },
     {
       "nodeType": "facility_audit",

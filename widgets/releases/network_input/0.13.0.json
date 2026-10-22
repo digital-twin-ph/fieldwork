@@ -1,0 +1,98 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:network_input",
+ "nodeType": "network_input",
+ "version": "0.13.0",
+ "title": "Street network",
+ "released": "2026-10-22",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['network_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "network",
+  "optionalInputs": [
+   "area"
+  ],
+  "note": "Area is acquisition context for OSM; file inputs do not require it."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:NetworkInput",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. The mode the graph was filtered for is asserted as fw:travelMode on the network entity -- the term reachability already uses for the mode it assumes -- from src/catchments.ts, so it is declared on the release whose definition is that module rather than here. Configuration SHACL is future work.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/catchments.ts",
+   "src/core.ts",
+   "src/payload-store.ts",
+   "src/street-network.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "fix",
+   "description": "No clock ends a download that is arriving. ATTEMPT_MS was armed before the fetch and never cleared when the response came, so it ran on through the body and stopped a working transfer: a province download was cut at 59.4 MB, about 0.33 MB/s, from a panel offering 300 MB -- the clock forbade roughly four fifths of what the widget said it accepts, and the toast then reported that the service 'did not answer'. The three minutes was borrowed from OSMnx, where it is passed to Python requests and fires only when no bytes have arrived for that long; it was imported here as a total elapsed deadline. The practitioner: 'If nothing ever arrives, that means there is no download. But there is an ongoing download -- this is where we are applying that wrong cap.' The response budget now ends where the response begins and nothing replaces it."
+  },
+  {
+   "kind": "added",
+   "description": "A Stop button beside the download, because nothing else can end one now. It is hidden until a download starts, and ending one says what had arrived: 'Stopped at 59.4 MB. Nothing was changed and what arrived was not kept.' If the service goes quiet the status line reports how long it has been silent and keeps waiting; the decision to give up is the practitioner's."
+  },
+  {
+   "kind": "changed",
+   "description": "The network preview says it is the graph saved on the node, and on the download path that a download replaces it only when it finishes. It had read as the result of a download in progress."
+  },
+  {
+   "kind": "changed",
+   "description": "The panel shows the controls of the chosen input method and no others. The hand-edit JSON box, its GraphML/JSON file input and the note about an uploaded file keeping its own extent were rendered for all three methods, so choosing Geofabrik or OpenStreetMap still presented the controls of a path not taken. The practitioner: 'The dropdown selection should declutter the UI of controls for other options.' The clip margin moved the other way: it governs the extract clip exactly as it governs the download, and it was settable only on the download, so a setting in force on this path could not be seen or changed from it."
+  },
+  {
+   "kind": "changed",
+   "description": "The published-extract path asks for the file first and offers the download under it, rather than numbering them Step 1 and Step 2. The practitioner: 'A downloaded Geofabrik file may come from another user for example.' Numbering them said the only way to hold a .pbf is to have fetched it here. The input is a published extract, wherever it came from; the links are help for not having one."
+  },
+  {
+   "kind": "fix",
+   "description": "The network-file upload states which formats it takes -- GraphML with its CRS declared as EPSG:4326, raw Overpass JSON, or a network JSON this application exported, and not GeoPackage, shapefile or OSM XML -- and its real size ceiling. It was labelled 'up to 2 MB' while the enforced limit is downloadLimits().maxBytes: 30 MB at the default graph limit and 300 MB at 500,000 junctions. A stated limit that low stops someone trying a file the application would have accepted."
+  },
+  {
+   "kind": "added",
+   "description": "An area too large for one Overpass request is asked for in as many as it takes, automatically. The single request is still made first, so a town costs exactly what it cost before and no extra count is spent on an area that never needed one; only the predictive SIZE refusal -- raised from the service's own count before any bytes are sent -- turns into a plan. The grid comes from that count divided by what one response carries, never from a chosen tile size, so density decides and a sparse area stays one request. Tiles overlap by the download margin so that a way crossing a seam keeps both its ends, tiles that miss the study outline are never requested, and the responses merge by OSM id with any edge whose far end never arrived counted and reported. Stop ends the whole sequence; the pause is charged once for the total rather than per tile. The practitioner, asked whether to make it a mode to choose: 'Let's try the first approach -- this is about discovery.'"
+  },
+  {
+   "kind": "fix",
+   "description": "A downloaded network is clipped to the study area polygon, not to its bounding box. Overpass is asked about a box because that is how it is asked about an area at all, and until now the box was what arrived: the practitioner saw 'network outside the study area bounds' on the Ituri map, and had been building longer workflows with separate clip widgets to compensate. Point-in-polygon over a province needs an index rather than a loop -- an outline of 7,759 vertices against hundreds of thousands of junctions -- so the clip uses 512 latitude bands, the same shape of index the street engine uses on the .pbf path. A junction is kept when it is inside the outline OR within the download margin of it, and a segment when both its ends are. The margin is not an oversight: the widget downloads beyond the study bounds on purpose, so a journey starting near the border can leave and come back, and clipping to the bare outline would make that control a lie. Set the margin to zero and the clip is the polygon exactly. Both drop counts are in the provenance."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Acquisition only; the graph it produces is checked where it is used. The pacing follows the service's own /api/status rather than a client-side guess, measured against OSMnx's behaviour on 2026-10-19."
+ }
+}

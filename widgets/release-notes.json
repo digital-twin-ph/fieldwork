@@ -572,12 +572,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "raster_input": {
-   "version": "0.3.1",
-   "released": "2026-10-07",
+   "version": "0.4.0",
+   "released": "2026-10-22",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Distinguish reading a retained raster window at execution from acquiring the source asset."
+     "kind": "added",
+     "description": "The widget says which published population raster covers this study area and links to it. WorldPop keys its data by ISO3, and a study area acquired from geoBoundaries states its country in its own provenance -- COD-ADM1-... -- so the country is read from the boundary rather than inferred from coordinates. A polygon drawn by hand states no country and is offered nothing: a denominator attributed to the wrong country is worse than no denominator, and a province on a border is exactly where a guess would be wrong and invisible. Every published year is offered, newest first, with the file size where it could be read -- the DRC is 1,184 MB. data.worldpop.org sends no CORS header and ignores a Range request, both measured 2026-10-22, so the browser downloads the file and the widget reads a window out of it on this device."
     }
    ],
    "breaking": false,

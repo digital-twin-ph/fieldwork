@@ -113,7 +113,7 @@ wasm32 has no filesystem. `osmpbf::BlobReader` is already generic over `Read + S
 | Rwanda | 68.2 MB | walk | 3,795,541 | 12.7 s | 2,102 MB |
 | Rwanda, province-sized bbox | 68.2 MB | walk | 1,425,531 | 6.5 s | 1,438 MB |
 | **DRC, Ituri bbox** | **416.3 MB** | **drive** | **1,152,974** | **23.7 s** | **3,587 MB** |
-| DRC, Ituri bbox | 416.3 MB | walk | — | — | **out of memory** |
+| DRC, Ituri bbox | 416.3 MB | walk | — | — | **a panic, see below — not memory** |
 
 Rwanda cross-validates the reader written for the first half: 3,795,541 against 3,795,630, the
 difference being graphways' `Walk` filter against this project's walking filter.
@@ -372,6 +372,58 @@ extract whole returns 417 MB. Freeing the intermediate as the graph consumes it 
 MB overlap. Slimming the intermediate itself — it carries owned tag strings per way — is the
 largest and the most invasive, since it is graphways' own shape. Together they are most of 2 GB,
 and none is built.
+
+## What changed our minds, 2026-10-22
+
+**The walking failures were not out of memory, and I said they were.** Four times in this document a
+walking build was reported as hitting the 4 GB wasm32 ceiling. A panic hook, written into the module
+so the message survives the trap, says otherwise:
+
+```
+panicked at library/alloc/src/raw_vec/mod.rs:28:5:
+capacity overflow
+```
+
+A capacity overflow is a `Vec` asked for a length that will not fit a 32-bit `usize` — not an
+allocation refused for want of room. It happens at **any** size: the full province, half of it, and
+a **2 km box around Bunia holding 3,931 nodes**, which cannot be a memory wall by any reading.
+Driving builds the same 2 km box fine, and walking builds Soho from the London extract fine. So it
+is the walking filter over **this extract's data**, at any scale, and it is a defect in the engine
+or in data the engine does not expect — not a property of WebAssembly.
+
+The first walking failure did report `raw_vec::handle_error`, which is the allocation path, and I
+generalised from that stack to every later failure without checking. The correct statement is that
+one failure's cause is unknown and the rest are this panic.
+
+**What this withdraws.** That walking is impossible at province scale in a browser — unproven.
+That the ADM1 driving default is "the difference between a graph and a crash" — withdrawn. The
+default stands on the practitioner's own argument, which is about what a province is for and what a
+walking download costs, and it never needed this.
+
+**And what the practitioner said while it was being measured**, which is the better frame:
+
+> *"Remember the walking and driving mode contexts are different. So walking will likely need
+> smaller networks not bigger because that is reality."*
+
+> *"Soho District John Snow setting is about right."* … *"Gaborone access to health facility also
+> works."*
+
+A province-wide walking graph is not a thing anyone needs. The walking scales this project actually
+works at are a district and a neighbourhood — Soho is 29,777 junctions and builds in 4.4 s, and Old
+Naledi is smaller again. Measuring walking at 1.8 million junctions was chasing a case that does not
+exist, and the one real question it raised — the panic — is a bug report rather than a limit.
+
+## The two-pass read, which is a real saving
+
+| Ituri, driving, simplified | one pass | two passes |
+|---|---|---|
+| after the scan | 2,264 MB | **875 MB** |
+| at the peak, graph built | 3,587 MB | **2,446 MB** |
+| time | 17.2 s | 28.2 s |
+
+Reading the ways first and keeping only the nodes they reference removes 1,389 MB from the scan and
+1,141 MB from the peak — **32% of the ceiling** — and costs a second pass over blobs that are
+already in memory. The patch is in the spike folder.
 
 ## What would close it
 

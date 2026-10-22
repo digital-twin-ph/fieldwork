@@ -331,6 +331,48 @@ about which matches a walk in 1854 Soho, and the notebook this example adapts is
 again. It establishes that the two are computing the same kind of thing at the same scale, and that
 the difference at large budgets is the extent of a graph rather than a disagreement about walking.
 
+## Spike 7: where the 4 GB goes, 2026-10-22
+
+*"Will we still have the same 4 GB failure?"* Yes — it is wasm32's address space, not a setting —
+and the measurement says where it goes and which of the obvious savings is not one.
+
+**Ituri, driving, the extract already in memory:**
+
+| stage | wasm memory | what it added |
+|---|---|---|
+| the extract copied in | 417 MB | the 416 MB file |
+| the scan alone (`read_pbf_bytes`, no graph) | **2,264 MB** | **+1,847 MB** of intermediate |
+| the graph built from it | **3,587 MB** | **+1,323 MB** |
+
+So the file is 12% of the ceiling and the other 88% is the two stages between the file and the
+graph. Both halves are roughly equal, and the peak is the sum: the intermediate `OsmData` is still
+alive while the graph is being built from it.
+
+**The obvious saving is not one.** Every spike before this passed `retain_all = true`, which keeps
+every OSM node instead of merging nearby intersections and collapsing chains. Passing `false`:
+
+| | junctions | wasm memory |
+|---|---|---|
+| `retain_all = true` | 1,152,974 | 3,587 MB |
+| `retain_all = false` | **122,061** | **3,587 MB** |
+
+A graph **9.4 times smaller, at exactly the same peak**, because simplification happens after the
+expensive part. It is still the right setting — 122,061 junctions is a graph this application could
+plausibly hold in its own structures, where 1,152,974 is not — but it buys nothing against the
+ceiling.
+
+**Walking still fails, and fails in the build.** At half the province the scan completes at
+1,255 MB with 553,001 nodes and the graph construction then traps. Driving at the full province
+scans 1,152,974 nodes and builds. So the walking filter's cost is in construction rather than in
+reading, which is a fact about how many ways per node a walking network has; nothing here has
+looked into why.
+
+**What is left to take, in order of size.** Feeding the module blob by blob instead of copying the
+extract whole returns 417 MB. Freeing the intermediate as the graph consumes it would cut the 1,323
+MB overlap. Slimming the intermediate itself — it carries owned tag strings per way — is the
+largest and the most invasive, since it is graphways' own shape. Together they are most of 2 GB,
+and none is built.
+
 ## What would close it
 
 For the first, now done for Andorra and Rwanda: what remains is the DRC's own 397 MB extract,
@@ -359,6 +401,9 @@ exists, it is a library that runs somewhere this application does not.
 - **That A, B or C is the right one.** Three ways each move 85 MB in under a second; which belongs
   in this application depends on what else must hold the graph, which is unmeasured. The timings
   are one run each on one machine, in one engine.
+- **That the savings above are achievable.** They are read off where the memory went, not
+  prototyped. Streaming the extract through `BlobReader` may cost time it does not currently cost,
+  and freeing the intermediate early may not be possible without changing graphways' own flow.
 - **That 4.5 GB in a tab is acceptable.** It completed on this machine in both engines. What
   happens on a laptop with less memory, or beside other tabs, is unmeasured, and wasm memory never
   shrinks: the module holds 3,587 MB until it is discarded entirely.

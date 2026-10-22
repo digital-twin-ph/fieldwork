@@ -166,6 +166,44 @@ experience in each engine and must be said rather than papered over. And the 416
 copied into wasm memory whole; reading it blob by blob from the file would return most of that
 12% of the ceiling.
 
+## Spike 1: the graph leaves WebAssembly, 2026-10-22
+
+The engine building a graph is not the engine being usable. What crosses the boundary, and what it
+costs to turn it into the shape this application's widgets read, is the step that could still end
+the approach. Measured on the DRC extract with Ituri's bbox, driving mode, in **both** test
+browsers.
+
+The module now exports `(osm id, lon, lat)` per junction and `(from index, to index, metres)` per
+directed segment as flat `f64` buffers, and lets the graph go once they are written. Flat on
+purpose: one JS object per junction is the thing being measured, so the module must not impose one.
+
+| | Chromium | WebKit |
+|---|---|---|
+| build the graph | 19.5 s | 17.1 s |
+| wasm memory after the build | 3,587 MB | 3,587 MB |
+| export both buffers | < 0.1 s | < 0.1 s |
+| copy them out of wasm | < 0.1 s | < 0.1 s |
+| the buffers themselves | **85 MB** | 85 MB |
+| build 1,152,974 nodes and 2,376,576 edges as objects | **0.6 s** | **0.2 s** |
+| JS heap, typed arrays only | 544 MB | not reported |
+| JS heap, after the objects | **932 MB** | not reported |
+
+**It crosses, and the crossing is nearly free.** 10.6 million doubles move out of wasm in under a
+tenth of a second, and the whole graph is 85 MB as typed arrays. Turning it into the objects
+`Network` is defined with — `{id, coordinates}` and `{from, to, lengthM}` — costs 0.6 seconds and
+**388 MB of JS heap** on top. A sample survives the trip intact: `osm-87737350` at
+`[29.4450981, 0.4995544]`, and a 95.1 m segment between two junctions.
+
+**So the wall is not where it was expected.** It is not the export, and it is not object-building
+time. It is that the tab holds **3,587 MB of wasm and 932 MB of JS at once**, about 4.5 GB, for one
+province in the mode that fits. Three economies are visible and none is built: the 416 MB extract
+is copied into wasm whole rather than fed blob by blob; the extract's JS `ArrayBuffer` is still
+alive after that copy; and `Network` could hold typed arrays rather than objects, which is 85 MB
+instead of 473 MB and a change to every widget that reads a network.
+
+**WebKit matched Chromium throughout** and built the objects three times faster. It reports no
+`performance.memory`, so the heap column is empty there rather than guessed.
+
 ## What would close it
 
 For the first, now done for Andorra and Rwanda: what remains is the DRC's own 397 MB extract,
@@ -183,11 +221,12 @@ exists, it is a library that runs somewhere this application does not.
 - **That PBF is smaller for Ituri.** It is 7 to 9 times smaller per junction on two extracts that
   are not the DRC, against a per-junction rate measured once on Ituri. The DRC's extract has not
   been read.
-- **That the browser can hold a province graph as a NETWORK.** Graphways builds one for Ituri in
-  driving mode and reports its junction count. Nothing has routed over it, snapped to it, drawn it,
-  or handed it back to this application, and no isochrone has been attempted on it.
-- **That this runs in a browser.** Every figure above is from Node, which is V8 — the same engine
-  family as Chromium and not the same as WebKit. The module has not been loaded in either browser.
+- **That fieldwork can USE the graph.** It now exists in the browser as `Network`-shaped objects.
+  Nothing has saved it to the payload store, drawn it, snapped to it or routed over it, and the
+  isochrone still refuses graphs this size by its own measured guard.
+- **That 4.5 GB in a tab is acceptable.** It completed on this machine in both engines. What
+  happens on a laptop with less memory, or beside other tabs, is unmeasured, and wasm memory never
+  shrinks: the module holds 3,587 MB until it is discarded entirely.
 - **That the fork is sound.** `read_pbf_bytes` and the bbox filter are ten-line changes written for
   a measurement, not reviewed against the crate's own tests.
 - **That a browser can hold a province graph at all.** 1,837,939 junctions downloaded, parsed and

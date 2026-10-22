@@ -10,7 +10,8 @@
     "src/catchments.ts",
     "src/study-area.ts",
     "src/network-preview.ts",
-    "src/street-network.ts"
+    "src/street-network.ts",
+    "src/raster.ts"
   ],
   "measuredAt": "2026-10-22",
   "caps": [
@@ -181,6 +182,18 @@
       "refuses": "Nothing. Beyond it the picture is an even sample and the caption says so.",
       "liftTest": "Not applicable: a limit on a drawing, not on data.",
       "kind": "artefact"
+    },
+    {
+      "id": "raster-window-cells",
+      "constant": "MAX_RASTER_CELLS",
+      "iri": "urn:fieldwork:cap:raster-window-cells",
+      "value": 16777216,
+      "unit": "cells",
+      "kind": "discovery",
+      "basis": "measured",
+      "evidence": "Measured 2026-10-22 in a Chromium tab against WorldPop Botswana 2025 at 100 m, a real 11,248 by 10,953 LZW GeoTIFF: 262,144 cells read in 77 ms, 14.4M in 1,217 ms, 36M in 2,625 ms, and the whole 123.2M-cell raster in 8,382 ms with every value touched and held live. Nothing degraded at any size. The previous value, 262,144, carried no evidence at all and was about 470 times below what a browser does comfortably; it would have refused a population denominator for Ituri, which needs about 14.4M cells.",
+      "refuses": "A study area whose window on a raster is larger than about 4,096 by 4,096 cells. A province at 100 m fits; a country does not.",
+      "liftTest": "The costs beyond the read: keeping a grid of this size in the payload store, carrying it through a project export, and drawing it. Only the read is measured, so only the read is claimed."
     },
     {
       "id": "json-editor-elements",

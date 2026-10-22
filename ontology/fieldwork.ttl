@@ -1362,6 +1362,15 @@ fw:capValueInForce a owl:DatatypeProperty;
   fw:capEvidence "A 1 km square of central London normalizes to 5,249 junctions and exhausted a 4 GB heap during isochrone construction, 2026-10-13. The threshold sits below what failed.";
   fw:capRefuses "Nothing. Above it the isochrone step warns, and its own worker timeout reports what happened.";
   fw:capLiftTest "An isochrone implementation measured past it -- the street engine drew one over 1,152,974 junctions in 0.14 s on 2026-10-22, in WebAssembly and not in this code.".
+<urn:fieldwork:cap:raster-window-cells> a fw:Cap;
+  rdfs:label "raster-window-cells";
+  fw:capKind "discovery";
+  fw:capValue 16777216;
+  fw:capUnit "cells";
+  fw:capBasis "measured";
+  fw:capEvidence "Measured 2026-10-22 in a Chromium tab against WorldPop Botswana 2025 at 100 m, a real 11,248 by 10,953 LZW GeoTIFF: 262,144 cells read in 77 ms, 14.4M in 1,217 ms, 36M in 2,625 ms, and the whole 123.2M-cell raster in 8,382 ms with every value touched and held live. Nothing degraded at any size. The previous value, 262,144, carried no evidence at all and was about 470 times below what a browser does comfortably; it would have refused a population denominator for Ituri, which needs about 14.4M cells.";
+  fw:capRefuses "A study area whose window on a raster is larger than about 4,096 by 4,096 cells. A province at 100 m fits; a country does not.";
+  fw:capLiftTest "The costs beyond the read: keeping a grid of this size in the payload store, carrying it through a project export, and drawing it. Only the read is measured, so only the read is claimed.".
 <urn:fieldwork:cap:preview-segments> a fw:Cap;
   rdfs:label "preview-segments";
   fw:capKind "artefact";

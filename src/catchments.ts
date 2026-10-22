@@ -1,4 +1,5 @@
 import {CRS84_IRI,crsIRIFromName} from './metric-crs.js';
+import {capFacts,networkCaps} from './caps.js';
 import {catchmentSemantics} from './catchment-semantics.js';
 import {buffer as turfBuffer} from '@turf/buffer';
 import proj4 from 'proj4';
@@ -93,9 +94,37 @@ export const SEGMENTS_PER_NODE=2.5;
  *  The DEFAULT is unchanged at 50,000, so a practitioner who never touches the knob sees exactly
  *  the previous behaviour. */
 export const NETWORK_NODE_LIMIT_MAX=1_000_000;
-/** The largest graph this repository has actually downloaded, parsed and drawn. Above it the
- *  widget warns rather than refuses: the failure is then a measurement. */
+/** The largest graph this repository has actually DOWNLOADED, parsed and drawn. Above it the
+ *  download warns rather than refuses: the failure is then a measurement.
+ *
+ *  A different number from the largest it has BUILT. The street engine read 122,061 junctions for
+ *  a province out of a published extract on 2026-10-22 (experiment 129), and that path transfers
+ *  nothing, so it has no byte budget to warn about and this figure does not apply to it. */
 export const NETWORK_MEASURED_NODES=27_181;
+/** The largest graph read from an extract and taken into this application's own structures:
+ *  parsed and held, and not yet drawn on a map, routed over or snapped to. */
+export const EXTRACT_MEASURED_NODES=122_061;
+/** WHEN THE JSON EDITOR IS OFFERED, counted in nodes plus directed edges.
+ *
+ *  The Inspector carried a textarea holding `JSON.stringify(network,null,2)` for every network,
+ *  built on every render and inside a COLLAPSED `<details>`, so the cost bought nothing on screen.
+ *  Measured 2026-10-22 at the province the practitioner was looking at when Chrome killed the tab
+ *  -- 113,485 nodes and 289,080 directed edges: 41.8 MB built, 59.7 MB again after escaping, about
+ *  203 MB of UTF-16 held, per render, and the Inspector re-renders on every selection and every
+ *  parameter change. Their report: *"Chrome has become unstable ... viewing the street network
+ *  widget with drc.osm.pbf loaded"*, and *"if I change workflows no crash"* -- which is the tell:
+ *  the cost is paid only while that node's Inspector is on screen.
+ *
+ *  20,000 elements is about 1.9 MB of pretty-printed JSON, which is the 2 MB this same control
+ *  already states as its upload limit. Above it the textarea is not offered and the panel says
+ *  why; the file input beside it stays, so a large graph can still be replaced by a small one.
+ *  A limit on a text box, not on a network: the graph is held, drawn, run and exported whatever
+ *  its size. */
+export const JSON_EDITOR_ELEMENT_LIMIT=20_000;
+/** Whether a graph is small enough for that text box. Counted, never serialised: asking the
+ *  question must not cost what the answer avoids. */
+export const offersJsonEditor=(network:{nodes:unknown[];edges:unknown[]}):boolean=>
+  network.nodes.length+network.edges.length<=JSON_EDITOR_ELEMENT_LIMIT;
 /** What a response costs per junction it finally yields, measured 2026-10-13 on two real extents
  *  with the tightened query:
  *
@@ -117,6 +146,18 @@ export const BYTES_PER_NODE=600;
  *  say how many elements are there for the price of one cheap request, and 150 B turns that into
  *  megabytes, which turns the guess into a number. */
 export const BYTES_PER_FEATURE=150;
+/** How long ONE segment may be, as a unit check rather than a judgement about roads.
+ *
+ *  It was 100,000 m, and on 2026-10-22 a province's driving network built from a published extract
+ *  was refused by it: 2 of 314,955 segments were over, the longest 100,723 m. Collapsing the chain
+ *  of road between two junctions is what simplification does, and in rural Ituri a chain is
+ *  genuinely a hundred kilometres. The cap was never derived from anything; it read as a statement
+ *  about how long a road can be, which is not this function's business.
+ *
+ *  1,000 km is kept because the check still has a job: a length given in degrees, or in kilometres
+ *  read as metres, lands orders of magnitude away from the truth and should be caught before it
+ *  becomes a travel time. */
+export const MAX_EDGE_METRES=1_000_000;
 export const FEATURES_PER_NODE=4;
 /** Never tighter than the limits that shipped, so raising the knob can only widen what is accepted
  *  and a practitioner who never touches it sees exactly the previous behaviour. */
@@ -248,7 +289,22 @@ export function validateNetwork(n:Network,maxNodes?:number){
   // and which did its job; what bounds an isochrone is the isochrone; what bounds a saved graph is
   // the store, which reports its own refusal. A graph is now allowed to be the size the area is.
   const ids=new Set<string>();for(const p of n.nodes){if(!p||!validId(p.id)||ids.has(p.id)||!coordinate(p.coordinates))throw new Error('Network node IDs and CRS84 coordinates must be valid and unique.');ids.add(p.id);}
-  let vertices=0;for(const e of n.edges){if(!e||!ids.has(e.from)||!ids.has(e.to)||!Number.isFinite(e.lengthM)||e.lengthM<=0||e.lengthM>100000)throw new Error('Network edges need known endpoints and positive metre lengths.');if(e.geometry){vertices+=e.geometry.length;if(!Array.isArray(e.geometry)||e.geometry.length<2||!e.geometry.every(coordinate))throw new Error('Invalid edge geometry.');}}
+  let vertices=0;for(const e of n.edges){
+    // WHICH edge and WHICH condition, because "network edges need known endpoints and positive
+    // metre lengths" sent a practitioner looking at 314,955 of them on 2026-10-22, when two were
+    // over a cap.
+    if(!e||!ids.has(e.from)||!ids.has(e.to))
+      throw new Error(`A street segment runs between junctions this network does not contain `
+        +`(${e?`${e.from} to ${e.to}`:'a missing segment'}), so it was not accepted.`);
+    if(!Number.isFinite(e.lengthM)||e.lengthM<=0)
+      throw new Error(`A street segment from ${e.from} to ${e.to} has a length of ${e.lengthM}, `
+        +`which is not a positive number of metres.`);
+    if(e.lengthM>MAX_EDGE_METRES)
+      throw new Error(`A street segment from ${e.from} to ${e.to} is `
+        +`${Math.round(e.lengthM/1000).toLocaleString()} km long, past the `
+        +`${(MAX_EDGE_METRES/1000).toLocaleString()} km a single segment may be. That limit is a `
+        +`unit check, not a geography one: a length in degrees or kilometres read as metres lands `
+        +`far outside it.`);if(e.geometry){vertices+=e.geometry.length;if(!Array.isArray(e.geometry)||e.geometry.length<2||!e.geometry.every(coordinate))throw new Error('Invalid edge geometry.');}}
   // The 30,000-vertex cap on edge geometry went with it, for the same reason and in the same
   // place: a province's ways carry millions of bends, and counting them after they are in memory
   // is not a guard. `vertices` is still summed, because the loop above validates each one.
@@ -269,7 +325,7 @@ export function validateCatchmentNode(n:WorkflowNode){
     if(n.params.pauseSeconds!==undefined&&(!Number.isFinite(n.params.pauseSeconds)||n.params.pauseSeconds<60||n.params.pauseSeconds>900))throw new Error('Use a 60–900 second pause between OSM requests. 60 is the minimum; it can only be raised.');
     if(n.params.data.nodes.length||n.params.data.edges.length)validateNetwork(n.params.data,n.params.maxNodes);
     if(n.params.marginM!==undefined&&(!Number.isFinite(n.params.marginM)||n.params.marginM<0||n.params.marginM>2000))throw new Error('Use a 0–2,000 metre download margin.');
-    if(n.params.inputMethod!==undefined&&!['osm','file'].includes(n.params.inputMethod))throw new Error('Choose OSM download or file upload.');
+    if(n.params.inputMethod!==undefined&&!['osm','file','extract'].includes(n.params.inputMethod))throw new Error('Choose an OSM download, a network file, or an extract on this device.');
   }
   if(n.type==='voronoi'||n.type==='isochrone'){if(!Number.isInteger(n.params.zone)||n.params.zone<1||n.params.zone>60||!['north','south'].includes(n.params.hemisphere))throw new Error('Choose a UTM zone 1–60 and hemisphere.');}
   if(n.type==='isochrone'){const p=n.params;if(![p.minutes,p.speedMPerMin,p.bufferM,p.maxSnapM].every(Number.isFinite)||p.minutes<.1||p.minutes>60||p.speedMPerMin<1||p.speedMPerMin>200||p.bufferM<1||p.bufferM>100||p.maxSnapM<0||p.maxSnapM>1000||!['outbound','inbound'].includes(p.direction))throw new Error('Use 0.1–60 minutes, 1–200 m/min, 1–100 m buffer and 0–1,000 m snap limit.');}
@@ -596,6 +652,10 @@ export function catchmentReceipt(node:WorkflowNode,value:Polygons|Network,runId:
   if('nodes' in value&&typeof (value.provenance as Record<string,unknown>|undefined)?.travelMode==='string')
     facts+=`<${entity}> fw:travelMode ${JSON.stringify(String((value.provenance as Record<string,unknown>).travelMode))}.\n`;
   if('features' in value){facts+=`<${activity}> ${operationCRS?`fw:metricCRS ${JSON.stringify(operationCRS)}; `:''}${conformsTo?`dcterms:conformsTo <${conformsTo}>; `:''}fw:method ${JSON.stringify(operationMethod)}; fw:caveats ${JSON.stringify(value.notes.join(' '))}.\n`;for(const f of value.features){const id=`${entity}:cell:${encodeURIComponent(f.id)}`,wkt='MULTIPOLYGON ('+multi(f.geometry).map(p=>'('+p.map(r=>'('+r.map(c=>c.join(' ')).join(', ')+')').join(', ')+')').join(', ')+')';facts+=`<${entity}> fw:member <${id}>.\n<${id}> a geo:Feature; fw:siteId ${JSON.stringify(f.siteId)}; geo:hasGeometry [ a geo:Geometry; geo:asWKT ${JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> '+wkt)}^^geo:wktLiteral ].\n`;if(f.minutes!==undefined)facts+=`<${id}> fw:travelTimeMinutes ${f.minutes}.\n`;if(f.count!==undefined)facts+=`<${id}> fw:recordCount ${f.count}; fw:missingValueCount ${f.missingValues}.\n`;}if(value.summary?.valueField)for(const f of value.features)facts+=`<${entity}:cell:${encodeURIComponent(f.id)}> fw:numericTotal ${f.total}.\n`;if(value.summary)facts+=`<${entity}> fw:summary ${JSON.stringify(JSON.stringify(value.summary))}.\n`;if(value.snaps)facts+=`<${activity}> fw:networkSnaps ${JSON.stringify(JSON.stringify(value.snaps))}.\n`;if(value.unconnected?.length)facts+=`<${activity}> fw:unconnectedSiteCount ${value.unconnected.length}; fw:unconnectedSites ${JSON.stringify(JSON.stringify(value.unconnected))}.\n`;if(value.offNetwork?.length)facts+=`<${activity}> fw:offNetworkSiteCount ${value.offNetwork.length}; fw:offNetworkSites ${JSON.stringify(JSON.stringify(value.offNetwork))}.\n`;for(const f of value.features)if(f.offNetworkMetres!==undefined)facts+=`<${entity}:cell:${encodeURIComponent(f.id)}> fw:offNetworkMetres ${f.offNetworkMetres}.\n`;}
+  // WHICH CAPS BOUND THIS RUN, and at what value. A knob's declared number is its default, and
+  // the run was governed by whatever it was set to.
+  if('nodes' in value)
+    facts+=capFacts(activity,networkCaps({maxNodes:(node.params as {maxNodes?:number}).maxNodes}));
   facts+=catchmentSemantics(node,value,entity,activity,runId);
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:operationMethod};
 }

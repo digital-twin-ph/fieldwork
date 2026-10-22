@@ -2,7 +2,7 @@
 import {bufferPoint,validateBufferPointNode} from './buffer-point.js';
 import {facilitiesValue,migrateHealthsitesNodes,validateFindHealthFacilitiesNode} from './health-facilities.js';
 import {convexHull,validateHullNode} from './convex-hull.js';
-import {combinedArea,validateCombinedAreaNode} from './combined-area.js';
+import {combinedArea,combineAreas,validateCombinedAreaNode} from './combined-area.js';
 import {snapToNetwork,validateSnapNode} from './network-snap.js';
 import {reachableNodes,validateReachNode} from './reachable-nodes.js';
 import {reachableCorridor,validateCorridorNode} from './reachable-corridor.js';
@@ -49,7 +49,7 @@ import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,Nea
 import {declarationGaps,dataIssuesOf} from './results.js';
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
-interface ExecutionInputs extends OldInputs {polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
+interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
@@ -114,7 +114,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   reachable_corridor:{title:'Reachable corridor',group:'Spatial operations',icon:'▦',color:'teal',description:'The strip of ground along the streets a traveller can get down within the budget',inputs:[['reached','points'],['network','network']],output:'polygons'},
   reachable_nodes:{title:'Reachable junctions',group:'Spatial operations',icon:'◴',color:'teal',description:'Street junctions within a travel time, each carrying the budget left on arrival',inputs:[['sites','points'],['network','network']],output:'points'},
   snap_to_network:{title:'Snap to street network',group:'Spatial operations',icon:'⇥',color:'teal',description:'Attach each site to its nearest network node, carrying how far it moved',inputs:[['sites','points'],['network','network']],output:'points'},
-  summarize_combined_area:{title:'Combined area',group:'Summaries',icon:'∪',color:'teal',description:'Overlapping and touching areas become one; separate areas stay separate',inputs:[['polygons','polygons']],output:'polygons'},
+  summarize_combined_area:{title:'Combined area',group:'Summaries',icon:'∪',color:'teal',description:'Areas become one area; overlapping and touching polygons become one polygon',inputs:[['polygons','polygons'],['area','area'],['area2','area']],output:'polygons'},
   summarize_hull:{title:'Convex hull',group:'Summaries',icon:'⬟',color:'teal',description:'The smallest convex outline containing a set of points, computed in metres',inputs:[['points','points']],output:'polygons'},
   find_health_facilities:{title:'Find health facilities',group:'Sources',icon:'⌖',color:'blue',description:'Retrieve health facilities inside the study area from OpenStreetMap, an HDX country export, or a healthsites.io download',inputs:[['area','area']],output:'points'},
   buffer_point:{title:'Area around a point',group:'Spatial operations',icon:'◍',color:'teal',description:'Define a study area as everything within a stated distance of one named point',inputs:[['points','points']],output:'area'},
@@ -157,6 +157,12 @@ const point = (id:string,name:string,coordinates:Position|null|undefined):PointF
  *  input modes. Inside a composition the static lookup is still correct: members are
  *  registry widgets, never compositions, so nothing nests. */
 export function outputOf(node:WorkflowNode):PortType|null{
+  // A STUDY AREA AND A STUDY AREA ARE A STUDY AREA. The practitioner, 2026-10-22: "But a study
+  // area is a polygon", and "two study area polygons combined should still be a study area". The
+  // union always returned a `polygons`, which nothing that wants an area will take -- so the
+  // widget that does exactly what was asked could not be used for it. Given areas it yields an
+  // area, which the street network, the facilities and the clip all accept.
+  if(node.type==='summarize_combined_area')return node.params.yields==='area'?'area':'polygons';
   if(node.type==='apply_ruleset')return node.params.ruleset?.output??null;
   if(node.type==='micro_workflow')return node.params.composition?.output??null;
   return TYPES[node.type].output;
@@ -824,6 +830,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         value=made.value;receipts.push(made.receipt);break;
       }
       case 'summarize_combined_area':{
+        // Given areas it combines areas; given polygons it combines polygons. Same widget, same
+        // sentence -- "overlapping and touching areas become one" -- and the output is whatever
+        // kind went in, so a merged study area can be given to everything a study area feeds.
+        if(node.params.yields==='area'){
+          const merged=combineAreas(node,[inputs.area,inputs.area2],runId);
+          value=merged.value;receipts.push(merged.receipt);break;
+        }
         const made=combinedArea(inputs.polygons,node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from);
         value=made.value;receipts.push(made.receipt);break;
       }
@@ -843,6 +856,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           raster:workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from}));break;
       }
       case 'buffer_area':{const buffered=bufferArea(node,inputs.area,runId);value=buffered.value;receipts.push(buffered.receipt);break;}
+
       case 'network_input':case 'voronoi':case 'isochrone':case 'clip_polygons':case 'summarize_points_to_polygon':{
         if(node.type==='network_input'){
           // An EMPTY network is almost always one that has not been downloaded, and acquiring it
@@ -854,6 +868,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           if(!network?.nodes?.length&&!network?.edges?.length)
             throw new Error(node.params.inputMethod==='file'
               ?`"${node.params.label}" has no street network yet. Select it and upload a GraphML or JSON file; running does not import one.`
+              :node.params.inputMethod==='extract'
+              ?`"${node.params.label}" has no street network yet. Select it and choose a published .osm.pbf extract; running the workflow does not read one.`
               :`"${node.params.label}" has no street network yet. Select it and press "Download and save OSM network" \u2014 running the workflow does not start the download.`);
           validateNetwork(network);
         }
@@ -1090,6 +1106,39 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // value before any renderer sees it. The Inspector's own network preview has drawn the
         // area behind the streets since it existed, which is what made the omission visible.
         const drawnArea=inputs.area as {boundary?:unknown;bounds?:unknown}|undefined;
+
+        // AND THE POINTS ARE DRAWN WITH THEM. The practitioner, 2026-10-22: *"The map output does
+        // not show health facilities layer despite the widget being connected to map input. Only
+        // the street network layer shows up on the map."* This is the same defect as the study
+        // area's, reported 2026-10-20 and fixed by adding `boundary` to the object below and
+        // nothing else: `rows:[]` went on throwing away every point layer before a renderer saw
+        // one, so the Leaflet layer control offered two layers for three wired ports and the
+        // review counts above the map all read zero.
+        //
+        // The note at `drawnMode` excuses a lost layer on the grounds that no renderer draws
+        // both. That is true of polygons and a raster. It is NOT true here: mountCatchmentMap
+        // draws the street network and the point layers into one map, and has since it existed.
+        // So when points are wired the map is built as the spatial map it is, and the network
+        // joins it as a layer rather than replacing it.
+        const wiredLayers=pointInputs().layers;
+        if(wiredLayers.length&&inputs.area){
+          const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);
+          value={...mapped.value,network:structuredClone(network)} as unknown as DisplayValue;
+          if(mapped.receipt){
+            // One receipt for one node: the network's own counts are asserted onto the map view
+            // the points receipt already describes, rather than a second receipt the reader of
+            // `receipts.find(nodeId)` would never reach.
+            mapped.receipt.facts+=`<urn:fieldwork:run:${runId}:map:${node.id}> `
+              +`prov:used <urn:fieldwork:run:${runId}:output:${source}>; `
+              +`fw:networkJunctionCount ${network.nodes.length}; `
+              +`fw:networkSegmentCount ${network.edges.length}.\n`;
+            mapped.receipt.input=mapped.receipt.facts;
+            mapped.receipt.method=`${mapped.receipt.method} The street network is drawn as itself; `
+              +'no routing, no simplification and no new inference.';
+            receipts.push(mapped.receipt);
+          }
+          break;
+        }
         value={kind:'network-map',network:structuredClone(network),
           ...(drawnArea?.boundary?{boundary:structuredClone(drawnArea.boundary),bounds:drawnArea.bounds}:{}),
           rows:[],centers:[]} as unknown as DisplayValue;

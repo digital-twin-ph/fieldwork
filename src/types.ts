@@ -131,7 +131,7 @@ export interface ParamsByType {
   table_input:{label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;dataRef?:string;source?:import('./data-table.js').DataTableSource};
   rate:{label:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
-  summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south'};
+  summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south';yields?:'area'};
   snap_to_network:{label:string;zone:number;hemisphere:'north'|'south';maxSnapM:number};
   /** `zone`, `hemisphere` and `maxSnapM` are OPTIONAL: they are needed only for origins this
    *  step has to attach to the network itself. Points arriving already snapped are used as
@@ -224,7 +224,7 @@ export interface ParamsByType {
    *  raise the pause: the module takes the longest of the 60-second floor, the volume a response
    *  actually cost, and this. Being more respectful of a public service is always permitted;
    *  being less is not. */
-  network_input:{label:string;data:import('./catchments.js').Network;dataRef?:string;inputMethod?:'osm'|'file';marginM?:number;maxNodes?:number;pauseSeconds?:number;travelMode?:import('./catchments.js').NetworkTravelMode};
+  network_input:{label:string;data:import('./catchments.js').Network;dataRef?:string;inputMethod?:'osm'|'file'|'extract';marginM?:number;maxNodes?:number;pauseSeconds?:number;travelMode?:import('./catchments.js').NetworkTravelMode};
   voronoi:{label:string;zone:number;hemisphere:'north'|'south'};
   isochrone:{label:string;zone:number;hemisphere:'north'|'south';minutes:number;thresholds?:number[];fillHoles?:boolean;speedMPerMin:number;bufferM:number;maxSnapM:number;direction:'inbound'|'outbound'};
   clip_polygons:{label:string};

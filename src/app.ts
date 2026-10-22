@@ -5,7 +5,8 @@ import {manualButton,openManual,hasManual} from './manual.js';
 import {canvasN3} from './canvas-semantics.js';
 import appPackage from '../package.json';
 import {networkDownloadStatus} from './network-throttle.js';
-import {downloadOSM,importNetwork} from './street-network.js';
+import {importNetwork} from './street-network.js';
+import {downloadOSMInTiles} from './network-tiles.js';
 import {johnSnowExample,snowExtentExample} from './john-snow.js';
 import {geoprivacyExample} from './geoprivacy-example.js';
 import {pointComparisonMarkup} from './point-comparison-ui.js';
@@ -564,6 +565,15 @@ function setConnection(w:Workflow,from:string|null,to:string,port:string){
   // while the other layers remain wired and recorded. That limit is the drawing code's, and it is
   // no longer paid for by silently discarding a practitioner's connections.
   w.edges=w.edges.filter(e=>e.to!==to||(e.port!==port&&(!from||!map||(port!=='coverage'&&e.port!=='coverage'))));
+  // WHAT THE UNION YIELDS follows what it is given, and the node records it so every reader of a
+  // port type -- the connection offers, the canvas, the layer binding -- agrees without consulting
+  // the edges. Set when an area is wired in, cleared when the last one goes.
+  if(target?.type==='summarize_combined_area'){
+    const areas=w.edges.some(e=>e.to===to&&(e.port==='area'||e.port==='area2'))
+      ||(!!from&&(port==='area'||port==='area2'));
+    const node=target as WorkflowNode<'summarize_combined_area'>;
+    if(areas)node.params.yields='area';else delete node.params.yields;
+  }
   if(from)w.edges.push({id:`e-${Date.now()}`,from,to,port});
   if(from&&port==='area'&&target?.type==='clip_raster'&&!target.params.cutline){
     try{const {boundary,node}=previewArea(w,to),geometry=boundary.type==='MultiPolygon'&&boundary.coordinates.length===1?{type:'Polygon' as const,coordinates:boundary.coordinates[0]}:boundary;target.params.cutline={geometry:structuredClone(validateDrawnGeometry(geometry)),selectionMode:node.params.source==='drawn'?node.params.selectionMode:'polygon'};}catch{/* An unfinished or complex boundary remains linked until a supported cutline is applied. */}
@@ -1279,7 +1289,7 @@ function renderInspector(){
     const outputType=n.type==='table_output'?'table':'map',reasoning=n.params.inputMode==='decisions',raster=false,tabular=n.type==='table_output'&&n.params.inputMode==='table';
     content+=`<div class="field"><label class="field-label" for="output-input-mode">Input mode</label><select id="output-input-mode"><option value="spatial" ${!reasoning&&!raster&&!tabular?'selected':''}>Point layers or spatial coverage</option><option value="polygons">Catchment polygons / summaries</option><option value="decisions" ${reasoning?'selected':''}>Reasoning results</option>${n.type==='table_output'?`<option value="table" ${tabular?'selected':''}>Tabular data</option>`:''}</select><small>Changing mode removes existing input connectors; Undo restores them.</small></div>`;
     if(reasoning)content+=`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map" ${outputType==='map'?'selected':''}>Map</option><option value="table" ${outputType==='table'?'selected':''}>Table</option><option value="bars">Chart</option></select></div>`;
-    content+=`<div class="field"><label class="field-label" for="${outputType}-label">Results tab name</label><input id="${outputType}-label" maxlength="60" value="${esc(n.params.label)}"></div><p class="description">${tabular?'Connect a Tabular data source.':raster?'Connect Raster input or Clip raster.':reasoning?'Connect an existing reasoning result.':outputType==='table'?'Connect point data, or a coverage result for its relations and decisions.':'Connect a study area and points, or a coverage check that holds both.'}</p>`;
+    content+=`<div class="field"><label class="field-label" for="${outputType}-label">Results tab name</label><input id="${outputType}-label" maxlength="60" value="${esc(n.params.label)}"></div><p class="description">${tabular?'Connect a Tabular data source.':raster?'Connect Raster input or Clip raster.':reasoning?'Connect a reasoning result.':outputType==='table'?'Connect point data, or a coverage result.':'Connect a study area and points.'}</p>`;
     content+=nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);return `<div class="field"><label class="field-label" for="${outputType}-${port}">${({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:raster?'Raster':'Or: Raster',network:'Street network'}[port]||'Point data '+(port==='points'?1:port.split('_')[1]))}</label><select id="${outputType}-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;}).join('');
     content+=tabular?'<div class="notice">Rows are shown as imported, with absent values displayed as unknown and an unstated unit named as unstated. Search covers every key column and the value. Works offline.</div>':raster?'<div class="notice">Colors show relative cell values; gray cells are NoData. Download GeoTIFF preserves native values and georeferencing.</div>':reasoning?'<div class="notice">This is a presentation of existing results, with no new inference or exclusion.</div>':outputType==='table'?'<div class="notice">Rows include coordinates and all point attributes. Missing coordinates and excluded records remain visible. Search covers all rows and attributes; large tables use row and attribute pages. Works offline.</div>':'<div class="notice">The map fits the polygon and every located point, including outside records. Missing coordinates appear in a selectable list. This local map works offline.</div>';
     // map_output has its own branch above; this one is table_output alone.
@@ -1902,7 +1912,49 @@ function renderInspector(){
     finally{button.disabled=false;button.textContent='Check endpoint status';paintEndpoints();}
   });
   paintEndpoints();
-  optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';try{const {boundary,node:areaNode}=previewArea(workflow,n.id);const node=getNode(workflow,n.id,'network_input');const data=await downloadOSM(boundary,node.params.marginM??250,node.params.maxNodes,(node.params.pauseSeconds??60)*1000,!!node.params.data?.nodes?.length,(phase,fraction)=>{networkDownloadPhase=phase;const line=document.querySelector<HTMLElement>('#network-download-status');if(line)line.textContent=phase;const bar=document.querySelector<HTMLButtonElement>('#download-network');if(bar){bar.textContent=phase;bar.style.backgroundImage=fraction===undefined?'':`linear-gradient(to right, var(--accent) ${Math.round(Math.min(1,fraction)*100)}%, transparent ${Math.round(Math.min(1,fraction)*100)}%)`;}},node.params.travelMode??defaultTravelMode(areaNode.params.source==='drawn'?areaNode.params.boundary?.boundaryID:undefined));if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed during download; retry with the current boundary.');
+  // AN EXTRACT ON THIS DEVICE. The file is never copied into either store: it is
+  // read where it sits, clipped to the study area as it is decoded, and only the
+  // network it yields is kept. See docs/experiments/129.
+  optionalElement('#network-extract')?.addEventListener('change',async event=>{
+    const input=event.target as HTMLInputElement;
+    const file=input.files?.[0];
+    if(!file)return;
+    const status=document.querySelector<HTMLElement>('#network-extract-status');
+    const say=(message:string)=>{if(status)status.textContent=message;};
+    const baseline=JSON.stringify(workflow);
+    try{
+      const {boundary,node:areaNode}=previewArea(workflow,n.id);
+      const node=getNode(workflow,n.id,'network_input');
+      const mode=node.params.travelMode??defaultTravelMode(
+        areaNode.params.source==='drawn'?areaNode.params.boundary?.boundaryID:undefined);
+      const {networkInWorker}=await import('./street-engine.js');
+      const bytes=new Uint8Array(await file.arrayBuffer());
+      // In a worker: the page stays answerable while a province is read, which is what stops the
+      // browser offering to kill it.
+      const network=await networkInWorker(bytes,{boundary,mode,marginM:node.params.marginM??250,
+        walkSpeedMPerMin:75,onPhase:say});
+      if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed while the extract was read. Choose the file again.');
+      say('Keeping it on this device\u2026');
+      const digest=await payloadDigest(network);
+      if(!await keepDataset(digest,network))
+        throw new Error(`This ${(payloadBytes(network)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved.`);
+      if(change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=network;target.params.dataRef=digest;},{requirePersistence:true})){
+        say('');
+        toast(`${network.nodes.length.toLocaleString('en')} junctions read from the extract and saved on this device. Run the workflow to update results.`);
+      }else await dropPayload(digest);
+    }catch(error){say('');toast(errorMessage(error),{tone:'failure'});}
+    finally{input.value='';}
+  });
+  optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';
+    // WHO ENDS AN ARRIVING DOWNLOAD. The practitioner, 2026-10-22: *"If nothing ever arrives, that
+    // means there is no download. But there is an ongoing download -- this is where we are
+    // applying that wrong cap."* No clock ends one now, so this does: the decision belongs to the
+    // person watching the megabytes climb, not to a number borrowed from another library.
+    const stop=new AbortController();
+    const stopButton=document.querySelector<HTMLButtonElement>('#stop-network-download');
+    if(stopButton){stopButton.hidden=false;stopButton.onclick=()=>{stopButton.disabled=true;
+      stopButton.textContent='Stopping\u2026';stop.abort();};}
+    try{const {boundary,node:areaNode}=previewArea(workflow,n.id);const node=getNode(workflow,n.id,'network_input');const data=await downloadOSMInTiles(boundary,node.params.marginM??250,node.params.maxNodes,(node.params.pauseSeconds??60)*1000,!!node.params.data?.nodes?.length,(phase,fraction)=>{networkDownloadPhase=phase;const line=document.querySelector<HTMLElement>('#network-download-status');if(line)line.textContent=phase;const bar=document.querySelector<HTMLButtonElement>('#download-network');if(bar){bar.textContent=phase;bar.style.backgroundImage=fraction===undefined?'':`linear-gradient(to right, var(--accent) ${Math.round(Math.min(1,fraction)*100)}%, transparent ${Math.round(Math.min(1,fraction)*100)}%)`;}},node.params.travelMode??defaultTravelMode(areaNode.params.source==='drawn'?areaNode.params.boundary?.boundaryID:undefined),stop.signal);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed during download; retry with the current boundary.');
     // The graph goes to the payload store and the workflow keeps a reference, so what localStorage
     // holds is a workflow and not a street network. Bunia is an estimated 14.2 MB against a
     // 5,226,496-byte store written twice per save; see docs/experiments/121.
@@ -1913,7 +1965,8 @@ function renderInspector(){
     // them: a device on 2026-10-21 showed "data 416.2 MB" beside this widget reading "0 nodes, 0
     // directed edges", and nothing in the application could reach them.
     if(change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true})){networkDownloadError=null;toast('OSM network saved on this device. Run the workflow to update results.');}
-    else await dropPayload(digest);}catch(e){networkDownloadError=errorMessage(e);toast(errorMessage(e),{tone:'failure'});}finally{button.disabled=false;button.textContent='Download and save OSM network';button.style.backgroundImage='';networkDownloadPhase=null;}});
+    else await dropPayload(digest);}catch(e){networkDownloadError=errorMessage(e);toast(errorMessage(e),{tone:'failure'});}finally{button.disabled=false;button.textContent='Download and save OSM network';button.style.backgroundImage='';networkDownloadPhase=null;
+      if(stopButton){stopButton.hidden=true;stopButton.disabled=false;stopButton.textContent='Stop';stopButton.onclick=null;}}});
   document.querySelectorAll<HTMLSelectElement>('[data-map-port]').forEach(el=>el.onchange=()=>change(w=>setConnection(w,el.value,n.id,el.dataset.mapPort!)));
   // Applying the suggested zone, so the advice is actionable rather than only stated. It sets
   // both the zone and the hemisphere together: a zone number without its hemisphere is half an
@@ -2490,7 +2543,11 @@ function renderMap(){
   // guard above it. Here the guard is an early return: interactive maps were made to work on "any
   // map" on 2026-10-17, below a branch added on 2026-10-13 that returns first. The behaviour never
   // regressed; the CLAIM did, which is worse, because it is the claim a practitioner acts on.
-  if(result?.network&&mapNode?.params.presentation!=='interactive'){
+  // ... and only where the streets are the whole of what was wired. With point layers on it too,
+  // this early return drew the streets and dropped the points, which is the defect it was asked
+  // to fix wearing the other hat. The static plot draws the points; the streets are a frame of a
+  // different size, so the note says where they are rather than letting them go missing quietly.
+  if(result?.network&&!result.pointLayers?.length&&mapNode?.params.presentation!=='interactive'){
     const coverage=networkCoverage(result.network);
     $('#map-panel').querySelector('#map-note')!.textContent=networkPreviewCaption(coverage);
     svg.style.display='';svg.setAttribute('viewBox','0 0 252 168');
@@ -2499,6 +2556,10 @@ function renderMap(){
     return;
   }
   svg.style.display='';svg.setAttribute('viewBox','0 0 850 295');
+  if(result?.network&&result.pointLayers?.length)
+    $('#map-panel').querySelector('#map-note')!.textContent=
+      `${networkPreviewCaption(networkCoverage(result.network))} The streets are drawn with the `
+      +`points on this map's interactive presentation; this plot shows the points.`;
   // The static plot is what those checkboxes act on: they set display:none on its marks.
   $('#map-layer-list').hidden=!activeOutput()?.pointLayers?.length;
   if(result?.comparison){svg.style.display='none';const host=document.createElement('div');host.id='comparison-map-host';host.innerHTML=pointComparisonMarkup(result.comparison,esc);$('#map-panel').append(host);return;}
@@ -3233,7 +3294,7 @@ function renderProjectsList(){
       share>=STORAGE_TIGHT?' <strong>Export what you want to keep and delete the rest.</strong>':''}</p>`
     +`<h3>Data store · what a download brought back</h3>`
     +`<p class="muted">${payloads?`${payloads.toLocaleString('en')} ${payloads===1?'payload':'payloads'}, ${size(held)}`:'Nothing held'}, `
-    +`in ${large?'IndexedDB, by the gigabyte':'the small store — a download will be refused'}. A network or raster is here, not above.</p>`
+    +`in ${large?'IndexedDB':'the small store — a download will be refused'}.</p>`
     +(()=>{const loose=unreferencedPayloads();
       return loose.digests.length
         ?`<p class="notice">${loose.digests.length.toLocaleString('en')}, ${size(loose.bytes)}, referred to by no workflow. `
@@ -3258,7 +3319,7 @@ function renderProjectsList(){
   const block=(title:string,subject:string,keys:readonly string[],deletable:boolean,id?:string)=>{
     const total=keys.reduce((n,k)=>n+bytes(k),0);
     return `<section class="project-block"><h3>${esc(title)}</h3>`
-      +`<p>${esc(subject||'No subject recorded.')} · ${keys.length} ${keys.length===1?'workflow':'workflows'} · ${kb(total)}`
+      +`<p>${esc(subject||'No subject.')} · ${keys.length===1?'1 workflow':`${keys.length} workflows`} · ${kb(total)}`
       +(deletable&&id?` · <button class="text-button" data-export-project="${esc(id)}">Export project</button>`
         +` · <button class="text-button" data-delete-project="${esc(id)}">Delete project</button>`:'')+`</p>`
       +(keys.length?keys.map(row).join(''):'<p class="muted">No workflows.</p>')+`</section>`;

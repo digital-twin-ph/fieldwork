@@ -38,3 +38,21 @@ test('workflow, results and N3 are three tabs, and only one is on screen',async(
   await expect(page.locator('#resize-results')).toHaveCount(0);
 });
 
+
+// "note how the map still does not use available real estate for the results panel" -- 2026-10-22,
+// the second time. The map was pinned to a 2.9:1 letterbox whatever the window offered, which was
+// right when the results shared the height with the canvas and wrong once the tab owned it.
+test('the results map takes the height the tab gives it',async({page})=>{
+  await page.setViewportSize({width:1600,height:1200});
+  await page.goto('/?example=heat');
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="results"]').click();
+  const map=page.locator('#map');
+  await expect(map).toBeVisible();
+  const box=await map.boundingBox();
+  // Not a strip: at least half the window's height, where it used to be about a third.
+  expect(box.height).toBeGreaterThan(500);
+  // And the panel below it is not mostly blank: the map reaches into the lower half.
+  expect(box.y+box.height).toBeGreaterThan(700);
+});

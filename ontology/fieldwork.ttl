@@ -299,6 +299,11 @@ fw:AreaBuffer a owl:Class;
   rdfs:label "Area buffer"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Expand an existing area by a stated distance, producing a second area and leaving the first unchanged. Restated 2026-10-17: this class was labelled an ACQUISITION buffer and described as generating an expanded acquisition boundary, which named one use and declared it the meaning. The practitioner settled that the study area is itself what bounds acquisition, and gave the use the narrow reading had hidden: an administrative boundary is not an epidemiological one, so an outbreak crossing a border -- Ebola from the DRC into Uganda -- is reasoned about by expanding the jurisdiction the surveillance is organised around. That is analysis, not acquisition. WHERE THE EDGE DECIDES MEMBERSHIP the approximation matters: see fw:PointBuffer, which records the fraction of the true circle its polygon covers, and note that this operation does not yet record its own.".
 fw:bufferDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
+fw:AreaCombination a owl:Class;
+  rdfs:label "Area combination"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Two study areas carried through as the parts of one area. A touching border is NOT dissolved: a published outline is an authority's record of where a boundary lies, two authorities describe a shared border differently, and welding them would assert a third line that neither drew while still citing both. Every question this application asks of a study area -- is this point inside, what does an extract clip to, what are the bounds -- is answered identically by the parts. Added 2026-10-22 on the practitioner's reading that a study area is a polygon and two of them combined are still a study area.".
+fw:ringCount a owl:DatatypeProperty;
+  rdfs:comment "How many rings the combined geometry carries, which is how a reader sees that the parts were kept rather than merged.".
 fw:parameters a owl:DatatypeProperty.
 # Retired 2026-10-13: a second name for fw:metricCRS. Three widgets wrote this one and five wrote
 # the other, so a query for the projection a run used got half an answer depending on which term it
@@ -1210,3 +1215,267 @@ fw:matchedDistanceM a owl:DatatypeProperty; rdfs:range xsd:decimal.
 fw:nameComparable a owl:DatatypeProperty; rdfs:range xsd:boolean;
   rdfs:comment "False where a record has no name: a missing value never agrees with another missing value.".
 fw:decisionReason a owl:DatatypeProperty; rdfs:range xsd:string.
+
+# ---------------------------------------------------------------------------
+# CAPS. Every magnitude in this application that can refuse a practitioner's work, as a term
+# rather than as a constant with a comment. The practitioner, 2026-10-22, having met six of them
+# one at a time over two days: "Caps should also be queryable in the ontology and receipts."
+#
+# A run asserts fw:governedBy against the caps that were in force, with the value that was in
+# force, so a reader of a receipt can ask what bounded it and what that number was derived from.
+# Generated from widgets/caps.json and gated by scripts/validate-caps.mjs.
+# ---------------------------------------------------------------------------
+fw:Cap a owl:Class;
+  rdfs:label "Cap";
+  rdfs:comment "A magnitude this application enforces. Carries the number, its unit, what it refuses, where the number came from, and the test that would replace it with a measurement.".
+fw:capValue a owl:DatatypeProperty; rdfs:domain fw:Cap; rdfs:label "cap value".
+fw:capUnit a owl:DatatypeProperty; rdfs:domain fw:Cap; rdfs:label "cap unit".
+fw:capBasis a owl:DatatypeProperty; rdfs:domain fw:Cap;
+  rdfs:comment "measured, derived or undderived. The third says the number was chosen.".
+fw:capKind a owl:DatatypeProperty; rdfs:domain fw:Cap;
+  rdfs:comment "artefact, platform or discovery. An artefact cap bounds something this application makes and is reasonable by construction; a platform cap reports a limit the environment imposes; a DISCOVERY cap bounds what a practitioner can find out, and decides in advance the answer to a question this project exists to ask.".
+fw:capEvidence a owl:DatatypeProperty; rdfs:domain fw:Cap;
+  rdfs:comment "What was measured, or what it was computed from, with the date.".
+fw:capRefuses a owl:DatatypeProperty; rdfs:domain fw:Cap;
+  rdfs:comment "What a practitioner is refused by it. \"Nothing\" is an answer and several caps give it.".
+fw:capLiftTest a owl:DatatypeProperty; rdfs:domain fw:Cap;
+  rdfs:comment "What would replace this number with a measured one, or retire it.".
+fw:governedBy a owl:ObjectProperty; rdfs:range fw:Cap;
+  rdfs:comment "A run was bounded by this cap. Asserted with the value in force at the time, which for a knob is not the declared default.".
+fw:capValueInForce a owl:DatatypeProperty;
+  rdfs:comment "The value a cap actually had for this run, where a practitioner can change it.".
+
+<urn:fieldwork:cap:storage-quota> a fw:Cap;
+  rdfs:label "storage-quota";
+  fw:capKind "platform";
+  fw:capValue 5226496;
+  fw:capUnit "bytes";
+  fw:capBasis "measured";
+  fw:capEvidence "localStorage accepted 5,226,496 bytes in both engines, probed 2026-10-19. docs/experiments/121-storage-beyond-local-storage.md.";
+  fw:capRefuses "A workflow whose saved form does not fit the browser's small store.";
+  fw:capLiftTest "Workflows move to the large store, at which point this governs nothing.".
+<urn:fieldwork:cap:geometry-bytes> a fw:Cap;
+  rdfs:label "geometry-bytes";
+  fw:capKind "discovery";
+  fw:capValue 1048576;
+  fw:capUnit "bytes";
+  fw:capBasis "derived";
+  fw:capEvidence "One extent as JSON against the measured quota; about 26,000 vertices at the measured 39.2 bytes each.";
+  fw:capRefuses "A single study-area outline too large to save.";
+  fw:capLiftTest "The same as storage-quota: geometry leaves localStorage.".
+<urn:fieldwork:cap:area-bytes> a fw:Cap;
+  rdfs:label "area-bytes";
+  fw:capKind "discovery";
+  fw:capValue 1572864;
+  fw:capUnit "bytes";
+  fw:capBasis "derived";
+  fw:capEvidence "Every extent one area has had, doubled by the two writes per save, leaving about 40% of the quota free.";
+  fw:capRefuses "A study area whose revision history is too large to save.";
+  fw:capLiftTest "The same as storage-quota.".
+<urn:fieldwork:cap:graph-limit-default> a fw:Cap;
+  rdfs:label "graph-limit-default";
+  fw:capKind "discovery";
+  fw:capValue 50000;
+  fw:capUnit "junctions";
+  fw:capBasis "derived";
+  fw:capEvidence "Bunia normalizes to 42,796 junctions and Buvuma Island to 11,359, measured 2026-10-20; the default must not refuse a town.";
+  fw:capRefuses "Nothing by itself. It is the default value of a knob a practitioner sets.";
+  fw:capLiftTest "Not a cap to lift: a default to re-derive when a larger real area is measured.".
+<urn:fieldwork:cap:graph-limit-ceiling> a fw:Cap;
+  rdfs:label "graph-limit-ceiling";
+  fw:capKind "discovery";
+  fw:capValue 1000000;
+  fw:capUnit "junctions";
+  fw:capBasis "undderived";
+  fw:capEvidence "Chosen 2026-10-21 to sit past what a public Overpass instance will serve in one request. It was 50,000 -- the default itself -- so the knob could be lowered and never raised, and the byte cap derived from it could never be raised either. That is the cap that cost two days.";
+  fw:capRefuses "A graph limit a practitioner tries to set above it.";
+  fw:capLiftTest "A measured response size at which a browser actually fails, replacing a chosen number with a met one.".
+<urn:fieldwork:cap:download-bytes-per-junction> a fw:Cap;
+  rdfs:label "download-bytes-per-junction";
+  fw:capKind "discovery";
+  fw:capValue 600;
+  fw:capUnit "bytes per junction";
+  fw:capBasis "derived";
+  fw:capEvidence "270 and 272 bytes per junction measured on two extents 2026-10-13, carried at roughly double as headroom. A province measured 163 on 2026-10-21, so the padding is nearly fourfold at that scale.";
+  fw:capRefuses "Nothing directly; it sizes the download byte cap from the graph limit.";
+  fw:capLiftTest "Re-derive from province-scale measurements rather than neighbourhood ones.".
+<urn:fieldwork:cap:predicted-bytes-per-element> a fw:Cap;
+  rdfs:label "predicted-bytes-per-element";
+  fw:capKind "discovery";
+  fw:capValue 150;
+  fw:capUnit "bytes per element";
+  fw:capBasis "measured";
+  fw:capEvidence "1.42 MB over 9,458 elements is 150 B; 7.39 MB over 50,791 is 145 B. Unpadded, because it predicts a response rather than bounding one.";
+  fw:capRefuses "A download whose predicted size, from the service's own count, exceeds the byte cap.";
+  fw:capLiftTest "Nothing to lift: it is a measurement used to refuse before bytes are spent, which is the cheap place to refuse.".
+<urn:fieldwork:cap:features-per-junction> a fw:Cap;
+  rdfs:label "features-per-junction";
+  fw:capKind "discovery";
+  fw:capValue 4;
+  fw:capUnit "features per junction";
+  fw:capBasis "derived";
+  fw:capEvidence "1.80 and 1.87 features per junction measured 2026-10-13, carried at roughly double.";
+  fw:capRefuses "Nothing directly; it sizes the feature cap from the graph limit.";
+  fw:capLiftTest "Re-derive at province scale.".
+<urn:fieldwork:cap:segments-per-junction> a fw:Cap;
+  rdfs:label "segments-per-junction";
+  fw:capKind "discovery";
+  fw:capValue 2.5;
+  fw:capUnit "directed segments per junction";
+  fw:capBasis "derived";
+  fw:capEvidence "2.19 measured on real street data (11,497 over 5,249); 2.04 measured on a province 2026-10-21.";
+  fw:capRefuses "Nothing now. It sized a graph refusal that was removed on 2026-10-21.";
+  fw:capLiftTest "Not a cap any more; kept because the pair is still reported.".
+<urn:fieldwork:cap:download-floor-bytes> a fw:Cap;
+  rdfs:label "download-floor-bytes";
+  fw:capKind "discovery";
+  fw:capValue 16000000;
+  fw:capUnit "bytes";
+  fw:capBasis "derived";
+  fw:capEvidence "Twice the largest extent this project had measured (7.39 MB), so the floor cannot refuse an example it ships.";
+  fw:capRefuses "Nothing: it is a floor under the byte cap, not a ceiling over it.";
+  fw:capLiftTest "Not applicable.".
+<urn:fieldwork:cap:download-floor-features> a fw:Cap;
+  rdfs:label "download-floor-features";
+  fw:capKind "discovery";
+  fw:capValue 120000;
+  fw:capUnit "features";
+  fw:capBasis "derived";
+  fw:capEvidence "Twice the 50,791 features of that same extent.";
+  fw:capRefuses "Nothing: a floor.";
+  fw:capLiftTest "Not applicable.".
+<urn:fieldwork:cap:edge-length> a fw:Cap;
+  rdfs:label "edge-length";
+  fw:capKind "discovery";
+  fw:capValue 1000000;
+  fw:capUnit "metres";
+  fw:capBasis "undderived";
+  fw:capEvidence "Raised from 100,000 on 2026-10-22, when 2 of 314,955 segments in a province's driving network were over it, the longest 100,723 m. A collapsed chain between junctions in rural Ituri is genuinely that long. 1,000 km is kept as a unit check: a length in degrees, or kilometres read as metres, lands orders of magnitude away.";
+  fw:capRefuses "A single street segment longer than 1,000 km.";
+  fw:capLiftTest "A unit declared on the field, at which point the magnitude check has nothing left to catch.".
+<urn:fieldwork:cap:isochrone-measured-junctions> a fw:Cap;
+  rdfs:label "isochrone-measured-junctions";
+  fw:capKind "discovery";
+  fw:capValue 2000;
+  fw:capUnit "junctions";
+  fw:capBasis "measured";
+  fw:capEvidence "A 1 km square of central London normalizes to 5,249 junctions and exhausted a 4 GB heap during isochrone construction, 2026-10-13. The threshold sits below what failed.";
+  fw:capRefuses "Nothing. Above it the isochrone step warns, and its own worker timeout reports what happened.";
+  fw:capLiftTest "An isochrone implementation measured past it -- the street engine drew one over 1,152,974 junctions in 0.14 s on 2026-10-22, in WebAssembly and not in this code.".
+<urn:fieldwork:cap:preview-segments> a fw:Cap;
+  rdfs:label "preview-segments";
+  fw:capKind "artefact";
+  fw:capValue 20000;
+  fw:capUnit "segments drawn";
+  fw:capBasis "derived";
+  fw:capEvidence "A 292-pixel Inspector figure. A province's 3,755,832 segments would be tens of megabytes of path data and thousands of strokes per pixel.";
+  fw:capRefuses "Nothing. Beyond it the picture is an even sample and the caption says so.";
+  fw:capLiftTest "Not applicable: a limit on a drawing, not on data.".
+<urn:fieldwork:cap:json-editor-elements> a fw:Cap;
+  rdfs:label "json-editor-elements";
+  fw:capKind "artefact";
+  fw:capValue 20000;
+  fw:capUnit "nodes plus directed edges";
+  fw:capBasis "measured";
+  fw:capEvidence "Measured 2026-10-22 on the Ituri extract in the Inspector: 113,485 nodes and 289,080 directed edges serialise to 41.8 MB pretty-printed and 59.7 MB after escaping, about 203 MB of UTF-16 held per render, in a collapsed <details> that showed none of it. Chrome killed the renderer. 20,000 elements is about 1.9 MB, the limit this same control already states for upload.";
+  fw:capRefuses "Nothing about the network. Above it the hand-edit textarea is not offered and the panel says so; the file input stays and the graph is still held, drawn, run and exported.";
+  fw:capLiftTest "Not applicable: a limit on a text box, not on data.".
+<urn:fieldwork:cap:download-measured-junctions> a fw:Cap;
+  rdfs:label "download-measured-junctions";
+  fw:capKind "discovery";
+  fw:capValue 27181;
+  fw:capUnit "junctions";
+  fw:capBasis "measured";
+  fw:capEvidence "The largest graph this project has downloaded from the service, parsed and drawn: 27,181 junctions from a 7.39 MB response, 2026-10-13.";
+  fw:capRefuses "Nothing. Above it the download warns that nothing larger has been tried.";
+  fw:capLiftTest "A larger response downloaded, parsed and drawn, which replaces the figure.".
+<urn:fieldwork:cap:extract-measured-junctions> a fw:Cap;
+  rdfs:label "extract-measured-junctions";
+  fw:capKind "discovery";
+  fw:capValue 122061;
+  fw:capUnit "junctions";
+  fw:capBasis "measured";
+  fw:capEvidence "A province's driving network read from a 416 MB published extract and taken into this application's structures, 2026-10-22. Held, not yet drawn, routed over or snapped to.";
+  fw:capRefuses "Nothing. It is what the extract control reports having been measured to.";
+  fw:capLiftTest "A larger extract-built graph drawn and routed over, which replaces the figure.".
+<urn:fieldwork:cap:buffer-batch> a fw:Cap;
+  rdfs:label "buffer-batch";
+  fw:capKind "artefact";
+  fw:capValue 25;
+  fw:capUnit "geometries per batch";
+  fw:capBasis "undderived";
+  fw:capEvidence "Chosen so buffering many geometries yields to the event loop rather than blocking it. No measurement recorded.";
+  fw:capRefuses "Nothing. It is a batch size, and a smaller one is only slower.";
+  fw:capLiftTest "A measurement of frame time against batch size, which would replace the choice with a number.".
+<urn:fieldwork:cap:preview-width> a fw:Cap;
+  rdfs:label "preview-width";
+  fw:capKind "artefact";
+  fw:capValue 252;
+  fw:capUnit "pixels";
+  fw:capBasis "derived";
+  fw:capEvidence "The Inspector panel is 292 pixels wide; the figure is that less its padding.";
+  fw:capRefuses "Nothing. It is the width of a drawing.";
+  fw:capLiftTest "Not applicable: a panel dimension, not a limit on data.".
+<urn:fieldwork:cap:preview-height> a fw:Cap;
+  rdfs:label "preview-height";
+  fw:capKind "artefact";
+  fw:capValue 168;
+  fw:capUnit "pixels";
+  fw:capBasis "derived";
+  fw:capEvidence "Two thirds of the figure's width, so a square extent is not stretched.";
+  fw:capRefuses "Nothing. It is the height of a drawing.";
+  fw:capLiftTest "Not applicable: a panel dimension, not a limit on data.".
+<urn:fieldwork:cap:corridor-buckets> a fw:Cap;
+  rdfs:label "corridor-buckets";
+  fw:capKind "artefact";
+  fw:capValue 6;
+  fw:capUnit "buckets";
+  fw:capBasis "derived";
+  fw:capEvidence "How finely a partial edge's corridor is approximated. Measured 2026-10-14 against an exact construction: 161,044 m2 against 160,785, a symmetric difference of 0.16%, and not purely conservative -- which the code states rather than assumes.";
+  fw:capRefuses "Nothing. It trades area accuracy for work, and the error is measured.";
+  fw:capLiftTest "Not applicable: an approximation parameter with its error stated, not a limit on data.".
+<urn:fieldwork:cap:attempt-seconds> a fw:Cap;
+  rdfs:label "attempt-seconds";
+  fw:capKind "discovery";
+  fw:capValue 180000;
+  fw:capUnit "milliseconds";
+  fw:capBasis "derived";
+  fw:capEvidence "A RESPONSE budget, and only that since 2026-10-22. Raised 2026-10-19 from 20,000 after a one-line probe to overpass-api.de took 14.2, 27.3 and 26.3 seconds while answering 200 every time -- which showed 20 seconds was too short and nothing more. The replacement was borrowed from OSMnx, where 180 seconds is passed to Python requests, and there it is not a limit on a download at all: requests raises only when no bytes have arrived for that long. Imported here as a total elapsed deadline it meant something else, and aborted a transfer that was working.";
+  fw:capRefuses "A service that has not begun to answer within three minutes. It no longer refuses a transfer that is arriving; STALL_MS governs that, which is what the borrowed number always meant.";
+  fw:capLiftTest "A measured time at which a response of a given size actually arrives, so the budget follows the size rather than a borrowed default.".
+<urn:fieldwork:cap:stall-seconds> a fw:Cap;
+  rdfs:label "stall-seconds";
+  fw:capKind "artefact";
+  fw:capValue 90000;
+  fw:capUnit "milliseconds";
+  fw:capBasis "derived";
+  fw:capEvidence "When the panel says in so many words that the service has gone quiet. It was 180,000 -- inherited from the response budget it replaced -- which meant a stalled transfer showed its last byte count for three minutes and looked exactly like one still arriving. Ninety seconds is the practitioner's, 2026-10-22: \"180s may be too long to wait to say it's stalled. 90s, time to give feedback.\" The faster half of the feedback is the transfer rate, said every second, which falls on its own the moment chunks stop.";
+  fw:capRefuses "Nothing. It is when a sentence appears. A download that has begun to arrive is ended only by the practitioner pressing Stop.";
+  fw:capLiftTest "Not applicable: a threshold for a status line, not a limit on data.".
+<urn:fieldwork:cap:rate-window> a fw:Cap;
+  rdfs:label "rate-window";
+  fw:capKind "artefact";
+  fw:capValue 5000;
+  fw:capUnit "milliseconds";
+  fw:capBasis "derived";
+  fw:capEvidence "How much history the transfer rate is averaged over, so the number is not noise between chunks and still falls while someone is watching it. The practitioner, 2026-10-22: \"Feedback could also be bytes/sec download speed. If the user sees it going down, that's immediate feedback.\"";
+  fw:capRefuses "Nothing. It is the width of an average shown in a status line.";
+  fw:capLiftTest "Not applicable: a display window, not a limit on data.".
+<urn:fieldwork:cap:total-seconds> a fw:Cap;
+  rdfs:label "total-seconds";
+  fw:capKind "discovery";
+  fw:capValue 300000;
+  fw:capUnit "milliseconds";
+  fw:capBasis "derived";
+  fw:capEvidence "Five minutes across the probe, the count, the failover attempts and any wait for a free slot. It is consulted between attempts and to bound a wait, never during a transfer: a stream that is delivering is governed by STALL_MS alone.";
+  fw:capRefuses "A download whose attempts together run past five minutes before a service begins to answer.";
+  fw:capLiftTest "The same measurement: a budget derived from response size rather than chosen.".
+<urn:fieldwork:cap:status-timeout> a fw:Cap;
+  rdfs:label "status-timeout";
+  fw:capKind "artefact";
+  fw:capValue 12000;
+  fw:capUnit "milliseconds";
+  fw:capBasis "undderived";
+  fw:capEvidence "How long this client waits for an instance's /api/status before calling it unreachable for the purposes of choosing one. Chosen.";
+  fw:capRefuses "Nothing a practitioner asked for: a slow status read only removes an instance from the preference order.";
+  fw:capLiftTest "Not applicable: it bounds this client's own impatience, not what can be found.".

@@ -5,6 +5,30 @@ _Created 2026-10-19 · Updated 2026-10-19_
 **An input widget.** It supplies the streets that walking-distance work is measured along: a graph
 of points joined by segments, each with a length.
 
+## Three ways in
+
+Choosing one shows that method's controls and hides the others, so the panel describes the path
+you are on.
+
+**Upload a network file.** A GraphML or JSON graph prepared elsewhere. It keeps its own extent.
+
+**Download from OpenStreetMap.** The study area's bounds go to overpass-api.de, which is asked to
+count what it would send before anything is sent, so an area past the limit is refused rather than
+transferred and discarded. One request at a time, 60 seconds minimum between them plus 30 seconds
+per megabyte received: the service is donated and the pause is the courtesy.
+
+**Read an extract on this device.** A published `.osm.pbf` — Geofabrik's country files, or any
+other OSM extract — chosen with the file picker. The file is read where it sits and is never copied
+into this browser's storage; the study area's bounding box is applied while the extract is decoded,
+so a country file yields one province's streets. Most countries have no province-level extract
+published, which is the point: the same file serves every province and every workflow after the
+first, and nothing is downloaded twice.
+
+The travel mode belongs to all three. Walking keeps footways, paths and steps; driving keeps roads
+and honours vehicle one-ways. At the scale of a province the choice decides how much there is to
+read; at the scale of a district it decides what the question means. An acquired ADM1 or ADM0 study
+area defaults to driving, because nobody walks across a province.
+
 ## What it does
 
 It gives the workflow a walkable street network, either downloaded from OpenStreetMap for your
@@ -43,6 +67,37 @@ downloaded is kept, so asking the same question again costs no request at all.
 ## What it will not do
 
 It does not download while you run the workflow. Acquisition is always something you ask for.
+
+An area too large for one request is asked for in several, automatically. The single request is
+tried first; if the service's own count says it will not fit, the panel says so — *"Too much for
+one request — working out how many parts it takes"* — and then works through the tiles, reporting
+each. The grid comes from that count, so a dense city is divided more finely than an empty
+district of the same size, and a sparse area is still one request. Tiles overlap by the download
+margin so a street crossing a seam keeps both ends, and parts of the grid that miss your study
+area are never requested at all. **Stop** ends the whole sequence, and the pause earned is charged
+once for the total rather than once per part.
+
+Whatever route it took, the result is clipped to your **study area polygon**, not to the box
+around it. A junction outside the outline is not in the network unless it falls within your
+download margin, which is fetched on purpose so journeys near the border still work; a road is
+cut at the border rather than trailing beyond it. The widget records how many junctions and segments that removed.
+
+It does not stop a download that is arriving. A request that never begins to answer is given three
+minutes, which is a limit on waiting, not on downloading. Once the first bytes arrive there is a
+download in progress and no clock ends it, however long it takes: press **Stop** when you want to
+give up, and the panel says how much had arrived and that none of it was kept. While it runs the panel shows how much has
+arrived and how fast, averaged over the last few seconds, so a transfer in trouble reads as a
+falling number rather than a frozen one. If it goes quiet for ninety seconds the panel says that
+too, with how much had arrived, and keeps waiting for you to decide.
+
+It does not offer to hand-edit a large graph. The **Edit bounded network JSON** box is for the
+kind of network a person writes or fixes by hand — the Soho graph is about 28 KB. Above 20,000
+nodes-plus-edges it is not offered, and the panel says so. Serialising a province into that box
+cost 41.8 MB of pretty-printed JSON and 59.7 MB again after escaping, rebuilt every time the panel
+redrew, which was enough to kill the browser tab while nothing was being done. The file input
+beside it stays, so a large graph can still be replaced by a small one, and nothing about the
+graph itself changes: it is held, drawn, run and exported at any size. The limit is declared as
+the cap `json-editor-elements`, queryable in the ontology like the rest.
 
 It does not guess your area. Without a connected study area there is nothing to bound the request.
 

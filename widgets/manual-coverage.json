@@ -2,8 +2,8 @@
  "schema": "fieldwork/manual-coverage/1",
  "note": "The distributed user manual, opened 2026-10-14 on the practitioner's proposal: a markdown page per widget, browsable inside the application rather than only in the repository, with the ontology entry for each widget pointing at its page so \"where is the documentation for this?\" is a question the graph answers.\n\nSeven pages exist and forty-six widgets have none. The ceiling records that honestly rather than hiding it: it may fall as pages are written and may not rise, so a new widget arrives owing a page. A page must carry a \"What it assumes\" section, because that is the half a practitioner cannot get from the Inspector -- the rest is in the palette, the ports and the release file.",
  "openedAt": "2026-10-14",
- "undocumentedCeiling": 46,
+ "undocumentedCeiling": 45,
  "ceilingRule": "May be lowered freely and never raised. A widget added without a page raises the count and fails the build, which is the intended cost.",
  "whyTheseThree": "isochrone, snap_to_network and summarize_hull were written first because experiment 114 had just measured assumptions none of them stated anywhere a practitioner would look. study_area, network_input and point_input followed on 2026-10-19: the three a practitioner meets first, and the three whose Inspector panels had grown into manuals in the wrong place.",
- "measuredAt": "2026-10-19"
+ "measuredAt": "2026-10-22"
 }

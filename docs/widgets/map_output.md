@@ -93,7 +93,12 @@ derived it — so a figure in a publication can be attributed.
 ## What it will not do
 
 - **It cannot draw everything at once.** A map with both a raster and polygons connected draws
-  the raster. The layers stay connected; only one is drawn.
+  the raster. The layers stay connected; only one is drawn. A street network is no longer one of
+  these cases: points, a study area and a street network wired to one map are all drawn together,
+  on the interactive presentation.
+- **The static plot does not draw a street network beside points.** The streets are drawn in a
+  frame of their own size, so a map carrying both draws the points in the plot and says where the
+  streets are. Set the presentation to interactive to see all of it in one picture.
 - **It cannot reorder layers, or choose their colours.** Draw order is fixed, and a layer's hue
   comes from its position in the palette. The mark is the one part of the symbol you choose.
 - **A basemap is not included in the SVG export.** The tiles come from an outside service as

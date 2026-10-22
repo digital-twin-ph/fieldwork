@@ -62,7 +62,8 @@
 <urn:fieldwork:widget:stack_polygons> a fw:WidgetDefinition; fw:nodeType "stack_polygons"; rdfs:label "Collect polygon layers".
 <urn:fieldwork:widget:study_area> a fw:WidgetDefinition; fw:nodeType "study_area"; rdfs:label "Study area";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/study_area.md>.
-<urn:fieldwork:widget:summarize_combined_area> a fw:WidgetDefinition; fw:nodeType "summarize_combined_area"; rdfs:label "Combined area".
+<urn:fieldwork:widget:summarize_combined_area> a fw:WidgetDefinition; fw:nodeType "summarize_combined_area"; rdfs:label "Combined area";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/summarize_combined_area.md>.
 <urn:fieldwork:widget:summarize_hull> a fw:WidgetDefinition; fw:nodeType "summarize_hull"; rdfs:label "Convex hull";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/summarize_hull.md>.
 <urn:fieldwork:widget:summarize_points_to_polygon> a fw:WidgetDefinition; fw:nodeType "summarize_points_to_polygon"; rdfs:label "Summarize points to polygons".

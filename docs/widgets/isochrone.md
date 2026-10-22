@@ -39,6 +39,31 @@ Out come polygons, one per site. Draw them on a Map, or count your records into 
    disagree.
 7. **Run the workflow**, then read the regions on a map and the alert in the Inspector.
 
+## How the travel time is spent
+
+Shortest paths are Dijkstra over the network's directed edges and the metre lengths it supplies,
+including the partial length of a curved edge where the budget runs out part-way along it.
+
+All three legs of the journey are charged against the same budget:
+
+| Leg | What it costs |
+| --- | --- |
+| the straight walk from the site onto the network | distance to the snapped street, at walking speed |
+| the streets | the shortest path, by directed edge and supplied length |
+| the final walk off the street to a door | the band width where time allows it, narrower where it does not |
+
+Charging the last leg rather than adding it is what stops a region overshooting the time it is
+drawn for. The off-street band is an approximation of coverage beside the streets, and holes
+inside it remain unless infill is enabled.
+
+Two cases are marked rather than dropped, and the widget names both:
+
+- **A site further from a street than the snap limit** is routed anyway and marked off-network.
+- **A site whose walk onto the network alone spends the budget** gets no catchment at all.
+
+Coverage can also be cut short by the graph itself: a region stops where the downloaded network
+stops, which is a property of the extent that was downloaded and not of the travel time.
+
 ## Worked examples that use it
 
 | Example | What it does there |

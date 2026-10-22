@@ -314,6 +314,25 @@
      "found": "Stated and recorded the same day. Nothing built and nothing downloaded: the application has never acquired a footprint layer, so every limit it would meet -- response size, feature count, parse, store, renderer -- is a guess. Recorded as an experiment rather than started, because the widget budget is 5 over target and experiment 64 names the retirements that would pay for it."
     }
    ]
+  },
+  {
+   "id": "street-networks-from-a-file-not-a-service",
+   "stated": "2026-10-22",
+   "statedBy": "the practitioner",
+   "inTheirWords": "Let's look at graphways as an alternative to download and compute street networks.",
+   "requiresInCode": "A street network acquired from a published extract rather than from a donated query service: PBF read in the browser, weighed against the 300 MB of Overpass JSON the same area cost. Separately, a decision on whether the computing half -- isochrones, routing, matrices -- can come from a Rust library compiled to wasm32, which nothing has yet shown builds for that target.",
+   "recordedIn": [
+    "docs/experiments/129-graphways-and-the-pbf-question.md"
+   ],
+   "workItem": "docs/experiments/129-graphways-and-the-pbf-question.md, whose closing conditions are one Geofabrik extract read and weighed, and a wasm32 build attempted; and experiment 125, which records what the Overpass path costs.",
+   "status": "open",
+   "lastChecked": "2026-10-22",
+   "checks": [
+    {
+     "date": "2026-10-22",
+     "found": "Read the library's own documentation and nothing else: MIT, Rust crate 0.5.0, Python API, reads PBF and Overpass XML, computes isochrones, routing, matrices, GTFS. No wasm32 target or browser use stated, and no independent benchmark or adoption record found. Recorded as two separable questions -- the input format, which is cheap and does not need the library, and the compute engine, which needs a build that nobody has attempted."
+    }
+   ]
   }
  ]
 }

@@ -1,0 +1,89 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:summarize_combined_area",
+ "version": "0.2.0",
+ "nodeType": "summarize_combined_area",
+ "title": "Combined area",
+ "released": "2026-10-22",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['summarize_combined_area']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "polygons",
+    "type": "polygons"
+   },
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "area2",
+    "type": "area"
+   }
+  ],
+  "output": "polygons",
+  "note": "Every port is declared; what the widget yields follows what is connected. Areas in, an area out; polygons in, a polygons result out."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:CombinedArea",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Emits an fw:CombinedArea activity carrying fw:partCount, fw:combinedPieceCount, fw:partsAreaSquareMetres, fw:combinedAreaSquareMetres and fw:metricCRS, and prov:used the polygon source. Both areas are emitted so overlap is a number rather than something a reader infers, and the piece count is emitted because areas that do not touch stay separate. The emitted terms are the area path's, added 2026-10-22: the polygons path's own assertions are unchanged and are made by combined-area.ts.",
+  "emits": {
+   "classes": [
+    "AreaCombination",
+    "CombinedArea",
+    "StudyArea"
+   ],
+   "properties": [
+    "combinedAreaSquareMetres",
+    "combinedPieceCount",
+    "method",
+    "partCount",
+    "partsAreaSquareMetres",
+    "ringCount"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/combined-area.ts",
+   "src/core.ts",
+   "src/palette.ts"
+  ],
+  "definition": "src/combined-area.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "feature",
+   "description": "The widget takes STUDY AREAS as well as polygons, and yields whichever kind it was given. Two adjacent provinces combine into one study area that can be handed to the street network, the facility sources, the clip and the buffer -- which was impossible before, because the only output was a polygons result and nothing that wants an area will take one. The practitioner, 2026-10-22: 'But a study area is a polygon', and 'two study area polygons combined should still be a study area'. No new widget was added: the one whose description already said overlapping and touching areas become one simply recognises areas now."
+  },
+  {
+   "kind": "changed",
+   "description": "Combining AREAS does not dissolve a touching border, where combining polygons does. A published outline is an authority's record of where a boundary lies and two authorities describe a shared border differently; welding them would assert a third line that neither drew while citing both. The parts answer every question this application asks of a study area identically. A catchment, by contrast, is this application's own construction, so two that touch are one reachable region and are merged as before."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Five unit checks cover two overlapping squares becoming one piece with the overlap reported (20,000 square metres of parts, 15,000 combined); disjoint areas staying separate and being counted, with the parts and the combination agreeing when nothing overlaps; one area combining to itself; refusal of empty input and of a bad zone; and the limitation travelling in both the notes and the receipt. One further check chains summarize_hull into this widget, which is the order NB03 uses, and asserts the combination is no smaller than the larger hull. Not established: that combining is appropriate. It answers whether anywhere is covered and not how well, and a practitioner wanting the second needs the parts."
+ }
+}

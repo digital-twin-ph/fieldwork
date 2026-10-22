@@ -99,6 +99,10 @@ and the usual remedy is SharedArrayBuffer behind COOP/COEP headers, which an off
 application cannot guarantee. A probe exporting `(0..1000).into_par_iter().sum()` returns **499500**
 inside the module. It does not panic; it falls back.
 
+The patch, the probe crate and both runners are kept at
+[`docs/spikes/129-graphways-wasm/`](../spikes/129-graphways-wasm/README.md); nothing there is built
+by `npm run check` or imported by the application.
+
 **It reads an extract from memory, once it is asked to.** Every PBF entry takes a `Path`, and
 wasm32 has no filesystem. `osmpbf::BlobReader` is already generic over `Read + Send`, so a fork adds
 `read_pbf_bytes` feeding it a `Cursor` — about ten lines, no change to the scan itself.

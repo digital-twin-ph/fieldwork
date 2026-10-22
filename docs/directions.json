@@ -333,6 +333,25 @@
      "found": "Read the library's own documentation and nothing else: MIT, Rust crate 0.5.0, Python API, reads PBF and Overpass XML, computes isochrones, routing, matrices, GTFS. No wasm32 target or browser use stated, and no independent benchmark or adoption record found. Recorded as two separable questions -- the input format, which is cheap and does not need the library, and the compute engine, which needs a build that nobody has attempted."
     }
    ]
+  },
+  {
+   "id": "a-country-extract-lives-on-the-computer",
+   "stated": "2026-10-22",
+   "statedBy": "the practitioner",
+   "inTheirWords": "Perhaps for large downloads we should offer the user download to computer so the whole country is available when needed and no need to re-download a whole country again just to get provinces?",
+   "requiresInCode": "A street network acquired from a published country extract the practitioner holds on their own computer: a file picker for the .osm.pbf, the study area's bbox applied while it is read, and only the resulting graph kept. No copy of the extract in either browser store, and no re-download per province.",
+   "recordedIn": [
+    "docs/experiments/129-graphways-and-the-pbf-question.md"
+   ],
+   "workItem": "docs/experiments/129-graphways-and-the-pbf-question.md, which measures the parse and names what is unresolved: the File System Access API exists in Chromium and not in WebKit, so 'choose it once' is available in one engine and not the other.",
+   "status": "open",
+   "lastChecked": "2026-10-22",
+   "checks": [
+    {
+     "date": "2026-10-22",
+     "found": "Stated while the DRC extract was weighed at 416.3 MB with no province extracts published. Measured the same day: Ituri's driving graph builds from that file in 23.7 s and 3,587 MB of wasm memory, and the walking graph does not fit in the 4 GB wasm32 space at all. Nothing built; the picker, the handle persistence and the blob-by-blob read are all unwritten."
+    }
+   ]
   }
  ]
 }

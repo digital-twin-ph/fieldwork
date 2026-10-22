@@ -2,7 +2,9 @@
 
 _Created 2026-10-22 · Updated 2026-10-22_
 
-**Status:** tried — the input half. A published OSM extract is read in both browsers this project
+**Status:** tried — both halves. Graphways' Rust core runs in WebAssembly and builds a province
+graph from a country extract; Ituri fits in driving mode and does not fit in walking. The input
+half. A published OSM extract is read in both browsers this project
 tests, with no dependency, and weighed below. The compute half is untouched: nothing of Graphways
 has been installed, built or run.
 
@@ -83,6 +85,78 @@ once, cached offline, serving every province and every future workflow, against 
 per attempt from a service that may refuse — but nobody has downloaded it, parsed it, or measured
 what clipping it to a province costs.
 
+## The second half: Graphways in WebAssembly, 2026-10-22
+
+The practitioner asked for the engine to be swapped so a province could be tested. The feasibility
+questions were answered first, because each could have ended it.
+
+**It compiles.** `cargo build --target wasm32-unknown-unknown --no-default-features` against the
+git `main` (bf2184f, which calls itself 0.5.0 although crates.io publishes only 0.4.0) builds
+clean. Dropping the default `network` feature drops `reqwest` and `tokio`.
+
+**Rayon runs.** This was the expected blocker: `rayon` 1.8 is a thread pool, wasm32 has no threads,
+and the usual remedy is SharedArrayBuffer behind COOP/COEP headers, which an offline static
+application cannot guarantee. A probe exporting `(0..1000).into_par_iter().sum()` returns **499500**
+inside the module. It does not panic; it falls back.
+
+**It reads an extract from memory, once it is asked to.** Every PBF entry takes a `Path`, and
+wasm32 has no filesystem. `osmpbf::BlobReader` is already generic over `Read + Send`, so a fork adds
+`read_pbf_bytes` feeding it a `Cursor` — about ten lines, no change to the scan itself.
+
+| extract | file | mode | junctions | time | wasm memory |
+|---|---|---|---|---|---|
+| Andorra | 3.5 MB | walk | 145,690 | 0.4 s | 92 MB |
+| Rwanda | 68.2 MB | walk | 3,795,541 | 12.7 s | 2,102 MB |
+| Rwanda, province-sized bbox | 68.2 MB | walk | 1,425,531 | 6.5 s | 1,438 MB |
+| **DRC, Ituri bbox** | **416.3 MB** | **drive** | **1,152,974** | **23.7 s** | **3,587 MB** |
+| DRC, Ituri bbox | 416.3 MB | walk | — | — | **out of memory** |
+
+Rwanda cross-validates the reader written for the first half: 3,795,541 against 3,795,630, the
+difference being graphways' `Walk` filter against this project's walking filter.
+
+**Ituri is built, in driving mode, by a Rust engine inside a browser's WebAssembly.** 1,152,974
+junctions in 23.7 seconds from a published country file. In walking mode the same box fails with
+`RuntimeError: unreachable` at `raw_vec::handle_error` — an allocation refused at the 4 GB wasm32
+ceiling, with 3,587 MB already in use for the lighter mode.
+
+**So the mode is not a preference at this scale, it is the difference between a graph and a crash.**
+The ADM1 default added on 2026-10-21 was argued from download size and from what a province is for.
+It turns out to be load-bearing for a reason nobody had measured: walking does not fit.
+
+**The bbox is applied during the parse**, not after: nodes outside the study area are dropped as
+they are decoded. On Rwanda that is a third of the memory and half the time. Without it a country
+cannot be held at all — Rwanda alone is 2.1 GB of the 4 GB available, and the DRC is six times
+Rwanda's file size.
+
+**What is still wasteful.** The whole 416 MB file is copied into wasm memory before the scan
+begins, which is 12% of the ceiling spent on bytes that are read once and sequentially. Feeding the
+module blob by blob would return most of that, and is the obvious next economy.
+
+## The file belongs on the computer, 2026-10-22
+
+Said while the DRC extract was being weighed:
+
+> *"Perhaps for large downloads we should offer the user download to computer so the whole country
+> is available when needed and no need to re-download a whole country again just to get provinces?"*
+
+That is the shape the measurements point at. Geofabrik publishes **no province extracts for the
+DRC**, so the file for Ituri is the whole country, and the same 416 MB serves North Kivu, Ituri and
+every workflow after them. Fetching it once per province would be absurd; keeping it in the browser
+is impossible — 416 MB against a 5.2 MB workspace store, and even the large store would be holding
+a copy of a file that already exists on disk.
+
+So the file stays on the practitioner's computer and this application reads it where it is: a file
+picker for the extract, the study area's bbox applied during the parse, and only the resulting graph
+kept. Nothing is re-downloaded, nothing is duplicated, and an extract downloaded once works offline
+forever after — which is what this project claims to be for.
+
+Two things to check before building it. Chromium's File System Access API can keep a handle with
+permission across sessions, so "choose it once" is possible there; WebKit has no such API, and a
+plain `<input type="file">` means choosing the file again each session, which is a different
+experience in each engine and must be said rather than papered over. And the 416 MB is currently
+copied into wasm memory whole; reading it blob by blob from the file would return most of that
+12% of the ceiling.
+
 ## What would close it
 
 For the first, now done for Andorra and Rwanda: what remains is the DRC's own 397 MB extract,
@@ -100,8 +174,12 @@ exists, it is a library that runs somewhere this application does not.
 - **That PBF is smaller for Ituri.** It is 7 to 9 times smaller per junction on two extracts that
   are not the DRC, against a per-junction rate measured once on Ituri. The DRC's extract has not
   been read.
-- **That the browser can hold a province graph as a NETWORK.** It holds 3.8 million junctions as a
-  map of coordinates. Building edges, snapping, routing and drawing are all still untried at that
-  size, and the 894 MB is before any of them.
+- **That the browser can hold a province graph as a NETWORK.** Graphways builds one for Ituri in
+  driving mode and reports its junction count. Nothing has routed over it, snapped to it, drawn it,
+  or handed it back to this application, and no isochrone has been attempted on it.
+- **That this runs in a browser.** Every figure above is from Node, which is V8 — the same engine
+  family as Chromium and not the same as WebKit. The module has not been loaded in either browser.
+- **That the fork is sound.** `read_pbf_bytes` and the bbox filter are ten-line changes written for
+  a measurement, not reviewed against the crate's own tests.
 - **That a browser can hold a province graph at all.** 1,837,939 junctions downloaded, parsed and
   normalized once. It has never been drawn, routed over, snapped to or saved.

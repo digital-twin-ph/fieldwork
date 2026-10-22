@@ -276,6 +276,29 @@ says the driving graph of Ituri is not one connected component — or that the g
 onto isolated stubs. Either is a finding about the data and neither has been looked into. A routing
 claim made on this would be wrong.
 
+## What 10 of 100 meant, 2026-10-22
+
+It meant **10 of 10**. Of the 25 grid points the matrix was given, **2 of the 5 origins and 5 of the
+20 destinations snapped to a road within 2 km**, so at most ten pairs could have routed, and all ten
+did. The other ninety were pairs in which at least one point was not on the network at all.
+
+| | pairs reachable | seconds |
+|---|---|---|
+| 25 grid points over the province | 10 of 100, **all 10 that could** | 1.1 |
+| 25 points taken from the graph itself | **100 of 100** | 2.7 |
+| 25 junctions clustered in one corner | **100 of 100**, longest 79 minutes | 2.5 |
+
+So Ituri's driving network is **not** fragmented, and nothing about it was being reported. The
+figure was an artefact of dropping a regular grid on a province — forest, water and the gaps
+between roads — compounded by a counter of mine that could not tell "no route" from "never reached
+the network".
+
+That distinction is one this application already draws and had good reason to: a site too far from
+any road is an `OffNetworkSite` and a site that reaches nothing in the budget is an
+`UnconnectedSite`, each reported separately, because they are different findings about access.
+A spike that collapsed them produced a sentence about a road network from a fact about where points
+were put, which is exactly the error the two types exist to prevent.
+
 ## What would close it
 
 For the first, now done for Andorra and Rwanda: what remains is the DRC's own 397 MB extract,
@@ -296,8 +319,9 @@ exists, it is a library that runs somewhere this application does not.
 - **That fieldwork can USE the graph.** It validates, hashes, and can be written and read back as
   typed arrays, a blob or a file. Nothing has drawn it, snapped to it or routed over it, and the
   isochrone still refuses graphs this size by its own measured guard.
-- **That routing over this graph is sound.** 10 of 100 pairs reachable is unexplained, and until
-  it is, nothing about travel times on a province graph should be reported.
+- **That routing over this graph is sound.** Every pair whose endpoints were on the network routed,
+  across the province and within one corner of it. Nothing has checked a route against ground
+  truth, and travel times depend on a speed profile nobody here has read.
 - **That the sites are real.** The 200 points are a grid over the bbox, not Ituri's health
   facilities. The snap and matrix figures are about the graph's shape, not about access to care.
 - **That A, B or C is the right one.** Three ways each move 85 MB in under a second; which belongs

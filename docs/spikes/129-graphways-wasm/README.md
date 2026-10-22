@@ -45,4 +45,12 @@ published ODbL files that Geofabrik already hosts.
 | DRC 416.3 MB, Ituri bbox | drive | 1,152,974 | 23.7 s | 3,587 MB |
 | DRC 416.3 MB, Ituri bbox | walk | — | — | out of memory at the 4 GB ceiling |
 
-Measured in Node, which is V8. Neither browser has loaded the module.
+Measured in Node, and repeated in both browsers: Chromium builds Ituri's driving graph in 20.2 s
+and WebKit in 17.9 s, both at 3,587 MB of wasm memory.
+
+## Spike 1: getting the graph out
+
+`export_nodes` and `export_edges` write flat `f64` buffers and `drop_graph` lets the original go.
+Crossing the boundary is nearly free — 10.6 million doubles in under a tenth of a second, 85 MB as
+typed arrays — and building fieldwork's `{id, coordinates}` / `{from, to, lengthM}` objects from
+them costs 0.6 s and 388 MB of JS heap, for a tab holding about 4.5 GB in all.

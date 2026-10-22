@@ -57,6 +57,41 @@ test('a street network reaches the Map and is drawn as itself', async()=>{
   assert.ok(!/Dijkstra|isochrone|reachab/i.test(facts),'a view routes nothing');
 });
 
+// The practitioner, 2026-10-22: *"The map output does not show health facilities layer despite
+// the widget being connected to map input. Only the street network layer shows up on the map."*
+// A wired network made the map a network map and `rows:[]` threw the point layers away before any
+// renderer saw one -- the same defect as the study area's, reported 2026-10-20 and fixed by
+// carrying the boundary and nothing else. The Leaflet map draws streets and points together, so
+// a map given both carries both.
+test('points wired beside a network are drawn with it, not replaced by it',async()=>{
+  const ready=async()=>[{subject:'urn:fieldwork:area:area',predicate:'urn:fieldwork:readyForSpatialAnalysis',object:'true'}];
+  const workflow={schema:'fieldwork/workflow/1',name:'t',nodes:[
+    {id:'area',type:'study_area',x:0,y:0,params:{label:'Study area',source:'drawn',selectionMode:'polygon',
+      geometry:square(-0.145,51.505,-0.125,51.525)}},
+    {id:'facilities',type:'point_input',x:0,y:0,params:{label:'Health facilities',fields:[],
+      data:{type:'FeatureCollection',features:[[-0.138,51.512],[-0.134,51.516]].map(([x,y],i)=>
+        ({type:'Feature',id:`f-${i}`,properties:{name:`Facility ${i}`},geometry:{type:'Point',coordinates:[x,y]}}))}}},
+    {id:'net',type:'network_input',x:0,y:0,params:{label:'Streets',data:grid(),inputMethod:'file'}},
+    {id:'map',type:'map_output',x:200,y:0,params:{label:'Facilities and streets',pointInputCount:1}}],
+    edges:[{id:'e1',from:'area',to:'map',port:'area'},
+           {id:'e2',from:'facilities',to:'map',port:'points'},
+           {id:'e3',from:'net',to:'map',port:'network'}]};
+  const result=await executeWorkflow(validateWorkflow(workflow),ready);
+  const output=result.outputs.find(o=>o.nodeId==='map');
+  assert.equal(output.network.nodes.length,16,'the streets still arrive whole');
+  assert.equal(output.rows.length,2,'and the facilities are not thrown away');
+  assert.equal(output.pointLayers.length,1,'the layer control has a layer to offer');
+  assert.ok(output.boundary,'the study area is still drawn under both');
+  // One receipt for one node, stating both what was drawn and how much of it.
+  const facts=result.receipts.find(r=>r.nodeId==='map').facts;
+  const quads=new Parser().parse(facts);
+  const value=p=>quads.find(q=>q.predicate.value===`urn:fieldwork:${p}`)?.object.value;
+  assert.equal(value('networkJunctionCount'),'16');
+  assert.equal(value('networkSegmentCount'),'48');
+  assert.ok(quads.some(q=>q.predicate.value==='urn:fieldwork:spatialRelation'),
+    'and the points keep their relation to the area');
+});
+
 // The refusal names the canvas, not a setting. It used to say "needs its network input
 // connected", which is a sentence about the mode the practitioner had chosen rather than about
 // what is missing -- and after 2026-10-15 there is no mode to have chosen.

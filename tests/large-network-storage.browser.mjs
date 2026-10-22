@@ -17,7 +17,13 @@ test.use({serviceWorkers:'block'});
 const QUOTA=5226496,NODES=40000;
 const chain=()=>{
   const elements=[];
-  for(let i=0;i<NODES;i++)elements.push({type:'node',id:i+1,lon:-0.14+i*0.000002,lat:51.5134+i*0.0000005});
+  // INSIDE THE STUDY AREA IT CLAIMS TO BE IN. The Soho rectangle is -.142..-.128 by
+  // 51.509..51.517; this chain used a step that carried it to -0.06, five kilometres past the
+  // eastern edge. That was harmless while a download kept whatever the bounding box returned,
+  // and stopped being harmless on 2026-10-22 when a downloaded network began to be clipped to
+  // the study area plus its download margin. The test is about STORAGE -- a graph larger than
+  // the whole localStorage quota -- so the geography only has to be plausible, and now is.
+  for(let i=0;i<NODES;i++)elements.push({type:'node',id:i+1,lon:-0.141+i*0.00000025,lat:51.5095+i*0.0000001});
   for(let i=1;i<NODES;i++)elements.push({type:'way',id:1000000+i,nodes:[i,i+1],tags:{highway:'residential'}});
   return {version:0.6,elements};
 };

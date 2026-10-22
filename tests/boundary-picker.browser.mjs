@@ -38,8 +38,15 @@ test.use({serviceWorkers:'block'});
 const openArea=async page=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=hagelloch');
+  // Clicking a node while the workspace is still restoring leaves the Inspector on its empty
+  // state, and the click below then waits 15 s for a control that is not there. Measured
+  // 2026-10-22: 23 of 24 serial webkit runs passed in about 1.5 s and one timed out, which is
+  // the signature of a test racing the application rather than of a defect in it. The same race
+  // is noted in version-supersession.browser.mjs, with the same remedy: wait for the panel to
+  // hold the node before reaching into it.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="village"]').click();
+  await expect(page.locator('#inspector-content')).not.toContainText('Choose a node to inspect');
   await page.locator('#edit-study-area').click();
   await page.locator('#area-boundary-source summary').click();
 };

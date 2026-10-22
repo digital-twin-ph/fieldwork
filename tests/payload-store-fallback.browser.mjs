@@ -45,7 +45,7 @@ test('a browser with no large store says so on the widget, before a download rat
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
   await page.locator('#network-input-method').selectOption('osm');
-  await expect(page.locator('#network-store-warning')).toContainText('about 5 MB in total');
+  await expect(page.locator('#network-store-warning')).toContainText('about 5 MB in all');
   await expect(page.locator('#network-store-warning')).toBeVisible();
 });
 

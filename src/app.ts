@@ -1,6 +1,6 @@
-import {diveDeeperPanel} from './dive-deeper.js';
+import {diveDeeperPanel,learnBlock} from './dive-deeper.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
-import {manualButton,openManual} from './manual.js';
+import {manualButton,openManual,hasManual} from './manual.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
 import {canvasN3} from './canvas-semantics.js';
 import appPackage from '../package.json';
@@ -9,7 +9,7 @@ import {downloadOSM,importNetwork} from './street-network.js';
 import {johnSnowExample,snowExtentExample} from './john-snow.js';
 import {geoprivacyExample} from './geoprivacy-example.js';
 import {pointComparisonMarkup} from './point-comparison-ui.js';
-import {CATCHMENT_TYPES} from './catchments.js';
+import {CATCHMENT_TYPES,defaultTravelMode} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
 import {mountCatchmentMap,basemapOptions,BASEMAP_OPTIONS} from './catchment-map.js';
 import {catchmentPlot,polygonSvg,catchmentFrame} from './catchment-output.js';
@@ -55,12 +55,12 @@ import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,distanceText} from './old-naledi-ui.js';
 import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
 import {isPointPort} from './point-layers.js';
-import {EXAMPLE_TEMPLATES,hasExampleTemplate} from './example-templates.js';
+import {EXAMPLE_TEMPLATES,hasExampleTemplate,WORKED_EXAMPLE_KEYS} from './example-templates.js';
 import {templateFrom} from './workflow-template.js';
 import {pairSignature} from './deduplicate-points.js';
 import {openDeduplicateReview} from './deduplicate-ui.js';
-import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds,storageRefusal} from './study-area.js';
-import {loadPayloads,putPayload,cachedPayloads,payloadStoreKind,payloadBytes,onStoreDegraded} from './payload-store.js';
+import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds,storageRefusal,STORAGE_QUOTA_BYTES} from './study-area.js';
+import {loadPayloads,putPayload,dropPayload,cachedPayloads,payloadStoreKind,payloadBytes,onStoreDegraded} from './payload-store.js';
 import {openStudyAreaEditor} from './study-area-map.js';
 import {newAreaMeasurement,areaUnitOptions,formatArea,AREA_UNITS} from './area-measurement.js';
 import {newObservations,relationLabel} from './spatial-coverage.js';
@@ -76,6 +76,7 @@ import {openTableEditor,dataTableMarkup} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview} from './raster-preview.js';
+import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT_SCHEMA} from './project-document.js';
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
@@ -107,7 +108,7 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label><input id="map-halo-toggle" type="checkbox" ${p.markHalo!==false?'checked':''}> Dark outline on point symbols</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
     <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap)}</select>
-    <p class="description">A basemap is layer 0, under everything the workflow produced. Choosing one switches this map to the interactive presentation, which is the only one that can draw tiles. ${p.presentation==='interactive'?'':'This map is a static plot today, so picking one will change how it is drawn.'}</p>
+    <p class="description">A basemap is layer 0, under everything the workflow produced.${p.presentation==='interactive'?'':' Choosing one switches this map to the interactive presentation, the only one that draws tiles.'}</p>
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
 }
 const KEY='fieldwork-workflow-v1';
@@ -473,7 +474,31 @@ function noticeIfRepublished(key:string){
  *  example could reach -- the twelve keys are compiled in -- and both arrive the moment a
  *  practitioner's project mints a key of its own. */
 const isExampleKey=(key:string):boolean=>!key.includes('/');
-function loadExample(key:string){if(busy)return;save();let fromTemplate=true;try{const saved=readSavedWorkflows()[key];fromTemplate=!saved;workflow=saved?validateWorkflow(structuredClone(saved)):isExampleKey(key)?template(key):workflow;}catch(error){if(errorMessage(error).startsWith('Shared input data is missing')){toast(errorMessage(error),{tone:'failure'});return;}if(isExampleKey(key))workflow=template(key);}if(!isExampleKey(key)){/* nothing published to compare against */}else if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
+function loadExample(key:string){if(busy)return;
+  // A KEY WITH NOTHING UNDER IT is not a workflow, and this used to leave the canvas exactly where
+  // it was and say nothing -- the row looked selectable and did nothing. Reported 2026-10-21:
+  // *"test-project/w*, and *-template workflows I find in the list do not load at all on canvas"*.
+  if(!isExampleKey(key)&&!Object.hasOwn(readSavedWorkflows(),key)){
+    const removed=pruneGhostWorkflows();
+    renderProjectOptions();render();
+    toast(removed?'That row was a workflow registered in this project and never saved, so there is nothing to open. It has been removed from the list.'
+      :'There is nothing saved under that workflow, so there is nothing to open.',{tone:'warning'});
+    return;
+  }
+  // A SAVED WORKFLOW THE APPLICATION REFUSES TO OPEN is a row that did nothing when chosen, which
+  // is how one became unreachable AND undeletable. It now says what is wrong with it and offers
+  // the one action left.
+  if(!isExampleKey(key)){
+    try{validateWorkflow(structuredClone(readSavedWorkflows()[key]));}
+    catch(error){
+      const why=errorMessage(error);
+      renderProjectOptions();render();
+      toast(why.startsWith('Shared input data is missing')?why:`That workflow could not be opened: ${why}`,
+        {tone:'failure',action:{label:'Delete it',run:()=>deleteWorkflow(key)}});
+      return;
+    }
+  }
+  save();let fromTemplate=true;try{const saved=readSavedWorkflows()[key];fromTemplate=!saved;workflow=saved?validateWorkflow(structuredClone(saved)):isExampleKey(key)?template(key):workflow;}catch(error){if(errorMessage(error).startsWith('Shared input data is missing')){toast(errorMessage(error),{tone:'failure'});return;}if(isExampleKey(key))workflow=template(key);}if(!isExampleKey(key)){/* nothing published to compare against */}else if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
 /** Drop focus before the panel holding the focused control is rewritten.
  *
  *  Removing a focused input fires blur, and the blur handler re-renders underneath the removal
@@ -494,7 +519,11 @@ function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}
   // the removal in progress. Found on 2026-10-17 by a test that clears a setting the workflow
   // requires: any refused edit typed into a field could raise it. Dropping focus first makes
   // the blur run to completion before anything is replaced.
-  workflow=previous;dropFocus();toast(errorMessage(e));render();return false;}}
+  // IN THE FAILURE TONE, because this is always a failure. A refused edit announced itself in the
+  // same green as "saved on this device": the practitioner read *"I got a GREEN toast that says
+  // Invalid or oversized network or provenance"*, 2026-10-21, and green is what the application
+  // says when something worked.
+  workflow=previous;dropFocus();toast(errorMessage(e),{tone:'failure'});render();return false;}}
 /** Which declared port a layer dropped on a map's "add a layer" port should bind to.
  *
  *  The map's one configurable port is type-free: the practitioner drops a result on it and this
@@ -638,7 +667,7 @@ function render(){
   const url=new URL(location.href);url.searchParams.set('example',exampleKey(workflow));window.history.replaceState(null,'',url);
   renderLibrary($('#node-search').value);
   const old=exampleKey(workflow)==='old-naledi';
-  renderProjectEyebrow();renderProjectOptions();renderProjectDetails();renderAssignProject();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
+  renderProjectEyebrow();renderProjectOptions();renderProjectDetails();renderAssignProject();renderStorageStatus();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
   if(exampleKey(workflow)==='blank'){$('#project-description').textContent='Developmental evaluation · define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
   if(exampleKey(workflow)==='coverage'){$('#project-description').textContent='Developmental evaluation · inspect spatial exceptions, exclude with a reason, or revise the boundary.';$('#example-note').textContent='Synthetic points and illustrative boundary · no patient data';$('#canvas-example').textContent='SPATIAL COVERAGE · EXPERIMENT';$('#footer-context').textContent='Synthetic coverage exercise · CRS84 · boundary included';}
   if(exampleKey(workflow)==='rulesets'){$('#project-description').textContent='How a rule is put together, four times over: two workflows band Snow\u2019s data as he recorded it \u2014 Table 1 by the deaths on each date, the mapped locations by the deaths at each address \u2014 and two run the identical rules over damaged copies of the same data.';$('#example-note').textContent='Four workflows on one canvas. A and B use Snow\u2019s data as recorded; C and D are SIMULATED damage, and say so on the input: three dates with no count, and a quarter of the counts written as text. C and D apply the same rules as A and B, so everything that differs is the data \u2014 and the step says what it could not read rather than banding those records Unrecorded in silence.';$('#canvas-example').textContent='RULESETS \u00b7 HOW A RULE IS PUT TOGETHER';$('#footer-context').textContent='Authored rules \u00b7 compiled to N3 \u00b7 declared field bindings';}
@@ -1112,7 +1141,11 @@ function renderInspector(){
   if(selected?.startsWith('result:')){renderEvidence(selected.slice(7));return;}
   if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><span class="inspector-section">Developmental evaluation · step 1</span><h2>Define the study area</h2><p class="description">Add Study area, then select the node to draw a bounding box or polygon on an online map.</p><div class="rule-preview">Predict what the selection will produce, inspect the N3 facts, then run the readiness rule.</div><p class="muted">Your other worked examples remain saved separately.</p></div>';return;}
   const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><h2>Your analysis, connected.</h2><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p><div class="notice">${exampleKey(workflow).startsWith('snow-')?'Historical case-study locations; modeled catchments. Inspect a processing node to compare its assumptions.':exampleKey(workflow)==='old-naledi'?'Real source boundary and historical facilities; generated sample locations. Select Facility access to explore the assumptions.':'The heat example uses synthetic neighborhoods and illustrative screening criteria.'}</div></div>`;return;}
-  let content=title(n)+`<p class="description">${esc(n.type==='map_output'&&n.params.inputMode==='raster'?'Display native raster cells and the clipping boundary':TYPES[n.type].description)}. ${n.type==='policy'?'Turn computed spatial evidence into explicit, inspectable conclusions.':''}</p>`;
+  // ONE SHAPE FOR EVERY PANEL: title, one line of what it does, the way in for a learner, then the
+  // controls. The two links used to sit after whatever alerts a run had raised, so their position
+  // moved with the state of the workflow and their size said they were an afterthought.
+  let content=title(n)+`<p class="description">${esc(n.type==='map_output'&&n.params.inputMode==='raster'?'Display native raster cells and the clipping boundary':TYPES[n.type].description)}. ${n.type==='policy'?'Turn computed spatial evidence into explicit, inspectable conclusions.':''}</p>`
+    +learnBlock(n.type,esc,hasManual(n.type)?n.type:'');
   const alert=nodeAlert(n.id);
   // The heading names what was found. It read "Out of bounds" for every alert, which is right for
   // a site the streets could not reach and wrong for a field nobody filled in: a declaration gap
@@ -1123,7 +1156,7 @@ function renderInspector(){
   const issuesOnly=!!alert&&!!alert.dataIssues?.length&&!alert.gaps?.length
     &&!alert.unconnected.length&&!alert.offNetwork.length;
   if(alert)content+=`<div class="inspector-alert" role="alert"><strong>${issuesOnly?'Read as not recorded':gapsOnly?'Not declared':'Out of bounds'} · ${esc(alertHeadline(alert))}</strong><p>${esc(alertText(alert))}</p><table><thead><tr><th>${gapsOnly?'Field':'Site'}</th><th>What happened</th><th>${gapsOnly?'What is missing':'Distance'}</th></tr></thead><tbody>${alertRows(alert).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.outcome)}</td><td>${esc(r.detail)}</td></tr>`).join('')}</tbody></table>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
-  content+=manualButton(n.type,esc)+diveDeeperPanel(n.type,esc);
+  content+=diveDeeperPanel(n.type,esc);
   if(n.type==='micro_workflow'){
     const pin=n.params.composition;
     const found=bundledCompositions().find(c=>c.id===pin.id&&c.version===pin.version);
@@ -1156,7 +1189,7 @@ function renderInspector(){
     content+=nodeInputs(n).map(([port,type])=>`<label class="field-label" for="comparison-port-${port}">${({original:'Original points',moved:'Moved points',pumps:'Reference pumps',originalCenter:'Original mean center',movedCenter:'Moved mean center',comparison:'Comparison result'} as Record<string,string>)[port]}</label><select id="comparison-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`).join('');
   }else if(n.type==='donut_geomask'||n.type==='aggregate_points_to_h3_cell'){
     content+=`<div class="notice">Educational transformation only. The private source remains in the project and run evidence. No anonymity claim.</div>`;
-    content+='<details><summary>How does this geoprivacy method work? (?)</summary><p>See the <a href="https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library" target="_blank" rel="noopener noreferrer">geoprivacy notebooks</a> for worked examples and evaluation. Map encryption and its calibration controls are planned, not executable here.</p></details>';
+    content+='<details><summary>How does this geoprivacy method work? (?)</summary><p>Map encryption and its calibration are planned, not executable here. See the <a href="https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library" target="_blank" rel="noopener noreferrer">geoprivacy notebooks</a>.</p></details>';
     if(n.type==='donut_geomask')content+=`<label class="field-label" for="privacy-innerM">Inner radius (m)</label><input id="privacy-innerM" type="number" min="0" max="5000" value="${n.params.innerM}"><label class="field-label" for="privacy-outerM">Outer radius (m)</label><input id="privacy-outerM" type="number" min="1" max="5000" value="${n.params.outerM}"><label class="field-label" for="privacy-seed">Demonstration seed</label><input id="privacy-seed" type="number" min="0" max="4294967295" value="${n.params.seed}"><p class="description">Output names and IDs are generated afresh; original attributes are not copied. The seeded generator is predictable and unsuitable as a production privacy control.</p>`;
     else content+=`<label class="field-label" for="privacy-resolution">H3 resolution</label><input id="privacy-resolution" type="number" min="0" max="15" value="${n.params.resolution}"><label class="field-label" for="privacy-minOccupancy">Minimum locations per released cell</label><input id="privacy-minOccupancy" type="number" min="2" max="100" value="${n.params.minOccupancy}"><p class="description">Counts locations, not deaths. Sparse cells are omitted; occupancy alone does not establish anonymity.</p>`;
     content+=`<label class="field-label" for="privacy-point-source">Point input</label><select id="privacy-point-source" data-map-port="points"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='points'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`;
@@ -1165,9 +1198,14 @@ function renderInspector(){
     // The study area is handed to the Inspector so a downloaded network can be seen against the
     // ground it was asked for. previewArea throws when nothing is connected, which is a legitimate
     // state: the caption then says coverage is unknown rather than implying it is complete.
-    let previewBoundary;
-    try{previewBoundary=n.type==='network_input'?previewArea(workflow,n.id).boundary:undefined;}catch{previewBoundary=undefined;}
-    content+=catchmentInspector(n,esc,previewBoundary)+nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="catchment-port-${port}">${esc(port)}</label><select id="catchment-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('');
+    let previewBoundary,previewBoundaryID;
+    try{
+      const area=n.type==='network_input'?previewArea(workflow,n.id):undefined;
+      previewBoundary=area?.boundary;
+      // The LEVEL of the connected area, which is what decides the travel mode a province needs.
+      previewBoundaryID=area?.node.params.source==='drawn'?area.node.params.boundary?.boundaryID:undefined;
+    }catch{previewBoundary=undefined;previewBoundaryID=undefined;}
+    content+=catchmentInspector(n,esc,previewBoundary,previewBoundaryID)+nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="catchment-port-${port}">${esc(port)}</label><select id="catchment-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('');
   }else if(n.type==='map_output'){
     // No Input mode. A map draws the layers it is given, and the practitioner wires what they
     // have: one source picker per layer port, every port always present. The selector this
@@ -1241,7 +1279,7 @@ function renderInspector(){
     const outputType=n.type==='table_output'?'table':'map',reasoning=n.params.inputMode==='decisions',raster=false,tabular=n.type==='table_output'&&n.params.inputMode==='table';
     content+=`<div class="field"><label class="field-label" for="output-input-mode">Input mode</label><select id="output-input-mode"><option value="spatial" ${!reasoning&&!raster&&!tabular?'selected':''}>Point layers or spatial coverage</option><option value="polygons">Catchment polygons / summaries</option><option value="decisions" ${reasoning?'selected':''}>Reasoning results</option>${n.type==='table_output'?`<option value="table" ${tabular?'selected':''}>Tabular data</option>`:''}</select><small>Changing mode removes existing input connectors; Undo restores them.</small></div>`;
     if(reasoning)content+=`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map" ${outputType==='map'?'selected':''}>Map</option><option value="table" ${outputType==='table'?'selected':''}>Table</option><option value="bars">Chart</option></select></div>`;
-    content+=`<div class="field"><label class="field-label" for="${outputType}-label">Results tab name</label><input id="${outputType}-label" maxlength="60" value="${esc(n.params.label)}"></div><p class="description">${tabular?'Connect a Tabular data source. The key columns and the value column are displayed as imported; no geometry is implied and no value is converted.':raster?'Connect Raster input or Clip raster. The native grid is displayed with its clipping boundary.':reasoning?'Connect an existing reasoning result. Decisions, missing evidence and supporting references are retained.':outputType==='table'?'Connect point data directly; no study area is required. Or connect a coverage result to include spatial relations and review decisions.':'Connect a study area and points, or use a coverage check that already contains both.'}${!reasoning&&!raster?' Connecting a coverage result or raster replaces the separate inputs; Undo restores them.':''}</p>`;
+    content+=`<div class="field"><label class="field-label" for="${outputType}-label">Results tab name</label><input id="${outputType}-label" maxlength="60" value="${esc(n.params.label)}"></div><p class="description">${tabular?'Connect a Tabular data source.':raster?'Connect Raster input or Clip raster.':reasoning?'Connect an existing reasoning result.':outputType==='table'?'Connect point data, or a coverage result for its relations and decisions.':'Connect a study area and points, or a coverage check that holds both.'}</p>`;
     content+=nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);return `<div class="field"><label class="field-label" for="${outputType}-${port}">${({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:raster?'Raster':'Or: Raster',network:'Street network'}[port]||'Point data '+(port==='points'?1:port.split('_')[1]))}</label><select id="${outputType}-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;}).join('');
     content+=tabular?'<div class="notice">Rows are shown as imported, with absent values displayed as unknown and an unstated unit named as unstated. Search covers every key column and the value. Works offline.</div>':raster?'<div class="notice">Colors show relative cell values; gray cells are NoData. Download GeoTIFF preserves native values and georeferencing.</div>':reasoning?'<div class="notice">This is a presentation of existing results, with no new inference or exclusion.</div>':outputType==='table'?'<div class="notice">Rows include coordinates and all point attributes. Missing coordinates and excluded records remain visible. Search covers all rows and attributes; large tables use row and attribute pages. Works offline.</div>':'<div class="notice">The map fits the polygon and every located point, including outside records. Missing coordinates appear in a selectable list. This local map works offline.</div>';
     // map_output has its own branch above; this one is table_output alone.
@@ -1481,8 +1519,8 @@ function renderInspector(){
     content+=`<button id="edit-study-area" class="button primary">${n.params.geometry?'Edit area on map':'Select area on map'}</button>${n.params.geometry?'<button id="area-view-n3" class="text-button">Inspect N3 facts and rule ↗</button>':''}<div class="notice">Evaluation prompt: what should the next workflow node receive from this selection?</div>`;
   }else if(n.type==='point_input'){
     if(n.sourceMigration)content+=`<p class="notice">${n.sourceMigration.fromType==='output'
-      ?`The retired <strong>Visual output</strong> widget was replaced by ${TYPES[n.type].title}, chosen from the view this node saved. Its name and connections are retained.`
-      :`This saved example source now uses the shared Input data editor. Its label, records and connections are retained.`}</p>`;
+      ?`Replaced the retired <strong>Visual output</strong> widget; name and connections retained.`
+      :`Now uses the shared Input data editor; label, records and connections retained.`}</p>`;
     content+=labelForm('source-label','Source label',n.params.label||'Input data')+`<div class="source-card"><h3>${n.params.data.features.length} point records</h3><p>${esc(n.params.sourceInfo?.format||'Local input')} · ${n.params.data.features.filter(f=>!f.geometry).length} missing locations</p></div><button id="edit-input-data" class="button primary">Prepare input data</button>${recordsPanel(n.id,n.params.data)}<p class="description">Generate synthetic points, import CSV / GeoPackage / GeoJSON, or place pushpins with forms. Connect to Check spatial coverage before deciding how to handle outside records.</p>`;
   }else if(n.type==='measure_area'){
     const input=workflow.edges.find(e=>e.to===n.id&&e.port==='area'),output=result?.outputs.find(o=>o.nodeId===n.id);
@@ -1569,7 +1607,7 @@ function renderInspector(){
               ?`<input data-field-unit="${index}" value="${esc(field.unitLabel??'')}" placeholder="minutes" aria-label="Unit for ${esc(field.attribute)}">`
               :'—'}</td></tr>`).join('')
           +`</tbody></table>`
-          +`<p class="description">Nothing is guessed from a column name. A record missing one of these is recorded as missing, which is why a rule can conclude Unknown instead of concluding nothing. <strong>A numeric column needs its unit</strong> — a number without one is not a measurement, and the rules will not run until every one of them has it.</p>`;
+          +`<p class="description">Nothing is guessed from a column name. <strong>A numeric column needs its unit</strong>: the rules will not run until every one has it.</p>`;
       }else{
         // Where a practitioner writing their first ruleset gets stuck: the rules cannot read
         // anything until the columns are declared, and the columns can only be offered once
@@ -1682,7 +1720,7 @@ function renderInspector(){
       // is wired to it, and this says so before you press it rather than after.
       +`<span class="inspector-section">The rules</span>`
       +(ruleset.authored
-        ?`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned, so its rules are not edited here — a reader of this workflow has to be able to tell which rules ran. They can be <strong>read</strong> in the same editor you write your own in.</p>`
+        ?`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned, so its rules are not edited here. They can be <strong>read</strong> in the same editor.</p>`
           // Read, not copied. Each published ruleset computes its own facts -- this one from
           // ${esc(ruleset.inputContract.factGenerator)} -- and a step applying rules written
           // here reads columns off records instead. The rules would look the same and be fed
@@ -1693,7 +1731,7 @@ function renderInspector(){
         // A ruleset shipped without a structured source. None do today, and the gate says so on
         // every build; this is what the Inspector says honestly if one ever does, rather than
         // offering a button that would open an empty editor.
-        :`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned. This build carries no structured form of its rules, so they cannot be laid out here. This step can stop applying it and apply rules you write instead; what is wired to the step stays wired, and Undo puts the published ruleset back.</p>`
+        :`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned, and this build carries no structured form of its rules. This step can apply rules you write instead; Undo puts it back.</p>`
           +`<div class="inspector-actions"><button id="author-rules" class="button">Write rules for this step instead</button></div>`);
   }else if(n.type==='policy'){
     content+=`<span class="inspector-section">Rule settings</span><div class="field"><label class="field-label" for="threshold">Distance threshold</label><div class="input-unit"><input id="threshold" type="number" min="0" max="1000" step="0.5" value="${n.params.thresholdKm}"><span>km</span></div><small>Flag distances strictly greater than this value.</small></div><div class="rule-preview">When the heat alert is <b>active</b><br>and the nearest center is <b>more than ${n.params.thresholdKm} km away</b>,<br>flag the neighborhood for review.</div><span class="inspector-section">Missing evidence</span><p class="description">Missing coordinates, missing centers, or an unknown alert produce “Insufficient data”.</p><div class="inspector-divider"></div><span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div><div class="notice">Illustrative screening criteria. A flag is a reason to review evidence, not a risk estimate or an intervention order.</div>`;
@@ -1731,7 +1769,7 @@ function renderInspector(){
   }
   if(['study_area','point_input','places','centers','measure_area','coverage_check','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). A source reads degrees or a UTM zone and converts on import; Reproject points projects mid-workflow.</p></div>';
   // A map can always take another point layer: there is no mode in which it cannot draw points.
-  if(n.type==='map_output'||(n.type==='table_output'&&(!n.params.inputMode||n.params.inputMode==='spatial')))content+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">${n.type==='table_output'?'No boundary required for point inputs':'One study boundary'} · up to 8 point layers and 2,000 records combined. Each added point port needs a source. Removing the last port also removes its connector; Undo restores it. Adding a point input switches a Map or Table from reviewed input to direct layers.</p>`;
+  if(n.type==='map_output'||(n.type==='table_output'&&(!n.params.inputMode||n.params.inputMode==='spatial')))content+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">${n.type==='table_output'?'No boundary required for point inputs':'One study boundary'} · up to 8 point layers and 2,000 records combined. Each added port needs a source.</p>`;
   if(exampleKey(workflow)==='raster'&&(n.type==='raster_input'||n.type==='clip_raster'))content+='<div class="source-card"><span class="inspector-section">Raster workflow steps</span><p>Prepare your GeoTIFF and citation, preview the clip, then Run workflow to populate the map.</p><div class="inspector-actions">'+(['raster_input','clip_raster','map_output'] as NodeType[]).map((type,i)=>{const target=workflow.nodes.find(x=>x.type===type);return '<button class="button small" data-raster-step="'+esc(target?.id||'')+'" '+(!target?'disabled':'')+'>'+[ '1. Raster input','2. Clip parameters','3. Map'][i]+'</button>';}).join('')+'</div></div>';
   content+=evidenceInspector(n);
   content+=identityMarkup(n.type,esc);
@@ -1836,7 +1874,7 @@ function renderInspector(){
   optionalElement('#catchment-output-mode')?.addEventListener('change',e=>change(w=>{const target=required(w.nodes.find(x=>x.id===n.id));(target.params as unknown as Record<string,unknown>).inputMode=control(e).value;w.edges=w.edges.filter(edge=>edge.to!==n.id);}));
   optionalElement('#polygon-output-label')?.addEventListener('change',e=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value;}));
   optionalElement('#save-network')?.addEventListener('click',()=>{try{const text=(document.querySelector('#network-json') as HTMLTextAreaElement).value;if(text.length>2000000)throw new Error('Network JSON exceeds 2 MB.');const data=JSON.parse(text);change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true});}catch(e){toast(errorMessage(e));}});
-  for(const selector of ['#network-file','#network-upload'])document.querySelector<HTMLInputElement>(selector)?.addEventListener('change',async e=>{const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;const baseline=JSON.stringify(workflow);try{const data=await importNetwork(file,getNode(workflow,n.id,'network_input').params.maxNodes);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed; import again.');const digest=await payloadDigest(data);if(!await keepDataset(digest,data))throw new Error(`This ${(payloadBytes(data)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved. Export the workflow to a file to keep it.`);change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true});}catch(e){toast(errorMessage(e));}});
+  for(const selector of ['#network-file','#network-upload'])document.querySelector<HTMLInputElement>(selector)?.addEventListener('change',async e=>{const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;const baseline=JSON.stringify(workflow);try{const data=await importNetwork(file,getNode(workflow,n.id,'network_input').params.maxNodes);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed; import again.');const digest=await payloadDigest(data);if(!await keepDataset(digest,data))throw new Error(`This ${(payloadBytes(data)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved. Export the workflow to a file to keep it.`);if(!change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true}))await dropPayload(digest);}catch(e){toast(errorMessage(e),{tone:'failure'});}});
   // The status panel. Rendered from the LAST check, so it survives the Inspector being redrawn,
   // and asked for only on click: every check is a request to a donated service.
   const paintEndpoints=()=>{
@@ -1864,13 +1902,18 @@ function renderInspector(){
     finally{button.disabled=false;button.textContent='Check endpoint status';paintEndpoints();}
   });
   paintEndpoints();
-  optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';try{const {boundary}=previewArea(workflow,n.id);const node=getNode(workflow,n.id,'network_input');const data=await downloadOSM(boundary,node.params.marginM??250,node.params.maxNodes,(node.params.pauseSeconds??60)*1000,!!node.params.data?.nodes?.length,(phase,fraction)=>{networkDownloadPhase=phase;const line=document.querySelector<HTMLElement>('#network-download-status');if(line)line.textContent=phase;const bar=document.querySelector<HTMLButtonElement>('#download-network');if(bar){bar.textContent=phase;bar.style.backgroundImage=fraction===undefined?'':`linear-gradient(to right, var(--accent) ${Math.round(Math.min(1,fraction)*100)}%, transparent ${Math.round(Math.min(1,fraction)*100)}%)`;}},node.params.travelMode??'walking');if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed during download; retry with the current boundary.');
+  optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';try{const {boundary,node:areaNode}=previewArea(workflow,n.id);const node=getNode(workflow,n.id,'network_input');const data=await downloadOSM(boundary,node.params.marginM??250,node.params.maxNodes,(node.params.pauseSeconds??60)*1000,!!node.params.data?.nodes?.length,(phase,fraction)=>{networkDownloadPhase=phase;const line=document.querySelector<HTMLElement>('#network-download-status');if(line)line.textContent=phase;const bar=document.querySelector<HTMLButtonElement>('#download-network');if(bar){bar.textContent=phase;bar.style.backgroundImage=fraction===undefined?'':`linear-gradient(to right, var(--accent) ${Math.round(Math.min(1,fraction)*100)}%, transparent ${Math.round(Math.min(1,fraction)*100)}%)`;}},node.params.travelMode??defaultTravelMode(areaNode.params.source==='drawn'?areaNode.params.boundary?.boundaryID:undefined));if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed during download; retry with the current boundary.');
     // The graph goes to the payload store and the workflow keeps a reference, so what localStorage
     // holds is a workflow and not a street network. Bunia is an estimated 14.2 MB against a
     // 5,226,496-byte store written twice per save; see docs/experiments/121.
     const digest=await payloadDigest(data);
     if(!await keepDataset(digest,data))throw new Error(`This ${(payloadBytes(data)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved. Export the workflow to a file to keep it, or cover a smaller area.`);
-    if(change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true})){networkDownloadError=null;toast('OSM network saved on this device. Run the workflow to update results.');}}catch(e){networkDownloadError=errorMessage(e);toast(errorMessage(e),{tone:'failure'});}finally{button.disabled=false;button.textContent='Download and save OSM network';button.style.backgroundImage='';networkDownloadPhase=null;}});
+    // AND IF THE WORKFLOW WILL NOT TAKE IT, the payload goes back out. It was written to the store
+    // before the workflow was asked, so a refusal left the bytes behind with nothing referring to
+    // them: a device on 2026-10-21 showed "data 416.2 MB" beside this widget reading "0 nodes, 0
+    // directed edges", and nothing in the application could reach them.
+    if(change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true})){networkDownloadError=null;toast('OSM network saved on this device. Run the workflow to update results.');}
+    else await dropPayload(digest);}catch(e){networkDownloadError=errorMessage(e);toast(errorMessage(e),{tone:'failure'});}finally{button.disabled=false;button.textContent='Download and save OSM network';button.style.backgroundImage='';networkDownloadPhase=null;}});
   document.querySelectorAll<HTMLSelectElement>('[data-map-port]').forEach(el=>el.onchange=()=>change(w=>setConnection(w,el.value,n.id,el.dataset.mapPort!)));
   // Applying the suggested zone, so the advice is actionable rather than only stated. It sets
   // both the zone and the hemisphere together: a zone number without its hemisphere is half an
@@ -2768,6 +2811,22 @@ function renderProjectOptions(){
     +candidates.map(([k,label])=>optionFor(k,label)).join('');
   template.hidden=!candidates.length;
   template.disabled=busy;
+
+  // DELETE is offered for a workflow a practitioner made and refused for a worked example, which
+  // ships with the application: the control says which, rather than being absent and leaving the
+  // question of where workflows go to be asked again.
+  const remove=$('#delete-workflow') as HTMLButtonElement;
+  const published=isExampleKey(key);
+  // RESET EXAMPLE is about published work, so it is in the bar only while published work is open.
+  // On everything else it was a control for a thing that does not exist -- there is nothing to
+  // reload a practitioner's own workflow to -- taking a slot beside the controls that do apply.
+  // The blank canvas is not a worked example either: "New empty canvas" is its gesture.
+  $('#reset-example').hidden=!WORKED_EXAMPLE_KEYS.includes(key);
+  remove.disabled=busy||published;
+  remove.title=published
+    ?'A worked example ships with the application and stays. "Reset example" discards your edits to it.'
+    :`Remove "${workflow.name||workflowTitle(key)}" from this device. This cannot be undone.`;
+
   workflows.value=key;
 }
 /** What a workflow is called before it has been opened and saved under its own name. Built-in
@@ -2875,13 +2934,62 @@ function applyProjectDetails(){
  *  lose the work inside it. */
 function deleteCurrentProject(){
   const key=storageKey(workflow);
-  const project=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,readProjects());
+  const open=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,readProjects());
+  if(open)deleteProject(open.id);
+}
+function deleteProject(id:string){
+  const project=readProjects().find(p=>p.id===id);
   if(!project)return;
   const held=project.workflows.length;
   if(!confirm(`Delete the project "${project.name}"? Its ${held===1?'workflow stays':`${held} workflows stay`} on this device and can still be opened; only the grouping is removed.`))return;
   if(!writeProjects(readProjects().filter(p=>p.id!==project.id)))return;
-  change(w=>{delete w.projectId;},{spatial:false});
-  render();toast(`Project "${project.name}" deleted. Its workflows are still here, in no project.`);
+  if(workflow.projectId===project.id)change(w=>{delete w.projectId;},{spatial:false});
+  render();
+  if($('#projects-dialog').open)renderProjectsList();
+  toast(`Project "${project.name}" deleted. Its workflows are still here, in no project.`);
+}
+/** A key no project holds and nothing is saved under.
+ *
+ *  It was `workflows.length + 1`, which mints a key the project ALREADY HOLDS as soon as one
+ *  workflow has been removed -- w1, w2, w3 with w2 gone mints w3 again, and the new canvas
+ *  overwrites the old one on its first save. */
+function mintWorkflowKey(projectId:string,projects:readonly Project[]):string{
+  const taken=new Set<string>([...projects.flatMap(p=>p.workflows),...Object.keys(readSavedWorkflows())]);
+  for(let n=1;;n++){const key=`${projectId}/w${n}`;if(!taken.has(key))return key;}
+}
+/** A project key with no workflow saved under it.
+ *
+ *  Registering the key and saving the workflow are two writes, and the second one can be refused
+ *  -- by a full store, which is exactly the device that reported this. The switcher then shows a
+ *  row for a workflow that does not exist, labelled with the raw key because there is no name to
+ *  read, and selecting it does nothing: `loadExample` finds nothing saved, the key is not an
+ *  example, so the canvas stays where it was. Reported 2026-10-21: *"I also see some
+ *  test-project/w* workflows in the list."* */
+function ghostWorkflowKeys(projects:readonly Project[]=readProjects()):string[]{
+  const saved=readSavedWorkflows(),open=storageKey(workflow);
+  return [...new Set(projects.flatMap(p=>p.workflows))].filter(key=>key!==open&&!Object.hasOwn(saved,key));
+}
+/** Drop those rows, loudly. Nothing is lost: a key with nothing saved under it holds no work, and
+ *  leaving it makes a project claim more workflows than it has. */
+function pruneGhostWorkflows():number{
+  const projects=readProjects(),ghosts=new Set(ghostWorkflowKeys(projects));
+  if(!ghosts.size)return 0;
+  if(!writeProjects(projects.map(p=>({...p,workflows:p.workflows.filter(k=>!ghosts.has(k))}))))return 0;
+  return ghosts.size;
+}
+/** Open a newly minted workflow, and keep the project's registration only if the save is kept.
+ *
+ *  The registration used to stand whatever the save did, which is how a key with no workflow
+ *  under it gets into a project in the first place. */
+function adoptNewWorkflow(next:Workflow,key:string,projectId:string,refusal:string):boolean{
+  const previous={workflow,selected,result,runWorkflow,activeOutputId,history,future,statuses};
+  workflow=next;selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
+  if(save()){renderProjectOptions();renderLibrary();renderResults();render();switchView('workflow');return true;}
+  ({workflow,selected,result,runWorkflow,activeOutputId,history,future,statuses}=previous);
+  writeProjects(readProjects().map(p=>p.id===projectId?{...p,workflows:p.workflows.filter(k=>k!==key)}:p));
+  renderProjectOptions();render();
+  toast(saveFailureMessage(refusal),{tone:'failure'});
+  return false;
 }
 /** A new canvas inside this investigation, which is the gesture the model implies and the one
  *  nothing offered: adding a second question meant creating an unrelated canvas and then
@@ -2897,12 +3005,11 @@ function addWorkflowToProject(projectId?:string){
     return;
   }
   save();
+  const key=mintWorkflowKey(project.id,readProjects());
   const index=project.workflows.length+1;
-  const key=`${project.id}/w${index}`;
   if(!writeProjects(readProjects().map(p=>p.id===project.id?{...p,workflows:[...p.workflows,key]}:p)))return;
-  workflow={...blankWorkflow(),name:`${project.name} · question ${index}`,projectId:project.id,workflowKey:key,exampleId:undefined};
-  selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
-  save();renderLibrary();renderResults();render();switchView('workflow');
+  if(!adoptNewWorkflow({...blankWorkflow(),name:`${project.name} · question ${index}`,projectId:project.id,workflowKey:key,exampleId:undefined},
+    key,project.id,'The new workflow could not be saved, so it was not created.'))return;
   toast(`A new workflow in "${project.name}". Name it for the question it answers.`);
 }
 
@@ -2919,24 +3026,315 @@ function addWorkflowFromTemplate(sourceKey:string){
   if(!project){toast('A template becomes a workflow in a project. Create one first.',{tone:'warning'});return;}
   const saved=readSavedWorkflows()[sourceKey];
   if(!saved){toast('That workflow could not be read from this device.',{tone:'failure'});return;}
+  const sourceName=(saved as {name?:string}).name||'that workflow';
   save();
-  const index=project.workflows.length+1;
-  const key=`${project.id}/w${index}`;
-  if(!writeProjects(readProjects().map(p=>p.id===project.id?{...p,workflows:[...p.workflows,key]}:p)))return;
+  // INTO THIS ONE, when this one is empty. The ask was *"can I import the North Kivu workflow
+  // into this blank one?"* -- said while sitting on a blank canvas named for the next province.
+  // Always minting a workflow answered a question nobody asked: it left that canvas untouched and
+  // empty beside a third workflow carrying the source's name, which is how a project ends up
+  // holding rows its owner did not want and cannot remove. Reported 2026-10-21.
+  const fillOpen=!workflow.nodes.length&&!!storageKey(workflow)&&!isExampleKey(storageKey(workflow));
+  const key=fillOpen?storageKey(workflow):mintWorkflowKey(project.id,readProjects());
+  const name=fillOpen?workflow.name||sourceName:`${sourceName} · template`;
+  if(!fillOpen&&!writeProjects(readProjects().map(p=>p.id===project.id?{...p,workflows:[...p.workflows,key]}:p)))return;
   let report;
-  try{report=templateFrom(validateWorkflow(structuredClone(saved)),
-    {name:`${(saved as {name?:string}).name||'Workflow'} · template`,projectId:project.id,workflowKey:key});}
-  catch(error){toast(errorMessage(error),{tone:'failure'});return;}
-  workflow=report.workflow;
-  selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
-  save();renderLibrary();renderResults();render();switchView('workflow');
+  // The RESULT is validated, not only the source. It was the source alone, so a template whose
+  // clearing left a workflow the application refuses to open was saved all the same, and the row
+  // it created could not be loaded -- or, because deleting needed loading, removed.
+  try{
+    report=templateFrom(validateWorkflow(structuredClone(saved)),{name,projectId:project.id,workflowKey:key});
+    report={...report,workflow:validateWorkflow(report.workflow)};
+  }
+  catch(error){toast(`A template of "${sourceName}" could not be made: ${errorMessage(error)}`,{tone:'failure'});return;}
+  if(fillOpen){
+    const previous=structuredClone(workflow);
+    workflow=report.workflow;
+    selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[previous];future=[];statuses={};dirty=true;
+    if(!save()){workflow=previous;history=[];render();toast(saveFailureMessage('The template could not be saved, so this canvas is unchanged.'),{tone:'failure'});return;}
+    renderProjectOptions();renderLibrary();renderResults();render();switchView('workflow');
+  }
+  else if(!adoptNewWorkflow(report.workflow,key,project.id,'The template could not be saved, so no workflow was created.'))return;
   const cleared=report.cleared.reduce((n,c)=>n+c.keys.length,0);
   // What it cleared, counted, because a template that silently emptied something is worse than
   // one that says so: the practitioner is about to fill exactly these.
-  toast(`A template of "${(saved as {name?:string}).name||'that workflow'}": the widgets and their `
+  toast(`${fillOpen?`This canvas now holds the method of "${sourceName}"`:`A template of "${sourceName}"`}: the widgets and their `
     +`settings, with ${cleared} acquired ${cleared===1?'input':'inputs'} cleared across `
     +`${report.cleared.length} ${report.cleared.length===1?'widget':'widgets'}. `
     +`The study area is chosen again; the sources are already set.`,{tone:'notice'});
+}
+/** Remove this workflow from this device.
+ *
+ *  Reported 2026-10-21: *"Now I have a bunch of workflows I do not need. We do not have a way to
+ *  delete workflows."* A project could be deleted and a workflow could not, so the only way to
+ *  lose one was to delete the investigation around it -- which keeps every workflow and removes
+ *  only the grouping, the opposite of what was wanted.
+ *
+ *  A worked example is not deletable: it ships with the application and Reset example is the
+ *  control for it. Everything else goes with its saved entry and its project registration, and
+ *  the next workflow of the same project is opened, or an empty canvas when there is none. */
+function deleteCurrentWorkflow(){deleteWorkflow(storageKey(workflow));}
+/** Deleting takes a KEY, not the open canvas, because the workflow most worth deleting is the one
+ *  that will not open: *"The Health Facilities North Kivu · template workflow won't load so can't
+ *  be deleted"*, 2026-10-21. A delete that works only on what is loaded cannot reach it. */
+function deleteWorkflow(key:string){
+  if(busy)return;
+  if(isExampleKey(key)){
+    toast('A worked example ships with the application and stays. Use "Reset example" to discard your edits to it.',{tone:'warning'});
+    return;
+  }
+  const open=key===storageKey(workflow);
+  const name=(open?workflow.name:(readSavedWorkflows()[key] as {name?:string}|undefined)?.name)||workflowTitle(key);
+  if(!confirm(`Delete the workflow "${name}"? Its widgets, settings and anything saved with it are removed from this device, and this cannot be undone. Export it first if you want to keep it.`))return;
+  const projects=readProjects(),owner=projects.find(p=>p.workflows.includes(key));
+  if(owner&&!writeProjects(projects.map(p=>p.id===owner.id?{...p,workflows:p.workflows.filter(k=>k!==key)}:p)))return;
+  try{
+    const store=JSON.parse(localStorage.getItem(WORKSPACES)||'{}');
+    delete store[key];
+    localStorage.setItem(WORKSPACES,JSON.stringify(store));
+    forgetSavedWorkflows();
+  }catch{/* the registration is already gone, so the row is gone; a stale entry is unreachable */}
+  // Deleting a row that is not the open canvas leaves the canvas alone: the practitioner is
+  // tidying a list, not navigating.
+  if(!open){renderProjectOptions();render();toast(`Workflow "${name}" deleted.`);return;}
+  // Not loadExample for the fallback: that saves the canvas it is leaving, which would write this
+  // workflow straight back under the key just deleted.
+  const saved=readSavedWorkflows();
+  const next=owner?.workflows.find(k=>k!==key&&Object.hasOwn(saved,k));
+  if(next){workflow=blankWorkflow();loadExample(next);}
+  else{
+    workflow={...blankWorkflow(),...(owner?{name:`${owner.name} · first question`,projectId:owner.id,workflowKey:mintWorkflowKey(owner.id,readProjects())}:{})};
+    if(owner)writeProjects(readProjects().map(p=>p.id===owner.id?{...p,workflows:[...p.workflows,storageKey(workflow)]}:p));
+    selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
+    save();renderProjectOptions();renderLibrary();renderResults();render();switchView('workflow');
+  }
+  toast(`Workflow "${name}" deleted.`);
+}
+/** HOW FULL THE STORE IS, before a save is refused rather than after.
+ *
+ *  The practitioner, 2026-10-21, having just been refused a study area: *"I think we need a storage
+ *  status indicator to also tell us to off load projects from the browser (export) if needed."*
+ *  Everything a workflow holds sits in `localStorage`, which this device accepts 5.2 MB of, and
+ *  nothing said how much was left -- so the first news of the ceiling was work that would not
+ *  save. See experiment 121 for why the ceiling is this one and what would move it. */
+function storageUsedBytes():number{
+  let total=0;
+  try{for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key===null)continue;total+=key.length+(localStorage.getItem(key)?.length??0);}}
+  catch{return 0;}
+  return total;
+}
+const STORAGE_TIGHT=0.75,STORAGE_FULL=0.9;
+/** THE OTHER STORE. The workspace store is the one that refuses a save, and it is not where the
+ *  bytes are: a node's `data` is kept by digest in IndexedDB, which this device offers by the
+ *  gigabyte, so a figure covering only `localStorage` can read "1.2 of 5.2 MB" beside 400 MB of
+ *  street networks. Asked by the practitioner on 2026-10-21 -- *"That's for local storage, what
+ *  about IndexedDB?"* -- of an indicator that had just been built measuring one store.
+ *
+ *  Two different quantities, reported as two:
+ *  - what the PAYLOADS this session holds come to, which is this application's own data;
+ *  - what the BROWSER says this site occupies and may occupy, from `navigator.storage.estimate()`.
+ *    That figure is the whole origin -- IndexedDB, the Cache Storage holding the offline
+ *    application, and `localStorage` -- so it is labelled as the site's total and never as the
+ *    payload store alone. The estimate is also just that: browsers pad and round it. */
+const payloadStoreBytes=():number=>{
+  let total=0;
+  for(const payload of Object.values(cachedPayloads()))total+=payloadBytes(payload);
+  return total;
+};
+const payloadCount=():number=>Object.keys(cachedPayloads()).length;
+/** Payloads no workflow on this device refers to.
+ *
+ *  They are made by any refusal that happens after the payload is written: the fix above stops the
+ *  download path making more, and does nothing about the ones already there. A practitioner whose
+ *  store reads 416.2 MB against a widget holding nothing needs to be able to get those bytes
+ *  back. A reference is a `dataRef` on any node of any saved workflow, plus the open canvas, which
+ *  may not be saved yet. */
+function unreferencedPayloads():{digests:string[];bytes:number}{
+  const referenced=new Set<string>();
+  const collect=(w:unknown)=>{
+    for(const node of ((w as {nodes?:unknown[]})?.nodes??[])){
+      const ref=(node as {params?:{dataRef?:unknown}})?.params?.dataRef;
+      if(typeof ref==='string')referenced.add(ref);
+    }
+  };
+  for(const saved of Object.values(readSavedWorkflows()))collect(saved);
+  collect(workflow);
+  const held=cachedPayloads();
+  const digests=Object.keys(held).filter(digest=>!referenced.has(digest));
+  return {digests,bytes:digests.reduce((sum,digest)=>sum+payloadBytes(held[digest]),0)};
+}
+let siteEstimate:{usage:number;quota:number}|null=null;
+async function refreshSiteEstimate():Promise<void>{
+  try{
+    const estimate=await navigator.storage?.estimate?.();
+    if(estimate&&typeof estimate.usage==='number'&&typeof estimate.quota==='number')
+      siteEstimate={usage:estimate.usage,quota:estimate.quota};
+  }catch{/* a browser that will not estimate is reported as not estimating */}
+}
+function renderStorageStatus(){
+  const used=storageUsedBytes(),share=used/STORAGE_QUOTA_BYTES;
+  const pill=$('#storage-status');
+  const mb=(value:number)=>(value/1e6).toFixed(1);
+  // KILOBYTES UNDER A MEGABYTE: "Storage 0.0 / 5.2 MB" reads as nothing stored at all, and the
+  // store is never empty.
+  //
+  // TWO LABELS, because the header has no room to spare: the full figure, and a percentage for a
+  // phone. Added as one element with two spans on 2026-10-21 after the long label pushed the
+  // header 13 px past a 390 px viewport and twelve tests that check the page does not scroll
+  // sideways caught it.
+  const full=used<1e6?`Storage ${Math.max(1,Math.round(used/1024)).toLocaleString('en')} KB / ${mb(STORAGE_QUOTA_BYTES)} MB`
+    :`Storage ${mb(used)} / ${mb(STORAGE_QUOTA_BYTES)} MB`;
+  pill.innerHTML=`<span class="storage-long"></span><span class="storage-short"></span>`;
+  pill.querySelector<HTMLElement>('.storage-long')!.textContent=full;
+  pill.querySelector<HTMLElement>('.storage-short')!.textContent=`${Math.min(999,Math.round(share*100))}%`;
+  pill.classList.toggle('tight',share>=STORAGE_TIGHT&&share<STORAGE_FULL);
+  pill.classList.toggle('full',share>=STORAGE_FULL);
+  const bytes=payloadStoreBytes();
+  // The large store is shown beside the workspace one rather than folded into it: they fill for
+  // different reasons and only one of them refuses a save.
+  if(bytes)pill.querySelector<HTMLElement>('.storage-long')!.textContent
+    =`${full} · data ${bytes<1e6?`${Math.round(bytes/1024).toLocaleString('en')} KB`:`${mb(bytes)} MB`}`;
+  pill.title=share>=STORAGE_FULL
+    ?'This browser\'s workspace store is nearly full. Export what you want to keep and delete what you do not: the next save may be refused.'
+    :share>=STORAGE_TIGHT
+      ?'This browser\'s workspace store is filling up. Export what you want to keep, and delete workflows you have finished with.'
+      :'How much of this browser\'s workspace store is in use. Everything is held on this device; export to keep it anywhere else.';
+  if(payloadStoreKind()!=='indexeddb')pill.title+=' Downloaded data is in the small store on this device, not the large one.';
+  else if(bytes)pill.title+=` Downloaded data (${payloadCount()} ${payloadCount()===1?'payload':'payloads'}) is kept separately in the large store, which is not what refuses a save.`;
+}
+/** Every project and workflow on this device, with what each costs and what can be done with it.
+ *
+ *  *"I am not sure we have a clear FW projects button"* -- there was a picker and a details
+ *  disclosure, and no one place that answers "what is on this device, how big is it, and how do I
+ *  get it off". */
+function openProjectsDialog(){
+  if(busy)return;
+  renderProjectsList();
+  // The estimate is asynchronous, so the dialog opens on what is known and redraws when it answers.
+  void refreshSiteEstimate().then(()=>{if($('#projects-dialog').open)renderProjectsList();});
+  $('#projects-dialog').showModal();
+}
+function renderProjectsList(){
+  const saved=readSavedWorkflows(),stored=readProjects(),key=storageKey(workflow);
+  const raw=(()=>{try{return JSON.parse(localStorage.getItem(WORKSPACES)||'{}') as Record<string,unknown>;}catch{return {};}})();
+  const bytes=(k:string)=>{try{return JSON.stringify(raw[k]??'').length;}catch{return 0;}};
+  const used=storageUsedBytes(),share=Math.min(1,used/STORAGE_QUOTA_BYTES);
+  const mb=(value:number)=>(value/1e6).toFixed(1);
+  const kb=(value:number)=>value>=1e6?`${mb(value)} MB`:`${Math.max(1,Math.round(value/1024)).toLocaleString('en')} KB`;
+  const tone=share>=STORAGE_FULL?'full':share>=STORAGE_TIGHT?'tight':'';
+  const size=(value:number)=>value<1e6?`${Math.max(1,Math.round(value/1024)).toLocaleString('en')} KB`:`${mb(value)} MB`;
+  const held=payloadStoreBytes(),payloads=payloadCount();
+  const large=payloadStoreKind()==='indexeddb';
+  // TWO STORES, TWO LINES. The workspace store is small and fills with workflows; the large store
+  // is where a download's records are kept by digest, and the two are not interchangeable.
+  $('#storage-meter').innerHTML=
+    `<h3>Workspace store · workflows and their settings</h3>`
+    +`<div class="storage-bar ${tone}"><i style="width:${Math.round(share*100)}%"></i></div>`
+    +`<p class="muted">${size(used)} of ${mb(STORAGE_QUOTA_BYTES)} MB used, each workflow written twice per save.${
+      share>=STORAGE_TIGHT?' <strong>Export what you want to keep and delete the rest.</strong>':''}</p>`
+    +`<h3>Data store · what a download brought back</h3>`
+    +`<p class="muted">${payloads?`${payloads.toLocaleString('en')} ${payloads===1?'payload':'payloads'}, ${size(held)}`:'Nothing held'}, `
+    +`in ${large?'IndexedDB, by the gigabyte':'the small store — a download will be refused'}. A network or raster is here, not above.</p>`
+    +(()=>{const loose=unreferencedPayloads();
+      return loose.digests.length
+        ?`<p class="notice">${loose.digests.length.toLocaleString('en')}, ${size(loose.bytes)}, referred to by no workflow. `
+          +`<button class="button small" id="drop-unreferenced">Remove ${size(loose.bytes)}</button></p>`
+        :'';})()
+    +(siteEstimate
+      ?`<p class="muted">The browser reports this site using ${size(siteEstimate.usage)} of about `
+        +`${(siteEstimate.quota/1e9).toFixed(1)} GB it may use — its own rounded accounting, which need `
+        +`not agree with the figures above.</p>`
+      :`<p class="muted">This browser does not report a storage estimate, so how much room remains for the data store is unknown here.</p>`);
+
+  const row=(k:string)=>{
+    const name=(saved[k] as {name?:string}|undefined)?.name||workflowTitle(k);
+    const held=Object.hasOwn(saved,k);
+    return `<div class="workflow-row"><span>${esc(name)}</span>`
+      +(k===key?'<span class="open-now">OPEN</span>':'')
+      +`<span class="size">${held?kb(bytes(k)):'not saved'}</span>`
+      +`<button class="button small" data-open-workflow="${esc(k)}"${k===key||!held?' disabled':''}>Open</button>`
+      +`<button class="button small" data-export-workflow="${esc(k)}"${held?'':' disabled'}>Export</button>`
+      +`<button class="button small danger" data-delete-workflow="${esc(k)}">Delete</button></div>`;
+  };
+  const block=(title:string,subject:string,keys:readonly string[],deletable:boolean,id?:string)=>{
+    const total=keys.reduce((n,k)=>n+bytes(k),0);
+    return `<section class="project-block"><h3>${esc(title)}</h3>`
+      +`<p>${esc(subject||'No subject recorded.')} · ${keys.length} ${keys.length===1?'workflow':'workflows'} · ${kb(total)}`
+      +(deletable&&id?` · <button class="text-button" data-export-project="${esc(id)}">Export project</button>`
+        +` · <button class="text-button" data-delete-project="${esc(id)}">Delete project</button>`:'')+`</p>`
+      +(keys.length?keys.map(row).join(''):'<p class="muted">No workflows.</p>')+`</section>`;
+  };
+  const filed=new Set(allProjects().flatMap(p=>p.workflows));
+  const unfiled=Object.keys(saved).filter(k=>!filed.has(k));
+  $('#projects-list').innerHTML=
+    stored.map(p=>block(p.name,p.subject,p.workflows,true,p.id)).join('')
+    +(unfiled.length?block('In no project','Workflows and worked examples that belong to no investigation.',unfiled,false):'')
+    // A worked example appears only once it has been opened and therefore saved: a block saying
+    // "no workflows" for each of seven published projects is a list of what is NOT on this device.
+    +BUILT_IN_PROJECTS.map(p=>({project:p,keys:p.workflows.filter(k=>Object.hasOwn(saved,k))}))
+      .filter(({keys})=>keys.length)
+      .map(({project,keys})=>block(`${project.name} · worked example`,project.subject,keys,false)).join('');
+}
+/** A PROJECT AS ONE FILE. *"Where is the export project button?"* -- 2026-10-21. There was none:
+ *  Export and Encrypted ZIP are both workflow-scoped, so four workflows about one province moved
+ *  as four unrelated files with nothing recording that they belonged together. */
+async function exportProject(id:string){
+  if(busy)return;
+  const project=readProjects().find(p=>p.id===id);
+  if(!project)return;
+  try{
+    save();
+    const saved=readSavedWorkflows();
+    const held=project.workflows.filter(key=>Object.hasOwn(saved,key));
+    if(!held.length)throw new Error('That project has no saved workflow to export.');
+    const workflows:{key:string;document:unknown}[]=[];
+    const validated:Workflow[]=[];
+    for(const key of held){
+      // The OPEN canvas is exported as it stands, not as it was last written: the practitioner
+      // sees it in front of them and would not expect an older copy in the file.
+      const source=key===storageKey(workflow)?workflow:validateWorkflow(structuredClone(saved[key]));
+      validated.push(source);
+      workflows.push({key,document:await workflowDocument(source)});
+    }
+    const document=projectDocument({...project,workflows:held},workflows);
+    const loose=unbundledReferences(validated);
+    download(`${project.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-project.json`,JSON.stringify(document,null,2));
+    toast(`"${project.name}" exported: ${held.length} ${held.length===1?'workflow':'workflows'}.`
+      +(loose?` ${loose} downloaded ${loose===1?'dataset is':'datasets are'} kept on this device by reference and `
+        +`${loose===1?'is':'are'} not in the file; whoever opens it downloads ${loose===1?'it':'them'} again.`:''),
+      {tone:loose?'warning':undefined});
+  }catch(error){toast(errorMessage(error),{tone:'failure'});}
+}
+/** Open one. The project is recreated with a key of its own for every workflow, so importing a
+ *  project twice makes two projects rather than overwriting the first. */
+async function importProjectDocument(raw:unknown){
+  const document=readProjectDocument(raw);
+  const existing=readProjects();
+  const project=newProject(document.project.name,document.project.subject,allProjects());
+  const keys:string[]=[];
+  const workflows:Workflow[]=[];
+  for(const entry of document.workflows){
+    const next=await importWorkflowDocument(entry.document,validateWorkflow);
+    const key=mintWorkflowKey(project.id,[...existing,{...project,workflows:keys}]);
+    keys.push(key);
+    workflows.push({...next,projectId:project.id,workflowKey:key,exampleId:undefined});
+  }
+  project.workflows=keys;
+  if(!writeProjects([...existing,project]))throw new Error('The project could not be recorded on this device.');
+  // Every workflow is written before any is opened, so a refusal half way through does not leave a
+  // project claiming workflows that were never saved.
+  try{
+    const store=JSON.parse(localStorage.getItem(WORKSPACES)||'{}');
+    for(const next of workflows)store[storageKey(next)]=dehydrateWorkflow(next,()=>false);
+    localStorage.setItem(WORKSPACES,JSON.stringify(store));
+    forgetSavedWorkflows();
+  }catch(error){
+    writeProjects(readProjects().filter(p=>p.id!==project.id));
+    throw new Error(saveFailureMessage(`"${project.name}" could not be saved on this device, so it was not imported.`));
+  }
+  workflow=workflows[0];
+  selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
+  save();renderProjectOptions();renderLibrary();renderResults();render();switchView('workflow');
+  toast(`"${project.name}" imported with ${keys.length} ${keys.length===1?'workflow':'workflows'}.`);
 }
 function renderAssignProject(){
   const select=$('#assign-project'),key=storageKey(workflow),builtIn=projectOfWorkflow(key,BUILT_IN_PROJECTS),stored=readProjects();
@@ -2982,6 +3380,38 @@ function assignCurrentWorkflow(projectId:string){
 $('#assign-project').onchange=e=>assignCurrentWorkflow(control(e).value);
 $('#new-project').onclick=openProjectDialog;
 $('#add-workflow').onclick=()=>addWorkflowToProject();
+$('#delete-workflow').onclick=deleteCurrentWorkflow;
+$('#storage-status').onclick=openProjectsDialog;
+$('#projects-dialog-close').onclick=()=>$('#projects-dialog').close();
+$('#storage-meter').addEventListener('click',async event=>{
+  if((event.target as HTMLElement).id!=='drop-unreferenced')return;
+  const loose=unreferencedPayloads();
+  if(!loose.digests.length)return;
+  if(!confirm(`Remove ${loose.digests.length} payload${loose.digests.length===1?'':'s'} that no workflow refers to, freeing about ${(loose.bytes/1e6).toFixed(1)} MB? This cannot be undone.`))return;
+  for(const digest of loose.digests)await dropPayload(digest);
+  renderProjectsList();renderStorageStatus();
+  toast(`${loose.digests.length} unreferenced payload${loose.digests.length===1?'':'s'} removed.`);
+});
+// One listener on the list, because its rows are rebuilt on every change inside the dialog.
+$('#projects-list').addEventListener('click',async event=>{
+  const button=(event.target as HTMLElement).closest('button');
+  if(!button)return;
+  const {openWorkflow,exportWorkflow,deleteWorkflow:removeKey,deleteProject:removeProject}=button.dataset;
+  if(openWorkflow){$('#projects-dialog').close();loadExample(openWorkflow);return;}
+  if(removeProject){deleteProject(removeProject);return;}
+  if(button.dataset.exportProject){await exportProject(button.dataset.exportProject);return;}
+  if(removeKey){deleteWorkflow(removeKey);renderProjectsList();renderStorageStatus();return;}
+  if(exportWorkflow){
+    try{
+      const saved=readSavedWorkflows()[exportWorkflow];
+      if(!saved)throw new Error('There is nothing saved under that workflow.');
+      const exported=await workflowDocument(validateWorkflow(structuredClone(saved)));
+      const name=((saved as {name?:string}).name||exportWorkflow).replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+      download(`${name}.json`,JSON.stringify(exported,null,2));
+      toast(`"${(saved as {name?:string}).name||exportWorkflow}" exported to a file. A workflow in a file is not at risk from a full store.`);
+    }catch(error){toast(errorMessage(error),{tone:'failure'});}
+  }
+});
 $('#workflow-template').onchange=e=>{
   const select=control(e) as HTMLSelectElement,source=select.value;
   select.value='';
@@ -3046,7 +3476,12 @@ if(new URLSearchParams(location.search).get('catalog')==='1'||location.hash==='#
 $('#encrypted-export').onclick=()=>{try{openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow);}catch(error){toast(errorMessage(error));}};
 function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
 $('#export-button').onclick=async()=>{try{const exported=await workflowDocument(workflow);download(exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json':'fieldwork-workflow.json',JSON.stringify(exported,null,2));}catch(error){toast(errorMessage(error));}};$('#import-button').onclick=()=>$('#workflow-file').click();
-$('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>MAX_BUNDLE_BYTES)throw new Error('Workflow or bundle exceeds the 20 MB import limit.');if(file.name.toLowerCase().endsWith('.zip')){openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow,file);control(e).value='';return;}const next=await importWorkflowDocument(JSON.parse(await file.text()),validateWorkflow);const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes.find(n=>n.type==='output')?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}catch(err){toast(errorMessage(err));}control(e).value='';};
+$('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>MAX_BUNDLE_BYTES)throw new Error('Workflow or bundle exceeds the 20 MB import limit.');if(file.name.toLowerCase().endsWith('.zip')){openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow,file);control(e).value='';return;}
+  const parsed=JSON.parse(await file.text());
+  // A PROJECT DOCUMENT comes in through the same control: a practitioner handed a file should not
+  // have to know which of two buttons made it.
+  if((parsed as {schema?:string})?.schema===PROJECT_DOCUMENT_SCHEMA){await importProjectDocument(parsed);control(e).value='';return;}
+  const next=await importWorkflowDocument(parsed,validateWorkflow);const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes.find(n=>n.type==='output')?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}catch(err){toast(errorMessage(err));}control(e).value='';};
 $('#geojson-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>5e6)throw new Error('GeoJSON file is too large (5 MB maximum).');const data=validateGeoJSON(JSON.parse(await file.text()));change(w=>{const n=w.nodes.find(n=>n.id===importNode);if(!n)throw new Error('Source node no longer exists.');updateParam(w,n.id,'data',data);});toast('Local geographic data loaded. Run to update results.');}catch(err){toast(errorMessage(err));}control(e).value='';};
 $('#download-evidence').onclick=async()=>{if(!result||!runWorkflow){toast('Run the workflow first.');return;}const snapshot=structuredClone({schema:'fieldwork/run/1',workflow:runWorkflow,...result});try{const attachments=await exportEvidenceFiles(snapshot.workflow);download('fieldwork-run-receipt.json',JSON.stringify({...snapshot,...(attachments.length?{attachments}:{})},null,2));}catch(error){toast(errorMessage(error));}};
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view!));
@@ -3132,6 +3567,16 @@ if('serviceWorker' in navigator){
   }).catch(()=>{$('#offline-status').textContent='Offline cache unavailable';});
   navigator.serviceWorker.addEventListener('controllerchange',askBuild);
 }else{$('#offline-status').textContent='Offline cache unsupported';}
+// A row for a workflow that was never saved is cleared on arrival, once, and said out loud.
+{
+  const ghosts=pruneGhostWorkflows();
+  if(ghosts){
+    renderProjectOptions();render();
+    setTimeout(()=>toast(`${ghosts} workflow ${ghosts===1?'row was':'rows were'} listed in a project with nothing saved under `
+      +`${ghosts===1?'it':'them'} — a workflow registered and then refused by a full store. `
+      +`${ghosts===1?'It has':'They have'} been removed; no work was in ${ghosts===1?'it':'them'}.`,{tone:'notice'}),600);
+  }
+}
 if(canAutoRun(workflow))setTimeout(run,350);
 
 setInterval(()=>{const button=document.querySelector<HTMLButtonElement>('#download-network'),message=document.querySelector<HTMLElement>('#network-download-status');if(!button||!message)return;const state=networkDownloadStatus();button.disabled=busy||state.inFlight||state.waitSeconds>0;message.textContent=state.inFlight?(networkDownloadPhase??'One OSM request is in progress.'):networkDownloadError?networkDownloadError+(state.waitSeconds?' Next attempt available in '+state.waitSeconds+' seconds.':''):state.waitSeconds?'Next OSM download available in '+state.waitSeconds+' seconds. Saved graphs are available offline.':'Ready for one bounded OSM request; no automatic refresh.';},1000);

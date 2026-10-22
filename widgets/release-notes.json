@@ -7,6 +7,7 @@
   "changed",
   "enhancement",
   "feature",
+  "fix",
   "initial",
   "major",
   "minor",
@@ -459,31 +460,36 @@
    "migrationFrom": []
   },
   "network_input": {
-   "version": "0.5.0",
-   "released": "2026-10-20",
+   "version": "0.7.0",
+   "released": "2026-10-21",
    "changes": [
     {
-     "kind": "feature",
-     "description": "Before downloading, the widget asks the service how much street data is in the area -- Overpass answers `out count;` with the number of ways a query would return -- and refuses an area beyond what it normalizes with that number, after ONE request instead of six. A study area spanning the DRC-Uganda border, some 600 km across, previously cost three instances two attempts each and ended on HTTP 504, which is the service saying it gave up computing the answer. A count the service itself declines to compute is treated the same way and says so. This replaces nothing that was removed on purpose: the client-side span cap refused an area for its WIDTH before anything was measured, while a count is a measurement the service makes."
+     "kind": "major",
+     "description": "A street network is no longer refused for its SIZE. The ceiling came from the graph knob, and the number behind it was measured on ISOCHRONE construction in central London in 2026-10-13 -- enforced on every network, in every workflow, whether or not an isochrone exists in it, and enforced after the response was downloaded, parsed and normalized, where a refusal protects nothing and discards everything. A province downloaded on 2026-10-21 was thrown away at 1,837,939 junctions and 3,755,832 directed segments for that reason. What bounds a download is the byte cap the practitioner sets, before the bytes are spent; what bounds an isochrone is the isochrone's own worker, boot check and timeout; what bounds a saved graph is the store, which reports its own refusal. The 30,000-vertex cap on edge geometry went with it, for the same reason. The panel drawing now samples at 20,000 segments and the caption says so, because a 292-pixel figure is a limit on a picture and not on a dataset.",
+     "breaking": true
+    },
+    {
+     "kind": "fix",
+     "description": "The last size cap went: network provenance was refused over 100,000 characters, and the record carries the study area's own outline, so a province's 7,759 vertices failed it -- measured after the response had been downloaded and parsed, like the others. Provenance is now checked for being a record and not for its length. A download the workflow then refuses also takes its payload back out of the store: the bytes were written before the workflow was asked, so every late refusal left a payload nothing referred to, and a device was measured holding 416.2 MB beside a widget reading 0 nodes."
     },
     {
      "kind": "feature",
-     "description": "A downloaded or uploaded street network is kept in the browser's large store and the workflow keeps only a digest that points at it. Before this, the graph was written inside the workflow into a store holding 5,226,496 bytes, written twice on every save, so a network for a town-sized area could not be saved at all -- the download succeeded, the save was refused, and the graph was discarded. A graph is now written to the store BEFORE the workflow records the reference, so a saved workflow never reloads into a missing payload. Where the large store is unavailable or refuses a write, the widget says so above the Download button rather than leaving it to be discovered, because a fallback nobody is told about turns the larger ceiling back into the smaller one while the application goes on reporting that everything was saved."
+     "description": "The service is asked to count what it would SEND, not just the ways it would match, and the download is refused on that count with the graph limit it would need. Counting ways alone left an area whose response was over 60 MB sitting inside every limit, because most of a street download is the nodes the ways reference. A refusal now reads: this area holds N ways and M elements, about X MB at the measured 150 bytes each, set the graph limit to Y junctions or draw a smaller area -- and says plainly that a prediction from two small extents is not a measurement of a large one. Nothing is downloaded and nothing of the service's work is spent to learn it."
     },
     {
      "kind": "feature",
-     "description": "A download is now made for walking or for driving, and the two are different graphs rather than different labels. Walking keeps footways, paths and steps and reads the one-way restrictions that apply on foot; driving keeps motorways and trunk roads, drops footways, paths and steps, honours vehicle one-ways and roundabouts, and reads motor_vehicle and motorcar restrictions. The highway exclusions follow OSMnx's drive filter so a graph here and a graph from OSMnx of the same area are comparable. The mode is part of the request, so a cached walking graph is never served to a driving download; it is saved with the graph, shown on the widget, and written into the receipt; and a widget further down the workflow that asks for a mode the graph cannot carry is refused instead of answered. Walking stays the default, so an existing workflow downloads what it always did."
+     "description": "A refusal reports what the OTHER TRAVEL MODE would cost, counted the same way. At province scale the mode decides whether there is a download at all -- footways, paths and steps are most of what a walking network holds -- and the practitioner was choosing it blind: 'At the province level we are not even looking at walking mode. It will be driving mode.' When an area is refused, one more count request answers whether the other mode fits at the current setting, and the message says which mode to switch to or that neither fits."
     },
     {
-     "kind": "feature",
-     "description": "Downloads are judged on what they cost rather than on how wide the area is: the fixed 6 km envelope is gone, and the byte and feature limits are their own numbers instead of following the isochrone graph limit. The default graph size is 50,000 network nodes, which admits a real town. Each instance's /api/status is read before downloading -- free slots, rate limit, and when the next slot frees -- and a busy service is waited for rather than treated as a failure. Responses are kept on the device and reused for the same query; pressing Download again when a network is already saved fetches a fresh one. The widget shows endpoint status before a download, progress on the button while it runs, which instance served the saved graph, and why a download failed."
+     "kind": "changed",
+     "description": "An acquired ADM1 or ADM0 study area defaults the travel mode to DRIVING. The default used to be walking everywhere, which is right for a neighbourhood and wrong for a province: nobody walks across one, and a walking network is mostly footways, paths and steps, which is most of what makes a province's download too large. The level is read from the boundary's own identifier, so it applies only where a published unit was acquired; a drawn box has no level and stays on walking, because a box can be any size and its extent is not evidence of intent. An explicit choice is never overridden, and the panel says why the default is what it is."
     },
     {
-     "kind": "initial",
-     "description": "Reusable local catchment primitive; see docs/experiments/32-john-snow-primitives.md. Bounded prototype, not an exact notebook replay."
+     "kind": "fix",
+     "description": "The panel no longer quotes the response and feature limits for a graph limit of 2,000 when the widget is set to something else; it states them for the current setting."
     }
    ],
-   "breaking": false,
+   "breaking": true,
    "migrationFrom": []
   },
   "output": {

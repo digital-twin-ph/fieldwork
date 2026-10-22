@@ -59,3 +59,25 @@ export function diveDeeperPanel(nodeType:string,esc:(value:string)=>string):stri
     +'<p class="muted">Opens the notebook in your browser and runs it there. Needs a connection.</p>'
     +'</details>';
 }
+/** THE TWO LINKS A LEARNER NEEDS, where a learner looks and at the size of a control.
+ *
+ *  The practitioner, 2026-10-21: *"The buttons for Deeper Dive and Manual are very tiny when they
+ *  are the most important links for users and learners."* They were: the manual was a 10-pixel
+ *  green text-button and the notebooks were a collapsed `<summary>`, both sitting wherever the
+ *  panel's alerts happened to leave them. They are now one block in one place -- directly under
+ *  the widget's title, before its controls -- so the panel has the same shape for every widget and
+ *  the way in is the first thing on it.
+ *
+ *  A widget with neither renders nothing rather than an empty frame, and the Dive Deeper details
+ *  below is kept for the notebooks' own descriptions: this is the entry, not a replacement. */
+export function learnBlock(nodeType:string,esc:(value:string)=>string,manual:string):string{
+  const entries=diveDeeperFor(nodeType);
+  if(!manual&&!entries.length)return '';
+  const lab=entries[0];
+  return `<nav class="learn-block" aria-label="Learn about this widget">`
+    +(manual?`<button class="button learn-link" id="open-manual" data-manual="${esc(nodeType)}">`
+      +`<span aria-hidden="true">\u25a4</span> Manual</button>`:'')
+    +(lab?`<a class="button learn-link" href="${lab.url}" target="_blank" rel="noopener noreferrer">`
+      +`<span aria-hidden="true">\u2697</span> Dive deeper${entries.length>1?` (${entries.length})`:''}</a>`:'')
+    +`</nav>`;
+}

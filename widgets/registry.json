@@ -557,7 +557,7 @@
   {
    "id": "urn:fieldwork:widget:network_input",
    "nodeType": "network_input",
-   "currentVersion": "0.5.0",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -583,6 +583,16 @@
      "version": "0.5.0",
      "path": "widgets/releases/network_input/0.5.0.json",
      "sha256": "facd39d245c4dfde24886321bfb633e8ce6f2e6110518062b42dae2ef7d47e27"
+    },
+    {
+     "version": "0.6.0",
+     "path": "widgets/releases/network_input/0.6.0.json",
+     "sha256": "85fd44725be8c20794211c96cf8895523d544ff098c724e9064c8ebef3bf0517"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/network_input/0.7.0.json",
+     "sha256": "ab541345bb6a7adbdb01fb912f4e7c06986bed90bdcdc6ab8466c55ebc9f2e82"
     }
    ]
   },

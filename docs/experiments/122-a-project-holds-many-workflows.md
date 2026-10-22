@@ -1,6 +1,6 @@
 # 122 · A project holds many workflows
 
-_Created 2026-10-19 · Updated 2026-10-19_
+_Created 2026-10-19 · Updated 2026-10-21_
 
 **Status:** tried — the project exists as an entity and groups the worked examples. What it does
 not yet do is share data between the workflows it holds, which is the half that pays for itself.
@@ -119,7 +119,54 @@ it honest. And *No project* has to be offered **always**, not only while the ope
 none: without it an unfiled workflow becomes unreachable the moment a project is selected, which
 is a navigation trap rather than a tidy list.
 
+## A list nobody could prune, 2026-10-21
+
+A screenshot of nine rows, with the report: *"The import workflow template does not seem to work.
+Now I have a bunch of workflows I do not need. We do not have a way to delete workflows."* Then,
+minutes later: *"test-project/w*, and *-template workflows I find in the list do not load at all on
+canvas."* Three defects were sitting behind that one list, and the second message identified the
+one the first could only describe.
+
+**A key is registered before the workflow is saved, and the registration stood whichever way the
+save went.** `writeProjects` adds `project/wN` to the project; `save()` then writes the workflow —
+and on a full store returns `false`, which nothing read. The project then holds a key with nothing
+saved under it. `renderProjectOptions` labels a row from the saved workflow's name and falls back
+to `workflowTitle(key)`, which returns the key itself for anything outside the closed example
+vocabulary, so the row reads `test-project/w7`. Choosing it reached `loadExample`, which found
+nothing saved, found the key was not an example, and assigned the canvas to itself: the row did
+nothing at all, which is what the practitioner saw. The `· template` rows are the same ghost from
+the same cause, which is why they behaved identically.
+
+This is the full store of [experiment 121](121-storage-beyond-local-storage.md) surfacing as a *project* defect rather than a storage one. The
+practitioner was not told the store was full — that was the same day's other fix — so what they
+saw was a workflow that half-existed.
+
+**A template always minted a workflow.** The ask on 2026-10-21 was *"can I import the North Kivu
+workflow into this blank one?"* — said while sitting on a blank canvas already named for the next
+province. The build answered the general question instead: it always created a workflow and named
+it after the source, so the practitioner ended up with their empty Ituri canvas, a third workflow
+called "Health Facilities North Kivu · template", and no way to remove either. The method was
+copied correctly and delivered to the wrong place. A template now fills the open canvas when that
+canvas is empty and keeps the name it was given, and mints a workflow only when the canvas holds
+work.
+
+**And deletion did not exist.** A project could be deleted since 2026-10-20 and a workflow could
+not, so the only gesture that removed anything removed the grouping and kept all the workflows —
+the opposite of what was wanted. The asymmetry was invisible while the model was new and every
+workflow was one somebody had just made on purpose.
+
+**Keys were minted by counting.** `workflows.length + 1` mints a key the project already holds as
+soon as one workflow has been removed, so the first deletion built would have made the next
+addition overwrite a neighbour. Minting now walks past what is taken.
+
 ## What this does not establish
+
+- **That the practitioner's nine rows were all ghosts.** Five of them read as names, so those are
+  saved workflows they no longer want, and deletion is the control for those. Which of the nine
+  were registrations without workflows has not been read off their device.
+- **That a full store was the only way to make one.** It is the cause that is proven to have
+  occurred here and the one the code shows; `writeProjects` can also fail on its own, and a key
+  could have been left behind by something not yet looked at.
 
 - **It does not share any data.** The four copies of Snow's points are still four copies, and the
   6.5% is still being paid. Moving data up to the project means `point_input` holding a

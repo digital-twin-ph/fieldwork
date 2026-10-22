@@ -1,6 +1,6 @@
 import type {Boundary,Position} from './types.js';
 import type {Network} from './catchments.js';
-import {validateNetwork,graphLimits,downloadLimits} from './catchments.js';
+import {validateNetwork,graphLimits,downloadLimits,BYTES_PER_NODE,BYTES_PER_FEATURE,NETWORK_NODE_LIMIT_MAX} from './catchments.js';
 import {geometryBounds} from './study-area.js';
 import {isRecord} from './guards.js';
 import {pacedNetworkDownload,deferNetworkDownload,chargeNetworkDownload} from './network-throttle.js';
@@ -308,7 +308,7 @@ const SERVER_ERRORS=[500,502,503,504];
  *  anything; the third carries on to the download, because a probe that could not be taken is not
  *  evidence about the area. */
 export async function countWays(url:string,query:string,fetcher:typeof fetch,signal?:AbortSignal):
-  Promise<{kind:'counted';ways:number}|{kind:'refused';status:number}|{kind:'unknown'}>{
+  Promise<{kind:'counted';ways:number;elements:number}|{kind:'refused';status:number}|{kind:'unknown'}>{
   try{
     const response=await fetcher(url,{method:'POST',
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
@@ -319,23 +319,37 @@ export async function countWays(url:string,query:string,fetcher:typeof fetch,sig
     // hiccuped. 504 is the gateway saying the query ran past its time, which is what an area
     // beyond the service's reach produces.
     if(!response.ok)return response.status===504?{kind:'refused',status:504}:{kind:'unknown'};
-    const ways=readOverpassCount(await response.json().catch(()=>null));
-    return ways===null?{kind:'unknown'}:{kind:'counted',ways};
+    const counted=readOverpassCounts(await response.json().catch(()=>null));
+    return counted===null?{kind:'unknown'}:{kind:'counted',...counted};
   }catch{return {kind:'unknown'};}
 }
 export function countQuery(boundary:Boundary,marginM:number,maxNodes?:number,mode:NetworkTravelMode='walking'){
   const request=osmQuery(boundary,marginM,maxNodes,mode);
   const [w,s,e,n]=request.bounds,filter=modeFilter(mode).highways.join('|');
+  // `>;` BEFORE THE COUNT, so what is counted is what would be SENT. The count asked for ways
+  // alone, and a download returns the ways plus every node they reference -- which is most of the
+  // bytes. A ways-only count could therefore sit well inside every limit for an area whose
+  // response is 60 MB, which is exactly what happened on 2026-10-21. Recursing costs the service
+  // more than counting ways and far less than serializing the result, and the count still returns
+  // in one request whose timeout is its own.
   return {...request,query:`[out:json][timeout:25];way["highway"~"^(${filter})$"]`
-    +`(${s.toFixed(7)},${w.toFixed(7)},${n.toFixed(7)},${e.toFixed(7)});out count;`};
+    +`(${s.toFixed(7)},${w.toFixed(7)},${n.toFixed(7)},${e.toFixed(7)});>;out count;`};
 }
 /** The number of ways the query would return, or null when the answer is not a count. */
 export function readOverpassCount(raw:unknown):number|null{
+  return readOverpassCounts(raw)?.ways??null;
+}
+/** What the service says it would send: the ways, and every element including the nodes they
+ *  reference. The second is the one that predicts a response size; the first is still read
+ *  because a ways figure is what a practitioner recognises as "streets". */
+export function readOverpassCounts(raw:unknown):{ways:number;elements:number}|null{
   if(!isRecord(raw)||!Array.isArray(raw.elements))return null;
   const first=raw.elements[0];
   if(!isRecord(first)||first.type!=='count'||!isRecord(first.tags))return null;
-  const ways=Number(first.tags.ways??first.tags.total);
-  return Number.isFinite(ways)?ways:null;
+  const total=Number(first.tags.total),ways=Number(first.tags.ways);
+  const elements=Number.isFinite(total)?total:ways;
+  if(!Number.isFinite(elements))return null;
+  return {ways:Number.isFinite(ways)?ways:elements,elements};
 }
 function metres(a:Position,b:Position){const r=Math.PI/180,dlat=(b[1]-a[1])*r,dlon=(b[0]-a[0])*r,h=Math.sin(dlat/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dlon/2)**2;return 12742017.6*Math.asin(Math.sqrt(Math.min(1,h)));}
 export function networkFromOSM(raw:unknown,maxNodes?:number,mode:NetworkTravelMode='walking'):Network{
@@ -533,11 +547,48 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     }
     const counted=probes.find(outcome=>outcome.kind==='counted')??probes[probes.length-1]??{kind:'unknown' as const};
     const refusedByAll=probes.length>1&&probes.every(outcome=>outcome.kind==='refused');
-    if(counted.kind==='counted'&&counted.ways>maxFeatures)
-      throw new Error(`This area holds ${counted.ways.toLocaleString()} street ways, and this `
-        +`widget normalizes up to ${maxFeatures.toLocaleString()} features. ${live[0].operator} was `
-        +`asked to count them rather than to send them, so nothing large was downloaded. Draw a `
-        +`smaller area, raise the graph limit, or upload a network file prepared outside the browser.`);
+    if(counted.kind==='counted'){
+      // WHAT IT WOULD COST, from the service's own count, before a byte of it is sent. Raising the
+      // knob and downloading again until it fits spends the whole response each time -- 60 MB of a
+      // donated service, twice, on 2026-10-21 -- and never says how much would be enough. The
+      // count does, within the accuracy of a measured 150 bytes per element.
+      const predicted=counted.elements*BYTES_PER_FEATURE;
+      const needed=Math.ceil(Math.ceil(predicted/BYTES_PER_NODE)/1000)*1000;
+      const {maxBytes}=downloadLimits(maxNodes);
+      if(counted.elements>maxFeatures||predicted>maxBytes){
+        // THE OTHER MODE, counted, because at this scale it is usually the question. The
+        // practitioner, 2026-10-21, on a province that will not fit: *"At the province level we are
+        // not even looking at walking mode. It will be driving mode."* Walking keeps footways,
+        // paths and steps; driving drops all three. Saying "too large" without saying what the
+        // mode costs leaves the practitioner to discover by downloading, which is what this whole
+        // change exists to stop. One more COUNT, only when the answer is already a refusal.
+        const other:NetworkTravelMode=mode==='driving'?'walking':'driving';
+        let alternative='';
+        const otherCount=await countWays(live[0].url,countQuery(boundary,marginM,maxNodes,other).query,fetcher,freshAttempt());
+        if(otherCount.kind==='counted'){
+          const otherBytes=otherCount.elements*BYTES_PER_FEATURE;
+          alternative=` The same area in ${other} mode holds ${otherCount.ways.toLocaleString()} ways `
+            +`and ${otherCount.elements.toLocaleString()} elements, about ${(otherBytes/1e6).toFixed(1)} MB`
+            +(otherBytes<=maxBytes&&otherCount.elements<=maxFeatures
+              ?`, which this download accepts at the current setting \u2014 change Travel mode to `
+                +`${other[0].toUpperCase()}${other.slice(1)} and download again.`
+              :`, which is also past what this download accepts.`);
+        }
+        throw new Error(`This area holds ${counted.ways.toLocaleString()} street ways and `
+          +`${counted.elements.toLocaleString()} elements in all, which is about `
+          +`${(predicted/1e6).toFixed(1)} MB at the measured ${BYTES_PER_FEATURE} bytes each. This `
+          +`download accepts ${(maxBytes/1e6).toFixed(1)} MB and normalizes `
+          +`${maxFeatures.toLocaleString()} features. ${live[0].operator} was asked to COUNT them `
+          +`rather than to send them, so nothing was downloaded and nothing was spent. `
+          +`${needed<=NETWORK_NODE_LIMIT_MAX
+            ?`Set the graph limit to ${needed.toLocaleString()} junctions to accept it`
+            :`A graph limit of about ${needed.toLocaleString()} junctions would be needed, which is past the `
+              +`${NETWORK_NODE_LIMIT_MAX.toLocaleString()} this widget allows`}, `
+          +`or draw a smaller study area.${alternative} A prediction is not a measurement: the rate `
+          +`comes from two extents of a few megabytes, and this area is larger than both.`);
+      }
+      onPhase?.(`${counted.ways.toLocaleString()} ways, about ${(predicted/1e6).toFixed(1)} MB\u2026`);
+    }
     if(refusedByAll)
       throw new Error(`Two instances could not even COUNT the streets in this area within their `
         +`own time limits, which is what they say when an area is beyond what they will process. `
@@ -591,18 +642,37 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     const sizes=(size:number)=>asMB(size)===asMB(maxBytes)
       ?[`${size.toLocaleString('en')} bytes`,`${maxBytes.toLocaleString('en')} bytes`]
       :[`${asMB(size)} MB`,`${asMB(maxBytes)} MB`];
-    const tooLarge=(size:number)=>{
+    /** `declaredSize` is what the service said it would send; a STREAM that was cut at the cap has
+     *  no size, only a floor, and saying "is 30.0 MB" of an answer nobody read to the end states a
+     *  measurement that was not made. Reported 2026-10-21 on Ituri Province, which stopped at the
+     *  cap with no content-length: the message named a number to raise and left the practitioner
+     *  to guess what to raise it to. */
+    const tooLarge=(size:number,measured:boolean)=>{
       const [got,limit]=sizes(size);
-      return new Error(`The street data for this area is ${got}, over the ${limit} this download `
-        +`accepts, so nothing was changed. The limit follows the graph limit on the Street network `
-        +`widget: raise it to pull more, or draw a smaller study area. Street density matters more `
-        +`than extent here -- a dense city block can exceed this while a sparse district many `
-        +`times the size does not.`);
+      // What the knob would have to say to accept it. Known only when the service declared a
+      // length: for a cut stream the whole size is unknown, so the advice is to raise it and
+      // try again rather than a number with nothing behind it.
+      const needed=Math.ceil(size/BYTES_PER_NODE);
+      const setting=measured
+        ? `Raise the graph limit on this widget to about ${(Math.ceil(needed/1000)*1000).toLocaleString('en')} junctions to accept it, `
+        : `The download was stopped at the limit, so how much more there is was never read -- `
+          +`raising the graph limit roughly doubles what the next attempt accepts for each doubling of the knob, `;
+      return new Error(`The street data for this area is ${measured?got:`over ${limit}`}, `
+        +`${measured?`over the ${limit} this download accepts`:'which is what this download accepts'}, `
+        +`so nothing was changed and nothing was saved. ${setting}or draw a smaller study area. `
+        +`Street density matters more than extent here -- a dense city block can exceed this while `
+        +`a sparse district many times the size does not. A whole province is usually past what one `
+        +`request can carry.`);
     };
-    if(Number(response.headers.get('content-length'))>maxBytes)throw tooLarge(Number(response.headers.get('content-length')));
+    if(Number(response.headers.get('content-length'))>maxBytes)throw tooLarge(Number(response.headers.get('content-length')),true);
     if(!response.body)throw new Error('OSM response has no readable body.');const reader=response.body.getReader(),chunks:Uint8Array[]= [];let bytes=0;
     const declared=Number(response.headers.get('content-length'))||0;
-    try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>maxBytes){controller.abort();throw tooLarge(bytes);}chunks.push(value);onPhase?.(declared?`Receiving \u2014 ${(bytes/1e6).toFixed(1)} of ${(declared/1e6).toFixed(1)} MB`:`Receiving \u2014 ${(bytes/1e6).toFixed(1)} MB`,declared?bytes/declared:undefined);}}finally{await reader.cancel().catch(()=>{});}
+    try{for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>maxBytes){controller.abort();
+      // CHARGED FOR WHAT WAS RECEIVED, although none of it is kept. The service did the work and
+      // sent the bytes; a refusal here used to charge nothing, so the next attempt was available
+      // at once and the failing request could be repeated without pause.
+      chargeNetworkDownload(bytes,pauseMs);
+      throw tooLarge(bytes,declared>0);}chunks.push(value);onPhase?.(declared?`Receiving \u2014 ${(bytes/1e6).toFixed(1)} of ${(declared/1e6).toFixed(1)} MB`:`Receiving \u2014 ${(bytes/1e6).toFixed(1)} MB`,declared?bytes/declared:undefined);}}finally{await reader.cancel().catch(()=>{});}
     // Charged once the size is known: a larger request earns a longer pause.
     chargeNetworkDownload(bytes,pauseMs);
     const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const body=new TextDecoder().decode(joined);const raw=JSON.parse(body);

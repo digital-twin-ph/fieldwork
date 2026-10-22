@@ -22,6 +22,23 @@ import {prepareEdges} from './network-edges.js';
  *  module is the one a worker can see. */
 export const NETWORK_TRAVEL_MODES=['walking','driving'] as const;
 export type NetworkTravelMode=typeof NETWORK_TRAVEL_MODES[number];
+/** The mode a study area of this LEVEL should default to.
+ *
+ *  The practitioner, 2026-10-21, on a province that would not download: *"At the province level we
+ *  are not even looking at walking mode. It will be driving mode."* Then: *"Change the default to
+ *  driving at ADM1 level."* A walking network keeps footways, paths and steps, which is most of
+ *  what it holds, and nobody walks across a province: at ADM1 and coarser the walking graph is
+ *  both the wrong question and the one that will not fit.
+ *
+ *  The level is read from the acquired boundary's own identifier -- `COD-ADM1-63176286` -- so this
+ *  applies only where a published unit was acquired and says which level it is. A drawn box has no
+ *  level and keeps walking, because a box can be any size and its extent is not evidence of intent.
+ *  An explicit choice always wins: this resolves what an UNSET parameter means, and setting the
+ *  control writes a value that is never overridden. */
+export const defaultTravelMode=(boundaryID?:string):NetworkTravelMode=>{
+  const level=/-(ADM[0-9])-/i.exec(boundaryID??'')?.[1]?.toUpperCase();
+  return level==='ADM0'||level==='ADM1'?'driving':'walking';
+};
 export interface Network {nodes:{id:string;coordinates:Position}[];edges:{from:string;to:string;lengthM:number;geometry?:Position[]}[];source:string;provenance?:Record<string,unknown>;limits?:{maxNodes:number;maxEdges:number}}
 
 /** The default graph ceiling, and the only value measured. Raising it is a knob rather than a
@@ -58,7 +75,27 @@ export const NETWORK_NODE_LIMIT=50000;
  *  knob governs both rather than asking a practitioner to calibrate two numbers that move
  *  together. */
 export const SEGMENTS_PER_NODE=2.5;
-export const NETWORK_NODE_LIMIT_MAX=50000;
+/** THE CEILING A PRACTITIONER MAY RAISE IT TO, which until 2026-10-21 was the default itself.
+ *
+ *  So the knob could be lowered and never raised, and the byte cap derived from it -- 50,000 x 600
+ *  = 30.0 MB -- was a hard limit on every download, from a number that was modelled rather than
+ *  met. The practitioner's Ituri Province download stopped at exactly that: *"The street network
+ *  download for Ituri province capped at 30MB and stopped."* And then the argument, which is the
+ *  same one that raised the default from 2,000 on 2026-10-20 and was not carried to the ceiling:
+ *  *"if we can't download street networks for provinces we will never know how far this
+ *  application can go because of an imagined cap."*
+ *
+ *  Nothing here was measured past the isochrone extent at 7.39 MB and 27,181 junctions. A cap that
+ *  stops the measurement is not a safety property; it is the reason the limit stays imagined. So
+ *  the ceiling is one million junctions -- about 600 MB at the padded rate, which the large store
+ *  holds and the service is unlikely to serve in one request anyway -- and what is NOT known above
+ *  the measured range is said on the widget instead of being enforced by a number nobody derived.
+ *  The DEFAULT is unchanged at 50,000, so a practitioner who never touches the knob sees exactly
+ *  the previous behaviour. */
+export const NETWORK_NODE_LIMIT_MAX=1_000_000;
+/** The largest graph this repository has actually downloaded, parsed and drawn. Above it the
+ *  widget warns rather than refuses: the failure is then a measurement. */
+export const NETWORK_MEASURED_NODES=27_181;
 /** What a response costs per junction it finally yields, measured 2026-10-13 on two real extents
  *  with the tightened query:
  *
@@ -71,6 +108,15 @@ export const NETWORK_NODE_LIMIT_MAX=50000;
  *  The multipliers carry roughly double the measured cost as headroom, because a sparse area yields
  *  fewer junctions per byte and must not be refused for it. */
 export const BYTES_PER_NODE=600;
+/** What one returned ELEMENT costs, from the same two measurements: 1.42 MB over 9,458 features is
+ *  150 B, and 7.39 MB over 50,791 is 145 B. Unlike the per-junction figure this one is not padded,
+ *  because it is used to PREDICT a response rather than to bound one: a prediction with headroom
+ *  in it refuses areas that would have fitted. Added 2026-10-21, when a practitioner raised the
+ *  graph limit from 50,000 to 100,000, downloaded 60 MB of a public service's work and had it
+ *  discarded at the cap for the second time: *"Doubling to 100000 did not help."* The service can
+ *  say how many elements are there for the price of one cheap request, and 150 B turns that into
+ *  megabytes, which turns the guess into a number. */
+export const BYTES_PER_FEATURE=150;
 export const FEATURES_PER_NODE=4;
 /** Never tighter than the limits that shipped, so raising the knob can only widen what is accepted
  *  and a practitioner who never touches it sees exactly the previous behaviour. */
@@ -178,27 +224,48 @@ export function validateNetwork(n:Network,maxNodes?:number){
   // Precedence: an explicit argument, then the ceiling the network itself was accepted under, then
   // the default. The middle term is what stops a step downstream of a raised knob from refusing a
   // graph the practitioner deliberately allowed.
-  const limits=graphLimits(maxNodes??n?.limits?.maxNodes??NETWORK_NODE_LIMIT);
+  void graphLimits;void maxNodes;
   if(!n||!Array.isArray(n.nodes)||!Array.isArray(n.edges)||!n.nodes.length||typeof n.source!=='string'||!n.source.trim()||n.source.length>2000)
     throw new Error('A street network needs at least one junction, an array of segments and a source description.');
-  if(n.nodes.length>limits.maxNodes||n.edges.length>limits.maxEdges)
-    throw new Error(`This street network has ${n.nodes.length} junctions and ${n.edges.length} `
-      +`directed segments; the limit is ${limits.maxNodes} and ${limits.maxEdges}. The limit is a `
-      +`knob on the Street network widget, so it can be raised to calibrate against your own `
-      +`machine. Measured 2026-10-13, a 1 km square of central London normalizes to 5,249 `
-      +`junctions and exhausted a 4 GB heap during isochrone construction, so raising it far is `
-      +`untested rather than merely slow. Alternatively use a smaller study area, or simplify the `
-      +`graph before uploading.`);
+  // NO SIZE REFUSAL HERE. There was one, derived from the graph knob, and it refused a street
+  // network for a reason that belongs to a different step: the number it cited was measured on
+  // ISOCHRONE construction in central London, 2026-10-13, where 5,249 junctions exhausted a 4 GB
+  // heap. The practitioner, 2026-10-21, having finally got a province to download and watched it
+  // discarded at 1,837,939 junctions:
+  //
+  //   *"Still did not work, and I don't think the isochrone exercise in London should dictate a
+  //   cap. That is a totally unrelated problem to this one, and an isochrone activity is not even
+  //   assumed at this point."*
+  //
+  // Right on both counts, and the file said so already: the comment above NETWORK_NODE_LIMIT
+  // records that a network which is drawn, snapped to or routed over never meets that cost, and
+  // that the isochrone carries its own worker, boot check and timeout. It then enforced the
+  // isochrone's number on everything anyway.
+  //
+  // Worse, it enforced it HERE -- after the response was downloaded, streamed, parsed and
+  // normalized. A refusal at this point protects nothing: every byte and every allocation has
+  // already been paid for. What bounds a download is the byte cap, which the practitioner sets
+  // and which did its job; what bounds an isochrone is the isochrone; what bounds a saved graph is
+  // the store, which reports its own refusal. A graph is now allowed to be the size the area is.
   const ids=new Set<string>();for(const p of n.nodes){if(!p||!validId(p.id)||ids.has(p.id)||!coordinate(p.coordinates))throw new Error('Network node IDs and CRS84 coordinates must be valid and unique.');ids.add(p.id);}
   let vertices=0;for(const e of n.edges){if(!e||!ids.has(e.from)||!ids.has(e.to)||!Number.isFinite(e.lengthM)||e.lengthM<=0||e.lengthM>100000)throw new Error('Network edges need known endpoints and positive metre lengths.');if(e.geometry){vertices+=e.geometry.length;if(!Array.isArray(e.geometry)||e.geometry.length<2||!e.geometry.every(coordinate))throw new Error('Invalid edge geometry.');}}
-  if(vertices>30000)throw new Error('Network geometry exceeds 30,000 vertices.');
-  if(n.provenance!==undefined&&(!n.provenance||typeof n.provenance!=='object'||Array.isArray(n.provenance)||JSON.stringify(n.provenance).length>100000))throw new Error('Invalid or oversized network provenance.');
+  // The 30,000-vertex cap on edge geometry went with it, for the same reason and in the same
+  // place: a province's ways carry millions of bends, and counting them after they are in memory
+  // is not a guard. `vertices` is still summed, because the loop above validates each one.
+  void vertices;
+  // STRUCTURE, NOT SIZE -- the last of this family. The 100,000-character cap on provenance was
+  // reached on 2026-10-21 by the province download that had just survived every other one: the
+  // record carries the study area's own outline, and 7,759 vertices do not fit in it. Serializing
+  // the record to measure it, after the response is downloaded and parsed, in order to refuse it,
+  // is the same mistake in the same place as the junction cap above.
+  if(n.provenance!==undefined&&(!n.provenance||typeof n.provenance!=='object'||Array.isArray(n.provenance)))
+    throw new Error('Network provenance must be a record of what was requested and from where.');
 }
 export function validateCatchmentNode(n:WorkflowNode){
   if(Object.hasOwn(CATCHMENT_TYPES,n.type)&&(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>100))throw new Error('Name the operation using 1–100 characters.');
   if(n.type==='network_input'){
     if(!n.params.data||!Array.isArray(n.params.data.nodes)||!Array.isArray(n.params.data.edges))throw new Error('Invalid network input.');
-    if(n.params.maxNodes!==undefined&&(!Number.isInteger(n.params.maxNodes)||n.params.maxNodes<500||n.params.maxNodes>NETWORK_NODE_LIMIT_MAX))throw new Error(`Use a graph limit between 500 and ${NETWORK_NODE_LIMIT_MAX} junctions.`);
+    if(n.params.maxNodes!==undefined&&(!Number.isInteger(n.params.maxNodes)||n.params.maxNodes<500||n.params.maxNodes>NETWORK_NODE_LIMIT_MAX))throw new Error(`Use a graph limit between 500 and ${NETWORK_NODE_LIMIT_MAX.toLocaleString('en')} junctions.`);
     if(n.params.pauseSeconds!==undefined&&(!Number.isFinite(n.params.pauseSeconds)||n.params.pauseSeconds<60||n.params.pauseSeconds>900))throw new Error('Use a 60–900 second pause between OSM requests. 60 is the minimum; it can only be raised.');
     if(n.params.data.nodes.length||n.params.data.edges.length)validateNetwork(n.params.data,n.params.maxNodes);
     if(n.params.marginM!==undefined&&(!Number.isFinite(n.params.marginM)||n.params.marginM<0||n.params.marginM>2000))throw new Error('Use a 0–2,000 metre download margin.');

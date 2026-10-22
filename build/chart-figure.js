@@ -1,2 +1,2 @@
-import{a}from"./chunks/chunk-NKUGVNYV.js";import"./chunks/chunk-DGMLEOTP.js";import"./chunks/chunk-IORWB5WE.js";import"./chunks/chunk-KVMUXFPB.js";export{a as standaloneChartSvg};
+import{a}from"./chunks/chunk-EAKWY5PN.js";import"./chunks/chunk-HLWBJI77.js";import"./chunks/chunk-IORWB5WE.js";import"./chunks/chunk-KVMUXFPB.js";export{a as standaloneChartSvg};
 //# sourceMappingURL=chart-figure.js.map

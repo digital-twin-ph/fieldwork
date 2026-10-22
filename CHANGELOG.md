@@ -5,6 +5,143 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **A province-sized network no longer overflows the call stack.** `Math.min(...coordinates)`
+  passes every junction as an argument, so at 1,837,939 of them a 300 MB download ended in
+  "Maximum call stack size exceeded" while computing how much of the study area it covered. The
+  bounds are folded in a loop, and the same spread is gone from the catchment figure, the column
+  histogram and the hull's widest pair.
+
+- **A project exports as one document.** Export and Encrypted ZIP are workflow-scoped, so four
+  workflows about one province travelled as four unrelated files with nothing recording that they
+  belonged together. **Export project**, in the projects list, writes the investigation and every
+  workflow in it as one file — each workflow exactly as its own Export would produce it, bundles
+  included, nothing re-encoded. Opening it through **Import** recreates the project with a key of
+  its own for every workflow, so importing twice makes two projects rather than overwriting the
+  first, and every workflow is written before any is opened. The export says how many datasets are
+  kept on this device by reference and therefore not in the file.
+
+- **A refused edit says so in the failure tone.** The rollback toast used the same green as
+  "saved on this device", so *"Invalid or oversized network provenance"* arrived looking like
+  success.
+- **Network provenance is checked for being a record, not for its length.** The 100,000-character
+  cap was the last of the size refusals that fire after a response has been downloaded and parsed;
+  the record carries the study area's outline, so a province failed it.
+- **A download the workflow refuses takes its payload back out of the store.** The bytes are
+  written before the workflow is asked to accept them, so every late refusal left a payload nothing
+  referred to — a device was measured holding **416.2 MB** beside a Street network widget reading
+  "0 nodes · 0 directed edges". New ones are rolled back, and the projects list reports the ones
+  already there with a control that removes them.
+
+- **The Inspector has one shape, and the way in is the first thing on it.** Every panel now opens
+  with the widget's name, one line of what it does, and a block holding **Manual** and **Dive
+  deeper** at the size of a control — they were a 10-pixel text link and a collapsed summary,
+  placed after whatever alerts a run had raised, so their position moved with the state of the
+  workflow and their size said they were an afterthought.
+- **Commentary is leaving the Inspector, and a ratchet keeps it out.** It is a control surface, not
+  a record: measured at 11,838 characters on 2026-10-20, it had reached 22,855 by 2026-10-21. The
+  Street network panel is cut by two thirds and the longest paragraphs elsewhere with it;
+  `npm run check` now measures what the panels emit against a ceiling in
+  `widgets/inspector-prose.json` that may fall and may never rise, and refuses a measurement left
+  sitting far below its ceiling so a trim is recorded rather than banked. What a paragraph was
+  explaining belongs in `docs/widgets/<node_type>.md`, which the panel now links to properly.
+
+- **The header says how full this browser's store is.** Everything a workflow holds sits in a
+  store this device accepts 5.2 MB of, and nothing said how much was left — so the first news of
+  the ceiling was work that would not save. The figure is in the header, turns amber at three
+  quarters and red at nine tenths, and says what to do about it.
+- **Both stores are reported, not just the one that refuses a save.** A node's records are kept by
+  digest in IndexedDB, which this browser offers by the gigabyte, so a figure covering only the
+  5.2 MB workspace store can read comfortably beside hundreds of megabytes of street network. The
+  header carries the data store beside the workspace one when it holds anything, and the list shows
+  them as two sections — what the payloads come to, which store they are actually in, and the
+  browser's own estimate of the site, labelled as the browser's and not as this application's count
+  (measured on 2026-10-21, Chromium's estimate does not include the workspace store at all).
+- **One list of what is on this device.** Clicking the storage figure opens every project and
+  workflow held in this browser, each with what it costs, and **Open**, **Export** and **Delete**
+  on every row — so a workflow can be exported or removed without being opened first, and a project
+  can be deleted from the same place. A worked example appears only once it has been opened, since
+  the list is what is here rather than what is published.
+- **The download is refused from the service's own count, with the setting it would need.** The
+  widget asked Overpass how many *ways* an area holds, and a street download returns the ways plus
+  every node they reference — most of the bytes. So a ways count sat inside every limit for an area
+  whose response was over 60 MB, and the only way to find the right graph limit was to download the
+  cap's worth and throw it away, twice. The count now asks for what would actually be sent, and the
+  refusal reads: this area holds N ways and M elements, about X MB at the measured 150 bytes each,
+  set the graph limit to Y junctions or draw a smaller area — with no download made and none of the
+  service's work spent. It also says that a rate measured on two small extents is not a measurement
+  of a large one.
+- **A street network is no longer refused for its size.** The ceiling came from the graph knob,
+  and the number behind it was measured on *isochrone construction* in central London — applied to
+  every network in every workflow, whether or not an isochrone exists in it, and applied after the
+  response had been downloaded, parsed and normalized, where a refusal protects nothing and
+  discards everything. A province downloaded on 2026-10-21 was thrown away at 1,837,939 junctions
+  and 3,755,832 directed segments for that reason. What bounds a download is the byte cap, set
+  before the bytes are spent; what bounds an isochrone is the isochrone's own worker, boot check
+  and timeout, whose message now says the limit is that step's and that the graph is intact; what
+  bounds a saved graph is the store, which reports its own refusal. The 30,000-vertex cap on edge
+  geometry went with it. The Inspector picture samples at 20,000 segments and the caption says so,
+  because a 292-pixel figure is a limit on a drawing, not on a dataset.
+- **An acquired province defaults to driving.** The travel mode defaulted to walking everywhere,
+  which is right for a neighbourhood and wrong for an ADM1 unit: nobody walks across a province,
+  and footways, paths and steps are most of what makes its download too large. The level is read
+  from the acquired boundary's own identifier, so a drawn box has no level and stays on walking —
+  a box can be any size, and its extent is not evidence of intent. An explicit choice is never
+  overridden, and the panel says why the default is what it is.
+- **A refusal says what the other travel mode would cost.** At the scale of a province the mode
+  decides whether there is a download at all — footways, paths and steps are most of what a walking
+  network holds — and the choice was being made blind. When an area is refused, one more count
+  answers whether the other mode fits at the current setting, and the message says which to switch
+  to, or that neither fits.
+- **The graph limit can be raised, so a province can be attempted.** Its ceiling was the default
+  itself — 50,000 junctions — so the download byte cap derived from it, 30.0 MB, could never be
+  raised by anyone, and a province download stopped there. 600 bytes per junction is roughly double
+  the 270 measured on two real extents, so the cap was a projection enforced as a boundary. The
+  ceiling is now one million junctions and the default is unchanged; above the largest graph this
+  project has downloaded and drawn (27,181 junctions, 7.4 MB) the widget says what is not known —
+  the tab may stop responding, and a failed download saves nothing — rather than refusing. See
+  experiment 125.
+- **A street-network download that is cut at the limit no longer states a size nobody read.** A
+  response that declares its length is refused with that length and the junction setting that would
+  accept it; a response that streams past the cap is stopped, and the refusal says the size was
+  never read rather than reporting the cap as the measurement. The bytes received are charged
+  against the pause before the next request, because the service sent them whether or not they were
+  kept.
+
+- **A template fills the canvas you are on, when that canvas is empty.** The ask was *"can I
+  import the North Kivu workflow into this blank one?"* and the answer minted a third workflow
+  named after the source, leaving the blank one untouched beside it. It now fills the open canvas
+  in place and keeps the name you gave it for its own question, and mints a new workflow only when
+  the canvas already holds work. Undo puts the empty canvas back.
+- **A template is a workflow.** Clearing material by removing the parameter left a street network
+  without its `data.nodes` and a drawn study area without the `geometry` key the validator
+  requires, and the result was never validated — so a template saved and then could not be opened,
+  which also meant it could not be deleted. Material now clears to the empty value of the same
+  shape (`null` for an outline, `{nodes:[],edges:[]}` for a graph, empty rows for a table), a
+  retrieved collection is removed together with the record of where it came from, and the template
+  is validated before it is saved: a template that cannot be made says so instead of becoming a
+  row that does nothing. A setting that happens to share a name with material is also kept —
+  `boundary` is a provenance record on a study area and the `include` / `exclude` setting on
+  Summarize points to polygon, and clearing it by name emptied the setting.
+- **A workflow that will not open can still be deleted.** Choosing such a row did nothing at all;
+  it now says what is wrong with it and offers **Delete it** on the spot, and deleting works on any
+  row rather than only on the canvas that is loaded.
+- **Reset example is in the bar only where there is a published example to reset to.** On a
+  workflow a practitioner made there is nothing to reload it to, so the button was a control for a
+  thing that does not exist, beside the ones that do apply.
+- **A workflow can be deleted.** A project could be deleted and a workflow could not, so the only
+  way to lose one was to delete the investigation around it — which keeps every workflow and
+  removes only the grouping. **Delete workflow** removes it and its project registration, opens the
+  next workflow of the same project, and is refused for a worked example, which ships with the
+  application and has *Reset example* instead.
+- **Rows that were never workflows are gone.** Registering a key in a project and saving the
+  workflow are two writes, and the second can be refused by a full store; the first stood anyway,
+  so the switcher listed rows labelled with their raw key — `test-project/w7` — that could not be
+  opened and could not be removed. Those rows are cleared on arrival with a notice saying what they
+  were, choosing one now says there is nothing to open rather than silently leaving the canvas
+  where it was, and a refused save no longer leaves the registration behind. A new key is also
+  minted from what is taken rather than from a count, which had reused the key of a deleted
+  workflow and overwritten its neighbour.
+
 - **A refused save says why it was refused.** Applying a study area into a device whose store is
   full reported only *"Study area could not be saved. Retry Apply."* — advice that cannot work,
   because the next Apply fails identically. Reported 2026-10-21 on an Ituri outline applied beside

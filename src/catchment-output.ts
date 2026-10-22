@@ -33,7 +33,12 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   if(p.kind==='hexbin'){
     const coords=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2));
     if(!coords.length)return '<text x="30" y="40">No cells meet the minimum occupancy</text>';
-    const west=Math.min(...coords.map(c=>c[0])),east=Math.max(...coords.map(c=>c[0])),south=Math.min(...coords.map(c=>c[1])),north=Math.max(...coords.map(c=>c[1]));
+    // Folded: spreading a province's worth of coordinates into Math.min overflows the call stack.
+    let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
+    for(const c of coords){
+      if(c[0]<west)west=c[0];if(c[0]>east)east=c[0];
+      if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
+    }
     const cos=Math.cos((south+north)/2*Math.PI/180),scale=Math.min(790/Math.max((east-west)*cos,.00001),235/Math.max(north-south,.00001));
     const project=(c:Position)=>[425+(c[0]-(east+west)/2)*cos*scale,145-(c[1]-(north+south)/2)*scale];
     return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="#3686a8" fill-opacity=".25" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')+'<text x="20" y="282" font-size="10">H3 aggregate cells · sparse cells omitted</text>';

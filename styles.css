@@ -484,3 +484,36 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .dedup-summary tbody td{text-align:right;padding:3px 0 3px 6px}
 .dedup-summary tbody tr.emphasis th,.dedup-summary tbody tr.emphasis td{font-weight:600;color:var(--ink-1)}
 .dedup-summary tbody tr+tr th,.dedup-summary tbody tr+tr td{border-top:1px solid var(--line)}
+
+/* The STORE IS A FINITE THING and nothing said how full it was until a save was refused. The
+   practitioner, 2026-10-21: "we need a storage status indicator to also tell us to off load
+   projects from the browser (export) if needed." */
+.storage-pill{display:flex;align-items:center;gap:7px}
+.storage-short{display:none}
+@media(max-width:700px){.storage-long{display:none}.storage-short{display:inline}}
+.storage-pill.tight{border-color:var(--warning-wash-4);color:var(--warning-5)}
+.storage-pill.full{border-color:var(--danger-2);color:var(--danger-2)}
+.wide-dialog{max-width:760px;width:calc(100vw - 48px)}
+#storage-meter h3{margin:16px 0 4px;font-size:11px;font-weight:650}
+#storage-meter h3:first-child{margin-top:4px}
+#storage-meter p{margin:0}
+.storage-bar{height:8px;border-radius:4px;background:var(--surface-tint-1);overflow:hidden;margin:6px 0 4px}
+.storage-bar>i{display:block;height:100%;background:var(--green)}
+.storage-bar.tight>i{background:var(--warning-5)}
+.storage-bar.full>i{background:var(--danger-2)}
+.project-block{border:1px solid var(--line);border-radius:7px;padding:12px 14px;margin:12px 0}
+.project-block h3{margin:0 0 2px;font-size:12px;font-weight:650}
+.project-block p{margin:0 0 8px;font-size:10px;color:var(--text-faint-7)}
+.workflow-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--surface-tint-8);font-size:11px}
+.workflow-row .size{margin-left:auto;font-size:10px;color:var(--text-faint-7);white-space:nowrap}
+.workflow-row .open-now{font-size:9px;letter-spacing:.8px;color:var(--green);font-weight:650}
+
+/* The two links a learner needs, at the size of a control and in the same place on every panel.
+   "The buttons for Deeper Dive and Manual are very tiny when they are the most important links for
+   users and learners" -- 2026-10-21. */
+.learn-block{display:flex;gap:8px;margin:0 0 18px}
+.learn-block .learn-link{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 12px;font-size:11px;font-weight:600;text-decoration:none;color:var(--ink);
+  border:1px solid var(--line-soft-2);background:var(--surface-raised-1);border-radius:6px}
+.learn-block .learn-link:hover,.learn-block .learn-link:focus-visible{border-color:var(--green);color:var(--green)}
+.learn-block .learn-link span{font-size:13px}

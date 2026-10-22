@@ -42,7 +42,7 @@ test('isochrone follows curved partial edges and directed inbound/outbound costs
   const r=summarizePolygons(p,collection(point('on',25,0),point('wrong',25,25),point('too-far',50,30)),{boundary:'include',valueField:''});assert.equal(r.features[0].count,1);
   const to=isochrone(collection(point('b',50,50)),network,{...params,direction:'inbound'});assert.equal(summarizePolygons(to,collection(point('on',50,25)),{boundary:'include',valueField:''}).summary.matched,1);
   const from=isochrone(collection(point('b',50,50)),network,params);assert.equal(summarizePolygons(from,collection(point('on',50,25)),{boundary:'include',valueField:''}).summary.matched,0);
-  assert.throws(()=>validateNetwork({...network,edges:[{from:'a',to:'unknown',lengthM:1}]}),/endpoints/);
+  assert.throws(()=>validateNetwork({...network,edges:[{from:'a',to:'unknown',lengthM:1}]}),/junctions this network does not contain/);
 });
 
 test('a site beyond the snap limit is routed anyway, across a leg it marks as off-network',()=>{

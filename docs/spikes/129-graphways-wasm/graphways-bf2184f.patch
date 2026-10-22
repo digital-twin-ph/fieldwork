@@ -1,5 +1,5 @@
 diff --git a/src/pbf.rs b/src/pbf.rs
-index 32af0af..bf8949c 100644
+index 32af0af..2e1fdcd 100644
 --- a/src/pbf.rs
 +++ b/src/pbf.rs
 @@ -112,9 +112,118 @@ fn pbf_error(error: impl ToString) -> OsmGraphError {
@@ -123,7 +123,7 @@ index 32af0af..bf8949c 100644
          .enumerate()
          .par_bridge()
          .map(|(position, blob)| {
-@@ -152,6 +261,23 @@ fn scan_pbf(path: &Path, network_types: &[NetworkType]) -> Result<PbfScan, OsmGr
+@@ -152,6 +261,103 @@ fn scan_pbf(path: &Path, network_types: &[NetworkType]) -> Result<PbfScan, OsmGr
      Ok(scan)
  }
  
@@ -133,21 +133,101 @@ index 32af0af..bf8949c 100644
 +/// Rwanda alone takes 2.1 GB. Nodes outside the box are dropped as they are
 +/// decoded, and a way is kept when any of its nodes survived.
 +static BBOX: std::sync::RwLock<Option<[f64; 4]>> = std::sync::RwLock::new(None);
++
++/// THE STUDY AREA ITSELF, not the box around it.
++///
++/// A bounding box is a convenience owed to services that only take one; it is not what a
++/// practitioner drew. Ituri's box reaches into Uganda, and a street network clipped to it is a
++/// network of two countries. The practitioner, 2026-10-22: *"The clip to the polygon study area is
++/// what we need as that has been the intent for the study area all along."*
++///
++/// Testing 2.3 million nodes against a 7,759-vertex ring directly is tens of billions of
++/// comparisons, so the ring is indexed by latitude band: each edge is filed in the bands it spans,
++/// and a point is tested against the edges of its own band alone. Even-odd crossing, which is what
++/// "inside" means for a ring with holes.
++struct Ring { edges: Vec<[f64; 4]>, bands: Vec<Vec<u32>>, south: f64, north: f64, height: f64 }
++static POLYGON: std::sync::RwLock<Option<Ring>> = std::sync::RwLock::new(None);
++const BANDS: usize = 512;
++
++/// `points` is `[lon, lat, ...]` with `(NaN, NaN)` between rings, which is how a MultiPolygon or a
++/// polygon with holes arrives. Every ring is tested; a point inside an odd number of them is in.
++pub fn set_polygon(points: &[f64]) {
++    let mut edges: Vec<[f64; 4]> = Vec::new();
++    let (mut south, mut north) = (f64::INFINITY, f64::NEG_INFINITY);
++    let mut start = 0usize;
++    let mut ring: Vec<[f64; 2]> = Vec::new();
++    let mut flush = |ring: &mut Vec<[f64; 2]>, edges: &mut Vec<[f64; 4]>| {
++        for pair in ring.windows(2) {
++            edges.push([pair[0][0], pair[0][1], pair[1][0], pair[1][1]]);
++        }
++        if ring.len() > 2 {
++            let (first, last) = (ring[0], ring[ring.len() - 1]);
++            if first != last { edges.push([last[0], last[1], first[0], first[1]]); }
++        }
++        ring.clear();
++    };
++    while start + 1 < points.len() {
++        let (lon, lat) = (points[start], points[start + 1]);
++        if lon.is_nan() || lat.is_nan() { flush(&mut ring, &mut edges); }
++        else {
++            if lat < south { south = lat; }
++            if lat > north { north = lat; }
++            ring.push([lon, lat]);
++        }
++        start += 2;
++    }
++    flush(&mut ring, &mut edges);
++    if edges.is_empty() { *POLYGON.write().unwrap() = None; return; }
++    let height = (north - south).max(1e-9);
++    let mut bands: Vec<Vec<u32>> = vec![Vec::new(); BANDS];
++    let band_of = |lat: f64| -> usize {
++        (((lat - south) / height) * (BANDS as f64 - 1.0)).clamp(0.0, BANDS as f64 - 1.0) as usize
++    };
++    for (index, edge) in edges.iter().enumerate() {
++        let (low, high) = if edge[1] <= edge[3] { (edge[1], edge[3]) } else { (edge[3], edge[1]) };
++        for band in band_of(low)..=band_of(high) { bands[band].push(index as u32); }
++    }
++    *POLYGON.write().unwrap() = Some(Ring { edges, bands, south, north, height });
++}
++pub fn clear_polygon() { *POLYGON.write().unwrap() = None; }
++
++/// Exposed so the clip can be tested without a published extract: the predicate is the whole of
++/// it, and a 400 MB fixture is not something a test suite should carry.
++pub fn point_inside(lon: f64, lat: f64) -> bool { inside(lon, lat) }
++
++fn in_polygon(lon: f64, lat: f64) -> bool {
++    let held = POLYGON.read().unwrap();
++    let Some(ring) = held.as_ref() else { return true };
++    if lat < ring.south || lat > ring.north { return false; }
++    let band = ((((lat - ring.south) / ring.height) * (BANDS as f64 - 1.0))
++        .clamp(0.0, BANDS as f64 - 1.0)) as usize;
++    let mut crossings = 0u32;
++    for &index in &ring.bands[band] {
++        let [x1, y1, x2, y2] = ring.edges[index as usize];
++        if (y1 > lat) != (y2 > lat) {
++            let x = x1 + (lat - y1) / (y2 - y1) * (x2 - x1);
++            if x > lon { crossings += 1; }
++        }
++    }
++    crossings % 2 == 1
++}
 +pub fn set_bbox(west: f64, south: f64, east: f64, north: f64) {
 +    *BBOX.write().unwrap() = Some([west, south, east, north]);
 +}
 +pub fn clear_bbox() { *BBOX.write().unwrap() = None; }
 +fn inside(lon: f64, lat: f64) -> bool {
-+    match *BBOX.read().unwrap() {
++    let in_box = match *BBOX.read().unwrap() {
 +        None => true,
 +        Some([w, s, e, n]) => lon >= w && lon <= e && lat >= s && lat <= n,
-+    }
++    };
++    // The box first, because it is two comparisons and rejects most of a country.
++    in_box && in_polygon(lon, lat)
 +}
 +
  fn scan_block(block: &PrimitiveBlock, network_types: &[NetworkType]) -> PbfScan {
      let mut chunk = PbfScan {
          roads: network_types.iter().map(|_| Vec::new()).collect(),
-@@ -167,11 +293,13 @@ fn scan_block(block: &PrimitiveBlock, network_types: &[NetworkType]) -> PbfScan
+@@ -167,11 +373,13 @@ fn scan_block(block: &PrimitiveBlock, network_types: &[NetworkType]) -> PbfScan
      for element in block.elements() {
          let (id, lat, lon) = match &element {
              Element::Node(node) => {

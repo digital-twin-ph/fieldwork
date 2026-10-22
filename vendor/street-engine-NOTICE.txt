@@ -1,0 +1,26 @@
+Street engine (vendor/street-engine.wasm)
+=========================================
+
+Built from Graphways (https://github.com/kyleloving/graphways), MIT licensed —
+see graphways-LICENSE.txt — at commit bf2184f, compiled for
+wasm32-unknown-unknown with default features off, plus the patch kept at
+docs/spikes/129-graphways-wasm/graphways-bf2184f.patch. That patch adds three
+things the published crate does not have, all needed because a browser has no
+filesystem and a study area is not a country:
+
+  * read_pbf_bytes / read_pbf_bytes_two_pass — read an extract already in
+    memory, and read the ways first so only the nodes a road refers to are kept
+  * a study-area bounding box applied while the extract is decoded, to nodes
+    AND to ways
+  * nothing else; the graph building, routing and isochrone code is unmodified
+
+The module exports plain C functions and is instantiated directly. It carries
+no JavaScript glue and no wasm-bindgen.
+
+Rebuilding it is documented in docs/spikes/129-graphways-wasm/README.md and
+needs a Rust toolchain, which this repository otherwise does not.
+
+OpenStreetMap data read by this module is © OpenStreetMap contributors and
+licensed under the Open Database License (ODbL) 1.0. Extracts published by
+Geofabrik GmbH carry the same licence. Attribution travels with any network
+acquired through it.

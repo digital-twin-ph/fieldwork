@@ -120,6 +120,8 @@ export function readOverpassStatus(text:string):Omit<OverpassStatus,'url'|'opera
 /** How long one status read may take. Twelve seconds, not the six the removed ping used: that was
  *  a healthy service's latency, and the measured one under load was 14 to 27 seconds. A status
  *  that times out costs only that its instance is tried after the ones that answered. */
+/** A released chunk's stand-in, so the array holds something of no size rather than a hole. */
+const EMPTY=new Uint8Array(0);
 export const STATUS_MS=12000;
 export async function overpassStatuses(fetcher:typeof fetch=fetch,timeoutMs=STATUS_MS):Promise<OverpassStatus[]>{
   return Promise.all(OVERPASS_ENDPOINTS.map(async endpoint=>{
@@ -747,6 +749,7 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     if(Number(response.headers.get('content-length'))>maxBytes)throw tooLarge(Number(response.headers.get('content-length')),true);
     if(!response.body)throw new Error('OSM response has no readable body.');const reader=response.body.getReader(),chunks:Uint8Array[]= [];let bytes=0;
     const declared=Number(response.headers.get('content-length'))||0;
+    let responseDigest='';
     try{for(;;){const {value,done}=await reader.read();if(done)break;receiving=true;bytes+=value.length;receivedSoFar=bytes;stillAlive();if(bytes>maxBytes){controller.abort();
       // CHARGED FOR WHAT WAS RECEIVED, although none of it is kept. The service did the work and
       // sent the bytes; a refusal here used to charge nothing, so the next attempt was available
@@ -767,7 +770,36 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     finally{clearInterval(silenceWatch);await reader.cancel().catch(()=>{});}
     // Charged once the size is known: a larger request earns a longer pause.
     chargeNetworkDownload(bytes,pauseMs);
-    const joined=new Uint8Array(bytes);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}const body=new TextDecoder().decode(joined);const raw=JSON.parse(body);
+    // ONE COPY AT A TIME. The practitioner reached 150 MB on an Ituri download and the tab died.
+    // Measured 2026-10-22 in a Chromium tab, each stage alone is comfortable -- 200 MB of Overpass
+    // JSON decodes and parses in 561 ms, and a million junctions builds into a graph -- but the
+    // path held the response four times over: the received chunks, a joined copy of them, the
+    // decoded string at two bytes a character, and the parsed object graph, all alive while the
+    // network was built on top. Nothing failed on its own; the sum did.
+    //
+    // So each copy is released as soon as the next one exists. One raw copy survives to the
+    // digest, because provenance.sha256 is a claim about the bytes the service sent and hashing
+    // anything else would quietly change what the receipt says.
+    const joined=new Uint8Array(bytes);
+    for(let i=0,offset=0;i<chunks.length;i++){
+      joined.set(chunks[i],offset);offset+=chunks[i].length;
+      chunks[i]=EMPTY;          // copied; let the array stop holding the original
+    }
+    chunks.length=0;
+    responseDigest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))]
+      .map(b=>b.toString(16).padStart(2,'0')).join('');
+    let body=new TextDecoder().decode(joined);
+    const raw=JSON.parse(body);
+    // KEPT BEFORE THE STRING IS LET GO. The cache holds the response text, and clearing the
+    // string first stored an empty body -- a cache hit then failed with "Unexpected end of JSON
+    // input", which two tests caught. Caching here rather than after the graph is built also
+    // says the right thing: these are the bytes the service sent, and a later failure to build a
+    // graph from them is this application's, not the service's.
+    const retrievedAt=new Date().toISOString();
+    await keepOSM(request.query,body,retrievedAt,cacheStore);
+    // The string is the largest single copy -- 300 MB for a 150 MB response, at two bytes a
+    // character -- and nothing reads it again once it is kept and parsed.
+    body='';
     // An instance that answers 200 with an empty `elements` array has told you something, and
     // `validateNetwork` would reject it as "a street network needs at least one junction" -- true,
     // and about the wrong thing. It is either an instance that does not hold data for this area or
@@ -799,10 +831,8 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
         +` Check the study area on the map, or upload a saved network file.`);
     }
     const network=networkFromOSM(raw,maxNodes,mode);
-    const retrievedAt=new Date().toISOString();
-    await keepOSM(request.query,body,retrievedAt,cacheStore);
     network.provenance={provider:'OpenStreetMap',license:'ODbL-1.0',
-      attribution:`© OpenStreetMap contributors, via ${reached.operator}`,url:reached.url,retrievedAt,travelMode:mode,query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',joined))].map(b=>b.toString(16).padStart(2,'0')).join('')};return network;
+      attribution:`© OpenStreetMap contributors, via ${reached.operator}`,url:reached.url,retrievedAt,travelMode:mode,query:request.query,bounds:request.bounds,marginM,boundary:structuredClone(boundary),osmTimestamp:raw.osm3s?.timestamp_osm_base||'unknown',sha256:responseDigest};return network;
   }finally{clearTimeout(timer);clearInterval(silenceWatch);}
 }
 export function parseGraphML(text:string,filename:string,maxNodes?:number):Network{

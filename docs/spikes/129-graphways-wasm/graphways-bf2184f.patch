@@ -1,11 +1,96 @@
 diff --git a/src/pbf.rs b/src/pbf.rs
-index 32af0af..3f339d9 100644
+index 32af0af..5177036 100644
 --- a/src/pbf.rs
 +++ b/src/pbf.rs
-@@ -112,9 +112,23 @@ fn pbf_error(error: impl ToString) -> OsmGraphError {
+@@ -112,9 +112,108 @@ fn pbf_error(error: impl ToString) -> OsmGraphError {
      OsmGraphError::PbfError(error.to_string())
  }
  
++/// TWO PASSES, so only the nodes a road actually references are ever held.
++///
++/// `scan_reader` keeps `(id, lat, lon)` for every node inside the box, plus the
++/// tags of every tagged node and every POI, and only then discovers which ones
++/// a way refers to. Over a province that is most of a country's nodes held to
++/// reach a tenth of them. Reading the ways first costs a second pass over the
++/// blobs -- cheap, since they are already decompressed in the caller's memory
++/// -- and holds one id set instead.
++///
++/// POIs are not collected: this path exists to build a street network.
++pub fn read_pbf_bytes_two_pass(
++    bytes: &[u8],
++    network_type: NetworkType,
++) -> Result<(OsmData, Vec<Poi>), OsmGraphError> {
++    // Pass one: the ways, and the ids they refer to.
++    let mut roads: Vec<RawWay> = Vec::new();
++    for blob in BlobReader::new(std::io::Cursor::new(bytes)) {
++        let blob = blob.map_err(pbf_error)?;
++        if let BlobDecode::OsmData(block) = blob.decode().map_err(pbf_error)? {
++            let mut chunk = scan_block_ways(&block, network_type);
++            roads.append(&mut chunk);
++        }
++    }
++    let mut needed: Vec<i64> = roads.iter().flat_map(|w| w.refs.iter().copied()).collect();
++    needed.sort_unstable();
++    needed.dedup();
++
++    // Pass two: the coordinates of exactly those ids.
++    let mut coords: Vec<(i64, f64, f64)> = Vec::with_capacity(needed.len());
++    for blob in BlobReader::new(std::io::Cursor::new(bytes)) {
++        let blob = blob.map_err(pbf_error)?;
++        if let BlobDecode::OsmData(block) = blob.decode().map_err(pbf_error)? {
++            for element in block.elements() {
++                let (id, lat, lon) = match &element {
++                    Element::Node(node) => (node.id(), node.lat(), node.lon()),
++                    Element::DenseNode(node) => (node.id(), node.lat(), node.lon()),
++                    _ => continue,
++                };
++                if !inside(lon, lat) { continue; }
++                if needed.binary_search(&id).is_ok() { coords.push((id, lat, lon)); }
++            }
++        }
++    }
++    coords.sort_unstable_by_key(|&(id, ..)| id);
++
++    let nodes = needed
++        .iter()
++        .filter_map(|&id| {
++            let index = coords.binary_search_by_key(&id, |&(id, ..)| id).ok()?;
++            let (_, lat, lon) = coords[index];
++            Some(OsmNode { id, lat, lon, tags: Vec::new() })
++        })
++        .collect();
++    let ways = roads
++        .into_iter()
++        .map(|way| OsmWay {
++            id: way.id,
++            nodes: way.refs.iter().map(|&node_id| OsmNodeRef { node_id }).collect(),
++            tags: to_xml_tags(&way.tags),
++        })
++        .collect();
++    Ok((OsmData { nodes, ways, relations: Vec::new() }, Vec::new()))
++}
++
++/// The ways of one block that pass the filter, and nothing else.
++fn scan_block_ways(block: &PrimitiveBlock, network_type: NetworkType) -> Vec<RawWay> {
++    let mut kept = Vec::new();
++    let mut tags: Vec<(&str, &str)> = Vec::new();
++    for element in block.elements() {
++        if let Element::Way(way) = &element {
++            tags.clear();
++            tags.extend(way.tags());
++            if !tags.iter().any(|&(k, _)| k == "highway") { continue; }
++            if way_passes_road_filter(&tags, network_type) {
++                kept.push(RawWay {
++                    id: way.id(),
++                    refs: way.refs().collect(),
++                    tags: tags.iter().map(|&(k, v)| (k.to_owned(), v.to_owned())).collect(),
++                });
++            }
++        }
++    }
++    kept
++}
++
 +/// Read an extract that is already in memory, which is the only shape it has in
 +/// a browser: wasm32 has no filesystem, and `BlobReader` is generic over any
 +/// `Read + Send`. Added for a fieldwork measurement, 2026-10-22.
@@ -28,7 +113,7 @@ index 32af0af..3f339d9 100644
          .enumerate()
          .par_bridge()
          .map(|(position, blob)| {
-@@ -152,6 +166,23 @@ fn scan_pbf(path: &Path, network_types: &[NetworkType]) -> Result<PbfScan, OsmGr
+@@ -152,6 +251,23 @@ fn scan_pbf(path: &Path, network_types: &[NetworkType]) -> Result<PbfScan, OsmGr
      Ok(scan)
  }
  
@@ -52,7 +137,7 @@ index 32af0af..3f339d9 100644
  fn scan_block(block: &PrimitiveBlock, network_types: &[NetworkType]) -> PbfScan {
      let mut chunk = PbfScan {
          roads: network_types.iter().map(|_| Vec::new()).collect(),
-@@ -167,11 +198,13 @@ fn scan_block(block: &PrimitiveBlock, network_types: &[NetworkType]) -> PbfScan
+@@ -167,11 +283,13 @@ fn scan_block(block: &PrimitiveBlock, network_types: &[NetworkType]) -> PbfScan
      for element in block.elements() {
          let (id, lat, lon) = match &element {
              Element::Node(node) => {

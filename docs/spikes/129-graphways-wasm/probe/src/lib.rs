@@ -36,10 +36,10 @@ pub extern "C" fn set_bbox(west: f64, south: f64, east: f64, north: f64) {
 pub extern "C" fn graph_from_pbf(pointer: *mut u8, len: usize, drive: i32) -> i32 {
     let bytes = unsafe { std::slice::from_raw_parts(pointer, len) };
     let network = if drive != 0 { NetworkType::Drive } else { NetworkType::Walk };
-    let (data, _pois) = match graphways::pbf::read_pbf_bytes(bytes, network) {
-        Ok(value) => value,
-        Err(_) => return -1,
-    };
+    let two_pass = *TWO_PASS.lock().unwrap();
+    let read = if two_pass { graphways::pbf::read_pbf_bytes_two_pass(bytes, network) }
+               else { graphways::pbf::read_pbf_bytes(bytes, network) };
+    let (data, _pois) = match read { Ok(value) => value, Err(_) => return -1 };
     let speed = *WALK_KPH.lock().unwrap();
     let retain = *RETAIN_ALL.lock().unwrap();
     let mut options = graphways::profile::BuildOptions::retain_all(retain);
@@ -102,11 +102,30 @@ pub extern "C" fn drop_buffers() {
 // ---------------------------------------------------------------------------
 
 static ANSWER: Mutex<Vec<f64>> = Mutex::new(Vec::new());
+/// A panic traps the instance, but its memory stays readable from JavaScript,
+/// so the message is written here before the trap rather than lost to
+/// "RuntimeError: unreachable".
+static PANIC: Mutex<String> = Mutex::new(String::new());
+#[no_mangle]
+pub extern "C" fn install_panic_hook() {
+    std::panic::set_hook(Box::new(|info| {
+        let mut held = PANIC.lock().unwrap();
+        *held = format!("{info}");
+    }));
+}
+#[no_mangle]
+pub extern "C" fn panic_ptr() -> *const u8 { PANIC.lock().unwrap().as_ptr() }
+#[no_mangle]
+pub extern "C" fn panic_len() -> usize { PANIC.lock().unwrap().len() }
 static WALK_KPH: Mutex<f64> = Mutex::new(0.0);
 /// `retain_all` keeps every OSM node; false lets graphways merge nearby
 /// intersections and collapse chains of road between junctions. The spikes
 /// before 2026-10-22 all passed true, which is the most expensive choice.
 static RETAIN_ALL: Mutex<bool> = Mutex::new(true);
+/// Read the ways first and keep only the nodes they refer to.
+static TWO_PASS: Mutex<bool> = Mutex::new(false);
+#[no_mangle]
+pub extern "C" fn set_two_pass(on: i32) { *TWO_PASS.lock().unwrap() = on != 0; }
 #[no_mangle]
 pub extern "C" fn set_retain_all(retain: i32) { *RETAIN_ALL.lock().unwrap() = retain != 0; }
 
@@ -188,8 +207,8 @@ pub extern "C" fn travel_matrix(pointer: *const f64, origins: usize, destination
 pub extern "C" fn scan_only(pointer: *mut u8, len: usize, drive: i32) -> i32 {
     let bytes = unsafe { std::slice::from_raw_parts(pointer, len) };
     let network = if drive != 0 { NetworkType::Drive } else { NetworkType::Walk };
-    match graphways::pbf::read_pbf_bytes(bytes, network) {
-        Ok((data, _pois)) => data.nodes.len() as i32,
-        Err(_) => -1,
-    }
+    let two_pass = *TWO_PASS.lock().unwrap();
+    let read = if two_pass { graphways::pbf::read_pbf_bytes_two_pass(bytes, network) }
+               else { graphways::pbf::read_pbf_bytes(bytes, network) };
+    match read { Ok((data, _pois)) => data.nodes.len() as i32, Err(_) => -1 }
 }

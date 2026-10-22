@@ -92,3 +92,75 @@ pub extern "C" fn drop_buffers() {
     *NODES.lock().unwrap() = Vec::new();
     *EDGES.lock().unwrap() = Vec::new();
 }
+
+// ---------------------------------------------------------------------------
+// Spike 4: ask the graph questions instead of handing it over.
+// ---------------------------------------------------------------------------
+
+static ANSWER: Mutex<Vec<f64>> = Mutex::new(Vec::new());
+
+#[no_mangle]
+pub extern "C" fn answer_values() -> usize { ANSWER.lock().unwrap().len() }
+fn publish(values: Vec<f64>) -> *const f64 {
+    let pointer = values.as_ptr();
+    *ANSWER.lock().unwrap() = values;
+    pointer
+}
+
+/// Snap `count` points, read as `(lat, lon)` pairs from `pointer`, to the
+/// graph. Writes `(snapped lat, snapped lon, metres)` per point, with -1
+/// metres where nothing was near enough.
+#[no_mangle]
+pub extern "C" fn snap_points(pointer: *const f64, count: usize, max_snap_m: f64) -> *const f64 {
+    let held = GRAPH.lock().unwrap();
+    let Some(graph) = held.as_ref() else { return std::ptr::null() };
+    let input = unsafe { std::slice::from_raw_parts(pointer, count * 2) };
+    let limit = if max_snap_m > 0.0 { Some(max_snap_m) } else { None };
+    let mut out = Vec::with_capacity(count * 3);
+    for pair in input.chunks_exact(2) {
+        let point = graphways::graph::LatLon::new(pair[0], pair[1]);
+        match graph.snap_point_within(point, limit) {
+            Some(snap) => { out.push(snap.snapped_lat); out.push(snap.snapped_lon); out.push(snap.distance_m); }
+            None => { out.push(f64::NAN); out.push(f64::NAN); out.push(-1.0); }
+        }
+    }
+    publish(out)
+}
+
+/// One isochrone from `(lat, lon)` at `seconds`. Writes the ring as
+/// `(lon, lat)` pairs, with `(NaN, NaN)` between parts.
+#[no_mangle]
+pub extern "C" fn isochrone(lat: f64, lon: f64, seconds: f64, max_snap_m: f64) -> *const f64 {
+    let held = GRAPH.lock().unwrap();
+    let Some(graph) = held.as_ref() else { return std::ptr::null() };
+    let limit = if max_snap_m > 0.0 { Some(max_snap_m) } else { None };
+    let polygons = match graph.isochrones(graphways::graph::LatLon::new(lat, lon), &[seconds], limit) {
+        Ok(value) => value,
+        Err(_) => return publish(Vec::new()),
+    };
+    let mut out = Vec::new();
+    for multi in &polygons {
+        for polygon in multi {
+            if !out.is_empty() { out.push(f64::NAN); out.push(f64::NAN); }
+            for point in polygon.exterior().points() { out.push(point.x()); out.push(point.y()); }
+        }
+    }
+    publish(out)
+}
+
+/// A travel-time matrix between the first `origins` points and the rest.
+/// Writes seconds row-major, with -1 where there is no route.
+#[no_mangle]
+pub extern "C" fn travel_matrix(pointer: *const f64, origins: usize, destinations: usize, max_snap_m: f64) -> *const f64 {
+    let held = GRAPH.lock().unwrap();
+    let Some(graph) = held.as_ref() else { return std::ptr::null() };
+    let input = unsafe { std::slice::from_raw_parts(pointer, (origins + destinations) * 2) };
+    let point = |i: usize| graphways::graph::LatLon::new(input[i * 2], input[i * 2 + 1]);
+    let from: Vec<_> = (0..origins).map(point).collect();
+    let to: Vec<_> = (origins..origins + destinations).map(point).collect();
+    let limit = if max_snap_m > 0.0 { Some(max_snap_m) } else { None };
+    let matrix = graph.travel_time_matrix(&from, &to, limit);
+    let mut out = Vec::with_capacity(origins * destinations);
+    for row in &matrix.durations_s { for cell in row { out.push(cell.unwrap_or(-1.0)); } }
+    publish(out)
+}

@@ -48,6 +48,12 @@ published ODbL files that Geofabrik already hosts.
 Measured in Node, and repeated in both browsers: Chromium builds Ituri's driving graph in 20.2 s
 and WebKit in 17.9 s, both at 3,587 MB of wasm memory.
 
+## Spike 4: asking instead of moving
+
+`snap_points`, `isochrone` and `travel_matrix` keep the graph in the module and return a few
+hundred doubles. A 15-minute isochrone over 1,152,974 junctions takes 0.14 s in Chromium and 0.09 s
+in WebKit — the operation this application's own Dijkstra refuses above 5,249.
+
 ## Spike 1: getting the graph out
 
 `export_nodes` and `export_edges` write flat `f64` buffers and `drop_graph` lets the original go.

@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {downloadText} from './read-download.mjs';
 
 // "Where is the export project button?" -- 2026-10-21.
 test('a project exports as one file and comes back as one project',async({page})=>{
@@ -17,7 +18,7 @@ test('a project exports as one file and comes back as one project',async({page})
   const download=page.waitForEvent('download');
   await block.locator('button',{hasText:'Export project'}).click();
   const file=await download;
-  const text=await (await import('node:fs/promises')).readFile(await file.path(),'utf8');
+  const text=await downloadText(file);
   const document=JSON.parse(text);
   expect(document.schema).toBe('fieldwork/project-document/1');
   expect(document.project.name).toBe('Facilities and Networks');

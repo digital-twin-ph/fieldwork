@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {downloadText} from './read-download.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
@@ -14,7 +15,7 @@ const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-w
 const refs=async(page,id='observations')=>(await saved(page)).nodes.find(n=>n.id===id).references||[];
 const upload=(page,buffer)=>page.locator('#workflow-file').setInputFiles({name:'workflow.json',mimeType:'application/json',buffer});
 const open=async(page,id='observations')=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"]`).click();await page.locator('#manage-references').click();};
-const download=async(page,selector)=>{const event=page.waitForEvent('download');await page.locator(selector).click();return readFile(await (await event).path());};
+const download=async(page,selector)=>{const event=page.waitForEvent('download');await page.locator(selector).click();return Buffer.from(await downloadText(await event));};
 async function addPDF(page){await open(page);await page.locator('#reference-kind').selectOption('pdf');await page.locator('#reference-pdf').setInputFiles({name:'annual-census.pdf',mimeType:'application/pdf',buffer:pdf});await page.locator('#reference-title').fill('Annual census 2022');await page.locator('#reference-authors').fill('Census office');await page.locator('#reference-published').fill('2022');await page.locator('#reference-locator').fill('Table 4, page 27');await page.locator('#reference-notes').fill('Denominator for the population model.');await page.locator('#reference-save').click();await expect(page.locator('#evidence-status')).toContainText('Reference saved');}
 test.beforeEach(async({page})=>{await page.goto('/?example=blank');const w=clipExercise();w.exampleId='blank';await upload(page,Buffer.from(JSON.stringify(w)));await expect(page.locator('.react-flow__node[data-id="observations"]')).toBeVisible();});
 

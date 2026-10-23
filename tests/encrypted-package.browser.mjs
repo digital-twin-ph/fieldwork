@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {downloadText} from './read-download.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
@@ -17,7 +18,7 @@ test('encrypted ZIP transfers binary PDFs offline, retries wrong passwords and k
   try{await target.goto('http://127.0.0.1:4174/?example=blank');await expect(target.locator('#offline-status')).toContainText('Available offline');await fresh.setOffline(true);const before=await saved(target);
     await importZip(target,zip);await target.locator('#package-password').fill('wrong password');await target.locator('#package-submit').click();await expect(target.locator('#package-error')).toContainText('Check the passphrase');assert.equal(await saved(target),before);
     await target.locator('#package-password').fill(password);await target.locator('#package-submit').click();await expect(target.locator('#package-dialog')).toHaveCount(0);await expect(target.locator('#project-title')).toHaveText('Encrypted project trial');
-    const pending=target.waitForEvent('download');await target.locator('#export-button').click();const bundle=JSON.parse(await readFile(await (await pending).path(),'utf8'));assert.deepEqual(Buffer.from(bundle.attachments[0].dataBase64,'base64'),pdf);
+    const pending=target.waitForEvent('download');await target.locator('#export-button').click();const bundle=JSON.parse(await downloadText(await pending));assert.deepEqual(Buffer.from(bundle.attachments[0].dataBase64,'base64'),pdf);
     await target.locator('#run-button').click();await expect(target.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(target.locator('#result-metrics .review b')).toHaveText('5');
   }finally{await fresh.close();}
 });
@@ -34,7 +35,7 @@ test('saved manifest updates with edits and survives export while incomplete inv
   await source(page);const initial=JSON.parse(await saved(page));assert.equal(initial.manifest.inventory.assets.length,1);assert.equal(initial.manifest.inventory.assets[0].sha256,hash);
   await page.locator('[data-add="chart_output"]').click();await page.locator('#chart-decisions').selectOption('criteria');
   const updated=JSON.parse(await saved(page));assert.ok(updated.manifest.revision>initial.manifest.revision);assert.equal(updated.manifest.inventory.nodes.length,initial.nodes.length+1);assert.equal(updated.manifest.inventory.connections.length,initial.edges.length+1);
-  const pending=page.waitForEvent('download');await page.locator('#export-button').click();const bundle=JSON.parse(await readFile(await (await pending).path(),'utf8'));assert.deepEqual(bundle.workflow.manifest,updated.manifest);
+  const pending=page.waitForEvent('download');await page.locator('#export-button').click();const bundle=JSON.parse(await downloadText(await pending));assert.deepEqual(bundle.workflow.manifest,updated.manifest);
   const incomplete=structuredClone(bundle);incomplete.workflow.manifest.inventory.assets=[];const before=await saved(page);
   await page.locator('#workflow-file').setInputFiles({name:'incomplete.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(incomplete))});await expect(page.locator('#toast')).toContainText('manifest');assert.equal(await saved(page),before);
   await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});assert.deepEqual(JSON.parse(await saved(page)).manifest,updated.manifest);

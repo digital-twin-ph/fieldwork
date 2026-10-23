@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {downloadText} from './read-download.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {clipExercise} from '../build/clip-points.js';
@@ -115,7 +116,7 @@ test('partial storage failure rolls back the workflow so discarding still preser
   await page.getByRole('button',{name:'Save Edits',exact:true}).click();await expect(page.locator('#input-error')).toContainText('could not be saved');assert.deepEqual(await saved(page),before);
   await page.evaluate(()=>{Storage.prototype.setItem=window.restoreStorage;delete window.restoreStorage;});
   await page.locator('#input-cancel').click();await page.locator('#input-discard-edits').click();
-  const download=page.waitForEvent('download');await page.locator('#export-button').click();const exported=JSON.parse(await readFile(await (await download).path(),'utf8'));assert.deepEqual(exported,before);
+  const download=page.waitForEvent('download');await page.locator('#export-button').click();const exported=JSON.parse(await downloadText(await download));assert.deepEqual(exported,before);
 });
 
 test('UUID option persists, new pin IDs stay stable, and Delete Pin is saved or discarded explicitly',async({page,context})=>{

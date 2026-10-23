@@ -57,8 +57,27 @@ test('a project holding a graph larger than the old 5 MB cap packages, opens and
   const exportMs=Date.now()-started;
   // Measured 2026-10-20 in Chromium: an 8.17 MB package written in 2.4 s, and opened, verified
   // and saved on a clean device in 1.5 s. The old cap refused this at 5 MB.
-  console.log(`MEASURED export: ${(zip.length/1e6).toFixed(2)} MB package in ${(exportMs/1000).toFixed(1)} s`);
-  assert.ok(zip.length>5_000_000,`the package is ${zip.length} bytes, which must exceed the cap this replaces`);
+  //
+  // THE GRAPH is what has to exceed that cap, not the file. Since 2026-10-22 the workflow entry
+  // is gzipped before it is packaged -- a street graph compresses about 25 to 1 -- so the same
+  // workflow that could never have fitted in localStorage now writes under a megabyte. Asserting
+  // on the package size turned that into a failure: the test said "larger than the old cap" and
+  // measured the one number compression was supposed to shrink.
+  const graphBytes=await page.evaluate(()=>new Promise(resolve=>{
+    const open=indexedDB.open('fieldwork',1);
+    open.onerror=()=>resolve(0);
+    open.onsuccess=()=>{
+      const store=open.result.transaction('payloads','readonly').objectStore('payloads');
+      const all=store.getAll();
+      all.onsuccess=()=>resolve(all.result.reduce((sum,value)=>sum+JSON.stringify(value).length,0));
+      all.onerror=()=>resolve(0);
+    };
+  }));
+  console.log(`MEASURED export: ${(graphBytes/1e6).toFixed(2)} MB graph as `
+    +`${(zip.length/1e6).toFixed(2)} MB package in ${(exportMs/1000).toFixed(1)} s`);
+  assert.ok(graphBytes>5_000_000,
+    `the graph is ${graphBytes} bytes, which must exceed the cap the payload store replaces`);
+  assert.ok(zip.length<graphBytes,'and the package is smaller than the graph it carries');
 
   const fresh=await browser.newContext({viewport:{width:1280,height:900}});
   const target=await fresh.newPage();

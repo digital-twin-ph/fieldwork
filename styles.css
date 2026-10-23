@@ -538,3 +538,13 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .extract-links{display:flex;flex-wrap:wrap;gap:6px 10px;margin:0 0 4px;font-size:11px}
 .extract-links a{color:var(--green);text-decoration:none;border-bottom:1px solid var(--line)}
 .extract-links a:hover,.extract-links a:focus-visible{border-bottom-color:var(--green)}
+
+/* THE BACKUP STATE IS A CONTROL, NOT A LABEL. Experiment 131's test is whether the backup can be
+   reached from a cold start without being told where it is, so this has to look like something
+   you can press while sitting inside a status line that is otherwise prose. Underlined rather
+   than button-shaped: the header has no room for another button and a status line full of
+   chrome reads as a toolbar. */
+.link-button{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;
+  text-decoration:underline;text-underline-offset:2px}
+.link-button:hover,.link-button:focus-visible{text-decoration-thickness:2px}
+#project-safety[data-safety="at-risk"]{color:var(--warn-text,#b4541a);font-weight:600}

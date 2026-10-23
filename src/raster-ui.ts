@@ -2,6 +2,8 @@ import {RASTER_SOURCE_FIELDS,validateRasterProvenance,WORLDPOP_BOTSWANA,WORLDPOP
 import type {RasterProvenance} from './raster-provenance.js';
 import type {Boundary} from './types.js';
 import type {RasterAsset,RasterGrid,RasterMetadata} from './raster.js';
+import {rasterImage} from './raster-image.js';
+export {rasterImage} from './raster-image.js';
 import {inspectRaster,rasterWindow,readRasterWindow,encodeRaster} from './raster.js';
 import {contentHash} from './project-files.js';
 import {storePDFs} from './evidence-storage.js';
@@ -28,11 +30,6 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
     await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));if(!onSave(asset))throw new Error('Raster metadata could not be saved. Your previous project is unchanged; retry Save.');dialog.close();
   }catch(e){fail(e);status.textContent='Raster has not been applied to the project.';}finally{busy=false;save.disabled=false;cancel.disabled=false;fileInput.disabled=false;padding.disabled=!file;fields.disabled=false;}};
   dialog.showModal();
-}
-export function rasterImage(grid:RasterGrid):string{
-  const {metadata:m,values}=grid,canvas=document.createElement('canvas');canvas.width=m.width;canvas.height=m.height;const context=canvas.getContext('2d')!,pixels=context.createImageData(m.width,m.height);let min=Infinity,max=-Infinity;
-  for(const value of values)if(value!==null){min=Math.min(min,value);max=Math.max(max,value);}for(let i=0;i<values.length;i++){const value=values[i];if(value===null)continue;const t=max===min?0.5:(value-min)/(max-min);pixels.data.set([Math.round(245-215*t),Math.round(250-145*t),Math.round(220-135*t),255],i*4);}context.putImageData(pixels,0,0);
-  return canvas.toDataURL();
 }
 export function rasterSvg(grid:RasterGrid):string{
   const m=grid.metadata;

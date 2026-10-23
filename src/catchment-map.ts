@@ -9,6 +9,7 @@ import {BASEMAP_CHOICES,type BasemapChoice} from './types.js';
 import {layerSymbol,markPath} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
+import {rasterImage} from './raster-image.js';
 export type {BasemapChoice};
 
 /** OpenFreeMap serves VECTOR tiles, not raster, so these cannot be an `L.tileLayer` URL.
@@ -86,6 +87,10 @@ export interface MapLayers {
   polygons?:Polygons;
   /** A study area, drawn as the ground the rest sits on. */
   boundary?:{type:string;coordinates:unknown};
+  /** A raster, drawn UNDER the study area: it is the most ground-like thing a map carries.
+   *  Arrives as a layer rather than as a mode, so a map showing streets and facilities can
+   *  show the population they are to be read against. */
+  raster?:import('./raster.js').RasterGrid;
   /** Points carried on a value rather than arriving at a port of their own. */
   rows?:{id:string;name:string;coordinates?:Position|null;status?:string;relation?:string;excluded?:boolean;sourceNodeId?:string;fill?:FillClass}[];
   /** What the fill channel stands for. The renderer prints the words and draws the classes; it
@@ -125,7 +130,18 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // could carry a halo put them in the MARKER pane instead, where a dense facility layer covered
   // the pump and site markers and swallowed their clicks. One pane, one z-index below markers,
   // restores the stacking the circleMarkers had.
-  // Ground first, under everything the workflow produced.
+  // Ground first, under everything the workflow produced -- and a raster is under THAT. The
+  // practitioner, 2026-10-23, looking at a map carrying a study area, a street network, 17
+  // facilities and a clipped WorldPop window, of which the raster alone did not appear: *"There
+  // is still no raster on the map"*. It did not appear because a map drew one mode and the
+  // network outranked the raster. The same defect took the study area on 2026-10-20 and the
+  // facilities on 2026-10-22, each patched one layer at a time; this is the third.
+  if(layers.raster?.metadata){
+    const [west,south,east,north]=layers.raster.metadata.bounds;
+    const overlay=L.imageOverlay(rasterImage(layers.raster),[[south,west],[north,east]],
+      {opacity:.75,interactive:false,className:'raster-result-image'});
+    overlay.addTo(map);all.addLayer(overlay);overlays['Population raster']=overlay;
+  }
   if(layers.boundary){
     // Canvas for the same reason the streets use it: a published boundary can be tens of
     // thousands of vertices, and an SVG path that long is seconds of paint on every redraw.

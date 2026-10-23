@@ -105,6 +105,39 @@ sub-district boundaries, which is the hard acquisition; the table is the easy pa
 **Neither started.** Step 1 needs no acquisition, no new repository and no licence manoeuvre — only
 a workflow — which is why it comes first.
 
+## A workflow keeps being called the example it started as
+
+The practitioner, 2026-10-23, looking at a canvas holding a study area, a WorldPop raster, a
+clipped raster, a street network, health facilities and a map, under a caption instructing them to
+draw and run a rule:
+
+> *"The text 'Experiment 01 · draw → inspect facts → run the rule' before the Reset Layout button
+> seems to be stale content."*
+
+It is, and not in one place. `exampleKey` resolves to `blank` and the `blank` branch of `render`
+sets **four** captions unconditionally: `#example-note` ("Experiment 01 · draw → inspect facts →
+run the rule"), `#canvas-example` ("STUDY AREA · EXPERIMENT 01"), `#project-description` and
+`#footer-context`. All four are pinned to the example IDENTITY and none to the content.
+
+**There is no divergence check anywhere.** The application knows a worked example ships and stays,
+and offers Reset example to discard edits to it, and nothing compares a canvas to the template it
+came from. So the one workspace designed to be built in is the one that goes on describing itself
+as a scripted exercise.
+
+It compounds through the project level: `exampleKey` returns `blank` for ANY workflow carrying a
+`projectId`, so a workflow inherits Experiment 01's captions the moment it joins a project --
+which is the thing [131](docs/experiments/131-project-and-workflow-lifecycles.md) is encouraging.
+
+**What it would take.** `template(key)` already exists and is what Reset example restores, so
+divergence is computable by comparing the canvas against it. When they differ the note stops
+asserting a recipe and the eyebrow stops claiming EXPERIMENT 01. The test is a canvas built on the
+blank workspace that is no longer called Experiment 01.
+
+**Where it belongs.** With 131 rather than beside it. "No longer the example it started as" is a
+lifecycle fact about a workflow, and Draft, Run, Stale and Refused have no word for it. Whether it
+needs one, or whether the captions should simply fall silent, is the design question -- and by the
+rule this project already has, the word goes in the glossary before it goes in a panel.
+
 ## What is actually blocked
 
 Everything else in this file is waiting on one of these, or is a defect that nothing is waiting on.

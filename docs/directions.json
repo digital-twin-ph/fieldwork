@@ -1,403 +1,465 @@
 {
- "schema": "fieldwork/directions/1",
- "note": "A DE moment is a point at which the direction should change. The practitioner named it on 2026-10-15, after finding that a map still had an Input mode a day after the discussion that ruled against modes: \"The map output discussion is what we call a DE moment, a moment when things should head in a different direction, and it did not.\"\n\nThis file is the answer to that. Every direction a discussion settles is recorded here with what it requires IN CODE and a clock on it, because the failure mode is specific and this project has produced it at least three times: the direction is written into a spec page, a glossary entry or an ontology term, the code is left alone, and the record now says the matter is settled while the running application still does the old thing. A widget page is not a work item and no ratchet can see one.\n\nIt is deliberately not the blocker ledger. A blocker is a claim that something CANNOT be done yet. A direction is a decision that something SHOULD now be done differently, and the two fail in opposite ways: a blocker rots by being lifted and not noticed, a direction rots by being agreed and not built.",
- "measuredAt": "2026-10-15",
- "checkWindowDays": 7,
- "windowBasis": "The same window the blocker ledger uses, for the same reason: this project changes in days. A direction nobody has checked in a week is a direction nobody is acting on, and saying so is the entire point of the file.",
- "directions": [
-  {
-   "id": "a-map-has-layers-not-modes",
-   "stated": "2026-10-14",
-   "statedBy": "the practitioner",
-   "inTheirWords": "I think we have a misunderstanding of maps: ... A map has layers... So there is no such thing as mode, only layers",
-   "requiresInCode": "map_output stops having an inputMode parameter that decides which ports exist; the renderer is chosen from what is connected.",
-   "recordedIn": [
-    "docs/widgets/map_output.md",
-    "ontology/fieldwork.ttl",
-    "docs/glossary.md"
-   ],
-   "workItem": "docs/experiments/112-progressive-widget-reveal.md and the blocker output-mode-set-before-the-shape-arrives",
-   "status": "built",
-   "lastChecked": "2026-10-15",
-   "checks": [
+  "schema": "fieldwork/directions/1",
+  "note": "A DE moment is a point at which the direction should change. The practitioner named it on 2026-10-15, after finding that a map still had an Input mode a day after the discussion that ruled against modes: \"The map output discussion is what we call a DE moment, a moment when things should head in a different direction, and it did not.\"\n\nThis file is the answer to that. Every direction a discussion settles is recorded here with what it requires IN CODE and a clock on it, because the failure mode is specific and this project has produced it at least three times: the direction is written into a spec page, a glossary entry or an ontology term, the code is left alone, and the record now says the matter is settled while the running application still does the old thing. A widget page is not a work item and no ratchet can see one.\n\nIt is deliberately not the blocker ledger. A blocker is a claim that something CANNOT be done yet. A direction is a decision that something SHOULD now be done differently, and the two fail in opposite ways: a blocker rots by being lifted and not noticed, a direction rots by being agreed and not built.",
+  "measuredAt": "2026-10-22",
+  "checkWindowDays": 7,
+  "windowBasis": "The same window the blocker ledger uses, for the same reason: this project changes in days. A direction nobody has checked in a week is a direction nobody is acting on, and saying so is the entire point of the file.",
+  "directions": [
     {
-     "date": "2026-10-15",
-     "found": "Shipped unchanged for a day. The direction reached docs/widgets/map_output.md, the fw:layerCount vocabulary and the glossary; inputMode stayed in src/core.ts, in the Inspector and in validate-widgets.mjs, which REQUIRED four mode-keyed port declarations. The practitioner found it in the running app: \"Map still has input mode\", then \"I thought we got rid of mode!\" Built the same day: every layer port always declared, drawnMode reads the renderer from the connections, one configurable port on the node, map_output 0.10.0."
-    }
-   ]
-  },
-  {
-   "id": "carrier-is-withdrawn-vocabulary",
-   "stated": "2026-10-12",
-   "statedBy": "the practitioner, via the glossary withdrawal",
-   "inTheirWords": "It's like \"carrier\" which is still out there in several files (2026-10-15, naming it as the same failure as the map model)",
-   "requiresInCode": "The live text of the corpus stops using `carrier` and `carrier kind`. Dated records keep theirs: a withdrawn term inside one is evidence of what was thought then.",
-   "recordedIn": [
-    "docs/glossary.md",
-    "docs/withdrawn-vocabulary.json",
-    "scripts/validate-vocabulary.mjs"
-   ],
-   "workItem": "docs/withdrawn-vocabulary.json#classified, and the 57 ledger uses that remain unseparated",
-   "status": "built",
-   "lastChecked": "2026-10-19",
-   "checks": [
-    {
-     "date": "2026-10-15",
-     "found": "146 occurrences across 45 files, exactly at the ceiling, three days after withdrawal. The ratchet forbids a NEW use and nothing makes the count fall, so the debt can sit at 146 indefinitely -- the same shape as a direction recorded and not built. What is missing is a classification: which of the 146 are dated records that may not be reworded, and which are live text that should be. The first number is a floor and the second is work. Nobody has separated them."
+      "id": "a-map-has-layers-not-modes",
+      "stated": "2026-10-14",
+      "statedBy": "the practitioner",
+      "inTheirWords": "I think we have a misunderstanding of maps: ... A map has layers... So there is no such thing as mode, only layers",
+      "requiresInCode": "map_output stops having an inputMode parameter that decides which ports exist; the renderer is chosen from what is connected.",
+      "recordedIn": [
+        "docs/widgets/map_output.md",
+        "ontology/fieldwork.ttl",
+        "docs/glossary.md"
+      ],
+      "workItem": "docs/experiments/112-progressive-widget-reveal.md and the blocker output-mode-set-before-the-shape-arrives",
+      "status": "built",
+      "lastChecked": "2026-10-15",
+      "checks": [
+        {
+          "date": "2026-10-15",
+          "found": "Shipped unchanged for a day. The direction reached docs/widgets/map_output.md, the fw:layerCount vocabulary and the glossary; inputMode stayed in src/core.ts, in the Inspector and in validate-widgets.mjs, which REQUIRED four mode-keyed port declarations. The practitioner found it in the running app: \"Map still has input mode\", then \"I thought we got rid of mode!\" Built the same day: every layer port always declared, drawnMode reads the renderer from the connections, one configurable port on the node, map_output 0.10.0."
+        }
+      ]
     },
     {
-     "date": "2026-10-15",
-     "found": "Classified, which is what the ceiling was missing. Of 146: 79 are dated records that may never be reworded, 57 are ledger entries not yet separated into record and live text, 6 are necessary mentions -- the ontology's own note that the term was withdrawn, and references to the fw:Carrier CLASS D11 rejected -- and 4 were live prose. The 4 were reworded to 'port type' and the ceiling fell 146 -> 142, the first time it has moved since the withdrawal. The remaining work is the 57."
+      "id": "carrier-is-withdrawn-vocabulary",
+      "stated": "2026-10-12",
+      "statedBy": "the practitioner, via the glossary withdrawal",
+      "inTheirWords": "It's like \"carrier\" which is still out there in several files (2026-10-15, naming it as the same failure as the map model)",
+      "requiresInCode": "The live text of the corpus stops using `carrier` and `carrier kind`. Dated records keep theirs: a withdrawn term inside one is evidence of what was thought then.",
+      "recordedIn": [
+        "docs/glossary.md",
+        "docs/withdrawn-vocabulary.json",
+        "scripts/validate-vocabulary.mjs"
+      ],
+      "workItem": "docs/withdrawn-vocabulary.json#classified, and the 57 ledger uses that remain unseparated",
+      "status": "built",
+      "lastChecked": "2026-10-19",
+      "checks": [
+        {
+          "date": "2026-10-15",
+          "found": "146 occurrences across 45 files, exactly at the ceiling, three days after withdrawal. The ratchet forbids a NEW use and nothing makes the count fall, so the debt can sit at 146 indefinitely -- the same shape as a direction recorded and not built. What is missing is a classification: which of the 146 are dated records that may not be reworded, and which are live text that should be. The first number is a floor and the second is work. Nobody has separated them."
+        },
+        {
+          "date": "2026-10-15",
+          "found": "Classified, which is what the ceiling was missing. Of 146: 79 are dated records that may never be reworded, 57 are ledger entries not yet separated into record and live text, 6 are necessary mentions -- the ontology's own note that the term was withdrawn, and references to the fw:Carrier CLASS D11 rejected -- and 4 were live prose. The 4 were reworded to 'port type' and the ceiling fell 146 -> 142, the first time it has moved since the withdrawal. The remaining work is the 57."
+        },
+        {
+          "date": "2026-10-19",
+          "found": "Classified and carried out. 142 occurrences across 43 files became 131 across 40, and the ceiling fell with them. The classification the 2026-10-15 check said was missing: 111 in dated records that may not be reworded, 20 that record the withdrawal itself and cannot avoid naming it, and 11 live uses -- which are now 0. Every live one meant the thing a connection is checked against, so every one became `port type`; the ledger's other two suggestions were not needed. The file-level count that made this look like 83 files of work was wrong: widgets/blockers.json holds 21 uses and only the single STANDING entry was live, the other three being lifted, narrowed and withdrawn entries that are records. docs/audits/ontology-audit.md holds 16 and 14 are inside the dated section that withdrew the term. Reading them was the work; replacing them was not.",
+          "remaining": "131, none live. The count can now only fall when a dated record is superseded, which is not a cleanup job. A NEW use still fails the build, which is what the withdrawal was for."
+        }
+      ]
     },
     {
-     "date": "2026-10-19",
-     "found": "Classified and carried out. 142 occurrences across 43 files became 131 across 40, and the ceiling fell with them. The classification the 2026-10-15 check said was missing: 111 in dated records that may not be reworded, 20 that record the withdrawal itself and cannot avoid naming it, and 11 live uses -- which are now 0. Every live one meant the thing a connection is checked against, so every one became `port type`; the ledger's other two suggestions were not needed. The file-level count that made this look like 83 files of work was wrong: widgets/blockers.json holds 21 uses and only the single STANDING entry was live, the other three being lifted, narrowed and withdrawn entries that are records. docs/audits/ontology-audit.md holds 16 and 14 are inside the dated section that withdrew the term. Reading them was the work; replacing them was not.",
-     "remaining": "131, none live. The count can now only fall when a dated record is superseded, which is not a cleanup job. A NEW use still fails the build, which is what the withdrawal was for."
-    }
-   ]
-  },
-  {
-   "id": "five-directions-as-a-method",
-   "stated": "2026-10-12",
-   "statedBy": "the practitioner, in experiment 105",
-   "inTheirWords": "In a DE project, we look back, we look forward, we look sideways, above and below. \u2014 and, on 2026-10-15: \"105 cannot be retired as it embodies the DE approach.\"",
-   "requiresInCode": "Nothing in code. It is the stance, not a technique: back, sideways, above, below and forward, pointed at the project periodically with the previous pass's findings in hand. What it requires is USE, and that each sweep's findings land as work items rather than as a document.",
-   "recordedIn": [
-    "AGENTS.md#the-five-directions",
-    "docs/glossary.md",
-    "docs/experiments/105-five-directions.md"
-   ],
-   "workItem": "A sweep. Findings go to docs/todo.md, widgets/blockers.json or this register, per AGENTS.md.",
-   "status": "open",
-   "lastChecked": "2026-10-22",
-   "checks": [
-    {
-     "date": "2026-10-15",
-     "found": "Pointed at the project twice, both on 2026-10-12 -- once over the widget set and once over vocabulary -- and not since, through three days in which the widget count, the ruleset layer, the map model and the blocker ledger all changed. The method was not withdrawn and is not in use, which is the state this file exists to make visible rather than a conclusion about whether it is worth using."
+      "id": "five-directions-as-a-method",
+      "stated": "2026-10-12",
+      "statedBy": "the practitioner, in experiment 105",
+      "inTheirWords": "In a DE project, we look back, we look forward, we look sideways, above and below. — and, on 2026-10-15: \"105 cannot be retired as it embodies the DE approach.\"",
+      "requiresInCode": "Nothing in code. It is the stance, not a technique: back, sideways, above, below and forward, pointed at the project periodically with the previous pass's findings in hand. What it requires is USE, and that each sweep's findings land as work items rather than as a document.",
+      "recordedIn": [
+        "AGENTS.md#the-five-directions",
+        "docs/glossary.md",
+        "docs/experiments/105-five-directions.md"
+      ],
+      "workItem": "A sweep. Findings go to docs/todo.md, widgets/blockers.json or this register, per AGENTS.md.",
+      "status": "open",
+      "lastChecked": "2026-10-22",
+      "checks": [
+        {
+          "date": "2026-10-15",
+          "found": "Pointed at the project twice, both on 2026-10-12 -- once over the widget set and once over vocabulary -- and not since, through three days in which the widget count, the ruleset layer, the map model and the blocker ledger all changed. The method was not withdrawn and is not in use, which is the state this file exists to make visible rather than a conclusion about whether it is worth using."
+        },
+        {
+          "date": "2026-10-15",
+          "found": "Corrected by the practitioner: \"105 cannot be retired as it embodies the DE approach.\" This entry had offered retirement as an option and 105's own closing condition had put the whole method on the same hook as its forward prediction, so a stance read as a technique on trial. The five directions moved into AGENTS.md where the method is; 105 keeps the derivation, the three readings it first got wrong, and the dated sweeps, and its closing condition is narrowed to the prediction alone. The gap itself is unchanged and is the reason this stays open: two sweeps, both 2026-10-12, none since, through three days in which the widget set, the ruleset layer, the map model and the blocker ledger all moved."
+        },
+        {
+          "date": "2026-10-22",
+          "found": "Checked by use rather than by reading. Three sweeps landed as work items in the seven days to 2026-10-22: looking BELOW produced experiment 125's finding that the graph-limit ceiling was its own default and that the byte cap was a projection enforced as a boundary; looking SIDEWAYS at another engine produced experiment 129, the spike folder and the street engine now shipped; looking BACK at this project's own caps retired the isochrone-derived refusal, the 30,000-vertex cap and the 100,000-character provenance cap. None of those landed as a document alone. The stance is in use and the direction stays open, because use is the only thing that keeps it true."
+        }
+      ]
     },
     {
-     "date": "2026-10-15",
-     "found": "Corrected by the practitioner: \"105 cannot be retired as it embodies the DE approach.\" This entry had offered retirement as an option and 105's own closing condition had put the whole method on the same hook as its forward prediction, so a stance read as a technique on trial. The five directions moved into AGENTS.md where the method is; 105 keeps the derivation, the three readings it first got wrong, and the dated sweeps, and its closing condition is narrowed to the prediction alone. The gap itself is unchanged and is the reason this stays open: two sweeps, both 2026-10-12, none since, through three days in which the widget set, the ruleset layer, the map model and the blocker ledger all moved."
+      "id": "progressive-reveal-on-the-ordinary-palette",
+      "stated": "2026-10-14",
+      "statedBy": "the practitioner",
+      "inTheirWords": "BTW on 0.80 I still do not see progressive reveal. On a blank canvas, all widgets are active, does not start with Study Area. (2026-10-15)",
+      "requiresInCode": "The reveal rule applied to the palette a practitioner actually uses, rather than only inside the ?playback=1 view.",
+      "recordedIn": [
+        "docs/experiments/112-progressive-widget-reveal.md",
+        "src/reveal-playback.ts"
+      ],
+      "workItem": "112, whose closing condition is now a decision: adopt the rule and under which of the three readings",
+      "status": "open",
+      "lastChecked": "2026-10-22",
+      "checks": [
+        {
+          "date": "2026-10-15",
+          "found": "Measured under three readings on four worked examples, prototyped behind ?playback=1 with tests, and never applied to the ordinary palette -- so a blank canvas offers all 51 widgets. revealedTypes() already produces the expected behaviour at step 0, because only widgets with an empty required set are revealed on an empty canvas, which is the inputs. What is missing is the decision of WHICH reading to adopt, and that is the practitioner's; it is not missing evidence."
+        },
+        {
+          "date": "2026-10-15",
+          "found": "The practitioner, having asked twice: \"I thought we implemented progressive reveal in worked examples. And used this as a progressive reveal refinement approach.\" Both true. The playback IS the refinement instrument -- it is what produced the three readings and the per-step measurements on four examples -- and it was reachable only by typing ?playback=1, so the person it was built for could not find it. Put in the workspace bar as \"Play back the build\" the same day. The ordinary palette is still untouched, which is the open part and is a decision rather than missing work."
+        },
+        {
+          "date": "2026-10-15",
+          "found": "The practitioner: \"What are the three readings? This decision seems vague to make.\" It was, and checking why found a false premise. 112 dismissed the port rule and emptied the stage rule on the same ground -- that the first placement is already handled by STARTER_TYPES, which offers 5. Measured in the running application: a blank canvas shows 41 of 53. addableTypes starts from the starter set and then adds ALWAYS_ADDABLE (32) and the catchment types unconditionally, so the starter set is overridden two lines after it is applied. Nobody had measured the palette, only the list. So there is no three-way choice: the port rule's own numbers still dismiss it (57-82% of the palette open through a build), the receipt rule's prerequisites are unchanged, and the stage rule has content after all -- 41 to 7 on a blank canvas, which is exactly the behaviour reported missing."
+        },
+        {
+          "date": "2026-10-22",
+          "found": "Re-derived from src/app.ts:3528. Unchanged: the reveal is still behind ?playback=1 with a control in the workspace bar, and nothing about the ordinary palette changes. What the week added is a reason to be glad of that -- the palette now carries a third acquisition method on Street network, and a reveal rule that hid it until a study area existed would have hidden the one path that needs no service. The direction stays open and unbuilt; the playback remains the instrument rather than the behaviour."
+        }
+      ]
     },
     {
-     "date": "2026-10-22",
-     "found": "Checked by use rather than by reading. Three sweeps landed as work items in the seven days to 2026-10-22: looking BELOW produced experiment 125's finding that the graph-limit ceiling was its own default and that the byte cap was a projection enforced as a boundary; looking SIDEWAYS at another engine produced experiment 129, the spike folder and the street engine now shipped; looking BACK at this project's own caps retired the isochrone-derived refusal, the 30,000-vertex cap and the 100,000-character provenance cap. None of those landed as a document alone. The stance is in use and the direction stays open, because use is the only thing that keeps it true."
-    }
-   ]
-  },
-  {
-   "id": "progressive-reveal-on-the-ordinary-palette",
-   "stated": "2026-10-14",
-   "statedBy": "the practitioner",
-   "inTheirWords": "BTW on 0.80 I still do not see progressive reveal. On a blank canvas, all widgets are active, does not start with Study Area. (2026-10-15)",
-   "requiresInCode": "The reveal rule applied to the palette a practitioner actually uses, rather than only inside the ?playback=1 view.",
-   "recordedIn": [
-    "docs/experiments/112-progressive-widget-reveal.md",
-    "src/reveal-playback.ts"
-   ],
-   "workItem": "112, whose closing condition is now a decision: adopt the rule and under which of the three readings",
-   "status": "open",
-   "lastChecked": "2026-10-22",
-   "checks": [
-    {
-     "date": "2026-10-15",
-     "found": "Measured under three readings on four worked examples, prototyped behind ?playback=1 with tests, and never applied to the ordinary palette -- so a blank canvas offers all 51 widgets. revealedTypes() already produces the expected behaviour at step 0, because only widgets with an empty required set are revealed on an empty canvas, which is the inputs. What is missing is the decision of WHICH reading to adopt, and that is the practitioner's; it is not missing evidence."
+      "id": "a-ruleset-widget-is-a-mini-program",
+      "stated": "2026-10-12",
+      "statedBy": "the practitioner, in the 65 amendment and experiment 106",
+      "inTheirWords": "In a nutshell, a ruleset widget is like a mini-software program with many possibilities because of how rules may be combined to produce an output. — and, on 2026-10-15, looking at the shipped Inspector: \"Regarding ruleset widgets, this is not the design we discussed, the rules are pinned not very flexible.\"",
+      "requiresInCode": "The authored form of 106 -- condition {field, comparator, value}, AND groups, OR of groups, a LIST of conclusions from the declared output vocabulary -- with a total compiler to the N3 subset 65 settled, a rule-count ceiling checkable from the form before compiling, and the Inspector authoring rules rather than choosing a pre-baked ruleset from a list of four.",
+      "recordedIn": [
+        "docs/experiments/106-rule-builder-ui.md",
+        "docs/experiments/65-ruleset-as-data.md"
+      ],
+      "workItem": "106, whose closing condition is Group A green and B1 green against the three existing rulesets on their frozen fixtures",
+      "status": "built",
+      "lastChecked": "2026-10-15",
+      "checks": [
+        {
+          "date": "2026-10-15",
+          "found": "Nothing of it is built. No comparator, no authored form, no compiler in src/rulesets.ts or src/rule-application.ts; 106 has been `asked` since 2026-10-12. What shipped is the OTHER half of 65 -- rules as declared versioned data, one widget hosting them, three widgets retired -- which is real and is not this. The practitioner meets a dropdown of four bundled rulesets whose rule text is fixed, and the only thing they can change is a declared parameter such as a 5 km threshold. \"The rules are pinned\" is exactly accurate. 106 says what must come first and it needs no new oracle: B1, the three existing rulesets rebuilt in the authored form and compiled, reaching identical conclusions on their frozen fixtures."
+        },
+        {
+          "date": "2026-10-15",
+          "found": "Acted on, partly, the same day. The authored form and its compiler are built in src/authored-rules.ts and B1 is GREEN: all three shipped rulesets rebuilt in the form, compiled, and reasoned under the real EYE engine reach identical conclusions. A1, A2, A3, A5, A8, A9 and A10 pass too, and the rule ceiling is checked from the form before anything is compiled. 106 moves asked -> tried. What is NOT built is the half the practitioner meets: the Inspector still offers a ruleset chosen from a list, so the rules are still pinned from where they sit. Four comparators compile and have never been executed, so by 106's own rule they must not be offered until B2 passes."
+        },
+        {
+          "date": "2026-10-15",
+          "found": "Carried further the same day, on the practitioner's proposal: \"We should have a worked example just for the ruleset widget to exercise different ruleset conditions so users can also see examples of how to configure it. That is one way to execute widget rules and validate at the same time.\" Built as the `rulesets` workspace: three steps, one condition kind each -- a band from two comparisons, alternatives with two conclusions at once, a category match -- over twelve synthetic records chosen so every branch has one. A node can now CARRY authored rules and a generic path runs them: facts from declared field bindings, the authored form compiled, conclusions back onto the records. Two things the example found that no unit test would: the Inspector described the PINNED ruleset, so a step applying authored rules showed somebody else's title, threshold and basis; and authored rules MINT VOCABULARY -- thirty terms in one afternoon -- which now lives in urn:fieldwork:authored: so a practitioner's coinage is never mistaken for a term this application defines. The Inspector reads the rules back in plain words. What is still missing is composing them there: the rules can be read and their numbers changed, not yet written."
+        },
+        {
+          "date": "2026-10-15",
+          "found": "Built. The practitioner opened the published example -- \"I see the ruleset widget but it's not editable\" -- and then chose the shape: \"Perhaps the rule editor should be a modal dialog so there is enough space.\" src/rule-editor.ts edits 106's authored form in a dialog: conditions grouped by and, alternatives by or, a list of conclusions, add and remove throughout. The compiler runs on every edit, so the rule ceiling and any refusal appear while authoring rather than at the end, and Keep is disabled while the rules cannot compile. Comparators are filtered by the field's kind, so a category cannot be given `is more than`, and the fwa: namespace is added for the practitioner rather than typed by them. Three debts recorded in 106 rather than hidden: two comparators are offered that have never been executed against the real engine, nothing catches an incommensurable unit at authoring time, and conclusions are free text so two rules can disagree -- caught at run time, which is late."
+        }
+      ]
     },
     {
-     "date": "2026-10-15",
-     "found": "The practitioner, having asked twice: \"I thought we implemented progressive reveal in worked examples. And used this as a progressive reveal refinement approach.\" Both true. The playback IS the refinement instrument -- it is what produced the three readings and the per-step measurements on four examples -- and it was reachable only by typing ?playback=1, so the person it was built for could not find it. Put in the workspace bar as \"Play back the build\" the same day. The ordinary palette is still untouched, which is the open part and is a decision rather than missing work."
+      "id": "street-network-declares-a-travel-mode",
+      "stated": "2026-10-20",
+      "statedBy": "the practitioner, reading the network_input manual page",
+      "inTheirWords": "Regarding street network, OSMNx designates a download as walk or drive. I noticed in the widget manual that it talks about walk but it could be drive. Do we make that distinction when we download an OSM street network? — and, settling the scope: \"For 1854 Soho, driving speed limits does not matter. For current day investigations, these speed limits matter as a ceiling (best case travel time).\"",
+      "requiresInCode": "A travelMode chosen on `network_input` at download time, which selects the highway list (driving adds motorway, trunk and their links and drops footway, path, steps, pedestrian and cycleway), the restriction tags read (motor_vehicle, motorcar and access rather than foot and oneway:foot) and the direction tag that makes an edge one-way. The graph records its mode in `source` and in the download receipt, and a downstream widget whose `travelMode` disagrees with the graph's mode refuses rather than computes.",
+      "recordedIn": [
+        "docs/experiments/126-travel-time-as-a-bound.md",
+        "docs/widgets/network_input.md"
+      ],
+      "workItem": "126, whose first half is the mode; the bound semantics are the second half and are a separate direction",
+      "status": "built",
+      "lastChecked": "2026-10-20",
+      "checks": [
+        {
+          "date": "2026-10-20",
+          "found": "Nothing of it is built, and the gap is wider than the manual page. `WALKABLE_HIGHWAYS` in src/street-network.ts is one list used twice -- in the Overpass query and again in networkFromOSM -- and it excludes motorway, trunk and their links entirely, so a driving network is not merely unfiltered here, it is missing the roads that carry cars. Restrictions read are foot ones (foot=no|private|use_sidepath, barrier nodes, oneway:foot), and the source string says outright that vehicle oneway does not imply foot oneway. Meanwhile `reachable_nodes` ALREADY takes travelMode walking|cycling|driving|other with per-mode speed bands that refuse an implausible speed, and the Inspector offers it as \"How people travel\" -- so the mode is declared where it cannot be honoured and absent where it would be. Measured on examples/john-snow/soho.graphml, the OSMnx walk graph this repository ships: of 1,619 directed edges and 50.63 km, 918 edges and 24.34 km (56.7% of edges, 48.1% of length) are types OSMnx's drive filter excludes, and 455 edges (28.1%) carry oneway=True whose direction we ignore because we read oneway:foot only. A driving isochrone on that graph routes over footways, up steps, and the wrong way down a quarter of the one-way streets. Not established: how wrong the resulting time is, which is unmeasured; Soho is half a square kilometre of dense centre so the shares elsewhere will differ; and OSMnx's drive filter is one project's definition, not a standard."
+        },
+        {
+          "date": "2026-10-20",
+          "found": "Built the same day, on the practitioner's go-ahead: \"So before I download Bunia again, I want to be able to set driving mode on the street network.\" MODE_FILTERS in src/street-network.ts is one table with a row per difference -- highway list, the access tags consulted, the values that forbid and permit, the one-way tag, whether a roundabout implies direction, and the sentence saved on the graph -- so the two modes cannot drift into two parsers. Driving follows OSMnx's drive exclusions so the two implementations stay comparable, and keeps `road`, as OSMnx does. The mode is in the query text, which is the cache key, so a driving download cannot be served a cached walking graph; it is written into provenance, shown on the widget, and asserted as fw:travelMode on the network entity rather than only inside the metadata blob. refuseModeMismatch in src/reachable-nodes.ts refuses a declared mode the graph cannot carry and names the way out, but only a KNOWN contradiction: an imported file carries no mode, and cycling or `other` have no download of their own, so neither is locked out. Walking is the default, so a saved workflow downloads what it always did. Ten unit tests in tests/street-network-mode.test.mjs and one browser test for the control. One list claim I had to correct against the data: nine of the fifteen walkable highway values are also drivable, so the LISTS mostly agree -- it is the edges that diverge, 56.7% of them on the Soho graph. network_input 0.3.0, manual page rewritten with a comparison table, CHANGELOG under 0.10.0. What is NOT built: the graph carries no speed limits, no junction delay and no congestion, so a driving travel time is one speed over every street, which is the subject of the other direction and of 126."
+        }
+      ]
     },
     {
-     "date": "2026-10-15",
-     "found": "The practitioner: \"What are the three readings? This decision seems vague to make.\" It was, and checking why found a false premise. 112 dismissed the port rule and emptied the stage rule on the same ground -- that the first placement is already handled by STARTER_TYPES, which offers 5. Measured in the running application: a blank canvas shows 41 of 53. addableTypes starts from the starter set and then adds ALWAYS_ADDABLE (32) and the catchment types unconditionally, so the starter set is overridden two lines after it is applied. Nobody had measured the palette, only the list. So there is no three-way choice: the port rule's own numbers still dismiss it (57-82% of the palette open through a build), the receipt rule's prerequisites are unchanged, and the stage rule has content after all -- 41 to 7 on a blank canvas, which is exactly the behaviour reported missing."
+      "id": "travel-time-from-a-posted-limit-is-a-best-case",
+      "stated": "2026-10-20",
+      "statedBy": "the practitioner, on whether OSM carries speed limits",
+      "inTheirWords": "For 1854 Soho, driving speed limits does not matter. For current day investigations, these speed limits matter as a ceiling (best case travel time). Worst case travel time can be researched. — and, on where the obligation falls: \"Do not worry about the local trip time license, that is the user's problem, the thing to worry about is if it is recorded in the widget, a provenance note goes with it for the benefit of accurate reporting, for example during publications.\"",
+      "requiresInCode": "Any travel time derived from a per-edge posted limit is reported as a BOUND and named as one -- in the result field, in the N3 receipt and in the Inspector -- rather than as an estimate, with the edges that had no limit and fell back to a declared speed counted in both. A widget that can produce only a best case refuses the claim a best case cannot support: a free-flow time can rule a site out of a catchment and cannot rule one in, so \"not reachable even at best\" is sound and \"reachable\" is not. And a speed or trip time a practitioner supplies carries a PROVENANCE NOTE that travels with it into the receipt, the evidence panel and any export, so a figure quoted in a publication can be attributed. Not a licence check: whose data it is remains the practitioner's to answer. This applies to the single speedMPerMin that already exists and carries no note today, not only to a future per-edge speed.",
+      "recordedIn": [
+        "docs/experiments/126-travel-time-as-a-bound.md"
+      ],
+      "workItem": "126, whose closing condition is a bound named in the result and the receipt, plus best and worst computed over one current-day graph and differing by a measured amount",
+      "status": "open",
+      "lastChecked": "2026-10-20",
+      "checks": [
+        {
+          "date": "2026-10-20",
+          "found": "Nothing to label yet, because no widget reads a posted limit: `maxspeed` appears nowhere in src/, docs/ or scripts/, although the Overpass query asks for way tags and the tag arrives in the response and is dropped. Travel time is one scalar everywhere -- minutes x speedMPerMin over every edge identically -- and src/reachable-nodes.ts already says so in the receipt it writes, which is the honest version of the current model and not the thing this direction changes. What this direction adds to the earlier framing, and what 126 records, is the asymmetry: an access claim is conservative in the WORST case, so coverage computed from a ceiling overstates access, invisibly, because the output is a number of minutes like any other. Measured on examples/john-snow/soho.graphml: 499 of 1,619 edges carry maxspeed (30.8%), or 469 of 701 drive-usable edges (66.9%) and 17.54 of 26.29 km (66.7%), with values `30 mph` and `20 mph` -- free text with units, where the wider database legally holds 50, RU:urban, walk, none and signals. So a third of the drivable length in a well-mapped city centre needs a declared fallback. Not established: that posted limits would make a driving time more accurate, which is unmeasured against any observed trip, and that 66.9% generalises -- it is one half-square-kilometre graph read from a file we ship."
+        },
+        {
+          "date": "2026-10-20",
+          "found": "Scope corrected the same day, before anything was built on the earlier reading. 126 had made the licence of a worst-case speed source a question for this project to settle; it is not. What is: every configurable speed in the application today -- isochrone's speedMPerMin, reachable_nodes', travel_time's, access' -- is a bare number with no note of where it came from, so in a receipt it is indistinguishable from a figure this application derived. That is the gap to close, and it is open now rather than when per-edge speeds arrive."
+        }
+      ]
     },
     {
-     "date": "2026-10-22",
-     "found": "Re-derived from src/app.ts:3528. Unchanged: the reveal is still behind ?playback=1 with a control in the workspace bar, and nothing about the ordinary palette changes. What the week added is a reason to be glad of that -- the palette now carries a third acquisition method on Street network, and a reveal rule that hid it until a study area existed would have hidden the one path that needs no service. The direction stays open and unbuilt; the playback remains the instrument rather than the behaviour."
-    }
-   ]
-  },
-  {
-   "id": "a-ruleset-widget-is-a-mini-program",
-   "stated": "2026-10-12",
-   "statedBy": "the practitioner, in the 65 amendment and experiment 106",
-   "inTheirWords": "In a nutshell, a ruleset widget is like a mini-software program with many possibilities because of how rules may be combined to produce an output. \u2014 and, on 2026-10-15, looking at the shipped Inspector: \"Regarding ruleset widgets, this is not the design we discussed, the rules are pinned not very flexible.\"",
-   "requiresInCode": "The authored form of 106 -- condition {field, comparator, value}, AND groups, OR of groups, a LIST of conclusions from the declared output vocabulary -- with a total compiler to the N3 subset 65 settled, a rule-count ceiling checkable from the form before compiling, and the Inspector authoring rules rather than choosing a pre-baked ruleset from a list of four.",
-   "recordedIn": [
-    "docs/experiments/106-rule-builder-ui.md",
-    "docs/experiments/65-ruleset-as-data.md"
-   ],
-   "workItem": "106, whose closing condition is Group A green and B1 green against the three existing rulesets on their frozen fixtures",
-   "status": "built",
-   "lastChecked": "2026-10-15",
-   "checks": [
-    {
-     "date": "2026-10-15",
-     "found": "Nothing of it is built. No comparator, no authored form, no compiler in src/rulesets.ts or src/rule-application.ts; 106 has been `asked` since 2026-10-12. What shipped is the OTHER half of 65 -- rules as declared versioned data, one widget hosting them, three widgets retired -- which is real and is not this. The practitioner meets a dropdown of four bundled rulesets whose rule text is fixed, and the only thing they can change is a declared parameter such as a 5 km threshold. \"The rules are pinned\" is exactly accurate. 106 says what must come first and it needs no new oracle: B1, the three existing rulesets rebuilt in the authored form and compiled, reaching identical conclusions on their frozen fixtures."
+      "id": "dive-deeper-notebooks-have-their-own-repository",
+      "stated": "2026-10-20",
+      "statedBy": "the practitioner",
+      "inTheirWords": "I created a dive-deeper repo on GitHub so the dive deeper notebooks do not mix with the validation lab's. — and, when nothing had changed in the code a day later: \"are we using the dive deeper repo for the dive deeper pedagogy notebooks?\"",
+      "requiresInCode": "A ledger of its own -- widgets/dive-deeper.json -- pinning the second repository, because parity results are pinned by commit and digest into a release's evidence and improving an explanation must not move that pin. The application links the new site for a widget that has a lesson; scripts/validate-dive-deeper.mjs verifies lesson notebooks against ../dive-deeper/content and refuses a lesson no widget links; and the sections still living inside lab notebooks are counted against a ceiling that may fall and never rise.",
+      "recordedIn": [
+        "docs/experiments/94-where-explanation-belongs.md"
+      ],
+      "workItem": "94, whose closing condition is whether the notebook is the right surface at all",
+      "status": "built",
+      "lastChecked": "2026-10-20",
+      "checks": [
+        {
+          "date": "2026-10-20",
+          "found": "Recorded and not built, which is the failure this ledger exists to catch. The split was written into experiment 94 with its costs and its ratchet, and the code still read ../validation-lab/content, linked the Lab's site, and carried `diveDeeper` as a heading inside a parity notebook. The repository had been created that morning and was EMPTY. I had not even recorded it here, so no clock was running on it; four defect reports came in and it went unlooked-at until the practitioner asked."
+        },
+        {
+          "date": "2026-10-20",
+          "found": "Built the same day. digital-twin-ph/dive-deeper is seeded: README stating what a notebook owes, Apache-2.0, JupyterLite config pinned to the Lab's builder versions, a Pages workflow that executes every notebook before publishing, and the first lesson -- the mean centre on Snow's 250 addresses. It meets the pedagogical requirements rather than the older narrower definition, and its three measured numbers are the lesson: weighting by deaths moves the centre 2.10 m, mean against median centre 6.62 m, UTM 30N against British National Grid 0.001 m. So the weighting a practitioner reaches for first matters least -- a weighted mean only moves when the weights are spatially structured, which the notebook then shows by weighting eastward and moving it 46 m -- and the summary nobody questions matters most, the mean centre having a breakdown point of zero. In Fieldwork: widgets/dive-deeper.json pins the repo at 04b22ab, the validator checks lessons against ../dive-deeper/content and holds the legacy count at 20, and the Inspector links the new site. What is NOT done: twenty sections remain inside lab notebooks, and rewriting one is new work rather than a file move."
+        }
+      ]
     },
     {
-     "date": "2026-10-15",
-     "found": "Acted on, partly, the same day. The authored form and its compiler are built in src/authored-rules.ts and B1 is GREEN: all three shipped rulesets rebuilt in the form, compiled, and reasoned under the real EYE engine reach identical conclusions. A1, A2, A3, A5, A8, A9 and A10 pass too, and the rule ceiling is checked from the form before anything is compiled. 106 moves asked -> tried. What is NOT built is the half the practitioner meets: the Inspector still offers a ruleset chosen from a list, so the rules are still pinned from where they sit. Four comparators compile and have never been executed, so by 106's own rule they must not be offered until B2 passes."
+      "id": "projects-are-managed-in-the-interface",
+      "stated": "2026-10-20",
+      "statedBy": "the practitioner, after using the project model built in 122",
+      "inTheirWords": "Right now I have no way of editing Project Title nor viewing Project metadata. I can only view the workflows through the worked example dropdown which seems to be the wrong place to locate projects. Let's figure out how to seamlessly manage projects within the UI first in such a way that it's intuitive for the user to do it. — and, on the first version: \"There is still no way to edit project (e.g., title) or workflow (e.g., title) metadata.\"",
+      "requiresInCode": "Two selectors rather than one -- the investigation, then the question -- with the worked examples listed as the built-in projects they already are. The project's own fields readable and editable where it is named: name, subject, the workflows it holds, and the id. One gesture to add a workflow INSIDE a project, which previously meant creating an unrelated canvas and then assigning it. Deleting a project removes the grouping and not the work.",
+      "recordedIn": [
+        "docs/experiments/122-a-project-holds-many-workflows.md"
+      ],
+      "workItem": "122, whose phase two is sharing data between a project's workflows",
+      "status": "built",
+      "lastChecked": "2026-10-20",
+      "checks": [
+        {
+          "date": "2026-10-20",
+          "found": "Built on the practitioner's choice of shape, taken before any code: split the selector and edit in place, with worked examples as built-in projects listed beside the practitioner's own. index.html now carries two empty selects and no example list at all -- the picker was the FOURTH copy of the example vocabulary and is now derived from the project registry, which deleted a unit test whose whole job was keeping the copy honest. The project bar gained a details disclosure: name, subject, the workflow list, the project id, Apply and Delete, with built-in projects shown read-only and saying why. `+ Add workflow` creates a canvas inside the project and names it for the question. Deleting a project leaves its workflows openable under `No project`, which is also always offered -- without it an unfiled workflow became unreachable the moment a project was selected, a navigation trap found while updating the tests. What is NOT done: no project-level export, no reordering of workflows, and the data sharing that 122 calls phase two is untouched."
+        },
+        {
+          "date": "2026-10-20",
+          "found": "Not finished, and the practitioner found the gap before the gate did. The fields existed only inside a collapsed disclosure at the bottom of the project bar, which is somewhere to PUT a control rather than somewhere a practitioner looks -- and the shape chosen on the day was `edit in place`, whose sketch showed `click title to rename`. Both titles are controls now: the project name in the eyebrow and the workflow name in the heading, with a cursor, a hover, a tooltip, a focus ring and a keyboard route in; Enter applies, Escape abandons, an empty name is abandoned rather than written, and a built-in project says why its name is fixed instead of doing nothing. The disclosure keeps what is not a title: the subject, the membership, the id and the two destructive actions. One defect found in the building: Enter inside the inline editor bubbled back to the title that opened it, which applied the name and then immediately reopened the editor -- so the heading looked empty and the rename looked to have failed although it was already saved."
+        }
+      ]
     },
     {
-     "date": "2026-10-15",
-     "found": "Carried further the same day, on the practitioner's proposal: \"We should have a worked example just for the ruleset widget to exercise different ruleset conditions so users can also see examples of how to configure it. That is one way to execute widget rules and validate at the same time.\" Built as the `rulesets` workspace: three steps, one condition kind each -- a band from two comparisons, alternatives with two conclusions at once, a category match -- over twelve synthetic records chosen so every branch has one. A node can now CARRY authored rules and a generic path runs them: facts from declared field bindings, the authored form compiled, conclusions back onto the records. Two things the example found that no unit test would: the Inspector described the PINNED ruleset, so a step applying authored rules showed somebody else's title, threshold and basis; and authored rules MINT VOCABULARY -- thirty terms in one afternoon -- which now lives in urn:fieldwork:authored: so a practitioner's coinage is never mistaken for a term this application defines. The Inspector reads the rules back in plain words. What is still missing is composing them there: the rules can be read and their numbers changed, not yet written."
+      "id": "an-acquired-outline-is-not-editable-by-hand",
+      "stated": "2026-10-20",
+      "statedBy": "the practitioner, on the handle limit built an hour earlier",
+      "inTheirWords": "If it's a jurisdictional polygon as a study area, I don't think we should make the vertices draggable. That would be changing the shape, provenance and authoritativeness of the polygon.",
+      "requiresInCode": "The study-area dialog offers no vertex handles for a geometry that carries an acquisition record, whatever its size, and says why rather than silently omitting them. The provenance machinery is unchanged: a boundary modified by any other route still names its source and records fw:geometryAsPublished false, because a shape that was edited and says nothing is worse than one that was edited and says so.",
+      "recordedIn": [
+        "docs/experiments/125-caps-below-the-limit-we-are-testing.md"
+      ],
+      "workItem": "the study-area widget's own checklist pass, where the drawing surface is reviewed",
+      "status": "built",
+      "lastChecked": "2026-10-20",
+      "checks": [
+        {
+          "date": "2026-10-20",
+          "found": "Built, and it corrected a fix made an hour earlier for a different reason. Profiling had shown that one draggable Leaflet marker per vertex was what froze the dialog on North Kivu's 16,548 vertices and killed WebKit, so handles were capped at 400 -- which answered the PERFORMANCE question and got the principle wrong: a district of 40 vertices sits far below any cap and would still have offered the gesture. The question is not how many vertices there are, it is whose shape it is. Handles are now refused for any geometry carrying an acquisition record, with a line saying the outline is a published jurisdiction and that drawing your own shape is the way to a different area. The 400 limit stays beneath it for a large geometry that arrived some other way, since nobody draws four hundred vertices by hand. Pinned by a test on a 40-vertex unit, so it measures the principle and not the size."
+        }
+      ]
     },
     {
-     "date": "2026-10-15",
-     "found": "Built. The practitioner opened the published example -- \"I see the ruleset widget but it's not editable\" -- and then chose the shape: \"Perhaps the rule editor should be a modal dialog so there is enough space.\" src/rule-editor.ts edits 106's authored form in a dialog: conditions grouped by and, alternatives by or, a list of conclusions, add and remove throughout. The compiler runs on every edit, so the rule ceiling and any refusal appear while authoring rather than at the end, and Keep is disabled while the rules cannot compile. Comparators are filtered by the field's kind, so a category cannot be given `is more than`, and the fwa: namespace is added for the practitioner rather than typed by them. Three debts recorded in 106 rather than hidden: two comparators are offered that have never been executed against the real engine, nothing catches an incommensurable unit at authoring time, and conclusions are free text so two rules can disagree -- caught at run time, which is late."
-    }
-   ]
-  },
-  {
-   "id": "street-network-declares-a-travel-mode",
-   "stated": "2026-10-20",
-   "statedBy": "the practitioner, reading the network_input manual page",
-   "inTheirWords": "Regarding street network, OSMNx designates a download as walk or drive. I noticed in the widget manual that it talks about walk but it could be drive. Do we make that distinction when we download an OSM street network? \u2014 and, settling the scope: \"For 1854 Soho, driving speed limits does not matter. For current day investigations, these speed limits matter as a ceiling (best case travel time).\"",
-   "requiresInCode": "A travelMode chosen on `network_input` at download time, which selects the highway list (driving adds motorway, trunk and their links and drops footway, path, steps, pedestrian and cycleway), the restriction tags read (motor_vehicle, motorcar and access rather than foot and oneway:foot) and the direction tag that makes an edge one-way. The graph records its mode in `source` and in the download receipt, and a downstream widget whose `travelMode` disagrees with the graph's mode refuses rather than computes.",
-   "recordedIn": [
-    "docs/experiments/126-travel-time-as-a-bound.md",
-    "docs/widgets/network_input.md"
-   ],
-   "workItem": "126, whose first half is the mode; the bound semantics are the second half and are a separate direction",
-   "status": "built",
-   "lastChecked": "2026-10-20",
-   "checks": [
-    {
-     "date": "2026-10-20",
-     "found": "Nothing of it is built, and the gap is wider than the manual page. `WALKABLE_HIGHWAYS` in src/street-network.ts is one list used twice -- in the Overpass query and again in networkFromOSM -- and it excludes motorway, trunk and their links entirely, so a driving network is not merely unfiltered here, it is missing the roads that carry cars. Restrictions read are foot ones (foot=no|private|use_sidepath, barrier nodes, oneway:foot), and the source string says outright that vehicle oneway does not imply foot oneway. Meanwhile `reachable_nodes` ALREADY takes travelMode walking|cycling|driving|other with per-mode speed bands that refuse an implausible speed, and the Inspector offers it as \"How people travel\" -- so the mode is declared where it cannot be honoured and absent where it would be. Measured on examples/john-snow/soho.graphml, the OSMnx walk graph this repository ships: of 1,619 directed edges and 50.63 km, 918 edges and 24.34 km (56.7% of edges, 48.1% of length) are types OSMnx's drive filter excludes, and 455 edges (28.1%) carry oneway=True whose direction we ignore because we read oneway:foot only. A driving isochrone on that graph routes over footways, up steps, and the wrong way down a quarter of the one-way streets. Not established: how wrong the resulting time is, which is unmeasured; Soho is half a square kilometre of dense centre so the shares elsewhere will differ; and OSMnx's drive filter is one project's definition, not a standard."
+      "id": "point-in-polygon-is-a-widget",
+      "stated": "2026-10-20",
+      "statedBy": "the practitioner, on finding 526 of 961 facilities outside the study area",
+      "inTheirWords": "We do not have a point in polygon process. — and, when shown pointRelation in spatial-predicates.ts: \"I mean widget.\" — and, on what it should show: \"clip_points_to_area can have a knob that shows which points are outside but still exclude them in the output.\"",
+      "requiresInCode": "A primitive that takes an area and a point layer and outputs the points inside it, with its own node on the canvas and its own receipt naming the OGC predicate, whether boundary points were kept, and the three counts. The predicate itself is not rewritten: pointRelation already decides this for catchments, the map, input data, the raster mask and the coverage check, and a sixth implementation would be the copy this project keeps finding.",
+      "recordedIn": [
+        "docs/widgets/clip_points_to_area.md"
+      ],
+      "workItem": "64, the widget budget, which this moves away from on purpose and which has to be told why",
+      "status": "built",
+      "lastChecked": "2026-10-20",
+      "checks": [
+        {
+          "date": "2026-10-20",
+          "found": "Built as clip_points_to_area. The gap was precise: eleven widgets emit a point layer and none of them answered 'keep the ones inside this area'. coverage_check REPORTS membership and outputs a review, summarize_points_to_polygon COUNTS it, a map draws the split -- so the decision could be read and could not be made, except privately inside whatever widget needed it, which is how it came to be buried in a source widget with no node and no receipt. A point ON the outline is kept by default and the choice is a parameter, because strict containment is what sfWithin means and the two give different counts on exactly the data where it matters. I had also hand-rolled ray casting in facility-records.ts an hour earlier, a sixth implementation that threw away the Boundary relation; it now calls pointRelation like everything else. The widget costs the budget: 47 live against a target of 41, six away rather than five, and experiment 64 is told so rather than left to notice."
+        },
+        {
+          "date": "2026-10-20",
+          "found": "Carried further the same day on the practitioner's shape for it. The widget now keeps the features it set aside and offers them for DRAWING while passing on only what is in the area: a connected map adds them as rows in the Outside colour it already has, marked so nothing reads them as records the workflow holds. The reason is the one the practitioner gave by sending a picture rather than a number -- 526 facilities in a tight cluster over one border is a different fact from 526 scattered in every direction, and the count 526 does not distinguish them. Default on. A record with no coordinates is counted as set aside and is NOT offered for drawing, because there is nowhere to draw it."
+        }
+      ]
     },
     {
-     "date": "2026-10-20",
-     "found": "Built the same day, on the practitioner's go-ahead: \"So before I download Bunia again, I want to be able to set driving mode on the street network.\" MODE_FILTERS in src/street-network.ts is one table with a row per difference -- highway list, the access tags consulted, the values that forbid and permit, the one-way tag, whether a roundabout implies direction, and the sentence saved on the graph -- so the two modes cannot drift into two parsers. Driving follows OSMnx's drive exclusions so the two implementations stay comparable, and keeps `road`, as OSMnx does. The mode is in the query text, which is the cache key, so a driving download cannot be served a cached walking graph; it is written into provenance, shown on the widget, and asserted as fw:travelMode on the network entity rather than only inside the metadata blob. refuseModeMismatch in src/reachable-nodes.ts refuses a declared mode the graph cannot carry and names the way out, but only a KNOWN contradiction: an imported file carries no mode, and cycling or `other` have no download of their own, so neither is locked out. Walking is the default, so a saved workflow downloads what it always did. Ten unit tests in tests/street-network-mode.test.mjs and one browser test for the control. One list claim I had to correct against the data: nine of the fifteen walkable highway values are also drivable, so the LISTS mostly agree -- it is the edges that diverge, 56.7% of them on the Soho graph. network_input 0.3.0, manual page rewritten with a comparison table, CHANGELOG under 0.10.0. What is NOT built: the graph carries no speed limits, no junction delay and no congestion, so a driving travel time is one speed over every street, which is the subject of the other direction and of 126."
-    }
-   ]
-  },
-  {
-   "id": "travel-time-from-a-posted-limit-is-a-best-case",
-   "stated": "2026-10-20",
-   "statedBy": "the practitioner, on whether OSM carries speed limits",
-   "inTheirWords": "For 1854 Soho, driving speed limits does not matter. For current day investigations, these speed limits matter as a ceiling (best case travel time). Worst case travel time can be researched. \u2014 and, on where the obligation falls: \"Do not worry about the local trip time license, that is the user's problem, the thing to worry about is if it is recorded in the widget, a provenance note goes with it for the benefit of accurate reporting, for example during publications.\"",
-   "requiresInCode": "Any travel time derived from a per-edge posted limit is reported as a BOUND and named as one -- in the result field, in the N3 receipt and in the Inspector -- rather than as an estimate, with the edges that had no limit and fell back to a declared speed counted in both. A widget that can produce only a best case refuses the claim a best case cannot support: a free-flow time can rule a site out of a catchment and cannot rule one in, so \"not reachable even at best\" is sound and \"reachable\" is not. And a speed or trip time a practitioner supplies carries a PROVENANCE NOTE that travels with it into the receipt, the evidence panel and any export, so a figure quoted in a publication can be attributed. Not a licence check: whose data it is remains the practitioner's to answer. This applies to the single speedMPerMin that already exists and carries no note today, not only to a future per-edge speed.",
-   "recordedIn": [
-    "docs/experiments/126-travel-time-as-a-bound.md"
-   ],
-   "workItem": "126, whose closing condition is a bound named in the result and the receipt, plus best and worst computed over one current-day graph and differing by a measured amount",
-   "status": "open",
-   "lastChecked": "2026-10-20",
-   "checks": [
-    {
-     "date": "2026-10-20",
-     "found": "Nothing to label yet, because no widget reads a posted limit: `maxspeed` appears nowhere in src/, docs/ or scripts/, although the Overpass query asks for way tags and the tag arrives in the response and is dropped. Travel time is one scalar everywhere -- minutes x speedMPerMin over every edge identically -- and src/reachable-nodes.ts already says so in the receipt it writes, which is the honest version of the current model and not the thing this direction changes. What this direction adds to the earlier framing, and what 126 records, is the asymmetry: an access claim is conservative in the WORST case, so coverage computed from a ceiling overstates access, invisibly, because the output is a number of minutes like any other. Measured on examples/john-snow/soho.graphml: 499 of 1,619 edges carry maxspeed (30.8%), or 469 of 701 drive-usable edges (66.9%) and 17.54 of 26.29 km (66.7%), with values `30 mph` and `20 mph` -- free text with units, where the wider database legally holds 50, RU:urban, walk, none and signals. So a third of the drivable length in a well-mapped city centre needs a declared fallback. Not established: that posted limits would make a driving time more accurate, which is unmeasured against any observed trip, and that 66.9% generalises -- it is one half-square-kilometre graph read from a file we ship."
+      "id": "a-worked-example-can-live-in-a-repository",
+      "stated": "2026-10-20",
+      "statedBy": "the practitioner, on finding that no worked example carries a denominator",
+      "inTheirWords": "We also have the potential to set up a downloadable worked example from a repo - the water provider study by John Snow in South London. — and: \"So worked examples do not have to occupy space in the downloaded app, we can set them up as repos read from a curated manifest.\"",
+      "requiresInCode": "A curated example manifest with per-file SHA-256 digests, verified in the browser before the files are used and refused on mismatch; a readiness state per example in the interface that distinguishes available-now from fetchable; an explicit fetch action rather than a fetch on load; the fetched workflow document validated by validateWorkflow on arrival as an imported one is; the example cached after first open so it stays available offline; and a receipt naming the manifest version and the digests the files matched. No admission rule changes: an example is a resource, not a widget definition.",
+      "recordedIn": [
+        "docs/experiments/127-examples-as-repositories.md",
+        "docs/experiments/51-dataset-profiles.md"
+      ],
+      "workItem": "127, whose first half is the manifest and whose second is the South London water-supply example that motivated it",
+      "status": "open",
+      "lastChecked": "2026-10-20",
+      "checks": [
+        {
+          "date": "2026-10-20",
+          "found": "Nothing is built. Measured the premise: the precache is 247 files and 11.25 MB, of which 0.89 MB is example files by name -- 640 KB of it one GraphML -- plus Hagelloch's 63 KB case list compiled into build/app.js, Manila's facilities in a 72 KB chunk and Old Naledi's 43 KB data module, so roughly 1.0 MB of 11.25 MB is worked-example data. Confirmed the rule permits it: experiment 49 records that preparation may download RESOURCES, never widget DEFINITIONS, and experiment 43 corrected the same misreading on 2026-10-09. Also found examples/snow-gboh/deaths_nd_by_house.csv -- 236 KB, retrieved, digested and NOTICE'd on 2026-10-09 -- is in no build output and used by no example key."
+        }
+      ]
     },
     {
-     "date": "2026-10-20",
-     "found": "Scope corrected the same day, before anything was built on the earlier reading. 126 had made the licence of a worst-case speed source a question for this project to settle; it is not. What is: every configurable speed in the application today -- isochrone's speedMPerMin, reachable_nodes', travel_time's, access' -- is a bare number with no note of where it came from, so in a receipt it is indistinguishable from a figure this application derived. That is the gap to close, and it is open now rather than when per-edge speeds arrive."
-    }
-   ]
-  },
-  {
-   "id": "dive-deeper-notebooks-have-their-own-repository",
-   "stated": "2026-10-20",
-   "statedBy": "the practitioner",
-   "inTheirWords": "I created a dive-deeper repo on GitHub so the dive deeper notebooks do not mix with the validation lab's. \u2014 and, when nothing had changed in the code a day later: \"are we using the dive deeper repo for the dive deeper pedagogy notebooks?\"",
-   "requiresInCode": "A ledger of its own -- widgets/dive-deeper.json -- pinning the second repository, because parity results are pinned by commit and digest into a release's evidence and improving an explanation must not move that pin. The application links the new site for a widget that has a lesson; scripts/validate-dive-deeper.mjs verifies lesson notebooks against ../dive-deeper/content and refuses a lesson no widget links; and the sections still living inside lab notebooks are counted against a ceiling that may fall and never rise.",
-   "recordedIn": [
-    "docs/experiments/94-where-explanation-belongs.md"
-   ],
-   "workItem": "94, whose closing condition is whether the notebook is the right surface at all",
-   "status": "built",
-   "lastChecked": "2026-10-20",
-   "checks": [
-    {
-     "date": "2026-10-20",
-     "found": "Recorded and not built, which is the failure this ledger exists to catch. The split was written into experiment 94 with its costs and its ratchet, and the code still read ../validation-lab/content, linked the Lab's site, and carried `diveDeeper` as a heading inside a parity notebook. The repository had been created that morning and was EMPTY. I had not even recorded it here, so no clock was running on it; four defect reports came in and it went unlooked-at until the practitioner asked."
+      "id": "building-footprints-are-a-widget",
+      "stated": "2026-10-21",
+      "statedBy": "the practitioner",
+      "inTheirWords": "We have not even downloaded building footprints yet. And that should be an upcoming widget",
+      "requiresInCode": "A widget that acquires building footprints for a study area, with the source as a setting and a retrieval record of its own, and a download cap derived from a measured bytes-per-feature rather than invented. Until one extent has been downloaded and weighed, nothing here is sized.",
+      "recordedIn": [
+        "docs/experiments/128-building-footprints.md"
+      ],
+      "workItem": "docs/experiments/128-building-footprints.md, whose closing condition is one extent downloaded, measured and written down; weighed against widgets/budget.json, which stands at 46 live against a target of 41.",
+      "status": "open",
+      "lastChecked": "2026-10-21",
+      "checks": [
+        {
+          "date": "2026-10-21",
+          "found": "Stated and recorded the same day. Nothing built and nothing downloaded: the application has never acquired a footprint layer, so every limit it would meet -- response size, feature count, parse, store, renderer -- is a guess. Recorded as an experiment rather than started, because the widget budget is 5 over target and experiment 64 names the retirements that would pay for it."
+        }
+      ]
     },
     {
-     "date": "2026-10-20",
-     "found": "Built the same day. digital-twin-ph/dive-deeper is seeded: README stating what a notebook owes, Apache-2.0, JupyterLite config pinned to the Lab's builder versions, a Pages workflow that executes every notebook before publishing, and the first lesson -- the mean centre on Snow's 250 addresses. It meets the pedagogical requirements rather than the older narrower definition, and its three measured numbers are the lesson: weighting by deaths moves the centre 2.10 m, mean against median centre 6.62 m, UTM 30N against British National Grid 0.001 m. So the weighting a practitioner reaches for first matters least -- a weighted mean only moves when the weights are spatially structured, which the notebook then shows by weighting eastward and moving it 46 m -- and the summary nobody questions matters most, the mean centre having a breakdown point of zero. In Fieldwork: widgets/dive-deeper.json pins the repo at 04b22ab, the validator checks lessons against ../dive-deeper/content and holds the legacy count at 20, and the Inspector links the new site. What is NOT done: twenty sections remain inside lab notebooks, and rewriting one is new work rather than a file move."
-    }
-   ]
-  },
-  {
-   "id": "projects-are-managed-in-the-interface",
-   "stated": "2026-10-20",
-   "statedBy": "the practitioner, after using the project model built in 122",
-   "inTheirWords": "Right now I have no way of editing Project Title nor viewing Project metadata. I can only view the workflows through the worked example dropdown which seems to be the wrong place to locate projects. Let's figure out how to seamlessly manage projects within the UI first in such a way that it's intuitive for the user to do it. \u2014 and, on the first version: \"There is still no way to edit project (e.g., title) or workflow (e.g., title) metadata.\"",
-   "requiresInCode": "Two selectors rather than one -- the investigation, then the question -- with the worked examples listed as the built-in projects they already are. The project's own fields readable and editable where it is named: name, subject, the workflows it holds, and the id. One gesture to add a workflow INSIDE a project, which previously meant creating an unrelated canvas and then assigning it. Deleting a project removes the grouping and not the work.",
-   "recordedIn": [
-    "docs/experiments/122-a-project-holds-many-workflows.md"
-   ],
-   "workItem": "122, whose phase two is sharing data between a project's workflows",
-   "status": "built",
-   "lastChecked": "2026-10-20",
-   "checks": [
-    {
-     "date": "2026-10-20",
-     "found": "Built on the practitioner's choice of shape, taken before any code: split the selector and edit in place, with worked examples as built-in projects listed beside the practitioner's own. index.html now carries two empty selects and no example list at all -- the picker was the FOURTH copy of the example vocabulary and is now derived from the project registry, which deleted a unit test whose whole job was keeping the copy honest. The project bar gained a details disclosure: name, subject, the workflow list, the project id, Apply and Delete, with built-in projects shown read-only and saying why. `+ Add workflow` creates a canvas inside the project and names it for the question. Deleting a project leaves its workflows openable under `No project`, which is also always offered -- without it an unfiled workflow became unreachable the moment a project was selected, a navigation trap found while updating the tests. What is NOT done: no project-level export, no reordering of workflows, and the data sharing that 122 calls phase two is untouched."
+      "id": "street-networks-from-a-file-not-a-service",
+      "stated": "2026-10-22",
+      "statedBy": "the practitioner",
+      "inTheirWords": "Let's look at graphways as an alternative to download and compute street networks.",
+      "requiresInCode": "A street network acquired from a published extract rather than from a donated query service: PBF read in the browser, weighed against the 300 MB of Overpass JSON the same area cost. Separately, a decision on whether the computing half -- isochrones, routing, matrices -- can come from a Rust library compiled to wasm32, which nothing has yet shown builds for that target.",
+      "recordedIn": [
+        "docs/experiments/129-graphways-and-the-pbf-question.md"
+      ],
+      "workItem": "docs/experiments/129-graphways-and-the-pbf-question.md, whose closing conditions are one Geofabrik extract read and weighed, and a wasm32 build attempted; and experiment 125, which records what the Overpass path costs.",
+      "status": "open",
+      "lastChecked": "2026-10-22",
+      "checks": [
+        {
+          "date": "2026-10-22",
+          "found": "Read the library's own documentation and nothing else: MIT, Rust crate 0.5.0, Python API, reads PBF and Overpass XML, computes isochrones, routing, matrices, GTFS. No wasm32 target or browser use stated, and no independent benchmark or adoption record found. Recorded as two separable questions -- the input format, which is cheap and does not need the library, and the compute engine, which needs a build that nobody has attempted."
+        }
+      ]
     },
     {
-     "date": "2026-10-20",
-     "found": "Not finished, and the practitioner found the gap before the gate did. The fields existed only inside a collapsed disclosure at the bottom of the project bar, which is somewhere to PUT a control rather than somewhere a practitioner looks -- and the shape chosen on the day was `edit in place`, whose sketch showed `click title to rename`. Both titles are controls now: the project name in the eyebrow and the workflow name in the heading, with a cursor, a hover, a tooltip, a focus ring and a keyboard route in; Enter applies, Escape abandons, an empty name is abandoned rather than written, and a built-in project says why its name is fixed instead of doing nothing. The disclosure keeps what is not a title: the subject, the membership, the id and the two destructive actions. One defect found in the building: Enter inside the inline editor bubbled back to the title that opened it, which applied the name and then immediately reopened the editor -- so the heading looked empty and the rename looked to have failed although it was already saved."
-    }
-   ]
-  },
-  {
-   "id": "an-acquired-outline-is-not-editable-by-hand",
-   "stated": "2026-10-20",
-   "statedBy": "the practitioner, on the handle limit built an hour earlier",
-   "inTheirWords": "If it's a jurisdictional polygon as a study area, I don't think we should make the vertices draggable. That would be changing the shape, provenance and authoritativeness of the polygon.",
-   "requiresInCode": "The study-area dialog offers no vertex handles for a geometry that carries an acquisition record, whatever its size, and says why rather than silently omitting them. The provenance machinery is unchanged: a boundary modified by any other route still names its source and records fw:geometryAsPublished false, because a shape that was edited and says nothing is worse than one that was edited and says so.",
-   "recordedIn": [
-    "docs/experiments/125-caps-below-the-limit-we-are-testing.md"
-   ],
-   "workItem": "the study-area widget's own checklist pass, where the drawing surface is reviewed",
-   "status": "built",
-   "lastChecked": "2026-10-20",
-   "checks": [
-    {
-     "date": "2026-10-20",
-     "found": "Built, and it corrected a fix made an hour earlier for a different reason. Profiling had shown that one draggable Leaflet marker per vertex was what froze the dialog on North Kivu's 16,548 vertices and killed WebKit, so handles were capped at 400 -- which answered the PERFORMANCE question and got the principle wrong: a district of 40 vertices sits far below any cap and would still have offered the gesture. The question is not how many vertices there are, it is whose shape it is. Handles are now refused for any geometry carrying an acquisition record, with a line saying the outline is a published jurisdiction and that drawing your own shape is the way to a different area. The 400 limit stays beneath it for a large geometry that arrived some other way, since nobody draws four hundred vertices by hand. Pinned by a test on a 40-vertex unit, so it measures the principle and not the size."
-    }
-   ]
-  },
-  {
-   "id": "point-in-polygon-is-a-widget",
-   "stated": "2026-10-20",
-   "statedBy": "the practitioner, on finding 526 of 961 facilities outside the study area",
-   "inTheirWords": "We do not have a point in polygon process. \u2014 and, when shown pointRelation in spatial-predicates.ts: \"I mean widget.\" \u2014 and, on what it should show: \"clip_points_to_area can have a knob that shows which points are outside but still exclude them in the output.\"",
-   "requiresInCode": "A primitive that takes an area and a point layer and outputs the points inside it, with its own node on the canvas and its own receipt naming the OGC predicate, whether boundary points were kept, and the three counts. The predicate itself is not rewritten: pointRelation already decides this for catchments, the map, input data, the raster mask and the coverage check, and a sixth implementation would be the copy this project keeps finding.",
-   "recordedIn": [
-    "docs/widgets/clip_points_to_area.md"
-   ],
-   "workItem": "64, the widget budget, which this moves away from on purpose and which has to be told why",
-   "status": "built",
-   "lastChecked": "2026-10-20",
-   "checks": [
-    {
-     "date": "2026-10-20",
-     "found": "Built as clip_points_to_area. The gap was precise: eleven widgets emit a point layer and none of them answered 'keep the ones inside this area'. coverage_check REPORTS membership and outputs a review, summarize_points_to_polygon COUNTS it, a map draws the split -- so the decision could be read and could not be made, except privately inside whatever widget needed it, which is how it came to be buried in a source widget with no node and no receipt. A point ON the outline is kept by default and the choice is a parameter, because strict containment is what sfWithin means and the two give different counts on exactly the data where it matters. I had also hand-rolled ray casting in facility-records.ts an hour earlier, a sixth implementation that threw away the Boundary relation; it now calls pointRelation like everything else. The widget costs the budget: 47 live against a target of 41, six away rather than five, and experiment 64 is told so rather than left to notice."
+      "id": "a-country-extract-lives-on-the-computer",
+      "stated": "2026-10-22",
+      "statedBy": "the practitioner",
+      "inTheirWords": "Perhaps for large downloads we should offer the user download to computer so the whole country is available when needed and no need to re-download a whole country again just to get provinces?",
+      "requiresInCode": "A street network acquired from a published country extract the practitioner holds on their own computer: a file picker for the .osm.pbf, the study area's bbox applied while it is read, and only the resulting graph kept. No copy of the extract in either browser store, and no re-download per province.",
+      "recordedIn": [
+        "docs/experiments/129-graphways-and-the-pbf-question.md"
+      ],
+      "workItem": "docs/experiments/129-graphways-and-the-pbf-question.md, which measures the parse and names what is unresolved: the File System Access API exists in Chromium and not in WebKit, so 'choose it once' is available in one engine and not the other.",
+      "status": "open",
+      "lastChecked": "2026-10-22",
+      "checks": [
+        {
+          "date": "2026-10-22",
+          "found": "Stated while the DRC extract was weighed at 416.3 MB with no province extracts published. Measured the same day: Ituri's driving graph builds from that file in 23.7 s and 3,587 MB of wasm memory, and the walking graph does not fit in the 4 GB wasm32 space at all. Nothing built; the picker, the handle persistence and the blob-by-blob read are all unwritten."
+        }
+      ]
     },
     {
-     "date": "2026-10-20",
-     "found": "Carried further the same day on the practitioner's shape for it. The widget now keeps the features it set aside and offers them for DRAWING while passing on only what is in the area: a connected map adds them as rows in the Outside colour it already has, marked so nothing reads them as records the workflow holds. The reason is the one the practitioner gave by sending a picture rather than a number -- 526 facilities in a tight cluster over one border is a different fact from 526 scattered in every direction, and the count 526 does not distinguish them. Default on. A record with no coordinates is counted as set aside and is NOT offered for drawing, because there is nowhere to draw it."
-    }
-   ]
-  },
-  {
-   "id": "a-worked-example-can-live-in-a-repository",
-   "stated": "2026-10-20",
-   "statedBy": "the practitioner, on finding that no worked example carries a denominator",
-   "inTheirWords": "We also have the potential to set up a downloadable worked example from a repo - the water provider study by John Snow in South London. \u2014 and: \"So worked examples do not have to occupy space in the downloaded app, we can set them up as repos read from a curated manifest.\"",
-   "requiresInCode": "A curated example manifest with per-file SHA-256 digests, verified in the browser before the files are used and refused on mismatch; a readiness state per example in the interface that distinguishes available-now from fetchable; an explicit fetch action rather than a fetch on load; the fetched workflow document validated by validateWorkflow on arrival as an imported one is; the example cached after first open so it stays available offline; and a receipt naming the manifest version and the digests the files matched. No admission rule changes: an example is a resource, not a widget definition.",
-   "recordedIn": [
-    "docs/experiments/127-examples-as-repositories.md",
-    "docs/experiments/51-dataset-profiles.md"
-   ],
-   "workItem": "127, whose first half is the manifest and whose second is the South London water-supply example that motivated it",
-   "status": "open",
-   "lastChecked": "2026-10-20",
-   "checks": [
+      "id": "a-study-area-clips-to-its-polygon",
+      "stated": "2026-10-22",
+      "statedBy": "the practitioner",
+      "inTheirWords": "The clip to the polygon study area is what we need as that has been the intent for the study area all along. I have longer workflows because what was intended was not what was implemented -- in the North Kivu health facilities, I needed a clip points to polygon widget for three sources because the study area clip was not implemented.",
+      "requiresInCode": "Every widget that acquires by a study area clips to the AREA, not to its bounding box: the street network read from an extract, the OSM street download, and the facility sources. A bounding box is an acquisition convenience owed to the services that only take one, and must not reach the practitioner as the result. Where a bbox is all that was done, the receipt and the source line say bounding box rather than study area.",
+      "recordedIn": [
+        "docs/experiments/129-graphways-and-the-pbf-question.md"
+      ],
+      "workItem": "The engine's second pass tests each node against the polygon, which needs the ring indexed to be affordable at province scale; the acquiring widgets in src/ clip their own results; and widgets/standardization.json records what happens to clip_points_to_area once its common case is gone.",
+      "status": "open",
+      "lastChecked": "2026-10-22",
+      "checks": [
+        {
+          "date": "2026-10-22",
+          "found": "Stated on seeing Ituri's street network drawn across the Ugandan border: the engine clips to the study area's bounding box plus margin, as the OSM download always has. The cost is visible in the practitioner's own workflows -- North Kivu carries three clip_points_to_area widgets doing downstream what the study area was meant to do at the source. Nothing built yet; the engine's polygon clip is the first piece."
+        }
+      ]
+    },
     {
-     "date": "2026-10-20",
-     "found": "Nothing is built. Measured the premise: the precache is 247 files and 11.25 MB, of which 0.89 MB is example files by name -- 640 KB of it one GraphML -- plus Hagelloch's 63 KB case list compiled into build/app.js, Manila's facilities in a 72 KB chunk and Old Naledi's 43 KB data module, so roughly 1.0 MB of 11.25 MB is worked-example data. Confirmed the rule permits it: experiment 49 records that preparation may download RESOURCES, never widget DEFINITIONS, and experiment 43 corrected the same misreading on 2026-10-09. Also found examples/snow-gboh/deaths_nd_by_house.csv -- 236 KB, retrieved, digested and NOTICE'd on 2026-10-09 -- is in no build output and used by no example key."
-    }
-   ]
-  },
-  {
-   "id": "building-footprints-are-a-widget",
-   "stated": "2026-10-21",
-   "statedBy": "the practitioner",
-   "inTheirWords": "We have not even downloaded building footprints yet. And that should be an upcoming widget",
-   "requiresInCode": "A widget that acquires building footprints for a study area, with the source as a setting and a retrieval record of its own, and a download cap derived from a measured bytes-per-feature rather than invented. Until one extent has been downloaded and weighed, nothing here is sized.",
-   "recordedIn": [
-    "docs/experiments/128-building-footprints.md"
-   ],
-   "workItem": "docs/experiments/128-building-footprints.md, whose closing condition is one extent downloaded, measured and written down; weighed against widgets/budget.json, which stands at 46 live against a target of 41.",
-   "status": "open",
-   "lastChecked": "2026-10-21",
-   "checks": [
+      "id": "a-study-area-is-a-polygon",
+      "stated": "2026-10-22",
+      "statedBy": "the practitioner",
+      "inTheirWords": "But a study area is a polygon.",
+      "requiresInCode": "The `area` and `polygons` port types stop being two unrelated things. An area carries a Boundary -- a Polygon or MultiPolygon -- and Combined area ('Overlapping and touching areas become one') refuses it because its port says `polygons`. Either the union takes areas and returns an area, or an area is readable wherever a polygon is. What must not stand is a widget that does exactly what the practitioner asked for, one port type away from the thing they have.",
+      "recordedIn": [
+        "docs/experiments/66-ports-as-schema-binding.md"
+      ],
+      "workItem": "docs/experiments/66-ports-as-schema-binding.md, which opened the question of what a port type promises; and the blocker no-points-within-area-selection, lifted the same day, which was the same shape: a capability one port type away from where it was needed.",
+      "status": "open",
+      "lastChecked": "2026-10-22",
+      "checks": [
+        {
+          "date": "2026-10-22",
+          "found": "Stated on being told that two adjacent study areas cannot be merged after the fact. They can be merged AT ACQUISITION -- the boundary picker takes several units at one level and builds a MultiPolygon with provenance naming each -- but the Combined area widget, whose whole description is 'overlapping and touching areas become one', takes a polygons result and so cannot be fed a study area. The distinction between the two types is this application's, not the domain's: an area is a boundary with provenance, a Polygons is features with a method, and a study area is a polygon in both readings. Nothing built."
+        }
+      ]
+    },
     {
-     "date": "2026-10-21",
-     "found": "Stated and recorded the same day. Nothing built and nothing downloaded: the application has never acquired a footprint layer, so every limit it would meet -- response size, feature count, parse, store, renderer -- is a guess. Recorded as an experiment rather than started, because the widget budget is 5 over target and experiment 64 names the retirements that would pay for it."
-    }
-   ]
-  },
-  {
-   "id": "street-networks-from-a-file-not-a-service",
-   "stated": "2026-10-22",
-   "statedBy": "the practitioner",
-   "inTheirWords": "Let's look at graphways as an alternative to download and compute street networks.",
-   "requiresInCode": "A street network acquired from a published extract rather than from a donated query service: PBF read in the browser, weighed against the 300 MB of Overpass JSON the same area cost. Separately, a decision on whether the computing half -- isochrones, routing, matrices -- can come from a Rust library compiled to wasm32, which nothing has yet shown builds for that target.",
-   "recordedIn": [
-    "docs/experiments/129-graphways-and-the-pbf-question.md"
-   ],
-   "workItem": "docs/experiments/129-graphways-and-the-pbf-question.md, whose closing conditions are one Geofabrik extract read and weighed, and a wasm32 build attempted; and experiment 125, which records what the Overpass path costs.",
-   "status": "open",
-   "lastChecked": "2026-10-22",
-   "checks": [
+      "id": "a-backup-carries-the-work-not-the-data",
+      "stated": "2026-10-22",
+      "statedBy": "the practitioner",
+      "inTheirWords": "I imported the Project from Safari into Chrome and got this message.",
+      "requiresInCode": "A project export is self-contained: workflowDocument inlines every dataset, so a project holding a province street network is hundreds of megabytes. That is right for an archive and wrong for the thing a practitioner reaches for when a browser will no longer open their work -- the workflows are the work, and a street network or a population raster can be downloaded again from the service that published it. An export should be able to carry references rather than bytes, and an import should be able to say which datasets it will need fetching again.",
+      "recordedIn": [
+        "src/evidence.ts",
+        "src/project-document.ts"
+      ],
+      "workItem": "A workflows-only export beside the self-contained one, and an import that names the datasets it could not find rather than refusing. The cap bundle-bytes was raised from 20 MB to 400 MB the same day so that the self-contained export can at least be read back, but a 400 MB backup is not a backup anyone will take twice.",
+      "status": "open",
+      "lastChecked": "2026-10-22",
+      "checks": [
+        {
+          "date": "2026-10-22",
+          "found": "Stated on being refused when importing a Safari project into Chrome: 'Workflow or bundle exceeds the 20 MB import limit.' The practitioner had exported precisely because Chrome could no longer open the application, which is the moment a backup matters most and the moment this one was unusable."
+        }
+      ]
+    },
     {
-     "date": "2026-10-22",
-     "found": "Read the library's own documentation and nothing else: MIT, Rust crate 0.5.0, Python API, reads PBF and Overpass XML, computes isochrones, routing, matrices, GTFS. No wasm32 target or browser use stated, and no independent benchmark or adoption record found. Recorded as two separable questions -- the input format, which is cheap and does not need the library, and the compute engine, which needs a build that nobody has attempted."
-    }
-   ]
-  },
-  {
-   "id": "a-country-extract-lives-on-the-computer",
-   "stated": "2026-10-22",
-   "statedBy": "the practitioner",
-   "inTheirWords": "Perhaps for large downloads we should offer the user download to computer so the whole country is available when needed and no need to re-download a whole country again just to get provinces?",
-   "requiresInCode": "A street network acquired from a published country extract the practitioner holds on their own computer: a file picker for the .osm.pbf, the study area's bbox applied while it is read, and only the resulting graph kept. No copy of the extract in either browser store, and no re-download per province.",
-   "recordedIn": [
-    "docs/experiments/129-graphways-and-the-pbf-question.md"
-   ],
-   "workItem": "docs/experiments/129-graphways-and-the-pbf-question.md, which measures the parse and names what is unresolved: the File System Access API exists in Chromium and not in WebKit, so 'choose it once' is available in one engine and not the other.",
-   "status": "open",
-   "lastChecked": "2026-10-22",
-   "checks": [
+      "id": "every-cap-is-declared",
+      "stated": "2026-10-22",
+      "statedBy": "the practitioner",
+      "inTheirWords": "Is that another cap?",
+      "requiresInCode": "The caps ledger watches four files and the application holds fifty-two exported numeric constants across twenty-five. Twenty-six of them are invisible to the ratchet, among them MAX_RASTER_CELLS, which refuses a raster window rather than a drawing and so decides how much of a study area may be analysed at all; also REPROJECT_MAX_RECORDS, RULE_CEILING, MAX_PDF_BYTES, ISOCHRONE_TIMEOUT_MS and OSM_PAUSE_MAX_MS. Watching every file is necessary and not sufficient: scripts/validate-caps.mjs matches `export const NAME=<number>`, so the refusal at project-files.ts on `blockWidth*blockHeight*bytesPerPixel > 64_000_000` escapes by being an inline literal with no name. The ledger must cover every file, and the check must reach comparisons against literals, or declaring a cap stays optional and the rule is therefore optional too.",
+      "recordedIn": [
+        "widgets/caps.json",
+        "scripts/validate-caps.mjs"
+      ],
+      "workItem": "Add the remaining twenty-one files to widgets/caps.json watchedFiles and declare what that surfaces; then extend the validator past named constants to the literals a refusal compares against. The ledger was built while chasing the street network widget and has the scope of that chase: twenty-six caps, four files, one subsystem. The practitioner met MAX_RASTER_CELLS the way they met attempt-seconds -- by being refused -- which is the thing the ledger exists to prevent.",
+      "status": "open",
+      "lastChecked": "2026-10-22",
+      "checks": [
+        {
+          "date": "2026-10-22",
+          "found": "Stated on being shown that the WorldPop raster path would find the file, window it and then be refused by MAX_RASTER_CELLS, a number carrying no evidence, no basis and no lift test because src/raster.ts is not watched. Counted the same day: 52 exported numeric constants across 25 files, 26 of them outside the ledger's reach."
+        }
+      ]
+    },
     {
-     "date": "2026-10-22",
-     "found": "Stated while the DRC extract was weighed at 416.3 MB with no province extracts published. Measured the same day: Ituri's driving graph builds from that file in 23.7 s and 3,587 MB of wasm memory, and the walking graph does not fit in the 4 GB wasm32 space at all. Nothing built; the picker, the handle persistence and the blob-by-blob read are all unwritten."
+      "id": "the-gis-kernel-owns-the-graph",
+      "stated": "2026-10-22",
+      "statedBy": "the practitioner",
+      "inTheirWords": "It's the approach we decided to pursue with that other project -- Epi Info AI -- in designing the GIS kernel.",
+      "requiresInCode": "A street graph is held as JavaScript objects with string identifiers: roughly 100 to 200 bytes a junction against about 24 for a packed struct, and a garbage collector that turns building one into a superlinear cost -- measured 2026-10-22 in a Chromium tab at 324 ms for 100,000 junctions, 4.4 s for 500,000 and 20.9 s for a million. The same day a province arrived as 200 MB of Overpass JSON that had to become one JavaScript string to be parsed, which is where V8 refuses with \"Invalid string length\", and the project export meets the same ceiling from the other side. The Rust street engine already reads a 416 MB .osm.pbf and clips it to a polygon during decode, at a scale the TypeScript download path does not reach: the experiment has been run and the kernel won it. What it does not yet own is the graph. Overpass responses should be parsed in wasm, nodes and edges held in linear memory, and TypeScript given typed-array views for drawing and routing -- the shape Epi Info AI settled on for its Epi kernel, where Rust owns the deterministic primitives and the host owns the surfaces.",
+      "recordedIn": [
+        "src/street-engine.ts",
+        "src/street-engine-worker.ts",
+        "docs/spikes/129-graphways-wasm/README.md",
+        "/Users/hermantolentino/workspace/epi-info-ai/wasm/docs/architecture.md"
+      ],
+      "workItem": "Fieldwork already carries what the Epi kernel design depends on: a Rust/WASM kernel in vendor/street-engine.wasm, a parity ledger and validation lab for parity-tested primitives, and since 2026-10-22 a caps ledger whose budgets are measured rather than chosen. The piece missing is ownership of the graph. Worth scoping against what it would NOT fix, which is most of what cost days: a borrowed 180-second clock, an undeclared MAX_RASTER_CELLS, a 20 MB import limit, Geofabrik links nobody could find and a project export behind a storage readout. A kernel raises the ceiling; it does not make a number measured or a door visible.",
+      "status": "open",
+      "lastChecked": "2026-10-22",
+      "checks": [
+        {
+          "date": "2026-10-22",
+          "found": "Stated when asked whether a Rust GIS kernel would have helped with the province-scale failures, and answered that it is the approach already decided for Epi Info AI. The natural experiment is in this repository: the extract path reads a province through the Rust engine while the download path holds four copies of the response in JavaScript and dies."
+        }
+      ]
     }
-   ]
-  },
-  {
-   "id": "a-study-area-clips-to-its-polygon",
-   "stated": "2026-10-22",
-   "statedBy": "the practitioner",
-   "inTheirWords": "The clip to the polygon study area is what we need as that has been the intent for the study area all along. I have longer workflows because what was intended was not what was implemented -- in the North Kivu health facilities, I needed a clip points to polygon widget for three sources because the study area clip was not implemented.",
-   "requiresInCode": "Every widget that acquires by a study area clips to the AREA, not to its bounding box: the street network read from an extract, the OSM street download, and the facility sources. A bounding box is an acquisition convenience owed to the services that only take one, and must not reach the practitioner as the result. Where a bbox is all that was done, the receipt and the source line say bounding box rather than study area.",
-   "recordedIn": [
-    "docs/experiments/129-graphways-and-the-pbf-question.md"
-   ],
-   "workItem": "The engine's second pass tests each node against the polygon, which needs the ring indexed to be affordable at province scale; the acquiring widgets in src/ clip their own results; and widgets/standardization.json records what happens to clip_points_to_area once its common case is gone.",
-   "status": "open",
-   "lastChecked": "2026-10-22",
-   "checks": [
-    {
-     "date": "2026-10-22",
-     "found": "Stated on seeing Ituri's street network drawn across the Ugandan border: the engine clips to the study area's bounding box plus margin, as the OSM download always has. The cost is visible in the practitioner's own workflows -- North Kivu carries three clip_points_to_area widgets doing downstream what the study area was meant to do at the source. Nothing built yet; the engine's polygon clip is the first piece."
-    }
-   ]
-  },
-  {
-   "id": "a-study-area-is-a-polygon",
-   "stated": "2026-10-22",
-   "statedBy": "the practitioner",
-   "inTheirWords": "But a study area is a polygon.",
-   "requiresInCode": "The `area` and `polygons` port types stop being two unrelated things. An area carries a Boundary -- a Polygon or MultiPolygon -- and Combined area ('Overlapping and touching areas become one') refuses it because its port says `polygons`. Either the union takes areas and returns an area, or an area is readable wherever a polygon is. What must not stand is a widget that does exactly what the practitioner asked for, one port type away from the thing they have.",
-   "recordedIn": [
-    "docs/experiments/66-ports-as-schema-binding.md"
-   ],
-   "workItem": "docs/experiments/66-ports-as-schema-binding.md, which opened the question of what a port type promises; and the blocker no-points-within-area-selection, lifted the same day, which was the same shape: a capability one port type away from where it was needed.",
-   "status": "open",
-   "lastChecked": "2026-10-22",
-   "checks": [
-    {
-     "date": "2026-10-22",
-     "found": "Stated on being told that two adjacent study areas cannot be merged after the fact. They can be merged AT ACQUISITION -- the boundary picker takes several units at one level and builds a MultiPolygon with provenance naming each -- but the Combined area widget, whose whole description is 'overlapping and touching areas become one', takes a polygons result and so cannot be fed a study area. The distinction between the two types is this application's, not the domain's: an area is a boundary with provenance, a Polygons is features with a method, and a study area is a polygon in both readings. Nothing built."
-    }
-   ]
-  }
- ]
+  ]
 }

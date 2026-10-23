@@ -5,7 +5,7 @@ _Created 2026-10-22 · Updated 2026-10-23_
 **Status:** tried — steps 1 to 3 of the reordered plan are built and the experiment's own test
 passes. `Project` carries `changedAt` and `exportedAt` at schema 2, `exportedAt` is written when
 an export completes, the words are in the glossary, and the project's safety state is said in the
-header and is the route to the backup. The Workspace itself is not built: the state has a door
+header and is the route to the backup. The Project view itself is not built: the state has a door
 now, and it still opens onto the old dialog. Sections below are left as written on 2026-10-22,
 with what the building found recorded at the end rather than folded back into the proposal.
 
@@ -127,7 +127,7 @@ bolted onto an interface that is about to be replaced.
 The answer was *both, at different times*: setting up and reviewing is project work, analysis is
 workflow work. So there are two places, not one crowded one.
 
-- **Workspace** -- the project and its workflows: their progress, their weight, what is backed up,
+- **Project view** -- the project and its workflows: their progress, their weight, what is backed up,
   what may be deleted and what that frees.
 - **Canvas** -- one workflow: build, run, read.
 
@@ -144,8 +144,8 @@ two, and is also the first thing in the application that says a workflow is insi
 | Today | Becomes |
 | --- | --- |
 | `↓ Export`, `Export project`, `Encrypted ZIP` | one **Back up**, with scope (this workflow / this project) and form (plain / encrypted) chosen inside it |
-| Projects dialog behind the storage pill | the Workspace; the pill links to it rather than being the only way in |
-| `New project`, `Add workflow`, `Delete workflow`, `From a template`, `New empty canvas` | creation and deletion live in the Workspace; the canvas toolbar keeps switching only |
+| Projects dialog behind the storage pill | the Project view; the pill links to it rather than being the only way in |
+| `New project`, `Add workflow`, `Delete workflow`, `From a template`, `New empty canvas` | creation and deletion live in the Project view; the canvas toolbar keeps switching only |
 | Storage pill, totals only | weight per workflow, summed per project, so *where data lives* is answerable |
 
 ## What has to happen before any of it is built
@@ -154,7 +154,7 @@ two, and is also the first thing in the application that says a workflow is insi
   proposed states -- draft, stale, backed up -- are not in it. Either they enter the glossary
   first or the existing phrasings are reused. Coining them in the interface and declaring them
   afterwards is the failure this project already has a ratchet against.
-- **The Workspace is a route, not a dialog**, or it inherits the discoverability problem it
+- **The Project view is a route, not a dialog**, or it inherits the discoverability problem it
   exists to solve.
 
 ## How it would be known to have worked
@@ -169,7 +169,7 @@ practitioner would ask?**
 
 ## What would say this was wrong
 
-- The Workspace adds a step to the thing done most often -- opening a workflow and running it --
+- The Project view adds a step to the thing done most often -- opening a workflow and running it --
   and the breadcrumb becomes a toll rather than a map.
 - Progress and weight turn out not to be orthogonal in practice, so two badges say one thing
   twice.
@@ -195,7 +195,7 @@ Which means the order is not UI first. It is:
    migration in which every existing project arrives as **never exported**, because that is what
    is true of it.
 2. `exportedAt` is written when an export COMPLETES, not when it is asked for.
-3. Then the states can be computed, and only then is there a Workspace worth building.
+3. Then the states can be computed, and only then is there a Project view worth building.
 
 Weight needs none of this: the payload store already knows bytes per digest and the storage
 readout already sums them. It wants attributing per workflow, not recording.
@@ -203,6 +203,26 @@ readout already sums them. It wants attributing per workflow, not recording.
 Had this been built UI-first, the view's main column would have been blank, and the state that
 answers the practitioner's worst pain point would have been a label over facts that were not
 there.
+
+## The view was called the wrong thing, 2026-10-23
+
+This experiment called the project-level view the **Workspace**, nine times, and was one commit
+from building it under that name. The practitioner stopped it: *"What is workspace definition in
+FW?"*
+
+There is none. The application already uses the word for the storage slot that holds saved
+workflows (`WORKSPACES`, "Workspace store · workflows and their settings"), for a single saved
+workflow (`NAMED_WORKSPACES`, and `docs/usage.md` telling a practitioner "your saved workspaces
+are untouched" when it means their workflows), and for itself (the header's "Research
+workspace"). A fourth sense, for the view that lists projects, would have been coined in the
+interface and declared afterwards -- which is the failure this experiment wrote its own rule
+against, two sections above, about `draft`, `stale` and `backed up`. Those three went into the
+glossary. The word for the view itself was never checked.
+
+It is the **Project view**, and `docs/glossary.md` now carries it beside **Canvas** and
+**Workspace store**. The existing three senses are not corrected: they are already in front of
+practitioners, and renaming a storage label is a separate decision from not making the problem
+worse.
 
 ## What the building found, 2026-10-23
 
@@ -240,8 +260,8 @@ and saying it are two acts, and this experiment had only specified the first.
 
 ### What is still not built
 
-The Workspace. The state now has a door and it opens onto the same modal dialog this experiment
-calls the problem — `Projects dialog behind the storage pill` becoming `the Workspace` is
+The Project view. The state now has a door and it opens onto the same modal dialog this experiment
+calls the problem — `Projects dialog behind the storage pill` becoming `the Project view` is
 untouched, as are the breadcrumb, the consolidation of three export controls into one **Back up**
 with scope and form, and Size per workflow. Size needs no new data: the payload store knows bytes
 per digest and `projectWork` already sums them per project for the risk measure.

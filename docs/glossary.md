@@ -122,6 +122,30 @@ was last performed. Neither moment was kept before 2026-10-23, so every project 
 before then is not backed up -- which is not a guess but the honest reading: an export nobody
 recorded is an export nobody can produce.
 
+### Where you work, and where you look at what you have
+
+_Added 2026-10-23, because the word was about to mean a fourth thing. Experiment 131 proposed
+calling the project-level view the **Workspace**, nine times, and the application already used
+that word for a storage slot, for a single saved workflow, and for itself. The practitioner
+stopped the build to ask: "What is workspace definition in FW?" There was none, which is the
+whole answer -- a word used in three senses and defined in none is not a word, and the view was
+one commit from making it four. Named **Project view** instead, because a new view is cheap to
+name and `workspace store` is already in storage labels, usage.md and test names a practitioner
+has read._
+
+| Term | Meaning |
+| --- | --- |
+| **Canvas** | One workflow, open: build it, run it, read its results. Where analysis happens |
+| **Project view** | One project and the workflows filed under it: what each holds, what is backed up, what may be deleted and what that frees. Where setting up and reviewing happen. A route, not a dialog — a capability behind a door nobody can see is the failure this view exists to end |
+| **Workspace store** | The browser storage that holds saved workflows and their settings. A store, not a place a practitioner works: it is what fills up, what refuses a save, and what the storage readout in the header is counting |
+
+**Workspace on its own is not a term here.** It appears in `NAMED_WORKSPACES`, in "your saved
+workspaces are untouched" meaning workflows, and in the header's "Research workspace" meaning the
+application. Those are not corrected by this entry, because they are already in front of
+practitioners; what this entry does is stop the word being given a fourth sense in a view built
+after the rule against exactly that was written down. Where it means the store, it is written
+**workspace store**.
+
 ## Evidence and records
 
 _For reading the project's records. Start here if you are catching up on why something is the way it is._

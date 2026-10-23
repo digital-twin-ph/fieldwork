@@ -6963,5 +6963,7 @@
       "latest": "2020",
       "bytes": 216960172
     }
-  ]
+  ],
+  "observedBytesPerSecond": 80000,
+  "observedRateNote": "ONE observation, not a benchmark: the practitioner reported Botswana 2020 (292,628,857 bytes) taking over an hour on 2026-10-23, which is about 80 kB/s. Held here so the panel can turn a file size into a wait a practitioner can plan around, and so the basis is visible rather than buried in a sentence. It is one link on one day; a second measurement that disagrees should replace it rather than be averaged with it. Re-measured 2026-10-23: the host advertises Accept-Ranges: bytes and then ignores a Range request, answering 200 with the whole body, so an interrupted download cannot be resumed by the browser and begins again at zero."
 }

@@ -122,3 +122,43 @@ test('local WorldPop file clips to Old Naledi without retaining the national ras
  await page.locator('#map-add-layer').selectOption('clip');await page.reload();await page.locator('.react-flow__node[data-id="map"]').click();await expect(page.locator('#map-raster')).toHaveValue('clip');
  });
 
+
+// A MAP WITH NO MODE MUST STILL DRAW THE RASTER. Input mode was removed 2026-10-15 and
+// `drawnMode` chooses the renderer from what is wired; network and polygons were converted to
+// it and raster and decisions were left reading `node.params.inputMode`, which a map created by
+// dragging or by the palette does not have. Every raster test above reaches its map through the
+// `#add-raster-map` button, which still writes `inputMode:'raster'`, so all of them passed
+// while a practitioner connecting a WorldPop raster to a Map saw nothing drawn and no error.
+// The sibling test asserts the WIRING survives the drag; this asserts a PIXEL arrives, which
+// is the claim that was never made.
+test('a Map with no stored input mode draws a raster wired to it',async({page})=>{
+ const metadata={width:40,height:40,origin:[25.88,-24.67],resolution:[0.001,-0.001]},values=Array.from({length:1600},(_,i)=>i%17===0?null:i/10);
+ const w=oldNalediWorkflow();w.nodes=w.nodes.filter(n=>n.type==='study_area');w.edges=[];delete w.outputId;
+ await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'raster-no-mode.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+ await page.locator('[data-view="workflow"]').click();
+ await page.locator('[data-add="raster_input"]').click();await page.locator('#prepare-raster').click();
+ await page.locator('#raster-file').setInputFiles({name:'synthetic.tif',mimeType:'image/tiff',buffer:Buffer.from(encodeRaster({metadata,values}))});
+ await expect(page.locator('#raster-save')).toBeEnabled();
+ await page.locator('#raster-source-sourceURL').fill('https://example.org/raster');
+ await page.locator('#raster-source-citation').fill('Synthetic raster citation');
+ await page.locator('#raster-source-units').fill('test units');
+ await page.locator('#raster-save').click();await expect(page.locator('#raster-dialog')).toHaveCount(0);
+ const source=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'))).nodes.find(n=>n.type==='raster_input');
+ await page.locator('[data-view="workflow"]').click();
+ await page.locator('[data-add="clip_raster"]').click();await page.locator('#clip-method').selectOption('cell-center');
+ await page.locator('#raster-raster').selectOption(source.id);
+ const clip=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'))).nodes.find(n=>n.type==='clip_raster');
+ // The palette's Map, not the Clip raster node's `Add raster map` button: this one carries no
+ // inputMode, which is the condition the regression needed.
+ await page.locator('[data-add="map_output"]').click();
+ const map=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'))).nodes.find(n=>n.type==='map_output');
+ assert.equal(map.params.inputMode,undefined);
+ await page.locator('#map-add-layer').selectOption(clip.id);
+ await expect(page.locator('#map-raster')).toHaveValue(clip.id);
+ assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'))).nodes.find(n=>n.type==='map_output').params.inputMode,undefined);
+ await page.locator('[data-view="results"]').click();
+ await page.locator('#run-button').click();
+ await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+ await expect(page.locator('#map image')).toHaveCount(1);
+ await expect(page.locator('#result-metrics')).toContainText('Cell-center polygon mask');
+});

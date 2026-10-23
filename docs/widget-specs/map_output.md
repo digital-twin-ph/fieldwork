@@ -30,6 +30,19 @@ the difference is the thing to understand about this widget.
 renderer is chosen from what is wired (`src/core.ts#drawnMode`), and a saved workflow's stored
 `inputMode` is read only as a fallback for a map with nothing connected.
 
+*This page said that for eight days before the code did.* `drawnMode` was written and the
+`network` and `polygons` branches were converted to it; the `raster` and `decisions` branches
+were left reading `node.params.inputMode`, which a map created by dragging or from the palette
+does not have. Those two renderers were therefore unreachable, and a raster wired to a Map was
+stored, listed in the layer picker, reported as `fw:RasterLayer` in the run evidence, and never
+drawn -- with no error, because the map fell through to the spatial branch and refused for want
+of a study area instead. Reported 2026-10-23 by a practitioner connecting a WorldPop raster:
+*"So WorldPop raster does not show up on a map"*. Fixed the same day; both branches now read
+`mode`. Every raster test reached its map through the Clip raster node's `Add raster map`
+button, which still writes `inputMode:'raster'`, and the one test that wires by dragging
+asserts the EDGE and not a pixel -- which is why a two-engine gate stayed green throughout.
+`tests/raster.browser.mjs` now has a map with no stored mode that must draw.
+
 On the canvas a map shows **the layers it draws, plus one port to add another**. Drop any
 drawable result on that port and it binds to the port its type belongs to — a second point
 source opens the next point slot by itself rather than replacing the first. The Inspector is

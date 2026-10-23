@@ -58,7 +58,19 @@ test('a created project gets a readable id, and a colliding name is numbered rat
 test('a stored project is read defensively and duplicate workflows collapse',()=>{
   const sound={schema:'fieldwork/project/1',id:'p',name:'P',subject:'s',workflows:['p/w1','p/w1','p/w2']};
   assert.deepEqual(validateProject(sound).workflows,['p/w1','p/w2']);
-  for(const bad of [null,{},{schema:'fieldwork/project/2',id:'p',name:'P',subject:'',workflows:[]},
+  // A project written before 2026-10-23 says schema 1 and carries no timestamps: it is READ, and
+  // what it does not know about itself is left unknown rather than invented. "fieldwork/project/2"
+  // sat in this list as an unknown future schema until it became the current one.
+  const carried=validateProject(sound);
+  assert.equal(carried.schema,'fieldwork/project/2','an older project is migrated, not refused');
+  assert.equal(carried.changedAt,undefined,'and claims no moment nobody recorded');
+  assert.equal(carried.exportedAt,undefined);
+  const timed=validateProject({...sound,schema:'fieldwork/project/2',
+    changedAt:'2026-10-23T09:00:00.000Z',exportedAt:'2026-10-23T10:00:00.000Z'});
+  assert.equal(timed.exportedAt,'2026-10-23T10:00:00.000Z','a recorded export survives the round trip');
+  assert.equal(validateProject({...sound,schema:'fieldwork/project/2',exportedAt:'not a date'}).exportedAt,
+    undefined,'and a moment that is not one is dropped rather than carried');
+  for(const bad of [null,{},{schema:'fieldwork/project/3',id:'p',name:'P',subject:'',workflows:[]},
     {schema:'fieldwork/project/1',id:'',name:'P',subject:'',workflows:[]},
     {schema:'fieldwork/project/1',id:'p',name:'P',subject:'',workflows:[1]},
     {schema:'fieldwork/project/1',id:'p',name:'P',subject:'',workflows:Array(51).fill('k')}])

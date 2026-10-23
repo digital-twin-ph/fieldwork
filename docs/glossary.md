@@ -75,6 +75,53 @@ one investigation the model could not say was one._
 | **Worked example** | A complete workflow with real data, expected results, and at least one thing it refuses to do — used both to teach and as a test that catches breakage. Old Naledi and John Snow are the two to start with |
 | **Experiment record** | A numbered, dated entry in `docs/experiments/` recording what was designed, what was tried, what that revealed, and what remains unknown. There are 62. They are the project's memory, and most questions you have are answered in one |
 
+### The state a workflow or a project is in
+
+_Added 2026-10-23. The practitioner, after a day in which they could not find their own backup
+and could not tell which results were current: "Our UI has become confusing to navigate... how
+should the UI represent project and workflow lifecycles." The application already said four of
+these things in four different places and defined none of them. A word the interface uses and the
+glossary does not is how terminology drifts._
+
+A workflow is in exactly one **state**, and moves between them: a draft that is run becomes run,
+a run one whose canvas is edited becomes stale, running it again makes it run or refused. The
+state answers "can I trust what is on screen".
+
+Its **size** is not one of these. It is an attribute — true of the workflow whatever state it is
+in, changed only by acquiring or dropping data, and answering a different question: "what will
+this cost me to open, keep, or send". The two are shown differently for that reason: a state is
+one word that is either true or not, a size is a number.
+
+| Term | Meaning |
+| --- | --- |
+| **Draft** | A workflow with widgets on its canvas that has never been run. It has no results, and nothing about it is stale |
+| **Run** | The run finished and its results match the canvas they came from. The application has said `Run complete` since before these words existed |
+| **Stale** | The canvas changed after the run, so the results on screen answer an older question. Said today as `Changed · rerun to update` |
+| **Refused** | The last run stopped and said why. A refusal is a result: it names what was missing or too large, and it is not an error to be cleared |
+| **Size** _(attribute, not a state)_ | How much of the data store a workflow accounts for — a downloaded street network, a raster window — as against the workflow itself, which is small. It is why a workflow is slow to open, expensive to delete, and sometimes too large to package. Said in megabytes, beside the workflow, in the words the header already uses: `Storage 2.4 / 5.2 MB · data 73.2 MB` |
+
+A project is **backed up** or it is **not backed up**, and the significance is loss: a project
+that has never been exported exists only in this browser's storage, and if that storage is
+cleared, corrupted, or the browser refuses to open the application, the work is gone. Everything
+else about a project's history is detail beside that.
+
+| Term | Meaning |
+| --- | --- |
+| **Backed up** | An export of this project was performed, at a time this application recorded. Said with that time, because an export taken before the last change does not hold the work done since |
+| **Not backed up** | No export of this project was ever performed here. If this browser loses its data, this work is lost |
+
+**What this cannot know.** A browser hands a file to the download machinery and loses sight of
+it: it cannot read the filesystem, cannot tell whether the file was kept, moved to another
+machine, or deleted an hour later, and cannot age it. What it can age is the PROCESS -- when an
+export was last performed. So "backed up" is a claim about something this application did, not
+about something that still exists, and the interface should say it that way: an export was taken
+three days ago, not a backup is safe.
+
+The state is DERIVED rather than recorded, from when the project last changed and when an export
+was last performed. Neither moment was kept before 2026-10-23, so every project carried over from
+before then is not backed up -- which is not a guess but the honest reading: an export nobody
+recorded is an export nobody can produce.
+
 ## Evidence and records
 
 _For reading the project's records. Start here if you are catching up on why something is the way it is._

@@ -1,0 +1,67 @@
+{
+ "schema": "fieldwork/example-catalog/1",
+ "catalogVersion": "0.1.0",
+ "updated": "2026-10-23",
+ "description": "Curated worked-example repositories. This file is the trust root, on the same terms as widgets/packs.json: an example is admitted only at a full commit SHA, only from a curated owner, and every file it may fetch is pinned by digest here. A branch is never fetched, because a digest pinned against a moving ref verifies nothing.\n\nAn example is a RESOURCE -- a workflow document, data and a provenance record -- and declares no node type, so runtimeFetching: \"none\" in widgets/packs.json does not reach it. That rule governs widget definitions. See docs/experiments/127-examples-as-repositories.md.",
+ "governance": {
+  "curatedOwners": [
+   "digital-twin-ph"
+  ],
+  "fetchPolicy": "Only on an explicit practitioner action, never on load. Opening an example tells a server it was opened, which is the same disclosure the basemaps and Overpass make, and it is named in the interface and recorded in the receipt.",
+  "verification": "Every fetched file is digested with SubtleCrypto and compared to this catalog. A mismatch is a refusal, not a warning.",
+  "offline": "An example opened once is cached and stays available. Until it is opened it is FETCHABLE rather than AVAILABLE, and the interface must say which."
+ },
+ "examples": [
+  {
+   "id": "urn:fieldwork:example:south-london-1854",
+   "title": "Snow's South London water supply study, 1854",
+   "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
+   "commit": "7b26d98ff33f9b160123be8f9d6a1c66833f4abe",
+   "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
+   "licence": {
+    "data": "CC0-1.0",
+    "source": "Public domain. John Snow, On the Mode of Communication of Cholera, 1855.",
+    "note": "Why this is recorded per example rather than assumed: the mechanism exists so an example may carry terms this project could not adopt. Here the terms are none, because the figures were transcribed from an 1855 publication rather than from HistData (GPL) or causaldata (MIT)."
+   },
+   "description": "Two tables, five rows. Deaths per 10,000 houses for the customers of two water companies whose mains ran down the same streets. The denominator is houses counted in an 1853 return to Parliament and the numerator is deaths in the 1854 epidemic, so the two do not agree -- which is what the rate widget refuses to compute over without both stated.",
+   "carries": {
+    "workflow": false,
+    "data": true,
+    "geography": false
+   },
+   "notYet": "No workflow bundle. rate requires a points input and these five rows have no geometry to offer; see TODO.md.",
+   "files": [
+    {
+     "path": "README.md",
+     "sha256": "378aa8bdba607cc0e3e5e6098e834613a96e5a12673549983b1e001184be17dd",
+     "bytes": 3473
+    },
+    {
+     "path": "NOTICE.txt",
+     "sha256": "34dcb1856a3713ae6474543e9051efb456ffa65b1f6ee1f5cf26e05affe6c1e9",
+     "bytes": 1558
+    },
+    {
+     "path": "LICENSE",
+     "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+     "bytes": 7048
+    },
+    {
+     "path": "provenance.json",
+     "sha256": "206954af8626200fdb2ecb16263683212df8eb2a8f3478f62f95b7f0c212f3ee",
+     "bytes": 3653
+    },
+    {
+     "path": "data/table-ix-first-seven-weeks.csv",
+     "sha256": "96232f9e6983ac7aeb657cec43ac1ded1e6df2d6d3f3093b704738d730d66605",
+     "bytes": 151
+    },
+    {
+     "path": "data/first-four-weeks.csv",
+     "sha256": "b3d7eb4032fc53d61d6bdbc183e48f55278992c67464abbf79236b21888eb8ae",
+     "bytes": 132
+    }
+   ]
+  }
+ ]
+}

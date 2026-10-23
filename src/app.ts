@@ -137,7 +137,45 @@ $('#app-version').textContent=`v${appPackage.version}`;
  *  workflow, not here -- so it is re-fetchable by definition. Named because it is the one thing
  *  cleared here that a practitioner paid a public service for.
  */
-if(new URLSearchParams(location.search).has('reset-cache')){
+/** A WAY BACK IN WHEN WHAT IS STORED IS WHAT BREAKS IT.
+ *
+ *  The practitioner, 2026-10-22, after downloading a province: *"I need to clean up Chrome
+ *  because it won't allow me to load FW. Is there a way to load it with a cleanup URL?"* There
+ *  was not. `reset-cache` unregisters the service worker and clears the HTTP caches, which is a
+ *  different problem: the graph that will not load is in IndexedDB, and clearing it meant going
+ *  to Chrome's own settings and deleting everything this application had ever saved.
+ *
+ *  Both run before anything is restored, so a workflow too large to open cannot stop the thing
+ *  that would let go of it.
+ *
+ *  `?forget-datasets` drops the payload store -- the networks and rasters -- and keeps the
+ *  projects and workflows, which then read "0 nodes" and can be downloaded again. That is almost
+ *  always the one wanted: the workflow is the work, and the graph can be fetched twice.
+ *
+ *  `?forget-everything` clears this application's localStorage as well, which is every project,
+ *  workflow and setting on this device. It says so and asks first, because nothing here is
+ *  recoverable and an export is the only copy. */
+const forgetting=new URLSearchParams(location.search);
+if(forgetting.has('forget-datasets')||forgetting.has('forget-everything')){
+  const everything=forgetting.has('forget-everything');
+  (async()=>{
+    if(everything&&!confirm('Delete every project, workflow and setting saved on this device? '
+      +'This cannot be undone, and an exported file is the only copy. '
+      +'To keep your workflows and drop only the downloaded data, use ?forget-datasets instead.')){
+      location.replace(location.pathname);return;
+    }
+    try{
+      await new Promise(resolve=>{
+        const request=indexedDB.deleteDatabase('fieldwork');
+        request.onsuccess=request.onerror=request.onblocked=()=>resolve(null);
+      });
+      localStorage.removeItem('fieldwork-datasets-v1');
+      if(everything)for(const key of Object.keys(localStorage))
+        if(key.startsWith('fieldwork'))localStorage.removeItem(key);
+    }catch{/* a store that refuses to be opened cannot hold the reload below */}
+    location.replace(location.pathname);
+  })();
+}else if(new URLSearchParams(location.search).has('reset-cache')){
   (async()=>{
     try{
       const registrations=await navigator.serviceWorker?.getRegistrations?.()??[];
@@ -2712,6 +2750,39 @@ async function run(){if(busy)return;
     // The run summary and the count on the Results tab say that there is something to look at.
     render();
   }}
+/** A PROJECT GOES OUT COMPRESSED, AND COMES BACK EITHER WAY.
+ *
+ *  The practitioner, after a 20 MB import limit refused the backup they had just taken to rescue
+ *  their work: *"Why don't we zip it as an export and unzip it upon import?"* A project document
+ *  is JSON holding a street graph -- millions of repeated OSM ids and coordinate strings -- which
+ *  is about as compressible as text gets. The browser does this itself: CompressionStream has
+ *  been in every engine this application supports since 2023, and the street engine already
+ *  leans on its DecompressionStream counterpart to read a .osm.pbf.
+ *
+ *  Gzip rather than zip: one stream in, one stream out, no archive format to describe, and the
+ *  file is readable by anything. The encrypted ZIP stays what it is -- a different artefact, for
+ *  sharing a bundle under a passphrase rather than for moving one's own work between browsers.
+ *
+ *  What this does NOT fix is the ceiling underneath: the text still becomes one JavaScript string
+ *  to be parsed, and V8 refuses past about 512 MB with "Invalid string length". Compression moves
+ *  what a practitioner can CARRY, not what a tab can hold. */
+export async function gzipText(text:string):Promise<Blob>{
+  const stream=new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+  return new Response(stream).blob();
+}
+/** Gzip announces itself: 1f 8b. A file that does not is read as the plain JSON it used to be,
+ *  so every export ever taken still imports. */
+export async function readMaybeGzipped(file:Blob):Promise<string>{
+  const head=new Uint8Array(await file.slice(0,2).arrayBuffer());
+  if(head[0]!==0x1f||head[1]!==0x8b)return file.text();
+  const stream=file.stream().pipeThrough(new DecompressionStream('gzip'));
+  return new Response(stream).text();
+}
+function downloadBlob(name:string,blob:Blob){
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download=name;link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),10_000);
+}
 function download(name:string,text:string,type='application/json'){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 $('#release-download').onclick=()=>{const output=activeOutput();if(!output||exampleKey(workflow)!=='snow-geoprivacy'||!output.nodeId.startsWith('after-'))return;
   const features=output.polygons?.kind==='hexbin'?output.polygons.features.map(f=>({type:'Feature',id:f.id,properties:{count:f.count},geometry:f.geometry})):output.rows.map(r=>({type:'Feature',id:r.id,properties:{name:r.name},geometry:r.coordinates?{type:'Point',coordinates:r.coordinates}:null}));
@@ -3351,8 +3422,10 @@ function renderProjectsList(){
     const total=keys.reduce((n,k)=>n+bytes(k),0);
     return `<section class="project-block"><h3>${esc(title)}</h3>`
       +`<p>${esc(subject||'No subject.')} · ${keys.length===1?'1 workflow':`${keys.length} workflows`} · ${kb(total)}`
-      +(deletable&&id?` · <button class="text-button" data-export-project="${esc(id)}">Export project</button>`
-        +` · <button class="text-button" data-delete-project="${esc(id)}">Delete project</button>`:'')+`</p>`
+      +`</p>`
+      +(deletable&&id?`<p class="project-actions-row">`
+        +`<button class="button small" data-export-project="${esc(id)}">↓ Export project</button>`
+        +`<button class="button small" data-delete-project="${esc(id)}">Delete project</button></p>`:'')
       +(keys.length?keys.map(row).join(''):'<p class="muted">No workflows.</p>')+`</section>`;
   };
   const filed=new Set(allProjects().flatMap(p=>p.workflows));
@@ -3389,7 +3462,13 @@ async function exportProject(id:string){
     }
     const document=projectDocument({...project,workflows:held},workflows);
     const loose=unbundledReferences(validated);
-    download(`${project.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-project.json`,JSON.stringify(document,null,2));
+    // Written compressed, and named for what it is. Indentation costs nothing once gzipped and
+    // keeps the file readable by hand after one `gunzip`.
+    const text=JSON.stringify(document,null,2);
+    const name=`${project.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-project.json.gz`;
+    const blob=await gzipText(text);
+    downloadBlob(name,blob);
+    toast(`${name} — ${(text.length/1e6).toFixed(1)} MB of project, ${(blob.size/1e6).toFixed(1)} MB written.`);
     toast(`"${project.name}" exported: ${held.length} ${held.length===1?'workflow':'workflows'}.`
       +(loose?` ${loose} downloaded ${loose===1?'dataset is':'datasets are'} kept on this device by reference and `
         +`${loose===1?'is':'are'} not in the file; whoever opens it downloads ${loose===1?'it':'them'} again.`:''),
@@ -3473,7 +3552,13 @@ $('#assign-project').onchange=e=>assignCurrentWorkflow(control(e).value);
 $('#new-project').onclick=openProjectDialog;
 $('#add-workflow').onclick=()=>addWorkflowToProject();
 $('#delete-workflow').onclick=deleteCurrentWorkflow;
+// TWO WAYS IN, AND ONE OF THEM LOOKS LIKE A BUTTON. The practitioner went looking for the
+// project export with Chrome refusing to load the application and their workflows unbacked up,
+// and found it behind the storage readout in the header: *"That is where I least expect it."*
+// It was the only way in. A readout reads as a status, not as the door to everything saved on
+// this device, and the one time it matters most is the time nobody is hunting for it.
 $('#storage-status').onclick=openProjectsDialog;
+optionalElement('#projects-button')?.addEventListener('click',openProjectsDialog);
 $('#projects-dialog-close').onclick=()=>$('#projects-dialog').close();
 $('#storage-meter').addEventListener('click',async event=>{
   if((event.target as HTMLElement).id!=='drop-unreferenced')return;
@@ -3567,9 +3652,12 @@ $('#header-catalog').onclick=showCatalog;
 if(new URLSearchParams(location.search).get('catalog')==='1'||location.hash==='#catalog')showCatalog();
 $('#encrypted-export').onclick=()=>{try{openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow);}catch(error){toast(errorMessage(error));}};
 function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
-$('#export-button').onclick=async()=>{try{const exported=await workflowDocument(workflow);download(exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json':'fieldwork-workflow.json',JSON.stringify(exported,null,2));}catch(error){toast(errorMessage(error));}};$('#import-button').onclick=()=>$('#workflow-file').click();
-$('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>MAX_BUNDLE_BYTES)throw new Error('Workflow or bundle exceeds the 20 MB import limit.');if(file.name.toLowerCase().endsWith('.zip')){openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow,file);control(e).value='';return;}
-  const parsed=JSON.parse(await file.text());
+$('#export-button').onclick=async()=>{try{const exported=await workflowDocument(workflow);const text=JSON.stringify(exported,null,2);
+  const name=exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json.gz':'fieldwork-workflow.json.gz';
+  downloadBlob(name,await gzipText(text));}catch(error){toast(errorMessage(error));}};$('#import-button').onclick=()=>$('#workflow-file').click();
+$('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>MAX_BUNDLE_BYTES)throw new Error(`Workflow or bundle exceeds the ${(MAX_BUNDLE_BYTES/1e6).toFixed(0)} MB import limit.`);if(file.name.toLowerCase().endsWith('.zip')){openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow,file);control(e).value='';return;}
+  // Gzipped or not, by what the first two bytes say rather than by the name on the file.
+  const parsed=JSON.parse(await readMaybeGzipped(file));
   // A PROJECT DOCUMENT comes in through the same control: a practitioner handed a file should not
   // have to know which of two buttons made it.
   if((parsed as {schema?:string})?.schema===PROJECT_DOCUMENT_SCHEMA){await importProjectDocument(parsed);control(e).value='';return;}

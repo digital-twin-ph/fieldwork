@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {MAX_BUNDLE_BYTES} from '../build/evidence.js';
 import {ZipReader,ZipWriter,BlobReader,BlobWriter,Uint8ArrayReader} from '@zip.js/zip.js';
 import {createEncryptedPackage,readEncryptedPackage,contentHash} from '../build/encrypted-package.js';
 import {exampleWorkflow,validateWorkflow} from '../build/core.js';
@@ -51,7 +52,13 @@ test('unencrypted, weak-encryption and compressed archives are outside the profi
 test('resource limits and export completeness are enforced',async()=>{
   const {workflow,files}=await fixture();await assert.rejects(()=>createEncryptedPackage(workflow,files,'short'),/12 characters/);
   await assert.rejects(()=>createEncryptedPackage(workflow,new Map(),password),/every referenced PDF/);
-  await assert.rejects(()=>readEncryptedPackage(new Blob([new Uint8Array(20_000_001)]),password,validateWorkflow),/20 MB/);
+  // Asserted against the CONSTANT, not against the number in a sentence. The sentence said
+  // "20 MB" as a literal while MAX_BUNDLE_BYTES was raised to 400 MB on 2026-10-22, and a
+  // practitioner would have been told a limit that no longer existed. The size is a stub rather
+  // than a real allocation, because a 400 MB buffer in a unit test measures nothing.
+  await assert.rejects(
+    ()=>readEncryptedPackage({size:MAX_BUNDLE_BYTES+1},password,validateWorkflow),
+    new RegExp(`${(MAX_BUNDLE_BYTES/1e6).toFixed(0)} MB`));
   const writer=new ZipWriter(new BlobWriter(),{password,encryptionStrength:3,level:0,useWebWorkers:false});await writer.add('manifest.json',new Uint8ArrayReader(new Uint8Array(1_000_001)));
   const oversized=await writer.close();await assert.rejects(()=>readEncryptedPackage(oversized,password,validateWorkflow),/size limit/);
 });

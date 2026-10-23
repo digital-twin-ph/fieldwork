@@ -458,6 +458,7 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 /* The published-extract links are the first half of Option 1, so they are sized as the action
    they are rather than as footnotes. One per line: a region name is long and two of them side by
    side wrap into each other. */
+.project-actions-row{display:flex;gap:6px;margin:4px 0 8px}
 .extract-links{display:flex;flex-direction:column;gap:4px;margin:4px 0}
 .extract-links .button{text-align:left}
 .work-area.showing-results .has-communication #map{aspect-ratio:auto;max-height:none}

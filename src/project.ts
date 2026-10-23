@@ -34,7 +34,31 @@ import {isRecord} from './guards.js';
  *      communicate the answer to questions."* A project gives four questions four canvases, which
  *      is the alternative that judgement implies.
  */
-export interface Project {schema:'fieldwork/project/1'; id:string; name:string; subject:string; workflows:string[]}
+/** WHAT A PROJECT KNOWS ABOUT ITSELF, which until 2026-10-23 was nothing about time.
+ *
+ *  The practitioner went looking for the backup of a project with Chrome refusing to open the
+ *  application, and the glossary's answer -- backed up, unbacked, never exported -- could not be
+ *  computed, because a project recorded no moment of any kind. `exportedAt` existed only inside
+ *  the document that leaves with the download.
+ *
+ *  Both are optional, and their absence is not a gap to be filled with a guess: a project carried
+ *  over from before this knows neither when it changed nor whether it was ever exported, and the
+ *  honest reading of that is NEVER EXPORTED. Saying "backed up" of a project whose export nobody
+ *  recorded would be the interface making a promise the data cannot keep. */
+export interface Project {
+  schema:'fieldwork/project/2'; id:string; name:string; subject:string; workflows:string[];
+  /** When any workflow in it last changed. Absent on a project carried over. */
+  changedAt?:string;
+  /** What the project held when that export was performed, so what has been added since can be
+   *  said in the units it cost to make: workflows, widgets, and megabytes of data. */
+  exportedWork?:{workflows:number;nodes:number;bytes:number};
+  /** When an export of it was last PERFORMED here. Absent means none ever was.
+   *
+   *  Not when a backup was last verified, which a browser cannot do: it hands a file to the
+   *  download machinery and loses sight of it, unable to read the filesystem or tell whether the
+   *  file was kept, moved or deleted. This ages the process, not the file. */
+  exportedAt?:string;
+}
 
 /** The workflows a built-in project holds, in reading order, with the label each carries in the
  *  picker. The keys are `exampleKey` values: this registry groups them, it does not rename them.
@@ -44,13 +68,13 @@ export interface Project {schema:'fieldwork/project/1'; id:string; name:string; 
  *  2026-10-19: *"the first step is not even study area - it's create a project."* An "Unfiled"
  *  project would have been a way to avoid asking. */
 export const BUILT_IN_PROJECTS:readonly Project[]=[
-  {schema:'fieldwork/project/1',id:'heat-outreach',name:'Heat outreach screening',subject:'Connecting geography to evidence, as the first worked example',workflows:['heat']},
-  {schema:'fieldwork/project/1',id:'old-naledi',name:'Old Naledi, Gaborone',subject:'One informal settlement. Diagnostic access, and the population raster under it',workflows:['old-naledi','raster']},
-  {schema:'fieldwork/project/1',id:'spatial-coverage',name:'Spatial coverage exercise',subject:'What a coverage claim needs before it means anything',workflows:['coverage']},
-  {schema:'fieldwork/project/1',id:'cholera-london-1854',name:'1854 Cholera Outbreak in London',subject:'One cholera outbreak. Catchments, network reach, extent, and what the source coordinates disclose',workflows:['snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent']},
-  {schema:'fieldwork/project/1',id:'manila-coastal',name:'Manila coastal exposure',subject:'AR6 sea-level projections against facility elevations',workflows:['sea-level']},
-  {schema:'fieldwork/project/1',id:'rulesets',name:'Rulesets',subject:'How a rule is put together, and what happens to one run on damaged data',workflows:['rulesets']},
-  {schema:'fieldwork/project/1',id:'hagelloch-1861',name:'Measles in Hagelloch, 1861',subject:'A closed outbreak with a complete line list',workflows:['hagelloch']},
+  {schema:'fieldwork/project/2',id:'heat-outreach',name:'Heat outreach screening',subject:'Connecting geography to evidence, as the first worked example',workflows:['heat']},
+  {schema:'fieldwork/project/2',id:'old-naledi',name:'Old Naledi, Gaborone',subject:'One informal settlement. Diagnostic access, and the population raster under it',workflows:['old-naledi','raster']},
+  {schema:'fieldwork/project/2',id:'spatial-coverage',name:'Spatial coverage exercise',subject:'What a coverage claim needs before it means anything',workflows:['coverage']},
+  {schema:'fieldwork/project/2',id:'cholera-london-1854',name:'1854 Cholera Outbreak in London',subject:'One cholera outbreak. Catchments, network reach, extent, and what the source coordinates disclose',workflows:['snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent']},
+  {schema:'fieldwork/project/2',id:'manila-coastal',name:'Manila coastal exposure',subject:'AR6 sea-level projections against facility elevations',workflows:['sea-level']},
+  {schema:'fieldwork/project/2',id:'rulesets',name:'Rulesets',subject:'How a rule is put together, and what happens to one run on damaged data',workflows:['rulesets']},
+  {schema:'fieldwork/project/2',id:'hagelloch-1861',name:'Measles in Hagelloch, 1861',subject:'A closed outbreak with a complete line list',workflows:['hagelloch']},
 ];
 /** Labels for the picker, kept beside the grouping so a workflow is named in one place. */
 export const WORKFLOW_LABELS:Readonly<Record<string,string>>={
@@ -70,17 +94,78 @@ export const multiWorkflowProjects=(projects:readonly Project[]=BUILT_IN_PROJECT
 export function newProject(name:string,subject:string,existing:readonly Project[]=BUILT_IN_PROJECTS):Project{
   const base=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'project';
   let id=base;for(let n=2;existing.some(p=>p.id===id);n++)id=`${base}-${n}`;
-  return {schema:'fieldwork/project/1',id,name:name.trim()||'Untitled project',subject:subject.trim(),workflows:[]};
+  // A project made now knows when it began and that nothing has been exported of it yet.
+  return {schema:'fieldwork/project/2',id,name:name.trim()||'Untitled project',
+    subject:subject.trim(),workflows:[],changedAt:new Date().toISOString()};
 }
+/** WHETHER A COPY OF THIS WORK EXISTS ANYWHERE ELSE, in the glossary's three words.
+ *
+ *  A project that records no export has never been exported, and that is what is said of it --
+ *  including every project carried over from before projects recorded anything, because "we do
+ *  not know" and "no copy exists" are the same thing to someone about to lose it. */
+export type ProjectSafety='backed up'|'not backed up';
+/** The practitioner, 2026-10-23: *"projects are either backed up (exported) or not -- the
+ *  significance being, if the browser crashes or loses data, a project not backed up is lost."*
+ *  Two states, because that is the question being asked. Whether the export predates the last
+ *  change is said by showing WHEN it was taken, not by a third word. */
+export const projectSafety=(project:Project):ProjectSafety=>
+  project.exportedAt?'backed up':'not backed up';
+/** HOW MUCH WORK IS AT RISK, measured in what it cost to make.
+ *
+ *  The practitioner, 2026-10-23: *"I think alert should depend on the amount of work. Like data
+ *  added, widgets added, those have cost in terms of time and size, which are in the receipts."*
+ *  Elapsed time is the wrong measure: a week away from a laptop risks nothing, and an afternoon
+ *  that downloaded a province risks a 200 MB request against a donated service and the hours
+ *  around it.
+ *
+ *  So the amount is reported and no threshold is applied here. What counts as worth interrupting
+ *  someone is a question for the interface and the person using it, not for this function, and a
+ *  number invented here would be exactly the kind this project spent two days removing.
+ *
+ *  Compute time is NOT included, though it belongs: a run's duration lives in `lastRunMs` in
+ *  memory and is lost on reload, so there is nothing to compare against. Persisting it is its own
+ *  change, and claiming it here before then would be a measure nobody took. */
+export interface ProjectWork {workflows:number; nodes:number; bytes:number}
+export type UnexportedWork=
+  {kind:'never'; at:ProjectWork}|{kind:'since'; added:ProjectWork}|null;
+export function unexportedWork(project:Project,current:ProjectWork):UnexportedWork{
+  if(!project.workflows.length)return null;                    // nothing made, nothing to lose
+  if(!project.exportedAt||!project.exportedWork)return {kind:'never',at:current};
+  const was=project.exportedWork;
+  const added={
+    workflows:Math.max(0,current.workflows-was.workflows),
+    nodes:Math.max(0,current.nodes-was.nodes),
+    bytes:Math.max(0,current.bytes-was.bytes),
+  };
+  return added.workflows||added.nodes||added.bytes?{kind:'since',added}:null;
+}
+
+/** True when a copy exists but was taken before the work it would have to restore. */
+export const exportPredatesWork=(project:Project):boolean=>
+  !!project.exportedAt&&!!project.changedAt
+  &&Date.parse(project.changedAt)>Date.parse(project.exportedAt);
+
 const MAX_WORKFLOWS=50;
 /** Checked at the storage boundary, like `validateWorkflow`: a stored project is practitioner
  *  data that a previous version of this application wrote, so it is read defensively. */
 export function validateProject(raw:unknown):Project{
-  if(!isRecord(raw)||raw.schema!=='fieldwork/project/1'||typeof raw.id!=='string'||!raw.id
+  // A project written before 2026-10-23 says schema 1 and carries no timestamps. It is read, not
+  // refused: the work is the same work, and what it does not know about itself is stated as not
+  // known rather than invented.
+  if(!isRecord(raw)||(raw.schema!=='fieldwork/project/2'&&raw.schema!=='fieldwork/project/1')||typeof raw.id!=='string'||!raw.id
     ||typeof raw.name!=='string'||typeof raw.subject!=='string'||!Array.isArray(raw.workflows)
     ||raw.workflows.length>MAX_WORKFLOWS||raw.workflows.some(w=>typeof w!=='string'||!w))
     throw new Error('Project could not be read. It names an investigation and the workflows in it.');
-  return {schema:'fieldwork/project/1',id:raw.id,name:raw.name,subject:raw.subject,workflows:[...new Set(raw.workflows as string[])]};
+  const moment=(value:unknown):string|undefined=>
+    typeof value==='string'&&!Number.isNaN(Date.parse(value))?value:undefined;
+  const changedAt=moment(raw.changedAt),exportedAt=moment(raw.exportedAt);
+  const count=(value:unknown):number=>Number.isSafeInteger(value)&&(value as number)>=0?value as number:0;
+  const work=isRecord(raw.exportedWork)
+    ?{workflows:count(raw.exportedWork.workflows),nodes:count(raw.exportedWork.nodes),bytes:count(raw.exportedWork.bytes)}
+    :undefined;
+  return {schema:'fieldwork/project/2',id:raw.id,name:raw.name,subject:raw.subject,
+    workflows:[...new Set(raw.workflows as string[])],
+    ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(work?{exportedWork:work}:{})};
 }
 
 /** The input widgets whose payload two workflows can genuinely share.

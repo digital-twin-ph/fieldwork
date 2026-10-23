@@ -58,7 +58,18 @@ fw:RuntimeMinutesShape a sh:NodeShape; sh:node fw:RuntimeQuantityShape;
   sh:property [ sh:path qudt:numericValue; sh:minExclusive 0 ].
 fw:StreetNetworkShape a sh:NodeShape; sh:targetClass fw:StreetNetwork;
   sh:property [ sh:path fw:directed; sh:hasValue true; sh:maxCount 1 ];
-  sh:property [ sh:path fw:networkNode; sh:minCount 1; sh:class fw:NetworkVertex ];
+  # IDENTIFIED, NOT TRANSCRIBED. This required at least one fw:networkNode, so a receipt had to
+  # carry a vertex -- and the code carried every one of them: 711 MB of Turtle for a province,
+  # past the string a browser will hold. The practitioner, 2026-10-23: "We don't use N3
+  # represented graphs to compute on graphs we use graph computation engines so the query and
+  # answers can be done somewhere else. But if we query which graph holds the data, we should be
+  # able to answer that in N3 as part of the receipts." So the shape asks for the identity: how
+  # large the graph is, and -- where the acquisition recorded one -- the digest that says which
+  # graph it was. Vertices and edges remain describable, and are still checked when present.
+  sh:property [ sh:path fw:networkNodeCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer ];
+  sh:property [ sh:path fw:networkEdgeCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer ];
+  sh:property [ sh:path fw:sha256; sh:maxCount 1; sh:pattern "^[a-f0-9]{64}$" ];
+  sh:property [ sh:path fw:networkNode; sh:class fw:NetworkVertex ];
   sh:property [ sh:path fw:networkEdge; sh:class fw:NetworkEdge ];
   sh:property [ sh:path prov:wasGeneratedBy; sh:minCount 1; sh:maxCount 1; sh:class fw:NetworkInput ].
 fw:NetworkVertexShape a sh:NodeShape; sh:targetClass fw:NetworkVertex;

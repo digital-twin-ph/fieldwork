@@ -1,0 +1,61 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:study_area",
+ "version": "0.4.0",
+ "nodeType": "study_area",
+ "title": "Study area",
+ "released": "2026-10-23",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['study_area']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [],
+  "output": "area",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:StudyArea",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/study-area.ts",
+   "src/study-area-map.ts",
+   "src/area-buffer.ts"
+  ],
+  "definition": "src/old-naledi.ts#OLD_TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "changed",
+   "description": "The country is stated once, here, and read by every widget that needs one. An area acquired from geoBoundaries was chosen BY country and carries it in its own identifier, so it is shown as a fact rather than asked again; a bounding box, a circle or a drawn polygon was never picked by country and is where the list belongs. The practitioner: \"State it once is best for manually derived study areas like bounding box, circle, hand drawn polygons. But for administrative boundaries from geoBoundaries, it could actually be derived from the country selection so pick country once. Not twice.\""
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

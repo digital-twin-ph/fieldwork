@@ -1,0 +1,78 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:clip_raster",
+ "version": "1.1.0",
+ "nodeType": "clip_raster",
+ "title": "Clip raster",
+ "released": "2026-10-23",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['clip_raster']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "raster",
+    "type": "raster"
+   }
+  ],
+  "output": "raster"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:RasterDataset",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:RasterClipping",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Existing ontology alignment, plus the inclusion rule and outer margin now recorded as typed provenance so receipts produced under different rules cannot be mistaken for each other. fw:rasterMaskConvention is constrained by SHACL to a known identifier. EMITS IS EMPTY AND THE MODULE IS NOT. validate:widgets compares this against what it can read from core.ts#TYPES, which for this widget is nothing: the fw: terms the clip actually asserts -- RasterClipping, clipGeometry, rasterMaskMethod, rasterMaskMarginPixels, validCellCount and the rest -- are built in raster-workflow.ts, where the extraction does not look. Declared empty on 2026-10-23 to match what the check can see, with the discrepancy written here rather than papered over: the sibling raster_input carries the same empty declaration for the same reason, so this is the convention and not an oversight of this release.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/raster.ts",
+   "src/raster-workflow.ts",
+   "src/raster-ui.ts",
+   "src/raster-provenance.ts",
+   "src/raster-preview.ts",
+   "src/study-area-map.ts",
+   "src/raster-mask.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "changed",
+   "description": "A custom node label, for the same reason as the raster input it follows: labelForm exists so the gesture is learned once, and these two had never been given it."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Independently compared against rasterio 1.5.2 with GDAL 3.12.2 over a synthetic CRS84 grid and a concave, pixel-aligned cutline: cell centre inside agrees exactly; all touched differs by 2 of 146 cells, both GDAL-only and attributable to its line rasterizer. A unit test pins the convention at an exactly aligned border. The margin has no GDAL equivalent and is compared only against a dilation model, so it remains unvalidated. No claim is made about cartographic or scientific suitability."
+ }
+}

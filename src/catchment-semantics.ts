@@ -7,13 +7,39 @@ const quantity=(value:number,unit:string)=>`[ a qudt:QuantityValue; qudt:numeric
 export function catchmentSemantics(node:WorkflowNode,value:Network|Polygons,entity:string,activity:string,runId:string):string{
   let facts='@prefix qudt: <http://qudt.org/schema/qudt/>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n';
   if('nodes' in value){
+    /* THE GRAPH IS IDENTIFIED, NOT TRANSCRIBED.
+     *
+     * This emitted one statement per junction and one per segment: a NetworkVertex with a WKT
+     * POINT for every node, a NetworkEdge with its ends and length for every edge. Measured
+     * 2026-10-23 against the province the practitioner downloaded -- 984,906 junctions and
+     * 2,022,803 segments -- that is 291 characters a junction and 210 a segment, so 711 MB of
+     * Turtle built as ONE JavaScript string. V8 refuses past about 512 MB with "Invalid string
+     * length", which is why the same province ran in Safari and killed Chrome: JavaScriptCore
+     * allows the larger string.
+     *
+     * The practitioner, on being shown the cost: *"If street network graphs can be validated,
+     * perhaps we can avoid storing the network data in N3?"* They can and it does. A receipt
+     * exists so a reader can check a claim, and the claim about a street network is that THIS
+     * graph, acquired this way, passed these checks. The digest identifies it, the counts and
+     * the source describe it, and validateNetwork is what checked it -- all asserted already,
+     * a few lines earlier in catchments.ts. Three million triples restating coordinates support
+     * none of that; they are the data wearing the costume of evidence.
+     *
+     * The terms they were written in -- fw:StreetNetwork, fw:directed, fw:NetworkVertex,
+     * fw:NetworkEdge -- appear nowhere in ontology/fieldwork.ttl. The most expensive thing this
+     * application produced was also undeclared vocabulary.
+     *
+     * What is lost: an N3 question about one named junction. What is kept: every question about
+     * the network as a thing -- which graph, how large, from where, in what travel mode, and
+     * whether it passed. The graph itself is in the payload store, addressed by this digest. */
     facts+=`<${entity}> a fw:StreetNetwork; fw:directed true.\n`;
-    for(const n of value.nodes){const id=`${entity}:node:${encodeURIComponent(n.id)}`;
-      facts+=`<${entity}> fw:networkNode <${id}>.\n<${id}> a fw:NetworkVertex, geo:Feature; dcterms:identifier ${lit(n.id)}; geo:hasGeometry [ a geo:Geometry; geo:asWKT ${lit('<'+CRS84+'> POINT ('+n.coordinates.join(' ')+')')}^^geo:wktLiteral ].\n`;
-    }
-    value.edges.forEach((e,i)=>{const id=`${entity}:edge:${i}`;facts+=`<${entity}> fw:networkEdge <${id}>.\n<${id}> a fw:NetworkEdge; fw:fromVertex <${entity}:node:${encodeURIComponent(e.from)}>; fw:toVertex <${entity}:node:${encodeURIComponent(e.to)}>; fw:edgeLength ${quantity(e.lengthM,'M')}.\n`;
-      if(e.geometry)facts+=`<${id}> geo:hasGeometry [ a geo:Geometry; geo:asWKT ${lit('<'+CRS84+'> LINESTRING ('+e.geometry.map(c=>c.join(' ')).join(', ')+')')}^^geo:wktLiteral ].\n`;
-    });
+    // WHICH GRAPH HOLDS THE DATA, which is the question a receipt is asked about a network.
+    // The digest answers it where the acquisition recorded one; the counts and the source
+    // description, asserted beside this, say how large it is and where it came from.
+    const provenance=(value as {provenance?:Record<string,unknown>}).provenance;
+    const digest=provenance?.sha256;
+    if(typeof digest==='string'&&/^[a-f0-9]{64}$/.test(digest))
+      facts+=`<${entity}> fw:sha256 ${lit(digest)}.\n`;
     return facts;
   }
   facts+=`<${entity}> a fw:CatchmentDataset, geo:FeatureCollection; fw:countSemantics ${lit(value.features.some(f=>f.minutes!==undefined)?'cumulative-threshold-memberships':'all-polygon-memberships')}.\n`;

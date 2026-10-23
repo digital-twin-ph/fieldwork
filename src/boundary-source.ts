@@ -75,6 +75,34 @@ export const COUNTRIES:readonly {iso:string;name:string}[]=countries.countries;
  *  unambiguous -- "Congo" matches two countries and must not silently pick one of them. */
 export const countryName=(iso:string)=>COUNTRIES.find(c=>c.iso===iso)?.name??iso;
 
+/** THE COUNTRY A STUDY AREA STATES IT IS IN, or null where it states none.
+ *
+ *  Lives here, beside the country list, because more than one widget needs it: the population
+ *  raster asks which country's surface to offer, and Find health facilities asks which country's
+ *  export to download. The practitioner, 2026-10-23: *"I should not have to type 3 letter ISO
+ *  code because the study area should already pass on that information."*
+ *
+ *  THE WHOLE SHAPE, not the first three characters. Taking a prefix turned "drawn-by-hand" into
+ *  the country "DRA" -- a country that does not exist, attributed to data that would carry it
+ *  onward with nothing downstream to show it. geoBoundaries identifiers are ISO3-ADM<level>-<id>,
+ *  and that is what is required before a country is claimed. A polygon somebody drew states no
+ *  country and gets none: guessing one from coordinates is wrong exactly where it matters, on a
+ *  border, and wrong invisibly. */
+export function iso3Of(provenance?:{boundaryID?:string}|null):string|null{
+  const match=/^([A-Za-z]{3})-ADM\d/.exec(provenance?.boundaryID||'');
+  return match?match[1].toUpperCase():null;
+}
+
+/** THE COUNTRY A STUDY AREA IS IN, however it came to be known.
+ *
+ *  The practitioner, 2026-10-23: *"Study Area should have country and connecting study area to
+ *  raster should autopopulate country."* An acquired boundary states its country in its own
+ *  identifier; a polygon somebody drew states nothing, and then the country is a thing they can
+ *  say once, on the area, rather than again in every widget that needs it. Said explicitly it
+ *  wins, because a practitioner correcting the application is not a conflict to resolve. */
+export const countryOfArea=(params?:{country?:string;boundary?:{provenance?:{boundaryID?:string}}}|null):string|null=>
+  (params?.country&&/^[A-Z]{3}$/.test(params.country)?params.country:null)??iso3Of(params?.boundary?.provenance);
+
 /** Other countries whose name contains what was typed. Empty when the choice is unmistakable.
  *
  *  "Congo" IS the Republic of the Congo's name, so resolving it is correct -- and the

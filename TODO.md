@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-10-19_
+_Created 2026-10-10 · Updated 2026-10-23_
 
 Deferred work, in rough priority order. An item here is a decision to do it later, not a
 decision to do it — anything abandoned should be struck with a reason rather than deleted,
@@ -13,6 +13,97 @@ tasks say so, and name the record that would settle them.
   all 39 widgets. Complete on D1, D2, D7 and D10; sampled on D3, where the first sample
   found an unenforced distinction, so the exhaustive D3 pass is the next step. Its six
   ordered actions are the near-term work.
+
+## Snow's denominator: wire up `snow-gboh`, then South London
+
+**Raised in priority 2026-10-23 at the practitioner's direction**, on the day they met the same
+lesson in their own work: a WorldPop raster is a denominator for health zones in Ituri, and a
+case count without one is the Soho map again. This is that lesson on data where the answer is
+known.
+
+Two steps, deliberately in this order. Both came out of the practitioner asking, 2026-10-19,
+*"what other epidemiological computations are possible with Cholera Outbreak data aside from
+epidemic curve?"*
+
+### 1. Wire up the data already in the repository
+
+`examples/snow-gboh/` has been present since 2026-10-09, with a `provenance.json` that records the
+source digest, the four limits and the licence reasoning — and **no file in `src/` references it.**
+It holds `deaths_nd_by_house.csv`: 1,852 houses from the 1855 General Board of Health map,
+**including the 1,483 where nobody died**, 706 deaths (661 residents, 45 non-residents), and
+precomputed distances to the Broad Street pump, the former pest field and the nearest sewer grate.
+
+Those zero-death houses are a denominator, which is what the 250 mapped death locations do not
+have. The difference it makes, measured 2026-10-19:
+
+| band from the pump | houses | deaths | deaths/house | % houses affected |
+|---|---|---|---|---|
+| 0–50 m | 45 | 84 | **1.867** | 55.6% |
+| 50–100 m | 140 | 186 | 1.329 | 59.3% |
+| 100–150 m | 283 | 204 | 0.721 | 41.3% |
+| 150–200 m | 429 | 150 | 0.350 | 20.3% |
+| 200–300 m | 724 | 78 | 0.108 | 7.5% |
+| 300 m+ | 231 | 4 | 0.017 | 1.3% |
+
+Monotone across a 110-fold range. The same gradient computed from the 250 mapped points — which
+condition on a house having had a death — runs 3.33 down to 1.00 and is barely a gradient at all.
+**Same outbreak, same pump, and the selection decides the finding.** That contrast is a better
+teaching artifact than either table, and it is this project's "a number needs a denominator" lesson
+in its own data.
+
+Three things this makes possible that no workflow does today:
+
+- A rate with a real denominator. `validate:evidence` reports `rate` as one of four widgets at the
+  **weakest evidence rung**, and this is the example where `minimumDenominator` and `rateKind` do
+  actual work.
+- The competing 1854 hypotheses tested against each other. `dis_pestf` and `dis_sewers` are the
+  miasma explanation's own candidate exposures, sitting in the same file as `dis_bspump`.
+- Resident against non-resident deaths. 661 and 45, and the file's own limits note warns that
+  `deaths` "mixes a numerator that includes visitors with a denominator of dwellings".
+
+**Two constraints, both already recorded in that `provenance.json` and neither to be worked
+around.** The coordinates are OSGB 1936 / Airy 1830 and this application deliberately performs no
+datum shift, so the analysis is tabular and uses the distance columns — there is no map. And the
+licence is *"GPL, version not stated by the publisher"*: redistribution verbatim is aggregation and
+does not affect this repository's Apache-2.0 licence, but **"a reprojected, filtered or otherwise
+modified copy would be a modified work and would have to carry the GPL and be marked as
+modified"**. So a workflow reads these columns; it does not ship a transformed copy of them.
+
+### 2. South London, as its own repository, imported as a bundle
+
+Snow's other 1854 investigation — Southwark & Vauxhall against Lambeth, two companies whose mains
+ran down the same streets, one drawing from the sewage-laden tidal Thames and one from Thames
+Ditton after the Metropolis Water Act of 1852. Roughly 315 deaths per 10,000 houses against 37, a
+risk ratio near 8.5, with exposure assigned by a chloride test because residents often did not know
+their supplier. It is the study with the denominator, and the ancestor of the cohort design.
+
+It is **not** in this repository, and adding it as a worked example is the expensive route: example
+data is imported at build time, and a new `exampleId` touches the closed union in `types.ts`, the
+`template()` dispatch, `NAMED_WORKSPACES` twice, the static picker options in `index.html`, the
+deep-link allowlist and `loadExample`'s per-example selection — the *"examples are the default
+world"* problem in the one place it is least visible.
+
+So: a separate repository, imported as a `fieldwork/bundle/1` workflow into the **1854 Cholera
+Outbreak in London** project ([122](docs/experiments/122-a-project-holds-many-workflows.md)). A
+project holding imported workflows is the practitioner's own request from the same day — *"create
+project, import workflows into project"* — and a South London table is kilobytes against a 500 MB
+bundle ceiling (20 MB when this was written; raised 2026-10-22 and again 2026-10-23). The separate repository earns its keep on licensing rather than architecture: it
+isolates third-party data and lets a derived copy carry the source's own licence without touching
+Fieldwork's.
+
+**Settled 2026-10-23: it does.** `geodacenter.github.io` answers `access-control-allow-origin: *`
+for HTML and for a `.zip` asset, `pages.github.com` the same, and `raw.githubusercontent.com` the
+same on GET. So runtime loading from another repository does not hit the DHIS2 and geoBoundaries
+wall and vendoring is not forced. One trap recorded with it: **HEAD on `raw.githubusercontent.com`
+returns no such header and GET does**, so a HEAD-only probe would have sent this the other way.
+
+**A caution worth keeping in view.** The South London study's power is not spatial — it is a 2x2
+contrast of two intermingled populations. A worked example in a semantic GIS studio whose central
+computation is a table with no map is defensible, and it is a departure. Mapping it needs 1850s
+sub-district boundaries, which is the hard acquisition; the table is the easy part.
+
+**Neither started.** Step 1 needs no acquisition, no new repository and no licence manoeuvre — only
+a workflow — which is why it comes first.
 
 ## What is actually blocked
 
@@ -505,91 +596,6 @@ neither.
 **Not started.** The two corrected on 2026-10-20 are the pattern: both turned out to be a downstream
 widget's constraint applied upstream, which is worth checking for in each of these before assuming
 the number itself is the problem.
-
-## Snow's denominator: wire up `snow-gboh`, then South London
-
-Two steps, deliberately in this order. Both came out of the practitioner asking, 2026-10-19,
-*"what other epidemiological computations are possible with Cholera Outbreak data aside from
-epidemic curve?"*
-
-### 1. Wire up the data already in the repository
-
-`examples/snow-gboh/` has been present since 2026-10-09, with a `provenance.json` that records the
-source digest, the four limits and the licence reasoning — and **no file in `src/` references it.**
-It holds `deaths_nd_by_house.csv`: 1,852 houses from the 1855 General Board of Health map,
-**including the 1,483 where nobody died**, 706 deaths (661 residents, 45 non-residents), and
-precomputed distances to the Broad Street pump, the former pest field and the nearest sewer grate.
-
-Those zero-death houses are a denominator, which is what the 250 mapped death locations do not
-have. The difference it makes, measured 2026-10-19:
-
-| band from the pump | houses | deaths | deaths/house | % houses affected |
-|---|---|---|---|---|
-| 0–50 m | 45 | 84 | **1.867** | 55.6% |
-| 50–100 m | 140 | 186 | 1.329 | 59.3% |
-| 100–150 m | 283 | 204 | 0.721 | 41.3% |
-| 150–200 m | 429 | 150 | 0.350 | 20.3% |
-| 200–300 m | 724 | 78 | 0.108 | 7.5% |
-| 300 m+ | 231 | 4 | 0.017 | 1.3% |
-
-Monotone across a 110-fold range. The same gradient computed from the 250 mapped points — which
-condition on a house having had a death — runs 3.33 down to 1.00 and is barely a gradient at all.
-**Same outbreak, same pump, and the selection decides the finding.** That contrast is a better
-teaching artifact than either table, and it is this project's "a number needs a denominator" lesson
-in its own data.
-
-Three things this makes possible that no workflow does today:
-
-- A rate with a real denominator. `validate:evidence` reports `rate` as one of four widgets at the
-  **weakest evidence rung**, and this is the example where `minimumDenominator` and `rateKind` do
-  actual work.
-- The competing 1854 hypotheses tested against each other. `dis_pestf` and `dis_sewers` are the
-  miasma explanation's own candidate exposures, sitting in the same file as `dis_bspump`.
-- Resident against non-resident deaths. 661 and 45, and the file's own limits note warns that
-  `deaths` "mixes a numerator that includes visitors with a denominator of dwellings".
-
-**Two constraints, both already recorded in that `provenance.json` and neither to be worked
-around.** The coordinates are OSGB 1936 / Airy 1830 and this application deliberately performs no
-datum shift, so the analysis is tabular and uses the distance columns — there is no map. And the
-licence is *"GPL, version not stated by the publisher"*: redistribution verbatim is aggregation and
-does not affect this repository's Apache-2.0 licence, but **"a reprojected, filtered or otherwise
-modified copy would be a modified work and would have to carry the GPL and be marked as
-modified"**. So a workflow reads these columns; it does not ship a transformed copy of them.
-
-### 2. South London, as its own repository, imported as a bundle
-
-Snow's other 1854 investigation — Southwark & Vauxhall against Lambeth, two companies whose mains
-ran down the same streets, one drawing from the sewage-laden tidal Thames and one from Thames
-Ditton after the Metropolis Water Act of 1852. Roughly 315 deaths per 10,000 houses against 37, a
-risk ratio near 8.5, with exposure assigned by a chloride test because residents often did not know
-their supplier. It is the study with the denominator, and the ancestor of the cohort design.
-
-It is **not** in this repository, and adding it as a worked example is the expensive route: example
-data is imported at build time, and a new `exampleId` touches the closed union in `types.ts`, the
-`template()` dispatch, `NAMED_WORKSPACES` twice, the static picker options in `index.html`, the
-deep-link allowlist and `loadExample`'s per-example selection — the *"examples are the default
-world"* problem in the one place it is least visible.
-
-So: a separate repository, imported as a `fieldwork/bundle/1` workflow into the **1854 Cholera
-Outbreak in London** project ([122](docs/experiments/122-a-project-holds-many-workflows.md)). A
-project holding imported workflows is the practitioner's own request from the same day — *"create
-project, import workflows into project"* — and a South London table is kilobytes against a 20 MB
-bundle ceiling. The separate repository earns its keep on licensing rather than architecture: it
-isolates third-party data and lets a derived copy carry the source's own licence without touching
-Fieldwork's.
-
-**What would have to be settled first.** Whether GitHub Pages sends
-`Access-Control-Allow-Origin` for a cross-origin fetch. If it does not, runtime loading from another
-repository hits the same wall as DHIS2 and geoBoundaries, and the answer is vendoring rather than
-fetching. Unverified; do not assume either way.
-
-**A caution worth keeping in view.** The South London study's power is not spatial — it is a 2x2
-contrast of two intermingled populations. A worked example in a semantic GIS studio whose central
-computation is a table with no map is defensible, and it is a departure. Mapping it needs 1850s
-sub-district boundaries, which is the hard acquisition; the table is the easy part.
-
-**Neither started.** Step 1 needs no acquisition, no new repository and no licence manoeuvre — only
-a workflow — which is why it comes first.
 
 ## Let practitioners compose their own routine primitives
 

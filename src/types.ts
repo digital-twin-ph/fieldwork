@@ -117,7 +117,10 @@ export interface AreaRevision {at:string; geometry:Boundary; selectionMode:'bbox
  *  record says "on this date we went back to the extent of that date" rather than quietly
  *  shortening the chain. An investigation that narrowed its area and then widened it again is
  *  exactly the emergent-strategy case this project means to keep. */
-export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Boundary|null; spatialReference?:SpatialReference} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference};
+/** `country` is the ISO3 this area is in, said once here rather than again in every widget that
+ *  needs it. An acquired boundary states it in its own identifier and this is left unset; a
+ *  polygon somebody drew states nothing, and then this is where they say it. */
+export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Boundary|null; spatialReference?:SpatialReference; country?:string} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference; country?:string};
 export interface Exclusion {sourceNodeId:string; featureId:string; signature:string; reason:string}
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';
 export interface Measurement {squareMetres:number; value:number; unit:AreaUnit; method:string}
@@ -231,7 +234,10 @@ export interface ParamsByType {
   summarize_points_to_polygon:{label:string;boundary:'include'|'exclude';valueField:string};
   /** `populationYear` is which published WorldPop year the download button offers; it chooses a
    *  link, never the data, which arrives only when a file is prepared. */
-  raster_input:{label:string;asset?:import('./raster.js').RasterAsset;populationYear?:string};
+  raster_input:{label:string;asset?:import('./raster.js').RasterAsset;populationYear?:string;
+    /** Which country's population surface the download button offers, when the study area does
+     *  not state one. It chooses a link, never the data. */
+    populationCountry?:string};
   clip_raster:{label:string;method:'cell-center'|'all-touched';marginPixels?:number;cutline?:{geometry:Boundary;selectionMode:'bbox'|'polygon'|'circle'}};
   places:PointParams; centers:PointParams; point_input:ObservationParams; study_area:AreaParams;
   alert:{active:boolean|null; date:string};

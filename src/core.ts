@@ -1123,7 +1123,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const wiredLayers=pointInputs().layers;
         if(wiredLayers.length&&inputs.area){
           const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);
-          value={...mapped.value,network:structuredClone(network)} as unknown as DisplayValue;
+          value={...mapped.value,network:structuredClone(network),
+            // AND THE RASTER IS DRAWN WITH THEM. Third instance of one defect: the study area was
+            // dropped here on 2026-10-20, the facilities on 2026-10-22, and the raster until
+            // 2026-10-23, each because the winning mode threw away every other wired layer.
+            ...(inputs.raster?{raster:inputs.raster}:{})} as unknown as DisplayValue;
           if(mapped.receipt){
             // One receipt for one node: the network's own counts are asserted onto the map view
             // the points receipt already describes, rather than a second receipt the reader of
@@ -1141,6 +1145,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         }
         value={kind:'network-map',network:structuredClone(network),
           ...(drawnArea?.boundary?{boundary:structuredClone(drawnArea.boundary),bounds:drawnArea.bounds}:{}),
+          // The raster is ground, and ground survives whichever mode won. Patching only the
+          // branch above left this one still dropping it, which is the same mistake in miniature:
+          // a layer is carried where somebody remembered to carry it.
+          ...(inputs.raster?{raster:inputs.raster}:{}),
           rows:[],centers:[]} as unknown as DisplayValue;
         const activity=`<urn:fieldwork:run:${runId}:map:${node.id}>`;
         const facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n'

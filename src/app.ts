@@ -73,7 +73,8 @@ import {standaloneChartSvg} from './chart-figure.js';
 import {networkPreviewSvg,networkCoverage,networkPreviewCaption} from './network-preview.js';
 import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,downloadRaster} from './raster-ui.js';
-import {populationRastersFor,WORLDPOP_LICENCE,WORLDPOP_TAKEN} from './worldpop-catalogue.js';
+import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
+import {populationRastersForCountry,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
 import type {BoundaryProvenance} from './types.js';
 import {openTableEditor,dataTableMarkup} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
@@ -429,6 +430,20 @@ function saveFailureMessage(fallback:string):string{
   const quota=/quota|exceed|full/i.test(lastSaveFailure.name);
   return quota?storageRefusal(lastSaveFailure.bytes):`${fallback} The device reported ${lastSaveFailure.name}.`;
 }
+/** The moment a project's work last changed, and the moment a copy of it last left this device.
+ *
+ *  Neither was recorded until 2026-10-23, which is why "backed up" could not be said of anything.
+ *  Written where the thing actually happens -- a save, and an export that COMPLETED -- so the
+ *  state is a fact about what was done rather than about what was attempted. */
+function touchProject(id:string|undefined,field:'changedAt'|'exportedAt'):void{
+  if(!id)return;
+  const stored=readProjects();
+  const project=stored.find(p=>p.id===id);
+  if(!project)return;   // a worked example is not stored, and has nothing to back up
+  project[field]=new Date().toISOString();
+  writeProjects(stored);
+}
+
 function save(){
   syncProjectManifest(workflow);
   const previous=new Map<string,string|null>();
@@ -450,6 +465,8 @@ function save(){
     // WHICH store, when it is not the large one. A practitioner whose payloads are back under the
     // 5 MB cap needs to know before a download, not after it is refused.
     lastSaveFailure=null;
+    // The project's work changed, which is what makes it unbacked until an export completes.
+    touchProject(workflow.projectId??projectOfWorkflow(storageKey(workflow),allProjects())?.id,'changedAt');
     $('#save-status').textContent=payloadStoreKind()==='indexeddb'?'Saved on this device':'Saved on this device — small store only';return true;}
   catch(error){
     // WHY IT FAILED, KEPT. This caught and rolled back and returned false, and every caller could
@@ -1232,7 +1249,7 @@ function renderInspector(){
         +`<p class="muted">Exploding replaces this node with its primitives so each can be inspected and changed. It cannot be reassembled; Undo is the way back, because once a member's parameter changes the nodes are no longer this composition at this version.</p>`:'');
   }
   if(n.type==='mean_center'){
-    content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote. A missing, non-numeric or negative weight is refused with the number of records it applies to, rather than read as zero; a weight of zero is kept, because a house where nobody died contributes no deaths.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><label class="field-label" for="mean-center-points">Point input</label><select id="mean-center-points" data-map-port="points"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='points'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`;
+    content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote. A missing, non-numeric or negative weight is refused and counted; zero is kept, because a house where nobody died contributes no deaths.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><label class="field-label" for="mean-center-points">Point input</label><select id="mean-center-points" data-map-port="points"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='points'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`;
   }else if(n.type==='compare_point_sets'||n.type==='comparison_map'){
     if(n.type==='compare_point_sets')content+=`<div class="notice">Connect a Mean center widget to each branch. Both centers must use this UTM CRS and have matching source counts. Original and moved locations stay private.</div><label class="field-label" for="comparison-zone">WGS84 UTM zone</label><input id="comparison-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="comparison-hemisphere">Hemisphere</label><select id="comparison-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><p class="description">Distances to the nearest pump and between centers are measured in metres. Pump locations are geographic context.</p>`;
     else content+='<div class="notice">Private evaluation map: both panels share one extent and scale. This view displays existing comparison results and includes original coordinates.</div>';
@@ -1505,7 +1522,28 @@ function renderInspector(){
       +'</select></div>'
       +`<div class="notice">${esc(descriptor.detail)}</div>`
       +(descriptor.needsCountry
-        ?`<div class="field"><label class="field-label" for="hf-country">Country (three-letter ISO code)</label><input id="hf-country" data-hf="country" maxlength="3" value="${esc(p.country)}" placeholder="PHL"></div>`
+        ?(()=>{
+          // THE STUDY AREA ALREADY SAYS WHICH COUNTRY, and a person should not retype what the
+          // application knows. The practitioner, 2026-10-23: *"In find health facilities, I
+          // should not have to type 3 letter ISO code because the study area should already pass
+          // on that information. And we should not make the user type 3 letter ISO codes, this
+          // should be a drop down."* A boundary acquired from geoBoundaries carries BWA-ADM1-...;
+          // a polygon drawn by hand carries nothing, and then the list is simply unset.
+          const areaNode=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
+          const stated=countryOfArea(areaNode?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}});
+          const chosen=p.country||stated||'';
+          return `<div class="field"><label class="field-label" for="hf-country">Country</label>`
+            +`<select id="hf-country" data-hf="country">`
+            +`<option value="" ${chosen?'':'selected'}>Choose a country…</option>`
+            +COUNTRIES.map(c=>`<option value="${c.iso}" ${c.iso===chosen?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
+            +`</select>`
+            +(stated&&!p.country
+              ?`<small>From the study area.</small>`
+              :stated&&p.country&&p.country!==stated
+                ?`<p class="notice">Study area is ${esc(stated)}; this asks ${esc(p.country)}. The export follows this choice.</p>`
+                :'')
+            +`</div>`;
+        })()
         :'')
       +(descriptor.confidence
         ?`<div class="field"><label class="field-label" for="hf-confidence">Least confidence to accept (0 to 1)</label><input id="hf-confidence" data-hf-number="minConfidence" type="number" min="0" max="1" step="0.05" value="${p.minConfidence??OVERTURE_DEFAULT_CONFIDENCE}"></div>`
@@ -1541,6 +1579,13 @@ function renderInspector(){
       +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" data-sample="valueUnit" maxlength="60" value="${esc(p.valueUnit)}" placeholder="metres above the stated datum"></div>`
       +'<div class="notice">A cell value is not a measurement at the point: it is the value of the containing cell, at the raster\u2019s resolution, with no interpolation. No-data cells, points outside the raster and points without coordinates carry no value and are counted; none is treated as zero. An attribute already on the layer is never overwritten.</div>';
   }else if(n.type==='raster_input'||n.type==='clip_raster'){
+    // ONE SHAPE, AND THIS WIDGET WAS STILL OUTSIDE IT. The practitioner, 2026-10-23: *"Note that
+    // raster widget still does not have custom node label field."* labelForm exists precisely so
+    // the gesture is learned once -- its own comment records a fourth widget that had none at
+    // all when it was written -- and these two were not given it. Two nodes of the same kind on
+    // one canvas could not be told apart except by their ports.
+    content+=labelForm(n.type==='raster_input'?'raster-label':'clip-raster-label','Node label',
+      n.params.label||(n.type==='raster_input'?'Raster input':'Clip raster'));
     content+=nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="raster-${port}">${port==='area'?'Study area':'Raster input'}</label><select id="raster-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('');
     // WHICH POPULATION RASTER COVERS THIS STUDY AREA, before asking for a file nobody has yet.
     // The same shape as the street network widget's published extracts: this application works
@@ -1551,7 +1596,21 @@ function renderInspector(){
     // on a border is exactly where a guess from coordinates would be wrong and invisible.
     if(n.type==='raster_input'){
       const area=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
-      const rasters=populationRastersFor((area?.params as {boundary?:{provenance?:BoundaryProvenance}})?.boundary?.provenance);
+      const stated=countryOfArea(area?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}});
+      // A STUDY AREA SOMEBODY DREW STATES NO COUNTRY, and WorldPop is keyed by country. Offering
+      // nothing in that case was correct and useless: the practitioner, 2026-10-23, looking at a
+      // drawn Gaborone area, *"Can we make raster input read from Worldpop?"* It already did, for
+      // an acquired boundary only. So the country is asked for here as it is in Find health
+      // facilities -- defaulted from the area where the area states one, chosen from a list where
+      // it does not. Two widgets that need a country now behave the same way.
+      const country=n.params.populationCountry||stated||'';
+      const rasters=populationRastersForCountry(country||null);
+      content+=`<label class="field-label" for="population-country">Country for population data</label>`
+        +`<select id="population-country" data-raster-param="populationCountry">`
+        +`<option value="" ${country?'':'selected'}>Choose a country…</option>`
+        +COUNTRIES.map(c=>`<option value="${c.iso}" ${c.iso===country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
+        +`</select>`
+        +(stated&&!n.params.populationCountry?`<small>From the study area.</small>`:'');
       if(rasters.length){
         const chosen=rasters.find(r=>r.year===(n.params.populationYear??rasters[0].year))??rasters[0];
         content+=`<label class="field-label" for="population-year">Population raster (WorldPop)</label>`
@@ -1560,6 +1619,16 @@ function renderInspector(){
           +`</select>`
           +`<div class="extract-links"><a class="button" href="${esc(chosen.url)}" download target="_blank" rel="noopener noreferrer">`
           +`\u2193 ${esc(chosen.iso3)} \u00b7 ${esc(chosen.year)}${chosen.bytes?` \u00b7 ${(chosen.bytes/1e6).toFixed(0)} MB`:''}</a></div>`
+          // SAID BESIDE THE BUTTON, BECAUSE THAT IS WHERE THE HOUR IS COMMITTED TO. There is no
+          // resume: the host advertises Accept-Ranges and ignores a Range request, confirmed again
+          // 2026-10-23, so a reboot or a sleep does not cost the remainder of the download, it
+          // costs all of it.
+          +(chosen.bytes
+            ?`<p class="notice">About ${esc(downloadWait(chosen.bytes))} at the one speed measured `
+              +`here, ${(WORLDPOP_BYTES_PER_SECOND/1e3).toFixed(0)} kB/s. Keep the laptop awake: this `
+              +`host ignores resume requests, so an interrupted download starts again from zero.</p>`
+            :`<p class="notice">Keep the laptop awake until this finishes. The host ignores resume `
+              +`requests, so an interrupted download starts again from zero.</p>`)
           +`<small>Your browser downloads it from data.worldpop.org; this application cannot fetch `
           +`it for you, as that host sends no CORS header. Unconstrained population, 100 m. `
           +`${esc(WORLDPOP_LICENCE)} Catalogue of ${esc(WORLDPOP_TAKEN)}.`
@@ -1569,6 +1638,31 @@ function renderInspector(){
       content+='<button id="prepare-raster" class="button primary">Prepare GeoTIFF input</button><p class="description">Acquire a rectangular window and enter source metadata/citation. Reopen to edit metadata without re-uploading. Use Clip raster to apply the polygon mask.</p>';if(n.params.asset)content+=`<p>${esc(n.params.asset.source.filename)}<br>${n.params.asset.source.metadata.width} x ${n.params.asset.source.metadata.height} source cells; retained ${n.params.asset.metadata.width} x ${n.params.asset.metadata.height}.</p><details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(n.params.asset,null,2))}</pre></details>`;}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
     if(n.type==='clip_raster'){content+='<div class="field"><label class="field-label" for="clip-method">Pixel inclusion</label><select id="clip-method"><option value="all-touched" '+(n.params.method==='all-touched'?'selected':'')+'>All touched</option><option value="cell-center" '+(n.params.method==='cell-center'?'selected':'')+'>Cell center inside</option></select><label class="field-label" for="clip-margin">Outer margin (native pixels, 0-1)</label><input id="clip-margin" type="number" min="0" max="1" step="0.25" value="'+(n.params.marginPixels||0)+'"><small>All touched includes a cell when the boundary covers part of its area or crosses it, so a boundary running exactly along a cell border does not pull in the cell outside it. This matches GDAL except where a boundary vertex lies exactly on a cell border. For an outward margin, prepare the GeoTIFF with one pixel of extra source coverage; a margin is a grid distance with no GDAL equivalent. NoData is never filled.</small></div>';content+='<p class="description">'+(n.params.cutline?'Saved clip boundary; independent of Study area edits.':'Boundary will be initialized from the connected Study area.')+'</p><button id="reset-clip-boundary" class="button small" '+(!n.params.cutline?'disabled':'')+'>Use Study area boundary</button>';if(n.params.cutline)content+='<div class="source-card"><span class="inspector-section">Clip extent (degrees)</span>'+geometryBounds(n.params.cutline.geometry).map((value,i)=>'<div class="detail-row"><span>'+['West','South','East','North'][i]+'</span><strong>'+value.toFixed(6)+'</strong></div>').join('')+'</div>';}
   }else if(n.type==='study_area'){
+    // THE COUNTRY, SAID ONCE, HERE. Every widget that needs one -- the population raster, the
+    // facilities export -- reads it from the area rather than asking again. An acquired boundary
+    // states it in its own identifier, so this shows that and need not be touched; a polygon
+    // somebody drew states nothing, and this is where it is said.
+    {
+      // PICKED ONCE, AND ONLY WHERE IT WAS NEVER PICKED. The practitioner, 2026-10-23: *"State
+      // it once is best for manually derived study areas like bounding box, circle, hand drawn
+      // polygons. But for administrative boundaries from geoBoundaries, it could actually be
+      // derived from the country selection so pick country once. Not twice."*
+      //
+      // An acquired boundary was chosen BY country -- the picker asks for one before it can
+      // offer a level or a unit -- and carries it in its own identifier, BWA-ADM1-... Offering a
+      // list there asks a question already answered, and a list implies the answer is in doubt.
+      // So it is stated, not asked. A bounding box, a circle or a drawn polygon was never picked
+      // by country and has none to derive, and that is where the list belongs.
+      const acquired=iso3Of((n.params as {boundary?:{provenance?:BoundaryProvenance}}).boundary?.provenance);
+      content+=acquired
+        ?`<div class="field"><span class="field-label">Country</span>`
+          +`<p class="muted">${esc(countryName(acquired))} (${esc(acquired)}), from the boundary this area was acquired as.</p></div>`
+        :`<div class="field"><label class="field-label" for="area-country">Country</label>`
+          +`<select id="area-country" data-area-country>`
+          +`<option value="" ${n.params.country?'':'selected'}>Not stated</option>`
+          +COUNTRIES.map(c=>`<option value="${c.iso}" ${c.iso===n.params.country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
+          +`</select><small>Read by the widgets that need a country.</small></div>`;
+    }
     content+=`<form id="study-area-label-form" class="field"><label class="field-label" for="study-area-label">Study area label</label><input id="study-area-label" maxlength="100" required value="${esc(n.params.label||'My study area')}"><button type="submit" class="button small">Apply label</button></form>`;
     content+=n.params.source==='drawn'?`<div class="source-card"><span class="inspector-section">${n.params.geometry?'Selected geometry':'No geometry yet'}</span><h3>${esc(n.params.label)}</h3><p>${n.params.geometry?`${n.params.selectionMode==='bbox'?'Bounding box':'Polygon'} · ${n.params.geometry.coordinates[0].length-1} vertices`:'Draw a bounding box or polygon on the online map.'}</p></div><p class="description">The shape is stored in longitude, latitude order. Applying it generates N3 facts; Run workflow evaluates the readiness rule.</p>`:oldInspector(n);
     // Every extent this area has had, newest first, each restorable. The practitioner,
@@ -1672,7 +1766,7 @@ function renderInspector(){
             +`</div>`).join('')
           +`</div></div></div>`).join('')
         +`</div>`
-        +`<p class="description">Every rule is checked against every record, so the rules must not disagree: no record may match two rules that reach different conclusions about the same thing. A record matching none keeps no conclusion, and the run evidence counts those.</p>`
+        +`<p class="description">Every rule is checked against every record, so rules must not disagree: no record may match two rules reaching different conclusions. A record matching none keeps no conclusion; the evidence counts those.</p>`
         +`<span class="inspector-section">Which column means what</span>`;
       if(authored.fields.length){
         content+=`<table class="inspector-table"><thead><tr><th>Column</th><th>Read as</th><th>Kind</th><th>Unit</th></tr></thead><tbody>`
@@ -2052,6 +2146,14 @@ function renderInspector(){
     const baseline=JSON.stringify(workflow);
     button.disabled=true;button.textContent='Retrieving\u2026';
     try{
+      // A country the study area stated and nobody touched is still the country. Written onto the
+      // node before the request, so the receipt says what was asked for rather than leaving it to
+      // be inferred from an area the workflow may later be rewired away from.
+      if(!node.params.country){
+        const areaNode=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
+        const stated=countryOfArea(areaNode?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}});
+        if(stated)change(w=>{const target=getNode(w,n.id,'find_health_facilities');target.params.country=stated;});
+      }
       requireRunnableFindHealthFacilities(node);
       // The area comes from the upstream node, resolved the same way the raster editor resolves
       // it, so the query is bounded by the study area rather than by a country guess.
@@ -2118,6 +2220,14 @@ function renderInspector(){
   optionalElement('#population-year')?.addEventListener('change',event=>change(w=>{
     const target=getNode(w,n.id,'raster_input');
     target.params.populationYear=(event.target as HTMLSelectElement).value;
+  }));
+  optionalElement('#area-country')?.addEventListener('change',event=>change(w=>{
+    const target=getNode(w,n.id,'study_area');
+    target.params.country=(event.target as HTMLSelectElement).value||undefined;
+  }));
+  optionalElement('#population-country')?.addEventListener('change',event=>change(w=>{
+    const target=getNode(w,n.id,'raster_input');
+    target.params.populationCountry=(event.target as HTMLSelectElement).value;
   }));
   optionalElement('#prepare-raster')?.addEventListener('click',()=>{
     let source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);const visited=new Set<string>();
@@ -2776,7 +2886,15 @@ export async function readMaybeGzipped(file:Blob):Promise<string>{
   const head=new Uint8Array(await file.slice(0,2).arrayBuffer());
   if(head[0]!==0x1f||head[1]!==0x8b)return file.text();
   const stream=file.stream().pipeThrough(new DecompressionStream('gzip'));
-  return new Response(stream).text();
+  const text=await new Response(stream).text();
+  // BOUNDED ON WHAT IT BECAME, not on what arrived. The file-size check upstream sees the
+  // COMPRESSED bytes, and a street graph gzips about 25 to 1 -- so a file inside the limit can
+  // expand far past it, which is the oldest trick an archive plays. The encrypted package has
+  // bounded its expansion since it learned to compress; this path had not.
+  if(text.length>MAX_BUNDLE_BYTES)
+    throw new Error(`This file expands to ${(text.length/1e6).toFixed(1)} MB, more than the `
+      +`${MAX_BUNDLE_BYTES/1e6} MB that may be read back in.`);
+  return text;
 }
 function downloadBlob(name:string,blob:Blob){
   const url=URL.createObjectURL(blob),link=document.createElement('a');
@@ -3462,12 +3580,20 @@ async function exportProject(id:string){
     }
     const document=projectDocument({...project,workflows:held},workflows);
     const loose=unbundledReferences(validated);
-    // Written compressed, and named for what it is. Indentation costs nothing once gzipped and
-    // keeps the file readable by hand after one `gunzip`.
-    const text=JSON.stringify(document,null,2);
+    // WRITTEN COMPACT, because indentation is paid in the one resource that binds. Measured
+    // 2026-10-23 on a million-junction document: 194 MB compact, 517 MB at indent 2 -- 2.66
+    // times, and within four per cent of the 536,870,888 characters V8 will hold. The
+    // practitioner's own workflow is 472 MB of JSON, which indented would not serialise at all,
+    // so the file they most need to back up would be the one they could not write.
+    //
+    // Gzip removes whitespace from the FILE either way; it cannot remove it from the string that
+    // has to exist first. `gunzip | jq .` gives the readability back on demand.
+    const text=JSON.stringify(document);
     const name=`${project.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-project.json.gz`;
     const blob=await gzipText(text);
     downloadBlob(name,blob);
+    // Recorded here, where the file has been written -- not where the export was asked for.
+    touchProject(id,'exportedAt');
     toast(`${name} — ${(text.length/1e6).toFixed(1)} MB of project, ${(blob.size/1e6).toFixed(1)} MB written.`);
     toast(`"${project.name}" exported: ${held.length} ${held.length===1?'workflow':'workflows'}.`
       +(loose?` ${loose} downloaded ${loose===1?'dataset is':'datasets are'} kept on this device by reference and `
@@ -3652,7 +3778,7 @@ $('#header-catalog').onclick=showCatalog;
 if(new URLSearchParams(location.search).get('catalog')==='1'||location.hash==='#catalog')showCatalog();
 $('#encrypted-export').onclick=()=>{try{openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow);}catch(error){toast(errorMessage(error));}};
 function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
-$('#export-button').onclick=async()=>{try{const exported=await workflowDocument(workflow);const text=JSON.stringify(exported,null,2);
+$('#export-button').onclick=async()=>{try{const exported=await workflowDocument(workflow);const text=JSON.stringify(exported);
   const name=exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json.gz':'fieldwork-workflow.json.gz';
   downloadBlob(name,await gzipText(text));}catch(error){toast(errorMessage(error));}};$('#import-button').onclick=()=>$('#workflow-file').click();
 $('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>MAX_BUNDLE_BYTES)throw new Error(`Workflow or bundle exceeds the ${(MAX_BUNDLE_BYTES/1e6).toFixed(0)} MB import limit.`);if(file.name.toLowerCase().endsWith('.zip')){openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow,file);control(e).value='';return;}

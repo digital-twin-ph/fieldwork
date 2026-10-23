@@ -1,2 +1,2 @@
-import{a,b,c,d,e,f}from"./chunks/chunk-DP7ENZ2R.js";import"./chunks/chunk-KVMUXFPB.js";export{b as WORLDPOP_LICENCE,a as WORLDPOP_TAKEN,c as fileFor,d as iso3Of,f as neverGuessCountryFrom,e as populationRastersFor};
+import{a as b,b as c,c as d,d as e,e as f,f as g,g as h,h as i}from"./chunks/chunk-6EDOTSGG.js";import{d as a}from"./chunks/chunk-3Z4TRST4.js";import"./chunks/chunk-KVMUXFPB.js";export{d as WORLDPOP_BYTES_PER_SECOND,c as WORLDPOP_LICENCE,b as WORLDPOP_TAKEN,e as downloadWait,f as fileFor,a as iso3Of,i as neverGuessCountryFrom,h as populationRastersFor,g as populationRastersForCountry};
 //# sourceMappingURL=worldpop-catalogue.js.map

@@ -1,6 +1,6 @@
 # 127 · A worked example can live in a repository
 
-_Created 2026-10-20 · Updated 2026-10-20_
+_Created 2026-10-20 · Updated 2026-10-23_
 
 **Status:** asked. Nothing is built. The mechanism this proposes is permitted by the rules already
 written, the space it would save is measured below, and the example that motivated it fills a gap
@@ -84,6 +84,63 @@ Three things do change, and each has an existing answer in this repository:
 And the workflow document must go through `validateWorkflow` on arrival, which is the path the
 import button and the encrypted package already take. A fetched example is an imported workflow with
 a different provenance, not a new kind of thing.
+
+## The licence argument, which is stronger than the size one
+
+_Added 2026-10-23, when the practitioner returned to this independently:_
+
+> *"I thought about creating a GitHub repo for South London and be able to import the worked
+> example from FW. This way we also open up possibilities for more GitHub repo-based worked
+> examples."*
+
+This experiment argued from **download size**: 1.0 MB of an 11.25 MB payload today, and a
+cross-border example that would carry tens of megabytes every practitioner pays for and most never
+open. That argument is sound and it is not the strongest one available. A second argument was
+sitting in the repository the day this was written, and nothing had connected it to this.
+
+`examples/snow-gboh/deaths_nd_by_house.csv` is **GPL, version unstated**. Its NOTICE is explicit
+that redistribution verbatim is aggregation and permitted, and that *"any modified copy --
+reprojected, filtered or re-keyed -- would be a derived work under the GPL"*, which an Apache-2.0
+tree cannot carry. So this is data the application **may hold and may not transform**: 236 KB,
+licence-analysed on 2026-10-09, used by nothing since.
+
+That is not a size problem and no amount of precache budget answers it. **A repository boundary is
+a licence boundary.** An example in its own repository carries its own terms, and the application
+imports a workflow rather than shipping a derived copy -- the same reasoning that already governs
+the WorldPop path, where the browser fetches what this project may neither host nor redistribute.
+
+Relicensing Fieldwork to the GPL was considered on 2026-10-23 and rejected on the evidence.
+`h3-js` is Apache-2.0, so the target would have to be GPL-3; the data's own GPL version is
+unstated, so if it is GPL-2-only the relicensing buys nothing and cannot be known to in advance.
+Copylefting a field tool intended for ministries and response organisations, to gain one 236 KB
+teaching file, inverts the cost and the benefit.
+
+### Settled: GitHub Pages does send the header
+
+`TODO.md` recorded one thing to establish first -- whether GitHub Pages answers
+`Access-Control-Allow-Origin` for a cross-origin fetch -- and marked it *"Unverified; do not assume
+either way."* Measured 2026-10-23:
+
+| host | `access-control-allow-origin` |
+| --- | --- |
+| `geodacenter.github.io` (HTML and a `.zip` asset) | `*` |
+| `pages.github.com` | `*` |
+| `raw.githubusercontent.com` (GET) | `*` |
+| `raw.githubusercontent.com` (HEAD) | **absent** |
+
+So runtime loading from another repository does not hit the wall that DHIS2 and geoBoundaries hit,
+and vendoring is not forced. The last row is the finding inside the finding: a HEAD-only probe
+returns no header and would have recorded the opposite answer. The question was asked correctly and
+could still have been answered wrongly by one flag.
+
+### One change to the mechanism above
+
+The manifest must carry a **licence per example**, not only a digest. Integrity, offline readiness
+and disclosure were the three things this experiment said would change, and each had an existing
+answer. Licence is a fourth, and it is the point rather than a detail: the mechanism exists so an
+example may carry data under terms this project could not adopt, and a practitioner choosing to
+open one is choosing to accept those terms. A readiness view that shows **available now** against
+**fetchable** must show under what licence, or it has hidden the reason the mechanism exists.
 
 ## The example that motivated it: Snow's South London water supply study
 

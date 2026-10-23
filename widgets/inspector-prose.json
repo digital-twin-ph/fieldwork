@@ -1,6 +1,6 @@
 {
   "schema": "fieldwork/inspector-prose/1",
-  "note": "The Inspector is a control surface, not a record. Measured 2026-10-20 at 11,838 characters across 80 paragraphs; measured again 2026-10-21 at 22,855 across 160, which is what the practitioner was looking at when they said \"there are too many commentaries in the Inspector panel. That is not the place to keep development or agent notes.\" This holds the measurement so it can only fall. A paragraph that explains WHY belongs in docs/widgets/<node_type>.md, which every panel now links to from a control-sized button at the top. Lowered 2026-10-22 to 21,115: the isochrone panel's method paragraph moved to docs/widgets/isochrone.md, which paid for the street network widget's refusal to serialise a province into a hidden textarea. Lowered 2026-10-22 to 20,893: the published-extract and population-raster link containers became <div>. They hold a download button, not prose, and counting a button's wrapper as Inspector commentary measured the wrong thing in both directions -- it charged for a control and it would have let a paragraph in beside it.",
+  "note": "The Inspector is a control surface, not a record. Measured 2026-10-20 at 11,838 characters across 80 paragraphs; measured again 2026-10-21 at 22,855 across 160, which is what the practitioner was looking at when they said \"there are too many commentaries in the Inspector panel. That is not the place to keep development or agent notes.\" The rule written against that held a ceiling on TOTAL characters, and on 2026-10-23 the practitioner named its fault: \"Inspector prose should not be limited by number of characters, it should be limited by how well each component of the widget is explained concisely\" ... \"concisely and clearly\". A total is a shared budget, and the day before, the weight and ruleset explanations -- neither a development note -- were trimmed to afford a country-mismatch warning the practitioner had asked for. The budget made the Inspector worse to let something necessary in. Replaced with a per-explanation measure after the practitioner's second point: \"The prose in the UI is more qualitative review than quantitative. But it could still be scored.\"",
   "files": [
     "src/app.ts",
     "src/catchment-ui.ts",
@@ -10,9 +10,28 @@
     "src/deduplicate-ui.ts",
     "src/table-output.ts"
   ],
-  "scope": "Every <p> these renderers emit, classed or not: a rule that can be dodged by leaving the class off is not a rule. Numbers rendered as a paragraph count too, which is a known overstatement of a few hundred characters and is left in rather than carved out by hand.",
-  "characterCeiling": 20893,
-  "slack": 1500,
-  "ceilingRule": "It may be lowered freely and may never be raised. The slack is the headroom a measurement is allowed to sit under the ceiling before the ceiling itself must be lowered, so a trim is recorded rather than banked.",
-  "measuredAt": "2026-10-22"
+  "scope": "Every <p> these renderers emit, classed or not: a rule that can be dodged by leaving the class off is not a rule. Set aside and scored by nothing: a <p> whose text is only interpolated values, or more than a quarter values, which is a computed readout rather than an explanation; and a match carrying a backtick, which crossed a source concatenation and is two halves of the source rather than a paragraph.",
+  "ceilingRule": "It may be lowered freely and may never be raised. There is no slack and none is needed: this counts explanations that are too long, not characters, so a trim is recorded when it is made rather than banked against the next control.",
+  "measuredAt": "2026-10-23",
+  "concise": 240,
+  "overCeiling": 3,
+  "floor": 27,
+  "floorRule": "It may be raised freely and may never be lowered. The floor is the worst explanation currently in the Inspector, so a new one is never charged for being new -- only for reading worse than what is already there.",
+  "score": {
+    "what": "A proxy, and reported as one. It does not know whether an explanation is true, whether it explains the control a reader will take it to be about, or whether anyone understood it. Its job is the worst-first list it prints, which is where a human review should start. Treated as the review rather than a route to it, it is gamed by short bad sentences.",
+    "weights": {
+      "brevity": 0.25,
+      "sentences": 0.25,
+      "grade": 0.25,
+      "direct": 0.15,
+      "clean": 0.1
+    },
+    "brevitySpan": 180,
+    "sentenceCap": 24,
+    "sentenceSpan": 14,
+    "gradeCap": 14,
+    "gradeSpan": 8,
+    "unweighted": "anchored: the share of its control's label words the explanation reuses. Measured 2026-10-23, 134 of 139 paragraphs sit outside the <div class=\"field\"> of any control, so association is read off reading order and would be guessing which control a paragraph is about. Reported to be looked at, weighted at nothing. Experiment 132 makes it structural.",
+    "show": 8
+  }
 }

@@ -1084,3 +1084,10 @@ Remaining here:
 - Four of 39 widgets have parity evidence recorded; `clip_raster` is partial, where
   all-touched with a one-pixel margin differs from the reference on 61 cells because the
   reference models the margin as a 3×3 dilation.
+
+## Dashboards
+
+- **chartgpu.io** — practitioner's note, 2026-10-23: worth looking at when dashboards come up.
+  Nothing has been read or measured yet, so nothing is claimed for it. The question to put to it
+  when we get there is whether a GPU chart renderer answers the volume problem the 1,011,401
+  polylines already demonstrated for Leaflet (769 ms to add, 824 ms to zoom), or only moves it.

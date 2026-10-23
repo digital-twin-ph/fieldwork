@@ -84,7 +84,7 @@ import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
-import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,newProject,validateProject,siblingInputs,payloadDigest,dehydrateWorkflow,hydrateWorkflow,type Project} from './project.js';
+import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,newProject,validateProject,siblingInputs,payloadDigest,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
@@ -467,7 +467,7 @@ function save(){
     lastSaveFailure=null;
     // The project's work changed, which is what makes it unbacked until an export completes.
     touchProject(workflow.projectId??projectOfWorkflow(storageKey(workflow),allProjects())?.id,'changedAt');
-    $('#save-status').textContent=payloadStoreKind()==='indexeddb'?'Saved on this device':'Saved on this device — small store only';return true;}
+    renderProjectSafety();return true;}
   catch(error){
     // WHY IT FAILED, KEPT. This caught and rolled back and returned false, and every caller could
     // then say only "could not be saved. Retry Apply." -- which is useless advice when the cause
@@ -734,7 +734,7 @@ function render(){
   const url=new URL(location.href);url.searchParams.set('example',exampleKey(workflow));window.history.replaceState(null,'',url);
   renderLibrary($('#node-search').value);
   const old=exampleKey(workflow)==='old-naledi';
-  renderProjectEyebrow();renderProjectOptions();renderProjectDetails();renderAssignProject();renderStorageStatus();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
+  renderProjectEyebrow();renderProjectOptions();renderProjectDetails();renderAssignProject();renderStorageStatus();renderProjectSafety();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
   if(exampleKey(workflow)==='blank'){$('#project-description').textContent='Developmental evaluation · define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
   if(exampleKey(workflow)==='coverage'){$('#project-description').textContent='Developmental evaluation · inspect spatial exceptions, exclude with a reason, or revise the boundary.';$('#example-note').textContent='Synthetic points and illustrative boundary · no patient data';$('#canvas-example').textContent='SPATIAL COVERAGE · EXPERIMENT';$('#footer-context').textContent='Synthetic coverage exercise · CRS84 · boundary included';}
   if(exampleKey(workflow)==='rulesets'){$('#project-description').textContent='How a rule is put together, four times over: two workflows band Snow\u2019s data as he recorded it \u2014 Table 1 by the deaths on each date, the mapped locations by the deaths at each address \u2014 and two run the identical rules over damaged copies of the same data.';$('#example-note').textContent='Four workflows on one canvas. A and B use Snow\u2019s data as recorded; C and D are SIMULATED damage, and say so on the input: three dates with no count, and a quarter of the counts written as text. C and D apply the same rules as A and B, so everything that differs is the data \u2014 and the step says what it could not read rather than banding those records Unrecorded in silence.';$('#canvas-example').textContent='RULESETS \u00b7 HOW A RULE IS PUT TOGETHER';$('#footer-context').textContent='Authored rules \u00b7 compiled to N3 \u00b7 declared field bindings';}
@@ -3422,6 +3422,85 @@ const payloadStoreBytes=():number=>{
   return total;
 };
 const payloadCount=():number=>Object.keys(cachedPayloads()).length;
+/** WHAT THIS PROJECT HOLDS RIGHT NOW, so `unexportedWork` can say what a lost browser would cost.
+ *
+ *  Counted from the saved workflows the project lists plus the open canvas, which may not be
+ *  saved yet and is the work most likely to be lost. Bytes are the payloads those workflows
+ *  refer to -- the street networks and raster windows -- which is where the weight of a project
+ *  actually is: a canvas of forty widgets is kilobytes beside one downloaded province. */
+function projectWork(project:Project):ProjectWork{
+  const saved=readSavedWorkflows();
+  const current=storageKey(workflow);
+  const referenced=new Set<string>();
+  let nodes=0;
+  const walk=(w:unknown)=>{
+    for(const node of ((w as {nodes?:unknown[]})?.nodes??[])){
+      nodes++;
+      const ref=(node as {params?:{dataRef?:unknown}})?.params?.dataRef;
+      if(typeof ref==='string')referenced.add(ref);
+    }
+  };
+  for(const key of project.workflows){
+    // The OPEN canvas rather than its saved copy, where they are the same workflow: unsaved work
+    // is the work most likely to be lost, so counting the stored version would understate it.
+    if(key===current){walk(workflow);continue;}
+    const document=saved[key];
+    if(document)walk(document);
+  }
+  const held=cachedPayloads();
+  let bytes=0;
+  for(const digest of referenced)if(held[digest])bytes+=payloadBytes(held[digest]);
+  return {workflows:project.workflows.length,nodes,bytes};
+}
+
+/** THE STATE THE PRACTITIONER COULD NOT FIND, said where they already look.
+ *
+ *  `#save-status` has said "Saved on this device" on every successful save since this application
+ *  had one. It is true and it answers the wrong question: it is about this browser, and the
+ *  practitioner who could not find their backup was asking whether a copy existed anywhere else.
+ *  The same string is the one this file already warns about elsewhere -- a degraded store "turns
+ *  a 10 GB ceiling back into a 5 MB one while the application goes on saying Saved on this
+ *  device".
+ *
+ *  So it now says both: where the work is, and whether a copy of it exists. And it is a control
+ *  rather than a label, because experiment 131's test is not whether the state can be displayed
+ *  but whether the backup can be REACHED from a cold start without being told where it is.
+ *  A capability behind a door nobody can see is the failure this whole experiment is about. */
+function renderProjectSafety():void{
+  const element=$('#save-status');
+  const store=payloadStoreKind()==='indexeddb'?'Saved on this device':'Saved on this device \u2014 small store only';
+  // STORED PROJECTS ONLY, and the reason is that the state must be satisfiable. A built-in
+  // worked example has no stored record, so `touchProject` returns early and `exportedAt` can
+  // never be written for it; the dialog has no project export for it either, because that
+  // control renders only for a project that can be deleted. Saying "Not backed up" there would
+  // be a warning no action could clear -- the door opening onto a room without the capability,
+  // which is the same failure as the capability without a door that this experiment began with.
+  // Found by writing the test: the status rendered on the Old Naledi example and its own route
+  // offered workflow exports only, none of which marks a project as backed up.
+  const stored=readProjects();
+  const project=stored.find(p=>p.id===(workflow.projectId
+    ??projectOfWorkflow(storageKey(workflow),stored)?.id));
+  if(!project||!project.workflows.length){element.textContent=store;return;}
+  const risk=unexportedWork(project,projectWork(project));
+  const safety=projectSafety(project)==='backed up'&&!exportPredatesWork(project)
+    ?'Backed up'
+    :risk?.kind==='never'?'Not backed up'
+    :risk?'Backed up \u00b7 changed since':'Backed up';
+  element.innerHTML='';
+  element.append(store+' \u00b7 ');
+  const control=document.createElement('button');
+  control.type='button';
+  control.id='project-safety';
+  control.className='link-button';
+  control.textContent=safety;
+  control.title=safety==='Backed up'
+    ?'A copy of this project exists outside this browser. Open the Workspace to make another.'
+    :'No copy of this project exists outside this browser. Open the Workspace to make one.';
+  control.dataset.safety=safety==='Backed up'?'backed-up':'at-risk';
+  control.onclick=openProjectsDialog;
+  element.append(control);
+}
+
 /** Payloads no workflow on this device refers to.
  *
  *  They are made by any refusal that happens after the payload is written: the fix above stops the
@@ -3594,6 +3673,10 @@ async function exportProject(id:string){
     downloadBlob(name,blob);
     // Recorded here, where the file has been written -- not where the export was asked for.
     touchProject(id,'exportedAt');
+    // AND SAID, which is a separate act from recording it. Found by the test: the state was
+    // written correctly and the header went on reading "Not backed up" until the next save or
+    // render, so a practitioner who backed up and looked would have been told it had not worked.
+    renderProjectSafety();
     toast(`${name} — ${(text.length/1e6).toFixed(1)} MB of project, ${(blob.size/1e6).toFixed(1)} MB written.`);
     toast(`"${project.name}" exported: ${held.length} ${held.length===1?'workflow':'workflows'}.`
       +(loose?` ${loose} downloaded ${loose===1?'dataset is':'datasets are'} kept on this device by reference and `

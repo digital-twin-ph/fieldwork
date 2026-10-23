@@ -2,9 +2,12 @@
 
 _Created 2026-10-22 · Updated 2026-10-23_
 
-**Status:** asked — a model and a plan, with nothing built. The states described here are not in
-the application; three of them are not in the glossary either. What follows is a proposal and the
-test that would show it was wrong.
+**Status:** tried — steps 1 to 3 of the reordered plan are built and the experiment's own test
+passes. `Project` carries `changedAt` and `exportedAt` at schema 2, `exportedAt` is written when
+an export completes, the words are in the glossary, and the project's safety state is said in the
+header and is the route to the backup. The Workspace itself is not built: the state has a door
+now, and it still opens onto the old dialog. Sections below are left as written on 2026-10-22,
+with what the building found recorded at the end rather than folded back into the proposal.
 
 ## What was asked
 
@@ -200,6 +203,48 @@ readout already sums them. It wants attributing per workflow, not recording.
 Had this been built UI-first, the view's main column would have been blank, and the state that
 answers the practitioner's worst pain point would have been a label over facts that were not
 there.
+
+## What the building found, 2026-10-23
+
+Steps 1 and 2 landed as written: schema 2 with a migration in which every existing project
+arrives as never exported, and `exportedAt` written at the point the file is produced rather than
+where the export is asked for. The glossary gained Draft, Run, Stale, Refused, Size, Backed up
+and Not backed up before any of them reached a panel, which is the rule this experiment set for
+itself.
+
+Then the state was said in the header, where `#save-status` had read **"Saved on this device"** on
+every successful save since this application had one. That string is true and answers a different
+question: it is about this browser, and the practitioner who could not find their backup was
+asking whether a copy existed anywhere else. This file already warned about the same sentence in
+another context — a degraded store "turns a 10 GB ceiling back into a 5 MB one while the
+application goes on saying Saved on this device".
+
+**The test this experiment named now passes.** From a cold start, with a project open, the state
+is on screen without opening anything, and pressing it reaches the backup. It is a control rather
+than a label for exactly that reason: the question was never whether the state could be displayed.
+
+### Two defects the test found, neither of which reading the code would have shown
+
+**A warning no action could clear.** The first version rendered the state for any project,
+including the built-in worked examples. For those, `touchProject` returns early because they have
+no stored record, and the projects dialog offers them no project export — that control renders
+only for a project that can be deleted. So Old Naledi would have read **Not backed up** forever,
+with a route that could not fix it: the door opening onto a room without the capability, which is
+the inverse of the failure this experiment began with and no better. The state is now said only
+for projects the application actually tracks.
+
+**A state recorded and not said.** `exportedAt` was written correctly on a completed export and
+nothing re-rendered the header, so the status went on reading Not backed up until the next save.
+A practitioner who backed up and looked would have been told it had not worked. Recording a state
+and saying it are two acts, and this experiment had only specified the first.
+
+### What is still not built
+
+The Workspace. The state now has a door and it opens onto the same modal dialog this experiment
+calls the problem — `Projects dialog behind the storage pill` becoming `the Workspace` is
+untouched, as are the breadcrumb, the consolidation of three export controls into one **Back up**
+with scope and form, and Size per workflow. Size needs no new data: the payload store knows bytes
+per digest and `projectWork` already sums them per project for the risk measure.
 
 ## See also
 

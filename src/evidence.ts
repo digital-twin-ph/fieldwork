@@ -5,7 +5,28 @@ import {isRecord} from './guards.js';
 import type {Receipt} from './results.js';
 import {runtimeBindingN3} from './runtime-semantics.js';
 
-export const MAX_PDF_BYTES=5_000_000,MAX_WORKFLOW_PDF_BYTES=10_000_000,MAX_BUNDLE_BYTES=20_000_000;
+export const MAX_PDF_BYTES=5_000_000;
+export const MAX_WORKFLOW_PDF_BYTES=10_000_000;
+/** THE LARGEST PROJECT OR BUNDLE THAT MAY BE READ BACK IN.
+ *
+ *  20,000,000 until 2026-10-22, carrying no evidence and no lift test because src/evidence.ts
+ *  was not among the caps ledger's watched files. The practitioner met it moving their own work
+ *  between browsers after Chrome would no longer open it: *"I imported the Project from Safari
+ *  into Chrome and got this message."* A project export is self-contained -- workflowDocument
+ *  inlines the datasets -- so a project holding a province street network is hundreds of
+ *  megabytes, and the backup could be written but not read.
+ *
+ *  A limit on reading back one's own work is the worst kind: it does not bound what can be
+ *  discovered, it bounds what can be KEPT. 400 MB is set from what a browser was measured doing
+ *  with the same operations the import performs: 200 MB of JSON decoded and parsed in 561 ms in
+ *  a Chromium tab on 2026-10-22, against a V8 string ceiling near 512 MB that the import would
+ *  meet first and report as "Invalid string length".
+ *
+ *  What is NOT measured is the rest of the import -- validating the document and writing its
+ *  payloads to the store -- so that is this cap's lift test rather than a claim. The better
+ *  answer is a backup that does not carry data which can be downloaded again; that is recorded
+ *  as its own direction. */
+export const MAX_BUNDLE_BYTES=400_000_000;
 export const REFERENCE_ROLES={data:'Data source',method:'Method or processing step',assumption:'Assumption or parameter',context:'Background context'} as const;
 export type ReferenceRole=keyof typeof REFERENCE_ROLES;
 interface ReferenceMetadata {

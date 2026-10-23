@@ -49,7 +49,9 @@ test('an area spanning two zones names each candidate and what it costs',async({
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').first().click();
   const advice=page.locator('[data-zone-advice]');
-  await expect(advice).toContainText('no single zone is right');
+  // Waiting for a restore, not timing one: 10 s is the suite's budget for a claim about
+  // behaviour, and a cold reload on WebKit under load has repeatedly wanted more.
+  await expect(advice).toContainText('no single zone is right',{timeout:45000});
   await expect(advice).toContainText('which side to keep whole');
   // Both candidates, each with the worst stretch it would cost — the pros and cons, as numbers.
   const rows=advice.locator('tbody tr');

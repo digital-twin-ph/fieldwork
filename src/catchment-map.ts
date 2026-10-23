@@ -1,4 +1,7 @@
 import L from 'leaflet';
+/** HOW MANY STREET SEGMENTS AN INTERACTIVE MAP DRAWS. See the sampling below for the measurement
+ *  this comes from: past about a quarter of a million, every pan and zoom reprojects them all. */
+export const INTERACTIVE_SEGMENT_LIMIT=200_000;
 import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
@@ -142,8 +145,19 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   if(layers.network?.nodes?.length){
     const at=new Map(layers.network.nodes.map(n=>[n.id,n.coordinates]));
     const lines:[number,number][][]=[];
+    // AN EVEN SAMPLE PAST THE LIMIT, as the Inspector preview has always done. A province
+    // arrived on 2026-10-22 -- 984,906 junctions and 2,022,803 directed segments for Ituri --
+    // and the interactive map tried to draw every one of them. Measured that day in a Chromium
+    // tab with straight two-point segments: 100,000 add in 76 ms and zoom in 29 ms, 250,000 zoom
+    // in 185 ms, a million zoom in 824 ms, and a real edge carries geometry which multiplies
+    // that on every pan. This is a limit on a DRAWING: the graph is untouched and every
+    // junction is still routed over, measured and exported.
+    const drawable=layers.network.edges.filter(edge=>edge.from<=edge.to).length;
+    const step=Math.max(1,Math.ceil(drawable/INTERACTIVE_SEGMENT_LIMIT));
+    let seen=0;
     for(const edge of layers.network.edges){
       if(edge.from>edge.to)continue;
+      if(seen++%step)continue;
       const a=at.get(edge.from),b=at.get(edge.to);
       if(!a||!b)continue;
       lines.push(edge.geometry?.length
@@ -152,7 +166,11 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     }
     if(lines.length){
       const streets=L.polyline(lines,{color:'#55706a',weight:1,opacity:.9,interactive:false,renderer:L.canvas()});
-      streets.addTo(map);all.addLayer(streets);overlays['Street network']=streets;
+      streets.addTo(map);all.addLayer(streets);
+      // Named for what it is, so a sampled picture is never read as the whole network.
+      overlays[step>1
+        ?`Street network (${lines.length.toLocaleString('en')} of ${drawable.toLocaleString('en')} segments)`
+        :'Street network']=streets;
     }
   }
   const observations=L.featureGroup();

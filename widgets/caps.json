@@ -11,7 +11,9 @@
     "src/study-area.ts",
     "src/network-preview.ts",
     "src/street-network.ts",
-    "src/raster.ts"
+    "src/raster.ts",
+    "src/catchment-map.ts",
+    "src/evidence.ts"
   ],
   "measuredAt": "2026-10-22",
   "caps": [
@@ -184,6 +186,18 @@
       "kind": "artefact"
     },
     {
+      "id": "interactive-segments",
+      "constant": "INTERACTIVE_SEGMENT_LIMIT",
+      "iri": "urn:fieldwork:cap:interactive-segments",
+      "value": 200000,
+      "unit": "segments drawn",
+      "kind": "artefact",
+      "basis": "measured",
+      "evidence": "Measured 2026-10-22 in a Chromium tab with Leaflet's canvas renderer and straight two-point segments: 100,000 added in 76 ms and zoomed in 29 ms, 250,000 zoomed in 185 ms, 500,000 in 274 ms and 1,011,401 in 824 ms. Cost climbs steeply past a quarter of a million because every pan and zoom reprojects every segment, and a real edge carries geometry which multiplies it further. Ituri arrived the same day with 2,022,803 directed segments and the interactive map tried to draw all of them.",
+      "refuses": "Nothing. Beyond it the map draws an even sample and the layer control says how many of how many.",
+      "liftTest": "Not applicable: a limit on a drawing. The graph is untouched -- every junction is routed over, measured and exported."
+    },
+    {
       "id": "raster-window-cells",
       "constant": "MAX_RASTER_CELLS",
       "iri": "urn:fieldwork:cap:raster-window-cells",
@@ -338,6 +352,42 @@
       "evidence": "How long this client waits for an instance's /api/status before calling it unreachable for the purposes of choosing one. Chosen.",
       "refuses": "Nothing a practitioner asked for: a slow status read only removes an instance from the preference order.",
       "liftTest": "Not applicable: it bounds this client's own impatience, not what can be found."
+    },
+    {
+      "id": "bundle-bytes",
+      "constant": "MAX_BUNDLE_BYTES",
+      "iri": "urn:fieldwork:cap:bundle-bytes",
+      "value": 400000000,
+      "unit": "bytes",
+      "kind": "discovery",
+      "basis": "measured",
+      "evidence": "The largest project or bundle that may be read back in. It was 20,000,000, carrying no evidence, and the practitioner met it moving their own work from Safari to Chrome after Chrome would no longer open it: a project export is self-contained, so one holding a province street network is hundreds of megabytes and the backup could be written but not read. 400 MB is set from what a browser was measured doing with the same operations the import performs: 200 MB of JSON decoded and parsed in 561 ms in a Chromium tab on 2026-10-22, against a V8 string ceiling near 512 MB that the import meets first and reports as \"Invalid string length\".",
+      "refuses": "A project or bundle larger than 400 MB, which no longer includes a province street network.",
+      "liftTest": "The rest of the import, which is unmeasured: validating the document and writing its payloads to the store. The better answer is a backup that does not carry data which can be downloaded again -- recorded as the direction a-backup-carries-the-work-not-the-data."
+    },
+    {
+      "id": "pdf-bytes",
+      "constant": "MAX_PDF_BYTES",
+      "iri": "urn:fieldwork:cap:pdf-bytes",
+      "value": 5000000,
+      "unit": "bytes",
+      "kind": "artefact",
+      "basis": "derived",
+      "evidence": "One cited PDF attached to a workflow as evidence. A reference document, not data under analysis.",
+      "refuses": "A single attached PDF over 5 MB.",
+      "liftTest": "A measured distribution of the documents practitioners actually cite."
+    },
+    {
+      "id": "workflow-pdf-bytes",
+      "constant": "MAX_WORKFLOW_PDF_BYTES",
+      "iri": "urn:fieldwork:cap:workflow-pdf-bytes",
+      "value": 10000000,
+      "unit": "bytes",
+      "kind": "artefact",
+      "basis": "derived",
+      "evidence": "Every cited PDF in one workflow together, so a workflow's evidence stays something a reader can receive.",
+      "refuses": "A workflow whose attached PDFs exceed 10 MB in total.",
+      "liftTest": "The same measurement as pdf-bytes, taken across a workflow."
     }
   ],
   "kindVocabulary": {

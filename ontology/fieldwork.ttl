@@ -1371,6 +1371,42 @@ fw:capValueInForce a owl:DatatypeProperty;
   fw:capEvidence "Measured 2026-10-22 in a Chromium tab against WorldPop Botswana 2025 at 100 m, a real 11,248 by 10,953 LZW GeoTIFF: 262,144 cells read in 77 ms, 14.4M in 1,217 ms, 36M in 2,625 ms, and the whole 123.2M-cell raster in 8,382 ms with every value touched and held live. Nothing degraded at any size. The previous value, 262,144, carried no evidence at all and was about 470 times below what a browser does comfortably; it would have refused a population denominator for Ituri, which needs about 14.4M cells.";
   fw:capRefuses "A study area whose window on a raster is larger than about 4,096 by 4,096 cells. A province at 100 m fits; a country does not.";
   fw:capLiftTest "The costs beyond the read: keeping a grid of this size in the payload store, carrying it through a project export, and drawing it. Only the read is measured, so only the read is claimed.".
+<urn:fieldwork:cap:interactive-segments> a fw:Cap;
+  rdfs:label "interactive-segments";
+  fw:capKind "artefact";
+  fw:capValue 200000;
+  fw:capUnit "segments drawn";
+  fw:capBasis "measured";
+  fw:capEvidence "Measured 2026-10-22 in a Chromium tab with Leaflet's canvas renderer and straight two-point segments: 100,000 added in 76 ms and zoomed in 29 ms, 250,000 zoomed in 185 ms, 500,000 in 274 ms and 1,011,401 in 824 ms. Cost climbs steeply past a quarter of a million because every pan and zoom reprojects every segment, and a real edge carries geometry which multiplies it further. Ituri arrived the same day with 2,022,803 directed segments and the interactive map tried to draw all of them.";
+  fw:capRefuses "Nothing. Beyond it the map draws an even sample and the layer control says how many of how many.";
+  fw:capLiftTest "Not applicable: a limit on a drawing. The graph is untouched -- every junction is routed over, measured and exported.".
+<urn:fieldwork:cap:bundle-bytes> a fw:Cap;
+  rdfs:label "bundle-bytes";
+  fw:capKind "discovery";
+  fw:capValue 400000000;
+  fw:capUnit "bytes";
+  fw:capBasis "measured";
+  fw:capEvidence "The largest project or bundle that may be read back in. It was 20,000,000, carrying no evidence, and the practitioner met it moving their own work from Safari to Chrome after Chrome would no longer open it: a project export is self-contained, so one holding a province street network is hundreds of megabytes and the backup could be written but not read. 400 MB is set from what a browser was measured doing with the same operations the import performs: 200 MB of JSON decoded and parsed in 561 ms in a Chromium tab on 2026-10-22, against a V8 string ceiling near 512 MB that the import meets first and reports as \"Invalid string length\".";
+  fw:capRefuses "A project or bundle larger than 400 MB, which no longer includes a province street network.";
+  fw:capLiftTest "The rest of the import, which is unmeasured: validating the document and writing its payloads to the store. The better answer is a backup that does not carry data which can be downloaded again -- recorded as the direction a-backup-carries-the-work-not-the-data.".
+<urn:fieldwork:cap:pdf-bytes> a fw:Cap;
+  rdfs:label "pdf-bytes";
+  fw:capKind "artefact";
+  fw:capValue 5000000;
+  fw:capUnit "bytes";
+  fw:capBasis "derived";
+  fw:capEvidence "One cited PDF attached to a workflow as evidence. A reference document, not data under analysis.";
+  fw:capRefuses "A single attached PDF over 5 MB.";
+  fw:capLiftTest "A measured distribution of the documents practitioners actually cite.".
+<urn:fieldwork:cap:workflow-pdf-bytes> a fw:Cap;
+  rdfs:label "workflow-pdf-bytes";
+  fw:capKind "artefact";
+  fw:capValue 10000000;
+  fw:capUnit "bytes";
+  fw:capBasis "derived";
+  fw:capEvidence "Every cited PDF in one workflow together, so a workflow's evidence stays something a reader can receive.";
+  fw:capRefuses "A workflow whose attached PDFs exceed 10 MB in total.";
+  fw:capLiftTest "The same measurement as pdf-bytes, taken across a workflow.".
 <urn:fieldwork:cap:preview-segments> a fw:Cap;
   rdfs:label "preview-segments";
   fw:capKind "artefact";

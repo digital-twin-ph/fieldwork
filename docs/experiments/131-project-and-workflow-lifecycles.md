@@ -1,6 +1,6 @@
 # 131 · What a project and a workflow are, while you are using them
 
-_Created 2026-10-22 · Updated 2026-10-22_
+_Created 2026-10-22 · Updated 2026-10-23_
 
 **Status:** asked — a model and a plan, with nothing built. The states described here are not in
 the application; three of them are not in the glossary either. What follows is a proposal and the
@@ -46,10 +46,18 @@ what they act on.
 | Stale | the canvas changed after the run | `Changed · rerun to update` |
 | Refused | the last run stopped, and why | a toast, which disappears |
 
-**Weight** is the second state and is invisible: a workflow holding 215 MB of street network is
-not the same object as one holding none. Weight is what makes a workflow slow to open, refused by
-a package, and expensive to delete. The practitioner met all three of those in one afternoon
-without the application ever showing the number that explains them.
+**Size** is the second thing and is invisible: a workflow holding 215 MB of street network is not
+the same object as one holding none. Size is what makes a workflow slow to open, refused by a
+package, and expensive to delete. The practitioner met all three of those in one afternoon without
+the application ever showing the number that explains them.
+
+*This paragraph said **Weight** until 2026-10-23.* The practitioner asked what the word meant --
+*"In the 8 words what's weight?"* -- then named it: *"sounds to me more like 'size'"*, and then
+separated it from the rest: *"most are 'machine' states, but size isn't it's more like an
+attribute"*. The glossary carries Size as an attribute rather than a state, and this now matches
+it. The question is recorded because it is the whole method working: a word nobody could define
+on sight was not a small problem with the table, it was the table claiming something was a state
+when it was a measurement.
 
 ### A project is one investigation, and its state is about safety
 
@@ -61,6 +69,55 @@ without the application ever showing the number that explains them.
 
 This is the state that was missing when Chrome would no longer open the application. The remedy
 offered was a URL that deletes data; what was wanted was to know, beforehand, that a copy existed.
+
+### A third object, found 2026-10-23: an example nobody has opened yet
+
+The practitioner, mid-way through wiring Fieldwork to fetch worked examples from GitHub:
+
+> *"We haven't finished the project/workflow UI update yet. Where does fetch workflow fall
+> under?"*
+
+**The result falls under project, and needs nothing new.** [Experiment
+127](127-examples-as-repositories.md) settles it: *"A fetched example is an imported workflow with
+a different provenance, not a new kind of thing."* It arrives through `validateWorkflow`, the path
+the import button and the encrypted package already take, and lands as a workflow inside a
+project, which is the practitioner's own shape from 2026-10-20: *"create project, import workflows
+into project"*. Draft, Current, Stale and Refused all apply to it from the moment it exists.
+
+**The thing acted on BEFORE the import has no name here.** At the moment of choosing, there is no
+workflow and no project — only a catalogue entry — and 127 requires the interface to distinguish
+two conditions of it:
+
+| Condition | Means |
+| --- | --- |
+| Fetchable | listed, pinned and verifiable, but not on this device |
+| Available | fetched once, digest checked, cached, and so usable in the field |
+
+That distinction is the one this project cannot leave implicit, because the application is
+offline-first and the practitioner is the person who finds out in an airport or a health zone
+which of the two an example was. It is also not a state of a workflow or of a project, so the two
+objects above do not cover it and a third row in either table would be wrong.
+
+**It is NOT only a readiness question.** Fetching tells a server that this example was opened. The
+application has exactly one pattern for that — an explicit practitioner action, named in the
+interface, with a note in the receipt — used by the basemaps and by Overpass, and a list that
+fetches on load would not meet it. So the control is not a link; it is a named act with a
+consequence worth stating before it happens.
+
+**What this adds to the work below.** Two glossary terms before any panel uses them, by the rule
+that cost this project a day when `weight` went into a table before it went into the glossary. A
+place in the interface where examples are listed with their condition and their LICENCE, which
+127 made a per-example field because the mechanism exists so an example may carry terms this
+project could not adopt. And a receipt line for the act of fetching.
+
+**What exists already, so the surface is the only thing missing.** Measured 2026-10-23:
+`widgets/examples.json` pins the first example at a full commit SHA with a digest per file;
+`raw.githubusercontent.com` answers `access-control-allow-origin: *` at a commit SHA; and a file
+fetched from that pin digests to exactly what the example's own `provenance.json` records.
+`src/example-catalog.ts` holds the verification and the URL construction and **is not wired to
+anything, so esbuild does not emit it and its test cannot load it** — which is the honest status
+of this: a mechanism proven end to end with nowhere yet to be reached from, deliberately not
+bolted onto an interface that is about to be replaced.
 
 ## Two modes, and the shift between them made visible
 

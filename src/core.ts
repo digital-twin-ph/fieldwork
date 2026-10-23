@@ -763,7 +763,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     }
   }
   async function runNode(node:typeof plan[number]){
-    onProgress(node.id,'running');const begin=performance.now();
+    onProgress(node.id,'running');const begin=performance.now();const beganAt=new Date().toISOString();
     const inputs=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>[e.port,values.get(e.from)])) as unknown as ExecutionInputs;
     // A DECLARED PORT IS NOT A CONNECTED ONE. map_output declares `points` and `context` beside
     // `area`, so a study area shown on its own -- the whole of experiment 01, and every area a
@@ -1152,7 +1152,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push({nodeId:node.id,kind:'presentation',facts,input:facts,rules:'',conclusions:[],
           method:'Draw the downloaded street graph as itself; no routing, no simplification and no new inference.'});
         break;}
-      if(mode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}// A MAP OF POINTS NEEDS SOMETHING TO PUT THEM ON. The relation every row carries -- inside,
+      if(mode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(mode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(mode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}// A MAP OF POINTS NEEDS SOMETHING TO PUT THEM ON. The relation every row carries -- inside,
         // on the boundary, outside -- is a relation TO the study area, so without one there is no
         // map to draw and `mapOutput` read `boundary` off nothing: "Cannot read properties of
         // undefined (reading 'boundary')", reported 2026-10-21 on a Map wired to a deduplication
@@ -1175,7 +1175,22 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       default:value=await executeOldNode(node,inputs,reasoner,receipts,distanceKm,runId);
     }
     if(node.type==='study_area'&&isRecord(value))value.spatialReference=structuredClone(node.params.spatialReference);
-    values.set(node.id,value);trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});onProgress(node.id,'done');
+    values.set(node.id,value);trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
+    // WHEN THIS STEP RAN, in the receipt, in PROV's own terms.
+    //
+    // The practitioner, 2026-10-23, on measuring the work a project holds: *"compute time in the
+    // measure queryable from receipts"*, and then *"perhaps timestamp is better?"* It is. A
+    // duration is a number a reader has to trust; two timestamps let the question be asked --
+    // what ran since my last export, and how long did it take -- and the duration is still there
+    // by subtraction. prov:startedAtTime and prov:endedAtTime are the terms PROV already has, so
+    // nothing new is coined for a thing the standard names.
+    //
+    // Until now the cost of a run lived only in `trace`, in memory, and was lost on reload.
+    const timed=receipts.find(r=>r.nodeId===node.id);
+    if(timed)timed.facts+=`<urn:fieldwork:run:${runId}:step:${node.id}> `
+      +`prov:startedAtTime "${beganAt}"^^<http://www.w3.org/2001/XMLSchema#dateTime>; `
+      +`prov:endedAtTime "${new Date().toISOString()}"^^<http://www.w3.org/2001/XMLSchema#dateTime>.\n`;
+    onProgress(node.id,'done');
   }
   const outputNodes=resultNodes({nodes:plan});
   const display=(id:string)=>required(values.get(id)) as DisplayValue;

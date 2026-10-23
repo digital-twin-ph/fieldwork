@@ -1,0 +1,71 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:raster_input",
+ "version": "0.5.0",
+ "nodeType": "raster_input",
+ "title": "Raster input",
+ "released": "2026-10-23",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['raster_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "raster"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:RasterDataset",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:RasterInputReading",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined. Emits is empty because the terms this widget's provenance asserts are written by src/raster-provenance.ts, while implementation.definition names src/core.ts#TYPES; the release declares what the defining module asserts, which is nothing of its own.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/raster.ts",
+   "src/raster-workflow.ts",
+   "src/raster-ui.ts",
+   "src/raster-provenance.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "changed",
+   "description": "A custom node label, so two raster inputs on one canvas can be told apart by something other than their ports -- \"Note that raster widget still does not have custom node label field.\" The country for the population raster is read from the study area where the area states one and asked once where it does not, so a three-letter code is never typed twice. And the WorldPop download now states the wait it commits to: the catalogue holds each file's size, so a 293 MB Botswana raster reads as about an hour and the Democratic Republic of the Congo's 1.18 GB as about four, from one measured rate held as one observation. It also states that the host advertises Accept-Ranges and ignores a Range request, so an interrupted download cannot be resumed and begins again at zero."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

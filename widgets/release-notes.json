@@ -199,21 +199,15 @@
    "migrationFrom": []
   },
   "clip_raster": {
-   "version": "1.0.0",
-   "released": "2026-10-08",
+   "version": "1.1.0",
+   "released": "2026-10-23",
    "changes": [
     {
-     "kind": "major",
-     "description": "Align the all-touched inclusion rule with GDAL ALL_TOUCHED, measured cell by cell against rasterio 1.5.2 and GDAL 3.12.2 in the Validation Lab: differences over a deliberately pixel-aligned cutline fall from 35 cells to 2, and the cropped window now agrees. The residual 2 cells come from GDAL burning cells along a cutline vertex lying exactly on a cell border, which is an artifact of its line rasterizer rather than a stateable rule. Records the convention and the outer margin in N3 evidence. See docs/experiments/29-raster-edge-inclusion.md.",
-     "breaking": true
-    },
-    {
-     "kind": "major",
-     "description": "Migration, no adapter required: All touched now includes a cell only when the cutline covers part of its area or crosses its interior. A cutline edge lying exactly on the border between two cells no longer pulls in the cell outside it, and the cropped window is no longer padded. Re-running a saved all-touched clip can therefore retain fewer boundary cells, and any total derived from one can change. Cell center inside is unaffected. Receipts from earlier runs carry no fw:rasterMaskConvention and were produced by the more inclusive rule.",
-     "breaking": true
+     "kind": "changed",
+     "description": "A custom node label, for the same reason as the raster input it follows: labelForm exists so the gesture is learned once, and these two had never been given it."
     }
    ],
-   "breaking": true,
+   "breaking": false,
    "migrationFrom": []
   },
   "compare_point_sets": {
@@ -372,12 +366,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.13.0",
-   "released": "2026-10-22",
+   "version": "0.14.0",
+   "released": "2026-10-23",
    "changes": [
     {
      "kind": "fix",
-     "description": "Points wired beside a street network are drawn with it instead of being thrown away. A wired network sent the map down a network-only path that built its value with rows:[], so every point layer was dropped before a renderer saw one -- the Leaflet layer control offered two layers for three wired ports and the review counts above the map read zero. This is the same defect as the study area's, reported 2026-10-20 and fixed then by carrying the boundary alone. The map is now built as the spatial map it is and the network joins it as a layer, which also restores the records table and the counts. The static plot still draws the streets in a frame of their own size, so with points on it the plot draws the points and the note says where the streets are."
+     "description": "A raster wired to a map is drawn under the streets instead of discarded. drawnMode returns one renderer and checks network before raster, so a map carrying both drew the streets and threw the raster away -- with no error, while the Inspector read \"4 layer sources connected; the map draws what it is given, ground first\". That sentence was false. Both network branches now carry the raster and the interactive map draws it as ground beneath the boundary, with its own entry in the layer control. THIS IS THE THIRD RELEASE OF THIS WIDGET TO PAY THE SAME LIMIT ONE LAYER AT A TIME: the study area was dropped on 2026-10-20, the point layers on 2026-10-22, the raster until today. The limit itself -- that a map draws one mode and the winning mode discards every other wired layer -- is undeclared, and a fourth layer will meet it. The practitioner named it: \"That must be another unwanted cap.\" Two combinations are still unpaid: the static plot checks polygons before raster, and a raster wired beside polygons with no network drops the polygons instead."
     }
    ],
    "breaking": false,
@@ -572,12 +566,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "raster_input": {
-   "version": "0.4.0",
-   "released": "2026-10-22",
+   "version": "0.5.0",
+   "released": "2026-10-23",
    "changes": [
     {
-     "kind": "added",
-     "description": "The widget says which published population raster covers this study area and links to it. WorldPop keys its data by ISO3, and a study area acquired from geoBoundaries states its country in its own provenance -- COD-ADM1-... -- so the country is read from the boundary rather than inferred from coordinates. A polygon drawn by hand states no country and is offered nothing: a denominator attributed to the wrong country is worse than no denominator, and a province on a border is exactly where a guess would be wrong and invisible. Every published year is offered, newest first, with the file size where it could be read -- the DRC is 1,184 MB. data.worldpop.org sends no CORS header and ignores a Range request, both measured 2026-10-22, so the browser downloads the file and the widget reads a window out of it on this device."
+     "kind": "changed",
+     "description": "A custom node label, so two raster inputs on one canvas can be told apart by something other than their ports -- \"Note that raster widget still does not have custom node label field.\" The country for the population raster is read from the study area where the area states one and asked once where it does not, so a three-letter code is never typed twice. And the WorldPop download now states the wait it commits to: the catalogue holds each file's size, so a 293 MB Botswana raster reads as about an hour and the Democratic Republic of the Congo's 1.18 GB as about four, from one measured rate held as one observation. It also states that the host advertises Accept-Ranges and ignores a Range request, so an interrupted download cannot be resumed and begins again at zero."
     }
    ],
    "breaking": false,
@@ -738,16 +732,12 @@
    "migrationFrom": []
   },
   "study_area": {
-   "version": "0.3.0",
-   "released": "2026-10-13",
+   "version": "0.4.0",
+   "released": "2026-10-23",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Renamed from `area` to `study_area`. The old identifier keeps resolving: a saved workflow naming `area` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `area` is a category noun -- which area? It is the study area, and the widget's own title has said \"Study area\" all along, so the type and the title disagreed. The port type and the port name stay `area`: a port carrying a study area is still an area, and a rename changes a node type, never a port. No contract change: ports, output, parameters and behaviour are identical."
-    },
-    {
-     "kind": "minor",
-     "description": "Add dimensioned square and rectangular bounding boxes; persisted CRS84 geometry and existing polygons are unchanged."
+     "kind": "changed",
+     "description": "The country is stated once, here, and read by every widget that needs one. An area acquired from geoBoundaries was chosen BY country and carries it in its own identifier, so it is shown as a fact rather than asked again; a bounding box, a circle or a drawn polygon was never picked by country and is where the list belongs. The practitioner: \"State it once is best for manually derived study areas like bounding box, circle, hand drawn polygons. But for administrative boundaries from geoBoundaries, it could actually be derived from the country selection so pick country once. Not twice.\""
     }
    ],
    "breaking": false,

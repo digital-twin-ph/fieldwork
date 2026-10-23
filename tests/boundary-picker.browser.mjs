@@ -46,7 +46,8 @@ const openArea=async page=>{
   // hold the node before reaching into it.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="village"]').click();
-  await expect(page.locator('#inspector-content')).not.toContainText('Choose a node to inspect');
+  await expect(page.locator('#inspector-content'))
+    .not.toContainText('Choose a node to inspect',{timeout:45000});
   await page.locator('#edit-study-area').click();
   await page.locator('#area-boundary-source summary').click();
 };

@@ -17,16 +17,24 @@ export const MAX_WORKFLOW_PDF_BYTES=10_000_000;
  *  megabytes, and the backup could be written but not read.
  *
  *  A limit on reading back one's own work is the worst kind: it does not bound what can be
- *  discovered, it bounds what can be KEPT. 400 MB is set from what a browser was measured doing
- *  with the same operations the import performs: 200 MB of JSON decoded and parsed in 561 ms in
- *  a Chromium tab on 2026-10-22, against a V8 string ceiling near 512 MB that the import would
- *  meet first and report as "Invalid string length".
+ *  discovered, it bounds what can be KEPT.
+ *
+ *  500 MB, at the practitioner's direction and measured 2026-10-23 rather than inferred: a
+ *  project document of 2.6 million junctions serialises to 505,485,882 characters and parses in
+ *  3.3 seconds. V8 refuses a string past 536,870,888 characters -- asked directly, not assumed --
+ *  so a 500 MB file of mostly single-byte JSON sits about six per cent under the ceiling it
+ *  would meet first. That margin is the reason this is not higher: the next failure above it is
+ *  "Invalid string length", which is the wall that cost a day to find.
+ *
+ *  Exports are compressed since 2026-10-22 and a street graph gzips about 25 to 1, so a file
+ *  anywhere near this limit is an uncompressed one written before that. What a practitioner
+ *  writes today is a fortieth of what they may read.
  *
  *  What is NOT measured is the rest of the import -- validating the document and writing its
  *  payloads to the store -- so that is this cap's lift test rather than a claim. The better
  *  answer is a backup that does not carry data which can be downloaded again; that is recorded
  *  as its own direction. */
-export const MAX_BUNDLE_BYTES=400_000_000;
+export const MAX_BUNDLE_BYTES=500_000_000;
 export const REFERENCE_ROLES={data:'Data source',method:'Method or processing step',assumption:'Assumption or parameter',context:'Background context'} as const;
 export type ReferenceRole=keyof typeof REFERENCE_ROLES;
 interface ReferenceMetadata {

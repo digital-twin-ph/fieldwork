@@ -1383,11 +1383,11 @@ fw:capValueInForce a owl:DatatypeProperty;
 <urn:fieldwork:cap:bundle-bytes> a fw:Cap;
   rdfs:label "bundle-bytes";
   fw:capKind "discovery";
-  fw:capValue 400000000;
+  fw:capValue 500000000;
   fw:capUnit "bytes";
   fw:capBasis "measured";
-  fw:capEvidence "The largest project or bundle that may be read back in. It was 20,000,000, carrying no evidence, and the practitioner met it moving their own work from Safari to Chrome after Chrome would no longer open it: a project export is self-contained, so one holding a province street network is hundreds of megabytes and the backup could be written but not read. 400 MB is set from what a browser was measured doing with the same operations the import performs: 200 MB of JSON decoded and parsed in 561 ms in a Chromium tab on 2026-10-22, against a V8 string ceiling near 512 MB that the import meets first and reports as \"Invalid string length\".";
-  fw:capRefuses "A project or bundle larger than 400 MB, which no longer includes a province street network.";
+  fw:capEvidence "The largest project or bundle that may be read back in. It was 20,000,000, carrying no evidence, and the practitioner met it moving their own work from Safari to Chrome after Chrome would no longer open it. Raised to 500,000,000 on 2026-10-23 at their direction and measured rather than inferred: a project document of 2.6 million junctions serialises to 505,485,882 characters and parses in 3.3 seconds, and a 465 MB indented document was read and parsed in a Chromium tab in 1.1 seconds. V8 refuses a string past 536,870,888 characters -- asked directly, not assumed -- so a file at this limit sits about six per cent under the ceiling it would meet first, and the practitioner's own 472 MB workflow about twelve. Exports are compressed since 2026-10-22 and compact since 2026-10-23, so a file near this limit is an older uncompressed one.";
+  fw:capRefuses "A project or bundle larger than 500 MB, or a compressed one that expands past it. The margin to the string ceiling above is small, and the failure there is \"Invalid string length\".";
   fw:capLiftTest "The rest of the import, which is unmeasured: validating the document and writing its payloads to the store. The better answer is a backup that does not carry data which can be downloaded again -- recorded as the direction a-backup-carries-the-work-not-the-data.".
 <urn:fieldwork:cap:pdf-bytes> a fw:Cap;
   rdfs:label "pdf-bytes";

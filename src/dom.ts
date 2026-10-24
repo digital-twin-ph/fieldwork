@@ -23,6 +23,12 @@ export interface SelectorElements {
   '#mean-center-weight':HTMLInputElement;
   '#project-subject-input':HTMLTextAreaElement;
   '#project-name':HTMLElement;
+  '#backup-button':HTMLButtonElement;
+  '#backup-dialog':HTMLDialogElement;
+  '#backup-dialog-close':HTMLButtonElement;
+  '#backup-project':HTMLButtonElement;
+  '#backup-project-note':HTMLElement;
+  '#backup-gap':HTMLElement;
   '#workflow-crumb':HTMLElement;
   '#chart-download-svg':HTMLButtonElement;
   '#chart-communication':HTMLElement;

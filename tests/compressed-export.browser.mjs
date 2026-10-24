@@ -11,7 +11,7 @@ test('an export is written compressed and reads back in',async({page})=>{
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
   const pending=page.waitForEvent('download');
-  await page.locator('#export-button').click();
+  await page.locator('#backup-button').click();await page.locator('#export-button').click();
   const file=await pending;
   expect(file.suggestedFilename()).toMatch(/\.json\.gz$/);
 

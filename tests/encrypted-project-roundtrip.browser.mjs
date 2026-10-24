@@ -41,7 +41,7 @@ test('an encrypted project carrying a downloaded network opens on a clean device
 
   // Export, encrypted.
   const pending=page.waitForEvent('download');
-  await page.locator('#encrypted-export').click();
+  await page.locator('#backup-button').click();await page.locator('#encrypted-export').click();
   await page.locator('#package-password').fill(password);
   await page.locator('#package-confirm').fill(password);
   await page.locator('#package-submit').click();

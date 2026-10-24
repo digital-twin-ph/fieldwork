@@ -57,7 +57,7 @@ const points=async(list)=>{const b=await page.locator('#area-map').boundingBox()
   const polygon=(await saved()).nodes[0].params.geometry;assert.notDeepEqual(polygon,box);assert.equal((await saved()).nodes[0].params.selectionMode,'polygon');
   await page.locator('#undo-button').click();assert.deepEqual((await saved()).nodes[0].params.geometry,box);
   await page.locator('#redo-button').click();assert.deepEqual((await saved()).nodes[0].params.geometry,polygon);
-  const workflowDownload=page.waitForEvent('download');await page.locator('#export-button').click();const exported=await readFile(await (await workflowDownload).path());
+  const workflowDownload=page.waitForEvent('download');await page.locator('#backup-button').click();await page.locator('#export-button').click();const exported=await readFile(await (await workflowDownload).path());
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#new-workflow').click();await expect(page.locator('.react-flow__node')).toHaveCount(0);
   await page.locator('[data-view="workflow"]').click();

@@ -67,7 +67,7 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   // a record with a reason. `coverage_check` was retired on 2026-10-21 and the map's `coverage`
   // port went with it. What survives is the persistence half, which was never about that widget.
   await run();
-  const exported=page.waitForEvent('download');await page.locator('#export-button').click();
+  const exported=page.waitForEvent('download');await page.locator('#backup-button').click();await page.locator('#export-button').click();
   const bytes=await readFile(await (await exported).path());
   await page.locator('#new-workflow').click();
   await page.locator('#workflow-file').setInputFiles({name:'map-saved.json',mimeType:'application/json',buffer:bytes});

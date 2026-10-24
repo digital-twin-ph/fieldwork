@@ -2,8 +2,7 @@
 
 _Created 2026-10-22 · Updated 2026-10-23_
 
-**Status:** tried — steps 1 to 3 of the reordered plan are built and the experiment's own test
-passes. `Project` carries `changedAt` and `exportedAt` at schema 2, `exportedAt` is written when
+**Status:** tried — the reordered plan is built and the experiment's own test passes. `Project` carries `changedAt` and `exportedAt` at schema 2, `exportedAt` is written when
 an export completes, the words are in the glossary, and the project's safety state is said in the
 header and is the route to the backup. The Project view itself is not built: the state has a door
 now, and it still opens onto the old dialog. Sections below are left as written on 2026-10-22,
@@ -304,12 +303,30 @@ which already showed it -- rather than occupying the one line that should answer
 test pinned the old form and was changed deliberately rather than worked around, with the reason
 written beside it.
 
+### Back up, built 2026-10-23
+
+One control in the header, with the scope chosen inside it. The three it replaced were named for
+their FILE FORMAT -- `↓ Export`, `Encrypted ZIP`, and `Export project` in a dialog elsewhere --
+rather than for what a practitioner is doing, which is to not lose their work.
+
+**It made a gap visible that three separate buttons hid.** There are three real combinations, not
+four: a project cannot be backed up encrypted, because the encrypted package takes one workflow.
+The practitioner had already gone looking for the fourth on 2026-10-22 -- *"Where is the export to
+zip for projects?"* and *"So encrypted zip description is misleading."* -- and three controls in
+three places is exactly how an absent combination reads as something you have failed to find. The
+dialog states it instead. With no project at all, backing one up is refused with the reason rather
+than offered and then failing.
+
+Thirteen test call sites clicked the two header buttons and now open the dialog first. One
+generic download helper was wrongly made unconditional in the first attempt, which broke three
+tests that use it for an attached PDF inside the evidence editor -- a reminder that a helper named
+`download` is not a helper named `backUp`.
+
 ### What is still not built
 
-One **Back up** control replacing the three (`↓ Export`, `Export project`, `Encrypted ZIP`) with
-scope and form chosen inside it. Size per workflow is computable -- `projectWork` already sums
-payload bytes per project -- and is not shown, because the practitioner asked for counts rather
-than bytes in this first cut.
+Size per workflow. It is computable -- `projectWork` already sums payload bytes per project -- and
+is not shown, because the practitioner asked for counts rather than bytes in this cut. That is the
+one remaining item of this experiment's own list.
 
 The state now has a door and it opens onto the same modal dialog this experiment
 calls the problem — `Projects dialog behind the storage pill` becoming `the Project view` is

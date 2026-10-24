@@ -504,6 +504,27 @@ missing axiom does not mean the question went unasked.
 
 ## Known and recorded, not yet scheduled
 
+**`case_series` has taken a table since 2026-10-16 and has never offered a control for it.** Its
+`source` param switches the `cases` port between points and a table, and nothing in the Inspector
+sets it, so table mode is reachable only by opening an example workflow that already has it — the
+Soho curve. `rate` gained the same param on 2026-10-24 and got the control at the same time
+([experiment 134](experiments/134-a-rate-from-a-table.md)), which is what made the older gap
+visible. Two widgets with the same shape should not differ on whether the practitioner can reach
+half of it.
+
+Its release is stale for the same reason: `widgets/releases/case_series/0.1.0.json` declares the
+points port only, and the table variant arrived without a release. That is not a registry
+violation — the port check compares the release against the static `TYPES` declaration, not against
+`nodeInputs`, so a per-param variant is invisible to it and lives in the release note instead. Both
+`rate` 0.2.0 and `case_series` state the variant in prose. Whether a port whose type depends on a
+param should be expressible in the release schema rather than described in a note is the open
+question, and it governs every widget that does this.
+
+**The South London example carries no workflow bundle.** The widget gap is closed — `rate` reads
+the five rows directly — so what remains is the workflow document, its export into the example
+repository and the digest re-pin. The example is pinned at a commit that carries data and
+provenance only.
+
 **A record can no longer be excluded by judgement, and nothing replaces that.** `coverage_check`
 was retired on 2026-10-21 at the practitioner's decision, as redundant with `clip_points_to_area`
 and the map — which it was, for the SPATIAL question. It also did something no widget now does:

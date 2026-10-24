@@ -1,6 +1,6 @@
 # Open work, in priority order
 
-_Created 2026-10-11 · Updated 2026-10-17_
+_Created 2026-10-11 · Updated 2026-10-24_
 
 What is committed to and not yet done. Items leave this list by being done or by
 being recorded as decided against, not by being forgotten. Dated so that an item
@@ -43,6 +43,25 @@ so in its own closing section: its beneficiaries are us and future contributors,
 not a practitioner in the field.
 
 ## Urgent
+
+**New project silently does nothing while a workflow is running.** `openProjectDialog` opens with
+`if(busy)return;`, so the click is swallowed with no dialog, no message and no disabled control,
+and the run that swallowed it is not visibly related to the button that stopped working. Found
+2026-10-24 in a Linux WebKit container ([experiment
+135](experiments/135-linux-webkit-in-a-container.md)) as the cause of a CI failure standing since
+2026-10-20. Two questions, and the second is the one that generalises: whether the control should
+be disabled while busy or should queue, and whether the other handlers opening with the same guard
+swallow clicks the same way — they were not surveyed.
+
+The test that found it, `workflow-housekeeping.browser.mjs:84`, needs to wait for the run to settle
+whatever is decided about the control, since it is the only test in the file that loads an
+auto-running example.
+
+**`evidence.browser.mjs:80` asserts "unchanged" and means "still null".** In a fresh context the
+baseline read happens before the application has persisted anything, so the comparison after a
+refused import sees the blank workflow saved in the meantime rather than anything the import wrote.
+Same class as the 2026-10-21 fix *Assert what survived the reload, not what the runner happened to
+see*.
 
 **Storage is capped by the smallest store the browser offers, and nothing chose it.**
 _Acted on 2026-10-20 for payloads: street networks now live in IndexedDB and the workflow keeps a

@@ -176,8 +176,21 @@ control is explained. A note about the world the data came from has no home.
 
 [Experiment 27](docs/experiments/27-workflow-learning-and-gamification.md) already proposed one --
 a side notepad to plan, prototype and reflect, with dated iteration notes and a stated boundary
-against source citations -- and it has never been built. [133](docs/experiments/133-the-planning-stage-and-historical-notes.md)
-proposes using it for narrative and historical notes, and says what would show that wrong.
+against source citations -- and it has never been built.
+
+**The task is not the filing.** Sharpened the same day: *"The elegant part comes in if we include
+story map structure as the frame for both the historical notes and the workflow. How to combine
+them is a genuine DE question."* So
+[133](docs/experiments/133-the-planning-stage-and-historical-notes.md) asks whether a story map's
+structure can be the frame a workflow is PLANNED in rather than a presentation applied to one
+afterwards -- sections written first, each binding a claim, the context that motivates it, and
+the outputs that evidence it. That binding is what would make assurance expressible: a reader
+asking "was this made under conditions I would accept?" asks it of a claim, and this application
+has no object that is a claim.
+
+**And the danger is the question.** Writing the story first is how evidence gets fitted to a
+narrative. The discipline that makes it honest is 27's own prompt -- *What do I predict?* -- and
+the test is whether a section contradicted by its run survives and says so.
 
 **Why it is more than tidiness.** [119](docs/experiments/119-can-this-tell-a-story.md) found the
 three measurable conditions for a good story already present and *scattered*, with assurance

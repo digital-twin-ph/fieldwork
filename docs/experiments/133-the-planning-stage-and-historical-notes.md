@@ -2,9 +2,17 @@
 
 _Created 2026-10-24 · Updated 2026-10-24_
 
-**Status:** asked — a home proposed for a kind of writing the application has nowhere to put, and
-nothing built. What follows names the gap, the three places it is not, and the test that would
-show the proposal was wrong.
+**Status:** asked — nothing built. Opened as a filing question (*where does a historical note
+go?*) and sharpened the same day into the one worth answering.
+
+**The task.** The practitioner, 2026-10-24: *"The elegant part comes in if we include story map
+structure as the frame for both the historical notes and the workflow. How to combine them is a
+genuine DE question. That's 133's task."*
+
+So this is not *where does a note go*. It is: **a story map has a structure; can that structure
+be the frame a workflow is planned in, rather than a presentation applied to one afterwards —
+and what happens to the analysis if it is?** The filing question below stands as evidence that
+the gap is real, not as the subject.
 
 ## What was asked
 
@@ -94,6 +102,60 @@ to a widget, a dataset or a control. **The planning stage is where those sentenc
 be, if it existed** — written before the work, not reconstructed after it, which is the difference
 between a narrative and a caption.
 
+## The task: one structure, two things in it
+
+A story map's structure is a sequence of **sections**, each holding a view — layers, an extent, a
+moment — and the sentences that say what it means. A workflow's structure is a graph of widgets
+producing outputs. Today the first is applied to the second after the fact: run the analysis,
+then arrange the results and write around them.
+
+The proposal inverts that. The sections are written FIRST, in the planning stage, and each one
+binds three things:
+
+| In a section | Comes from | Exists today |
+| --- | --- | --- |
+| what this part claims | the practitioner, before the run | no |
+| the context that motivates it | historical and narrative notes | no |
+| the evidence that supports it | one or more workflow outputs | yes, unbound |
+
+What makes it worth doing is the third column. Each of those outputs already carries provenance,
+refusals and the design rules that applied — [119](119-can-this-tell-a-story.md) found those
+three conditions *"present, measured, and scattered"*, with assurance missing. **Binding a claim
+to the outputs that evidence it is what makes assurance expressible at all**: a reader asking
+*"was this made under conditions I would accept?"* is asking it of a claim, and there is
+currently no object in this application that IS a claim.
+
+## The danger, which is the real question
+
+Writing the story first is how evidence gets fitted to a narrative. That is not a hypothetical
+risk in public health; it is the ordinary failure mode of outbreak communication, and a studio
+that encourages it would be worse than one with no planning stage at all.
+
+The discipline that makes the inversion honest is already in
+[27](27-workflow-learning-and-gamification.md), in one of its four prompts: **What do I predict?**
+A section written before the run is a prediction. A prediction that survives the run is evidence;
+one that does not is a finding, and the section has to change or say why it did not. That is the
+difference between pre-registration and confirmation bias, and it is a difference this
+application can MEASURE, because it already knows when a workflow was run, what it produced and
+whether the result still matches the canvas.
+
+So the question this experiment has to answer is not whether sections and outputs can be bound
+together. It is:
+
+- **Does a section that was written before the run, and contradicted by it, survive?** If the
+  application cannot tell a practitioner that their own claim did not hold, the frame is a
+  template for persuasion.
+- **What is the unit?** A section binding to a whole workflow is a caption. Binding to one output
+  is probably right and is a guess. Binding to a node is too fine — a reader does not read nodes.
+- **Which way does the dependency run?** If deleting an output deletes a section, the story is a
+  view of the workflow. If the section survives with its evidence missing and says so, the story
+  is an object with its own integrity. The second is harder and is almost certainly correct,
+  because a claim whose evidence vanished is exactly the thing a reader needs told.
+- **What does a historical note bind to?** A note about copepods is not evidence for a section's
+  claim; it is context for the reader. If it binds the same way evidence does, the distinction
+  this experiment opened with — *claim about the dataset, or about the world* — is lost at the
+  moment it matters most.
+
 ## What would say this was wrong
 
 - **The notes are written once and never read.** A plan nobody returns to is a diary, and a diary
@@ -108,6 +170,10 @@ between a narrative and a caption.
   argument above is decoration.
 - **It only ever carries one note.** The Snow copepod remark is the motivating case; one case is
   a reason to write a paragraph in a repository, not to build a surface.
+- **A section is never contradicted.** If every claim written before a run turns out to be
+  supported by it, the sections are being written after the result or edited to match it, and the
+  prediction prompt is decoration. A planning stage that never produces a surprise is not
+  disciplining anything.
 
 ## The first subject, if it is built
 

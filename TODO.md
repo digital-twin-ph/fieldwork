@@ -161,6 +161,33 @@ and also why the stale list only grows.
 **Not a reason to stop bumping.** The alternative is a release note that does not exist for a
 control a practitioner can see, which is the fault paid off earlier the same day.
 
+## The planning stage: where a note about the world goes
+
+Raised 2026-10-24, reading Snow's chloride measurements: *"The tide part is interesting because
+Cholera vibrio survives inside copepods."* ... *"we do not have a dive deeper class for historical
+notes. Perhaps we can now incorporate it in the planning part of the workflow (that's pre-workflow
+and undeveloped) as we have planned earlier? That way we can capture Snow's narratives, and with
+the historical notes we can then create our story map."*
+
+There are three places a sentence can go today and none of them fits. `provenance.json` is for
+claims about the DATASET; Dive Deeper notebooks are keyed to a `nodeType` and are about a widget's
+method; Inspector prose is scored per explanation against a 240-character limit and is where a
+control is explained. A note about the world the data came from has no home.
+
+[Experiment 27](docs/experiments/27-workflow-learning-and-gamification.md) already proposed one --
+a side notepad to plan, prototype and reflect, with dated iteration notes and a stated boundary
+against source citations -- and it has never been built. [133](docs/experiments/133-the-planning-stage-and-historical-notes.md)
+proposes using it for narrative and historical notes, and says what would show that wrong.
+
+**Why it is more than tidiness.** [119](docs/experiments/119-can-this-tell-a-story.md) found the
+three measurable conditions for a good story already present and *scattered*, with assurance
+missing; [17](docs/experiments/17-workflow-publication-products.md) wants a story map as an end
+product. A story map needs the sentences between the layers, and there is nowhere to write one
+that belongs to the investigation rather than to a widget, a dataset or a control.
+
+**First subject if built**: the copepod note on the South London example, which must read as
+modern knowledge about the world Snow worked in and not as something his 1855 text claims.
+
 ## What is actually blocked
 
 Everything else in this file is waiting on one of these, or is a defect that nothing is waiting on.

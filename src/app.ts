@@ -2083,7 +2083,7 @@ function renderInspector(){
   optionalElement('#mean-center-hemisphere')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'mean_center').params.hemisphere=control(e).value as 'north'|'south'));
   optionalElement('#catchment-output-mode')?.addEventListener('change',e=>change(w=>{const target=required(w.nodes.find(x=>x.id===n.id));(target.params as unknown as Record<string,unknown>).inputMode=control(e).value;w.edges=w.edges.filter(edge=>edge.to!==n.id);}));
   optionalElement('#polygon-output-label')?.addEventListener('change',e=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value;}));
-  optionalElement('#save-network')?.addEventListener('click',()=>{try{const text=(document.querySelector('#network-json') as HTMLTextAreaElement).value;if(text.length>2000000)throw new Error('Network JSON exceeds 2 MB.');const data=JSON.parse(text);change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true});}catch(e){toast(errorMessage(e));}});
+  optionalElement('#save-network')?.addEventListener('click',()=>{try{const text=(document.querySelector('#network-json') as HTMLTextAreaElement).value;if(text.length>2000000)throw new Error('Network JSON exceeds 2 MB.');const data=JSON.parse(text);change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true});}catch(e){toast(errorMessage(e),{tone:'failure'});}});
   for(const selector of ['#network-file','#network-upload'])document.querySelector<HTMLInputElement>(selector)?.addEventListener('change',async e=>{const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;const baseline=JSON.stringify(workflow);try{const data=await importNetwork(file,getNode(workflow,n.id,'network_input').params.maxNodes);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed; import again.');const digest=await payloadDigest(data);if(!await keepDataset(digest,data))throw new Error(`This ${(payloadBytes(data)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved. Export the workflow to a file to keep it.`);if(!change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true}))await dropPayload(digest);}catch(e){toast(errorMessage(e),{tone:'failure'});}});
   // The status panel. Rendered from the LAST check, so it survives the Inspector being redrawn,
   // and asked for only on click: every check is a request to a donated service.
@@ -2274,7 +2274,7 @@ function renderInspector(){
   optionalElement('#prepare-raster')?.addEventListener('click',()=>{
     let source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);const visited=new Set<string>();
     while(source?.type==='measure_area'&&!visited.has(source.id)){visited.add(source.id);source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===source!.id&&e.port==='area')?.from);}
-    let boundary:Boundary;try{boundary=previewArea(workflow,n.id).boundary;}catch(e){toast(errorMessage(e));return;}
+    let boundary:Boundary;try{boundary=previewArea(workflow,n.id).boundary;}catch(e){toast(errorMessage(e),{tone:'failure'});return;}
     const baseline=JSON.stringify(workflow);openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Prepare GeoTIFF input.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},getNode(workflow,n.id,'raster_input').params.asset);
   });
   optionalElement('#add-raster-map')?.addEventListener('click',()=>change(w=>{const id=`map-${Date.now()}`;w.nodes.push({id,type:'map_output',x:n.x+270,y:n.y,params:{label:'Clipped raster',inputMode:'raster',pointInputCount:1}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'raster'});selected=id;}));
@@ -2293,7 +2293,7 @@ function renderInspector(){
         if(!params.geometry)throw new Error('Define a clipping boundary.');
         return change(w=>{const target=getNode(w,n.id,'clip_raster');target.params.cutline={geometry:params.geometry!,selectionMode:params.selectionMode};target.params.label=params.label;target.params.method=options.method||clip.params.method;target.params.marginPixels=options.marginPixels||0;},{requirePersistence:true});
       },{raster,clip:true,clipOptions:clip.params,refusal:saveFailureMessage});
-    }catch(error){toast(errorMessage(error));}finally{button.disabled=false;button.textContent='Preview and adjust';}
+    }catch(error){toast(errorMessage(error),{tone:'failure'});}finally{button.disabled=false;button.textContent='Preview and adjust';}
   });
   document.querySelector<HTMLSelectElement>('#clip-method')?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'clip_raster').params.method=control(e).value as 'cell-center'|'all-touched';},{requirePersistence:true}));
   document.querySelector<HTMLInputElement>('#clip-margin')?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'clip_raster').params.marginPixels=control(e).value===''?NaN:Number(control(e).value);},{requirePersistence:true}));
@@ -2622,7 +2622,7 @@ function renderResults(){
       const svg=await standaloneChartSvg(output!.chart!,chartNode!.params,
         {sourceId:runWorkflow?.edges.find(e=>e.to===output!.nodeId)?.from,runId:result?.runId});
       download(`${output!.nodeId}-chart.svg`,svg,'image/svg+xml');
-    }catch(error){toast(errorMessage(error));}
+    }catch(error){toast(errorMessage(error),{tone:'failure'});}
     finally{button.disabled=false;}
   };
   $('#facility-legend').textContent=output?.kind?'Qualifying facility':'Cooling center';$('#map-note').textContent=output?.kind==='facility-evidence'?'Historical facilities · evidence tiers':output?.kind==='access'?`${output.locationSource?.kind==='input-points'?'Input locations':'Generated samples'} \u00b7 source boundary`:'Local locations · no external map tiles';
@@ -2673,7 +2673,7 @@ function renderResults(){
       declared:runWorkflow&&shown?declaredKinds(runWorkflow,shown.sourceNodeId||shown.nodeId):{}},esc);
   };
   $('#result-rows').querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});
-  const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e));}};if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${raster.values.filter(v=>v!==null).length} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
+  const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e),{tone:'failure'});}};if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${raster.values.filter(v=>v!==null).length} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
   if(output?.polygons){const p=output.polygons;$('.map-legend').hidden=true;$('#map-note').textContent=p.method;$('#result-metrics').textContent=p.kind==='hexbin'?`${p.features.length} released H3 cells / ${p.summary?.matched} locations represented / ${p.summary?.unmatched} locations in omitted sparse cells`:p.summary?`${p.summary.records} locations / ${p.summary.matched} matched / ${p.summary.unmatched} outside / ${p.summary.missingLocation} missing location / ${p.summary.multiple} multiple memberships`:p.features.length+' catchments';$('#map-note').textContent=p.method+' / '+p.notes.join(' ');}
   if(exampleKey(workflow)==='snow-geoprivacy'&&output)$('#map-note').textContent=(output.nodeId.startsWith('before-')?'PRIVATE SOURCE · original coordinates. ':'DERIVED DISPLAY · educational transformation; no anonymity guarantee. ')+$('#map-note').textContent;
   if(output?.comparison){$('#map-note').textContent='PRIVATE EVALUATION · original and moved coordinates, mean centers and pumps';$('.map-legend').hidden=true;}
@@ -4060,7 +4060,16 @@ async function importProjectDocument(raw:unknown){
     forgetSavedWorkflows();
   }catch(error){
     writeProjects(readProjects().filter(p=>p.id!==project.id));
-    throw new Error(saveFailureMessage(`"${project.name}" could not be saved on this device, so it was not imported.`));
+    // WHY, FROM THE ERROR IN HAND. This read `saveFailureMessage(...)`, which reports the last
+    // refusal recorded by `save()` -- and this write does not go through `save()`, so there was
+    // never one to report and the sentence arrived bare. The practitioner, 2026-10-23, importing
+    // a project: the toast said it could not be saved and nothing about what stopped it.
+    const name=error instanceof Error?error.name:String(error);
+    const quota=/quota|exceed|full/i.test(name);
+    throw new Error(`"${project.name}" could not be saved on this device, so it was not imported. `
+      +(quota?'The workspace store is full. Back up and delete a project you no longer need, then '
+        +'import again -- the file is unchanged.'
+        :`The device reported ${name}.`));
   }
   workflow=workflows[0];
   selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
@@ -4203,7 +4212,7 @@ function setFullScreen(on:boolean){
 $('#fullscreen-workbench').onclick=()=>setFullScreen(!fullScreen);
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&fullScreen){setFullScreen(false);event.preventDefault();}});
 credentials=installCredentials(document.querySelector<HTMLButtonElement>('#credentials-button')!);
-const showCatalog=()=>{try{openCatalogDialog(esc,servingBuild);}catch(error){toast(errorMessage(error));}};
+const showCatalog=()=>{try{openCatalogDialog(esc,servingBuild);}catch(error){toast(errorMessage(error),{tone:'failure'});}};
 $('#open-catalog').onclick=showCatalog;
 $('#header-catalog').onclick=showCatalog;
 // Deep link, so the catalog can be pointed at rather than described: ?catalog=1 or #catalog.
@@ -4240,21 +4249,21 @@ $('#backup-project').onclick=async()=>{
   await exportProject(project.id);
 };
 $('#encrypted-export').onclick=()=>{try{if($('#backup-dialog').open)$('#backup-dialog').close();
-  openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow);}catch(error){toast(errorMessage(error));}};
+  openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow);}catch(error){toast(errorMessage(error),{tone:'failure'});}};
 function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
 $('#export-button').onclick=async()=>{try{if($('#backup-dialog').open)$('#backup-dialog').close();
   const exported=await workflowDocument(workflow);const text=JSON.stringify(exported);
   const name=exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json.gz':'fieldwork-workflow.json.gz';
-  downloadBlob(name,await gzipText(text));}catch(error){toast(errorMessage(error));}};$('#import-button').onclick=()=>$('#workflow-file').click();
+  downloadBlob(name,await gzipText(text));}catch(error){toast(errorMessage(error),{tone:'failure'});}};$('#import-button').onclick=()=>$('#workflow-file').click();
 $('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>MAX_BUNDLE_BYTES)throw new Error(`Workflow or bundle exceeds the ${(MAX_BUNDLE_BYTES/1e6).toFixed(0)} MB import limit.`);if(file.name.toLowerCase().endsWith('.zip')){openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow,file);control(e).value='';return;}
   // Gzipped or not, by what the first two bytes say rather than by the name on the file.
   const parsed=JSON.parse(await readMaybeGzipped(file));
   // A PROJECT DOCUMENT comes in through the same control: a practitioner handed a file should not
   // have to know which of two buttons made it.
   if((parsed as {schema?:string})?.schema===PROJECT_DOCUMENT_SCHEMA){await importProjectDocument(parsed);control(e).value='';return;}
-  const next=await importWorkflowDocument(parsed,validateWorkflow);const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes.find(n=>n.type==='output')?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}catch(err){toast(errorMessage(err));}control(e).value='';};
-$('#geojson-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>5e6)throw new Error('GeoJSON file is too large (5 MB maximum).');const data=validateGeoJSON(JSON.parse(await file.text()));change(w=>{const n=w.nodes.find(n=>n.id===importNode);if(!n)throw new Error('Source node no longer exists.');updateParam(w,n.id,'data',data);});toast('Local geographic data loaded. Run to update results.');}catch(err){toast(errorMessage(err));}control(e).value='';};
-$('#download-evidence').onclick=async()=>{if(!result||!runWorkflow){toast('Run the workflow first.');return;}const snapshot=structuredClone({schema:'fieldwork/run/1',workflow:runWorkflow,...result});try{const attachments=await exportEvidenceFiles(snapshot.workflow);download('fieldwork-run-receipt.json',JSON.stringify({...snapshot,...(attachments.length?{attachments}:{})},null,2));}catch(error){toast(errorMessage(error));}};
+  const next=await importWorkflowDocument(parsed,validateWorkflow);const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes.find(n=>n.type==='output')?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}catch(err){toast(errorMessage(err),{tone:'failure'});}control(e).value='';};
+$('#geojson-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>5e6)throw new Error('GeoJSON file is too large (5 MB maximum).');const data=validateGeoJSON(JSON.parse(await file.text()));change(w=>{const n=w.nodes.find(n=>n.id===importNode);if(!n)throw new Error('Source node no longer exists.');updateParam(w,n.id,'data',data);});toast('Local geographic data loaded. Run to update results.');}catch(err){toast(errorMessage(err),{tone:'failure'});}control(e).value='';};
+$('#download-evidence').onclick=async()=>{if(!result||!runWorkflow){toast('Run the workflow first.');return;}const snapshot=structuredClone({schema:'fieldwork/run/1',workflow:runWorkflow,...result});try{const attachments=await exportEvidenceFiles(snapshot.workflow);download('fieldwork-run-receipt.json',JSON.stringify({...snapshot,...(attachments.length?{attachments}:{})},null,2));}catch(error){toast(errorMessage(error),{tone:'failure'});}};
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view!));
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});

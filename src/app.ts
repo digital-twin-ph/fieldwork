@@ -1414,6 +1414,12 @@ function renderInspector(){
     const p=n.params;
     const field=(id:string,label:string,key:string,value:string,placeholder='')=>`<div class="field"><label class="field-label" for="${id}">${label}</label><input id="${id}" data-slr="${key}" maxlength="80" value="${esc(value)}" placeholder="${esc(placeholder)}"></div>`;
     content+='<p class="description">Divides counted events by a declared population at risk. What the denominator counts is part of the result.</p>'
+      // A denominator usually arrives as a table, not as points: Snow's two water companies are
+      // rows, not places. The kind of input is stated here because it decides what the records
+      // port will accept. Experiment 134.
+      +`<div class="field"><label class="field-label" for="rate-source">Records arrive as</label><select id="rate-source" data-rate-source>${[['points','points, one per subject'],['table','a table, one row per measure']].map(([value,text])=>`<option value="${value}" ${(p.source||'points')===value?'selected':''}>${text}</option>`).join('')}</select></div>`
+      +(p.source==='table'?field('rate-measure','Key column holding the measure names','measureKey',p.measureKey||'','measure'):'')
+      +nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="rate-${port}">Records input</label><select id="rate-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('')
       +field('rate-numerator','Numerator attribute (what is counted)','numeratorField',p.numeratorField,'deaths')
       +field('rate-denominator','Denominator attribute (units at risk)','denominatorField',p.denominatorField,'population')
       +`<div class="field"><label class="field-label" for="rate-unit">The denominator counts</label><select id="rate-unit" data-slr="denominatorUnit">${['people','houses','households','person-time','other'].map(u=>`<option value="${u}" ${p.denominatorUnit===u?'selected':''}>${u}</option>`).join('')}</select></div>`
@@ -1424,7 +1430,8 @@ function renderInspector(){
       +`<div class="field"><label class="field-label" for="rate-minimum">Smallest denominator that gets a rate</label><input id="rate-minimum" type="number" min="0" data-rate-number="minimumDenominator" value="${p.minimumDenominator}"></div>`
       +field('rate-period','Period the numerator covers','numeratorPeriod',p.numeratorPeriod,'1854 outbreak')
       +field('rate-vintage','Vintage of the denominator','denominatorVintage',p.denominatorVintage,'1855 map')
-      +'<div class="notice">A rate whose denominator is unstated cannot be compared with any other rate: deaths per house is not a mortality rate. A proportion cannot exceed one and is refused if it does; a ratio of events per unit can. Groups below the stated minimum report their counts and no rate, because a rate from a handful of units is unstable rather than precise. The two vintages are recorded and compared, since a numerator and a denominator measured at different times describe different populations.</div>';
+      +'<div class="notice">A rate whose denominator is unstated cannot be compared with any other rate: deaths per house is not a mortality rate. A proportion cannot exceed one and is refused if it does; a ratio of events per unit can. Groups below the stated minimum report their counts and no rate, because a rate from a handful of units is unstable rather than precise. The two vintages are recorded and compared, since a numerator and a denominator measured at different times describe different populations.'
+      +(p.source==='table'?' A table is read as one row per measure per subject: the key column named above holds the measure names, and the other key columns name the subject. Changing the kind of input disconnects what was wired, because points and a table are not the same shape.':'')+'</div>';
   }else if(n.type==='case_series'){
     const p=n.params;
     content+='<p class="description">Counts cases per period from a declared date attribute. The kind of date travels with the series.</p>'
@@ -2176,6 +2183,12 @@ function renderInspector(){
     change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)).params as Record<string,unknown>;
       node.zone=Number(zone);node.hemisphere=hemisphere;});
   });
+  // Switching the kind of input changes what the records port accepts, so anything wired into it
+  // is disconnected rather than left in place carrying the wrong shape.
+  const rateSource=document.querySelector<HTMLSelectElement>('[data-rate-source]');
+  if(rateSource)rateSource.addEventListener('change',()=>change(w=>{
+    const node=getNode(w,n.id,'rate');node.params.source=rateSource.value as 'points'|'table';
+    w.edges=w.edges.filter(e=>e.to!==node.id);}));
   document.querySelectorAll<HTMLInputElement|HTMLSelectElement>('[data-rate-number]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=required(w.nodes.find(x=>x.id===n.id));const key=required(el.dataset.rateNumber);
     (node.params as unknown as Record<string,number|undefined>)[key]=el.value===''?undefined:Number(el.value);})));

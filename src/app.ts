@@ -4053,9 +4053,27 @@ async function importProjectDocument(raw:unknown){
   if(!writeProjects([...existing,project]))throw new Error('The project could not be recorded on this device.');
   // Every workflow is written before any is opened, so a refusal half way through does not leave a
   // project claiming workflows that were never saved.
+  // THE DATA GOES WHERE DATA GOES, which is not the workspace store. This dehydrated against
+  // `()=>false` -- "no digest is held" -- so nothing was stripped and every downloaded network and
+  // raster window was written inline into localStorage, whose ceiling is about 5 MB. A project
+  // carrying any real data therefore could not be imported at all, however empty the store was:
+  // the practitioner's refusal read "the workspace store is full" over a store holding 419 KB of
+  // 5.2 MB, because the write that failed was oversized rather than the room being short.
+  //
+  // `save()` has always done this correctly -- payloads to the payload store by digest, references
+  // in the workspace store -- and the import simply never did. Keeping them first also means a
+  // reload rehydrates them, which is the defect the encrypted-project round trip found when an
+  // imported project's reference pointed at nothing.
+  const kept=new Set<string>();
+  for(const next of workflows)
+    for(const node of next.nodes){
+      const params=node.params as unknown as {dataRef?:unknown;data?:unknown};
+      if(typeof params.dataRef!=='string'||params.data===undefined)continue;
+      if(await keepDataset(params.dataRef,params.data))kept.add(params.dataRef);
+    }
   try{
     const store=JSON.parse(localStorage.getItem(WORKSPACES)||'{}');
-    for(const next of workflows)store[storageKey(next)]=dehydrateWorkflow(next,()=>false);
+    for(const next of workflows)store[storageKey(next)]=dehydrateWorkflow(next,digest=>kept.has(digest));
     localStorage.setItem(WORKSPACES,JSON.stringify(store));
     forgetSavedWorkflows();
   }catch(error){
@@ -4064,11 +4082,21 @@ async function importProjectDocument(raw:unknown){
     // refusal recorded by `save()` -- and this write does not go through `save()`, so there was
     // never one to report and the sentence arrived bare. The practitioner, 2026-10-23, importing
     // a project: the toast said it could not be saved and nothing about what stopped it.
+    // SAY THE NUMBERS. "The workspace store is full" was said over a store holding 419 KB of
+    // 5.2 MB: the room was not short, the write was too big. A refusal that names a cause it has
+    // not measured is the fault this project already fixed once, in a storage handler that
+    // asserted a full disk and discarded the error it had.
     const name=error instanceof Error?error.name:String(error);
     const quota=/quota|exceed|full/i.test(name);
+    const mb=(value:number)=>value<1e6?`${Math.max(1,Math.round(value/1024)).toLocaleString('en')} KB`
+      :`${(value/1e6).toFixed(1)} MB`;
+    const needed=workflows.reduce((n,w)=>{
+      try{return n+JSON.stringify(dehydrateWorkflow(w,digest=>kept.has(digest))).length;}catch{return n;}},0);
+    const free=Math.max(0,STORAGE_QUOTA_BYTES-storageUsedBytes());
     throw new Error(`"${project.name}" could not be saved on this device, so it was not imported. `
-      +(quota?'The workspace store is full. Back up and delete a project you no longer need, then '
-        +'import again -- the file is unchanged.'
+      +(quota?`It needs about ${mb(needed)} in the workspace store and ${mb(free)} is free of `
+        +`${mb(STORAGE_QUOTA_BYTES)}. Back up and delete a workflow or a project you no longer need, `
+        +'then import again -- the file is unchanged.'
         :`The device reported ${name}.`));
   }
   workflow=workflows[0];

@@ -46,7 +46,7 @@ test('an imported project keeps its payloads out of the workspace store',async({
   await page.goto('/?example=old-naledi');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('#new-project').click();
-  await page.locator('#project-name-input').fill('Ituri payload carrier');
+  await page.locator('#project-name-input').fill('Ituri payloads');
   await page.locator('#project-subject-input').fill('A project with data in it');
   await page.locator('#project-create').click();
 

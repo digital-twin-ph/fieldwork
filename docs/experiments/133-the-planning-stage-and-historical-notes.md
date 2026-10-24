@@ -125,7 +125,7 @@ to the outputs that evidence it is what makes assurance expressible at all**: a 
 *"was this made under conditions I would accept?"* is asking it of a claim, and there is
 currently no object in this application that IS a claim.
 
-## Four things at once, which is why it is worth the risk
+## Five things at once, and a sixth that is minor and real
 
 The practitioner, on what the frame would settle: *"Then we will have hit three birds with one
 stone -- story map which is communication stage, planning, and the integrating project/workflow
@@ -149,6 +149,28 @@ frame fits, and the reason to suspect it does.
 It also explains a loose end from 131. A project's `subject` is "what this investigation is
 about", written once and read nowhere except the Project tab. In this frame the subject is the
 story's premise, and the sections are what is claimed about it.
+
+### And a sixth: import, and the first thing a practitioner sees
+
+The practitioner: *"It also exercises import and FW onboarding, so that's a minor 6th."*
+
+Minor and real. Two separate things rest on it.
+
+**Import stops being a path nobody travels.** Until 2026-10-23 the import control would not show
+a practitioner the `.gz` files this application writes, announced its refusals in the success
+colour, and said nothing about why a project could not be saved -- three faults found in one
+sitting because somebody tried to import a real project. A fetched example makes that path
+ordinary rather than exceptional, and a path that is travelled is a path whose faults are found.
+
+**Onboarding stops being a canvas of widgets.** What a new practitioner opens today is a worked
+example: a graph, already wired, with results. It shows what the application DOES and not what it
+is for. An imported investigation carrying its subject, its questions, its evidence and the
+sentences between them shows the arc -- and the first one would be Snow's South London study,
+which is the clearest demonstration in public health of why a denominator matters, on data whose
+answer has been published since 1855.
+
+It is minor because neither is a reason to build the frame on its own. It is real because both
+are things this project already wanted and neither has a better vehicle.
 
 ### What the fourth one constrains
 

@@ -262,6 +262,46 @@ gets fitted to it; the defence is that **synthesis cannot quietly drop the quest
 support the story**, because the question is in the project and the project is what the story map
 is of.
 
+## Notes are anchored along a sequence, and the sequence already exists
+
+The practitioner: *"If we think of a story map, each workflow may have one or more notes,
+incrementally revealed as we play the story and see results."*
+
+That refines the shape twice over. A note is **not one per investigation**: a workflow may carry
+several, and each is anchored at a point rather than filed in a drawer. And a story map is
+**played** rather than scrolled -- the reveal is the medium, and a note appears when the thing it
+is about does.
+
+**The playing already exists.** `src/reveal-playback.ts` replays a worked example one widget at a
+time, computing the build order and what each placement unlocks, with the order *"computed here
+and nowhere else, so the measurement script and the interface cannot disagree about what the rule
+says"*. It was built for a different purpose -- watching a progressive-reveal rule behave on
+something real before committing to it -- and `buildOrder` is exactly the spine a played story
+needs. The Play back the build control is already in the interface.
+
+So the sequence a story map plays is not a new mechanism. It is `buildOrder` over the workflows
+of a project, with three kinds of thing arriving along it:
+
+| Arrives | From | Anchored to |
+| --- | --- | --- |
+| a step appearing | `buildOrder` | the node |
+| a result | the run that produced it | the output |
+| a note | the practitioner, written in planning | the node or the output it is about |
+
+### What that settles, and what it opens
+
+It settles the earlier question of what a note binds to: **a node or an output**, not a workflow
+as a whole, because a note that cannot say where in the sequence it belongs cannot be revealed at
+the right moment.
+
+It opens a harder one. A story map is the synthesis of a project's workflows, and `buildOrder` is
+defined over the nodes of ONE workflow. Playing a project means an order across workflows, and
+nothing computes that today. The honest candidates are the practitioner's own section order --
+which is the planning artefact and probably correct -- or a dependency order between workflows,
+which does not exist because workflows do not feed each other. **The sections carry the order**,
+and that is another reason the frame has to be written before the run rather than derived after
+it: the application cannot work out in which order an investigation's questions should be told.
+
 ## The danger, which is the real question
 
 Writing the story first is how evidence gets fitted to a narrative. That is not a hypothetical

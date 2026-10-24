@@ -258,9 +258,44 @@ nothing re-rendered the header, so the status went on reading Not backed up unti
 A practitioner who backed up and looked would have been told it had not worked. Recording a state
 and saying it are two acts, and this experiment had only specified the first.
 
+### The Project view, built 2026-10-23
+
+A tab beside Workflow and Results, not a dialog, which this experiment made a precondition: the
+project level lived behind a storage readout that had to be recognised as a button, and that is
+why the backup could not be found.
+
+Per project it says the name, the subject, whether a copy exists, how many workflows and how many
+widgets; per workflow, its widget count and whether it is the one open. Backing up and deleting
+are reachable from it, which is the half of *"creation and deletion live in the Project view"*
+that does not need the canvas toolbar touched.
+
+**No progress column**, at the practitioner's direction: *"Project does not ship with a project
+column, only workflow and widget count."* Draft, Run and Stale are known for the OPEN workflow
+and for no other -- a saved document carries its name, nodes, edges and manifest and records
+nothing about having run -- so the view counts what is there and claims nothing about what was
+done to it. That is the same refusal as the timestamps that reordered this plan: a progress column
+would have been a label over facts the application does not keep. Persisting run state is a
+separate change and is not pretended at here.
+
+Two defects found by building it, both of the same kind as the one before:
+
+- **A control that was not wired.** The project actions were delegated on the dialog's list
+  alone, so the identical buttons in the view did nothing. Found by a test that pressed Back up
+  and waited for a download that never came. A view offering a control that does nothing is worse
+  than one offering none, because it reads as capability. One handler now serves both lists.
+- **A second surface that did not hear.** The header was taught to re-render when an export
+  completes; the view then repeated the mistake, saying Not backed up while the header beside it
+  had already corrected itself. Every place that states a derived fact has to be told when the
+  fact changes, and there are now two.
+
 ### What is still not built
 
-The Project view. The state now has a door and it opens onto the same modal dialog this experiment
+The breadcrumb, and one **Back up** control replacing the three (`↓ Export`, `Export project`,
+`Encrypted ZIP`) with scope and form chosen inside it. Size per workflow is computable --
+`projectWork` already sums payload bytes per project -- and is not shown, because the practitioner
+asked for counts rather than bytes in this first cut.
+
+The state now has a door and it opens onto the same modal dialog this experiment
 calls the problem — `Projects dialog behind the storage pill` becoming `the Project view` is
 untouched, as are the breadcrumb, the consolidation of three export controls into one **Back up**
 with scope and form, and Size per workflow. Size needs no new data: the payload store knows bytes

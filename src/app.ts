@@ -2935,6 +2935,7 @@ function switchView(view:string){
   work.classList.toggle('showing-results',view==='results');
   $('#workflow-view').hidden=view!=='workflow';
   $('#rules-view').hidden=view!=='rules';
+  $('#project-view').hidden=view!=='project';
   document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>{
     const active=b.dataset.view===view;
     b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));
@@ -2944,6 +2945,7 @@ function switchView(view:string){
   // the class above has already made the panel visible, and Leaflet reads clientWidth, which
   // forces the layout it needs. Deferred to a frame, anything that looked at the map in the
   // same turn as the tab click found no map -- a race in the application, not only in a test.
+  if(view==='project')renderProjectView();
   if(view==='results')renderMap();
   if(view==='workflow')requestAnimationFrame(()=>flow?.fit());
 }
@@ -3422,6 +3424,83 @@ const payloadStoreBytes=():number=>{
   return total;
 };
 const payloadCount=():number=>Object.keys(cachedPayloads()).length;
+/** THE PROJECT VIEW: one project and the workflows filed under it.
+ *
+ *  Experiment 131, after a day the practitioner spent unable to find their own backup: *"Our UI
+ *  has become confusing to navigate... how should the UI represent project and workflow
+ *  lifecycles."* Asked what they work in, the answer was both, at different times -- setting up
+ *  and reviewing is project work, analysis is workflow work -- so there are two places and this
+ *  is the first one.
+ *
+ *  A ROUTE, NOT A DIALOG, which the experiment made a precondition: the project level lived
+ *  behind a storage readout that had to be recognised as a button, and that is why the backup
+ *  could not be found. A dialog here would inherit the problem it exists to end.
+ *
+ *  NO PROGRESS COLUMN. Draft, Run and Stale are known for the workflow that is OPEN and for no
+ *  other: a saved document carries its name, nodes, edges and manifest, and nothing records that
+ *  it ran. The practitioner, asked to choose: *"Project does not ship with a project column, only
+ *  workflow and widget count."* So this counts what is there and claims nothing about what was
+ *  done to it -- the same refusal as the timestamps that reordered this plan, where a column
+ *  would have been a label over facts the application does not keep.
+ */
+function renderProjectView():void{
+  const list=$('#project-view-list');
+  const stored=readProjects();
+  const saved=readSavedWorkflows();
+  const current=storageKey(workflow);
+  const widgets=(key:string):number=>key===current?workflow.nodes.length
+    :((saved[key] as {nodes?:unknown[]})?.nodes??[]).length;
+  $('#project-view-count').textContent=stored.length?String(stored.length):'';
+  if(!stored.length){
+    list.innerHTML='';
+    const empty=document.createElement('p');empty.className='muted';
+    empty.textContent='No projects yet. "New project" files the workflow you have open under one, '
+      +'and everything filed under a project can be backed up in one act.';
+    list.append(empty);
+    return;
+  }
+  list.innerHTML='';
+  for(const project of stored){
+    const safe=projectSafety(project)==='backed up'&&!exportPredatesWork(project);
+    const section=document.createElement('section');
+    section.className='project-view-block';
+    section.dataset.project=project.id;
+    const heading=document.createElement('h3');heading.textContent=project.name;
+    const state=document.createElement('span');
+    state.className='project-view-state';
+    state.dataset.safety=safe?'backed-up':'at-risk';
+    state.textContent=safe?'Backed up':exportPredatesWork(project)?'Backed up \u00b7 changed since':'Not backed up';
+    heading.append(' ',state);
+    const counts=document.createElement('p');counts.className='muted';
+    const nodes=project.workflows.reduce((n,key)=>n+widgets(key),0);
+    counts.textContent=`${esc(project.subject||'No subject.')} \u00b7 `
+      +`${project.workflows.length===1?'1 workflow':`${project.workflows.length} workflows`} \u00b7 `
+      +`${nodes===1?'1 widget':`${nodes} widgets`}`;
+    section.append(heading,counts);
+    const actions=document.createElement('p');actions.className='project-view-actions';
+    const backup=document.createElement('button');
+    backup.className='button small';backup.dataset.exportProject=project.id;
+    backup.textContent='\u2193 Back up';
+    const remove=document.createElement('button');
+    remove.className='button small danger';remove.dataset.deleteProject=project.id;
+    remove.textContent='Delete project';
+    actions.append(backup,remove);section.append(actions);
+    for(const key of project.workflows){
+      const row=document.createElement('div');row.className='project-view-row';
+      const name=document.createElement('span');
+      name.textContent=(WORKFLOW_LABELS[key]||key)+(key===current?' \u00b7 open':'');
+      const count=document.createElement('span');count.className='muted';
+      const held=widgets(key);
+      count.textContent=held===1?'1 widget':`${held} widgets`;
+      const open=document.createElement('button');
+      open.className='button small';open.dataset.openWorkflow=key;open.textContent='Open';
+      open.disabled=key===current;
+      row.append(name,count,open);section.append(row);
+    }
+    list.append(section);
+  }
+}
+
 /** WHAT THIS PROJECT HOLDS RIGHT NOW, so `unexportedWork` can say what a lost browser would cost.
  *
  *  Counted from the saved workflows the project lists plus the open canvas, which may not be
@@ -3676,7 +3755,13 @@ async function exportProject(id:string){
     // AND SAID, which is a separate act from recording it. Found by the test: the state was
     // written correctly and the header went on reading "Not backed up" until the next save or
     // render, so a practitioner who backed up and looked would have been told it had not worked.
+    //
+    // Both surfaces, because the second one repeated the first one's mistake: the Project view
+    // was added, the state was recorded on export, and the view went on saying Not backed up
+    // while the header beside it had already corrected itself. Every place that states a derived
+    // fact has to be told when the fact changes, and there are now two.
     renderProjectSafety();
+    if(currentView==='project')renderProjectView();
     toast(`${name} — ${(text.length/1e6).toFixed(1)} MB of project, ${(blob.size/1e6).toFixed(1)} MB written.`);
     toast(`"${project.name}" exported: ${held.length} ${held.length===1?'workflow':'workflows'}.`
       +(loose?` ${loose} downloaded ${loose===1?'dataset is':'datasets are'} kept on this device by reference and `
@@ -3779,14 +3864,19 @@ $('#storage-meter').addEventListener('click',async event=>{
   toast(`${loose.digests.length} unreferenced payload${loose.digests.length===1?'':'s'} removed.`);
 });
 // One listener on the list, because its rows are rebuilt on every change inside the dialog.
-$('#projects-list').addEventListener('click',async event=>{
+// ONE HANDLER, TWO LISTS. These actions were delegated on the dialog's list alone, so the same
+// buttons rendered in the Project view did nothing at all -- found by the test that pressed Back
+// up there and waited for a download that never came. A view that offers a control which is not
+// wired is worse than one that offers none: it reads as capability.
+const projectListAction=async(event:Event)=>{
   const button=(event.target as HTMLElement).closest('button');
   if(!button)return;
   const {openWorkflow,exportWorkflow,deleteWorkflow:removeKey,deleteProject:removeProject}=button.dataset;
-  if(openWorkflow){$('#projects-dialog').close();loadExample(openWorkflow);return;}
+  if(openWorkflow){if($('#projects-dialog').open)$('#projects-dialog').close();loadExample(openWorkflow);return;}
   if(removeProject){deleteProject(removeProject);return;}
   if(button.dataset.exportProject){await exportProject(button.dataset.exportProject);return;}
-  if(removeKey){deleteWorkflow(removeKey);renderProjectsList();renderStorageStatus();return;}
+  if(removeKey){deleteWorkflow(removeKey);renderProjectsList();renderStorageStatus();
+    if(currentView==='project')renderProjectView();return;}
   if(exportWorkflow){
     try{
       const saved=readSavedWorkflows()[exportWorkflow];
@@ -3797,7 +3887,9 @@ $('#projects-list').addEventListener('click',async event=>{
       toast(`"${(saved as {name?:string}).name||exportWorkflow}" exported to a file. A workflow in a file is not at risk from a full store.`);
     }catch(error){toast(errorMessage(error),{tone:'failure'});}
   }
-});
+};
+$('#projects-list').addEventListener('click',projectListAction);
+$('#project-view-list').addEventListener('click',projectListAction);
 $('#workflow-template').onchange=e=>{
   const select=control(e) as HTMLSelectElement,source=select.value;
   select.value='';

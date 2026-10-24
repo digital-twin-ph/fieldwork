@@ -548,3 +548,20 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
   text-decoration:underline;text-underline-offset:2px}
 .link-button:hover,.link-button:focus-visible{text-decoration-thickness:2px}
 #project-safety[data-safety="at-risk"]{color:var(--warn-text,#b4541a);font-weight:600}
+
+/* THE PROJECT VIEW. Experiment 131: setting up and reviewing is project work, analysis is
+   workflow work, so this is a route beside the canvas rather than a dialog over it. A dialog
+   here would inherit the discoverability problem it exists to end. */
+.project-view{padding:16px 18px;overflow:auto}
+.project-view-intro{display:flex;flex-direction:column;gap:2px;margin-bottom:14px}
+.project-view-intro span{color:var(--muted)}
+.project-view-block{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.project-view-block h3{margin:0 0 4px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.project-view-state{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.project-view-state[data-safety="at-risk"]{color:var(--warn-text,#b4541a)}
+.project-view-state[data-safety="backed-up"]{color:var(--muted);font-weight:500}
+.project-view-actions{display:flex;gap:8px;margin:10px 0 6px}
+.project-view-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+  padding:6px 0;border-top:1px solid var(--line)}
+@media (max-width:520px){.project-view-row{grid-template-columns:1fr auto}
+  .project-view-row .muted{grid-column:1/-1}}

@@ -1,0 +1,72 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:rate",
+  "nodeType": "rate",
+  "version": "0.2.0",
+  "title": "Rate with a denominator",
+  "released": "2026-10-24",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['rate']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "points"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Records in, a keyed table of rates out, so a Table output displays them and a Chart output draws them. The declared port is the static one; the type it accepts follows the stated kind of input, so with a table selected the same `records` port takes a table instead. The port keeps its name either way, because what it carries is the records to divide. A denominator usually arrives as a table -- Snow's two water companies are rows, not places -- which is why the table variant exists. The person axis needs no new port type: the counts are already attributes of the input."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:RateComputation",
+        "file": "ontology/runtime.ttl"
+      },
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:RateResult",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "fw:RateResultShape requires the denominator unit and the rate kind from closed sets and records whether the numerator period and denominator vintage agree, so a rate that does not say what it is a rate of cannot conform. Verified in tests; this registry version records application validation only.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/rate.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "feature",
+      "description": "Reads a long-format table as well as points. A table is pivoted into one record per subject: the key column named in the Inspector holds the measure names, the remaining key columns name the subject, and a table whose only key is the measure column is refused because it has no subject. The kind of input and the measure column are stated in the Inspector; switching the kind disconnects what was wired, since points and a table are not the same shape."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks cover the required declarations, refusal of a proportion exceeding one, banding and order, suppression at a zero or small denominator with the counts still reported, refusal of non-numeric and negative values, and comparison of the two vintages. Division is arithmetic; nothing here establishes that a denominator is the right population at risk, which is a judgment about the data. The table path is checked against Snow's Table IX (1855), published outside this project: the pivot reproduces its houses and deaths columns, and the rates computed from them are 315.39, 37.54 and 55.46 per 10,000 houses. Snow printed 315, 37 and 59. Four of his five printed rates are the quotient with the fraction dropped; Rest of London is not reproduced under either rounding rule, because 59 per 10,000 from 1,422 deaths implies about 241,000 houses rather than the 256,423 printed beside it. The widget divides the columns and does not reproduce 59, which is a discrepancy in the source and is recorded, not smoothed away."
+  }
+}

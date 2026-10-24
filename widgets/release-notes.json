@@ -578,12 +578,12 @@
    "migrationFrom": []
   },
   "rate": {
-   "version": "0.1.0",
-   "released": "2026-10-09",
+   "version": "0.2.0",
+   "released": "2026-10-24",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Divides counted events by a declared population at risk, grouping by an attribute or by bands of a numeric one. The denominator's unit, the kind of rate, the multiplier, the smallest reportable denominator and both vintages are declared rather than implied. See docs/research/john-snow-data-sets.md for the data that motivated it."
+     "kind": "feature",
+     "description": "Reads a long-format table as well as points. A table is pivoted into one record per subject: the key column named in the Inspector holds the measure names, the remaining key columns name the subject, and a table whose only key is the measure column is refused because it has no subject. The kind of input and the measure column are stated in the Inspector; switching the kind disconnects what was wired, since points and a table are not the same shape."
     }
    ],
    "breaking": false,

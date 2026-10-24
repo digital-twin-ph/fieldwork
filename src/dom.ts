@@ -24,6 +24,8 @@ export interface SelectorElements {
   '#project-subject-input':HTMLTextAreaElement;
   '#project-name':HTMLElement;
   '#project-unfiled':HTMLElement;
+  '#project-view-title':HTMLElement;
+  '#project-view-subtitle':HTMLElement;
   '#project-unfiled-name':HTMLElement;
   '#project-file-under':HTMLSelectElement;
   '#project-file':HTMLButtonElement;

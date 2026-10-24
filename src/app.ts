@@ -3530,8 +3530,12 @@ function renderUnfiled():void{
   const stored=readProjects();
   const filed=stored.some(p=>p.workflows.includes(key))
     ||BUILT_IN_PROJECTS.some(p=>p.workflows.includes(key));
-  // A worked example is already filed under the project it ships in, so it is not offered.
-  panel.hidden=filed||!stored.length&&!workflow.nodes.length;
+  // A worked example is already filed under the project it ships in, so it is not offered. An
+  // empty canvas still is: this tab is where filing lives, and a practitioner who opens it with
+  // nothing selected needs the way forward, not a blank panel. The first version also hid it
+  // when there were no projects AND no widgets, which is every fresh canvas -- the one case where
+  // somebody is most likely to be looking for how to start.
+  panel.hidden=filed;
   if(panel.hidden)return;
   $('#project-unfiled-name').textContent=workflow.name||WORKFLOW_LABELS[key]||key;
   const select=$('#project-file-under');
@@ -3586,9 +3590,17 @@ function renderProjectView():void{
   // So the view answers "what do I have", for which a worked example counts, and claims a backup
   // state only where there is one to claim. Two different questions, and only the second is about
   // storage.
+  // THE PROJECT THAT IS SELECTED, not every project on the device. The practitioner, 2026-10-23:
+  // *"In the project tab, I should only see the workflows for project that's selected from top
+  // left drop down for projects."* The first version listed all eight, which is the projects
+  // DIALOG rendered in a tab -- the same contents in a new place, which is how twelve surfaces
+  // happened. One dropdown selects, this tab shows what was selected.
   const stored=readProjects();
   const storedIds=new Set(stored.map(p=>p.id));
-  const projects=allProjects();
+  const key=storageKey(workflow);
+  const selectedProject=allProjects().find(p=>p.id===(workflow.projectId
+    ??projectOfWorkflow(key,allProjects())?.id));
+  const projects=selectedProject?[selectedProject]:[];
   const saved=readSavedWorkflows();
   const current=storageKey(workflow);
   // ZERO IS NOT THE SAME AS NOT YET OPENED. This counted `saved[key]`, which is what is stored on
@@ -3603,15 +3615,13 @@ function renderProjectView():void{
     :key in saved?((saved[key] as {nodes?:unknown[]})?.nodes??[]).length:null;
   const widgetText=(count:number|null):string=>count===null?'not opened on this device'
     :count===1?'1 widget':`${count} widgets`;
-  $('#project-view-count').textContent=projects.length?String(projects.length):'';
-  if(!projects.length){
-    list.innerHTML='';
-    const empty=document.createElement('p');empty.className='muted';
-    empty.textContent='No projects yet. "New project" files the workflow you have open under one, '
-      +'and everything filed under a project can be backed up in one act.';
-    list.append(empty);
-    return;
-  }
+  $('#project-view-title').textContent=selectedProject?selectedProject.name:'No project selected';
+  $('#project-view-subtitle').textContent=selectedProject
+    ?'What this project holds, and whether a copy of it exists anywhere else.'
+    :'Choose one from the Project list at the top left, or file the workflow you have open under a new one.';
+  $('#project-view-count').textContent=selectedProject
+    ?String(selectedProject.workflows.length):'';
+  if(!projects.length){list.innerHTML='';return;}
   list.innerHTML='';
   for(const project of projects){
     const tracked=storedIds.has(project.id);

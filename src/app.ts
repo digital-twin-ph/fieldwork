@@ -805,6 +805,19 @@ function render(){
   if(exampleKey(workflow)==='snow-geoprivacy')$('#run-summary').textContent=result?'Private project and run evidence contain original coordinates. Derived tabs are educational; review before sharing.':'Private source coordinates are included in this workflow.';
   ($('#project-select') as HTMLSelectElement).disabled=busy;($('#workflow-select') as HTMLSelectElement).disabled=busy;document.body.classList.toggle('busy',busy);flow?.setBusy(busy);renderInspector();
   $('#run-button').disabled=busy||!workflow.nodes.length;$('#new-workflow').disabled=busy;($('#add-workflow') as HTMLButtonElement).disabled=busy;$('#reset-example').disabled=busy||!workflow.nodes.length;$('#tidy-button').disabled=busy||workflow.nodes.length<2;
+  // EVERY CONTROL WHOSE HANDLER OPENS WITH `if(busy)return` BELONGS ON THIS LINE, and the three
+  // that open the project dialog did not. A guard that returns silently is invisible: the click
+  // lands, nothing happens, no message appears, and the run that swallowed it is in a different
+  // part of the screen from the button that stopped working. Found 2026-10-24 in a Linux WebKit
+  // container, where a heavy example is still running when the practitioner reaches New project;
+  // on a faster machine the run finishes first and the control looks fine. The defect is older
+  // than the test that caught it -- experiment 135.
+  //
+  // Disabled rather than queued, at the practitioner's decision: a control that greys out says the
+  // application is busy, where one that remembers a click acts on an intention formed before the
+  // run finished.
+  for(const id of ['#new-project','#project-new','#blank-project','#backup-button'])
+    ($(id) as HTMLButtonElement).disabled=busy;
   if(!workflow.nodes.length)$('#workflow-state').textContent='Add Study area to begin';
   renderN3();
 }
@@ -3797,7 +3810,9 @@ function renderProjectView():void{
     const actions=document.createElement('p');actions.className='project-view-actions';
     if(tracked){
       const backup=document.createElement('button');
-      backup.className='button small';backup.dataset.exportProject=project.id;
+      // Same class: exportProject opens with the same guard, and this button is rebuilt by
+      // render() on every state change, so it carries the state rather than being set once.
+      backup.className='button small';backup.dataset.exportProject=project.id;backup.disabled=busy;
       backup.textContent='\u2193 Back up';
       const remove=document.createElement('button');
       remove.className='button small danger';remove.dataset.deleteProject=project.id;

@@ -3,8 +3,8 @@
 _Created 2026-10-24 · Updated 2026-10-24_
 
 **Status:** tried — the container runs the suite on Linux WebKit, reproduced both standing CI
-failures on the first attempt, and found one of them to be a defect in the application rather than
-in the test.
+failures on the first attempt, found one of them to be a defect in the application rather than in
+the test, and both are fixed and verified in it.
 
 ## What was asked
 
@@ -68,6 +68,44 @@ because the container is `--rm` and reading them is the whole reason for running
 
 `FIELDWORK_DOCKER_CPUS` constrains the container. It is there because the first reading above was
 the resource one, and the two causes have to be separable by something other than argument.
+
+## What was fixed, and what the fixing found
+
+**The control is disabled while a run is in flight**, at the practitioner's decision on
+2026-10-24: a control that greys out says the application is busy, where one that remembers the
+click would act on an intention formed before the run finished. Four controls needed it —
+`#new-project`, `#project-new` and `#blank-project`, which all open the project dialog, and
+`#backup-button` — plus the Back up button on each project row, which is rebuilt on every render.
+
+The line they were missing from already existed. `#run-button`, `#new-workflow`, `#add-workflow`,
+`#reset-example` and `#tidy-button` have been disabled on `busy` all along, and `#delete-workflow`
+is covered separately by `remove.disabled=busy||published`. **The defect was an omission from an
+established pattern, not a missing idea**, which is why it survived: nothing about the code looks
+wrong, and the control only misbehaves while a run happens to be in flight.
+
+Surveyed, since one omission suggests others: of the handlers opening with the busy guard, the five
+controls above were uncovered and the rest were already disabled. `deleteProject` carries no guard
+at all and is left alone — whether deleting a project during a run should be refused is a different
+question, recorded in TODO.md rather than decided here.
+
+**The second failure was not fixed by the first, and the run that appeared to fix it was luck.**
+After the control was disabled, `evidence.browser.mjs` passed 12 of 12 — including the test that
+had nothing to do with the control. Repeating that one test five times failed once. It is a
+separate race, in the test: a fresh context has not necessarily written its initial state when the
+page is ready, so the baseline read returns `null` and compares unequal to the state the
+application saves a moment later. The test now waits for that write before taking its baseline.
+
+## Validation record, 2026-10-24
+
+Run in the container on Linux WebKit, arm64, Playwright 1.64.0, Node 24.21.0:
+
+| | Before | After |
+| --- | --- | --- |
+| `workflow-housekeeping.browser.mjs` (7 tests × 5) | 1 test failed every run | 35 passed |
+| `evidence.browser.mjs:80` (× 5) | 1 of 5 failed | 5 passed |
+
+A single green run of the second test would not have established anything, and did not: it took
+the repeat to show the first pass was luck.
 
 ## The cost
 

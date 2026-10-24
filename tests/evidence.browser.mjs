@@ -13,6 +13,16 @@ const pdf=Buffer.from('%PDF-1.4\nSynthetic census reference for testing\n%%EOF')
 const hash=createHash('sha256').update(pdf).digest('hex');
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const refs=async(page,id='observations')=>(await saved(page)).nodes.find(n=>n.id===id).references||[];
+// A FRESH CONTEXT HAS NOT NECESSARILY WRITTEN ITS INITIAL STATE when the page is ready, so a
+// baseline read straight after `goto` can be null and then compare unequal to the state the
+// application saves a moment later -- through no fault of whatever the test is exercising in
+// between. The assertion says "unchanged" and would have meant "still null". Found 2026-10-24 on
+// Linux WebKit, where the write lands later: one run in five. Experiment 135.
+const persisted=async page=>{
+  await expect.poll(async()=>(await saved(page))!==null,
+    {timeout:15000,message:'the application never persisted its initial workflow'}).toBe(true);
+  return saved(page);
+};
 const upload=(page,buffer)=>page.locator('#workflow-file').setInputFiles({name:'workflow.json',mimeType:'application/json',buffer});
 const open=async(page,id='observations')=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"]`).click();await page.locator('#manage-references').click();};
 // The export controls moved inside the Back up dialog on 2026-10-23: one control named for
@@ -80,5 +90,5 @@ test('invalid uploads, unsafe URLs and persistence failure leave an obvious reco
 test('tampered bundles and incomplete reference-only imports preserve the current workflow',async({page,browser,baseURL})=>{
   await addPDF(page);await page.locator('#evidence-close').click();const bundle=JSON.parse(await download(page,'#export-button')),before=await saved(page);
   const changed=Buffer.from(bundle.attachments[0].dataBase64,'base64');changed[15]^=1;bundle.attachments[0].dataBase64=changed.toString('base64');await upload(page,Buffer.from(JSON.stringify(bundle)));await expect(page.locator('#toast')).toContainText('checksum');assert.deepEqual(await saved(page),before);
-  const fresh=await browser.newContext({baseURL});try{const other=await fresh.newPage();await other.goto('/?example=blank');const original=await saved(other);await upload(other,Buffer.from(JSON.stringify(bundle.workflow)));await expect(other.locator('#toast')).toContainText('PDF unavailable');assert.deepEqual(await saved(other),original);}finally{await fresh.close();}
+  const fresh=await browser.newContext({baseURL});try{const other=await fresh.newPage();await other.goto('/?example=blank');const original=await persisted(other);await upload(other,Buffer.from(JSON.stringify(bundle.workflow)));await expect(other.locator('#toast')).toContainText('PDF unavailable');assert.deepEqual(await saved(other),original);}finally{await fresh.close();}
 });

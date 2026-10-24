@@ -40,7 +40,15 @@ test('the widget catalog shows identities, digests and independent checks, and w
   await expect(row.locator('[data-parity]')).toHaveText('agrees');
 
   // A partial result is shown as partial rather than rounded up to a pass.
-  await expect(dialog.locator('tr[data-widget="clip_raster"] [data-parity]')).toHaveText('partial');
+  // "partial · earlier release" since 2026-10-23, and the suffix is the ledger working rather than
+  // a stale expectation. clip_raster's parity covers 1.0.0; bumping it to 1.1.0 for a node label
+  // field made that evidence older than the release it describes, and the catalog says so.
+  //
+  // Worth seeing for what it costs: the bump could not have changed the clipping the parity run
+  // measured, and parity is keyed to a version string, so a cosmetic release invalidates
+  // substantive evidence. Re-establishing it needs a run in the validation lab, not an edit here.
+  // validate:widgets lists it beside access_policy and xpert, which are stale for the same reason.
+  await expect(dialog.locator('tr[data-widget="clip_raster"] [data-parity]')).toHaveText('partial · earlier release');
   // An unchecked widget says so plainly. The widget is chosen from parity.json at run time
   // rather than named here: this assertion was written against `voronoi` and went stale the day
   // voronoi gained a check, failing on a coverage increase rather than on a defect.

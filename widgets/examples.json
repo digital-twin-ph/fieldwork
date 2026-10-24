@@ -16,7 +16,7 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "d3004ea872921629ec6cb6054c624a60ccc35582",
+      "commit": "a5170b5c397ce7e983e59045dbd2ed457de3dc20",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause",
@@ -25,16 +25,21 @@
       },
       "description": "Four tables and a georeferenced map. Deaths per 10,000 houses for two water companies whose mains ran down the same streets, the 32 sub-districts behind that summary -- with an 1851 population denominator, deaths attributed per sub-district to each company, to pump-wells and to the Thames, and deaths in both 1849 and 1854 across Lambeth moving its intake upstream -- and Snow's Map 2 placed in WGS84 with its three water-supply zones traced from it.",
       "carries": {
-        "workflow": false,
+        "workflow": true,
         "data": true,
         "geography": true
       },
-      "notYet": "No Fieldwork workflow bundle yet. The widget gap is closed and the geography is here; what remains is the workflow document itself.",
+      "notYet": "Fieldwork cannot read the geography this example carries. There is no polygon input widget and nothing produces polygons from a table, so geo/sub-districts-csds.geojson, the georeferenced plate and the traced supply zones cannot be brought onto a canvas or joined to the figures. The workflow is therefore tabular.",
       "files": [
         {
+          "path": "fieldwork-workflow.json.gz",
+          "sha256": "a69a31dfbec6847304210aa28162e162a2e7f1697655f984cd72d2ad3ae7fcdf",
+          "bytes": 2169
+        },
+        {
           "path": "README.md",
-          "sha256": "b854d76253ee5474a8c1b84094c2f0e6da3c1f94a2cef6dea5f681337aff4b8f",
-          "bytes": 16145
+          "sha256": "ab33b338a0659f9a66f43cee42ed0ba9344f8783f3afe3caa12301fbfdb30de6",
+          "bytes": 17494
         },
         {
           "path": "NOTICE.txt",
@@ -48,8 +53,8 @@
         },
         {
           "path": "provenance.json",
-          "sha256": "86b024adbed4d28a3253f5bafa6b221851ff7816c471bcffd4f2bf7c9e77e3be",
-          "bytes": 6399
+          "sha256": "d722b56c178d99d267adf16827e0d070025cefe60c424fbcad500ca137b78f2f",
+          "bytes": 6560
         },
         {
           "path": "data/table-ix-first-seven-weeks.csv",

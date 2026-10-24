@@ -16,12 +16,12 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "94d698ecb4c411ee89f8ec896ad7da2c32b0e696",
+      "commit": "d3004ea872921629ec6cb6054c624a60ccc35582",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
-        "data": "CC0-1.0",
+        "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause",
         "source": "Public domain. John Snow, On the Mode of Communication of Cholera, 1855.",
-        "note": "Why this is recorded per example rather than assumed: the mechanism exists so an example may carry terms this project could not adopt. Here the terms are none, because the figures were transcribed from an 1855 publication rather than from HistData (GPL) or causaldata (MIT)."
+        "note": "Why this is recorded per example rather than assumed: the mechanism exists so an example may carry terms this project could not adopt. Here the terms are none, because the figures were transcribed from an 1855 publication rather than from HistData (GPL) or causaldata (MIT). One file is an exception and is named in the licence field: the sub-district polygons are redistributed under BSD-2-Clause, which asks for attribution and does not restrict who may receive a map derived from them. That is why this example can carry them where the UK Data Service's sub-district shapefile, whose licence reaches derived datasets, could not be carried by anyone."
       },
       "description": "Four tables and a georeferenced map. Deaths per 10,000 houses for two water companies whose mains ran down the same streets, the 32 sub-districts behind that summary -- with an 1851 population denominator, deaths attributed per sub-district to each company, to pump-wells and to the Thames, and deaths in both 1849 and 1854 across Lambeth moving its intake upstream -- and Snow's Map 2 placed in WGS84 with its three water-supply zones traced from it.",
       "carries": {
@@ -33,13 +33,13 @@
       "files": [
         {
           "path": "README.md",
-          "sha256": "3fb9ed30bc33f360f55d2e745f3dd7b8a1fe1a79fd7998844f59c81aa7d92951",
-          "bytes": 10834
+          "sha256": "b854d76253ee5474a8c1b84094c2f0e6da3c1f94a2cef6dea5f681337aff4b8f",
+          "bytes": 16145
         },
         {
           "path": "NOTICE.txt",
-          "sha256": "34dcb1856a3713ae6474543e9051efb456ffa65b1f6ee1f5cf26e05affe6c1e9",
-          "bytes": 1558
+          "sha256": "cabfd463e5a70d30e8cbbdc5de40fa52ffffacabdec9fd450d5dfca28662ffd8",
+          "bytes": 4120
         },
         {
           "path": "LICENSE",
@@ -90,6 +90,11 @@
           "path": "geo/map2-large.jgw",
           "sha256": "813e3edb847f4443c6d0caab7bde56f04a03b57ea73b38137d2fd8f58acc007f",
           "bytes": 67
+        },
+        {
+          "path": "geo/sub-districts-csds.geojson",
+          "sha256": "8fb2a298458dd2b1b08fc39447d2ca51419c252e14b0e7cf1e7062a588ba0ec3",
+          "bytes": 120806
         }
       ]
     }

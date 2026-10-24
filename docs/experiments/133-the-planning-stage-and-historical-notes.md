@@ -125,17 +125,19 @@ to the outputs that evidence it is what makes assurance expressible at all**: a 
 *"was this made under conditions I would accept?"* is asking it of a claim, and there is
 currently no object in this application that IS a claim.
 
-## Three things at once, which is why it is worth the risk
+## Four things at once, which is why it is worth the risk
 
 The practitioner, on what the frame would settle: *"Then we will have hit three birds with one
 stone -- story map which is communication stage, planning, and the integrating project/workflow
-into that framework."*
+into that framework."* And then, counting again: *"Actually 4 because this is an imported worked
+example project."*
 
 | | Its state before this | What the frame gives it |
 | --- | --- | --- |
 | **Communication stage** | `docs/glossary.md` lists *"the communication layer and its products — reports, story maps, dashboards"* among the terms **not yet defined**, and [17](17-workflow-publication-products.md) wants them as end products | a structure to define it as, rather than a format to render into |
 | **Planning** | proposed in [27](27-workflow-learning-and-gamification.md), never built, with no reason to build it beyond note-keeping | a product at the end of it, so planning is the first act of making the thing rather than a diary beside it |
 | **Project and workflow** | [131](131-project-and-workflow-lifecycles.md) settled what they ARE -- a project is one investigation, its workflows are the questions asked inside it -- and consolidated twelve surfaces into two | a reason for the hierarchy to exist beyond filing: the investigation is the story's subject and its questions are the sections' evidence |
+| **An example that lives in a repository** | [127](127-examples-as-repositories.md) built the mechanism and `example-1855-cholera-south-london` carries data, provenance and **no workflow bundle**, because `rate` cannot take a table | something worth carrying: an investigation with its questions, its sections and its notes, imported as one thing |
 
 The third is the one that was not obvious. 131 spent a day deciding what a project is and where
 it is managed, and answered both without ever saying what a project is FOR. **The structure the
@@ -147,6 +149,30 @@ frame fits, and the reason to suspect it does.
 It also explains a loose end from 131. A project's `subject` is "what this investigation is
 about", written once and read nowhere except the Project tab. In this frame the subject is the
 story's premise, and the sections are what is claimed about it.
+
+### What the fourth one constrains
+
+The other three could be built as interface state. The fourth cannot. An example that lives in a
+repository is **fetched, verified against a digest, and imported** -- so if a story's sections and
+its historical notes are to arrive with it, they are part of the document, not part of the screen.
+
+That is a sharper requirement than it first reads:
+
+- sections and notes belong in the **project document**, beside the workflows, where they are
+  exported, digested and imported like everything else;
+- a section naming an output has to name it in a way that survives the trip, which means the same
+  identity discipline the payload digests already have -- a reference that means nothing on
+  another device is the bug this project found in an imported project carrying a downloaded
+  network, where a dehydrated reference pointed at nothing and the workflow refused on the next
+  reload;
+- and the licence question [127](127-examples-as-repositories.md) made per-example now covers the
+  notes too. A historical note is writing, with an author and terms, carried in a repository whose
+  terms are declared. The South London repository is CC0 precisely so nothing it carries inherits
+  a restriction.
+
+So the fourth bird is not an extra payoff; it is the constraint that keeps the other three honest.
+A story map built as interface state would be a view that cannot leave the device it was made on,
+which for a practitioner whose work is reviewed elsewhere is the same as not existing.
 
 ## The danger, which is the real question
 

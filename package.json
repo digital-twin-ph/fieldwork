@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node server.mjs",
     "build": "npm run typecheck && node build.mjs",
+    "dev": "node server.mjs",
     "test": "npm run build && node scripts/test-unit.mjs",
     "test:browser": "playwright test",
     "test:report": "playwright show-report",

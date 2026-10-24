@@ -562,6 +562,7 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .project-view-state{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .project-view-state[data-safety="at-risk"]{color:var(--warn-text,#b4541a)}
 .project-view-state[data-safety="backed-up"]{color:var(--muted);font-weight:500}
+.project-view-state[data-safety="built-in"]{color:var(--muted);font-weight:500}
 .project-view-actions{display:flex;gap:8px;margin:10px 0 6px}
 .project-view-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
   padding:6px 0;border-top:1px solid var(--line)}

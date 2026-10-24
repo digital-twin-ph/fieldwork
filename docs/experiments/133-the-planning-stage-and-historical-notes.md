@@ -125,6 +125,29 @@ to the outputs that evidence it is what makes assurance expressible at all**: a 
 *"was this made under conditions I would accept?"* is asking it of a claim, and there is
 currently no object in this application that IS a claim.
 
+## Three things at once, which is why it is worth the risk
+
+The practitioner, on what the frame would settle: *"Then we will have hit three birds with one
+stone -- story map which is communication stage, planning, and the integrating project/workflow
+into that framework."*
+
+| | Its state before this | What the frame gives it |
+| --- | --- | --- |
+| **Communication stage** | `docs/glossary.md` lists *"the communication layer and its products — reports, story maps, dashboards"* among the terms **not yet defined**, and [17](17-workflow-publication-products.md) wants them as end products | a structure to define it as, rather than a format to render into |
+| **Planning** | proposed in [27](27-workflow-learning-and-gamification.md), never built, with no reason to build it beyond note-keeping | a product at the end of it, so planning is the first act of making the thing rather than a diary beside it |
+| **Project and workflow** | [131](131-project-and-workflow-lifecycles.md) settled what they ARE -- a project is one investigation, its workflows are the questions asked inside it -- and consolidated twelve surfaces into two | a reason for the hierarchy to exist beyond filing: the investigation is the story's subject and its questions are the sections' evidence |
+
+The third is the one that was not obvious. 131 spent a day deciding what a project is and where
+it is managed, and answered both without ever saying what a project is FOR. **The structure the
+story map needs is the one already built**: a project with a subject, holding workflows that each
+answer one question. A section binds to the output of a question asked inside the investigation
+it belongs to. Nothing new has to be invented to hold them -- which is the test of whether the
+frame fits, and the reason to suspect it does.
+
+It also explains a loose end from 131. A project's `subject` is "what this investigation is
+about", written once and read nowhere except the Project tab. In this frame the subject is the
+story's premise, and the sections are what is claimed about it.
+
 ## The danger, which is the real question
 
 Writing the story first is how evidence gets fitted to a narrative. That is not a hypothetical

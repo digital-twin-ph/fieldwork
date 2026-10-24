@@ -44,6 +44,30 @@ not a practitioner in the field.
 
 ## Urgent
 
+**Measure OPFS against IndexedDB for large rasters, before changing anything.** A raster asset
+currently goes through `storePDFs` into `evidence-storage.ts` as a single IndexedDB value. That is
+fine for the 5.3 MB Snow plate and is the wrong shape for WorldPop: the national extracts measured
+on 2026-10-24 are 293 MB and 1.18 GB, and an IndexedDB `put` of that size has to hold the whole
+buffer in memory, while reading a window of the GeoTIFF has to pull it back out whole. OPFS would
+allow a streamed write and a ranged read through `createSyncAccessHandle().read(buf, {at})`, which
+is what geotiff.js wants.
+
+That is an argument, not a measurement, and it is not a reason to rebuild storage yet. What would
+settle it: write one 293 MB file both ways in both engines, and record whether the write succeeds
+at all, the wall time, whether a ranged read works without materialising the file, and peak memory
+where the engine reports it. Chromium offers `measureUserAgentSpecificMemory`; WebKit does not, so
+that column will be partial and should say so. The Linux WebKit container
+([experiment 135](experiments/135-linux-webkit-in-a-container.md)) is the instrument for half of
+it. Run it at several sizes rather than one, because the useful result is where IndexedDB starts
+to fail rather than how fast it is when it does not.
+
+Constraints that apply whatever the measurement says: `createSyncAccessHandle` is worker-only,
+which is no obstacle since three dedicated workers already exist, but raster IO would have to move
+into one. Engine parity cannot be assumed -- handle locking, `flush()`, `getSize()` and error names
+are reported to differ between Firefox and Safari -- and Safari still lacks `createWritable`, so
+sync access handles rather than writable streams. Fieldwork gates on WebKit because of Tauri, so
+this is tested rather than read off a support table.
+
 **Should deleting a project be refused while a workflow is running?** `deleteProject` carries no
 busy guard, unlike every neighbouring handler. Found 2026-10-24 while surveying the controls that
 silently swallow a click during a run ([experiment

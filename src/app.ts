@@ -3682,7 +3682,8 @@ function renderProjectStorage():void{
       ?`<p class="muted">The browser reports this site using ${size(siteEstimate.usage)} of about `
         +`${(siteEstimate.quota/1e9).toFixed(1)} GB it may use — its own rounded accounting, which need `
         +`not agree with the figures above.</p>`
-      :`<p class="muted">This browser does not report a storage estimate, so how much room remains for the data store is unknown here.</p>`);
+      :`<p class="muted">This browser does not report a storage estimate, so how much room remains for the data store is unknown here.</p>`)
+    +`<p class="muted">${esc(persistenceNote())}</p>`;
 }
 
 /** WORKFLOWS THAT BELONG TO NO INVESTIGATION, which is where a deleted project leaves its own.
@@ -3729,6 +3730,7 @@ function renderProjectView():void{
   // asks what a project holds, so it is where the answer belongs.
   renderProjectStorage();
   void refreshSiteEstimate().then(()=>{if(currentView==='project')renderProjectStorage();});
+  void requestPersistence().then(()=>{if(currentView==='project')renderProjectStorage();});
   renderUnfiledList(readSavedWorkflows(),storageKey(workflow));
   const list=$('#project-view-list');
   // EVERY PROJECT, NOT ONLY THE STORED ONES. The first version listed `readProjects()`, which is
@@ -3963,6 +3965,34 @@ function unreferencedPayloads():{digests:string[];bytes:number}{
   const digests=Object.keys(held).filter(digest=>!referenced.has(digest));
   return {digests,bytes:digests.reduce((sum,digest)=>sum+payloadBytes(held[digest]),0)};
 }
+/** BEST-EFFORT STORAGE IS EVICTABLE, AND THIS APPLICATION'S DATA IS NOT CHEAP TO REPLACE.
+ *
+ *  Without a granted persistence request, everything this site keeps -- IndexedDB payloads, the
+ *  Cache Storage holding the offline application, localStorage -- is "best-effort" and the browser
+ *  may evict it under storage pressure. That is survivable for a cached stylesheet and not for a
+ *  WorldPop raster: the national extracts measured on 2026-10-24 are 293 MB and 1.18 GB, and at
+ *  the 80 kB/s that download sustained, the larger one is about four hours. Losing it to eviction
+ *  in the field is a worse failure than any slow save.
+ *
+ *  The request is asked once, on load, and the ANSWER IS RECORDED RATHER THAN ASSUMED. Browsers
+ *  decide it differently -- some grant it silently to an installed application, some to a site
+ *  with engagement, some refuse -- so this never reports data as safe. It reports what the browser
+ *  said. A refusal is not an error and is not surfaced as one: the application works either way,
+ *  and the practitioner is told which they have when they ask about storage. */
+let persistence:'persisted'|'best-effort'|'unsupported'|'unknown'='unknown';
+async function requestPersistence():Promise<void>{
+  try{
+    if(!navigator.storage?.persist){persistence='unsupported';return;}
+    persistence=await navigator.storage.persisted?.()||await navigator.storage.persist()
+      ?'persisted':'best-effort';
+  }catch{persistence='unknown';}
+}
+const persistenceNote=():string=>({
+  persisted:'The browser has granted persistent storage, so this site\u2019s data is not evicted to reclaim space.',
+  'best-effort':'Storage here is best-effort: the browser may evict this site\u2019s data under storage pressure. Downloads that took hours are not guaranteed to survive. Installing the application, or using it more, usually earns persistence.',
+  unsupported:'This browser does not offer persistent storage, so its data may be evicted under storage pressure.',
+  unknown:'Whether this browser will keep this site\u2019s data under storage pressure is not known.',
+}[persistence]);
 let siteEstimate:{usage:number;quota:number}|null=null;
 async function refreshSiteEstimate():Promise<void>{
   try{

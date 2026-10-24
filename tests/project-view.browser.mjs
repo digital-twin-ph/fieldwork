@@ -14,11 +14,13 @@ test('the Project view is a tab, and counts what each project holds',async({page
   await page.goto('/?example=blank');
   await expect(page.locator('[data-view="project"]')).toBeVisible();
 
-  // The worked examples are always there, so the empty state is unreachable in practice and is
-  // not asserted. What matters is that the tab opens and lists something.
+  // A canvas filed under nothing selects nothing, and the tab says so rather than listing
+  // every project on the device.
   await page.locator('[data-view="project"]').click();
   await expect(page.locator('#project-view')).toBeVisible();
-  await expect(page.locator('.project-view-block').first()).toBeVisible();
+  await expect(page.locator('#project-view-title')).toHaveText('No project selected');
+  await expect(page.locator('.project-view-block')).toHaveCount(0);
+  await expect(page.locator('#project-unfiled')).toBeVisible();
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#new-project').click();
@@ -28,8 +30,8 @@ test('the Project view is a tab, and counts what each project holds',async({page
   await expect(page.locator('#project-dialog')).toBeHidden();
 
   await page.locator('[data-view="project"]').click();
-  const block=page.locator('.project-view-block',{hasText:'Ituri health zones'});
-  await expect(block).toBeVisible();
+  const block=page.locator('.project-view-block');
+  await expect(page.locator('#project-view-title')).toHaveText('Ituri health zones');
   await expect(block).toContainText('Ebola response denominators');
   await expect(block).toContainText('1 workflow');
   // The widget count is the canvas's own, and the blank canvas carries widgets.
@@ -53,12 +55,10 @@ test('a project can be backed up from the Project view, and says so afterwards',
   await page.locator('#project-subject-input').fill('Ituri');
   await page.locator('#project-create').click();
   await page.locator('[data-view="project"]').click();
-  const state=page.locator('.project-view-block',{hasText:'Facilities and networks'})
-    .locator('.project-view-state');
+  const state=page.locator('.project-view-block .project-view-state');
   await expect(state).toHaveText('Not backed up');
   const download=page.waitForEvent('download');
-  await page.locator('.project-view-block',{hasText:'Facilities and networks'})
-    .locator('[data-export-project]').click();
+  await page.locator('.project-view-block [data-export-project]').click();
   await download;
   await expect(state).toHaveText('Backed up');
 });
@@ -80,7 +80,7 @@ test('the breadcrumb names the project and the workflow, and the project leads t
   // A crumb that leads nowhere is a label.
   await page.locator('#project-name').click();
   await expect(page.locator('#project-view')).toBeVisible();
-  await expect(page.locator('.project-view-block',{hasText:'Facilities and networks'})).toBeVisible();
+  await expect(page.locator('#project-view-title')).toHaveText('Facilities and networks');
 });
 
 // EXPERIMENT 131's last control row: `↓ Export`, `Encrypted ZIP` and, in a dialog elsewhere,
@@ -131,13 +131,15 @@ test('Back up is one control, and says which combination does not exist',async({
 // project the rest of the interface was naming, because the view listed only STORED projects --
 // the restriction the header's safety state needs, applied to a view that answers a different
 // question.
-test('the Project view lists a worked example, and does not call it unbacked',async({page})=>{
+test('the Project view shows the selected project, and does not call a worked example unbacked',async({page})=>{
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="project"]').click();
 
-  const block=page.locator('.project-view-block',{hasText:'1854 Cholera Outbreak in London'});
-  await expect(block).toBeVisible();
+  // ONLY the selected project: the dropdown selects, the tab shows what was selected.
+  await expect(page.locator('.project-view-block')).toHaveCount(1);
+  await expect(page.locator('#project-view-title')).toHaveText('1854 Cholera Outbreak in London');
+  const block=page.locator('.project-view-block');
   await expect(block).toContainText('4 workflows');
   // "0 widgets" would be true about storage and false about the project, so an unopened
   // workflow says which question is being answered.

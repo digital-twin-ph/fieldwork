@@ -135,6 +135,16 @@ application rather than your work.
 The equivalents, where you do have developer tools, are a hard reload, Application → Service
 Workers → Unregister, or Application → Storage → Clear site data.
 
+**And check what is serving the page, because the other cache is not Fieldwork's.** Serve the
+directory with `npm run dev`, which runs this repository's own `server.mjs` on port 4173 and sends
+`Cache-Control: no-cache`. A general-purpose static server may not: `http-server` defaults to
+`max-age=3600`, and on 2026-10-23 that hid a new tab in the interface for an hour while the server
+was returning the new file all along. The browser simply never asked. Nothing in Fieldwork can
+correct that — the service worker treats `index.html`, `build/app.js` and `styles.css` as
+network-first precisely so a change reaches you, and a server that tells the browser its copy is
+still fresh defeats that upstream of the application. A hard reload is the one-off fix; `npm run
+dev` is the one that stops it recurring.
+
 ## Retired widgets, and what replaced them
 
 Seven widgets were retired on 2026-10-12. **A retired widget never runs**, so a saved workflow holding

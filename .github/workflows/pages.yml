@@ -110,6 +110,25 @@ jobs:
           # A commit reachable from any branch, which a shallow default-branch clone would miss.
           fetch-depth: 0
           path: validation-lab-checkout
+      # AND THE LESSONS, for the same reason and found the hard way. `validate:dive-deeper` reads
+      # ../dive-deeper/content and refuses when it is absent, so every push to main since
+      # 2026-10-20 has deployed with a red verify: "2 referenced, NONE verified -- dive-deeper is
+      # not checked out beside this repository." The gate passed on the machine it was developed
+      # on, where that repository happens to sit beside this one, and failed on a clean runner --
+      # which is precisely the difference the verify job exists to find, reporting it for three
+      # days before anyone read the log.
+      #
+      # Pinned the same way, because widgets/dive-deeper.json pins a commit under `repository`
+      # and a link verified against whatever the default branch holds today is not verified
+      # against the lesson the ledger claims.
+      - id: deeper
+        run: echo "commit=$(jq -r .repository.commit widgets/dive-deeper.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          repository: digital-twin-ph/dive-deeper
+          ref: ${{ steps.deeper.outputs.commit }}
+          fetch-depth: 0
+          path: dive-deeper-checkout
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
@@ -138,5 +157,7 @@ jobs:
       # repository, so it is moved up one level to where they expect it.
       - name: Place the validation lab beside this repository
         run: mv validation-lab-checkout ../validation-lab
+      - name: Place the lessons beside this repository
+        run: mv dive-deeper-checkout ../dive-deeper
       - name: Type check, build and run regression tests
         run: npm run check

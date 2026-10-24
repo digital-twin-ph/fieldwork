@@ -14,10 +14,11 @@ test('the Project view is a tab, and counts what each project holds',async({page
   await page.goto('/?example=blank');
   await expect(page.locator('[data-view="project"]')).toBeVisible();
 
-  // Empty before anything is filed, and says what filing would do.
+  // The worked examples are always there, so the empty state is unreachable in practice and is
+  // not asserted. What matters is that the tab opens and lists something.
   await page.locator('[data-view="project"]').click();
   await expect(page.locator('#project-view')).toBeVisible();
-  await expect(page.locator('#project-view-list')).toContainText('No projects yet');
+  await expect(page.locator('.project-view-block').first()).toBeVisible();
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#new-project').click();
@@ -27,8 +28,8 @@ test('the Project view is a tab, and counts what each project holds',async({page
   await expect(page.locator('#project-dialog')).toBeHidden();
 
   await page.locator('[data-view="project"]').click();
-  const block=page.locator('.project-view-block').first();
-  await expect(block).toContainText('Ituri health zones');
+  const block=page.locator('.project-view-block',{hasText:'Ituri health zones'});
+  await expect(block).toBeVisible();
   await expect(block).toContainText('Ebola response denominators');
   await expect(block).toContainText('1 workflow');
   // The widget count is the canvas's own, and the blank canvas carries widgets.
@@ -52,10 +53,12 @@ test('a project can be backed up from the Project view, and says so afterwards',
   await page.locator('#project-subject-input').fill('Ituri');
   await page.locator('#project-create').click();
   await page.locator('[data-view="project"]').click();
-  const state=page.locator('.project-view-block .project-view-state').first();
+  const state=page.locator('.project-view-block',{hasText:'Facilities and networks'})
+    .locator('.project-view-state');
   await expect(state).toHaveText('Not backed up');
   const download=page.waitForEvent('download');
-  await page.locator('.project-view-block [data-export-project]').first().click();
+  await page.locator('.project-view-block',{hasText:'Facilities and networks'})
+    .locator('[data-export-project]').click();
   await download;
   await expect(state).toHaveText('Backed up');
 });
@@ -77,7 +80,7 @@ test('the breadcrumb names the project and the workflow, and the project leads t
   // A crumb that leads nowhere is a label.
   await page.locator('#project-name').click();
   await expect(page.locator('#project-view')).toBeVisible();
-  await expect(page.locator('.project-view-block').first()).toContainText('Facilities and networks');
+  await expect(page.locator('.project-view-block',{hasText:'Facilities and networks'})).toBeVisible();
 });
 
 // EXPERIMENT 131's last control row: `↓ Export`, `Encrypted ZIP` and, in a dialog elsewhere,
@@ -120,4 +123,35 @@ test('Back up is one control, and says which combination does not exist',async({
   await download;
   await expect(page.locator('#backup-dialog')).toBeHidden();
   await expect(page.locator('#project-safety')).toHaveText('Backed up');
+});
+
+// THE TAB WAS EMPTY WHERE IT MATTERED MOST. The practitioner, on the Project tab of a canvas
+// whose own breadcrumb read "1854 CHOLERA OUTBREAK IN LONDON" and whose selector read "4
+// workflows": "This is the Projects tab, really nothing to see." It said "No projects yet" over a
+// project the rest of the interface was naming, because the view listed only STORED projects --
+// the restriction the header's safety state needs, applied to a view that answers a different
+// question.
+test('the Project view lists a worked example, and does not call it unbacked',async({page})=>{
+  await page.goto('/?example=snow-voronoi');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="project"]').click();
+
+  const block=page.locator('.project-view-block',{hasText:'1854 Cholera Outbreak in London'});
+  await expect(block).toBeVisible();
+  await expect(block).toContainText('4 workflows');
+  // "0 widgets" would be true about storage and false about the project, so an unopened
+  // workflow says which question is being answered.
+  await expect(block).toContainText('not opened');
+
+  // A worked example ships with the application, so "Not backed up" would be a warning no action
+  // could clear -- and the project export it would point at does not render for one.
+  const state=block.locator('.project-view-state');
+  await expect(state).toHaveText('Ships with the application');
+  await expect(state).toHaveAttribute('data-safety','built-in');
+  await expect(block.locator('[data-export-project]')).toHaveCount(0);
+  await expect(block.locator('[data-delete-project]')).toHaveCount(0);
+
+  // The workflow you have open is still marked, and its siblings are still reachable.
+  await expect(block.locator('.project-view-row')).toHaveCount(4);
+  await expect(block).toContainText('open');
 });

@@ -322,6 +322,35 @@ generic download helper was wrongly made unconditional in the first attempt, whi
 tests that use it for an attached PDF inside the evidence editor -- a reminder that a helper named
 `download` is not a helper named `backUp`.
 
+### The view was empty where it mattered most, 2026-10-23
+
+The practitioner, on the Project tab of a canvas whose own breadcrumb read `1854 CHOLERA OUTBREAK
+IN LONDON` and whose selector read `4 workflows`:
+
+> *"This is the Projects tab, really nothing to see."*
+
+It said **No projects yet** over a project the rest of the interface was naming. The view listed
+`readProjects()`, the stored projects -- the restriction the header's safety state needs, because
+a built-in has no stored record and `exportedAt` can never be written for it. **That reasoning is
+right about the state and wrong about the view.** The two answer different questions: *what do I
+have* counts a worked example, *is there a copy* cannot speak about one. Applying the second's
+restriction to the first emptied the tab in exactly the case a practitioner opens first.
+
+A worked example now reads **Ships with the application** rather than Not backed up, and carries no
+project export or delete, because neither renders for a project that cannot be deleted -- the same
+trap the header fell into first, met a second time one surface along.
+
+And the counts were lying in a quieter way. `widgets()` read the SAVED workflows, so every example
+nobody had opened read `0 widgets` -- "4 workflows · 0 widgets" against the John Snow project,
+whose four workflows are full of them. True about storage, false about the project, which is the
+worse kind of true. Counting the published template instead would be accurate and would build up
+to a dozen example workflows on a tab switch, some of them data-bearing, so the view says **not
+opened on this device** rather than answering the wrong question with a number.
+
+Three tests in this file used `.project-view-block` with `.first()`, which stopped meaning the
+project they had just created once the built-ins were listed. They now select by name. The empty
+state is unreachable while worked examples ship, and is no longer asserted.
+
 ### What is still not built
 
 Size per workflow. It is computable -- `projectWork` already sums payload bytes per project -- and

@@ -3463,13 +3463,36 @@ const payloadCount=():number=>Object.keys(cachedPayloads()).length;
  */
 function renderProjectView():void{
   const list=$('#project-view-list');
+  // EVERY PROJECT, NOT ONLY THE STORED ONES. The first version listed `readProjects()`, which is
+  // the stored ones, because the header's safety state is said only for those -- a built-in has no
+  // stored record, so `exportedAt` can never be written for it. That reasoning is right about the
+  // STATE and was wrong about the VIEW. The practitioner, on the Project tab of a canvas whose
+  // own breadcrumb read "1854 Cholera Outbreak in London" and whose selector read "4 workflows":
+  // *"This is the Projects tab, really nothing to see."* It said "No projects yet" over a project
+  // the rest of the interface was naming, which is worse than empty.
+  //
+  // So the view answers "what do I have", for which a worked example counts, and claims a backup
+  // state only where there is one to claim. Two different questions, and only the second is about
+  // storage.
   const stored=readProjects();
+  const storedIds=new Set(stored.map(p=>p.id));
+  const projects=allProjects();
   const saved=readSavedWorkflows();
   const current=storageKey(workflow);
-  const widgets=(key:string):number=>key===current?workflow.nodes.length
-    :((saved[key] as {nodes?:unknown[]})?.nodes??[]).length;
-  $('#project-view-count').textContent=stored.length?String(stored.length):'';
-  if(!stored.length){
+  // ZERO IS NOT THE SAME AS NOT YET OPENED. This counted `saved[key]`, which is what is stored on
+  // this device, so every worked example nobody has opened read "0 widgets" -- "4 workflows · 0
+  // widgets" against the John Snow project, whose four workflows are full of them. The count was
+  // true about storage and false about the project, which is the worse kind of true.
+  //
+  // Counting the published template instead would be accurate and would build up to a dozen
+  // example workflows on a tab switch, some of them data-bearing, so the honest cheap answer is
+  // to say which question is being answered rather than to answer the wrong one with a number.
+  const held=(key:string):number|null=>key===current?workflow.nodes.length
+    :key in saved?((saved[key] as {nodes?:unknown[]})?.nodes??[]).length:null;
+  const widgetText=(count:number|null):string=>count===null?'not opened on this device'
+    :count===1?'1 widget':`${count} widgets`;
+  $('#project-view-count').textContent=projects.length?String(projects.length):'';
+  if(!projects.length){
     list.innerHTML='';
     const empty=document.createElement('p');empty.className='muted';
     empty.textContent='No projects yet. "New project" files the workflow you have open under one, '
@@ -3478,7 +3501,8 @@ function renderProjectView():void{
     return;
   }
   list.innerHTML='';
-  for(const project of stored){
+  for(const project of projects){
+    const tracked=storedIds.has(project.id);
     const safe=projectSafety(project)==='backed up'&&!exportPredatesWork(project);
     const section=document.createElement('section');
     section.className='project-view-block';
@@ -3486,30 +3510,45 @@ function renderProjectView():void{
     const heading=document.createElement('h3');heading.textContent=project.name;
     const state=document.createElement('span');
     state.className='project-view-state';
-    state.dataset.safety=safe?'backed-up':'at-risk';
-    state.textContent=safe?'Backed up':exportPredatesWork(project)?'Backed up \u00b7 changed since':'Not backed up';
+    // A worked example ships with the application and is restored by Reset example, so "Not backed
+    // up" would be a warning no action could clear -- the same trap the header fell into first.
+    state.dataset.safety=!tracked?'built-in':safe?'backed-up':'at-risk';
+    state.textContent=!tracked?'Ships with the application'
+      :safe?'Backed up':exportPredatesWork(project)?'Backed up \u00b7 changed since':'Not backed up';
     heading.append(' ',state);
     const counts=document.createElement('p');counts.className='muted';
-    const nodes=project.workflows.reduce((n,key)=>n+widgets(key),0);
+    const counted=project.workflows.map(held).filter((n):n is number=>n!==null);
+    const nodes=counted.reduce((n,x)=>n+x,0);
+    const unopened=project.workflows.length-counted.length;
     counts.textContent=`${esc(project.subject||'No subject.')} \u00b7 `
       +`${project.workflows.length===1?'1 workflow':`${project.workflows.length} workflows`} \u00b7 `
-      +`${nodes===1?'1 widget':`${nodes} widgets`}`;
+      +(counted.length?`${nodes===1?'1 widget':`${nodes} widgets`}`:'none opened on this device')
+      +(counted.length&&unopened?` \u00b7 ${unopened} not opened yet`:'');
     section.append(heading,counts);
     const actions=document.createElement('p');actions.className='project-view-actions';
-    const backup=document.createElement('button');
-    backup.className='button small';backup.dataset.exportProject=project.id;
-    backup.textContent='\u2193 Back up';
-    const remove=document.createElement('button');
-    remove.className='button small danger';remove.dataset.deleteProject=project.id;
-    remove.textContent='Delete project';
-    actions.append(backup,remove);section.append(actions);
+    if(tracked){
+      const backup=document.createElement('button');
+      backup.className='button small';backup.dataset.exportProject=project.id;
+      backup.textContent='\u2193 Back up';
+      const remove=document.createElement('button');
+      remove.className='button small danger';remove.dataset.deleteProject=project.id;
+      remove.textContent='Delete project';
+      actions.append(backup,remove);
+    }else{
+      // Its workflows can still be backed up one at a time; the PROJECT cannot, because the
+      // dialog's project export renders only for a project that can be deleted.
+      const note=document.createElement('span');note.className='muted';
+      note.textContent='A worked example. Back up any of its workflows from Back up, or file your '
+        +'own copies under a new project.';
+      actions.append(note);
+    }
+    section.append(actions);
     for(const key of project.workflows){
       const row=document.createElement('div');row.className='project-view-row';
       const name=document.createElement('span');
       name.textContent=(WORKFLOW_LABELS[key]||key)+(key===current?' \u00b7 open':'');
       const count=document.createElement('span');count.className='muted';
-      const held=widgets(key);
-      count.textContent=held===1?'1 widget':`${held} widgets`;
+      count.textContent=widgetText(held(key));
       const open=document.createElement('button');
       open.className='button small';open.dataset.openWorkflow=key;open.textContent='Open';
       open.disabled=key===current;

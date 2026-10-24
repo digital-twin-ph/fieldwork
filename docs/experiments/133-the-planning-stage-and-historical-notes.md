@@ -174,6 +174,39 @@ So the fourth bird is not an extra payoff; it is the constraint that keeps the o
 A story map built as interface state would be a view that cannot leave the device it was made on,
 which for a practitioner whose work is reviewed elsewhere is the same as not existing.
 
+## One per project, because it is the synthesis of its workflows
+
+The practitioner: *"So the story map in essence should provide the synthesis for all of a
+project's workflows."*
+
+That settles the scope, which had been left open. A story map belongs to a **project**, not to a
+workflow. A project is one investigation holding workflows that each answer one question; the
+story map is where those answers are brought together into one account. One per project is
+therefore not a limit imposed on it -- it is what the thing IS.
+
+### And it makes one kind of omission computable
+
+[119](119-can-this-tell-a-story.md) drew the line carefully: *"A map that leaves out the
+inconvenient district still breaks no rule — but a map that leaves out what its own declared
+objective says it is for is, for the first time, something an application could notice."*
+
+Synthesis puts a second case on the computable side of that line. If the story map accounts for
+all of a project's workflows, then **a workflow whose answer appears in no section is visible**.
+Not omission of a fact, which remains uncomputable and always will be. Omission of a question the
+practitioner asked themselves, in this project, and then left out of the account.
+
+The application can already tell the difference between the states that matter here: a workflow
+that is a draft and was never run, one whose results are stale, one that ran and was refused, and
+one that ran and produced an output no section cites. Only the last is an omission, and it is the
+one worth saying out loud -- quietly, as a count beside the sections rather than as an accusation,
+because leaving a question out is often correct and the point is that it should be a decision
+rather than a drift.
+
+This is also the answer to the danger above. The risk of writing the story first is that evidence
+gets fitted to it; the defence is that **synthesis cannot quietly drop the question that did not
+support the story**, because the question is in the project and the project is what the story map
+is of.
+
 ## The danger, which is the real question
 
 Writing the story first is how evidence gets fitted to a narrative. That is not a hypothetical

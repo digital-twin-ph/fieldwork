@@ -42,7 +42,7 @@ const select=async id=>{await page.locator('[data-view="workflow"]').click();awa
   const smaller=bboxPolygon(25.89,-24.7,25.9,-24.68);await expect(page.locator('#result-metrics')).toContainText(formatArea(calculateArea(smaller,'mi2')));
   await select(measureId);await page.locator('#area-unit').selectOption('acre');await run();
   await mkdir('test-results',{recursive:true});await page.screenshot({path:'test-results/area-computation-desktop.png',fullPage:true});
-  const exported=page.waitForEvent('download');await page.locator('#export-button').click();const workflowBytes=await readFile(await (await exported).path());
+  const exported=page.waitForEvent('download');await page.locator('#backup-button').click();await page.locator('#export-button').click();const workflowBytes=await readFile(await (await exported).path());
   await page.locator('#new-workflow').click();await page.locator('#workflow-file').setInputFiles({name:'saved-area.json',mimeType:'application/json',buffer:workflowBytes});await run();
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();

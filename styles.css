@@ -579,3 +579,11 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .breadcrumb button.crumb:hover,.breadcrumb button.crumb:focus-visible{text-decoration-thickness:2px}
 .breadcrumb .crumb.current{text-transform:none;opacity:.85}
 .breadcrumb .crumb-sep{opacity:.5}
+
+/* BACK UP: one control, the real options inside it. Named for what a practitioner is trying to do
+   rather than for a file format, and the combination that does not exist is stated rather than
+   left to be hunted for. */
+#backup-dialog{min-width:min(460px,92vw)}
+.backup-option{display:flex;flex-direction:column;gap:4px;margin:12px 0}
+.backup-option .button{align-self:flex-start}
+#backup-gap{border-top:1px solid var(--line);padding-top:10px;margin-top:14px}

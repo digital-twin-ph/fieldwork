@@ -3969,9 +3969,42 @@ $('#open-catalog').onclick=showCatalog;
 $('#header-catalog').onclick=showCatalog;
 // Deep link, so the catalog can be pointed at rather than described: ?catalog=1 or #catalog.
 if(new URLSearchParams(location.search).get('catalog')==='1'||location.hash==='#catalog')showCatalog();
-$('#encrypted-export').onclick=()=>{try{openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow);}catch(error){toast(errorMessage(error));}};
+/** ONE BACK UP, with the scope chosen inside it. Experiment 131's last control row: the header
+ *  carried `Export`, `Encrypted ZIP` and, in a dialog elsewhere, `Export project` -- three
+ *  controls for one act, named for their FORMAT rather than for what a practitioner is trying to
+ *  do, which is to not lose their work.
+ *
+ *  It also makes a gap visible that three separate buttons hid. The practitioner, 2026-10-22,
+ *  having looked for it: *"Where is the export to zip for projects?"* and *"So encrypted zip
+ *  description is misleading."* There are three combinations, not four: a project cannot be
+ *  backed up encrypted, because the encrypted package takes one workflow. That is said in the
+ *  dialog rather than left as an option a practitioner hunts for and does not find. */
+function openBackupDialog(){
+  if(busy)return;
+  const project=readProjects().find(p=>p.id===(workflow.projectId
+    ??projectOfWorkflow(storageKey(workflow),readProjects())?.id));
+  const scoped=$('#backup-project');
+  scoped.disabled=!project;
+  $('#backup-project-note').textContent=project
+    ?`Compressed JSON of all ${project.workflows.length===1?'1 workflow':`${project.workflows.length} workflows`} filed under "${project.name}".`
+    :'This workflow is filed under no project, so there is no project to back up. "New project" files it under one.';
+  $('#backup-gap').hidden=!project;
+  $('#backup-dialog').showModal();
+}
+$('#backup-button').onclick=openBackupDialog;
+$('#backup-dialog-close').onclick=()=>$('#backup-dialog').close();
+$('#backup-project').onclick=async()=>{
+  const project=readProjects().find(p=>p.id===(workflow.projectId
+    ??projectOfWorkflow(storageKey(workflow),readProjects())?.id));
+  if(!project)return;
+  $('#backup-dialog').close();
+  await exportProject(project.id);
+};
+$('#encrypted-export').onclick=()=>{try{if($('#backup-dialog').open)$('#backup-dialog').close();
+  openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow);}catch(error){toast(errorMessage(error));}};
 function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
-$('#export-button').onclick=async()=>{try{const exported=await workflowDocument(workflow);const text=JSON.stringify(exported);
+$('#export-button').onclick=async()=>{try{if($('#backup-dialog').open)$('#backup-dialog').close();
+  const exported=await workflowDocument(workflow);const text=JSON.stringify(exported);
   const name=exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json.gz':'fieldwork-workflow.json.gz';
   downloadBlob(name,await gzipText(text));}catch(error){toast(errorMessage(error));}};$('#import-button').onclick=()=>$('#workflow-file').click();
 $('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>MAX_BUNDLE_BYTES)throw new Error(`Workflow or bundle exceeds the ${(MAX_BUNDLE_BYTES/1e6).toFixed(0)} MB import limit.`);if(file.name.toLowerCase().endsWith('.zip')){openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow,file);control(e).value='';return;}

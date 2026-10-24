@@ -79,3 +79,45 @@ test('the breadcrumb names the project and the workflow, and the project leads t
   await expect(page.locator('#project-view')).toBeVisible();
   await expect(page.locator('.project-view-block').first()).toContainText('Facilities and networks');
 });
+
+// EXPERIMENT 131's last control row: `↓ Export`, `Encrypted ZIP` and, in a dialog elsewhere,
+// `Export project` -- three controls for one act, each named for a FILE FORMAT rather than for
+// what a practitioner is trying to do, which is to not lose their work.
+//
+// Consolidating them also makes a gap visible that three separate buttons hid. The practitioner,
+// 2026-10-22, having gone looking for it: "Where is the export to zip for projects?" and "So
+// encrypted zip description is misleading." There are three real combinations, not four.
+test('Back up is one control, and says which combination does not exist',async({page})=>{
+  await page.goto('/?example=blank');
+  // The header carries one, not three.
+  await expect(page.locator('#backup-button')).toBeVisible();
+  await expect(page.locator('#backup-button')).toHaveText('↓ Back up');
+
+  await page.locator('#backup-button').click();
+  await expect(page.locator('#backup-dialog')).toBeVisible();
+  await expect(page.locator('#export-button')).toBeVisible();
+  await expect(page.locator('#encrypted-export')).toBeVisible();
+
+  // With no project, backing one up is refused with the reason rather than offered and failing.
+  await expect(page.locator('#backup-project')).toBeDisabled();
+  await expect(page.locator('#backup-project-note')).toContainText('filed under no project');
+  await expect(page.locator('#backup-gap')).toBeHidden();
+  await page.locator('#backup-dialog-close').click();
+
+  await page.locator('#new-project').click();
+  await page.locator('#project-name-input').fill('Ituri health zones');
+  await page.locator('#project-subject-input').fill('Ebola response denominators');
+  await page.locator('#project-create').click();
+
+  await page.locator('#backup-button').click();
+  await expect(page.locator('#backup-project')).toBeEnabled();
+  await expect(page.locator('#backup-project-note')).toContainText('Ituri health zones');
+  // The combination that does not exist is stated, not hunted for.
+  await expect(page.locator('#backup-gap')).toContainText('cannot yet be backed up encrypted');
+
+  const download=page.waitForEvent('download');
+  await page.locator('#backup-project').click();
+  await download;
+  await expect(page.locator('#backup-dialog')).toBeHidden();
+  await expect(page.locator('#project-safety')).toHaveText('Backed up');
+});

@@ -92,7 +92,7 @@ test('a table takes point layers directly, searches them and survives a round tr
   await page.getByRole('tab',{name:/Point table$/}).click();
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
-  const download=page.waitForEvent('download');await page.locator('#export-button').click();
+  const download=page.waitForEvent('download');await page.locator('#backup-button').click();await page.locator('#export-button').click();
   const bytes=await readFile(await (await download).path());
   await page.locator('#new-workflow').click();
   await page.locator('#workflow-file').setInputFiles({name:'table-roundtrip.json',mimeType:'application/json',buffer:bytes});

@@ -63,33 +63,41 @@ test('a project can be backed up from the Project view, and says so afterwards',
   await expect(state).toHaveText('Backed up');
 });
 
-// EXPERIMENT 131: the breadcrumb is the shift between the two places, and the first thing in the
-// application to say that a workflow is INSIDE a project. It read `PROJECT NAME / 1 workflow`
-// until 2026-10-23 -- a count where the second crumb should be, and neither half leading
-// anywhere, which is the discoverability fault this whole experiment is about.
-test('the breadcrumb names the project and the workflow, and the project leads to its view',async({page})=>{
+// ONE PLACE TO SELECT, ONE PLACE TO MANAGE. The practitioner, 2026-10-23, after counting the
+// surfaces that showed project information: *"There are too many controls that display project
+// information - tab, drop down. It looks messy."* ... *"Four locations for projects is four
+// locations to remember, friction and cognitive overload."* ... *"I need one location to select
+// projects that's the project drop down top left. then view project info, manage a project and
+// its workflows, and to import projects, export projects, this is the Projects tab."*
+//
+// The breadcrumb this replaces was added the same day and lasted hours: it named the project the
+// dropdown beside it already named.
+test('the project is selected in one place and managed in one place',async({page})=>{
   await page.goto('/?example=blank');
-  await page.locator('#new-project').click();
+  await page.locator('#project-new').click().catch(async()=>{
+    await page.locator('[data-view="project"]').click();
+    await page.locator('#project-new').click();
+  });
   await page.locator('#project-name-input').fill('Facilities and networks');
   await page.locator('#project-subject-input').fill('Ituri');
   await page.locator('#project-create').click();
   await expect(page.locator('#project-dialog')).toBeHidden();
 
-  await expect(page.locator('#project-name')).toHaveText('FACILITIES AND NETWORKS');
-  await expect(page.locator('#workflow-crumb')).not.toBeEmpty();
-  // A crumb that leads nowhere is a label.
-  await page.locator('#project-name').click();
-  await expect(page.locator('#project-view')).toBeVisible();
+  // Selected in the dropdown.
+  await expect(page.locator('#project-select')).toHaveValue(/.+/);
+  // Managed in the tab, and nowhere else: the old doors are gone.
+  await page.locator('[data-view="project"]').click();
   await expect(page.locator('#project-view-title')).toHaveText('Facilities and networks');
+  await expect(page.locator('#project-import')).toBeVisible();
+  await expect(page.locator('#project-name-edit')).toHaveValue('Facilities and networks');
+  await expect(page.locator('#storage-meter')).toBeVisible();
+
+  await expect(page.locator('#projects-button')).toHaveCount(0);
+  await expect(page.locator('#projects-dialog')).toHaveCount(0);
+  await expect(page.locator('#assign-project')).toHaveCount(0);
+  await expect(page.locator('#project-name')).toHaveCount(0);
 });
 
-// EXPERIMENT 131's last control row: `↓ Export`, `Encrypted ZIP` and, in a dialog elsewhere,
-// `Export project` -- three controls for one act, each named for a FILE FORMAT rather than for
-// what a practitioner is trying to do, which is to not lose their work.
-//
-// Consolidating them also makes a gap visible that three separate buttons hid. The practitioner,
-// 2026-10-22, having gone looking for it: "Where is the export to zip for projects?" and "So
-// encrypted zip description is misleading." There are three real combinations, not four.
 test('Back up is one control, and says which combination does not exist',async({page})=>{
   await page.goto('/?example=blank');
   // The header carries one, not three.
@@ -156,4 +164,31 @@ test('the Project view shows the selected project, and does not call a worked ex
   // The workflow you have open is still marked, and its siblings are still reachable.
   await expect(block.locator('.project-view-row')).toHaveCount(4);
   await expect(block).toContainText('open');
+});
+
+// The practitioner, 2026-10-23: "I deleted Raster Project but the workflow persisted." It does,
+// by design -- a project is a grouping, not a container whose deletion destroys what somebody
+// made, and both the confirmation and the toast say so. What was wrong is that the consolidation
+// an hour earlier deleted the only place unfiled workflows were visible, so the announcement was
+// true and unverifiable.
+test('deleting a project leaves its workflows visible, in no project',async({page})=>{
+  page.on('dialog',d=>d.accept());
+  await page.goto('/?example=blank');
+  await page.locator('[data-view="project"]').click();
+  await page.locator('#project-new').click();
+  await page.locator('#project-name-input').fill('Raster Project');
+  await page.locator('#project-subject-input').fill('A raster, clipped');
+  await page.locator('#project-create').click();
+  await page.locator('[data-view="project"]').click();
+  await expect(page.locator('#project-view-title')).toHaveText('Raster Project');
+
+  await page.locator('.project-view-block [data-delete-project]').click();
+
+  // Gone as a project, and its workflow is exactly where the toast says it is.
+  await expect(page.locator('#project-view-title')).toHaveText('No project selected');
+  await expect(page.locator('#project-unfiled-list')).toBeVisible();
+  await expect(page.locator('#project-unfiled-rows')).toContainText('Raster Project · first question');
+  // And it can still be opened and deleted from there, which is what "can still be opened" means.
+  await expect(page.locator('#project-unfiled-rows [data-open-workflow]').first()).toBeVisible();
+  await expect(page.locator('#project-unfiled-rows [data-delete-workflow]').first()).toBeVisible();
 });

@@ -32,13 +32,13 @@ test('the storage figure opens one list of everything on this device, with its c
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="study_area"]').click();
   await page.locator('#storage-status').click();
-  await expect(page.locator('#projects-dialog')).toBeVisible();
+  await expect(page.locator('#project-view')).toBeVisible();
   await expect(page.locator('#storage-meter')).toContainText('of 5.2 MB used');
-  const kivu=page.locator('.project-block').filter({hasText:'Kivu'}).first();
-  await expect(kivu.locator('.workflow-row').first()).toContainText('OPEN');
-  await expect(kivu.locator('.workflow-row').first()).toContainText('KB');
+  const kivu=page.locator('.project-view-block').filter({hasText:'Kivu'}).first();
+  await expect(kivu.locator('.project-view-row').first()).toContainText('open');
+  await expect(kivu.locator('.project-view-row').first()).toContainText('KB');
   // A worked example nobody has opened is not listed: this is what IS on the device.
-  await expect(page.locator('.project-block h3').filter({hasText:'Hagelloch'})).toHaveCount(0);
+  await expect(page.locator('.project-view-block h3').filter({hasText:'Hagelloch'})).toHaveCount(0);
 });
 
 test('a workflow can be deleted from the list without being opened first',async({page})=>{
@@ -52,9 +52,9 @@ test('a workflow can be deleted from the list without being opened first',async(
   const open=await page.locator('#project-title').textContent();
   await page.locator('#storage-status').click();
   page.on('dialog',d=>d.accept());
-  const other=page.locator('.workflow-row').filter({hasText:'first question'}).first();
+  const other=page.locator('.project-view-row').filter({hasText:'first question'}).first();
   await other.locator('button',{hasText:'Delete'}).click();
-  await expect(page.locator('.workflow-row').filter({hasText:'first question'})).toHaveCount(0);
+  await expect(page.locator('.project-view-row').filter({hasText:'first question'})).toHaveCount(0);
   // The canvas is where it was: deleting a row is tidying, not navigating.
   await expect(page.locator('#project-title')).toHaveText(open);
 });
@@ -79,7 +79,7 @@ test('the figure does not push the header off a phone',async({page})=>{
   expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
   // And it still opens the list it opens at any other width.
   await page.locator('#storage-status').click();
-  await expect(page.locator('#projects-dialog')).toBeVisible();
+  await expect(page.locator('#project-view')).toBeVisible();
 });
 
 // A payload is written to the store before the workflow is asked to accept it, so every refusal

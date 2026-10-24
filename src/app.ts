@@ -760,7 +760,13 @@ function render(){
   const url=new URL(location.href);url.searchParams.set('example',exampleKey(workflow));window.history.replaceState(null,'',url);
   renderLibrary($('#node-search').value);
   const old=exampleKey(workflow)==='old-naledi';
-  renderProjectEyebrow();renderProjectOptions();renderProjectDetails();renderAssignProject();renderStorageStatus();renderProjectSafety();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
+  renderProjectOptions();renderProjectDetails();renderStorageStatus();renderProjectSafety();
+  // THE TAB REDRAWS WITH EVERYTHING ELSE. Three bugs today were the same bug: a derived fact
+  // was written and the surface showing it was not told -- the header after an export, the
+  // Project view after an export, the view again after a project was renamed. Scattering a
+  // call at each site is how the fourth one happens, so it renders where every other surface
+  // renders and the individual calls are no longer load-bearing.
+  if(currentView==='project')renderProjectView();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
   // SAID ONLY WHILE IT IS STILL TRUE. The four captions below are set from the example key; the
   // block after them withdraws the two that describe a RECIPE once the canvas no longer matches
   // the published example. The project description and the footer stay: they describe the kind of
@@ -3064,18 +3070,7 @@ $('#blank-add').onclick=()=>$('#node-library [data-add="study_area"]')?.click();
  *
  *  The count now lives where it is useful, in the Project view and in the project's own details,
  *  rather than in the one line that should answer "where am I". */
-function renderProjectEyebrow(){
-  const key=storageKey(workflow),project=workflow.projectId?allProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,allProjects());
-  const crumb=$('#project-name');
-  crumb.textContent=(project?project.name:'No project').toUpperCase();
-  crumb.title=project
-    ?`${project.subject} \u2014 open the Project view`
-    :'A project is one investigation. Create one to say what these workflows are asking about.';
-  // A crumb that leads nowhere is a label. It leads to the Project view, which is the place this
-  // breadcrumb is the shift to and from.
-  crumb.onclick=()=>switchView('project');
-  $('#workflow-crumb').textContent=workflow.name||WORKFLOW_LABELS[key]||key;
-}
+
 /** Create a project, then give it its first workflow.
  *
  *  The practitioner, 2026-10-19: *"the first step is not even study area - it's create a project."*
@@ -3309,7 +3304,8 @@ function deleteProject(id:string){
   if(!writeProjects(readProjects().filter(p=>p.id!==project.id)))return;
   if(workflow.projectId===project.id)change(w=>{delete w.projectId;},{spatial:false});
   render();
-  if($('#projects-dialog').open)renderProjectsList();
+  // The workflows it held are now unfiled, and the section that shows them is in this tab.
+  if(currentView==='project')renderProjectView();
   toast(`Project "${project.name}" deleted. Its workflows are still here, in no project.`);
 }
 /** A key no project holds and nothing is saved under.
@@ -3544,6 +3540,12 @@ function renderUnfiled():void{
   $('#project-file').disabled=!stored.length;
   if(!stored.length)select.innerHTML='<option value="">No projects yet</option>';
 }
+// IMPORT LANDS HERE, because the Project tab is where a project is managed and importing one is
+// the other half of exporting it. It reuses the same file control the header's Import uses: a
+// project document and a workflow document arrive through one input, so a practitioner handed a
+// file does not have to know which of two buttons made it.
+$('#project-import').onclick=()=>$('#workflow-file').click();
+$('#project-new').onclick=openProjectDialog;
 $('#project-file').onclick=()=>{
   const id=$('#project-file-under').value;
   if(!id)return;
@@ -3576,8 +3578,87 @@ $('#project-file-new').onclick=()=>{
  *  done to it -- the same refusal as the timestamps that reordered this plan, where a column
  *  would have been a label over facts the application does not keep.
  */
+/** WHAT THIS DEVICE IS HOLDING, in the tab that asks what a project holds.
+ *
+ *  Recovered on 2026-10-23 from inside `renderProjectsList`, which was deleted with the dialog it
+ *  rendered. Deleting the door deleted the room: the meter kept its element and lost the code that
+ *  filled it, and the tab showed an empty section rather than an error. Found by a test asserting
+ *  it was visible, which an empty div is not.
+ *
+ *  TWO STORES, TWO LINES. The workspace store is small and fills with workflows; the large store
+ *  is where a download's records are kept by digest, and the two are not interchangeable. */
+function renderProjectStorage():void{
+  const used=storageUsedBytes(),share=used/STORAGE_QUOTA_BYTES;
+  const tone=share>=STORAGE_FULL?'full':share>=STORAGE_TIGHT?'tight':'';
+  const mb=(value:number)=>(value/1e6).toFixed(1);
+  const size=(value:number)=>value<1e6?`${Math.max(1,Math.round(value/1024)).toLocaleString('en')} KB`:`${mb(value)} MB`;
+  const held=payloadStoreBytes(),payloads=payloadCount();
+  const large=payloadStoreKind()==='indexeddb';
+  $('#storage-meter').innerHTML=
+    `<h3>Workspace store · workflows and their settings</h3>`
+    +`<div class="storage-bar ${tone}"><i style="width:${Math.round(share*100)}%"></i></div>`
+    +`<p class="muted">${size(used)} of ${mb(STORAGE_QUOTA_BYTES)} MB used, each workflow written twice per save.${
+      share>=STORAGE_TIGHT?' <strong>Export what you want to keep and delete the rest.</strong>':''}</p>`
+    +`<h3>Data store · what a download brought back</h3>`
+    +`<p class="muted">${payloads?`${payloads.toLocaleString('en')} ${payloads===1?'payload':'payloads'}, ${size(held)}`:'Nothing held'}, `
+    +`in ${large?'IndexedDB':'the small store — a download will be refused'}.</p>`
+    +(()=>{const loose=unreferencedPayloads();
+      return loose.digests.length
+        ?`<p class="notice">${loose.digests.length.toLocaleString('en')}, ${size(loose.bytes)}, referred to by no workflow. `
+          +`<button class="button small" id="drop-unreferenced">Remove ${size(loose.bytes)}</button></p>`
+        :'';})()
+    +(siteEstimate
+      ?`<p class="muted">The browser reports this site using ${size(siteEstimate.usage)} of about `
+        +`${(siteEstimate.quota/1e9).toFixed(1)} GB it may use — its own rounded accounting, which need `
+        +`not agree with the figures above.</p>`
+      :`<p class="muted">This browser does not report a storage estimate, so how much room remains for the data store is unknown here.</p>`);
+}
+
+/** WORKFLOWS THAT BELONG TO NO INVESTIGATION, which is where a deleted project leaves its own.
+ *
+ *  The practitioner, 2026-10-23: *"I deleted Raster Project but the workflow persisted."* It did,
+ *  by design and announced twice -- the confirmation says the workflows stay and can still be
+ *  opened, and the toast says they are here, in no project. Keeping work that somebody made is
+ *  the right default; a project is a grouping, not a container whose deletion destroys its
+ *  contents.
+ *
+ *  What was wrong is that the consolidation an hour earlier deleted the only place they were
+ *  visible. The projects dialog had an "In no project" block; removing the dialog removed it, so
+ *  a workflow survived its project into an interface with nowhere to show it. The announcement
+ *  was true and unverifiable, which is worse than either.
+ */
+function renderUnfiledList(saved:Record<string,unknown>,current:string):void{
+  const section=$('#project-unfiled-list');
+  const filed=new Set(allProjects().flatMap(p=>p.workflows));
+  const unfiled=Object.keys(saved).filter(k=>!filed.has(k));
+  section.hidden=!unfiled.length;
+  if(section.hidden)return;
+  const rows=$('#project-unfiled-rows');
+  rows.innerHTML='';
+  for(const key of unfiled){
+    const row=document.createElement('div');row.className='project-view-row';
+    const name=document.createElement('span');
+    name.textContent=((saved[key] as {name?:string})?.name||workflowTitle(key))
+      +(key===current?' \u00b7 open':'');
+    const count=document.createElement('span');count.className='muted';
+    const nodes=((saved[key] as {nodes?:unknown[]})?.nodes??[]).length;
+    count.textContent=nodes===1?'1 widget':`${nodes} widgets`;
+    const open=document.createElement('button');
+    open.className='button small';open.dataset.openWorkflow=key;open.textContent='Open';
+    open.disabled=key===current;
+    const remove=document.createElement('button');
+    remove.className='button small danger';remove.dataset.deleteWorkflow=key;remove.textContent='Delete';
+    row.append(name,count,open,remove);rows.append(row);
+  }
+}
+
 function renderProjectView():void{
   renderUnfiled();
+  // The storage figures moved here from the dialog behind the pill: this is where a practitioner
+  // asks what a project holds, so it is where the answer belongs.
+  renderProjectStorage();
+  void refreshSiteEstimate().then(()=>{if(currentView==='project')renderProjectStorage();});
+  renderUnfiledList(readSavedWorkflows(),storageKey(workflow));
   const list=$('#project-view-list');
   // EVERY PROJECT, NOT ONLY THE STORED ONES. The first version listed `readProjects()`, which is
   // the stored ones, because the header's safety state is said only for those -- a built-in has no
@@ -3611,6 +3692,14 @@ function renderProjectView():void{
   // Counting the published template instead would be accurate and would build up to a dozen
   // example workflows on a tab switch, some of them data-bearing, so the honest cheap answer is
   // to say which question is being answered rather than to answer the wrong one with a number.
+  // WHAT EACH WORKFLOW COSTS, which is the other half of what the practitioner asked this tab to
+  // answer: *"This could be also where I view assets in storage per workflow in that project."*
+  // Recovered from the dialog, where it was the only place a per-workflow size was ever shown.
+  const raw=(()=>{try{return JSON.parse(localStorage.getItem(WORKSPACES)||'{}') as Record<string,unknown>;}
+    catch{return {} as Record<string,unknown>;}})();
+  const storedBytes=(k:string)=>{try{return JSON.stringify(raw[k]??'').length;}catch{return 0;}};
+  const kb=(value:number)=>value>=1e6?`${(value/1e6).toFixed(1)} MB`
+    :`${Math.max(1,Math.round(value/1024)).toLocaleString('en')} KB`;
   const held=(key:string):number|null=>key===current?workflow.nodes.length
     :key in saved?((saved[key] as {nodes?:unknown[]})?.nodes??[]).length:null;
   const widgetText=(count:number|null):string=>count===null?'not opened on this device'
@@ -3668,13 +3757,34 @@ function renderProjectView():void{
     for(const key of project.workflows){
       const row=document.createElement('div');row.className='project-view-row';
       const name=document.createElement('span');
-      name.textContent=(WORKFLOW_LABELS[key]||key)+(key===current?' \u00b7 open':'');
+      // THE WORKFLOW'S NAME, not its storage key. These rows read "kivu/w1" until 2026-10-23: the
+      // dialog they replaced took the name off the saved document and fell back to a title, and
+      // the replacement used the key as its fallback for a project workflow, which has no entry
+      // in WORKFLOW_LABELS -- so every workflow a practitioner made was listed by an identifier
+      // they never chose.
+      name.textContent=((saved[key] as {name?:string}|undefined)?.name
+        ||(key===current?workflow.name:'')||workflowTitle(key))
+        +(key===current?' \u00b7 open':'');
       const count=document.createElement('span');count.className='muted';
-      count.textContent=widgetText(held(key));
+      // THE PRACTITIONER'S OWN QUESTION, 2026-10-23: *"And I want to know if the data are stored
+      // with the project."* `exportProject` already knew -- it says so in a toast after the file
+      // is written, which is the moment it is least useful -- and `unbundledReferences` is the
+      // measure it uses: a node holding a `dataRef` and no inline `data` is a download kept on
+      // this device by reference, so whoever opens the export downloads it again.
+      const document_=key===current?workflow:saved[key] as Workflow|undefined;
+      const byReference=document_?unbundledReferences([document_]):0;
+      const inStore=key in raw;
+      count.textContent=widgetText(held(key))
+        +(inStore?` \u00b7 ${kb(storedBytes(key))}`:'')
+        +(byReference?` \u00b7 ${byReference} ${byReference===1?'dataset':'datasets'} by reference, not in an export`:'');
       const open=document.createElement('button');
       open.className='button small';open.dataset.openWorkflow=key;open.textContent='Open';
       open.disabled=key===current;
-      row.append(name,count,open);section.append(row);
+      const remove=document.createElement('button');
+      remove.className='button small danger';remove.dataset.deleteWorkflow=key;
+      remove.textContent='Delete';
+      remove.disabled=!(key in raw);   // nothing saved under it, so there is nothing to delete
+      row.append(name,count,open,remove);section.append(row);
     }
     list.append(section);
   }
@@ -3755,7 +3865,7 @@ function renderProjectSafety():void{
     ?'A copy of this project exists outside this browser. Open the Workspace to make another.'
     :'No copy of this project exists outside this browser. Open the Workspace to make one.';
   control.dataset.safety=safety==='Backed up'?'backed-up':'at-risk';
-  control.onclick=openProjectsDialog;
+  control.onclick=()=>switchView('project');
   element.append(control);
 }
 
@@ -3824,76 +3934,8 @@ function renderStorageStatus(){
  *  *"I am not sure we have a clear FW projects button"* -- there was a picker and a details
  *  disclosure, and no one place that answers "what is on this device, how big is it, and how do I
  *  get it off". */
-function openProjectsDialog(){
-  if(busy)return;
-  renderProjectsList();
-  // The estimate is asynchronous, so the dialog opens on what is known and redraws when it answers.
-  void refreshSiteEstimate().then(()=>{if($('#projects-dialog').open)renderProjectsList();});
-  $('#projects-dialog').showModal();
-}
-function renderProjectsList(){
-  const saved=readSavedWorkflows(),stored=readProjects(),key=storageKey(workflow);
-  const raw=(()=>{try{return JSON.parse(localStorage.getItem(WORKSPACES)||'{}') as Record<string,unknown>;}catch{return {};}})();
-  const bytes=(k:string)=>{try{return JSON.stringify(raw[k]??'').length;}catch{return 0;}};
-  const used=storageUsedBytes(),share=Math.min(1,used/STORAGE_QUOTA_BYTES);
-  const mb=(value:number)=>(value/1e6).toFixed(1);
-  const kb=(value:number)=>value>=1e6?`${mb(value)} MB`:`${Math.max(1,Math.round(value/1024)).toLocaleString('en')} KB`;
-  const tone=share>=STORAGE_FULL?'full':share>=STORAGE_TIGHT?'tight':'';
-  const size=(value:number)=>value<1e6?`${Math.max(1,Math.round(value/1024)).toLocaleString('en')} KB`:`${mb(value)} MB`;
-  const held=payloadStoreBytes(),payloads=payloadCount();
-  const large=payloadStoreKind()==='indexeddb';
-  // TWO STORES, TWO LINES. The workspace store is small and fills with workflows; the large store
-  // is where a download's records are kept by digest, and the two are not interchangeable.
-  $('#storage-meter').innerHTML=
-    `<h3>Workspace store · workflows and their settings</h3>`
-    +`<div class="storage-bar ${tone}"><i style="width:${Math.round(share*100)}%"></i></div>`
-    +`<p class="muted">${size(used)} of ${mb(STORAGE_QUOTA_BYTES)} MB used, each workflow written twice per save.${
-      share>=STORAGE_TIGHT?' <strong>Export what you want to keep and delete the rest.</strong>':''}</p>`
-    +`<h3>Data store · what a download brought back</h3>`
-    +`<p class="muted">${payloads?`${payloads.toLocaleString('en')} ${payloads===1?'payload':'payloads'}, ${size(held)}`:'Nothing held'}, `
-    +`in ${large?'IndexedDB':'the small store — a download will be refused'}.</p>`
-    +(()=>{const loose=unreferencedPayloads();
-      return loose.digests.length
-        ?`<p class="notice">${loose.digests.length.toLocaleString('en')}, ${size(loose.bytes)}, referred to by no workflow. `
-          +`<button class="button small" id="drop-unreferenced">Remove ${size(loose.bytes)}</button></p>`
-        :'';})()
-    +(siteEstimate
-      ?`<p class="muted">The browser reports this site using ${size(siteEstimate.usage)} of about `
-        +`${(siteEstimate.quota/1e9).toFixed(1)} GB it may use — its own rounded accounting, which need `
-        +`not agree with the figures above.</p>`
-      :`<p class="muted">This browser does not report a storage estimate, so how much room remains for the data store is unknown here.</p>`);
 
-  const row=(k:string)=>{
-    const name=(saved[k] as {name?:string}|undefined)?.name||workflowTitle(k);
-    const held=Object.hasOwn(saved,k);
-    return `<div class="workflow-row"><span>${esc(name)}</span>`
-      +(k===key?'<span class="open-now">OPEN</span>':'')
-      +`<span class="size">${held?kb(bytes(k)):'not saved'}</span>`
-      +`<button class="button small" data-open-workflow="${esc(k)}"${k===key||!held?' disabled':''}>Open</button>`
-      +`<button class="button small" data-export-workflow="${esc(k)}"${held?'':' disabled'}>Export</button>`
-      +`<button class="button small danger" data-delete-workflow="${esc(k)}">Delete</button></div>`;
-  };
-  const block=(title:string,subject:string,keys:readonly string[],deletable:boolean,id?:string)=>{
-    const total=keys.reduce((n,k)=>n+bytes(k),0);
-    return `<section class="project-block"><h3>${esc(title)}</h3>`
-      +`<p>${esc(subject||'No subject.')} · ${keys.length===1?'1 workflow':`${keys.length} workflows`} · ${kb(total)}`
-      +`</p>`
-      +(deletable&&id?`<p class="project-actions-row">`
-        +`<button class="button small" data-export-project="${esc(id)}">↓ Export project</button>`
-        +`<button class="button small" data-delete-project="${esc(id)}">Delete project</button></p>`:'')
-      +(keys.length?keys.map(row).join(''):'<p class="muted">No workflows.</p>')+`</section>`;
-  };
-  const filed=new Set(allProjects().flatMap(p=>p.workflows));
-  const unfiled=Object.keys(saved).filter(k=>!filed.has(k));
-  $('#projects-list').innerHTML=
-    stored.map(p=>block(p.name,p.subject,p.workflows,true,p.id)).join('')
-    +(unfiled.length?block('In no project','Workflows and worked examples that belong to no investigation.',unfiled,false):'')
-    // A worked example appears only once it has been opened and therefore saved: a block saying
-    // "no workflows" for each of seven published projects is a list of what is NOT on this device.
-    +BUILT_IN_PROJECTS.map(p=>({project:p,keys:p.workflows.filter(k=>Object.hasOwn(saved,k))}))
-      .filter(({keys})=>keys.length)
-      .map(({project,keys})=>block(`${project.name} · worked example`,project.subject,keys,false)).join('');
-}
+
 /** A PROJECT AS ONE FILE. *"Where is the export project button?"* -- 2026-10-21. There was none:
  *  Export and Encrypted ZIP are both workflow-scoped, so four workflows about one province moved
  *  as four unrelated files with nothing recording that they belonged together. */
@@ -3980,19 +4022,7 @@ async function importProjectDocument(raw:unknown){
   save();renderProjectOptions();renderLibrary();renderResults();render();switchView('workflow');
   toast(`"${project.name}" imported with ${keys.length} ${keys.length===1?'workflow':'workflows'}.`);
 }
-function renderAssignProject(){
-  const select=$('#assign-project'),key=storageKey(workflow),builtIn=projectOfWorkflow(key,BUILT_IN_PROJECTS),stored=readProjects();
-  select.innerHTML=`<option value="">— No project —</option>`
-    +stored.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')
-    +(builtIn?`<option value="${esc(builtIn.id)}">${esc(builtIn.name)} · worked example</option>`:'');
-  select.value=workflow.projectId||builtIn?.id||'';
-  // A worked example's membership is published, not chosen; so is the absence of a project when
-  // there is none to move into yet.
-  select.disabled=busy||!!builtIn||(!stored.length&&!workflow.projectId);
-  select.title=builtIn?`${builtIn.name} is a worked example: its workflows are published together and are not reassigned here.`
-    :stored.length||workflow.projectId?'Which investigation this workflow belongs to. Optional, and changeable at any time.'
-    :'No projects yet. Create one, then this workflow can join it.';
-}
+
 /** Move the current workflow into a project, or out of every project.
  *
  *  Minting a key is what makes membership possible at all: the workspace map was keyed by a closed
@@ -4011,7 +4041,7 @@ function assignCurrentWorkflow(projectId:string){
   }
   const target=stored.find(p=>p.id===projectId);
   if(target&&key)target.workflows=[...target.workflows,key];
-  if(!writeProjects(stored)){renderAssignProject();return;}
+  if(!writeProjects(stored))return;
   if(key&&key!==previousKey&&isExampleKey(previousKey))
     try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}');delete saved[previousKey];localStorage.setItem(WORKSPACES,JSON.stringify(saved));forgetSavedWorkflows();}
     catch{/* the stale entry is harmless; the minted key is what this workflow is saved under now */}
@@ -4021,7 +4051,6 @@ function assignCurrentWorkflow(projectId:string){
   dirty=true;save();renderProjectOptions();render();
   toast(target?`This workflow is now in "${target.name}".`:'This workflow is in no project.');
 }
-$('#assign-project').onchange=e=>assignCurrentWorkflow(control(e).value);
 $('#new-project').onclick=openProjectDialog;
 $('#add-workflow').onclick=()=>addWorkflowToProject();
 $('#delete-workflow').onclick=deleteCurrentWorkflow;
@@ -4030,16 +4059,17 @@ $('#delete-workflow').onclick=deleteCurrentWorkflow;
 // and found it behind the storage readout in the header: *"That is where I least expect it."*
 // It was the only way in. A readout reads as a status, not as the door to everything saved on
 // this device, and the one time it matters most is the time nobody is hunting for it.
-$('#storage-status').onclick=openProjectsDialog;
-optionalElement('#projects-button')?.addEventListener('click',openProjectsDialog);
-$('#projects-dialog-close').onclick=()=>$('#projects-dialog').close();
+// THE PILL IS A READOUT, NOT A DOOR. It opened the projects dialog, which is how the project
+// level came to be reachable only by recognising a storage figure as a button -- the fault
+// experiment 131 exists to end. What it was a door to is the Project tab, which has its own.
+$('#storage-status').onclick=()=>switchView('project');
 $('#storage-meter').addEventListener('click',async event=>{
   if((event.target as HTMLElement).id!=='drop-unreferenced')return;
   const loose=unreferencedPayloads();
   if(!loose.digests.length)return;
   if(!confirm(`Remove ${loose.digests.length} payload${loose.digests.length===1?'':'s'} that no workflow refers to, freeing about ${(loose.bytes/1e6).toFixed(1)} MB? This cannot be undone.`))return;
   for(const digest of loose.digests)await dropPayload(digest);
-  renderProjectsList();renderStorageStatus();
+  renderStorageStatus();if(currentView==='project')renderProjectView();
   toast(`${loose.digests.length} unreferenced payload${loose.digests.length===1?'':'s'} removed.`);
 });
 // One listener on the list, because its rows are rebuilt on every change inside the dialog.
@@ -4051,10 +4081,10 @@ const projectListAction=async(event:Event)=>{
   const button=(event.target as HTMLElement).closest('button');
   if(!button)return;
   const {openWorkflow,exportWorkflow,deleteWorkflow:removeKey,deleteProject:removeProject}=button.dataset;
-  if(openWorkflow){if($('#projects-dialog').open)$('#projects-dialog').close();loadExample(openWorkflow);return;}
+  if(openWorkflow){loadExample(openWorkflow);return;}
   if(removeProject){deleteProject(removeProject);return;}
   if(button.dataset.exportProject){await exportProject(button.dataset.exportProject);return;}
-  if(removeKey){deleteWorkflow(removeKey);renderProjectsList();renderStorageStatus();
+  if(removeKey){deleteWorkflow(removeKey);renderStorageStatus();
     if(currentView==='project')renderProjectView();return;}
   if(exportWorkflow){
     try{
@@ -4067,16 +4097,19 @@ const projectListAction=async(event:Event)=>{
     }catch(error){toast(errorMessage(error),{tone:'failure'});}
   }
 };
-$('#projects-list').addEventListener('click',projectListAction);
 $('#project-view-list').addEventListener('click',projectListAction);
+// The unfiled rows carry the same data attributes, so they are served by the same handler --
+// one act, one implementation, whichever list it was pressed in.
+$('#project-unfiled-rows').addEventListener('click',projectListAction);
 $('#workflow-template').onchange=e=>{
   const select=control(e) as HTMLSelectElement,source=select.value;
   select.value='';
   if(source)addWorkflowFromTemplate(source);
 };
 // The two titles are controls, and say so: a pointer, a tooltip, and a keyboard route in.
-for(const [id,label,run] of [['#project-name','Rename this project',renameProjectInPlace],
-                             ['#project-title','Rename this workflow',renameWorkflowInPlace]] as const){
+// The project's name is edited in the Project tab now, so the only in-place rename left is the
+// workflow's own title.
+for(const [id,label,run] of [['#project-title','Rename this workflow',renameWorkflowInPlace]] as const){
   const element=$(id);
   element.dataset.renameLabel=label;element.title=label+' \u2014 click to edit';
   element.tabIndex=0;element.setAttribute('role','button');

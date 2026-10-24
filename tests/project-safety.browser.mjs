@@ -29,14 +29,14 @@ test('a stored project says whether a copy exists, and that is the way to make o
 
   // Reached by pressing the thing that states the problem, not by knowing a pill is a button.
   await safety.click();
-  await expect(page.locator('#projects-dialog')).toBeVisible();
+  await expect(page.locator('#project-view')).toBeVisible();
 
   // AND THE STATE IS A FACT, NOT A LABEL. exportedAt is written when the export COMPLETES, so a
   // status reading "Backed up" over a download that failed is not reachable by construction.
   const download=page.waitForEvent('download');
-  await page.locator('#projects-dialog [data-export-project]').first().click();
+  await page.locator('.project-view-block [data-export-project]').first().click();
   await download;
-  await page.locator('#projects-dialog-close').click();
+  await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('#project-safety')).toHaveText('Backed up');
   await expect(page.locator('#project-safety')).toHaveAttribute('data-safety','backed-up');
 });

@@ -557,14 +557,15 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .project-view{padding:16px 18px;overflow:auto}
 .project-view-intro{display:flex;flex-direction:column;gap:2px;margin-bottom:14px}
 .project-view-intro span{color:var(--muted)}
-.project-view-block{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.project-view-block,.project-unfiled-block{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.project-unfiled-block h3{margin:0 0 4px}
 .project-view-block h3{margin:0 0 4px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .project-view-state{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .project-view-state[data-safety="at-risk"]{color:var(--warn-text,#b4541a)}
 .project-view-state[data-safety="backed-up"]{color:var(--muted);font-weight:500}
 .project-view-state[data-safety="built-in"]{color:var(--muted);font-weight:500}
 .project-view-actions{display:flex;gap:8px;margin:10px 0 6px}
-.project-view-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+.project-view-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;
   padding:6px 0;border-top:1px solid var(--line)}
 @media (max-width:520px){.project-view-row{grid-template-columns:1fr auto}
   .project-view-row .muted{grid-column:1/-1}}
@@ -588,3 +589,10 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .backup-option{display:flex;flex-direction:column;gap:4px;margin:12px 0}
 .backup-option .button{align-self:flex-start}
 #backup-gap{border-top:1px solid var(--line);padding-top:10px;margin-top:14px}
+
+/* The Project tab is the one management surface: info, workflows, import, export, storage. */
+.project-view-actions-top{display:flex;gap:8px;margin-bottom:14px}
+.project-details{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.project-storage{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
+.project-unfiled{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.project-unfiled-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}

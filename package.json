@@ -53,7 +53,8 @@
     "validate:inspector-prose": "node scripts/validate-inspector-prose.mjs",
     "validate:caps": "node scripts/validate-caps.mjs",
     "notes:extracts": "node scripts/geofabrik-catalogue.mjs --write",
-    "validate:extracts": "node scripts/geofabrik-catalogue.mjs"
+    "validate:extracts": "node scripts/geofabrik-catalogue.mjs",
+    "test:browser:linux": "bash scripts/linux-webkit.sh"
   },
   "engines": {
     "node": ">=22"

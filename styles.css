@@ -89,9 +89,11 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 @media(max-width:850px){.theme-control{display:none}#theme-select{padding:4px 5px;font-size:9px;max-width:92px}}
 @media(max-width:530px){#theme-select{max-width:74px}}
 :root:not([data-theme="light"]):not([data-theme="dark"]) .palette-node>span:last-child{color:var(--text-faint)}
-:root:not([data-theme="light"]):not([data-theme="dark"]) .eyebrow span{color:var(--text-faint)}
+:root:not([data-theme="light"]):not([data-theme="dark"]) .eyebrow span,
+:root:not([data-theme="light"]):not([data-theme="dark"]) .eyebrow .crumb{color:var(--text-faint)}
 :root[data-theme="dark"] .palette-node>span:last-child{color:var(--text-faint)}
-:root[data-theme="dark"] .eyebrow span{color:var(--text-faint)}
+:root[data-theme="dark"] .eyebrow span,
+:root[data-theme="dark"] .eyebrow .crumb{color:var(--text-faint)}
 
 
 /* Measured at 390px: the header is 395px wide with this control and 390px without it, even
@@ -565,3 +567,15 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
   padding:6px 0;border-top:1px solid var(--line)}
 @media (max-width:520px){.project-view-row{grid-template-columns:1fr auto}
   .project-view-row .muted{grid-column:1/-1}}
+
+/* THE BREADCRUMB. Experiment 131: the shift between the two places a practitioner works, and the
+   first thing in the application to say a workflow is inside a project. The project crumb is a
+   button because a crumb that leads nowhere is a label, and the project level being reachable
+   only by recognising a storage readout as a button is the fault this answers. */
+.breadcrumb{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.breadcrumb .crumb{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit}
+.breadcrumb button.crumb{background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;
+  text-underline-offset:2px}
+.breadcrumb button.crumb:hover,.breadcrumb button.crumb:focus-visible{text-decoration-thickness:2px}
+.breadcrumb .crumb.current{text-transform:none;opacity:.85}
+.breadcrumb .crumb-sep{opacity:.5}

@@ -48,7 +48,11 @@ test('a created project can be renamed, given a subject, and holds a second work
 
   // A second question, inside the same investigation, in one gesture.
   await page.locator('#add-workflow').click();
-  await expect(page.locator('#project-workflow-count')).toHaveText('2 workflows');
+  // The count left the breadcrumb on 2026-10-23 and is asserted below where it now lives, in the
+  // project's own details and in the Project view. A breadcrumb answers "where am I", and a count
+  // of sibling workflows never did: it said how many the project held and never which one was
+  // open, so the second crumb was missing entirely.
+  await expect(page.locator('#workflow-crumb')).not.toBeEmpty();
   await expect(page.locator('#workflow-select option')).toHaveCount(2);
   await page.locator('#project-details summary').click();
   await expect(page.locator('#project-stats')).toContainText('2 workflows');

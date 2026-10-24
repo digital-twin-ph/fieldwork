@@ -23,7 +23,7 @@ export interface SelectorElements {
   '#mean-center-weight':HTMLInputElement;
   '#project-subject-input':HTMLTextAreaElement;
   '#project-name':HTMLElement;
-  '#project-workflow-count':HTMLElement;
+  '#workflow-crumb':HTMLElement;
   '#chart-download-svg':HTMLButtonElement;
   '#chart-communication':HTMLElement;
   '#zoom-out':HTMLButtonElement;

@@ -288,12 +288,28 @@ Two defects found by building it, both of the same kind as the one before:
   had already corrected itself. Every place that states a derived fact has to be told when the
   fact changes, and there are now two.
 
+### The breadcrumb, built 2026-10-23
+
+`FACILITIES AND NETWORKS \u203a Health facilities Ituri`, with the project crumb opening the
+Project view.
+
+What it replaced says why it was needed: the line read `PROJECT NAME / 1 workflow`, and both
+halves were wrong for a breadcrumb. **A count is not a crumb** -- it said how many workflows the
+project held and never which one was open, so the second half of the trail was missing entirely.
+And **neither half led anywhere**, which is this experiment's own subject: the project level was
+reachable only by recognising a storage readout as a button.
+
+The count moved to where it is useful -- the Project view and the project's own details, both of
+which already showed it -- rather than occupying the one line that should answer "where am I". One
+test pinned the old form and was changed deliberately rather than worked around, with the reason
+written beside it.
+
 ### What is still not built
 
-The breadcrumb, and one **Back up** control replacing the three (`↓ Export`, `Export project`,
-`Encrypted ZIP`) with scope and form chosen inside it. Size per workflow is computable --
-`projectWork` already sums payload bytes per project -- and is not shown, because the practitioner
-asked for counts rather than bytes in this first cut.
+One **Back up** control replacing the three (`↓ Export`, `Export project`, `Encrypted ZIP`) with
+scope and form chosen inside it. Size per workflow is computable -- `projectWork` already sums
+payload bytes per project -- and is not shown, because the practitioner asked for counts rather
+than bytes in this first cut.
 
 The state now has a door and it opens onto the same modal dialog this experiment
 calls the problem — `Projects dialog behind the storage pill` becoming `the Project view` is

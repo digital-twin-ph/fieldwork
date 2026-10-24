@@ -3015,12 +3015,30 @@ $('#blank-add').onclick=()=>$('#node-library [data-add="study_area"]')?.click();
 /** The eyebrow above the workflow's name: the investigation it belongs to, and how many
  *  workflows that investigation holds. Said rather than implied, because the whole finding behind
  *  experiment 122 is that four workflows about one outbreak looked like four unrelated workspaces. */
+/** WHERE YOU ARE, AND THE WAY BACK UP. Experiment 131 asked for a breadcrumb --
+ *  `Facilities and Networks > Health Facilities Ituri` -- as the shift between the two places the
+ *  practitioner works, and noted it would be the first thing in the application to say that a
+ *  workflow is INSIDE a project.
+ *
+ *  This read `PROJECT NAME / 1 workflow` until 2026-10-23. Two things were wrong with it. A count
+ *  is not a crumb: it told you how many workflows the project held and never which one you had
+ *  open, so the second half of the trail was missing. And neither half went anywhere, which is
+ *  the discoverability problem this experiment is about -- the project level was reachable only
+ *  by recognising a storage readout as a button.
+ *
+ *  The count now lives where it is useful, in the Project view and in the project's own details,
+ *  rather than in the one line that should answer "where am I". */
 function renderProjectEyebrow(){
   const key=storageKey(workflow),project=workflow.projectId?allProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,allProjects());
-  $('#project-name').textContent=(project?project.name:'No project').toUpperCase();
-  const held=project?project.workflows.length:0;
-  $('#project-workflow-count').textContent=!project?'this workflow belongs to no investigation':held===1?'1 workflow':`${held} workflows`;
-  $('#project-name').title=project?project.subject:'A project is one investigation. Create one to say what these workflows are asking about.';
+  const crumb=$('#project-name');
+  crumb.textContent=(project?project.name:'No project').toUpperCase();
+  crumb.title=project
+    ?`${project.subject} \u2014 open the Project view`
+    :'A project is one investigation. Create one to say what these workflows are asking about.';
+  // A crumb that leads nowhere is a label. It leads to the Project view, which is the place this
+  // breadcrumb is the shift to and from.
+  crumb.onclick=()=>switchView('project');
+  $('#workflow-crumb').textContent=workflow.name||WORKFLOW_LABELS[key]||key;
 }
 /** Create a project, then give it its first workflow.
  *

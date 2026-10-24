@@ -59,3 +59,23 @@ test('a project can be backed up from the Project view, and says so afterwards',
   await download;
   await expect(state).toHaveText('Backed up');
 });
+
+// EXPERIMENT 131: the breadcrumb is the shift between the two places, and the first thing in the
+// application to say that a workflow is INSIDE a project. It read `PROJECT NAME / 1 workflow`
+// until 2026-10-23 -- a count where the second crumb should be, and neither half leading
+// anywhere, which is the discoverability fault this whole experiment is about.
+test('the breadcrumb names the project and the workflow, and the project leads to its view',async({page})=>{
+  await page.goto('/?example=blank');
+  await page.locator('#new-project').click();
+  await page.locator('#project-name-input').fill('Facilities and networks');
+  await page.locator('#project-subject-input').fill('Ituri');
+  await page.locator('#project-create').click();
+  await expect(page.locator('#project-dialog')).toBeHidden();
+
+  await expect(page.locator('#project-name')).toHaveText('FACILITIES AND NETWORKS');
+  await expect(page.locator('#workflow-crumb')).not.toBeEmpty();
+  // A crumb that leads nowhere is a label.
+  await page.locator('#project-name').click();
+  await expect(page.locator('#project-view')).toBeVisible();
+  await expect(page.locator('.project-view-block').first()).toContainText('Facilities and networks');
+});

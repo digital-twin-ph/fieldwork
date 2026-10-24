@@ -3296,17 +3296,62 @@ function deleteCurrentProject(){
   const open=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,readProjects());
   if(open)deleteProject(open.id);
 }
+/** DELETING A PROJECT DELETES WHAT IS IN IT.
+ *
+ *  The practitioner, 2026-10-23: *"I deleted a project but it's workflow did not get deleted. I
+ *  expect to have all workflows under that project deleted as well."*
+ *
+ *  It did not, deliberately, and said so twice -- the confirmation promised the workflows would
+ *  stay and the toast said where they were. The reasoning was that a project is a grouping and
+ *  deleting a grouping should not destroy what somebody made. The practitioner's expectation is
+ *  the other reading, and it is theirs to settle: a project is the investigation, its workflows
+ *  are the questions asked inside it, and deleting the investigation without its questions leaves
+ *  a practitioner tidying twice and finding the second half in a list called "In no project".
+ *
+ *  So it now deletes them, and the confirmation says exactly what will go: how many workflows,
+ *  what they weigh, and -- because this application can finally answer it -- whether a copy exists
+ *  anywhere else. Deleting an unbacked-up project is destroying the only copy, and that sentence
+ *  belongs in front of the decision rather than in a toast after it.
+ *
+ *  A worked example's workflow is never destroyed: it ships with the application, and Reset
+ *  example is how its edits are discarded. */
 function deleteProject(id:string){
   const project=readProjects().find(p=>p.id===id);
   if(!project)return;
-  const held=project.workflows.length;
-  if(!confirm(`Delete the project "${project.name}"? Its ${held===1?'workflow stays':`${held} workflows stay`} on this device and can still be opened; only the grouping is removed.`))return;
+  const saved=readSavedWorkflows();
+  const raw=(()=>{try{return JSON.parse(localStorage.getItem(WORKSPACES)||'{}') as Record<string,unknown>;}
+    catch{return {} as Record<string,unknown>;}})();
+  const keys=project.workflows.filter(k=>!isExampleKey(k));
+  const kept=project.workflows.filter(isExampleKey);
+  const bytes=keys.reduce((n,k)=>{try{return n+JSON.stringify(raw[k]??'').length;}catch{return n;}},0);
+  const held=keys.length;
+  const safe=projectSafety(project)==='backed up'&&!exportPredatesWork(project);
+  const sizeText=bytes>=1e6?`${(bytes/1e6).toFixed(1)} MB`
+    :`${Math.max(1,Math.round(bytes/1024)).toLocaleString('en')} KB`;
+  if(!confirm(`Delete the project "${project.name}" and `
+    +`${held===1?'its 1 workflow':`all ${held} of its workflows`}?\n\n`
+    +(held?`Their widgets, settings and anything saved with them -- ${sizeText} -- are removed from `
+      +'this device, and this cannot be undone.':'It holds no workflows of its own.')
+    +(kept.length?`\n\n${kept.length===1?'1 worked example stays':`${kept.length} worked examples stay`}`
+      +': they ship with the application.':'')
+    +(held&&!safe?'\n\nThis project is NOT BACKED UP, so this is the only copy. "Back up" writes one '
+      +'first.':'')))return;
+  for(const key of keys){
+    try{delete raw[key];}catch{/* already gone */}
+  }
+  try{localStorage.setItem(WORKSPACES,JSON.stringify(raw));forgetSavedWorkflows();}
+  catch{/* the project record is removed below either way, so nothing is left half-deleted */}
   if(!writeProjects(readProjects().filter(p=>p.id!==project.id)))return;
-  if(workflow.projectId===project.id)change(w=>{delete w.projectId;},{spatial:false});
-  render();
-  // The workflows it held are now unfiled, and the section that shows them is in this tab.
-  if(currentView==='project')renderProjectView();
-  toast(`Project "${project.name}" deleted. Its workflows are still here, in no project.`);
+  const openWasInIt=project.workflows.includes(storageKey(workflow));
+  if(openWasInIt){
+    workflow=blankWorkflow();
+    selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};
+    dirty=true;save();renderLibrary();renderResults();
+  }else if(workflow.projectId===project.id)change(w=>{delete w.projectId;},{spatial:false});
+  renderProjectOptions();render();
+  toast(`Project "${project.name}" deleted`
+    +(held?` with ${held===1?'its workflow':`all ${held} workflows`}.`:'.')
+    +(kept.length?' Its worked examples stay.':''));
 }
 /** A key no project holds and nothing is saved under.
  *

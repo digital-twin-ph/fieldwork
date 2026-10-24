@@ -166,13 +166,19 @@ test('the Project view shows the selected project, and does not call a worked ex
   await expect(block).toContainText('open');
 });
 
-// The practitioner, 2026-10-23: "I deleted Raster Project but the workflow persisted." It does,
-// by design -- a project is a grouping, not a container whose deletion destroys what somebody
-// made, and both the confirmation and the toast say so. What was wrong is that the consolidation
-// an hour earlier deleted the only place unfiled workflows were visible, so the announcement was
-// true and unverifiable.
-test('deleting a project leaves its workflows visible, in no project',async({page})=>{
-  page.on('dialog',d=>d.accept());
+// THE EXPECTATION, REVERSED BY THE PRACTITIONER. First: *"I deleted Raster Project but the
+// workflow persisted."* The behaviour was deliberate and announced twice, so the first fix was to
+// make the announcement verifiable -- an "In no project" list, which this test asserted. Then:
+// *"I deleted a project but it's workflow did not get deleted. I expect to have all workflows
+// under that project deleted as well."*
+//
+// That settles it the other way and it is theirs to settle: a project is the investigation and
+// its workflows are the questions asked inside it, so deleting the one without the others leaves
+// a practitioner tidying twice. This test is inverted rather than deleted, because what it was
+// checking -- that the promise the dialog makes is the thing that happens -- is still the point.
+test('deleting a project deletes the workflows under it',async({page})=>{
+  const asked=[];
+  page.on('dialog',d=>{asked.push(d.message());d.accept();});
   await page.goto('/?example=blank');
   await page.locator('[data-view="project"]').click();
   await page.locator('#project-new').click();
@@ -181,14 +187,19 @@ test('deleting a project leaves its workflows visible, in no project',async({pag
   await page.locator('#project-create').click();
   await page.locator('[data-view="project"]').click();
   await expect(page.locator('#project-view-title')).toHaveText('Raster Project');
+  // Scoped to the project: the unfiled list uses the same row class, which is one reason the
+  // earlier class collision was worth separating.
+  await expect(page.locator('.project-view-block .project-view-row')).toHaveCount(1);
 
   await page.locator('.project-view-block [data-delete-project]').click();
 
-  // Gone as a project, and its workflow is exactly where the toast says it is.
+  // What is about to be destroyed is named before it is: how many, what they weigh, and that no
+  // copy exists -- which this application could not answer before 2026-10-23.
+  expect(asked.join(' ')).toContain('and its 1 workflow');
+  expect(asked.join(' ')).toContain('cannot be undone');
+  expect(asked.join(' ')).toContain('NOT BACKED UP');
+
   await expect(page.locator('#project-view-title')).toHaveText('No project selected');
-  await expect(page.locator('#project-unfiled-list')).toBeVisible();
-  await expect(page.locator('#project-unfiled-rows')).toContainText('Raster Project · first question');
-  // And it can still be opened and deleted from there, which is what "can still be opened" means.
-  await expect(page.locator('#project-unfiled-rows [data-open-workflow]').first()).toBeVisible();
-  await expect(page.locator('#project-unfiled-rows [data-delete-workflow]').first()).toBeVisible();
+  // Gone, not relocated: the workflow is not waiting in "In no project".
+  await expect(page.locator('#project-unfiled-rows')).not.toContainText('Raster Project · first question');
 });

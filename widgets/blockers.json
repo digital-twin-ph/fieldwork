@@ -73,7 +73,7 @@
     "facility_audit"
    ],
    "recorded": "2026-10-12",
-   "lastRevisited": "2026-10-17",
+   "lastRevisited": "2026-10-24",
    "status": "standing",
    "liftTest": "A presentation-stage composition exists and comparison_map is expressed as one.",
    "record": "the practitioner's direction of 2026-10-12, recorded in widgets/standardization.json under deferred. Experiment 119 now asks the question this blocker has been holding open.",
@@ -86,6 +86,10 @@
     {
      "date": "2026-10-17",
      "found": "Still unmet -- no composition declares a presentation stage and comparison_map is not expressed as one, so the claim and the lift test are unchanged. What changed is that the question now has an experiment: 119, asking whether this application can make data tell a story through maps, prompted by the practitioner's observation that experiment 118's cartographic rules blend into it. 118 does not lift this and 119 does not yet either: 118's rules are NEGATIVE, catching violations, and nothing computable notices what a map leaves out -- which is the part of the communication question a conformance report can never reach."
+    },
+    {
+     "date": "2026-10-24",
+     "found": "Still unmet, and the lift test can no longer be satisfied as written. It asks for \"a presentation-stage COMPOSITION\", and on 2026-10-24 the practitioner ruled that composition belongs to workflows: it is the shipped word for a saved sub-workflow used as one step, in thirteen source files and in the Micro-workflow widget's visible description. The glossary's only definition of the term was the communication product, which contradicted the code, so the glossary was corrected and the product named the FIELDWORK STORY -- provisionally. This lift test therefore names a thing that cannot exist under that name; restated, it asks for a Fieldwork story that comparison_map is expressed as part of.\n\nWhat else changed. Experiment 133 was opened and gives the stage a structure rather than a format: a Fieldwork story is one per project and is the synthesis of that project's workflows, its sections each binding a claim, the context that motivates it and the outputs that evidence it, played along the order the sections carry. That answers the half of this claim about a display-only widget having nowhere to go -- a section is where a view lands -- and it does NOT answer the other half, which is about decision logic hidden inside a display widget, as facility_audit's tier-to-status ternary still is.\n\nSo: claim stands, lift test needs restating, and for the first time the stage has a named product and a structure recorded in 133 rather than an intention. Nothing is built, which is why this is a revisit and not a lift."
     }
    ]
   },

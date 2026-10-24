@@ -503,6 +503,32 @@ function exampleRevision(w:Workflow){
 function readRevisions():Record<string,string>{
   try{return JSON.parse(localStorage.getItem(REVISIONS)||'{}');}catch{return {};}
 }
+/** HAS THIS CANVAS STOPPED BEING THE EXAMPLE IT STARTED AS?
+ *
+ *  The practitioner, 2026-10-23, twice, looking at a canvas holding a study area, a WorldPop
+ *  raster, a clipped raster, a street network, health facilities and a map, under a caption
+ *  telling them to draw and run a rule: *"The text 'Experiment 01 · draw → inspect facts → run the
+ *  rule' before the Reset Layout button seems to be stale content."* ... *"And I am still seeing
+ *  this text."*
+ *
+ *  It was. Four captions -- the example note, the canvas eyebrow, the project description and the
+ *  footer context -- were set from the example KEY and never from the content, and `exampleKey`
+ *  returns `blank` for any workflow carrying a projectId, so building anything at all left the
+ *  instructions for Experiment 01 sitting over it. The one workspace designed to be built in was
+ *  the one that went on describing itself as a scripted exercise.
+ *
+ *  `exampleRevision` already hashes the node and edge shape, for the republished-example notice,
+ *  so the comparison is a hash against a hash. The template is built once per key and kept,
+ *  because `render` runs often and some of these carry data. */
+const publishedShape=new Map<string,number|string>();
+function divergedFromExample(key:string):boolean{
+  if(!workflow.nodes.length)return false;
+  if(!publishedShape.has(key)){
+    try{publishedShape.set(key,exampleRevision(template(key)));}
+    catch{return false;}   // no template to compare against, so nothing is claimed
+  }
+  return publishedShape.get(key)!==exampleRevision(workflow);
+}
 function recordRevision(key:string){
   try{localStorage.setItem(REVISIONS,JSON.stringify({...readRevisions(),[key]:exampleRevision(template(key))}));}
   catch{/* storage refused; the notice simply reappears next time, which is harmless */}
@@ -735,6 +761,10 @@ function render(){
   renderLibrary($('#node-search').value);
   const old=exampleKey(workflow)==='old-naledi';
   renderProjectEyebrow();renderProjectOptions();renderProjectDetails();renderAssignProject();renderStorageStatus();renderProjectSafety();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
+  // SAID ONLY WHILE IT IS STILL TRUE. The four captions below are set from the example key; the
+  // block after them withdraws the two that describe a RECIPE once the canvas no longer matches
+  // the published example. The project description and the footer stay: they describe the kind of
+  // work, not the steps, and remain true of a canvas built on top of one.
   if(exampleKey(workflow)==='blank'){$('#project-description').textContent='Developmental evaluation · define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
   if(exampleKey(workflow)==='coverage'){$('#project-description').textContent='Developmental evaluation · inspect spatial exceptions, exclude with a reason, or revise the boundary.';$('#example-note').textContent='Synthetic points and illustrative boundary · no patient data';$('#canvas-example').textContent='SPATIAL COVERAGE · EXPERIMENT';$('#footer-context').textContent='Synthetic coverage exercise · CRS84 · boundary included';}
   if(exampleKey(workflow)==='rulesets'){$('#project-description').textContent='How a rule is put together, four times over: two workflows band Snow\u2019s data as he recorded it \u2014 Table 1 by the deaths on each date, the mapped locations by the deaths at each address \u2014 and two run the identical rules over damaged copies of the same data.';$('#example-note').textContent='Four workflows on one canvas. A and B use Snow\u2019s data as recorded; C and D are SIMULATED damage, and say so on the input: three dates with no count, and a quarter of the counts written as text. C and D apply the same rules as A and B, so everything that differs is the data \u2014 and the step says what it could not read rather than banding those records Unrecorded in silence.';$('#canvas-example').textContent='RULESETS \u00b7 HOW A RULE IS PUT TOGETHER';$('#footer-context').textContent='Authored rules \u00b7 compiled to N3 \u00b7 declared field bindings';}
@@ -742,6 +772,12 @@ function render(){
   if(exampleKey(workflow)==='sea-level'){$('#project-description').textContent='Published AR6 sea-level projections against real Manila health facilities: which gauge, how far away.';$('#example-note').textContent='Projections are IPCC AR6, CC BY 4.0, in millimetres against the 1995\u20132014 baseline. Facilities are OpenStreetMap, ODbL. No elevation is supplied, so nothing here is compared against one \u2014 and none of it is an inundation model.';}
   if(exampleKey(workflow).startsWith('snow-')){$('#project-description').textContent='Historical pump and death-location tables; explicit metric catchment computations and source evidence.';$('#example-note').textContent='250 locations / 489 deaths; network is a modern OSM snapshot, not 1854 streets';$('#canvas-example').textContent='JOHN SNOW / CATCHMENT WORKED EXAMPLE';$('#footer-context').textContent='CRS84 inputs and outputs / UTM computation / method parameters in evidence';}
   if(exampleKey(workflow)==='snow-geoprivacy'){$('#project-description').textContent='Compare private source points with moved points and H3 cell aggregates.';$('#example-note').textContent='Before views and workflow exports contain source coordinates; after views are educational transformations, not privacy guarantees';$('#canvas-example').textContent='JOHN SNOW / GEOPRIVACY EXPERIMENT';$('#footer-context').textContent='CRS84 · seeded donut · H3 aggregation · hide and map encryption remain TODO';}
+  // The practitioner met this twice before it was fixed, which is why it is withdrawn here rather
+  // than corrected in eight branches: one place that can be read, instead of a rule repeated.
+  if(divergedFromExample(exampleKey(workflow))){
+    $('#example-note').textContent=`Built on ${workflowTitle(exampleKey(workflow))} and changed since.`;
+    $('#canvas-example').textContent=(workflow.name||'This workflow').toUpperCase();
+  }
   $('#blank-canvas').hidden=workflow.nodes.length!==0||exampleKey(workflow)!=='blank';
   // The bar is refreshed here rather than only when a control is used, because the workflow can
   // change underneath it -- loading an example being the case that caught this: the playback had
@@ -3048,6 +3084,21 @@ function renderProjectEyebrow(){
 function openProjectDialog(){
   if(busy)return;
   $('#project-name-input').value='';$('#project-subject-input').value='';
+  // WHAT HAPPENS TO THE CANVAS YOU HAVE OPEN, said before it happens. This created the project and
+  // then replaced the canvas with an empty workflow named "<project> · first question", which is
+  // right when starting an investigation from nothing -- the practitioner's own 2026-10-19 request,
+  // *"the first step is not even study area - it's create a project"* -- and wrong when the reason
+  // for making the project is the work already on screen. One control served the first intent and
+  // silently did the second thing.
+  const key=storageKey(workflow);
+  const filed=allProjects().some(p=>p.workflows.includes(key));
+  const adopt=$('#project-adopt-current');
+  const name=workflow.name||WORKFLOW_LABELS[key]||key;
+  adopt.checked=!filed&&workflow.nodes.length>0;
+  adopt.disabled=filed;
+  $('#project-adopt-label').textContent=filed
+    ?`"${name}" is already filed under a project, so a new one starts with an empty workflow.`
+    :`Put "${name}" in it, instead of starting with an empty workflow.`;
   $('#project-dialog').showModal();$('#project-name-input').focus();
 }
 function createProjectFromDialog(){
@@ -3059,6 +3110,18 @@ function createProjectFromDialog(){
   if(!writeProjects([...stored,project])){$('#project-dialog').close();return;}
   $('#project-dialog').close();
   save();
+  // ADOPTING THE OPEN CANVAS takes the path that already files a workflow, rather than a second
+  // implementation of the same act: the project is written with no workflows and
+  // `assignCurrentWorkflow` gives this one its key and puts it in.
+  if($('#project-adopt-current').checked&&!$('#project-adopt-current').disabled){
+    project.workflows=[];
+    if(!writeProjects([...stored,project])){return;}
+    assignCurrentWorkflow(project.id);
+    renderProjectOptions();render();
+    toast(`"${workflow.name||'This workflow'}" is now in "${project.name}". `
+      +'Add a workflow for each further question you want to ask about it.');
+    return;
+  }
   workflow={...blankWorkflow(),name:`${project.name} · first question`,projectId:project.id,workflowKey:key,exampleId:undefined};
   selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
   save();renderProjectOptions();renderLibrary();renderResults();render();switchView('workflow');
@@ -3442,6 +3505,54 @@ const payloadStoreBytes=():number=>{
   return total;
 };
 const payloadCount=():number=>Object.keys(cachedPayloads()).length;
+/** FILING A WORKFLOW IS AN ACT, NOT A SIDE EFFECT OF A DROPDOWN.
+ *
+ *  The practitioner, 2026-10-23, having tried it: *"if I select the project-less workflow and
+ *  select the project from the project drop down, it does nothing, only loads an empty workflow.
+ *  That assign workflow to a project should be explicit."* And then: *"That assign to project
+ *  inside the project dropdown is as good as it does not exist as it's not easily located."*
+ *
+ *  Both are right, and the second is the diagnosis. There were two selects that looked alike and
+ *  did opposite things: the visible **Project** dropdown NAVIGATES -- it loads that project's
+ *  first workflow and replaces the canvas -- and `#assign-project`, labelled "Belongs to" inside
+ *  a collapsed `Project details` disclosure, is the one that files. A practitioner who wants to
+ *  file their work presses the visible one and is moved off it. That is worse than a capability
+ *  with no door, which is what the backup was this morning: it is two doors side by side where
+ *  the visible one discards what you were doing.
+ *
+ *  So the act is named, and it is where 131 put creation and deletion -- the Project view -- with
+ *  the workflow's name in it, so there is no doubt about what is being filed. `#assign-project`
+ *  stays where it is: it still works, and removing a control a practitioner may have learned is a
+ *  separate decision from adding the one they looked for. */
+function renderUnfiled():void{
+  const panel=$('#project-unfiled');
+  const key=storageKey(workflow);
+  const stored=readProjects();
+  const filed=stored.some(p=>p.workflows.includes(key))
+    ||BUILT_IN_PROJECTS.some(p=>p.workflows.includes(key));
+  // A worked example is already filed under the project it ships in, so it is not offered.
+  panel.hidden=filed||!stored.length&&!workflow.nodes.length;
+  if(panel.hidden)return;
+  $('#project-unfiled-name').textContent=workflow.name||WORKFLOW_LABELS[key]||key;
+  const select=$('#project-file-under');
+  select.innerHTML=stored.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+  select.disabled=!stored.length;
+  $('#project-file').disabled=!stored.length;
+  if(!stored.length)select.innerHTML='<option value="">No projects yet</option>';
+}
+$('#project-file').onclick=()=>{
+  const id=$('#project-file-under').value;
+  if(!id)return;
+  assignCurrentWorkflow(id);
+  renderProjectView();
+};
+$('#project-file-new').onclick=()=>{
+  // The same dialog, arriving with the question already answered: this workflow is what the
+  // project is being made for.
+  openProjectDialog();
+  $('#project-adopt-current').checked=true;
+};
+
 /** THE PROJECT VIEW: one project and the workflows filed under it.
  *
  *  Experiment 131, after a day the practitioner spent unable to find their own backup: *"Our UI
@@ -3462,6 +3573,7 @@ const payloadCount=():number=>Object.keys(cachedPayloads()).length;
  *  would have been a label over facts the application does not keep.
  */
 function renderProjectView():void{
+  renderUnfiled();
   const list=$('#project-view-list');
   // EVERY PROJECT, NOT ONLY THE STORED ONES. The first version listed `readProjects()`, which is
   // the stored ones, because the header's safety state is said only for those -- a built-in has no

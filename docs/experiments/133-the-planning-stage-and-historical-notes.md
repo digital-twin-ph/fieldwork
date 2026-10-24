@@ -102,6 +102,33 @@ to a widget, a dataset or a control. **The planning stage is where those sentenc
 be, if it existed** — written before the work, not reconstructed after it, which is the difference
 between a narrative and a caption.
 
+## What it is called, and why not the obvious words
+
+The practitioner, 2026-10-24: *"A story map is really not just one map. It could be several. So we
+may want to disambiguate that in the ontology. Perhaps we can call it computational narrative or
+something but that's what Jupyter notebooks are."* Then, having ruled out the word the glossary
+was already using: *"We cannot use composition, that is for workflows."* And: *"Let's just call it
+the fieldwork story for now."*
+
+It is the **Fieldwork story**, provisionally, and `for now` is part of the decision.
+
+Three words were considered and each failed for its own reason, which is worth keeping because
+the next person will reach for all three:
+
+- **story map** implies one map, where this is a played sequence that may hold several maps,
+  charts and tables -- and it is a vendor's product name;
+- **computational narrative** belongs to literate-computing notebooks, and describes the wrong
+  thing anyway: a notebook interleaves CODE with prose, this interleaves evidence already produced
+  with prose, and the computation is in the workflows;
+- **composition** was the glossary's own word for it and is already the shipped word for something
+  else -- a saved sub-workflow used as one step, in thirteen source files and in the Micro-workflow
+  widget's visible description. The glossary's only definition of the term contradicted the code,
+  so this is the second collision found in two days, after `workspace` meant a storage slot, a
+  single workflow and the whole application at once.
+
+`story map` survives as the name of a PRESENTATION -- one way a Fieldwork story can be shown --
+which is what it should have meant all along.
+
 ## The task: one structure, two things in it
 
 A story map's structure is a sequence of **sections**, each holding a view — layers, an extent, a

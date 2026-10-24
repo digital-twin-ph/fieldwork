@@ -67,7 +67,7 @@ import {validateAttributeSchema} from './attribute-schema.js';
 import {defaultSpatialReference,validateSpatialReference} from './spatial-reference.js';
 import {utmDefinition,projectFromCRS84} from './reproject.js';
 import {dataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
-import {computeRate,fromPoints,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
+import {computeRate,fromPoints,fromTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
 import {caseSeries,caseSeriesFromTable,seriesTable,seriesChart,seriesReceipt,validateCaseSeriesNode} from './case-series.js';
 import {projectionExtract,projectionTable,readExtract,assignSites,assignmentTable,compareToElevation,extractReceipt,assignmentReceipt,comparisonReceipt as thresholdReceipt,validateSeaLevelNode} from './sea-level.js';
 import {distanceKm,nearestOf,satisfies} from './nearest-neighbour.js';
@@ -232,6 +232,9 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   if(node.type==='compare_point_sets'&&node.params.centers)return [...TYPES.compare_point_sets.inputs,['originalCenter','mean-center'],['movedCenter','mean-center']];
   if(node.type==='chart_output'&&node.params.inputMode==='series')return [['series','table']];
   if(node.type==='case_series')return node.params.source==='table'?[['cases','table']]:[['points','points']];
+  // The same shape, for the same reason: a rate's denominator usually arrives as a table.
+  // The port keeps its name either way, because what it carries is the records to divide.
+  if(node.type==='rate')return node.params.source==='table'?[['records','table']]:[['records','points']];
   // A map takes every layer it can draw, always. Its ports used to change with its mode, so the
   // port a connection needed might not exist on the node -- the blocker
   // `output-mode-set-before-the-shape-arrives`, and the reason a practitioner had to answer a
@@ -910,7 +913,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               +' The source file is unchanged; these records are not the records it held.'});
         }
         break;}
-      case 'rate':{const result=computeRate(fromPoints(inputs.records),node.params);value={...rateTable(result),chart:rateChart(result)} as unknown as DisplayValue;receipts.push(rateReceipt(node,result,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));break;}
+      case 'rate':{const records=node.params.source==='table'
+        ?fromTable(inputs.records as unknown as import('./data-table.js').DataTable,node.params.measureKey||'measure')
+        :fromPoints(inputs.records);
+        const result=computeRate(records,node.params);value={...rateTable(result),chart:rateChart(result)} as unknown as DisplayValue;receipts.push(rateReceipt(node,result,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));break;}
       case 'case_series':{const series=node.params.source==='table'?caseSeriesFromTable(inputs.cases,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period}):caseSeries(inputs.points,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period,weightField:node.params.weightField});value={...seriesTable(series),chart:seriesChart(series)} as unknown as DisplayValue;receipts.push(seriesReceipt(node,series,runId,workflow.edges.find(e=>e.to===node.id&&(e.port==='points'||e.port==='cases'))!.from));break;}
       case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,basisKind:node.params.basisKind,familyValues:node.params.familyValues,sourceNote:node.params.sourceNote});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}
       case 'slr_site_assignment':{const extract=readExtract(inputs.projections);const assignments=assignSites(inputs.points,inputs.sites,extract);value=assignmentTable(assignments) as unknown as DisplayValue;const edge=(port:string)=>workflow.edges.find(e=>e.to===node.id&&e.port===port)!.from;receipts.push(assignmentReceipt(node,assignments,runId,{points:edge('points'),sites:edge('sites'),projections:edge('projections')}));break;}

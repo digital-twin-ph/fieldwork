@@ -101,6 +101,50 @@ export function computeRate(records:{id:string;properties:Record<string,Scalar>}
 export const fromPoints=(points:PointCollection)=>points.features.map(feature=>
   ({id:String(feature.id),properties:feature.properties as Record<string,Scalar>}));
 
+/** A DENOMINATOR DOES NOT USUALLY ARRIVE AS POINTS.
+ *
+ *  This widget required `records:points` from the day it was built, and the three datasets it was
+ *  built for are all tables. Snow's South London figures are three rows about water companies with
+ *  no geometry at all; the Soho house file is deliberately tabular, because its coordinates are
+ *  OSGB 1936 and are not to be reprojected; and a population denominator per health zone arrives
+ *  from WorldPop or a ministry keyed by zone name. The widget built to divide counts by a
+ *  population at risk could not read any of them.
+ *
+ *  `case_series` had already solved this one line away in `core.ts`: a `source` parameter choosing
+ *  between a table and a point layer, with a port contract for each. This follows it rather than
+ *  inventing a second shape.
+ *
+ *  THE PIVOT, AND WHY IT IS NEEDED. A `DataTable` here is long: every row carries one value, under
+ *  key columns. A rate needs two numbers for the same subject -- 1,263 deaths among 40,046 houses
+ *  -- so one key column holds the MEASURE name and the rest identify the subject. Snow's table in
+ *  this form is supplier + measure -> value, and `numeratorField` and `denominatorField` then name
+ *  measures rather than columns, which is what they already mean for points. */
+export function fromTable(table:DataTable,measureKey:string):{id:string;properties:Record<string,Scalar>}[]{
+  if(table?.kind!=='data-table')
+    throw new Error('Connect a table of counts: this Rate is set to read one.');
+  if(!table.keys.includes(measureKey))
+    throw new Error(`The table has no key column "${measureKey}" to take measure names from. `
+      +`Its key columns are: ${table.keys.join(', ')}.`);
+  const subjectKeys=table.keys.filter(key=>key!==measureKey);
+  if(!subjectKeys.length)
+    throw new Error(`"${measureKey}" is the table's only key column, so every row describes the `
+      +'same subject and there is nothing to compute a rate for. A rate needs a subject -- a '
+      +'supplier, a district, a health zone -- and a measure.');
+  const subjects=new Map<string,{id:string;properties:Record<string,Scalar>}>();
+  for(const row of table.rows){
+    const id=subjectKeys.map(key=>row.key[key]).join(' \u00b7 ');
+    let subject=subjects.get(id);
+    if(!subject){
+      subject={id,properties:Object.fromEntries(subjectKeys.map(key=>[key,row.key[key]]))};
+      subjects.set(id,subject);
+    }
+    // A missing value is left absent rather than written as zero: `computeRate` refuses a
+    // denominator it cannot read, and a zero would be a number nobody measured.
+    if(row.value!==null)subject.properties[row.key[measureKey]]=row.value;
+  }
+  return [...subjects.values()];
+}
+
 export function rateTable(result:RateResult):DataTable&{rate:RateResult}{
   const {multiplier,denominatorUnit}=result.options;
   return {kind:'data-table',keys:['group'],valueField:`per ${multiplier.toLocaleString()} ${denominatorUnit}`,

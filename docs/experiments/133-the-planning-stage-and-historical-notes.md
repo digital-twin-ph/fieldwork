@@ -125,7 +125,7 @@ to the outputs that evidence it is what makes assurance expressible at all**: a 
 *"was this made under conditions I would accept?"* is asking it of a claim, and there is
 currently no object in this application that IS a claim.
 
-## Five things at once, and a sixth that is minor and real
+## Five things at once, a minor sixth, and a seventh that is new capability
 
 The practitioner, on what the frame would settle: *"Then we will have hit three birds with one
 stone -- story map which is communication stage, planning, and the integrating project/workflow
@@ -195,6 +195,39 @@ That is a sharper requirement than it first reads:
 So the fourth bird is not an extra payoff; it is the constraint that keeps the other three honest.
 A story map built as interface state would be a view that cannot leave the device it was made on,
 which for a practitioner whose work is reviewed elsewhere is the same as not existing.
+
+### A seventh: the design rules get a scale they have never had
+
+The practitioner: *"now we can fully exercise the visualization improvement aspect of FW, when we
+talked about opinionated approaches."*
+
+`src/map-conformance.ts` holds the opinionated part: design rules applied **while a map is
+assembled**, stated in its receipt, and bound to WCAG, EARL and DQV rather than to a vocabulary
+minted here. They already refuse -- a mark too faint to find fails with the number that decided
+it, and absence of data drawn as a hue fails because it competes with the categories. The record
+is blunt about where the boundary falls: every toast tone in this application failed WCAG
+contrast on 2026-10-17, the worst at 2.08 against a 4.5 floor, and no RULE would have caught it
+-- relative luminance did.
+
+Every one of those rules is applied to **one map at a time**, because one map is all there has
+ever been to apply them to. A story map is a sequence of views of one investigation, and that
+makes a class of rule possible that cannot exist for a single map:
+
+- **the same variable, encoded the same way across sections** -- deaths per 10,000 houses cannot
+  be a sequential ramp in one view and a diverging one in the next;
+- **a scale that does not move** when the reader is meant to compare two sections;
+- **a mark that means one thing throughout**, which the layer symbols already resolve once per
+  map and would now resolve once per investigation.
+
+A single map cannot be inconsistent with itself. A sequence can, and inconsistency across a
+sequence is one of the commonest ways a true set of maps misleads. **These rules are arithmetic,
+not judgement** -- they compare an encoding to an encoding -- which is exactly the kind this
+project is willing to enforce.
+
+It also completes what [119](119-can-this-tell-a-story.md) asked for. Assurance was to state that
+*"every design rule that applied, passed -- and the ones that did not apply are listed"*. For a
+single map that is a short list. For a story map it is a report about the whole account, which is
+the thing a reader actually wants to interrogate.
 
 ## One per project, because it is the synthesis of its workflows
 

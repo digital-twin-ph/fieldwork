@@ -14,16 +14,16 @@ test('a project exports as one file and comes back as one project',async({page})
   await page.locator('#node-library [data-add="point_input"]').click();
 
   await page.locator('#storage-status').click();
-  const block=page.locator('.project-block').filter({hasText:'Facilities and Networks'}).first();
+  const block=page.locator('.project-view-block').filter({hasText:'Facilities and Networks'}).first();
   const download=page.waitForEvent('download');
-  await block.locator('button',{hasText:'Export project'}).click();
+  await block.locator('button[data-export-project]').click();
   const file=await download;
   const text=await downloadText(file);
   const document=JSON.parse(text);
   expect(document.schema).toBe('fieldwork/project-document/1');
   expect(document.project.name).toBe('Facilities and Networks');
   expect(document.workflows).toHaveLength(2);
-  await page.locator('#projects-dialog-close').click();
+  await page.locator('[data-view="workflow"]').click();
 
   // Importing it again makes a SECOND project rather than overwriting the first.
   await page.locator('#workflow-file').setInputFiles({name:'p.json',mimeType:'application/json',buffer:Buffer.from(text)});

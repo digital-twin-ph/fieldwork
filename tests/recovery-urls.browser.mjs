@@ -62,7 +62,7 @@ test('a cleanup URL drops the stored datasets and keeps the workflows',async({pa
 
 // "That is where I least expect it" -- of the project export, which lived behind the storage
 // readout in the header and nowhere else.
-test('Projects is a button in the header, and a project exports from a button',async({page})=>{
+test('a project is managed in the Project tab, and exports from a button there',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
@@ -71,14 +71,15 @@ test('Projects is a button in the header, and a project exports from a button',a
   await page.locator('#project-name-input').fill('Ituri response');
   await page.locator('#project-subject-input').fill('Ebola, health zones');
   await page.locator('#project-create').click();
-  await page.locator('#projects-button').click();
-  await expect(page.locator('#projects-dialog')).toBeVisible();
-  const exportButton=page.locator('#projects-list button[data-export-project]').first();
+  await page.locator('[data-view="project"]').click();
+  await expect(page.locator('#project-view')).toBeVisible();
+  const exportButton=page.locator('.project-view-block button[data-export-project]').first();
   await expect(exportButton).toBeVisible();
-  await expect(exportButton).toContainText('Export project');
+  // Named for the act, not the file format: three controls called Export became one called Back up.
+  await expect(exportButton).toContainText('Back up');
   // The storage readout still opens it, because somebody has learned that by now.
-  await page.locator('#projects-dialog-close').click();
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#storage-status').click();
-  await expect(page.locator('#projects-dialog')).toBeVisible();
+  await expect(page.locator('#project-view')).toBeVisible();
   expect(errors).toEqual([]);
 });

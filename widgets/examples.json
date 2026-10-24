@@ -16,14 +16,14 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "1559fe53a7130e89856eeb10083a292fcdaa1b19",
+      "commit": "7983dc50de4bfe2408813d1eed9aaaf88126b160",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0",
         "source": "Public domain. John Snow, On the Mode of Communication of Cholera, 1855.",
         "note": "Why this is recorded per example rather than assumed: the mechanism exists so an example may carry terms this project could not adopt. Here the terms are none, because the figures were transcribed from an 1855 publication rather than from HistData (GPL) or causaldata (MIT)."
       },
-      "description": "Two tables, five rows. Deaths per 10,000 houses for the customers of two water companies whose mains ran down the same streets. The denominator is houses counted in an 1853 return to Parliament and the numerator is deaths in the 1854 epidemic, so the two do not agree -- which is what the rate widget refuses to compute over without both stated.",
+      "description": "Four tables. Deaths per 10,000 houses for the customers of two water companies whose mains ran down the same streets, and the 32 sub-districts behind that summary -- with an 1851 population denominator, the water supply of each, and deaths in both 1849 and 1854, before and after Lambeth moved its intake upstream. The denominators and the numerator are measured years apart, which is what the rate widget refuses to compute over without both stated.",
       "carries": {
         "workflow": false,
         "data": true,
@@ -33,8 +33,8 @@
       "files": [
         {
           "path": "README.md",
-          "sha256": "7dfc6cb112d19a746808accf3ab4ab404d0505439dede43b55cdbdaf157694c2",
-          "bytes": 4898
+          "sha256": "8c314682bceefcc887acf4ddfccc0e70569ccdf512fae3fe144e5a4c22d7d39b",
+          "bytes": 9712
         },
         {
           "path": "NOTICE.txt",
@@ -48,8 +48,8 @@
         },
         {
           "path": "provenance.json",
-          "sha256": "206954af8626200fdb2ecb16263683212df8eb2a8f3478f62f95b7f0c212f3ee",
-          "bytes": 3653
+          "sha256": "da69d821b127acfb1f1862ca9cac87f7016e64414cc48b0dcf8c2bff47dabea2",
+          "bytes": 4890
         },
         {
           "path": "data/table-ix-first-seven-weeks.csv",
@@ -60,6 +60,16 @@
           "path": "data/first-four-weeks.csv",
           "sha256": "b3d7eb4032fc53d61d6bdbc183e48f55278992c67464abbf79236b21888eb8ae",
           "bytes": 132
+        },
+        {
+          "path": "data/table-viii-sub-districts-seven-weeks.csv",
+          "sha256": "308d3bbab7a9d29ab87bcc9062589b28c966e7613d3b6a0f0817177aac305ae0",
+          "bytes": 1024
+        },
+        {
+          "path": "data/table-xii-sub-districts-1849-1854.csv",
+          "sha256": "306ce1eed8f99df9a6008d6a7eff9db8a3f0e06205b2cd0394f9de4c18b37728",
+          "bytes": 2229
         }
       ]
     }

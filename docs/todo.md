@@ -44,24 +44,17 @@ not a practitioner in the field.
 
 ## Urgent
 
-**New project silently does nothing while a workflow is running.** `openProjectDialog` opens with
-`if(busy)return;`, so the click is swallowed with no dialog, no message and no disabled control,
-and the run that swallowed it is not visibly related to the button that stopped working. Found
-2026-10-24 in a Linux WebKit container ([experiment
-135](experiments/135-linux-webkit-in-a-container.md)) as the cause of a CI failure standing since
-2026-10-20. Two questions, and the second is the one that generalises: whether the control should
-be disabled while busy or should queue, and whether the other handlers opening with the same guard
-swallow clicks the same way — they were not surveyed.
+**Should deleting a project be refused while a workflow is running?** `deleteProject` carries no
+busy guard, unlike every neighbouring handler. Found 2026-10-24 while surveying the controls that
+silently swallow a click during a run ([experiment
+135](experiments/135-linux-webkit-in-a-container.md)), and deliberately left alone: the others were
+a control saying nothing when it had a guard, and this is the opposite question — whether it should
+have one. Deleting the project whose workflow is mid-run is a different risk from opening a dialog.
 
-The test that found it, `workflow-housekeeping.browser.mjs:84`, needs to wait for the run to settle
-whatever is decided about the control, since it is the only test in the file that loads an
-auto-running example.
-
-**`evidence.browser.mjs:80` asserts "unchanged" and means "still null".** In a fresh context the
-baseline read happens before the application has persisted anything, so the comparison after a
-refused import sees the blank workflow saved in the meantime rather than anything the import wrote.
-Same class as the 2026-10-21 fix *Assert what survived the reload, not what the runner happened to
-see*.
+**One chromium failure is still unexplained.** `large-network-storage.browser.mjs:25` spent 4.4
+minutes against a 240-second budget on a runner, 2026-10-20. It was not reproduced in the Linux
+container and is not covered by either finding in experiment 135: the resource reading was
+retracted for the two WebKit tests, not for this one.
 
 **Storage is capped by the smallest store the browser offers, and nothing chose it.**
 _Acted on 2026-10-20 for payloads: street networks now live in IndexedDB and the workflow keeps a

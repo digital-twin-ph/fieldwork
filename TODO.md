@@ -138,6 +138,29 @@ lifecycle fact about a workflow, and Draft, Run, Stale and Refused have no word 
 needs one, or whether the captions should simply fall silent, is the design question -- and by the
 rule this project already has, the word goes in the glossary before it goes in a panel.
 
+## Parity is keyed to a version, so a cosmetic release invalidates real evidence
+
+Found 2026-10-23 by the gate, not by reading. `clip_raster` was bumped 1.0.0 -> 1.1.0 for a node
+label field, and the widget catalog immediately began reading **`partial · earlier release`**: its
+parity entry carries `coversRelease: 1.0.0`, and `src/catalog-ui.ts` marks any entry whose covered
+release is not the current one.
+
+The ledger is right and the cost is real. **The bump could not have changed the clipping the
+parity run measured** -- a label field is not a raster mask -- and the evidence was still
+invalidated, because parity is pinned to a version string rather than to what the release changed.
+`validate:widgets` now lists clip_raster beside `access_policy` and `xpert`, which are stale for
+the same reason, and parity is recorded for 23 of 55 widgets, so the pool this erodes is already
+small.
+
+**What it would take.** Either parity entries say which release range they still cover, or a
+release declares whether it touched the computation parity measured -- `changes[].kind` already
+distinguishes `fix` from `changed`, so the information is half there. Re-establishing parity needs
+a run in the validation lab and cannot be edited into the ledger, which is the right constraint
+and also why the stale list only grows.
+
+**Not a reason to stop bumping.** The alternative is a release note that does not exist for a
+control a practitioner can see, which is the fault paid off earlier the same day.
+
 ## What is actually blocked
 
 Everything else in this file is waiting on one of these, or is a defect that nothing is waiting on.

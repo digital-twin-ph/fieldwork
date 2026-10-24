@@ -8,7 +8,11 @@ test('project title and workflow actions remain visible when scrolling desktop a
     await expect.poll(()=>page.evaluate(()=>window.scrollY)).toBeGreaterThan(71);
     await expect(page.locator('.project-bar')).toBeInViewport({ratio:1});
     await expect(page.locator('#project-title')).toBeInViewport({ratio:1});
-    for(const id of ['import-button','export-button','run-button'])await expect(page.locator('#'+id)).toBeInViewport({ratio:1});
+    // `export-button` and `encrypted-export` moved inside the Back up dialog on 2026-10-23:
+    // one header control named for what a practitioner is doing, rather than three named for
+    // file formats. What this test is about -- the actions you need stay reachable while the
+    // canvas scrolls -- is unchanged, and `backup-button` is the one that has to stay put.
+    for(const id of ['import-button','backup-button','run-button'])await expect(page.locator('#'+id)).toBeInViewport({ratio:1});
     await expect.poll(()=>page.locator('.project-bar').evaluate(el=>Math.round(el.getBoundingClientRect().top))).toBe(0);
     await page.screenshot({path:`test-results/floating-controls-${viewport.width}.png`});
   }

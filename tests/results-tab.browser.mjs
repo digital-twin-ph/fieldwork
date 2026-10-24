@@ -4,12 +4,15 @@ import {test,expect} from '@playwright/test';
 // Evidence ... It would be easier to see the whole workflow or the whole Result panel than to see
 // half of each."* The split had a divider, a remembered height and an Expand button that toggled
 // which half won -- three controls managing a compromise a tab removes.
-test('workflow, results and N3 are three tabs, and only one is on screen',async({page})=>{
+test('workflow, project, results and N3 are four tabs, and only one is on screen',async({page})=>{
   await page.goto('/?example=hagelloch');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 
   // In that order: build it, read it, then inspect how it was derived.
-  await expect(page.locator('[data-view]')).toHaveText([/^Workflow/,/^Results/,/N3/]);
+  // Project joined these on 2026-10-23, as experiment 131's route to the project level: the
+  // practitioner's question that opened this test -- "can we make the Results Panel a tab
+  // alongside Workflow, and N3" -- turned out to have a fourth answer.
+  await expect(page.locator('[data-view]')).toHaveText([/^Workflow/,/^Project/,/^Results/,/N3/]);
 
   // A finished run does not move you: the canvas is still what is on screen, and the tab says
   // how many outputs are waiting -- read from the run rather than announced.

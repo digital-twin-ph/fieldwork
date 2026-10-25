@@ -150,7 +150,16 @@ data, once cached by a connected visit. Workflows built only from those parts ru
 save and reopen with no network.
 
 What does not, and cannot: anything from another origin at the moment it is
-needed. Basemap tiles, so the study-area editor draws on a blank map.
+needed. The study-area editor draws on a blank map, because it asks a tile
+server for the view you are panning to and there is no asking it offline.
+
+A figure's basemap is a different case, and the difference is the one that
+matters offline: a raster basemap is fetched once while connected and **baked
+into the figure**, so the exported SVG carries its own ground and a later visit
+redraws it from the payload store with no network. That is the flow this
+application is built around — download the assets while you can, use the cached
+assets when you cannot. What it does not give you is a basemap you have never
+fetched, at an extent you have never visited.
 
 But a widget that reaches a remote service is not the same as a workflow that
 cannot run offline, and the distinction is the whole design. **Retrieval and

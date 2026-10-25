@@ -18,7 +18,7 @@ test.describe.configure({timeout:300_000});
 const password='test-only long passphrase for a large project';
 const NODES=40000;
 
-test('a project holding a graph larger than the old 5 MB cap packages, opens and survives a reload',async({page,browser})=>{
+test('a project holding a graph larger than the old 5 MB cap packages, opens and survives a reload',async({page,browser,baseURL})=>{
   const elements=[];
   // INSIDE THE STUDY AREA IT CLAIMS TO BE IN. The Soho rectangle is -.142..-.128 by
   // 51.509..51.517; this chain used a step that carried it to -0.06, five kilometres past the
@@ -79,10 +79,10 @@ test('a project holding a graph larger than the old 5 MB cap packages, opens and
     `the graph is ${graphBytes} bytes, which must exceed the cap the payload store replaces`);
   assert.ok(zip.length<graphBytes,'and the package is smaller than the graph it carries');
 
-  const fresh=await browser.newContext({viewport:{width:1280,height:900}});
+  const fresh=await browser.newContext({viewport:{width:1280,height:900},baseURL});
   const target=await fresh.newPage();
   try{
-    await target.goto('http://127.0.0.1:4174/?example=blank');
+    await target.goto('/?example=blank');
     await expect(target.locator('#workflow-state')).toBeVisible({timeout:45000});
     const opened=Date.now();
     await target.locator('#workflow-file').setInputFiles({name:'project.zip',mimeType:'application/zip',buffer:zip});

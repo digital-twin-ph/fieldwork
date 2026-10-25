@@ -4,6 +4,7 @@
 //
 // Usage: node scripts/export-validation-fixture.mjs <fixtureId> <outputDir>
 //        fixtureId: reproject-utm35s-001 | project-forward-utm30n-001 | clip-all-touched-001
+//                   | deduplicate-facilities-001
 //                   | measure-area-001 | mean-center-001
 //                   | reachability-soho-001 | corridor-soho-001
 import {createHash} from 'node:crypto';
@@ -26,6 +27,7 @@ import {bufferPoint,BUFFER_POINT_STEPS} from '../build/buffer-point.js';
 import {bufferedBoundary} from '../build/area-buffer.js';
 import {aggregateHex} from '../build/geoprivacy.js';
 import {caseSeriesFromTable} from '../build/case-series.js';
+import {deduplicatePoints,jaroWinkler,normaliseName} from '../build/deduplicate-points.js';
 import {extentN3,extentProjection} from '../build/rule-application.js';
 import {runInThisContext} from 'node:vm';
 import {readFileSync} from 'node:fs';
@@ -170,6 +172,107 @@ const builders={
       input:{rows:table.rows.map(r=>({date:r.key[dateField],deaths:r.value}))},
       output:byPeriod,
       note:'Bin the same rows by day, week and month with pandas, weighting by the deaths column, filling empty periods, and compare every bin key and count, the totals, and the dated and undated record counts.'
+    },files:{}};
+  },
+  'deduplicate-facilities-001'(){
+    // Cross-source record linkage, which no worked example exercises: this widget is on the
+    // weakest evidence rung and has never been recomputed by anything outside this repository.
+    //
+    // THE RECORDS ARE CONSTRUCTED, not downloaded, and that is the right choice here even though
+    // the release says the thresholds want real OSM and Overture data. A parity check asks whether
+    // the algorithm computes what it says it computes, and that needs every branch to fire at
+    // least once -- a match on both comparisons, a match on each one alone, a pair neither
+    // reaches, a pair blocking never offers, a name that is missing, a record with no location,
+    // a same-source pair, and the cluster rule refusing a second record from one source. Real
+    // downloaded records exercise whichever of those they happen to contain, and the question of
+    // what the thresholds SHOULD be is a different question that needs labelled ground truth
+    // nobody has. That question is named in the note and left open rather than answered badly.
+    //
+    // NO PAIR SITS NEAR A DISTANCE THRESHOLD. The widget measures on a sphere (haversine,
+    // R=6371.0088 km), an independent implementation will measure a geodesic, and the two
+    // disagree by up to about 0.56% (experiment 101). Every distance below is at least 10 m clear
+    // of 50 m and of 500 m, so that disagreement cannot flip a classification and the
+    // classifications can be compared exactly while the metres are compared within a tolerance.
+    const origin=[120.9842,14.5995];
+    // Metres east and north of the base, converted at this latitude only. The exporter is not
+    // claiming these are exact: it prints the measured distance for every pair it builds.
+    const at=(east,north)=>[origin[0]+east/(111320*Math.cos(origin[1]*Math.PI/180)),origin[1]+north/110574];
+    const feature=(id,name,coordinates)=>({type:'Feature',id,
+      properties:name===null?{kind:'clinic'}:{name,kind:'clinic'},
+      geometry:coordinates?{type:'Point',coordinates}:null});
+    const layers=[
+      {sourceNodeId:'osm',label:'OpenStreetMap',features:[
+        feature('osm-1','Ospital ng Maynila Medical Center',at(0,0)),
+        // Same source as osm-1 and 20 m from it: a layer's duplicates of itself are never
+        // compared, and the counts have to show that rather than leave it assumed.
+        feature('osm-2','Ospital ng Maynila Medical Center Annex',at(20,0)),
+        feature('osm-3',"St. Mary's Clinic",at(400,0)),
+        feature('osm-4','Mercury Drug Clinic',at(0,900)),
+        // No name at all: a missing value contributes zero, which is not the same as disagreeing.
+        feature('osm-5',null,at(400,900)),
+        // Beyond the blocking distance from everything in the other layer.
+        feature('osm-6','Barangay Health Station 12',at(2000,2000)),
+        // No location: never a candidate, carried through untouched, still counted as input.
+        feature('osm-7','Pasay City Clinic',null)]},
+      {sourceNodeId:'overture',label:'Overture Places',features:[
+        // Name abbreviated, 18 m away: both comparisons agree.
+        feature('ovt-1','Ospital ng Maynila Med Ctr',at(18,0)),
+        // The same place again from the same source, also within the near distance. One of the
+        // two merges and the other is refused: a cluster holds at most one record per source.
+        feature('ovt-2','Ospital ng Maynila Medical Center',at(0,30)),
+        // Punctuation only: agrees on name after normalisation, and on distance.
+        feature('ovt-3','St Marys Clinic',at(400,22)),
+        // The same name 300 m away: the name agrees, the distance does not.
+        feature('ovt-4',"St. Mary's Clinic",at(400,-300)),
+        // A different place 15 m from osm-4: the distance agrees, the name does not.
+        feature('ovt-5','Rizal Memorial Coliseum',at(0,915)),
+        // Neither comparison agrees, and blocking still offered the pair.
+        feature('ovt-6','Manila Doctors Hospital',at(0,1250)),
+        // 12 m from the unnamed osm-5: nothing to compare the name against.
+        feature('ovt-7','Health Center',at(412,900))]}];
+    const params={nameField:'name',nameMatch:'fuzzy',fuzzyThreshold:0.88,
+      blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1};
+    const result=deduplicatePoints(layers,params);
+    // Published Jaro-Winkler values, carried so the notebook can check the string comparison
+    // directly rather than only through the pipeline. `martha`/`marhta` is 0.961 and
+    // `dwayne`/`duane` is 0.840 in the literature; the prefix adjustment has three parameters
+    // and any of them can be wrong while the pipeline still looks plausible.
+    const namePairs=[['martha','marhta'],['dwayne','duane'],['dixon','dicksonx'],
+      ['jones','johnson'],['abcvwxyz','cabvwxyz'],['',''],['a','a']];
+    return {fixture:{
+      ...base('deduplicate-facilities-001','deduplicate_points','Deduplicate point records',
+        'src/deduplicate-points.ts#deduplicatePoints'),
+      declaredParameters:{...params,
+        distanceRule:'Great-circle (haversine) on a sphere of radius 6371.0088 km, in metres. A geodesic will differ by up to about 0.56%; every pair here is at least 10 m clear of both distance thresholds so no classification turns on that difference.',
+        blockingRule:'Only pairs within blockDistanceM are compared. Every other pair is counted as blocked and never compared.',
+        sourceRule:'Cross-source only. Two records from the same layer are neither compared nor counted as blocked.',
+        normalisationRule:'NFKC, trimmed, lower case. Fuzzy comparison also replaces every run of characters that are neither letters nor numbers with one space, so punctuation and spacing stop being a disagreement.',
+        nameRule:'Fuzzy: Jaro similarity with the Winkler prefix adjustment -- prefix at most 4 characters, scaling 0.1, applied only when the Jaro similarity exceeds 0.7 -- and the name agrees when that value is at least fuzzyThreshold. A name missing on either side is not comparable: similarity is absent, and the comparison contributes zero rather than agreeing or disagreeing.',
+        scoreRule:'Two binary contributions, not a blended score: the name agreement and the near agreement each contribute 1 or 0. A similarity of 0.87 against a threshold of 0.88 contributes nothing rather than 0.87.',
+        classRule:'At or above matchThreshold the pair is a match; at or above reviewThreshold it waits for a person; below that it is not a match. Three classes, not merge-or-not.',
+        clusterRule:'Matched pairs are accepted in order of score descending, then distance ascending, then key. A cluster holds at most one record from each source: an edge that would add a second is refused and the pair stays reported as a match that did not merge. A pair in the review band merges only when a person decides, and no decision is supplied here.',
+        outputRule:'One record per cluster, the first of the cluster kept, carrying mergedFrom when it stands for more than one. Records with no usable location were never candidates and are carried through untouched.'},
+      input:{layers:layers.map(l=>({sourceNodeId:l.sourceNodeId,label:l.label,
+        features:l.features.map(f=>({id:f.id,name:f.properties.name??null,
+          coordinates:f.geometry?f.geometry.coordinates:null}))})),
+        namePairs:namePairs.map(([a,b])=>({a,b}))},
+      output:{
+        counts:{inputCount:result.inputCount,compared:result.compared,blocked:result.blocked,
+          matched:result.matched,awaiting:result.awaiting,merged:result.merged,
+          outputRecords:result.collection.features.length},
+        candidates:result.candidates.map(c=>({key:c.key,
+          a:{sourceNodeId:c.a.sourceNodeId,id:c.a.id,name:c.a.name},
+          b:{sourceNodeId:c.b.sourceNodeId,id:c.b.id,name:c.b.name},
+          metres:c.metres,nameSimilarity:c.nameSimilarity,nameAgrees:c.nameAgrees,
+          nearAgrees:c.nearAgrees,score:c.score,classification:c.classification})),
+        records:result.collection.features.map(f=>({id:f.id,
+          name:(f.properties).name??null,
+          mergedFrom:(f.properties).mergedFrom??null})),
+        normalisedNames:layers.flatMap(l=>l.features.filter(f=>f.properties.name!==undefined)
+          .map(f=>({id:f.id,exact:normaliseName(f.properties.name,'exact'),
+            fuzzy:normaliseName(f.properties.name,'fuzzy')}))),
+        nameSimilarities:namePairs.map(([a,b])=>({a,b,similarity:jaroWinkler(a,b)}))},
+      note:"Recompute the linkage from the two layers and the declared parameters with an independent Jaro-Winkler (jellyfish) and an independent distance (a WGS84 geodesic), and compare: every published name similarity, the normalised form of every name, the two agreements and the class of every pair, the blocked and compared counts, the refusal by the cluster rule of a second record from one source, and the output record set with its mergedFrom. What this cannot establish is what the thresholds should be: that needs records whose true identity is known, and these are constructed."
     },files:{}};
   },
   'snap-soho-001'(){

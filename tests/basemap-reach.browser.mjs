@@ -7,8 +7,15 @@ import {collectPageErrors} from './page-errors.mjs';
 // ALREADY in the interactive presentation, which is a selector further down the same panel.
 // Five of the ten maps in the worked examples were two clicks from a basemap and nothing
 // said so. Choosing a basemap now takes the map to a presentation that can draw it.
+//
+// REVISED 2026-10-25, when the static plot learned to draw tiles itself (experiment 137). This
+// asserted that ANY basemap moved the map to the interactive presentation, which was right while
+// MapLibre was the only renderer that could draw one. A raster style is now baked into the static
+// figure, so only the vector styles still move it -- and the practitioner met the old rule as a
+// defect: *"I still don't see the static map basemap"*, after choosing one had quietly taken the
+// map away from the presentation they wanted.
 
-test('a basemap can be chosen on a static plot, and the map becomes one that can draw it',async({page})=>{
+test('a raster basemap is drawn into the static plot, and a vector one moves the map',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
@@ -21,26 +28,32 @@ test('a basemap can be chosen on a static plot, and the map becomes one that can
   const basemap=page.locator('#map-basemap');
   await expect(basemap).toBeVisible();
   await expect(basemap).toHaveValue('none');
-  await expect(page.locator('#inspector-content')).toContainText('switches this map to the interactive presentation');
+  await expect(page.locator('#inspector-content')).toContainText('drawn into the figure itself');
   await expect(page.locator('#polygon-presentation')).toHaveValue('plot');
 
-  await basemap.selectOption('osm');
-  // Both halves move together: the choice is recorded and the presentation can honour it.
-  await expect.poll(async()=>await page.evaluate(()=>{
+  const recorded=async()=>await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
     const map=(w.nodes||[]).find(n=>n.id==='map');
     return `${map?.params?.basemap}/${map?.params?.presentation}`;
-  })).toBe('osm/interactive');
+  });
+
+  // A RASTER STYLE LEAVES THE PRESENTATION ALONE, because the static plot bakes the tiles in.
+  // Moving the map here is what made the control look broken: the practitioner chose a basemap
+  // and the figure they were looking at was replaced by a different renderer.
+  await basemap.selectOption('osm');
+  await expect.poll(recorded).toBe('osm/plot');
+  await expect(page.locator('#polygon-presentation')).toHaveValue('plot');
+
+  // A VECTOR STYLE STILL MOVES IT. OpenFreeMap serves vector tiles that need a GL canvas, so the
+  // interactive presentation is the only one that can draw them, and switching is honest.
+  await basemap.selectOption('ofm-positron');
+  await expect.poll(recorded).toBe('ofm-positron/interactive');
   await expect(page.locator('#polygon-presentation')).toHaveValue('interactive');
 
   // And back to none leaves the presentation where the practitioner put it, rather than
   // undoing a change they may now want.
   await page.locator('#map-basemap').selectOption('none');
-  await expect.poll(async()=>await page.evaluate(()=>{
-    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
-    const map=(w.nodes||[]).find(n=>n.id==='map');
-    return `${map?.params?.basemap}/${map?.params?.presentation}`;
-  })).toBe('none/interactive');
+  await expect.poll(recorded).toBe('none/interactive');
   expect(errors).toEqual([]);
 });
 
@@ -64,10 +77,11 @@ test('a map with no polygons can still take a basemap',async({page})=>{
   await expect(page.locator('#map-basemap')).toBeVisible();
   await expect(page.locator('#inspector-content')).toContainText('A basemap is layer 0');
   await page.locator('#map-basemap').selectOption('osm');
+  // Recorded, and the map stays the static plot it was: the tiles come to the figure.
   await expect.poll(async()=>await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
     const map=(w.nodes||[]).find(n=>n.id==='access-map');
-    return `${map?.params?.basemap}/${map?.params?.presentation}`;
-  })).toBe('osm/interactive');
+    return `${map?.params?.basemap}/${map?.params?.presentation??'plot'}`;
+  })).toBe('osm/plot');
   expect(errors).toEqual([]);
 });

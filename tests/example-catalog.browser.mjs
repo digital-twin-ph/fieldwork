@@ -18,7 +18,7 @@ test.use({serviceWorkers:'block'});
 // catalog actually pins rather than a fixture that could drift from it. Checked out or not is
 // said plainly, on the same terms as the validation lab: a link verified against nothing is the
 // defect, and a test that silently passes without its subject is the same defect wearing green.
-const BUNDLE=new URL('../../example-1855-cholera-south-london/fieldwork-workflow.json.gz',import.meta.url);
+const BUNDLE=new URL('../../example-1855-cholera-south-london/fieldwork-project.json.gz',import.meta.url);
 const skip=existsSync(BUNDLE)?false
   :'example-1855-cholera-south-london is not checked out beside this repository, so the bytes the catalog pins are not here to serve.';
 const bundle=skip?Buffer.alloc(0):readFileSync(BUNDLE);
@@ -68,4 +68,22 @@ test('bytes that do not match the pinned digest are refused, not loaded',{skip},
   // REFUSED, NOT PARTLY LOADED: the canvas is still the blank one.
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="mortality"]')).toHaveCount(0);
+});
+
+/** AN INVESTIGATION IS A PROJECT, AND ITS QUESTIONS ARE ITS WORKFLOWS.
+ *
+ *  The practitioner, 2026-10-24: *"when we import South London, we import a project and its
+ *  workflows. Right now it just one workflow."* It was, and it landed under "-- No project --". */
+test('a curated example opens as a project with its workflows',{skip},async({page})=>{
+  await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bundle}));
+  await openProjects(page);
+  await page.locator('[data-open-example]').click();
+  await expect(page.locator('[data-example-status]')).toContainText('digest matched',{timeout:20000});
+  // A PROJECT, named, with all three questions under it -- not a loose canvas.
+  await expect(page.locator('#project-select')).toContainText("Snow's South London");
+  await expect(page.locator('#project-select')).toContainText('3 workflows');
+  const workflows=await page.locator('#workflow-select option').allTextContents();
+  expect(workflows).toContain('Deaths per 1,000 people, by sub-district');
+  expect(workflows).toContain('The ground: 32 sub-districts');
+  expect(workflows).toContain('Cholera in 1849 compared with 1854');
 });

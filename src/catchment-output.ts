@@ -1,4 +1,4 @@
-import {orderedSteps} from './presentation.js';
+import {orderedSteps,FIGURE_ROLE,markPath} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
 import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
@@ -79,7 +79,19 @@ export function catchmentPlot(p:Polygons,esc:Escape,context?:PointCollection):st
   for(let i=0;i<=4;i++){const lon=west+(east-west)*i/4,lat=south+(north-south)*i/4,x=project([lon,south])[0],y=project([west,lat])[1];svg+=`<text x="${x}" y="595" text-anchor="middle" font-size="12">${lon.toFixed(4)}</text><text x="78" y="${y+4}" text-anchor="end" font-size="12">${lat.toFixed(4)}</text>`;}
   svg+='<text x="455" y="617" text-anchor="middle" font-size="14">Longitude</text><text transform="translate(20,310) rotate(-90)" text-anchor="middle" font-size="14">Latitude</text>';
   for(const f of [...p.features].sort((a,b)=>(b.minutes||0)-(a.minutes||0))){const rings=f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat();svg+=`<path data-catchment="${esc(f.id)}" d="${rings.map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="#1f77b4" fill-opacity=".2" fill-rule="evenodd"><title>${esc(f.name)}</title></path>`;}
-  for(const [fs,color,r,kind] of [[observations,'gray',2.7,'observation'],[sites,'red',3.5,'site']] as const)for(const f of fs){if(!f.geometry)continue;const [x,y]=project(f.geometry.coordinates);svg+=`<circle data-plot-${kind}="${esc(f.id)}" cx="${x}" cy="${y}" r="${r}" fill="${color}"><title>${esc(f.properties.name)}</title></circle>`;}
+  // THE COLOURS THE KEY NAMES, and the shapes it draws. This plot used `gray` and `red` while the
+  // legend beside it named Okabe-Ito's #CC79A7 and #E69F00 and drew the sites as squares, so a
+  // reader matching marks to the key matched nothing. Worse than a mismatch: `red` on `gray` is
+  // the pair that fails first under the commonest colour vision deficiencies, and neither colour
+  // is in the declared palette -- which is what CategoricalPaletteIsColourBlindSafe exists to
+  // prevent, on a figure it was not checking. Found 2026-10-25 by rendering it to look at it.
+  //
+  // Shape carries the distinction as well as hue, so the two are told apart without colour.
+  for(const [fs,color,r,shape,kind] of [
+    [observations,FIGURE_ROLE.secondary,2.7,'circle','observation'],
+    [sites,FIGURE_ROLE.site,4,'square','site']] as const)
+    for(const f of fs){if(!f.geometry)continue;const [x,y]=project(f.geometry.coordinates);
+      svg+=`<path data-plot-${kind}="${esc(f.id)}" d="${markPath(shape,x,y,r)}" fill="${color}" stroke="white" stroke-width=".8"><title>${esc(f.properties.name)}</title></path>`;}
   const times=[...new Set(p.features.flatMap(f=>f.minutes===undefined?[]:[f.minutes]))].sort((a,b)=>a-b);
-  return svg+`<text x="425" y="640" text-anchor="middle" font-size="11">${times.length?'Cumulative regions: '+times.join(', ')+' min · ':''}Gray: observations · red: sites · CRS84</text>`;
+  return svg+`<text x="425" y="640" text-anchor="middle" font-size="11">${times.length?'Cumulative regions: '+times.join(', ')+' min · ':''}Dots: observations · squares: sites · CRS84</text>`;
 }

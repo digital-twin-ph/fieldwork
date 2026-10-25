@@ -27,7 +27,8 @@ test('a site past the snap limit is routed off-network, and the widget says so',
   await expect(alert).toContainText('Out of bounds');
   await expect(alert).toContainText('Routed off-network');
   await expect(alert).toContainText('charged as a straight line');
-  await expect(alert).toContainText('assumes a walk that may not exist');
+  // Mode-neutral: see tests/catchments.test.mjs. 2026-10-25.
+  await expect(alert).toContainText('assumes ground that can be crossed');
   assert.ok((await alert.locator('tbody tr').count())>0,'each site is named with the leg it was charged');
 
   // The badge closes. It covers the node it is about, and once it has been read it is in the

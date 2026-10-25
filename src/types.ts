@@ -282,7 +282,7 @@ export interface ParamsByType {
     /** How each point layer is drawn, keyed by the node that produced it -- a source keeps its
      *  symbol when layers are rewired or reordered. Absent means derived from the layer's
      *  position, which is what every map did before a practitioner could choose. */
-    layerSymbols?:Record<string,{mark?:import('./presentation.js').LayerShape;colour?:string}>;
+    layerSymbols?:Record<string,{mark?:import('./presentation.js').LayerShape;colour?:string;size?:number}>;
     /** Whether every point mark is drawn over a dark halo. On by default, because the reason it
      *  exists is a terrain basemap: a mark in the palette's own values over OpenTopoMap was hard
      *  to pick out. It is a checkbox rather than a rule because a map on a pale ground, or one

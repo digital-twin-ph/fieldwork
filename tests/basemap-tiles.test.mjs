@@ -88,3 +88,34 @@ test('each tile is placed by its own corners in the caller\'s projection',async(
   // from the equator. South London is northern, so the northern row is the SHORTER one.
   if(rows.size>1)assert.ok(Math.max(...heights)-Math.min(...heights)>0);
 });
+
+test('a fetched tile is kept durably, and a failed one is not',async()=>{
+  const {useTileStore,fetchTileAsDataURI,forgetTiles,tileCacheKey}=await import('../build/basemap-tiles.js');
+  // THE OFFLINE PROMISE IS A FLOW: online download the assets, offline use the cached assets. A
+  // session-only cache gave the opposite of that -- ground on the first visit and none on the
+  // visit that mattered, which is the one on a device with no network.
+  const kept=new Map();
+  useTileStore({read:key=>kept.get(key),write:async(key,value)=>{kept.set(key,value);}});
+
+  const url='https://tile.openstreetmap.org/16/0/0.png';
+  let calls=0;
+  globalThis.fetch=async()=>{calls++;return {ok:true,blob:async()=>new Blob([new Uint8Array([1,2,3])],{type:'image/png'})};};
+  globalThis.FileReader=class{readAsDataURL(){this.result='data:image/png;base64,AQID';this.onload();}};
+
+  assert.equal(await fetchTileAsDataURI(url),'data:image/png;base64,AQID');
+  assert.equal(calls,1);
+  assert.equal(kept.get(tileCacheKey(url)),'data:image/png;base64,AQID','written down for the next visit');
+
+  // A NEW SESSION, with no network at all: the tile is still there.
+  forgetTiles();
+  globalThis.fetch=async()=>{throw new Error('offline');};
+  assert.equal(await fetchTileAsDataURI(url),'data:image/png;base64,AQID');
+
+  // A FAILURE IS NOT WRITTEN DOWN. The next visit should try again rather than inherit one bad
+  // afternoon's network, so nothing is stored for a tile that could not be had.
+  forgetTiles();
+  const missing='https://tile.openstreetmap.org/16/9/9.png';
+  assert.equal(await fetchTileAsDataURI(missing),null);
+  assert.equal(kept.has(tileCacheKey(missing)),false);
+  useTileStore(null);
+});

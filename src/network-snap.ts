@@ -90,7 +90,7 @@ export function snapToNetwork(
   if(shared)notes.push(`${shared} site${shared===1?' shares':'s share'} a node with another, so they are indistinguishable to anything routed from here.`);
   if(offNetwork.length)notes.unshift(`${offNetwork.length} of ${located.length} site${located.length===1?'':'s'} ${offNetwork.length===1?'is':'are'} further than the ${node.params.maxSnapM} m snap limit from any node and reached the network across ground no street covers: `
     +offNetwork.map(u=>`${u.name} (${Math.round(u.distanceM)} m)`).join(', ')
-    +`. ${offNetwork.length===1?'It carries':'They carry'} offNetworkMetres, and a straight line there assumes a walk that may not exist.`);
+    +`. ${offNetwork.length===1?'It carries':'They carry'} offNetworkMetres, and a straight line there assumes ground that can be crossed.`);
   if(unlocated)notes.push(`${unlocated} record${unlocated===1?' without coordinates was':'s without coordinates were'} not snapped and ${unlocated===1?'is':'are'} not in the result.`);
   const activity=`<urn:fieldwork:run:${runId}:${node.id}:snap>`;
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`

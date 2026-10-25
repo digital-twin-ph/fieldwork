@@ -100,7 +100,7 @@ export interface Output extends DisplayValue {nodeId:string; label:string; view:
  *  found it can say so. Not an error: the run completed and the outputs are real.
  *
  *  Two findings so far, and the difference between them is what the practitioner does about it.
- *  `unconnected` sites got no answer -- the walk to the network spends the whole budget -- so the
+ *  `unconnected` sites got no answer -- the leg to the network spends the whole budget -- so the
  *  counts are over fewer sites than were offered. `offNetwork` sites got an answer that assumes a
  *  straight line nobody has checked is walkable, so their results are optimistic rather than
  *  missing. Experiment 114. */

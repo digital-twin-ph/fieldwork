@@ -30,11 +30,15 @@ test('the marks are the standard’s names, not ours',()=>{
 
 test('a chosen symbol wins, and says that it was chosen',()=>{
   const derived=resolveLayerSymbol(2);
-  assert.deepEqual(derived.chosen,{colour:false,shape:false});
+  // `size` joined hue and mark on 2026-10-25: density is a property of the data, so a figure
+  // holding eight pumps across a borough and 250 addresses in four streets needs a radius per
+  // layer rather than one default. Reported as marks merging "like a blob on the map".
+  assert.deepEqual(derived.chosen,{colour:false,shape:false,size:false});
+  assert.equal(derived.size,4,'the default radius, where none was chosen');
   const picked=resolveLayerSymbol(2,{mark:'star'});
   assert.equal(picked.shape,'star');
   assert.equal(picked.colour,derived.colour,'what was not chosen keeps its derived value');
-  assert.deepEqual(picked.chosen,{colour:false,shape:true},
+  assert.deepEqual(picked.chosen,{colour:false,shape:true,size:false},
     'because "a star because somebody chose one" and "a star because it is the seventh layer" are different claims');
 });
 
@@ -55,4 +59,21 @@ test('an ordered quantity gets an ordered ramp, spread across the scheme',()=>{
 test('the ordered palette is not the categorical one',()=>{
   for(const hue of ORDERED_PALETTE)assert.ok(!FIGURE_PALETTE.includes(hue),
     'a sequence and a set of categories are different jobs and must not share hues');
+});
+
+test('a mark radius is per layer, defaulted, and clamped',async()=>{
+  const {resolveLayerSymbol,markRadius,MARK_RADIUS_MIN,MARK_RADIUS_MAX}=await import('../build/presentation.js');
+  // One figure holds both densities, which is why this is per layer and not a renderer constant:
+  // eight pumps across a borough want a mark a reader can find; 250 addresses in four streets
+  // want one small enough to leave gaps. Reported 2026-10-25 as marks merging into a blob.
+  assert.equal(resolveLayerSymbol(0,{size:2}).size,2);
+  assert.equal(resolveLayerSymbol(0,{size:2}).chosen.size,true);
+  assert.equal(resolveLayerSymbol(0).size,4,'default where nothing was chosen');
+  assert.equal(resolveLayerSymbol(0).chosen.size,false);
+  // Clamped rather than refused: a saved workflow carrying a wild number still draws a figure,
+  // and a mark of radius 0 or 400 is not a figure anybody can read.
+  assert.equal(markRadius(0),MARK_RADIUS_MIN);
+  assert.equal(markRadius(400),MARK_RADIUS_MAX);
+  assert.equal(markRadius(Number.NaN),4);
+  assert.equal(markRadius(undefined),4);
 });

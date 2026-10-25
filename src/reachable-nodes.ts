@@ -334,7 +334,7 @@ export function reachableNodes(
   if(offNetwork.length)notes.unshift(`${offNetwork.length} origin${offNetwork.length===1?'':'s'} reached the network across ground no street covers (`
     +offNetwork.map(u=>`${u.name}, ${Math.round(u.distanceM)} m`).join('; ')
     +`), charged as a straight line at the street speed. ${offNetwork.length===1?'That distance is':'Those distances are'} a lower bound on the real walk, so ${offNetwork.length===1?'this origin reaches':'these origins reach'} further here than on the ground.`);
-  if(unconnected.length)notes.unshift(`${unconnected.length} origin${unconnected.length===1?'':'s'} reached NO junction: the walk to the network alone spends the ${budgetM.toFixed(0)} m budget (`
+  if(unconnected.length)notes.unshift(`${unconnected.length} origin${unconnected.length===1?'':'s'} reached NO junction: the leg to the network alone spends the ${budgetM.toFixed(0)} m budget (`
     +unconnected.map(u=>`${u.name}, ${Math.round(u.distanceM)} m`).join('; ')
     +`). ${unconnected.length===1?'It is':'They are'} absent from the result, and any count below is over the origins that reached something.`);
   if(input.features.length>origins.length)

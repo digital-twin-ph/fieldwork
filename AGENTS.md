@@ -1,6 +1,6 @@
 # Fieldwork semantic development checkpoints
 
-_Created 2026-10-07 · Updated 2026-10-17_
+_Created 2026-10-07 · Updated 2026-10-25_
 
 ## Developmental evaluation
 
@@ -210,6 +210,45 @@ Found 2026-10-16: a whole session of work was reported as passing on the strengt
 alone, and the gap surfaced only when a CI deploy failed on a WebKit test. Running both found no
 defect that time, which is the uncomfortable part — the habit was wrong whether or not it cost
 anything on the day, and a method that happens to be lucky is not a method.
+
+### Where a gate runs, and when to start one
+
+`npm run check` takes about 25 minutes. It is a landing check, not a development loop, and
+treating it as one cost roughly two and a half hours on 2026-10-25 — six gates, three of
+which failed on things a two-minute targeted run would have caught.
+
+**Gate a commit in a worktree, not the working tree.**
+
+    scripts/gate.sh            # gates HEAD in ../fieldwork-gate, on port 4184
+
+The worktree is detached at a commit and symlinks this checkout's `node_modules`, so setup
+costs nothing and the gate runs against exactly the dependencies developed against. Two
+consequences, both wanted:
+
+- **The main tree stays editable while a gate runs.** Gating the working tree means freezing
+  it, because a gate whose tree moved under it describes nothing. Gating a commit removes
+  the freeze.
+- **What is validated is what would be pushed.** The order becomes commit, then gate, then
+  fix and amend if it fails — rather than gate, then commit something slightly different.
+
+Each tree has its own `build/`, so **building in the main tree while a gate runs is fine** —
+which is the point, and it is what makes the main tree usable rather than merely editable.
+What is not fine is `npm ci` or `npm install` in either tree, because `node_modules` is
+shared and the gate would lose its dependencies mid-run.
+
+Keep heavy work off the machine while a gate runs even so. CPU contention is not
+theoretical: `micro-workflow.browser.mjs` took 22 to 26 seconds under load against 4 seconds
+idle, and failed a whole gate for it — an hour lost to a diagnosis that found nothing wrong
+with the code.
+
+**Before starting a gate**, have `tsc --noEmit` clean, `node scripts/test-unit.mjs` clean,
+and every touched browser test passing on **both** engines. `FIELDWORK_BROWSERS` and
+`FIELDWORK_TEST_PORT` make a targeted run cheap; the rule above about claiming a result only
+for the browsers it ran on still decides what may be reported.
+
+**Start a gate as the last act before handing back**, so its 25 minutes overlap with
+somebody reading rather than with waiting. This is scheduling, not rigour, and it is where
+most of the waste was.
 
 ### Generated files, and the order they are written in
 

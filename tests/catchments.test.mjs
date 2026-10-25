@@ -58,7 +58,11 @@ test('a site beyond the snap limit is routed anyway, across a leg it marks as of
   assert.deepEqual(p.unconnected,[],'nothing was dropped');
   assert.deepEqual(p.offNetwork.map(u=>[u.siteId,u.limitM]),[['away',2]]);
   assert.match(p.notes[0],/^1 of 2 sites started further than the 2 m snap limit/);
-  assert.match(p.notes[0],/lower bound on the walk and reach too far rather than too little/);
+  // Mode-neutral wording, 2026-10-25: *"any reference to walking or driving (or cycling) when
+  // using street networks must never be hard coded in the interface"*. A straight leg is charged
+  // the same way whatever mode was declared, and a message that calls it a walk is wrong on a
+  // driving network while looking perfectly reasonable.
+  assert.match(p.notes[0],/lower bound on the journey and reach too far rather than too little/);
   // The route is drawn whole, so the catchment reaches back to the site itself across the leg it
   // was charged for -- the straight line it assumed was walkable.
   const ring=p.features[1].geometry.type==='Polygon'?p.features[1].geometry.coordinates.flat()
@@ -68,7 +72,7 @@ test('a site beyond the snap limit is routed anyway, across a leg it marks as of
   assert.ok(nearest<40,`the catchment comes within ${nearest.toFixed(0)} m of the site it belongs to`);
 });
 
-test('a site whose walk to the network spends the whole budget gets no catchment, and says so',()=>{
+test('a site whose leg to the network spends the whole budget gets no catchment, and says so',()=>{
   const network={source:'synthetic directed graph',nodes:[{id:'a',coordinates:coord(0,0)},{id:'b',coordinates:coord(50,50)}],edges:[{from:'a',to:'b',lengthM:100,geometry:[coord(0,0),coord(50,0),coord(50,50)]}]};
   // 636 m to the nearest junction on a 50 m budget. There is nothing to draw: the only available
   // shape is a buffer disc around the junction, which is not where the site is nor where it can
@@ -80,7 +84,7 @@ test('a site whose walk to the network spends the whole budget gets no catchment
   assert.equal(p.unconnected.length,1);
   assert.equal(p.unconnected[0].budgetM,50);
   assert.ok(p.unconnected[0].distanceM>600);
-  assert.match(p.notes[0],/the walk to the nearest street alone spends the whole 50 m budget/);
+  assert.match(p.notes[0],/the leg to the nearest street alone spends the whole 50 m budget/);
   assert.match(p.notes[0],/over the origins|over the sites that reached something/);
   // A summary over an incomplete set carries the omission forward, so the tab that counts says so.
   const summary=summarizePolygons(p,collection(point('on',25,0)),{boundary:'include',valueField:''});

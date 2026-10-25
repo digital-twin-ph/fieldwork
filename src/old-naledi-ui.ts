@@ -60,7 +60,13 @@ export function mapFrame(output:DisplayValue){
 export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string){
   const {polygons,project}=mapFrame(output);
   let svg='<rect width="850" height="295" fill="#f0f3e9"/><text x="18" y="22" style="letter-spacing:1px">OLD NALEDI · SOURCE BOUNDARY</text>';
-  svg+=polygons.map(rings=>`<path d="${rings.map(ring=>'M'+ring.map(p=>project(p).join(',')).join('L')+'Z').join(' ')}" fill="#dbe8d6" stroke="#668870" stroke-width="1.5" fill-rule="evenodd"/>`).join('');
+  // TAGGED AS CARRYING NO VALUE. This polygon is a boundary: it says where the study area is and
+  // encodes no measurement, so its fill is spending a visual variable on nothing -- the same
+  // objection `UnknownIsNotAHue` already makes about hue, one channel over. On a blank page a
+  // pale wash still earns its place by separating figure from ground; over a basemap it simply
+  // hides the ground, which is what the practitioner met on the South London figure, 2026-10-25.
+  // So the fill is declared here and withdrawn by whoever draws ground underneath it.
+  svg+=polygons.map(rings=>`<path data-fill-role="context" d="${rings.map(ring=>'M'+ring.map(p=>project(p).join(',')).join('L')+'Z').join(' ')}" fill="#dbe8d6" stroke="#668870" stroke-width="1.5" fill-rule="evenodd"/>`).join('');
   if(['spatial-coverage','spatial-map'].includes(output.kind||''))svg=svg.replace('OLD NALEDI · SOURCE BOUNDARY','STUDY AREA · SPATIAL COVERAGE');
   const focus=output.rows.find(r=>'result:'+r.id===selected);
   if(focus?.center){svg+=`<path d="M${project(focus.coordinates!).join(',')}L${project(focus.center.coordinates!).join(',')}" stroke="#587d6c" stroke-dasharray="4 4"/>`;}
@@ -78,10 +84,14 @@ export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Es
   //
   // Where no symbols are declared the status colours stand, so every example that predates layer
   // symbols looks exactly as it did.
-  const symbols=(output as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0]}>}).layerSymbols;
+  const symbols=(output as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0];size?:number}>}).layerSymbols;
   for(const r of output.rows){if(!r.coordinates!)continue;const [x,y]=project(r.coordinates!),label=['spatial-coverage','spatial-map'].includes(output.kind||'')?(r.excluded?'Excluded':r.relation):output.kind==='facility-evidence'?tierLabel(r.tier||'Unknown'):statusLabel(r.status);
     const symbol=symbols?.[r.sourceNodeId||''];
-    const radius=focus?.id===r.id?7:4;
+    // The layer's own radius, or the default where none was chosen. A focused mark is drawn
+    // larger than whatever that is, rather than at a fixed size that could be smaller than the
+    // mark it is meant to pick out.
+    const base=symbol?.size??4;
+    const radius=focus?.id===r.id?base+3:base;
     const statusFill={Review:'#c18b4f',NoFlag:'#699178',Unknown:'#a89b87'}[r.status!];
     // `hollow` is the declared fill for a point outside the area, and `absent` for one a clip set
     // aside: drawn as an outline and as a neutral, never as a second hue competing with a layer.

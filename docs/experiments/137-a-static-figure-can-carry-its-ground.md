@@ -38,6 +38,29 @@ So: off by default, chosen per map, and the receipt records that tiles were requ
 from whom. The application already warns in those words; what is new is that the warning
 now applies to a figure that can be published with the tiles inside it.
 
+## The offline promise is a flow, not an absolute
+
+The practitioner, 2026-10-25, on what offline-first means here: *"The offline promise is
+not absolute as we have already discussed earlier. It's a flow from online to offline.
+Online download the assets, offline use the cached assets."*
+
+That settles what a basemap must do and exposed a defect in the first implementation of
+this, which cached tiles in memory for the session. It gave the opposite of the flow:
+ground on the first visit, and none on the visit that matters — the one on a field device
+with no network, which is what this application exists for.
+
+So a fetched tile goes where every other downloaded asset goes: the payload store, which
+survives a reload, is hydrated at startup and is counted in the storage figures the Project
+tab shows. A practitioner can see what the ground cost them and clear it with everything
+else. A tile that could NOT be fetched is remembered for the session and not written down,
+so the next visit tries again rather than inheriting one bad afternoon's network.
+
+It also changes what shipping a basemap inside a worked example would mean. The example's
+README says it *"runs offline with nothing else fetched"*, which is a statement about the
+data it carries; under the flow above, a basemap would be fetched once online and cached
+thereafter. That is a defensible example to ship, but the README sentence has to be
+rewritten to match rather than left to contradict it. Not done here.
+
 ## Raster and vector are different problems
 
 `src/catchment-map.ts` says it plainly: *"OpenFreeMap serves VECTOR tiles, not raster, so

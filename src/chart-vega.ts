@@ -44,8 +44,21 @@ export const chartRenderer=(params:{renderer?:'html'|'vega-lite'}):'html'|'vega-
 export const chartOrientation=(params:{orientation?:'horizontal'|'vertical';inputMode?:string}):'horizontal'|'vertical'=>
   params.orientation??'vertical';
 
-export function chartSourceNote(params:ChartParams,sourceId?:string,runId?:string){
-  return params.sourceNote?.trim()||`Source: ${sourceId||'connected workflow result'}${runId?` · run ${runId}`:''}`;
+/** THE DEFAULT IS WHAT MOST FIGURES PUBLISH WITH, so it has to be publishable.
+ *
+ *  This read `Source: curve · run 8e86bd09-1d3f-4a2b-8e06-b3beadf90b41` -- a node id and a run
+ *  UUID. Both are provenance and neither is a source: a reader meeting the figure cannot tell
+ *  what `curve` is, and the run id identifies this execution rather than the data. The
+ *  practitioner, 2026-10-25: *"This chart from Hagelloch is not publish friendly"*.
+ *
+ *  The map's default already did this correctly -- it names the upstream labels and points at the
+ *  evidence for method -- so this follows it rather than inventing a second convention. The run
+ *  id is not lost: it is in the receipt, which is where a reader checking reproducibility looks
+ *  and where a reader of the figure does not. */
+export function chartSourceNote(params:ChartParams,sourceId?:string,runId?:string,sourceLabel?:string){
+  if(params.sourceNote?.trim())return params.sourceNote.trim();
+  const named=sourceLabel?.trim()||sourceId;
+  return `Source: ${named||'connected workflow result'} · See N3 & evidence for method.`;
 }
 
 /** A deliberately small, offline Vega-Lite profile over already computed bins.
@@ -82,7 +95,7 @@ export function wrapToWidth(value:string,width:number):string[]{
   return lines;
 }
 
-export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string}={}){
+export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}={}){
   if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
   const mark=params.mark||'bar',orientation=chartOrientation(params);
   if(!['bar','point'].includes(mark)||!['horizontal','vertical'].includes(orientation))throw new Error('Unsupported chart encoding.');
@@ -105,7 +118,16 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
   }
   const source=difference?ordered:chart.bins;
   const values=source.map(b=>({key:b.key,label:b.label,displayLabel:duplicateLabels?`${b.label} (${b.key})`:b.label,count:b.count,...(b.order===undefined?{}:{order:b.order})}));
-  const category={field:'displayLabel',type:'nominal' as const,sort:values.map(b=>b.displayLabel)};
+  // LABELS THAT FIT. Vega-Lite thins overlapping labels by default on quantitative and temporal
+  // axes and NOT on nominal ones, so a date axis modelled as categories -- which an epidemic
+  // curve is -- draws every label and they collide. 87 daily bins across the plot width rendered
+  // as a solid band of overlapping text, reported 2026-10-25 on the Hagelloch measles curve.
+  //
+  // `parity` drops every other label and repeats until they fit, so the ones that remain are
+  // evenly spaced and the axis stays readable at any bin count. No data is hidden: the bars are
+  // all drawn and the tooltip names each one.
+  const categoryAxis={labelOverlap:'parity' as const,labelSeparation:2};
+  const category={field:'displayLabel',type:'nominal' as const,sort:values.map(b=>b.displayLabel),axis:categoryAxis};
   const quantity={field:difference?'bandCount':'count',type:'quantitative' as const,scale:{domainMin:0}};
   const quantityTitle=difference
     ?(chart.field==='total'?'Numeric total in this band alone':'Records in this band alone')
@@ -117,7 +139,7 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
     {calculate:'datum.count - (datum.innerCount == null ? 0 : datum.innerCount)',as:'bandCount'},
   ]}:{};
   const color=params.colorByCategory?{color:{field:'displayLabel',type:'nominal' as const,scale:{domain:values.map(v=>v.displayLabel),range:colors.slice(0,values.length)},legend:{title:'Category'}}}:{};
-  const sourceNote=chartSourceNote(params,context.sourceId,context.runId);
+  const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
   const chartWidth=Math.min(560,Math.max(300,chart.bins.length*72));
   return {
     $schema:'https://vega.github.io/schema/vega-lite/v6.json',
@@ -138,8 +160,8 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
       anchor:'start' as const},
     mark:{type:mark,filled:true,...(params.colorByCategory?{}:{color:FIGURE_ROLE.primary}),...(mark==='point'?{size:110}:{})},
     encoding:orientation==='horizontal'
-      ?{x:{...quantity,title:params.xAxisTitle?.trim()||quantityTitle},y:{...category,title:params.yAxisTitle?.trim()||'Category'},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]}
-      :{x:{...category,title:params.xAxisTitle?.trim()||'Category'},y:{...quantity,title:params.yAxisTitle?.trim()||quantityTitle},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]},
+      ?{x:{...quantity,title:params.xAxisTitle?.trim()||quantityTitle},y:{...category,title:params.yAxisTitle?.trim()||chart.categoryTitle||'Category'},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]}
+      :{x:{...category,title:params.xAxisTitle?.trim()||chart.categoryTitle||'Category'},y:{...quantity,title:params.yAxisTitle?.trim()||quantityTitle},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]},
     width:chartWidth,
     height:orientation==='horizontal'?Math.max(140,chart.bins.length*38):280,
     // One type scale with the map, including the family: a chart that inherits the page font and a
@@ -189,7 +211,7 @@ export function chartSpecificationFacts(node:WorkflowNode<'chart_output'>,runId:
 }
 
 export function disposeVegaChart(){generation++;current?.finalize();current=null;}
-export async function renderVegaChart(host:HTMLElement,chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string}={}):Promise<void>{
+export async function renderVegaChart(host:HTMLElement,chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}={}):Promise<void>{
   disposeVegaChart();
   const ticket=generation;
   const spec=chartVegaSpec(chart,params,context);

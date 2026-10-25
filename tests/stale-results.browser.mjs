@@ -57,3 +57,38 @@ test('deleting one output leaves the others, and a parameter change still keeps 
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output]')).toHaveCount(before-1);
 });
+
+/** AN OUTPUT IS ORPHANED BY ITS NODE GOING, NOT BY WHAT ITS NODE IS CALLED.
+ *
+ *  The prune stripped a trailing `-map` or `-table` from an output's node id before asking
+ *  whether that node still existed. Nothing produces an id needing that — every output sets
+ *  `nodeId: node.id` — so it only ever mis-fired, and it mis-fired on authored ids that happen to
+ *  end that way.
+ *
+ *  `geoprivacy-example` has seven: before-map, before-table, after-move-map, after-move-table,
+ *  comparison-map, after-group-map and after-group-table. None of the stems it strips to exists
+ *  as a node, so deleting ANY node in that workspace dropped all seven at once, and the branch
+ *  below that discards a result with nothing left in it then threw the whole run away.
+ *
+ *  Found 2026-10-25 by naming a node `spot-map` in the John Snow example: deleting the catchment
+ *  map took Snow's own map with it, purely because of how it had been named. This is the
+ *  workspace where it would have cost most, so it is the one that holds the line. */
+test('outputs whose ids end in -map or -table survive a delete elsewhere',async({page})=>{
+  await page.goto('/?example=snow-geoprivacy');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="results"]').click();
+  const ids=()=>page.locator('#result-tabs [data-output]').evaluateAll(els=>els.map(e=>e.dataset.output));
+  const before=await ids();
+  // The workspace is worth the test only if it actually carries the dangerous ids.
+  expect(before.filter(id=>/-(map|table)$/.test(id)).length).toBeGreaterThan(1);
+
+  // Delete a node that produced NO output, so nothing here should change at all.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="original-center"]').click();
+  await page.locator('#delete-node').click();
+  await page.locator('[data-view="results"]').click();
+
+  const after=await ids();
+  for(const id of before.filter(id=>/-(map|table)$/.test(id)))
+    expect(after,`${id} was orphaned by its name, not by its node`).toContain(id);
+});

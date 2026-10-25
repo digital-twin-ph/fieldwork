@@ -155,7 +155,25 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   const categories=drawn.some(l=>l.kind==='PolygonsLayer'||l.kind==='PointsLayer')
     ?[...FIGURE_PALETTE].slice(0,Math.max(1,drawn.filter(l=>l.kind==='PointsLayer'||l.kind==='PolygonsLayer').length))
     :[];
-  const applied=applyDesignRules(figureDesign(categories,spec.legend&&categories.length>0));
+  // The figure's parts, read from the specification the map was assembled from rather than
+  // restated, so a rule cannot pass against something the figure does not actually carry.
+  //
+  // `northIsUp` is true because every figure this project draws is CRS84, whose meridians are
+  // parallel: north is up everywhere on it. It is stated rather than assumed so that the rule
+  // becomes applicable by itself the day a projected map is drawn, instead of silently
+  // continuing to report inapplicable.
+  //
+  // No scale is claimed. A bar on unprojected coordinates would be true at one latitude only,
+  // which is why the rule asks what a claim holds for rather than asking for a bar.
+  const applied=applyDesignRules(figureDesign(categories,spec.legend&&categories.length>0,{
+    title:spec.title,
+    key:{drawn:spec.legend,entries:spec.items.length},
+    marksDrawn:categories.length,
+    sourceNote:spec.sourceNote,
+    northIsUp:true,
+    scale:{claimed:false},
+    ...(spec.basemap&&spec.basemap!=='none'
+      ?{basemap:{provider:spec.basemap,credit:spec.attribution}}:{})}));
   // WHAT EACH CHANNEL CARRIES, as facts rather than as pixels.
   //
   // The practitioner, 2026-10-20: *"in the ontology do we have UI representations of

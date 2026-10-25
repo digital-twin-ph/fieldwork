@@ -122,6 +122,10 @@ export function seriesChart(series:CaseSeries):ChartSummary{
   const kinds:Record<DateKind,string>={onset:'date of onset',report:'date of report',death:'date of death',
     'specimen-collection':'date of specimen collection',other:'a date of unstated kind'};
   return {field:'period',total:series.total,bins:series.bins,
+    // The axis says WHICH date, not merely that there are dates. "Date of onset, by day" rather
+    // than "Category", and the declared kind travels with it so a chart cannot quietly relabel
+    // the series it was built from.
+    categoryTitle:`${kinds[series.dateKind].replace(/^a? ?date/,'Date')}, by ${series.period}`,
     caption:`Cases by ${series.period} of ${kinds[series.dateKind]}`+(series.weightField?`, weighted by ${series.weightField}`:'')
       +(series.undatedRecords?` · ${series.undatedRecords} record(s) without a usable date are excluded and listed`:'')};
 }

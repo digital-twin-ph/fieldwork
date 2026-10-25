@@ -1,6 +1,7 @@
 import type {WorkflowNode,Escape,Position,DistanceUnit} from './types.js';
 import type {DisplayValue,DisplayRow} from './results.js';
 import {SOURCE,tierLabel,serviceLabel,zoneLabel} from './old-naledi.js';
+import {markPath} from './presentation.js';
 const numeric=(key:string,label:string,value:number,min:number,max:number,step:number,help:string)=>`<div class="field"><label class="field-label" for="param-${key}">${label}</label><input id="param-${key}" data-param="${key}" type="number" value="${value}" min="${min}" max="${max}" step="${step}"><small>${help}</small></div>`;
 const choose=(key:string,label:string,value:string,options:[string,string][])=>`<div class="field"><label class="field-label" for="param-${key}">${label}</label><select id="param-${key}" data-param="${key}">${options.map(([v,t])=>`<option value="${v}" ${v===value?'selected':''}>${t}</option>`).join('')}</select></div>`;
 export function oldInspector(n:WorkflowNode){
@@ -53,6 +54,30 @@ export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Es
   const focus=output.rows.find(r=>'result:'+r.id===selected);
   if(focus?.center){svg+=`<path d="M${project(focus.coordinates!).join(',')}L${project(focus.center.coordinates!).join(',')}" stroke="#587d6c" stroke-dasharray="4 4"/>`;}
   for(const c of output.centers||[]){if(!c.geometry)continue;const [x,y]=project(c.geometry!.coordinates);svg+=`<rect x="${x-5}" y="${y-5}" width="10" height="10" fill="#315d57" stroke="white"/><text x="${x+9}" y="${y-8}">${esc(c.properties.name)}</text>`;}
-  for(const r of output.rows){if(!r.coordinates!)continue;const [x,y]=project(r.coordinates!),label=['spatial-coverage','spatial-map'].includes(output.kind||'')?(r.excluded?'Excluded':r.relation):output.kind==='facility-evidence'?tierLabel(r.tier||'Unknown'):statusLabel(r.status);svg+=`<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}" data-layer="${esc(r.sourceNodeId||'')}" aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}"><title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title><circle cx="${x}" cy="${y}" r="${focus?.id===r.id?7:4}" fill="${{Review:'#c18b4f',NoFlag:'#699178',Unknown:'#a89b87'}[r.status!]}" stroke="white" stroke-width="1.2"/></g>`;}
+  // THE ENCODING THE KEY ALREADY PROMISES. Hue and mark say which source a point came from and
+  // fill says whether it is inside the study area -- the Inspector states it in those words, the
+  // legend draws one entry per layer in that layer's hue and mark, the interactive map honours it
+  // and the raster map was taught it on 2026-10-25. This renderer, the plainest static map in the
+  // application, drew every mark as a circle coloured by status instead.
+  //
+  // Found the same day on Snow's own map: the key said the eight pumps were orange squares and
+  // the plot drew 258 identical green dots, so the one distinction the figure exists to make --
+  // deaths here, pumps there -- was the one it did not draw. A legend that disagrees with its
+  // plot is worse than no legend; the reader trusts it.
+  //
+  // Where no symbols are declared the status colours stand, so every example that predates layer
+  // symbols looks exactly as it did.
+  const symbols=(output as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0]}>}).layerSymbols;
+  for(const r of output.rows){if(!r.coordinates!)continue;const [x,y]=project(r.coordinates!),label=['spatial-coverage','spatial-map'].includes(output.kind||'')?(r.excluded?'Excluded':r.relation):output.kind==='facility-evidence'?tierLabel(r.tier||'Unknown'):statusLabel(r.status);
+    const symbol=symbols?.[r.sourceNodeId||''];
+    const radius=focus?.id===r.id?7:4;
+    const statusFill={Review:'#c18b4f',NoFlag:'#699178',Unknown:'#a89b87'}[r.status!];
+    // `hollow` is the declared fill for a point outside the area, and `absent` for one a clip set
+    // aside: drawn as an outline and as a neutral, never as a second hue competing with a layer.
+    const hollow=r.relation==='Outside',aside=r.excluded||r.relation==='MissingLocation';
+    const mark=symbol
+      ?`<path d="${markPath(symbol.shape,x,y,radius)}" fill="${hollow?'none':aside?'#a89b87':symbol.colour}" stroke="${aside?'#a89b87':symbol.colour}" stroke-width="1.6"/>`
+      :`<circle cx="${x}" cy="${y}" r="${radius}" fill="${statusFill}" stroke="white" stroke-width="1.2"/>`;
+    svg+=`<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}" data-layer="${esc(r.sourceNodeId||'')}" aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}"><title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title>${mark}</g>`;}
   return svg+`<text x="18" y="281" style="font-size:10px">${['spatial-coverage','spatial-map'].includes(output.kind||'')?'Select a point to review its relation to the study boundary':output.kind==='access'?'Grid samples · straight-line proxy · select a point for evidence':'Historical facility registry · source evidence assignments'}</text><text x="826" y="25" text-anchor="middle">N ↑</text>`;
 }

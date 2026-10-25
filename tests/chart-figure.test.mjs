@@ -102,3 +102,47 @@ test('a long subtitle or source note wraps instead of running off the edge', asy
   for(const line of spec.title.subtitle)
     assert.ok(line.length<=Math.floor(spec.width/6.2),`spec line too long: ${line}`);
 });
+
+/** A FIGURE FOR PUBLICATION, not only a correct one.
+ *
+ *  The practitioner, 2026-10-25, on the Hagelloch measles curve: *"This chart from Hagelloch is
+ *  not publish friendly"*. Two defects, both in the defaults rather than in the data.
+ *
+ *  The x axis was titled "Category", which is true of every chart and tells a reader nothing. An
+ *  epidemic curve published with "Category" under its dates has not said what it binned, and the
+ *  chart could not know: `ChartSummary` carried the bins and a prose caption, so only the widget
+ *  that computed the series knew it was a date of onset by day. It now declares that.
+ *
+ *  And every one of 87 daily labels was drawn. Vega-Lite thins overlapping labels on quantitative
+ *  and temporal axes by default and NOT on nominal ones, and an epidemic curve's axis is nominal
+ *  here, so the labels collided into a solid band. */
+test('a series chart names its own axis and thins labels that would collide',async()=>{
+  const {seriesChart}=await import('../build/case-series.js');
+  const {chartVegaSpec}=await import('../build/chart-vega.js');
+  const bins=Array.from({length:87},(_,i)=>({key:`d${i}`,label:`1861-11-${i}`,count:i%7,order:i}));
+  const chart=seriesChart({period:'day',dateKind:'onset',total:87,bins,undatedRecords:0});
+  assert.equal(chart.categoryTitle,'Date of onset, by day');
+
+  const spec=chartVegaSpec(chart,{mark:'bar',orientation:'vertical'});
+  // The producer's title reaches the axis, in place of the word that said nothing.
+  assert.equal(spec.encoding.x.title,'Date of onset, by day');
+  assert.notEqual(spec.encoding.x.title,'Category');
+  // And the labels thin themselves rather than overlapping. Every bar is still drawn: this is a
+  // label rule, not a filter, and the count below is what proves no data was dropped to get it.
+  assert.equal(spec.encoding.x.axis.labelOverlap,'parity');
+  assert.equal(spec.data.values.length,87);
+
+  // A practitioner's own axis title still wins over the producer's.
+  const chosen=chartVegaSpec(chart,{mark:'bar',orientation:'vertical',xAxisTitle:'Day of illness'});
+  assert.equal(chosen.encoding.x.title,'Day of illness');
+});
+
+test('a chart whose producer declares no axis title still says Category',async()=>{
+  const {chartVegaSpec}=await import('../build/chart-vega.js');
+  // Unchanged behaviour where there is nothing better to say: the fallback is a fallback, not a
+  // thing to be removed, and a producer that knows nothing about its categories omits the field.
+  const spec=chartVegaSpec({field:'status',caption:'By decision',total:2,
+    bins:[{key:'a',label:'Review',count:1},{key:'b',label:'No flag',count:1}]},
+    {mark:'bar',orientation:'vertical'});
+  assert.equal(spec.encoding.x.title,'Category');
+});

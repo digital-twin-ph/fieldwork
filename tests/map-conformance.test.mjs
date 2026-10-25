@@ -70,7 +70,21 @@ test('a rule that did not apply is REPORTED, not omitted',()=>{
   const applied=applyDesignRules(figureDesign([],false));
   const ids=new Set(applied.map(a=>a.rule.id));
   for(const rule of DESIGN_RULES)assert.ok(ids.has(rule.id),`${rule.id} must be reported`);
-  assert.equal(applied.filter(a=>a.outcome==='inapplicable').length,3);
+  const outcome=id=>applied.find(a=>a.rule.id===id).outcome;
+  // The three colour rules do not apply to a map that drew nothing categorical.
+  for(const id of ['MapMarkContrast','CategoricalPaletteIsColourBlindSafe','UnknownIsNotAHue'])
+    assert.equal(outcome(id),'inapplicable',`${id} should not apply here`);
+  // CANTTELL IS NOT INAPPLICABLE, which is the distinction EARL draws and the reason this
+  // asserts outcomes rather than a total. This caller described no figure parts, so the four
+  // rules that read them could not run -- and a check that could not run must never report as a
+  // check that ran and did not apply. Counting them together would hide exactly that.
+  for(const id of ['FigureHasTitle','EveryMarkIsInTheKey','FigureStatesItsSource',
+    'OrientationIsStatedWhereItIsNotObvious'])
+    assert.equal(outcome(id),'cantTell',`${id} had nothing to read`);
+  // These two are genuinely inapplicable rather than unreadable: no scale was claimed and no
+  // basemap was drawn, and both of those are facts about the figure, not gaps in what it said.
+  for(const id of ['ScaleStatementSurvivesItsProjection','BasemapIsCredited'])
+    assert.equal(outcome(id),'inapplicable',`${id} should not apply here`);
 });
 
 test('every rule declares whether it measured or merely checked',()=>{
@@ -210,4 +224,52 @@ test('the SHACL shapes accept a real receipt and refuse a malformed one',async()
     +`fw:problemKind fw:ValueAbsent; fw:affectedRecordCount 3; fw:consideredRecordCount 43 ].`;
   assert.equal((await validateGraph(parse(issue))).conforms,true);
   assert.equal((await validateGraph(parse(issue.replace('; fw:consideredRecordCount 43','')))).conforms,false);
+});
+
+test('a figure that describes its parts is checked on them, conditionally',async()=>{
+  const {applyDesignRules,figureDesign}=await import('../build/map-conformance.js');
+  // A figure as this project actually draws one: titled, keyed, sourced, CRS84 and north-up,
+  // claiming no scale and drawing no basemap. Experiment 136.
+  const applied=applyDesignRules(figureDesign(['#0072B2'],false,{
+    title:'Cholera deaths by sub-district',
+    key:{drawn:true,entries:2},marksDrawn:1,
+    sourceNote:'Snow 1855, Table VIII · CRS84',
+    northIsUp:true,scale:{claimed:false}}));
+  const outcome=id=>applied.find(a=>a.rule.id===id).outcome;
+  assert.equal(outcome('FigureHasTitle'),'passed');
+  assert.equal(outcome('EveryMarkIsInTheKey'),'passed');
+  assert.equal(outcome('FigureStatesItsSource'),'passed');
+  // THE THREE THAT WOULD HAVE BEEN WRONG AS ASKED FOR. The request was for a north arrow and a
+  // scale bar on every map; the canon says a north arrow on a north-up map is unnecessary and on
+  // a converging projection is wrong, and that a scale bar on unprojected coordinates is true at
+  // one latitude only. So these report that they do not apply, rather than failing a correct map.
+  assert.equal(outcome('OrientationIsStatedWhereItIsNotObvious'),'inapplicable');
+  assert.equal(outcome('ScaleStatementSurvivesItsProjection'),'inapplicable');
+  assert.equal(outcome('BasemapIsCredited'),'inapplicable');
+});
+
+test('a figure that draws marks with no key fails, and an untitled one fails',async()=>{
+  const {applyDesignRules,figureDesign}=await import('../build/map-conformance.js');
+  const applied=applyDesignRules(figureDesign(['#0072B2','#D55E00'],false,{
+    title:'   ',key:{drawn:false,entries:0},marksDrawn:2,sourceNote:'',northIsUp:true}));
+  const found=id=>applied.find(a=>a.rule.id===id);
+  assert.equal(found('FigureHasTitle').outcome,'failed');
+  // The case the raster map was in until 2026-10-25: marks drawn, nothing in the key naming
+  // them. MapMarkContrast cannot catch it -- a mark can have perfect contrast and still be
+  // unexplained -- which is why this is a rule of its own.
+  assert.equal(found('EveryMarkIsInTheKey').outcome,'failed');
+  assert.match(found('EveryMarkIsInTheKey').says,/no key entry/);
+  assert.equal(found('FigureStatesItsSource').outcome,'failed');
+});
+
+test('a basemap drawn without its credit fails, because the licence requires it',async()=>{
+  const {applyDesignRules,figureDesign}=await import('../build/map-conformance.js');
+  const uncredited=applyDesignRules(figureDesign([],false,{
+    title:'Gaborone',sourceNote:'x',northIsUp:true,basemap:{provider:'osm'}}));
+  const credited=applyDesignRules(figureDesign([],false,{
+    title:'Gaborone',sourceNote:'x',northIsUp:true,
+    basemap:{provider:'osm',credit:'© OpenStreetMap contributors, ODbL'}}));
+  const outcome=(a,id)=>a.find(x=>x.rule.id===id).outcome;
+  assert.equal(outcome(uncredited,'BasemapIsCredited'),'failed');
+  assert.equal(outcome(credited,'BasemapIsCredited'),'passed');
 });

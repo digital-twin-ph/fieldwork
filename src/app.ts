@@ -2592,7 +2592,18 @@ function removeNodes(ids:string[]){
   // rerun to check it.
   if(!result)return;
   const live=new Set(workflow.nodes.map(node=>node.id));
-  const outputs=result.outputs.filter(output=>live.has(output.nodeId.replace(/-(map|table)$/,'')));
+  // AN OUTPUT IS KEYED BY THE NODE THAT PRODUCED IT, so that is what is checked. This stripped a
+  // trailing `-map` or `-table` from the id first, and nothing in the application produces an id
+  // that needs it: every output sets `nodeId:node.id`. What it did instead was silently orphan
+  // any node whose AUTHORED id happens to end that way. `geoprivacy-example` has seven of them --
+  // before-map, before-table, after-move-map, after-move-table, comparison-map, after-group-map,
+  // after-group-table -- and not one of the stems it strips to exists as a node, so deleting any
+  // node in that workspace would have dropped every one of those outputs, and the line below
+  // would then have discarded the whole run for having nothing left.
+  //
+  // Found 2026-10-25 by adding a node called `spot-map` to the John Snow example: deleting the
+  // map output took Snow's own map with it, and only because of how it had been named.
+  const outputs=result.outputs.filter(output=>live.has(output.nodeId));
   if(!outputs.length){result=null;runWorkflow=null;activeOutputId=null;}
   else if(outputs.length!==result.outputs.length){
     result={...result,outputs};
@@ -2661,7 +2672,11 @@ function renderResults(){
   if(output?.pointTable)renderPointTable();
   const chartNode=runWorkflow?.nodes.find(n=>n.id===output?.nodeId&&n.type==='chart_output') as WorkflowNode<'chart_output'>|undefined;
   if(output?.chart&&chartNode&&chartRenderer(chartNode.params)==='vega-lite'){
-    const chartContext={sourceId:runWorkflow?.edges.find(e=>e.to===output.nodeId)?.from,runId:result?.runId};
+    const chartSourceId=runWorkflow?.edges.find(e=>e.to===output.nodeId)?.from;
+    // The upstream node's own label, so the figure names the thing a reader recognises rather
+    // than the identifier the canvas uses for it.
+    const chartContext={sourceId:chartSourceId,runId:result?.runId,
+      sourceLabel:runWorkflow?.nodes.find(n=>n.id===chartSourceId)?.params.label};
     const spec=chartVegaSpec(output.chart,chartNode.params,chartContext);
     $('#bars-panel').innerHTML=`<p class="muted">${esc(output.chart.caption)} · ${output.chart.total} input records · grouping: ${esc(output.chart.field)}</p>${output.chart.field==='total'?'<p class="notice">The chart source does not declare a physical unit for this numeric total. Check the source and method before interpreting it.</p>':''}<div id="vega-chart" role="img" aria-label="${esc(output.chart.caption)}"></div><details><summary>Underlying chart values</summary><table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>${output.chart.bins.map(b=>`<tr><td>${esc(b.label)}</td><td>${b.count}</td></tr>`).join('')}</tbody></table></details><details><summary>Vega-Lite specification</summary><pre>${esc(JSON.stringify(spec,null,2))}</pre></details>`;
     const host=$('#vega-chart');void renderVegaChart(host,output.chart,chartNode.params,chartContext).catch(e=>{if(host.isConnected)host.textContent=`Chart could not render: ${errorMessage(e)}. Underlying values remain available below.`;});
@@ -3638,7 +3653,18 @@ function deleteCurrentWorkflow(){deleteWorkflow(storageKey(workflow));}
  *  be deleted"*, 2026-10-21. A delete that works only on what is loaded cannot reach it. */
 function deleteWorkflow(key:string){
   if(busy)return;
-  if(isExampleKey(key)){
+  // A SHAPE TEST STANDING IN FOR A MEMBERSHIP TEST, which is the third time this pair of controls
+  // has disagreed about what "example" means. `isExampleKey` asks whether a key has no slash --
+  // true of EVERY unfiled workflow -- where the question is whether this is one of the examples
+  // that ship. `renderProjectOptions` already decides the row's button with EXAMPLE_KEYS.includes(key),
+  // so the two disagreed: the Delete button rendered live and this refused the click.
+  //
+  // The practitioner, 2026-10-25, on an unfiled "Snow · South London, deaths per 1,000 people"
+  // carrying three widgets: *"I still could not delete the South London example"*. Its key is
+  // `snow-south-london-1854`, from a bundle published before that exampleId was removed, and
+  // `exampleKey` passes through anything beginning `snow-`. Slash-less, so the shape test called
+  // it shipped; absent from EXAMPLE_KEYS, so it never was.
+  if(EXAMPLE_KEYS.includes(key)){
     toast('A worked example ships with the application and stays. Use "Reset example" to discard your edits to it.',{tone:'warning'});
     return;
   }

@@ -55,8 +55,26 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   // place is not on the map at all.
   await expect(page.locator('#map-spatial-notice')).toContainText('1 record has no usable location');
   const outside=page.locator('#map [data-place="outside"]');await expect(outside).toHaveAttribute('aria-label',/Outside/);
-  await expect(outside.locator('circle')).toHaveAttribute('fill','#c18b4f');
-  for(const circle of await page.locator('#map [data-place] circle').all()){const x=Number(await circle.getAttribute('cx')),y=Number(await circle.getAttribute('cy'));assert.ok(x>=0&&x<=850&&y>=0&&y<=295);}
+  // THE DECLARED ENCODING, which this asserted the absence of until 2026-10-25: hue and mark say
+  // which source a point came from, and fill says whether it is inside the study area. The
+  // legend has drawn one entry per layer in that layer's hue and mark since layer symbols
+  // existed; this renderer drew every mark as a circle coloured by STATUS and so disagreed with
+  // its own key. `SPATIAL_RELATION_FILL` gives Outside the value `hollow`, so an outside point is
+  // an outline in its layer's colour rather than a filled orange dot.
+  const outsideMark=outside.locator('path');
+  await expect(outsideMark).toHaveAttribute('fill','none');
+  const inside=page.locator('#map [data-place]').filter({hasNot:page.locator('[fill="none"]')}).first();
+  expect(await inside.locator('path').getAttribute('fill')).not.toBe('none');
+  // Every mark stays inside the frame. Marks are paths now, so this reads the path geometry: the
+  // same check against `circle` would have found nothing and passed by looping over nothing,
+  // which is a worse outcome than failing.
+  const marks=await page.locator('#map [data-place] path').all();
+  expect(marks.length).toBeGreaterThan(0);
+  for(const mark of marks){
+    const d=await mark.getAttribute('d');
+    for(const [x,y] of [...d.matchAll(/(-?[\d.]+)[ ,](-?[\d.]+)/g)].map(m=>[Number(m[1]),Number(m[2])]))
+      assert.ok(x>=-20&&x<=870&&y>=-20&&y<=315,`mark at ${x},${y} is outside the frame`);
+  }
   await outside.focus();await outside.press('Enter');await expect(page.locator('#inspector-content')).toContainText('Outside study area');
   await page.locator('[data-view="results"]').click();
   await page.locator('[data-map-record="missing"]').click();await expect(page.locator('#inspector-content')).toContainText('cannot be plotted');

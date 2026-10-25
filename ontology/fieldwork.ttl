@@ -946,6 +946,29 @@ fw:UnknownIsNotAHue a fw:DesignRule; fw:ruleKind "categorical";
   rdfs:comment "Absence of data is drawn in a neutral, never in a hue, because it is not a category and must not compete with one.";
   dcterms:source "Bertin, on the visual variables: hue is selective but not ordered, so spending it on an absence makes that absence compete as a category".
 
+# The figure's own parts, added 2026-10-25 (experiment 136). Five of the six are CONDITIONAL and
+# report inapplicable rather than failing: the cartographic canon holds that a north arrow and a
+# scale bar are unnecessary on some maps and wrong on others, and that only a title is required
+# of every map.
+fw:FigureHasTitle a fw:DesignRule; fw:ruleKind "categorical";
+  rdfs:comment "A figure states what it is. A reader who meets it outside the text it was written for has only its own parts to read it by.";
+  dcterms:source "Buckley (Esri), who holds a north arrow and a scale bar to be unnecessary on some maps and harmful on others, and an appropriate title to be necessary on all of them".
+fw:EveryMarkIsInTheKey a fw:DesignRule; fw:ruleKind "categorical";
+  rdfs:comment "Every mark a figure draws is named in its key, or the reader is left to guess what it stands for.";
+  dcterms:source "APA Publication Manual 7th edition, on the figure legend: it explains any symbols used in the figure image".
+fw:FigureStatesItsSource a fw:DesignRule; fw:ruleKind "categorical";
+  rdfs:comment "A figure names where its content came from, in the figure rather than in the text around it.";
+  dcterms:source "APA Publication Manual 7th edition, on the figure note: it carries what the title, image and legend cannot, including attribution".
+fw:OrientationIsStatedWhereItIsNotObvious a fw:DesignRule; fw:ruleKind "categorical";
+  rdfs:comment "A map whose north is not up says which way is north. A north-up map does not need to, and a north arrow on a projection whose meridians converge is wrong rather than redundant.";
+  dcterms:source "Ordnance Survey, that readers assume the top of a map is north unless told otherwise; Buckley, that north is true only along the central meridian of a conic or equal-area projection and a graticule should be shown instead of an arrow".
+fw:ScaleStatementSurvivesItsProjection a fw:DesignRule; fw:ruleKind "categorical";
+  rdfs:comment "A scale a figure claims says what it holds for. On unprojected coordinates scale varies with latitude, so a bar alone is true at one latitude and false elsewhere.";
+  dcterms:source "Buckley, on scale varying across a projection, so that a single bar is true only where it was computed".
+fw:BasemapIsCredited a fw:DesignRule; fw:ruleKind "categorical";
+  rdfs:comment "A figure that draws a basemap carries that basemap\u2019s credit, because the credit is a condition of using it and not a courtesy.";
+  dcterms:source "ODbL, the licence of OpenStreetMap-derived tiles, which requires attribution of the source database wherever the derived work is published".
+
 fw:fieldBinding a owl:ObjectProperty; rdfs:domain fw:RuleApplication;
   rdfs:comment "Which attribute of a record supplies which predicate the rules read. Nothing is guessed from a column name, so a ruleset over arbitrary records is possible only because this is declared.".
 fw:boundAttribute a owl:DatatypeProperty; rdfs:range xsd:string;

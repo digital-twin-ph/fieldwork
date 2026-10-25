@@ -8,7 +8,7 @@ import {readFileSync,existsSync} from 'node:fs';
  *  there."* They were -- 250 death locations and a private-source map, tabbed under a workflow
  *  about water companies, with Results counting seven. Opening a new empty canvas already
  *  cleared the previous run; importing did not, on either path. */
-const BUNDLE=new URL('../../example-1855-cholera-south-london/fieldwork-workflow.json.gz',import.meta.url);
+const BUNDLE=new URL('../../example-1855-cholera-south-london/fieldwork-project.json.gz',import.meta.url);
 const skip=existsSync(BUNDLE)?false
   :'example-1855-cholera-south-london is not checked out beside this repository.';
 

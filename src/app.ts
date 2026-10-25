@@ -58,7 +58,7 @@ import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,distanceText} from './old-naledi-ui.js';
 import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
 import {isPointPort} from './point-layers.js';
-import {EXAMPLE_TEMPLATES,hasExampleTemplate,WORKED_EXAMPLE_KEYS} from './example-templates.js';
+import {EXAMPLE_TEMPLATES,hasExampleTemplate,EXAMPLE_KEYS,WORKED_EXAMPLE_KEYS} from './example-templates.js';
 import {templateFrom} from './workflow-template.js';
 import {pairSignature} from './deduplicate-points.js';
 import {openDeduplicateReview} from './deduplicate-ui.js';
@@ -3217,7 +3217,26 @@ function renderProjectOptions(){
   // ships with the application: the control says which, rather than being absent and leaving the
   // question of where workflows go to be asked again.
   const remove=$('#delete-workflow') as HTMLButtonElement;
-  const published=isExampleKey(key);
+  // SHIPPING WITH THE APPLICATION IS A FACT ABOUT THE LIST, NOT ABOUT THE KEY'S SHAPE.
+  //
+  // This was `isExampleKey(key)` -- `!key.includes('/')` -- so ANY workflow whose key had no
+  // slash was refused deletion as a worked example, including one imported from a repository.
+  // The practitioner, 2026-10-24, on the South London example fetched from the catalog: *"Any
+  // imported project we should be able to delete, including repo-based projects like South
+  // London."*
+  //
+  // The line below already knew better: Reset example reads the compiled-in list and correctly
+  // hid itself for an imported workflow. So the refusal told the practitioner to use a control
+  // that the next statement had removed from the bar -- it refused the action they wanted and
+  // recommended one that was not there.
+  //
+  // THE TWO CONTROLS ASK DIFFERENT QUESTIONS, which is how the first fix for this broke the blank
+  // canvas. Delete asks "does this ship with the application", and the blank canvas does, so it is
+  // EXAMPLE_KEYS. Reset example asks "is there published work to reload", and a blank canvas has
+  // none, so it is WORKED_EXAMPLE_KEYS -- the same list with `blank` removed. Sharing one
+  // predicate is what made `isExampleKey` look right: wrong for an imported workflow and right by
+  // accident for the blank one. `workflow-housekeeping` caught the replacement in both engines.
+  const published=EXAMPLE_KEYS.includes(key);
   // RESET EXAMPLE is about published work, so it is in the bar only while published work is open.
   // On everything else it was a control for a thing that does not exist -- there is nothing to
   // reload a practitioner's own workflow to -- taking a slot beside the controls that do apply.
@@ -3815,19 +3834,29 @@ async function openCuratedExample(id:string,button:HTMLButtonElement):Promise<vo
   const label=button.textContent||'Fetch and open';
   button.disabled=true;button.textContent='Fetching\u2026';
   try{
-    const workflowFile=example.files.find(f=>/fieldwork-workflow.*\.json(\.gz)?$/.test(f.path));
-    if(!workflowFile)throw new Error('This example pins no workflow document, so there is nothing to open.');
+    // A PROJECT FIRST, A LONE WORKFLOW ONLY IF THERE IS NO PROJECT.
+    //
+    // The practitioner, 2026-10-24: *"when we import South London, we import a project and its
+    // workflows. Right now it just one workflow."* It was, and it landed under "-- No project --"
+    // because that is what the file said it was. An investigation is a project, its questions are
+    // its workflows, and the import control already knew how to read one.
+    const projectFile=example.files.find(f=>/fieldwork-project.*\.json(\.gz)?$/.test(f.path));
+    const workflowFile=projectFile
+      ??example.files.find(f=>/fieldwork-workflow.*\.json(\.gz)?$/.test(f.path));
+    if(!workflowFile)throw new Error('This example pins no project or workflow document, so there is nothing to open.');
     say(`Fetching ${workflowFile.path} from ${example.repository}\u2026`);
     const bytes=await verifiedFile(example,workflowFile.path);
     say('Verified against the pinned digest \u00b7 reading\u2026');
     const text=await readMaybeGzipped(new Blob([bytes as BlobPart]));
-    const next=validateWorkflow(JSON.parse(text));
-    applyImportedWorkflow(next);
+    const parsed=JSON.parse(text) as {schema?:string};
+    let opened:string;
+    if(parsed?.schema===PROJECT_DOCUMENT_SCHEMA){await importProjectDocument(parsed);opened=example.title;}
+    else {const next=validateWorkflow(parsed);applyImportedWorkflow(next);opened=next.name;}
     rememberFetched(example.id);
     toast(`${example.title} opened. It is on this device now and opens offline.`);
     // The badge first, then the message, because re-rendering replaces the paragraph.
     renderExampleCatalog();
-    say(`Opened ${next.name} \u00b7 ${workflowFile.bytes.toLocaleString()} bytes, digest matched`);
+    say(`Opened ${opened} \u00b7 ${workflowFile.bytes.toLocaleString()} bytes, digest matched`);
   }catch(error){
     // The example stays unfetched rather than partly loaded, and the reason is the one the
     // verification gave -- a digest mismatch says so, rather than becoming "could not load".

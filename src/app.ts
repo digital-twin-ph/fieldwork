@@ -13,12 +13,13 @@ import {pointComparisonMarkup} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES,defaultTravelMode} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
 import {mountCatchmentMap,basemapOptions,BASEMAP_OPTIONS} from './catchment-map.js';
-import {catchmentPlot,polygonSvg,catchmentFrame} from './catchment-output.js';
+import {catchmentPlot,polygonSvg,catchmentFrame,polygonFrame} from './catchment-output.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
 import {installCredentials} from './credentials-ui.js';
 import type {CredentialAccess} from './credentials-ui.js';
 import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_COMPOSITION,ADDABLE_VIA_RULESET} from './palette.js';
+import {MARK_RADIUS_MIN,MARK_RADIUS_MAX} from './presentation.js';
 import {compositionEntry,explodeMicroWorkflow,detectDrift} from './compositions.js';
 import {tidyLayout,alreadyTidy} from './layout.js';
 import {bundledCompositions,resolveComposition} from './composition-registry.js';
@@ -75,7 +76,8 @@ import {standaloneChartSvg} from './chart-figure.js';
 import {networkPreviewSvg,networkCoverage,networkPreviewCaption} from './network-preview.js';
 import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,rasterFrame,downloadRaster} from './raster-ui.js';
-import {TILE_PROVIDERS,basemapImages,fetchTileAsDataURI} from './basemap-tiles.js';
+import {TILE_PROVIDERS,basemapImages,fetchTileAsDataURI,useTileStore} from './basemap-tiles.js';
+import {rasteriseFigure,FIGURE_PIXEL_SCALE} from './figure-export.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
 import {populationRastersForCountry,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
 import type {BoundaryProvenance} from './types.js';
@@ -422,6 +424,12 @@ function toast(message:string,options?:{action?:{label:string;run:()=>void};tone
 // while the application goes on saying "Saved on this device".
 onStoreDegraded((_kind,why)=>toast(`${why} Large street networks will be refused until it is. Export anything you need to keep.`,{tone:'failure'}));
 await loadPayloads();
+// Basemap tiles are downloaded assets like any other, so they go to the store that survives a
+// reload and is counted in the storage figures. The practitioner, 2026-10-25, on what the offline
+// promise means: *"It's a flow from online to offline. Online download the assets, offline use
+// the cached assets."* A session-only cache gave the opposite -- ground on the first visit and
+// none on the one that mattered.
+useTileStore({read:key=>cachedPayload(key),write:(key,value)=>putPayload(key,value)});
 try{const saved=localStorage.getItem(KEY);if(saved)workflow=validateWorkflow(hydrateWorkflow(JSON.parse(saved),readDatasets(),true));}catch(error){toast(errorMessage(error).startsWith('Shared input data is missing')?errorMessage(error):'Saved workflow could not be loaded. The example is ready.');}
 if(!workflow.nodes.some(n=>n.id===selected))selected=exampleKey(workflow)==='raster'?'raster-input':exampleKey(workflow)==='old-naledi'?'access':workflow.nodes[0]?.id;
 /** What the last refused save knew, so a caller can say something a practitioner can act on. */
@@ -716,9 +724,9 @@ function alertText(alert:NonNullable<ReturnType<typeof nodeAlert>>){
     +`what a reader would need in order to check where it came from. Fill the fields below, or `
     +`publish as it is and say that the source is undeclared.`);
   if(alert.unconnected.length)said.push(
-    `${alert.unconnected.length} site${alert.unconnected.length===1?'':'s'} got no result at all: the walk to the nearest street alone spends the whole travel budget. Every count and area from this widget is over the sites that reached something.`);
+    `${alert.unconnected.length} site${alert.unconnected.length===1?'':'s'} got no result at all: the leg to the nearest street alone spends the whole travel budget. Every count and area from this widget is over the sites that reached something.`);
   if(alert.offNetwork.length)said.push(
-    `${alert.offNetwork.length} site${alert.offNetwork.length===1?'':'s'} started further from the network than the snap limit allows, and ${alert.offNetwork.length===1?'its route was':'their routes were'} charged a straight line to reach it. A straight line assumes a walk that may not exist, so ${alert.offNetwork.length===1?'that result reaches':'those results reach'} further here than on the ground.`);
+    `${alert.offNetwork.length} site${alert.offNetwork.length===1?'':'s'} started further from the network than the snap limit allows, and ${alert.offNetwork.length===1?'its route was':'their routes were'} charged a straight line to reach it. A straight line assumes ground that can be crossed at the declared speed, so ${alert.offNetwork.length===1?'that result reaches':'those results reach'} further here than on the ground.`);
   // Catchment advice, for catchment findings. It was pushed onto EVERY alert, so a step whose
   // only finding was an undeclared field was told to extend the street network -- and from
   // 2026-10-16 so was a step that could not read a column. Advice that does not fit what was
@@ -1381,7 +1389,16 @@ function renderInspector(){
               +`<select id="layer-mark-${esc(source.id)}" data-layer-mark="${esc(source.id)}">`
               +`<option value="">Default \u00b7 ${esc(resolved.shape)}</option>`
               +LAYER_SHAPES.map(shape=>`<option value="${shape}" ${held?.mark===shape?'selected':''}>${shape}</option>`).join('')
-              +`</select></div>`;
+              +`</select>`
+              // SIZE BESIDE THE MARK IT SIZES. Density is a property of the data: eight pumps
+              // across a borough want a mark a reader can find, and 250 addresses in four streets
+              // want one small enough to leave gaps between them. One default cannot serve both,
+              // and this figure holds both.
+              +`<label class="field-label" for="layer-size-${esc(source.id)}">Mark radius</label>`
+              +`<input id="layer-size-${esc(source.id)}" data-layer-size="${esc(source.id)}" type="range"`
+              +` min="${MARK_RADIUS_MIN}" max="${MARK_RADIUS_MAX}" step="0.5" value="${resolved.size}">`
+              +`<small>${resolved.size} units${held?.size===undefined?' (default)':''}. Smaller separates dense points; larger finds sparse ones.</small>`
+              +`</div>`;
           }).join('');
       })()
       +`<div class="field"><label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation" data-catchment-param="presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select></div>`
@@ -2552,6 +2569,19 @@ function renderInspector(){
     const chosen=control(e).value;
     if(chosen)change(w=>setConnection(w,chosen,n.id,'layer'));
   });
+  document.querySelectorAll<HTMLInputElement>('[data-layer-size]').forEach(input=>{
+    input.addEventListener('change',e=>{
+      const source=(e.currentTarget as HTMLInputElement).dataset.layerSize!;
+      const size=Number((e.currentTarget as HTMLInputElement).value);
+      change(w=>{
+        const target=getNode(w,n.id,'map_output'),held={...(target.params.layerSymbols||{})};
+        held[source]={...held[source],size};
+        target.params.layerSymbols=held;
+      },{spatial:false});
+      // A size is presentation, like a basemap: the figure redraws and the run is not stale.
+      renderResults();
+    });
+  });
   document.querySelectorAll<HTMLSelectElement>('[data-layer-mark]').forEach(select=>{
     select.addEventListener('change',()=>{
       const source=select.dataset.layerMark!,mark=select.value as LayerShape|'';
@@ -2579,7 +2609,18 @@ function renderInspector(){
       // the presentation alone. OpenFreeMap serves vector tiles that need a GL canvas, so those
       // still switch -- a control that appeared to do nothing would read as broken.
       if(choice!=='none'&&choice!=='osm'&&choice!=='topo')target.params.presentation='interactive';
-    });
+    },{spatial:false});
+    // AND THE FIGURE REDRAWS. `change` calls `render`, which redraws the library, the project
+    // bar and the Inspector and NOT the map -- so choosing a basemap did nothing visible until
+    // something else happened to re-render the results. The practitioner met it twice on
+    // 2026-10-25: on a John Snow map with six output tabs it appeared as soon as they clicked
+    // between tabs, and on South London, which has ONE output and nothing to click, it never
+    // appeared at all. Two reports, one cause.
+    //
+    // `{spatial:false}` above for the same reason in reverse: a basemap changes nothing the run
+    // computed, so marking the workflow stale and clearing the statuses was telling the
+    // practitioner to rerun for a choice that cannot alter a single number.
+    renderResults();
   });
   optionalElement('#output-view')?.addEventListener('change',e=>change(w=>{const index=w.nodes.findIndex(x=>x.id===n.id);w.nodes[index]={...w.nodes[index],type:'output',params:{label:n.params.label,view:control(e).value as 'map'|'table'|'bars'}};}));
   optionalElement('#output-input-mode')?.addEventListener('change',e=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'>;(node.params as unknown as Record<string,string>).inputMode=control(e).value;w.edges=w.edges.filter(edge=>edge.to!==n.id);}));
@@ -2816,7 +2857,8 @@ function resultsOnScreen(){return $('.work-area').classList.contains('showing-re
  *  Refuses the vector providers by name. OpenFreeMap serves vector tiles rendered by MapLibre,
  *  and baking those needs a GL canvas rasterised first; saying so is better than drawing nothing
  *  and letting a practitioner conclude the control is broken. */
-async function drawStaticBasemap(result:Output,svg:SVGSVGElement):Promise<void>{
+async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
+  frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]}):Promise<void>{
   // READ FROM THE LIVE WORKFLOW, not from the snapshot as run. A basemap is presentation: it
   // changes nothing the run computed, so it must appear the moment it is chosen. Reading
   // `runWorkflow` here meant choosing one did nothing at all until the workflow was run again,
@@ -2832,12 +2874,35 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement):Promise<void>{
       +'static plot cannot bake in. Choose OpenStreetMap or OpenTopoMap here, or the interactive presentation for that style.';
     return;
   }
-  const frame=mapFrame(result);
   const stamp=svg.dataset.renderStamp=String(Date.now());
   const {markup,drawn,requested,zoom}=await basemapImages(frame.bounds,frame.project,provider,fetchTileAsDataURI);
   // The figure may have been replaced while the tiles were in flight.
   if(svg.dataset.renderStamp!==stamp||!svg.isConnected)return;
-  if(markup)svg.insertAdjacentHTML('afterbegin',markup);
+  // AFTER THE BACKGROUND, NOT BEFORE IT. `oldMap` opens by painting an opaque rect across the
+  // whole frame, so inserting the tiles at `afterbegin` drew the ground and then covered it --
+  // the practitioner saw a sliver of basemap above the plot and nothing within it: *"look at the
+  // top of that map, I think the basemap is hidden in the back"*. Ground belongs above the blank
+  // background and below everything the workflow produced, which is what layer 0 means.
+  if(markup){
+    // AFTER THE BACKGROUND RECT, found by what it is rather than where it sits. Every static
+    // renderer opens by painting an opaque rect across its frame, but not all of them open WITH
+    // it: the walking-time plot emits a `<desc>` first, so "after the first child" put the ground
+    // back underneath the paint it was meant to sit on. Ground belongs above the blank background
+    // and below everything the workflow produced, which is what layer 0 means.
+    const background=[...svg.children].find(child=>child.tagName.toLowerCase()==='rect');
+    if(background)background.insertAdjacentHTML('afterend',markup);
+    else svg.insertAdjacentHTML('afterbegin',markup);
+    // A FILL THAT ENCODES NOTHING MUST NOT HIDE WHAT IS UNDER IT. The practitioner, 2026-10-25:
+    // *"If the shade carries value, then make the shade translucent but discernible. If not, e.g.,
+    // just a boundary, it should be transparent, only the border shows."*
+    //
+    // Withdrawn here rather than never drawn, because the two cases are genuinely different: on a
+    // blank page a pale wash separates figure from ground and earns its place, and over a basemap
+    // the ground is already there and the wash only covers it. The polygons that DO carry a value
+    // -- catchments, travel-time bands, hex counts -- are already translucent at about a fifth
+    // and are left alone, which is the other half of the same rule.
+    for(const shape of svg.querySelectorAll('[data-fill-role="context"]'))shape.setAttribute('fill','none');
+  }
   if(note)note.textContent=drawn
     ?`${provider.attribution} · ${drawn} of ${requested} tiles at zoom ${zoom}, drawn into this figure.`
     :`No basemap tiles could be fetched, so this figure has no ground under it. ${provider.attribution}`;
@@ -2846,7 +2911,20 @@ function renderMap(){
   if(!resultsOnScreen())return;
   disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#comparison-map-host')?.remove();
   const result=activeOutput(),svg=$('#map'), rows=result?.rows||[], centers=result?.centers||[], points=[...rows.filter(r=>r.coordinates).map(r=>r.coordinates!),...centers.filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
-  const mapNode=runWorkflow?.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result?.nodeId&&n.type==='map_output');
+  // PRESENTATION IS LIVE, NOT BAKED INTO THE RUN. The node is read from the current workflow and
+  // not from the snapshot as run, because a title, a key, a basemap and a mark's size change
+  // nothing the run computed -- so they must show the moment they are chosen, and demanding a
+  // rerun for them would be asking a practitioner to recompute a figure to resize a dot.
+  const mapNode=workflow.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result?.nodeId&&n.type==='map_output')
+    ??runWorkflow?.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result?.nodeId&&n.type==='map_output');
+  // The symbols the run resolved are the run's, so they carry the sizes that were current then.
+  // Re-resolved here against the live node, in the layer order the run recorded, so the marks and
+  // the key cannot disagree about what a layer looks like.
+  if(result?.pointLayers?.length&&mapNode){
+    const live=Object.fromEntries(result.pointLayers.map((layer,index)=>
+      [layer.sourceNodeId,resolveLayerSymbol(index,mapNode.params.layerSymbols?.[layer.sourceNodeId])]));
+    (result as {layerSymbols?:unknown}).layerSymbols=live;
+  }
   const spec=result&&mapNode&&runWorkflow?mapPresentation(mapNode,result,runWorkflow):undefined;
   $('#map-panel').classList.toggle('has-communication',!!spec);
   $('#map-communication').hidden=!spec;$('#map-communication-key').hidden=!spec?.legend;$('#map-communication-source').hidden=!spec;
@@ -2867,6 +2945,32 @@ function renderMap(){
         ?catchmentFrame(result.polygons,result.contextPoints):null;
       const frame=plotted?{metresPerPixel:metresPerPixel(plotted.pixelsPerDegreeLatitude)}:undefined;
       download(`${result!.nodeId}-map.svg`,standaloneMapSvg(content,viewBox,spec,frame),'image/svg+xml');};
+    // THE SAME FIGURE, FOR THE PLACES THAT WILL NOT TAKE AN SVG. The practitioner, 2026-10-25,
+    // on putting one into a slide: *"Why not export as PNG?"* Built from the identical markup, so
+    // the two files cannot say different things -- a PNG assembled separately would be a second
+    // figure that happened to look like the first.
+    $('#map-download-png').onclick=async()=>{
+      const button=$('#map-download-png');
+      const label=button.textContent||'Download map (PNG)';
+      button.disabled=true;button.textContent='Rendering\u2026';
+      try{
+        const content=result?.polygons&&result.polygonPresentation==='interactive'
+          ?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonSvg(result.polygons,esc))
+          :svg.innerHTML;
+        const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':svg.getAttribute('viewBox')||'0 0 850 295';
+        const plotted=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)
+          ?catchmentFrame(result.polygons,result.contextPoints):null;
+        const frame=plotted?{metresPerPixel:metresPerPixel(plotted.pixelsPerDegreeLatitude)}:undefined;
+        const raster=await rasteriseFigure(standaloneMapSvg(content,viewBox,spec,frame));
+        if(!raster){toast('This figure could not be drawn as a PNG. The SVG download carries the same figure.',{tone:'failure'});return;}
+        const url=URL.createObjectURL(raster.blob);
+        const link=document.createElement('a');link.href=url;link.download=`${result!.nodeId}-map.png`;link.click();
+        setTimeout(()=>URL.revokeObjectURL(url),2000);
+        // The size is stated rather than left to be discovered at a printer.
+        toast(`${raster.width} \u00d7 ${raster.height} px, ${FIGURE_PIXEL_SCALE}\u00d7 the figure \u2014 300 dpi at 8.5 inches.`);
+      }catch(error){toast(errorMessage(error),{tone:'failure'});}
+      finally{button.disabled=false;button.textContent=label;}
+    };
   }
   // A network is drawn as itself: the streets, at the size of the panel, with nothing inferred.
   //
@@ -2929,8 +3033,21 @@ function renderMap(){
     // given, so a study area with points on it is a map like any other -- and since only the
     // interactive presentation can draw tiles, this is what makes a basemap reachable on a map
     // that is not a catchment. Reported three times before the cause turned out to be here.
-    if(result.polygons.features.some(f=>f.minutes!==undefined)){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
+    // GROUND HERE TOO. The basemap was wired into the renderer that draws a study area with
+    // points and into no other, so a catchment, isochrone or extent map -- most of the maps in
+    // the worked examples -- could not have one. Found 2026-10-25 by a test that reached for a
+    // basemap on `snow-extent` and got nothing: the comment above says the renderer draws the
+    // layers it is given, and ground was the layer it was not being given.
+    //
+    // Each plot carries its own frame, because each projects its own extent: the walking-time
+    // plot is 850x650 and the rest are 850x295, and a basemap computed from the wrong one is a
+    // basemap in the wrong place.
+    const banded=result.polygons.features.some(f=>f.minutes!==undefined);
+    if(banded){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
     else svg.innerHTML=polygonSvg(result.polygons,esc);
+    const polygonGround=banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons);
+    if(polygonGround)void drawStaticBasemap(result,svg,
+      {bounds:polygonGround.bounds,project:c=>polygonGround.project(c) as [number,number]});
     const method=document.createElement('p');method.className='muted';method.textContent=result.polygons.method+' / '+result.polygons.notes.join(' ');note.append(method);return;
   }
   // THE RASTER IS GROUND, NOT A MODE. Fourth instance of one defect, and the comments in
@@ -2945,19 +3062,20 @@ function renderMap(){
     const frame=rasterFrame(result.raster);
     // Typed from markPath's own parameter, so a shape the renderer cannot draw is a build error
     // rather than a mark that silently falls back to a circle.
-    const symbols=(result as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0]}>}).layerSymbols||{};
+    const symbols=(result as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0];size?:number}>}).layerSymbols||{};
     const hidden=hiddenMapLayers.get(result.nodeId)||new Set<string>();
     const focus=rows.find(r=>`result:${r.id}`===selected);
     const marks=rows.filter(r=>r.coordinates).map(r=>{
       const [x,y]=frame.project(r.coordinates!);
-      const symbol=symbols[r.sourceNodeId||'']||{colour:'#699178',shape:'circle'};
+      const symbol=symbols[r.sourceNodeId||'']||{colour:'#699178',shape:'circle' as const};
       const label=r.excluded?'Excluded':r.relation||statusLabel(r.status);
+      const radius=(symbol.size??4)+(focus?.id===r.id?2:0);
       return `<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}"`
         +` data-layer="${esc(r.sourceNodeId||'')}"`
         +` style="display:${hidden.has(r.sourceNodeId||'')?'none':''}"`
         +` aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}">`
         +`<title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title>`
-        +`<path d="${markPath(symbol.shape||'circle',x,y,focus?.id===r.id?6:4)}" fill="${symbol.colour}" stroke="white" stroke-width="1.2"/></g>`;
+        +`<path d="${markPath(symbol.shape||'circle',x,y,radius)}" fill="${symbol.colour}" stroke="white" stroke-width="1.2"/></g>`;
     }).join('');
     svg.innerHTML=rasterSvg(result.raster,marks);
     svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{
@@ -2978,7 +3096,7 @@ function renderMap(){
     // Drawn after the fact and inserted underneath, because fetching is asynchronous and the map
     // must appear immediately. If the view has moved on by the time the tiles arrive they are
     // dropped: a late basemap under the wrong figure is worse than none.
-    void drawStaticBasemap(result,svg);svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layer!)?'none':'';el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});return;}
+    void drawStaticBasemap(result,svg,mapFrame(result));svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layer!)?'none':'';el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});return;}
   if(!points.length){svg.innerHTML='<text x="425" y="140" text-anchor="middle">Run the workflow to map its local results.</text>';return;}
   let minX=Math.min(...points.map(p=>p[0])),maxX=Math.max(...points.map(p=>p[0])),minY=Math.min(...points.map(p=>p[1])),maxY=Math.max(...points.map(p=>p[1]));
   const midY=(minY+maxY)/2,cos=Math.max(.05,Math.cos(midY*Math.PI/180)),width=Math.max((maxX-minX)*cos,.01),height=Math.max(maxY-minY,.01),scale=Math.min(660/width,210/height);

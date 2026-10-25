@@ -45,3 +45,39 @@ test('the spot map draws deaths and pumps as different marks, as its key says',a
   await expect(key).toContainText('pump locations');
   await page.screenshot({path:'test-results/snow-spot-map.png'});
 });
+
+/** MARK SIZE IS A SETTING, because density is a property of the data.
+ *
+ *  The practitioner, 2026-10-25, looking at Snow's 250 death addresses in a few Soho streets:
+ *  *"the sizes of the marks should be adjustable so they do not all merge like a blob on the
+ *  map"*. They do merge, and no single default can prevent it — the same figure carries eight
+ *  pumps spread across the parish, which want a mark a reader can find. */
+test('a layer mark can be resized, and the figure redraws where it stands',async({page})=>{
+  await page.goto('/?example=snow-voronoi');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="spot-map"]').click();
+  await page.locator('[data-view="results"]').click();
+  await page.locator('#result-tabs [data-output="spot-map"]').click();
+
+  const death=page.locator('#map .location[data-layer="locations"] path').first();
+  const pump=page.locator('#map .location[data-layer="pumps"] path').first();
+  // Measured from the rendered geometry rather than parsed out of the path string: a mark's `d`
+  // carries absolute coordinates, so reading numbers out of it measures position, not size.
+  const spanOf=mark=>mark.evaluate(el=>el.getBBox().width);
+  const deathsBefore=await spanOf(death);
+  const pumpsBefore=await spanOf(pump);
+
+  // Shrink the dense layer only. No tab click and no view switch: the figure redraws in place.
+  const slider=page.locator('[data-layer-size="locations"]');
+  await expect(slider).toBeVisible();
+  // Driven as a range input is driven: `fill` does not move a slider, so the value is set and
+  // the change announced the way the browser would.
+  await slider.evaluate(el=>{el.value='2';el.dispatchEvent(new Event('change',{bubbles:true}));});
+
+  await expect.poll(async()=>await spanOf(death)).toBeLessThan(deathsBefore);
+  // The OTHER layer is untouched, which is the whole point of it being per layer.
+  expect(await spanOf(pump)).toBeCloseTo(pumpsBefore,5);
+  // And a presentation choice does not make the run stale.
+  await expect(page.locator('#workflow-state')).toContainText('Run complete');
+});

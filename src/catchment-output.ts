@@ -29,6 +29,27 @@ export function polygonPresentationReceipt(node:WorkflowNode,source:string,runId
   const extra=(contextSource?`<${activity}> prov:used <urn:fieldwork:run:${runId}:output:${contextSource}>.\n`:'')+`<${activity}> fw:parameters ${JSON.stringify(JSON.stringify({presentation,contextPoints:!!context}))}.\n`;
   return {nodeId:node.id,kind:'presentation',facts:facts+extra,input:facts+extra,rules:'',conclusions:[],method:'Display an existing polygon dataset and attributes without changing its geometry, membership or aggregation.'};
 }
+/** The frame `polygonSvg` draws in, so ground can be placed in it.
+ *
+ *  Same reason as `mapFrame` and `rasterFrame`: a caller that recomputes this arithmetic gets a
+ *  slightly different answer, and a basemap a few pixels out is worse than none. Returns null
+ *  where there is nothing to frame, which is the hexbin case with no cells. */
+export function polygonFrame(p:Polygons):{project:(c:Position)=>[number,number];bounds:[number,number,number,number]}|null{
+  const coords=p.kind==='hexbin'
+    ?p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2))
+    :[...p.features.flatMap(f=>(f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat())).flat(),
+      ...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];
+  if(!coords.length)return null;
+  let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
+  for(const c of coords as Position[]){
+    if(c[0]<west)west=c[0];if(c[0]>east)east=c[0];
+    if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
+  }
+  const cos=Math.cos((south+north)/2*Math.PI/180),
+    scale=Math.min(790/Math.max((east-west)*cos,.00001),235/Math.max(north-south,.00001));
+  return {bounds:[west,south,east,north],
+    project:(c:Position):[number,number]=>[425+(c[0]-(east+west)/2)*cos*scale,145-(c[1]-(north+south)/2)*scale]};
+}
 export function polygonSvg(p:Polygons,esc:Escape):string{
   if(p.kind==='hexbin'){
     const coords=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2));

@@ -123,18 +123,46 @@ export async function basemapImages(
 const fetched=new Map<string,string|null>();
 export const forgetTiles=()=>fetched.clear();
 
+/** THE OFFLINE PROMISE IS A FLOW, NOT AN ABSOLUTE. The practitioner, 2026-10-25: *"It's a flow
+ *  from online to offline. Online download the assets, offline use the cached assets."*
+ *
+ *  A session-only cache does not honour that. It made the first open fetch and bake, and the next
+ *  open -- the one on a field device with no network, which is the case this application is built
+ *  for -- find nothing and draw a figure with no ground under it. So a fetched tile goes where
+ *  every other downloaded asset goes: the payload store, which survives a reload, is hydrated at
+ *  startup, and is counted in the storage figures the Project tab shows. A practitioner can see
+ *  what the basemap cost them and clear it with everything else.
+ *
+ *  Keyed by the tile URL rather than a content digest, because the question asked here is "have I
+ *  already got z/x/y from this provider", not "have I seen these bytes". */
+export const tileCacheKey=(url:string)=>`basemap-tile:${url}`;
+let store:{read:(key:string)=>unknown; write:(key:string,value:unknown)=>Promise<unknown>}|null=null;
+/** Injected rather than imported, so this module stays testable without a browser database and
+ *  the storage layer stays the caller's choice. */
+export const useTileStore=(next:typeof store)=>{store=next;};
+
 /** One tile as a `data:` URI, or null if it could not be had.
  *
  *  Null rather than a throw: a missing tile is missing context, and the figure is still true
  *  without it. The caller omits it. */
 export async function fetchTileAsDataURI(url:string,timeoutMs=8000):Promise<string|null>{
   if(fetched.has(url))return fetched.get(url)!;
+  // Durable first: a tile fetched on a previous visit is why the figure still has ground on a
+  // device that is now offline.
+  const kept=store?.read(tileCacheKey(url));
+  if(typeof kept==='string'){fetched.set(url,kept);return kept;}
   let href:string|null=null;
   try{
     const controller=new AbortController();
     const timer=setTimeout(()=>controller.abort(),timeoutMs);
     try{
-      const response=await fetch(url,{signal:controller.signal,referrerPolicy:'no-referrer'});
+      // NO `referrerPolicy:'no-referrer'`. It was here for the privacy constraint and had the
+      // opposite effect of the one intended: OpenStreetMap's tile usage policy requires a Referer
+      // or User-Agent that identifies the application, a browser cannot set the latter, and an
+      // unidentified app is what they block. The practitioner met it as tiles reading "Access
+      // blocked" baked into a figure, 2026-10-25. The Referer discloses this application's own
+      // URL and nothing about a workflow, so it is still only the tile request.
+      const response=await fetch(url,{signal:controller.signal});
       if(response.ok){
         const blob=await response.blob();
         href=await new Promise<string|null>(resolve=>{
@@ -147,5 +175,8 @@ export async function fetchTileAsDataURI(url:string,timeoutMs=8000):Promise<stri
     }finally{clearTimeout(timer);}
   }catch{href=null;}
   fetched.set(url,href);
+  // A failure is remembered for the session and NOT written down: the next visit should try
+  // again rather than inherit one bad afternoon's network.
+  if(href&&store)await store.write(tileCacheKey(url),href);
   return href;
 }

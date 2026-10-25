@@ -251,14 +251,29 @@ export const TUFTE_AXIS={
  *  chose a triangle" and "triangle because it was the second layer" are different claims, and a
  *  reader auditing a figure needs to know which they are looking at -- the same separation the map
  *  receipt already makes between a design rule and a preference. */
-export interface LayerSymbol {colour:string; shape:LayerShape; chosen:{colour:boolean;shape:boolean}}
+/** HOW BIG A MARK IS, because density is a property of the data and not of the renderer.
+ *
+ *  The practitioner, 2026-10-25, on Snow's 250 death addresses in a few Soho streets: *"the sizes
+ *  of the marks should be adjustable so they do not all merge like a blob on the map"*. They do
+ *  merge, and no single default can prevent it: eight pumps across a borough want a mark a reader
+ *  can find, and 250 addresses in four streets want one small enough to leave gaps. The same
+ *  figure holds both.
+ *
+ *  So it is a per-layer setting with a default, in the same place hue and mark already live.
+ *  Radius in figure units, where the plot is 850 wide. */
+export const MARK_RADIUS_DEFAULT=4, MARK_RADIUS_MIN=1, MARK_RADIUS_MAX=12;
+export const markRadius=(size:number|undefined):number=>
+  typeof size==='number'&&Number.isFinite(size)
+    ?Math.min(MARK_RADIUS_MAX,Math.max(MARK_RADIUS_MIN,size)):MARK_RADIUS_DEFAULT;
+export interface LayerSymbol {colour:string; shape:LayerShape; size:number; chosen:{colour:boolean;shape:boolean;size:boolean}}
 export function resolveLayerSymbol(index:number,
-  chosen?:{mark?:LayerShape;colour?:string}):LayerSymbol{
+  chosen?:{mark?:LayerShape;colour?:string;size?:number}):LayerSymbol{
   const derived=layerSymbol(index);
   return {
     colour:chosen?.colour||derived.colour,
     shape:chosen?.mark||derived.shape,
-    chosen:{colour:!!chosen?.colour,shape:!!chosen?.mark}};
+    size:markRadius(chosen?.size),
+    chosen:{colour:!!chosen?.colour,shape:!!chosen?.mark,size:typeof chosen?.size==='number'}};
 }
 /** WHAT THE FILL CHANNEL MEANS, as data rather than as code.
  *

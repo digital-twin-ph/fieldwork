@@ -48,7 +48,11 @@ test('a site beyond the snap limit snaps anyway and carries the leg it crossed',
   assert.equal(got.value.features[1].properties.snapDistanceM,300,'and the distance is charged like any other');
   assert.deepEqual(got.value.offNetwork,[{siteId:'clinic',name:'clinic',distanceM:300,limitM:150}]);
   assert.match(got.value.sourceInfo.notes[0],/^1 of 2 sites is further than the 150 m snap limit from any node and reached the network across ground no street covers: clinic \(300 m\)/);
-  assert.match(got.value.sourceInfo.notes[0],/assumes a walk that may not exist/);
+  // Mode-neutral wording, 2026-10-25: *"any reference to walking or driving (or cycling) when
+  // using street networks must never be hard coded in the interface"*. A straight leg is charged
+  // the same way whatever mode was declared, and a message that calls it a walk is wrong on a
+  // driving network while looking perfectly reasonable.
+  assert.match(got.value.sourceInfo.notes[0],/assumes ground that can be crossed/);
   assert.match(got.receipt.facts,/fw:offNetworkSiteCount 1/);
   assert.match(got.receipt.facts,/fw:offNetworkSites "\[\{\\"siteId\\":\\"clinic/);
 });

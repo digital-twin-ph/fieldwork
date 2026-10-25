@@ -20,7 +20,14 @@ export function previewArea(workflow:Workflow,nodeId:string):{node:WorkflowNode<
   }
   throw new Error('Connect a Study area to preview clipping.');
 }
-export async function prepareRasterPreview(workflow:Workflow,nodeId:string):Promise<RasterGrid>{
+/** Two questions a caller can ask about one node, and they are not the same one.
+ *
+ *  `prepareRasterPreview` answers "what arrives at this node" -- the clip preview needs the grid
+ *  it is about to mask, not the masked result. `rasterOfNode` answers "what does this node
+ *  produce", which is what a download offers: the retained window at a Raster input, the masked
+ *  grid at a Clip raster. One resolver, because a second copy of this walk would be a second
+ *  place for the cycle check to be forgotten. */
+function resolver(workflow:Workflow){
   const visited=new Set<string>();
   async function source(id:string):Promise<RasterGrid>{
     if(visited.has(id))throw new Error('Raster connections contain a cycle.');visited.add(id);
@@ -33,5 +40,11 @@ export async function prepareRasterPreview(workflow:Workflow,nodeId:string):Prom
     throw new Error('Connect a prepared Raster input or Clip raster.');
   }
   async function input(id:string){const edge=workflow.edges.find(e=>e.to===id&&e.port==='raster');if(!edge)throw new Error('Connect a raster before previewing.');return source(edge.from);}
-  return input(nodeId);
+  return {source,input};
+}
+export async function prepareRasterPreview(workflow:Workflow,nodeId:string):Promise<RasterGrid>{
+  return resolver(workflow).input(nodeId);
+}
+export async function rasterOfNode(workflow:Workflow,nodeId:string):Promise<RasterGrid>{
+  return resolver(workflow).source(nodeId);
 }

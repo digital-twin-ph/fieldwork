@@ -1,6 +1,6 @@
 import {RASTER_SOURCE_FIELDS,validateRasterProvenance,WORLDPOP_BOTSWANA,WORLDPOP_BOTSWANA_FILENAME} from './raster-provenance.js';
 import type {RasterProvenance} from './raster-provenance.js';
-import type {Boundary} from './types.js';
+import type {Boundary,Position} from './types.js';
 import type {RasterAsset,RasterGrid,RasterMetadata} from './raster.js';
 import {rasterImage} from './raster-image.js';
 export {rasterImage} from './raster-image.js';
@@ -31,15 +31,29 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
   }catch(e){fail(e);status.textContent='Raster has not been applied to the project.';}finally{busy=false;save.disabled=false;cancel.disabled=false;fileInput.disabled=false;padding.disabled=!file;fields.disabled=false;}};
   dialog.showModal();
 }
-export function rasterSvg(grid:RasterGrid):string{
+/** The frame the raster is drawn in, and the projection that puts anything else in it.
+ *
+ *  Extracted so a caller can place a mark on the raster without recomputing this arithmetic and
+ *  getting a slightly different answer. The raster is GROUND, and ground is drawn under the
+ *  layers that were wired beside it -- it is not a mode that replaces them. */
+export function rasterFrame(grid:RasterGrid){
   const m=grid.metadata;
   const [west,south,east,north]=m.bounds,cos=Math.cos((north+south)/2*Math.PI/180),scale=Math.min(800/((east-west)*cos),245/(north-south)),width=(east-west)*cos*scale,height=(north-south)*scale,x=(850-width)/2,y=(295-height)/2;
+  return {west,south,east,north,cos,scale,width,height,x,y,
+    project:(p:Position):[number,number]=>[x+(p[0]-west)*cos*scale,y+(north-p[1])*scale]};
+}
+/** `overlay` is SVG already projected by `rasterFrame(grid).project`, drawn over the cells and
+ *  under the caption. Empty when nothing else was wired, which is the only time this map is
+ *  honestly a picture of a raster alone. */
+export function rasterSvg(grid:RasterGrid,overlay=''):string{
+  const m=grid.metadata;
+  const {west,north,cos,scale,width,height,x,y}=rasterFrame(grid);
   const path=grid.boundary?(grid.boundary.type==='Polygon'?[grid.boundary.coordinates]:grid.boundary.coordinates).flatMap(poly=>poly.map(ring=>ring.map((p,i)=>`${i?'L':'M'}${x+(p[0]-west)*cos*scale},${y+(north-p[1])*scale}`).join(' ')+'Z')).join(' '):'';
   const polygons=grid.boundary?(grid.boundary.type==='Polygon'?[grid.boundary.coordinates]:grid.boundary.coordinates):[];
   const pixelPaths=polygons.map(poly=>poly.map(ring=>ring.map((p,i)=>`${i?'L':'M'}${(p[0]-m.origin[0])/m.resolution[0]},${(p[1]-m.origin[1])/m.resolution[1]}`).join(' ')+'Z').join(' '));
   const transform=`translate(${x} ${y}) scale(${width/m.width} ${height/m.height})`,margin=grid.mask?.marginPixels||0,maskId='raster-visible-footprint';
   const shapes=(color:string)=>pixelPaths.map(d=>`<path data-raster-mask-shape d="${d}" fill="${color}" fill-rule="evenodd" stroke="${color}" stroke-width="${2*margin}" stroke-linejoin="round" stroke-linecap="round"/>`).join('');
   const background=grid.mask?`<defs><mask id="${maskId}" maskUnits="userSpaceOnUse" x="0" y="0" width="850" height="295" style="mask-type:alpha"><g transform="${transform}">${shapes('white')}</g></mask></defs><g transform="${transform}">${shapes('#e8ece5').replaceAll('data-raster-mask-shape','data-raster-nodata-background')}</g>`:`<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="#e8ece5"/>`;
-  return `${background}<image ${grid.mask?`mask="url(#${maskId})"`:''} href="${rasterImage(grid)}" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none" style="image-rendering:pixelated"/><path d="${path}" fill="none" stroke="#193d33" stroke-width="1.4"/><text x="15" y="18" font-size="11">Native raster cells · ${grid.mask?`${grid.mask.method} · margin ${margin} px · outside footprint = transparent`:'unmasked input window'} · gray inside = NoData</text>`;
+  return `${background}<image ${grid.mask?`mask="url(#${maskId})"`:''} href="${rasterImage(grid)}" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none" style="image-rendering:pixelated"/><path d="${path}" fill="none" stroke="#193d33" stroke-width="1.4"/>${overlay}<text x="15" y="18" font-size="11">Native raster cells · ${grid.mask?`${grid.mask.method} · margin ${margin} px · outside footprint = transparent`:'unmasked input window'} · gray inside = NoData</text>`;
 }
 export function downloadRaster(grid:RasterGrid):void{const url=URL.createObjectURL(new Blob([encodeRaster(grid)],{type:'image/tiff'})),link=document.createElement('a');link.href=url;link.download=grid.mask?'fieldwork-clipped.tif':'fieldwork-raster-window.tif';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}

@@ -87,3 +87,46 @@ test('a curated example opens as a project with its workflows',{skip},async({pag
   expect(workflows).toContain('The ground: 32 sub-districts');
   expect(workflows).toContain('Cholera in 1849 compared with 1854');
 });
+
+/** RESET REACHES AN IMPORTED EXAMPLE TOO.
+ *
+ *  The practitioner, 2026-10-24: *"Imported examples should also be resettable."* Reset reloaded a
+ *  workflow compiled into the application, and an imported one has no such template, so the
+ *  control hid itself and an edit to published work had no way back.
+ *
+ *  Three things are checked here, and the second is the one worth the test: that the reset is
+ *  SERVED FROM THE CACHE -- the request counter does not move -- so a device that has gone offline
+ *  can still reset; and that the workflow is still the practitioner's afterwards, because a reset
+ *  that restored the published identity along with the published content would have made it
+ *  undeletable again, which is the defect this pair of controls already had once. */
+test('an imported example is resettable, from the bytes already verified',{skip},async({page})=>{
+  const errors=collectPageErrors(page);
+  let requests=0;
+  await page.route(/raw\.githubusercontent\.com/,route=>{requests++;
+    route.fulfill({status:200,body:bundle});});
+  page.on('dialog',dialog=>dialog.accept());
+  await openProjects(page);
+  await page.locator('[data-open-example]').click();
+  await expect(page.locator('[data-example-status]')).toContainText('digest matched',{timeout:20000});
+  await page.locator('[data-view="workflow"]').click();
+  const node=page.locator('.react-flow__node[data-id="mortality"]');
+  await expect(node).toBeVisible();
+  // The control is offered at all, which it was not before: an imported example has an origin
+  // even though it has no template.
+  await expect(page.locator('#reset-example')).toBeVisible();
+
+  // Edit it: remove a widget the example publishes.
+  await node.click();
+  await page.locator('#delete-node').click();
+  await expect(node).toHaveCount(0);
+
+  await page.locator('#reset-example').click();
+  await expect(node).toBeVisible({timeout:20000});
+  // NOT A SECOND FETCH. The bytes verified at import were kept under the digest the catalog pins,
+  // so the reset reads those and the network is not touched again.
+  expect(requests).toBe(1);
+  // Still theirs: in the project it was imported into, and still deletable.
+  await expect(page.locator('#project-select')).toContainText("Snow's South London");
+  await expect(page.locator('#delete-workflow')).toBeEnabled();
+  expect(errors).toEqual([]);
+});

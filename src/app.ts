@@ -35,7 +35,7 @@ import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,
 
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles} from './evidence-storage.js';
-import {curatedExamples,verifiedFile,type CatalogExample} from './example-catalog.js';
+import {curatedExamples,exampleById,verifiedFile,type CatalogExample} from './example-catalog.js';
 import {saveRefusalMessage} from './save-refusal.js';
 import {MAX_BUNDLE_BYTES} from './evidence.js';
 import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType,ColumnRepair} from './types.js';
@@ -63,7 +63,7 @@ import {templateFrom} from './workflow-template.js';
 import {pairSignature} from './deduplicate-points.js';
 import {openDeduplicateReview} from './deduplicate-ui.js';
 import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds,storageRefusal,STORAGE_QUOTA_BYTES} from './study-area.js';
-import {loadPayloads,putPayload,dropPayload,cachedPayloads,payloadStoreKind,payloadBytes,onStoreDegraded} from './payload-store.js';
+import {loadPayloads,putPayload,dropPayload,cachedPayload,cachedPayloads,payloadStoreKind,payloadBytes,onStoreDegraded} from './payload-store.js';
 import {openStudyAreaEditor} from './study-area-map.js';
 import {newAreaMeasurement,areaUnitOptions,formatArea,AREA_UNITS} from './area-measurement.js';
 import {newObservations,relationLabel} from './spatial-coverage.js';
@@ -74,14 +74,14 @@ import {chartOrientation,chartRenderer} from './chart-vega.js';
 import {standaloneChartSvg} from './chart-figure.js';
 import {networkPreviewSvg,networkCoverage,networkPreviewCaption} from './network-preview.js';
 import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
-import {openRasterEditor,rasterSvg,downloadRaster} from './raster-ui.js';
+import {openRasterEditor,rasterSvg,rasterFrame,downloadRaster} from './raster-ui.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
 import {populationRastersForCountry,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
 import type {BoundaryProvenance} from './types.js';
 import {openTableEditor,dataTableMarkup} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
-import {previewArea,prepareRasterPreview} from './raster-preview.js';
+import {previewArea,prepareRasterPreview,rasterOfNode} from './raster-preview.js';
 import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT_SCHEMA} from './project-document.js';
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
@@ -1640,6 +1640,15 @@ function renderInspector(){
       +`<div class="field"><label class="field-label" for="sample-attribute">Attribute to write</label><input id="sample-attribute" data-sample="attribute" maxlength="60" value="${esc(p.attribute)}" placeholder="elevation_m"></div>`
       +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" data-sample="valueUnit" maxlength="60" value="${esc(p.valueUnit)}" placeholder="metres above the stated datum"></div>`
       +'<div class="notice">A cell value is not a measurement at the point: it is the value of the containing cell, at the raster\u2019s resolution, with no interpolation. No-data cells, points outside the raster and points without coordinates carry no value and are counted; none is treated as zero. An attribute already on the layer is never overwritten.</div>';
+    // THE ARTEFACT IS DOWNLOADED WHERE IT IS MADE, not where it happens to be displayed.
+    // `#raster-download` sits in the Results heading and offers whatever raster the output tab
+    // on screen carries, so with a prepared window and a clipped grid in one workflow the full
+    // window was unreachable while the clipped map was displayed -- the one case where two
+    // rasters exist is the one case it could not serve. The filenames already told them apart,
+    // and neither needs a run: both come from the stored input, through the resolver the clip
+    // preview uses. The two descriptions are separate literals rather than one ternary, because
+    // the prose check reads this source and scored the ternary as a single 328-character
+    // explanation attached to the control above it.
   }else if(n.type==='raster_input'||n.type==='clip_raster'){
     // ONE SHAPE, AND THIS WIDGET WAS STILL OUTSIDE IT. The practitioner, 2026-10-23: *"Note that
     // raster widget still does not have custom node label field."* labelForm exists precisely so
@@ -1697,8 +1706,8 @@ function renderInspector(){
           +`${chosen.bytes?'':' Size unread at snapshot time, so unstated rather than guessed.'}`
           +`</small>`;
       }
-      content+='<button id="prepare-raster" class="button primary">Prepare GeoTIFF input</button><p class="description">Acquire a rectangular window and enter source metadata/citation. Reopen to edit metadata without re-uploading. Use Clip raster to apply the polygon mask.</p>';if(n.params.asset)content+=`<p>${esc(n.params.asset.source.filename)}<br>${n.params.asset.source.metadata.width} x ${n.params.asset.source.metadata.height} source cells; retained ${n.params.asset.metadata.width} x ${n.params.asset.metadata.height}.</p><details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(n.params.asset,null,2))}</pre></details>`;}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
-    if(n.type==='clip_raster'){content+='<div class="field"><label class="field-label" for="clip-method">Pixel inclusion</label><select id="clip-method"><option value="all-touched" '+(n.params.method==='all-touched'?'selected':'')+'>All touched</option><option value="cell-center" '+(n.params.method==='cell-center'?'selected':'')+'>Cell center inside</option></select><label class="field-label" for="clip-margin">Outer margin (native pixels, 0-1)</label><input id="clip-margin" type="number" min="0" max="1" step="0.25" value="'+(n.params.marginPixels||0)+'"><small>All touched includes a cell when the boundary covers part of its area or crosses it, so a boundary running exactly along a cell border does not pull in the cell outside it. This matches GDAL except where a boundary vertex lies exactly on a cell border. For an outward margin, prepare the GeoTIFF with one pixel of extra source coverage; a margin is a grid distance with no GDAL equivalent. NoData is never filled.</small></div>';content+='<p class="description">'+(n.params.cutline?'Saved clip boundary; independent of Study area edits.':'Boundary will be initialized from the connected Study area.')+'</p><button id="reset-clip-boundary" class="button small" '+(!n.params.cutline?'disabled':'')+'>Use Study area boundary</button>';if(n.params.cutline)content+='<div class="source-card"><span class="inspector-section">Clip extent (degrees)</span>'+geometryBounds(n.params.cutline.geometry).map((value,i)=>'<div class="detail-row"><span>'+['West','South','East','North'][i]+'</span><strong>'+value.toFixed(6)+'</strong></div>').join('')+'</div>';}
+      content+='<button id="prepare-raster" class="button primary">Prepare GeoTIFF input</button><p class="description">Acquire a rectangular window and enter source metadata/citation. Reopen to edit metadata without re-uploading. Use Clip raster to apply the polygon mask.</p>';if(n.params.asset)content+=`<p>${esc(n.params.asset.source.filename)}<br>${n.params.asset.source.metadata.width} x ${n.params.asset.source.metadata.height} source cells; retained ${n.params.asset.metadata.width} x ${n.params.asset.metadata.height}.</p><details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(n.params.asset,null,2))}</pre></details>`;content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The retained window at native resolution, with its georeferencing and source metadata.</p>';}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
+    if(n.type==='clip_raster'){content+='<div class="field"><label class="field-label" for="clip-method">Pixel inclusion</label><select id="clip-method"><option value="all-touched" '+(n.params.method==='all-touched'?'selected':'')+'>All touched</option><option value="cell-center" '+(n.params.method==='cell-center'?'selected':'')+'>Cell center inside</option></select><label class="field-label" for="clip-margin">Outer margin (native pixels, 0-1)</label><input id="clip-margin" type="number" min="0" max="1" step="0.25" value="'+(n.params.marginPixels||0)+'"><small>All touched includes a cell when the boundary covers part of its area or crosses it, so a boundary running exactly along a cell border does not pull in the cell outside it. This matches GDAL except where a boundary vertex lies exactly on a cell border. For an outward margin, prepare the GeoTIFF with one pixel of extra source coverage; a margin is a grid distance with no GDAL equivalent. NoData is never filled.</small></div>';content+='<p class="description">'+(n.params.cutline?'Saved clip boundary; independent of Study area edits.':'Boundary will be initialized from the connected Study area.')+'</p><button id="reset-clip-boundary" class="button small" '+(!n.params.cutline?'disabled':'')+'>Use Study area boundary</button>';if(n.params.cutline)content+='<div class="source-card"><span class="inspector-section">Clip extent (degrees)</span>'+geometryBounds(n.params.cutline.geometry).map((value,i)=>'<div class="detail-row"><span>'+['West','South','East','North'][i]+'</span><strong>'+value.toFixed(6)+'</strong></div>').join('')+'</div>';content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The masked grid at native resolution. Cells outside the boundary are NoData, not absent.</p>';}
   }else if(n.type==='study_area'){
     // THE COUNTRY, SAID ONCE, HERE. Every widget that needs one -- the population raster, the
     // facilities export -- reads it from the area rather than asking again. An acquired boundary
@@ -2304,6 +2313,13 @@ function renderInspector(){
     const baseline=JSON.stringify(workflow);openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Prepare GeoTIFF input.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},getNode(workflow,n.id,'raster_input').params.asset);
   });
   optionalElement('#add-raster-map')?.addEventListener('click',()=>change(w=>{const id=`map-${Date.now()}`;w.nodes.push({id,type:'map_output',x:n.x+270,y:n.y,params:{label:'Clipped raster',inputMode:'raster',pointInputCount:1}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'raster'});selected=id;}));
+  optionalElement('#download-node-raster')?.addEventListener('click',async e=>{
+    const button=e.currentTarget as HTMLButtonElement,label=button.textContent||'Download GeoTIFF';
+    button.disabled=true;button.textContent='Preparing\u2026';
+    try{downloadRaster(await rasterOfNode(workflow,n.id));}
+    catch(error){toast(errorMessage(error),{tone:'failure'});}
+    finally{button.disabled=false;button.textContent=label;}
+  });
   optionalElement('#preview-raster-clip')?.addEventListener('click',async e=>{
     const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Loading raster preview…';
     try{
@@ -2862,7 +2878,39 @@ function renderMap(){
     else svg.innerHTML=polygonSvg(result.polygons,esc);
     const method=document.createElement('p');method.className='muted';method.textContent=result.polygons.method+' / '+result.polygons.notes.join(' ');note.append(method);return;
   }
-  if(result?.raster){svg.innerHTML=rasterSvg(result.raster);return;}
+  // THE RASTER IS GROUND, NOT A MODE. Fourth instance of one defect, and the comments in
+  // core.ts name the first three: the study area was dropped on 2026-10-20, the facilities on
+  // 2026-10-22, the raster itself on 2026-10-23, each because the winning mode threw away every
+  // other wired layer. The value reaching here already carried the rows -- the layer list under
+  // the map counted seventeen facilities -- and this line drew the cells and returned, so the
+  // control offered a toggle for marks that were never drawn. Reported 2026-10-25 against a
+  // Gaborone map with a study area, a clipped raster, facilities and a street network wired,
+  // where only the raster appeared.
+  if(result?.raster){
+    const frame=rasterFrame(result.raster);
+    // Typed from markPath's own parameter, so a shape the renderer cannot draw is a build error
+    // rather than a mark that silently falls back to a circle.
+    const symbols=(result as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0]}>}).layerSymbols||{};
+    const hidden=hiddenMapLayers.get(result.nodeId)||new Set<string>();
+    const focus=rows.find(r=>`result:${r.id}`===selected);
+    const marks=rows.filter(r=>r.coordinates).map(r=>{
+      const [x,y]=frame.project(r.coordinates!);
+      const symbol=symbols[r.sourceNodeId||'']||{colour:'#699178',shape:'circle'};
+      const label=r.excluded?'Excluded':r.relation||statusLabel(r.status);
+      return `<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}"`
+        +` data-layer="${esc(r.sourceNodeId||'')}"`
+        +` style="display:${hidden.has(r.sourceNodeId||'')?'none':''}"`
+        +` aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}">`
+        +`<title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title>`
+        +`<path d="${markPath(symbol.shape||'circle',x,y,focus?.id===r.id?6:4)}" fill="${symbol.colour}" stroke="white" stroke-width="1.2"/></g>`;
+    }).join('');
+    svg.innerHTML=rasterSvg(result.raster,marks);
+    svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{
+      el.onclick=()=>selectResult(el.dataset.place!);
+      el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};
+    });
+    return;
+  }
   if(result?.pointTable){svg.innerHTML='';return;}
   if(result?.kind==='study-area'){svg.innerHTML=areaSvg(required(result.boundary),result.label);return;}
   if(result?.boundary){svg.innerHTML=oldMap(result,selected,esc,statusLabel);svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layer!)?'none':'';el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});return;}
@@ -3063,11 +3111,55 @@ $('#tidy-button').onclick=()=>{
   toast('Laid out in columns, left to right in the order the work happens. Undo to put it back.');
 };
 // A worked example is published work, and editing it should not mean losing it. The saved
+/** Reload ONE imported workflow from the document it was read from, IN PLACE.
+ *
+ *  Asked which it should be, the practitioner, 2026-10-24: *"Yes reset the currently open
+ *  workflow"* -- not the project. So the project membership and the minted key survive, because
+ *  they are what make the workflow theirs; only the content is the publisher's again. A second
+ *  import would have left them with two copies and renamed neither.
+ *
+ *  THE CACHE IS CHECKED BEFORE THE NETWORK, and the cache is keyed by the digest the catalog
+ *  pins, so a hit is the same bytes that were verified at import rather than a second fetch
+ *  trusted because the first one worked. An offline device resets; a device whose cache has been
+ *  cleared re-fetches and verifies again.
+ *
+ *  Nothing is replaced until the published workflow has been read and validated: a refusal leaves
+ *  the edited workflow exactly as it was and says why. */
+async function resetFromOrigin(origin:ExampleOrigin):Promise<void>{
+  const example=exampleById(origin.exampleId);
+  if(!example){
+    toast('This example is no longer in the catalog, so there is nothing to reload it from.',{tone:'failure'});
+    return;
+  }
+  try{
+    let payload=cachedPayload(origin.sha256);
+    if(payload===undefined){
+      toast('Fetching the published document again\u2026');
+      const bytes=await verifiedFile(example,origin.path);
+      payload=JSON.parse(await readMaybeGzipped(new Blob([bytes as BlobPart]))) as unknown;
+      await putPayload(origin.sha256,payload);
+    }
+    const entry=readProjectDocument(payload).workflows[origin.index];
+    if(!entry)throw new Error('The published document no longer carries this workflow, so there is nothing to reload.');
+    const published=await importWorkflowDocument(entry.document,validateWorkflow);
+    const identity={projectId:workflow.projectId,workflowKey:workflow.workflowKey,exampleId:undefined};
+    const replaced=change(w=>{replaceWorkflow(w,{...published,...identity});selected=null;});
+    if(replaced===false)return;
+    result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};
+    renderResults();renderLibrary($('#node-search').value);render();
+    setTimeout(()=>flow?.fit(),80);
+    toast('Reloaded as published.');
+  }catch(error){
+    toast(errorMessage(error),{tone:'failure'});
+  }
+}
 // workspace is kept when the dropdown is used, so this is the way back to the published one.
-$('#reset-example').onclick=()=>{
+$('#reset-example').onclick=async()=>{
   if(busy)return;
-  const key=exampleKey(workflow);
+  const origin=originOf(storageKey(workflow));
   if(!confirm('Discard your edits to this workspace and reload it as published? This cannot be undone.'))return;
+  if(origin){await resetFromOrigin(origin);return;}
+  const key=exampleKey(workflow);
   // Not loadExample: that saves the workspace you are leaving before loading, which would
   // write the edited version straight back over the one being discarded. Replacing in place
   // lets the ordinary save put the published template where the edit was.
@@ -3241,7 +3333,8 @@ function renderProjectOptions(){
   // On everything else it was a control for a thing that does not exist -- there is nothing to
   // reload a practitioner's own workflow to -- taking a slot beside the controls that do apply.
   // The blank canvas is not a worked example either: "New empty canvas" is its gesture.
-  $('#reset-example').hidden=!WORKED_EXAMPLE_KEYS.includes(key);
+  // An imported example has no template, but it has an origin, and that is published work too.
+  $('#reset-example').hidden=!WORKED_EXAMPLE_KEYS.includes(key)&&!originOf(key);
   remove.disabled=busy||published;
   remove.title=published
     ?'A worked example ships with the application and stays. "Reset example" discards your edits to it.'
@@ -3402,6 +3495,7 @@ function deleteProject(id:string){
   }
   try{localStorage.setItem(WORKSPACES,JSON.stringify(raw));forgetSavedWorkflows();}
   catch{/* the project record is removed below either way, so nothing is left half-deleted */}
+  forgetOrigins(keys);
   if(!writeProjects(readProjects().filter(p=>p.id!==project.id)))return;
   const openWasInIt=project.workflows.includes(storageKey(workflow));
   if(openWasInIt){
@@ -3559,6 +3653,9 @@ function deleteWorkflow(key:string){
     localStorage.setItem(WORKSPACES,JSON.stringify(store));
     forgetSavedWorkflows();
   }catch{/* the registration is already gone, so the row is gone; a stale entry is unreachable */}
+  // The key is minted per device and never reissued, so an origin left behind would refer to a
+  // workflow that cannot come back.
+  forgetOrigins([key]);
   // Deleting a row that is not the open canvas leaves the canvas alone: the practitioner is
   // tidying a list, not navigating.
   if(!open){renderProjectOptions();render();toast(`Workflow "${name}" deleted.`);return;}
@@ -3783,6 +3880,35 @@ const rememberFetched=(id:string)=>{
   try{const all=new Set(fetchedExamples());all.add(id);
     localStorage.setItem(FETCHED_EXAMPLES,JSON.stringify([...all]));}catch{/* a refusal here costs the badge, not the example */}
 };
+/** WHERE AN IMPORTED WORKFLOW CAME FROM, so that RESET EXAMPLE means something for it.
+ *
+ *  The practitioner, 2026-10-24: *"Imported examples should also be resettable."* They were not.
+ *  Reset reloaded `template(key)` -- a workflow compiled into the application -- and an imported
+ *  example has no template, so the control hid itself and an edit had no way back.
+ *
+ *  The import MINTS A FRESH KEY, and that is the whole difficulty: minting is what makes the
+ *  workflow the practitioner's own and deletable, and it is also what severs it from the document
+ *  it was read from. So record the severed end. The digest is the catalog's pinned one, which is
+ *  also the payload-store key the verified bytes are kept under, so a reset reads the same bytes
+ *  that were verified at import and goes back to the network only if the cache has lost them. */
+interface ExampleOrigin {exampleId:string; path:string; sha256:string; index:number}
+const EXAMPLE_ORIGINS='fieldwork-example-origins-v1';
+const exampleOrigins=():Record<string,ExampleOrigin>=>{
+  try{const raw=localStorage.getItem(EXAMPLE_ORIGINS);return raw?JSON.parse(raw) as Record<string,ExampleOrigin>:{};}
+  catch{return {};}
+};
+const originOf=(key:string):ExampleOrigin|undefined=>exampleOrigins()[key];
+const rememberOrigins=(added:Record<string,ExampleOrigin>):void=>{
+  try{localStorage.setItem(EXAMPLE_ORIGINS,JSON.stringify({...exampleOrigins(),...added}));}
+  catch{/* a refusal here costs the reset, not the import */}
+};
+/** Forget the keys a delete has removed, so the map does not grow for the life of the device. */
+const forgetOrigins=(keys:string[]):void=>{
+  const all=exampleOrigins();
+  const kept=Object.fromEntries(Object.entries(all).filter(([key])=>!keys.includes(key)));
+  if(Object.keys(kept).length===Object.keys(all).length)return;
+  try{localStorage.setItem(EXAMPLE_ORIGINS,JSON.stringify(kept));}catch{/* as above */}
+};
 /** What the example carries, in the practitioner's terms rather than the schema's. */
 const carriedBy=(e:CatalogExample):string=>{
   const has=[e.carries.workflow&&'a workflow',e.carries.data&&'data',e.carries.geography&&'geography']
@@ -3850,7 +3976,18 @@ async function openCuratedExample(id:string,button:HTMLButtonElement):Promise<vo
     const text=await readMaybeGzipped(new Blob([bytes as BlobPart]));
     const parsed=JSON.parse(text) as {schema?:string};
     let opened:string;
-    if(parsed?.schema===PROJECT_DOCUMENT_SCHEMA){await importProjectDocument(parsed);opened=example.title;}
+    if(parsed?.schema===PROJECT_DOCUMENT_SCHEMA){
+      const keys=await importProjectDocument(parsed);
+      // Written AFTER the import, because an import that refuses leaves nothing to reset to.
+      await putPayload(workflowFile.sha256,parsed);
+      rememberOrigins(Object.fromEntries(keys.map((key,index)=>
+        [key,{exampleId:example.id,path:workflowFile.path,sha256:workflowFile.sha256,index}])));
+      // The import opens the workflow and draws the bar BEFORE the origin exists, so the bar was
+      // drawn for a workflow with no way back and RESET EXAMPLE stayed hidden until something
+      // else happened to redraw it. Draw it again now that the origin is recorded.
+      renderProjectOptions();
+      opened=example.title;
+    }
     else {const next=validateWorkflow(parsed);applyImportedWorkflow(next);opened=next.name;}
     rememberFetched(example.id);
     toast(`${example.title} opened. It is on this device now and opens offline.`);
@@ -4236,7 +4373,7 @@ async function exportProject(id:string){
 }
 /** Open one. The project is recreated with a key of its own for every workflow, so importing a
  *  project twice makes two projects rather than overwriting the first. */
-async function importProjectDocument(raw:unknown){
+async function importProjectDocument(raw:unknown):Promise<string[]>{
   const document=readProjectDocument(raw);
   const existing=readProjects();
   const project=newProject(document.project.name,document.project.subject,allProjects());
@@ -4302,6 +4439,7 @@ async function importProjectDocument(raw:unknown){
   selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
   save();renderProjectOptions();renderLibrary();renderResults();render();switchView('workflow');
   toast(`"${project.name}" imported with ${keys.length} ${keys.length===1?'workflow':'workflows'}.`);
+  return keys;
 }
 
 /** Move the current workflow into a project, or out of every project.

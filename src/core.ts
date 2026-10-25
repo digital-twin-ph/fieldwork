@@ -1166,7 +1166,28 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push({nodeId:node.id,kind:'presentation',facts,input:facts,rules:'',conclusions:[],
           method:'Draw the downloaded street graph as itself; no routing, no simplification and no new inference.'});
         break;}
-      if(mode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(mode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(mode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}// A MAP OF POINTS NEEDS SOMETHING TO PUT THEM ON. The relation every row carries -- inside,
+      if(mode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(mode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;
+        // THE SAME FIX THE NETWORK BRANCH ABOVE ALREADY HAS. `rows:[]` threw away every point
+        // layer wired beside the raster before a renderer could see one, so the map drew cells
+        // alone and the layer list under it had nothing to list. The network branch learned this
+        // on 2026-10-22 and this one was left; a layer is carried where somebody remembered to
+        // carry it. When points are wired the map is built as the spatial map it is, and the
+        // raster joins it as ground.
+        const rasterLayers=pointInputs().layers;
+        if(rasterLayers.length&&inputs.area){
+          const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);
+          value={...mapped.value,raster:inputs.raster} as unknown as DisplayValue;
+          if(mapped.receipt){
+            mapped.receipt.facts+=`<urn:fieldwork:run:${runId}:map:${node.id}> `
+              +`prov:used <urn:fieldwork:run:${runId}:output:${source}>.\n`;
+            mapped.receipt.input=mapped.receipt.facts;
+            mapped.receipt.method=`${mapped.receipt.method} The raster is drawn as ground beneath `
+              +'the layers wired beside it; no resampling and no new inference.';
+            receipts.push(mapped.receipt);
+          }
+          break;
+        }
+        const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(mode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}// A MAP OF POINTS NEEDS SOMETHING TO PUT THEM ON. The relation every row carries -- inside,
         // on the boundary, outside -- is a relation TO the study area, so without one there is no
         // map to draw and `mapOutput` read `boundary` off nothing: "Cannot read properties of
         // undefined (reading 'boundary')", reported 2026-10-21 on a Map wired to a deduplication

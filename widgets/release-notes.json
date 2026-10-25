@@ -732,12 +732,20 @@
    "migrationFrom": []
   },
   "study_area": {
-   "version": "0.4.0",
-   "released": "2026-10-23",
+   "version": "0.5.0",
+   "released": "2026-10-24",
    "changes": [
     {
-     "kind": "changed",
-     "description": "The country is stated once, here, and read by every widget that needs one. An area acquired from geoBoundaries was chosen BY country and carries it in its own identifier, so it is shown as a fact rather than asked again; a bounding box, a circle or a drawn polygon was never picked by country and is where the list belongs. The practitioner: \"State it once is best for manually derived study areas like bounding box, circle, hand drawn polygons. But for administrative boundaries from geoBoundaries, it could actually be derived from the country selection so pick country once. Not twice.\""
+     "kind": "feature",
+     "description": "A study area accepts a GeoJSON polygon file from the practitioner's own device, named by a property they name, and each feature becomes a selectable unit exactly as a downloaded administrative level does. Of the five port types only `polygons` had no source widget; the answer was not a sixth source, because a study area already held several published outlines with provenance naming each. The practitioner, 2026-10-24: \"Study area then for polygon input. I have mentioned before that a study area is actually a polygon input.\" Provenance for a local file states \"not stated\" for licence, authority and year rather than inventing them, and names the file."
+    },
+    {
+     "kind": "fix",
+     "description": "ADJACENT UNITS ARE ADMITTED. Parts sharing a border were refused -- two squares meeting along an edge were rejected while the same two with a gap were accepted -- so a multi-part study area worked only for units that do not touch, which administrative units tiling their ground almost never are. The practitioner, 2026-10-24: \"Study area can hold adjacent units, like North Kivu and Ituri Provinces for Ebola outbreak.\" Two causes, both fixed: the edge test refused touching as well as crossing between parts, and the containment test probed from a vertex that for an adjacent unit usually lies on the shared border, which ray casting reads as inside. Crossing interiors and true containment are still refused, and within one part a ring that touches itself is still a drawing fault. Combined area's manual already argued this position -- two provinces sharing a border come through as two parts, not one welded outline -- so the widget kept the border while acquisition refused it; that is resolved."
+    },
+    {
+     "kind": "feature",
+     "description": "Per-part identity survives into the workflow. BoundaryProvenance gains `units`, so `units[i]` names part i. A54 asks to select boundary members without forcing a union and acquisition honoured it, but application did not: several units became one MultiPolygon and one comma-joined name, so nothing could match a figure to the boundary it belongs to."
     }
    ],
    "breaking": false,

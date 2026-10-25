@@ -510,6 +510,45 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       `${pickedLevel.meanVertices} vertices each on average \u00b7 ${summarise(pickedLevel,chosen)}${names}`;
   }
   unitPick.onchange=()=>{showSelection();const chosen=chosenUnits();if(chosen.length)lookAt(chosen);};
+  /** A BOUNDARY FILE THE PRACTITIONER ALREADY HAS, feeding the same unit picker.
+   *
+   *  Everything after this point is the downloaded path unchanged: the same multi-select, the
+   *  same vertex budget, the same "use the selected units" button that assembles the parts. The
+   *  only thing a file lacks is what geoBoundaries would have told us about terms, so
+   *  `localBoundaryLevel` states "not stated" rather than inventing a licence.
+   *
+   *  No size limit beyond what the existing budget already imposes further down: a file is
+   *  already on the device, so there is no download to spare and no reason to refuse by bytes
+   *  what the vertex path will refuse by vertices with a better message. */
+  $('#area-file-pick').onclick=()=>$('#area-file-input').click();
+  $('#area-file-input').onchange=async e=>{
+    const input=e.currentTarget as HTMLInputElement;
+    const file=input.files?.[0];
+    const status=$('#area-file-status');
+    if(!file)return;
+    try{
+      status.textContent=`Reading ${file.name}\u2026`;
+      const {unitsFromFile,localBoundaryLevel}=await import('./boundary-source.js');
+      const parsed=JSON.parse(await file.text()) as {features?:unknown[]};
+      const key=$('#area-file-name-key').value.trim()||'name';
+      const level=localBoundaryLevel(file.name,parsed.features?.length??0);
+      pickedUnits=unitsFromFile(parsed,key,level.boundaryID);
+      pickedLevel=level;
+      unitPick.innerHTML=pickedUnits.map((u,i)=>`<option value="${i}">${u.name}</option>`).join('');
+      unitsBox.hidden=false;
+      summarise=(_l,chosen)=>`${chosen.length} of ${pickedUnits.length} boundaries from ${file.name} \u00b7 licence not stated here`;
+      showSelection();
+      lookAt(pickedUnits);
+      const skipped=(parsed.features?.length??0)-pickedUnits.length;
+      status.textContent=`${pickedUnits.length} boundaries read from ${file.name}`
+        +(skipped>0?` \u00b7 ${skipped} feature${skipped===1?'':'s'} skipped, not a polygon`:'')
+        +` \u00b7 named by "${key}" \u00b7 select the ones your study covers`;
+    }catch(error){
+      // The file stays chosen-but-unused rather than half-applied: nothing has touched the
+      // geometry yet, so the area on screen is still whatever it was.
+      status.textContent=errorMessage(error);
+    }finally{input.value='';}
+  };
   $('#area-boundary-use').onclick=()=>{
     const chosen=chosenUnits();
     if(!pickedLevel||!chosen.length){$('#area-boundary-terms').textContent='Select at least one unit.';return;}
@@ -547,6 +586,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
           source:pickedLevel!.source,licence:pickedLevel!.licence,licenceSource:pickedLevel!.licenceSource,
           yearRepresented:pickedLevel!.yearRepresented,canonical:pickedLevel!.canonical,
           retrievedFrom:pickedLevel!.geoJsonUrl,retrievedAt:new Date().toISOString(),
+          units:[{id:chosen[0].id,name:chosen[0].name}],
           vertices:rings.vertices,publishedHash:boundaryFingerprint(geometry)};
         selectionMode='polygon';setTool('pan');refresh();fit();
         $('#area-boundary-terms').textContent=
@@ -572,6 +612,11 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
         licenceSource:pickedLevel!.licenceSource,yearRepresented:pickedLevel!.yearRepresented,
         canonical:pickedLevel!.canonical,retrievedFrom:pickedLevel!.geoJsonUrl,
         retrievedAt:new Date().toISOString(),
+        // IN THE ORDER THE PARTS WERE BUILT, so units[i] names part i. `kept` is pushed beside
+        // `parts` above and skips any unit with no usable outline, which is what keeps the two
+        // in step. Without this the only record of which ring is which was the comma-joined
+        // unitName, and a figure could not be joined to a boundary.
+        units:kept.map(u=>({id:u.id,name:u.name})),
         vertices:parts.reduce((n,rings)=>n+rings.reduce((m,r)=>m+r.length-1,0),0),
         publishedHash:boundaryFingerprint(geometry)};
       setTool('pan');refresh();fit();

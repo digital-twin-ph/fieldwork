@@ -69,9 +69,20 @@ export interface ObservationParams extends PointParams {fields?:FormField[]; att
 export interface BoundaryProvenance {
   /** The level's content-keyed identifier, e.g. COD-ADM2-63176286. */
   boundaryID:string;
-  /** The unit's own identifier and name within that level. */
+  /** The unit's own identifier and name within that level. With several units these are joined,
+   *  which is how they have always been written and how every reader of them still works. */
   unitID:string;
   unitName:string;
+  /** EACH UNIT, STILL ITSELF. A54 asks to "select boundary members without forcing a union", and
+   *  acquisition honours it -- `readUnits` keeps every unit whole and named. Application did not:
+   *  several units became one MultiPolygon and one comma-joined `unitName`, so which ring was
+   *  which stopped being recorded at the moment it entered the workflow. Nothing could then join
+   *  a figure to a boundary, which is what a choropleth is.
+   *
+   *  The parts of `geometry` are in this order, so `units[i]` names part i. Optional because
+   *  every study area saved before 2026-10-24 has none, and a boundary with one unit does not
+   *  need it. */
+  units?:{id:string;name:string}[];
   /** The authority that drew it, e.g. "Referenciel Geographique Commun, OCHA DR Congo". */
   source:string;
   licence:string;

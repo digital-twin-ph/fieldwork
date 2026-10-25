@@ -1,6 +1,6 @@
 # Open work, in priority order
 
-_Created 2026-10-11 · Updated 2026-10-24_
+_Created 2026-10-11 · Updated 2026-10-25_
 
 What is committed to and not yet done. Items leave this list by being done or by
 being recorded as decided against, not by being forgotten. Dated so that an item
@@ -43,6 +43,82 @@ so in its own closing section: its beneficiaries are us and future contributors,
 not a practitioner in the field.
 
 ## Urgent
+
+**N3 evidence is unreadable, and colour is the smaller half of it.** Asked by the
+practitioner on 2026-10-25: *"looking at N3 evidence, is there a way to make the N3
+readable, like add color coding?"* Measured the same day before answering: a receipt for
+two records already carries a **452-character line** — one subject with a dozen predicates
+separated by `;`, which soft-wraps in `<pre id="n3-preview">` into a paragraph with no
+structure. A real workflow is worse. So pretty-printing at the `;`, with predicates
+indented under their subject, is the larger gain and turns that line into about twelve
+readable ones. Collapsing the identical `@prefix` header into a `<details>` and grouping
+triples by subject are cheap alongside it.
+
+Syntax colour is then worth adding and needs no dependency: N3 has few token classes, so a
+tokenizer is about forty lines. Three constraints decide how it is built. The panel is set
+with `textContent` today and therefore cannot inject; highlighting means `innerHTML`, and
+this N3 carries user data — node labels, filenames, IRIs out of imported files — so
+escaping has to happen per token while tokenizing, never on the assembled string.
+`tests/contrast.browser.mjs` already asserts WCAG AA for every rendered text element in
+dark and holds light to its baseline, so the colours are enforced in both themes without
+new machinery. And the displayed N3 must not become different N3: the receipt download and
+the bytes the reasoner saw stay exactly as generated, so formatting is a display transform
+and that boundary belongs in the code rather than in a comment.
+
+**An interactive map should be able to reveal points in time order.** Proposed by the
+practitioner on 2026-10-25: *"The data set for Hagelloch has time column and on the
+interactive map we can actually have a progressive point reveal using the time column to
+dictate display sequence using a 'play' button."* The data supports it — each Hagelloch
+case carries `date_of_prodrome`, and `case_series` already declares which kind of date a
+series was built from — and Snow's Soho deaths carry dates too, so one control would serve
+both worked examples.
+
+**Scoped by the practitioner the same day:** *"We only need the playback for maps where the
+zoom level has all the data."* That is a refusal rule rather than a convenience. An
+animation run over a viewport that excludes some cases shows a partial outbreak while
+looking complete, and the reader has no way to see what was left out — the figure would be
+wrong in the one direction a spot map is read for. So the control is offered only at a view
+that contains every record being animated, with a fit-to-all-cases gesture to reach it
+(`#fit-button` is the established one), and it says what is outside the view rather than
+playing on. Settled by the practitioner the same day, on what the
+condition means for a case-cluster layer: **all data points visible**. So it is not enough
+that the records are present — each case must be drawn as itself. A clustered map does not
+qualify while its cases are merged into aggregates, because a cluster of twelve animates as
+one mark and the reader counts one. Two conditions together, then: every record drawn
+individually, and every one of them inside the view. Where no zoom satisfies both — dense
+data that only separates by zooming past the extent — playback is not offered at all, which
+is the honest answer rather than animating something the reader will miscount.
+
+**The naming is settled, and the two are told apart by what they replay.** The practitioner,
+2026-10-25: *"the other playback is workflow build. This one is point and time column
+related."* So `src/reveal-playback.ts` keeps "Play back the build" — it replays how the
+*workflow* was assembled, widget by widget — and this one is named for the points and the
+date column it reads. Neither may be called "playback" unqualified in the interface or in
+the glossary, because the word alone no longer identifies either.
+
+**And it must say which date it is animating.** `case_series` already carries a declared
+date kind — onset, report, death, specimen collection — precisely so that a chart cannot
+quietly relabel the series it was built from, and check 22 states that limit in as many
+words. A time-ordered map is the same claim in another form: cases appearing by date of
+death tell a different story from the same cases appearing by date of onset, and a reader
+watching an animation has even less opportunity to check than a reader of an axis. The
+declared kind travels with the control and is stated on the figure.
+
+**Where the control lives, settled the same day.** *"the date column should be selectable
+on the map Inspector panel"*, and *"play back options should only be visible when
+interactive map is selected."* Both follow from the rule above rather than sitting beside
+it: a static plot cannot animate, so offering the control there would be offering something
+that cannot run, and the presentation select is already what decides between a static plot
+and an interactive map.
+
+Choosing the column on the map has a consequence worth taking with it. `case_series` picks a
+date column AND declares its kind, and the pair is what stops a figure relabelling the
+series it was built from. A column chosen on the map with no kind beside it loses exactly
+that, so the Inspector asks for both — or inherits them from an upstream `case_series`
+where one is wired, which is the better answer when it is available because then the curve
+and the map cannot disagree about which date they are showing.
+
+A new capability, so it wants an experiment record before the diff.
 
 **A catalog entry should name the workflow it opens as.** The Worked examples section reports
 FETCHABLE or AVAILABLE from a list of ids fetched on this device, because it cannot derive it: the

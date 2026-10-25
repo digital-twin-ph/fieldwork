@@ -39,12 +39,18 @@ const openArea=async page=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=hagelloch');
   // Clicking a node while the workspace is still restoring leaves the Inspector on its empty
-  // state, and the click below then waits 15 s for a control that is not there. Measured
-  // 2026-10-22: 23 of 24 serial webkit runs passed in about 1.5 s and one timed out, which is
-  // the signature of a test racing the application rather than of a defect in it. The same race
-  // is noted in version-supersession.browser.mjs, with the same remedy: wait for the panel to
-  // hold the node before reaching into it.
+  // state. Measured 2026-10-22: 23 of 24 serial webkit runs passed in about 1.5 s and one timed
+  // out, which is the signature of a test racing the application rather than of a defect in it.
+  // The same race is noted in version-supersession.browser.mjs.
+  //
+  // THE WAIT WAS ON THE WRONG SIDE OF THE CLICK, which is why raising its timeout never fixed
+  // this: the restore replaces the workflow and clears the selection, so a click that lands
+  // before it finishes is thrown away and no later wait can bring it back. On 2026-10-25 it
+  // took two tests of a gate at 45 s each, and the failure named it -- the Inspector was still
+  // showing the HEAT example's note while the canvas held hagelloch's node, so the click had
+  // gone to the workspace being replaced. Wait for the restore to settle, then click.
   await page.locator('[data-view="workflow"]').click();
+  await expect(page.locator('#workflow-select')).toHaveValue('hagelloch');
   await page.locator('.react-flow__node[data-id="village"]').click();
   await expect(page.locator('#inspector-content'))
     .not.toContainText('Choose a node to inspect',{timeout:45000});

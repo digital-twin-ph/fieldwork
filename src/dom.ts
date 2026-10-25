@@ -106,6 +106,10 @@ export interface SelectorElements {
   '#result-search':HTMLInputElement;
   '#workflow-file':HTMLInputElement;
   '#geojson-file':HTMLInputElement;
+  '#area-file-input':HTMLInputElement;
+  '#area-file-name-key':HTMLInputElement;
+  '#area-file-pick':HTMLButtonElement;
+  '#area-file-status':HTMLElement;
   '#area-online':HTMLInputElement;
   '#area-name':HTMLInputElement;
   '#area-west':HTMLInputElement;

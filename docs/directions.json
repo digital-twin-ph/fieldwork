@@ -60,7 +60,7 @@
       "id": "five-directions-as-a-method",
       "stated": "2026-10-12",
       "statedBy": "the practitioner, in experiment 105",
-      "inTheirWords": "In a DE project, we look back, we look forward, we look sideways, above and below. — and, on 2026-10-15: \"105 cannot be retired as it embodies the DE approach.\"",
+      "inTheirWords": "In a DE project, we look back, we look forward, we look sideways, above and below. \u2014 and, on 2026-10-15: \"105 cannot be retired as it embodies the DE approach.\"",
       "requiresInCode": "Nothing in code. It is the stance, not a technique: back, sideways, above, below and forward, pointed at the project periodically with the previous pass's findings in hand. What it requires is USE, and that each sweep's findings land as work items rather than as a document.",
       "recordedIn": [
         "AGENTS.md#the-five-directions",
@@ -121,7 +121,7 @@
       "id": "a-ruleset-widget-is-a-mini-program",
       "stated": "2026-10-12",
       "statedBy": "the practitioner, in the 65 amendment and experiment 106",
-      "inTheirWords": "In a nutshell, a ruleset widget is like a mini-software program with many possibilities because of how rules may be combined to produce an output. — and, on 2026-10-15, looking at the shipped Inspector: \"Regarding ruleset widgets, this is not the design we discussed, the rules are pinned not very flexible.\"",
+      "inTheirWords": "In a nutshell, a ruleset widget is like a mini-software program with many possibilities because of how rules may be combined to produce an output. \u2014 and, on 2026-10-15, looking at the shipped Inspector: \"Regarding ruleset widgets, this is not the design we discussed, the rules are pinned not very flexible.\"",
       "requiresInCode": "The authored form of 106 -- condition {field, comparator, value}, AND groups, OR of groups, a LIST of conclusions from the declared output vocabulary -- with a total compiler to the N3 subset 65 settled, a rule-count ceiling checkable from the form before compiling, and the Inspector authoring rules rather than choosing a pre-baked ruleset from a list of four.",
       "recordedIn": [
         "docs/experiments/106-rule-builder-ui.md",
@@ -153,7 +153,7 @@
       "id": "street-network-declares-a-travel-mode",
       "stated": "2026-10-20",
       "statedBy": "the practitioner, reading the network_input manual page",
-      "inTheirWords": "Regarding street network, OSMNx designates a download as walk or drive. I noticed in the widget manual that it talks about walk but it could be drive. Do we make that distinction when we download an OSM street network? — and, settling the scope: \"For 1854 Soho, driving speed limits does not matter. For current day investigations, these speed limits matter as a ceiling (best case travel time).\"",
+      "inTheirWords": "Regarding street network, OSMNx designates a download as walk or drive. I noticed in the widget manual that it talks about walk but it could be drive. Do we make that distinction when we download an OSM street network? \u2014 and, settling the scope: \"For 1854 Soho, driving speed limits does not matter. For current day investigations, these speed limits matter as a ceiling (best case travel time).\"",
       "requiresInCode": "A travelMode chosen on `network_input` at download time, which selects the highway list (driving adds motorway, trunk and their links and drops footway, path, steps, pedestrian and cycleway), the restriction tags read (motor_vehicle, motorcar and access rather than foot and oneway:foot) and the direction tag that makes an edge one-way. The graph records its mode in `source` and in the download receipt, and a downstream widget whose `travelMode` disagrees with the graph's mode refuses rather than computes.",
       "recordedIn": [
         "docs/experiments/126-travel-time-as-a-bound.md",
@@ -177,7 +177,7 @@
       "id": "travel-time-from-a-posted-limit-is-a-best-case",
       "stated": "2026-10-20",
       "statedBy": "the practitioner, on whether OSM carries speed limits",
-      "inTheirWords": "For 1854 Soho, driving speed limits does not matter. For current day investigations, these speed limits matter as a ceiling (best case travel time). Worst case travel time can be researched. — and, on where the obligation falls: \"Do not worry about the local trip time license, that is the user's problem, the thing to worry about is if it is recorded in the widget, a provenance note goes with it for the benefit of accurate reporting, for example during publications.\"",
+      "inTheirWords": "For 1854 Soho, driving speed limits does not matter. For current day investigations, these speed limits matter as a ceiling (best case travel time). Worst case travel time can be researched. \u2014 and, on where the obligation falls: \"Do not worry about the local trip time license, that is the user's problem, the thing to worry about is if it is recorded in the widget, a provenance note goes with it for the benefit of accurate reporting, for example during publications.\"",
       "requiresInCode": "Any travel time derived from a per-edge posted limit is reported as a BOUND and named as one -- in the result field, in the N3 receipt and in the Inspector -- rather than as an estimate, with the edges that had no limit and fell back to a declared speed counted in both. A widget that can produce only a best case refuses the claim a best case cannot support: a free-flow time can rule a site out of a catchment and cannot rule one in, so \"not reachable even at best\" is sound and \"reachable\" is not. And a speed or trip time a practitioner supplies carries a PROVENANCE NOTE that travels with it into the receipt, the evidence panel and any export, so a figure quoted in a publication can be attributed. Not a licence check: whose data it is remains the practitioner's to answer. This applies to the single speedMPerMin that already exists and carries no note today, not only to a future per-edge speed.",
       "recordedIn": [
         "docs/experiments/126-travel-time-as-a-bound.md"
@@ -200,7 +200,7 @@
       "id": "dive-deeper-notebooks-have-their-own-repository",
       "stated": "2026-10-20",
       "statedBy": "the practitioner",
-      "inTheirWords": "I created a dive-deeper repo on GitHub so the dive deeper notebooks do not mix with the validation lab's. — and, when nothing had changed in the code a day later: \"are we using the dive deeper repo for the dive deeper pedagogy notebooks?\"",
+      "inTheirWords": "I created a dive-deeper repo on GitHub so the dive deeper notebooks do not mix with the validation lab's. \u2014 and, when nothing had changed in the code a day later: \"are we using the dive deeper repo for the dive deeper pedagogy notebooks?\"",
       "requiresInCode": "A ledger of its own -- widgets/dive-deeper.json -- pinning the second repository, because parity results are pinned by commit and digest into a release's evidence and improving an explanation must not move that pin. The application links the new site for a widget that has a lesson; scripts/validate-dive-deeper.mjs verifies lesson notebooks against ../dive-deeper/content and refuses a lesson no widget links; and the sections still living inside lab notebooks are counted against a ceiling that may fall and never rise.",
       "recordedIn": [
         "docs/experiments/94-where-explanation-belongs.md"
@@ -223,7 +223,7 @@
       "id": "projects-are-managed-in-the-interface",
       "stated": "2026-10-20",
       "statedBy": "the practitioner, after using the project model built in 122",
-      "inTheirWords": "Right now I have no way of editing Project Title nor viewing Project metadata. I can only view the workflows through the worked example dropdown which seems to be the wrong place to locate projects. Let's figure out how to seamlessly manage projects within the UI first in such a way that it's intuitive for the user to do it. — and, on the first version: \"There is still no way to edit project (e.g., title) or workflow (e.g., title) metadata.\"",
+      "inTheirWords": "Right now I have no way of editing Project Title nor viewing Project metadata. I can only view the workflows through the worked example dropdown which seems to be the wrong place to locate projects. Let's figure out how to seamlessly manage projects within the UI first in such a way that it's intuitive for the user to do it. \u2014 and, on the first version: \"There is still no way to edit project (e.g., title) or workflow (e.g., title) metadata.\"",
       "requiresInCode": "Two selectors rather than one -- the investigation, then the question -- with the worked examples listed as the built-in projects they already are. The project's own fields readable and editable where it is named: name, subject, the workflows it holds, and the id. One gesture to add a workflow INSIDE a project, which previously meant creating an unrelated canvas and then assigning it. Deleting a project removes the grouping and not the work.",
       "recordedIn": [
         "docs/experiments/122-a-project-holds-many-workflows.md"
@@ -265,7 +265,7 @@
       "id": "point-in-polygon-is-a-widget",
       "stated": "2026-10-20",
       "statedBy": "the practitioner, on finding 526 of 961 facilities outside the study area",
-      "inTheirWords": "We do not have a point in polygon process. — and, when shown pointRelation in spatial-predicates.ts: \"I mean widget.\" — and, on what it should show: \"clip_points_to_area can have a knob that shows which points are outside but still exclude them in the output.\"",
+      "inTheirWords": "We do not have a point in polygon process. \u2014 and, when shown pointRelation in spatial-predicates.ts: \"I mean widget.\" \u2014 and, on what it should show: \"clip_points_to_area can have a knob that shows which points are outside but still exclude them in the output.\"",
       "requiresInCode": "A primitive that takes an area and a point layer and outputs the points inside it, with its own node on the canvas and its own receipt naming the OGC predicate, whether boundary points were kept, and the three counts. The predicate itself is not rewritten: pointRelation already decides this for catchments, the map, input data, the raster mask and the coverage check, and a sixth implementation would be the copy this project keeps finding.",
       "recordedIn": [
         "docs/widgets/clip_points_to_area.md"
@@ -288,7 +288,7 @@
       "id": "a-worked-example-can-live-in-a-repository",
       "stated": "2026-10-20",
       "statedBy": "the practitioner, on finding that no worked example carries a denominator",
-      "inTheirWords": "We also have the potential to set up a downloadable worked example from a repo - the water provider study by John Snow in South London. — and: \"So worked examples do not have to occupy space in the downloaded app, we can set them up as repos read from a curated manifest.\"",
+      "inTheirWords": "We also have the potential to set up a downloadable worked example from a repo - the water provider study by John Snow in South London. \u2014 and: \"So worked examples do not have to occupy space in the downloaded app, we can set them up as repos read from a curated manifest.\"",
       "requiresInCode": "A curated example manifest with per-file SHA-256 digests, verified in the browser before the files are used and refused on mismatch; a readiness state per example in the interface that distinguishes available-now from fetchable; an explicit fetch action rather than a fetch on load; the fetched workflow document validated by validateWorkflow on arrival as an imported one is; the example cached after first open so it stays available offline; and a receipt naming the manifest version and the digests the files matched. No admission rule changes: an example is a resource, not a widget definition.",
       "recordedIn": [
         "docs/experiments/127-examples-as-repositories.md",
@@ -390,12 +390,16 @@
         "docs/experiments/66-ports-as-schema-binding.md"
       ],
       "workItem": "docs/experiments/66-ports-as-schema-binding.md, which opened the question of what a port type promises; and the blocker no-points-within-area-selection, lifted the same day, which was the same shape: a capability one port type away from where it was needed.",
-      "status": "open",
-      "lastChecked": "2026-10-22",
+      "status": "built",
+      "lastChecked": "2026-10-24",
       "checks": [
         {
           "date": "2026-10-22",
           "found": "Stated on being told that two adjacent study areas cannot be merged after the fact. They can be merged AT ACQUISITION -- the boundary picker takes several units at one level and builds a MultiPolygon with provenance naming each -- but the Combined area widget, whose whole description is 'overlapping and touching areas become one', takes a polygons result and so cannot be fed a study area. The distinction between the two types is this application's, not the domain's: an area is a boundary with provenance, a Polygons is features with a method, and a study area is a polygon in both readings. Nothing built."
+        },
+        {
+          "date": "2026-10-24",
+          "found": "Built, in both halves. The practitioner restated it as acquisition -- \"Study area then for polygon input. I have mentioned before that a study area is actually a polygon input\" -- and a survey of the 55 widgets showed why it had to be the study area: of the five port types only `polygons` had no source widget, and `polygons` is not a generic layer but a catchment result carrying sites, a method and snaps. A sixth source emitting it would have made imported boundaries masquerade as the output of a computation nobody ran. A study area already held several published outlines with provenance naming each, which is what a polygon layer is. study_area 0.5.0 takes a GeoJSON polygon file, states \"not stated\" rather than inventing a licence for it, and keeps per-part identity in BoundaryProvenance.units so units[i] names part i -- closing where A54 was honoured in acquisition and lost in application.\n\nFinding the direction could not be delivered without a second: parts that share a border were refused, so the feature could not touch its own use case. The practitioner: \"Study area can hold adjacent units, like North Kivu and Ituri Provinces for Ebola outbreak.\" Two causes, both fixed. The application already argued this position in Combined area's manual -- two provinces sharing a border come through as two parts, not one welded outline -- so the widget kept the border while acquisition refused it.\n\nWhat is NOT built: a join from a table to the parts, without which 32 named boundaries and 32 rates still cannot colour one another. That is what a choropleth is and it is recorded in TODO.md, not done here."
         }
       ]
     },

@@ -170,3 +170,35 @@ test('a study area shown on its own does not crash the map output',()=>{
     predicate:'urn:fieldwork:readyForSpatialAnalysis',object:'true'}])
     .then(run=>{assert.equal(run.outputs.length,1,'the area is shown, with no point layers');});
 });
+
+/** ADJACENT UNITS SHARE A BORDER.
+ *
+ *  The practitioner, 2026-10-24: *"Study area can hold adjacent units, like North Kivu and Ituri
+ *  Provinces for Ebola outbreak."* Until then two squares meeting along an edge were refused and
+ *  the same two with a gap were accepted, so a multi-part study area worked only for units that
+ *  do not touch -- which administrative units, tiling their ground, almost never are.
+ *
+ *  Combined area's manual already argued the other way: two provinces sharing a border "come
+ *  through as two parts, not one welded outline". The widget kept the border; acquisition refused
+ *  it. This is that inconsistency resolved. */
+test('a study area holds adjacent parts, and still refuses overlapping ones',()=>{
+  const sq=(x,y,w=1,h=1)=>[[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x,y]];
+  const parts=p=>({type:'MultiPolygon',coordinates:p});
+  // Ituri and North Kivu: one border, two authorities, two parts.
+  assert.doesNotThrow(()=>validateDrawnGeometry(parts([[sq(0,0)],[sq(1,0)]])));
+  // Meeting at a single corner is still only a border.
+  assert.doesNotThrow(()=>validateDrawnGeometry(parts([[sq(0,0)],[sq(1,1)]])));
+  // Separate units were always fine and stay fine.
+  assert.doesNotThrow(()=>validateDrawnGeometry(parts([[sq(0,0)],[sq(3,0)]])));
+  // Interiors that meet are not two jurisdictions, they are a mistake.
+  assert.throws(()=>validateDrawnGeometry(parts([[sq(0,0)],[sq(0.5,0.5)]])),/must not overlap/);
+  // WITHIN one part the old rule is unchanged: a ring touching itself is a drawing fault.
+  assert.throws(()=>validateDrawnGeometry({type:'Polygon',
+    coordinates:[[[0,0],[2,0],[2,2],[1,0],[0,2],[0,0]]]}),/must not cross or touch/);
+  // Three in a row, each sharing a border with the next, which is what a tiled layer looks like.
+  assert.doesNotThrow(()=>validateDrawnGeometry(parts([[sq(0,0)],[sq(1,0)],[sq(2,0)]])));
+  // AND CONTAINMENT STILL CATCHES CONTAINMENT. Ray casting reads a point on a ring as inside it,
+  // so an adjacent unit's first vertex -- usually on the shared border -- made this fire too.
+  // Probing from a vertex off the other outline fixed that without weakening the rule.
+  assert.throws(()=>validateDrawnGeometry(parts([[sq(0,0,4,4)],[sq(1,1)]])),/lies inside another/);
+});

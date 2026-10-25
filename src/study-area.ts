@@ -127,11 +127,34 @@ function crossingFault(parts:Position[][][]):string|null{
       const p1=list[u],q1=list[v];
       if(adjacent(p1,q1))continue;
       const [a,b]=edges[p1],[c,d]=edges[q1];
-      if((cross(a,b,c)*cross(a,b,d)<0&&cross(c,d,a)*cross(c,d,b)<0)||on(a,b,c)||on(a,b,d)||on(c,d,a)||on(c,d,b))
-        return partOf[p1]!==partOf[q1]
-          ?'The parts of this area must not overlap or touch each other.'
-          :ringOf[p1]===ringOf[q1]?'Polygon edges must not cross or touch each other.'
-            :"The boundary's rings must not cross or touch each other.";
+      // A PROPER CROSSING is one edge passing through another, which means the interiors meet.
+      // TOUCHING is an endpoint or a collinear run lying on another edge -- a shared border.
+      const crosses=cross(a,b,c)*cross(a,b,d)<0&&cross(c,d,a)*cross(c,d,b)<0;
+      const touches=on(a,b,c)||on(a,b,d)||on(c,d,a)||on(c,d,b);
+      if(!crosses&&!touches)continue;
+      // ADJACENT UNITS SHARE A BORDER, and that is what adjacent units are.
+      //
+      // The practitioner, 2026-10-24: *"Study area can hold adjacent units, like North Kivu and
+      // Ituri Provinces for Ebola outbreak."* The rule refused them: two squares sharing an edge
+      // were rejected while the same two squares with a gap were accepted, so a multi-unit study
+      // area worked only for units that do not touch -- which administrative units, tiling their
+      // ground, almost never are. Snow's 32 South London sub-districts failed the same way.
+      //
+      // The application already held the opposite position elsewhere. Combined area's manual
+      // says two provinces sharing a border "come through as two parts, not one welded outline",
+      // because welding them would assert a third line neither authority drew. The widget kept
+      // the border and acquisition refused it; this is that inconsistency, resolved the way the
+      // manual already argued.
+      //
+      // Between parts, only a proper crossing is a fault -- interiors that overlap are not two
+      // jurisdictions, they are a mistake. WITHIN a part the old rule stands unchanged: a ring
+      // touching itself or another ring of the same part is a drawing fault, not a border.
+      if(partOf[p1]!==partOf[q1]){
+        if(crosses)return 'The parts of this area must not overlap each other. Parts that share a border are fine; these cross.';
+        continue;
+      }
+      return ringOf[p1]===ringOf[q1]?'Polygon edges must not cross or touch each other.'
+        :"The boundary's rings must not cross or touch each other.";
     }
   }
   return null;
@@ -201,9 +224,20 @@ export function validateDrawnGeometry(raw:unknown):Boundary{
   // One part inside another is only legitimate when it sits in that part's hole -- an enclave
   // that belongs to the area. Inside the outline but not in a hole would be the same ground
   // counted twice.
+  // A PROBE ON THE SHARED BORDER DECIDES NOTHING. Ray casting counts a point lying on the ring as
+  // inside it, and the first vertex of an adjacent unit is very often exactly on the border it
+  // shares -- so Ituri probed against North Kivu read as "one part inside another" when the two
+  // merely meet. The probe is taken from the first vertex that is NOT on the other part's
+  // outline; if every vertex is, the two parts trace the same line and containment is not what
+  // is wrong with them.
+  const onRing=(ring:Position[],p:Position)=>{
+    for(let i=0;i<ring.length-1;i++)if(on(ring[i],ring[i+1],p))return true;
+    return false;
+  };
   for(let a=0;a<parts.length;a++)for(let b=0;b<parts.length;b++){
     if(a===b)continue;
-    const probe=parts[b][0][0];
+    const probe=parts[b][0].find(vertex=>!onRing(parts[a][0],vertex));
+    if(!probe)continue;
     if(encloses(parts[a][0],probe)&&!parts[a].slice(1).some(hole=>encloses(hole,probe)))
       throw new Error('One part of the area lies inside another. Parts must be separate, or sit in an interior ring.');
   }

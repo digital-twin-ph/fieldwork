@@ -44,6 +44,35 @@ not a practitioner in the field.
 
 ## Urgent
 
+**A WebKit service-worker error failed one gate, once.** `ruleset-example.browser.mjs` failed in
+the 2026-10-24 gate on a page error reading `/127.0.0.1:4174/sw.js due to access control checks.`
+-- not on its own assertions, which all passed -- and then passed 5 of 5 in isolation. The
+signature matches the two messages already in `BROWSER_OWN`: suite pressure, not a defect.
+
+**It is deliberately not filtered yet.** `tests/page-errors.mjs` filters by exact message and
+documents the evidence for each, and one sighting is not evidence. Filtering this one is also
+riskier than the other two: a service worker that fails to register means offline support is
+silently gone, which is the application's central promise, and the string carries the test port so
+an exact match would be brittle across `FIELDWORK_TEST_PORT`. Watch for a second sighting before
+deciding; if it recurs, the question is whether registration is actually failing under load or
+whether WebKit reports a cancelled fetch this way.
+
+**A run in flight is reported as a storage failure.** `change()` returns false while `busy`, and
+the study-area apply path turns that into *"Study area could not be saved. Retry Apply."* -- a
+message about this device's storage for a condition that has nothing to do with storage. Found
+2026-10-24 while building the boundary file import: the test applied an area while the example was
+still auto-running, and the failure read as a quota problem in a workspace holding 169 KB. Same
+family as the swallowed New project click ([experiment
+135](experiments/135-linux-webkit-in-a-container.md)), and worse, because this one misdirects
+rather than staying silent. Either `#area-apply` is disabled while busy like the controls on
+app.ts's render line, or the refusal says what actually happened.
+
+**A table still cannot colour the boundaries it is keyed on.** study_area 0.5.0 brings polygons in
+and keeps `units[i]` naming part i, so the South London example's 32 sub-districts can now reach a
+canvas. Joining the 32 mortality rates to them cannot: nothing takes a table and an area and
+returns the area with a value per part. That join is the choropleth, and it is the figure the
+example has been arguing in prose since 2026-10-24.
+
 **There is no way to bring a polygon into a workflow.** Of 55 widgets, eight take no input and
 none of them accepts polygons; nothing produces polygons from a table either. Polygons exist only
 as the output of a computation over something else -- a Voronoi, an isochrone, a hull, an H3

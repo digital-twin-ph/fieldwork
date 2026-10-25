@@ -213,6 +213,54 @@ export function readUnits(level:BoundaryLevel,geojson:unknown):BoundaryUnit[]{
   });
 }
 
+/** A BOUNDARY FILE THE PRACTITIONER ALREADY HAS, read as units the same way a downloaded level is.
+ *
+ *  The practitioner, 2026-10-24: *"Study area then for polygon input. I have mentioned before
+ *  that a study area is actually a polygon input."* It is the second half of the direction
+ *  `a-study-area-is-a-polygon`, stated 2026-10-22: the first half let Combined area take an area,
+ *  and this is where polygons come IN. Of the five port types only `polygons` had no source
+ *  widget, and the answer is not a sixth source -- a study area already holds several published
+ *  outlines with provenance naming each, which is what a polygon layer is.
+ *
+ *  WHAT THIS CANNOT KNOW, and therefore does not claim. A downloaded level carries a licence, an
+ *  authority and a year from geoBoundaries. A file from the practitioner's own machine carries
+ *  none of that, and guessing would put words in a source's mouth. The level this builds states
+ *  "not stated" for all three and names the file it came from, so a receipt citing it says where
+ *  the line came from and that its terms were not declared here. */
+export function localBoundaryLevel(filename:string,featureCount:number):BoundaryLevel{
+  return {iso:'',level:'file',boundaryID:`local:${filename}`,name:filename,units:featureCount,
+    meanVertices:0,maxVertices:0,yearRepresented:'not stated',licence:'not stated',
+    licenceSource:'',source:`Local file supplied by the practitioner: ${filename}`,
+    canonical:'as published in the file',geoJsonUrl:filename};
+}
+
+/** The units inside a file the practitioner chose, named by a property they name.
+ *
+ *  `readUnits` looks for geoBoundaries' own `shapeName` and `shapeID`. A file from anywhere else
+ *  uses its own words -- the CSDS South London layer calls it `subdist` -- so the property is
+ *  asked for rather than guessed, and a feature without it is still kept and still addressable by
+ *  position. Dropping a boundary because its name column was called something else would lose
+ *  geography over a spelling. */
+export function unitsFromFile(geojson:unknown,nameProperty:string,boundaryID:string):BoundaryUnit[]{
+  const features=(geojson as {features?:unknown[]})?.features;
+  if(!Array.isArray(features))
+    throw new Error('That file is not a GeoJSON FeatureCollection, so it holds no boundaries to read.');
+  const units=features.flatMap((f,index)=>{
+    const feature=f as {id?:unknown; properties?:Record<string,unknown>; geometry?:Boundary};
+    const g=feature?.geometry as {type?:string}|undefined;
+    // Points and lines are not boundaries. They are skipped rather than refused, so a mixed file
+    // still yields its polygons and the count below says how many were left.
+    if(!g||(g.type!=='Polygon'&&g.type!=='MultiPolygon'))return [];
+    const p=feature.properties??{};
+    const name=text(p[nameProperty])||text(p.name)||text(p.shapeName)||`feature ${index+1}`;
+    return [{id:text(feature.id)||text(p[nameProperty])||`${boundaryID}-${index}`,name,
+      geometry:feature.geometry as Boundary}];
+  });
+  if(!units.length)
+    throw new Error('That file has no Polygon or MultiPolygon features, so there is no boundary in it to use.');
+  return units;
+}
+
 /** What choosing these units costs and obliges, for the practitioner to see before downloading. */
 export function selectionSummary(level:BoundaryLevel,chosen:readonly BoundaryUnit[]):string{
   const vintage=level.yearRepresented?`represents ${level.yearRepresented}`:'states no year';

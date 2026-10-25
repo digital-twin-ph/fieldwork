@@ -44,6 +44,14 @@ not a practitioner in the field.
 
 ## Urgent
 
+**A catalog entry should name the workflow it opens as.** The Worked examples section reports
+FETCHABLE or AVAILABLE from a list of ids fetched on this device, because it cannot derive it: the
+catalog id is `urn:fieldwork:example:south-london-1854` and the workflow carries
+`exampleId: snow-south-london-1854`, which do not match. A record of what was fetched is honest
+but it is not the same question as "is this example's workflow open here", and the two will
+disagree the moment a practitioner deletes the workflow. An `opensAs` field naming the workflow id
+would let the state be read from what is actually on the device.
+
 **A WebKit service-worker error failed one gate, once.** `ruleset-example.browser.mjs` failed in
 the 2026-10-24 gate on a page error reading `/127.0.0.1:4174/sw.js due to access control checks.`
 -- not on its own assertions, which all passed -- and then passed 5 of 5 in isolation. The

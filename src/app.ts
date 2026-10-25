@@ -35,6 +35,7 @@ import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,
 
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles} from './evidence-storage.js';
+import {curatedExamples,verifiedFile,type CatalogExample} from './example-catalog.js';
 import {MAX_BUNDLE_BYTES} from './evidence.js';
 import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType,ColumnRepair} from './types.js';
 import type {WorkflowRun,Receipt,Output,MapRow,PointRow,CoverageRow,CoverageValue,TableValue} from './results.js';
@@ -3724,8 +3725,104 @@ function renderUnfiledList(saved:Record<string,unknown>,current:string):void{
   }
 }
 
+/** THE CATALOG OF WORKED EXAMPLES, which `widgets/examples.json` has described since 2026-10-23
+ *  with nothing reading it. The practitioner, 2026-10-24, asked how to load South London and
+ *  whether it was in a manifest: it was pinned -- commit, per-file digests, licence -- and
+ *  `src/example-catalog.ts` was imported by nothing, so it was not built and its three tests
+ *  skipped saying exactly that. A trust root with nothing standing on it.
+ *
+ *  It lives in the PROJECT TAB because opening a worked example is importing a project, and this
+ *  tab is where the practitioner consolidated projects: *"I need one location to select
+ *  projects... view project info, manage a project and its workflows, and to import projects,
+ *  export projects, this is the Projects tab."* The header's Catalog button is the WIDGET
+ *  catalog; putting examples there would overload one word across two different things.
+ *
+ *  FETCHABLE IS NOT AVAILABLE, and the governance in the catalog requires the interface to say
+ *  which: an example not yet fetched is a repository on somebody else's server, and one fetched
+ *  is a workflow on this device that opens offline. */
+const FETCHED_EXAMPLES='fieldwork-fetched-examples-v1';
+const fetchedExamples=():string[]=>{
+  try{const raw=localStorage.getItem(FETCHED_EXAMPLES);return raw?JSON.parse(raw) as string[]:[];}
+  catch{return [];}
+};
+const rememberFetched=(id:string)=>{
+  try{const all=new Set(fetchedExamples());all.add(id);
+    localStorage.setItem(FETCHED_EXAMPLES,JSON.stringify([...all]));}catch{/* a refusal here costs the badge, not the example */}
+};
+/** What the example carries, in the practitioner's terms rather than the schema's. */
+const carriedBy=(e:CatalogExample):string=>{
+  const has=[e.carries.workflow&&'a workflow',e.carries.data&&'data',e.carries.geography&&'geography']
+    .filter(Boolean) as string[];
+  return has.length?has.join(', '):'nothing yet';
+};
+function renderExampleCatalog():void{
+  const host=optionalElement('#project-examples-list');
+  if(!host)return;
+  const fetched=new Set(fetchedExamples());
+  const examples=curatedExamples();
+  host.innerHTML=examples.map(e=>{
+    const bytes=e.files.reduce((n,f)=>n+f.bytes,0);
+    const state=fetched.has(e.id)
+      ?'<span class="pill">Fetched on this device</span>'
+      :'<span class="pill muted">Not fetched yet</span>';
+    return `<article class="project-row"><h4>${esc(e.title)} ${state}</h4>`
+      +`<p class="muted">${esc(e.description)}</p>`
+      +`<p class="muted">Carries ${esc(carriedBy(e))} \u00b7 ${e.files.length} files, `
+      +`${(bytes/1024).toFixed(0)} KB \u00b7 ${esc(e.licence.data)}</p>`
+      +(e.notYet?`<p class="muted">Not yet: ${esc(e.notYet)}</p>`:'')
+      +`<p class="muted">${esc(e.repository)} at ${esc(e.commit.slice(0,10))}</p>`
+      +`<div class="inspector-actions">`
+      +(e.carries.workflow
+        ?`<button class="button small" data-open-example="${esc(e.id)}">${fetched.has(e.id)?'Fetch again and open':'Fetch and open'}</button>`
+        :`<span class="muted">No workflow to open yet.</span>`)
+      +`</div><p class="muted" data-example-status="${esc(e.id)}"></p></article>`;
+  }).join('')||'<p class="muted">No worked examples are curated yet.</p>';
+  host.querySelectorAll<HTMLButtonElement>('[data-open-example]').forEach(button=>{
+    button.onclick=()=>void openCuratedExample(required(button.dataset.openExample),button);
+  });
+}
+/** Fetched only on this click, verified before it is used, and refused rather than half-loaded.
+ *
+ *  `verifiedFile` does the refusing: a path the catalog does not pin is never requested, a size
+ *  that disagrees is refused before hashing, and a digest mismatch discards the bytes. Nothing
+ *  here softens any of that into a warning. */
+async function openCuratedExample(id:string,button:HTMLButtonElement):Promise<void>{
+  const example=curatedExamples().find(e=>e.id===id);
+  if(!example)return;
+  // RE-QUERIED EVERY TIME, never held. Importing a workflow re-renders the project view, which
+  // replaces this paragraph -- a reference captured before the import is writing to a node that
+  // is no longer on the page, so the message the practitioner most needs (the digest matched, or
+  // did not) is the one that silently goes nowhere.
+  const say=(message:string)=>{
+    const at=optionalElement(`[data-example-status="${CSS.escape(id)}"]`);
+    if(at)at.textContent=message;
+  };
+  const label=button.textContent||'Fetch and open';
+  button.disabled=true;button.textContent='Fetching\u2026';
+  try{
+    const workflowFile=example.files.find(f=>/fieldwork-workflow.*\.json(\.gz)?$/.test(f.path));
+    if(!workflowFile)throw new Error('This example pins no workflow document, so there is nothing to open.');
+    say(`Fetching ${workflowFile.path} from ${example.repository}\u2026`);
+    const bytes=await verifiedFile(example,workflowFile.path);
+    say('Verified against the pinned digest \u00b7 reading\u2026');
+    const text=await readMaybeGzipped(new Blob([bytes as BlobPart]));
+    const next=validateWorkflow(JSON.parse(text));
+    applyImportedWorkflow(next);
+    rememberFetched(example.id);
+    toast(`${example.title} opened. It is on this device now and opens offline.`);
+    // The badge first, then the message, because re-rendering replaces the paragraph.
+    renderExampleCatalog();
+    say(`Opened ${next.name} \u00b7 ${workflowFile.bytes.toLocaleString()} bytes, digest matched`);
+  }catch(error){
+    // The example stays unfetched rather than partly loaded, and the reason is the one the
+    // verification gave -- a digest mismatch says so, rather than becoming "could not load".
+    say(errorMessage(error));
+    toast(errorMessage(error),{tone:'failure'});
+  }finally{button.disabled=false;button.textContent=label;}
+}
 function renderProjectView():void{
   renderUnfiled();
+  renderExampleCatalog();
   // The storage figures moved here from the dialog behind the pill: this is where a practitioner
   // asks what a project holds, so it is where the answer belongs.
   renderProjectStorage();

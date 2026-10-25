@@ -16,6 +16,42 @@ basemap switches the map to the interactive presentation, *"the only one that dr
 So a static figure has never had ground under it, and the figure this project most wants to
 publish is the static one.
 
+## What this record missed, and what that changes
+
+**This was written without reading the prior art.** Four records had covered this ground
+before it, and finding them afterwards is itself the result worth keeping, because the
+method says to compare against existing records before adding and this did not.
+
+| record | what it had already established |
+| --- | --- |
+| [49](49-catalog-in-the-interface.md) | the service worker caches same-origin requests only, so `tile.openstreetmap.org` tiles are never cached and the study-area editor stops working offline — recorded as **field-fatal**, 2026-10-08 |
+| [51](51-dataset-profiles.md) | caching tiles for a cross-border extent is hopeless: 134,493 tiles through zoom 12 for DRC |
+| [52](52-cacheable-basemaps.md) | **"PMTiles for interactive navigation, Natural Earth for static figures"**, with measurements — a planet of vector tiles as one 138.7 GB file against **215 kB** of Natural Earth context |
+| [53](53-reproducible-maps.md) | **a live tile basemap cannot be reproduced at all** |
+
+So the practitioner's first suggestion on 2026-10-25 — *"could be natural earth"* — was the
+answer this project had already measured and chosen for exactly this job, and this record
+deferred it as "a different question" while building the live-tile path instead.
+
+What survives the collision, and what does not:
+
+- **53's objection is partly answered rather than ignored.** A tile that is fetched once,
+  cached under its URL and baked into the exported figure is not a live basemap: the figure
+  carries its ground, and a reader redrawing it gets the same ground. What is still true is
+  that the tiles were not *pinned* — nothing records which vintage was baked, so two figures
+  drawn a year apart differ with no notice. That is 53's point and it stands.
+- **52's conclusion is unchanged and unbuilt.** Natural Earth remains the cheap, public
+  domain, nearly uncoupled answer for a static figure at national and regional extent, and
+  nothing here replaces it. At city extent it is still too coarse to show anything, which is
+  the gap this record's raster path actually fills.
+- **49's defect is fixed in one place only.** A figure's basemap is now cached; the
+  study-area editor's live map is not, and that is the case 49 called field-fatal.
+
+**What would close this properly:** a pinned basemap — a PMTiles extract or a Natural Earth
+subset carried with its digest like every other asset — so the ground is citable rather than
+merely cached. That is 52 and 53 together, and it is the work this record should have
+started from.
+
 ## That the medium is not the obstacle
 
 Python's **contextily** does exactly this for matplotlib: `add_basemap(ax, crs=…, source=…)`

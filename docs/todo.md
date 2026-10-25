@@ -360,6 +360,39 @@ implied twice in two days and never written down.
 
 ## Done
 
+**DONE 2026-10-25 — a static figure carries its own ground.** A raster basemap is fetched
+once and baked into the figure as `data:` URIs, cached in the payload store so a later visit
+redraws it offline, and credited in the figure because ODbL attaches to the copy. Each tile is
+placed by its own corners, since tiles are Web Mercator and this plot is equirectangular.
+[Experiment 137](experiments/137-a-static-figure-can-carry-its-ground.md). **Written without
+reading the prior art, which is the finding worth keeping**: [52](experiments/52-cacheable-basemaps.md)
+had already concluded "PMTiles for interactive navigation, Natural Earth for static figures" and
+measured 215 kB for Natural Earth context, and [53](experiments/53-reproducible-maps.md) had
+already recorded that a live tile basemap cannot be reproduced at all. **Still open:** reconcile
+137 with 49, 51, 52 and 53; Natural Earth for static figures is the recorded answer and is
+unbuilt; the OpenFreeMap styles are vector and still cannot be baked.
+
+**DONE 2026-10-25 — the figure defects the practitioner found by looking at figures.** A raster
+was a mode that threw away every other wired layer; `oldMap` and the isochrone plot each drew
+colours and marks their own keys contradicted; the orphan prune discarded any output whose node
+id ended `-map` or `-table`, which would have thrown away the whole geoprivacy run on any node
+delete; `deleteWorkflow` asked whether a key had a slash rather than whether the application
+ships the example; the Hagelloch curve drew 87 overlapping labels under an axis titled
+"Category", sourced to a run UUID. Each is in its own commit with what it does not establish.
+
+**DONE 2026-10-25 — Snow's own map, and mark size as a setting.** Both John Snow workspaces drew
+a catchment map and neither drew the figure the outbreak is remembered for. Mark radius is now
+per layer, because eight pumps across a parish and 250 addresses in four streets are one figure
+and no single default serves both.
+
+**DONE 2026-10-25 — the interface stopped assuming a travel mode.** Six runtime messages said
+"the walk" whatever mode was declared, including the note that travels into a published figure.
+
+**DONE 2026-10-25 — gates run in a worktree.** `scripts/gate.sh` gates a commit in
+`../fieldwork-gate` on port 4184, so the main tree stays usable for the 25 minutes and what is
+validated is what would be pushed. [CONTRIBUTING.md](../CONTRIBUTING.md) carries the pipeline and
+the merge policy for human developers; AGENTS.md carries the same for agents.
+
 **The ruleset widget stopped being pinned.** Done 2026-10-15, in two halves on the
 practitioner's reports. First *"this is not the design we discussed, the rules are pinned not
 very flexible"*: experiment [106](experiments/106-rule-builder-ui.md) had specified the authored

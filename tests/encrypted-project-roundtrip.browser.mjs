@@ -13,7 +13,7 @@ import {readFile} from 'node:fs/promises';
 test.use({serviceWorkers:'block'});
 const password='test-only long passphrase for the round trip';
 
-test('an encrypted project carrying a downloaded network opens on a clean device and survives a reload',async({page,browser})=>{
+test('an encrypted project carrying a downloaded network opens on a clean device and survives a reload',async({page,browser,baseURL})=>{
   await page.route(/^https:\/\//,route=>route.abort());
   for(const host of ['overpass-api.de','overpass.kumi.systems','overpass.private.coffee'])
     await page.route(`https://${host}/api/status`,route=>
@@ -49,10 +49,10 @@ test('an encrypted project carrying a downloaded network opens on a clean device
   assert.ok(zip.length>0,'the package has bytes');
 
   // A clean slate: a browser that has never seen this project, holding only the worked examples.
-  const fresh=await browser.newContext({viewport:{width:1280,height:900}});
+  const fresh=await browser.newContext({viewport:{width:1280,height:900},baseURL});
   const target=await fresh.newPage();
   try{
-    await target.goto('http://127.0.0.1:4174/?example=blank');
+    await target.goto('/?example=blank');
     await expect(target.locator('#workflow-state')).toBeVisible({timeout:45000});
     await target.locator('#workflow-file').setInputFiles({name:'project.zip',mimeType:'application/zip',buffer:zip});
     await target.locator('#package-password').fill(password);

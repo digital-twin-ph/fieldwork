@@ -10,12 +10,12 @@ async function source(page){const workflow=exampleWorkflow();workflow.name='Encr
 async function exportZip(page){await page.locator('#backup-button').click();await page.locator('#encrypted-export').click();await expect(page.locator('#package-dialog')).toContainText('1 unique PDFs');await page.locator('#package-password').fill(password);await page.locator('#package-confirm').fill(password);const pending=page.waitForEvent('download');await page.locator('#package-submit').click();const file=await pending;assert.equal(file.suggestedFilename(),'fieldwork-project.zip');await expect(page.locator('#package-dialog')).toHaveCount(0);return readFile(await file.path());}
 async function importZip(page,bytes){await page.locator('#workflow-file').setInputFiles({name:'project.zip',mimeType:'application/zip',buffer:bytes});await expect(page.locator('#package-dialog')).toBeVisible();}
 
-test('encrypted ZIP transfers binary PDFs offline, retries wrong passwords and keeps JSON compatibility',async({page,browser})=>{
+test('encrypted ZIP transfers binary PDFs offline, retries wrong passwords and keeps JSON compatibility',async({page,browser,baseURL})=>{
   await source(page);await expect(page.locator('#offline-status')).toContainText('Available offline');await page.context().setOffline(true);
   const zip=await exportZip(page);assert.ok(!zip.includes(Buffer.from('census-private.pdf')));
   assert.ok(!(await page.evaluate(()=>JSON.stringify({...localStorage}))).includes(password));
-  const fresh=await browser.newContext({viewport:{width:1280,height:900}}),target=await fresh.newPage();
-  try{await target.goto('http://127.0.0.1:4174/?example=blank');await expect(target.locator('#offline-status')).toContainText('Available offline');await fresh.setOffline(true);const before=await saved(target);
+  const fresh=await browser.newContext({viewport:{width:1280,height:900},baseURL}),target=await fresh.newPage();
+  try{await target.goto('/?example=blank');await expect(target.locator('#offline-status')).toContainText('Available offline');await fresh.setOffline(true);const before=await saved(target);
     await importZip(target,zip);await target.locator('#package-password').fill('wrong password');await target.locator('#package-submit').click();await expect(target.locator('#package-error')).toContainText('Check the passphrase');assert.equal(await saved(target),before);
     await target.locator('#package-password').fill(password);await target.locator('#package-submit').click();await expect(target.locator('#package-dialog')).toHaveCount(0);await expect(target.locator('#project-title')).toHaveText('Encrypted project trial');
     const pending=target.waitForEvent('download');await target.locator('#backup-button').click();await target.locator('#export-button').click();const bundle=JSON.parse(await downloadText(await pending));assert.deepEqual(Buffer.from(bundle.attachments[0].dataBase64,'base64'),pdf);

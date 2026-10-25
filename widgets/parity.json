@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "3633ae32debd880bd79f7cabcb08e0a7a69e4466"
+    "commit": "8d8b030cd12fe090871bbbb2f8855fae280d52f2"
   },
   "outcomes": {
     "agrees": "Every case met the stated criterion.",
@@ -480,6 +480,24 @@
       "note": "The same check, listed here because the first of its three leaps is this widget's: the area a hull derives has to be a FIELD on the polygon rather than a line in the run receipt, or no rule downstream can read it. Until 2026-10-14 it was computed, published as fw:hullAreaSquareMetres, and dropped. The hull geometry itself is checked by 10-hull.",
       "notebook": "25-extent-vs-shapely.ipynb",
       "diveDeeper": "Dive deeper · three leaps this makes"
+    },
+    {
+      "widget": "urn:fieldwork:widget:deduplicate_points",
+      "coversRelease": "0.1.0",
+      "check": "26-deduplicate",
+      "result": "content/results/check-26-deduplicate.json",
+      "sha256": "2154893bcabd03c35c0009ecc964df18a77dc6a726a537fad663f7d8b949cad2",
+      "external": [
+        "rapidfuzz 3.14.6",
+        "jellyfish 1.3.0",
+        "pyproj 3.8.0"
+      ],
+      "criterion": "name similarity within 1e-9 of rapidfuzz; normalised names exact in both modes; distances within 1% of a WGS84 geodesic; blocked and compared counts exact; each pair's two agreements, score and class exact; and the merged count, output record set and every mergedFrom exact",
+      "outcome": "partial",
+      "measured": "The pipeline agrees in full: 16 pairs compared and 26 never compared, every normalised name, the two agreements, score and class of every pair, 3 merges with 2 matched pairs refused by the one-record-per-source rule, and all 11 output records with every mergedFrom. Distances agree to within 0.497% of a WGS84 geodesic against a 1% tolerance. One name comparison of seven diverges: abcvwxyz/cabvwxyz is 0.9375 here and 0.958333 in both references, a difference of 0.020833.",
+      "ranAt": "2026-10-25T04:00:29.260704+00:00",
+      "note": "Four independent recomputations, none sharing code with the widget: rapidfuzz and jellyfish for the name comparison, plain Python for the normalisation, a pyproj geodesic for the distances where the widget measures a great circle, and the blocking, scoring, classification and clustering reimplemented from declaredParameters alone. THE DIVERGENCE IS A CONVENTION, NOT A SLIP. Jaro halves the count of matched characters that are in a different order; this widget halves it exactly and both references halve it with integer division. Two independent references agreeing with each other is what settles that. It can only arise when the raw count is odd, which needs a cycle of odd length among the matched characters, and every published reference pair has an even count -- martha/marhta and dwayne/duane agree to six decimals here -- so no published value can detect it. No name pair in the fixture's two layers reaches it, which is why the pipeline agrees while this one constructed case does not. The records are constructed rather than downloaded so that every branch fires once: both comparisons agreeing, each agreeing alone, neither agreeing, a pair blocking never offered, a missing name, a record with no location, a same-source pair, and the cluster rule refusing a second record from one source. It says nothing about what the thresholds should be, which needs records whose true identity is known. It also surfaced a finding about the rule rather than the code: pairs are accepted in distance order, so a record named Annex sitting 2 m from another source's record for the main hospital takes that record, and the pair a reader would choose is then refused. Both implementations do it, because both follow the declared rule.",
+      "notebook": "26-deduplicate-vs-rapidfuzz.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

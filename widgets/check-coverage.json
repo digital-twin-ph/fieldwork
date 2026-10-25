@@ -9,8 +9,8 @@
  "measuredAt": "2026-10-20",
  "counts": {
   "widgets": 47,
-  "covered": 20,
-  "awaiting": 14,
+  "covered": 21,
+  "awaiting": 13,
   "none": 12,
   "blocked": 1
  },
@@ -84,7 +84,8 @@
    "nodeType": "deduplicate_points",
    "expectation": "parity",
    "computes": "Cross-source record linkage: a blocking distance, a Jaro-Winkler or exact name comparison, binary contributions to a score, and three classes from two thresholds. The merge is what the classification licences.",
-   "reason": "Worth recomputing independently because every part of it has a reference implementation to disagree with. Jaro-Winkler is a published algorithm with published values -- martha/marhta is 0.961 and dwayne/duane is 0.840 -- and the prefix adjustment has three parameters any of which can be got wrong silently. The clustering has its own rule, one record per source, which decides whether a third record joins a pair or is refused. And a lab notebook can answer the question this widget cannot: what the thresholds SHOULD be on real OSM and Overture data, which the release says are proposals rather than measurements."
+   "reason": "Worth recomputing independently because every part of it has a reference implementation to disagree with. Jaro-Winkler is a published algorithm with published values -- martha/marhta is 0.961 and dwayne/duane is 0.840 -- and the prefix adjustment has three parameters any of which can be got wrong silently. The clustering has its own rule, one record per source, which decides whether a third record joins a pair or is refused. And a lab notebook can answer the question this widget cannot: what the thresholds SHOULD be on real OSM and Overture data, which the release says are proposals rather than measurements.",
+   "check": "26-deduplicate"
   },
   {
    "nodeType": "donut_geomask",

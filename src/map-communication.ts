@@ -26,7 +26,18 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
       {label:'Observations',color:R.secondary},
       {label:'Sites / context',color:R.site,shape:'square'}
     ]:[{label:'Modeled catchment',color:R.primary},{label:'Observations',color:R.secondary},{label:'Sites',color:R.site,shape:'square'}];
-  }else if(output.raster)items=[{label:'Relative cell value (see scale)',color:R.primary},{label:'NoData / outside mask',color:R.unknown}];
+  }else if(output.raster){
+    // The raster's own two entries, and then the layers drawn ON it. This read `else if` and
+    // stopped there, so a map carrying a raster and seventeen facilities published a key that
+    // named the cells and neither the facilities nor their mark -- the same "winning mode throws
+    // the others away" the renderer and the value builder both had. A mark on a map with no entry
+    // in its key is exactly what MapMarkContrast cannot save a reader from.
+    items=[{label:'Relative cell value (see scale)',color:R.primary},{label:'NoData / outside mask',color:R.unknown}];
+    for(const [index,layer] of (output.pointLayers||[]).entries()){
+      const symbol=resolveLayerSymbol(index,node.params.layerSymbols?.[layer.sourceNodeId]);
+      items.push({label:`${layer.label} (${layer.count})`,color:symbol.colour,shape:symbol.shape});
+    }
+  }
   else if(output.kind==='spatial-map'){
     // The legend has to say what the map now does. Hue stopped meaning the spatial relation when
     // one overlay per source arrived, and this list went on naming three relations in three hues

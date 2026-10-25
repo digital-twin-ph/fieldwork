@@ -118,3 +118,142 @@ test('a map draws a raster with an area, points and a network all wired',async({
   await expect(page.locator('.leaflet-control-layers-overlays')).toContainText('Population raster');
   await expect(page.locator('.leaflet-control-layers-overlays')).toContainText('Study area');
 });
+
+// AND THE STATIC PLOT, which neither test above reaches: both select the interactive
+// presentation and assert against Leaflet's layer control. The static SVG took the same cap for
+// a fourth time and kept it after the interactive map was fixed -- `renderMap` drew the cells and
+// returned, so a map carrying a study area, a clipped raster, 17 facilities and a street network
+// showed the raster alone. Reported by the practitioner on 2026-10-25 from a Gaborone map, with
+// the layer list underneath still offering a checkbox for marks that were never drawn.
+//
+// The checkbox is the sharpest part of it: the control promised a composition the renderer did
+// not do, and three places had to agree before it could -- the value (core.ts kept rows:[]), the
+// key (map-communication stopped at the raster's own two entries) and the renderer.
+test('the static plot draws points on the raster, and the key names them',async({page})=>{
+  await page.goto('/?example=snow-isochrone');
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+
+  const metadata={width:160,height:120,origin:[-0.18,51.55],resolution:[0.0005,-0.0005]};
+  const values=Array.from({length:19200},(_,i)=>i%7===0?null:i);
+  await page.locator('[data-add="raster_input"]').click();
+  await page.locator('#raster-area').selectOption('study');
+  await page.locator('#prepare-raster').click();
+  await page.locator('#raster-file').setInputFiles({name:'soho.tif',mimeType:'image/tiff',
+    buffer:Buffer.from(encodeRaster({metadata,values}))});
+  await expect(page.locator('#raster-save')).toBeEnabled();
+  await page.locator('#raster-source-sourceURL').fill('https://example.org/raster');
+  await page.locator('#raster-source-citation').fill('Synthetic raster citation');
+  await page.locator('#raster-source-units').fill('people per cell');
+  await page.locator('#raster-save').click();
+  await expect(page.locator('#raster-dialog')).toHaveCount(0);
+  const source=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')))
+    .nodes.find(n=>n.type==='raster_input');
+
+  await page.locator('[data-add="map_output"]').click();
+  const map=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')))
+    .nodes.filter(n=>n.type==='map_output').at(-1);
+  // An area, points and a raster, left on the STATIC presentation this time.
+  for(const layer of ['study','locations',source.id]){
+    await page.locator(`.react-flow__node[data-id="${map.id}"]`).click();
+    await page.locator('#map-add-layer').selectOption(layer);
+  }
+
+  await page.locator('[data-view="results"]').click();
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator(`[data-output="${map.id}"]`).click();
+
+  // The raster is drawn, as it always was.
+  await expect(page.locator('#map image')).toHaveCount(1);
+  // And the points are on it now. Tagged by layer, because that is what the checkbox acts on.
+  const marks=page.locator('#map .location[data-place]');
+  expect(await marks.count()).toBeGreaterThan(0);
+  await expect(marks.first()).toHaveAttribute('data-layer',/.+/);
+  // The key names them, so no mark on this map is unexplained. The raster's own two entries stay
+  // and the layer is appended after them, which is the ordering a reader meets: ground, then what
+  // is on it. The label is the layer's own, so this asserts the text the application composes
+  // rather than a wording chosen here.
+  const key=page.locator('#map-communication-key');
+  await expect(key).toContainText('Relative cell value');
+  await expect(key).toContainText('death locations');
+
+  // The study area outline is drawn, and always was: `loadRaster` attaches the area to every
+  // grid it returns, masked or not, so `rasterSvg` has a boundary to draw whether or not the
+  // raster was clipped. Asserted because an attempt to "fix" a missing area outline here is what
+  // established that -- the branch added for it was unreachable, and this is what made it so.
+  await expect(page.locator('#map path[stroke="#193d33"]')).toHaveCount(1);
+
+  // Taken while everything is still shown: this image is the record of what the fix produces.
+  await page.screenshot({path:'test-results/map-raster-static-with-points.png'});
+
+  // The checkbox now acts on marks that exist: unticking hides them rather than hiding nothing.
+  const before=await marks.count();
+  await page.locator('#map-layer-list input[type="checkbox"]').first().uncheck();
+  await expect(page.locator('#map .location[data-place]:visible')).toHaveCount(0);
+  expect(before).toBeGreaterThan(0);
+});
+
+// THE DOWNLOAD BELONGS TO THE NODE THAT MAKES THE ARTEFACT.
+//
+// The practitioner, 2026-10-25: *"The download GeoTiff should probably be in the Inspector panels
+// of both the Raster widget (full raster) and the clipper raster widget (clipped raster)."*
+//
+// It was in the Results heading, bound to whatever output tab was on screen. With a prepared
+// window and a clipped grid in one workflow -- the only case where the distinction matters --
+// the full window could not be reached while the clipped map was displayed. The filenames had
+// told them apart all along; the control had not.
+//
+// Neither download needs a run, which is the part worth asserting: both are produced from the
+// stored input by the same resolver the clip preview uses.
+test('each raster node offers its own GeoTIFF, without running the workflow',async({page})=>{
+  await page.goto('/?example=snow-isochrone');
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+
+  const metadata={width:160,height:120,origin:[-0.18,51.55],resolution:[0.0005,-0.0005]};
+  const values=Array.from({length:19200},(_,i)=>i%5===0?null:i);
+  await page.locator('[data-add="raster_input"]').click();
+  await page.locator('#raster-area').selectOption('study');
+  await page.locator('#prepare-raster').click();
+  await page.locator('#raster-file').setInputFiles({name:'soho.tif',mimeType:'image/tiff',
+    buffer:Buffer.from(encodeRaster({metadata,values}))});
+  await expect(page.locator('#raster-save')).toBeEnabled();
+  await page.locator('#raster-source-sourceURL').fill('https://example.org/raster');
+  await page.locator('#raster-source-citation').fill('Synthetic raster citation');
+  await page.locator('#raster-source-units').fill('people per cell');
+  await page.locator('#raster-save').click();
+  await expect(page.locator('#raster-dialog')).toHaveCount(0);
+  const source=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')))
+    .nodes.find(n=>n.type==='raster_input');
+
+  // The full window, from the Raster input's own Inspector.
+  await page.locator(`.react-flow__node[data-id="${source.id}"]`).click();
+  await expect(page.locator('#download-node-raster')).toBeVisible();
+  const windowFile=await (async()=>{
+    const wait=page.waitForEvent('download');
+    await page.locator('#download-node-raster').click();
+    return wait;
+  })();
+  expect(windowFile.suggestedFilename()).toBe('fieldwork-raster-window.tif');
+
+  // A clip of it, and its Inspector offers the masked grid under its own name.
+  await page.locator('[data-add="clip_raster"]').click();
+  const clip=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')))
+    .nodes.filter(n=>n.type==='clip_raster').at(-1);
+  await page.locator(`.react-flow__node[data-id="${clip.id}"]`).click();
+  // Wired to the window above: an unwired clip has no grid to offer and says so rather than
+  // producing an empty file, which is what the first run of this test established.
+  await page.locator('#raster-raster').selectOption(source.id);
+  await page.locator(`.react-flow__node[data-id="${clip.id}"]`).click();
+  await expect(page.locator('#download-node-raster')).toBeVisible();
+  const clipped=await (async()=>{
+    const wait=page.waitForEvent('download');
+    await page.locator('#download-node-raster').click();
+    return wait;
+  })();
+  // The distinction the Results-level control could not make: two nodes, two artefacts, and the
+  // workflow has not been run since either was added.
+  expect(clipped.suggestedFilename()).toBe('fieldwork-clipped.tif');
+  expect(clipped.suggestedFilename()).not.toBe(windowFile.suggestedFilename());
+});

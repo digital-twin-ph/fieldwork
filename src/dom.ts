@@ -147,6 +147,7 @@ export interface SelectorElements {
   '#pin-pair-values':HTMLTextAreaElement;
   '#pin-pair-value':HTMLTextAreaElement;
   '#reset-example':HTMLButtonElement;
+  '#download-node-raster':HTMLButtonElement;
   '#tidy-button':HTMLButtonElement;
   '#series-orientation':HTMLSelectElement;
 }

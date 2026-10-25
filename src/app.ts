@@ -36,6 +36,7 @@ import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles} from './evidence-storage.js';
 import {curatedExamples,verifiedFile,type CatalogExample} from './example-catalog.js';
+import {saveRefusalMessage} from './save-refusal.js';
 import {MAX_BUNDLE_BYTES} from './evidence.js';
 import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType,ColumnRepair} from './types.js';
 import type {WorkflowRun,Receipt,Output,MapRow,PointRow,CoverageRow,CoverageValue,TableValue} from './results.js';
@@ -424,12 +425,10 @@ try{const saved=localStorage.getItem(KEY);if(saved)workflow=validateWorkflow(hyd
 if(!workflow.nodes.some(n=>n.id===selected))selected=exampleKey(workflow)==='raster'?'raster-input':exampleKey(workflow)==='old-naledi'?'access':workflow.nodes[0]?.id;
 /** What the last refused save knew, so a caller can say something a practitioner can act on. */
 let lastSaveFailure:{name:string;bytes:number}|null=null;
-/** The refusal in words: the quota message when the store is full, and the caller's own sentence
- *  when it was something else, because inventing a cause is worse than naming none. */
+/** The refusal in words, decided in `save-refusal.ts` so it can be tested without racing a
+ *  browser against its own auto-run. This passes the three facts and formats nothing itself. */
 function saveFailureMessage(fallback:string):string{
-  if(!lastSaveFailure)return fallback;
-  const quota=/quota|exceed|full/i.test(lastSaveFailure.name);
-  return quota?storageRefusal(lastSaveFailure.bytes):`${fallback} The device reported ${lastSaveFailure.name}.`;
+  return saveRefusalMessage(fallback,busy,lastSaveFailure,storageRefusal);
 }
 /** The moment a project's work last changed, and the moment a copy of it last left this device.
  *
@@ -2596,6 +2595,22 @@ function renderEvidence(id:string){
 }
 function statusLabel(status:string|undefined){return ({Review:'Review',NoFlag:'No flag',Unknown:'Insufficient data'} as Record<string,string>)[status||'Unknown'];}
 function renderResults(){
+  // RESULTS BELONG TO THE WORKFLOW THAT PRODUCED THEM.
+  //
+  // The practitioner, 2026-10-24, having fetched South London from the catalog: *"Loaded South
+  // London successfully, but it not clear the results panel. The Geoprivacy results are still
+  // there."* And then the rule, which is better than the fix that prompted it: *"Default should
+  // be result panel should bear outputs of current workflow not another's."*
+  //
+  // Clearing at each transition is how this keeps coming back. Opening a new empty canvas
+  // cleared; loading an example cleared; the two import paths did not, and `importProjectDocument`
+  // still did not after both were fixed -- a third door found only by looking. `runWorkflow` is
+  // the snapshot that produced `result`, so the question has an answer here and does not depend
+  // on anyone remembering: results from another workflow are not this workflow's results, and are
+  // discarded rather than shown under its name.
+  if(result&&runWorkflow&&storageKey(runWorkflow)!==storageKey(workflow)){
+    result=null;runWorkflow=null;activeOutputId=null;
+  }
   disposeVegaChart();
   const output=activeOutput();$('.results-panel').classList.toggle('catchment-results',!!output?.polygons);$('.results-panel').classList.toggle('comparison-results',!!output?.comparison);activeOutputId=output?.nodeId||null;
   // A comparison used to take over the lower half of the split for one run. A tab needs no such
@@ -4433,7 +4448,24 @@ $('#backup-project').onclick=async()=>{
 };
 $('#encrypted-export').onclick=()=>{try{if($('#backup-dialog').open)$('#backup-dialog').close();
   openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow);}catch(error){toast(errorMessage(error),{tone:'failure'});}};
-function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
+/** THE PREVIOUS RUN BELONGED TO THE PREVIOUS WORKFLOW.
+ *
+ *  The practitioner, 2026-10-24, having fetched South London from the catalog: *"Loaded South
+ *  London successfully, but it not clear the results panel. The Geoprivacy results are still
+ *  there."* They were -- 250 death locations and a private-source map, tabbed under a workflow
+ *  about water companies, with the Results tab counting seven of them. A toast saying "Run it to
+ *  update results" is not the same as not showing somebody else's answer in the meantime, and the
+ *  panel does not say which workflow a result came from because until now it could only have
+ *  come from this one.
+ *
+ *  Opening a new empty canvas already did this. Importing did not, on either path, so a file and
+ *  a catalog fetch both inherited it. Cleared here so both do the same thing. */
+function discardPreviousRun():void{
+  result=null;runWorkflow=null;activeOutputId=null;statuses={};
+  runFailed=false;runIncomplete=false;dirty=true;
+  renderResults();
+}
+function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');discardPreviousRun();renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
 $('#export-button').onclick=async()=>{try{if($('#backup-dialog').open)$('#backup-dialog').close();
   const exported=await workflowDocument(workflow);const text=JSON.stringify(exported);
   const name=exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json.gz':'fieldwork-workflow.json.gz';
@@ -4444,7 +4476,7 @@ $('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElemen
   // A PROJECT DOCUMENT comes in through the same control: a practitioner handed a file should not
   // have to know which of two buttons made it.
   if((parsed as {schema?:string})?.schema===PROJECT_DOCUMENT_SCHEMA){await importProjectDocument(parsed);control(e).value='';return;}
-  const next=await importWorkflowDocument(parsed,validateWorkflow);const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes.find(n=>n.type==='output')?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}catch(err){toast(errorMessage(err),{tone:'failure'});}control(e).value='';};
+  const next=await importWorkflowDocument(parsed,validateWorkflow);const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes.find(n=>n.type==='output')?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');discardPreviousRun();renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}catch(err){toast(errorMessage(err),{tone:'failure'});}control(e).value='';};
 $('#geojson-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>5e6)throw new Error('GeoJSON file is too large (5 MB maximum).');const data=validateGeoJSON(JSON.parse(await file.text()));change(w=>{const n=w.nodes.find(n=>n.id===importNode);if(!n)throw new Error('Source node no longer exists.');updateParam(w,n.id,'data',data);});toast('Local geographic data loaded. Run to update results.');}catch(err){toast(errorMessage(err),{tone:'failure'});}control(e).value='';};
 $('#download-evidence').onclick=async()=>{if(!result||!runWorkflow){toast('Run the workflow first.');return;}const snapshot=structuredClone({schema:'fieldwork/run/1',workflow:runWorkflow,...result});try{const attachments=await exportEvidenceFiles(snapshot.workflow);download('fieldwork-run-receipt.json',JSON.stringify({...snapshot,...(attachments.length?{attachments}:{})},null,2));}catch(error){toast(errorMessage(error),{tone:'failure'});}};
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view!));

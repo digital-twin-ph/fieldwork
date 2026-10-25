@@ -65,15 +65,18 @@ an exact match would be brittle across `FIELDWORK_TEST_PORT`. Watch for a second
 deciding; if it recurs, the question is whether registration is actually failing under load or
 whether WebKit reports a cancelled fetch this way.
 
-**A run in flight is reported as a storage failure.** `change()` returns false while `busy`, and
-the study-area apply path turns that into *"Study area could not be saved. Retry Apply."* -- a
-message about this device's storage for a condition that has nothing to do with storage. Found
-2026-10-24 while building the boundary file import: the test applied an area while the example was
-still auto-running, and the failure read as a quota problem in a workspace holding 169 KB. Same
-family as the swallowed New project click ([experiment
-135](experiments/135-linux-webkit-in-a-container.md)), and worse, because this one misdirects
-rather than staying silent. Either `#area-apply` is disabled while busy like the controls on
-app.ts's render line, or the refusal says what actually happened.
+**DONE 2026-10-24 — the refusal says what actually happened.** `change()` returns false while
+`busy` without attempting a save, so `lastSaveFailure` stayed null and `saveFailureMessage` fell
+through to the caller's storage sentence: "Study area could not be saved. Retry Apply.", over a
+workspace holding 169 KB, where retrying would fail identically until the run ended. Fixed in
+`saveFailureMessage` rather than at each caller, so every refusal routed through it gets the true
+reason. Third sighting of the same family: the first swallowed a New project click in silence, the
+second disabled the controls that open with the guard, and this one misdirected, which is worse.
+
+**Still open from that family:** `input-data-ui` says "Edits could not be saved on this device" on
+its own, without going through `saveFailureMessage`, so the same misdirection is available there.
+It was not touched because it was not what was reported, and a fix applied to a fraction of the
+places that need it is how the swallowed-click problem kept being rediscovered.
 
 **A table still cannot colour the boundaries it is keyed on.** study_area 0.5.0 brings polygons in
 and keeps `units[i]` naming part i, so the South London example's 32 sub-districts can now reach a
@@ -81,19 +84,13 @@ canvas. Joining the 32 mortality rates to them cannot: nothing takes a table and
 returns the area with a value per part. That join is the choropleth, and it is the figure the
 example has been arguing in prose since 2026-10-24.
 
-**There is no way to bring a polygon into a workflow.** Of 55 widgets, eight take no input and
-none of them accepts polygons; nothing produces polygons from a table either. Polygons exist only
-as the output of a computation over something else -- a Voronoi, an isochrone, a hull, an H3
-aggregation. The consequence surfaced on 2026-10-24, when the South London example gained 32
-sub-district boundaries under BSD-2, a georeferenced plate and three traced water-supply zones,
-and none of it can be put on a canvas. The example's workflow is tabular because the application
-left it no choice.
-
-Two separable gaps, and the first is the smaller: a `polygon_input` beside `table_input` and
-`point_input`, which would let a GeoJSON polygon layer be imported the way a table is; and a join
-from a table to polygons, without which the figures cannot colour the boundaries they are keyed
-on. A choropleth of deaths per 1,000 people across Snow's 32 sub-districts needs both, and it is
-the figure the whole example has been arguing in prose.
+**DONE 2026-10-24 — a polygon comes in through the study area.** This entry said no widget took a
+polygon and that the first of its two gaps was a `polygon_input` beside `table_input`. The
+practitioner settled it differently and better: *"a study area is actually a polygon input."* Of
+the five port types only `polygons` lacked a source, and `polygons` is a catchment result
+carrying sites and a method, so a new source emitting it would have made imported boundaries
+masquerade as a computation nobody ran. study_area 0.5.0 takes a GeoJSON polygon file and holds
+units that share a border. The second gap is still open and is its own entry below.
 
 **Measure OPFS against IndexedDB for large rasters, before changing anything.** A raster asset
 currently goes through `storePDFs` into `evidence-storage.ts` as a single IndexedDB value. That is

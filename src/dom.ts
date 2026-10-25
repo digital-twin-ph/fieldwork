@@ -110,6 +110,7 @@ export interface SelectorElements {
   '#area-file-name-key':HTMLInputElement;
   '#area-file-pick':HTMLButtonElement;
   '#area-file-status':HTMLElement;
+  '#project-examples-list':HTMLElement;
   '#area-online':HTMLInputElement;
   '#area-name':HTMLInputElement;
   '#area-west':HTMLInputElement;

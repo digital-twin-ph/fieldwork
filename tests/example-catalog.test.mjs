@@ -4,11 +4,15 @@ import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {existsSync} from 'node:fs';
 
-// SKIPPED UNTIL THE MODULE HAS A SURFACE, which is the honest status rather than a green tick.
-// `src/example-catalog.ts` is imported by nothing, so esbuild emits no `build/example-catalog.js`
-// and these cannot load it. The module is not wired on purpose: the interface it would be reached
-// from is being replaced, and a fetch control bolted onto the old one would have to be built
-// twice. See docs/experiments/131-project-and-workflow-lifecycles.md.
+// WIRED ON 2026-10-24, and these stopped skipping that day. They were written against a module
+// nothing imported -- esbuild emitted no `build/example-catalog.js`, so all three reported SKIP
+// with that as the reason, which is what the practitioner met when they asked how to load South
+// London and whether it was in a manifest. It was pinned by commit, per-file digest and licence,
+// and no interface read any of it: a trust root with nothing standing on it.
+//
+// The surface is the Worked examples section of the Project tab, because opening a worked example
+// is importing a project. The guard below stays: it is what reports an unwired module honestly
+// rather than as a green tick, and it would catch the module being dropped from build.mjs.
 //
 // These run the moment something imports the module, so the coverage arrives with the surface
 // instead of being written again later. The same shape as the WorldPop local-file exercise, which

@@ -38,7 +38,7 @@ import {workflowDocument,importWorkflowDocument,exportEvidenceFiles} from './evi
 import {curatedExamples,exampleById,verifiedFile,type CatalogExample} from './example-catalog.js';
 import {saveRefusalMessage} from './save-refusal.js';
 import {MAX_BUNDLE_BYTES} from './evidence.js';
-import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType,ColumnRepair} from './types.js';
+import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType,ColumnRepair,BasemapChoice} from './types.js';
 import type {WorkflowRun,Receipt,Output,MapRow,PointRow,CoverageRow,CoverageValue,TableValue} from './results.js';
 import type {CanvasAPI,NodeDescription} from './canvas.js';
 import type {Connection,Edge} from '@xyflow/react';
@@ -55,7 +55,7 @@ import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,exe
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
-import {oldInspector,oldEvidence,resultTable,oldMap,distanceText} from './old-naledi-ui.js';
+import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from './old-naledi-ui.js';
 import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
 import {isPointPort} from './point-layers.js';
 import {EXAMPLE_TEMPLATES,hasExampleTemplate,EXAMPLE_KEYS,WORKED_EXAMPLE_KEYS} from './example-templates.js';
@@ -75,6 +75,7 @@ import {standaloneChartSvg} from './chart-figure.js';
 import {networkPreviewSvg,networkCoverage,networkPreviewCaption} from './network-preview.js';
 import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,rasterFrame,downloadRaster} from './raster-ui.js';
+import {TILE_PROVIDERS,basemapImages,fetchTileAsDataURI} from './basemap-tiles.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
 import {populationRastersForCountry,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
 import type {BoundaryProvenance} from './types.js';
@@ -114,7 +115,7 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label><input id="map-halo-toggle" type="checkbox" ${p.markHalo!==false?'checked':''}> Dark outline on point symbols</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
     <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap)}</select>
-    <p class="description">A basemap is layer 0, under everything the workflow produced.${p.presentation==='interactive'?'':' Choosing one switches this map to the interactive presentation, the only one that draws tiles.'}</p>
+    <p class="description">A basemap is layer 0, under everything the workflow produced.${p.presentation==='interactive'?'':' OpenStreetMap and OpenTopoMap are drawn into the figure itself. The OpenFreeMap styles are vector, so they move this map to the interactive presentation.'}</p>
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
 }
 const KEY='fieldwork-workflow-v1';
@@ -2565,11 +2566,19 @@ function renderInspector(){
     });
   });
   optionalElement('#map-basemap')?.addEventListener('change',e=>{
-    const choice=control(e).value as 'none'|'osm'|'topo';
+    const choice=control(e).value as BasemapChoice;
     change(w=>{
       const target=getNode(w,n.id,'map_output');
       target.params.basemap=choice;
-      if(choice!=='none')target.params.presentation='interactive';
+      // ONLY THE STYLES A STATIC PLOT CANNOT DRAW FORCE THE INTERACTIVE PRESENTATION. This
+      // switched for EVERY choice, which was true while tiles could only be drawn by MapLibre --
+      // and it is what the practitioner met on 2026-10-25: *"I still don't see the static map
+      // basemap"*. Picking one silently moved the map away from the presentation they wanted.
+      //
+      // Raster tiles are baked into the static figure now (experiment 137), so osm and topo leave
+      // the presentation alone. OpenFreeMap serves vector tiles that need a GL canvas, so those
+      // still switch -- a control that appeared to do nothing would read as broken.
+      if(choice!=='none'&&choice!=='osm'&&choice!=='topo')target.params.presentation='interactive';
     });
   });
   optionalElement('#output-view')?.addEventListener('change',e=>change(w=>{const index=w.nodes.findIndex(x=>x.id===n.id);w.nodes[index]={...w.nodes[index],type:'output',params:{label:n.params.label,view:control(e).value as 'map'|'table'|'bars'}};}));
@@ -2802,6 +2811,37 @@ let disposeCatchmentMap:(()=>void)|undefined;
  *  reproduced on the measles example the same day. The map is drawn when its tab is the one being
  *  shown, and `switchView` renders on arrival. */
 function resultsOnScreen(){return $('.work-area').classList.contains('showing-results');}
+/** Fetch and place a raster basemap under a static figure, if this map asked for one.
+ *
+ *  Refuses the vector providers by name. OpenFreeMap serves vector tiles rendered by MapLibre,
+ *  and baking those needs a GL canvas rasterised first; saying so is better than drawing nothing
+ *  and letting a practitioner conclude the control is broken. */
+async function drawStaticBasemap(result:Output,svg:SVGSVGElement):Promise<void>{
+  // READ FROM THE LIVE WORKFLOW, not from the snapshot as run. A basemap is presentation: it
+  // changes nothing the run computed, so it must appear the moment it is chosen. Reading
+  // `runWorkflow` here meant choosing one did nothing at all until the workflow was run again,
+  // which is the second way this control could look broken on the same day.
+  const node=(workflow.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result.nodeId&&n.type==='map_output')
+    ??runWorkflow?.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result.nodeId&&n.type==='map_output'));
+  const choice=node?.params.basemap;
+  if(!node||!choice||choice==='none')return;
+  const provider=choice==='osm'||choice==='topo'?TILE_PROVIDERS[choice]:undefined;
+  const note=$('#map-panel').querySelector('#map-note');
+  if(!provider){
+    if(note)note.textContent=`${BASEMAP_OPTIONS.find(o=>o.value===choice)?.label||choice} is drawn from vector tiles, which this `
+      +'static plot cannot bake in. Choose OpenStreetMap or OpenTopoMap here, or the interactive presentation for that style.';
+    return;
+  }
+  const frame=mapFrame(result);
+  const stamp=svg.dataset.renderStamp=String(Date.now());
+  const {markup,drawn,requested,zoom}=await basemapImages(frame.bounds,frame.project,provider,fetchTileAsDataURI);
+  // The figure may have been replaced while the tiles were in flight.
+  if(svg.dataset.renderStamp!==stamp||!svg.isConnected)return;
+  if(markup)svg.insertAdjacentHTML('afterbegin',markup);
+  if(note)note.textContent=drawn
+    ?`${provider.attribution} · ${drawn} of ${requested} tiles at zoom ${zoom}, drawn into this figure.`
+    :`No basemap tiles could be fetched, so this figure has no ground under it. ${provider.attribution}`;
+}
 function renderMap(){
   if(!resultsOnScreen())return;
   disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#comparison-map-host')?.remove();
@@ -2928,7 +2968,17 @@ function renderMap(){
   }
   if(result?.pointTable){svg.innerHTML='';return;}
   if(result?.kind==='study-area'){svg.innerHTML=areaSvg(required(result.boundary),result.label);return;}
-  if(result?.boundary){svg.innerHTML=oldMap(result,selected,esc,statusLabel);svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layer!)?'none':'';el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});return;}
+  if(result?.boundary){svg.innerHTML=oldMap(result,selected,esc,statusLabel);
+    // GROUND UNDER A STATIC FIGURE. Experiment 137. Choosing a basemap used to switch the map to
+    // the interactive presentation, "the only one that draws tiles", so the figure this project
+    // most wants to publish was the one that could never have any context under it. The tiles are
+    // baked in, which makes the exported SVG MORE self-contained than the interactive map rather
+    // than less: a reader holding the file holds the ground too.
+    //
+    // Drawn after the fact and inserted underneath, because fetching is asynchronous and the map
+    // must appear immediately. If the view has moved on by the time the tiles arrive they are
+    // dropped: a late basemap under the wrong figure is worse than none.
+    void drawStaticBasemap(result,svg);svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layer!)?'none':'';el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});return;}
   if(!points.length){svg.innerHTML='<text x="425" y="140" text-anchor="middle">Run the workflow to map its local results.</text>';return;}
   let minX=Math.min(...points.map(p=>p[0])),maxX=Math.max(...points.map(p=>p[0])),minY=Math.min(...points.map(p=>p[1])),maxY=Math.max(...points.map(p=>p[1]));
   const midY=(minY+maxY)/2,cos=Math.max(.05,Math.cos(midY*Math.PI/180)),width=Math.max((maxX-minX)*cos,.01),height=Math.max(maxY-minY,.01),scale=Math.min(660/width,210/height);

@@ -42,12 +42,23 @@ export function resultTable(output:DisplayValue|undefined,esc:Escape,statusLabel
   }).join('');
   return {head:columns.map(c=>`<th>${c}</th>`).join(''),body};
 }
-export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string){
+/** The frame this map draws in, and the projection that puts anything else in it.
+ *
+ *  Extracted so a caller can place something in the same frame without recomputing the
+ *  arithmetic and getting a slightly different answer -- the pattern `rasterFrame` already uses.
+ *  A basemap needs both: the extent, to know which tiles cover it, and the projection, to place
+ *  each tile by its own corners. Experiment 137. */
+export function mapFrame(output:DisplayValue){
   const boundary=output.boundary!,polygons=boundary.type==='MultiPolygon'?boundary.coordinates:[boundary.coordinates];
   const outline=polygons.flat(2),points=[...outline,...output.rows.filter(r=>r.coordinates!).map(r=>r.coordinates!),...(output.centers||[]).filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
   const xs=points.map(p=>p![0]),ys=points.map(p=>p![1]),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys),cos=Math.cos((ymin+ymax)/2*Math.PI/180);
   const scale=Math.min(720/Math.max((xmax-xmin)*cos,.001),225/Math.max(ymax-ymin,.001));
-  const project=(p:Position)=>[425+(p[0]-(xmin+xmax)/2)*cos*scale,145-(p[1]-(ymin+ymax)/2)*scale];
+  return {polygons,xmin,xmax,ymin,ymax,cos,scale,
+    bounds:[xmin,ymin,xmax,ymax] as [number,number,number,number],
+    project:(p:Position):[number,number]=>[425+(p[0]-(xmin+xmax)/2)*cos*scale,145-(p[1]-(ymin+ymax)/2)*scale]};
+}
+export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string){
+  const {polygons,project}=mapFrame(output);
   let svg='<rect width="850" height="295" fill="#f0f3e9"/><text x="18" y="22" style="letter-spacing:1px">OLD NALEDI · SOURCE BOUNDARY</text>';
   svg+=polygons.map(rings=>`<path d="${rings.map(ring=>'M'+ring.map(p=>project(p).join(',')).join('L')+'Z').join(' ')}" fill="#dbe8d6" stroke="#668870" stroke-width="1.5" fill-rule="evenodd"/>`).join('');
   if(['spatial-coverage','spatial-map'].includes(output.kind||''))svg=svg.replace('OLD NALEDI · SOURCE BOUNDARY','STUDY AREA · SPATIAL COVERAGE');

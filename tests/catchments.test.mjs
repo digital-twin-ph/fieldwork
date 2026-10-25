@@ -104,7 +104,11 @@ test('pinned John Snow examples execute, conserve counts and emit parseable GeoS
     // because the index was an unstated assumption about plan order -- the new table executes
     // first and silently became outputs[0], which would have left `p` undefined and failed the
     // conservation assertions below for a reason that has nothing to do with conservation.
-    assert.equal(result.outputs.length,kind==='snow-isochrone'?6:5);
+    // Counted by what each example draws rather than by a bare number. The isochrone adds its
+    // interactive map; the Voronoi adds Snow's own spot map of deaths and pumps, which neither
+    // workspace had until 2026-10-25 -- both drew a catchment map, and a catchment is an argument
+    // about Snow's map rather than that map.
+    assert.equal(result.outputs.length,6);
     const map=result.outputs.find(o=>o.nodeId==='map'),p=map.polygons;
     assert.ok(p,'the map output must carry the catchment polygons');
     // The projected table is the same eight pumps (one, for the isochrone) in metres.

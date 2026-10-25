@@ -71,7 +71,11 @@ export interface DisplayRow {
 }
 /** `order` places a bin on a scale its label does not carry — a band's travel time, so
  *  far. Present on every bin or none: a partial order is refused rather than guessed. */
-export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'period'; caption:string; total:number; bins:{key:string; label:string; count:number; order?:number}[]}
+/** `categoryTitle` is the axis title the PRODUCER declares, because only the producer knows what
+ *  its categories are. Without it a chart falls back to "Category", which is true of every chart
+ *  and says nothing: an epidemic curve published with "Category" under its dates has not told the
+ *  reader what it binned. Optional, so a producer that has nothing better to say omits it. */
+export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'period'; caption:string; categoryTitle?:string; total:number; bins:{key:string; label:string; count:number; order?:number}[]}
 export interface DisplayValue {
   comparison?:import('./point-comparison.js').PointComparison;
   polygonPresentation?:'plot'|'interactive';

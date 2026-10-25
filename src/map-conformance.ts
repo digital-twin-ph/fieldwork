@@ -89,6 +89,32 @@ export const DESIGN_RULES:DesignRule[]=[
   {id:'UnknownIsNotAHue',kind:'categorical',
     tracesTo:'Bertin, on the visual variables: hue is selective but not ordered, so spending it on an absence makes that absence compete as a category',
     statement:'Absence of data is drawn in a neutral, never in a hue, because it is not a category and must not compete with one.'},
+  // THE FIGURE'S PARTS, which the four rules above do not reach: they are all about colour, and a
+  // map can be perfectly legible and still say nothing about what it is. Experiment 136.
+  //
+  // Almost every element here is CONDITIONAL, which is the finding that changed this design. The
+  // request was for "title, labels, legend, north, scale"; the cartographic canon says a north
+  // arrow and a scale bar are not necessary on all maps and that some should not have them, and
+  // that the one unconditional element is a title. So five of the six below can report
+  // `inapplicable`, and only `FigureHasTitle` cannot.
+  {id:'FigureHasTitle',kind:'categorical',
+    tracesTo:'Buckley (Esri), who holds a north arrow and a scale bar to be unnecessary on some maps and harmful on others, and an appropriate title to be necessary on all of them',
+    statement:'A figure states what it is. A reader who meets it outside the text it was written for has only its own parts to read it by.'},
+  {id:'EveryMarkIsInTheKey',kind:'categorical',
+    tracesTo:'APA Publication Manual 7th edition, on the figure legend: it explains any symbols used in the figure image',
+    statement:'Every mark a figure draws is named in its key, or the reader is left to guess what it stands for.'},
+  {id:'FigureStatesItsSource',kind:'categorical',
+    tracesTo:'APA Publication Manual 7th edition, on the figure note: it carries what the title, image and legend cannot, including attribution',
+    statement:'A figure names where its content came from, in the figure rather than in the text around it.'},
+  {id:'OrientationIsStatedWhereItIsNotObvious',kind:'categorical',
+    tracesTo:'Ordnance Survey, that readers assume the top of a map is north unless told otherwise; Buckley, that north is true only along the central meridian of a conic or equal-area projection and a graticule should be shown instead of an arrow',
+    statement:'A map whose north is not up says which way is north. A north-up map does not need to, and a north arrow on a projection whose meridians converge is wrong rather than redundant.'},
+  {id:'ScaleStatementSurvivesItsProjection',kind:'categorical',
+    tracesTo:'Buckley, on scale varying across a projection, so that a single bar is true only where it was computed',
+    statement:'A scale a figure claims says what it holds for. On unprojected coordinates scale varies with latitude, so a bar alone is true at one latitude and false elsewhere.'},
+  {id:'BasemapIsCredited',kind:'categorical',
+    tracesTo:'ODbL, the licence of OpenStreetMap-derived tiles, which requires attribution of the source database wherever the derived work is published',
+    statement:'A figure that draws a basemap carries that basemap\u2019s credit, because the credit is a condition of using it and not a courtesy.'},
 ];
 const ruleBy=(id:string)=>DESIGN_RULES.find(r=>r.id===id)!;
 
@@ -101,6 +127,26 @@ export interface MapDesign {
   categoryColours:string[];
   /** The colour standing for "no data", if this map drew one. */
   unknownColour?:string;
+  /** The figure's parts, as much of them as a rule can be held against. Absent on a caller that
+   *  has not been taught them, which is why every field here is optional and the rules that read
+   *  them report `cantTell` rather than `failed` when the caller said nothing. */
+  parts?:FigureParts;
+}
+/** What the figure says about itself, separately from how it is coloured. */
+export interface FigureParts {
+  title?:string;
+  /** Whether a key was drawn, and how many entries it carried. */
+  key?:{drawn:boolean; entries:number};
+  /** How many marks the figure drew that a key would have to explain. */
+  marksDrawn?:number;
+  sourceNote?:string;
+  /** True when north is up everywhere on this figure: unprojected coordinates, or a projection
+   *  whose meridians do not converge across the drawn extent. */
+  northIsUp?:boolean;
+  /** A scale the figure claims, if it claims one, and what it was computed at. */
+  scale?:{claimed:boolean; qualifier?:string};
+  /** The tile provider whose basemap was drawn, and the credit drawn with it. */
+  basemap?:{provider:string; credit?:string};
 }
 
 /** Apply every rule, and report every one — including the ones that did not apply.
@@ -153,6 +199,61 @@ export function applyDesignRules(design:MapDesign):RuleApplication[] {
       :isNeutral(unknown)?`Absent data is drawn in ${unknown}, a neutral.`
       :`Absent data is drawn in ${unknown}, which is a hue and competes with the categories.`});
 
+  // THE FIGURE'S PARTS. A caller that has not been taught them says nothing, and `cantTell` is
+  // the honest answer for a check that could not run -- distinct from `inapplicable`, which says
+  // the check ran and does not apply to this figure. EARL draws that line and this keeps it.
+  const parts=design.parts;
+  const cannotTell=(id:string,subject:string)=>({rule:ruleBy(id),subject,outcome:'cantTell' as const,
+    says:'This figure did not describe its parts, so the check could not run.'});
+
+  if(!parts)out.push(cannotTell('FigureHasTitle','the figure title'));
+  else out.push({rule:ruleBy('FigureHasTitle'),subject:'the figure title',
+    outcome:parts.title?.trim()?'passed':'failed',
+    says:parts.title?.trim()?`The figure is titled ${JSON.stringify(parts.title.trim())}.`
+      :'The figure carries no title, so it says nothing about what it is.'});
+
+  if(!parts||parts.marksDrawn===undefined)out.push(cannotTell('EveryMarkIsInTheKey','marks and key entries'));
+  else if(!parts.marksDrawn)out.push({rule:ruleBy('EveryMarkIsInTheKey'),subject:'marks and key entries',
+    outcome:'inapplicable',says:'This figure drew no marks, so there was nothing for a key to explain.'});
+  else out.push({rule:ruleBy('EveryMarkIsInTheKey'),subject:'marks and key entries',
+    outcome:parts.key?.drawn&&(parts.key.entries>=1)?'passed':'failed',
+    measurement:{value:parts.key?.entries??0,threshold:1,unit:'key entries'},
+    says:parts.key?.drawn&&parts.key.entries>=1
+      ?`${parts.marksDrawn} mark kind${parts.marksDrawn===1?'':'s'} drawn, ${parts.key.entries} named in the key.`
+      :`${parts.marksDrawn} mark kind${parts.marksDrawn===1?'':'s'} drawn and no key entry for them.`});
+
+  if(!parts)out.push(cannotTell('FigureStatesItsSource','the source note'));
+  else out.push({rule:ruleBy('FigureStatesItsSource'),subject:'the source note',
+    outcome:parts.sourceNote?.trim()?'passed':'failed',
+    says:parts.sourceNote?.trim()?'The figure names its sources in its own note.'
+      :'The figure names no source, so a reader meeting it alone cannot trace its content.'});
+
+  if(!parts||parts.northIsUp===undefined)out.push(cannotTell('OrientationIsStatedWhereItIsNotObvious','orientation'));
+  else out.push({rule:ruleBy('OrientationIsStatedWhereItIsNotObvious'),subject:'orientation',
+    // The rule that would have been wrong as asked for. North is up on every figure this project
+    // draws today, so it reports inapplicable rather than demanding an arrow -- and becomes
+    // applicable the moment a projected map is drawn.
+    outcome:parts.northIsUp?'inapplicable':'cantTell',
+    says:parts.northIsUp
+      ?'North is up across this figure, which a reader assumes unless told otherwise, so no orientation indicator is required.'
+      :'North is not up across this figure and nothing here can yet read whether it says so.'});
+
+  if(!parts||!parts.scale?.claimed)out.push({rule:ruleBy('ScaleStatementSurvivesItsProjection'),
+    subject:'the scale claim',outcome:'inapplicable',
+    says:'This figure claims no scale, so there is no claim to qualify. On unprojected coordinates a bar would be true at one latitude only.'});
+  else out.push({rule:ruleBy('ScaleStatementSurvivesItsProjection'),subject:'the scale claim',
+    outcome:parts.scale.qualifier?.trim()?'passed':'failed',
+    says:parts.scale.qualifier?.trim()?`The scale says what it holds for: ${parts.scale.qualifier.trim()}.`
+      :'The figure claims a scale without saying where it holds, and scale varies across the drawn extent.'});
+
+  if(!parts||!parts.basemap)out.push({rule:ruleBy('BasemapIsCredited'),subject:'basemap attribution',
+    outcome:'inapplicable',says:'This figure drew no basemap, so no tile provider has to be credited.'});
+  else out.push({rule:ruleBy('BasemapIsCredited'),subject:'basemap attribution',
+    outcome:parts.basemap.credit?.trim()?'passed':'failed',
+    says:parts.basemap.credit?.trim()
+      ?`The basemap from ${parts.basemap.provider} is credited in the figure.`
+      :`A basemap from ${parts.basemap.provider} is drawn with no credit, which its licence requires.`});
+
   return out;
 }
 
@@ -164,9 +265,9 @@ export function isNeutral(hex:string,tolerance=8):boolean{
 
 /** The design this project's figures actually declare, read from the palette rather than
  *  restated, so the two cannot drift. */
-export function figureDesign(categoryColours:string[],drewUnknown:boolean):MapDesign{
+export function figureDesign(categoryColours:string[],drewUnknown:boolean,parts?:FigureParts):MapDesign{
   return {background:FIGURE_ROLE.background,ink:FIGURE_ROLE.ink,quietInk:FIGURE_ROLE.quietInk,
-    categoryColours,...(drewUnknown?{unknownColour:FIGURE_ROLE.unknown}:{})};
+    categoryColours,...(drewUnknown?{unknownColour:FIGURE_ROLE.unknown}:{}),...(parts?{parts}:{})};
 }
 
 /** The rules that were applied, as N3 for the map's receipt.

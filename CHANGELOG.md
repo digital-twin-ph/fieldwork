@@ -64,6 +64,22 @@ this section covers the work of 2026-10-25 and 26._
   facilities all take one gauge, so the assignment is 194 rows against a single column and
   perfectly dense, and drawing it as a grid hid the distance column a reader came for.
 
+- **A value can be derived from two others, and rows can be kept by value.** Epi Info separates
+  `DEFINE` and `ASSIGN` from `IF`, and only the `IF` was here: rules conclude a *term* about a
+  record and never a number computed from other numbers. **Derive a value** computes one, once per
+  group of rows sharing the other key columns — a table here is long, so the two numbers combined
+  are two rows and not two columns. **Keep rows by value** then selects what a figure should show.
+  Together they build South London's 2×2 **in** the application: `houses` minus `deaths` gives
+  `houses without a death`, and keeping those two drops the total they partition. Each row sums to
+  Snow's published house count. The assumption rides on the node's own label — his 1,263 are
+  deaths, not houses in which a death occurred — because it changes what the figure means.
+
+- **A wide file can be read as published.** One row per subject and a column per variable is how
+  epidemiological data arrives, and the importer refused it outright, calling a repeated key "the
+  signature of a wide table". Every long table here had therefore been melted by hand elsewhere,
+  including the ones the worked examples ship. The reader is in, and the Inspector for it is not
+  yet, so this is not reachable from the application in this release.
+
 - **A result can state its finding in words**, beside the rows it was computed from.
 
 - **The catalog counts the widgets you actually run**, in this browser. A use is a widget

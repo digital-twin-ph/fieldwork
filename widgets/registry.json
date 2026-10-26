@@ -320,6 +320,18 @@
       ]
     },
     {
+      "id": "urn:fieldwork:widget:derive_value",
+      "nodeType": "derive_value",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/derive_value/0.1.0.json",
+          "sha256": "aebeeac40fd1ca0744df59334e9f849da55323bcf8f2cbeb464efc0786535042"
+        }
+      ]
+    },
+    {
       "id": "urn:fieldwork:widget:donut_geomask",
       "nodeType": "donut_geomask",
       "currentVersion": "0.1.0",
@@ -430,6 +442,18 @@
           "version": "0.1.0",
           "path": "widgets/releases/join_table_to_area/0.1.0.json",
           "sha256": "77afc50b2fa1781d28cc3d769b740264cb36665ad53362f43b34c1001aa5f219"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:keep_rows",
+      "nodeType": "keep_rows",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/keep_rows/0.1.0.json",
+          "sha256": "3b3cb8b5f475a2461b08d149b7a5bff5ffc4e115a7380b2d09fca7f4b3bdc627"
         }
       ]
     },

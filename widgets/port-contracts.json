@@ -262,6 +262,36 @@
         }
       ]
     },
+    "derive_value": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "records",
+              "table"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
+    "keep_rows": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "records",
+              "table"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "rate": {
       "output": "table",
       "contracts": [

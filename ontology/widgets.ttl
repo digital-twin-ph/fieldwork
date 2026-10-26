@@ -27,6 +27,8 @@
 <urn:fieldwork:widget:coverage_check> a fw:WidgetDefinition; fw:nodeType "coverage_check"; rdfs:label "Check spatial coverage".
 <urn:fieldwork:widget:deduplicate_points> a fw:WidgetDefinition; fw:nodeType "deduplicate_points"; rdfs:label "Deduplicate point records";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/deduplicate_points.md>.
+<urn:fieldwork:widget:derive_value> a fw:WidgetDefinition; fw:nodeType "derive_value"; rdfs:label "Derive a value";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/derive_value.md>.
 <urn:fieldwork:widget:donut_geomask> a fw:WidgetDefinition; fw:nodeType "donut_geomask"; rdfs:label "Move points in a donut".
 <urn:fieldwork:widget:facilities> a fw:WidgetDefinition; fw:nodeType "facilities"; rdfs:label "Select nearby facilities".
 <urn:fieldwork:widget:facility_audit> a fw:WidgetDefinition; fw:nodeType "facility_audit"; rdfs:label "Evidence register".
@@ -36,6 +38,8 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/isochrone.md>.
 <urn:fieldwork:widget:join_table_to_area> a fw:WidgetDefinition; fw:nodeType "join_table_to_area"; rdfs:label "Join a table to the study area";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/join_table_to_area.md>.
+<urn:fieldwork:widget:keep_rows> a fw:WidgetDefinition; fw:nodeType "keep_rows"; rdfs:label "Keep rows by value";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/keep_rows.md>.
 <urn:fieldwork:widget:map_output> a fw:WidgetDefinition; fw:nodeType "map_output"; rdfs:label "Map";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_output.md>.
 <urn:fieldwork:widget:mean_center> a fw:WidgetDefinition; fw:nodeType "mean_center"; rdfs:label "Mean center".

@@ -85,7 +85,12 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // The first time this count has fallen because a widget LEFT rather than because one arrived.
   // 47 on 2026-10-26: slr_extract_import retired into apply_ruleset with the extract-contract
   // ruleset, the second removal and the first of the three sea-level widgets.
-  assert.equal(review.reviews.length,47);
+  // 49 on 2026-10-26: derive_value and keep_rows, arithmetic over a table and selection of its
+  // rows. Both raise pendingCeiling under the same rule -- a widget may be added if its function
+  // did not exist before -- and both are PENDING, because a verdict on a name is a practitioner's
+  // judgement and not its author's. The count rises on the same day it fell, and the two sea-level
+  // widgets that would pay for them are deferred in TODO.md rather than traded here.
+  assert.equal(review.reviews.length,49);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

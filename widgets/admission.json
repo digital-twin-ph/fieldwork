@@ -2,7 +2,7 @@
   "schema": "fieldwork/admission-state/1",
   "note": "Admission is a claim made at a point in time against a stated standard, not a permanent property. This is a developmental evaluation: the criteria change as lessons are learned, so what passed D1 at widget 20 may fail the D1 of widget 51. Treating admission as permanent is what left three implementations of one operation, nine example-bound widgets and four port names encoding a use in a registry whose every member had passed its own review honestly. The widget audit's own Method section is where the permanence came from: D3 and D4 were sampled because 'doing it retroactively for all of them is a separate task', and D5, D6, D8 and D9 were declared 'not applicable retroactively'. That separate task was never scheduled. So each criterion now records when it last CHANGED and when the set was last SWEPT against it. A criterion changed after its last sweep is a re-admission debt: validate:admission fails, and the only ways to clear it are to sweep or to record why the change does not reach the existing set.",
   "measuredAt": "2026-10-21",
-  "widgets": 57,
+  "widgets": 59,
   "criteria": [
     {
       "id": "D1",
@@ -124,9 +124,9 @@
   ],
   "setChanged": {
     "at": "2026-10-26",
-    "registry": 57,
-    "live": 47,
+    "registry": 59,
+    "live": 49,
     "retired": 10,
-    "note": "slr_extract_import retired into apply_ruleset. D1 is what closed it: experiment 115 read it operation by operation and none of the five is a sea-level operation, so it was general machinery with one dataset's knowledge compiled into it. The knowledge is declared data now."
+    "note": "derive_value and keep_rows admitted: arithmetic over a table, and selection of its rows. D1 is what admitted them -- a primitive is exposed when a workflow needs it -- and the need was already on the record as a validation limit, that South London's 2x2 is prepared outside the application because nothing derives a column from others. D2 asked whether either duplicates something: nothing computes a value from two others (rules conclude terms, never numbers), and nothing selects rows of a table (clip_points_to_area filters POINTS by geometry). D7 on the names is pending in widgets/name-review.json, with the ceiling raised by two rather than a verdict recorded by their author. The full sweep still dates from 2026-10-21; this records that the set changed and why, which is the reason to re-sweep rather than the sweep."
   }
 }

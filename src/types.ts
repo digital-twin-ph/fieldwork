@@ -152,6 +152,8 @@ export interface ParamsByType {
     distinctValuesFor?:string[]};
   rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:import('./rate-ratio.js').IntervalMethod};
   rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
+  derive_value:{label:string;keyColumn:string;left:string;operator:import('./derive-value.js').Operator;right:string;name:string};
+  keep_rows:{label:string;keyColumn:string;values:string[]};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
   summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south';yields?:'area'};
   snap_to_network:{label:string;zone:number;hemisphere:'north'|'south';maxSnapM:number};

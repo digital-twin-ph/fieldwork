@@ -53,6 +53,7 @@ interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;s
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
+import {deriveValue,keepRows,OPERATORS} from './derive-value.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
@@ -89,6 +90,12 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   rate_ratio:{title:'Rate ratio with an interval',group:'Epidemiology',icon:'⚖',color:'teal',
     description:'Divide one group\'s rate by another\'s, with an interval and the counts behind it',
     inputs:[['rates','table']],output:'table'},
+  derive_value:{title:'Derive a value',group:'Summaries',icon:'∓',color:'teal',
+    description:'Compute a new value in a key column from two of its existing values, group by group',
+    inputs:[['records','table']],output:'table'},
+  keep_rows:{title:'Keep rows by value',group:'Summaries',icon:'⊂',color:'teal',
+    description:'Keep only the rows whose key column holds one of the values you name, in that order',
+    inputs:[['records','table']],output:'table'},
   rate:{title:'Rate with a denominator',group:'Epidemiology',icon:'÷',color:'teal',description:'Divide counts by a declared population at risk, stating what the denominator counts',inputs:[['records','points']],output:'table'},
   case_series:{title:'Cases by period',group:'Epidemiology',icon:'▦',color:'teal',description:'Count cases per day, week or month by a declared kind of date',inputs:[['points','points']],output:'table'},
   slr_extract_import:{title:'Sea-level projection extract',group:'Sources',icon:'≈',color:'blue',description:'Declare an imported long-format table as a bounded extract of published AR6 projections',inputs:[['projections','table']],output:'table'},
@@ -940,6 +947,29 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               +(r.unreadable.length?`, ${r.unreadable.length} left unreadable`:'')+'.').join(' ')
               +' The source file is unchanged; these records are not the records it held.'});
         }
+        break;}
+      case 'derive_value':{
+        // ASSIGN, over the long table this application holds. Epi Info separates DEFINE and
+        // ASSIGN from IF, and only the IF was here: rules conclude a TERM about a record and
+        // never a number computed from other numbers. A DataTable is long, so there are never
+        // two numeric columns to combine -- there are two ROWS agreeing on every key but one,
+        // which is the same pivot `rate` already names with `measureKey`.
+        const table=inputs.records as unknown as import('./data-table.js').DataTable;
+        if(table?.kind!=='data-table')throw new Error('Connect a table: this step derives a value from one.');
+        const result=deriveValue(table,node.params);
+        value=result.table as unknown as DisplayValue;
+        receipts.push({nodeId:node.id,kind:'computation',
+          method:`${node.params.left} ${OPERATORS[node.params.operator].label} ${node.params.right}`,
+          derived:result.derived,gaps:result.gaps} as unknown as Receipt);
+        break;}
+      case 'keep_rows':{
+        const table=inputs.records as unknown as import('./data-table.js').DataTable;
+        if(table?.kind!=='data-table')throw new Error('Connect a table: this step keeps rows of one.');
+        const result=keepRows(table,node.params.keyColumn,node.params.values);
+        value=result.table as unknown as DisplayValue;
+        receipts.push({nodeId:node.id,kind:'computation',
+          method:`kept ${node.params.values.join(', ')} of ${node.params.keyColumn}`,
+          kept:result.kept,dropped:result.dropped,absent:result.absent} as unknown as Receipt);
         break;}
       case 'rate':{const records=node.params.source==='table'
         ?fromTable(inputs.records as unknown as import('./data-table.js').DataTable,node.params.measureKey||'measure')

@@ -1,0 +1,61 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:keep_rows",
+  "nodeType": "keep_rows",
+  "version": "0.1.0",
+  "title": "Keep rows by value",
+  "released": "2026-10-26",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['keep_rows']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes a table and gives back the same table with fewer rows. Key columns, value field and unit are unchanged, because selecting rows does not change what the table measures."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No ontology mapping yet. The receipt names the column, the values kept, how many rows were kept and dropped, and any named value the table did not hold.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/derive-value.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/derive-value.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Keeps only the rows whose chosen key column holds one of the values named, in the order named. Nothing in the application selected rows of a table before: `clip_points_to_area` filters points by geometry and has no equivalent for a table. A value the table does not hold is reported rather than ignored, because asking for a row that is not there is usually a typo or a changed table upstream, and quietly returning fewer rows is how a figure loses a category nobody noticed. Keeping nothing the table holds is refused rather than returning an empty table."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested on the same Table IX fixture, including the ordering the named values impose and a value absent from the table. Nothing here establishes that a selection is an honest one: keeping a subset of categories is exactly how a figure can mislead, and the widget cannot tell a partition from a cherry-pick."
+  }
+}

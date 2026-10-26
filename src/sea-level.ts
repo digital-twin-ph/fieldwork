@@ -1,4 +1,5 @@
 import type {DataTable} from './data-table.js';
+import type {Ruleset} from './rulesets.js';
 import type {PointCollection,Position,Scalar,WorkflowNode} from './types.js';
 import type {DeclarationGap,DisplayRow,Receipt,Status} from './results.js';
 import {nearestOf} from './nearest-neighbour.js';
@@ -116,6 +117,54 @@ export type ProjectionTable=DataTable&{projection:{provenance:ExtractProvenance;
 export const projectionTable=(extract:ProjectionExtract):ProjectionTable=>
   ({...extract.table,projection:{provenance:extract.provenance,siteIds:extract.siteIds,
     ...(extract.gaps?.length?{gaps:extract.gaps}:{})}});
+/** The extract a downstream step needs, built from a plain table and the ruleset that contracts
+ *  for it.
+ *
+ *  THIS IS WHAT RETIRES `slr_extract_import`. That widget's output carried a `.projection` bag,
+ *  and `readExtract` refused anything without one -- "the dataset, baseline and citations must be
+ *  declared first" -- which is a CONTRACT CHECK WEARING A TYPE CHECK. The contract is declared
+ *  data now (rulesets/extract-contract), so the bag has nothing left to prove.
+ *
+ *  Where each piece comes from, and none of it from a widget's parameters:
+ *
+ *  - the table, rows and unit, straight through, so no value is touched and the recorded
+ *    millimetre-to-metre conversion is still recorded rather than performed;
+ *  - `siteIds` from the table input's declared distinct values, which is P3 of experiment 115 --
+ *    the constraint lives where the data enters, not in the middle of the graph;
+ *  - provenance from the PINNED RULESET: its basis carries the dataset DOI and the obligatory
+ *    citations, its `tableContract.declares` carries the baseline, the basis kind and the family
+ *    pair. Pinned by id and version, so a different dataset version is a different ruleset
+ *    version rather than a field somebody retyped.
+ *
+ *  Experiment 115's P1, decided 2026-10-15. */
+export function extractFromRuleset(
+  table:DataTable&{distinct?:Record<string,string[]>},
+  ruleset:Pick<Ruleset,'basis'|'inputContract'>,
+):ProjectionExtract{
+  if(table?.kind!=='data-table')
+    throw new Error('Connect a long-format projection extract: a table with one row per projected value.');
+  const declared=Object.fromEntries((ruleset.inputContract.tableContract?.declares??[])
+    .map(d=>[d.name,d.value]));
+  const siteIds=table.distinct?.site_id;
+  if(!siteIds?.length)
+    throw new Error('The table input has not been asked for the distinct values of "site_id", so '
+      +'there is no site list to assign against. Set it on the input that reads this file, where '
+      +'a practitioner can still see what the column holds.');
+  const provenance:ExtractProvenance={
+    // A url reference or a digested PDF; a DOI is the first, and a citation a reader cannot
+    // open is exactly what the ledger counts. `locator` carries the DOI on both kinds.
+    datasetIRI:ruleset.basis.evidence.filter(e=>e.kind==='url').find(e=>e.role==='data')?.url??'',
+    datasetVersion:declared.datasetVersion??'',
+    baselinePeriod:declared.baselinePeriod??'',
+    citations:ruleset.basis.evidence.map(e=>e.kind==='url'?e.url:e.locator).filter(Boolean),
+    basisKind:(declared.basisKind??'') as ExtractProvenance['basisKind'],
+    familyValues:{withVerticalLandMotion:declared.familyWithVerticalLandMotion??'',
+      withoutVerticalLandMotion:declared.familyWithoutVerticalLandMotion??''},
+    sourceNote:'',
+  };
+  return {kind:'projection-extract',table,provenance,siteIds:[...siteIds]};
+}
+
 export function readExtract(value:ProjectionTable):ProjectionExtract{
   if(!value?.projection)throw new Error('Connect a Sea-level projection extract, not a plain table: the dataset, baseline and citations must be declared first.');
   const {projection,...table}=value;

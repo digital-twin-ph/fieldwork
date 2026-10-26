@@ -307,6 +307,58 @@ What is retirable without contradicting D1:
 Roughly ten palette retirements, taking 51 to about 41, plus code-level factoring that changes
 no palette entry.
 
+**Utilisation is runs, not appearances. BUILT 2026-10-26; what remains is below.** The
+practitioner, defining the term: *"use is defined as widget connected to another and run in a
+workflow, that's a use instance, regardless of whether it's in a worked example, a user developed
+one or an imported one."*
+
+That is a different measure from the one this project has. `npm run usage:widgets` counts **node
+types appearing in example templates** — an appearance in something shipped — and AGENTS.md names
+it as the instrument for D10. Under the definition above it answers a narrower question, and the
+two should not be confused: a widget can appear in five examples nobody runs, or be run daily in
+workflows nobody shipped.
+
+**The data already exists and is discarded.** `WorkflowRun.trace` is
+`{nodeId, type, milliseconds}[]`, produced by every run, so each execution already records which
+widget types ran, connected, in a real workflow. `src/app.ts` reads it for a one-line summary and
+drops it. The smallest honest implementation is to accumulate it: a local tally of type → count
+and last-run date, written where the app already writes, surfaced in the widget catalogue beside
+each entry.
+
+**What was built**, the same day: `src/widget-usage.ts` accumulates a tally from every run's
+`trace`, `src/app.ts` records it when a run completes, and the widget catalogue carries a **Runs
+here** column with the limit stated beside it. A run counts once per widget TYPE, not once per
+node — a workflow with three map outputs is one use of `map_output`, because counting nodes would
+make a habit of duplicating a step look like evidence of its worth. A node placed and abandoned
+never counts: the tally is written from what executed.
+
+**What remains:**
+
+- **Nothing reads the tally but a human.** It informs no ratchet. The obvious use is the
+  retirement argument — a widget at zero runs is a candidate — but a count from one browser is
+  thin evidence for a decision affecting everyone, so what it may be used FOR needs deciding
+  before it is wired to anything.
+- **Two measures now have similar names.** `usage:widgets` counts appearances in shipped
+  examples and AGENTS.md names it as the D10 instrument; this counts runs here. They should be
+  named apart before somebody cites the wrong one.
+- **No way to clear it on request.** `forgetRuns()` exists and nothing calls it, so a
+  practitioner who wants the count gone must clear all site data and lose their workflows with it.
+- **Untested in the browser.** No test asserts that running a workflow increments the column.
+
+**The limit, in the practitioner's own words**, 2026-10-26: *"since the app is browser based and
+does not include what other browsers do, the use stats is only good for that one specific browser
+for that one specific user."* Not that person's use — a second browser keeps its own tally — and
+certainly not the field's.
+
+**Strictly local, and that is not a limitation to apologise for.** This application sends nothing
+and is built to run offline; a utilisation count that phoned home would contradict the premise
+([the directions register](directions.json)'s `fieldwork-bounds-what-it-controls`). What it buys
+is still real: a practitioner can see which widgets they actually use, and this project can see
+which of the 47 earn their place on the evidence of runs rather than on the evidence of being
+mentioned in a template. That is the measure
+`streamlining-measures-confusion-and-duplication` says does not exist, arriving from the one
+direction that needs no new instrumentation at all.
+
 **A third category, and the one that changes the count: a declaration wearing a node type.**
 Added 2026-10-25, when the practitioner looked at the palette and asked *"why do we still have
 the heat alert as a widget under inputs?"*, then *"that looks to me like a ruleset widget

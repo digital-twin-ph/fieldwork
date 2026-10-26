@@ -42,6 +42,33 @@ if(sealevel)add('manila sea-level',()=>sealevel.seaLevelExample());
 if(snow){add('snow-voronoi',()=>snow.johnSnowExample('snow-voronoi'));add('snow-isochrone',()=>snow.johnSnowExample('snow-isochrone'));}
 if(geo)add('snow-geoprivacy',()=>geo.geoprivacyExample());
 
+// CURATED EXAMPLES THAT LIVE IN THEIR OWN REPOSITORIES COUNT TOO, and until 2026-10-26 they did
+// not. `widgets/examples.json` pins them by commit and digest, and this script read only the
+// examples bundled into the build -- so South London, which is the ONLY example exercising
+// join_table_to_area, rate and rate_ratio, reported all three as "never instantiated by any
+// example". D10 is the criterion that asks whether some example instantiates a widget, and
+// AGENTS.md names this script as the instrument for it, so the instrument was blind to the place
+// the answer lived. Found by writing a lab check for rate_ratio and meeting the false zero.
+//
+// Read where checked out, reported where not: an example that is not beside this repository
+// cannot be counted, and saying so is different from counting it absent.
+const catalog=JSON.parse(await readFile(new URL('../widgets/examples.json',import.meta.url),'utf8'));
+for(const example of catalog.examples??[]){
+  const folder=(example.repository??'').split('/').filter(Boolean).pop();
+  const bundle=(example.files??[]).find(f=>f.path.endsWith('.json.gz'));
+  if(!folder||!bundle){skipped.push(`${example.id} (no bundle pinned)`);continue;}
+  const path=new URL(`../../${folder}/${bundle.path}`,import.meta.url);
+  let raw;
+  try{raw=await readFile(path);}
+  catch{skipped.push(`${example.title??example.id} (${folder} not checked out beside this repository)`);continue;}
+  try{
+    const {gunzipSync}=await import('node:zlib');
+    const doc=JSON.parse(gunzipSync(raw).toString());
+    for(const w of doc.workflows??[])
+      if(w.document?.nodes)examples.push([`${folder}/${w.key.split('/').pop()}`,w.document]);
+  }catch(error){skipped.push(`${example.id} (${error.message})`);}
+}
+
 // Frozen fixtures are worked examples too: they are what the browser suite replays.
 // Except the ones whose whole purpose is to hold something invalid. A fixture that
 // deliberately carries a removed widget is a test of what happens when a workflow

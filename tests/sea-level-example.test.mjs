@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {resolveRuleset} from '../build/rulesets.js';
 import assert from 'node:assert/strict';
 import {seaLevelExample} from '../build/sea-level-example.js';
 import {executeWorkflow,executionPlan,validateGeoJSON,validateWorkflow} from '../build/core.js';
@@ -37,10 +38,23 @@ test('the bundled extract is real AR6 data, in millimetres, over eight gauges',(
   assert.equal(new Set(projections.data.rows.map(r=>r.key.site_id)).size,8);
   // basis is a confidence level here, not a workflow, and the declaration must say so.
   assert.deepEqual([...new Set(projections.data.rows.map(r=>r.key.basis))],['medium']);
+  // THE DECLARATIONS MOVED TO THE RULESET, 2026-10-26. They were parameters a practitioner
+  // typed into `slr_extract_import`, a widget named for one dataset; they are now declared data
+  // on extract-contract, pinned by id AND version on the node that applies it -- which is what
+  // makes "values are not comparable across dataset versions" true by construction rather than
+  // by somebody remembering to retype a field. Experiment 115's P1.
   const extract=seaLevelExample().nodes.find(n=>n.id==='extract').params;
-  assert.equal(extract.basisKind,'confidence-pbox');
-  assert.equal(extract.citations.length,3,'CC BY 4.0 obliges three citations');
-  assert.equal(extract.baselinePeriod,'1995-2014');
+  assert.equal(extract.ruleset.id,'urn:fieldwork:ruleset:extract-contract');
+  assert.equal(extract.ruleset.version,'1.0.0');
+  const contract=resolveRuleset(extract.ruleset.id,extract.ruleset.version);
+  const declared=Object.fromEntries(
+    contract.inputContract.tableContract.declares.map(d=>[d.name,d.value]));
+  assert.equal(declared.basisKind,'confidence-pbox');
+  assert.equal(declared.baselinePeriod,'1995-2014');
+  assert.equal(contract.basis.evidence.length,3,'CC BY 4.0 obliges three citations');
+  // And they resolve, which is the point of carrying them rather than naming them.
+  assert.deepEqual(contract.basis.evidence.map(e=>e.locator),
+    ['10.1017/9781009157896.011','10.5194/gmd-16-7461-2023','10.5281/zenodo.5914709']);
 });
 
 test('the site layer carries no gauge the extract cannot answer for',()=>{

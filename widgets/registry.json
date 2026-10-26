@@ -936,12 +936,17 @@
     {
       "id": "urn:fieldwork:widget:slr_extract_import",
       "nodeType": "slr_extract_import",
-      "currentVersion": "0.1.0",
+      "currentVersion": "2.0.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/slr_extract_import/0.1.0.json",
           "sha256": "d977da060716b4e03c17367a44324207388c222939cb49415485a29b9e65b7ec"
+        },
+        {
+          "version": "2.0.0",
+          "path": "widgets/releases/slr_extract_import/2.0.0.json",
+          "sha256": "6efa2d895b078bf2730d4fbb447436503629a4ef448071d2d9bc08355e4a790c"
         }
       ]
     },

@@ -1,4 +1,5 @@
 import {PALETTE_GROUPS} from './palette.js';
+import {runsFor} from './widget-usage.js';
 import registry from '../widgets/registry.json';
 import parityRecord from '../widgets/parity.json';
 import packCatalog from '../widgets/packs.json';
@@ -65,6 +66,15 @@ export function identityMarkup(nodeType:string,esc:Escape):string{
     +'<p class="muted">Compiled into this build. No widget is fetched at runtime.</p>';
 }
 
+
+/** This browser's run count for one widget, and nothing implied beyond it. */
+const runsMarkup=(nodeType:string):string=>{
+  const seen=runsFor(nodeType);
+  if(!seen?.runs)return '<span class="tag parity-unchecked" title="Never run in this browser">—</span>';
+  const when=seen.lastRunAt?seen.lastRunAt.slice(0,10):'';
+  return `<span title="Last run ${when||'at an unrecorded time'}">${seen.runs}</span>`;
+};
+
 export function openCatalogDialog(esc:Escape,servingBuild='unknown'):void{
   document.getElementById('catalog-dialog')?.remove();
   const dialog=document.createElement('dialog');dialog.id='catalog-dialog';dialog.setAttribute('aria-labelledby','catalog-title');
@@ -82,7 +92,12 @@ export function openCatalogDialog(esc:Escape,servingBuild='unknown'):void{
       +`<td><code>${identity?esc(identity.digest.slice(0,12)):'—'}</code></td>`
       +`<td>${esc(ports)} → ${esc(definition.output??'none')}</td>`
       +`<td>${identity?.classification==='domain'?`<span class="tag parity-partial">domain</span> ${esc(String(packName(identity.pack)))}`:'<span class="tag parity-unchecked">standard</span>'}</td>`
-      +`<td>${badge(parity?.outcome,!!identity?.stale&&!identity?.parity)}</td></tr>`;
+      +`<td>${badge(parity?.outcome,!!identity?.stale&&!identity?.parity)}</td>`
+      // A USE IS A RUN. Counted when a widget executes, connected, in a workflow -- a shipped
+      // example that nobody runs is not a use, and a widget placed on a canvas and left there is
+      // not either. "Here" is load-bearing: this is one browser's tally, not this person's and
+      // not the field's.
+      +`<td>${runsMarkup(type)}</td></tr>`;
   }).join('');
   const checked=new Set((parityRecord.entries as ParityEntry[]).map(e=>e.widget)).size;
   type Pack={id:string;name:string;version:string;commit:string;kind:string;repository:string;
@@ -100,6 +115,7 @@ export function openCatalogDialog(esc:Escape,servingBuild='unknown'):void{
   }).join('');
   dialog.innerHTML=`<h2 id="catalog-title">Widget catalog</h2>
     <p>Every definition in this build, with the version and release digest a run receipt cites. Nothing here is fetched and nothing is installable: these widgets are compiled in.</p>
+    <p class="description"><strong>Runs here</strong> counts the times a widget has run, connected, in a workflow on this browser — a shipped example nobody runs is not a use, and neither is a node placed on a canvas and left there. It is <strong>this browser's</strong> tally and no one else's: your own second browser keeps a separate count, clearing site data starts it at zero, and nothing is sent anywhere. It answers whether <em>you</em> use a widget here, which is not evidence about anybody else.</p>
     <div class="detail-row"><span>Application</span><strong>${esc(appPackage.version)}</strong></div>
     <div class="detail-row"><span>Serving this page</span><strong id="catalog-build">${esc(servingBuild)}</strong></div>
     <div class="detail-row"><span>Widgets</span><strong>${registry.widgets.length} definitions · ${registry.widgets.reduce((n,w)=>n+w.releases.length,0)} releases</strong></div>
@@ -109,7 +125,7 @@ export function openCatalogDialog(esc:Escape,servingBuild='unknown'):void{
     <p class="muted">"Serving this page" is the build the offline cache is answering from, reported by the service worker itself rather than by this page. If it differs from a freshly loaded copy, this tab is running an older build and a reload will replace it.</p>
     <p class="muted">Standard widgets are the components that ship with the application and apply to any domain. A domain widget belongs to a pack's domain and maps to that pack's vocabulary; the distinction is derived from those mappings, not declared, so one cannot be filed as the other by accident.</p>
     <p class="muted">A release digest identifies the description of a widget, not a certificate: no widget here is individually certified. An independent check means an external implementation recomputed the same result under a stated criterion, recorded in widgets/parity.json.</p>
-    ${groups.map(group=>`<h3>${esc(group)}</h3><table class="catalog-table"><thead><tr><th scope="col">Widget</th><th scope="col">Node type</th><th scope="col">Version</th><th scope="col">Digest</th><th scope="col">Ports</th><th scope="col">Kind</th><th scope="col">Independent check</th></tr></thead><tbody>${rows(group)}</tbody></table>`).join('')}
+    ${groups.map(group=>`<h3>${esc(group)}</h3><table class="catalog-table"><thead><tr><th scope="col">Widget</th><th scope="col">Node type</th><th scope="col">Version</th><th scope="col">Digest</th><th scope="col">Ports</th><th scope="col">Kind</th><th scope="col">Independent check</th><th scope="col">Runs here</th></tr></thead><tbody>${rows(group)}</tbody></table>`).join('')}
     <h3>Widget packs</h3>
     <table class="catalog-table" id="pack-table"><thead><tr><th scope="col">Pack</th><th scope="col">Version</th><th scope="col">Commit</th><th scope="col">Kind</th><th scope="col">Admission</th><th scope="col">Reviews</th></tr></thead><tbody>${packs}</tbody></table>
     <div class="notice">A pack cannot be added here, and not because this view lacks a button. The application fetches and executes no pack: every widget above is compiled in, which is an admission rule rather than an omission. The sea-level pack is <strong>declaration-only</strong> — it carries vocabulary, shapes, widget contracts and a worked example, and no widget code, so there is nothing in it to run. Making its workflow runnable means implementing those three contracts in the application, as Tabular data was. Admission states shown here are read from this build's catalog; they are recorded decisions, not checks performed by this page.</div>

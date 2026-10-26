@@ -6,7 +6,7 @@ import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
 import {BASEMAP_CHOICES,type BasemapChoice} from './types.js';
-import {layerSymbol,markPath} from './presentation.js';
+import {layerSymbol,markPath,classifyValues,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
 import {rasterImage} from './raster-image.js';
@@ -149,11 +149,41 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     area.addTo(map);all.addLayer(area);overlays['Study area']=area;
   }
   const sorted=[...p.features].sort((a,b)=>(b.minutes||0)-(a.minutes||0));
+  // COLOURED BY VALUE WHERE THERE IS ONE, as the static plot already is. Every feature took one
+  // hard-coded blue, so a choropleth switched to this presentation lost its classes entirely --
+  // the practitioner, 2026-10-26: "when I shift to Interactive, the choropleth loses its shades."
+  // Both renderers now read the same `classifyValues`, because a figure whose meaning depends on
+  // which renderer drew it is two different figures.
+  const classed=classifyValues(p.features.map(f=>f.value));
+  // One group for every part a value-classed layer draws, so the control lists the LAYER.
+  const themed=L.featureGroup();
+  const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
   for(const f of sorted){
-    const layer=L.geoJSON(f.geometry,{style:{color:'#39779e',weight:1,fillColor:'#1f77b4',fillOpacity:.2}});
-    layer.bindPopup(`<b>${esc(f.name)}</b>${f.minutes===undefined?'':`<br>Within ${f.minutes} minutes (cumulative)`}${f.count===undefined?'':`<br>${f.count} locations${p.summary?.valueField?`<br>${esc(p.summary.valueField)}: ${f.total}`:''}`}`);
-    layer.addTo(map);all.addLayer(layer);const label=esc(f.name);overlays[Object.hasOwn(overlays,label)?`${label} (${esc(f.id)})`:label]=layer;
+    const at=classed?classed.classOf(f.value):null;
+    // A part with no value is neutral, never the lowest class: pale-for-absent reads as a
+    // finding of low incidence, which is the opposite of what it means.
+    const fillColor=classed?(at===null?FIGURE_ROLE.unknown:classed.colours[at]):'#1f77b4';
+    const fillOpacity=classed?(at===null?.18:.78):.2;
+    const layer=L.geoJSON(f.geometry,{style:{color:classed?FIGURE_ROLE.quietInk:'#39779e',weight:1,fillColor,fillOpacity}});
+    // THE VALUE THE SHADE ENCODES, in the popup. A choropleth whose popup names only the polygon
+    // leaves a reader with a colour and no number, and reading a value off a five-class ramp is
+    // exactly what a legend cannot do. The practitioner, 2026-10-26.
+    const shade=f.value===undefined||!classed?''
+      :`<br>${round(f.value)}${at===null?'':` · class ${at+1} of ${classed.classes}`}`;
+    layer.bindPopup(`<b>${esc(f.name)}</b>${shade}${f.minutes===undefined?'':`<br>Within ${f.minutes} minutes (cumulative)`}${f.count===undefined?'':`<br>${f.count} locations${p.summary?.valueField?`<br>${esc(p.summary.valueField)}: ${f.total}`:''}`}`);
+    layer.addTo(map);all.addLayer(layer);
+    // A CHOROPLETH'S PARTS ARE ONE LAYER, NOT THIRTY-THREE. A catchment or an isochrone band is
+    // a distinct thing worth toggling; a sub-district shaded by a rate is one of many parts of a
+    // single thematic layer, and listing each gave south London 33 checkboxes that ran off the
+    // bottom of the map. The practitioner, 2026-10-26, naming the shape this should have had:
+    // "we can have the map configure what appears as layers -- in this case, study area,
+    // mortality per sub-district, provider by sub-district." Making the list scroll treated the
+    // symptom; this is the granularity.
+    if(classed)themed.addLayer(layer);
+    else{const label=esc(f.name);overlays[Object.hasOwn(overlays,label)?`${label} (${esc(f.id)})`:label]=layer;}
   }
+  if(classed&&themed.getLayers().length)
+    overlays[esc(p.layerName||'Shaded by value')]=themed;
   // The streets, as ONE multi-polyline on a canvas renderer rather than a layer per segment.
   // A town-sized graph is tens of thousands of segments -- Bunia is an estimated 94,000 directed
   // ones -- and a Leaflet layer each would not draw. Each undirected segment arrives twice, once
@@ -296,6 +326,30 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     if(group.getLayers().length){group.addTo(map);all.addLayer(group);overlays['Centers']=group;}
   }
   L.control.layers({},overlays,{collapsed:false}).addTo(map);L.control.scale({imperial:false}).addTo(map);
+  // THE SAME LEGEND THE STATIC FIGURE CARRIES. A choropleth here had its classes and no key to
+  // read them by: a reader could see five shades and had no way to turn one into a number, which
+  // is the one thing a ramp cannot be read for. The practitioner, 2026-10-26: "the interactive
+  // map should also show the value classes, as in the static map." Built from the same
+  // `classifyValues`, so the two renderers cannot state different breaks for one figure.
+  if(classed){
+    const values=p.features.map(f=>f.value)
+      .filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+    const edges=[Math.min(...values),...classed.breaks];
+    const legend=new L.Control({position:'bottomleft'});
+    legend.onAdd=()=>{
+      const box=L.DomUtil.create('div','map-class-legend');
+      box.innerHTML=`<div class="map-class-ramp">`
+        +classed.colours.map(c=>`<i style="background:${c}"></i>`).join('')
+        +`</div><div class="map-class-edges">`
+        +edges.map(v=>`<span>${round(v)}</span>`).join('')
+        +`</div><p>${classed.classes} ${classed.method==='quantile'
+          ?'quantile classes · the shade shows rank'
+          :'equal-interval classes · the shade shows magnitude'}</p>`;
+      L.DomEvent.disableClickPropagation(box);
+      return box;
+    };
+    legend.addTo(map);
+  }
   const fit=()=>{if(all.getBounds().isValid())map.fitBounds(all.getBounds(),{padding:[20,20]});else map.setView([0,0],2);};fit();
   toolbar.querySelector<HTMLButtonElement>('[data-fit]')!.onclick=fit;
   // Full screen, on the element the CSS is written for. Safari before 16.4 has only the webkit
@@ -377,7 +431,17 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   };
   select.value=basemap;setBasemap(basemap);
   select.onchange=()=>{const choice=select.value as BasemapChoice;setBasemap(choice);onBasemapChange?.(choice);};
-  const note=document.createElement('p');note.className='muted';note.textContent='Blue nested regions: cumulative travel times. Red circles: observations (DEATHS radius capped at 20 px); blue squares: sites/context. Use layer controls and click features for details.';host.append(note);
+  // WHAT IS DRAWN, not what a travel-time figure draws. This was a fixed sentence about nested
+  // travel-time regions and capped death radii, printed under every interactive map including a
+  // choropleth carrying none of those marks -- the THIRD surface on which this same defect has
+  // been reported: the static figure's key on 2026-10-25, the results-panel key and this one on
+  // 2026-10-26.
+  const note=document.createElement('p');note.className='muted';
+  note.textContent=(classifyValues(p.features.map(f=>f.value))
+    ?'Polygon shade: the joined value, in classes shown in the key. Click a part for its number. '
+    :'Blue nested regions: cumulative travel times. Red circles: observations (DEATHS radius capped at 20 px); blue squares: sites/context. ')
+    +'Use layer controls and click features for details.';
+  host.append(note);
   let disposed=false;const observer=new ResizeObserver(()=>{if(!disposed)map.invalidateSize();});observer.observe(canvas);observer.observe(panel());
   return ()=>{disposed=true;observer.disconnect();
     for(const event of ['fullscreenchange','webkitfullscreenchange'])document.removeEventListener(event,markFullscreen);

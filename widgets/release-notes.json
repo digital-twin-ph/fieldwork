@@ -695,16 +695,20 @@
    "migrationFrom": []
   },
   "slr_extract_import": {
-   "version": "0.1.0",
-   "released": "2026-10-09",
+   "version": "2.0.0",
+   "released": "2026-10-26",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Declares an imported long-format table as a bounded extract of published AR6 projections, requiring the full key, metre units, the dataset and version, the baseline period, three obligatory citations and which family value includes vertical land motion. Imports and declares; acquires nothing and produces no projection."
+     "kind": "major",
+     "description": "Retired into apply_ruleset with the extract-contract ruleset. Experiment 115 read this widget operation by operation on 2026-10-15 and found that NONE OF ITS FIVE OPERATIONS IS ABOUT SEA LEVEL: four are assertions about a table -- its key columns, its unit, its provenance, a column's closed vocabulary -- and one derives a column's distinct values. Every piece of sea-level knowledge it held was in its parameters, and its code was general machinery with that knowledge compiled into it.\\n\\nWhere each operation went, all of it declared data: the six key columns and the two units to inputContract.tableContract; the family pair to its closedVocabulary; the baseline period, the basis kind and the recorded millimetre-to-metre conversion to tableContract.declares; the dataset DOI and the three obligatory citations to basis.evidence, where they resolve; and the distinct site_id values to a knob on the table input, which is P3 -- the constraint lives where the data enters, so a practitioner meets it while they can still fix the file.\\n\\nProvenance was a refusal wearing a type check: readExtract rejected a plain table because 'the dataset, baseline and citations must be declared first', and the .projection bag it demanded was a token meaning the contract was satisfied. The contract is declared now, pinned by id AND version, which makes 'values are not comparable across dataset versions' true by construction. A workflow saved before today still runs: the assignment step reads the annotated value when it is present.\\n\\nThe practitioner's standard for this, 2026-10-26: 'if another climate model ended up as a ruleset in FW it should be able to use the standard ruleset widget to express and implement its contract' -- and 'no variants'. This widget was the variant, and while it shipped it was a working example teaching the next author to make another one.",
+     "breaking": true
     }
    ],
-   "breaking": false,
-   "migrationFrom": []
+   "breaking": true,
+   "migrationFrom": [],
+   "replacementCandidate": [
+    "urn:fieldwork:widget:apply_ruleset"
+   ]
   },
   "slr_site_assignment": {
    "version": "0.1.0",

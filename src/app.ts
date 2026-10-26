@@ -1,4 +1,5 @@
 import {diveDeeperPanel,learnBlock} from './dive-deeper.js';
+import {recordRun,runsFor} from './widget-usage.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
 import {manualButton,openManual,hasManual} from './manual.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
@@ -2067,6 +2068,20 @@ function renderInspector(){
           +`<div class="input-unit"><input id="ruleset-${esc(parameter.name)}" type="number" min="${parameter.min}" max="${parameter.max}" step="0.5" value="${n.params.parameters[parameter.name]}">`
           +`<span>${esc(parameter.unitLabel||'')}</span></div><small>${esc(parameter.meaning)}</small></div>`;
     }
+    // WHAT APPLYING THIS COMMITS YOU TO, where a practitioner meets it rather than where they
+    // meet the error. Experiment 140: whoever shares a ruleset that requires provenance
+    // transmission owes its users the instructions for fulfilling it. This is the middle link of
+    // a chain nothing enforced -- the dataset's authors oblige the user, and until now nothing
+    // told the user how to meet that obligation in this application.
+    const obligation=(ruleset as unknown as {obligation?:{summary:string;whatYouTakeOn:string;
+      howToAcknowledge:string;ifYouDoNot:string}}).obligation;
+    if(obligation)
+      content+=`<div class="inspector-divider"></div>`
+        +`<span class="inspector-section">What this obliges you to</span>`
+        +`<div class="inspector-alert" role="note"><strong>${esc(obligation.summary)}</strong></div>`
+        +`<p class="description">${esc(obligation.whatYouTakeOn)}</p>`
+        +`<p class="description"><strong>How to acknowledge it.</strong> ${esc(obligation.howToAcknowledge)}</p>`
+        +`<p class="description"><strong>If you do not.</strong> ${esc(obligation.ifYouDoNot)}</p>`;
     content+=`<div class="inspector-divider"></div><span class="inspector-section">Basis</span>`
       +`<div class="detail-row"><span>${esc(basis)}</span><strong>${ruleset.basis.evidence.length} reference${ruleset.basis.evidence.length===1?'':'s'}</strong></div>`;
     if(ruleset.basis.unresolvedCitations.length)
@@ -3296,7 +3311,11 @@ async function run(){if(busy)return;
   // a state line that says what is true -- not "Run failed", which claims something went wrong.
   try{executionPlan(workflow);}catch(e){
     if(e instanceof IncompleteWorkflow){runIncomplete=true;toast(errorMessage(e),{tone:'notice'});render();return;}
-    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;renderResults();const issues=dataIssueNotice(next);
+    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;
+    // A use instance is a widget connected and RUN, so it is counted here and nowhere else:
+    // placing one on a canvas is not using it. Local to this browser, never sent.
+    recordRun(next.trace);
+    renderResults();const issues=dataIssueNotice(next);
   // "we must surface the issue on the widget as a toast message that I can then read and close"
   // -- the practitioner, 2026-10-16. A run that quietly bands a third of its records Unrecorded
   // has answered the question and hidden the thing worth knowing.

@@ -15,6 +15,11 @@
       {
         "predicate": "fw:projectedValueKnown",
         "type": "boolean"
+      },
+      {
+        "predicate": "fw:projectedValue",
+        "type": "number",
+        "unit": "http://qudt.org/vocab/unit/MilliM"
       }
     ],
     "tableContract": {
@@ -30,8 +35,22 @@
         "metre",
         "millimetre"
       ],
-      "closedVocabulary": [],
+      "closedVocabulary": [
+        {
+          "column": "family",
+          "values": [
+            "with_vlm",
+            "without_vlm"
+          ],
+          "meaning": "A family that includes vertical land motion and one that excludes it are not comparable, so a row outside the declared pair is refused rather than averaged in."
+        }
+      ],
       "declares": [
+        {
+          "name": "datasetVersion",
+          "value": "20210809",
+          "meaning": "The dataset version these values are comparable within. Zenodo returns the same string for the dataset DOI, so this can be checked against its source rather than trusted."
+        },
         {
           "name": "baselinePeriod",
           "value": "1995-2014",
@@ -46,10 +65,28 @@
           "name": "valueConversion",
           "value": "millimetre to metre, recorded and not performed",
           "meaning": "The published files state sea_level_change in millimetres and comparisons are made in metres. The conversion is recorded on the result rather than applied to the data: any step that performed it would change every comparison downstream, silently."
+        },
+        {
+          "name": "familyWithVerticalLandMotion",
+          "value": "with_vlm",
+          "meaning": "The value in the family column marking projections that include vertical land motion. Families that include and exclude it are not comparable."
+        },
+        {
+          "name": "familyWithoutVerticalLandMotion",
+          "value": "without_vlm",
+          "meaning": "The value in the family column marking projections that exclude vertical land motion."
         }
       ]
     },
-    "fieldFrom": [],
+    "fieldFrom": [
+      {
+        "attribute": "value_mm",
+        "predicate": "fw:projectedValue",
+        "kind": "number",
+        "label": "Projected change",
+        "unitLabel": "mm"
+      }
+    ],
     "ports": {
       "inputs": [
         [
@@ -61,7 +98,8 @@
     },
     "projection": "declared",
     "parameterFrom": {},
-    "portsNote": "A table in and a table out, carrying what the contract concluded about each row as a further key column. The extract widget passed its table through unchanged with a provenance bag attached; the bag was a token meaning the contract was satisfied, and the contract is declared here instead."
+    "portsNote": "A table in and a table out, carrying what the contract concluded about each row as a further key column. The extract widget passed its table through unchanged with a provenance bag attached; the bag was a token meaning the contract was satisfied, and the contract is declared here instead.",
+    "note": "The binding names the column the rules read, so nothing is guessed from a spelling. `value_mm` is this dataset's own column name and lives here, in data, rather than as a constant in a widget -- which is the whole of what made the old extract widget sea-level-specific."
   },
   "outputVocabulary": {
     "predicates": [

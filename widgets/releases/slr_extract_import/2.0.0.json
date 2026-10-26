@@ -1,0 +1,74 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:slr_extract_import",
+  "nodeType": "slr_extract_import",
+  "version": "2.0.0",
+  "title": "Sea-level projection extract",
+  "released": "2026-10-26",
+  "implementationStatus": "retired",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['slr_extract_import']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "projections",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes a table rather than importing the CSV itself, which deviates from the pack contract: the host already has a tabular importer, and a second reader of the same file would be a second place for the contract to drift."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#ProjectionExtract",
+        "file": "ontology/packs/sea-level.ttl"
+      },
+      {
+        "role": "entity",
+        "iri": "https://digital-twin-ph.github.io/widget-pack-sea-level-rise/ns#ProjectionValue",
+        "file": "ontology/packs/sea-level.ttl"
+      }
+    ],
+    "note": "Maps to the sea-level pack's vocabulary, vendored into ontology/packs/sea-level.ttl at the digest widgets/packs.json pins. This widget mints no host term: the pack's namespace stays authoritative for the meaning. See docs/experiments/58-sea-level-widgets.md. The receipt is constrained by slr:ProjectionValueShape, slr:SiteAssignmentShape and slr:ThresholdComparisonShape in ontology/shapes/pack-sea-level.ttl, verified in tests; this registry version records application validation only, so the shapes are not referenced in a field.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/sea-level.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": [
+      "urn:fieldwork:widget:apply_ruleset"
+    ]
+  },
+  "changes": [
+    {
+      "kind": "major",
+      "description": "Retired into apply_ruleset with the extract-contract ruleset. Experiment 115 read this widget operation by operation on 2026-10-15 and found that NONE OF ITS FIVE OPERATIONS IS ABOUT SEA LEVEL: four are assertions about a table -- its key columns, its unit, its provenance, a column's closed vocabulary -- and one derives a column's distinct values. Every piece of sea-level knowledge it held was in its parameters, and its code was general machinery with that knowledge compiled into it.\\n\\nWhere each operation went, all of it declared data: the six key columns and the two units to inputContract.tableContract; the family pair to its closedVocabulary; the baseline period, the basis kind and the recorded millimetre-to-metre conversion to tableContract.declares; the dataset DOI and the three obligatory citations to basis.evidence, where they resolve; and the distinct site_id values to a knob on the table input, which is P3 -- the constraint lives where the data enters, so a practitioner meets it while they can still fix the file.\\n\\nProvenance was a refusal wearing a type check: readExtract rejected a plain table because 'the dataset, baseline and citations must be declared first', and the .projection bag it demanded was a token meaning the contract was satisfied. The contract is declared now, pinned by id AND version, which makes 'values are not comparable across dataset versions' true by construction. A workflow saved before today still runs: the assignment step reads the annotated value when it is present.\\n\\nThe practitioner's standard for this, 2026-10-26: 'if another climate model ended up as a ruleset in FW it should be able to use the standard ruleset widget to express and implement its contract' -- and 'no variants'. This widget was the variant, and while it shipped it was a working example teaching the next author to make another one."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks cover the full-key requirement, the unit, the baseline, the three citations and refusal of an undeclared family value. Nothing here establishes that the extracted values are correct, or that the extraction was faithful: that is the pack's extraction script and the dataset's own provenance."
+  }
+}

@@ -247,12 +247,10 @@
     {
       "id": "sources-group-does-not-mean-acquisition",
       "claim": "Two widgets are grouped under Sources while acquiring nothing. `reproject` imports its own data and converts it, so its name promises a transform its group denies; `slr_extract_import` takes a table on an input port and only validates and annotates it. The palette group states a workflow stage, and for these two it states one the contract does not occupy.",
-      "blocks": [
-        "slr_extract_import"
-      ],
+      "blocks": [],
       "recorded": "2026-10-13",
-      "lastRevisited": "2026-10-22",
-      "status": "narrowed",
+      "lastRevisited": "2026-10-26",
+      "status": "lifted",
       "liftTest": "A check in scripts/validate-naming.mjs requires a widget grouped under Sources to acquire something -- no inputs, or acquired data carried in its params as `find_health_facilities` does -- and both widgets either move group or change contract so the check passes without an exemption.",
       "measured": "slr_extract_import declares inputs:[['projections','table']] and holds no data parameter; the table arrives from table_input. reproject declares inputs:[] and holds params.data, so it genuinely acquires -- but it also reprojects, which is why the split recorded in docs/todo.md gives the sources an output CRS and leaves reproject a points-to-points transform.",
       "alsoFound": "The naming ratchet added 2026-10-13 catches reproject through its transform verb and misses slr_extract_import entirely, because that rule keys on the verb rather than on the contract. A rule that asks whether a source acquires would catch both, and would not depend on a verb list staying complete.",
@@ -266,11 +264,16 @@
         {
           "date": "2026-10-22",
           "found": "NARROWED to one widget. reproject has moved out: src/core.ts now groups it under Spatial operations as 'Reproject points', so its group no longer denies the transform its name promises. slr_extract_import is still group 'Sources' while acquiring nothing -- it declares an imported table. Half the claim is resolved; the half that names a widget acquiring nothing under Sources stands."
+        },
+        {
+          "date": "2026-10-26",
+          "found": "slr_extract_import retired into apply_ruleset, so this blocker no longer gates it. The widget was the last one holding this up (experiment 115 recorded it as such on 2026-10-15); what closed it was not a fix to the Sources group but the widget ceasing to exist. Its five operations were assertions about a table, and a table's contract is declared data now. Nothing is gated on it."
         }
       ],
       "narrowedTo": "One widget, not two, as of 2026-10-15. `reproject` was resolved by experiment 111's split -- it changed contract rather than taking an exemption. Of the ten Sources widgets, network_input, raster_input and find_health_facilities each take an `area` to acquire WITHIN, which is acquisition; slr_extract_import takes a `table` on a port and acquires nothing.",
       "preferredLift": "Decomposition rather than a group change, designed 2026-10-15 in docs/experiments/115-decomposing-the-projection-extract.md. Read operation by operation, none of slr_extract_import's five operations is about sea level: four are assertions about a table -- required key columns, an admissible unit, a closed domain for one column -- and one derives a column's distinct values. The sea-level knowledge is entirely in its parameters. So the widget does not need to move group or change contract; it needs to stop being a widget, which lifts this blocker by removing the thing it is about and takes the live count from 46 toward the target of 41 rather than away from it. Blocked on typed-field-schema, which this makes a third caller for.",
-      "whatChanged": "reproject has left the group: src/core.ts groups it under Spatial operations, so its name no longer promises a transform its group denies. slr_extract_import is still under Sources while acquiring nothing. One of the two widgets the claim named is resolved. Re-derived 2026-10-22."
+      "whatChanged": "reproject has left the group: src/core.ts groups it under Spatial operations, so its name no longer promises a transform its group denies. slr_extract_import is still under Sources while acquiring nothing. One of the two widgets the claim named is resolved. Re-derived 2026-10-22. Lifted 2026-10-26 by removal rather than by repair: the widget this gated is retired, and the group question it raised stands on its own in experiment 115 without a blocker attached to it.",
+      "liftedBy": "slr_extract_import retired, 2026-10-26"
     },
     {
       "id": "isochrone-does-not-scale",

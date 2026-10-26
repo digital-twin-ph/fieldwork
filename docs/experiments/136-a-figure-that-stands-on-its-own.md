@@ -179,3 +179,65 @@ naming as a pattern rather than rediscovering a fourth time.
 
 This is the same shape as the key that named marks the figure did not carry: the part a reader
 trusts without checking is the part that must be true.
+
+## A layer is a dataset, and polygon layers cannot grow yet
+
+_Added 2026-10-26._ The practitioner, restating a settled model: *"we discussed before layering
+the map by data set. So if mortality is one table, provider is another, and study area is
+another, those are three layers."*
+
+That is the right unit, and the south London choropleth is where it first bites. Snow's argument
+needs two thematic layers over one boundary — **mortality per sub-district** and **provider per
+sub-district** — so a reader can toggle *how much* against *why*. The data for both is already
+in the example: Table VIII's rates, and Table XII's declared `water_supply`.
+
+Three things stand between here and that figure.
+
+**The map takes one polygon port.** `map_output` declares `['polygons','polygons']`, singular.
+Point layers already grow — `pointInputCount` and `pointPort(i)` give a second point layer its
+own slot — and polygons have no equivalent. Two polygon datasets cannot both be layers today.
+
+**`stack_polygons` flattens.** It is the existing gather widget, and it does
+`layers.flatMap(l=>l.features)`: every source's parts merge into one list, so per-dataset
+identity is gone by the time the map sees it. Collected layers would then share one
+classification, which is wrong the moment one layer is a rate and another a category.
+
+**A provider layer is nominal, and every choropleth here is ordered.** `classifyValues` does
+quantile and equal-interval over numbers; `ORDERED_PALETTE` is a sequential ramp. Shading three
+water companies along light-to-dark asserts that Lambeth is LESS of something than Southwark and
+Vauxhall, which is the misreading the classed figure exists to prevent. The nominal path needs
+distinct categories, the Okabe-Ito `FIGURE_PALETTE` that already exists and is colour-blind
+safe, and a key listing names rather than breaks.
+
+What is already right: a value-classed layer's parts are now **one** entry in the layer control,
+named by the node label, rather than one entry per part — 33 sub-districts are one layer, not 33
+things to switch on and off. That was changed on 2026-10-26 after the control ran off the bottom
+of the map and the first fix only made it scroll, which treated the symptom.
+
+### A map is one mode of displaying layers; a matrix is another
+
+The practitioner, same day: *"map is one mode of displaying layers, the other is a chart where
+two variables are matrixed — e.g., heat map."*
+
+So presentation has two axes, not one. The project already treats **static plot versus
+interactive map** as a choice over one figure; this is the choice above it — **map versus
+matrix** over the same layers. Mortality and provider drawn on a boundary, or crossed against
+each other in cells.
+
+**Why this one matters more than a second chart type.** A matrix of two variables IS the
+contingency table a rate ratio summarises. [139](139-a-rate-ratio-with-an-interval.md) computes
+5.35 (95% CI 3.35 to 8.53) from exactly such a cross-tabulation — deaths and population by
+supply group — and nothing in the application displays it. The number is shown and the table it
+came from cannot be. For an epidemiologist the table is the more familiar object of the two, and
+it is what a reader checks the ratio against.
+
+**What stands in the way, measured 2026-10-26.** `ChartSummary` is one-dimensional:
+`{field, bins}`, a single variable's frequency, which is what an epidemic curve and a decision
+count need. A matrix needs rows, columns and a cell measure, which that shape cannot carry. And
+`chart_output` declares only `['decisions','decisions']` while reaching `polygons` and `series`
+at run time — both already named by `validate:port-contracts` among its undeclared ports, so the
+widget's declared contract is behind its behaviour before any of this is added.
+
+Not a chart type to add to a list, then: a second shape of summary beside the one that exists,
+and the output that draws it.
+

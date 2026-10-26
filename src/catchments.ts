@@ -259,7 +259,12 @@ export function offNetworkSites(value:unknown):OffNetworkSite[]{
   const list=(value as {offNetwork?:unknown})?.offNetwork;
   return Array.isArray(list)?list as OffNetworkSite[]:[];
 }
-export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;features:Catchment[];sites:PointFeature[];method:string;crs:string;boundary?:Boundary;notes:string[];observations?:PointCollection;summary?:{records:number;matched:number;unmatched:number;missingLocation:number;multiple:number;valueField:string};snaps?:{siteId:string;nodeId:string;distanceM:number}[];unconnected?:UnconnectedSite[];offNetwork?:OffNetworkSite[]}
+export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;
+  /** What to call this layer where a reader toggles it. A value-classed layer's parts are
+   *  ONE layer -- 33 sub-districts shaded by a rate are not 33 things to switch on and off
+   *  -- so the control needs a name for the whole rather than one per part. */
+  layerName?:string;
+  features:Catchment[];sites:PointFeature[];method:string;crs:string;boundary?:Boundary;notes:string[];observations?:PointCollection;summary?:{records:number;matched:number;unmatched:number;missingLocation:number;multiple:number;valueField:string};snaps?:{siteId:string;nodeId:string;distanceM:number}[];unconnected?:UnconnectedSite[];offNetwork?:OffNetworkSite[]}
 export const CATCHMENT_TYPES:Record<'voronoi'|'network_input'|'isochrone'|'clip_polygons'|'summarize_points_to_polygon',NodeDefinition>={
   voronoi:{title:'Voronoi catchments',group:'Spatial operations',icon:'◇',color:'teal',description:'Allocate an extent to the nearest site in a metric CRS',inputs:[['area','area'],['sites','points']],output:'polygons'},
   network_input:{title:'Street network',group:'Sources',icon:'⌁',color:'blue',description:'Download OSM by study area or upload a directed graph',inputs:[['area','area']],output:'network'},

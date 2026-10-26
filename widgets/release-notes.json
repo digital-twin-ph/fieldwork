@@ -60,16 +60,19 @@
    "migrationFrom": []
   },
   "alert": {
-   "version": "0.1.0",
-   "released": "2026-10-06",
+   "version": "0.2.0",
+   "released": "2026-10-25",
    "changes": [
     {
-     "kind": "baseline",
-     "description": "First registry snapshot of existing behavior; no implementation change or historical version reconstruction."
+     "kind": "minor",
+     "description": "Retired. A declaration wearing a node type: `{active, date}`, no inputs, and a bespoke `alert` port type whose only consumer was `policy` -- itself retired on 2026-10-12 -- so a live, addable widget was emitting a value for an archived one. Experiment 64 called it one of four genuine deletions on 2026-10-09 and it outlived that by sixteen days behind a blocker that had the reasoning backwards: the blocker treated `fw:heatAlert` naming a domain as the obstacle to generalising this widget, when a RULESET may name a domain and a widget may not, so naming one was the disqualification. The predicate stays in outreach-criteria, which is data. The condition is declared on the node that applies the ruleset asking for it, keyed by the predicate the ruleset names, beside the threshold that moved there already -- `declaredFacts:{'fw:heatAlert':'true','fw:assessmentDate':'2026-07-15'}`. outreach-criteria 1.1.0 drops the `alert` input port with its rules byte-identical to 1.0.0, which is the ledger's own ground for a version: a rule change changes results, a port change changes connections. A saved workflow still carrying an `alert` node runs: the execution reads the connected node when no declaration is present. fw:AlertPort is owl:deprecated with dcterms:isReplacedBy fw:DeclaredFact and a dated skos:changeNote."
     }
    ],
    "breaking": false,
-   "migrationFrom": []
+   "migrationFrom": [],
+   "replacementCandidate": [
+    "urn:fieldwork:widget:apply_ruleset"
+   ]
   },
   "apply_ruleset": {
    "version": "0.1.0",

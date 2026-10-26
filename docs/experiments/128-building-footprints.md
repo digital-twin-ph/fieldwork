@@ -1,6 +1,6 @@
 # 128 · Building footprints
 
-_Created 2026-10-21 · Updated 2026-10-21_
+_Created 2026-10-22 · Updated 2026-10-22_
 
 **Status:** asked. Nothing is built, and nothing has been downloaded. This records a direction and
 what it would have to answer, so the work is chosen from a ledger rather than from memory.

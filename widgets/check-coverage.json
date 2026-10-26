@@ -8,10 +8,10 @@
   },
   "measuredAt": "2026-10-20",
   "counts": {
-    "widgets": 49,
+    "widgets": 48,
     "covered": 21,
     "awaiting": 15,
-    "none": 12,
+    "none": 11,
     "blocked": 1
   },
   "widgets": [
@@ -19,11 +19,6 @@
       "nodeType": "aggregate_points_to_h3_cell",
       "expectation": "parity",
       "check": "21-hex"
-    },
-    {
-      "nodeType": "alert",
-      "expectation": "none",
-      "reason": "A declared status. Nothing is derived from anything."
     },
     {
       "nodeType": "apply_ruleset",

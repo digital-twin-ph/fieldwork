@@ -1,6 +1,6 @@
 # 139 — A rate ratio, with an interval
 
-_Created 2026-10-26 · Updated 2026-10-26_
+_Created 2026-10-25 · Updated 2026-10-25_
 
 **Status:** asked — this record is the design and its admission review, written before the
 implementation. Nothing in `src/` computes a ratio of two rates today.

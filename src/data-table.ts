@@ -64,7 +64,32 @@ export function keyDomains(table:DataTable):Record<string,Scalar[]> {
 
 /** Run evidence for one import. Records the declared key and value fields, whether a unit was
  *  stated, and how many values were absent, so a reader can tell shape from meaning. */
-export function tableReceipt(node:{id:string;params:{label:string;unit?:string}},table:DataTable,runId:string){
+/** The distinct values of each declared column, sorted, with the column that has none named.
+ *
+ *  P3 of experiment 115. The extract widget derived this in the middle of the graph -- operation
+ *  5 of five, annotated onto a value in transit -- and it belongs at the input, where a
+ *  practitioner can still act on what it tells them.
+ *
+ *  Sorted with `localeCompare` so the order is the one a reader would put them in, and stable
+ *  across runs: a distinct set whose order changed between runs would make two identical
+ *  extracts look different. */
+export function distinctValues(table:DataTable,columns:readonly string[]):Record<string,string[]>{
+  const out:Record<string,string[]>={};
+  for(const column of columns){
+    if(!table.keys.includes(column))
+      throw new Error(`"${column}" is not a key column of this table, so it has no distinct values to take. `
+        +`Its key columns are: ${table.keys.join(', ')}.`);
+    const seen=new Set<string>();
+    for(const row of table.rows){
+      const value=row.key[column];
+      if(value!==undefined&&value!==null&&String(value).trim())seen.add(String(value));
+    }
+    out[column]=[...seen].sort((a,b)=>a.localeCompare(b));
+  }
+  return out;
+}
+
+export function tableReceipt(node:{id:string;params:{label:string;unit?:string;distinctValuesFor?:string[]}},table:DataTable,runId:string){
   const entity=`<urn:fieldwork:run:${runId}:table:${node.id}>`,activity=`<urn:fieldwork:run:${runId}:tableinput:${node.id}>`;
   const quote=(value:string)=>JSON.stringify(value);
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcat: <http://www.w3.org/ns/dcat#>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
@@ -75,5 +100,15 @@ export function tableReceipt(node:{id:string;params:{label:string;unit?:string}}
     +`fw:valueField ${quote(table.valueField)}; fw:valueUnitStatus ${quote(table.unit?'stated':'unstated')}`
     +(table.unit?`; fw:valueUnit ${quote(table.unit)}`:'')
     +`; fw:tableRowCount "${table.rowCount}"^^xsd:integer; fw:tableMissingValueCount "${table.missingValueCount}"^^xsd:integer.\n`;
-  return {value:table,receipt:{nodeId:node.id,kind:'computation' as const,facts,rules:'',input:facts,conclusions:[]}};
+  const declared=node.params.distinctValuesFor??[];
+  const distinct=declared.length?distinctValues(table,declared):undefined;
+  const distinctFacts=distinct
+    ?Object.entries(distinct).map(([column,values])=>
+      `${entity} fw:distinctValuesOf [ fw:boundAttribute ${quote(column)}; `
+      +`fw:distinctValueCount "${values.length}"^^xsd:integer; `
+      +values.map(v=>`fw:distinctValue ${quote(v)}`).join('; ')+' ].\n').join('')
+    :'';
+  return {value:distinct?{...table,distinct}:table,
+    receipt:{nodeId:node.id,kind:'computation' as const,facts:facts+distinctFacts,rules:'',
+      input:facts+distinctFacts,conclusions:[]}};
 }

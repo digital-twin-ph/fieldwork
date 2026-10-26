@@ -372,8 +372,24 @@ aimed at external owners [64](experiments/64-widget-streamlining.md) later found
 project owns."* Manila was carrying the domain the whole time while the pack carried the
 governance for carrying it.
 
-**AR6 as a ruleset** — the practitioner, naming the mechanism. Checked against
-`fieldwork/ruleset/1` on 2026-10-25, and the format already has a slot for every constant:
+**AR6 as a ruleset — and this was settled on 2026-10-15, not today.**
+[115](experiments/115-decomposing-the-projection-extract.md) reads `slr_extract_import`
+operation by operation, finds that **none of its five operations is about sea level** — four
+are assertions about a table and one is a derivation over a column — and records the
+practitioner's decisions the same day: P1, the contract is the ruleset's own declaration via
+`inputContract.expects`, so no new widget and no ruleset power to stop a run; P2, provenance is
+an alert rather than a blocker; P3, the distinct values are a knob on the input widget. The
+blocker ledger had already reached the verdict too: *"`slr_` names a pack, not an operation.
+Becoming a ruleset makes that correct rather than needing a fix."* **The build has not started**,
+and 115 still reads `asked`.
+
+On 2026-10-25 the practitioner said *"AR6 as a ruleset"* and Claude re-derived the same
+conclusion from the ruleset format as though it were new, which is the relitigating this
+section is about. The practitioner: *"I remember the AR6 ruleset work as it was a significant
+amount of time."* They were right. What follows is a field mapping that supports 115's P1 and
+does not replace it; the decisions above are the ones to build.
+
+Checked against `fieldwork/ruleset/1` on 2026-10-25, the format has a slot for every constant:
 
 | In `src/sea-level.ts` today | Ruleset field it belongs in |
 | --- | --- |

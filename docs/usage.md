@@ -1,6 +1,6 @@
 # Using Fieldwork
 
-_Created 2026-10-08 · Updated 2026-10-15_
+_Created 2026-10-08 · Updated 2026-10-23_
 
 The practitioner detail that used to live in the README. The
 [README](../README.md) keeps the overview, the published links and the current

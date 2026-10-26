@@ -1,0 +1,56 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:alert",
+  "version": "0.2.0",
+  "nodeType": "alert",
+  "title": "Heat alert",
+  "released": "2026-10-25",
+  "implementationStatus": "retired",
+  "standardization": "example-specific",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['alert']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [],
+    "output": "alert",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": [
+      "urn:fieldwork:widget:apply_ruleset"
+    ]
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Retired. A declaration wearing a node type: `{active, date}`, no inputs, and a bespoke `alert` port type whose only consumer was `policy` -- itself retired on 2026-10-12 -- so a live, addable widget was emitting a value for an archived one. Experiment 64 called it one of four genuine deletions on 2026-10-09 and it outlived that by sixteen days behind a blocker that had the reasoning backwards: the blocker treated `fw:heatAlert` naming a domain as the obstacle to generalising this widget, when a RULESET may name a domain and a widget may not, so naming one was the disqualification. The predicate stays in outreach-criteria, which is data. The condition is declared on the node that applies the ruleset asking for it, keyed by the predicate the ruleset names, beside the threshold that moved there already -- `declaredFacts:{'fw:heatAlert':'true','fw:assessmentDate':'2026-07-15'}`. outreach-criteria 1.1.0 drops the `alert` input port with its rules byte-identical to 1.0.0, which is the ledger's own ground for a version: a rule change changes results, a port change changes connections. A saved workflow still carrying an `alert` node runs: the execution reads the connected node when no declaration is present. fw:AlertPort is owl:deprecated with dcterms:isReplacedBy fw:DeclaredFact and a dated skos:changeNote."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

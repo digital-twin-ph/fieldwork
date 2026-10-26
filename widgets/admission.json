@@ -125,8 +125,8 @@
   "setChanged": {
     "at": "2026-10-25",
     "registry": 57,
-    "live": 49,
-    "retired": 8,
-    "note": "rate_ratio added, with its own D1/D2/D3/D10 in experiment 139. D2 is the one to re-read: it sits beside rate, which computes one group's measure and stops, and beside slr_threshold_comparison, which compares a value to a THRESHOLD rather than two measures to each other. Neither divides. Two palette groups also changed in the same commit -- rate and case_series moved from Summaries to a new Epidemiology group -- which is placement under D1's second axis and not a change of kind. D1, D7 and D10 were last swept against a set that no longer exists."
+    "live": 48,
+    "retired": 9,
+    "note": "alert retired into a declared fact on apply_ruleset. D2 is what closed it, and it was answerable all along: the operation `alert` performed -- declaring a value a ruleset's rules read -- is what apply_ruleset does for the threshold already. Also added the same day: join_table_to_area and rate_ratio, each with its own admission review."
   }
 }

@@ -22,6 +22,7 @@
 import type {EvidenceReference} from './evidence.js';
 import type {PortType} from './types.js';
 import outreachCriteria from '../rulesets/outreach-criteria/1.0.0.json' with {type:'json'};
+import outreachCriteria11 from '../rulesets/outreach-criteria/1.1.0.json' with {type:'json'};
 import accessReview2 from '../rulesets/access-review/2.0.0.json' with {type:'json'};
 import nb06Evidence2 from '../rulesets/nb06-evidence/2.0.0.json' with {type:'json'};
 import accessReview from '../rulesets/access-review/1.0.0.json' with {type:'json'};
@@ -145,7 +146,7 @@ export const rulesetCitation=(ruleset:Ruleset):RulesetCitation=>
 
 // Both versions of each changed ruleset are carried: a saved workflow pins the version that
 // produced its results, and a port type change does not entitle this build to forget the old one.
-const BUNDLED=[outreachCriteria,accessReview,accessReview2,nb06Evidence,nb06Evidence2,extentReview,extentReview2] as unknown as Ruleset[];
+const BUNDLED=[outreachCriteria,outreachCriteria11,accessReview,accessReview2,nb06Evidence,nb06Evidence2,extentReview,extentReview2] as unknown as Ruleset[];
 /** The version of this ruleset a practitioner would be offered today, if it is not the one
  *  pinned. Returns nothing when the pin is current.
  *

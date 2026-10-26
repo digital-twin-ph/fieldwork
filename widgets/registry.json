@@ -74,12 +74,17 @@
     {
       "id": "urn:fieldwork:widget:alert",
       "nodeType": "alert",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/alert/0.1.0.json",
           "sha256": "324e8ecc76c4f5eb086308dcbdfed2d56bd997068c939bc455e4003aa7b510bd"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/alert/0.2.0.json",
+          "sha256": "bc32e5e0f9865f824c5c56eec8e0ef95fce143510583ecbcacb40d3732edac0d"
         }
       ]
     },

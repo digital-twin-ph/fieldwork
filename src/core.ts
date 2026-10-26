@@ -270,17 +270,20 @@ export function exampleWorkflow():Workflow {
     {id:'neighborhoods',type:'point_input',x:35,y:52,params:{label:'Neighborhoods',data:{type:'FeatureCollection',features:[point('oakwood','Oakwood',[-84.455,33.873]),point('northgate','Northgate',[-84.337,33.875]),point('riverside','Riverside',[-84.438,33.812]),point('midtown','Midtown',[-84.37,33.79]),point('eastfield','Eastfield',[-84.277,33.795]),point('brookside','Brookside',[-84.421,33.734]),point('southpark','South Park',[-84.34,33.72]),point('cedar','Cedar Heights',null)]}}},
     {id:'centers',type:'point_input',x:35,y:229,params:{label:'Cooling centers',data:{type:'FeatureCollection',features:[point('library','Central Library',[-84.367,33.79]),point('community','West Community Hall',[-84.426,33.823])]}}},
     {id:'nearest',type:'measure_distance',x:323,y:90,params:{unit:'kilometres'}},
-    {id:'alert',type:'alert',x:323,y:284,params:{active:true,date:'2026-07-15'}},
     // The template names the ruleset rather than the retired `policy` type, so the shipped example
     // does not depend on a migration running. The threshold is the ruleset's declared parameter now,
     // with its unit on the declaration instead of buried in a field name.
     {id:'criteria',type:'apply_ruleset',x:605,y:151,params:{label:'Outreach criteria',
-      ruleset:pinnedRuleset('urn:fieldwork:ruleset:outreach-criteria','1.0.0'),parameters:{threshold:5}}},
+      ruleset:pinnedRuleset('urn:fieldwork:ruleset:outreach-criteria','1.1.0'),parameters:{threshold:5},
+      // The condition the ruleset asks for, declared on the node that applies it. It was a
+      // separate `alert` widget until 2026-10-25 -- a parameter wearing a node type, titled for
+      // a domain, emitting a port type only a retired widget consumed.
+      declaredFacts:{'fw:heatAlert':'true','fw:assessmentDate':'2026-07-15'}}},
     {id:'map',type:'map_output',x:879,y:70,params:{label:'Outreach map',inputMode:'decisions'}},
     {id:'table',type:'table_output',x:879,y:249,params:{label:'Decision table',inputMode:'decisions'}}
   ],edges:[
     {id:'e1',from:'neighborhoods',to:'nearest',port:'points'}, {id:'e2',from:'centers',to:'nearest',port:'candidates'},
-    {id:'e3',from:'nearest',to:'criteria',port:'distances'}, {id:'e4',from:'alert',to:'criteria',port:'alert'},
+    {id:'e3',from:'nearest',to:'criteria',port:'distances'},
     {id:'e5',from:'criteria',to:'map',port:'decisions'},
     {id:'e6',from:'criteria',to:'table',port:'decisions'}]};
 }
@@ -1072,9 +1075,19 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         }
         switch(projectionOf(pinned.id,pinned.version)){
           case 'outreach':{
-            const n3=makeN3(inputs.distances.rows,inputs.alert,bound.threshold,pinned.version);
+            // THE CONDITION IS DECLARED HERE, not wired in from a widget of its own. `fw:heatAlert`
+            // is named by the ruleset's inputContract, so this node holds a value for it exactly
+            // as it holds one for the threshold. A saved workflow may still carry an `alert` node
+            // on the `alert` port; it is read when no declaration is present, which is the
+            // adapter rather than a second way of saying the same thing.
+            const stated=node.params.declaredFacts?.['fw:heatAlert'];
+            const condition=stated!==undefined||!inputs.alert
+              ?{active:stated==='true'?true:stated==='false'?false:null,
+                date:node.params.declaredFacts?.['fw:assessmentDate']??''}
+              :inputs.alert;
+            const n3=makeN3(inputs.distances.rows,condition,bound.threshold,pinned.version);
             const conclusions=await reasoner(n3.input);
-            value=outreachProjection(inputs.distances,inputs.alert,bound.threshold,conclusions);
+            value=outreachProjection(inputs.distances,condition,bound.threshold,conclusions);
             receipts.push({nodeId:node.id,...n3,conclusions});break;
           }
           case 'polygon-extent':{

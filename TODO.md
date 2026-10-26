@@ -567,6 +567,44 @@ teaches a method, and two things have now been found to need one:
 Not urgent against the items above, and recorded now because it has been
 implied twice in two days and never written down.
 
+**The Epi Info command set is a coverage checklist for the palette.** _Raised 2026-10-26: "if
+you look at the Results panel of Epi Info AI, it is like the outputs of each Epi Info command
+that has an input and output. The commands also carry parameters (our knobs) to modify the
+outputs."_ That is a structural correspondence, not an analogy: **a command is a widget** —
+input, output, and parameters that are our knobs — and a results panel is the stream of their
+outputs.
+
+What it buys is a palette gap analysis grounded in a mature tool instead of invented. The 48
+modules in `epi-info-ai/wasm/app/programming/` split into `classic-*`, the original command set
+ported, and `epi-ai-*`, the browser-era additions (GIS, record linkage, space-time clustering,
+data quality). Read against this palette, FROM FILENAMES ONLY and therefore a list to verify
+rather than a finding:
+
+| Command | Here |
+| --- | --- |
+| `SELECT` | `select_rows`, built 2026-10-26 |
+| `IF`/`THEN` | `apply_ruleset` authored rules |
+| `DEFINE`/`ASSIGN` | `derive_value`, partial — no computed column across tables |
+| `GRAPH` | `chart_output` |
+| **`MERGE`, `RELATE`, `MATCH`** | **nothing** |
+| `TABLES` | counts and margins; no analysis |
+| `FREQ`, `MEANS`, `SORT`, `GROUP`, `RECODE`, `LOGISTIC` | nothing |
+
+**The join is the headline.** What this project has recorded as a single missing capability since
+0.12.0 — nothing joins two tables on a shared column — is THREE commands in Epi Info. It
+blocks the Manila example from reporting a projection, blocks the people-denominated 2x2 from
+being built here, and is the reason both are prepared outside. It is a standard operation, not a
+local wish.
+
+**And the reverse reading is worth as much.** `classic-command-parity.ts` suggests that project
+tracks parity with the original, and the practitioner has noted it made DEPRECATION decisions
+about the original commands. Which operations a mature epidemiological tool decided to drop, and
+why, bears directly on a palette standing at 49 against a target of 41. Read it before the next
+retirement, not after.
+
+Do not treat the table above as scope. Several of those commands are large (`LOGISTIC` is
+regression), and the checklist's value is knowing what is absent, not committing to fill it.
+
 **A 2x2 invites a reading Fieldwork cannot yet support.** _Raised 2026-10-26: "if you look at
 how 2x2 tables are reported in Epi Info, that's what they will look at."_ Checked against
 `epi-info-ai`'s `Table2x2Result` contract, which returns **totals** (exposed, unexposed, cases,

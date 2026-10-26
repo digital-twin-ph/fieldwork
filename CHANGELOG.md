@@ -68,7 +68,7 @@ this section covers the work of 2026-10-25 and 26._
   `DEFINE` and `ASSIGN` from `IF`, and only the `IF` was here: rules conclude a *term* about a
   record and never a number computed from other numbers. **Derive a value** computes one, once per
   group of rows sharing the other key columns — a table here is long, so the two numbers combined
-  are two rows and not two columns. **Keep rows by value** then selects what a figure should show.
+  are two rows and not two columns. **Select rows by value** then selects what a figure should show.
   Together they build South London's 2×2 **in** the application: `houses` minus `deaths` gives
   `houses without a death`, and keeping those two drops the total they partition. Each row sums to
   Snow's published house count. The assumption rides on the node's own label — his 1,263 are

@@ -38,8 +38,6 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/isochrone.md>.
 <urn:fieldwork:widget:join_table_to_area> a fw:WidgetDefinition; fw:nodeType "join_table_to_area"; rdfs:label "Join a table to the study area";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/join_table_to_area.md>.
-<urn:fieldwork:widget:keep_rows> a fw:WidgetDefinition; fw:nodeType "keep_rows"; rdfs:label "Keep rows by value";
-  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/keep_rows.md>.
 <urn:fieldwork:widget:map_output> a fw:WidgetDefinition; fw:nodeType "map_output"; rdfs:label "Map";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_output.md>.
 <urn:fieldwork:widget:mean_center> a fw:WidgetDefinition; fw:nodeType "mean_center"; rdfs:label "Mean center".
@@ -62,6 +60,8 @@
 <urn:fieldwork:widget:reachable_nodes> a fw:WidgetDefinition; fw:nodeType "reachable_nodes"; rdfs:label "Reachable junctions".
 <urn:fieldwork:widget:reproject> a fw:WidgetDefinition; fw:nodeType "reproject"; rdfs:label "Reproject points".
 <urn:fieldwork:widget:sample_raster> a fw:WidgetDefinition; fw:nodeType "sample_raster"; rdfs:label "Sample raster at points".
+<urn:fieldwork:widget:select_rows> a fw:WidgetDefinition; fw:nodeType "select_rows"; rdfs:label "Select rows by value";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/select_rows.md>.
 <urn:fieldwork:widget:slr_extract_import> a fw:WidgetDefinition; fw:nodeType "slr_extract_import"; rdfs:label "Sea-level projection extract".
 <urn:fieldwork:widget:slr_site_assignment> a fw:WidgetDefinition; fw:nodeType "slr_site_assignment"; rdfs:label "Assign projection site".
 <urn:fieldwork:widget:slr_threshold_comparison> a fw:WidgetDefinition; fw:nodeType "slr_threshold_comparison"; rdfs:label "Compare level to elevation".

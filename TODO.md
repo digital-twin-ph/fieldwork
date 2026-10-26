@@ -22,7 +22,7 @@ the same thing; one that does not gets no totals rather than a wrong one". Snow'
 none, correctly: as imported it holds houses beside deaths, and a total across those is
 meaningless.
 
-But `keep_rows` leaves `deaths` beside `houses without a death`, and those **both count houses**.
+But `select_rows` leaves `deaths` beside `houses without a death`, and those **both count houses**.
 The table is now commensurable and nothing in it records that, so the figure an epidemiologist
 reads loses exactly the margins they read first. The rule is right in general and wrong here.
 
@@ -54,7 +54,7 @@ still not an inundation model.
 **What blocks it is one named limit.** The extract is keyed `site_id, scenario, basis, family,
 year, quantile`; the assignment is keyed `point_id, projection_site`. Carrying the value across
 is a join of two tables on a shared column, which the 0.12.0 release notes already record as
-missing. Slicing the extract to one scenario, year, quantile and family is `keep_rows`. The
+missing. Slicing the extract to one scenario, year, quantile and family is `select_rows`. The
 example stops exactly where the application stops.
 
 Until it reports a value, the note should say the projections are validated but not reported —

@@ -105,7 +105,7 @@
       "widgets": 49,
       "added": [
         "derive_value",
-        "keep_rows"
+        "select_rows"
       ],
       "note": "ARITHMETIC OVER A TABLE, AND SELECTION OF ITS ROWS -- two functions the framework did not have. Rules conclude a TERM about a record and never a number computed from other numbers; `authoredProjection` says so in place, \"the value field is untouched\". Nothing selected rows of a table either: `clip_points_to_area` filters points by geometry and had no equivalent for a table. The cost was already recorded as a validation limit in the 0.12.0 release notes -- South London's contingency table is prepared OUTSIDE the application because nothing derives a column from others -- so the 2x2 that carries the example's argument was not reproducible in the tool that draws it. Both are admitted under D1: a primitive is exposed when a workflow needs it. WHY THE TOTAL RISES RATHER THAN SOMETHING ELSE FALLING: nothing here was traded away, and the honest reading is that 49 against a target of 41 is worse than 47 was. The two sea-level widgets that would pay for them are named in TODO.md and were deferred the same day, at the practitioner's direction, to finish South London first. That debt is carried here rather than settled by arithmetic. Kept apart rather than welded into one widget by the practitioner's call: deriving a value is arithmetic and keeping rows is a selection, and a widget doing both would read naturally only for subtraction."
     }

@@ -37,7 +37,7 @@ and `measure` is the column holding the names of the values to combine.
 | **Name for the derived value** | What the new rows are called, e.g. `houses without a death`. |
 
 The values are offered as a list wherever the chain ends in a table this canvas holds, including
-through an earlier *Derive a value* or *Keep rows by value*. Where it does not, you type them.
+through an earlier *Derive a value* or *Select rows by value*. Where it does not, you type them.
 
 ## What it refuses, and why
 

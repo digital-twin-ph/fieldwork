@@ -53,7 +53,7 @@ interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;s
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
-import {deriveValue,keepRows,OPERATORS} from './derive-value.js';
+import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
@@ -93,7 +93,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   derive_value:{title:'Derive a value',group:'Summaries',icon:'∓',color:'teal',
     description:'Compute a new value in a key column from two of its existing values, group by group',
     inputs:[['records','table']],output:'table'},
-  keep_rows:{title:'Keep rows by value',group:'Summaries',icon:'⊂',color:'teal',
+  select_rows:{title:'Select rows by value',group:'Summaries',icon:'⊂',color:'teal',
     description:'Keep only the rows whose key column holds one of the values you name, in that order',
     inputs:[['records','table']],output:'table'},
   rate:{title:'Rate with a denominator',group:'Epidemiology',icon:'÷',color:'teal',description:'Divide counts by a declared population at risk, stating what the denominator counts',inputs:[['records','points']],output:'table'},
@@ -962,10 +962,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           method:`${node.params.left} ${OPERATORS[node.params.operator].label} ${node.params.right}`,
           derived:result.derived,gaps:result.gaps} as unknown as Receipt);
         break;}
-      case 'keep_rows':{
+      case 'select_rows':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;
         if(table?.kind!=='data-table')throw new Error('Connect a table: this step keeps rows of one.');
-        const result=keepRows(table,node.params.keyColumn,node.params.values);
+        const result=selectRows(table,node.params.keyColumn,node.params.values);
         value=result.table as unknown as DisplayValue;
         receipts.push({nodeId:node.id,kind:'computation',
           method:`kept ${node.params.values.join(', ')} of ${node.params.keyColumn}`,

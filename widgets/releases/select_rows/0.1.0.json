@@ -1,15 +1,15 @@
 {
   "schema": "fieldwork/widget-release/1",
-  "id": "urn:fieldwork:widget:keep_rows",
-  "nodeType": "keep_rows",
+  "id": "urn:fieldwork:widget:select_rows",
+  "nodeType": "select_rows",
   "version": "0.1.0",
-  "title": "Keep rows by value",
+  "title": "Select rows by value",
   "released": "2026-10-26",
   "implementationStatus": "implemented",
   "standardization": "shared",
   "configuration": {
     "typescriptFile": "src/types.ts",
-    "typescriptType": "ParamsByType['keep_rows']",
+    "typescriptType": "ParamsByType['select_rows']",
     "planClass": "http://www.w3.org/ns/prov#Plan",
     "validationStatus": "application-only",
     "shaclShapes": []

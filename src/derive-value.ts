@@ -14,7 +14,7 @@
  *  between them. So the operand is a VALUE OF A KEY COLUMN, the grouping is every other key,
  *  and the result is a new row rather than a new column.
  *
- *  That is also why `keepRows` sits beside it rather than inside it. Deriving
+ *  That is also why `selectRows` sits beside it rather than inside it. Deriving
  *  `houses without a death` from `houses - deaths` leaves `houses` in the table, and `houses` is
  *  the total that the other two partition: a grid of all three double-counts, and its totals row
  *  is wrong. Removing it is a SELECTION, which is a different operation from arithmetic and is
@@ -88,14 +88,14 @@ export function deriveValue(table:DataTable,request:DeriveRequest):DeriveResult 
     derived:derivedRows.length,gaps};
 }
 
-export interface KeepResult {table:DataTable; kept:number; dropped:number; absent:string[]}
+export interface SelectResult {table:DataTable; kept:number; dropped:number; absent:string[]}
 
 /** Keeps the rows whose `keyColumn` holds one of `values`, in the order named.
  *
  *  A named value the table does not have is reported rather than ignored: asking for a row that
  *  is not there is usually a typo or a changed upstream table, and silently returning fewer rows
  *  than asked for is how a figure ends up missing a category nobody noticed. */
-export function keepRows(table:DataTable,keyColumn:string,values:string[]):KeepResult {
+export function selectRows(table:DataTable,keyColumn:string,values:string[]):SelectResult {
   if(!table.keys.includes(keyColumn))
     throw new Error(`This table has no "${keyColumn}" column. Its columns are ${table.keys.join(', ')}.`);
   const wanted=values.map(value=>value.trim()).filter(Boolean);

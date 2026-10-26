@@ -126,11 +126,6 @@
       "computes": "Which boundary part each table row names, under a declared normalisation, and the value each part carries as a result. An independent implementation recomputes the matched and unmatched counts and the value on every part: 32 of 32 sub-districts match on Snow's files after folding punctuation, 23 of 32 on the raw strings, and 33 parts carry a rate because Streatham is two polygons."
     },
     {
-      "nodeType": "keep_rows",
-      "expectation": "none",
-      "reason": "Selects rows already present and computes nothing: every value it emits was read from the table it was given, unchanged. What could be wrong is which rows survive and in what order, which the unit tests assert directly rather than by recomputation."
-    },
-    {
       "nodeType": "map_output",
       "expectation": "none",
       "reason": "Draws what it is given and derives no value."
@@ -209,6 +204,11 @@
       "expectation": "parity",
       "check": null,
       "computes": "Reads a raster value at each point's position."
+    },
+    {
+      "nodeType": "select_rows",
+      "expectation": "none",
+      "reason": "Selects rows already present and computes nothing: every value it emits was read from the table it was given, unchanged. What could be wrong is which rows survive and in what order, which the unit tests assert directly rather than by recomputation."
     },
     {
       "nodeType": "slr_site_assignment",

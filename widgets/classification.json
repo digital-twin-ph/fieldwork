@@ -111,10 +111,6 @@
       "classification": "standard"
     },
     {
-      "nodeType": "keep_rows",
-      "classification": "standard"
-    },
-    {
       "nodeType": "map_output",
       "classification": "standard"
     },
@@ -187,6 +183,10 @@
     },
     {
       "nodeType": "sample_raster",
+      "classification": "standard"
+    },
+    {
+      "nodeType": "select_rows",
       "classification": "standard"
     },
     {

@@ -44,15 +44,18 @@ test('the water-company 2x2 is derived from Table IX rather than imported as an 
   await expect(grid).toContainText('1263');
   await expect(grid).toContainText('38783');  // 40,046 houses less 1,263 deaths
   await expect(grid).toContainText('26009');  // 26,107 less 98
-  // `houses` was the total the pair partitions, and keeping the two outcomes dropped it, so the
-  // figure holds no column that counts the same houses twice.
-  await expect(grid).not.toContainText('40046');
-  await expect(grid).not.toContainText('256423');
+  // `houses` was the total the pair partitions, and selecting the two outcomes dropped it as a
+  // COLUMN -- 40,046 reappears below as a row total, which is the arithmetic working.
+  // supplier | deaths | houses without a death | Total -- and no bare `houses` column.
+  await expect(grid.locator('thead th')).toHaveCount(4);
 
-  // NO MARGINS, and that is the stated rule rather than an oversight: totals are drawn only where
-  // the table states a unit, and Table IX states none because as imported it mixes houses with
-  // deaths. The selection makes the two remaining measures commensurable and nothing says so --
-  // a unit belongs to the table, and no step restates one. Recorded in TODO.md.
-  await expect(grid).not.toContainText('Total');
+  // THE MARGINS, which is what an epidemiologist reads first. Table IX states no unit -- as
+  // imported it mixes houses with deaths -- so the output carries the claim that these two
+  // measures count the same thing, and the figure says underneath that somebody asserted it.
+  await expect(grid).toContainText('Total');
+  await expect(grid).toContainText('40046');  // 1,263 + 38,783, the published house count
+  await expect(grid).toContainText('26107');  // 98 + 26,009
+  await expect(page.locator('#data-table-view'))
+    .toContainText('told these values count the same thing');
   expect(errors).toEqual([]);
 });

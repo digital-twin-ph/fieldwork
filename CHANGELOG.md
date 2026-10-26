@@ -60,6 +60,14 @@ this section covers the work of 2026-10-25 and 26._
   that copy is fed identically. The eight with their own fact generators still refuse to be
   copied, and still say why. Resetting the example puts the step back.
 
+- **A 2×2 can show its margins, when somebody vouches for them.** A grid totalled only where the
+  table stated a unit, which is a weak proxy for the claim that matters: South London's mortality
+  table states *"people or deaths, as the measure says"* — prose denying that its values are
+  commensurable, read as granting it — while Snow's Table IX states nothing and, once two
+  house-counting measures are selected, has the property and cannot say so. A tabular output can
+  now assert it, and the figure says underneath that it was asserted rather than checked. The
+  per-measure unit this really wants is recorded, not built.
+
 - **A grid is drawn only where both axes are categories.** Density was not enough: Manila's 194
   facilities all take one gauge, so the assignment is 194 rows against a single column and
   perfectly dense, and drawing it as a grid hid the distance column a reader came for.

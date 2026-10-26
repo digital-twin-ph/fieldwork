@@ -113,6 +113,16 @@ export interface Ruleset {
      *  parameter. `thresholdKm` and `thresholdMin` were one kind of thing in two units with the
      *  unit buried in the name; the ruleset declares one parameter with its unit attached. */
     parameterFrom:Record<string,string>;
+    /** Which column of the input supplies which declared predicate, and how to read it.
+     *
+     *  `parameterFrom` one field over, and the piece that lets a bundled ruleset use the
+     *  projection an authored one already uses. Without it the interpreter needs a branch per
+     *  program -- four of them in `src/core.ts` on 2026-10-25 -- which is what makes adding a
+     *  ruleset a code change rather than a data change. Experiment 65.
+     *
+     *  Absent on a ruleset whose facts come from a bespoke generator; those are the four. */
+    fieldFrom?:{attribute:string; predicate:string; kind:'number'|'boolean'|'term';
+      label?:string; unitLabel?:string}[];
     portsNote?:string};
   outputVocabulary:Record<string,unknown>;
   basis:RulesetBasis;

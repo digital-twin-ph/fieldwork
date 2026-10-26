@@ -197,5 +197,11 @@
       }
     ]
   },
-  "changeNote": "1.1.0 drops the `alert` input port. The rules are byte-identical to 1.0.0 and every conclusion it draws is the same: this version changes CONNECTIONS, not results, which is the ledger's own ground for a new version while keeping the old one. `fw:heatAlert` is still expected and still read by the rules; it is now supplied as a fact declared on the node that applies the ruleset, beside the threshold, instead of arriving from a widget whose whole purpose was to carry it. That widget was titled 'Heat alert', sat under Sources, and emitted a port type whose only consumer -- `policy` -- had itself been retired on 2026-10-12. 1.0.0 is kept because saved workflows pin it and because it reproduces the shipped conclusions."
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "1.1.0 drops the `alert` input port. The rules are byte-identical to 1.0.0 and every conclusion it draws is the same: this version changes CONNECTIONS, not results, which is the ledger's own ground for a new version while keeping the old one. `fw:heatAlert` is still expected and still read by the rules; it is now supplied as a fact declared on the node that applies the ruleset, beside the threshold, instead of arriving from a widget whose whole purpose was to carry it. That widget was titled 'Heat alert', sat under Sources, and emitted a port type whose only consumer -- `policy` -- had itself been retired on 2026-10-12. 1.0.0 is kept because saved workflows pin it and because it reproduces the shipped conclusions.",
+      "incompatibility": "The `alert` input port is gone, so a node pinned to 1.0.0 and wired from an alert widget is wired to a port 1.1.0 does not declare. Moving is a rewiring job, not a click: delete that connection and state the condition on the node instead, as `declaredFacts` keyed by the predicate this ruleset names -- fw:heatAlert, and fw:assessmentDate for the date it applies to. Nothing else changes: the rules are byte-identical to 1.0.0 and every conclusion is the same. Staying on 1.0.0 keeps working, and the alert widget it needs is retired, so new work cannot be built that way."
+    }
+  ]
 }

@@ -1073,6 +1073,37 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges,dataIssues));
           break;
         }
+        // A RULESET THAT DECLARES ITS COLUMNS NEEDS NO BRANCH HERE.
+        //
+        // The widget is an interpreter and the ruleset is the program (experiment 65), and an
+        // interpreter that must be edited to run a new program is not one. The four cases below
+        // are exactly that edit, each projecting one ruleset's conclusions in its own way, while
+        // `authoredProjection` -- which rules a practitioner writes have always gone through --
+        // is the general answer: conclusions become key columns on a table or properties on a
+        // point layer, and the value field is left alone.
+        //
+        // Declaring `inputContract.fieldFrom` is what lets a bundled ruleset use it. The four
+        // below have bespoke fact generators and keep their branches until each is converted;
+        // nothing new needs one.
+        const bindings=resolveRuleset(pinned.id,pinned.version).inputContract.fieldFrom;
+        if(bindings?.length){
+          const port=node.params.ruleset?.inputs[0]?.[0];
+          const subjects=port?(inputs as unknown as Record<string,unknown>)[port]:undefined;
+          if(!subjects)throw new Error(`${pinned.title} reads its facts from the `
+            +`"${port??'first'}" input, and nothing is connected to it.`);
+          const typed=subjects as PointCollection|import('./data-table.js').DataTable;
+          const facts=authoredFacts(typed,bindings);
+          const rules=bindParameters(resolveRuleset(pinned.id,pinned.version),bound);
+          const conclusions=await reasoner(facts+'\n'+rules);
+          const dataIssues=authoredDataIssues(typed,bindings);
+          const judged=authoredProjection(typed,bindings,conclusions);
+          value=({...(judged.table??{type:'FeatureCollection',features:judged.features,
+            rows:judged.rows,kind:'ruleset-applied',centers:[],method:pinned.title}),
+            ...(dataIssues.length?{dataIssues,issuedBy:node.id}:{})}) as unknown as DisplayValue;
+          receipts.push({nodeId:node.id,kind:'computation',facts,rules,input:facts+'\n'+rules,
+            conclusions,ruleset:rulesetCitation(resolveRuleset(pinned.id,pinned.version))});
+          break;
+        }
         switch(projectionOf(pinned.id,pinned.version)){
           case 'outreach':{
             // THE CONDITION IS DECLARED HERE, not wired in from a widget of its own. `fw:heatAlert`

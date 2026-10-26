@@ -112,3 +112,41 @@ and so cannot be drawn faithfully yet.
 
 A rule that fires on all three equally has learned nothing. The interesting outcome is a
 rule reporting `inapplicable` on one and `failed` on another.
+
+## A source note that exists is not a source note that discharges an obligation
+
+_Added 2026-10-26._
+
+`FigureStatesItsSource` passes when `sourceNote` is non-empty and checks nothing else, so a
+figure drawn from a dataset whose licence obliges three citations passes with a note reading
+"my data". The citations are on the receipt; the artifact that leaves the application need not
+carry them.
+
+The practitioner, 2026-10-26, on why that matters more than it looks:
+
+> It's something the authors require of users, and if the users present to an audience they
+> will be held accountable by other scientists to that provenance requirement.
+
+That is the measure this rule is missing. [115](115-decomposing-the-projection-extract.md)'s
+P2 made provenance an alert rather than a blocker because *no provenance field changes a
+computed number*, which is true of the arithmetic and false of the obligation: a figure
+published without its citations is not wrong, and its author cannot answer the first question
+a scientist asks of it. The costs are different in kind, and only the first one was measured.
+
+What would close it, in two pieces that should not be run together. The practitioner, the same
+day: *"we can make the citation appear in the figure as well, but that's a provenance piping
+problem."*
+
+**The rule** can ask whether the obligations the run carries appear in the note a reader sees,
+rather than whether a note exists. That is a change to one conformance check.
+
+**The piping** is the larger and separate thing. The run knows — a ruleset citation is on every
+receipt and a worked example declares its licence terms per file — and the figure does not:
+`mapSourceNote` is a parameter a practitioner types, and the renderer is handed a value, not the
+run that produced it. Carrying run-level provenance to the thing that draws the figure is its own
+problem, with its own failure modes (which of several inputs' obligations, and a note that
+rewrites itself under an author who edited it). Fixing the rule without the piping would mean
+refusing figures for an obligation the application gives no way to discharge.
+
+This is the same shape as the key that named marks the figure did not carry: the part a reader
+trusts without checking is the part that must be true.

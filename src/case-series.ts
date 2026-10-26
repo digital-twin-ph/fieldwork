@@ -111,8 +111,11 @@ export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSer
     firstPeriod:keys[0]??null,lastPeriod:keys[keys.length-1]??null};
 }
 
+/** The key column a case-series table carries. Named for the same reason as RATE_TABLE_KEYS. */
+export const SERIES_TABLE_KEYS=['period'] as const;
+
 export function seriesTable(series:CaseSeries):SeriesTable{
-  return {kind:'data-table',keys:['period'],valueField:'cases',
+  return {kind:'data-table',keys:[...SERIES_TABLE_KEYS],valueField:'cases',
     rows:series.bins.map(bin=>({key:{period:bin.key},value:bin.count})),
     rowCount:series.bins.length,missingValueCount:0,series};
 }

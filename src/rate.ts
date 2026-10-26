@@ -145,9 +145,12 @@ export function fromTable(table:DataTable,measureKey:string):{id:string;properti
   return [...subjects.values()];
 }
 
+/** The key column a rate table carries. Named so an Inspector can offer it without a run. */
+export const RATE_TABLE_KEYS=['group'] as const;
+
 export function rateTable(result:RateResult):DataTable&{rate:RateResult}{
   const {multiplier,denominatorUnit}=result.options;
-  return {kind:'data-table',keys:['group'],valueField:`per ${multiplier.toLocaleString()} ${denominatorUnit}`,
+  return {kind:'data-table',keys:[...RATE_TABLE_KEYS],valueField:`per ${multiplier.toLocaleString()} ${denominatorUnit}`,
     rows:result.rows.map(row=>({key:{group:row.label},value:row.rate})),
     rowCount:result.rows.length,missingValueCount:result.suppressed,rate:result};
 }

@@ -343,3 +343,53 @@ export function markPath(shape:LayerShape,x:number,y:number,r:number):string{
     default:return `M${(x-r).toFixed(1)},${y.toFixed(1)}a${r},${r} 0 1,0 ${2*r},0a${r},${r} 0 1,0 ${-2*r},0Z`;
   }
 }
+
+/** CLASSING A MEASURE FOR A CHOROPLETH, and saying which method was used.
+ *
+ *  The method is not a detail of rendering: it changes what a reader concludes. Quantile classes
+ *  hold equal numbers of areas, so they show rank clearly and exaggerate a narrow spread --
+ *  five classes look dramatic even when the highest rate is barely above the lowest. Equal
+ *  intervals preserve magnitude, so a genuine outlier stays visible, and leave classes empty when
+ *  the distribution is skewed, which most disease rates are.
+ *
+ *  Neither is correct in general, so neither is chosen in general: the figure states the method
+ *  and the breaks, and a reader who disagrees can see what to disagree with. Brewer's rule of
+ *  thumb is that five classes is the practical ceiling for reading a sequential scheme, which is
+ *  why `ORDERED_PALETTE` has five.
+ *
+ *  References: Brewer C A, *Designing Better Maps*, on class count and sequential schemes;
+ *  Slocum et al, *Thematic Cartography and Geovisualization*, on the choice of method. */
+export type ClassMethod='quantile'|'equal-interval';
+export interface ValueClasses {
+  method:ClassMethod; classes:number;
+  /** Upper bound of each class, ascending. One per class. */
+  breaks:number[];
+  /** How many values fell in each class, so an empty class is visible rather than implied. */
+  counts:number[];
+  colours:string[];
+  /** The class a value falls in, or null where there is no value: absent is not a class. */
+  classOf:(value:number|null|undefined)=>number|null;
+}
+export function classifyValues(values:(number|null|undefined)[],
+  options:{method?:ClassMethod; classes?:number}={}):ValueClasses|null{
+  const method=options.method??'quantile';
+  const present=values.filter((v):v is number=>typeof v==='number'&&Number.isFinite(v)).sort((a,b)=>a-b);
+  if(!present.length)return null;
+  const classes=Math.max(1,Math.min(options.classes??ORDERED_PALETTE.length,present.length));
+  const lowest=present[0],highest=present[present.length-1];
+  const breaks=method==='equal-interval'
+    ? Array.from({length:classes},(_,i)=>lowest+(highest-lowest)*(i+1)/classes)
+    // The value at each quantile position, taken from the data rather than interpolated, so every
+    // break is a number that actually occurs and a reader can find it in the table.
+    : Array.from({length:classes},(_,i)=>present[Math.min(present.length-1,
+        Math.ceil((i+1)*present.length/classes)-1)]);
+  const colours=orderedSteps(classes);
+  const classOf=(value:number|null|undefined)=>{
+    if(typeof value!=='number'||!Number.isFinite(value))return null;
+    for(let i=0;i<breaks.length;i++)if(value<=breaks[i])return i;
+    return breaks.length-1;
+  };
+  const counts=Array.from({length:classes},()=>0);
+  for(const value of present){const at=classOf(value);if(at!==null)counts[at]++;}
+  return {method,classes,breaks,counts,colours,classOf};
+}

@@ -149,6 +149,8 @@ export interface SelectorElements {
   '#reset-example':HTMLButtonElement;
   '#download-node-raster':HTMLButtonElement;
   '#map-download-png':HTMLButtonElement;
+  '#join-key':HTMLSelectElement;
+  '#join-normalisation':HTMLSelectElement;
   '#tidy-button':HTMLButtonElement;
   '#series-orientation':HTMLSelectElement;
 }

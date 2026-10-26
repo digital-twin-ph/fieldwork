@@ -1,0 +1,92 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:join_table_to_area",
+  "nodeType": "join_table_to_area",
+  "version": "0.1.0",
+  "title": "Join a table to the study area",
+  "released": "2026-10-25",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['join_table_to_area']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      },
+      {
+        "name": "area",
+        "type": "area"
+      }
+    ],
+    "output": "polygons"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:KeyedAreaJoin",
+        "file": "ontology/fieldwork.ttl"
+      },
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:PolygonDataset",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "The receipt asserts the key column, the declared normalisation and every condition the join met by name, so a reader can see that a part matched only because punctuation was folded. No SHACL shape yet: the conditions are reported as findings rather than refused, because a part with no row is a fact about the data and not a malformed input.",
+    "emits": {
+      "classes": [
+        "JoinFinding",
+        "KeyedAreaJoin",
+        "PolygonDataset"
+      ],
+      "properties": [
+        "boundaryPartCount",
+        "findingCode",
+        "findingSubject",
+        "joinFinding",
+        "joinKeyField",
+        "joinNormalisation",
+        "joinValueField",
+        "matchedPartCount",
+        "matchedRowCount",
+        "sharedPartCount",
+        "tableRowCount",
+        "unmatchedPartCount",
+        "unmatchedRowCount"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/area-join.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/area-join.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Puts a value from each row of a table onto the part of a study area that row names, matching on a key column by equality after a declared normalisation. One feature per part, undissolved, each carrying the value in an open properties bag. Four conditions are reported by name rather than folded into a count: a part no row names, a row naming no part, two raw keys that normalise together, and two parts sharing one name. See docs/experiments/138-a-table-and-a-boundary-are-two-tables.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Checked against the real transcription and the real boundaries of Snow's South London rather than a fixture: 23 of 32 sub-districts match on the published strings and 32 of 32 after folding punctuation and spacing, and no two names collapse together. Unit checks cover each of the four reported conditions, including two parts of one name both taking a rate. Equality after normalisation is string comparison; nothing here establishes that the normalisation generalises beyond a pair of files whose nine differences are all punctuation, nor that a choropleth of the joined values is a sound reading of them."
+  }
+}

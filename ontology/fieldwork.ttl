@@ -1209,6 +1209,39 @@ fw:DataTable owl:disjointWith fw:PointDataset.
 # set of words for the same thing. A candidate is a pair the blocking rule retained; a class is
 # what the thresholds proposed; a decision is what a person answered where the proposal was not
 # confident enough to act on.
+# A table and a boundary are two tables, one of which has a geometry column. Experiment 138.
+fw:KeyedAreaJoin a owl:Class; rdfs:subClassOf prov:Activity;
+  rdfs:label "Keyed area join";
+  rdfs:comment "Putting a value from each row of a table onto the part of a study area that row names. Matching is EQUALITY after a declared normalisation: no similarity, no threshold, and no part is matched by resemblance. Distinct from record linkage, which decides whether two records are one subject and may ask a person; this decides nothing and reports every condition it met.".
+fw:JoinFinding a owl:Class;
+  rdfs:label "Join finding";
+  rdfs:comment "A condition the join met and did not resolve: a part no row names, a row naming no part, two raw keys that normalise together, or two parts sharing one name. A finding is not an error. A boundary part with no row is a fact about the data, and the part is still drawn.".
+fw:joinFinding a owl:ObjectProperty; rdfs:domain fw:KeyedAreaJoin; rdfs:range fw:JoinFinding;
+  rdfs:comment "Each condition the join reported, carried individually rather than as a count, because a reader cannot act on \"32 of 32 matched\".".
+fw:findingCode a owl:DatatypeProperty; rdfs:domain fw:JoinFinding;
+  rdfs:comment "Which condition, from the closed set the join reports: missing-data-key, unmatched-data-key, unmatched-boundary, duplicate-boundary-key, ambiguous-data-key, multiple-data-rows.".
+fw:findingSubject a owl:DatatypeProperty; rdfs:domain fw:JoinFinding;
+  rdfs:comment "The name the condition is about, as the source wrote it rather than as the join folded it, so a reader can find it in their own file.".
+fw:joinKeyField a owl:DatatypeProperty; rdfs:domain fw:KeyedAreaJoin;
+  rdfs:comment "The table column holding the name of a part.".
+fw:joinValueField a owl:DatatypeProperty; rdfs:domain fw:KeyedAreaJoin;
+  rdfs:comment "The column whose value is put onto the boundary.".
+fw:joinNormalisation a owl:DatatypeProperty; rdfs:domain fw:KeyedAreaJoin;
+  rdfs:comment "How a key was folded before comparison: exact trims and lowercases; fuzzy also replaces every run of non-alphanumerics with one space. Declared because it decides the match. Measured on Snow's South London, 2026-10-25: 23 of 32 sub-districts match exact and 32 of 32 fuzzy, the nine differing only in a comma.".
+fw:boundaryPartCount a owl:DatatypeProperty; rdfs:domain fw:KeyedAreaJoin;
+  rdfs:comment "Parts of the boundary offered to the join. Parts, not features: an undissolved boundary of 33 rings over 32 named places has 33.".
+fw:tableRowCount a owl:DatatypeProperty; rdfs:domain fw:KeyedAreaJoin;
+  rdfs:comment "Rows the table offered.".
+fw:matchedPartCount a owl:DatatypeProperty; rdfs:domain fw:KeyedAreaJoin;
+  rdfs:comment "Parts that carry a value.".
+fw:matchedRowCount a owl:DatatypeProperty; rdfs:domain fw:KeyedAreaJoin;
+  rdfs:comment "Distinct keys that reached a part. Lower than the matched part count where two parts share a name.".
+fw:unmatchedPartCount a owl:DatatypeProperty; rdfs:domain fw:KeyedAreaJoin;
+  rdfs:comment "Parts no row names. They are drawn and left empty, never omitted: a hole reads as a different claim than an absence of data.".
+fw:unmatchedRowCount a owl:DatatypeProperty; rdfs:domain fw:KeyedAreaJoin;
+  rdfs:comment "Rows naming no part of this boundary.".
+fw:sharedPartCount a owl:DatatypeProperty; rdfs:domain fw:KeyedAreaJoin;
+  rdfs:comment "Parts whose name is held by another part, and which therefore carry the same value. True of a rate, which is an intensity; NOT true of a count, which the same move would double.".
 fw:RecordDeduplication a owl:Class; rdfs:subClassOf prov:Activity;
   rdfs:label "Record deduplication";
   rdfs:comment "Comparing records across point sources and merging the pairs that agree. Compares across sources only: duplicates within one source are not looked for.".

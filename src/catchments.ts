@@ -206,7 +206,15 @@ export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
  *  judgement and dropped the geometry, so a decision about a shape could be listed and never
  *  drawn. Carrying it here means a map can colour by it, a clip or a summary afterwards keeps it,
  *  and nothing has to reach back to a receipt to find out what was decided. Experiment 113. */
-export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;status?:'Review'|'NoFlag'|'Unknown';explanation?:string;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
+/** `properties` is the OPEN BAG this type never had, and its absence is why a table could not
+ *  colour the boundaries it was keyed on. Every other field here is a named slot owned by one
+ *  operation -- `count` and `total` by the point summary, `minutes` by the isochrone -- so a
+ *  value from anywhere else had nowhere to go. Adding a bag is additive: the ten slots stay, and
+ *  whether they should fold into it is a separate question with 41 call sites behind it.
+ *
+ *  `value` repeats whichever property a figure is drawn by, in a fixed place, so a renderer can
+ *  colour by it without being told which column to read. */
+export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;properties?:Record<string,import('./types.js').Scalar>;value?:number;status?:'Review'|'NoFlag'|'Unknown';explanation?:string;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
 /** `unconnected` lists the sites that got no catchment, and `offNetwork` the sites that got one
  *  across a leg no street covers.
  *

@@ -1,4 +1,4 @@
-import {orderedSteps,FIGURE_ROLE,markPath} from './presentation.js';
+import {orderedSteps,classifyValues,FIGURE_ROLE,markPath} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
 import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
@@ -66,8 +66,61 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   }
   const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
   const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]),cos=Math.cos((south+north)/2*Math.PI/180),scale=Math.min(790/Math.max((east-west)*cos,.00001),235/Math.max(north-south,.00001));
-  const project=(c:Position)=>[425+(c[0]-(east+west)/2)*cos*scale,145-(c[1]-(north+south)/2)*scale],colors=orderedSteps(p.features.length);
-  return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;return `<path data-catchment="${esc(f.id)}" d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${colors[i%colors.length]}" fill-opacity=".22" fill-rule="evenodd" stroke="${colors[i%colors.length]}" stroke-width="1"><title>${esc(f.name)}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+'<text x="20" y="282" font-size="10">Squares: sites · dots: observations · polygons: modeled catchments</text>';
+  const project=(c:Position)=>[425+(c[0]-(east+west)/2)*cos*scale,145-(c[1]-(north+south)/2)*scale];
+  // COLOURED BY VALUE WHERE THERE IS ONE, by position where there is not. A catchment's colour
+  // says which catchment; a choropleth's colour says how much, and reading the second as the
+  // first is the misreading this whole figure exists to avoid. `classifyValues` returns null
+  // when nothing carries a value, which is every figure this renderer drew before today.
+  const classed=classifyValues(p.features.map(f=>f.value));
+  const colors=classed?classed.colours:orderedSteps(p.features.length);
+  return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;const at=classed?classed.classOf(f.value):null;
+    // A part with no value is drawn in a neutral, never in the lowest class: an unmatched
+    // boundary would otherwise read as a finding of low incidence rather than as no data.
+    const fill=classed?(at===null?FIGURE_ROLE.unknown:colors[at]):colors[i%colors.length];
+    // Value-bearing fills are readable at full strength; a catchment's identity wash is not
+    // the same thing and keeps the lighter tint it has always had.
+    const opacity=classed?(at===null?'.18':'.78'):'.22';
+    return `<path data-catchment="${esc(f.id)}"${classed&&f.value!==undefined?` data-value="${f.value}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${classed?'.6':'1'}"><title>${esc(f.name)}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+plotKey(p,classed,esc);
+}
+
+// THE KEY NAMES WHAT IS DRAWN, and nothing else. This line was a fixed string -- "Squares:
+// sites · dots: observations · polygons: modeled catchments" -- printed under every figure this
+// renderer produced, including a choropleth of sub-district mortality that has no sites, no
+// observations and no modeled catchment anywhere on it. A key that describes marks the figure
+// does not carry is worse than no key: it is the one part of a figure a reader trusts without
+// checking. `EveryMarkIsInTheKey` in map-conformance asks the converse of the same question.
+function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape):string{
+  const marks:string[]=[];
+  if(p.sites.some(f=>f.geometry))marks.push('squares: sites');
+  if((p.observations?.features||[]).some(f=>f.geometry))marks.push('dots: observations');
+  // What the polygons ARE differs with what they carry. A catchment is modeled; a boundary
+  // shaded by a joined value is measured, and calling it modeled would misreport its standing.
+  marks.push(classed?'polygon shade: the joined value':'polygons: modeled catchments');
+  // The method belongs on the key line, not beside the ramp: set beside it, the sentence ran
+  // across the polygons it was explaining.
+  const method=classed?` · ${classed.classes} ${classed.method==='quantile'
+    ?'quantile classes, about equal counts, so the shade shows rank'
+    :'equal-interval classes, equal value spans, so the shade shows magnitude'}`:'';
+  const key=`<text x="20" y="${classed?290:282}" font-size="10">`
+    +esc(marks.join(' · ').replace(/^./,c=>c.toUpperCase())+method)+'</text>';
+  if(!classed)return key;
+
+  // A SHADE WITHOUT ITS BREAKS SAYS ONLY "MORE" AND "LESS". The classes are quantiles taken from
+  // the data, so every break printed here is a value that occurs in it and a reader can find the
+  // sub-district that sits on one. Experiment 137.
+  const values=p.features.map(f=>f.value).filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+  const lowest=Math.min(...values);
+  const width=34,left=20,top=250;
+  const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
+  const swatches=classed.colours.map((colour,i)=>
+    `<rect x="${left+i*width}" y="${top}" width="${width}" height="10" fill="${colour}" `
+    +`fill-opacity=".78" stroke="${FIGURE_ROLE.quietInk}" stroke-width=".4"/>`).join('');
+  // Edge labels, not per-class ranges: the breaks are the boundaries BETWEEN classes, and
+  // printing them under the gaps is what makes a ramp readable at this size.
+  const edges=[lowest,...classed.breaks].map((v,i)=>
+    `<text x="${left+i*width}" y="${top+21}" font-size="8" text-anchor="middle" `
+    +`fill="${FIGURE_ROLE.quietInk}">${round(v)}</text>`).join('');
+  return swatches+edges+key;
 }
 
 /** The plot's frame: the extent it fits, the pixels it gives a degree of latitude, and the

@@ -199,3 +199,32 @@ test('a boundary shows only its border once there is ground beneath it',async({p
   await expect.poll(async()=>await page.locator('#map [data-fill-role="context"]').first().getAttribute('fill')).toBe('none');
   expect(await page.locator('#map [data-fill-role="context"]').first().getAttribute('stroke')).toBeTruthy();
 });
+
+/** OFFLINE IS THE ORDINARY CASE, not the exception.
+ *
+ *  Found 2026-10-25 on WebKit, which reported it as a bare `"Load failed"` on a figure that had
+ *  otherwise drawn correctly. Both call sites float the promise -- `void drawStaticBasemap(...)`
+ *  -- so a rejecting tile request reached the page as an unhandled error and said nothing about
+ *  tiles, about the network, or about the fact that the plot itself was fine. This application
+ *  is built to run without a network; a basemap is the one layer that needs one, and it is
+ *  layer 0, carrying nothing the workflow computed. */
+test('a figure whose tiles cannot be fetched says so, and keeps its plot',async({page})=>{
+  const errors=[];
+  page.on('pageerror',e=>errors.push(String(e)));
+  // Every tile request fails, which is what no network looks like from inside the page.
+  await page.route(/tile\.(openstreetmap|opentopomap)\.org/,route=>route.abort('failed'));
+
+  await page.goto('/?example=old-naledi');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="access-map"]').click();
+  await page.locator('#map-basemap').selectOption('osm');
+  await page.locator('[data-view="results"]').click();
+
+  // Said by name, on the figure, rather than thrown.
+  await expect(page.locator('#map-note')).toContainText('No basemap tiles could be fetched',{timeout:20000});
+  await expect(page.locator('#map [data-basemap]')).toHaveCount(0);
+  // The plot is untouched: ground is layer 0 and carries none of the workflow's own marks.
+  expect(await page.locator('#map path, #map circle, #map rect').count()).toBeGreaterThan(0);
+  expect(errors).toEqual([]);
+});

@@ -69,6 +69,7 @@ import {utmDefinition,projectFromCRS84} from './reproject.js';
 import {dataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
 import {computeRate,fromPoints,fromTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
 import {caseSeries,caseSeriesFromTable,seriesTable,seriesChart,seriesReceipt,validateCaseSeriesNode} from './case-series.js';
+import {joinTableToAreas,joinedPolygons,areaJoinReceipt} from './area-join.js';
 import {projectionExtract,projectionTable,readExtract,assignSites,assignmentTable,compareToElevation,extractReceipt,assignmentReceipt,comparisonReceipt as thresholdReceipt,validateSeaLevelNode} from './sea-level.js';
 import {distanceKm,nearestOf,satisfies} from './nearest-neighbour.js';
 export const NS = 'urn:fieldwork:';
@@ -81,6 +82,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   buffer_area:{title:'Buffer study area',group:'Spatial operations',icon:'◎',color:'teal',description:'Expand an acquisition boundary without changing the reporting area',inputs:[['area','area']],output:'area'},
   ...CATCHMENT_TYPES,
   table_input:{title:'Tabular data',group:'Sources',icon:'▤',color:'blue',description:'Import a long-format table keyed by declared columns; no geometry',inputs:[],output:'table'},
+  join_table_to_area:{title:'Join a table to the study area',group:'Summaries',icon:'⋈',color:'teal',
+    description:'Put a value from each row onto the part of the boundary it names',
+    inputs:[['records','table'],['area','area']],output:'polygons'},
   rate:{title:'Rate with a denominator',group:'Summaries',icon:'÷',color:'teal',description:'Divide counts by a declared population at risk, stating what the denominator counts',inputs:[['records','points']],output:'table'},
   case_series:{title:'Cases by period',group:'Summaries',icon:'▦',color:'teal',description:'Count cases per day, week or month by a declared kind of date',inputs:[['points','points']],output:'table'},
   slr_extract_import:{title:'Sea-level projection extract',group:'Sources',icon:'≈',color:'blue',description:'Declare an imported long-format table as a bounded extract of published AR6 projections',inputs:[['projections','table']],output:'table'},
@@ -881,6 +885,23 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push(catchmentReceipt(node,value as Polygons|Network,runId,workflow.edges.filter(e=>e.to===node.id).map(e=>e.from)));break;
       }
 
+      case 'join_table_to_area':{
+        // THE NAMES HAVE TO BE THERE. An area drawn by hand has no named parts, so there is
+        // nothing to key on and saying so is better than matching nothing and drawing an empty
+        // choropleth that looks like a finding.
+        const units=(inputs.area as {units?:{id:string;name:string}[]}).units;
+        if(!units?.length)throw new Error('This study area has no named parts to join to. Acquire a boundary whose features carry names, or import one from a file and choose the name column.');
+        // `records`, not `table`: `inputs` is keyed by PORT name, and the port is called records
+        // to match every other widget that takes rows. Reading `inputs.table` here cost a run
+        // that failed with "Cannot read properties of undefined" and named neither port.
+        const joined=joinTableToAreas(units,
+          inputs.records as unknown as import('./data-table.js').DataTable,
+          {keyField:node.params.keyField,normalisation:node.params.normalisation});
+        value=joinedPolygons(inputs.area.boundary,joined,node.params.label);
+        receipts.push(areaJoinReceipt(node,joined,runId,
+          workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from,
+          workflow.edges.find(e=>e.to===node.id&&e.port==='area')!.from));
+        break;}
       case 'raster_input':{if(!node.params.asset)throw new Error('Prepare the raster window before running.');const grid=await loadRaster(node.params.asset,inputs.area);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId));break;}
       case 'clip_raster':{const grid=clipRaster(inputs.raster,node.params.cutline?.geometry||inputs.area.boundary,node.params);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from));break;}
       case 'places':case 'centers':value={...node.params.data,spatialReference:structuredClone(node.params.spatialReference)};break;
@@ -1205,7 +1226,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const ready=conclusions.some(q=>q.subject===`urn:fieldwork:area:${node.id}`&&q.predicate===NS+'readyForSpatialAnalysis'&&q.object==='true');
         if(!ready)throw new Error('The reasoner did not confirm the study-area input contract.');
         receipts.push({nodeId:node.id,...n3,conclusions});
-        value={kind:'study-area',areaId:`urn:fieldwork:area:${node.id}`,geometryId:`urn:fieldwork:geometry:${node.id}`,boundary:structuredClone(node.params.geometry),bounds:geometryBounds(node.params.geometry!),label:node.params.label,selectionMode:node.params.selectionMode,ready,rows:[],centers:[],source:'User-drawn geometry in CRS84'};break;
+        value={kind:'study-area',areaId:`urn:fieldwork:area:${node.id}`,geometryId:`urn:fieldwork:geometry:${node.id}`,boundary:structuredClone(node.params.geometry),...(node.params.boundary?.units?.length?{units:structuredClone(node.params.boundary.units)}:{}),bounds:geometryBounds(node.params.geometry!),label:node.params.label,selectionMode:node.params.selectionMode,ready,rows:[],centers:[],source:'User-drawn geometry in CRS84'};break;
       }
       default:value=await executeOldNode(node,inputs,reasoner,receipts,distanceKm,runId);
     }

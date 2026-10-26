@@ -75,8 +75,10 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // 46 on 2026-10-21, when coverage_check was retired into it: a widget that reports a membership
   // and a widget that acts on one were the same question asked twice. 47 the same day, with
   // deduplicate_points: two sources over one area draw the same hospital twice, and nothing could
-  // say which records were the same place.
-  assert.equal(review.reviews.length,47);
+  // say which records were the same place. 48 on 2026-10-25, with join_table_to_area: a table
+  // of rates and a boundary of named parts had no way to meet, so a choropleth could not be
+  // drawn from measured values at all.
+  assert.equal(review.reviews.length,48);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

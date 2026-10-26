@@ -16,6 +16,9 @@ import {mountCatchmentMap,basemapOptions,BASEMAP_OPTIONS} from './catchment-map.
 import {catchmentPlot,polygonSvg,catchmentFrame,polygonFrame} from './catchment-output.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
+import {RATE_TABLE_KEYS} from './rate.js';
+import {SERIES_TABLE_KEYS} from './case-series.js';
+import {SITE_ASSIGNMENT_TABLE_KEYS} from './sea-level.js';
 import {installCredentials} from './credentials-ui.js';
 import type {CredentialAccess} from './credentials-ui.js';
 import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_COMPOSITION,ADDABLE_VIA_RULESET} from './palette.js';
@@ -604,6 +607,28 @@ function loadExample(key:string){if(busy)return;
  *  Safe to call from inside an `onchange`: the element has already fired its change, so blurring
  *  it cannot fire another one. */
 const dropFocus=()=>{(document.activeElement as HTMLElement|null)?.blur();};
+// THE COLUMNS ON A TABLE DO NOT ALL COME FROM A TABLE INPUT. A rate or a case series emits a
+// table of its own, and its key columns are declared by the widget that emits it rather than by
+// anything in the workflow -- a run would show them, but a practitioner picks the column BEFORE
+// the run. Offering only a table_input's keys is what left the area join's column control saying
+// "Connect a table first" with a table plainly connected (South London choropleth, 2026-10-25).
+function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):readonly string[]{
+  if(!node||seen.has(node.id))return [];
+  seen.add(node.id);
+  switch(node.type){
+    case 'table_input':return node.params.data.keys;
+    case 'rate':return RATE_TABLE_KEYS;
+    case 'case_series':return SERIES_TABLE_KEYS;
+    case 'slr_site_assignment':return SITE_ASSIGNMENT_TABLE_KEYS;
+    // A pass-through: the extract hands on the table it was given, keys and all, so the columns
+    // are the ones further up and not something this node names.
+    case 'slr_extract_import':{
+      const up=workflow.edges.find(e=>e.to===node.id&&e.port==='projections');
+      return tableKeyColumns(up?workflow.nodes.find(m=>m.id===up.from):undefined,seen);}
+    default:return [];
+  }
+}
+
 function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){const bytes=JSON.stringify(workflow).length;workflow=previous;dropFocus();render();toast(storageRefusal(bytes),{tone:'failure'});return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
   // The edit is rolled back and the panel is rewritten -- WHILE the control that made the edit
   // still holds focus. Chromium throws "The node to be removed is no longer a child of this
@@ -1182,7 +1207,7 @@ function renderLibrary(search=''){
       :type==='facilities'?{type:'facilities' as const,params:{dataset:DATASET,radiusKm:5,sourceMode:'connected' as const}}
       :type==='facility_audit'?{type:'facility_audit' as const,params:{} as Record<string,never>}
       :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
-      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
+      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
     // in, from the mean longitude of every coordinate already configured. The parameter stays: a
@@ -1441,6 +1466,25 @@ function renderInspector(){
       +`<p>${esc(p.source?.filename||'Imported file')}<br>${p.data.rowCount} rows, ${p.data.missingValueCount} values absent and kept as unknown.</p><details><summary>Table shape</summary><pre>${esc(JSON.stringify({keys:p.data.keys,valueField:p.data.valueField,unit:p.data.unit||'(unstated)',rows:p.data.rowCount,source:p.source},null,2))}</pre></details>`;
     else content+='<p class="description">No table imported yet. This node cannot run until a table is imported.</p>';
     content+='<div class="notice">A unit is recorded as you state it and never inferred. An absent value is kept as unknown, never read as zero. Connect a Table output to display it.</div>';
+  }else if(n.type==='join_table_to_area'){
+    // THE KEY COLUMN IS OFFERED, NOT TYPED. The columns are on the connected table, so a
+    // practitioner picks one rather than spelling it and discovering the mismatch at the run.
+    const upstream=workflow.edges.find(edge=>edge.to===n.id&&edge.port==='records');
+    const source=upstream?workflow.nodes.find(node=>node.id===upstream.from):undefined;
+    const columns=tableKeyColumns(source);
+    content+=labelForm('join-label','Node label',n.params.label||'Values on the study area')
+      +`<label class="field-label" for="join-key">Column naming each part</label>`
+      +`<select id="join-key"${columns.length?'':' disabled'}>`
+      +`<option value="">${columns.length?'Choose a column…':'Connect a table first'}</option>`
+      +columns.map(column=>`<option value="${esc(column)}" ${n.params.keyField===column?'selected':''}>${esc(column)}</option>`).join('')
+      +`</select>`
+      +`<label class="field-label" for="join-normalisation">Match names</label>`
+      +`<select id="join-normalisation">`
+      +`<option value="fuzzy" ${n.params.normalisation==='fuzzy'?'selected':''}>Ignoring punctuation and spacing</option>`
+      +`<option value="exact" ${n.params.normalisation==='exact'?'selected':''}>Exactly as written</option>`
+      +`</select>`
+      +`<p class="description">Names are compared for equality, never for resemblance. Ignoring punctuation is what matches "St. George, Camberwell" to "St. George  Camberwell"; it will not match an abbreviation to a full name, and says so rather than guessing.</p>`
+      +`<div class="notice">A part no row names is drawn and left empty. Two parts sharing a name both take the value, which is true of a rate and is not true of a count.</div>`;
   }else if(n.type==='rate'){
     const p=n.params;
     const field=(id:string,label:string,key:string,value:string,placeholder='')=>`<div class="field"><label class="field-label" for="${id}">${label}</label><input id="${id}" data-slr="${key}" maxlength="80" value="${esc(value)}" placeholder="${esc(placeholder)}"></div>`;
@@ -2324,6 +2368,10 @@ function renderInspector(){
     const target=getNode(w,n.id,'raster_input');
     target.params.populationCountry=(event.target as HTMLSelectElement).value;
   }));
+  optionalElement('#join-key')?.addEventListener('change',e=>
+    change(w=>{getNode(w,n.id,'join_table_to_area').params.keyField=control(e).value;}));
+  optionalElement('#join-normalisation')?.addEventListener('change',e=>
+    change(w=>{getNode(w,n.id,'join_table_to_area').params.normalisation=control(e).value as 'exact'|'fuzzy';}));
   optionalElement('#prepare-raster')?.addEventListener('click',()=>{
     let source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);const visited=new Set<string>();
     while(source?.type==='measure_area'&&!visited.has(source.id)){visited.add(source.id);source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===source!.id&&e.port==='area')?.from);}
@@ -2875,7 +2923,22 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
     return;
   }
   const stamp=svg.dataset.renderStamp=String(Date.now());
-  const {markup,drawn,requested,zoom}=await basemapImages(frame.bounds,frame.project,provider,fetchTileAsDataURI);
+  // GROUND THAT CANNOT BE FETCHED IS A FIGURE WITHOUT GROUND, not a broken application. Both
+  // call sites float this promise, so a rejecting tile request reached the page as an unhandled
+  // error -- WebKit reports it as a bare "Load failed", which says nothing about tiles and
+  // appears on a figure that otherwise drew correctly. Offline is the ordinary case for this
+  // application, and the one it is built for.
+  let images;
+  try{images=await basemapImages(frame.bounds,frame.project,provider,fetchTileAsDataURI);}
+  catch{
+    if(svg.dataset.renderStamp!==stamp||!svg.isConnected)return;
+    const name=BASEMAP_OPTIONS.find(o=>o.value===choice)?.label||choice;
+    if(note)note.textContent=`${name} tiles could not be fetched, so this figure is drawn `
+      +'without its ground. The plot above is unaffected: a basemap is layer 0 and carries none of '
+      +'what the workflow computed.';
+    return;
+  }
+  const {markup,drawn,requested,zoom}=images;
   // The figure may have been replaced while the tiles were in flight.
   if(svg.dataset.renderStamp!==stamp||!svg.isConnected)return;
   // AFTER THE BACKGROUND, NOT BEFORE IT. `oldMap` opens by painting an opaque rect across the

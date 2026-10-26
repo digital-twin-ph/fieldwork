@@ -107,3 +107,54 @@ test('a step fed by a table is offered that table\'s columns',async({page})=>{
   await expect(inspector).toContainText(/value_mm/i);
   expect(errors).toEqual([]);
 });
+
+// "How do we demonstrate the use of a ruleset widget when we cannot even provide the view of how
+// it's used? Defeats the purpose of a worked example." -- the practitioner, 2026-10-26. A worked
+// example is a teaching artifact and a regression fixture at once, and the step the sea-level
+// example is built around showed its title, version, settings and obligations and never what it
+// decides. Forking it opened a blank editor, so a learner could neither read the rules nor start
+// from them.
+test('the worked example\'s ruleset step shows its rules, and a copy starts from them',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=sea-level');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+  const id=await page.evaluate(()=>
+    JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='apply_ruleset').id);
+  await page.locator(`.react-flow__node[data-id="${id}"]`).click();
+
+  // The rules are ON the panel, not behind a button: extract-contract declares two.
+  const inspector=page.locator('#inspector-content');
+  await expect(inspector.locator('.authored-rule')).toHaveCount(2);
+  // Named as the file spells the column, which is what a reader checks against their data.
+  await expect(inspector.locator('.authored-rules')).toContainText('value_mm');
+
+  // This ruleset reads columns through declared bindings, so a copy is fed identically and the
+  // panel offers one. The four with bespoke fact generators still refuse, and say why.
+  await expect(inspector).toContainText('A copy is fed exactly what these rules are fed');
+  await page.locator('#author-rules').click();
+
+  // The copy opens on the published rules rather than on nothing.
+  await expect(page.locator('#rule-editor')).toBeVisible();
+  await expect(page.locator('#rule-editor .rule-card')).toHaveCount(2);
+  await page.locator('#rule-editor-keep').click();
+
+  const seeded=await page.evaluate(nodeId=>{
+    const node=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id===nodeId);
+    return {rules:node.params.authored.rules.length,
+      attribute:node.params.authored.fields[0]?.attribute,
+      unit:node.params.authored.fields[0]?.unit};
+  },id);
+  assertSeeded(seeded);
+  expect(errors).toEqual([]);
+});
+
+// The declared binding states `mm`, and the unit check compares IRIs -- so a seeded fork that
+// carried the label alone would refuse to run for want of a unit it had been given.
+function assertSeeded(seeded){
+  expect(seeded.rules).toBe(2);
+  expect(seeded.attribute).toBe('value_mm');
+  expect(seeded.unit).toBe('http://qudt.org/vocab/unit/MilliM');
+}

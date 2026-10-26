@@ -68,3 +68,20 @@ test('a grid wider than a screen stays a list',()=>{
 test('a table that is not two-keyed is not a matrix',()=>{
   assert.equal(crossTab({kind:'data-table',keys:['only'],valueField:'v',rows:[],rowCount:0,missingValueCount:0}),null);
 });
+
+// Manila's 194 health facilities all take gauge 145, so the assignment is 194 rows against ONE
+// column and perfectly dense -- which the density rule happily pivoted into a 194-row grid,
+// hiding `distance_m`, the column a reader came for. A single column is a list drawn with extra
+// lines. Found by the sea-level example on both engines, 2026-10-26.
+test('one column is a list, however dense it is',()=>{
+  const rows=Array.from({length:12},(_,i)=>({key:{point_id:`p${i}`,projection_site:'145'},value:i}));
+  assert.equal(crossTab({kind:'data-table',keys:['point_id','projection_site'],
+    valueField:'distance_m',unit:'metre',rows,rowCount:rows.length,missingValueCount:0}),null);
+});
+
+test('one row is a list too',()=>{
+  const rows=[{key:{supply:'Southwark',outcome:'died'},value:1263},
+    {key:{supply:'Southwark',outcome:'survived'},value:38783}];
+  assert.equal(crossTab({kind:'data-table',keys:['supply','outcome'],
+    valueField:'people',unit:'people',rows,rowCount:2,missingValueCount:0}),null);
+});

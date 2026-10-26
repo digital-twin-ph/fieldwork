@@ -587,7 +587,8 @@ four commands this project had been treating as one:
 | Epi Info | here |
 | --- | --- |
 | `IF` | the authored form's `any` / `all` conditions and its `then` conclusions — built |
-| `DEFINE`, `ASSIGN` | `authoredProjection` writing a conclusion as a new column — built |
+| `DEFINE` | `authoredProjection` adding a column the record did not have — built |
+| `ASSIGN` | built **only for a term the rules concluded**; a value computed from other columns is not built |
 | `RECODE` — a **bounded** from→to map, not a general conditional | expressible as `IF`/`THEN` today; the bounded form is not built |
 
 Two consequences worth stating separately, because they are different kinds of gap.
@@ -623,6 +624,48 @@ It also inherits the reproducibility rule for free. `tests/rulesets-are-reproduc
 asserts that `authored` rebuilds `rules` byte for byte; a recode whose `authored` form was
 generated from its own map satisfies that by construction, which is the test of whether a
 practitioner could have built it.
+
+### Where `DEFINE` and `ASSIGN` actually fall, corrected
+
+_Added 2026-10-26, after the row above was found to overstate._ The practitioner, on the unit
+obstacle below: *"that is probably where a DEFINE and ASSIGN would work."*
+
+The row said `DEFINE, ASSIGN` → built. Checked against the code, that is true of one of them and
+half of the other. `authoredProjection` writes **the terms the reasoner concluded** as new key
+columns, and says so in place: *"The value field is untouched, so what the table MEASURES is
+still the thing it measured."* So a column can be brought into existence, and it can be given a
+**term**. It cannot be given a **number computed from other columns** — there is no arithmetic
+anywhere on that path.
+
+That splits the practitioner's suggestion into two pieces of different size, and they are worth
+keeping apart because only one of them is a new capability.
+
+**`DEFINE` as a declaration was already built, under another name, and is now reachable.** The
+authored `fields` list — column, predicate, kind, unit — *is* a `DEFINE`: it brings a variable
+into existence and says what it is. What was missing was not the command but a way to reach it
+from a published ruleset, and one obstacle in the way: the published
+`inputContract.fieldFrom` declares `unitLabel: "mm"` and no unit IRI, while the authored path
+refuses a number that states no unit — *"a number without a unit is not a measurement, and a
+rule comparing it to anything is comparing two numbers and hoping."*
+
+Resolved 2026-10-26, and worth recording because the obvious fix was the wrong one. Adding a
+`unit` to the published ruleset would have edited a pinned, versioned artefact that this project
+refuses to edit in place. So the IRI is resolved **at the fork**, from the label the ruleset
+already declares, with `mm` added to the unit table; a label nothing recognises still yields no
+IRI and the run still refuses by name. The declaration stays the practitioner's act, which is
+what a `DEFINE` is, and the published file is untouched.
+
+So of the three, two were already here wearing different clothes. That is the finding: Epi Info's
+command set does not map onto missing capabilities here so much as onto capabilities this
+project had built without naming, and could therefore not offer.
+
+**`ASSIGN` as a computation** is the new capability, and it is the same gap the 0.12.0 release
+notes record as a validation limit — nothing *"derives a column from others."* It is what would
+let the South London contingency table be built inside the application rather than prepared
+outside it, which is currently stated as a limit of that worked example rather than fixed.
+
+`ASSIGN` as a computation is not built here, and neither is the bounded map. This section
+records where they fall; the direction register is where the decision to build them belongs.
 
 **A bounded map is a different artifact from a rule**, and the distinction is worth keeping:
 a from→to table can be read at a glance, checked, and its unmapped values enumerated, while an

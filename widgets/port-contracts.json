@@ -247,6 +247,21 @@
         }
       ]
     },
+    "rate_ratio": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "rates",
+              "table"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "rate": {
       "output": "table",
       "contracts": [

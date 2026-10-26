@@ -155,6 +155,27 @@ fw:RateResult a owl:Class;
 fw:RateGroup a owl:Class;
   rdfs:label "Rate group"; rdfs:subClassOf prov:Entity;
   rdfs:comment "One group's numerator, denominator and rate. A group with no rate is reported with its counts, because suppressing the rate is a decision the reader must be able to see.".
+fw:RateRatioComputation a owl:Class;
+  rdfs:label "Rate ratio computation"; rdfs:subClassOf prov:Activity;
+  rdfs:comment "Divides one group's rate by another's. Both rates must be per the same thing: a per-house rate over a per-person rate is arithmetic on two different quantities. A group with no events is refused rather than given an undefined interval, because adding half an event to make one is an assumption and not a measurement.".
+fw:RateRatio a owl:Class;
+  rdfs:label "Rate ratio"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "A ratio of two rates, with an interval, carrying both counts and both denominators so a reader can see what was compared. It is dimensionless: the multiplier the rates were reported with cancels, and there is deliberately no multiplier on this entity. The interval states its level and method; it is not a p-value, and the ratio is a contrast between two populations rather than a measured effect.".
+fw:comparedGroup a owl:DatatypeProperty; rdfs:label "compared group";
+  rdfs:domain fw:RateRatio; rdfs:comment "The group whose rate is the numerator -- the one a claim is being made about. Not named for exposure: an exposure is one use of a rate ratio, and two districts or two periods compared with each other are not one.".
+fw:referenceGroup a owl:DatatypeProperty; rdfs:label "reference group";
+  rdfs:domain fw:RateRatio; rdfs:comment "The group compared to. Naming it is not optional: a ratio and its reciprocal are the same finding and not the same sentence.".
+fw:comparedEventCount a owl:DatatypeProperty; rdfs:label "compared event count"; rdfs:domain fw:RateRatio.
+fw:comparedUnitsAtRisk a owl:DatatypeProperty; rdfs:label "compared units at risk"; rdfs:domain fw:RateRatio.
+fw:referenceEventCount a owl:DatatypeProperty; rdfs:label "reference event count"; rdfs:domain fw:RateRatio.
+fw:referenceUnitsAtRisk a owl:DatatypeProperty; rdfs:label "reference units at risk"; rdfs:domain fw:RateRatio.
+fw:ratioValue a owl:DatatypeProperty; rdfs:label "ratio value"; rdfs:domain fw:RateRatio.
+fw:intervalLower a owl:DatatypeProperty; rdfs:label "interval lower bound"; rdfs:domain fw:RateRatio.
+fw:intervalUpper a owl:DatatypeProperty; rdfs:label "interval upper bound"; rdfs:domain fw:RateRatio.
+fw:intervalLevel a owl:DatatypeProperty; rdfs:label "interval level";
+  rdfs:domain fw:RateRatio; rdfs:comment "As a percentage. A 90% interval and a 95% interval are different claims, so the level is carried rather than assumed.".
+fw:intervalMethod a owl:DatatypeProperty; rdfs:label "interval method";
+  rdfs:domain fw:RateRatio; rdfs:comment "Named so a reader is never left guessing which interval they are looking at.".
 fw:numeratorField a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:denominatorField a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:denominatorUnit a owl:DatatypeProperty; rdfs:range xsd:string;

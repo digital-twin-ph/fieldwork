@@ -1,0 +1,87 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:rate_ratio",
+  "nodeType": "rate_ratio",
+  "version": "0.1.0",
+  "title": "Rate ratio with an interval",
+  "released": "2026-10-25",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['rate_ratio']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "rates",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "A RATE in, not a table of numbers. The port type is `table` because that is what `rate` emits, but the value carries the RateResult with it, and only that declares what the numbers are per. A plain table connected here is refused by name rather than divided: dividing a per-house rate by a per-person one is arithmetic on two different quantities."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:RateRatioComputation",
+        "file": "ontology/runtime.ttl"
+      },
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:RateRatio",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "The receipt carries both counts, both denominators, the denominator unit, the interval bounds, the level and the method by name, so a reader is never left guessing which interval they are looking at. No SHACL shape yet. There is deliberately no multiplier property: a rate ratio is dimensionless and there is nowhere to write one.",
+    "emits": {
+      "classes": [
+        "RateRatio"
+      ],
+      "properties": [
+        "comparedEventCount",
+        "comparedGroup",
+        "comparedUnitsAtRisk",
+        "denominatorUnit",
+        "intervalLevel",
+        "intervalLower",
+        "intervalMethod",
+        "intervalUpper",
+        "ratioValue",
+        "referenceEventCount",
+        "referenceGroup",
+        "referenceUnitsAtRisk"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/rate-ratio.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/rate-ratio.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Divides one group's rate by another's and reports an interval with the counts behind it. The exposed group and the reference are both named, because 8.40 and 0.12 are the same finding and not the same sentence. Refuses a zero cell rather than reporting an undefined interval or adding half an event to make one, refuses a group compared with itself, and refuses a plain table. A count below five is reported as a small-count warning rather than refused. The interval is a log-normal approximation, named on the result; it is not a p-value and the ratio is not a causal claim. See docs/experiments/139-a-rate-ratio-with-an-interval.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Checked against the real transcription and the real boundaries of Snow's South London rather than a fixture: 23 of 32 sub-districts match on the published strings and 32 of 32 after folding punctuation and spacing, and no two names collapse together. Unit checks cover each of the four reported conditions, including two parts of one name both taking a rate. Equality after normalisation is string comparison; nothing here establishes that the normalisation generalises beyond a pair of files whose nine differences are all punctuation, nor that a choropleth of the joined values is a sound reading of them."
+  }
+}

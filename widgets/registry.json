@@ -834,6 +834,18 @@
       ]
     },
     {
+      "id": "urn:fieldwork:widget:rate_ratio",
+      "nodeType": "rate_ratio",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/rate_ratio/0.1.0.json",
+          "sha256": "707e10d9744f0e5adda53cfd5a42ee35f6d8c9ff505cc006b3f6ed03b531c740"
+        }
+      ]
+    },
+    {
       "id": "urn:fieldwork:widget:reachable_corridor",
       "nodeType": "reachable_corridor",
       "currentVersion": "0.3.0",

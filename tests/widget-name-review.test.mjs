@@ -77,8 +77,11 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // deduplicate_points: two sources over one area draw the same hospital twice, and nothing could
   // say which records were the same place. 48 on 2026-10-25, with join_table_to_area: a table
   // of rates and a boundary of named parts had no way to meet, so a choropleth could not be
-  // drawn from measured values at all.
-  assert.equal(review.reviews.length,48);
+  // drawn from measured values at all. 49 the same day, with rate_ratio: the framework could map
+  // Snow's mortality rates and had nothing that compared two of them, so it could state his
+  // measure and not his argument. The first addition to raise pendingCeiling, under the rule the
+  // practitioner set that day -- a widget may be added if its function did not exist before.
+  assert.equal(review.reviews.length,49);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

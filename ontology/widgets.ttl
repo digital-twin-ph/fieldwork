@@ -52,6 +52,8 @@
 <urn:fieldwork:widget:policy> a fw:WidgetDefinition; fw:nodeType "policy"; rdfs:label "Outreach criteria".
 <urn:fieldwork:widget:raster_input> a fw:WidgetDefinition; fw:nodeType "raster_input"; rdfs:label "Raster input".
 <urn:fieldwork:widget:rate> a fw:WidgetDefinition; fw:nodeType "rate"; rdfs:label "Rate with a denominator".
+<urn:fieldwork:widget:rate_ratio> a fw:WidgetDefinition; fw:nodeType "rate_ratio"; rdfs:label "Rate ratio with an interval";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/rate_ratio.md>.
 <urn:fieldwork:widget:reachable_corridor> a fw:WidgetDefinition; fw:nodeType "reachable_corridor"; rdfs:label "Reachable corridor".
 <urn:fieldwork:widget:reachable_nodes> a fw:WidgetDefinition; fw:nodeType "reachable_nodes"; rdfs:label "Reachable junctions".
 <urn:fieldwork:widget:reproject> a fw:WidgetDefinition; fw:nodeType "reproject"; rdfs:label "Reproject points".

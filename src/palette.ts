@@ -10,7 +10,18 @@ import classification from '../widgets/classification.json' with {type:'json'};
 
 /** Group headings, in the order the palette shows them. A group missing here sorts to the front,
  *  which is how "Comparisons and checks" briefly jumped the queue. */
-export const PALETTE_GROUPS=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Summaries','Micro-workflows','Outputs'] as const;
+// EPIDEMIOLOGY IS A GROUP, not a scattering. The practitioner, 2026-10-25, looking at the
+// palette: *"I do not see any epi widget"* -- and they were right in a way the widget list does
+// not show. The widgets existed; 45 of 48 are standard, the only domain pack is sea-level-rise,
+// and `rate` and `case_series` sat inside a generic Summaries group of five beside 21 spatial
+// operations. The capability was there and the identity was not, which for an epidemiologist
+// opening this is the same as the capability being absent.
+//
+// The group is presentation, deliberately: these stay `standard` in widgets/classification.json
+// because a rate with a declared denominator is not an epidemiological quantity, it is an
+// ordinary one that epidemiology leans on. Where a practitioner looks for it is a different
+// question from whose vocabulary it belongs to.
+export const PALETTE_GROUPS=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Epidemiology','Summaries','Micro-workflows','Outputs'] as const;
 
 import portContracts from '../widgets/port-contracts.json';
 

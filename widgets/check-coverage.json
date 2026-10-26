@@ -8,9 +8,9 @@
   },
   "measuredAt": "2026-10-20",
   "counts": {
-    "widgets": 48,
+    "widgets": 49,
     "covered": 21,
-    "awaiting": 14,
+    "awaiting": 15,
     "none": 12,
     "blocked": 1
   },
@@ -177,6 +177,11 @@
       "expectation": "parity",
       "check": null,
       "computes": "Divides a numerator by a denominator and scales it, with a minimum denominator."
+    },
+    {
+      "nodeType": "rate_ratio",
+      "expectation": "parity",
+      "computes": "A ratio of two rates and its interval. An independent implementation recomputes both from the same counts: Snow's Table IX gives 8.40 with a 95% log-normal interval of 6.84 to 10.32 from 1,263 deaths in 40,046 houses against 98 in 26,107, and any statistics package computes the same three numbers."
     },
     {
       "nodeType": "reachable_corridor",

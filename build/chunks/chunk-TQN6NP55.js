@@ -1,0 +1,19 @@
+var v=!0,$=["comparison"],h=["log-normal"],p={90:1.6449,95:1.96,99:2.5758},b=[90,95,99],R=5,u=(t,e,n)=>{let o=t.find(a=>a.group===e||a.label===e);if(!o)throw new Error(`No group "${e}" to use as the ${n}. The rate has: ${t.map(a=>a.label).join(", ")}.`);return o};function A(t,e){if(t?.kind!=="rate")throw new Error("Connect a Rate with a denominator. A rate ratio divides two RATES, and a plain table does not say what its numbers are per.");if(!h.includes(e.method))throw new Error(`"${e.method}" is not an interval method this computes.`);if(!(e.level in p))throw new Error(`${e.level}% is not an interval level this computes.`);if(e.compared===e.reference)throw new Error("A group compared with itself is 1 by construction, which measures nothing. Choose a different reference.");let n=u(t.rows,e.compared,"compared group"),o=u(t.rows,e.reference,"reference group");for(let[r,c]of[[n,"compared"],[o,"reference"]])if(r.numerator===0)throw new Error(`"${r.label}" has 0 events, so there is no ratio and no interval to report for it as the ${c} group. A ratio with a zero cell is undefined, and adding half an event to make one is an assumption, not a measurement.`);for(let[r,c]of[[n,"compared"],[o,"reference"]])if(r.rate===null||r.denominator===0)throw new Error(`"${r.label}" has no rate to use as the ${c} group`+(r.reason?`: ${r.reason}`:". A count without a population at risk is not a rate."));let a=n.numerator/n.denominator,i=o.numerator/o.denominator,s=a/i,m=p[e.level],l=Math.sqrt(1/n.numerator+1/o.numerator),f=Math.exp(Math.log(s)-m*l),w=Math.exp(Math.log(s)+m*l),d=[n,o].filter(r=>r.numerator<R);return{kind:"rate-ratio",compared:{name:n.group,label:n.label,events:n.numerator,unitsAtRisk:n.denominator,rate:a},reference:{name:o.group,label:o.label,events:o.numerator,unitsAtRisk:o.denominator,rate:i},ratio:s,lower:f,upper:w,level:e.level,method:e.method,denominatorUnit:t.options.denominatorUnit,smallCountWarning:d.length?`${d.map(r=>`${r.label} has ${r.numerator} event${r.numerator===1?"":"s"}`).join(" and ")}. Below about five events the log-normal interval is an approximation doing most of the work; read the counts, not only the bounds.`:null,periodsAgree:!0,vintagesAgree:t.vintagesAgree}}var g=t=>`${t.compared.label} against ${t.reference.label}: rate ratio ${t.ratio.toFixed(2)} (${t.level}% interval ${t.lower.toFixed(2)} to ${t.upper.toFixed(2)}), comparing ${t.compared.events} events in ${t.compared.unitsAtRisk.toLocaleString()} ${t.denominatorUnit} with ${t.reference.events} in ${t.reference.unitsAtRisk.toLocaleString()}.`;function x(t,e,n,o){let a=`<urn:fieldwork:run:${n}:output:${t.id}>`,i=l=>JSON.stringify(l),s=l=>`"${l}"^^xsd:double`,m=`@prefix fw: <urn:fieldwork:>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+${a} a fw:RateRatio;
+  prov:wasDerivedFrom <urn:fieldwork:run:${n}:output:${o}>;
+  fw:comparedGroup ${i(e.compared.label)};
+  fw:referenceGroup ${i(e.reference.label)};
+  fw:comparedEventCount "${e.compared.events}"^^xsd:integer;
+  fw:comparedUnitsAtRisk "${e.compared.unitsAtRisk}"^^xsd:integer;
+  fw:referenceEventCount "${e.reference.events}"^^xsd:integer;
+  fw:referenceUnitsAtRisk "${e.reference.unitsAtRisk}"^^xsd:integer;
+  fw:denominatorUnit ${i(e.denominatorUnit)};
+  fw:ratioValue ${s(e.ratio)};
+  fw:intervalLower ${s(e.lower)};
+  fw:intervalUpper ${s(e.upper)};
+  fw:intervalLevel "${e.level}"^^xsd:integer;
+  fw:intervalMethod ${i(e.method)}.
+`;return{nodeId:t.id,kind:"computation",facts:m,rules:"",input:m,conclusions:[],method:g(e)+" The interval is a log-normal approximation and is not a p-value. A ratio is a contrast between two supplied populations, not a measured effect: nothing here adjusts for anything the two groups did not share."+(e.smallCountWarning?` ${e.smallCountWarning}`:"")}}export{v as a,$ as b,h as c,b as d,R as e,A as f,g,x as h};
+//# sourceMappingURL=chunk-TQN6NP55.js.map

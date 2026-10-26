@@ -85,3 +85,38 @@ test('one row is a list too',()=>{
   assert.equal(crossTab({kind:'data-table',keys:['supply','outcome'],
     valueField:'people',unit:'people',rows,rowCount:2,missingValueCount:0}),null);
 });
+
+// A stated unit was the only way to earn margins, and it is a weak proxy for the claim that
+// matters: South London's mortality table states "people or deaths, as the measure says" --
+// prose DENYING commensurability, read as granting it -- while Snow's Table IX states nothing
+// and, once two house-counting measures are selected, has the property and cannot say so.
+// So the claim is made by whoever composes the figure. 2026-10-26.
+const housesAndDeaths=()=>({kind:'data-table',keys:['supplier','measure'],valueField:'count',
+  rows:[
+    {key:{supplier:'Southwark and Vauxhall Company',measure:'deaths'},value:1263},
+    {key:{supplier:'Southwark and Vauxhall Company',measure:'houses without a death'},value:38783},
+    {key:{supplier:'Lambeth Company',measure:'deaths'},value:98},
+    {key:{supplier:'Lambeth Company',measure:'houses without a death'},value:26009}],
+  rowCount:4,missingValueCount:0});
+
+test('a table stating no unit gets no margins on its own',()=>{
+  const grid=crossTab(housesAndDeaths());
+  assert.equal(grid.grandTotal,null);
+  assert.deepEqual(grid.rows.map(r=>r.total),[null,null]);
+});
+
+test('asserting the cells count the same thing earns the margins',()=>{
+  const grid=crossTab(housesAndDeaths(),{assertCommensurable:true});
+  // Snow's published house counts, which is the check the margins are for.
+  assert.deepEqual(grid.rows.map(r=>r.total),[40046,26107]);
+  assert.deepEqual(grid.columnTotals,[1361,64792]);
+  assert.equal(grid.grandTotal,66153);
+});
+
+test('an assertion cannot conjure a total over an unknown cell',()=>{
+  const table=housesAndDeaths();
+  table.rows[1].value=null;
+  const grid=crossTab(table,{assertCommensurable:true});
+  assert.equal(grid.rows[0].total,null,'a row holding an unknown has an unknown total');
+  assert.equal(grid.grandTotal,null);
+});

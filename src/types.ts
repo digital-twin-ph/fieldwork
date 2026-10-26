@@ -312,7 +312,7 @@ export interface ParamsByType {
      *  exists is a terrain basemap: a mark in the palette's own values over OpenTopoMap was hard
      *  to pick out. It is a checkbox rather than a rule because a map on a pale ground, or one
      *  going into a printed figure, may not want it. */
-    markHalo?:boolean; inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'};
+    markHalo?:boolean; inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
   chart_output:{label:string;inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference'};
   output:{label?:string; view:'map'|'table'|'bars'};
   facilities:{dataset:string; radiusKm:number; sourceMode?:'connected'}; point_grid:{spacingM:number};

@@ -668,6 +668,25 @@ function rateGroupsFor(node:WorkflowNode):string[]{
  *  pair -- the step that keeps rows needs to offer the value the step before it derived, and
  *  that value exists nowhere but on that step's own parameters until a run happens.
  */
+/** The unit of the table reaching an output, where it can be known without a run.
+ *
+ *  A table that states one is already saying its values count the same thing, so asserting it
+ *  again at the output would be a second control for a claim the table has already made.
+ *  Deriving a value and selecting rows both pass the unit through unchanged, so the walk goes
+ *  up the chain to whatever imported the table. */
+function tableUnitFor(output:WorkflowNode):string|undefined{
+  const walk=(node:WorkflowNode|undefined,port:string,seen:Set<string>):string|undefined=>{
+    const edge=workflow.edges.find(e=>e.to===node?.id&&e.port===port);
+    const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
+    if(!up||seen.has(up.id))return undefined;
+    seen.add(up.id);
+    if(up.type==='table_input')return up.params.data.unit?.trim()||undefined;
+    if(up.type==='select_rows'||up.type==='derive_value')return walk(up,'records',seen);
+    return undefined;
+  };
+  return walk(output,'table',new Set());
+}
+
 function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>()):Record<string,string[]>|undefined{
   const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
   const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
@@ -1612,6 +1631,19 @@ function renderInspector(){
     if(reasoning)content+=`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map" ${outputType==='map'?'selected':''}>Map</option><option value="table" ${outputType==='table'?'selected':''}>Table</option><option value="bars">Chart</option></select></div>`;
     content+=`<div class="field"><label class="field-label" for="${outputType}-label">Results tab name</label><input id="${outputType}-label" maxlength="60" value="${esc(n.params.label)}"></div><p class="description">${tabular?'Connect a Tabular data source.':raster?'Connect Raster input or Clip raster.':reasoning?'Connect a reasoning result.':outputType==='table'?'Connect point data, or a coverage result.':'Connect a study area and points.'}</p>`;
     content+=nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);return `<div class="field"><label class="field-label" for="${outputType}-${port}">${({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:raster?'Raster':'Or: Raster',network:'Street network'}[port]||'Point data '+(port==='points'?1:port.split('_')[1]))}</label><select id="${outputType}-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;}).join('');
+    // THE MARGINS AN EPIDEMIOLOGIST READS FIRST, and the claim that earns them. A grid totals
+    // where the table states a unit, which Snow's Table IX correctly does not: as imported it
+    // holds houses beside deaths. Selecting two measures that both count houses makes the cells
+    // addable and nothing in the table records it, so the claim is made here, by the person
+    // composing the figure. Offered only for a tabular output, and only where the table does not
+    // already say it. 2026-10-26.
+    if(tabular&&!tableUnitFor(n))
+      content+=`<label class="check"><input type="checkbox" id="output-totals" `
+        +`${n.params.totalsAsserted?'checked':''}> Show totals: these values count the same thing</label>`
+        +`<p class="description">A 2&times;2 is read with its margins. Tick this only where every `
+        +`cell counts the same thing — deaths beside houses without a death both count houses, `
+        +`deaths beside population do not. The figure says that you asserted it, because nothing `
+        +`here can check it.</p>`;
     content+=tabular?'<div class="notice">Rows are shown as imported, with absent values displayed as unknown and an unstated unit named as unstated. Search covers every key column and the value. Works offline.</div>':raster?'<div class="notice">Colors show relative cell values; gray cells are NoData. Download GeoTIFF preserves native values and georeferencing.</div>':reasoning?'<div class="notice">This is a presentation of existing results, with no new inference or exclusion.</div>':outputType==='table'?'<div class="notice">Rows include coordinates and all point attributes. Missing coordinates and excluded records remain visible. Search covers all rows and attributes; large tables use row and attribute pages. Works offline.</div>':'<div class="notice">The map fits the polygon and every located point, including outside records. Missing coordinates appear in a selectable list. This local map works offline.</div>';
     // map_output has its own branch above; this one is table_output alone.
   }else if(n.type==='table_input'){
@@ -2577,6 +2609,9 @@ function renderInspector(){
   // The kept values are a LIST and their ORDER is the order a figure reads in, so a checkbox
   // appends rather than rebuilding the list from the DOM: unticking and re-ticking a value moves
   // it to the end, which is how a practitioner reorders without a second control.
+  document.querySelectorAll<HTMLInputElement>('#output-totals').forEach(el=>
+    el.addEventListener('change',()=>change(w=>{
+      getNode(w,n.id,'table_output').params.totalsAsserted=el.checked||undefined;})));
   document.querySelectorAll<HTMLInputElement>('[data-select-value]').forEach(el=>
     el.addEventListener('change',()=>change(w=>{
       const node=getNode(w,n.id,'select_rows'),value=required(el.dataset.selectValue);
@@ -3142,7 +3177,11 @@ function renderPointTable(){
     // Rendered in its own container: the point-table grid and its controls stay in the DOM,
     // because a later point-table tab reads #result-head and #result-rows directly.
     dataView.hidden=false;$('#point-table-grid').hidden=true;$('#point-table-controls').hidden=true;
-    dataView.innerHTML=dataTableMarkup(active as unknown as import('./data-table.js').DataTable,esc,{query:$('#result-search').value,page:tablePage});
+    // The assertion belongs to the OUTPUT NODE, not to the table: it is a claim about a figure
+    // somebody is composing, and the same table may be totalled in one figure and not another.
+    const owner=workflow.nodes.find(n=>n.id===activeOutputId);
+    const asserted=owner?.type==='table_output'&&owner.params.totalsAsserted===true;
+    dataView.innerHTML=dataTableMarkup(active as unknown as import('./data-table.js').DataTable,esc,{query:$('#result-search').value,page:tablePage,assertTotals:asserted});
     dataView.querySelectorAll<HTMLButtonElement>('[data-table-page]').forEach(b=>b.onclick=()=>{tablePage=Number(b.dataset.tablePage);renderPointTable();});
     return;
   }

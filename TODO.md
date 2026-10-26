@@ -567,6 +567,22 @@ teaches a method, and two things have now been found to need one:
 Not urgent against the items above, and recorded now because it has been
 implied twice in two days and never written down.
 
+**The input-stage palette looks like a palette that failed to load.** _Found 2026-10-26, by the
+practitioner misreading it twice in ten minutes on the live build — first as missing widgets,
+then as "the Pages palette is truncated to only around 6 widgets"._ An empty canvas offers four
+widgets: `network_input`, `table_input`, `study_area`, `point_input`, plus any saved
+micro-workflows. That is the input-stage gate and it is right — *"there is no sensible process
+step before there is something to process"* — but **nothing on the screen says more will
+appear**. The panel reads "Click to add. Connect matching ports." and then shows four things,
+which is indistinguishable from a broken load, and worst on a fresh tab where a reader has no
+prior to compare against.
+
+The person who wrote the rule misread the screen twice, which is the strongest available
+evidence that a practitioner will. The fix is a sentence, not a redesign: say that the rest of
+the palette appears once something is on the canvas. Costs one line in `renderLibrary` and a
+build; the demo on 2026-10-30 is the deadline that makes it worth doing before the larger items
+above.
+
 **A stated unit is read as permission to add, and prose cannot be checked.**
 _Found 2026-10-26, read-only, while asking why the derived 2x2 shows no margins._ `crossTab`
 decides whether a grid may carry totals with `addable=Boolean(table.unit?.trim())`: **any**
@@ -588,7 +604,7 @@ where a person composes a figure and takes responsibility for it.
 
 Do not fix by pattern-matching the prose.
 
-**A 2x2 that became commensurable shows no margins.**
+**PARTLY DONE 2026-10-26 — a 2x2 that became commensurable shows no margins.**
 _Found 2026-10-26, building South London's contingency table in the application._ Totals are
 drawn only where a table states a unit — "a table that states its unit is saying its values count
 the same thing; one that does not gets no totals rather than a wrong one". Snow's Table IX states
@@ -599,7 +615,18 @@ But `select_rows` leaves `deaths` beside `houses without a death`, and those **b
 The table is now commensurable and nothing in it records that, so the figure an epidemiologist
 reads loses exactly the margins they read first. The rule is right in general and wrong here.
 
-Three candidate answers, none chosen: a step that states a unit on a table it passes through;
+**Settled for the figure, not for the model.** A tabular output can now assert that its cells
+count the same thing, and the grid draws its margins; the figure says underneath that somebody
+asserted it, because nothing checks it. South London's derived 2x2 reads 40,046 and 26,107, the
+published house counts. A separate "state a unit" widget was rejected: it would take the budget
+from 49 to 50 and add a palette entry, which is the cost this project keeps paying.
+
+**What is still open is the model.** A unit belongs to a table and each measure of a long table
+may count something different, so the right answer remains a unit per measure — which reaches
+every consumer of `valueField` and is not a four-day change. Until then a reader of a totalled
+grid is trusting a person, which the figure at least says out loud.
+
+Three candidate answers, one taken: a step that states a unit on a table it passes through;
 a unit per measure rather than per table, which is a change to `DataTable` and reaches every
 consumer; or letting the output state its own margins where a reader has asserted the cells are
 commensurable. The first is smallest and the second is the one that is actually true of long

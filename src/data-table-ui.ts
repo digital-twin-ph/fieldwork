@@ -112,7 +112,7 @@ export const CROSSTAB_MAX_COLUMNS=12;
  *  those is a table nobody has shown us yet. */
 export const CROSSTAB_MIN_DENSITY=0.5;
 
-export function crossTab(table:DataTable):{rowKey:string;colKey:string;columns:string[];
+export function crossTab(table:DataTable,{assertCommensurable=false}={}):{rowKey:string;colKey:string;columns:string[];
   rows:{label:string;cells:(number|null|undefined)[];total:number|null}[];
   columnTotals:(number|null)[];grandTotal:number|null}|null{
   if(table.keys.length!==2)return null;
@@ -136,7 +136,18 @@ export function crossTab(table:DataTable):{rowKey:string;colKey:string;columns:s
   // grid would send it back to being a list.
   if(table.rows.length<labels.length*columns.length*CROSSTAB_MIN_DENSITY)return null;
   const at=new Map(table.rows.map(r=>[`${r.key[rowKey]}\u0000${r.key[colKey]}`,r.value]));
-  const addable=Boolean(table.unit?.trim());
+  // TOTALS NEED A CLAIM THAT THE CELLS COUNT THE SAME THING, and a stated unit is a weak proxy
+  // for one: `addable` was any non-empty string, and South London's mortality table states
+  // "people or deaths, as the measure says" -- prose DENYING commensurability, read as granting
+  // it. The other half of the same hole is a table that has the property and cannot say so:
+  // Snow's Table IX states no unit, correctly, because as imported it holds houses beside
+  // deaths; selecting `deaths` and `houses without a death` leaves two measures that both count
+  // houses, and nothing records that.
+  //
+  // So the claim is made where a person composes a figure and takes responsibility for it,
+  // rather than inferred from a free-text field. Found 2026-10-26; the per-measure unit this
+  // really wants is recorded in TODO.md and reaches every consumer of `valueField`.
+  const addable=assertCommensurable||Boolean(table.unit?.trim());
   const sum=(values:(number|null|undefined)[]):number|null=>{
     if(!addable)return null;
     const numbers=values.filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
@@ -151,13 +162,13 @@ export function crossTab(table:DataTable):{rowKey:string;colKey:string;columns:s
     grandTotal:sum(rows.flatMap(r=>r.cells))};
 }
 
-export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40}={}){
+export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40,assertTotals=false}={}){
   const matching=query?table.rows.filter(row=>Object.values(row.key).some(v=>String(v).toLowerCase().includes(query.toLowerCase()))):table.rows;
   const pages=Math.max(1,Math.ceil(matching.length/pageSize)),shown=matching.slice(page*pageSize,page*pageSize+pageSize);
   const unit=table.unit?esc(table.unit):'<span class="muted">unit unstated</span>';
   // The grid, where the shape allows one and nothing is being searched -- a filter is about
   // finding a row, and a matrix has no rows to page through in the same sense.
-  const grid=query?null:crossTab(table);
+  const grid=query?null:crossTab(table,{assertCommensurable:assertTotals});
   if(grid)
     return `<div class="table-meta muted">${table.rowCount} cells · ${esc(grid.rowKey)} by ${esc(grid.colKey)}`
       +` · value in ${unit}</div>`
@@ -175,7 +186,13 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
       +(grid.grandTotal===null?'':`<tfoot><tr><th scope="row">Total</th>`
         +grid.columnTotals.map(v=>`<td class="crosstab-total">${v===null?'<span class="muted">—</span>':esc(v)}</td>`).join('')
         +`<td class="crosstab-total">${esc(grid.grandTotal)}</td></tr></tfoot>`)
-      +`</table>`;
+      +`</table>`
+      // WHO SAID THESE COULD BE ADDED. A reader checking a margin is entitled to know whether
+      // the table claimed its values count the same thing or a person did, because the two carry
+      // different weight -- and because the person can be wrong in a way the file cannot.
+      +(grid.grandTotal!==null&&assertTotals&&!table.unit?.trim()
+        ?`<p class="table-meta muted">Totals are shown because this step was told these values `
+          +`count the same thing. The table states no unit, so nothing here checks that.</p>`:'');
   return `<div class="table-meta muted">${matching.length} of ${table.rowCount} rows${table.missingValueCount?` · ${table.missingValueCount} values absent and kept as unknown`:''} · value in ${unit}</div>`
     +`<table><thead><tr>${table.keys.map(k=>`<th>${esc(k)}</th>`).join('')}<th>${esc(table.valueField)}</th></tr></thead><tbody>`
     +shown.map(row=>`<tr>${table.keys.map(k=>`<td>${esc(row.key[k])}</td>`).join('')}<td>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td></tr>`).join('')

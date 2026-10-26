@@ -69,7 +69,72 @@ Read as a publication it is already one, so the test is not "could a narrative b
 | What this repository does not yet contain | project | limitation | Discussion |
 | Independently found, twice | project | finding | Discussion |
 | Why this is a separate repository | — | — | — |
-| References, and its four subsections (~75 lines) | — | source | — |
+| References, and its four subsections (~75 lines) | **derived** | source | **References** |
+
+### References are the one section a workflow can write by itself
+
+_The practitioner, 2026-10-26: "Some of the references and citations can be automatically built
+from the provenance of the assets like WorldPop, OSM, PMTiles, John Snow literature, etc."_
+
+That row carried two dashes until this was said, and it was the only row in the table that did.
+The reason it can be filled is that **this project already stores a bibliographic record and
+calls it something else.** Every source carries a licence IRI, a digest and a retrieval date;
+`provenance.json` in the example repository holds them per asset; a run emits PROV naming every
+entity a result used. A reference list is that same information with a citation style applied.
+
+So References is a **fourth kind of note**, and it is unlike the other three. Widget, workflow
+and project notes are written by a practitioner and the application cannot check them. This one
+is the reverse: **nothing should be written by hand, because anything written by hand can
+disagree with the digest.** It is derived, and the practitioner's judgement goes into what a
+citation says about an asset ONCE, in the source record, rather than into every report that
+cites it.
+
+What that buys, and why it is more than a convenience:
+
+- **An uncited asset becomes findable.** A run used an entity; the report's reference list is
+  built from the run; so an asset that appears in a figure and in no reference is a gap an
+  application can name. This is the first thing in 119's assurance argument that could be
+  mechanically checked, and References is where it is cheapest.
+- **A citation and a digest cannot drift apart**, which is the failure the retrieval date exists
+  to catch. A hand-typed OSM citation stating a date the digest contradicts is worse than no
+  citation, because it looks like diligence.
+- **It separates the two things a reference does.** Attribution is a licence obligation and is
+  owed whether or not anybody reads the report; citation is a scholarly claim about what the work
+  rests on. The same record serves both and they are not the same act. ODbL requires the first.
+
+**What is NOT derivable, and must not be made to look as if it were.** The John Snow literature
+is a different case from WorldPop, OSM and PMTiles: the 1855 monograph is not an asset with a
+digest this project retrieved, it is a work being argued with. A citation to it is a scholarly
+choice about what the account rests on, and nothing in a receipt knows it was made. So the
+derived list is **sources used**, and a practitioner adds **works cited** — and a report that
+blurred the two would be claiming provenance for a reading.
+
+Nor is the ORDER derivable, nor which style, nor whether a source cited for one number deserves
+the same prominence as one the whole argument rests on.
+
+**And the section predicts which kind it is**, which turns the distinction from a caveat into a
+rule the application can hold. _The practitioner, 2026-10-26: "There are some references that
+will be written by hand, especially those that appear in the Introduction, and Discussion."_
+
+| IMRaD section | What it cites | Where it comes from |
+| --- | --- | --- |
+| **Methods** | the assets the run used: a boundary, a population raster, a basemap, a transcription | derived from provenance, with the digest and the retrieval date |
+| **Results** | the same assets, where a figure rests on one | derived |
+| **Introduction** | the literature the question comes out of | written |
+| **Discussion** | the literature the finding is argued against | written |
+
+The reason the split falls exactly there is not bibliographic convention. **Methods and Results
+make claims about what was done, and the application witnessed it. Introduction and Discussion
+make claims about what the work means, and nothing in a receipt was present for that.** So the
+two reference kinds are not a formatting difference to be merged later: they differ in who can
+vouch for them, which is the same distinction this project draws between a measurement and a
+judgement everywhere else.
+
+It also gives the derived list a falsifiable duty. A Methods reference that nothing in the run
+used is wrong and can be caught; an Introduction reference nobody can check is a practitioner's
+to defend, and the report should not dress it in a digest.
+
+**Not built.** Recorded here on the day it was said, with the rest of the notes design.
 
 ## What held
 

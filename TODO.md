@@ -597,12 +597,18 @@ rather than a finding:
 | `IF`/`THEN` | `apply_ruleset` authored rules |
 | `DEFINE`/`ASSIGN` | `derive_value`, partial — no computed column across tables |
 | `GRAPH` | `chart_output` |
-| **`MERGE`, `RELATE`, `MATCH`** | **nothing** |
-| `TABLES` | counts and margins; no analysis |
-| `FREQ`, `MEANS`, `SORT`, `GROUP`, `RECODE`, `LOGISTIC` | nothing |
+| `RELATE` | `relate_table`, built 2026-10-26 — a CATEGORY across a shared key |
+| **`MERGE`, `MATCH`** | **nothing**. Named in `src/relate-table.ts` so neither is reached by widening it: `MERGE` brings measures across and adds ROWS, `MATCH` is approximate linkage |
+| `GROUP` | `group_table`, built 2026-10-26 — sum only, because summing a rate has no referent |
+| `TABLES` | `two_by_two`, built 2026-10-26 — risk, risk ratio, odds ratio, risk difference. **Not** the tests |
+| `FREQ`, `MEANS`, `SORT`, `RECODE`, `LOGISTIC` | nothing |
 
-**The join is the headline.** What this project has recorded as a single missing capability since
-0.12.0 — nothing joins two tables on a shared column — is THREE commands in Epi Info. It
+**The join was the headline, and splitting it into three was the point.** What this project
+recorded as a single missing capability since 0.12.0 — nothing joins two tables on a shared column —
+is THREE commands in Epi Info, and only the narrowest of them was needed: a long table's value
+column holds only numbers, so a category brought across can only be a key column and the row count
+does not change. That is `RELATE`, built 2026-10-26. Reading the command set as three operations
+rather than one is what kept `relate_table` from being a general join nobody had specified. It
 blocks the Manila example from reporting a projection, blocks the people-denominated 2x2 from
 being built here, and is the reason both are prepared outside. It is a standard operation, not a
 local wish.
@@ -704,7 +710,30 @@ cost of the alternative is concrete: `legacyBreslowDayOddsRatio` directly ports 
 log-odds dispersion that the legacy output LABELS "Breslow-Day", so bit-for-bit parity imports a
 statistic named as something it is not.
 
-Until any of it exists, the 2x2 should not be presented as an Epi Info 2x2.
+**BUILT 2026-10-26**, in the narrow form and not in full. See
+[142](docs/experiments/142-an-epi-kernel-exercised.md). `relate_table`, `group_table` and
+`two_by_two` ship; the South London contingency table is now DERIVED from the two CSVs the example
+already shipped, rather than inlined with an empty digest; risk, the risk ratio, the odds ratio and
+the risk difference each name their interval method and are checked against statsmodels to 1e-9 in
+lab check 30. The tests are not built and should not be started to meet a date.
+
+**AND THE PARAGRAPH ABOVE WAS WRONG ABOUT WHY.** It said the estimand was the sharp part: a RATE
+ratio of 8.40 beside a RISK-shaped 2x2. Check 30's fixture refuted that before the widget shipped.
+A risk ratio over the same houses is `8.401853429780243` — the rate ratio's value **bit for bit**,
+because deaths per house IS a risk when a house holds at most one death, so the two are the same
+division; only the intervals differ, and only in the second decimal. The sharp part is the
+**denominator**, a house against a person, and the hazard is worse than this file claimed: a reader
+who takes 8.40 for the risk ratio beside the houses table is RIGHT, and is thereby taught that the
+substitution is safe. It is safe only while the outcome is rare, and the layout shows the
+statistics rather than the subject being counted.
+
+**What remains open here**, and it is the recognisability half: every `epiInfoLabel` is null. The
+CDC user guide states the statistics in prose while the layout is an image, so the displayed labels
+have to be read off the original source or a running Epi Info. Until then this is structurally
+present and factually empty — and check 30 fails if a label appears without that verification,
+because a field that can be filled unverifiably is worse than no field.
+
+Until the labels exist, the 2x2 is not presented as an Epi Info 2x2.
 
 **The input-stage palette looks like a palette that failed to load.** _Found 2026-10-26, by the
 practitioner misreading it twice in ten minutes on the live build — first as missing widgets,

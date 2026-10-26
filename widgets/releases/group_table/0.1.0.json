@@ -1,0 +1,61 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "released": "2026-10-26",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "typescriptType": "ParamsByType['group_table']"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "id": "urn:fieldwork:widget:group_table",
+  "nodeType": "group_table",
+  "version": "0.1.0",
+  "title": "Total within groups",
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes a table and gives back one row per distinct combination of the key columns kept, holding the total of the rows that collapsed into it. The key columns not kept are gone from the result."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No ontology mapping yet. The receipt names the columns kept, the columns dropped, how many rows collapsed into how many groups, and every group that held an empty cell.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/group-table.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/group-table.ts"
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Adds up the values of the rows agreeing on the key columns you keep. Epi Info's GROUP. `rate` has grouped and summed internally since it was written, but it emits a rate, so the totals are consumed on the way out and no other step can use them; a stratified contingency table needs those totals and no rate. The columns KEPT are named rather than the columns dropped, for the reason `wideDataTable` names its value columns explicitly: name what is kept and a column added to a file later is dropped, leaving the same groups, while naming what is dropped would let a new column silently become a grouping key. Sum and nothing else, because Epi Info separates MEANS from GROUP and the separation is not bureaucratic -- summing counts gives a count, and summing rates gives a number with no referent. A group holding any empty cell totals to NOTHING KNOWN and is named, because summing over an empty cell quietly produces a total too small by an unknown amount."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested as the second step of the Snow chain: 64 rows of Table VIII, related to a water supply category, totalled into six -- three supply categories by two measures -- and matching the hand-computed table exactly. Covers an empty cell, which totals to nothing known, and grouping by every column, which is refused as a no-op. Nothing here establishes that the rows totalled TOGETHER belong together: this step cannot tell a count from a rate and will add up rates on request, which is why only sum is offered and why the table's own unit is the only thing saying what the total counts. Lab check 29."
+  }
+}

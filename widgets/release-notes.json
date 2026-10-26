@@ -360,6 +360,18 @@
     }
    ]
   },
+  "group_table": {
+   "version": "0.1.0",
+   "released": "2026-10-26",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Adds up the values of the rows agreeing on the key columns you keep. Epi Info's GROUP. `rate` has grouped and summed internally since it was written, but it emits a rate, so the totals are consumed on the way out and no other step can use them; a stratified contingency table needs those totals and no rate. The columns KEPT are named rather than the columns dropped, for the reason `wideDataTable` names its value columns explicitly: name what is kept and a column added to a file later is dropped, leaving the same groups, while naming what is dropped would let a new column silently become a grouping key. Sum and nothing else, because Epi Info separates MEANS from GROUP and the separation is not bureaucratic -- summing counts gives a count, and summing rates gives a number with no referent. A group holding any empty cell totals to NOTHING KNOWN and is named, because summing over an empty cell quietly produces a total too small by an unknown amount."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
   "isochrone": {
    "version": "0.4.0",
    "released": "2026-10-20",
@@ -676,6 +688,18 @@
    "breaking": false,
    "migrationFrom": []
   },
+  "relate_table": {
+   "version": "0.1.0",
+   "released": "2026-10-26",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Brings a key column from a second table onto these rows, matched on a column both tables carry. This is Epi Info's RELATE and deliberately not its MERGE: a long table's value column holds only numbers, so a CATEGORY brought across can only be a key column and the row count is unchanged, while bringing MEASURES across would add rows and has a different failure mode. A second table giving one key two different values is REFUSED rather than resolved, because choosing between them would produce a stratification that is wrong in a way no total reveals. A left key the second table does not carry is reported by name and its rows are dropped, since inventing an \"unknown\" category would put a stratum in the table that nobody measured. What this unblocks is recorded in the 0.12.0 release notes as the reason South London's contingency table was prepared outside the application."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
   "reproject": {
    "version": "0.2.0",
    "released": "2026-10-13",
@@ -907,6 +931,18 @@
     {
      "kind": "added",
      "description": "Records the fw: terms this widget asserts, as ontology.emits, derived from its module by scripts/ontology-coupling.mjs. The point is the coupling rather than the list: the terms a widget asserts can no longer change without a new release, so a composition pinning the old one reports drift, and ontology drift and widget drift become one signal. Declares 1 class and 6 properties. No behaviour change."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
+  "two_by_two": {
+   "version": "0.1.0",
+   "released": "2026-10-26",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Risk in each group, the risk ratio with a Katz log interval, the odds ratio with a Wald log interval, and the risk difference with an unpooled Wald interval. Epi Info's TABLES, minus its tests. Built on 2026-10-26 against a measured misreading rather than a missing feature: the South London project shows a rate ratio of 8.40 on houses where the risk ratio on people is 5.35, both correct and 57% apart. The first draft of this widget attributed that gap to the estimand, rate versus risk. THE LAB FIXTURE FOR CHECK 30 REFUTED THAT BEFORE IT SHIPPED: a risk ratio on the same houses is 8.401853429780243 -- the SAME NUMBER, bit for bit, because at most one death per house makes deaths-per-house a risk and the two are the same division. Only the intervals differ, and only in the second decimal: 6.84 to 10.32 from the Poisson form against 6.85 to 10.31 from Katz. So the gap is the DENOMINATOR, a house against a person, and the hazard is worse than first stated: a reader who takes 8.40 for the risk ratio beside the houses table is RIGHT, and is thereby taught that the substitution is safe. The direction `recognisable-not-identical-an-epi-kernel-of-our-own` records that training makes the misreading near-certain, and this is the mechanism -- the taught layout shows the statistics and not the subject being counted. Every estimate NAMES its interval method, and carries a separate field for what Epi Info calls the same quantity, because the direction's hardest finding is that the two can disagree. That field is null here: the CDC user guide states the statistics in prose and the layout itself is an image, so nobody has verified the displayed labels, and filling them from memory is how a wrong label enters a teaching context. The exposed and unexposed groups are NAMED rather than taken as the first two rows, because Snow's people-denominated table has three strata -- 16 of 32 sub-districts were supplied by both companies -- and the stratum left out is reported. An estimate may be unavailable while the table stays readable: a zero cell takes the odds ratio and leaves the risk difference standing. NOT the tests -- Pearson, Mantel-Haenszel, Yates, Fisher, mid-P -- which are a larger piece and were not started to meet a date."
     }
    ],
    "breaking": false,

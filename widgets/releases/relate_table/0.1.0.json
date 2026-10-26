@@ -1,0 +1,65 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "released": "2026-10-26",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "typescriptType": "ParamsByType['relate_table']"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "id": "urn:fieldwork:widget:relate_table",
+  "nodeType": "relate_table",
+  "version": "0.1.0",
+  "title": "Relate a column from another table",
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      },
+      {
+        "name": "related",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes the table being added to on `records` and the table being read from on `related`, and gives back the first with one more key column. The row count does not change: a category brought across lands on every row that matched."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No ontology mapping yet. The receipt names the matched column, the column brought across, how many rows were related, how many were dropped for keys the second table does not carry, and the distinct values that landed.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/relate-table.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/relate-table.ts"
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Brings a key column from a second table onto these rows, matched on a column both tables carry. This is Epi Info's RELATE and deliberately not its MERGE: a long table's value column holds only numbers, so a CATEGORY brought across can only be a key column and the row count is unchanged, while bringing MEASURES across would add rows and has a different failure mode. A second table giving one key two different values is REFUSED rather than resolved, because choosing between them would produce a stratification that is wrong in a way no total reveals. A left key the second table does not carry is reported by name and its rows are dropped, since inventing an \"unknown\" category would put a stratum in the table that nobody measured. What this unblocks is recorded in the 0.12.0 release notes as the reason South London's contingency table was prepared outside the application."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested against the two tables the South London repository already ships: Snow's Table VIII, 32 sub-districts with population and deaths, related to Table XII's water supply category on `sub_district`. The oracle is the hand-computed contingency table inlined in that example project with an empty digest -- relating and then totalling reproduces its six numbers exactly, which is what makes the hand computation removable. Covers an ambiguous key, an absent key, and a column the left table already holds. Nothing here establishes that two tables keyed on the same column describe the same subjects: the match is on the string, and a sub-district renamed between two sources would match nothing or, worse, match the wrong row. Lab check 28 is where this is compared against an independent implementation."
+  }
+}

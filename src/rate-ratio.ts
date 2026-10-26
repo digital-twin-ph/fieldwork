@@ -32,9 +32,14 @@ export type IntervalMethod=typeof INTERVAL_METHODS[number];
  *  statsmodels and every one of four comparisons missed by more than 1e-6 -- the ratios agreed
  *  exactly and the intervals did not, which is the signature of a rounded constant rather than a
  *  wrong formula. Snow's per-house interval moved from 6.8409 to 6.8410. Immaterial at two
- *  decimals, and the kind of thing an independent check exists to find before a reader does. */
-const Z_FOR_LEVEL:Record<number,number>={90:1.6448536269514722,95:1.959963984540054,99:2.5758293035489004};
-export const INTERVAL_LEVELS=[90,95,99] as const;
+ *  decimals, and the kind of thing an independent check exists to find before a reader does.
+ *
+ *  MOVED to `epi-estimate.ts` on 2026-10-26, when the two-by-two needed the same constant. It is
+ *  re-exported here because this file's callers import it, and it lives there because a value
+ *  that has already been found rounded once must exist in exactly one place -- otherwise the next
+ *  estimate reintroduces check 27's defect by typing a textbook number into its own file. */
+export {INTERVAL_LEVELS} from './epi-estimate.js';
+import {Z_FOR_LEVEL} from './epi-estimate.js';
 
 export interface RateRatioOptions {
   /** The group whose rate goes on top -- the one a claim is being made about.

@@ -292,6 +292,55 @@
         }
       ]
     },
+    "relate_table": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "records",
+              "table"
+            ],
+            [
+              "related",
+              "table"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
+    "group_table": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "records",
+              "table"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
+    "two_by_two": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "records",
+              "table"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "rate": {
       "output": "table",
       "contracts": [

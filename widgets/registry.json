@@ -407,6 +407,18 @@
       ]
     },
     {
+      "id": "urn:fieldwork:widget:group_table",
+      "nodeType": "group_table",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/group_table/0.1.0.json",
+          "sha256": "2a04907b33221b6eb4b985eb646a89130e33a5b8106e308dff8bd22652934fc1"
+        }
+      ]
+    },
+    {
       "id": "urn:fieldwork:widget:isochrone",
       "nodeType": "isochrone",
       "currentVersion": "0.4.0",
@@ -917,6 +929,18 @@
       ]
     },
     {
+      "id": "urn:fieldwork:widget:relate_table",
+      "nodeType": "relate_table",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/relate_table/0.1.0.json",
+          "sha256": "0ef1f8764926acec0ca1b4bffb20d7b4c47d35927c3db474bd3c846cf2f12e02"
+        }
+      ]
+    },
+    {
       "id": "urn:fieldwork:widget:reproject",
       "nodeType": "reproject",
       "currentVersion": "0.2.0",
@@ -1181,6 +1205,18 @@
           "version": "0.3.0",
           "path": "widgets/releases/travel_time_band/0.3.0.json",
           "sha256": "ec29b5c4bb40c3cad259fb98840b8efa64a8131b7a2e909f189c16f25521877b"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:two_by_two",
+      "nodeType": "two_by_two",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/two_by_two/0.1.0.json",
+          "sha256": "026a32130ce4e47117575571927c1b236993c78125185352c7788f53fb865eea"
         }
       ]
     },

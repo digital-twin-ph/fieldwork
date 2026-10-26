@@ -607,11 +607,43 @@ blocks the Manila example from reporting a projection, blocks the people-denomin
 being built here, and is the reason both are prepared outside. It is a standard operation, not a
 local wish.
 
-**And the reverse reading is worth as much.** `classic-command-parity.ts` suggests that project
-tracks parity with the original, and the practitioner has noted it made DEPRECATION decisions
-about the original commands. Which operations a mature epidemiological tool decided to drop, and
-why, bears directly on a palette standing at 49 against a target of 41. Read it before the next
-retirement, not after.
+**The deprecations are NOT a list of unnecessary operations, and this file said they were.**
+Corrected 2026-10-26 by the practitioner: *"the deprecations were so much about Epi Info AI being
+browser based vs. Epi Info being a desktop app. Also some commands carried some security risks."*
+Checked in `wasm/docs/design/classic-command-compatibility-registry.md`, whose browser policy is
+a three-way vocabulary — `candidate`, reproducible through typed browser operations;
+`adapt-required`, where legacy behaviour depends on files, databases, printers, destructive state
+or UI effects; and `blocked`, where *"ambient desktop authority is not reproduced"* and legacy
+`EXECUTE` *"cannot launch arbitrary processes, scripts, DLLs, or shell commands"* — under the
+invariant that *"adaptation never grants a command direct DOM, network, credential, filesystem,
+database, or process authority."*
+
+So that axis is platform and security, not epidemiological necessity, and it says nothing about a
+palette at 49 against a target of 41. What it IS directly relevant to is that this application is
+also browser-based, offline-first, and holds credentials, imported files and local storage —
+so a sibling project's reasoning about what a browser may be trusted with is reusable here, where
+its reasoning about which analyses matter was never the point.
+
+**Three things from that register worth taking, recorded so they are not lost:**
+
+- **A disposition vocabulary.** `preserve, adapt, defer, extend, retire`, with a lifecycle that
+  separates `deprecated` — *"still visible and supported during a documented transition"* —
+  from `retired` — *"removed only after explicit review, replacement documentation, and release
+  communication."* This project has a boolean `retired` in `classification.json` and conflates
+  the two, which is exactly the distinction its own policy drew on 2026-10-26 when it said
+  removal is licensed now and a notice will be owed once there are users.
+- **The reference adaptation pattern**, which they name on `WRITE`: request a capability only
+  through a user gesture, validate and preview before a mutation, audit the result, offer a
+  portable fallback. That is a checklist this application could hold its own file, credential and
+  export paths to.
+- **"Unsupported source remains visible and portable."** A program using an unsupported command
+  still opens and can be read. This project chose the opposite on 2026-10-26 — a workflow
+  holding a retired widget REFUSES TO OPEN — on the reasoning that a retired widget never runs.
+  Both are defensible; the alternative was never considered, and "opens but will not run" keeps a
+  practitioner's work inspectable where refusing to open does not. Worth revisiting before the
+  next retirement, not after.
+
+Read the register before the next retirement.
 
 Do not treat the table above as scope. Several of those commands are large (`LOGISTIC` is
 regression), and the checklist's value is knowing what is absent, not committing to fill it.

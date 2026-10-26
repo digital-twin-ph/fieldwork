@@ -161,9 +161,13 @@ prompted anyone to discharge, which is why the order matters: ask at the input, 
 figure, then tighten the rule.
 
 **And the rule's new form is decided**, by [140](140-provenance-as-a-port.md): where a figure
-received required provenance, showing nothing is an **error state**, not a passing note. The
-obligation is discharged by DISPLAYING rather than by carrying — it is owed to an audience, so
-it is met where the audience looks. `FigureStatesItsSource` stops asking whether a note exists
+received required provenance, showing nothing is an **error state**, not a passing note.
+
+What the note IS, precisely, because it is easy to overstate: the obligation is taken on by the
+practitioner's act of connecting the provenance, and the note is **the evidence of that act** —
+the only evidence a reader has, since they were not there when it was wired. So the rule does not
+ask whether a figure carries a citation because the citation is the duty; it asks because a
+figure is where somebody checks that the duty was taken on. `FigureStatesItsSource` stops asking whether a note exists
 and asks whether it carries what the figure received. A figure that received no obligation is
 unaffected, which is most of them.
 

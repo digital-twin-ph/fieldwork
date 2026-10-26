@@ -1,0 +1,61 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:derive_value",
+  "nodeType": "derive_value",
+  "version": "0.1.0",
+  "title": "Derive a value",
+  "released": "2026-10-26",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['derive_value']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes the table whose values it reads and gives back that table with the derived rows added. The rows it computed from are left in place: removing them is a selection, which `keep_rows` does."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No ontology mapping yet. The receipt names the operation, the two operands, how many rows were derived and which groups were skipped for want of an operand.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/derive-value.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/derive-value.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Computes a new value in a key column from two of its existing values, once per group of rows sharing the other key columns. This is Epi Info's ASSIGN over the long table this application holds: a DataTable carries one value per row, so the two numbers combined are two ROWS, not two columns, and the operands are values of a key column -- the same pivot `rate` names with `measureKey`. A group missing either operand yields no row and is named, because a group whose operand nobody recorded has an unknown result and not a zero. A name the column already holds is refused, since two rows would share a key. Division by zero is unknown rather than infinite. See docs/experiments/65-ruleset-as-data.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested against Snow's Table IX as the South London repository carries it: three suppliers, houses and deaths, deriving houses without a death. Covers a missing operand, a colliding name, an absent key column and division by zero. Nothing here establishes that an arithmetic result is a meaningful quantity -- the widget does not know what its numbers count, and subtracting deaths from houses is sound only because both count houses."
+  }
+}

@@ -3,7 +3,7 @@
   "note": "The human half of the naming gate. scripts/validate-naming.mjs checks the six mechanical rules; this records a practitioner's judgement on the rule that cannot be mechanised -- whether the name is what someone would say to ask for the operation. Review docs/widget-names.md, which is generated, and record verdicts here. A verdict is pinned to the digest of (nodeType, title, group): change any of the three and the review goes stale rather than carrying over.",
   "stampedAt": "2026-10-19",
   "reviewer": "practitioner",
-  "pendingCeiling": 43,
+  "pendingCeiling": 45,
   "ceilingRule": "pendingCeiling may be lowered freely. It may be raised only when a widget is added whose FUNCTION DID NOT EXIST BEFORE -- the practitioner's rule, 2026-10-25: \"we can add a widget if its function did not exist before\" -- with an entry in ceilingRaises naming the widget and what it does that nothing did. That is D2 of the admission audit asked of the ceiling: a widget duplicating an existing function must not buy itself room by raising this, and a widget carrying a function the framework lacked is not review debt incurred carelessly. The ratchet exists so review debt cannot grow SILENTLY, not so that nothing may be added. As first written this rule said 'never raised' and also that the pending list 'can only shrink', which cannot both hold: a widget added after 2026-10-13 has no entry, fails the build until one is written, and a written entry starts pending. The contradiction surfaced on 2026-10-25, when rate_ratio was the second widget added in one day and the first to find no slack left.",
   "verdicts": {
     "accepted": "The name is what a practitioner would say to ask for this operation.",
@@ -124,6 +124,15 @@
       "note": "A transform verb and what it acts on, which is the rule this ledger states: deduplicate_points beside clip_points_to_area and compare_point_sets. The palette says \"Deduplicate point records\" rather than \"Link records\" because the practitioner asked for deduplication and that is the sentence they are holding; RECORD LINKAGE is the method and is named as such in the receipt and the manual, where the distinction is worth drawing. It is in Comparisons and checks rather than Spatial operations because the question it answers is about two records being one thing, which the distance only helps decide."
     },
     {
+      "nodeType": "derive_value",
+      "title": "Derive a value",
+      "group": "Summaries",
+      "fingerprint": "e559562fe055",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
       "nodeType": "donut_geomask",
       "title": "Move points in a donut",
       "group": "Spatial operations",
@@ -188,6 +197,15 @@
       "reviewed": null,
       "reviewedBy": null,
       "note": "Pending because the practitioner named the tension while the widget was being designed, 2026-10-25: \"We are not strictly joining table to polygon here. What we are joining are a table and another table with geometry.\" The title says \"to the study area\", which is the object a practitioner points at, and the identifier says `area`, which is the port. Neither says that the area carries a table of named parts and that the join is table-to-table on those names. Whether that matters to a reader is the question a review has to answer; it is not settled by the author who chose the name."
+    },
+    {
+      "nodeType": "keep_rows",
+      "title": "Keep rows by value",
+      "group": "Summaries",
+      "fingerprint": "15524bafa335",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
     },
     {
       "nodeType": "map_output",
@@ -455,6 +473,14 @@
       "widget": "rate_ratio",
       "functionThatDidNotExist": "Dividing one rate by another, with an interval. src/rate.ts computed one group's measure and stopped; nothing in the framework compared two measures to each other. slr_threshold_comparison compares a value to a threshold, which is not the same operation. So the framework could map Snow's mortality rates and could not state his argument.",
       "why": "The ceiling had exactly one place left and join_table_to_area took it earlier the same day. Nothing about rate_ratio's name was reviewed to make room: the debt genuinely rose by one, and is recorded rather than absorbed. Lowering it again means reviewing a pending name, which is a practitioner's judgement and not an author's."
+    },
+    {
+      "at": "2026-10-26",
+      "from": 43,
+      "to": 45,
+      "widget": "derive_value, keep_rows",
+      "functionThatDidNotExist": "Arithmetic over a table, and selection of its rows. Rules conclude a TERM about a record and never a number computed from other numbers -- authoredProjection says so in place, \"the value field is untouched\" -- so no step could compute one value from two others. Nothing selected rows of a table either: clip_points_to_area filters points by geometry, and no equivalent existed for a table. The 0.12.0 release notes record the cost as a validation limit: South London's contingency table is prepared outside the application because nothing derives a column from others.",
+      "why": "Two widgets, two places. Raised rather than absorbed, because absorbing it would mean recording a practitioner's verdict on a name nobody has reviewed. Both entries are pending and the ceiling carries the debt until they are read."
     }
   ]
 }

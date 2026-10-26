@@ -270,6 +270,18 @@
    "breaking": true,
    "migrationFrom": []
   },
+  "derive_value": {
+   "version": "0.1.0",
+   "released": "2026-10-26",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Computes a new value in a key column from two of its existing values, once per group of rows sharing the other key columns. This is Epi Info's ASSIGN over the long table this application holds: a DataTable carries one value per row, so the two numbers combined are two ROWS, not two columns, and the operands are values of a key column -- the same pivot `rate` names with `measureKey`. A group missing either operand yields no row and is named, because a group whose operand nobody recorded has an unknown result and not a zero. A name the column already holds is refused, since two rows would share a key. Division by zero is unknown rather than infinite. See docs/experiments/65-ruleset-as-data.md."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
   "donut_geomask": {
    "version": "0.1.0",
    "released": "2026-10-07",
@@ -375,6 +387,18 @@
     {
      "kind": "initial",
      "description": "Puts a value from each row of a table onto the part of a study area that row names, matching on a key column by equality after a declared normalisation. One feature per part, undissolved, each carrying the value in an open properties bag. Four conditions are reported by name rather than folded into a count: a part no row names, a row naming no part, two raw keys that normalise together, and two parts sharing one name. See docs/experiments/138-a-table-and-a-boundary-are-two-tables.md."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
+  "keep_rows": {
+   "version": "0.1.0",
+   "released": "2026-10-26",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Keeps only the rows whose chosen key column holds one of the values named, in the order named. Nothing in the application selected rows of a table before: `clip_points_to_area` filters points by geometry and has no equivalent for a table. A value the table does not hold is reported rather than ignored, because asking for a row that is not there is usually a typo or a changed table upstream, and quietly returning fewer rows is how a figure loses a category nobody noticed. Keeping nothing the table holds is refused rather than returning an empty table."
     }
    ],
    "breaking": false,

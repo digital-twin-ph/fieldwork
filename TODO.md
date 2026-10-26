@@ -14,6 +14,58 @@ tasks say so, and name the record that would settle them.
   found an unenforced distinction, so the exhaustive D3 pass is the next step. Its six
   ordered actions are the near-term work.
 
+## A 2x2 that became commensurable shows no margins
+
+_Found 2026-10-26, building South London's contingency table in the application._ Totals are
+drawn only where a table states a unit — "a table that states its unit is saying its values count
+the same thing; one that does not gets no totals rather than a wrong one". Snow's Table IX states
+none, correctly: as imported it holds houses beside deaths, and a total across those is
+meaningless.
+
+But `keep_rows` leaves `deaths` beside `houses without a death`, and those **both count houses**.
+The table is now commensurable and nothing in it records that, so the figure an epidemiologist
+reads loses exactly the margins they read first. The rule is right in general and wrong here.
+
+Three candidate answers, none chosen: a step that states a unit on a table it passes through;
+a unit per measure rather than per table, which is a change to `DataTable` and reaches every
+consumer; or letting the output state its own margins where a reader has asserted the cells are
+commensurable. The first is smallest and the second is the one that is actually true of long
+tables, where each measure may count something different.
+
+## Revisit the Manila sea-level example, which reports no sea level
+
+_Raised 2026-10-26 by the practitioner: **"that is a useless worked example if titled sea level
+rise."** Checked, and the criticism holds._ `assignSites` reads the AR6 extract **only to narrow
+which gauges are usable** — `usable` is the set of sites whose `site_id` appears in the extract —
+so the 288 projected values are imported, contract-checked, carried through a ruleset with three
+obligatory AR6 citations, and never read. The output is facility → gauge → distance. As a
+sea-level example it delivers no sea level, and its title claims the one thing it does not do.
+This is the D7 overclaim failure applied to a worked example rather than to a widget.
+
+Refusing to model inundation stays right, and [the answer given on 2026-10-26](experiments/)
+dressed the gap up as that virtue, which it is not: not claiming inundation and never computing
+a projection are different omissions.
+
+**What it should report**, and can report honestly: the projected change at each facility's
+assigned gauge, with scenario, year, quantile and vertical-land-motion family named in the
+output — "+X mm by 2100 under SSP2-4.5, median, with VLM". Real, uses the data it ships, and
+still not an inundation model.
+
+**What blocks it is one named limit.** The extract is keyed `site_id, scenario, basis, family,
+year, quantile`; the assignment is keyed `point_id, projection_site`. Carrying the value across
+is a join of two tables on a shared column, which the 0.12.0 release notes already record as
+missing. Slicing the extract to one scenario, year, quantile and family is `keep_rows`. The
+example stops exactly where the application stops.
+
+Until it reports a value, the note should say the projections are validated but not reported —
+today it says what it will not claim and is silent about what it never computed.
+
+**Check the two remaining sea-level widgets in the same pass**, which the practitioner has
+flagged to review: `slr_site_assignment` is listed in the Duplicates row as a one-off of
+nearest-neighbour-with-distance, and `slr_threshold_comparison` this file has called *"genuinely
+domain-bound"*, which under the domain-agnostic direction is a question rather than a settled
+exemption. Both are still classified `domain` in `widgets/classification.json`.
+
 ## Snow's denominator: wire up `snow-gboh`, then South London
 
 **Raised in priority 2026-10-23 at the practitioner's direction**, on the day they met the same

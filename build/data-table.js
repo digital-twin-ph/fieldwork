@@ -1,2 +1,2 @@
-import{a,b,c,d,e}from"./chunks/chunk-3YHTMP7A.js";import"./chunks/chunk-KVMUXFPB.js";export{a as MAX_TABLE_ROWS,b as dataTable,d as distinctValues,c as keyDomains,e as tableReceipt};
+import{a,b,c,d,e,f}from"./chunks/chunk-LJYNWP4L.js";import"./chunks/chunk-KVMUXFPB.js";export{a as MAX_TABLE_ROWS,b as dataTable,e as distinctValues,d as keyDomains,f as tableReceipt,c as wideDataTable};
 //# sourceMappingURL=data-table.js.map

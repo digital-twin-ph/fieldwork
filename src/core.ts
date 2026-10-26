@@ -1082,7 +1082,16 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(authored){
           // Points or a table. The rules do not know the difference: a rule reads a predicate,
           // and a predicate is bound to an attribute of a record. 2026-10-16.
-          const subjects=inputs.subjects as PointCollection;
+          //
+          // READ THE PORT THE NODE DECLARES, not a port named here. Writing rules on a step keeps
+          // the ports of whatever pin the node was holding (`app.ts`, `held?.inputs`), so a node
+          // that came from the extract contract carries `projections` and never had a `subjects`
+          // port at all. This line named one, got undefined, and reported "Connect records to
+          // classify" about an input that was connected -- found 2026-10-26 by writing rules on
+          // the Manila extract step. `subjects` remains the fallback: it is the port the authored
+          // default declares for a node that was holding no pin.
+          const port=node.params.ruleset?.inputs[0]?.[0]??'subjects';
+          const subjects=(inputs as unknown as Record<string,unknown>)[port] as PointCollection;
           // Units first. A rule comparing minutes to hours is wrong by a factor of sixty and
           // every other check in this application passes it: the parameter is in range, the
           // rules compile, the run succeeds. Refused rather than converted, which is the

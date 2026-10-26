@@ -574,6 +574,17 @@ outputs."_ That is a structural correspondence, not an analogy: **a command is a
 input, output, and parameters that are our knobs — and a results panel is the stream of their
 outputs.
 
+**What that command set IS**, stated 2026-10-26: *"codified knowledge for field epidemiology
+practice. That is what they teach to FETP trainees in more than 80 countries. And to Epidemic
+Intelligence Services Officers at CDC."* So it is the discipline's operation set rather than one
+tool's API — which is why it can serve as a coverage checklist without further warrant, and
+why an absence in the table below is a gap against what practitioners were TRAINED to do rather
+than against a competitor's feature list.
+
+It also adjusts D1. This project exposes a primitive when a workflow needs it, not in advance;
+for an operation in the taught curriculum the need is established by the discipline, so MERGE,
+RELATE and MATCH are not speculative additions waiting for a local example to justify them.
+
 What it buys is a palette gap analysis grounded in a mature tool instead of invented. The 48
 modules in `epi-info-ai/wasm/app/programming/` split into `classic-*`, the original command set
 ported, and `epi-ai-*`, the browser-era additions (GIS, record linkage, space-time clustering,

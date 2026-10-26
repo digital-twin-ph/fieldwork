@@ -567,6 +567,64 @@ teaches a method, and two things have now been found to need one:
 Not urgent against the items above, and recorded now because it has been
 implied twice in two days and never written down.
 
+**A 2x2 invites a reading Fieldwork cannot yet support.** _Raised 2026-10-26: "if you look at
+how 2x2 tables are reported in Epi Info, that's what they will look at."_ Checked against
+`epi-info-ai`'s `Table2x2Result` contract, which returns **totals** (exposed, unexposed, cases,
+non-cases, overall), **estimates** (risk in exposed and unexposed, risk ratio with a Katz-log
+interval, odds ratio with Wald-log, risk difference with Wald-unpooled, conditional odds ratio),
+**tests** (Pearson, Mantel-Haenszel, Yates, Fisher exact, mid-P) and **diagnostics** (expected
+cell counts and warnings). Fieldwork shows the counts and the margins: the totals line, and
+nothing else.
+
+**The estimand is the sharp part, not the feature count.** `rate_ratio` computes a RATE ratio --
+events per unit, log-normal interval -- and the derived 2x2 is RISK-shaped: cases against
+non-cases. A reader trained on Epi Info's layout will expect a risk ratio and an odds ratio, and
+may take the 8.40 already on the canvas for one of them. It is neither. That is a misreading the
+application currently invites by drawing the table and offering the wrong measure beside it.
+
+Smallest honest step, if this is taken: risk in each group, the risk ratio and the odds ratio,
+each with the interval method NAMED as Epi Info names its own, and each with a lab check against
+an independent implementation before it is claimed. Lab check 27 is the precedent and the
+warning: it found `rate_ratio` using a rounded 1.9600 for the normal quantile. Chi-square, Fisher
+and mid-P are a larger piece and should not be started to meet a date.
+
+**Which source is authoritative for what**, established by the practitioner 2026-10-26: Epi Info
+AI's **epi kernel was synthesized from the original Epi Info codebase**, which is public on
+GitHub; the rest of that project — its GIS kernel, adaptive learning kernel, evidence generation
+kernel, and its new and deprecated programming commands — are improvements and adaptations for a
+browser environment. So:
+
+| For | Go to |
+| --- | --- |
+| statistical behaviour: formulas, interval methods, the Fisher ordering and its `1.000001` tolerance, chi-square variants, warning thresholds | **the original Epi Info source**, as the thing being matched |
+| contract shape, result vocabulary, how a browser expresses it, and what was held to what tolerance | **Epi Info AI**, including `wasm/validation-lab/verify.py` |
+| what an FETP-trained reader expects to see | the original's output layout and labels |
+
+A name in the Epi Info AI contract is a faithful description of the original's behaviour, not an
+independent choice, so it can be read as a pointer INTO the original rather than as a
+specification to implement against.
+
+**Two things to check before copying anything.** The licence: Epi Info is CDC-produced and
+generally public domain, but this project records a licence IRI, a digest and a retrieval date
+for every source it carries, and source code deserves that at least as much as a CSV.
+Reimplementing a documented method from reading it is not the same act as lifting an
+implementation, and which one was done belongs in the experiment.
+
+**And a second thing worth reading for its own sake.** Epi Info AI made DEPRECATION decisions
+about the original's programming commands. A sibling project deciding which of a mature command
+set to drop, and why, is directly relevant to this project's own widget retirement work — where
+the budget stands at 49 against a target of 41 and the plan has been written for weeks. That is
+not a 2x2 question and should not be bundled into one.
+
+**The approach is settled and the register has it.** Not parity — an epi kernel of our own,
+with the LAYOUT patterned after Epi Info so a reader needs no translation. See
+[directions.json](directions.json), `recognisable-not-identical-an-epi-kernel-of-our-own`. The
+cost of the alternative is concrete: `legacyBreslowDayOddsRatio` directly ports a Woolf weighted
+log-odds dispersion that the legacy output LABELS "Breslow-Day", so bit-for-bit parity imports a
+statistic named as something it is not.
+
+Until any of it exists, the 2x2 should not be presented as an Epi Info 2x2.
+
 **The input-stage palette looks like a palette that failed to load.** _Found 2026-10-26, by the
 practitioner misreading it twice in ten minutes on the live build — first as missing widgets,
 then as "the Pages palette is truncated to only around 6 widgets"._ An empty canvas offers four

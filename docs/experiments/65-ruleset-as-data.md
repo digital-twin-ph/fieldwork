@@ -1,6 +1,6 @@
 # 65 · A ruleset as declared data, and where its knobs live
 
-_Created 2026-10-10 · Updated 2026-10-15_
+_Created 2026-10-10 · Updated 2026-10-26_
 
 **Status:** admission review. Written before the code, as experiments 48, 58, 61, 63 and 64
 were. Proposes one widget replacing three node types, and one new declared artifact — a
@@ -597,6 +597,32 @@ conclusions land as columns beside the data. No example demonstrates it, no manu
 it, and nothing in the palette suggests it — which is a **confusion** cost under
 [the directions register](../directions.json)'s
 `streamlining-measures-confusion-and-duplication`, not a missing capability.
+
+### Where the bounded map goes, now that the generic path exists
+
+_Added 2026-10-26._ The practitioner, closing the loop: *"which brings us back to the RECODE,
+IF-THEN logic from Epi Info and embedding that in the ruleset widget."*
+
+It embeds with no new mechanism, and the format already shows the shape twice. A ruleset carries
+its rules at two levels — the compiled `rules` that run, and the `authored` form they were built
+from, which is what makes them reproducible by hand. A recode is a third level above the same
+stack:
+
+| level | what it is | who reads it |
+| --- | --- | --- |
+| `recode` | a from→to map: this value becomes that one | a practitioner, at a glance |
+| `authored` | one IF/THEN rule per mapping | the rule builder |
+| `rules` | the N3 that runs | the reasoner |
+
+Each compiles to the one below, and each is kept. That is why the bounded-ness survives: the map
+stays beside the rules it generated, so the set of values it covers is **enumerable**, and a
+value outside it is reportable by name rather than inferred from a rule that failed to fire. A
+map compiled away into conditions would lose exactly that.
+
+It also inherits the reproducibility rule for free. `tests/rulesets-are-reproducible.test.mjs`
+asserts that `authored` rebuilds `rules` byte for byte; a recode whose `authored` form was
+generated from its own map satisfies that by construction, which is the test of whether a
+practitioner could have built it.
 
 **A bounded map is a different artifact from a rule**, and the distinction is worth keeping:
 a from→to table can be read at a glance, checked, and its unmapped values enumerated, while an

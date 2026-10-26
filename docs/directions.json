@@ -510,6 +510,23 @@
           "found": "EVIDENCED, by retiring one widget. The practitioner's thesis -- \"the more retirable widgets we don't remove, the bigger the mess when they remain entangled with the ones that are needed\" -- was tested on `alert`, removed 16 days after experiment 64 named it one of four genuine deletions. It cost 12 gate failures, 9 of them tests using it as a convenient palette fixture, plus a ruleset version, an ontology deprecation with a replacement term, a port-type retirement, a case removed from the [data-add] construction chain, a validation rule, and four governance surfaces. NONE OF THAT EXISTED WHEN 64 MARKED IT. It accumulated while it sat.\n\nAND NO MEASURE SEES IT. budget.json counts widgets; nothing counts attachments, and naive counts mislead in both directions. `alert` greps at 168 references, inflated by the English word, and looked trivial -- two parameters, no inputs -- while costing twelve tests. `slr_extract_import` greps at 11 and is worse: 24 contract throws in its module, a ProjectionTable type that two other widgets are BUILT ON, and a selection UI reading projectionDomains. Entanglement is not in a widget's name.\n\nIt is still growing. join_table_to_area and rate_ratio were added on 2026-10-25 into the same [data-add] chain that special-cases four retirable widgets, so the next removal already touches two more things than it would have."
         }
       ]
+    },
+    {
+      "id": "fieldwork-bounds-what-it-controls",
+      "stated": "2026-10-26",
+      "statedBy": "the practitioner",
+      "inTheirWords": "We can only set boundaries for what we can control in FW. The rest of the collective responsibility is to the people who produce and consume FW outputs.",
+      "requiresInCode": "A design constraint, and it rules things OUT. Fieldwork enforces what happens inside a run and nothing beyond it: whether a step produces output, what a receipt says, whose words a reader is shown. It does not enforce what a practitioner does with a figure, whether an obligation is honoured at a venue, or whether prose written by a ruleset author is any good. Mechanisms that pretend otherwise are to be refused, because a false boundary is worse than an acknowledged gap -- it reads as a guarantee and is not one.\n\nThe instance that produced this, same day: the obligation text on a ruleset was designed NOT EDITABLE, so a practitioner could not soften an obligation a dataset's authors impose. The practitioner struck it down: \"they could soften it as much as they can, but the hard constraint and the accountability to audience and the consequences of shirking that responsibility will always make them think twice -- the consequences are real, even if they manage to skirt around the responsibility: non-acceptance of a publication, questioning by peers during a presentation.\" Locking the text stopped nobody determined and confused editorial control with enforcement. What replaced it is attribution: the author's wording stays pinned, an edit is recorded as the practitioner's revision in the receipt, and a reader can see whose words they are reading. That is the whole of what an application can honestly protect.\n\nThree layers, and only two are Fieldwork's: STRUCTURAL -- no connection, no output, unaffected by any rewrite; ATTRIBUTIONAL -- whose words a reader is seeing; and CONSEQUENTIAL -- a paper not accepted, a question nobody can answer, which is not Fieldwork's to grant and is the one that governs.",
+      "recordedIn": "docs/experiments/140-provenance-as-a-port.md",
+      "workItem": "docs/experiments/140-provenance-as-a-port.md — the obligation text, its revision receipt, and the validator that refuses an unexplained obligation",
+      "status": "open",
+      "lastChecked": "2026-10-26",
+      "checks": [
+        {
+          "date": "2026-10-26",
+          "found": "Stated on the day it corrected a design. Nothing built yet: the obligation field is written into rulesets/extract-contract/1.0.0.json as declared data, the Ruleset type does not carry it, no Inspector shows it, and no receipt records a revision. The boundary it draws is already load-bearing in experiment 140, which cites it for why the error state stops at no output rather than reaching further."
+        }
+      ]
     }
   ]
 }

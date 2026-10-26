@@ -167,5 +167,13 @@
         ]
       }
     ]
+  },
+  "obligation": {
+    "summary": "Applying this contract commits you to citing three sources whenever you publish or present what you make with it. They are required by the dataset's authors, not by this application.",
+    "whatYouTakeOn": "The IPCC AR6 sea-level projections are published on terms that oblige a user to cite the chapter, the FACTS framework paper and the dataset version. The obligation is to the authors and to whoever reads your figure. It is not discharged by this application having the citations: it is discharged by them appearing on what you show people.",
+    "howToAcknowledge": "Connect this step's provenance output to the output that will carry it. Connecting it is how you say you know the citations are required; the citations then appear on the figure or table, which is the evidence that you did. All three are DOIs, so a reader can resolve them without trusting you or this application.",
+    "ifYouDoNot": "The run stops with an error and produces no output. Not a warning beside a figure -- no figure. A figure that travelled without its citations would leave you unable to answer the first question a scientist asks of it, which is where the numbers came from.",
+    "editable": true,
+    "note": "The author's words, pinned to this ruleset version and carried on every receipt. A practitioner may rewrite them for their own setting, and an earlier draft of this field forbade it. That was a false protection: locking text stops nobody determined, and the hard constraint is structural rather than editorial -- no connection, no output, whatever the wording says. The practitioner, 2026-10-26: \"they could soften it as much as they can, but the hard constraint and the accountability to audience and the consequences of shirking that responsibility will always make them think twice -- the consequences are real, even if they manage to skirt around the responsibility: non-acceptance of a publication, questioning by peers during a presentation.\"\n\nWhat is kept is ATTRIBUTION, not control. The original stays here, pinned; a rewrite is recorded as the practitioner's revision in the same way a repaired column is -- prov:qualifiedRevision, the source unchanged, the change attributed. So a softened obligation is never read in the authors' voice, which is the only thing an application can honestly protect."
   }
 }

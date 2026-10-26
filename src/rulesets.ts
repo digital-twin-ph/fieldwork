@@ -139,6 +139,18 @@ export interface Ruleset {
       requiredKeys?:string[];
       allowedUnits?:string[];
       closedVocabulary?:{column:string; values:string[]; meaning:string}[];
+      /** Constants about the PUBLISHED DATASET that a reader needs to interpret its numbers,
+       *  carried by the ruleset rather than typed into a widget.
+       *
+       *  The practitioner, 2026-10-26: the provenance "become citation entries for the ruleset".
+       *  The dataset's identity and its obligatory citations go to `basis`, which every receipt
+       *  already emits; these are the declarations that are not citations but without which the
+       *  values mean nothing -- the baseline a change is measured from, above all.
+       *
+       *  This pins them to the ruleset VERSION, which is the point. Values are not comparable
+       *  across dataset versions, so a different dataset version is a different ruleset version
+       *  by construction, rather than by a practitioner remembering to retype a field. */
+      declares?:{name:string; value:string; meaning:string}[];
     };
     portsNote?:string};
   outputVocabulary:Record<string,unknown>;

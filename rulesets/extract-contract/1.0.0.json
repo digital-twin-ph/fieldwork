@@ -30,7 +30,24 @@
         "metre",
         "millimetre"
       ],
-      "closedVocabulary": []
+      "closedVocabulary": [],
+      "declares": [
+        {
+          "name": "baselinePeriod",
+          "value": "1995-2014",
+          "meaning": "The period the projected change is measured from. A projected value is a CHANGE from the dataset's baseline sea surface, so +0.5 m means nothing without it, and comparing it to an elevation is meaningful only when that elevation is measured from the same surface."
+        },
+        {
+          "name": "basisKind",
+          "value": "confidence-pbox",
+          "meaning": "What the basis column names in this dataset's confidence output files. A basis identifier is uninterpretable without the kind of identifier it is: wf_1e is one published workflow, \"medium\" is a p-box combining workflow p-boxes, and a p-box bound is not a quantile of one distribution."
+        },
+        {
+          "name": "valueConversion",
+          "value": "millimetre to metre, recorded and not performed",
+          "meaning": "The published files state sea_level_change in millimetres and comparisons are made in metres. The conversion is recorded on the result rather than applied to the data: any step that performed it would change every comparison downstream, silently."
+        }
+      ]
     },
     "fieldFrom": [],
     "ports": {
@@ -62,23 +79,26 @@
   },
   "basis": {
     "status": "published",
-    "statedBy": "The six key columns, the two units and the family pair are read from the dataset documentation of IPCC AR6 sea-level projections, as the retired slr_extract_import widget recorded them. Decomposing a vocabulary preserves a wrong one as faithfully as a right one: nothing here re-reads that documentation.",
+    "statedBy": "The dataset's own documentation, carried here rather than typed into a widget. The practitioner, 2026-10-26: the provenance fields \"become citation entries for the ruleset\". That pins them to a ruleset VERSION, which is what makes the dataset version meaningful -- values are not comparable across dataset versions, so a different dataset version is a different ruleset version by construction. Decomposing a vocabulary preserves a wrong one as faithfully as a right one: nothing here re-reads that documentation.",
     "evidence": [],
     "unresolvedCitations": [
       {
         "citation": "IPCC AR6 WG1 Chapter 9, sea level change",
-        "whatWouldResolveIt": "A DOI or url for the chapter, added as an evidence reference, so a reader can open the source the vocabulary was read from rather than take this ruleset’s word for it."
+        "whatWouldResolveIt": "A DOI or url for the chapter, added as an evidence reference, so a reader can open the source the vocabulary was read from rather than take this ruleset’s word for it.",
+        "supports": "The six key columns and the baseline period."
       },
       {
         "citation": "The FACTS modular framework paper the projections are produced by",
-        "whatWouldResolveIt": "The paper’s DOI. It is what distinguishes a workflow identifier from a confidence p-box, which is the distinction this contract refuses to guess at."
+        "whatWouldResolveIt": "The paper’s DOI. It is what distinguishes a workflow identifier from a confidence p-box, which is the distinction this contract refuses to guess at.",
+        "supports": "What the basis column names, and why a p-box bound is not a quantile."
       },
       {
         "citation": "The pinned dataset version at Rutgers-ESSP/IPCC-AR6-Sea-Level-Projections",
-        "whatWouldResolveIt": "A release url with a digest. Values are not comparable across dataset versions, so an unversioned citation does not let a reader check these numbers against another extract."
+        "whatWouldResolveIt": "A release url with a digest. Values are not comparable across dataset versions, so an unversioned citation does not let a reader check these numbers against another extract.",
+        "supports": "The dataset version these values are comparable within, and the family pair."
       }
     ],
-    "note": "Three citations the licence makes obligatory. Named and not resolvable here, which is what the ledger's uncited ceiling exists to make someone decide rather than drift into."
+    "note": "WHY THESE THREE ARE OBLIGATORY, and not bookkeeping. The practitioner, 2026-10-26: \"it's something the authors require of users, and if the users present to an audience they will be held accountable by other scientists to that provenance requirement.\" The obligation is to the dataset's authors and to the room, not to the arithmetic. Experiment 115's P2 made provenance an alert rather than a blocker on the ground that no provenance field changes a computed number -- which is true, and is the wrong measure of what it costs to omit one. A figure published without them is not wrong; its author is unable to answer the first question a scientist asks of it.\n\nCarrying them HERE is what makes the obligation travel. A ruleset is pinned by id and version on every receipt, so a practitioner cannot apply this contract and arrive at an audience without the citations the authors require. Typed into a widget, they were whatever somebody remembered to enter.\n\nNone of the three resolves yet, and that is the live gap rather than a formality: a named citation and one a reader can open are different claims, and it is the second that answers the question in the room."
   },
   "authored": {
     "subject": "?p",

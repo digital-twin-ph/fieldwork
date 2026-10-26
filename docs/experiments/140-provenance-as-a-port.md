@@ -106,11 +106,28 @@ The practitioner, 2026-10-26:
 
 That settles two of the three open questions and settles them strictly.
 
-**The obligation is discharged by DISPLAYING, not by acknowledging.** A receiving widget that
-takes the provenance and shows nothing has not met it. This is what makes
-[136](136-a-figure-that-stands-on-its-own.md)'s rule enforceable at last: `FigureStatesItsSource`
-can stop asking whether a note exists and start asking whether it carries what the figure
-received. The obligation is to an audience, so it is discharged where the audience looks.
+**Three layers, and an earlier draft of this record collapsed two of them.** The practitioner,
+settling it:
+
+> The act of connecting is the user's way of acknowledging that he knows the provenance is
+> required. ... And the display of the provenance on the output is merely the evidence of that
+> acknowledgement.
+
+| layer | what it is | whose |
+| --- | --- | --- |
+| **the act** | connecting the port — *I know this provenance is required* | the practitioner's |
+| **the evidence** | the provenance shown on the output | the widget's |
+| **the record** | the N3 saying it happened | the receipt's |
+
+A draft above said the obligation is "discharged by displaying, not by acknowledging". That has
+it backwards. The **act** discharges it; the display is what makes the act checkable by someone
+who was not there, and the receipt records that it occurred. Each layer attests to the one above
+it, and none substitutes for it.
+
+This is why [136](136-a-figure-that-stands-on-its-own.md)'s rule becomes enforceable:
+`FigureStatesItsSource` can stop asking whether a note exists and ask whether it carries what the
+figure received — not because the display IS the obligation, but because it is the only evidence
+a reader has that the obligation was taken on.
 
 **A widget that cannot carry provenance is an error, not a silent drop.** The alternative —
 accepting the connection and losing the obligation at the first widget that does not implement
@@ -133,11 +150,15 @@ presenting a figure they cannot answer for.
 
 ## What must still be decided
 
-**Is the acknowledgement automatic or an act?** A receiving widget could connect the port itself
-when the data edge is drawn, or require a practitioner to connect it. The practitioner's own
-correction of this record argues for the second: a receipt records an act, so a receipt attesting
-to an acknowledgement the application performed on somebody's behalf attests to the wrong thing.
-Not settled, but no longer open in both directions.
+**~~Is the acknowledgement automatic or an act?~~ SETTLED: an act.** *"The act of connecting is
+the user's way of acknowledging that he knows the provenance is required."* So the port is never
+wired by the application on a practitioner's behalf. Auto-connecting would produce a receipt
+attesting to an acknowledgement nobody made, which is worse than no attestation: it is the
+application vouching for a person's knowledge of an obligation they were never shown.
+
+The cost is accepted and should be stated: a practitioner who does not connect it gets an error
+rather than a figure, and that is the intended behaviour. The alternative buys convenience with
+somebody else's accountability.
 
 ## What this does not establish
 

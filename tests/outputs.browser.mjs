@@ -27,9 +27,16 @@ const run=async()=>{await page.locator('#run-button').click();await done();await
 
   // Actual EYE inference on two independent branches, with shared geography.
   const w=exampleWorkflow();
-  w.nodes.push({id:'criteria2',type:'policy',x:600,y:360,params:{thresholdKm:100}});
+  // A second branch built the way the example's own first one is. It was a `policy` node with a
+  // thresholdKm and an edge from an `alert` widget; `policy` was retired on 2026-10-12 and
+  // `alert` on 2026-10-25, so the branch now pins the same ruleset at a different threshold and
+  // states the condition on the node, which is where a declared fact lives.
+  const criteria=w.nodes.find(n=>n.id==='criteria');
+  w.nodes.push({...structuredClone(criteria),id:'criteria2',x:600,y:360,
+    params:{...structuredClone(criteria.params),label:'Outreach criteria at 100 km',
+      parameters:{threshold:100}}});
   w.edges.find(e=>e.to==='table').from='criteria2';
-  w.edges.push({id:'e7',from:'nearest',to:'criteria2',port:'distances'},{id:'e8',from:'alert',to:'criteria2',port:'alert'});
+  w.edges.push({id:'e7',from:'nearest',to:'criteria2',port:'distances'});
   await page.locator('#workflow-file').setInputFiles({name:'branches.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await run();
   await page.locator('[data-view="results"]').click();

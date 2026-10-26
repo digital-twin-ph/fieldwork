@@ -3265,6 +3265,15 @@ function supersessionNotice(ran:Workflow):string{
   const hosts=ran.nodes.filter((n):n is WorkflowNode<'apply_ruleset'>=>n.type==='apply_ruleset');
   const stale=hosts.flatMap(node=>{
     const pinned=node.params.ruleset;if(!pinned)return [];
+    // A NODE CARRYING ITS OWN RULES IS NOT SUPERSEDED BY THE ARTEFACT IT BORROWED PORTS FROM.
+    // `authoredPin` pins a ruleset purely for its port shape and titles the pin "Rules written in
+    // this workflow"; what such a node computes is the practitioner's authored rules, so a newer
+    // version of the pinned artefact changes nothing about it. Publishing outreach-criteria 1.1.0
+    // on 2026-10-26 told four authored nodes their ruleset was superseded and not a drop-in,
+    // which was false of every one of them. `core.ts` already states the principle where it binds
+    // parameters: "the pin gives this node its ports; it does not describe rules the practitioner
+    // wrote."
+    if(node.params.authored)return [];
     const found=supersession(pinned.id,pinned.version);
     return found?[{node,pinned,found}]:[];
   });

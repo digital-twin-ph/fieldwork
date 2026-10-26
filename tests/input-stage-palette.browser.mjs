@@ -16,10 +16,11 @@ test('a canvas with no input offers the input stage, and everything after one is
   await page.goto('/?example=blank');
 
   const entries=page.locator('#node-library [data-add]');
-  await expect(entries).toHaveCount(5);
+  await expect(entries).toHaveCount(4);
   // The input stage is seven by contract; `places` and `centers` are retired from the palette,
-  // which is a separate decision and is applied after this one.
-  for(const name of ['Study area','Point data','Tabular data','Street network','Heat alert'])
+  // and `alert` joined them on 2026-10-25 -- a declaration wearing a node type, whose condition
+  // is now stated on the node that applies the ruleset asking for it. Four are offered.
+  for(const name of ['Study area','Point data','Tabular data','Street network'])
     await expect(page.locator('#node-library [data-add]').filter({hasText:name})).toHaveCount(1);
   // Nothing that needs something is offered yet.
   for(const name of ['Map','Buffer','Reproject'])
@@ -36,7 +37,7 @@ test('a canvas with no input offers the input stage, and everything after one is
   // number comfortably below it.
   await expect.poll(()=>entries.count(),{timeout:15000}).toBeGreaterThanOrEqual(45);
   for(const type of ['measure_distance','network_input','voronoi','isochrone','clip_polygons',
-    'summarize_points_to_polygon','facilities','facility_audit','alert','map_output'])
+    'summarize_points_to_polygon','facilities','facility_audit','map_output'])
     await expect(page.locator(`#node-library [data-add="${type}"]`)).toHaveCount(1);
   expect(errors).toEqual([]);
 });

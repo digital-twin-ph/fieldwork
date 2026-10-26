@@ -33,7 +33,10 @@ test('every panel opens with the same block, and its links are controls rather t
 test('a widget with neither a page nor a notebook shows no empty frame',async({page})=>{
   await page.goto('/?example=blank');
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('#node-library [data-add="alert"]').click();
+  // `alert` stood here until it was retired on 2026-10-25. `table_input` is the replacement for
+  // the same reason alert was chosen: of the widgets offered on an empty canvas it is the one
+  // with no manual page, which is what this test needs.
+  await page.locator('#node-library [data-add="table_input"]').click();
   const block=page.locator('#inspector-content .learn-block');
   if(await block.count()){
     // If it is there at all, it carries at least one real link.

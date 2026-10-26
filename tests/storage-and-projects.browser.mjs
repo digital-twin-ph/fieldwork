@@ -9,7 +9,13 @@ test('the header says how full the store is, and the figure moves with what is s
   await expect(page.locator('#storage-status')).toContainText('/ 5.2 MB');
   const before=await page.locator('#storage-status').textContent();
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('#node-library [data-add="study_area"]').click();
+  // THREE, because the indicator reads in whole kilobytes and one node is 731 bytes. A single
+  // study area moved the figure until 2026-10-26, when re-pinning the South London example grew
+  // the cached catalog to 4,792 bytes and pushed the total just past a rounding boundary -- so
+  // the save still happened, 4,701 bytes to 5,611, and the display could not show it. The claim
+  // this test makes is that the figure moves with what is saved, so it saves enough to move it
+  // rather than asserting a boundary crossing that was always incidental.
+  for(let i=0;i<3;i++)await page.locator('#node-library [data-add="study_area"]').click();
   await expect.poll(()=>page.locator('#storage-status').textContent()).not.toBe(before);
 });
 

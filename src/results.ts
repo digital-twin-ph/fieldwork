@@ -36,7 +36,12 @@ export interface PointRow {id:string; recordId:string; sourceNodeId:string; laye
  *  the class; it does not read the variable. */
 export interface MapRow extends PointRow {relation:SpatialRelation; status:Status; fill?:FillClass}
 export interface CoverageRow extends MapRow {excluded:boolean; exclusionReason:string; signature:string; iri:string; decision:'Accept'|'Review'|'Excluded'}
-export interface AreaValue {boundary:Boundary; areaId:string; geometryId:string; label:string; spatialReference?:SpatialReference; areaFacts?:string; measurement?:Measurement; bounds?:Bounds; ready?:boolean; source?:string; dataset?:string; kind?:'study-area'; rows?:never[]; centers?:never[]}
+/** `units` are the NAMED PARTS of an acquired boundary, carried on the value rather than left on
+ *  the node that produced it. Without this a downstream widget can see 33 rings and no way to
+ *  tell which is Streatham, which is why nothing could join a table to a study area: the names
+ *  existed, in `BoundaryProvenance`, and stopped at the node. Index-aligned with the parts of
+ *  `boundary` when it is a MultiPolygon. */
+export interface AreaValue {boundary:Boundary; units?:{id:string;name:string}[]; areaId:string; geometryId:string; label:string; spatialReference?:SpatialReference; areaFacts?:string; measurement?:Measurement; bounds?:Bounds; ready?:boolean; source?:string; dataset?:string; kind?:'study-area'; rows?:never[]; centers?:never[]}
 export interface CoverageValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-coverage'; rows:CoverageRow[]; centers:never[]; checkNodeId:string; areaNodeId:string; sourceNodeId:string|null; pointLayers:LayerSummary[]; reviewCount:number; excludedCount:number; canProceed:boolean; retainedLayers:{sourceNodeId:string; label:string; data:PointCollection}[]; retainedData:PointCollection; pointTable?:boolean}
 export interface MapValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-map'; rows:MapRow[]; centers:never[];
   /** How each point layer is drawn, resolved once so the plot, the interactive map, the legend

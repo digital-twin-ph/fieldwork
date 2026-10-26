@@ -79,13 +79,17 @@ test('a curated example opens as a project with its workflows',{skip},async({pag
   await openProjects(page);
   await page.locator('[data-open-example]').click();
   await expect(page.locator('[data-example-status]')).toContainText('digest matched',{timeout:20000});
-  // A PROJECT, named, with all three questions under it -- not a loose canvas.
+  // A PROJECT, named, with all four questions under it -- not a loose canvas. Three until
+  // 2026-10-25, when the choropleth joined the rates to the boundaries; the count is asserted
+  // rather than ignored because a bundle that quietly loses a workflow is the failure this
+  // pinned catalog exists to catch.
   await expect(page.locator('#project-select')).toContainText("Snow's South London");
-  await expect(page.locator('#project-select')).toContainText('3 workflows');
+  await expect(page.locator('#project-select')).toContainText('4 workflows');
   const workflows=await page.locator('#workflow-select option').allTextContents();
   expect(workflows).toContain('Deaths per 1,000 people, by sub-district');
   expect(workflows).toContain('The ground: 32 sub-districts');
   expect(workflows).toContain('Cholera in 1849 compared with 1854');
+  expect(workflows).toContain('Deaths per 1,000 people, mapped');
 });
 
 /** RESET REACHES AN IMPORTED EXAMPLE TOO.

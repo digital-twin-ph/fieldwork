@@ -1,2 +1,2 @@
-import{a,b,c,d,e,f,g,h}from"./chunks/chunk-JWPAHDW2.js";import"./chunks/chunk-KVMUXFPB.js";export{a as DATE_KINDS,b as PERIODS,d as caseSeries,c as caseSeriesFromTable,f as seriesChart,g as seriesReceipt,e as seriesTable,h as validateCaseSeriesNode};
+import{a,b,c,d,e,f,g,h,i}from"./chunks/chunk-O7N3N4HM.js";import"./chunks/chunk-KVMUXFPB.js";export{a as DATE_KINDS,b as PERIODS,e as SERIES_TABLE_KEYS,d as caseSeries,c as caseSeriesFromTable,g as seriesChart,h as seriesReceipt,f as seriesTable,i as validateCaseSeriesNode};
 //# sourceMappingURL=case-series.js.map

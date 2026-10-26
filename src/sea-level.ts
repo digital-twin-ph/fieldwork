@@ -124,8 +124,11 @@ export function readExtract(value:ProjectionTable):ProjectionExtract{
 
 /** Assignments travel as a table of distances, so the join itself can be displayed and checked. */
 export type AssignmentTable=DataTable&{assignments:Assignments};
+/** The key columns a site-assignment table carries. See RATE_TABLE_KEYS. */
+export const SITE_ASSIGNMENT_TABLE_KEYS=['point_id','projection_site'] as const;
+
 export function assignmentTable(assignments:Assignments):AssignmentTable{
-  return {kind:'data-table',keys:['point_id','projection_site'],valueField:'distance_m',unit:'metre',
+  return {kind:'data-table',keys:[...SITE_ASSIGNMENT_TABLE_KEYS],valueField:'distance_m',unit:'metre',
     rows:assignments.rows.map(row=>({key:{point_id:row.id,projection_site:row.siteId??'none'},value:row.distanceM})),
     rowCount:assignments.rows.length,missingValueCount:assignments.unassigned,assignments};
 }

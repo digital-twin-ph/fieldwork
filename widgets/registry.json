@@ -417,6 +417,18 @@
       ]
     },
     {
+      "id": "urn:fieldwork:widget:join_table_to_area",
+      "nodeType": "join_table_to_area",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/join_table_to_area/0.1.0.json",
+          "sha256": "77afc50b2fa1781d28cc3d769b740264cb36665ad53362f43b34c1001aa5f219"
+        }
+      ]
+    },
+    {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
       "currentVersion": "0.14.0",

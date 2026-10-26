@@ -55,6 +55,9 @@ fw:PointInput a owl:Class;
 fw:PointDataset a owl:Class;
   rdfs:comment "A collection of point features with their attributes. Records without coordinates are retained and remain explicitly unknown.";
   rdfs:label "Point dataset"; rdfs:subClassOf geo:FeatureCollection, dcat:Dataset, prov:Entity.
+fw:PolygonDataset a owl:Class;
+  rdfs:comment "A collection of polygon features with their attributes. Parts are not dissolved: a boundary of 33 rings over 32 named places stays 33 features, and two parts of one place each carry that place's value. Features without a value are retained and remain explicitly unknown, as the point dataset does for coordinates.";
+  rdfs:label "Polygon dataset"; rdfs:subClassOf geo:FeatureCollection, dcat:Dataset, prov:Entity.
 fw:sourceMetadata a owl:DatatypeProperty; rdfs:comment "Supplemental source metadata JSON; author supplied, not independently verified.".
 fw:missingLocation a owl:DatatypeProperty; rdfs:range xsd:boolean.
 fw:StreetNetwork a owl:Class;

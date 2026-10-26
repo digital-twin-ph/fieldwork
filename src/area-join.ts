@@ -1,5 +1,9 @@
 import {normaliseName} from './deduplicate-points.js';
 import type {DataTable} from './data-table.js';
+import type {Boundary,Scalar} from './types.js';
+import type {WorkflowNode} from './types.js';
+import type {Receipt} from './results.js';
+import type {Polygons} from './catchments.js';
 
 /** Joining a table to the parts of a study area, on a key that is a name.
  *
@@ -119,4 +123,64 @@ export function joinTableToAreas(
       matchedRows:used.size,unmatchedParts:parts.length-matchedParts,
       unmatchedRows:byKey.size-used.size,
       sharedParts:parts.filter(part=>part.shared).length}};
+}
+
+/** The joined area as polygons a map can draw: one feature per part, carrying its value.
+ *
+ *  `polygons` rather than an area, because a map already knows how to draw polygons and a value
+ *  per feature is what a choropleth is. The parts are not dissolved — a boundary of 33 rings
+ *  stays 33 features, and the two that are Streatham each carry the rate, which is the whole
+ *  reason the duplicate is reported rather than merged.
+ *
+ *  A part with no value is still drawn. `properties` carries the joined value under the table's
+ *  own field name, and `value` repeats it in a fixed place so a renderer can colour by it
+ *  without being told which column to look at. */
+export function joinedPolygons(boundary:Boundary,result:AreaJoinResult,label:string):Polygons{
+  const rings=boundary.type==='MultiPolygon'?boundary.coordinates:[boundary.coordinates];
+  const features=result.parts.map((part,index)=>({
+    id:part.id,name:part.name,siteId:part.id,
+    geometry:{type:'Polygon' as const,coordinates:rings[index]??rings[0]},
+    ...(part.value===null?{}:{value:part.value}),
+    properties:{[result.declared.valueField]:part.value,
+      [result.declared.keyField]:part.name} as Record<string,Scalar>,
+  }));
+  const {counts}=result;
+  return {features:features as unknown as Polygons['features'],sites:[],boundary:structuredClone(boundary),
+    method:`Keyed join on ${result.declared.keyField}, ${result.declared.normalisation} normalisation: `
+      +`${counts.matchedParts} of ${counts.parts} parts carry a value from ${counts.matchedRows} of ${counts.rows} rows.`,
+    crs:'OGC:CRS84',
+    notes:[`${label}. A part with no matching row is drawn and left empty rather than omitted.`,
+      ...result.diagnostics.map(d=>`${d.code}: ${d.says}`)]};
+}
+
+/** What the join did, as facts rather than as a count.
+ *
+ *  A receipt saying "32 of 32 matched" is a claim a reader cannot check. This asserts the key
+ *  column, the normalisation that was applied, and every condition the join met by name — so a
+ *  reader can see that nine parts matched only because punctuation was folded, and disagree. */
+export function areaJoinReceipt(node:WorkflowNode<'join_table_to_area'>,result:AreaJoinResult,
+  runId:string,tableNodeId:string,areaNodeId:string):Receipt{
+  const entity=`urn:fieldwork:run:${runId}:output:${node.id}`,activity=`${entity}:activity`;
+  const quote=(v:unknown)=>JSON.stringify(String(v));
+  const {counts,declared}=result;
+  let facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+    +`<${activity}> a fw:KeyedAreaJoin, prov:Activity; `
+    +`prov:used <urn:fieldwork:run:${runId}:output:${tableNodeId}>, <urn:fieldwork:run:${runId}:output:${areaNodeId}>; `
+    +`fw:joinKeyField ${quote(declared.keyField)}; fw:joinValueField ${quote(declared.valueField)}; `
+    +`fw:joinNormalisation ${quote(declared.normalisation)}; `
+    +`fw:boundaryPartCount ${counts.parts}; fw:tableRowCount ${counts.rows}; `
+    +`fw:matchedPartCount ${counts.matchedParts}; fw:matchedRowCount ${counts.matchedRows}; `
+    +`fw:unmatchedPartCount ${counts.unmatchedParts}; fw:unmatchedRowCount ${counts.unmatchedRows}; `
+    +`fw:sharedPartCount ${counts.sharedParts}.\n`
+    +`<${entity}> a fw:PolygonDataset, prov:Entity; prov:wasGeneratedBy <${activity}>.\n`;
+  for(const [index,diagnostic] of result.diagnostics.entries()){
+    const node_=`<${entity}:finding:${index}>`;
+    facts+=`${node_} a fw:JoinFinding; fw:findingCode ${quote(diagnostic.code)}; `
+      +`fw:findingSubject ${quote(diagnostic.subject)}.\n<${activity}> fw:joinFinding ${node_}.\n`;
+  }
+  return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
+    method:`Keyed join of ${quote(declared.valueField)} onto the named parts of the study area, `
+      +`matching ${quote(declared.keyField)} by equality after ${declared.normalisation} normalisation. `
+      +`${counts.matchedParts} of ${counts.parts} parts carry a value. `
+      +`Equality only: no similarity, no threshold, and no part is matched by resemblance.`};
 }

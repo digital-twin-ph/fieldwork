@@ -108,3 +108,43 @@ test('a key column the table does not have is refused by name',()=>{
     {kind:'data-table',keys:['area'],valueField:'deaths',rows:[],rowCount:0,missingValueCount:0},
     {keyField:'district'}),/no column "district".*keyed by area/s);
 });
+
+test('the joined area becomes polygons a map can draw, one per part',skip??{},async()=>{
+  const {joinedPolygons}=await import('../build/area-join.js');
+  const units=boundaries(),data=table();
+  const geo=JSON.parse(readFileSync(new URL('geo/sub-districts-csds.geojson',BASE),'utf8'));
+  // The boundary as the study area holds it: every part of every sub-district, undissolved.
+  const boundary={type:'MultiPolygon',coordinates:geo.features.flatMap(f=>
+    f.geometry.type==='MultiPolygon'?f.geometry.coordinates:[f.geometry.coordinates])};
+  const result=joinTableToAreas(units,data,{keyField:'sub_district'});
+  const polygons=joinedPolygons(boundary,result,"Snow 1855, Table VIII");
+
+  assert.equal(polygons.features.length,32);
+  // THE VALUE IS ON THE FEATURE, which is the thing that was missing: `Catchment` had ten named
+  // slots owned by other operations and no open bag, so a rate had nowhere to go.
+  const first=polygons.features[0];
+  assert.equal(typeof first.value,'number');
+  assert.equal(first.properties.deaths_seven_weeks,first.value);
+  assert.equal(first.properties.sub_district,first.name);
+  // The method line states the join rather than leaving a reader to infer it.
+  assert.match(polygons.method,/Keyed join on sub_district, fuzzy normalisation: 32 of 32 parts/);
+  // Diagnostics travel with the figure, so a reader sees what the join could not do.
+  assert.ok(polygons.notes[0].includes('drawn and left empty rather than omitted'));
+});
+
+test('a part with no row is drawn, and carries a null rather than a number',async()=>{
+  const {joinedPolygons}=await import('../build/area-join.js');
+  const square=c=>[[[c,0],[c+1,0],[c+1,1],[c,1],[c,0]]];
+  const result=joinTableToAreas(
+    [{id:'a',name:'Alpha'},{id:'b',name:'Beta'}],
+    {kind:'data-table',keys:['area'],valueField:'deaths',
+      rows:[{key:{area:'Alpha'},value:7}],rowCount:1,missingValueCount:0},
+    {keyField:'area'});
+  const polygons=joinedPolygons({type:'MultiPolygon',coordinates:[square(0),square(2)]},result,'x');
+  assert.equal(polygons.features.length,2);
+  assert.equal(polygons.features[0].value,7);
+  // Drawn, and empty. A hole in the map would read as a different claim than "no data here".
+  assert.equal(polygons.features[1].value,undefined);
+  assert.equal(polygons.features[1].properties.deaths,null);
+  assert.ok(polygons.notes.some(n=>n.startsWith('unmatched-boundary:')));
+});

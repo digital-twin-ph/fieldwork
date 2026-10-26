@@ -243,6 +243,10 @@ export interface ParamsByType {
   isochrone:{label:string;zone:number;hemisphere:'north'|'south';minutes:number;thresholds?:number[];fillHoles?:boolean;speedMPerMin:number;bufferM:number;maxSnapM:number;direction:'inbound'|'outbound'};
   clip_polygons:{label:string};
   summarize_points_to_polygon:{label:string;boundary:'include'|'exclude';valueField:string};
+  /** `keyField` is the table column holding the name of a part. `normalisation` is declared
+   *  rather than assumed, because folding punctuation is what takes South London from 23 of 32
+   *  matches to 32 of 32 and a reader is owed the chance to disagree with it. */
+  join_table_to_area:{label:string;keyField:string;normalisation:'exact'|'fuzzy'};
   /** `populationYear` is which published WorldPop year the download button offers; it chooses a
    *  link, never the data, which arrives only when a file is prepared. */
   raster_input:{label:string;asset?:import('./raster.js').RasterAsset;populationYear?:string;

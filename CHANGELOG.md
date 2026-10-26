@@ -5,6 +5,28 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **A table of values can be put onto the parts of a study area, and the map shades them.** Join a
+  table to the study area matches each row to the boundary part it names and hands on polygons that
+  carry the value, so Snow's Table VIII of deaths and population becomes a map of mortality rather
+  than a map of where people lived. Names are compared for equality and never for resemblance: the
+  match can ignore punctuation and spacing, which is what joins "St. George, Camberwell" to
+  "St. George Camberwell", but it will not match an abbreviation to a full name and says so instead
+  of guessing. A part no row names is drawn and left empty in a neutral shade, never in the lowest
+  class, because an unmatched boundary drawn pale reads as a finding of low incidence. Two parts
+  sharing a name both take the value — true of a rate, and not true of a count. Streatham is two
+  polygons, so south London draws 33 parts for 32 sub-districts.
+
+- **A shaded figure carries its class breaks and says how it was classed.** The breaks are values
+  that occur in the data, so a reader can find the sub-district sitting on one, and the key states
+  that quantile classes show rank rather than magnitude. A shade without its breaks says only
+  "more" and "less".
+
+- **A figure's key names the marks the figure actually carries.** Every figure this renderer drew
+  carried a fixed line — "Squares: sites · dots: observations · polygons: modeled catchments" —
+  including figures with no site, no observation and no modeled catchment on them. A key is the
+  part of a figure a reader trusts without checking, so one that describes absent marks is worse
+  than none. Polygons shaded by a joined value are now called measured rather than modeled.
+
 - **Two study areas can be combined into one study area.** Combined area takes areas as well as
   polygons and yields whichever kind it was given, so two adjacent provinces become one area that
   the street network, the facility sources, the clip and the buffer all accept. Before, its only

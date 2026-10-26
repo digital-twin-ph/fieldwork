@@ -83,7 +83,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // practitioner set that day -- a widget may be added if its function did not exist before.
   // 48 on 2026-10-25: alert retired, and a review of a widget that no longer exists must go.
   // The first time this count has fallen because a widget LEFT rather than because one arrived.
-  assert.equal(review.reviews.length,48);
+  // 47 on 2026-10-26: slr_extract_import retired into apply_ruleset with the extract-contract
+  // ruleset, the second removal and the first of the three sea-level widgets.
+  assert.equal(review.reviews.length,47);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

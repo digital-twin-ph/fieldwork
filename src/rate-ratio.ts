@@ -27,7 +27,13 @@ export type IntervalMethod=typeof INTERVAL_METHODS[number];
 
 /** 1.96 is the two-sided 95% normal quantile. The level is carried on the result rather than
  *  assumed by a reader, because a 90% interval and a 95% interval are different claims. */
-const Z_FOR_LEVEL:Record<number,number>={90:1.6449,95:1.9600,99:2.5758};
+/** Two-sided normal quantiles, to the precision the arithmetic can use rather than the precision
+ *  a textbook prints. 1.9600 stood here until check 27 compared the resulting bounds against
+ *  statsmodels and every one of four comparisons missed by more than 1e-6 -- the ratios agreed
+ *  exactly and the intervals did not, which is the signature of a rounded constant rather than a
+ *  wrong formula. Snow's per-house interval moved from 6.8409 to 6.8410. Immaterial at two
+ *  decimals, and the kind of thing an independent check exists to find before a reader does. */
+const Z_FOR_LEVEL:Record<number,number>={90:1.6448536269514722,95:1.959963984540054,99:2.5758293035489004};
 export const INTERVAL_LEVELS=[90,95,99] as const;
 
 export interface RateRatioOptions {

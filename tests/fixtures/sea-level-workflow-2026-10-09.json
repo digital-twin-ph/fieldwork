@@ -92,29 +92,32 @@
           "bytes": 256,
           "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
           "rows": 4
-        }
+        },
+        "distinctValuesFor": [
+          "site_id"
+        ]
       }
     },
     {
       "id": "extract",
-      "type": "slr_extract_import",
+      "type": "apply_ruleset",
       "x": 300,
       "y": 40,
       "params": {
-        "label": "AR6 extract (synthetic)",
-        "datasetIRI": "https://example.org/synthetic-projection-extract",
-        "datasetVersion": "synthetic-001",
-        "baselinePeriod": "1995-2014",
-        "citations": [
-          "Synthetic stand-in for the WG1 Chapter 9 citation",
-          "Synthetic stand-in for the FACTS model-description citation",
-          "Synthetic stand-in for the dataset version citation"
-        ],
-        "familyValues": {
-          "withVerticalLandMotion": "with_vlm",
-          "withoutVerticalLandMotion": "without_vlm"
+        "label": "Published projection extract",
+        "ruleset": {
+          "id": "urn:fieldwork:ruleset:extract-contract",
+          "version": "1.0.0",
+          "title": "Published projection extract",
+          "inputs": [
+            [
+              "projections",
+              "table"
+            ]
+          ],
+          "output": "table"
         },
-        "basisKind": "workflow"
+        "parameters": {}
       }
     },
     {

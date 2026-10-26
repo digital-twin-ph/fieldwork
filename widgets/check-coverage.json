@@ -8,9 +8,9 @@
   },
   "measuredAt": "2026-10-20",
   "counts": {
-    "widgets": 48,
-    "covered": 21,
-    "awaiting": 15,
+    "widgets": 47,
+    "covered": 22,
+    "awaiting": 13,
     "none": 11,
     "blocked": 1
   },
@@ -176,7 +176,7 @@
     {
       "nodeType": "rate_ratio",
       "expectation": "parity",
-      "computes": "A ratio of two rates and its interval. An independent implementation recomputes both from the same counts: Snow's Table IX gives 8.40 with a 95% log-normal interval of 6.84 to 10.32 from 1,263 deaths in 40,046 houses against 98 in 26,107, and any statistics package computes the same three numbers."
+      "check": "27-rate-ratio"
     },
     {
       "nodeType": "reachable_corridor",
@@ -199,12 +199,6 @@
       "expectation": "parity",
       "check": null,
       "computes": "Reads a raster value at each point's position."
-    },
-    {
-      "nodeType": "slr_extract_import",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Converts projected values between millimetres and metres and keys them."
     },
     {
       "nodeType": "slr_site_assignment",

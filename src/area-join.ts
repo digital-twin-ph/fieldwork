@@ -146,6 +146,9 @@ export function joinedPolygons(boundary:Boundary,result:AreaJoinResult,label:str
   }));
   const {counts}=result;
   return {features:features as unknown as Polygons['features'],sites:[],boundary:structuredClone(boundary),
+    // The node's own label names the layer: it is what the practitioner called this join, and
+    // what they will look for when they toggle it beside the study area.
+    layerName:label,
     method:`Keyed join on ${result.declared.keyField}, ${result.declared.normalisation} normalisation: `
       +`${counts.matchedParts} of ${counts.parts} parts carry a value from ${counts.matchedRows} of ${counts.rows} rows.`,
     crs:'OGC:CRS84',

@@ -123,10 +123,10 @@
     }
   ],
   "setChanged": {
-    "at": "2026-10-25",
+    "at": "2026-10-26",
     "registry": 57,
-    "live": 48,
-    "retired": 9,
-    "note": "alert retired into a declared fact on apply_ruleset. D2 is what closed it, and it was answerable all along: the operation `alert` performed -- declaring a value a ruleset's rules read -- is what apply_ruleset does for the threshold already. Also added the same day: join_table_to_area and rate_ratio, each with its own admission review."
+    "live": 47,
+    "retired": 10,
+    "note": "slr_extract_import retired into apply_ruleset. D1 is what closed it: experiment 115 read it operation by operation and none of the five is a sea-level operation, so it was general machinery with one dataset's knowledge compiled into it. The knowledge is declared data now."
   }
 }

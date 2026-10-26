@@ -1,4 +1,5 @@
 import projections from '../examples/manila-sea-level/projections.json';
+import {pinnedRuleset} from './rule-application.js';
 import sites from '../examples/manila-sea-level/sites.json';
 import facilities from '../examples/manila-sea-level/facilities.json';
 import provenance from '../examples/manila-sea-level/provenance.json';
@@ -62,16 +63,23 @@ export function seaLevelExample():Workflow{
         keys:projections.keys,valueField:projections.valueField,unit:projections.unit,
         data:structuredClone(projections) as never,
         source:{filename:'ar6-philippines-gauges-extract.csv',bytes:0,sha256:'',
-          rows:projections.rowCount}},
+          rows:projections.rowCount},
+        // Asked for where the data enters, which is P3 of experiment 115. The assignment step
+        // needs the site list and nothing else from this file; deriving it here means a
+        // practitioner meets what the column holds while they can still fix the file.
+        distinctValuesFor:['site_id']},
       references:[cite('ar6-dataset','IPCC AR6 Sea Level Projections',AR6.datasetIRI,'data',
         `Version ${AR6.datasetVersion}, ${AR6.licence}, values in ${AR6.unit}, measured against the ${AR6.baselinePeriod} baseline. ${AR6.note}`)]},
 
-    {id:'extract',type:'slr_extract_import',x:760,y:470,
-      params:{label:'Declare the extract',datasetIRI:AR6.datasetIRI,
-        datasetVersion:AR6.datasetVersion,baselinePeriod:AR6.baselinePeriod,
-        citations:AR6.requiredCitations as [string,string,string],
-        basisKind:AR6.basisKind as 'confidence-pbox',
-        familyValues:{withVerticalLandMotion:'with_vlm',withoutVerticalLandMotion:'without_vlm'}}},
+    // THE STANDARD RULESET WIDGET, pinned to a ruleset anybody can choose. This was
+    // `slr_extract_import` until 2026-10-26: a widget named for one dataset, holding that
+    // dataset's key columns, units, vocabulary and citations as TypeScript. None of its five
+    // operations was about sea level (experiment 115). Another climate model now expresses its
+    // contract the same way, in data, with no widget to copy.
+    {id:'extract',type:'apply_ruleset',x:760,y:470,
+      params:{label:'Published projection extract',
+        ruleset:pinnedRuleset('urn:fieldwork:ruleset:extract-contract','1.0.0'),
+        parameters:{}}},
 
     {id:'assignment',type:'slr_site_assignment',x:1080,y:250,
       params:{label:'Assign each facility its nearest gauge'}},

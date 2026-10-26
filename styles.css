@@ -596,3 +596,22 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .project-storage{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
 .project-unfiled{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
 .project-unfiled-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+
+/* A LAYER CONTROL THAT LISTS 33 PARTS MUST BE REACHABLE TO THE LAST ONE.
+   The practitioner, 2026-10-26: "the layer checkboxes on the right do not include all the
+   sub-districts." They were all registered -- the control is built after every overlay is added
+   -- and the ones past the map's bottom edge were drawn outside it and clipped, with nothing to
+   scroll. A choropleth of south London lists 33, so this is the first figure where the list is
+   longer than the map is tall. */
+.leaflet-control-layers{max-height:calc(100% - 24px);overflow-y:auto;overscroll-behavior:contain}
+.leaflet-control-layers-list{max-height:none}
+
+/* The interactive map's class legend, drawn to match the static figure's ramp so one figure
+   cannot state two different sets of breaks depending on which renderer the reader opened. */
+.map-class-legend{background:var(--panel,#fff);padding:6px 8px;border-radius:6px;font-size:11px;
+  box-shadow:0 1px 4px rgba(0,0,0,.3);color:var(--ink,#222);max-width:260px}
+.map-class-ramp{display:flex}
+.map-class-ramp i{display:block;width:30px;height:10px;opacity:.78}
+.map-class-edges{display:flex;margin-left:-15px}
+.map-class-edges span{width:30px;text-align:center;font-size:10px;opacity:.85}
+.map-class-legend p{margin:4px 0 0;font-size:10px;opacity:.85}

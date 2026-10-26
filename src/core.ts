@@ -71,7 +71,7 @@ import {computeRate,fromPoints,fromTable,rateTable,rateChart,rateReceipt,validat
 import {computeRateRatio,rateRatioReceipt,rateRatioSentence,RATE_RATIO_TABLE_KEYS} from './rate-ratio.js';
 import {caseSeries,caseSeriesFromTable,seriesTable,seriesChart,seriesReceipt,validateCaseSeriesNode} from './case-series.js';
 import {joinTableToAreas,joinedPolygons,areaJoinReceipt} from './area-join.js';
-import {projectionExtract,projectionTable,readExtract,assignSites,assignmentTable,compareToElevation,extractReceipt,assignmentReceipt,comparisonReceipt as thresholdReceipt,validateSeaLevelNode} from './sea-level.js';
+import {projectionExtract,projectionTable,readExtract,extractFromRuleset,assignSites,assignmentTable,compareToElevation,extractReceipt,assignmentReceipt,comparisonReceipt as thresholdReceipt,validateSeaLevelNode} from './sea-level.js';
 import {distanceKm,nearestOf,satisfies} from './nearest-neighbour.js';
 export const NS = 'urn:fieldwork:';
 export const TYPES:Record<NodeType,NodeDefinition> = {
@@ -961,7 +961,27 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         break;}
       case 'case_series':{const series=node.params.source==='table'?caseSeriesFromTable(inputs.cases,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period}):caseSeries(inputs.points,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period,weightField:node.params.weightField});value={...seriesTable(series),chart:seriesChart(series)} as unknown as DisplayValue;receipts.push(seriesReceipt(node,series,runId,workflow.edges.find(e=>e.to===node.id&&(e.port==='points'||e.port==='cases'))!.from));break;}
       case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,basisKind:node.params.basisKind,familyValues:node.params.familyValues,sourceNote:node.params.sourceNote});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}
-      case 'slr_site_assignment':{const extract=readExtract(inputs.projections);const assignments=assignSites(inputs.points,inputs.sites,extract);value=assignmentTable(assignments) as unknown as DisplayValue;const edge=(port:string)=>workflow.edges.find(e=>e.to===node.id&&e.port===port)!.from;receipts.push(assignmentReceipt(node,assignments,runId,{points:edge('points'),sites:edge('sites'),projections:edge('projections')}));break;}
+      case 'slr_site_assignment':{
+        // A PLAIN TABLE AND THE RULESET THAT CONTRACTED FOR IT, or -- for a workflow saved before
+        // 2026-10-26 -- the annotated value the retired extract widget produced. `readExtract`
+        // refused a plain table because the dataset, baseline and citations "must be declared
+        // first"; they are, in rulesets/extract-contract, pinned by version on the node that
+        // applied it. Experiment 115's P1.
+        const annotated=(inputs.projections as unknown as {projection?:unknown}).projection;
+        let extract;
+        if(annotated)extract=readExtract(inputs.projections);
+        else{
+          const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='projections');
+          const upstream=edge?workflow.nodes.find(n=>n.id===edge.from):undefined;
+          const pin=upstream?.type==='apply_ruleset'?upstream.params.ruleset:undefined;
+          if(!pin)throw new Error('These projections were not read through a contract. Apply the '
+            +'published projection extract ruleset to them first: it declares the key columns, the '
+            +'units and the citations this step relies on, and it is what carries the dataset\'s '
+            +'provenance to this step.');
+          extract=extractFromRuleset(
+            inputs.projections as unknown as import('./data-table.js').DataTable&{distinct?:Record<string,string[]>},
+            resolveRuleset(pin.id,pin.version));
+        }const assignments=assignSites(inputs.points,inputs.sites,extract);value=assignmentTable(assignments) as unknown as DisplayValue;const edge=(port:string)=>workflow.edges.find(e=>e.to===node.id&&e.port===port)!.from;receipts.push(assignmentReceipt(node,assignments,runId,{points:edge('points'),sites:edge('sites'),projections:edge('projections')}));break;}
       case 'slr_threshold_comparison':{const table=inputs.assignments;if(!table?.assignments)throw new Error('Connect Assign projection site: a comparison needs the assignments, not a plain table.');const comparison=compareToElevation(table.assignments,{selection:{scenario:node.params.scenario,basis:node.params.basis,family:node.params.family,year:node.params.year,quantile:node.params.quantile},elevationField:node.params.elevationField,verticalDatum:node.params.verticalDatum,elevationReference:node.params.elevationReference});value=comparison as unknown as DisplayValue;receipts.push(thresholdReceipt(node,comparison,table.assignments,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='assignments')!.from));break;}
       case 'table_input':{if(!node.params.data.rows.length)throw new Error('Import a long-format table before running.');const imported=tableReceipt(node,node.params.data,runId);value=imported.value;receipts.push(imported.receipt);break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.

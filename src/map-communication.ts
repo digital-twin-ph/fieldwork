@@ -2,7 +2,7 @@ import type {Output,Receipt} from './results.js';
 import {outputOf} from './core.js';
 import type {WorkflowNode,Workflow} from './types.js';
 import type {LayerShape} from './presentation.js';
-import {markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel} from './presentation.js';
+import {markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
 
 export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:LayerShape;hollow?:boolean}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
@@ -13,6 +13,22 @@ export interface MapPresentation {title:string; subtitle:string; sourceNote:stri
   attribution:string}
 
 /** A map specification describes presentation; it never changes source geometries or decisions. */
+
+/** The key a value-classed polygon layer deserves: one entry per class, labelled by the values
+ *  that bound it, drawn from the same classification the figure colours with. Null when nothing
+ *  carries a value, which is every catchment figure. */
+function classedItems(polygons:{features:{value?:number}[]}):{label:string;color:string}[]|null{
+  const classed=classifyValues(polygons.features.map(f=>f.value));
+  if(!classed)return null;
+  const values=polygons.features.map(f=>f.value)
+    .filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+  const lowest=Math.min(...values);
+  const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
+  const edges=[lowest,...classed.breaks];
+  return classed.colours.map((color,i)=>
+    ({label:`${round(edges[i])} to ${round(edges[i+1])}`,color}));
+}
+
 export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,workflow:Workflow):MapPresentation{
   const upstream=workflow.edges.filter(e=>e.to===node.id).map(e=>workflow.nodes.find(n=>n.id===e.from)?.params.label||e.from);
   const sourceNote=node.params.mapSourceNote?.trim()||`Sources: ${upstream.join(', ')||'connected workflow inputs'} · CRS84. ${output.polygons?.method||output.method||'See N3 & evidence for method.'}`;
@@ -25,7 +41,15 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
       {label:'Cumulative travel-time region',color:R.primary},
       {label:'Observations',color:R.secondary},
       {label:'Sites / context',color:R.site,shape:'square'}
-    ]:[{label:'Modeled catchment',color:R.primary},{label:'Observations',color:R.secondary},{label:'Sites',color:R.site,shape:'square'}];
+    ]:classedItems(output.polygons)
+      // THE KEY AND THE PLOT HAVE TO AGREE. A choropleth landed in this default and was given a
+      // legend about modelled catchments, observations and sites -- none of which it draws --
+      // while its own figure carried the class breaks. The practitioner met it as "the legend is
+      // stale", 2026-10-26, which is the SECOND time this defect has been reported on a
+      // different surface: the figure's own key said the same thing until 2026-10-25. Classed
+      // polygons are read from the same `classifyValues` the renderer colours with, so the two
+      // cannot drift again.
+      ??[{label:'Modeled catchment',color:R.primary},{label:'Observations',color:R.secondary},{label:'Sites',color:R.site,shape:'square'}];
   }else if(output.raster){
     // The raster's own two entries, and then the layers drawn ON it. This read `else if` and
     // stopped there, so a map carrying a raster and seventeen facilities published a key that

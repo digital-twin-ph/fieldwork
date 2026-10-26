@@ -498,6 +498,28 @@
       "ranAt": "2026-10-25T04:00:29.260704+00:00",
       "note": "Four independent recomputations, none sharing code with the widget: rapidfuzz and jellyfish for the name comparison, plain Python for the normalisation, a pyproj geodesic for the distances where the widget measures a great circle, and the blocking, scoring, classification and clustering reimplemented from declaredParameters alone. THE DIVERGENCE IS A CONVENTION, NOT A SLIP. Jaro halves the count of matched characters that are in a different order; this widget halves it exactly and both references halve it with integer division. Two independent references agreeing with each other is what settles that. It can only arise when the raw count is odd, which needs a cycle of odd length among the matched characters, and every published reference pair has an even count -- martha/marhta and dwayne/duane agree to six decimals here -- so no published value can detect it. No name pair in the fixture's two layers reaches it, which is why the pipeline agrees while this one constructed case does not. The records are constructed rather than downloaded so that every branch fires once: both comparisons agreeing, each agreeing alone, neither agreeing, a pair blocking never offered, a missing name, a record with no location, a same-source pair, and the cluster rule refusing a second record from one source. It says nothing about what the thresholds should be, which needs records whose true identity is known. It also surfaced a finding about the rule rather than the code: pairs are accepted in distance order, so a record named Annex sitting 2 m from another source's record for the main hospital takes that record, and the pair a reader would choose is then refused. Both implementations do it, because both follow the declared rule.",
       "notebook": "26-deduplicate-vs-rapidfuzz.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:rate_ratio",
+      "coversRelease": "0.1.0",
+      "check": "27-rate-ratio",
+      "result": "content/results/check-27-rate-ratio.json",
+      "sha256": "b1b58e61d5d37418040764c2ca62abc98e28554cfc21e5fd8fc34f22f7589345",
+      "external": [
+        "statsmodels 0.15.0",
+        "scipy 1.18.1"
+      ],
+      "criterion": "the ratio within 1e-9 and both interval bounds within 1e-6 of statsmodels.stats.rates.confint_poisson_2indep(method='wald-log'), which is the same estimator by other authors -- a rate ratio is not a risk ratio and comparing against the wrong one would have agreed about nothing; the hard-coded z quantile against scipy.stats.norm.ppf; and the ratio recomputed from raw counts so a multiplier leaking into a dimensionless quantity would show as disagreement. Four comparisons over Snow's figures, per house and per person.",
+      "outcome": "agrees",
+      "notEstablished": [
+        "That the comparison is fair: no interval speaks to confounding, and these customers were not randomised.",
+        "That the log-normal interval is adequate at small counts. The Lambeth-only group has 18 events; a score interval is reported beside it rather than asserted equal. An exact conditional interval would be the better comparison and statsmodels documents that method as not yet implemented.",
+        "What the right denominator is. Houses and people give different ratios over the same outbreak, and choosing between them is the practitioner's."
+      ],
+      "ranAt": "2026-10-26T11:58:23.418446+00:00",
+      "measured": "Four comparisons agree in full. Snow's per-house ratio 8.4019 with a 95% interval of 6.8410 to 10.3189, against statsmodels at the same estimator; the per-person ratio 5.3511 (3.3549 to 8.5349) from the declared supply groups; the intermingled area 2.3090 (1.4456 to 3.6881) and 2.3175 (2.0924 to 2.5668) against Lambeth only and against the intermingled area. Ratios to within 1e-9 and both bounds to within 1e-6. The score method is reported beside each -- 6.8434 to 10.3152 on the first -- and never asserted equal, so what the declared approximation costs is visible rather than hidden.",
+      "note": "The intervals missed by more than 1e-6 on every comparison while the ratios agreed exactly -- the signature of a rounded constant rather than a wrong formula. Fieldwork hard-coded z as 1.9600 where the quantile is 1.959963984540054, moving Snow's per-house lower bound from 6.8409 to 6.8410. Immaterial at two decimals, and exactly the kind of thing an independent check exists to find before a reader does. Fixed in the same commit; the fixture was regenerated and all four agree.",
+      "notebook": "27-rate-ratio-vs-statsmodels.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

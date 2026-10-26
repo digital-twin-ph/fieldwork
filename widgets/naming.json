@@ -5,7 +5,7 @@
   "domainPrefixes": {
     "urn:fieldwork:pack:sea-level-rise": "slr"
   },
-  "maxKnownViolations": 3,
+  "maxKnownViolations": 2,
   "knownViolations": [
     {
       "nodeType": "facilities",
@@ -19,13 +19,6 @@
       "reason": "Titled 'Evidence register' against the type `facility_audit`. Neither says the other, and the widget runs no reasoner despite its decisions port.",
       "gatedOn": "presentation-stage",
       "clearedBy": "Decided with the presentation stage, which is where this widget is expected to land."
-    },
-    {
-      "nodeType": "slr_extract_import",
-      "rule": "source-consumes-data",
-      "reason": "Grouped under Sources while acquiring nothing: the table arrives from table_input on the `projections` port and this widget validates it and annotates provenance onto it. The group states a workflow stage the contract does not occupy.",
-      "gatedOn": "sources-group-does-not-mean-acquisition",
-      "clearedBy": "Move it out of Sources, and express its eight refusals as a declared admission ruleset with the AR6 licence and chapter as basis.evidence -- the fourth caller for the ruleset machinery. Audited in docs/audits/widget_audit.md."
     }
   ],
   "ceilingRule": "maxKnownViolations may be lowered freely and raised only when a NEW RULE is added and finds violations that already existed. Raising it for a newly introduced defect is forbidden. Every raise names the rule and the date, below, so the distinction is auditable rather than asserted -- otherwise the ratchet would quietly discourage adding rules, which is the opposite of what it is for. Checked from 2026-10-13: the ceiling must equal initialCeiling plus every recorded raise. Before that this rule was prose and nothing read it.",

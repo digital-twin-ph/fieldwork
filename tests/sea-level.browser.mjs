@@ -35,21 +35,41 @@ test('the sea-level workflow runs, states its refusals and replays offline',asyn
   await expect(page.locator('#slr-datum')).toHaveValue('MSL 1995-2014 (synthetic)');
   await expect(page.locator('#slr-elevation')).toHaveValue('elevation_m');
 
-  // The extract's obligations are visible on its own node.
+  // THE EXTRACT'S OBLIGATIONS ARE STILL VISIBLE ON ITS OWN NODE, which is the claim this test
+  // has always made. What changed on 2026-10-26 is which node: `slr_extract_import` was retired
+  // into `apply_ruleset` with the extract-contract ruleset, so the obligation is declared data
+  // carried by the ruleset rather than parameters typed into a widget named for one dataset.
+  // The three citations are the dataset authors' requirement of a user, and experiment 140 makes
+  // telling the user how to meet it an obligation on whoever shares the ruleset.
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node').filter({hasText:'AR6 extract'}).click();
-  await expect(page.locator('.inspector')).toContainText('three citations obligatory');
-  await expect(page.locator('#slr-baseline')).toHaveValue('1995-2014');
+  await page.locator('.react-flow__node').filter({hasText:'Published projection extract'}).click();
+  await expect(page.locator('.inspector')).toContainText('What this obliges you to');
+  await expect(page.locator('.inspector')).toContainText('citing three sources');
+  // How to meet it, and what happens otherwise -- both stated before the error rather than by it.
+  await expect(page.locator('.inspector')).toContainText('How to acknowledge it');
+  await expect(page.locator('.inspector')).toContainText('no output');
 
   // Receipts carry the pack's vocabulary, with the family and datum stated.
   await page.locator('[data-view="rules"]').click();
   const n3=await page.locator('#n3-preview').textContent();
-  assert.match(n3,/slr:ProjectionExtract/);
-  assert.match(n3,/slr:baselinePeriod "1995-2014"/);
+  // THE DATASET'S PROVENANCE MOVED, AND IMPROVED. It was `slr:ProjectionExtract` with
+  // `slr:baselinePeriod`, emitted by a widget named for one dataset from parameters somebody
+  // typed. It is now the ruleset's own basis: standard vocabulary, pinned by id AND version, and
+  // every citation a DOI a reader can open rather than a string they must take on trust. That is
+  // the whole claim of experiment 140 -- "the citations are also DOIs, so when transmitted and
+  // embedded in the output they are independently verifiable".
+  assert.match(n3,/<urn:fieldwork:ruleset:extract-contract> a fw:Ruleset, prov:Plan/);
+  assert.match(n3,/dcterms:hasVersion "1\.0\.0"/);
+  assert.match(n3,/dcterms:source <https:\/\/doi\.org\/10\.1017\/9781009157896\.011>/);
+  assert.match(n3,/dcterms:source <https:\/\/doi\.org\/10\.5281\/zenodo\.5914709>/);
   assert.match(n3,/slr:assignmentDistance/);
   assert.match(n3,/slr:datasetFamily slr:WithVerticalLandMotion/);
   assert.match(n3,/slr:elevationDatum "MSL 1995-2014 \(synthetic\)"/);
-  assert.equal(/dcterms:bibliographicCitation/g.test(n3),true);
+  // All three the licence obliges, each resolvable. `dcterms:bibliographicCitation` stood here
+  // and was emitted by the retired extract widget as free text a reader could only read, never
+  // follow; three DOIs is the stronger claim and the one the authors' requirement actually asks
+  // for -- an audience can check them without trusting this application or the practitioner.
+  assert.equal((n3.match(/dcterms:source <https:\/\/doi\.org\//g)||[]).length,3);
   await page.locator('[data-view="workflow"]').click();
 
   await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});

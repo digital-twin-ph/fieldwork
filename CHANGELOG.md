@@ -32,7 +32,12 @@ this section covers the work of 2026-10-25 and 26._
   district by measure — is shown with categories across the top and down the left rather than as
   a list of triples, with totals as a fourth column and row where the cells are commensurable.
   A table that states its unit is saying its values count the same thing; one that does not gets
-  no totals rather than a wrong one.
+  no totals rather than a wrong one. Having two key columns is not enough to earn a grid: an
+  assignment table naming each of sixty points and the site it was assigned to has two, and
+  pivoting it drew a 480-cell grid holding sixty numbers. A grid is drawn where the cells are
+  at least half filled — every row of a tabulation exists for every column by construction,
+  and an assignment's rows do not — and a sparser table stays a list. A grid that is full
+  enough but has a hole shows the hole, because nothing was said there.
 
 - **A result can state its finding in words**, beside the rows it was computed from.
 

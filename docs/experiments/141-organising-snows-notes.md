@@ -110,6 +110,39 @@ findings, underlying results, assumptions and supporting evidence".
 With notes carrying a narrative purpose, that mechanism is now nameable. A report is the IMRaD
 structure, filled by selecting notes for each section and the outputs they refer to.
 
+**One stage, several renderings.** The practitioner, immediately after: *"that stage also
+presents the story map, shows the dashboard."* So the synthesis stage is not a document
+generator. It composes notes and outputs once, and renders that composition in the forms
+[17](17-workflow-publication-products.md) named in 2026-10-06 — report, story map, infographic,
+dashboard — which until now read as four features and now read as four views over one thing.
+
+They differ in **reading order** and in **their relationship to time**, and those two
+differences decide what each one needs:
+
+| Rendering | Reading order | Time | What it needs that the others do not |
+| --- | --- | --- | --- |
+| **Report** | IMRaD, linear | a snapshot of an investigation | the narrative axis, and a References home it does not yet have |
+| **Story map** | a guided path through the geography | a snapshot, walked | an ORDER, which a graph does not have |
+| **Dashboard** | none; read at a glance | live, recomputed | numbers that are never transcribed |
+
+**The story map is the one that needs the spine.** A report can take IMRaD's order and a
+dashboard needs no order at all, but a story map is a sequence through a canvas that has none.
+`src/reveal-playback.ts` already computes one, one widget at a time, and says that order "is
+computed here and nowhere else" so the interface and the measurement cannot disagree. It was
+built for experiment 112 to watch progressive reveal behave. If a story map is the playback with
+narrative attached to its steps, the hardest part of it already exists and was paid for.
+
+That also answers [133](133-the-planning-stage-and-historical-notes.md)'s question from the other
+end: it asked whether story map structure could be the frame a workflow is PLANNED in rather than
+a presentation applied afterwards. If the order a story map walks is the order the canvas was
+built in, the two are the same structure seen at different times, and planning in it is not a
+separate discipline.
+
+**The dashboard is where "do not transcribe a number" stops being advice.** A report is a
+snapshot and could, badly, be written once. A dashboard claims to be current; one holding
+transcribed numbers is stating a falsehood the moment anything is rerun, and unlike a stale
+report it carries no date to warn a reader.
+
 **Why this is a field application and not a publishing feature.** The practitioner, on the
 synthesis stage: *"that is a very powerful field application."* The report is not a convenience
 added after the analysis — for a field epidemiologist it **is** the deliverable. An outbreak
@@ -155,6 +188,11 @@ It does not establish that the Jupyter analogy transfers. A notebook's reading o
 execution order; a canvas is a graph with no inherent order. `src/reveal-playback.ts` computes
 one for progressive reveal (experiment 112) and is the obvious spine to test, but no story has
 been told along it.
+
+It does not establish that one composition can serve all four renderings. That is an
+architectural claim made from their descriptions, not from building any of them, and the
+differences tabulated above are exactly the kind that look superficial until implementation
+finds they are not.
 
 It does not establish that a report can be assembled at all. The synthesis stage above is a
 design with no implementation and no trial: nothing here has selected notes into sections, and

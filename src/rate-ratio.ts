@@ -20,7 +20,7 @@ import type {WorkflowNode} from './types.js';
 export const RATE_RATIO_IS_DIMENSIONLESS=true as const;
 
 /** The key column a rate-ratio table carries, named where the table is built. See RATE_TABLE_KEYS. */
-export const RATE_RATIO_TABLE_KEYS=['comparison'] as const;
+export const RATE_RATIO_TABLE_KEYS=['group','measure'] as const;
 
 export const INTERVAL_METHODS=['log-normal'] as const;
 export type IntervalMethod=typeof INTERVAL_METHODS[number];
@@ -172,6 +172,13 @@ export function rateRatioReceipt(node:WorkflowNode,result:RateRatioResult,runId:
   return {nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
     method:rateRatioSentence(result)
       +' The interval is a log-normal approximation and is not a p-value.'
+      // The assumption a reader will ask about, stated with the result rather than left for them
+      // to raise at a venue. Poisson treats events as independent; a transmitted disease
+      // clusters, and correlated events are over-dispersed, so this interval is if anything too
+      // narrow. Experiment 139.
+      +' It treats the events as independent, which a transmitted disease is not:'
+      +' deaths that cluster are over-dispersed, so an interval of this kind is narrower'
+      +' than the data warrants.'
       +' A ratio is a contrast between two supplied populations, not a measured effect:'
       +' nothing here adjusts for anything the two groups did not share.'
       +(result.smallCountWarning?` ${result.smallCountWarning}`:'')};

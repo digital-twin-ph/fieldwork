@@ -27,10 +27,15 @@ test('every palette entry can be added to a blank canvas as a draft',async({page
     await expect.poll(()=>page.locator('.react-flow__node').count()).toBeGreaterThanOrEqual(before);
     if(await page.locator('.react-flow__node').count()===before)refused.push(type);
   }
-  // Four widgets validate their full contract on every edit, so they cannot be added from the
-  // palette at all and are reachable only from a template that already contains them. That is
-  // why it went unnoticed. Recorded here so the set cannot grow; see docs/todo.md.
-  const known=['slr_extract_import','slr_threshold_comparison','rate','case_series'];
+  // Widgets that validate their full contract on every edit cannot be added from the palette at
+  // all, and are reachable only from a template that already contains them. That is why it went
+  // unnoticed. Recorded here so the set cannot grow; see docs/todo.md.
+  //
+  // THREE SINCE 2026-10-26, down from four: slr_extract_import retired into apply_ruleset with
+  // the extract-contract ruleset. The first time this list has shrunk, and it shrank because a
+  // widget left rather than because one was fixed -- which still counts, since a widget nobody
+  // can add is one nobody can use.
+  const known=['slr_threshold_comparison','rate','case_series'];
   expect(refused.filter(t=>!known.includes(t)),
     'these palette entries could not be added as drafts').toEqual([]);
   expect(refused.sort(),'the known-unaddable set must shrink, never grow').toEqual([...known].sort());

@@ -65,6 +65,12 @@ nowhere to write one. Change the rate's multiplier and the ratio does not move.
 - **It will not compare two different quantities.** Both rates come from one rate node, so they
   share a denominator unit by construction. Deaths per house over deaths per person is not a ratio
   of anything.
+- **It assumes the events are independent, and a transmitted disease is not.** The interval comes
+  from a Poisson model, where the variance of a log count is one over the count. Deaths that
+  cluster — in a household, a street, around a pump — are over-dispersed relative to that, so the
+  interval is **narrower than the data warrants**. The point estimate is unaffected, which is no
+  comfort, because the interval is the claim. Expect the question and do not meet it for the
+  first time in front of an audience.
 - **It will not give you a p-value, and it is not a causal claim.** An interval is a range
   compatible with the data. The ratio is a contrast between two populations as they were supplied,
   and nothing here adjusts for anything the two groups did not share.

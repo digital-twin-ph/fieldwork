@@ -527,6 +527,40 @@
           "found": "Stated on the day it corrected a design. Nothing built yet: the obligation field is written into rulesets/extract-contract/1.0.0.json as declared data, the Ruleset type does not carry it, no Inspector shows it, and no receipt records a revision. The boundary it draws is already load-bearing in experiment 140, which cites it for why the error state stops at no output rather than reaching further."
         }
       ]
+    },
+    {
+      "id": "the-epi-kernel-is-a-kernel-not-a-palette-of-statistics",
+      "stated": "2026-10-26",
+      "statedBy": "the practitioner",
+      "inTheirWords": "This is why the epi kernel needs to be built as a kernel.",
+      "requiresInCode": "ONE SUBSTRATE AND A FAMILY OF MEASURES OVER IT, not one widget per statistic. The substrate is a table of counts with declared roles -- which variable is the grouping, which the outcome, what each denominator counts, and whether a unit may experience more than one event. Every epidemiological measure is then a function of that table: rate ratio, risk ratio, odds ratio, rate difference, attributable fraction, and a stratified estimate across a third variable. Each declares its estimator and its interval method ON THE RESULT, because \"the 95% interval\" is not one thing.\n\nTHE EVIDENCE IS THIS SESSION'S OWN WORK. rate_ratio was admitted and built on 2026-10-25 as a widget that computes ONE statistic -- a statistic wearing a node type, which is the same shape as `alert` being a declaration wearing one, retired the same week for exactly that. Adding risk ratio, odds ratio, rate difference and a Mantel-Haenszel stratified estimate as widgets would be five more palette entries against a target of 41, each carrying its own copy of the counts, the direction parameter, the interval machinery and the assumptions. The second one would already be a duplicate under D2.\n\nThe framing exists here already: experiment 65 settled that apply_ruleset is an INTERPRETER and a ruleset is a PROGRAM, so one widget serves many declared behaviours. A kernel is that shape for measurement rather than for rules -- one widget, a declared measure, the method named on the result.\n\nWhat it must carry, from the distinctions already paid for: a rate is not a risk (Poisson admits more events than units, binomial does not, and rate.ts's `rateKind` already decides which); a ratio is dimensionless and the multiplier cancels; a zero cell has no interval and adding half an event is an assumption; an interval is not a p-value; and a Poisson interval treats events as independent, which a transmitted disease is not.",
+      "recordedIn": "docs/experiments/139-a-rate-ratio-with-an-interval.md",
+      "workItem": "docs/todo.md — section 2, widget streamlining",
+      "status": "open",
+      "lastChecked": "2026-10-26",
+      "checks": [
+        {
+          "date": "2026-10-26",
+          "found": "Stated on the day the second measure was being considered. Nothing built: rate_ratio ships as a single-statistic widget with its own 2x2, and the contingency table it emits is the substrate the kernel would generalise -- group against measure, four cells. The cheapest moment to decide this was before rate_ratio was built, and the next cheapest is before the second measure is."
+        }
+      ]
+    },
+    {
+      "id": "a-project-is-a-story-because-a-graph-is-not-a-narrative",
+      "stated": "2026-10-26",
+      "statedBy": "the practitioner",
+      "inTheirWords": "This is why the notes part of the project is very important, we design the project to become a FW story. ... We can learn from how Epi Info programming produces outputs and results. ... If Epi Info does procedural programming with its command set, FW does visual programming through its widgets.",
+      "requiresInCode": "THE PARADIGM DIFFERENCE DECIDES WHERE THE NARRATIVE LIVES. A procedural analysis is a program read top to bottom: the command sequence IS the account of what was done, and its output stream follows the same order, so a reader who has the program has the story. A visual analysis is a GRAPH. A graph has no first line. Nothing about a canvas says where to start reading, which branch mattered, or why one group was compared with another rather than the reverse -- and none of that is recoverable from the topology.\n\nSo the narrative has to be CARRIED rather than implied, and that is what the notes are for. They are not annotation on the work; in a visual language they do the job the command sequence does in a procedural one. The unit of story is the PROJECT: South London is five workflows that together make Snow's argument -- rates, the ground, 1849 against 1854, the choropleth, the water companies -- and each is a section rather than a separate analysis. A reader opening it should be able to follow it in an order somebody chose.\n\nWHAT THIS NEEDS, none of it built: a project that declares its own order and says what each workflow contributes; a note that travels with a result rather than living beside it in a parameter a figure may or may not show; and a way for a reader to move through a project as a sequence, which today they cannot -- the workflow selector is a list with no stated order and no account of why one comes after another.\n\nWHAT TO LEARN FROM THE PROCEDURAL SIDE, examined 2026-10-26: its results are typed records that declare their own operation, the plan version that produced them, the canonical source they ran on, and what they DID NOT USE -- records excluded for missing values, for invalid weights, for zero weight. A result that says what it dropped is a result a reader can audit. Fieldwork's receipts carry provenance well and its outputs carry much less; the shape worth borrowing is the result that accounts for its own inputs, which `authoredDataIssues` already does for one case and nothing does generally.",
+      "recordedIn": "docs/experiments/136-a-figure-that-stands-on-its-own.md",
+      "workItem": "docs/todo.md",
+      "status": "open",
+      "lastChecked": "2026-10-26",
+      "checks": [
+        {
+          "date": "2026-10-26",
+          "found": "Stated while the fifth South London workflow was being added -- the point at which the project stopped being a set of demonstrations and became an argument with parts. Nothing built: a project holds workflows in whatever order they were added, no workflow says what it contributes, and the notes that carry the reasoning are per-figure parameters a practitioner types rather than anything the project knows about."
+        }
+      ]
     }
   ]
 }

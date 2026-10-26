@@ -608,10 +608,24 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 
 /* The interactive map's class legend, drawn to match the static figure's ramp so one figure
    cannot state two different sets of breaks depending on which renderer the reader opened. */
-.map-class-legend{background:var(--panel,#fff);padding:6px 8px;border-radius:6px;font-size:11px;
-  box-shadow:0 1px 4px rgba(0,0,0,.3);color:var(--ink,#222);max-width:260px}
+.map-class-legend{background:var(--surface-raised);padding:6px 8px;border-radius:6px;font-size:11px;
+  box-shadow:var(--shadow);color:var(--ink);border:1px solid var(--line);max-width:260px}
 .map-class-ramp{display:flex}
 .map-class-ramp i{display:block;width:30px;height:10px;opacity:.78}
 .map-class-edges{display:flex;margin-left:-15px}
 .map-class-edges span{width:30px;text-align:center;font-size:10px;opacity:.85}
 .map-class-legend p{margin:4px 0 0;font-size:10px;opacity:.85}
+
+/* THE SCALE BAR HAS TO BE READABLE, which Leaflet's default is not on a dark page: its own
+   styling is #333 text on a 50%-white background, and over the muted basemap the practitioner
+   met it as "the text is unreadable due to contrast", 2026-10-26. A scale is not decoration --
+   it is the one mark that says how big anything on the figure is, and a reader who cannot read
+   it cannot size the map at all. Opaque background, the panel's own ink, and the same treatment
+   the class legend beside it already gives itself. */
+.leaflet-control-scale-line{background:var(--surface-raised);color:var(--ink);
+  border:2px solid var(--line);border-top:none;font-size:11px;padding:1px 6px;
+  text-shadow:none;box-shadow:var(--shadow);line-height:1.5}
+.leaflet-control-scale-line:not(:first-child){border-top:2px solid var(--line);border-bottom:none}
+/* The attribution carries a licence obligation, so it is held to the same standard. */
+.leaflet-control-attribution{background:var(--surface-raised);color:var(--text-muted)}
+.leaflet-control-attribution a{color:var(--accent)}

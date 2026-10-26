@@ -952,10 +952,22 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // place that declaration survives a port.
         const comparison=computeRateRatio(inputs.rates?.rate!,node.params);
         const sentence=rateRatioSentence(comparison);
-        value={kind:'data-table',keys:[...RATE_RATIO_TABLE_KEYS],valueField:'rate ratio',
-          rows:[{key:{comparison:`${comparison.compared.label} vs ${comparison.reference.label}`},
-            value:comparison.ratio}],
-          rowCount:1,missingValueCount:0,rateRatio:comparison,sentence} as unknown as DisplayValue;
+        // THE TABLE IS THE 2x2 THE RATIO WAS COMPUTED FROM, not the ratio on its own. One row
+        // holding 8.40 showed the summary and hid the thing a reader checks it against: an
+        // epidemiologist reads the counts first and the ratio second, and until 2026-10-26 the
+        // counts existed on the result and reached no display at all. Two variables matrixed --
+        // group against measure -- which is the shape experiment 136 records as the other mode
+        // of displaying layers, in the long form every table here uses.
+        const cell=(side:typeof comparison.compared,measure:string,value:number)=>
+          ({key:{group:side.label,measure},value});
+        value={kind:'data-table',keys:[...RATE_RATIO_TABLE_KEYS],valueField:'count',
+          rows:[
+            cell(comparison.compared,'events',comparison.compared.events),
+            cell(comparison.compared,`${comparison.denominatorUnit} at risk`,comparison.compared.unitsAtRisk),
+            cell(comparison.reference,'events',comparison.reference.events),
+            cell(comparison.reference,`${comparison.denominatorUnit} at risk`,comparison.reference.unitsAtRisk),
+          ],
+          rowCount:4,missingValueCount:0,rateRatio:comparison,sentence} as unknown as DisplayValue;
         receipts.push(rateRatioReceipt(node,comparison,runId,
           workflow.edges.find(e=>e.to===node.id&&e.port==='rates')!.from));
         break;}

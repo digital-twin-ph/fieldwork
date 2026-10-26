@@ -47,16 +47,30 @@ obligation lives: the dataset's identity and its obligatory citations are its `b
 id **and version** on every receipt. Whether the authors require them transmitted is a fact about
 the same dataset.
 
-## Why PROV does not already do this
+## Why the N3 receipts do not already do this
 
-It does the derivation half. The run emits `prov:wasDerivedFrom` chains, so provenance already
-flows through the evidence graph, and this proposal adds no new relation to it.
+A first draft of this record said provenance "already flows through the evidence graph" and
+framed the port's value as timing — visible before a run rather than recorded after it. That is
+a category error, and the practitioner named it:
 
-What the evidence graph cannot do is **refuse a connection, or show a practitioner a dangling
-obligation before they run**. A declaration is checked after the fact, in a graph most readers
-never open. A port is visible while the workflow is being built, and an unconnected one is an
-obligation somebody can see they have not discharged. That is the whole of what this adds, and it
-should be stated plainly, because "we already have PROV" is the first objection it will meet.
+> The N3 receipts merely record what semantics the widgets express. It's the widgets' job to
+> transmit required provenance; the N3 receipts express that that happened.
+
+A receipt is a **record of an act, not the act**. `prov:wasDerivedFrom` says a value came from
+another; it does not carry an obligation from one widget to the next, and nothing else does
+either. So the honest statement is stronger than the draft's: **there is no transmission of
+required provenance today at all.** The receipt has only ever been able to attest to what the
+widgets expressed, and on this they expressed nothing — which is exactly why a figure can be
+drawn from AR6 projections and say "my data" while the run's receipts look complete.
+
+This is also what the port IS, rather than a view onto something that already exists. It gives a
+widget the means to discharge a duty it has always had and never had a way to perform. The
+receipt's role is unchanged and remains the right one: once a widget transmits provenance and the
+next acknowledges receipt, the N3 says so, and a reader can check the obligation was met rather
+than take the application's word for it.
+
+"We already have PROV" is still the first objection this will meet, and the answer is that PROV
+is the record. The transmission is the widget's job.
 
 ## The admission audit
 

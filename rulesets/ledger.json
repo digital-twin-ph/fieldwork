@@ -4,11 +4,11 @@
   "measuredAt": "2026-10-26",
   "counts": {
     "rulesets": 5,
-    "withResolvableEvidence": 0,
-    "withoutResolvableEvidence": 5,
+    "withResolvableEvidence": 1,
+    "withoutResolvableEvidence": 4,
     "citationsNamedButUnresolvable": 3
   },
-  "uncitedCeiling": 5,
+  "uncitedCeiling": 4,
   "uncited": [
     {
       "id": "urn:fieldwork:ruleset:outreach-criteria",
@@ -33,12 +33,6 @@
       "basisStatus": "illustrative",
       "statedBy": "The ruleset text itself: \"Not a judgement that large is wrong.\"",
       "whatWouldResolveIt": "Nothing, as shipped, and that is deliberate -- this ruleset exists to answer a question about the machinery, not about extents. It resolves by being REPLACED: if rules over derived geometry turn out to be useful, the one that proves it will be a particular ruleset about a particular question, with a size that matters for that question and a source for it. If experiment 113 concludes against the approach, this is deleted and the ceiling returns to 3."
-    },
-    {
-      "id": "urn:fieldwork:ruleset:extract-contract",
-      "basisStatus": "published",
-      "statedBy": "The ruleset's own basis: the six key columns, the two units and the family pair are read from the IPCC AR6 dataset documentation as the retired slr_extract_import widget recorded them, and nothing here re-reads that documentation.",
-      "whatWouldResolveIt": "The three citations the licence makes obligatory, as resolvable references rather than names: the AR6 WG1 Chapter 9 sea-level projections, the FACTS framework paper, and the pinned dataset version. All three are named in the ruleset and none carries a url or a digest."
     }
   ],
   "requiredOfEveryRuleset": [
@@ -51,5 +45,5 @@
   ],
   "ceilingRaisedTo4": "Raised from 3 on 2026-10-14, with the reason the ledger asks for. Experiment 113 tests whether a ruleset can run over a quantity DERIVED from geometry rather than over an imported column, and no existing ruleset takes polygons -- so the question cannot be asked without adding one. The cost is exactly what this ledger exists to resist: a fourth uncited ruleset, added because it was cheap. It is recorded as a debt against the experiment rather than as a new normal. If 113 concludes the approach is not worth having, deleting extent-review returns the ceiling to 3 in the same commit; if it is worth having, the ruleset that replaces this one must be sourced.",
   "ceilingPolicy": "Clarified by the practitioner on 2026-10-14, after the ceiling was raised 3 -> 4 for experiment 113: \"OK with ceiling, we move up a little or down both OK, not too much.\" So this ceiling is NOT a one-way ratchet like the widget budget or the naming count. It may move in either direction, by a little, with the reason recorded in the same commit. What it exists to stop is unnoticed growth -- rulesets are data, so adding one costs no code, no release build and no lab check, and the widget set grew 39 -> 51 in three days for exactly that reason. A ceiling that can move by one with a stated reason still makes the fourth uncited ruleset a decision someone made, which is the whole purpose. A jump of several at once is what the policy refuses.",
-  "ceilingRaisedTo5": "Raised 4 -> 5 on 2026-10-26, in the same commit, with the reason the policy asks for. The fifth ruleset is extract-contract, which carries the AR6 contract that slr_extract_import held in TypeScript. THE DEBT IS NOT NEW: those same three citations were unresolvable while they were compiled into a widget, where no ledger counted them and no ceiling could tick. Moving the contract into declared data is what made the debt countable, so the ceiling rises to record something that was always true rather than to permit something new. It falls again when the three citations resolve, which would take the count to 4 with one more ruleset than before."
+  "ceilingRaisedTo5": "RAISED AND LOWERED THE SAME DAY, 2026-10-26, and the round trip is the record worth keeping. It went to 5 when extract-contract was written, carrying the AR6 contract that slr_extract_import had held in TypeScript with its three citations named and unresolvable. The practitioner then said the thing that mattered: \"the citations are also DOIs, so when transmitted and embedded in the output they are independently verifiable.\" They are, and all three were resolved against the public DOI system on 2026-10-17 (docs/research/doi-resolution-probe-2026-10-17.md) -- the chapter as a book-chapter, FACTS as a journal-article, the dataset as a dataset returning version 20210809. Attached as resolvable evidence, extract-contract stops being uncited and the ceiling returns to 4 with ONE MORE RULESET THAN BEFORE. It is also the first ruleset of five to carry resolvable evidence at all."
 }

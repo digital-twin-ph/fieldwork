@@ -29,7 +29,7 @@ test('declared rulesets assemble byte-identical rule text',()=>{
   assert.equal(facilityN3([{id:'f1',name:'X',serviceType:'Clinic',owner:'GOVERNMENT'}]).rules,golden.facility);
 });
 
-test('a ruleset declares its basis, and none of five carries resolvable evidence',()=>{
+test('a ruleset declares its basis, and one of five carries resolvable evidence',()=>{
   const sets=bundledRulesets();
   // Seven version files until 2026-10-25, now eight: outreach-criteria published a 1.1.0 that
   // drops its `alert` input port, with the rules byte-identical to 1.0.0. The third version file
@@ -70,9 +70,18 @@ test('a ruleset declares its basis, and none of five carries resolvable evidence
   // to carry url-or-pdf references showed that the one ruleset recorded as "cited" cites three
   // papers as author-year text, which resolve to nothing a reader can open. No locator was
   // invented to close that gap; it is counted instead, and may only fall.
+  // ONE NOW DOES, 2026-10-26. extract-contract carries the three AR6 citations as DOIs, each
+  // resolved against the public DOI system on 2026-10-17 before any of them was written down
+  // here. The practitioner's reason is the one that matters: "the citations are also DOIs, so
+  // when transmitted and embedded in the output they are independently verifiable" -- by an
+  // audience, without trusting this application or the person presenting. uncitedCeiling went
+  // back to 4 in the same commit, with one more ruleset than before.
   const resolvable=sets.filter(s=>s.basis.evidence.length>0);
-  assert.deepEqual(resolvable.map(s=>s.id),[],
-    'None of the three carries a URL or a digested PDF. If one now does, lower uncitedCeiling in rulesets/ledger.json.');
+  assert.deepEqual([...new Set(resolvable.map(s=>s.id))],['urn:fieldwork:ruleset:extract-contract'],
+    'If another now carries a URL or a digested PDF, lower uncitedCeiling in rulesets/ledger.json.');
+  const dois=resolvable[0].basis.evidence.map(e=>e.locator);
+  assert.deepEqual(dois,['10.1017/9781009157896.011','10.5194/gmd-16-7461-2023','10.5281/zenodo.5914709'],
+    'the chapter, the FACTS paper and the dataset version: the three the licence obliges');
   const nb06=sets.find(s=>s.id==='urn:fieldwork:ruleset:nb06-evidence');
   assert.equal(nb06.basis.status,'published');
   assert.equal(nb06.basis.unresolvedCitations.length,3,'a published basis with three unopenable citations');

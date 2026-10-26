@@ -39,6 +39,13 @@ this section covers the work of 2026-10-25 and 26._
   and an assignment's rows do not — and a sparser table stays a list. A grid that is full
   enough but has a hole shows the hole, because nothing was said there.
 
+- **Rules written on a step read the port that step has.** Writing your own rules on a step keeps
+  the wiring of whatever ruleset it was holding — the step still takes what it took — but the
+  run looked for a port named `subjects` whichever port the step actually had. A step forked
+  from the projection extract carries `projections` and never had a `subjects` one, so it
+  refused with *"Connect records to classify"* about an input that was connected. Found on the
+  Manila extract step.
+
 - **A result can state its finding in words**, beside the rows it was computed from.
 
 - **The catalog counts the widgets you actually run**, in this browser. A use is a widget

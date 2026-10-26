@@ -7,7 +7,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {deriveValue,keepRows} from '../build/derive-value.js';
+import {deriveValue,selectRows} from '../build/derive-value.js';
 
 const TABLE_IX=[
   ['Southwark and Vauxhall Company',40046,1263],
@@ -67,7 +67,7 @@ test('division by zero is unknown rather than infinite',()=>{
 
 test('keeping two measures leaves the 2x2, in the order named',()=>{
   const derived=derive(tableIX(),{}).table;
-  const {table,kept,dropped,absent}=keepRows(derived,'measure',['deaths','houses without a death']);
+  const {table,kept,dropped,absent}=selectRows(derived,'measure',['deaths','houses without a death']);
   assert.equal(kept,6);
   assert.equal(dropped,3,'the three "houses" rows are the ones removed');
   assert.deepEqual(absent,[]);
@@ -79,10 +79,10 @@ test('keeping two measures leaves the 2x2, in the order named',()=>{
 });
 
 test('a value the table does not hold is reported, not ignored',()=>{
-  const {absent}=keepRows(tableIX(),'measure',['deaths','survivors']);
+  const {absent}=selectRows(tableIX(),'measure',['deaths','survivors']);
   assert.deepEqual(absent,['survivors']);
 });
 
 test('keeping nothing that exists is refused rather than returning an empty table',()=>{
-  assert.throws(()=>keepRows(tableIX(),'measure',['survivors']),/Nothing would be left/);
+  assert.throws(()=>selectRows(tableIX(),'measure',['survivors']),/Nothing would be left/);
 });

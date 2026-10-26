@@ -277,7 +277,7 @@
         }
       ]
     },
-    "keep_rows": {
+    "select_rows": {
       "output": "table",
       "contracts": [
         {

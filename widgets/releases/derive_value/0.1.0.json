@@ -23,7 +23,7 @@
     ],
     "output": "table",
     "optionalInputs": [],
-    "note": "Takes the table whose values it reads and gives back that table with the derived rows added. The rows it computed from are left in place: removing them is a selection, which `keep_rows` does."
+    "note": "Takes the table whose values it reads and gives back that table with the derived rows added. The rows it computed from are left in place: removing them is a selection, which `select_rows` does."
   },
   "ontology": {
     "status": "gap",

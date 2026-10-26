@@ -1,4 +1,4 @@
-# Keep rows by value
+# Select rows by value
 
 _Created 2026-10-26 · Updated 2026-10-26_
 

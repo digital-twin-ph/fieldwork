@@ -199,15 +199,6 @@
       "note": "Pending because the practitioner named the tension while the widget was being designed, 2026-10-25: \"We are not strictly joining table to polygon here. What we are joining are a table and another table with geometry.\" The title says \"to the study area\", which is the object a practitioner points at, and the identifier says `area`, which is the port. Neither says that the area carries a table of named parts and that the join is table-to-table on those names. Whether that matters to a reader is the question a review has to answer; it is not settled by the author who chose the name."
     },
     {
-      "nodeType": "keep_rows",
-      "title": "Keep rows by value",
-      "group": "Summaries",
-      "fingerprint": "15524bafa335",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
       "nodeType": "map_output",
       "title": "Map",
       "group": "Outputs",
@@ -346,6 +337,15 @@
       "reviewedBy": null
     },
     {
+      "nodeType": "select_rows",
+      "title": "Select rows by value",
+      "group": "Summaries",
+      "fingerprint": "7df0ca349bf8",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
       "nodeType": "slr_site_assignment",
       "title": "Assign projection site",
       "group": "Spatial operations",
@@ -478,7 +478,7 @@
       "at": "2026-10-26",
       "from": 43,
       "to": 45,
-      "widget": "derive_value, keep_rows",
+      "widget": "derive_value, select_rows",
       "functionThatDidNotExist": "Arithmetic over a table, and selection of its rows. Rules conclude a TERM about a record and never a number computed from other numbers -- authoredProjection says so in place, \"the value field is untouched\" -- so no step could compute one value from two others. Nothing selected rows of a table either: clip_points_to_area filters points by geometry, and no equivalent existed for a table. The 0.12.0 release notes record the cost as a validation limit: South London's contingency table is prepared outside the application because nothing derives a column from others.",
       "why": "Two widgets, two places. Raised rather than absorbed, because absorbing it would mean recording a practitioner's verdict on a name nobody has reviewed. Both entries are pending and the ceiling carries the debt until they are read."
     }

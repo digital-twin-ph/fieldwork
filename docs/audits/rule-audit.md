@@ -160,7 +160,7 @@ a limitation wearing a declaration's costume.
 Not applied here. Ninety-four documents is a migration, and the honest increment
 is the one used for `ontology.emits`: require it of new documents, add it to
 existing ones as they are touched, and let the count be visible. Recorded in
-[docs/todo.md](../todo.md) rather than done in passing.
+[TODO.md](../../TODO.md) rather than done in passing.
 
 ## A rule has stages, and enforcement is the last one
 

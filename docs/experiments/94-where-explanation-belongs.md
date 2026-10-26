@@ -148,7 +148,7 @@ they share the setup, not because they are the same work, and a section written 
 
 ## What this changes
 
-**The 26 widgets without a lab check** ([docs/todo.md](../todo.md), item 2) were
+**The 26 widgets without a lab check** ([TODO.md](../../TODO.md), item 2) were
 a validation debt. They are now also the deep-explanation materials, which
 changes what each notebook has to contain — a parity check plus a section that
 varies the governing assumption — and raises what the work is worth.

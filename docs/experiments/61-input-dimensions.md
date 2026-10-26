@@ -176,7 +176,7 @@ Which is the gap worth naming: **nothing converts a `table` already in the graph
 Three widgets consume `table` and all three emit a table or decisions, and the only sources of
 `points` are `observations`, `samples` and `find_health_facilities`. A practitioner who imports
 their own CSV with latitude and longitude columns cannot make it spatial. That is a new widget, so
-it is recorded in `docs/todo.md` rather than built, with the contract this thread settled.
+it is recorded in `TODO.md` rather than built, with the contract this thread settled.
 
 ## What this cannot establish
 

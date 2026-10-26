@@ -57,7 +57,7 @@ test('GeoPackage parser reads point geometry and attributes, rejects unsupported
 // editing the record lapsed the exclusion rather than letting a stale judgement ride on changed
 // data. The widget was retired that day and nothing replaces that mechanism, so the test went
 // with it rather than being weakened into something the code still does. What remains is the
-// spatial half, covered by tests/clip-points.test.mjs. See docs/todo.md, which records the
+// spatial half, covered by tests/clip-points.test.mjs. See TODO.md, which records the
 // capability as missing rather than as replaced.
 
 test('attribute data types and value sets validate values, defaults and imported records without coercion',()=>{

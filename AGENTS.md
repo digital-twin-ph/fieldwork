@@ -67,7 +67,7 @@ look at.
 Point them at the project periodically, with the previous pass's findings in hand, and write
 what each one finds. A sweep that finds nothing is a result and gets written down too. What a
 sweep produces is not a document on its own: a finding becomes a work item in
-[docs/todo.md](docs/todo.md), a blocker in `widgets/blockers.json` if something is waiting on
+[TODO.md](TODO.md), a blocker in `widgets/blockers.json` if something is waiting on
 it, or a direction in [docs/directions.json](docs/directions.json) if it settles a model —
 because a finding nobody scheduled is the failure the directions register exists to catch.
 

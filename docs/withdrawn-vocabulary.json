@@ -36,7 +36,7 @@
      "whereTheyWere": [
       "widgets/blockers.json (the one STANDING entry)",
       "docs/audits/ontology-audit.md (D8a evidence, the D8 sweep count)",
-      "docs/todo.md",
+      "TODO.md",
       "rulesets/ledger.json",
       "widgets/standardization.json"
      ],

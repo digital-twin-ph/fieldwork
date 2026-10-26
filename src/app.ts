@@ -915,10 +915,20 @@ function candidateFields(workflow:Workflow,nodeId:string){
   const edge=workflow.edges.find(e=>e.to===nodeId&&e.port==='subjects')
     ??workflow.edges.find(e=>e.to===nodeId);
   const source=edge&&workflow.nodes.find(n=>n.id===edge.from);
-  const data=(source?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data;
+  const data=(source?.params as {data?:{kind?:string; features?:{properties?:Record<string,unknown>}[];
+    keys?:string[]; valueField?:string; rows?:{key:Record<string,unknown>; value:unknown}[]}}|undefined)?.data;
+  // A TABLE IS RECORDS TOO. The run has said so since 2026-10-16 -- "points or a table, the rules
+  // do not know the difference" -- but this offered columns only from a point layer's properties,
+  // so a step fed by a table was told to connect the records it already had and no rule could be
+  // written on it at all. The attributes of a row are its key columns plus the declared value
+  // field, which is `authoredSubjects` read the same way round. Found 2026-10-26 on the Manila
+  // extract step.
+  const records=data?.kind==='data-table'
+    ?(data.rows??[]).slice(0,200).map(row=>({...row.key,...(data.valueField?{[data.valueField]:row.value}:{})}))
+    :(data?.features??[]).slice(0,200).map(feature=>feature.properties??{});
   const seen=new Map<string,Set<string>>();
-  for(const feature of data?.features?.slice(0,200)??[])
-    for(const [key,value] of Object.entries(feature.properties??{})){
+  for(const properties of records)
+    for(const [key,value] of Object.entries(properties)){
       if(key==='name'||value===null||value===undefined||value==='')continue;
       (seen.get(key)??seen.set(key,new Set()).get(key)!).add(typeof value);
     }

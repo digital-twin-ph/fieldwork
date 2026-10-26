@@ -46,6 +46,11 @@ this section covers the work of 2026-10-25 and 26._
   refused with *"Connect records to classify"* about an input that was connected. Found on the
   Manila extract step.
 
+- **A step fed by a table is offered that table's columns** when writing rules on it. The columns
+  were read from a point layer's properties alone, so a table-fed step was told to connect the
+  records it already had, and no rule could be written on it at all. A row's attributes are its
+  key columns plus the declared value field, which is how the run has read them since 2026-10-16.
+
 - **A result can state its finding in words**, beside the rows it was computed from.
 
 - **The catalog counts the widgets you actually run**, in this browser. A use is a widget

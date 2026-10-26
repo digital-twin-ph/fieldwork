@@ -68,3 +68,42 @@ test('a ruleset step can be given rules written here, from a standing start',asy
   await expect(page.locator('#rule-editor .rule-card')).toHaveCount(1);
   expect(errors).toEqual([]);
 });
+
+// "When I click Edit Ruleset in Inspector, I do not see any rules that can be edited" -- the
+// practitioner, 2026-10-26, on the Manila extract step. Two things were wrong and only one of
+// them was the editor. The step is fed by a TABLE, and the columns on offer were read from a
+// point layer's `properties` alone, so a table-fed step was told to connect the records it
+// already had and no rule could be written on it at all. The run has treated the two alike
+// since 2026-10-16: "points or a table, the rules do not know the difference."
+test('a step fed by a table is offered that table\'s columns',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=sea-level');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+
+  // Fork the extract step onto its own rules, which is what the Inspector's own button does.
+  // Its ports are kept, so it still takes the projections table it always took.
+  await page.evaluate(()=>{
+    const key='fieldwork-workflow-v1';
+    const w=JSON.parse(localStorage.getItem(key));
+    const step=w.nodes.find(n=>n.type==='apply_ruleset');
+    step.params.authored={title:'Rules for this step',mustNotBeReadAs:'',
+      fields:[],parameters:[],rules:[]};
+    delete w.manifest;
+    localStorage.setItem(key,JSON.stringify(w));
+    const ws=JSON.parse(localStorage.getItem('fieldwork-examples-v1')||'{}');
+    ws['sea-level']=w;localStorage.setItem('fieldwork-examples-v1',JSON.stringify(ws));
+  });
+  await page.reload();
+  await page.locator('[data-view="workflow"]').click();
+  const id=await page.evaluate(()=>
+    JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='apply_ruleset').id);
+  await page.locator(`.react-flow__node[data-id="${id}"]`).click();
+
+  const inspector=page.locator('#inspector-content');
+  await expect(inspector).toContainText('These are the columns the connected records carry');
+  // The declared value field, which is the column any rule about this table would read.
+  await expect(inspector).toContainText(/value_mm/i);
+  expect(errors).toEqual([]);
+});

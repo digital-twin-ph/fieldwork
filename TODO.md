@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-10-24_
+_Created 2026-10-10 · Updated 2026-10-25_
 
 Deferred work, in rough priority order. An item here is a decision to do it later, not a
 decision to do it — anything abandoned should be struck with a reason rather than deleted,

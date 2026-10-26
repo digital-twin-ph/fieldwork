@@ -34,6 +34,8 @@
 <urn:fieldwork:widget:find_health_facilities> a fw:WidgetDefinition; fw:nodeType "find_health_facilities"; rdfs:label "Find health facilities".
 <urn:fieldwork:widget:isochrone> a fw:WidgetDefinition; fw:nodeType "isochrone"; rdfs:label "Network isochrone";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/isochrone.md>.
+<urn:fieldwork:widget:join_table_to_area> a fw:WidgetDefinition; fw:nodeType "join_table_to_area"; rdfs:label "Join a table to the study area";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/join_table_to_area.md>.
 <urn:fieldwork:widget:map_output> a fw:WidgetDefinition; fw:nodeType "map_output"; rdfs:label "Map";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_output.md>.
 <urn:fieldwork:widget:mean_center> a fw:WidgetDefinition; fw:nodeType "mean_center"; rdfs:label "Mean center".

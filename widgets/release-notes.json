@@ -601,6 +601,18 @@
    "breaking": false,
    "migrationFrom": []
   },
+  "rate_ratio": {
+   "version": "0.1.0",
+   "released": "2026-10-25",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Divides one group's rate by another's and reports an interval with the counts behind it. The exposed group and the reference are both named, because 8.40 and 0.12 are the same finding and not the same sentence. Refuses a zero cell rather than reporting an undefined interval or adding half an event to make one, refuses a group compared with itself, and refuses a plain table. A count below five is reported as a small-count warning rather than refused. The interval is a log-normal approximation, named on the result; it is not a p-value and the ratio is not a causal claim. See docs/experiments/139-a-rate-ratio-with-an-interval.md."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
   "reachable_corridor": {
    "version": "0.3.0",
    "released": "2026-10-14",

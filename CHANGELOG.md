@@ -5,6 +5,38 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.10.0 — In development
 
+- **Epidemiology is a group in the palette.** Rate with a denominator and Cases by period were
+  already here, sitting in a generic Summaries group beside twenty-one spatial operations, and an
+  epidemiologist looking at the framework reported seeing no epi widget at all. The capability was
+  there and the identity was not, which for someone opening this is the same thing. They stay
+  standard widgets: a rate with a declared denominator is not an epidemiological quantity, it is
+  an ordinary one epidemiology leans on, and where you look for a thing is a different question
+  from whose vocabulary it belongs to.
+
+- **A rate ratio, with an interval and the counts behind it.** Two rates side by side are not a
+  comparison until something divides them, and a reader comparing them by eye is doing arithmetic
+  without an interval. Snow's own figures: houses supplied by Southwark and Vauxhall against
+  houses supplied by Lambeth is a rate ratio of 8.40, 95% interval 6.84 to 10.32; the same
+  argument with people as the denominator, from the declared water supply of each sub-district, is
+  5.35 (3.35 to 8.53), with the intermingled sub-districts sitting between the two at 2.31. They
+  differ because the second assigns a whole sub-district to one supply and averages away the
+  intermingling within streets. Neither is the right one, which is why the denominator is named on
+  every result.
+
+  **A group with no events is refused**, rather than given an undefined interval: Dulwich recorded
+  no cholera deaths in those seven weeks, and the usual repair of adding half an event to every
+  cell is a choice somebody made and not a fact about Dulwich. **A count below five is reported
+  with a warning naming it** — Putney's single death buys an interval spanning more than
+  twentyfold, which is not wrong, just carrying almost no information.
+
+  **The ratio is dimensionless.** The rate's multiplier cancels, so changing it to per 100,000
+  moves neither the ratio nor its bounds, and there is nowhere on the result to write a unit.
+
+  Which group goes on top is yours to choose and is shown as a sentence before the run, with a
+  swap, because a ratio and its reciprocal are the same finding and not the same sentence. The
+  groups are offered from the connected table rather than typed. The interval method is stated
+  rather than offered: a dropdown holding one option is not a choice.
+
 - **A table of values can be put onto the parts of a study area, and the map shades them.** Join a
   table to the study area matches each row to the boundary part it names and hands on polygons that
   carry the value, so Snow's Table VIII of deaths and population becomes a map of mortality rather

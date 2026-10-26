@@ -280,10 +280,22 @@ list and its count, from `classification.json`'s counts and from `check-coverage
 retired widget stops owing a lab check — and absent from the Inspector too, since a retired widget never
 runs. `docs/usage.md` keeps it in a retired section so an old workflow can still be looked up.
 
-**And Phase 2's first task is not retiring anything.** `implementationStatus: 'retired'` has
-been a valid value since the registry format was written, no release uses it, and **no file in
-`src/` reads the field at all**. The state is declarable and inert; making the application
-honour a status it already permits comes before using it.
+**~~And Phase 2's first task is not retiring anything.~~ DONE, and this line was still being
+read as a reason not to start.** It said `implementationStatus: 'retired'` was a valid value no
+release used and **no file in `src/` read**, so the state was declarable and inert and honouring
+it came first. That was true when written. It is false now: `src/palette.ts` derives
+`RETIRED_FROM_PALETTE` from the declared status, its own comment records that this is what makes
+a retirement take effect *"everywhere at once — palette, node search, the catalogue and its
+counts"*, and **eight widgets are retired through it today**.
+
+So the prerequisite is met and the only thing between this plan and a smaller palette is the
+decision to remove. Corrected 2026-10-25, on the practitioner's: *"we keep on relitigating what
+we have solved already by putting up blockers for why we cannot remove them. I think it's about
+time we remove with impunity."* This paragraph is the instance they are describing. The
+remaining caution in this section was weighted for external owners that [64](experiments/64-widget-streamlining.md)
+itself later found do not exist — *"there are no external owners, only the seven shipped examples
+and the frozen fixtures this project owns"* — so the adapters protect work this project can fix
+in the same commit.
 
 What is retirable without contradicting D1:
 
@@ -294,6 +306,101 @@ What is retirable without contradicting D1:
 
 Roughly ten palette retirements, taking 51 to about 41, plus code-level factoring that changes
 no palette entry.
+
+**A third category, and the one that changes the count: a declaration wearing a node type.**
+Added 2026-10-25, when the practitioner looked at the palette and asked *"why do we still have
+the heat alert as a widget under inputs?"*, then *"that looks to me like a ruleset widget
+function"*, then *"so that sea-level projection extract sounds about the same"*. All three are
+the same observation, and the table above splits them across two rows that hide it.
+
+A declaration is not an operation. `alert` declares `{active, date}`, takes no input, emits a
+bespoke port type consumed by exactly one widget, and contributes two facts — `fw:alertKnown`
+and `fw:heatAlert` — asserted inside the rule application's own fact generator. The *other*
+declared value that same ruleset needs, the distance threshold, is already a parameter on
+`policy` carried by `bindParameters`. So the mechanism exists and is in use, and `alert` is the
+one declared value that was given a node type instead of a knob.
+
+`slr_extract_import` is the same shape: it computes nothing, hands its input table back with a
+provenance bag attached — `projectionTable` is `{...extract.table, projection:{…}}` — and every
+knob is a declaration. It is the harder case, because its domain content is in TypeScript rather
+than in data: `PROJECTION_KEYS`, `BASIS_KINDS` (`workflow` / `confidence-pbox`), `VALUE_UNITS`
+(metre / millimetre) and the vertical-land-motion family pair. The generic operation underneath
+is domain-agnostic and worth having — *declare an imported table as an extract of a published
+dataset, with its citations, baseline, units and key columns, and refuse to proceed until that
+is stated* — and it would serve WorldPop, a census or a ministry's facility register equally.
+Those four constants are what make it sea-level-specific, and they are data. The precedent for
+moving exactly this kind of thing out of code is `rulesets/outreach-criteria/1.0.0.json`, which
+is what the `ruleset-as-declared-data` blocker was lifted for.
+
+**And the pack is gone, which removes the place a domain widget could live.** The practitioner,
+same day: *"widgets are supposed to be domain agnostic"* and *"we abandoned the pack idea (e.g.,
+sea-level rise)"*. This file says in two places that pack work is **postponed**, citing
+[67](experiments/67-sample-raster-at-points.md), and the coverage analysis leans on it — *"its
+weakness is owned — all pack work is deliberately postponed and the record says so."* Postponed
+is now the wrong word. Those sentences are left standing with their dates; this is the
+correction. Recorded as `domain-belongs-in-data-not-in-widgets` in
+[directions.json](directions.json).
+
+What that exposes is not three awkward widgets but a check nobody was making. `classifyWidgets`
+derives standard-vs-domain from the **pack namespace alone**. Measured 2026-10-25: 3 of 49 live
+widgets are classified `domain` and all three are the sea-level pack, and nothing verifies that a
+widget classified `standard` is actually domain-agnostic — which is how `alert` passes as
+standard while its own release says `example-specific`, its title is "Heat alert" and it asserts
+`fw:heatAlert`. That check is mechanisable, which AGENTS.md says to prefer over a rule people
+must remember.
+
+The three sea-level widgets have three different dispositions and must not be swept together:
+`slr_site_assignment` is already in the Duplicates row as a one-off of
+nearest-neighbour-with-distance; `slr_extract_import` is a declaration, as above;
+`slr_threshold_comparison` this file has judged *"genuinely domain-bound"*, which under the new
+direction is a question rather than a settled exemption.
+
+**The sea-level knowledge is kept, and it already has a home.** The practitioner, asked whether
+retiring the pack meant losing it: *"we already address that in the Manila example."* It does —
+`src/sea-level-example.ts` is Manila coastal exposure, shipped as worked example 08, carrying 60
+OpenStreetMap health facilities in a Manila box, the eight published AR6 tide gauges for the
+Philippines and the 288-value projection extract, with both licences travelling with it. So this
+is a refactor and not a deletion.
+
+It also settles why the pack was never needed. A worked example is defined in the
+[glossary](glossary.md) as a teaching artifact and a regression fixture at once, carrying a
+workflow, bundled data with provenance and digests, and its own limits — and it is the **only**
+artifact that demonstrates composition rather than declaring it. That is already the sanctioned
+place for domain knowledge, and it is data. The pack was a second mechanism for the same job,
+aimed at external owners [64](experiments/64-widget-streamlining.md) later found do not exist:
+*"there are no external owners, only the seven shipped examples and the frozen fixtures this
+project owns."* Manila was carrying the domain the whole time while the pack carried the
+governance for carrying it.
+
+**AR6 as a ruleset** — the practitioner, naming the mechanism. Checked against
+`fieldwork/ruleset/1` on 2026-10-25, and the format already has a slot for every constant:
+
+| In `src/sea-level.ts` today | Ruleset field it belongs in |
+| --- | --- |
+| `PROJECTION_KEYS` — the six key columns an extract must carry | `inputContract.expects`, which already lists what a fact generator requires |
+| `VALUE_UNITS` metre / millimetre, with `UNIT_IRIS` holding `qudt:M` and `qudt:MilliM` | `parameters[].unit`, which is already a QUDT IRI in every shipped ruleset |
+| `BASIS_KINDS` — `workflow` / `confidence-pbox` | an enumerated vocabulary, as `outputVocabulary.predicates[].values` already is |
+| the vertical-land-motion family pair | `parameters`, with `meaning` carrying what each names |
+| baseline period and the three obliged citations | `basis.evidence` and `basis.unresolvedCitations` |
+
+The field that makes the case is `mustNotBeReadAs`. `src/sea-level.ts` carries this as a code
+comment: *"wf_1e is one workflow, 'medium' is a p-box over several, and a p-box bound is not a
+quantile of one distribution."* That is a distinction in the glossary's sense, it is the most
+valuable thing the widget holds, and it is sitting where no reader of the application will ever
+meet it. `mustNotBeReadAs` is the declared, versioned, citable place for exactly that sentence,
+and `access-review 1.0.0` already uses it.
+
+One adaptation to settle before the work: a ruleset today carries N3 `rules` applied by the
+reasoner, and AR6's domain content is **refusals rather than inferences** — a missing key column,
+an uninterpretable unit, an undeclared basis kind. Either those become N3 rules, which would make
+each refusal declared and explainable rather than a `throw` in TypeScript, or the format admits a
+ruleset that is a contract with no rules. The first is the more interesting answer and is what
+"semantic reasoning" would mean here; neither is chosen yet.
+
+The disposition of `widgets/packs.json`, `validate:packs`, `src/pack-catalog.ts` and
+`src/catalog-ui.ts` is a separate question and is not answered here — it is governance for a
+mechanism no longer used, which is a different thing from the domain knowledge it was meant to
+carry.
 
 **The order is not retirement-first**, which is where this started and was wrong. Checked
 2026-10-12: no affected workflow is completely replaceable, because "replaceable" means a current

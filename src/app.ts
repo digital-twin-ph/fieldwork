@@ -629,6 +629,33 @@ function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):rea
   }
 }
 
+// THE GROUP NAMES ARE DATA, NOT SCHEMA. `tableKeyColumns` can name a table's key COLUMNS without
+// a run, because a widget declares those. The VALUES in a grouping column are whatever the file
+// holds, so they can only be offered when the rate's own source is a table this canvas carries --
+// which is the common case, since a denominator usually arrives as an imported table. When the
+// rate reads points, or the chain does not end in an imported table, the field stays typed and
+// the Inspector says nothing it cannot support.
+function rateGroupsFor(node:WorkflowNode):string[]{
+  const rateEdge=workflow.edges.find(e=>e.to===node.id&&e.port==='rates');
+  const rate=rateEdge?workflow.nodes.find(n=>n.id===rateEdge.from):undefined;
+  if(rate?.type!=='rate')return [];
+  const groupBy=rate.params.groupBy;
+  if(!groupBy)return [];
+  const sourceEdge=workflow.edges.find(e=>e.to===rate.id&&e.port==='records');
+  const source=sourceEdge?workflow.nodes.find(n=>n.id===sourceEdge.from):undefined;
+  if(source?.type!=='table_input')return [];
+  // The rate pivots a long table into one row per subject, keyed by every key column except the
+  // one holding measure names. The grouping column is one of those, so its distinct values are
+  // the groups the rate will produce.
+  if(!source.params.data.keys.includes(groupBy))return [];
+  const seen=new Set<string>();
+  for(const row of source.params.data.rows){
+    const value=row.key[groupBy];
+    if(value!==undefined&&value!==null&&String(value).trim())seen.add(String(value));
+  }
+  return [...seen].sort((a,b)=>a.localeCompare(b));
+}
+
 function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){const bytes=JSON.stringify(workflow).length;workflow=previous;dropFocus();render();toast(storageRefusal(bytes),{tone:'failure'});return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
   // The edit is rolled back and the panel is rewritten -- WHILE the control that made the edit
   // still holds focus. Chromium throws "The node to be removed is no longer a child of this
@@ -1206,7 +1233,7 @@ function renderLibrary(search=''){
       :type==='measure_distance'?{type:'measure_distance' as const,params:{unit:'kilometres' as const}}
       :type==='facilities'?{type:'facilities' as const,params:{dataset:DATASET,radiusKm:5,sourceMode:'connected' as const}}
       :type==='facility_audit'?{type:'facility_audit' as const,params:{} as Record<string,never>}
-      :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
+      :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}:type==='rate_ratio'?{type:'rate_ratio' as const,params:{label:'Rate ratio',compared:'',reference:'',level:95 as const,method:'log-normal' as const}}
       :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
@@ -1507,6 +1534,39 @@ function renderInspector(){
       +field('rate-vintage','Vintage of the denominator','denominatorVintage',p.denominatorVintage,'1855 map')
       +'<div class="notice">A rate whose denominator is unstated cannot be compared with any other rate: deaths per house is not a mortality rate. A proportion cannot exceed one and is refused if it does; a ratio of events per unit can. Groups below the stated minimum report their counts and no rate, because a rate from a handful of units is unstable rather than precise. The two vintages are recorded and compared, since a numerator and a denominator measured at different times describe different populations.'
       +(p.source==='table'?' A table is read as one row per measure per subject: the key column named above holds the measure names, and the other key columns name the subject. Changing the kind of input disconnects what was wired, because points and a table are not the same shape.':'')+'</div>';
+  }else if(n.type==='rate_ratio'){
+    const p=n.params;
+    // THE GROUPS ARE OFFERED WHERE THEY CAN BE, not typed. Same lesson the area join taught on
+    // 2026-10-25: a control that makes you spell a value you cannot see is a control that
+    // discovers its mismatch at the run. The group NAMES are data rather than schema -- they are
+    // whatever is in the grouping column -- so they can only be offered when the rate's own
+    // source is a table this canvas is holding. When it is not, the field stays typed and says so.
+    const groups=rateGroupsFor(n);
+    const pick=(id:string,key:'compared'|'reference',label:string,hint:string)=>
+      `<div class="field"><label class="field-label" for="${id}">${label}</label>`
+      +(groups.length
+        ?`<select id="${id}" data-slr="${key}"><option value="">Choose a group…</option>`
+          +groups.map(g=>`<option value="${esc(g)}" ${p[key]===g?'selected':''}>${esc(g)}</option>`).join('')
+          +'</select>'
+        :`<input id="${id}" data-slr="${key}" maxlength="120" value="${esc(p[key]||'')}" placeholder="${esc(hint)}">`)
+      +'</div>';
+    content+='<p class="description">Divides one group\'s rate by another\'s and reports an interval with the counts behind it. Two rates side by side are not a comparison until something divides them.</p>'
+      +nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="ratio-${port}">Rate input</label><select id="ratio-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('')
+      +pick('ratio-compared','compared','Group compared','Southwark and Vauxhall Company')
+      +pick('ratio-reference','reference','Compared with (reference)','Lambeth Company')
+      // WHICH WAY ROUND IT READS, shown before the run rather than discovered after it. A ratio
+      // and its reciprocal are the same finding and not the same sentence, and the only way to
+      // see which one you have asked for is to read it as a sentence.
+      +(p.compared&&p.reference
+        ?`<p class="description">Reads as: <strong>${esc(p.compared)}</strong> against <strong>${esc(p.reference)}</strong> — how many times the rate in ${esc(p.compared)} is the rate in ${esc(p.reference)}.</p>`
+          +'<div class="inspector-actions"><button id="ratio-swap" class="button small">⇄ Swap the two</button></div>'
+        :'<p class="description">Choose both groups to see which way round the comparison will read.</p>')
+      +`<div class="field"><label class="field-label" for="ratio-level">Interval level</label><select id="ratio-level" data-ratio-level>${[90,95,99].map(l=>`<option value="${l}" ${(p.level||95)===l?'selected':''}>${l}%</option>`).join('')}</select></div>`
+      // THE METHOD IS STATED, NOT SELECTED. A dropdown holding one option offers a choice that
+      // does not exist. It is named because a reader must never have to guess which interval they
+      // are looking at, and it becomes a control when there is a second method to choose.
+      +'<div class="detail-row"><span>Interval method</span><strong>Log-normal approximation</strong></div>'
+      +'<div class="notice">A rate ratio is dimensionless: the rate\'s multiplier cancels, so changing it to per 100,000 moves neither the ratio nor its bounds, and there is nowhere here to state a unit. Both rates come from one Rate node, so they are per the same thing by construction. A group with no events has no ratio and no interval, and is refused rather than given one by adding half an event. A count below five is reported with a warning naming it, because such an interval is wide for a reason a reader should see. An interval is not a p-value, and a ratio is a contrast between two populations rather than a measured effect.</div>';
   }else if(n.type==='case_series'){
     const p=n.params;
     content+='<p class="description">Counts cases per period from a declared date attribute. The kind of date travels with the series.</p>'
@@ -2327,6 +2387,16 @@ function renderInspector(){
     const node=getNode(w,n.id,'slr_extract_import');node.params.familyValues={...node.params.familyValues,[required(el.dataset.slrFamily)]:el.value.trim()};})));
   document.querySelectorAll<HTMLTextAreaElement>('[data-slr-citation]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=getNode(w,n.id,'slr_extract_import');const citations=[...node.params.citations];citations[Number(el.dataset.slrCitation)]=el.value.trim();node.params.citations=citations;})));
+  // The level is a number, and `data-slr` writes strings. A '95' where 95 is expected reaches the
+  // module as a key that is not in its table and is refused there, which is a correct refusal
+  // arriving two layers from the control that caused it.
+  optionalElement('#ratio-level')?.addEventListener('change',e=>change(w=>{
+    getNode(w,n.id,'rate_ratio').params.level=Number((e.target as HTMLSelectElement).value) as 90|95|99;}));
+  // SWAPPING IS A REAL EDIT, not a display toggle: it changes which finding the node states.
+  optionalElement('#ratio-swap')?.addEventListener('click',()=>change(w=>{
+    const node=getNode(w,n.id,'rate_ratio');
+    const {compared,reference}=node.params;
+    node.params.compared=reference;node.params.reference=compared;}));
   optionalElement('#add-series-chart')?.addEventListener('click',()=>change(w=>{const id=`curve-${Date.now()}`;w.nodes.push({id,type:'chart_output',x:n.x+270,y:n.y,params:{label:'Epidemic curve',inputMode:'series'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'series'});selected=id;}));
   document.querySelectorAll<HTMLInputElement>('#chart-label').forEach(el=>el.addEventListener('change',()=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=el.value.trim()||'Epidemic curve';})));
   // Reading, not editing: it opens a dialog and touches nothing that is saved.

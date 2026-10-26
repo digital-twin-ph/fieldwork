@@ -5,15 +5,8 @@
   "domainPrefixes": {
     "urn:fieldwork:pack:sea-level-rise": "slr"
   },
-  "maxKnownViolations": 4,
+  "maxKnownViolations": 3,
   "knownViolations": [
-    {
-      "nodeType": "alert",
-      "rule": "audited-name",
-      "reason": "An example's parameter, not an operation.",
-      "gatedOn": "outreach-predicates-name-a-domain",
-      "clearedBy": "Retire with the outreach ruleset's 2.0.0, which is what the blocker tracks."
-    },
     {
       "nodeType": "facilities",
       "rule": "audited-name",

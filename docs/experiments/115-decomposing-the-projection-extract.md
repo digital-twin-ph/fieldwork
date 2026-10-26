@@ -1,6 +1,6 @@
 # 115 — Decomposing `slr_extract_import`
 
-_Created 2026-10-15 · Updated 2026-10-15_
+_Created 2026-10-15 · Updated 2026-10-25_
 
 **Status:** tried — the widget is read operation by operation and none of its five
 operations is about sea level. The practitioner settled all three pieces on
@@ -197,6 +197,36 @@ filter to.
 P1 is declared data, P2 is an alert plus a field, P3 is a knob. **No piece of the
 decomposition is a new widget**, so the net is −1: `slr_extract_import` retires and nothing
 replaces it. 46 live against a target of 41.
+
+## The downstream coupling is the same problem, not an extra one
+
+Added 2026-10-25. Starting the build, Claude read `slr_site_assignment` as a dependency P1 had
+not accounted for: it calls `readExtract`, which throws unless the value carries a `.projection`
+bag that only `slr_extract_import` attaches, so retiring the widget appeared to break the next
+step of the Manila example. A fourth step was about to be proposed — thread the site ids through
+P3's knob.
+
+The practitioner: *"that seems to me to be a ruleset problem."* It is, and the refusal says so
+in its own words:
+
+> Connect a Sea-level projection extract, not a plain table: **the dataset, baseline and
+> citations must be declared first.**
+
+That is a CONTRACT CHECK WEARING A TYPE CHECK. The `.projection` bag is not data the next step
+needs; it is a token meaning *the contract was satisfied*. `assignSites` settles it — of
+everything in that bag it reads exactly one field, `extract.siteIds`, to check that the site
+layer and the extract came from the same release. Nothing downstream reads the dataset IRI, the
+baseline, the citations or the basis kind at all.
+
+So there is no plumbing step to add. P1 as decided already covers it: *"the ruleset widget
+establishes the contract"*, and *"a table that cannot satisfy the declaration does not reach the
+rules."* Once the contract is the ruleset's declaration, no type needs to certify it, and the
+membership condition is one more declared expectation rather than a bespoke parameter threaded
+through two widgets. The proposed fourth step would have kept the coupling alive in code while
+appearing to remove it.
+
+The measurement that makes the scale concrete: `src/sea-level.ts` throws **24 times**. Each one
+is a contract enforced in TypeScript that a ruleset could declare.
 
 ## What this does not establish
 

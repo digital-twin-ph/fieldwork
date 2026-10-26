@@ -551,3 +551,62 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-12 | 65: structured rule entry, with N3 as the compiled form |
 | 2026-10-12 | The ruleset layer gets its constraint at birth, and it is not the widget's |
 | 2026-10-14 | The practitioner's frame -- a ruleset widget is a mini-program interpreter -- recorded, and it settles why the ports are late-bound, why one palette entry is right, and why a successor cannot be predicted for this widget. Tested their other statement, that the receipt is the node's final state once configured and bound: it failed. All four fact generators resolved their own hardcoded ruleset version instead of the node's pin, so a node pinning extent-review 1.1.0 cited 1.0.0. It survived because rules are byte-identical across every version pair this build carries. Fixed and verified on both worked examples |
+
+## The interpreter has a branch per program, and the general answer is already written
+
+_Added 2026-10-25._
+
+The frame above says the widget is an interpreter and the ruleset is the program. An
+interpreter that must be **edited to run a new program** is not one. That is the state today:
+`src/core.ts` carries four hand-written cases — `outreach`, `polygon-extent`, `access-review`,
+`facility-grading-points` — each projecting its ruleset's conclusions back onto records in its
+own way. The code already admits it, in the comment on the second:
+
+> That this case had to be written is the experiment's own finding. A ruleset declares its
+> `projection` as data, but the handler for a new one is a branch here, so adding a ruleset
+> over a shape nothing had classified before is **not a data change**.
+
+**The general answer exists and is used by the other half of the system.**
+`authoredProjection` in `src/authored-application.ts` takes a `PointCollection` **or** a
+`DataTable`, applies conclusions to the subjects they were drawn about, and writes them back —
+as new key columns on a table, as merged properties on points — leaving the value field
+untouched, *"so what the table MEASURES is still the thing it measured."* Rules a practitioner
+authors go through it. Rulesets this project ships do not.
+
+So the work is subtraction: bundled rulesets adopt `authoredProjection` through declared
+column-to-predicate bindings, and the four branches retire. One mechanism in, four out. It is
+the same mechanism [115](115-decomposing-the-projection-extract.md)'s P1 needs, which is why
+an `extract-contract` ruleset would otherwise have required a fifth branch to be written for it.
+
+### What this makes reachable: transforming a column
+
+The practitioner, 2026-10-25, on where a recode belongs: *"all the above can be built into the
+ruleset widget."* Checked against **Epi Info's documented command set** (CDC), which separates
+four commands this project had been treating as one:
+
+| Epi Info | here |
+| --- | --- |
+| `IF` | the authored form's `any` / `all` conditions and its `then` conclusions — built |
+| `DEFINE`, `ASSIGN` | `authoredProjection` writing a conclusion as a new column — built |
+| `RECODE` — a **bounded** from→to map, not a general conditional | expressible as `IF`/`THEN` today; the bounded form is not built |
+
+Two consequences worth stating separately, because they are different kinds of gap.
+
+**Recoding a column already works** for a practitioner authoring rules on `apply_ruleset`: the
+conclusions land as columns beside the data. No example demonstrates it, no manual page says
+it, and nothing in the palette suggests it — which is a **confusion** cost under
+[the directions register](../directions.json)'s
+`streamlining-measures-confusion-and-duplication`, not a missing capability.
+
+**A bounded map is a different artifact from a rule**, and the distinction is worth keeping:
+a from→to table can be read at a glance, checked, and its unmapped values enumerated, while an
+arbitrary condition cannot. If one is built it is declared data, and an unmapped value is
+reported by name rather than passing through silently — the stance
+[138](138-a-table-and-a-boundary-are-two-tables.md) takes for a row naming no part.
+
+The epidemiological case for it is concrete and is already in this repository. The
+person-denominated rate ratio in South London groups 32 sub-districts into three water-supply
+groups, and works only because the published table carries a `water_supply` column —
+**a recode somebody performed by hand before the data arrived**. A practitioner holding only
+sub-district names could not have produced those groups here.
+

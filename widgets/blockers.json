@@ -96,12 +96,10 @@
     {
       "id": "outreach-predicates-name-a-domain",
       "claim": "outreach-criteria 1.0.0 asserts fw:heatAlert and fw:distanceKm. One names a domain and the other welds a unit into a predicate name, and the rules read both by name, so the alert widget cannot be generalised without a ruleset 2.0.0.",
-      "blocks": [
-        "alert"
-      ],
+      "blocks": [],
       "recorded": "2026-10-12",
-      "lastRevisited": "2026-10-25",
-      "status": "standing",
+      "lastRevisited": "2026-10-26",
+      "status": "lifted",
       "liftTest": "A ruleset 2.0.0 exists whose predicates name no domain and carry no unit in their names, with the unit on the declaration, and 1.0.0 is kept because it is what reproduces the shipped conclusions. Separately, and not gated on 2.0.0: the declared condition and its date move onto the rule application as parameters, through experiment 18's adapter pattern, so saved workflows carrying an `alert` node and its edge still run.",
       "narrowedTo": "What replaced ruleset-as-declared-data for alert alone. Declaring a condition and the date it applies to is irreducible, so alert survives as a primitive; only its name and its predicate are domain, and the predicate is now in a versioned artefact rather than in a template literal, which is what makes this a version bump rather than a code change. NARROWED AGAIN 2026-10-25, and against this blocker's own reasoning. The practitioner, looking at the palette: \"why do we still have the heat alert as a widget under inputs?\" and then \"that looks to me like a ruleset widget function\". It is. `alert` declares inputs:[] and emits a bespoke `alert` port type consumed by exactly one widget, and its entire runtime contribution is two facts -- fw:alertKnown and fw:heatAlert -- asserted inside the rule application's own fact generator. The OTHER declared value that ruleset needs, the distance threshold, is already a parameter on `policy` carried by bindParameters. So the mechanism exists and is in use, and alert is the one declared value that was given a node type instead of a knob. This blocker said 'declaring a condition and the date it applies to is irreducible, so alert survives as a primitive'; the information is irreducible and that is not what makes something a widget -- the threshold is irreducible too. What alert is actually waiting on is a migration, not a ruleset 2.0.0: the predicate naming and the node's existence are separate questions, and only the first needs 2.0.0.",
       "record": "docs/experiments/65-ruleset-as-data.md",
@@ -117,8 +115,14 @@
         {
           "date": "2026-10-25",
           "found": "THE CLAIM IS BACKWARDS, on the practitioner's reading: \"that it names a domain is not a blocker, it's the reason to remove it -- widgets are supposed to be domain agnostic.\" This blocker treated a domain-named predicate as an obstacle to generalising the widget. It is instead the disqualification. The contradiction is already in the data: widgets/classification.json types `alert` as `standard`, which that file defines as shipping with the application and applying to ANY domain, while alert's own release declares standardization 'example-specific', titles it 'Heat alert' and asserts fw:heatAlert. classifyWidgets derives standard-vs-domain from the pack namespace alone, so nothing has ever checked whether a widget calling itself domain-agnostic is one. The separation that resolves this: a RULESET may name a domain -- outreach-criteria is domain data and fw:heatAlert belongs in it -- and a widget may not. So removing the widget does not need a ruleset 2.0.0 at all; the two were only ever coupled because the widget's identity WAS the predicate. What is needed is the migration: the declared condition and its date become domain-agnostic parameters on the rule application, beside the threshold that is already one."
+        },
+        {
+          "date": "2026-10-26",
+          "found": "Closed. Nothing is gated on it: `alert` is no longer a live widget, so the blocks list is empty and the validator is right that a blocker nothing waits on is noise."
         }
-      ]
+      ],
+      "liftedBy": "alert retired, 2026-10-25 (widgets/releases/alert/0.2.0.json)",
+      "whatChanged": "Lifted WITHOUT the ruleset 2.0.0 it was waiting for, because it had the question backwards and the practitioner said so: \"that it names a domain is not a blocker, it's the reason to remove it -- widgets are supposed to be domain agnostic.\" This blocker held that fw:heatAlert naming a domain prevented the alert widget from being generalised. A RULESET may name a domain, because it is data; a widget may not. So the predicate was never the problem and needed no new version: it stays in outreach-criteria, read by rules byte-identical across 1.0.0 and 1.1.0. The widget is retired, the condition is declared on the node that applies the ruleset, and fw:AlertPort is owl:deprecated with dcterms:isReplacedBy fw:DeclaredFact. It blocked a removal for thirteen days by arguing for a rewrite nobody needed."
     },
     {
       "id": "no-points-within-area-selection",

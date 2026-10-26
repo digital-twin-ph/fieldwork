@@ -20,7 +20,7 @@ test('a rate ratio offers the rate\'s own groups, and says which way it reads',{
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles(BUNDLE.pathname);
-  await expect(page.locator('.toast')).toContainText('imported with 4 workflows',{timeout:30000});
+  await expect(page.locator('.toast')).toContainText('imported with 6 workflows',{timeout:30000});
 
   await page.locator('[data-view="workflow"]').click();
   const mortality=page.locator('#workflow-select option',{hasText:'Deaths per 1,000 people, by sub-district'});

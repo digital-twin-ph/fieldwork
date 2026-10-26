@@ -2844,6 +2844,14 @@ function renderResults(){
   if(output?.kind==='study-area')$('#result-metrics').innerHTML=`<span class="metric"><b>1</b> stored geometry</span><span class="metric">CRS84 · longitude, latitude</span><span class="metric">${output.ready?'N3: ready for spatial analysis':'Source preview'}</span>`;
   if(output?.kind==='study-area'&&output.measurement)$('#result-metrics').innerHTML=`<span class="metric"><b>${esc(formatArea(output.measurement))}</b> enclosed area</span><span class="metric">Approximate · spherical calculation</span>`;
   if(output?.kind==='spatial-coverage')$('#result-metrics').innerHTML=`<span class="metric"><b>${rows.filter(r=>r.decision==='Accept').length}</b> included</span><span class="metric review"><b>${output.reviewCount}</b> need review</span><span class="metric"><b>${output.excludedCount}</b> explicitly excluded</span>`;
+  // THE SUMMARY A TABLE WAS COMPUTED FOR, beside the table. A rate ratio emits the four counts
+  // it divided, which is what a reader checks -- and the ratio itself then had nowhere to appear,
+  // so the headline number vanished from the screen entirely. The practitioner, 2026-10-26: "I do
+  // not see rate ratio". A result that carries a stated finding says it here; one that does not
+  // is unaffected.
+  const stated=(output as unknown as {sentence?:string})?.sentence;
+  $('#result-statement').innerHTML=stated?`<p class="result-statement">${esc(stated)}</p>`:'';
+  $('#result-statement').hidden=!stated;
   if(output?.kind==='data-table'){const t=output as unknown as import('./data-table.js').DataTable;$('#result-metrics').innerHTML=`<span class="metric"><b>${t.rowCount}</b> rows</span><span class="metric unknown"><b>${t.missingValueCount}</b> values absent</span><span class="metric">${t.keys.length} key columns · value in ${esc(t.unit||'an unstated unit')}</span>`;}
   if(output?.kind==='point-table')$('#result-metrics').innerHTML=`<span class="metric"><b>${rows.length}</b> records</span><span class="metric"><b>${rows.filter(r=>!r.coordinates).length}</b> missing coordinates</span><span class="metric">CRS84 · longitude, latitude</span>`;
   if(output?.comparison)$('#result-metrics').innerHTML=`<span class="metric"><b>${output.comparison.original.features.length}</b> locations in each set</span><span class="metric"><b>${output.comparison.pumps.features.length}</b> reference pumps</span><span class="metric"><b>${output.comparison.centerShiftM.toFixed(1)} m</b> mean-center shift</span>`;

@@ -25,9 +25,9 @@
  "weakest": "exampleUseCount 0 and a lab check still owed. That is the bottom of the ladder and the population the pending exemption is about.",
  "note": "Derived by scripts/widget-evidence.mjs from the shipped example workflows and widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a micro_workflow node is its members. Field use is declared and empty: an empty top rung is a measurement, a missing one is a flattering omission.",
  "counts": {
-  "declared only": 5,
+  "declared only": 7,
   "example only": 10,
-  "parity only": 11,
+  "parity only": 12,
   "example, lab not applicable": 10,
   "example+parity": 11,
   "neither applies": 2
@@ -239,6 +239,15 @@
    "rung": "example only"
   },
   {
+   "nodeType": "group_table",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "declared only"
+  },
+  {
    "nodeType": "isochrone",
    "exampleUses": [
     "snow-isochrone"
@@ -410,6 +419,15 @@
    "rung": "parity only"
   },
   {
+   "nodeType": "relate_table",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "awaiting",
+   "labOwed": true,
+   "fieldUse": [],
+   "rung": "declared only"
+  },
+  {
    "nodeType": "reproject",
    "exampleUses": [
     "snow-isochrone",
@@ -575,6 +593,15 @@
   },
   {
    "nodeType": "travel_time_band",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "parity",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "parity only"
+  },
+  {
+   "nodeType": "two_by_two",
    "exampleUses": [],
    "exampleUseCount": 0,
    "lab": "parity",

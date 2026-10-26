@@ -34,6 +34,8 @@
 <urn:fieldwork:widget:facility_audit> a fw:WidgetDefinition; fw:nodeType "facility_audit"; rdfs:label "Evidence register".
 <urn:fieldwork:widget:fill_interior_gaps> a fw:WidgetDefinition; fw:nodeType "fill_interior_gaps"; rdfs:label "Fill interior gaps".
 <urn:fieldwork:widget:find_health_facilities> a fw:WidgetDefinition; fw:nodeType "find_health_facilities"; rdfs:label "Find health facilities".
+<urn:fieldwork:widget:group_table> a fw:WidgetDefinition; fw:nodeType "group_table"; rdfs:label "Total within groups";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/group_table.md>.
 <urn:fieldwork:widget:isochrone> a fw:WidgetDefinition; fw:nodeType "isochrone"; rdfs:label "Network isochrone";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/isochrone.md>.
 <urn:fieldwork:widget:join_table_to_area> a fw:WidgetDefinition; fw:nodeType "join_table_to_area"; rdfs:label "Join a table to the study area";
@@ -58,6 +60,8 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/rate_ratio.md>.
 <urn:fieldwork:widget:reachable_corridor> a fw:WidgetDefinition; fw:nodeType "reachable_corridor"; rdfs:label "Reachable corridor".
 <urn:fieldwork:widget:reachable_nodes> a fw:WidgetDefinition; fw:nodeType "reachable_nodes"; rdfs:label "Reachable junctions".
+<urn:fieldwork:widget:relate_table> a fw:WidgetDefinition; fw:nodeType "relate_table"; rdfs:label "Relate a column from another table";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/relate_table.md>.
 <urn:fieldwork:widget:reproject> a fw:WidgetDefinition; fw:nodeType "reproject"; rdfs:label "Reproject points".
 <urn:fieldwork:widget:sample_raster> a fw:WidgetDefinition; fw:nodeType "sample_raster"; rdfs:label "Sample raster at points".
 <urn:fieldwork:widget:select_rows> a fw:WidgetDefinition; fw:nodeType "select_rows"; rdfs:label "Select rows by value";
@@ -79,5 +83,7 @@
 <urn:fieldwork:widget:table_output> a fw:WidgetDefinition; fw:nodeType "table_output"; rdfs:label "Table".
 <urn:fieldwork:widget:travel_time> a fw:WidgetDefinition; fw:nodeType "travel_time"; rdfs:label "Travel time from distance".
 <urn:fieldwork:widget:travel_time_band> a fw:WidgetDefinition; fw:nodeType "travel_time_band"; rdfs:label "Travel time band".
+<urn:fieldwork:widget:two_by_two> a fw:WidgetDefinition; fw:nodeType "two_by_two"; rdfs:label "Two-by-two table";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/two_by_two.md>.
 <urn:fieldwork:widget:voronoi> a fw:WidgetDefinition; fw:nodeType "voronoi"; rdfs:label "Voronoi catchments".
 <urn:fieldwork:widget:xpert> a fw:WidgetDefinition; fw:nodeType "xpert"; rdfs:label "Diagnostic evidence".

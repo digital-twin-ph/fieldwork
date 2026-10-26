@@ -49,11 +49,14 @@ import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,Nea
 import {declarationGaps,dataIssuesOf} from './results.js';
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
-interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
+interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
+import {relateTable} from './relate-table.js';
+import {groupTable} from './group-table.js';
+import {computeTwoByTwo,twoByTwoReceipt} from './two-by-two.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
@@ -95,6 +98,15 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     inputs:[['records','table']],output:'table'},
   select_rows:{title:'Select rows by value',group:'Summaries',icon:'⊂',color:'teal',
     description:'Keep only the rows whose key column holds one of the values you name, in that order',
+    inputs:[['records','table']],output:'table'},
+  relate_table:{title:'Relate a column from another table',group:'Summaries',icon:'⋈',color:'teal',
+    description:'Bring a category from a second table onto these rows, matched on a column both carry',
+    inputs:[['records','table'],['related','table']],output:'table'},
+  group_table:{title:'Total within groups',group:'Summaries',icon:'Σ',color:'teal',
+    description:'Add up the values of the rows that agree on the key columns you keep',
+    inputs:[['records','table']],output:'table'},
+  two_by_two:{title:'Two-by-two table',group:'Epidemiology',icon:'⊞',color:'teal',
+    description:'Risk in each group, the risk ratio, the odds ratio and the risk difference, each naming its method',
     inputs:[['records','table']],output:'table'},
   rate:{title:'Rate with a denominator',group:'Epidemiology',icon:'÷',color:'teal',description:'Divide counts by a declared population at risk, stating what the denominator counts',inputs:[['records','points']],output:'table'},
   case_series:{title:'Cases by period',group:'Epidemiology',icon:'▦',color:'teal',description:'Count cases per day, week or month by a declared kind of date',inputs:[['points','points']],output:'table'},
@@ -961,6 +973,60 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push({nodeId:node.id,kind:'computation',
           method:`${node.params.left} ${OPERATORS[node.params.operator].label} ${node.params.right}`,
           derived:result.derived,gaps:result.gaps} as unknown as Receipt);
+        break;}
+      case 'relate_table':{
+        // RELATE, not MERGE. Epi Info has three join commands and this project had none, which
+        // the 0.12.0 release notes recorded as the reason South London's contingency table is
+        // "prepared outside the application". The one that table needs is the narrowest: a long
+        // table's value column can only hold numbers, so a CATEGORY brought across is a key
+        // column and the row count does not change. Bringing MEASURES across adds rows and is a
+        // different operation with a different failure mode -- see src/relate-table.ts.
+        const table=inputs.records as unknown as import('./data-table.js').DataTable;
+        const other=inputs.related as unknown as import('./data-table.js').DataTable;
+        if(table?.kind!=='data-table')throw new Error('Connect a table: this step adds a column to one.');
+        if(other?.kind!=='data-table')throw new Error('Connect a second table on the "related" port: '
+          +'this step brings a column across from it.');
+        const result=relateTable(table,other,node.params);
+        value=result.table as unknown as DisplayValue;
+        receipts.push({nodeId:node.id,kind:'computation',
+          method:`${node.params.bring} brought across on ${node.params.on}`
+            +`, ${result.related} row${result.related===1?'':'s'} related`
+            +(result.dropped?`, ${result.dropped} dropped for keys the second table does not carry`:''),
+          related:result.related,dropped:result.dropped,gaps:result.gaps,
+          values:result.values} as unknown as Receipt);
+        break;}
+      case 'group_table':{
+        const table=inputs.records as unknown as import('./data-table.js').DataTable;
+        if(table?.kind!=='data-table')throw new Error('Connect a table: this step totals the rows of one.');
+        const result=groupTable(table,node.params);
+        value=result.table as unknown as DisplayValue;
+        receipts.push({nodeId:node.id,kind:'computation',
+          method:`${result.collapsedFrom} rows totalled into ${result.groups} within `
+            +`${node.params.by.join(' and ')}, dropping ${result.dropped.join(' and ')}`
+            +(result.gaps.length?`; ${result.gaps.length} group`
+              +`${result.gaps.length===1?'' :'s'} held an empty cell and total to nothing known`:''),
+          groups:result.groups,collapsedFrom:result.collapsedFrom,
+          dropped:result.dropped,gaps:result.gaps} as unknown as Receipt);
+        break;}
+      case 'two_by_two':{
+        const table=inputs.records as unknown as import('./data-table.js').DataTable;
+        if(table?.kind!=='data-table')throw new Error('Connect a table: this step reads four cells of one.');
+        const result=computeTwoByTwo(table,node.params);
+        // THE COUNTS ARE THE VALUE AND THE ESTIMATES RIDE ON IT, the arrangement `rate_ratio`
+        // settled on 2026-10-26 after one row holding 8.40 showed the summary and hid the thing
+        // a reader checks it against. An epidemiologist reads the cells first.
+        const cell=(exposure:string,outcome:string,count:number)=>
+          ({key:{[node.params.exposureColumn]:exposure,[node.params.outcomeColumn]:outcome},value:count});
+        const {exposed,unexposed,caseValue,nonCaseValue}=node.params;
+        value={kind:'data-table',keys:[node.params.exposureColumn,node.params.outcomeColumn],
+          valueField:table.valueField,...(table.unit?{unit:table.unit}:{}),
+          rows:[cell(exposed,caseValue,result.cells.exposedCases),
+            cell(exposed,nonCaseValue,result.cells.exposedNonCases),
+            cell(unexposed,caseValue,result.cells.unexposedCases),
+            cell(unexposed,nonCaseValue,result.cells.unexposedNonCases)],
+          rowCount:4,missingValueCount:0,twoByTwo:result} as unknown as DisplayValue;
+        receipts.push(twoByTwoReceipt(node,result,runId,
+          workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));
         break;}
       case 'select_rows':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;

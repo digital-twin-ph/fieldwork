@@ -1,0 +1,87 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "released": "2026-10-26",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "typescriptType": "ParamsByType['two_by_two']"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "id": "urn:fieldwork:widget:two_by_two",
+  "nodeType": "two_by_two",
+  "version": "0.1.0",
+  "title": "Two-by-two table",
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes a table holding one row per exposure-and-outcome combination and gives back the four cells of the named comparison, with the estimates carried on the value. The input must already be totalled: a cell matching more than one row is refused rather than summed here, because summing silently is how a 2x2 acquires subjects nobody counted."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "GAP, meaning no mapping to an external vocabulary -- not meaning the terms are undeclared. fw:TwoByTwo and fw:EpiEstimate are declared in ontology/runtime.ttl with their properties, so every term the receipt asserts is declared and the coupling gate passes. What is absent is an alignment to an epidemiological ontology, and `fw:epiInfoLabel` is deliberately NOT such an alignment: it is a field for what one tool displays, left empty because nobody has verified it. The receipt names the exposure and outcome attributes, the four counts, every stratum left out of the comparison, and for each estimate its name, interval method, level and -- where it has none -- why it has no value. The Epi Info label is written as `unverified` rather than omitted.",
+    "emits": {
+      "classes": [
+        "EpiEstimate",
+        "TwoByTwo"
+      ],
+      "properties": [
+        "caseValue",
+        "epiInfoLabel",
+        "epiInfoLabelStatus",
+        "estimate",
+        "estimateName",
+        "estimateUnavailable",
+        "estimateValue",
+        "exposedCaseCount",
+        "exposedGroup",
+        "exposedNonCaseCount",
+        "exposureAttribute",
+        "intervalLevel",
+        "intervalLower",
+        "intervalMethod",
+        "intervalUpper",
+        "outcomeAttribute",
+        "stratumLeftOut",
+        "subjectCount",
+        "unexposedCaseCount",
+        "unexposedGroup",
+        "unexposedNonCaseCount"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/two-by-two.ts",
+      "src/epi-estimate.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/two-by-two.ts"
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Risk in each group, the risk ratio with a Katz log interval, the odds ratio with a Wald log interval, and the risk difference with an unpooled Wald interval. Epi Info's TABLES, minus its tests. Built on 2026-10-26 against a measured misreading rather than a missing feature: the South London project shows a rate ratio of 8.40 on houses where the risk ratio on people is 5.35, both correct and 57% apart. The first draft of this widget attributed that gap to the estimand, rate versus risk. THE LAB FIXTURE FOR CHECK 30 REFUTED THAT BEFORE IT SHIPPED: a risk ratio on the same houses is 8.401853429780243 -- the SAME NUMBER, bit for bit, because at most one death per house makes deaths-per-house a risk and the two are the same division. Only the intervals differ, and only in the second decimal: 6.84 to 10.32 from the Poisson form against 6.85 to 10.31 from Katz. So the gap is the DENOMINATOR, a house against a person, and the hazard is worse than first stated: a reader who takes 8.40 for the risk ratio beside the houses table is RIGHT, and is thereby taught that the substitution is safe. The direction `recognisable-not-identical-an-epi-kernel-of-our-own` records that training makes the misreading near-certain, and this is the mechanism -- the taught layout shows the statistics and not the subject being counted. Every estimate NAMES its interval method, and carries a separate field for what Epi Info calls the same quantity, because the direction's hardest finding is that the two can disagree. That field is null here: the CDC user guide states the statistics in prose and the layout itself is an image, so nobody has verified the displayed labels, and filling them from memory is how a wrong label enters a teaching context. The exposed and unexposed groups are NAMED rather than taken as the first two rows, because Snow's people-denominated table has three strata -- 16 of 32 sub-districts were supplied by both companies -- and the stratum left out is reported. An estimate may be unavailable while the table stays readable: a zero cell takes the odds ratio and leaves the risk difference standing. NOT the tests -- Pearson, Mantel-Haenszel, Yates, Fisher, mid-P -- which are a larger piece and were not started to meet a date."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested on the three-stratum table the relate-and-group chain derives from Snow's Tables VIII and XII: risk ratio 5.3511 (3.3557 to 8.5328), odds ratio 5.3731 (3.3679 to 8.5720), risk difference 4.093 per 1,000. Fourteen tests, covering a zero reference count, a zero cell, a small cell, an empty cell, a missing cell, an ungrouped table, a table of rates, a group compared with itself, an unsupported interval level, and the stratum left out. NOTHING HERE ESTABLISHES AGREEMENT WITH EPI INFO, and no parity claim is made: these are standard methods named honestly, verified against this project's own arithmetic only. Lab check 30 is where they are compared against an independent implementation -- and its fixture has already earned its place, refuting this widget's own first account of why 8.40 and 5.35 differ -- and check 27 is the warning -- it found `rate_ratio` using a rounded 1.9600 for the normal quantile, a constant this widget now shares from one place so the defect cannot be reintroduced. Nor does anything here adjust for confounding: the both-companies stratum is excluded by name, not controlled for, and Snow went to the house level precisely because the sub-district comparison could not settle it."
+  }
+}

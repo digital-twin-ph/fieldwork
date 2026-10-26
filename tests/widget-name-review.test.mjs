@@ -90,7 +90,13 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // did not exist before -- and both are PENDING, because a verdict on a name is a practitioner's
   // judgement and not its author's. The count rises on the same day it fell, and the two sea-level
   // widgets that would pay for them are deferred in TODO.md rather than traded here.
-  assert.equal(review.reviews.length,49);
+  // 52 on 2026-10-26: relate_table, group_table and two_by_two, the epi kernel's first three
+  // operations. All three PENDING for the same reason, and pendingCeiling raised by three under
+  // the same rule. The practitioner, asked the budget question that afternoon: "I am not worried
+  // about increasing the widgets because I see some more widgets to retire" -- so the room is
+  // promised from retirements they will name, and this count records the rise rather than a trade
+  // that has not happened.
+  assert.equal(review.reviews.length,52);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

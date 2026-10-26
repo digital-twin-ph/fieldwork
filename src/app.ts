@@ -681,14 +681,21 @@ function tableUnitFor(output:WorkflowNode):string|undefined{
     if(!up||seen.has(up.id))return undefined;
     seen.add(up.id);
     if(up.type==='table_input')return up.params.data.unit?.trim()||undefined;
-    if(up.type==='select_rows'||up.type==='derive_value')return walk(up,'records',seen);
+    // relate_table and group_table pass the unit through too: relating adds a key column and
+    // totalling adds up values already in the unit, so neither changes what the numbers count.
+    if(up.type==='select_rows'||up.type==='derive_value'||up.type==='relate_table'
+      ||up.type==='group_table'||up.type==='two_by_two')return walk(up,'records',seen);
     return undefined;
   };
   return walk(output,'table',new Set());
 }
 
-function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>()):Record<string,string[]>|undefined{
-  const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
+/** `port` so a widget with TWO table inputs can ask about either one: `relate_table` needs the
+ *  columns of the table being read from as well as the table being added to, and they are
+ *  different questions with different answers. */
+function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
+  port='records'):Record<string,string[]>|undefined{
+  const edge=workflow.edges.find(e=>e.to===node.id&&e.port===port);
   const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
   if(!up||seen.has(up.id))return undefined;
   seen.add(up.id);
@@ -708,6 +715,26 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>()):Record<stri
     if(!below)return undefined;
     const name=up.params.name.trim();
     return name?{...below,[up.params.keyColumn]:[...(below[up.params.keyColumn]??[]),name]}:below;
+  }
+  // RELATING ADDS A COLUMN, and the values it will hold are the ones the second table holds --
+  // read from THAT table rather than guessed, which is the same discipline as reading the
+  // operands of a derived value off the column they come from.
+  if(up.type==='relate_table'){
+    const below=upstreamKeyValues(up,seen);
+    if(!below)return undefined;
+    const brought=up.params.bring.trim();
+    if(!brought)return below;
+    const other=upstreamKeyValues(up,new Set(seen),'related');
+    return {...below,[brought]:other?.[brought]??[]};
+  }
+  // Totalling DROPS the columns not kept, so offering them downstream would offer a column that
+  // is no longer there.
+  if(up.type==='group_table'){
+    const below=upstreamKeyValues(up,seen);
+    if(!below)return undefined;
+    const kept=up.params.by.filter(name=>name.trim());
+    return kept.length?Object.fromEntries(kept.filter(name=>name in below)
+      .map(name=>[name,below[name]])):below;
   }
   return undefined;
 }
@@ -1392,7 +1419,7 @@ function renderLibrary(search=''){
       :type==='facilities'?{type:'facilities' as const,params:{dataset:DATASET,radiusKm:5,sourceMode:'connected' as const}}
       :type==='facility_audit'?{type:'facility_audit' as const,params:{} as Record<string,never>}
       :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}:type==='rate_ratio'?{type:'rate_ratio' as const,params:{label:'Rate ratio',compared:'',reference:'',level:95 as const,method:'log-normal' as const}}
-      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='derive_value'?{type:'derive_value' as const,params:{label:'Derive a value',keyColumn:'measure',left:'',operator:'minus' as const,right:'',name:''}}:type==='select_rows'?{type:'select_rows' as const,params:{label:'Select rows by value',keyColumn:'measure',values:[]}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
+      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='derive_value'?{type:'derive_value' as const,params:{label:'Derive a value',keyColumn:'measure',left:'',operator:'minus' as const,right:'',name:''}}:type==='select_rows'?{type:'select_rows' as const,params:{label:'Select rows by value',keyColumn:'measure',values:[]}}:type==='relate_table'?{type:'relate_table' as const,params:{label:'Relate a column from another table',on:'',bring:''}}:type==='group_table'?{type:'group_table' as const,params:{label:'Total within groups',by:[]}}:type==='two_by_two'?{type:'two_by_two' as const,params:{label:'Two-by-two table',exposureColumn:'',exposed:'',unexposed:'',outcomeColumn:'',caseValue:'',nonCaseValue:'',level:95 as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
     // in, from the mean longitude of every coordinate already configured. The parameter stays: a
@@ -1727,6 +1754,89 @@ function renderInspector(){
         :`<div class="field"><label class="field-label" for="select-values">Values to keep, one per line</label>`
           +`<textarea id="select-values" data-select-text rows="3">${esc(p.values.join('\n'))}</textarea></div>`)
       +'<div class="notice">A value this table does not hold is reported rather than ignored, because asking for a row that is not there is usually a typo or a changed table upstream. Keeping nothing the table holds is refused instead of returning an empty table.</div>';
+  }else if(n.type==='relate_table'){
+    const p=n.params,here=upstreamKeyValues(n)??{},there=upstreamKeyValues(n,new Set(),'related')??{};
+    const shared=Object.keys(here).filter(column=>column in there);
+    const bringable=Object.keys(there).filter(column=>column!==p.on&&!(column in here));
+    const picker=(id:string,key:'on'|'bring',label:string,options:string[],empty:string)=>
+      `<div class="field"><label class="field-label" for="${id}">${label}</label>`
+      +`<select id="${id}" data-slr="${key}"${options.length?'':' disabled'}>`
+      +(options.length?`<option value="">Choose a column…</option>`:`<option value="${esc(p[key])}">${esc(empty)}</option>`)
+      +options.map(column=>`<option value="${esc(column)}" ${p[key]===column?'selected':''}>${esc(column)}</option>`).join('')
+      +`</select></div>`;
+    content+='<p class="description">Brings a category from a second table onto these rows, matched on a column both tables carry. A table here is long, so a category can only be a key column — it lands on every row and the row count does not change.</p>'
+      +labelForm('relate-label','Node label',p.label||'Relate a column from another table')
+      +nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="relate-${port}">`
+        +`${port==='records'?'Table being added to':'Table read from'}</label>`
+        +`<select id="relate-${port}" data-map-port="${port}"><option value="">Select input</option>`
+        +workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" `
+          +`${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>`
+          +`${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')+`</select></div>`).join('')
+      // ONLY THE SHARED COLUMNS are offered to match on, and only the second table's own columns
+      // to bring across. A column the first table already has is excluded here rather than
+      // refused on the run, because the refusal is correct and arrives three steps from the choice.
+      +picker('relate-on','on','Matched on',shared,'Connect both tables first')
+      +picker('relate-bring','bring','Bring across',bringable,'Connect both tables first')
+      +(Object.keys(there).length&&!shared.length
+        ?'<div class="notice notice-warning">These two tables share no key column, so there is nothing to match on. Check that both carry the same kind of key.</div>':'')
+      +'<div class="notice">A second table giving one key two different values is refused rather than resolved, because choosing between them would produce a grouping that is wrong in a way no total reveals. A key the second table does not carry is named in the evidence and those rows are dropped, since an invented “unknown” would put a stratum in your table that nobody measured. The match is on the exact text: this is Epi Info’s RELATE and not its MATCH.</div>';
+  }else if(n.type==='group_table'){
+    const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
+    content+='<p class="description">Adds up the values of the rows that agree on the key columns you keep. The columns you do not keep are gone from the result.</p>'
+      +labelForm('group-label','Node label',p.label||'Total within groups')
+      +(columns.length
+        ?`<span class="inspector-section">Key columns to keep</span>`
+          +columns.map(column=>`<label class="check"><input type="checkbox" data-group-by="${esc(column)}" `
+            +`${p.by.includes(column)?'checked':''}> ${esc(column)}</label>`).join('')
+          +(p.by.length&&p.by.length===columns.length
+            ?'<div class="notice notice-warning">Keeping every column means every row is already its own group, so nothing would be totalled. Leave out the column whose rows should be added up.</div>'
+            :p.by.length?`<div class="notice">Dropping ${esc(columns.filter(c=>!p.by.includes(c)).join(', '))}.</div>`:'')
+        :`<div class="field"><label class="field-label" for="group-by">Key columns to keep, one per line</label>`
+          +`<textarea id="group-by" data-group-text rows="3">${esc(p.by.join('\n'))}</textarea></div>`)
+      // Why KEPT and not dropped, said where the choice is made rather than only in the manual.
+      +'<div class="notice">You name what is kept, not what is dropped, because files change: a column added later is simply dropped and you keep the same groups, where naming the dropped columns would let a new one silently become a grouping key. Only addition is offered — adding counts gives a count, while adding rates gives a number with no referent. A group holding any empty value totals to nothing known and is named in the evidence, because an unrecorded population should come out unknown rather than small.</div>';
+  }else if(n.type==='two_by_two'){
+    const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
+    const valuesOf=(column:string)=>shape?.[column]??[];
+    const column=(id:string,key:'exposureColumn'|'outcomeColumn',label:string)=>
+      `<div class="field"><label class="field-label" for="${id}">${label}</label>`
+      +`<select id="${id}" data-slr="${key}"${columns.length?'':' disabled'}>`
+      +(columns.length?`<option value="">Choose a column…</option>`:`<option value="${esc(p[key])}">Connect a table first</option>`)
+      +columns.map(name=>`<option value="${esc(name)}" ${p[key]===name?'selected':''}>${esc(name)}</option>`).join('')
+      +`</select></div>`;
+    const value=(id:string,key:'exposed'|'unexposed'|'caseValue'|'nonCaseValue',label:string,from:string,placeholder:string)=>{
+      const held=valuesOf(from);
+      return `<div class="field"><label class="field-label" for="${id}">${label}</label>`
+        +(held.length
+          ?`<select id="${id}" data-slr="${key}"><option value="">Choose a value…</option>`
+            +held.map(v=>`<option value="${esc(v)}" ${p[key]===v?'selected':''}>${esc(v)}</option>`).join('')+`</select>`
+          :`<input id="${id}" data-slr="${key}" maxlength="120" value="${esc(p[key])}" placeholder="${esc(placeholder)}">`)
+        +`</div>`;
+    };
+    const unnamed=p.exposureColumn?valuesOf(p.exposureColumn)
+      .filter(v=>v!==p.exposed&&v!==p.unexposed):[];
+    content+='<p class="description">Risk in each group, the risk ratio, the odds ratio and the risk difference, each naming the method that produced it. The table must already be totalled: one row per combination of the exposure and the outcome.</p>'
+      +labelForm('twobytwo-label','Node label',p.label||'Two-by-two table')
+      +column('twobytwo-exposure','exposureColumn','Exposure column')
+      +value('twobytwo-exposed','exposed','Exposed',p.exposureColumn,'the group a claim is being made about')
+      +value('twobytwo-unexposed','unexposed','Unexposed',p.exposureColumn,'the group it is compared with')
+      +column('twobytwo-outcome','outcomeColumn','Outcome column')
+      +value('twobytwo-case','caseValue','Case',p.outcomeColumn,'died')
+      +value('twobytwo-noncase','nonCaseValue','Non-case',p.outcomeColumn,'survived')
+      +`<div class="field"><label class="field-label" for="twobytwo-level">Interval level</label>`
+      +`<select id="twobytwo-level">`
+      +[90,95,99].map(level=>`<option value="${level}" ${p.level===level?'selected':''}>${level}%</option>`).join('')
+      +`</select></div>`
+      // THE STRATUM LEFT OUT, said in the Inspector and not only on the result. Snow's
+      // people-denominated table has three supply categories because 16 of 32 sub-districts were
+      // supplied by both companies, and a practitioner choosing two of three should be told at
+      // the moment they choose.
+      +(unnamed.length
+        ?`<div class="notice notice-warning">This table also holds ${esc(unnamed.join(', '))} in `
+          +`${esc(p.exposureColumn)}. Those subjects are in neither group: they are excluded from `
+          +`this comparison, not controlled for, and the totals will be of the two groups you chose `
+          +`rather than of the table.</div>`:'')
+      +'<div class="notice">Each estimate names its interval method — Katz log for the risk ratio, Wald log for the odds ratio, unpooled Wald for the risk difference — and none claims agreement with Epi Info, whose displayed labels for these quantities nobody here has verified. An empty cell is unknown rather than zero and is refused. A group with no cases has no risk ratio, and adding half a case to make one is an assumption rather than a measurement, so the estimate reports why it has no value while the ones that are still defined stand. The tests — chi-square, Mantel-Haenszel, Yates, Fisher, mid-P — are not built.</div>';
   }else if(n.type==='rate'){
     const p=n.params;
     const field=(id:string,label:string,key:string,value:string,placeholder='')=>`<div class="field"><label class="field-label" for="${id}">${label}</label><input id="${id}" data-slr="${key}" maxlength="80" value="${esc(value)}" placeholder="${esc(placeholder)}"></div>`;
@@ -2622,6 +2732,20 @@ function renderInspector(){
     el.addEventListener('change',()=>change(w=>{
       getNode(w,n.id,'select_rows').params.values=el.value.split('\n')
         .map(line=>line.trim()).filter(Boolean);})));
+  document.querySelectorAll<HTMLInputElement>('[data-group-by]').forEach(el=>
+    el.addEventListener('change',()=>change(w=>{
+      const node=getNode(w,n.id,'group_table'),column=required(el.dataset.groupBy);
+      node.params.by=el.checked
+        ?[...node.params.by.filter(held=>held!==column),column]
+        :node.params.by.filter(held=>held!==column);})));
+  document.querySelectorAll<HTMLTextAreaElement>('[data-group-text]').forEach(el=>
+    el.addEventListener('change',()=>change(w=>{
+      getNode(w,n.id,'group_table').params.by=el.value.split('\n')
+        .map(line=>line.trim()).filter(Boolean);})));
+  // A number, and `data-slr` writes strings -- the same reason #ratio-level has its own handler.
+  optionalElement('#twobytwo-level')?.addEventListener('change',e=>change(w=>{
+    getNode(w,n.id,'two_by_two').params.level=
+      Number((e.target as HTMLSelectElement).value) as 90|95|99;}));
   document.querySelectorAll<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>('[data-slr]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,string>)[required(el.dataset.slr)]=el.value.trim();})));
   document.querySelectorAll<HTMLInputElement>('[data-slr-family]').forEach(el=>el.addEventListener('change',()=>change(w=>{

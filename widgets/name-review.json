@@ -3,7 +3,7 @@
   "note": "The human half of the naming gate. scripts/validate-naming.mjs checks the six mechanical rules; this records a practitioner's judgement on the rule that cannot be mechanised -- whether the name is what someone would say to ask for the operation. Review docs/widget-names.md, which is generated, and record verdicts here. A verdict is pinned to the digest of (nodeType, title, group): change any of the three and the review goes stale rather than carrying over.",
   "stampedAt": "2026-10-19",
   "reviewer": "practitioner",
-  "pendingCeiling": 41,
+  "pendingCeiling": 44,
   "ceilingRule": "pendingCeiling may be lowered freely. It may be raised only when a widget is added whose FUNCTION DID NOT EXIST BEFORE -- the practitioner's rule, 2026-10-25: \"we can add a widget if its function did not exist before\" -- with an entry in ceilingRaises naming the widget and what it does that nothing did. That is D2 of the admission audit asked of the ceiling: a widget duplicating an existing function must not buy itself room by raising this, and a widget carrying a function the framework lacked is not review debt incurred carelessly. The ratchet exists so review debt cannot grow SILENTLY, not so that nothing may be added. As first written this rule said 'never raised' and also that the pending list 'can only shrink', which cannot both hold: a widget added after 2026-10-13 has no entry, fails the build until one is written, and a written entry starts pending. The contradiction surfaced on 2026-10-25, when rate_ratio was the second widget added in one day and the first to find no slack left.",
   "verdicts": {
     "accepted": "The name is what a practitioner would say to ask for this operation.",
@@ -183,6 +183,16 @@
       "reviewedBy": null
     },
     {
+      "nodeType": "group_table",
+      "title": "Total within groups",
+      "group": "Summaries",
+      "fingerprint": "1fd0fd5ce4af",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "Epi Info's command is GROUP, but \"group\" alone does not say that the values are added up, and this widget offers only a sum because summing a rate is meaningless. \"Total within groups\" says the operation and leaves the grouping implicit in the columns kept. For review: whether a practitioner would look under \"total\", \"sum\", \"aggregate\" or \"group\"."
+    },
+    {
       "nodeType": "isochrone",
       "title": "Network isochrone",
       "group": "Spatial operations",
@@ -319,6 +329,16 @@
       "verdict": "pending",
       "reviewed": null,
       "reviewedBy": null
+    },
+    {
+      "nodeType": "relate_table",
+      "title": "Relate a column from another table",
+      "group": "Summaries",
+      "fingerprint": "ef005a35ed71",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "Epi Info's own word, kept deliberately: RELATE is one of its three join commands and the one this matches, while MERGE and MATCH do different things. The tension for review is that a practitioner asking for this would probably say \"join\" -- and `join_table_to_area` already uses that word for putting a value onto a boundary, which is a different operation. The title is long and says what the row count does not do."
     },
     {
       "nodeType": "reproject",
@@ -459,6 +479,16 @@
       "reviewedBy": null
     },
     {
+      "nodeType": "two_by_two",
+      "title": "Two-by-two table",
+      "group": "Epidemiology",
+      "fingerprint": "618b9fe578f0",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "The name the discipline uses, and the one an FETP-trained reader will search for. For review: whether the title should also carry what it computes -- a reader looking for \"risk ratio\" or \"odds ratio\" will not find those words in the title, only in the description, which is what the palette search matches. Against that, naming one estimate in the title would make the other two look secondary."
+    },
+    {
       "nodeType": "voronoi",
       "title": "Voronoi catchments",
       "group": "Spatial operations",
@@ -485,6 +515,14 @@
       "widget": "derive_value, select_rows",
       "functionThatDidNotExist": "Arithmetic over a table, and selection of its rows. Rules conclude a TERM about a record and never a number computed from other numbers -- authoredProjection says so in place, \"the value field is untouched\" -- so no step could compute one value from two others. Nothing selected rows of a table either: clip_points_to_area filters points by geometry, and no equivalent existed for a table. The 0.12.0 release notes record the cost as a validation limit: South London's contingency table is prepared outside the application because nothing derives a column from others.",
       "why": "Two widgets, two places. Raised rather than absorbed, because absorbing it would mean recording a practitioner's verdict on a name nobody has reviewed. Both entries are pending and the ceiling carries the debt until they are read."
+    },
+    {
+      "at": "2026-10-26",
+      "from": 41,
+      "to": 44,
+      "widget": "relate_table, group_table, two_by_two",
+      "functionThatDidNotExist": "Joining two tables, totalling a table within groups, and the analysis under a two-by-two. Nothing joined two tables on a shared column: the 0.12.0 release notes record that as the reason South London's contingency table is prepared outside the application, and `join_table_to_area` puts a value onto a boundary rather than onto rows. Nothing totalled a table either -- `rate` groups and sums internally and emits a RATE, so the totals are consumed on the way out and no other step can use them. And nothing computed a risk, a risk ratio, an odds ratio or a risk difference: the application drew a 2x2 with counts and margins and no analysis, while the only ratio on the canvas was a RATE ratio, a different estimand.",
+      "why": "Three widgets, three places. Raised rather than absorbed, because lowering the ceiling means a practitioner reviewing a pending name and that is not an author's to do. The practitioner's own answer to the budget question the same day: \"I am not worried about increasing the widgets because I see some more widgets to retire\" -- so the room comes from retirements they will name, not from arithmetic here."
     }
   ]
 }

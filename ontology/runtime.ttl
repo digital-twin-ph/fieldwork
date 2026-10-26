@@ -199,3 +199,41 @@ fw:RateResult owl:disjointWith fw:PointDataset, fw:CaseSeries.
 fw:CaseSeries owl:disjointWith fw:PointDataset.
 
 fw:PackCatalog owl:disjointWith fw:WidgetDefinition, fw:WorkflowNodePlan, fw:CanvasNodePlan.
+
+# The epi kernel's two-by-two, 2026-10-26. Patterned after Epi Info's TABLES output and
+# deliberately not claiming agreement with it: every estimate names the method that produced it,
+# and `fw:epiInfoLabelStatus` records that nobody has verified what Epi Info displays for the
+# same quantity. See docs/directions.json, recognisable-not-identical-an-epi-kernel-of-our-own.
+fw:TwoByTwo a owl:Class;
+  rdfs:label "Two-by-two table"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "Four counts -- two groups by two outcomes -- and the estimates computed from them. The two groups are NAMED rather than taken as the first two values present, because a table may hold more: Snow's people-denominated table has three water supply strata, 16 of 32 sub-districts having been supplied by both companies. Any stratum left out is carried on this entity, since a stratum silently excluded from a comparison is the commonest way a two-by-two misleads. A contrast between two groups as they were supplied, not a measured effect: nothing adjusts for anything the two groups did not share.".
+fw:EpiEstimate a owl:Class;
+  rdfs:label "Epidemiological estimate"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "One estimate with its interval, its level and the method that produced it. Carried even when it has no value: a zero cell removes an odds ratio and leaves a risk difference perfectly well defined, so an estimate states why it is unavailable rather than being omitted, which a reader cannot tell from an estimate nobody computed.".
+fw:exposureAttribute a owl:DatatypeProperty; rdfs:label "exposure attribute";
+  rdfs:domain fw:TwoByTwo; rdfs:comment "The column the exposure was read from. Declared, never inferred from a column name.".
+fw:outcomeAttribute a owl:DatatypeProperty; rdfs:label "outcome attribute";
+  rdfs:domain fw:TwoByTwo.
+fw:exposedGroup a owl:DatatypeProperty; rdfs:label "exposed group"; rdfs:domain fw:TwoByTwo.
+fw:unexposedGroup a owl:DatatypeProperty; rdfs:label "unexposed group"; rdfs:domain fw:TwoByTwo.
+fw:caseValue a owl:DatatypeProperty; rdfs:label "case value";
+  rdfs:domain fw:TwoByTwo; rdfs:comment "Which value of the outcome column counts as a case. A two-by-two with the outcome the other way round is a different table and not a relabelled one.".
+fw:exposedCaseCount a owl:DatatypeProperty; rdfs:label "exposed case count"; rdfs:domain fw:TwoByTwo.
+fw:exposedNonCaseCount a owl:DatatypeProperty; rdfs:label "exposed non-case count"; rdfs:domain fw:TwoByTwo.
+fw:unexposedCaseCount a owl:DatatypeProperty; rdfs:label "unexposed case count"; rdfs:domain fw:TwoByTwo.
+fw:unexposedNonCaseCount a owl:DatatypeProperty; rdfs:label "unexposed non-case count"; rdfs:domain fw:TwoByTwo.
+fw:subjectCount a owl:DatatypeProperty; rdfs:label "subject count";
+  rdfs:domain fw:TwoByTwo; rdfs:comment "The subjects in the two named groups, which is NOT the size of the table when a stratum was left out.".
+fw:stratumLeftOut a owl:DatatypeProperty; rdfs:label "stratum left out";
+  rdfs:domain fw:TwoByTwo; rdfs:comment "A value of the exposure column that this comparison did not name. Those subjects are in neither group; they are excluded, not controlled for.".
+fw:estimate a owl:ObjectProperty; rdfs:label "estimate";
+  rdfs:domain fw:TwoByTwo; rdfs:range fw:EpiEstimate.
+fw:estimateName a owl:DatatypeProperty; rdfs:label "estimate name";
+  rdfs:domain fw:EpiEstimate; rdfs:comment "What the estimate is, in this project's words: \"risk ratio\", not \"RR\".".
+fw:estimateValue a owl:DatatypeProperty; rdfs:label "estimate value"; rdfs:domain fw:EpiEstimate.
+fw:estimateUnavailable a owl:DatatypeProperty; rdfs:label "estimate unavailable";
+  rdfs:domain fw:EpiEstimate; rdfs:comment "Why this estimate has no value. Present only when it has none, and never a substitute for a repaired cell: adding half a case to make a ratio computable is an assumption and not a measurement.".
+fw:epiInfoLabel a owl:DatatypeProperty; rdfs:label "Epi Info label";
+  rdfs:domain fw:EpiEstimate; rdfs:comment "What Epi Info displays for the same quantity, where somebody has verified it. SEPARATE from the method name on purpose, because the two can disagree: epi-info-ai's method contract records that its legacy Breslow-Day odds ratio ports a Woolf weighted log-odds dispersion which the legacy output labels \"Breslow-Day test for Odds\". One label field would force a choice between being correct and being recognisable.".
+fw:epiInfoLabelStatus a owl:DatatypeProperty; rdfs:label "Epi Info label status";
+  rdfs:domain fw:EpiEstimate; rdfs:comment "\"unverified\" when no Epi Info label has been read off Epi Info for this estimate. Written rather than omitted, so a receipt states the gap instead of being silent about a field this project requires.".

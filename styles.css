@@ -635,3 +635,12 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
    hides its own conclusion makes the reader reconstruct it. */
 .result-statement{margin:8px 0 12px;padding:10px 12px;border-left:3px solid var(--accent);
   background:var(--surface-tint);border-radius:0 6px 6px 0;font-size:14px;line-height:1.5}
+
+/* A two-key table as a grid. Row headers carry the first key, columns the second, so the
+   comparison a reader is making runs along a row rather than down a column three rows apart. */
+.crosstab th[scope="row"]{text-align:left;font-weight:600;white-space:nowrap}
+.crosstab td{text-align:right;font-variant-numeric:tabular-nums}
+.crosstab th[scope="col"]{text-align:right}
+.crosstab th[scope="col"]:first-child{text-align:left}
+.crosstab tfoot th,.crosstab tfoot td,.crosstab .crosstab-total{font-weight:600;
+  border-top:1px solid var(--line)}

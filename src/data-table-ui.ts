@@ -85,10 +85,78 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
 }
 
 /** Results view: key columns, then the value, with the unit stated or marked unstated. */
+/** TWO KEY COLUMNS ARE A MATRIX, and a long list of them is the same data saying less.
+ *
+ *  A table keyed by (group, measure) printed as six rows is a list; printed as a grid it is the
+ *  2x2 a reader came for, and the comparison they are making runs along a row instead of down a
+ *  column three rows apart. The practitioner, 2026-10-26, on the rate ratio's output: "still not
+ *  quite like the Epi Info AI results" -- whose categorical output cross-tabulates exposure
+ *  against outcome rather than listing cells.
+ *
+ *  Generic rather than epidemiological: ANY table with exactly two key columns pivots this way,
+ *  including Snow's Table VIII at sub-district by measure. Declined when the second key has many
+ *  values, because a grid wider than a screen is worse than the list it replaced.
+ *
+ *  TOTALS WHERE THE CELLS ARE COMMENSURABLE, and only there. The epidemiologist's 2x2 is
+ *  predictable -- four cells A, B, C, D with categories across the top and down the left, and
+ *  totals as a fourth column and a fourth row -- and a reader expects to find N in the corner.
+ *  But a measure-keyed table has cells that cannot be added: 1,263 deaths plus 40,046 houses is
+ *  not a quantity, and a Total column would invite exactly that reading.
+ *
+ *  The declaration already distinguishes them. A table that states its `unit` is saying every
+ *  value counts the same thing, so totals are meaningful; a table with none is not, and gets no
+ *  totals rather than a guess. */
+export const CROSSTAB_MAX_COLUMNS=12;
+
+export function crossTab(table:DataTable):{rowKey:string;colKey:string;columns:string[];
+  rows:{label:string;cells:(number|null|undefined)[];total:number|null}[];
+  columnTotals:(number|null)[];grandTotal:number|null}|null{
+  if(table.keys.length!==2)return null;
+  const [rowKey,colKey]=table.keys;
+  const columns=[...new Set(table.rows.map(r=>String(r.key[colKey])))];
+  if(!columns.length||columns.length>CROSSTAB_MAX_COLUMNS)return null;
+  const labels=[...new Set(table.rows.map(r=>String(r.key[rowKey])))];
+  const at=new Map(table.rows.map(r=>[`${r.key[rowKey]}\u0000${r.key[colKey]}`,r.value]));
+  const addable=Boolean(table.unit?.trim());
+  const sum=(values:(number|null|undefined)[]):number|null=>{
+    if(!addable)return null;
+    const numbers=values.filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+    return numbers.length===values.length?numbers.reduce((a,b)=>a+b,0):null;
+  };
+  const rows=labels.map(label=>{
+    const cells=columns.map(c=>at.get(`${label}\u0000${c}`));
+    return {label,cells,total:sum(cells)};
+  });
+  return {rowKey,colKey,columns,rows,
+    columnTotals:columns.map((_,i)=>sum(rows.map(r=>r.cells[i]))),
+    grandTotal:sum(rows.flatMap(r=>r.cells))};
+}
+
 export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40}={}){
   const matching=query?table.rows.filter(row=>Object.values(row.key).some(v=>String(v).toLowerCase().includes(query.toLowerCase()))):table.rows;
   const pages=Math.max(1,Math.ceil(matching.length/pageSize)),shown=matching.slice(page*pageSize,page*pageSize+pageSize);
   const unit=table.unit?esc(table.unit):'<span class="muted">unit unstated</span>';
+  // The grid, where the shape allows one and nothing is being searched -- a filter is about
+  // finding a row, and a matrix has no rows to page through in the same sense.
+  const grid=query?null:crossTab(table);
+  if(grid)
+    return `<div class="table-meta muted">${table.rowCount} cells · ${esc(grid.rowKey)} by ${esc(grid.colKey)}`
+      +` · value in ${unit}</div>`
+      +`<table class="crosstab"><thead><tr><th scope="col">${esc(grid.rowKey)}</th>`
+      +grid.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')
+      +(grid.grandTotal===null?'':'<th scope="col">Total</th>')
+      +`</tr></thead><tbody>`
+      +grid.rows.map(r=>`<tr><th scope="row">${esc(r.label)}</th>`
+        +r.cells.map(v=>`<td>${v===undefined?'<span class="muted">—</span>'
+          :v===null?'<span class="muted">unknown</span>':esc(v)}</td>`).join('')
+        +(r.total===null?'':`<td class="crosstab-total">${esc(r.total)}</td>`)
+        +'</tr>').join('')
+      +`</tbody>`
+      // The fourth row, where a reader looks for N.
+      +(grid.grandTotal===null?'':`<tfoot><tr><th scope="row">Total</th>`
+        +grid.columnTotals.map(v=>`<td class="crosstab-total">${v===null?'<span class="muted">—</span>':esc(v)}</td>`).join('')
+        +`<td class="crosstab-total">${esc(grid.grandTotal)}</td></tr></tfoot>`)
+      +`</table>`;
   return `<div class="table-meta muted">${matching.length} of ${table.rowCount} rows${table.missingValueCount?` · ${table.missingValueCount} values absent and kept as unknown`:''} · value in ${unit}</div>`
     +`<table><thead><tr>${table.keys.map(k=>`<th>${esc(k)}</th>`).join('')}<th>${esc(table.valueField)}</th></tr></thead><tbody>`
     +shown.map(row=>`<tr>${table.keys.map(k=>`<td>${esc(row.key[k])}</td>`).join('')}<td>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td></tr>`).join('')

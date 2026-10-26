@@ -491,7 +491,7 @@
       "recordedIn": "docs/todo.md — section 2, widget streamlining",
       "workItem": "docs/todo.md — a confusion measure beside the widget budget",
       "status": "open",
-      "lastChecked": "2026-10-25",
+      "lastChecked": "2026-10-26",
       "checks": [
         {
           "date": "2026-10-25",
@@ -504,6 +504,10 @@
         {
           "date": "2026-10-25",
           "found": "Corrected the same day. An earlier draft of this entry had duplication as a second, parallel cost that merely added inefficiency. The practitioner: \"duplicate widgets also causes confusion, which one to use?\" So duplication is the strictly worse case and contains the first, which orders the work: merges before renames, and no amount of renaming substitutes for a merge."
+        },
+        {
+          "date": "2026-10-26",
+          "found": "EVIDENCED, by retiring one widget. The practitioner's thesis -- \"the more retirable widgets we don't remove, the bigger the mess when they remain entangled with the ones that are needed\" -- was tested on `alert`, removed 16 days after experiment 64 named it one of four genuine deletions. It cost 12 gate failures, 9 of them tests using it as a convenient palette fixture, plus a ruleset version, an ontology deprecation with a replacement term, a port-type retirement, a case removed from the [data-add] construction chain, a validation rule, and four governance surfaces. NONE OF THAT EXISTED WHEN 64 MARKED IT. It accumulated while it sat.\n\nAND NO MEASURE SEES IT. budget.json counts widgets; nothing counts attachments, and naive counts mislead in both directions. `alert` greps at 168 references, inflated by the English word, and looked trivial -- two parameters, no inputs -- while costing twelve tests. `slr_extract_import` greps at 11 and is worse: 24 contract throws in its module, a ProjectionTable type that two other widgets are BUILT ON, and a selection UI reading projectionDomains. Entanglement is not in a widget's name.\n\nIt is still growing. join_table_to_area and rate_ratio were added on 2026-10-25 into the same [data-add] chain that special-cases four retirable widgets, so the next removal already touches two more things than it would have."
         }
       ]
     }

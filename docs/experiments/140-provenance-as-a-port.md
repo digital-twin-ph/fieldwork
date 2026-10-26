@@ -129,6 +129,21 @@ This is why [136](136-a-figure-that-stands-on-its-own.md)'s rule becomes enforce
 figure received — not because the display IS the obligation, but because it is the only evidence
 a reader has that the obligation was taken on.
 
+**No connection means no output, not merely a warning beside one.** The practitioner,
+2026-10-26: *"if the user does not connect the required provenance port it results in error and
+no output."* An error state that still drew the figure would let the figure travel, and the
+figure is the thing that reaches an audience.
+
+**Why a DOI is what makes any of this worth doing.** *"The citations are also DOIs, so when
+transmitted and embedded in the output they are independently verifiable."* That is the property
+the whole design turns on: a DOI resolves for anyone, so an audience can check the provenance
+without trusting this application **or** the person presenting. Embedding an unresolvable string
+would give a reader something to look at and nothing to check. All three AR6 DOIs resolved on
+2026-10-17 — the chapter as a `book-chapter`, FACTS as a `journal-article`, the dataset as a
+`dataset` returning `version: 20210809`, which means even the declared dataset version can be
+checked rather than taken on the practitioner's word
+([probe](../research/doi-resolution-probe-2026-10-17.md)).
+
 **A widget that cannot carry provenance is an error, not a silent drop.** The alternative —
 accepting the connection and losing the obligation at the first widget that does not implement
 the contract — is worse than having no port, because the workflow would then look complete while

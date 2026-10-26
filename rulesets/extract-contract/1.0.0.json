@@ -80,25 +80,49 @@
   "basis": {
     "status": "published",
     "statedBy": "The dataset's own documentation, carried here rather than typed into a widget. The practitioner, 2026-10-26: the provenance fields \"become citation entries for the ruleset\". That pins them to a ruleset VERSION, which is what makes the dataset version meaningful -- values are not comparable across dataset versions, so a different dataset version is a different ruleset version by construction. Decomposing a vocabulary preserves a wrong one as faithfully as a right one: nothing here re-reads that documentation.",
-    "evidence": [],
-    "unresolvedCitations": [
+    "evidence": [
       {
-        "citation": "IPCC AR6 WG1 Chapter 9, sea level change",
-        "whatWouldResolveIt": "A DOI or url for the chapter, added as an evidence reference, so a reader can open the source the vocabulary was read from rather than take this ruleset’s word for it.",
-        "supports": "The six key columns and the baseline period."
+        "id": "ar6-chapter9",
+        "kind": "url",
+        "url": "https://doi.org/10.1017/9781009157896.011",
+        "title": "Ocean, Cryosphere and Sea Level Change (IPCC AR6 WG1, Chapter 9)",
+        "role": "source",
+        "authors": "Fox-Kemper, B., et al.",
+        "published": "2021",
+        "locator": "10.1017/9781009157896.011",
+        "notes": "Resolves as a book-chapter. Supports the six key columns and the baseline period. Its DOI registers issued 2023-07-06 against a citation text reading 2021 -- a publication-versus-registration difference, not an error, and exactly the discrepancy a practitioner should not have to explain from memory at a venue (docs/research/doi-resolution-probe-2026-10-17.md).",
+        "addedAt": "2026-10-26",
+        "modifiedAt": "2026-10-26"
       },
       {
-        "citation": "The FACTS modular framework paper the projections are produced by",
-        "whatWouldResolveIt": "The paper’s DOI. It is what distinguishes a workflow identifier from a confidence p-box, which is the distinction this contract refuses to guess at.",
-        "supports": "What the basis column names, and why a p-box bound is not a quantile."
+        "id": "facts-v1",
+        "kind": "url",
+        "url": "https://doi.org/10.5194/gmd-16-7461-2023",
+        "title": "FACTS v1.0: The Framework for Assessing Changes To Sea-level",
+        "role": "method",
+        "authors": "Kopp, R. E., et al.",
+        "published": "2023",
+        "locator": "10.5194/gmd-16-7461-2023",
+        "notes": "Resolves as a journal-article. Supports what the basis column names, and why a p-box bound is not a quantile of one distribution.",
+        "addedAt": "2026-10-26",
+        "modifiedAt": "2026-10-26"
       },
       {
-        "citation": "The pinned dataset version at Rutgers-ESSP/IPCC-AR6-Sea-Level-Projections",
-        "whatWouldResolveIt": "A release url with a digest. Values are not comparable across dataset versions, so an unversioned citation does not let a reader check these numbers against another extract.",
-        "supports": "The dataset version these values are comparable within, and the family pair."
+        "id": "ar6-dataset",
+        "kind": "url",
+        "url": "https://doi.org/10.5281/zenodo.5914709",
+        "title": "IPCC AR6 Sea Level Projections",
+        "role": "data",
+        "authors": "Garner, G. G., et al.",
+        "published": "2021",
+        "locator": "10.5281/zenodo.5914709",
+        "notes": "Resolves as a dataset and returns version 20210809, which is the dataset version these values are comparable within. The version can therefore be CHECKED rather than trusted: a typo in it would otherwise be invisible and propagate into every receipt.",
+        "addedAt": "2026-10-26",
+        "modifiedAt": "2026-10-26"
       }
     ],
-    "note": "WHY THESE THREE ARE OBLIGATORY, and not bookkeeping. The practitioner, 2026-10-26: \"it's something the authors require of users, and if the users present to an audience they will be held accountable by other scientists to that provenance requirement.\" The obligation is to the dataset's authors and to the room, not to the arithmetic. Experiment 115's P2 made provenance an alert rather than a blocker on the ground that no provenance field changes a computed number -- which is true, and is the wrong measure of what it costs to omit one. A figure published without them is not wrong; its author is unable to answer the first question a scientist asks of it.\n\nCarrying them HERE is what makes the obligation travel. A ruleset is pinned by id and version on every receipt, so a practitioner cannot apply this contract and arrive at an audience without the citations the authors require. Typed into a widget, they were whatever somebody remembered to enter.\n\nNone of the three resolves yet, and that is the live gap rather than a formality: a named citation and one a reader can open are different claims, and it is the second that answers the question in the room."
+    "unresolvedCitations": [],
+    "note": "WHY THESE THREE ARE OBLIGATORY, and not bookkeeping. The practitioner, 2026-10-26: \"it's something the authors require of users, and if the users present to an audience they will be held accountable by other scientists to that provenance requirement.\" The obligation is to the dataset's authors and to the room, not to the arithmetic. Experiment 115's P2 made provenance an alert rather than a blocker on the ground that no provenance field changes a computed number -- which is true, and is the wrong measure of what it costs to omit one. A figure published without them is not wrong; its author is unable to answer the first question a scientist asks of it.\n\nCarrying them HERE is what makes the obligation travel. A ruleset is pinned by id and version on every receipt, so a practitioner cannot apply this contract and arrive at an audience without the citations the authors require. Typed into a widget, they were whatever somebody remembered to enter.\n\nALL THREE ARE DOIs AND ALL THREE RESOLVE, verified 2026-10-17 against the public DOI system with nothing of a practitioner's sent. That is what makes them answer the question in the room: the practitioner, 2026-10-26, \"the citations are also DOIs, so when transmitted and embedded in the output they are independently verifiable\" -- by the audience, without trusting this application or the person presenting."
   },
   "authored": {
     "subject": "?p",

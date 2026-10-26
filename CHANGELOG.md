@@ -51,6 +51,19 @@ this section covers the work of 2026-10-25 and 26._
   records it already had, and no rule could be written on it at all. A row's attributes are its
   key columns plus the declared value field, which is how the run has read them since 2026-10-16.
 
+- **A published ruleset shows its rules, and a copy can be edited.** A pinned step gave its
+  title, version, description, settings and obligations and never what it decides, so the step a
+  worked example is built around could not be read — and forking it opened a blank editor. The
+  rules are now on the panel, drawn from the form every bundled ruleset already carries. Where a
+  ruleset reads the columns you connect — it declares the bindings and names the same fact
+  generator rules written here use — **a copy carries its rules and bindings over**, because
+  that copy is fed identically. The eight with their own fact generators still refuse to be
+  copied, and still say why. Resetting the example puts the step back.
+
+- **A grid is drawn only where both axes are categories.** Density was not enough: Manila's 194
+  facilities all take one gauge, so the assignment is 194 rows against a single column and
+  perfectly dense, and drawing it as a grid hid the distance column a reader came for.
+
 - **A result can state its finding in words**, beside the rows it was computed from.
 
 - **The catalog counts the widgets you actually run**, in this browser. A use is a widget

@@ -908,6 +908,63 @@ function renderN3(){
  *  Read from the records themselves rather than guessed from a name: the kind comes from the
  *  values, and a numeric column gets no unit, because this cannot know one and a number without
  *  a unit is not a measurement. The practitioner states it before the rules will run. */
+/** The rules of a step, drawn as rules rather than described in prose.
+ *
+ *  Written for a step carrying authored rules and reachable only from one, which meant the
+ *  published ruleset a worked example applies could not be SEEN -- the Inspector gave its title,
+ *  version, description, settings and obligations, and never what it actually decides. The
+ *  practitioner, 2026-10-26: "how do we demonstrate the use of a ruleset widget when we cannot
+ *  even provide the view of how it's used? Defeats the purpose of a worked example."
+ *
+ *  Every bundled ruleset already carries its rules in this shape -- the `authored` form they were
+ *  built from, which is what makes them reproducible by hand -- so showing them needs no new data,
+ *  only this renderer reached from both branches. */
+type ShownRule={any:{all:{field:string;comparator:string;
+  value:import('./authored-rules.js').AuthoredValue}[]}[];
+  then:{predicate:string;value:import('./authored-rules.js').AuthoredValue}[]};
+function rulesList(rules:ShownRule[],
+  fields:{attribute?:string;predicate:string}[],
+  readable:(value:import('./authored-rules.js').AuthoredValue)=>string,
+  esc:(text:string)=>string):string{
+  const comparator=(c:string)=>({equals:'is',greaterThan:'is more than',notGreaterThan:'is at most',
+    lessThan:'is less than',notLessThan:'is at least'}[c]??c);
+  // The column, as the file spells it. Not a label somebody wrote over it: a reader checking
+  // this rule against their data is looking for the column, and a rule that names something
+  // the file does not contain makes them translate. 2026-10-16.
+  const named=(predicate:string)=>{
+    const field=fields.find(f=>f.predicate===predicate||`${f.predicate}Known`===predicate);
+    return field?.attribute??predicate.slice(predicate.indexOf(':')+1);
+  };
+  const presenceOf=(predicate:string)=>fields.some(f=>`${f.predicate}Known`===predicate);
+  return ''
+    +`<div class="authored-rules">`
+    +rules.map((rule,index)=>`<div class="authored-rule">`
+      +`<span class="rule-number">${index+1}</span>`
+      +rule.any.map((group,g)=>`<div class="rule-when">`
+        +`<span class="rule-keyword">${g?'OR':'IF'}</span><div class="rule-conditions">`
+        +group.all.map((condition,c)=>`<div class="rule-row">`
+          +(c?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
+          +`<span class="rule-field">${esc(named(condition.field))}</span>`
+          // A condition about whether a value was there reads as one phrase, with nothing
+          // to compare against: "DEATHS is not recorded", not "whether DEATHS is recorded
+          // is false", which is a double negative wrapped around a question.
+          +(presenceOf(condition.field)
+      ?`<span class="rule-op">${condition.value===true?'is recorded':'is not recorded'}</span><span class="rule-value"></span>`
+      :`<span class="rule-op">${esc(comparator(condition.comparator))}</span>`
+       +`<span class="rule-value">${esc(readable(condition.value))}</span>`)
+          +`</div>`).join('')
+        +`</div></div>`).join('')
+      +`<div class="rule-then"><span class="rule-keyword">THEN</span><div class="rule-conditions">`
+      +rule.then.map((conclusion,t)=>`<div class="rule-row">`
+        +(t?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
+        +`<span class="rule-field">${esc(conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
+        +`<span class="rule-op">is</span>`
+        +`<span class="rule-value">${esc(readable(conclusion.value))}</span>`
+        +`</div>`).join('')
+      +`</div></div></div>`).join('')
+    +`</div>`;
+}
+
 function candidateFields(workflow:Workflow,nodeId:string){
   // Any incoming edge, not only one on a port called `subjects`. A step converted from a
   // declared ruleset keeps that ruleset's port names -- `polygons` for extent-review -- and
@@ -954,6 +1011,18 @@ function candidateFields(workflow:Workflow,nodeId:string){
  *  What it does NOT do is edit the published ruleset. That one is pinned, versioned and carries
  *  a basis; a step that writes its own rules has forked away from it, and the Inspector says so
  *  rather than letting a practitioner believe they changed something published. */
+/** Units a practitioner can type, and the IRI the unit check compares.
+ *
+ *  A word this does not recognise gets the label and no IRI -- so the check then refuses the
+ *  rules for want of a unit, which is the honest outcome rather than a guess at what they meant.
+ *  Millimetres were added 2026-10-26 when a seeded binding declared `mm` and nothing could
+ *  resolve it. */
+const UNIT_IRIS:Record<string,string>={minutes:'MIN',minute:'MIN',min:'MIN',hours:'HR',hour:'HR',hr:'HR',seconds:'SEC',second:'SEC',days:'DAY',day:'DAY',metres:'M',meters:'M',m:'M',kilometres:'KiloM',kilometers:'KiloM',km:'KiloM',millimetres:'MilliM',millimeters:'MilliM',millimetre:'MilliM',millimeter:'MilliM',mm:'MilliM',percent:'PERCENT'};
+const unitIriFor=(label?:string)=>{
+  const code=UNIT_IRIS[(label??'').trim().toLowerCase()];
+  return code?`http://qudt.org/vocab/unit/${code}`:undefined;
+};
+
 function authorRulesOn(nodeId:string,label:string){
   change(w=>{
     const target=getNode(w,nodeId,'apply_ruleset');
@@ -962,11 +1031,34 @@ function authorRulesOn(nodeId:string,label:string){
     target.params.ruleset={id:pin!.id,version:pin!.version,title:'Rules written in this workflow',
       inputs:held?.inputs??[['subjects','points']],output:held?.output??'points'};
     target.params.parameters={};
-    target.params.authored={title:label||'Rules for this step',mustNotBeReadAs:'',
+    // A RULESET THAT READS COLUMNS CARRIES OVER; one that works its facts out for itself does
+    // not. The refusal to copy was right for the four bespoke fact generators -- the rules would
+    // read the same and be fed something different -- but `extract-contract` declares
+    // `fieldFrom` and names `authoredFacts` as its generator, which is the very function rules
+    // written here go through. Fed by the same function from the same bindings, a copy is fed
+    // identically, so the objection does not reach it.
+    //
+    // The practitioner, 2026-10-26: "how do we demonstrate the use of a ruleset widget when we
+    // cannot even provide the view of how it's used? Defeats the purpose of a worked example."
+    // A worked example is a teaching artifact and a regression fixture at once, and a step whose
+    // rules open blank teaches nothing about the step. Resetting the example puts it back.
+    const source=held&&resolveRuleset(held.id,held.version);
+    const bindings=source?.inputContract.fieldFrom;
+    const seeded=bindings?.length?source:undefined;
+    target.params.authored={title:label||'Rules for this step',
+      mustNotBeReadAs:seeded?.mustNotBeReadAs??'',
       // The columns the connected records carry, declared for them. Nothing is guessed from a
       // name -- the kinds come from the values -- and an empty list is the honest result when
-      // nothing is connected yet, which the Inspector already says plainly.
-      fields:candidateFields(w,nodeId) as never,parameters:[],rules:[]};
+      // nothing is connected yet, which the Inspector already says plainly. A seeded fork
+      // declares the bindings the ruleset declared, resolving each stated unit to the IRI the
+      // unit check compares; a label nothing recognises stays a label and the run says so.
+      fields:(seeded&&bindings
+        ?bindings.map(b=>({...b,unit:unitIriFor(b.unitLabel)}))
+        :candidateFields(w,nodeId)) as never,
+      parameters:(seeded?.parameters??[]).map(parameter=>({name:parameter.name,
+        meaning:parameter.meaning,min:parameter.min,max:parameter.max,
+        unitLabel:parameter.unitLabel})) as never,
+      rules:(seeded?.authored?structuredClone(seeded.authored.rules):[]) as never};
   });
 }
 
@@ -1944,32 +2036,7 @@ function renderInspector(){
         // wrote ABOUT the rules, and a rule should look like a thing with parts. So each
         // condition is a row of three cells, the connectives are labels in the margin, and the
         // conclusion is separated by a line.
-        +`<div class="authored-rules">`
-        +authored.rules.map((rule,index)=>`<div class="authored-rule">`
-          +`<span class="rule-number">${index+1}</span>`
-          +rule.any.map((group,g)=>`<div class="rule-when">`
-            +`<span class="rule-keyword">${g?'OR':'IF'}</span><div class="rule-conditions">`
-            +group.all.map((condition,c)=>`<div class="rule-row">`
-              +(c?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
-              +`<span class="rule-field">${esc(named(condition.field))}</span>`
-              // A condition about whether a value was there reads as one phrase, with nothing
-              // to compare against: "DEATHS is not recorded", not "whether DEATHS is recorded
-              // is false", which is a double negative wrapped around a question.
-              +(presenceOf(condition.field)
-                ?`<span class="rule-op">${condition.value===true?'is recorded':'is not recorded'}</span><span class="rule-value"></span>`
-                :`<span class="rule-op">${esc(comparator(condition.comparator))}</span>`
-                 +`<span class="rule-value">${esc(readable(condition.value))}</span>`)
-              +`</div>`).join('')
-            +`</div></div>`).join('')
-          +`<div class="rule-then"><span class="rule-keyword">THEN</span><div class="rule-conditions">`
-          +rule.then.map((conclusion,t)=>`<div class="rule-row">`
-            +(t?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
-            +`<span class="rule-field">${esc(conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
-            +`<span class="rule-op">is</span>`
-            +`<span class="rule-value">${esc(readable(conclusion.value))}</span>`
-            +`</div>`).join('')
-          +`</div></div></div>`).join('')
-        +`</div>`
+        +rulesList(authored.rules,authored.fields,readable,esc)
         +`<p class="description">Every rule is checked against every record, so rules must not disagree: no record may match two rules reaching different conclusions. A record matching none keeps no conclusion; the evidence counts those.</p>`
         +`<span class="inspector-section">Which column means what</span>`;
       if(authored.fields.length){
@@ -2011,7 +2078,6 @@ function renderInspector(){
       // IRI is what the unit check compares, and a word this does not recognise gets the label
       // and no IRI -- so the check then refuses the rules for want of a unit, which is the
       // honest outcome rather than a guess at what they meant.
-      const UNIT_IRIS:Record<string,string>={minutes:'MIN',minute:'MIN',min:'MIN',hours:'HR',hour:'HR',hr:'HR',seconds:'SEC',second:'SEC',days:'DAY',day:'DAY',metres:'M',meters:'M',m:'M',kilometres:'KiloM',kilometers:'KiloM',km:'KiloM',percent:'PERCENT'};
       document.querySelectorAll<HTMLInputElement>('[data-field-unit]').forEach(el=>
         el.addEventListener('change',()=>change(w=>{
           const field=getNode(w,n.id,'apply_ruleset').params.authored!.fields[Number(el.dataset.fieldUnit)];
@@ -2105,7 +2171,29 @@ function renderInspector(){
       // stops applying the published ruleset and starts applying rules of your own, keeping what
       // is wired to it, and this says so before you press it rather than after.
       +`<span class="inspector-section">The rules</span>`
+      // SHOWN, not only offered behind a button. A worked example teaches the step it is built
+      // around, and a reader who has to press something to find out what a step decides has
+      // already been told it is somebody else's business. Drawn by the renderer the authored
+      // branch uses, from the `authored` form every bundled ruleset carries. 2026-10-26.
       +(ruleset.authored
+        ?rulesList(ruleset.authored.rules,ruleset.inputContract.fieldFrom??[],
+          value=>{
+            const setting=settingNamed(value);
+            if(!setting)return typeof value==='string'&&value.includes(':')?value.slice(value.indexOf(':')+1):String(value);
+            const held=n.params.parameters?.[setting],declared=ruleset.parameters.find(q=>q.name===setting);
+            return held===undefined||held===null?`${setting} · not set`
+              :`${setting} · ${held}${declared?.unitLabel?' '+declared.unitLabel:''}`;
+          },esc)
+        :'')
+      +(ruleset.authored&&ruleset.inputContract.fieldFrom?.length
+        // Copyable, because this ruleset reads columns off the records exactly as rules written
+        // here do -- it names `authoredFacts` as its generator, which is that same function. The
+        // notice below is true of the bespoke four and false of this one.
+        ?`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned, so these rules are not edited in place. A <strong>copy</strong> can be, on this step.</p>`
+          +`<div class="notice">A copy is fed exactly what these rules are fed: ${esc(ruleset.title)} reads the columns you connect, through the same bindings, so rules copied onto this step compare the same values. The step stops applying the published ruleset and starts applying your copy, keeping what is wired to it. Resetting the example puts it back.</div>`
+          +`<div class="inspector-actions"><button id="review-rules" class="button">Review these rules</button>`
+          +`<button id="author-rules" class="button">Edit a copy on this step</button></div>`
+        :ruleset.authored
         ?`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned, so its rules are not edited here. They can be <strong>read</strong> in the same editor.</p>`
           // Read, not copied. Each published ruleset computes its own facts -- this one from
           // ${esc(ruleset.inputContract.factGenerator)} -- and a step applying rules written

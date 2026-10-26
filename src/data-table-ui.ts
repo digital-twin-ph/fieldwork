@@ -120,6 +120,12 @@ export function crossTab(table:DataTable):{rowKey:string;colKey:string;columns:s
   const columns=[...new Set(table.rows.map(r=>String(r.key[colKey])))];
   if(!columns.length||columns.length>CROSSTAB_MAX_COLUMNS)return null;
   const labels=[...new Set(table.rows.map(r=>String(r.key[rowKey])))];
+  // BOTH AXES MUST BE CATEGORIES. One column is a list drawn with extra lines: it says nothing
+  // a list does not, and it costs the value field its heading -- Manila's 194 facilities all
+  // take gauge 145, so the assignment is 194 rows against one column, perfectly dense, and
+  // pivoting it hid `distance_m`, which was the column a reader came for. Density alone could
+  // not tell that from a tabulation; the shape can. Found by the sea-level example, 2026-10-26.
+  if(columns.length<2||labels.length<2)return null;
   // A MATRIX IS FOR A TABULATION, not for any pair of keys. Manila's assignment table is keyed
   // by point and by the site each point was assigned -- 60 points against 8 sites, one cell
   // filled per row -- and pivoting it drew a 480-cell grid holding 60 numbers. Every row of a

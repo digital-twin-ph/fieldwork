@@ -365,6 +365,18 @@
    "breaking": false,
    "migrationFrom": []
   },
+  "join_table_to_area": {
+   "version": "0.1.0",
+   "released": "2026-10-25",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Puts a value from each row of a table onto the part of a study area that row names, matching on a key column by equality after a declared normalisation. One feature per part, undissolved, each carrying the value in an open properties bag. Four conditions are reported by name rather than folded into a count: a part no row names, a row naming no part, two raw keys that normalise together, and two parts sharing one name. See docs/experiments/138-a-table-and-a-boundary-are-two-tables.md."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
   "map_output": {
    "version": "0.14.0",
    "released": "2026-10-23",

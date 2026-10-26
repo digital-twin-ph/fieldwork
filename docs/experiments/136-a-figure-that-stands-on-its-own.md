@@ -1,6 +1,6 @@
 # 136 — A figure that stands on its own
 
-_Created 2026-10-25 · Updated 2026-10-25_
+_Created 2026-10-25 · Updated 2026-10-26_
 
 **Status:** asked — the rules are designed here and reported, not enforced. Nothing gates
 on them. Moving to `tried` needs them applied to the three John Snow maps.
@@ -140,13 +140,31 @@ problem."*
 **The rule** can ask whether the obligations the run carries appear in the note a reader sees,
 rather than whether a note exists. That is a change to one conformance check.
 
-**The piping** is the larger and separate thing. The run knows — a ruleset citation is on every
-receipt and a worked example declares its licence terms per file — and the figure does not:
-`mapSourceNote` is a parameter a practitioner types, and the renderer is handed a value, not the
-run that produced it. Carrying run-level provenance to the thing that draws the figure is its own
-problem, with its own failure modes (which of several inputs' obligations, and a note that
-rewrites itself under an author who edited it). Fixing the rule without the piping would mean
-refusing figures for an obligation the application gives no way to discharge.
+**The piping** is separate, and it does not run from the run to the renderer. The practitioner,
+correcting that reading the same day:
+
+> We already ensure provenance in maps, and we can do the same for figures, but this is a
+> separate problem — **the input must ask for provenance receipts if there are any.**
+
+Which is where the mechanism already is. `WorkflowNode` carries `references?: EvidenceReference[]`
+— the url-or-pdf-with-digest union, verified by hash rather than trusted by filename — and the
+Manila example attaches them to its input nodes with `cite(...)`. A map already ensures its own
+narrow case: `BasemapIsCredited` holds a figure to ODbL for the tiles under it.
+
+So neither half is a new mechanism. The input does not ASK — a file arrives with no reference
+attached and nothing says it should have one — and the figure does not READ what is attached.
+Both are small beside the thing they are mistaken for, which is carrying run-level provenance to
+a renderer.
+
+Fixing the rule without the asking would refuse figures for an obligation the application never
+prompted anyone to discharge, which is why the order matters: ask at the input, read at the
+figure, then tighten the rule.
+
+**Third time in one session the answer was the same.** The alert condition belonged on the node
+that applies the ruleset; the distinct values belonged at the table input (115's P3); the
+dataset's citations belong to the ruleset that contracts for it. Each looked like plumbing
+between steps and each was a declaration at the point where the thing enters. That is worth
+naming as a pattern rather than rediscovering a fourth time.
 
 This is the same shape as the key that named marks the figure did not carry: the part a reader
 trusts without checking is the part that must be true.

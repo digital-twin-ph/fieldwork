@@ -583,6 +583,17 @@ the palette appears once something is on the canvas. Costs one line in `renderLi
 build; the demo on 2026-10-30 is the deadline that makes it worth doing before the larger items
 above.
 
+**A table figure cannot carry its own source, where a map can.** Recorded as a 0.12.0
+validation limit and raised again 2026-10-26 by the margins review: a map output states a title,
+a subtitle and a source note; `table_output` states a label and nothing else, so a table that
+leaves the application carries no provenance at all. The three fields exist on `map_output`
+already (`mapTitle`, `mapSubtitle`, `mapSourceNote`), so this is symmetry rather than design.
+
+It is the nearer half of the notes problem above: the 1851-against-1854 vintage mismatch belongs
+on the figure that shows it, where it travels with the figure, while the narrative around the
+investigation waits for notes to be built. Small, and it would put a source line under the 2x2
+before the demo.
+
 **A stated unit is read as permission to add, and prose cannot be checked.**
 _Found 2026-10-26, read-only, while asking why the derived 2x2 shows no margins._ `crossTab`
 decides whether a grid may carry totals with `addable=Boolean(table.unit?.trim())`: **any**
@@ -863,6 +874,158 @@ that belongs to the investigation rather than to a widget, a dataset or a contro
 
 **First subject if built**: the copepod note on the South London example, which must read as
 modern knowledge about the world Snow worked in and not as something his 1855 text claims.
+
+_The design below, and the test of it against Snow's own publication, are written up in
+[141](experiments/141-organising-snows-notes.md). Read that first: it is where the shape was
+tried before anything was built, and it names three things this list does not._
+
+### Why notes, stated by the practitioner 2026-10-26
+
+*"Notes are user documentation that provides the contextual scaffolding for the workflows. Like
+in a Jupyter Notebook, the computations are not as useful by themselves. Only when they are woven
+together by narrative will they begin to make sense and become a story."*
+
+This is the premise the three levels below answer to, and it is not a request for metadata. A
+notebook's markdown cells are not annotations ON the code; they are the medium the code is read
+IN, and removing them leaves something that runs and does not mean anything. The claim is that a
+workflow is in the same position: a canvas of correct computations that no reader can assemble
+into a finding.
+
+**It corrects an objection made the same day.** This file argued that a note widget "is not an
+operation" -- it takes no ports and computes nothing -- and costed it against the widget budget
+at 49 against a target of 41. A markdown cell is not an operation either, and no notebook treats
+that as a defect. The budget exists to stop DUPLICATE AND CONFUSING COMPUTATION; narrative is
+not competing in that space, so the widget count is the wrong instrument for it. If a note is
+refused, it must be refused for a reason that applies to notes.
+
+**What a notebook has for free and a canvas does not: reading order.** A notebook's narrative
+order IS its execution order, so weaving needs no extra machinery. A workflow is a graph with no
+single order, and that is the real obstacle to "woven together" here -- not the writing.
+
+Except this project already computes an order. `src/reveal-playback.ts` plays a worked example
+back **one widget at a time**, and says the order "is computed here and nowhere else" so the
+measurement and the interface cannot disagree. That is the spine a story needs, built for a
+different purpose (experiment 112). A story, on this reading, is the playback sequence with the
+narrative attached to its steps -- which would also give [17](docs/experiments/17-workflow-publication-products.md)'s
+story map its sentences between the layers, and answers [119](docs/experiments/119-can-this-tell-a-story.md)
+in the affirmative with a mechanism rather than a hope.
+
+Not a decision. It is the connection worth testing first, because it costs a view over existing
+data rather than a new object in the model.
+
+### The shape notes should take, specified by the practitioner 2026-10-26
+
+Three levels, all **markdown so they can be formatted**, each answering a different question.
+
+| Level | Role, in the practitioner's words | What it extends |
+| --- | --- | --- |
+| **Widget** | notes on a widget "so their outputs can carry the notes" | `map_output` already carries `mapTitle`, `mapSubtitle`, `mapSourceNote`; no other output carries anything |
+| **Workflow** | "its own widget ... its role is to provide context for the workflow. If it's a workflow for a methods section of a publication, it describes the method in detail, and its limitations" | nothing. `Workflow` has `name` and no prose field |
+| **Project** | "describes how the workflows are sequenced and stitched and rationale for selection and sequencing, also synthesized project findings" | `Project.subject`, which is one line |
+
+The three are not one feature repeated at three scales. A widget note is **about a result** and
+travels with it; a workflow note is **a methods section**, which is a claim about how something
+was done and what it cannot show; a project note is **synthesis**, which is the only one that
+can say what the whole investigation found. Only the second is proposed as a widget.
+
+**Each note is mapped to a purpose.** The practitioner, 2026-10-26, completing the shape. A note
+is not free prose with a location; it carries a declared purpose, which is what lets anything
+check it. The candidates the project's own gaps name — not a settled vocabulary:
+
+| Purpose | What it answers | Already wanted by |
+| --- | --- | --- |
+| **source** | where these numbers came from, and of what vintage | the 1851 census against 1854 deaths, which has nowhere to sit on the 2x2 |
+| **method** | how this was done | a workflow standing in for a methods section |
+| **limitation** | what this cannot show | *"describes the method in detail, and its limitations"* |
+| **rationale** | why this step, and why here | project-level *"rationale for selection and sequencing"* |
+| **context** | what a reader needs that the data does not say | the copepod note in [133](133-the-planning-stage-and-historical-notes.md) |
+| **finding** | what it means | project-level *"synthesized project findings"* |
+
+**A narrative purpose, which is a second axis.** The practitioner, 2026-10-26: *"notes can be
+used to provide the meat for research publications so organized around Title, Abstract,
+Introduction, etc. In fact epidemiologists have a structure for it."* Named the same day:
+**IMRaD**, and *"it's in the FETP training materials"* — the Field Epidemiology Training
+Programme, which is where the practitioners this application is for learn to write up an
+investigation. That is the frame, not a journal reporting checklist: STROBE and its RECORD
+extension exist and are a different instrument, aimed at manuscripts rather than at teaching the
+structure of a report.
+
+Choosing the one the audience was trained in matters more than choosing the stricter one. An
+epidemiologist meeting a Methods heading in this application should meet the heading they were
+taught, in the order they were taught it.
+
+So a note has two coordinates, and they answer different questions:
+
+| Axis | The question | Example |
+| --- | --- | --- |
+| **Functional** | what this note does for a reader of the workflow | `source`, `limitation`, `rationale` |
+| **Narrative** | where it belongs in the write-up | Introduction, Methods, Results, Discussion |
+
+A `limitation` note belongs in Discussion; a `source` note belongs in Methods under data
+sources. The same note carries both and neither determines the other, which is the argument for
+two fields rather than one merged vocabulary.
+
+**What this makes possible, and the line not to cross.** With a narrative purpose a project can
+report which parts of the structure carry a note and which do not — a completeness view, which
+is a real practice. It must never report that a write-up IS an IMRaD report, or that it meets any
+checklist. Whether a section is adequately written is a judgement by a person; this application
+can see only that text exists under a heading. Claiming the former from the latter is the
+overclaim this project names as D7, and it would be the worst instance of it yet, because a
+reader would take it as a credential. Say "Discussion carries no note", never "report complete".
+
+The headings must be taken from the FETP materials rather than recalled here.
+
+**Why this is the load-bearing part.** A purpose makes a note CHECKABLE, and that is the
+difference between documentation and scaffolding. A figure leaving the application with no
+`source` note can be named; a workflow offered as a methods section with no `limitation` note is
+incomplete in a way a gate can see; a `source` note is the one that must travel with an output.
+None of that is possible over undifferentiated text. It is the same discipline the rest of this
+project already uses — declared data over prose — and the unit field is the standing
+counterexample of what happens without it.
+
+**The risk, from the practitioner's own rule.** A closed vocabulary too narrow forces a writer to
+file a note under a purpose it does not have, and *"if you design the text as non-editable, that
+destroys the flexibility of the widget."* Whether the list is closed, closed-with-an-other, or
+open and merely suggested is undecided, and the honest default is to watch which purposes get
+used before fixing the set.
+
+**What is NOT settled, and should not be inferred from the above.**
+
+- **A note widget is not an operation.** Every other palette entry takes ports and computes
+  something; this one would take nothing and compute nothing. It costs a palette entry and takes
+  the budget from 49 to 50, against a target of 41 — which is the cost this project keeps
+  paying and has twice refused to pay for lesser reasons. Whether context belongs on the canvas
+  or in the Workflow tab beside the name is the first question, not a detail.
+- **How far a widget note travels.** "So their outputs can carry the notes" settles that it
+  reaches the figure. Whether it reaches a DOWNSTREAM widget is the provenance-as-output-port
+  question raised on 2026-10-26, and the answer there was that a ruleset requiring provenance
+  transmits it and the receiving widget must display it. A note is weaker than an obligation and
+  should probably not inherit that machinery.
+- **Markdown needs a runtime renderer, and there is none.** `scripts/widget-manual.mjs` converts
+  markdown at BUILD time with a hand-rolled escape-then-regex pass and no dependency. A note is
+  typed by a person, saved in a workflow, and **shared** — so it renders in someone else's
+  browser from text this project did not write. Escape-first is the right order and already the
+  precedent; one converter with two callers beats a second implementation.
+- **What a note does to a run.** Receipts record acts rather than performing them, so editing a
+  note is an act and not a recomputation. Whether a run records the note it was current with, and
+  whether changing one marks results stale, is undecided — and getting it wrong makes a figure
+  carry a methods section that was written after the method changed.
+
+**Second subject, found 2026-10-26 reviewing the contingency margins with the practitioner:**
+*"These are the details that need to get into the workflow notes — 3 years apart."* The
+people-denominated 2x2 divides **1854 deaths by an 1851 census population**. South London was
+growing fast, so the denominators are understated and every rate correspondingly overstated;
+it biases all three supply groups the same way, which is why the ratio survives it better than
+any single rate does. A reader cannot see this anywhere on the figure. `survived` is the same
+kind of claim one layer further out — a residual, population minus cholera deaths, counting
+everyone who did not die of cholera in seven weeks including those who died of something else.
+
+Both belong to the investigation rather than to a widget, which is exactly the gap above. Note
+what already exists and does not reach this figure: `rate` carries `numeratorPeriod` and
+`denominatorVintage` as declared fields and **compares them** — South London's rate nodes
+already say "the seven weeks ending 26 August 1854" against "the census of 1851" — but the
+contingency workflow is `table_input → table_output` with no rate in it, so nothing carries the
+mismatch. A note is the general answer; see also the nearer one below.
 
 ### What is actually blocked
 

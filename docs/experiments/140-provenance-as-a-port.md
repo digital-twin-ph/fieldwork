@@ -97,19 +97,47 @@ any of the seven.
 **D10 · Which example instantiates it?** Manila coastal exposure, whose three AR6 citations are
 the obligation this exists for.
 
-## What must be decided before building
+## The severity, decided
 
-1. **Is the acknowledgement automatic or an act?** A receiving widget could connect the port
-   itself when the data edge is drawn — visible, and never forgotten — or require the connection,
-   which makes the obligation an act a practitioner performs. The first cannot be forgotten; the
-   second cannot be done absent-mindedly. They are different claims about what a practitioner is
-   asserting when they wire it.
-2. **What does a widget that cannot carry provenance do?** Refusing the connection stops a
-   workflow the obligation did not intend to stop. Accepting it silently drops the obligation at
-   the first widget that does not implement the contract, which is worse than not having the port.
-3. **Does a figure's source note read from it?** That is [136](136-a-figure-that-stands-on-its-own.md)'s
-   piping half, and it is the point of the whole exercise: the obligation is discharged in front
-   of an audience, not in a receipt.
+The practitioner, 2026-10-26:
+
+> If a widget is required-provenance-bearing and the next widget did not acknowledge receipt and
+> display the provenance in the outputs, it will result in an **error state**.
+
+That settles two of the three open questions and settles them strictly.
+
+**The obligation is discharged by DISPLAYING, not by acknowledging.** A receiving widget that
+takes the provenance and shows nothing has not met it. This is what makes
+[136](136-a-figure-that-stands-on-its-own.md)'s rule enforceable at last: `FigureStatesItsSource`
+can stop asking whether a note exists and start asking whether it carries what the figure
+received. The obligation is to an audience, so it is discharged where the audience looks.
+
+**A widget that cannot carry provenance is an error, not a silent drop.** The alternative —
+accepting the connection and losing the obligation at the first widget that does not implement
+the contract — is worse than having no port, because the workflow would then look complete while
+the duty went unmet.
+
+### This does not reverse P2, and the difference is worth keeping
+
+[115](115-decomposing-the-projection-extract.md)'s P2 made provenance **an alert, not a blocker**,
+and that stands. The two decisions are about different things:
+
+| | |
+| --- | --- |
+| **P2, alert** | A practitioner has not SAID where the data came from. No provenance field changes a computed number, so refusing to compute is a punishment for an unfilled form. |
+| **This, error** | An obligation that EXISTS is dropped in transit. The data carries a duty the authors impose, a widget accepted it, and the next one threw it away. |
+
+The first is an absence. The second is a loss. Refusing to run over an absent declaration
+punishes someone for not filling in a form; refusing over a dropped obligation stops them
+presenting a figure they cannot answer for.
+
+## What must still be decided
+
+**Is the acknowledgement automatic or an act?** A receiving widget could connect the port itself
+when the data edge is drawn, or require a practitioner to connect it. The practitioner's own
+correction of this record argues for the second: a receipt records an act, so a receipt attesting
+to an acknowledgement the application performed on somebody's behalf attests to the wrong thing.
+Not settled, but no longer open in both directions.
 
 ## What this does not establish
 

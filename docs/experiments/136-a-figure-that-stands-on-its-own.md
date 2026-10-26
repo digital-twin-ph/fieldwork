@@ -160,6 +160,13 @@ Fixing the rule without the asking would refuse figures for an obligation the ap
 prompted anyone to discharge, which is why the order matters: ask at the input, read at the
 figure, then tighten the rule.
 
+**And the rule's new form is decided**, by [140](140-provenance-as-a-port.md): where a figure
+received required provenance, showing nothing is an **error state**, not a passing note. The
+obligation is discharged by DISPLAYING rather than by carrying — it is owed to an audience, so
+it is met where the audience looks. `FigureStatesItsSource` stops asking whether a note exists
+and asks whether it carries what the figure received. A figure that received no obligation is
+unaffected, which is most of them.
+
 **Third time in one session the answer was the same.** The alert condition belonged on the node
 that applies the ruleset; the distinct values belonged at the table input (115's P3); the
 dataset's citations belong to the ruleset that contracts for it. Each looked like plumbing

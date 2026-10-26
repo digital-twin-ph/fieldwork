@@ -1,0 +1,127 @@
+{
+  "schema": "fieldwork/ruleset/1",
+  "id": "urn:fieldwork:ruleset:extract-contract",
+  "version": "1.0.0",
+  "title": "Published projection extract",
+  "released": "2026-10-26",
+  "description": "Declares what a long-format extract of a published projection dataset must carry before anything is computed from it: the key columns that identify a projected value, the units its values may be stated in, and the closed vocabulary of its family column. The AR6 particulars are declared here as data; nothing about sea level is compiled into a widget.",
+  "mustNotBeReadAs": "A statement that the numbers are correct, or that this dataset is the right one for a question. It is a contract about a table's shape and declarations. In particular: a basis identifier is uninterpretable without the kind of identifier it is -- wf_1e is ONE workflow, \"medium\" is a p-box over several, and A P-BOX BOUND IS NOT A QUANTILE OF ONE DISTRIBUTION. And a conversion between millimetres and metres is RECORDED here, never performed: a decomposition that performed it would change every comparison downstream.",
+  "rules": "# Projection extract contract. Declares what a published projection table must carry; it concludes nothing about sea level.\n{ ?p fw:projectedValueKnown false. } => { ?p fw:extractRow fw:Unreadable. }.\n{ ?p fw:projectedValueKnown true. } => { ?p fw:extractRow fw:Readable. }.\n",
+  "parameters": [],
+  "inputContract": {
+    "factGenerator": "src/authored-application.ts#authoredFacts",
+    "subjectKind": "projected values",
+    "expects": [
+      {
+        "predicate": "fw:projectedValueKnown",
+        "type": "boolean"
+      }
+    ],
+    "tableContract": {
+      "requiredKeys": [
+        "site_id",
+        "scenario",
+        "basis",
+        "family",
+        "year",
+        "quantile"
+      ],
+      "allowedUnits": [
+        "metre",
+        "millimetre"
+      ],
+      "closedVocabulary": []
+    },
+    "fieldFrom": [],
+    "ports": {
+      "inputs": [
+        [
+          "projections",
+          "table"
+        ]
+      ],
+      "output": "table"
+    },
+    "projection": "declared",
+    "parameterFrom": {},
+    "portsNote": "A table in and a table out, carrying what the contract concluded about each row as a further key column. The extract widget passed its table through unchanged with a provenance bag attached; the bag was a token meaning the contract was satisfied, and the contract is declared here instead."
+  },
+  "outputVocabulary": {
+    "predicates": [
+      {
+        "predicate": "fw:extractRow",
+        "values": [
+          "Readable",
+          "Unreadable"
+        ],
+        "unknownValue": "Unreadable"
+      }
+    ],
+    "unmatchedSubjectsExpected": false,
+    "note": "Every row reaches one of the two conclusions, because the two conditions are each other's negation. A subject no rule fired on would mean the fact generator produced no fw:projectedValueKnown for it, which is a gap in the binding rather than a finding about the data."
+  },
+  "basis": {
+    "status": "published",
+    "statedBy": "The six key columns, the two units and the family pair are read from the dataset documentation of IPCC AR6 sea-level projections, as the retired slr_extract_import widget recorded them. Decomposing a vocabulary preserves a wrong one as faithfully as a right one: nothing here re-reads that documentation.",
+    "evidence": [],
+    "unresolvedCitations": [
+      {
+        "citation": "IPCC AR6 WG1 Chapter 9, sea level change",
+        "whatWouldResolveIt": "A DOI or url for the chapter, added as an evidence reference, so a reader can open the source the vocabulary was read from rather than take this ruleset’s word for it."
+      },
+      {
+        "citation": "The FACTS modular framework paper the projections are produced by",
+        "whatWouldResolveIt": "The paper’s DOI. It is what distinguishes a workflow identifier from a confidence p-box, which is the distinction this contract refuses to guess at."
+      },
+      {
+        "citation": "The pinned dataset version at Rutgers-ESSP/IPCC-AR6-Sea-Level-Projections",
+        "whatWouldResolveIt": "A release url with a digest. Values are not comparable across dataset versions, so an unversioned citation does not let a reader check these numbers against another extract."
+      }
+    ],
+    "note": "Three citations the licence makes obligatory. Named and not resolvable here, which is what the ledger's uncited ceiling exists to make someone decide rather than drift into."
+  },
+  "authored": {
+    "subject": "?p",
+    "comment": "Projection extract contract. Declares what a published projection table must carry; it concludes nothing about sea level.",
+    "rules": [
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:projectedValueKnown",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:extractRow",
+            "value": "fw:Unreadable"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:projectedValueKnown",
+                "comparator": "equals",
+                "value": true
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:extractRow",
+            "value": "fw:Readable"
+          }
+        ]
+      }
+    ]
+  }
+}

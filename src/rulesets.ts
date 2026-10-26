@@ -23,6 +23,7 @@ import type {EvidenceReference} from './evidence.js';
 import type {PortType} from './types.js';
 import outreachCriteria from '../rulesets/outreach-criteria/1.0.0.json' with {type:'json'};
 import outreachCriteria11 from '../rulesets/outreach-criteria/1.1.0.json' with {type:'json'};
+import extractContract from '../rulesets/extract-contract/1.0.0.json' with {type:'json'};
 import accessReview2 from '../rulesets/access-review/2.0.0.json' with {type:'json'};
 import nb06Evidence2 from '../rulesets/nb06-evidence/2.0.0.json' with {type:'json'};
 import accessReview from '../rulesets/access-review/1.0.0.json' with {type:'json'};
@@ -123,6 +124,22 @@ export interface Ruleset {
      *  Absent on a ruleset whose facts come from a bespoke generator; those are the four. */
     fieldFrom?:{attribute:string; predicate:string; kind:'number'|'boolean'|'term';
       label?:string; unitLabel?:string}[];
+    /** What the TABLE must be, as opposed to what each row must carry.
+     *
+     *  P1 of experiment 115: "the ruleset widget establishes the contract", and "a table that
+     *  cannot satisfy the declaration does not reach the rules". These are the checks about the
+     *  dataset rather than a subject -- which columns key it, what unit its values are in, which
+     *  values a column may hold -- and they are fatal, because they say HOW TO READ THE NUMBERS:
+     *  a change of +0.5 means nothing without the baseline it is measured from.
+     *
+     *  Distinct from the provenance declarations, which say WHERE THE DATA CAME FROM and are
+     *  reported as gaps rather than refused. No provenance field changes a computed number, so
+     *  refusing to compute is a punishment for an unfilled form. */
+    tableContract?:{
+      requiredKeys?:string[];
+      allowedUnits?:string[];
+      closedVocabulary?:{column:string; values:string[]; meaning:string}[];
+    };
     portsNote?:string};
   outputVocabulary:Record<string,unknown>;
   basis:RulesetBasis;
@@ -156,7 +173,7 @@ export const rulesetCitation=(ruleset:Ruleset):RulesetCitation=>
 
 // Both versions of each changed ruleset are carried: a saved workflow pins the version that
 // produced its results, and a port type change does not entitle this build to forget the old one.
-const BUNDLED=[outreachCriteria,outreachCriteria11,accessReview,accessReview2,nb06Evidence,nb06Evidence2,extentReview,extentReview2] as unknown as Ruleset[];
+const BUNDLED=[outreachCriteria,outreachCriteria11,extractContract,accessReview,accessReview2,nb06Evidence,nb06Evidence2,extentReview,extentReview2] as unknown as Ruleset[];
 /** The version of this ruleset a practitioner would be offered today, if it is not the one
  *  pinned. Returns nothing when the pin is current.
  *
@@ -217,6 +234,38 @@ export function resolveRuleset(id:string,version:string):Ruleset{
  *
  *  Decimals are fixed per parameter rather than chosen here, because the shipped rules were
  *  assembled with `toFixed(9)` and the byte-identity test depends on reproducing exactly that. */
+/** What a table fails, as sentences a practitioner can act on.
+ *
+ *  Returns every failure rather than the first: a file missing three columns and stating no unit
+ *  should say so once, not across four runs. Empty means the table satisfies the contract. */
+export function tableContractFailures(
+  contract:NonNullable<Ruleset['inputContract']['tableContract']>|undefined,
+  table:{keys?:string[]; unit?:string; rows?:{key:Record<string,unknown>}[]}|undefined,
+):string[]{
+  if(!contract||!table)return [];
+  const problems:string[]=[];
+  const keys=table.keys??[];
+  const missing=(contract.requiredKeys??[]).filter((key:string)=>!keys.includes(key));
+  if(missing.length)
+    problems.push(`The table is missing key columns: ${missing.join(', ')}. `
+      +`A value without its full key cannot be interpreted. Its key columns are: ${keys.join(', ')||'none'}.`);
+  if(contract.allowedUnits?.length&&!contract.allowedUnits.includes(String(table.unit??'')))
+    problems.push(`The table states its values are in "${table.unit??'an unstated unit'}". `
+      +`This ruleset reads ${contract.allowedUnits.join(' or ')}, and will not guess at a unit it `
+      +'cannot interpret.');
+  for(const closed of contract.closedVocabulary??[]){
+    if(!keys.includes(closed.column))continue;
+    const allowed=new Set(closed.values);
+    const seen=new Set((table.rows??[]).map(row=>String(row.key[closed.column])).filter(Boolean));
+    const outside=[...seen].filter(value=>!allowed.has(value));
+    if(outside.length)
+      problems.push(`"${closed.column}" holds ${outside.slice(0,3).map(v=>JSON.stringify(v)).join(', ')}`
+        +`${outside.length>3?` and ${outside.length-3} more`:''}, outside the declared set `
+        +`${closed.values.map((v:string)=>JSON.stringify(v)).join(', ')}. ${closed.meaning}`);
+  }
+  return problems;
+}
+
 export function bindParameters(ruleset:Ruleset,values:Record<string,number|string>):string{
   let rules=ruleset.rules;
   for(const parameter of ruleset.parameters){

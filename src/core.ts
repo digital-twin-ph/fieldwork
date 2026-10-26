@@ -52,7 +52,7 @@ import {isRecord,required} from './guards.js';
 interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
-import {resolveRuleset,bindParameters,rulesetCitation} from './rulesets.js';
+import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
@@ -1092,6 +1092,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           if(!subjects)throw new Error(`${pinned.title} reads its facts from the `
             +`"${port??'first'}" input, and nothing is connected to it.`);
           const typed=subjects as PointCollection|import('./data-table.js').DataTable;
+          // THE CONTRACT IS CHECKED BEFORE THE RULES SEE ANYTHING. Every failure at once, and
+          // fatal: these say how to read the numbers, so a run that proceeded without them would
+          // compute something nobody could interpret. Provenance is the other kind and is a gap.
+          const failures=tableContractFailures(
+            resolveRuleset(pinned.id,pinned.version).inputContract.tableContract,
+            typed as {keys?:string[];unit?:string;rows?:{key:Record<string,unknown>}[]});
+          if(failures.length)
+            throw new Error(`${pinned.title} cannot read this table.\n\n`+failures.join('\n\n'));
           const facts=authoredFacts(typed,bindings);
           const rules=bindParameters(resolveRuleset(pinned.id,pinned.version),bound);
           const conclusions=await reasoner(facts+'\n'+rules);

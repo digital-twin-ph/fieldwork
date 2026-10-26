@@ -5,7 +5,7 @@ _Created 2026-10-13 · Updated 2026-10-15_
 **Status:** validated
 
 The practitioner's decision of 2026-10-13, confirming the analysis already in
-[todo.md](../todo.md): `reproject` is **split, not retired**. The source widgets
+[todo.md](../../TODO.md): `reproject` is **split, not retired**. The source widgets
 gain an output CRS so the common case needs no second node, and `reproject`
 becomes a true `points → points` transform under Spatial operations.
 

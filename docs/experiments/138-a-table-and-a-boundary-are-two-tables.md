@@ -145,7 +145,7 @@ this widget already performs, once per column.
 
 ### It dissolves a gap recorded hours earlier
 
-[docs/todo.md](../todo.md) records, from building South London's contingency table, that *a table
+[TODO.md](../../TODO.md) records, from building South London's contingency table, that *a table
 cannot be joined to another table*: the 2x2 of people by supply and outcome had to be derived
 outside the application because Table XII's declared supply could not be joined to Table VIII's
 population on the sub-district name. `join_table_to_area` performs exactly that match against a

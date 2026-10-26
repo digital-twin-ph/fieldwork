@@ -10,7 +10,7 @@ the plan failing.
 
 ## The question asked
 
-[The TODO](../todo.md) carried this as *"the 26 computing widgets with no lab check"*, with
+[The TODO](../../TODO.md) carried this as *"the 26 computing widgets with no lab check"*, with
 an instruction attached: **plan and test the work, do not simply start writing notebooks.** A
 coverage ratchet should come first so the number is visible in every run and can only fall.
 

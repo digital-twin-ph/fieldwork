@@ -29,7 +29,7 @@ test('every palette entry can be added to a blank canvas as a draft',async({page
   }
   // Widgets that validate their full contract on every edit cannot be added from the palette at
   // all, and are reachable only from a template that already contains them. That is why it went
-  // unnoticed. Recorded here so the set cannot grow; see docs/todo.md.
+  // unnoticed. Recorded here so the set cannot grow; see TODO.md.
   //
   // THREE SINCE 2026-10-26, down from four: slr_extract_import retired into apply_ruleset with
   // the extract-contract ruleset. The first time this list has shrunk, and it shrank because a

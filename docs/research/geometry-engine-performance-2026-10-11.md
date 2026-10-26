@@ -49,7 +49,7 @@ JavaScript has no equivalent cost.
 `polyclip-ts` are a few hundred kilobytes in a bundle that precaches and reports
 *Available offline*. Pyodide with Shapely, PROJ and GDAL is tens of megabytes
 fetched from a CDN, which is the constraint
-[the goal](../todo.md) names: practitioners where connectivity may be scarce.
+[the goal](../../TODO.md) names: practitioners where connectivity may be scarce.
 
 **And it would cost the parity evidence.** The lab is independent because it
 shares no numerical module with the application

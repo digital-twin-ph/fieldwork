@@ -170,7 +170,7 @@ declines to make.
 *(Mintzberg and Waters, 1985, is the usual attribution. Not read here — the terms are used as
 the practitioner used them.)*
 
-**Scheduled, not built** — [TODO](../todo.md), so it does not displace housecleaning.
+**Scheduled, not built** — [TODO](../../TODO.md), so it does not displace housecleaning.
 
 ## What this does not establish
 

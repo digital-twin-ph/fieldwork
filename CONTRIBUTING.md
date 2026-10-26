@@ -107,7 +107,7 @@ worth keeping.
 ## What to write down
 
 A finding that nobody scheduled is the failure the registers exist to catch. A finding
-becomes a work item in [docs/todo.md](docs/todo.md), a blocker in `widgets/blockers.json` if
+becomes a work item in [TODO.md](TODO.md), a blocker in `widgets/blockers.json` if
 something waits on it, or a direction in [docs/directions.json](docs/directions.json) if it
 settles a model — and a direction names what it requires **in code**, because a settled
 direction that only reaches the documentation has not been acted on.

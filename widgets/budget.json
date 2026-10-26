@@ -65,7 +65,7 @@
     {
       "measuredAt": "2026-10-21",
       "widgets": 46,
-      "note": "coverage_check retired into clip_points_to_area, on the practitioner's decision closing D2. A widget that REPORTED a membership and a widget that ACTED on one were the same question asked twice, and a map had meanwhile started drawing inside and outside without being asked. The count returns to 46, one day after clip_points_to_area raised it to 47: the pair is a replacement rather than an addition. The coverage-check port type stays, produced by an archived definition and consumed by nothing, which raised the custom-stud ratchet from 6 to 7. What did not survive the merge is the record review -- an exclusion by judgement, with a written reason, pinned to a content signature and decided by an N3 rule -- recorded in docs/todo.md as missing rather than replaced."
+      "note": "coverage_check retired into clip_points_to_area, on the practitioner's decision closing D2. A widget that REPORTED a membership and a widget that ACTED on one were the same question asked twice, and a map had meanwhile started drawing inside and outside without being asked. The count returns to 46, one day after clip_points_to_area raised it to 47: the pair is a replacement rather than an addition. The coverage-check port type stays, produced by an archived definition and consumed by nothing, which raised the custom-stud ratchet from 6 to 7. What did not survive the merge is the record review -- an exclusion by judgement, with a written reason, pinned to a content signature and decided by an N3 rule -- recorded in TODO.md as missing rather than replaced."
     },
     {
       "measuredAt": "2026-10-21",

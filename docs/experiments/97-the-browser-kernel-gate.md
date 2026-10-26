@@ -10,7 +10,7 @@ by one green run.
 ## The question asked
 
 [41](41-validation-lab.md) made the notebooks the instrument that checks
-Fieldwork's computations, and [the TODO](../todo.md) carried the remaining half
+Fieldwork's computations, and [the TODO](../../TODO.md) carried the remaining half
 of notebook CI: **does the browser kernel actually run them?** CPython passing is
 necessary and not sufficient, because the distribution the kernel loads carries
 different package versions from the one a developer has.

@@ -1,14 +1,14 @@
 {
   "schema": "fieldwork/ruleset-ledger/1",
   "note": "The widget set grew from 39 to 51 in three days because nothing owned the total, and every one of the twelve passed its own admission review honestly. Rulesets will grow faster: they are data, so adding one costs no code, no release build and no lab check. The same failure is therefore available one layer down, and this file is here before the layer is finished rather than after.\n\nBut the constraint must be a different one, and copying the widget rule would be a mistake. A widget must be GENERAL -- that is what widgets/standardization.json enforces, and it is why twelve example-specific widgets were a problem. A ruleset must be PARTICULAR: knowledge about a place, a disease, a published hierarchy, is exactly what this layer exists to hold, and refusing an example-specific ruleset would refuse the point of it.\n\nWhat a ruleset can be wrong about is its authority. So the ratchet counts rulesets with no cited basis. Declaring the three shipped rulesets as data is what made that countable: two of three carry a disclaimer where a citation would go -- 'Threshold is illustrative', 'not a clinical recommendation or routed travel time'. Both are honest. Neither is a source. The count may fall freely and may never rise.\n\nRestructured 2026-10-12, on the practitioner's rule that each ruleset-based widget must be able to map to evidence and provenance -- a PDF or a URL. A ruleset's basis now carries EvidenceReference values of the same url-or-pdf-with-digest shape node references use, so a cited PDF is verified by hash rather than trusted by filename, and the provenance emitter already knew how to write it. That change immediately weakened the earlier count: the one ruleset recorded as having a cited basis cites three papers as author-year strings, which resolve to nothing a reader can open. So the ratchet counts rulesets with no RESOLVABLE evidence, which is three of three, not one of three. No locator was invented to close the gap -- the gap is recorded, with what would resolve each entry. Two 2.0.0 versions published 2026-10-12 for PORT TYPE changes rather than rule changes: nb06-evidence emits a point layer instead of the gradedFacilities stud, and access-review consumes distances instead of the `access` port type. The rules and the conclusions are identical in both; 1.0.0 is kept in each case because a saved workflow pinned it, and because a rule change changes results while a port type change changes connections.",
-  "measuredAt": "2026-10-12",
+  "measuredAt": "2026-10-26",
   "counts": {
-    "rulesets": 4,
+    "rulesets": 5,
     "withResolvableEvidence": 0,
-    "withoutResolvableEvidence": 4,
+    "withoutResolvableEvidence": 5,
     "citationsNamedButUnresolvable": 3
   },
-  "uncitedCeiling": 4,
+  "uncitedCeiling": 5,
   "uncited": [
     {
       "id": "urn:fieldwork:ruleset:outreach-criteria",
@@ -33,6 +33,12 @@
       "basisStatus": "illustrative",
       "statedBy": "The ruleset text itself: \"Not a judgement that large is wrong.\"",
       "whatWouldResolveIt": "Nothing, as shipped, and that is deliberate -- this ruleset exists to answer a question about the machinery, not about extents. It resolves by being REPLACED: if rules over derived geometry turn out to be useful, the one that proves it will be a particular ruleset about a particular question, with a size that matters for that question and a source for it. If experiment 113 concludes against the approach, this is deleted and the ceiling returns to 3."
+    },
+    {
+      "id": "urn:fieldwork:ruleset:extract-contract",
+      "basisStatus": "published",
+      "statedBy": "The ruleset's own basis: the six key columns, the two units and the family pair are read from the IPCC AR6 dataset documentation as the retired slr_extract_import widget recorded them, and nothing here re-reads that documentation.",
+      "whatWouldResolveIt": "The three citations the licence makes obligatory, as resolvable references rather than names: the AR6 WG1 Chapter 9 sea-level projections, the FACTS framework paper, and the pinned dataset version. All three are named in the ruleset and none carries a url or a digest."
     }
   ],
   "requiredOfEveryRuleset": [
@@ -44,5 +50,6 @@
     "no instance IRI in the rules"
   ],
   "ceilingRaisedTo4": "Raised from 3 on 2026-10-14, with the reason the ledger asks for. Experiment 113 tests whether a ruleset can run over a quantity DERIVED from geometry rather than over an imported column, and no existing ruleset takes polygons -- so the question cannot be asked without adding one. The cost is exactly what this ledger exists to resist: a fourth uncited ruleset, added because it was cheap. It is recorded as a debt against the experiment rather than as a new normal. If 113 concludes the approach is not worth having, deleting extent-review returns the ceiling to 3 in the same commit; if it is worth having, the ruleset that replaces this one must be sourced.",
-  "ceilingPolicy": "Clarified by the practitioner on 2026-10-14, after the ceiling was raised 3 -> 4 for experiment 113: \"OK with ceiling, we move up a little or down both OK, not too much.\" So this ceiling is NOT a one-way ratchet like the widget budget or the naming count. It may move in either direction, by a little, with the reason recorded in the same commit. What it exists to stop is unnoticed growth -- rulesets are data, so adding one costs no code, no release build and no lab check, and the widget set grew 39 -> 51 in three days for exactly that reason. A ceiling that can move by one with a stated reason still makes the fourth uncited ruleset a decision someone made, which is the whole purpose. A jump of several at once is what the policy refuses."
+  "ceilingPolicy": "Clarified by the practitioner on 2026-10-14, after the ceiling was raised 3 -> 4 for experiment 113: \"OK with ceiling, we move up a little or down both OK, not too much.\" So this ceiling is NOT a one-way ratchet like the widget budget or the naming count. It may move in either direction, by a little, with the reason recorded in the same commit. What it exists to stop is unnoticed growth -- rulesets are data, so adding one costs no code, no release build and no lab check, and the widget set grew 39 -> 51 in three days for exactly that reason. A ceiling that can move by one with a stated reason still makes the fourth uncited ruleset a decision someone made, which is the whole purpose. A jump of several at once is what the policy refuses.",
+  "ceilingRaisedTo5": "Raised 4 -> 5 on 2026-10-26, in the same commit, with the reason the policy asks for. The fifth ruleset is extract-contract, which carries the AR6 contract that slr_extract_import held in TypeScript. THE DEBT IS NOT NEW: those same three citations were unresolvable while they were compiled into a widget, where no ledger counted them and no ceiling could tick. Moving the contract into declared data is what made the debt countable, so the ceiling rises to record something that was always true rather than to permit something new. It falls again when the three citations resolve, which would take the count to 4 with one more ruleset than before."
 }

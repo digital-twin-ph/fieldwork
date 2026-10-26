@@ -29,7 +29,7 @@ test('declared rulesets assemble byte-identical rule text',()=>{
   assert.equal(facilityN3([{id:'f1',name:'X',serviceType:'Clinic',owner:'GOVERNMENT'}]).rules,golden.facility);
 });
 
-test('a ruleset declares its basis, and none of four carries resolvable evidence',()=>{
+test('a ruleset declares its basis, and none of five carries resolvable evidence',()=>{
   const sets=bundledRulesets();
   // Seven version files until 2026-10-25, now eight: outreach-criteria published a 1.1.0 that
   // drops its `alert` input port, with the rules byte-identical to 1.0.0. The third version file
@@ -48,8 +48,10 @@ test('a ruleset declares its basis, and none of four carries resolvable evidence
   // declared output port changed from `decisions` to `polygons` so the judgement travels on the
   // shape it is about. A port type is part of the contract, so it is a version rather than an
   // edit, and both are bundled because a saved workflow may pin either. Experiment 113.
-  assert.equal(new Set(sets.map(s=>s.id)).size,4);
-  assert.equal(sets.length,8);
+  assert.equal(new Set(sets.map(s=>s.id)).size,5);
+  // Nine version files on 2026-10-26, with extract-contract: the AR6 contract that
+  // slr_extract_import held in TypeScript, declared as data so the ledger can count its debt.
+  assert.equal(sets.length,9);
   for(const set of sets){
     assert.ok(set.basis.status&&set.basis.statedBy,`${set.id} must say what its basis is and who says so`);
     assert.ok(set.mustNotBeReadAs?.trim(),`${set.id} must say what it is not`);

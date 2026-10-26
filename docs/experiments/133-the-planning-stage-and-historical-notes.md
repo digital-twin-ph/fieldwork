@@ -2,6 +2,8 @@
 
 _Created 2026-10-24 · Updated 2026-10-24_
 
+**Superseded by [141](141-organising-snows-notes.md), which synthesizes this with 17 and 119. The spine, the danger and the computable omission are carried over there; this stays as the record of how they were reached, and it got there first.**
+
 **Status:** asked — nothing built. Opened as a filing question (*where does a historical note
 go?*) and sharpened the same day into the one worth answering.
 

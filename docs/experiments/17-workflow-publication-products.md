@@ -2,6 +2,8 @@
 
 _Created 2026-10-06 · Updated 2026-10-15_
 
+**Superseded by [141](141-organising-snows-notes.md), which synthesizes this with 119 and 133 so there is one record to act on. What is actionable from here lives there; this stays as the record of how it was reached.**
+
 Date: October 6, 2026. Status: future-work design experiment. No publication widgets, templates, export engines or new ontology terms are implemented by this document.
 
 ## Developmental evaluation insight

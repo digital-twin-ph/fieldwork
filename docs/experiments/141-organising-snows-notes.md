@@ -1,9 +1,24 @@
-# 141 — Organising Snow's notes, as if Fieldwork had written the publication
+# 141 — Notes, the story, and the report: one record
 
 _Created 2026-10-26 · Updated 2026-10-26_
 
 **Status:** tried — the design is proposed and was tested against a publication that already
 exists, before anything was built. Nothing in `src/` carries a note today.
+
+**This supersedes [17](17-workflow-publication-products.md),
+[119](119-can-this-tell-a-story.md) and [133](133-the-planning-stage-and-historical-notes.md)**,
+at the practitioner's instruction on 2026-10-26: synthesize them so there is one to deal with.
+Those three stay in the repository as the record of how each finding was reached; what is
+actionable is here. [74](74-notebook-first-worked-examples.md) is NOT superseded — it is the
+notebook intuition pointing the other way, a method for deriving primitives from a real analysis.
+
+**A correction that is itself the argument for consolidating.** Most of the "connection worth
+testing first" written below — that a story is the playback sequence with narrative attached to
+its steps — was already recorded in 133 on 2026-10-24, with the same `reveal-playback.ts` quote
+and a table of what arrives along `buildOrder`. It was rediscovered on 2026-10-26 by someone
+working on this project all day, because the record was spread across four documents and 700
+lines. That is the cost this consolidation is paying off, and it is the same cost that merged two
+TODO lists the same afternoon.
 
 ## The question
 
@@ -176,6 +191,69 @@ This is the strongest argument yet for notes being declared data with a purpose 
 free-text field. A report that assembles itself from typed notes and live outputs can be
 regenerated after a rerun and will either still be true or visibly fail; one that is written once
 is a document that can quietly contradict its own analysis.
+
+## Carried over from the three superseded records
+
+### The spine, and what travels along it (from 133)
+
+A note is **not one per investigation**: a workflow may carry several, each anchored at a point
+rather than filed. And a story is **played** rather than scrolled — a note appears when the thing
+it is about does. The sequence is `buildOrder` in `src/reveal-playback.ts`, already computed and
+already in the interface as *Play back the build*:
+
+| Arrives | From | Anchored to |
+| --- | --- | --- |
+| a step appearing | `buildOrder` | the node |
+| a result | the run that produced it | the output |
+| a note | the practitioner | the node or the output it is about |
+
+### The danger, which is the real question (from 133)
+
+**Writing the story first is how evidence gets fitted to a narrative.** That is not hypothetical
+in public health; it is the ordinary failure mode of outbreak communication, and a studio that
+encouraged it would be worse than one with no planning stage at all.
+
+The discipline that makes the inversion honest is already in
+[27](27-workflow-learning-and-gamification.md): **What do I predict?** A section written before
+the run is a prediction. One that survives the run is evidence; one that does not is a finding,
+and the section must change or say why it did not. That is the difference between
+pre-registration and confirmation bias, and this application can MEASURE it, because it knows
+when a workflow ran, what it produced, and whether the result still matches the canvas.
+
+### Omission, made computable (from 133 and 119)
+
+119 drew the line: *"a map that leaves out the inconvenient district still breaks no rule — but a
+map that leaves out what its own declared objective says it is for is, for the first time,
+something an application could notice."* Synthesis puts a second case on the computable side. If
+a report accounts for a project's workflows, **a workflow whose answer appears in no section is
+visible**. Not omission of a fact, which stays uncomputable; omission of a question the
+practitioner asked themselves and then left out.
+
+Said quietly, as a count beside the sections rather than an accusation: leaving a question out is
+often correct, and the point is that it be a decision rather than a drift. It is also the answer
+to the danger above — synthesis cannot quietly drop the question that did not support the story,
+because the question is in the project and the project is what the report is of.
+
+### Assurance, and why a green list is the danger (from 119)
+
+The parts of a trustworthy account are **present, measured, and scattered**: provenance (PROV
+chains, licence IRIs, digests, retrieval dates), rigorous processing (declared units that refuse
+rather than convert, declared bindings, unread records counted, rulesets that decline and say how
+often), and the cartographic rules held to SHACL shapes in
+[118](118-cartographic-judgment-as-rules.md). Each lands in its own corner of a receipt with
+nothing taking the three together.
+
+A reader cannot ask *"was this made under conditions I would accept?"* and get an answer. And
+**an assurance that cannot fail is worthless**: whatever is built must be able to return "these
+conditions were not met" and say which. A short list of green outcomes is the easiest thing in
+this project to mistake for quality.
+
+### Product identity (from 17)
+
+A communication product must preserve the connection between what it displays and the underlying
+results, assumptions and evidence; and a product's presentation filters must stay separable from
+the analytical decisions that produced the numbers. A filter that silently changes a finding is
+an analytical decision wearing a presentation control.
 
 ## What this does not establish
 

@@ -875,9 +875,11 @@ that belongs to the investigation rather than to a widget, a dataset or a contro
 **First subject if built**: the copepod note on the South London example, which must read as
 modern knowledge about the world Snow worked in and not as something his 1855 text claims.
 
-_The design below, and the test of it against Snow's own publication, are written up in
-[141](experiments/141-organising-snows-notes.md). Read that first: it is where the shape was
-tried before anything was built, and it names three things this list does not._
+_All of this now lives in [141](experiments/141-organising-snows-notes.md), which synthesizes
+experiments 17, 119 and 133 and supersedes them — one record to act on rather than four
+documents and seven hundred lines. Read it first. The consolidation paid for itself immediately:
+133 had already recorded the playback-as-spine finding on 2026-10-24, and it was rediscovered on
+2026-10-26 by someone who had been working on this project all day._
 
 ### Why notes, stated by the practitioner 2026-10-26
 

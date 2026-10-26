@@ -2,6 +2,8 @@
 
 _Created 2026-10-17 · Updated 2026-10-17_
 
+**Superseded by [141](141-organising-snows-notes.md), which synthesizes this with 17 and 133. The three measurable conditions and the assurance argument are carried over there; this stays as the record of how they were reached.**
+
 **Status:** asked — reframed on the day it was opened, and nothing built for it yet.
 
 ## The question, after a correction

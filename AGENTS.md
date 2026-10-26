@@ -185,6 +185,36 @@ rules a reader can only agree with, rules whose only evidence is the argument
 that produced them, and rules nobody can act on. If it is not a rule yet, it is a
 finding, and findings go in `docs/experiments/` with their date and measurement.
 
+### Retiring a widget, and when a notice is owed first
+
+A widget is retired outright today: the node type, its port types, the examples
+and the fixtures go in one pass, and the concept is deprecated in the ontology
+with a timestamp. No deprecation period, no shim, no variant kept alive beside
+the replacement. What licenses that is not a preference for speed — it is that
+nobody outside this project has built on any of it yet. On 2026-10-26, of the
+sea-level projection extract: *"I guarantee you there is no other person yet
+using sea level rise extract."*
+
+**With wider adoption a deprecation notice is owed first**, and the widget keeps
+working through it. That is the whole of the rule, and it is prose rather than
+mechanism on purpose: the condition is the existence of users elsewhere, which
+this application cannot observe — and a rule FW cannot enforce in code must not
+be written as a blocker. So each retirement states which of the two regimes it
+is under rather than assuming; the judgement is the author's, and the reason is
+recorded in the release note.
+
+The cost being traded is not symmetric, which is why the regimes differ. A
+retireable widget left in place is paid for every day, in confusion over which
+of two widgets to use and in the entanglement it builds with the ones that work
+— *"the more retireable widgets we don't remove the bigger the mess when they
+remain entangled with the ones that are needed."* Removing it costs nothing
+while nobody else depends on it. Once somebody does, that reverses.
+
+This is expected to get rarer on its own rather than to need tightening: the
+frequency of retirement in 0.10–0.12 is a property of early developmental
+evaluation, not a steady state, and better widget design up front is what
+reduces it.
+
 ## Toolchain
 
 This project requires **Node.js 22 or newer** (`engines: node >=22`; `.nvmrc` records 22).

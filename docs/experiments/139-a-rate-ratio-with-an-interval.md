@@ -1,6 +1,6 @@
 # 139 — A rate ratio, with an interval
 
-_Created 2026-10-25 · Updated 2026-10-25_
+_Created 2026-10-25 · Updated 2026-10-26_
 
 **Status:** asked — this record is the design and its admission review, written before the
 implementation. Nothing in `src/` computes a ratio of two rates today.
@@ -176,6 +176,44 @@ pipes ran intermingled in the same streets, so their customers were otherwise al
 fact about the setting, it is what makes the comparison worth making, and no interval computed
 here speaks to it. It belongs in the example's prose, where it now is, and a widget that implied
 otherwise would be overclaiming.
+
+## A result should not hide what it did
+
+_Added 2026-10-26, after the practitioner: "you should see how Epi Info AI presents epi
+computation results, it's more comprehensive, doesn't hide many things."_
+
+Read on the same day. Its categorical table result carries, per table: the counts, the **row and
+column percents**, the **expected counts** under the null, the totals — and the test's own
+validity diagnostics beside it: the minimum expected count, how many cells fall below five, how
+many below one, and a warning. The conditions under which a chi-square is unreliable are
+surfaced rather than assumed known.
+
+**Fixed here the same day, because it was hiding the obvious.** The 2x2 this widget emits showed
+only counts, while the two rates were computed upstream and sat on the result unused. It now
+carries them at the multiplier the Rate step declared, so a reader can do the division: 315.39
+over 37.54 is 8.40. A table that makes you compute the headline yourself is not showing its
+work.
+
+### Unavailability as a STATE, which this design gets wrong
+
+Their Fisher's exact result is a union: `{state:"computed", pValue, tablesEnumerated}` or
+`{state:"unavailable", reason, tablesEnumerated, maximumTables, tolerance}`. Either way a reader
+learns what was attempted and what stopped it, and the rest of the analysis proceeds.
+
+This widget THROWS on a zero cell. Dulwich's nought deaths stops the entire run. The refusal
+itself is right — an interval over a zero cell is undefined and adding half an event is an
+assumption — but the SEVERITY is wrong for a table of many comparisons: a practitioner comparing
+twelve sub-districts loses all twelve to one undefined cell, and learns nothing about the eleven
+that were fine.
+
+What that implies, and it is not a small change: a measure's result should be able to say
+**computed** or **unavailable with a reason**, and only a contract failure — a unit mismatch, a
+group that is not there — should stop a run. The same distinction experiment 115's P2 drew for
+provenance, one layer over: an absence is reported, a contradiction refuses.
+
+This belongs to the kernel direction rather than to this widget. A family of measures over one
+table needs exactly this, because in a stratified analysis some strata will be computable and
+others will not, and refusing the lot is the wrong answer every time.
 
 ## Why Poisson, and where that assumption fails
 

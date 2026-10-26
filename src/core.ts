@@ -958,16 +958,27 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // counts existed on the result and reached no display at all. Two variables matrixed --
         // group against measure -- which is the shape experiment 136 records as the other mode
         // of displaying layers, in the long form every table here uses.
+        // The rate each group carries, at the multiplier the Rate step declared, because that is
+        // what makes the ratio checkable BY HAND: 315.4 over 37.5 is 8.40, and a reader who sees
+        // only the counts has to do the division themselves. The multiplier belongs to the rates
+        // and never to the ratio, which stays dimensionless.
+        const per=inputs.rates?.rate?.options.multiplier??1;
+        const unit=comparison.denominatorUnit;
+        // WHAT THE EVENTS ARE, from the Rate step's own declaration. "events" is the widget's
+        // word and is true of every rate ratio; `deaths` is the practitioner's, and it is what
+        // they will look for. The practitioner, 2026-10-26, reading the table: "events =
+        // deaths?" -- a question nobody should have to ask of their own data. Reading the
+        // declared numerator is not guessing: it is the column they named.
+        const events=inputs.rates?.rate?.options.numeratorField?.trim()||'events';
         const cell=(side:typeof comparison.compared,measure:string,value:number)=>
           ({key:{group:side.label,measure},value});
         value={kind:'data-table',keys:[...RATE_RATIO_TABLE_KEYS],valueField:'count',
-          rows:[
-            cell(comparison.compared,'events',comparison.compared.events),
-            cell(comparison.compared,`${comparison.denominatorUnit} at risk`,comparison.compared.unitsAtRisk),
-            cell(comparison.reference,'events',comparison.reference.events),
-            cell(comparison.reference,`${comparison.denominatorUnit} at risk`,comparison.reference.unitsAtRisk),
-          ],
-          rowCount:4,missingValueCount:0,rateRatio:comparison,sentence} as unknown as DisplayValue;
+          rows:[comparison.compared,comparison.reference].flatMap(side=>[
+            cell(side,events,side.events),
+            cell(side,`${unit} at risk`,side.unitsAtRisk),
+            cell(side,`per ${per.toLocaleString()} ${unit}`,side.rate*per),
+          ]),
+          rowCount:6,missingValueCount:0,rateRatio:comparison,sentence} as unknown as DisplayValue;
         receipts.push(rateRatioReceipt(node,comparison,runId,
           workflow.edges.find(e=>e.to===node.id&&e.port==='rates')!.from));
         break;}

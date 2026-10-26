@@ -629,3 +629,9 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 /* The attribution carries a licence obligation, so it is held to the same standard. */
 .leaflet-control-attribution{background:var(--surface-raised);color:var(--text-muted)}
 .leaflet-control-attribution a{color:var(--accent)}
+
+/* A stated finding beside the table it was computed from. The counts are what a reader checks;
+   this is what they are checking. Given weight rather than tucked under, because a figure that
+   hides its own conclusion makes the reader reconstruct it. */
+.result-statement{margin:8px 0 12px;padding:10px 12px;border-left:3px solid var(--accent);
+  background:var(--surface-tint);border-radius:0 6px 6px 0;font-size:14px;line-height:1.5}

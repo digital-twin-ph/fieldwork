@@ -28,7 +28,7 @@
   "declared only": 5,
   "example only": 11,
   "parity only": 10,
-  "example, lab not applicable": 11,
+  "example, lab not applicable": 10,
   "example+parity": 11,
   "neither applies": 1
  },
@@ -46,17 +46,6 @@
    "labOwed": false,
    "fieldUse": [],
    "rung": "example+parity"
-  },
-  {
-   "nodeType": "alert",
-   "exampleUses": [
-    "heat"
-   ],
-   "exampleUseCount": 1,
-   "lab": "none",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example, lab not applicable"
   },
   {
    "nodeType": "apply_ruleset",

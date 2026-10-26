@@ -81,7 +81,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // Snow's mortality rates and had nothing that compared two of them, so it could state his
   // measure and not his argument. The first addition to raise pendingCeiling, under the rule the
   // practitioner set that day -- a widget may be added if its function did not exist before.
-  assert.equal(review.reviews.length,49);
+  // 48 on 2026-10-25: alert retired, and a review of a widget that no longer exists must go.
+  // The first time this count has fallen because a widget LEFT rather than because one arrived.
+  assert.equal(review.reviews.length,48);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

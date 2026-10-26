@@ -3,7 +3,7 @@
   "note": "The human half of the naming gate. scripts/validate-naming.mjs checks the six mechanical rules; this records a practitioner's judgement on the rule that cannot be mechanised -- whether the name is what someone would say to ask for the operation. Review docs/widget-names.md, which is generated, and record verdicts here. A verdict is pinned to the digest of (nodeType, title, group): change any of the three and the review goes stale rather than carrying over.",
   "stampedAt": "2026-10-19",
   "reviewer": "practitioner",
-  "pendingCeiling": 45,
+  "pendingCeiling": 44,
   "ceilingRule": "pendingCeiling may be lowered freely. It may be raised only when a widget is added whose FUNCTION DID NOT EXIST BEFORE -- the practitioner's rule, 2026-10-25: \"we can add a widget if its function did not exist before\" -- with an entry in ceilingRaises naming the widget and what it does that nothing did. That is D2 of the admission audit asked of the ceiling: a widget duplicating an existing function must not buy itself room by raising this, and a widget carrying a function the framework lacked is not review debt incurred carelessly. The ratchet exists so review debt cannot grow SILENTLY, not so that nothing may be added. As first written this rule said 'never raised' and also that the pending list 'can only shrink', which cannot both hold: a widget added after 2026-10-13 has no entry, fails the build until one is written, and a written entry starts pending. The contradiction surfaced on 2026-10-25, when rate_ratio was the second widget added in one day and the first to find no slack left.",
   "verdicts": {
     "accepted": "The name is what a practitioner would say to ask for this operation.",
@@ -20,16 +20,6 @@
       "reviewed": "2026-10-19",
       "reviewedBy": "practitioner",
       "note": "Renamed from `hex_aggregate` on 2026-10-19, as the sibling of the above: same operation, different areal unit, and it had the verb after its object with the unit unstated. The unit is the ontology's own term (`fw:HexCell`, \"H3 cell\") rather than \"hexbin\", because a plotting library's hexbin is a lattice fitted to its data and these cells come from a fixed global index at a stated resolution. Hexbin is what practitioners say, so it is a glossary pointer to H3 cell and sits in the widget's description, which is what the palette search matches."
-    },
-    {
-      "nodeType": "alert",
-      "title": "Heat alert",
-      "group": "Sources",
-      "fingerprint": "9bfc8e32e7bf",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null,
-      "note": "The mechanical ratchet already records a violation for this name; see widgets/naming.json."
     },
     {
       "nodeType": "apply_ruleset",

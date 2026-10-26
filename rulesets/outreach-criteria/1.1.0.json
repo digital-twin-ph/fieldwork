@@ -1,0 +1,201 @@
+{
+  "schema": "fieldwork/ruleset/1",
+  "id": "urn:fieldwork:ruleset:outreach-criteria",
+  "version": "1.1.0",
+  "title": "Outreach criteria",
+  "released": "2026-10-25",
+  "description": "Flags a location for outreach review when an external alert is active and its distance to the nearest service point exceeds a threshold. Missing evidence is concluded unknown rather than negative.",
+  "mustNotBeReadAs": "A recommendation to visit or not visit anywhere. The threshold is a practitioner judgement, and this ruleset as shipped has no published basis for any particular value.",
+  "rules": "# Missing evidence stays unknown. Threshold is illustrative.\n{ ?p fw:distanceKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:alertKnown false. } => { ?p fw:decision fw:Unknown. }.\n{ ?p fw:distanceKm ?d; fw:heatAlert true. ?d math:greaterThan {{threshold}}. } => { ?p fw:decision fw:Review. }.\n{ ?p fw:distanceKm ?d; fw:heatAlert true. ?d math:notGreaterThan {{threshold}}. } => { ?p fw:decision fw:NoFlag. }.\n{ ?p fw:distanceKnown true; fw:heatAlert false. } => { ?p fw:decision fw:NoFlag. }.\n",
+  "parameters": [
+    {
+      "name": "threshold",
+      "role": "distance",
+      "type": "number",
+      "unit": "http://qudt.org/vocab/unit/KM",
+      "min": 0,
+      "max": 1000,
+      "default": 5,
+      "decimals": 9,
+      "placeholder": "{{threshold}}",
+      "meaning": "Distance above which an alerted location is flagged for review.",
+      "unitLabel": "km"
+    }
+  ],
+  "inputContract": {
+    "factGenerator": "src/core.ts#makeN3",
+    "subjectKind": "places",
+    "expects": [
+      {
+        "predicate": "fw:distanceKnown",
+        "type": "boolean"
+      },
+      {
+        "predicate": "fw:alertKnown",
+        "type": "boolean"
+      },
+      {
+        "predicate": "fw:distanceKm",
+        "type": "number",
+        "unit": "http://qudt.org/vocab/unit/KM"
+      },
+      {
+        "predicate": "fw:heatAlert",
+        "type": "boolean"
+      }
+    ],
+    "note": "fw:distanceKm welds a unit into a predicate name. It is kept at 1.0.0 because changing it changes the rules and this version must reproduce the shipped conclusions exactly; a unit-free predicate with a declared unit is the 2.0.0 change.",
+    "ports": {
+      "inputs": [
+        [
+          "distances",
+          "distances"
+        ]
+      ],
+      "output": "decisions"
+    },
+    "projection": "outreach",
+    "parameterFrom": {
+      "threshold": "thresholdKm"
+    },
+    "portsNote": "Declared so one widget can host every ruleset with the ruleset's own ports, pinned in the node as a micro_workflow pins its composition's. src/core.ts nodeInputs and outputOf already vary per node, so the mechanism is the one compositions use rather than a new one."
+  },
+  "outputVocabulary": {
+    "predicate": "fw:decision",
+    "values": [
+      "Review",
+      "NoFlag",
+      "Unknown"
+    ],
+    "unknownValue": "Unknown",
+    "unmatchedSubjectsExpected": false
+  },
+  "basis": {
+    "status": "illustrative",
+    "statedBy": "The ruleset text itself: \"Threshold is illustrative.\"",
+    "evidence": [],
+    "unresolvedCitations": [],
+    "note": "No citation of any kind, resolvable or otherwise. The threshold is a knob with a default and no authority, and the receipt now says so rather than implying it by silence."
+  },
+  "authored": {
+    "subject": "?p",
+    "comment": "Missing evidence stays unknown. Threshold is illustrative.",
+    "rules": [
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:distanceKnown",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Unknown"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:alertKnown",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Unknown"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:distanceKm",
+                "comparator": "greaterThan",
+                "value": {
+                  "setting": "threshold"
+                }
+              },
+              {
+                "field": "fw:heatAlert",
+                "comparator": "equals",
+                "value": true
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:Review"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:distanceKm",
+                "comparator": "notGreaterThan",
+                "value": {
+                  "setting": "threshold"
+                }
+              },
+              {
+                "field": "fw:heatAlert",
+                "comparator": "equals",
+                "value": true
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:NoFlag"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:distanceKnown",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:heatAlert",
+                "comparator": "equals",
+                "value": false
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:decision",
+            "value": "fw:NoFlag"
+          }
+        ]
+      }
+    ]
+  },
+  "changeNote": "1.1.0 drops the `alert` input port. The rules are byte-identical to 1.0.0 and every conclusion it draws is the same: this version changes CONNECTIONS, not results, which is the ledger's own ground for a new version while keeping the old one. `fw:heatAlert` is still expected and still read by the rules; it is now supplied as a fact declared on the node that applies the ruleset, beside the threshold, instead of arriving from a widget whose whole purpose was to carry it. That widget was titled 'Heat alert', sat under Sources, and emitted a port type whose only consumer -- `policy` -- had itself been retired on 2026-10-12. 1.0.0 is kept because saved workflows pin it and because it reproduces the shipped conclusions."
+}

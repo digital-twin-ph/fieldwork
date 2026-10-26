@@ -1,6 +1,6 @@
 # Join a table to the study area
 
-_Created 2026-10-26 · Updated 2026-10-26_
+_Created 2026-10-25 · Updated 2026-10-25_
 
 **A join.** It takes a table of values and a study area whose parts are named, matches each row to
 the part it names, and hands on polygons that carry the value. A map downstream can then shade

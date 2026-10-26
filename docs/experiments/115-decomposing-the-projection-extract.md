@@ -2,10 +2,19 @@
 
 _Created 2026-10-15 · Updated 2026-10-15_
 
-**Status:** asked — the widget is read operation by operation and none of its five
+**Status:** tried — the widget is read operation by operation and none of its five
 operations is about sea level. The practitioner settled all three pieces on
-2026-10-15, including the refusal question this document could not answer; the
-decisions are below and the build has not started.
+2026-10-15, including the refusal question this document could not answer.
+
+**Corrected 2026-10-25: the build had started and this line said it had not**, which is
+how it came to be re-derived from scratch ten days later. **P2 is done** —
+`provenanceGaps` in `src/sea-level.ts` carries the decision's own words in its comment, and
+`projectionTable` already hands the gaps to the run's alert channel. **P1's hardest piece is
+done too, under another name**: `authoredSubjects` in `src/authored-application.ts` is a
+generic fact generator over a `PointCollection` **or** a `DataTable`, emitting one subject
+per row from declared `FieldBinding`s. What P1 still needs is not that machinery but a way
+for a *bundled* ruleset to declare its bindings, which is `inputContract.parameterFrom` one
+field over. P3 is not built.
 
 Asked by the practitioner on 2026-10-15, on finding `slr_extract_import` named in the
 blocker ledger as the last widget holding `sources-group-does-not-mean-acquisition` up:

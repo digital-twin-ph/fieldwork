@@ -142,7 +142,14 @@ export interface ParamsByType {
   donut_geomask:{label:string;innerM:number;outerM:number;seed:number};
   aggregate_points_to_h3_cell:{label:string;resolution:number;minOccupancy:number};
   buffer_area:{label:string;distanceM:number};
-  table_input:{label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;dataRef?:string;source?:import('./data-table.js').DataTableSource};
+  table_input:{label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;dataRef?:string;source?:import('./data-table.js').DataTableSource;
+    /** Key columns whose DISTINCT values this input derives and carries.
+     *
+     *  P3 of experiment 115: the distinct values are a knob on the input widget, not a
+     *  derivation in the middle of the graph. The constraint then lives where the data
+     *  enters, which is where it can be acted on -- a practitioner who meets it at import
+     *  can fix the file, one who meets it three steps downstream cannot. */
+    distinctValuesFor?:string[]};
   rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:import('./rate-ratio.js').IntervalMethod};
   rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
@@ -173,6 +180,17 @@ export interface ParamsByType {
     ruleset?:{id:string;version:string;title:string;
       inputs:[string,PortType][];output:PortType};
     parameters:Record<string,number>;
+    /** Facts the ruleset's `inputContract.expects` names that no connected port supplies.
+     *
+     *  Keyed by the PREDICATE the ruleset declares, never by a name this widget invents, so the
+     *  widget stays domain-agnostic while the ruleset carries the domain. `fw:heatAlert` is the
+     *  ruleset's word; "Heat alert" was a whole widget until 2026-10-25.
+     *
+     *  Values are strings because a declared fact is tri-state: "true", "false", or absent for
+     *  not stated, which is what drives the companion `…Known` predicate. A boolean could not
+     *  express the third case, and the third case is the one that matters -- an unstated
+     *  condition is not a false one. */
+    declaredFacts?:Record<string,string>;
     /** Rules the practitioner wrote, rather than a bundled ruleset chosen from a list.
      *
      *  Experiment 106's authored form, carried on the node the way a composition is: the node

@@ -1,6 +1,6 @@
 # Street network
 
-_Created 2026-10-19 · Updated 2026-10-19_
+_Created 2026-10-19 · Updated 2026-10-22_
 
 **An input widget.** It supplies the streets that walking-distance work is measured along: a graph
 of points joined by segments, each with a length.

@@ -1,6 +1,6 @@
 # 51 · What the problem predicts: dataset profiles
 
-_Created 2026-10-08 · Updated 2026-10-15_
+_Created 2026-10-08 · Updated 2026-10-20_
 
 **Status:** design record, nothing implemented. Proposes a declaration, not a
 download: a profile names the **class** of dataset a problem requires and the

@@ -1,6 +1,6 @@
 # 122 · A project holds many workflows
 
-_Created 2026-10-19 · Updated 2026-10-21_
+_Created 2026-10-19 · Updated 2026-10-22_
 
 **Status:** tried — the project exists as an entity and groups the worked examples. What it does
 not yet do is share data between the workflows it holds, which is the half that pays for itself.

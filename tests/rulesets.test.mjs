@@ -31,6 +31,9 @@ test('declared rulesets assemble byte-identical rule text',()=>{
 
 test('a ruleset declares its basis, and none of four carries resolvable evidence',()=>{
   const sets=bundledRulesets();
+  // Seven version files until 2026-10-25, now eight: outreach-criteria published a 1.1.0 that
+  // drops its `alert` input port, with the rules byte-identical to 1.0.0. The third version file
+  // published for a change of CONNECTIONS rather than of results.
   // Four ruleset IDENTITIES across six version files: nb06-evidence and access-review each
   // published a 2.0.0 for a change of port type, with the rules and the conclusions unchanged. A
   // basis belongs to the ruleset, not to each version of it.
@@ -46,7 +49,7 @@ test('a ruleset declares its basis, and none of four carries resolvable evidence
   // shape it is about. A port type is part of the contract, so it is a version rather than an
   // edit, and both are bundled because a saved workflow may pin either. Experiment 113.
   assert.equal(new Set(sets.map(s=>s.id)).size,4);
-  assert.equal(sets.length,7);
+  assert.equal(sets.length,8);
   for(const set of sets){
     assert.ok(set.basis.status&&set.basis.statedBy,`${set.id} must say what its basis is and who says so`);
     assert.ok(set.mustNotBeReadAs?.trim(),`${set.id} must say what it is not`);
@@ -80,7 +83,7 @@ test('binding refuses what would silently conclude nothing',()=>{
   // An unbound placeholder reaches the reasoner as text and matches nothing, so the ruleset
   // concludes nothing and reads as a dataset full of unknowns.
   assert.throws(()=>bindParameters({...set,parameters:[]},{}),/left \{\{threshold\}\} unbound/);
-  assert.throws(()=>resolveRuleset('urn:fieldwork:ruleset:outreach-criteria','9.9.9'),/carries .* at 1\.0\.0 and not 9\.9\.9/);
+  assert.throws(()=>resolveRuleset('urn:fieldwork:ruleset:outreach-criteria','9.9.9'),/carries .* at 1\.0\.0, 1\.1\.0 and not 9\.9\.9/);
   assert.throws(()=>resolveRuleset('urn:fieldwork:ruleset:nope','1.0.0'),/carries no ruleset/);
 });
 
@@ -94,7 +97,9 @@ test('ruleset basis reaches provenance and never a rule premise',async()=>{
   });
   const applied=result.receipts.find(r=>r.ruleset);
   assert.equal(applied.ruleset.id,'urn:fieldwork:ruleset:outreach-criteria');
-  assert.equal(applied.ruleset.version,'1.0.0');
+  // The shipped example pins 1.1.0 since 2026-10-25, which drops the `alert` input port with its
+  // rules byte-identical to 1.0.0. The conclusions this test reaches are the same ones.
+  assert.equal(applied.ruleset.version,'1.1.0');
   assert.match(result.provenanceN3,/<urn:fieldwork:ruleset:outreach-criteria> a fw:Ruleset, prov:Plan/);
   assert.match(result.provenanceN3,/fw:basisStatus fw:Illustrative/);
   assert.match(result.provenanceN3,/prov:hadPlan <urn:fieldwork:ruleset:outreach-criteria>/);

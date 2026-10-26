@@ -435,7 +435,23 @@ fw:PointComparisonPort a fw:PortType; rdfs:label "point-comparison".
 fw:TablePort a fw:PortType; rdfs:label "table".
 fw:RasterPort a fw:PortType; rdfs:label "raster".
 fw:NetworkPort a fw:PortType; rdfs:label "network".
-fw:AlertPort a fw:PortType; rdfs:label "alert".
+fw:AlertPort a fw:PortType; rdfs:label "alert";
+  rdfs:comment "Retired 2026-10-25 with the alert widget. A bespoke port type whose only consumer was `policy`, itself retired on 2026-10-12, so it carried a value between one live widget and one archived one. The condition it carried is declared on the node that applies the ruleset asking for it, beside that ruleset's threshold.";
+  owl:deprecated true;
+  dcterms:isReplacedBy fw:DeclaredFact;
+  skos:changeNote "Retired 2026-10-25. A declared condition is not a layer of data and does not need a port: it is a value the applying node states, keyed by the predicate the ruleset names.";
+  fw:implementationStatus "retired".
+
+# A FACT THE PRACTITIONER STATES, named by the ruleset rather than by a widget.
+#
+# Added 2026-10-25, replacing the alert port. A ruleset's `inputContract.expects` lists the facts
+# its rules read; some arrive from connected data and some are constants somebody declares. Those
+# constants had exactly one implementation -- a widget titled "Heat alert" under Sources, emitting
+# a port type -- which meant the framework could express a declared condition only for heat. The
+# key is the predicate the ruleset declares, so the domain stays in the ruleset, which is data.
+fw:DeclaredFact a owl:Class; rdfs:subClassOf prov:Entity;
+  rdfs:label "Declared fact";
+  rdfs:comment "A value stated by a practitioner to satisfy a predicate a ruleset expects and no connected input supplies. Tri-state where the predicate is boolean: stated true, stated false, or not stated at all -- which is a different claim from false and drives the companion `…Known` predicate.".
 
 fw:Ruleset a owl:Class;
   rdfs:subClassOf prov:Plan;
@@ -697,10 +713,20 @@ fw:distanceKnown a owl:DatatypeProperty; rdfs:range xsd:boolean;
   rdfs:comment "Asserted separately from the distance so that an absent distance is a stated fact rather than a missing triple.".
 fw:distanceKm a owl:DatatypeProperty; rdfs:range xsd:decimal;
   rdfs:label "Distance to the nearest centre, in kilometres".
+fw:distinctValuesOf a owl:ObjectProperty;
+  rdfs:label "Distinct values of a column";
+  rdfs:comment "The set of values a declared key column actually holds, derived where the data enters rather than in the middle of the graph. P3 of experiment 115: a practitioner who meets a column's contents at import can still fix the file; one who meets them three steps downstream cannot.".
+fw:distinctValue a owl:DatatypeProperty; rdfs:label "A distinct value".
+fw:distinctValueCount a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:label "How many distinct values the column holds".
+fw:assessmentDate a owl:DatatypeProperty; rdfs:range xsd:date;
+  rdfs:label "Date a declared condition applies to";
+  rdfs:comment "The date the practitioner states a declared fact holds for. Carried with the fact rather than inferred from when the workflow was run: a run in November may be assessing a day in July, and the two are not the same claim.".
 fw:alertKnown a owl:DatatypeProperty; rdfs:range xsd:boolean;
   rdfs:label "Whether an alert state was supplied".
 fw:heatAlert a owl:DatatypeProperty; rdfs:range xsd:boolean;
-  rdfs:label "Whether a heat alert is in force".
+  rdfs:label "Whether a heat alert is in force";
+  rdfs:comment "Names a domain, which a RULESET may do and a widget may not. It is read by outreach-criteria 1.0.0 and is kept because that version must reproduce the shipped conclusions exactly. Noted 2026-10-25, when the widget named after this predicate was retired: the predicate was never the problem, the widget was.".
 
 fw:sourceFile a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "Name of the file a table was read from".

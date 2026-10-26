@@ -107,6 +107,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
  *  value counts the same thing, so totals are meaningful; a table with none is not, and gets no
  *  totals rather than a guess. */
 export const CROSSTAB_MAX_COLUMNS=12;
+/** How full the grid must be before it is drawn as one. Half is a judgement, not a measurement:
+ *  Manila's assignment sits at 0.125 and a 2x2 missing a cell at 0.75, and anything between
+ *  those is a table nobody has shown us yet. */
+export const CROSSTAB_MIN_DENSITY=0.5;
 
 export function crossTab(table:DataTable):{rowKey:string;colKey:string;columns:string[];
   rows:{label:string;cells:(number|null|undefined)[];total:number|null}[];
@@ -116,6 +120,15 @@ export function crossTab(table:DataTable):{rowKey:string;colKey:string;columns:s
   const columns=[...new Set(table.rows.map(r=>String(r.key[colKey])))];
   if(!columns.length||columns.length>CROSSTAB_MAX_COLUMNS)return null;
   const labels=[...new Set(table.rows.map(r=>String(r.key[rowKey])))];
+  // A MATRIX IS FOR A TABULATION, not for any pair of keys. Manila's assignment table is keyed
+  // by point and by the site each point was assigned -- 60 points against 8 sites, one cell
+  // filled per row -- and pivoting it drew a 480-cell grid holding 60 numbers. Every row of a
+  // contingency table exists for every column by construction; an assignment's rows do not.
+  //
+  // Density tells them apart and needs no declaration. Not completeness: a 2x2 missing one cell
+  // is still the table a reader wants, with a gap where nothing was said, and demanding a full
+  // grid would send it back to being a list.
+  if(table.rows.length<labels.length*columns.length*CROSSTAB_MIN_DENSITY)return null;
   const at=new Map(table.rows.map(r=>[`${r.key[rowKey]}\u0000${r.key[colKey]}`,r.value]));
   const addable=Boolean(table.unit?.trim());
   const sum=(values:(number|null|undefined)[]):number|null=>{

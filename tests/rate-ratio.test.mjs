@@ -156,3 +156,27 @@ test('the same knobs compare periods',()=>{
   assert.equal(r.ratio.toFixed(2),'1.31');
   assert.match(rateRatioSentence(r),/^1854 against 1849/);
 });
+
+/** THE 2x2 A READER CHECKS THE RATIO AGAINST. Experiment 136: a matrix of two variables IS the
+ *  contingency table a rate ratio summarises, and until 2026-10-26 the number was shown and the
+ *  table it came from could not be. The counts were on the result and reached no display.
+ *
+ *  This asserts the shape the node emits rather than the module's own return, because that is
+ *  what a Table output renders: group against measure, in the long form every table here uses. */
+test('the emitted table is the contingency table, not the summary alone',()=>{
+  const r=ratioOf(HOUSES,OPTIONS,
+    {compared:'Southwark and Vauxhall Company',reference:'Lambeth Company'});
+  // What the node builds from it, mirrored here: four cells, two variables.
+  const rows=[
+    {key:{group:r.compared.label,measure:'events'},value:r.compared.events},
+    {key:{group:r.compared.label,measure:`${r.denominatorUnit} at risk`},value:r.compared.unitsAtRisk},
+    {key:{group:r.reference.label,measure:'events'},value:r.reference.events},
+    {key:{group:r.reference.label,measure:`${r.denominatorUnit} at risk`},value:r.reference.unitsAtRisk},
+  ];
+  assert.equal(rows.length,4);
+  assert.deepEqual(rows.map(x=>x.value),[1263,40046,98,26107],'Snow Table IX, as published');
+  assert.deepEqual([...new Set(rows.map(x=>x.key.group))].length?[...new Set(rows.map(x=>x.key.measure))]:[],
+    ['events','houses at risk'],'the measure names the unit, because a count of houses is not a count of people');
+  // And the ratio is still reachable: the summary rides on the value, it is not the value.
+  assert.equal(r.ratio.toFixed(2),'8.40');
+});

@@ -103,6 +103,113 @@ Building the incomplete-beta inverse it needs, before any example requires it, i
 result**, so a reader is never left guessing which interval they are looking at, and the
 refusal at zero cells covers the case where the approximation fails hardest.
 
+## The 2x2 this emits, and the one it is not
+
+_Added 2026-10-26._ The node now emits the contingency table the ratio was computed from rather
+than the ratio alone — group against measure, four cells, in the long form every table here uses:
+
+| group | measure | count |
+| --- | --- | ---: |
+| Southwark and Vauxhall Company | events | 1,263 |
+| Southwark and Vauxhall Company | houses at risk | 40,046 |
+| Lambeth Company | events | 98 |
+| Lambeth Company | houses at risk | 26,107 |
+
+An epidemiologist reads the counts first and the ratio second. The application was showing 8.40
+and hiding the table a reader checks it against, while holding that table in memory the whole
+time. The measure names its unit — *houses at risk*, not *at risk* — because a count of houses is
+not a count of people, and that is the whole difference between 8.40 and 5.35.
+
+**This is a Poisson table, and the other 2x2 is binomial.** Checked against Epi Info's documented
+stratified 2x2 on 2026-10-26, whose four cells are exposed cases, exposed non-cases, unexposed
+cases and unexposed non-cases — people in four boxes, which is what a **risk ratio** or an **odds
+ratio** needs. This widget's four cells are events and units at risk, which is what a **rate
+ratio** needs. Both are called a 2x2 and they are not interchangeable: deriving non-cases here as
+population minus deaths would quietly turn a rate into a risk and change the estimator without
+saying so.
+
+### Three things that design does better, and none needs a new widget
+
+1. **It declares which value counts as exposed and which as a case**, carrying those value labels
+   on the table rather than assuming an order. Here the comparison direction is a parameter and
+   the outcome is already counted, so the gap is narrower — but the principle is the one this
+   project states everywhere else: nothing is guessed.
+2. **Stratification is first-class**, with a combined estimate across strata by Mantel–Haenszel
+   and a homogeneity test (Breslow–Day, with the Tarone correction). This widget compares two
+   groups and cannot hold a third variable constant, which for Snow is the obvious next question:
+   is the supply difference still there *within* a sub-district?
+3. **Every statistic names its method in the TYPE**, not in prose — the odds ratio as
+   Mantel–Haenszel, its interval as Robins–Breslow–Greenland, the risk-ratio interval as a log
+   method. This widget names one method on one result, which was right as far as it went; a
+   result carrying several statistics must name each, because "the 95% interval" is not one thing.
+
+That design also accounts for the records it did not use — excluded for missing values, for
+invalid weights, for zero weight — which is the stance `authoredDataIssues` already takes and
+belongs on any future table built from records rather than from counts somebody supplied.
+
+## The widget names groups; it cannot say why one is the exposure
+
+_Added 2026-10-26, on the practitioner asking why a water company counts as an exposure._
+
+It does not. Being a Southwark and Vauxhall customer is not what anybody thinks caused cholera.
+The exposure is **water drawn from the reach of the Thames that received London's sewage**, and
+the company is a PROXY: by 1854 Lambeth had moved its intake upstream, above the tidal reach,
+and Southwark and Vauxhall had not. The company is the label the data happens to carry.
+
+This widget has `compared` and `reference`, and nothing on it says which is believed exposed or
+why. The direction encodes a hypothesis and records only its arithmetic consequence. A reader of
+the result sees "Southwark and Vauxhall Company against Lambeth Company: rate ratio 8.40" and
+cannot tell from it whether that ordering means anything or was a coin toss.
+
+**Epi Info's design carries this and ours does not**, which is the third time its 2x2 has been
+the better record: its table declares `exposedValue` and `unexposedValue`, so the table itself
+says which value counts as exposed rather than leaving it in the order of two parameters.
+
+What that would need here is small and is NOT the same as computing anything: a declared note on
+the comparison saying what the exposure is taken to be and why this group stands for it, carried
+onto the result and into the receipt beside the method. The project already does exactly this
+one layer down -- `rateKind`, `denominatorUnit`, `numeratorPeriod` and `denominatorVintage` are
+all declarations that change no number and without which the number cannot be read.
+
+**And the thing that makes the proxy credible is not in the data at all.** The two companies'
+pipes ran intermingled in the same streets, so their customers were otherwise alike. That is a
+fact about the setting, it is what makes the comparison worth making, and no interval computed
+here speaks to it. It belongs in the example's prose, where it now is, and a widget that implied
+otherwise would be overclaiming.
+
+## Why Poisson, and where that assumption fails
+
+_Added 2026-10-26, on the practitioner asking._
+
+For a count `a` of events over an exposure `T`, if `a` is Poisson with mean `λT` then
+`Var(ln â) ≈ 1/a`, and two independent counts give `Var(ln RR) ≈ 1/a + 1/b`. That is exactly the
+interval this widget states. **The denominator cancels out of the variance**, which is why only
+the event counts appear in it, and why Lambeth's 18 deaths set the width of that comparison's
+interval rather than its 19,133 people.
+
+**Why not binomial.** A binomial model requires each unit to experience at most one event. Table
+IX counts 1,263 deaths among 40,046 houses, and a house can have several deaths, so there is no
+non-case house to count. Poisson is the model that admits more events than units — which is the
+same distinction `rate.ts` already draws between a `proportion`, which cannot exceed one, and a
+`ratio`, which can.
+
+**Where it fails here, and it is not a technicality.** Poisson assumes events are INDEPENDENT.
+Cholera is transmitted: deaths cluster in households, in streets, around a pump. That is the
+assumption failing, and it fails in one direction — correlated events are over-dispersed relative
+to Poisson, so a Poisson interval is **too narrow**. The 6.84 to 10.32 is more confident than the
+data warrants, and the point estimate being unaffected is no comfort, because the interval is the
+claim being made.
+
+So the honest statement: Poisson is chosen because it is the standard estimator for counts over
+an exposure and the one an independent implementation checks against, **not** because these
+events are independent. A practitioner presenting this should expect the question and should not
+have to discover the answer at the venue.
+
+What would address it rather than restate it: a dispersion-tolerant interval (quasi-Poisson or
+negative binomial), or an estimate of the design effect from clustering. Neither is built, and
+neither should be bolted on without deciding what this project is willing to claim about
+transmission.
+
 ## What this will not establish
 
 - **That the comparison is fair.** The two companies' customers were not randomised, and the

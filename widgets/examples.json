@@ -33,13 +33,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "1601e20e8db0de789e80fa53956d14049a09601f075da585d0e5a3ae2819630f",
-          "bytes": 63730
+          "sha256": "6bd70b4230410c536ee2d74814ccf2c8225fc2a3ca4d9d94306539b54cf42f0c",
+          "bytes": 64390
         },
         {
           "path": "README.md",
-          "sha256": "1e5e109488b7c51b300bd42100b7cdc92588f3542b50d7d05fb71e0a7f59310e",
-          "bytes": 19974
+          "sha256": "d74ba358af4a75c4e31af337986b5347b3375af2256ea85db73172d8de3b1aa8",
+          "bytes": 21609
         },
         {
           "path": "NOTICE.txt",

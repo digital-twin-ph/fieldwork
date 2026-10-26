@@ -123,3 +123,42 @@ draws 33 parts for 32 sub-districts — Streatham is two polygons and both take 
   [experiment 136](136-a-figure-that-stands-on-its-own.md)'s business and a human's.
 - **That the ten named slots on `Catchment` should stay.** The bag is additive and settles
   nothing about them; folding them in is 41 call sites and its own argument.
+
+## The join generalises, and the widget's name is already wrong
+
+_Added 2026-10-26._ The practitioner: *"join can be multi-dimension table column to table column,
+table column to point table column."*
+
+Two widenings, and the record above already contains the argument for both.
+
+**The second operand is not only an area.** This experiment opens with the reframing that made
+the gap visible — *"what we are joining are a table and another table with geometry"* — and that
+reading does not stop at boundaries. A point layer is a table with geometry. An area is a table
+with geometry. A table is a table. There is one operation with three kinds of second operand,
+and building it as three widgets would be three variants of one thing, which is what
+[the directions register](../directions.json)'s `no variants` rule and D2 both refuse.
+
+**The key is columns, not a column.** `keyField` is singular and a composite key is ordinary:
+AR6's extract is keyed by six columns, and a join on (site, year) or (district, period) is the
+normal case rather than the exotic one. Matching a tuple is the same equality-after-normalisation
+this widget already performs, once per column.
+
+### It dissolves a gap recorded hours earlier
+
+[docs/todo.md](../todo.md) records, from building South London's contingency table, that *a table
+cannot be joined to another table*: the 2x2 of people by supply and outcome had to be derived
+outside the application because Table XII's declared supply could not be joined to Table VIII's
+population on the sub-district name. `join_table_to_area` performs exactly that match against a
+different second operand. The missing capability was never the matching; it was the insistence
+that the other side be a boundary.
+
+What remains missing after this is the second half of that gap: a **derived column**, survivors
+being population minus deaths. A join brings the columns together; nothing computes one from
+another.
+
+### The name is pending for this reason
+
+`widgets/name-review.json` holds `join_table_to_area` as pending with the note that the title
+says *to the study area* and never says the area carries a table of named parts. Generalised, the
+name is not merely imprecise but wrong — it would describe one of three operands. The review
+entry can be closed by the rename this implies rather than by a judgement on the current name.

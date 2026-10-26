@@ -1,6 +1,6 @@
 # Open work, in priority order
 
-_Created 2026-10-11 · Updated 2026-10-25_
+_Created 2026-10-11 · Updated 2026-10-26_
 
 What is committed to and not yet done. Items leave this list by being done or by
 being recorded as decided against, not by being forgotten. Dated so that an item
@@ -306,6 +306,28 @@ What is retirable without contradicting D1:
 
 Roughly ten palette retirements, taking 51 to about 41, plus code-level factoring that changes
 no palette entry.
+
+**A table cannot be joined to another table, and no widget does arithmetic on columns.** Found
+2026-10-26, building South London's contingency table. The 2x2 of people by supply and outcome is
+derived from two published tables -- Table XII declares each sub-district's water supply, Table
+VIII gives its population and deaths -- and needs two operations the application does not have:
+a **table-to-table join** on the sub-district name, and a **derived column**, survivors being
+population minus deaths.
+
+`join_table_to_area` joins a table to a BOUNDARY, which is the same matching problem against a
+different second operand; nothing joins two plain tables. And nothing computes a column from
+other columns at all: `rate` divides two declared measures and emits a rate, which is the only
+arithmetic over columns in the application.
+
+So the workflow carries prepared data with its provenance stated, as the other inputs do. That
+is honest and it is not the same as the example demonstrating the operation -- a practitioner
+with the same two published tables cannot reproduce the step in Fieldwork, which is what
+[the glossary](glossary.md) says a worked example is for: the only artifact that demonstrates
+composition rather than declaring it.
+
+Neither operation is epidemiological. A join of two tables on a shared key and a column derived
+from others are the two most ordinary things in tabular work, and their absence is why the one
+genuinely checkable epidemiological table in this project had to be computed outside it.
 
 **Utilisation is runs, not appearances. BUILT 2026-10-26; what remains is below.** The
 practitioner, defining the term: *"use is defined as widget connected to another and run in a

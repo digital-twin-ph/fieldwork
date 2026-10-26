@@ -3,6 +3,68 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.12.0 — In development
+
+_A note on the number: `package.json` read 0.11.0 while the newest section below was 0.10.0, so
+0.11.0 shipped without a section and some of the work recorded under 0.10.0 belongs to it. The
+earlier sections are left as written rather than reshuffled — the dated record is the point — and
+this section covers the work of 2026-10-25 and 26._
+
+- **An Epidemiology group, and a rate ratio with an interval.** Rate with a denominator and Cases
+  by period already existed, in a generic Summaries group beside twenty-one spatial operations,
+  and an epidemiologist looking at the framework reported seeing no epi widget at all. **Rate
+  ratio** divides one group's rate by another's: Snow's water companies give 8.40 with a 95%
+  interval of 6.84 to 10.32 per house, and 5.35 (3.35 to 8.53) per person from the declared
+  supply groups. Which group goes on top is yours to choose and is shown as a sentence before the
+  run, because a ratio and its reciprocal are the same finding and not the same sentence. A group
+  with no events is refused rather than given an undefined interval; a count below five is
+  reported with a warning naming it. The interval assumes the events are independent, which a
+  transmitted disease is not — so it is narrower than the data warrants, and the result says so.
+
+- **A table of values can be put onto the parts of a study area.** **Join a table to the study
+  area** matches each row to the boundary part it names, so a table of rates becomes a map of
+  rates rather than a map of where people live. Names are compared for equality and never for
+  resemblance: ignoring punctuation joins "St. George, Camberwell" to "St. George  Camberwell"
+  and still refuses an abbreviation. A part no row names is drawn empty in a neutral shade,
+  never in the lowest class.
+
+- **Two-key tables are drawn as a grid.** A table keyed by two columns — supply by outcome,
+  district by measure — is shown with categories across the top and down the left rather than as
+  a list of triples, with totals as a fourth column and row where the cells are commensurable.
+  A table that states its unit is saying its values count the same thing; one that does not gets
+  no totals rather than a wrong one.
+
+- **A result can state its finding in words**, beside the rows it was computed from.
+
+- **The catalog counts the widgets you actually run**, in this browser. A use is a widget
+  connected and run in a workflow — a shipped example nobody runs is not one, and neither is a
+  node left on a canvas. Nothing is sent anywhere, and the count is this browser's alone: a
+  second browser keeps its own.
+
+### Retired
+
+- **Heat alert**, into the rule application. It was a declaration wearing a node type — two
+  parameters, no inputs, and a port type whose only consumer had itself been retired. The
+  condition is now declared on the step that applies the ruleset, beside that ruleset's
+  threshold. **A saved workflow holding one still runs.**
+
+- **Sea-level projection extract**, into Apply ruleset with a new `extract-contract` ruleset.
+  None of its five operations was about sea level: four were assertions about a table and one
+  derived a column's distinct values. The key columns, units, vocabulary, baseline and the three
+  obligatory AR6 citations are declared data now, the citations as DOIs a reader can resolve.
+  **A workflow saved before this refuses to open rather than running differently** — a retired
+  widget never runs — and the Manila example produces identical numbers through the new path.
+
+### Validation limits
+
+- `rate_ratio` carries an independent check against statsmodels (lab check 27), which found on
+  its first run that the 95% quantile had been the textbook 1.9600 rather than 1.959963984540054.
+  `join_table_to_area` has no independent check yet.
+- The contingency table in South London is prepared outside the application: nothing here joins
+  one table to another on a shared column, nor computes a column from other columns.
+- A table output can state only its label. A map states a title, a subtitle and a source note; a
+  table cannot, so a table that leaves the application carries no source.
+
 ## 0.10.0 — In development
 
 - **Epidemiology is a group in the palette.** Rate with a denominator and Cases by period were

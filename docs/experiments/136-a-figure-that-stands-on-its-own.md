@@ -241,3 +241,35 @@ widget's declared contract is behind its behaviour before any of this is added.
 Not a chart type to add to a list, then: a second shape of summary beside the one that exists,
 and the output that draws it.
 
+### A table cannot say what it is about
+
+_Added 2026-10-26._ The practitioner, on the rate ratio's output: *"we also have to describe by
+way of existing widget fields what the rate ratio is about, rate ratio of what. This is a worked
+example so we have to show the user how to address the communication pieces of widget outputs."*
+
+Two findings, and the second is the structural one.
+
+**The fields that exist were carrying shorthand.** The water-company workflow labelled its steps
+*"Deaths per 10,000 houses"* and *"Southwark and Vauxhall against Lambeth"* — the first says what
+the rate is of, the second says who was compared and never what the comparison measured. A
+worked example is a teaching artifact, so its labels are part of what it teaches: they now read
+*"Rate ratio of cholera death per house: Southwark and Vauxhall against Lambeth"* and
+*"Cholera deaths and houses supplied, by water company · seven weeks to 26 August 1854"*.
+
+**And a table has no other field to say it with.** Measured the same day:
+
+| output | what it can state |
+| --- | --- |
+| `map_output` | label, `mapTitle`, `mapSubtitle`, `mapSourceNote`, `showLegend` |
+| `chart_output` | label, `chartTitle`, `subtitle`, `xAxisTitle`, `yAxisTitle` |
+| `table_output` | label, and nothing else |
+
+So the work this experiment records — a figure that states its title, its subtitle, its source and
+its key — was done for maps, extended to charts, and never reached tables. A table that leaves
+the application carries a tab name and no source note, which is the same defect
+`FigureStatesItsSource` exists to catch one output over. The asymmetry is not a judgement that
+tables matter less; nobody decided it.
+
+That matters most for exactly the output this session added. A contingency table is the artifact
+an epidemiologist reads before anything else, and it is the one output that cannot say where its
+numbers came from.

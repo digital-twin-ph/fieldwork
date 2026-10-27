@@ -110,7 +110,21 @@ export interface MapLayers {
 }
 
 /** Presentation only: never changes polygons, memberships, or source points. */
-export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void){
+/** Where the practitioner last left this map, so a remount does not throw it away.
+ *
+ *  Module level because the map itself does not survive: a presentation change -- mark radius,
+ *  basemap, a legend toggle -- calls `renderResults`, which disposes this map, removes its host
+ *  and mounts a new one. The new map fitted all layers on arrival, so every nudge of the Mark
+ *  radius slider zoomed back out to the whole extent, discarding the view the practitioner had
+ *  panned to in order to judge the mark size. Reported 2026-10-26.
+ *
+ *  KEYED ON THE LAYER BOUNDS AS WELL AS THE NODE, which is what keeps this from becoming the
+ *  opposite bug. A remount with the same data restores the view; a remount after a run that
+ *  moved or changed the layers has a different key, falls through to `fit`, and still shows the
+ *  practitioner their new result rather than stranding them over the old extent. */
+let rememberedView:{key:string;lat:number;lng:number;zoom:number}|undefined;
+
+export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void,viewKey?:string){
   // A Polygons value passed directly is the old call, kept working: it is one layer set with no
   // boundary and no rows.
   const layers:MapLayers=(source as Polygons)?.features!==undefined&&!(source as MapLayers).polygons
@@ -350,7 +364,33 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     };
     legend.addTo(map);
   }
-  const fit=()=>{if(all.getBounds().isValid())map.fitBounds(all.getBounds(),{padding:[20,20]});else map.setView([0,0],2);};fit();
+  const fit=()=>{if(all.getBounds().isValid())map.fitBounds(all.getBounds(),{padding:[20,20]});else map.setView([0,0],2);};
+  // The identity of what is being looked at: this node, showing these bounds. `fit` is the
+  // right arrival for a map nobody has moved yet and the wrong one for a remount caused by a
+  // presentation change, and the key is what tells the two apart.
+  const settled=all.getBounds();
+  const viewIdentity=viewKey&&settled.isValid()?`${viewKey}|${settled.toBBoxString()}`:undefined;
+  if(viewIdentity&&rememberedView?.key===viewIdentity)
+    map.setView([rememberedView.lat,rememberedView.lng],rememberedView.zoom,{animate:false});
+  else fit();
+  // WHERE THE MAP IS LOOKING, on the element. Written whether or not a view is being remembered,
+  // because it is the state a reader of the DOM -- a test, a screenshot comparison, somebody
+  // debugging a remount -- otherwise has no way to see: Leaflet keeps it on an instance this
+  // module does not publish, and the alternative was a global existing only for tests.
+  const publish=()=>{const centre=map.getCenter();
+    canvas.dataset.viewZoom=String(map.getZoom());
+    canvas.dataset.viewLat=centre.lat.toFixed(6);
+    canvas.dataset.viewLng=centre.lng.toFixed(6);};
+  if(viewIdentity){
+    // Recorded after `fit` too, so 'Fit all layers' is itself a view worth returning to and the
+    // next remount does not undo it.
+    const remember=()=>{const centre=map.getCenter();
+      rememberedView={key:viewIdentity,lat:centre.lat,lng:centre.lng,zoom:map.getZoom()};
+      publish();};
+    map.on('moveend',remember);map.on('zoomend',remember);remember();
+  }else{
+    map.on('moveend',publish);map.on('zoomend',publish);publish();
+  }
   toolbar.querySelector<HTMLButtonElement>('[data-fit]')!.onclick=fit;
   // Full screen, on the element the CSS is written for. Safari before 16.4 has only the webkit
   // names, and an iPhone has neither on a div, so the button says so rather than appearing to work.

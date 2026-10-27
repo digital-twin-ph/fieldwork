@@ -645,6 +645,57 @@
           "found": "Widened from one repository to the class, and the second member already exists: `example-2025-nigeria-immunization` is on disk beside Fieldwork, holding a single 276-line framework document for district-level immunization surveillance. It is NOT yet a git repository, has no remote, is not in the `digital-twin-ph` org, and is not in widgets/examples.json -- so validate-examples.mjs does not see it and correctly says nothing about it: the validator checks pins, and an unpinned directory is not a pin. That is the honest state rather than a gap, but it does mean the class rule has exactly one member under management so far."
         }
       ]
+    },
+    {
+      "id": "the-validation-lab-is-integral-in-lifecycle-and-independent-in-method",
+      "stated": "2026-10-26",
+      "statedBy": "the practitioner",
+      "inTheirWords": "validation lab repo is also integral to fieldwork development by serving as an external validation space for fieldwork computations.",
+      "requiresInCode": "The same split as the worked examples -- integral in lifecycle, separate for a reason -- but the reason is different and the confusion it invites is worse. South London is separate because a repository boundary is a LICENCE boundary. The validation lab is separate because it is an INDEPENDENCE boundary, and independence is a property of the method rather than of the directory.\n\nSO WHAT INTEGRATION MUST NOT ERODE. A lab check earns its keep only if the expected value comes from somewhere Fieldwork's code did not reach: statsmodels, scipy, shapely, pyproj, h3-py, rapidfuzz -- a separate implementation by separate authors. The FIXTURE legitimately comes from Fieldwork, because the fixture is the subject under test. The EXPECTATION never may.\n\nThe failure mode this makes easy, and it is silent: regenerate a fixture from a changed implementation, re-run the check, and it agrees -- with itself. Nothing fails, a result file is written, the parity register says `agrees`, and the independence is gone while every artefact looks the same. That happened in benign form on 2026-10-26: the two-by-two fixture was regenerated after `epiInfoLabelSource` was added. Benign because the reference computation is statsmodels and the numbers were untouched, but the shape of the mistake is exactly right and nothing in the repository would have objected if the numbers HAD moved.\n\nWhat follows in practice. Regenerating a fixture is a declaration that the subject changed, not that the expectation did, and a regeneration that moves any compared number must be stated in the parity entry rather than absorbed. A check whose reference is Fieldwork's own arithmetic in another language is not a check, and check 21 already records this honestly against itself -- h3-js against h3-py are two bindings of one C library, so what is verified is that Fieldwork calls it correctly and not that the indexing is right.\n\nIntegral in lifecycle means: its commits and pushes are ordinary Fieldwork work, its notebooks are run before pushing, and a widget's parity entry is part of that widget's release rather than a later errand.",
+      "recordedIn": "docs/directions.json, widgets/parity.json",
+      "workItem": "ongoing; the open half is that nothing mechanically checks a fixture was not regenerated to fit",
+      "status": "open",
+      "lastChecked": "2026-10-26",
+      "checks": [
+        {
+          "date": "2026-10-26",
+          "found": "Acted on for lifecycle: the lab's three unpushed commits -- checks 27 and 30, one of them dating from before today -- were run and pushed as branch check-27-rate-ratio, which had no upstream at all. NOT acted on for the independence half, which is the part with no mechanism: nothing in either repository detects a fixture regenerated to fit. The branch name is also now wrong, carrying check 30 as well as 27, and the merge to main is the practitioner's."
+        }
+      ]
+    },
+    {
+      "id": "the-siblings-are-fieldworks-arms-not-its-dependencies",
+      "stated": "2026-10-26",
+      "statedBy": "the practitioner",
+      "inTheirWords": "validation lab repo is also integral to fieldwork development by serving as an external validation space for fieldwork computations. ... Same with dive-deeper, it is the pedagogy arm of fieldwork.",
+      "requiresInCode": "A SHAPE FOR THE WHOLE CONSTELLATION, stated across three messages, and it replaces the reading this author had been using. The siblings beside Fieldwork are not optional add-ons that Fieldwork tolerates; each is an ARM of it, separate for one specific reason, and managed with it in every other respect:\n\n  example-1855-cholera-south-london  demonstration    separate because a repository boundary is a LICENCE boundary (BSD-2 geometry in an Apache-2.0 project)\n  validation-lab                     validation       separate because it is an INDEPENDENCE boundary (the expectation must come from other authors' code)\n  dive-deeper                        pedagogy         separate because a lesson is read at its own pace and ships as notebooks, not as application chrome\n\nEach boundary protects something real and none of them is about distance. So: their commits, pushes and verification are ordinary Fieldwork work; a widget's lab check and its lesson belong to that widget's release rather than to a later errand; and the thing to stop doing is treating a push to one as a negotiation, which made this author the bottleneck on the project's own demo material.\n\nWHAT THIS IS NOT. It is not a licence to merge any of them in, and the three reasons above are why. It is also not uniform: dive-deeper is LIVE in the gate -- validate:dive-deeper checks each declared lesson section against the notebook that carries it, and a widget declaring a section its notebook lacks fails the build -- whereas widget-pack-sea-level-rise was never admitted, carries three not-started reviews, and is being archived because the worked-example model superseded it. An arm is kept because it does work, not because it exists.",
+      "recordedIn": "docs/directions.json",
+      "workItem": "ongoing; nothing yet gates a sibling WITH Fieldwork rather than beside it",
+      "status": "open",
+      "lastChecked": "2026-10-26",
+      "checks": [
+        {
+          "date": "2026-10-26",
+          "found": "Lifecycle acted on for two of the three: South London's commit pushed and its pin verified at HTTP 200, and validation-lab's three unpushed commits -- checks 27 and 30, one predating today -- run and pushed to a branch that had no upstream at all. dive-deeper needed nothing: two commits, clean, in sync. The pedagogy arm is also the THINNEST arm, and that is the finding rather than the lifecycle: two lessons against 52 live widgets, and widgets/dive-deeper.json reports 20 notebooks carrying a declared section against a legacy ceiling of 20, so the pedagogy has not kept pace with the widget set it is meant to teach. Nothing in the gate requires a lesson for a new widget, which is why three epi operations shipped today without one."
+        }
+      ]
+    },
+    {
+      "id": "the-pack-idea-is-parked-not-withdrawn",
+      "stated": "2026-10-26",
+      "statedBy": "the practitioner",
+      "inTheirWords": "We should archive the widget-pack-sea-level-rise. We already have a working model for worked examples. ... The pack idea was never tested extensively. We may revisit it at some time in the future or not.",
+      "requiresInCode": "PARKED, AND THE WORD MATTERS. This author's first instinct was to set the catalogue entry to `withdrawn`, which the schema offers and which keeps the entry for traceability. That would have been wrong: `withdrawn` records a decision AGAINST the idea, and the practitioner's is weaker -- untested, possibly revisited. `not-admitted` stays exactly true, because the three required reviews are still not-started and the pack never was admitted, so only the reason changed. Recording a firmer decision than was taken is the same failure as a label claiming a method it does not have.\n\nWHY THE WORKED-EXAMPLE MODEL WON, which is the part worth keeping. An example is admitted at a full commit with per-file digests from a curated owner and carries its own licence -- the same trust root a pack has -- WITHOUT a pack's second job of shipping vocabulary and widget contracts. The three sea-level widget contracts turned out to be implemented in the host all along and the vocabulary is vendored at ontology/packs/sea-level.ttl, so the pack was a distribution mechanism for things Fieldwork was already doing another way. One mechanism, not two.\n\nNothing deleted: the three slr_* widgets, the vendored vocabulary and shapes, and the Manila worked example all stay. Revisiting means reviving the reviews rather than rebuilding anything.\n\nAND IT PAID A DEBT NOBODY HAD BOOKED. validate:packs was the one validator that fetched over the network, in `check` AND `check:fast`, and it failed twice on 2026-10-26 with `fetch failed` and passed on retry -- a non-deterministic fast gate in an offline-first project, on behalf of an idea now parked. A `--local` seam had existed all along and was opt-in, so nobody passed it. The validator now PREFERS a sibling checkout at ../<repo> -- the convention validate-examples.mjs uses -- and falls back to the network for a machine that has not cloned it, recording which source ran. Verified by forcing every proxy to a dead port: five files verified, exit 0, no network. An archived GitHub repository stays publicly readable, so both the clone and the fallback keep working.",
+      "recordedIn": "widgets/packs.json, scripts/validate-packs.mjs",
+      "workItem": "done 2026-10-26; revisiting means reviving the three reviews",
+      "status": "built",
+      "lastChecked": "2026-10-27",
+      "checks": [
+        {
+          "date": "2026-10-27",
+          "found": "Repository archived (isArchived true, still public, pinned commit still HTTP 200), entry parked with the reason rewritten, and the gate's last network call removed. Only 2 of the pack's 5 files are vendored in-tree -- ontology/sea-level.ttl and ontology/shapes/sea-level.ttl, both byte-identical to their pins -- while pack.json, the Manila CSV and extract-projection.py live only in that repository, which is why a sibling clone was the right answer rather than vendoring the rest: the clone verifies all five and a local-only check would have verified two and had to say so."
+        }
+      ]
     }
   ]
 }

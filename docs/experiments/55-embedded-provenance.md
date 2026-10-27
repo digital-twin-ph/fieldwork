@@ -1,6 +1,6 @@
 # 55 · Embedded provenance in exported artifacts
 
-_Created 2026-10-08 · Updated 2026-10-15_
+_Created 2026-10-08 · Updated 2026-10-14_
 
 **Status:** design record with a recommendation and one refusal. Nothing implemented.
 

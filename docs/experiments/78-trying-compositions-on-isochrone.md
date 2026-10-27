@@ -1,6 +1,6 @@
 # 78 · Trying the composition rules on the isochrone case
 
-_Created 2026-10-10 · Updated 2026-10-15_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 **Status:** trial plan, written before the work. Predictions are recorded here so
 they can come out badly.

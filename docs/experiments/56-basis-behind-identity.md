@@ -1,6 +1,6 @@
 # 56 · The basis behind an identity: method provenance and validation evidence
 
-_Created 2026-10-08 · Updated 2026-10-15_
+_Created 2026-10-08 · Updated 2026-10-14_
 
 **Status:** audit, one implemented change, and a specification deliberately left unpopulated.
 

@@ -43,7 +43,17 @@ function substantiveDates(file){
   for(const entry of entries){
     const [hash,date]=entry.split(' ');
     let changed=[];
-    try{changed=git('show','--format=','--unified=0','--',file,hash).split('\n');}catch{dates.push(date);continue;}
+    // `hash` BEFORE the `--`. It was after it, which makes git read it as a second pathspec
+    // rather than as the revision: `git show --format= --unified=0 -- <file> <hash>` diffs HEAD,
+    // matches no path named by a 40-character hex string, and returns nothing. Every commit
+    // therefore arrived here with an empty diff, took the `!content.length` branch, and counted
+    // as substantive -- so the stamp-only filter this function exists for has never once fired.
+    //
+    // The cost was a stamper that perpetuates its own churn: a stamp-only commit is the newest
+    // commit touching the file, so the next `--write` stamps every file with the date of the last
+    // stamping, and the run after that does it again. 46 files moved on 2026-10-27 for no reason
+    // but that. Found by asking why they had moved twice in one morning.
+    try{changed=git('show','--format=','--unified=0',hash,'--',file).split('\n');}catch{dates.push(date);continue;}
     const content=changed.filter(line=>/^[+-]/.test(line)&&!/^(\+\+\+|---)/.test(line))
       .map(line=>line.slice(1)).filter(line=>line.trim()!=='');
     if(!content.length||content.some(line=>!STAMP.test(line)))dates.push(date);

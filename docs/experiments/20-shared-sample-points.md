@@ -1,6 +1,6 @@
 # Shared points for generation and facility access
 
-_Created 2026-10-06 · Updated 2026-10-15_
+_Created 2026-10-06 · Updated 2026-10-14_
 
 Date: October 6, 2026. Status: third implementation slice of widget standardization.
 

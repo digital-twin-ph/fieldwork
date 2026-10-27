@@ -1,6 +1,6 @@
 # 100 · Choosing the metric CRS
 
-_Created 2026-10-11 · Updated 2026-10-15_
+_Created 2026-10-11 · Updated 2026-10-14_
 
 **Status:** tried — the defaults are now derived from the workflow's own data and a disagreeing
 zone is reported with what it costs, both built and tested on 2026-10-11. The guard is

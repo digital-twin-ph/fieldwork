@@ -1,6 +1,6 @@
 # 73 · What the workflow stages are, and how the old ones were wrong
 
-_Created 2026-10-10 · Updated 2026-10-15_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 **Status:** vocabulary rewritten. Recorded because the glossary now reads as
 though it was always right, and the corrections are the useful part.

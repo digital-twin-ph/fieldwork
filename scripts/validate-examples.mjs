@@ -8,6 +8,12 @@
  * that repo a worked example repo so let's manage it as an integral part of fieldwork."* Separate
  * in location, integral in lifecycle -- and nothing checked the join between the two.
  *
+ * WRITTEN FOR THE CLASS, not for one repository: the practitioner widened it the same day --
+ * *"from here on all worked example repos, like a new one I just created for nigeria
+ * immunization."* So this walks the catalogue for anything carrying a commit and a file list
+ * rather than naming a repository, and a second example is covered by arriving in
+ * `widgets/examples.json`. Nothing here needs editing for it.
+ *
  * Both of 2026-10-26's example failures were that join going unchecked, and neither was reachable
  * by any existing validator:
  *

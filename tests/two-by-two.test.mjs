@@ -78,14 +78,22 @@ test('the risk difference is symmetric, because a difference is not a ratio',()=
   assert.equal((e.value*1000).toFixed(3),'4.093');
 });
 
-test('every estimate owes a real method name and declares its Epi Info label unverified',()=>{
+test('every estimate names its method and carries a sourced Epi Info label',()=>{
   for(const e of run().estimates){
     assert.ok(e.method&&!/^(default|standard|auto)$/.test(e.method),`${e.name} names its method`);
-    // Not filled from memory. The CDC user guide states the statistics in prose and the layout
-    // itself is an image, so these stay null until somebody reads them off Epi Info.
-    assert.equal(e.epiInfoLabel,null);
+    // READ OFF A SOURCE, NEVER FROM MEMORY. These were transcribed from the Epi Info AI classic
+    // TABLES results panel on 2026-10-26, which is a sibling project's rendering of Epi Info and
+    // not Epi Info -- so the source is asserted with the label. A label whose provenance went
+    // unstated would let a deduction be read as a verification.
+    assert.ok(e.epiInfoLabel,`${e.name} carries a label`);
+    assert.equal(e.epiInfoLabelSource,'epi-info-ai-results-panel');
+    assert.notEqual(e.epiInfoLabelSource,'epi-info','nobody has read Epi Info itself');
     assert.equal(e.level,95);
   }
+  assert.deepEqual(run().estimates.map(e=>e.epiInfoLabel),
+    ['Risk Ratio (RR)','Odds Ratio (cross product)','Risk Difference (RD%)'],
+    'the panel\'s own strings, including the qualifier that distinguishes the cross-product odds '
+    +'ratio from the conditional MLE one printed beside it');
   assert.deepEqual(run().estimates.map(e=>e.name),
     ['risk ratio','odds ratio','risk difference'],'in the order a trained reader reads them');
 });
@@ -106,6 +114,10 @@ test('a zero reference count takes the risk ratio and leaves the risk difference
   assert.match(rr.unavailable,/has 0 died/);
   assert.match(rr.unavailable,/assumption rather than a measurement/);
   assert.equal(rr.method,'Katz log','the method is stated even with no value');
+  // And so is the label: an unavailable estimate still tells a reader which row of the familiar
+  // layout it corresponds to, which is what lets them see that it is absent rather than missing.
+  assert.equal(rr.epiInfoLabel,'Risk Ratio (RR)');
+  assert.equal(rr.epiInfoLabelSource,'epi-info-ai-results-panel');
   assert.equal(named(r,'odds ratio').value,null);
   assert.match(named(r,'odds ratio').unavailable,/reciprocal of every cell/);
   const rd=named(r,'risk difference');

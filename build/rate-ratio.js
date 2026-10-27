@@ -1,2 +1,2 @@
-import{a as b,b as c,c as d,d as e,e as f,f as g,g as h}from"./chunks/chunk-QXF7XZQI.js";import{b as a}from"./chunks/chunk-2PU6AZED.js";import"./chunks/chunk-KVMUXFPB.js";export{a as INTERVAL_LEVELS,d as INTERVAL_METHODS,b as RATE_RATIO_IS_DIMENSIONLESS,c as RATE_RATIO_TABLE_KEYS,e as SMALL_COUNT,f as computeRateRatio,h as rateRatioReceipt,g as rateRatioSentence};
+import{a as b,b as c,c as d,d as e,e as f,f as g,g as h}from"./chunks/chunk-EZWA6WJG.js";import{b as a}from"./chunks/chunk-Q2QXP5VO.js";import"./chunks/chunk-KVMUXFPB.js";export{a as INTERVAL_LEVELS,d as INTERVAL_METHODS,b as RATE_RATIO_IS_DIMENSIONLESS,c as RATE_RATIO_TABLE_KEYS,e as SMALL_COUNT,f as computeRateRatio,h as rateRatioReceipt,g as rateRatioSentence};
 //# sourceMappingURL=rate-ratio.js.map

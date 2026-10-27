@@ -727,13 +727,25 @@ who takes 8.40 for the risk ratio beside the houses table is RIGHT, and is there
 substitution is safe. It is safe only while the outcome is rare, and the layout shows the
 statistics rather than the subject being counted.
 
-**What remains open here**, and it is the recognisability half: every `epiInfoLabel` is null. The
-CDC user guide states the statistics in prose while the layout is an image, so the displayed labels
-have to be read off the original source or a running Epi Info. Until then this is structurally
-present and factually empty — and check 30 fails if a label appears without that verification,
-because a field that can be filled unverifiably is worse than no field.
+**The recognisability half landed the same day.** _The practitioner: "The Epi Info labels can be
+deduced from the results panel that Epi Info AI prints. That's the closest I got to the real
+thing."_ Read from the classic TABLES estimate table in `epi-info-ai/wasm/demo/app.ts` and carried
+on the estimates: `Risk Ratio (RR)`, `Odds Ratio (cross product)`, `Risk Difference (RD%)`.
 
-Until the labels exist, the 2x2 is not presented as an Epi Info 2x2.
+A sibling project's rendering of Epi Info is a deduction and not a reading, so each label carries
+`epiInfoLabelSource`, the receipt writes a status of `deduced`, and **check 30 fails if a label
+ever claims `epi-info` as its source**. The criterion inverted rather than relaxed: from "the
+label must be null" to "the label must name where it came from".
+
+Two details worth keeping. `Odds Ratio (cross product)` keeps its qualifier, because that panel
+prints a conditional-MLE odds ratio beside it which is a different estimator and is not computed
+here. And the panel prints the risk difference as a PERCENTAGE — 0.4093% where this carries
+0.004093 — a scale difference stated on the estimate rather than reconciled away.
+
+**Still open:** reading the labels off Epi Info itself, which would upgrade the source to
+`epi-info` and either confirm the words or change them. Either outcome is information. Until then
+the 2x2 is not presented as an Epi Info 2x2 — it is presented as Fieldwork's own, labelled so a
+trained reader can find their row.
 
 **The input-stage palette looks like a palette that failed to load.** _Found 2026-10-26, by the
 practitioner misreading it twice in ten minutes on the live build — first as missing widgets,

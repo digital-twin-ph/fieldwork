@@ -15,6 +15,27 @@
  * It is a target and not a ceiling, because D1 says primitives are exposed when a workflow needs
  * them and not in advance. A needed primitive is not refused by arithmetic — it is recorded.
  *
+ * AND THE TARGET IS NOT A GOAL. The practitioner, 2026-10-26, on the epi kernel's three
+ * additions: *"Forget the widget ceiling for epi kernel, it is a natural consequence of making
+ * progress. This is a DE project at the end of the day, and we want to be moving forward, not
+ * backward. The widget ratchet is artificial and is meant to guard for duplication and
+ * non-widgets pretending to be widgets."*
+ *
+ * So what this file is FOR is two of the admission criteria and not the size of the set:
+ *
+ *   D2  — does this already exist? The ratchet makes every addition name its admission review,
+ *         which is what forces that question to be asked out loud.
+ *   D11 — does a residual function remain that no existing entity performs? A widget that
+ *         cannot answer it is a non-widget pretending to be one.
+ *
+ * A widget that passes both is PROGRESS, and this file records it rather than charging for it.
+ * That is why the count below is reported as a fact and the target as a reference: the number
+ * exists to make additions visible, never to cap them, and a rising count whose additions each
+ * named a review is this project working as intended. What the ratchet still refuses is growth
+ * nobody recorded, which is the condition it was built for — the set went 39 to 51 in three days
+ * while a refactor to shrink it sat unexecuted, and the defect was that nothing owned the total,
+ * not that the total was too big.
+ *
  * Usage: node scripts/validate-widget-budget.mjs
  */
 import {readFileSync} from 'node:fs';
@@ -107,7 +128,15 @@ console.log(`Widget budget: ${actual} live widgets`+(retired?` (${retired} retir
   +(pending.length?` (${pending.length} pending, exempt)`:'')
   +` — ${budget.counts.primitive} primitive, `
   +`${budget.counts.composite} composite, ${compositions} bundled composition`+(compositions===1?'':'s')
-  +`. Target ${budget.target.widgets}`
-  +(distance>0?`, which is ${distance} away.`:distance<0?`, which is ${-distance} below.`:`, which is met.`));
-if(distance>0)console.log(`  ${budget.target.basis}`);
+  // REPORTED, NOT CHARGED FOR. This read "Target 41, which is 11 away", and a distance phrased as
+  // a shortfall is read as a debt -- which is how three widgets that each carried new function
+  // got recorded as room owed back. The reference is still printed, because duplication pressure
+  // is worth seeing; it is no longer printed as a gap to close.
+  +`. Reference ${budget.target.widgets}`
+  +(distance>0?`, exceeded by ${distance} — see additionsSince for what each one added.`
+    :distance<0?`, ${-distance} below it.`:`, met.`));
+console.log('  The guard is D2 (does it already exist?) and D11 (does a residual function remain '
+  +'that nothing else performs?), not the size of the set. An addition that answers both is '
+  +'progress and is recorded here; growth nobody recorded is what this refuses.');
+if(distance>0)console.log(`  Reduction plan, if and when it is wanted: ${budget.target.basis}`);
 if(problems.length){console.error('\n'+problems.join('\n\n'));process.exit(1);}

@@ -75,15 +75,35 @@ rather than of the table. A stratum silently excluded is the commonest way a two
 The four cells as a table, with the estimates carried on it, and a receipt holding each estimate's
 value, bounds, level and **method by name**.
 
-**Each estimate also has a field for what Epi Info calls the same quantity, and it is empty.**
-Nobody here has verified Epi Info's displayed labels — the CDC user guide states the statistics in
-prose and the layout itself is an image — and filling them in from memory is how a wrong label
-enters a teaching context. The field exists so the gap is visible rather than silent.
+**Each estimate also carries the label the familiar layout prints for the same quantity**, so you
+can find the row you were trained to look for:
+
+| this widget computes | printed as |
+| --- | --- |
+| risk ratio · Katz log | `Risk Ratio (RR)` |
+| odds ratio · Wald log | `Odds Ratio (cross product)` |
+| risk difference · Wald unpooled | `Risk Difference (RD%)` |
+
+**Read from Epi Info AI's results panel, not from Epi Info.** That is a sibling project whose epi
+kernel was synthesized from the original, so these are a good deduction and not a verification —
+and every estimate records which, in `epiInfoLabelSource`. The receipt says `deduced`. If somebody
+reads the labels off Epi Info itself the source becomes `verified`, and the words may or may not
+change; that is a different claim and the field keeps the two apart.
+
+`Odds Ratio (cross product)` keeps its qualifier on purpose: the same panel prints an
+`Odds Ratio (conditional MLE)` beside it, which is a different estimator and is **not** computed
+here. Dropping the qualifier would make this label claim both.
+
+**One scale difference, stated rather than reconciled.** That panel prints the risk difference as a
+*percentage*. Snow's figure is `0.004093` here and `0.4093%` there — the same quantity on a
+different scale, and the estimate says so where the number is, so nobody reads the two screens
+side by side and concludes the implementations disagree.
 
 ## What it will not do
 
-- **It will not claim agreement with Epi Info.** These are standard methods, named honestly. A
-  parity claim needs a parity suite nobody has written.
+- **It will not claim agreement with Epi Info.** These are standard methods, named honestly, with
+  labels deduced from a project built from Epi Info. A parity claim needs a parity suite nobody has
+  written.
 - **It will not treat an empty cell as a zero.** An empty cell is unknown, and a two-by-two
   computed as though it were zero would understate that group.
 - **It will not add half a case to make a ratio computable.** A group with no cases has no risk

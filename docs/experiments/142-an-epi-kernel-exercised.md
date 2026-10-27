@@ -125,10 +125,29 @@ project would otherwise have shipped in a manual page and repeated out loud to e
 
 - **No tests.** Pearson, Mantel-Haenszel, Yates, Fisher exact, mid-P. A larger piece, and the rule
   from [141](141-organising-snows-notes.md) is that tests are not started to meet a date.
-- **No Epi Info labels.** The field exists on every estimate and every one is `null`. The CDC user
-  guide states the statistics in prose and the layout itself is an image, so nobody has read them
-  off Epi Info — and check 30 **fails** if a label appears without that verification, because a
-  field that can be filled unverifiably is worse than no field.
+- **The Epi Info labels are read, from a sibling project rather than from Epi Info.** Recorded
+  here as blocked on the morning of 2026-10-26 and unblocked the same afternoon by the
+  practitioner: *"The Epi Info labels can be deduced from the results panel that Epi Info AI
+  prints. That's the closest I got to the real thing."* Transcribed from the classic TABLES
+  estimate table in `epi-info-ai/wasm/demo/app.ts` — `Risk Ratio (RR)`,
+  `Odds Ratio (cross product)`, `Risk Difference (RD%)`.
+
+  Three things that followed, and the second is the one worth keeping.
+
+  **A second field, not a filled one.** `epiInfoLabelSource` sits beside the label, because a
+  label deduced from a rendering of Epi Info and one read from Epi Info are different claims. The
+  receipt writes `deduced`, and check 30 now **fails if any label claims `epi-info` as its
+  source** — the criterion inverted from "the label must be null" to "the label must name where it
+  came from", which polices the provenance rather than the absence and is the same purpose.
+
+  **The qualifier is load-bearing.** `Odds Ratio (cross product)` is kept whole because that panel
+  prints an `Odds Ratio (conditional MLE)` beside it, which is a different estimator and is not
+  computed here. Shortening the label to `Odds Ratio` would make it claim both.
+
+  **And one scale difference, stated rather than reconciled.** That panel prints the risk
+  difference as a percentage, so Snow's `0.004093` reads there as `0.4093%`. Same quantity,
+  different scale on screen. Said on the estimate, because a reader comparing the two screens must
+  not conclude the implementations disagree.
 - **No `MERGE` and no `MATCH`.** Two of the three join commands remain, and the module names them
   so neither is reached by widening this one.
 - **No checks 28 and 29.** `relate_table` and `group_table` declare what they owe in
@@ -140,7 +159,9 @@ project would otherwise have shipped in a manual page and repeated out loud to e
 ## What this does not establish
 
 - **That the estimates agree with Epi Info.** statsmodels is not Epi Info. No parity claim is made
-  and no parity suite exists; see the direction.
+  and no parity suite exists; see the direction. **Nor do the labels establish it** — they are a
+  deduction about what Epi Info prints, read from a project synthesized from it, and the field
+  says so.
 - **That the comparison is fair.** The both-companies stratum holds 16 of Snow's 32 sub-districts
   and is **excluded by name, not controlled for**. That is Snow's own confounding and the reason he
   went to the house level. Nothing built here adjusts for anything.
@@ -163,7 +184,9 @@ project would otherwise have shipped in a manual page and repeated out loud to e
 1. Checks 28 and 29 written, so all three operations carry independent evidence rather than one.
 2. `rate` and `case_series` emitting `EpiEstimate`, so the kernel is one vocabulary in fact and not
    only in intent.
-3. The Epi Info labels read off Epi Info and recorded, or the field withdrawn with a reason.
+3. The Epi Info labels read off **Epi Info itself**, upgrading `epiInfoLabelSource` from
+   `epi-info-ai-results-panel` to `epi-info` — at which point the words may or may not change, and
+   either outcome is information. Done 2026-10-26 to the extent a sibling project allows.
 4. A verdict on the three names.
 5. An FETP-trained reader shown the two-by-two and asked what they take each number to be —
    specifically whether they read the denominator without being told to.

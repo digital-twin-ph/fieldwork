@@ -3529,7 +3529,11 @@ function renderMap(){
     svg.style.display='none';$('#map-layer-list').hidden=true;
     disposeCatchmentMap=mountCatchmentMap(host,result.polygons?{...result,polygons:result.polygons}:result,
       result.contextPoints,esc,mapNode?.params.basemap||'none',
-      choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);});
+      choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);},
+      // The node is the view's identity. Without it every presentation change -- and Mark radius
+      // is one -- remounted the map and refitted it, throwing away the pan and zoom the
+      // practitioner had chosen in order to judge the change they were making.
+      mapNode?.id);
     if(result.polygons){
       const method=document.createElement('p');method.className='muted';
       method.textContent=result.polygons.method+' / '+result.polygons.notes.join(' ');

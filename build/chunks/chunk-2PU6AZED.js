@@ -1,2 +1,0 @@
-var u={90:1.6448536269514722,95:1.959963984540054,99:2.5758293035489004},o=[90,95,99];function a(e){let n=u[e];if(n===void 0)throw new Error(`${e}% is not an interval level this computes. It computes ${o.join(", ")}.`);return n}var i=(e,n,l,t,r=null)=>({name:e,value:null,lower:null,upper:null,level:n,method:l,epiInfoLabel:r,unavailable:t,notes:[]}),s=(e,n,l)=>{let t=a(l);return{lower:Math.exp(Math.log(e)-t*n),upper:Math.exp(Math.log(e)+t*n)}};export{u as a,o as b,a as c,i as d,s as e};
-//# sourceMappingURL=chunk-2PU6AZED.js.map

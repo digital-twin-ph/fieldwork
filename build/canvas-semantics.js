@@ -1,2 +1,2 @@
-import{a}from"./chunks/chunk-LHAKMCEZ.js";import"./chunks/chunk-ZKBHUAB6.js";import"./chunks/chunk-KWCDH2VG.js";import"./chunks/chunk-KVMUXFPB.js";export{a as canvasN3};
+import{a}from"./chunks/chunk-556GS5LD.js";import"./chunks/chunk-K2BMLIND.js";import"./chunks/chunk-KWCDH2VG.js";import"./chunks/chunk-KVMUXFPB.js";export{a as canvasN3};
 //# sourceMappingURL=canvas-semantics.js.map

@@ -15,11 +15,23 @@
  *  legacy output labels "Breslow-Day test for Odds". A single `label` field would force a choice
  *  between being correct and being recognisable. Two fields say both.
  *
- *  `epiInfoLabel` IS NULL UNTIL SOMEBODY READS IT OFF EPI INFO. Not because the label does not
- *  matter -- it is the whole recognisability argument -- but because filling it from memory is
- *  how a wrong label enters a teaching context, and the CDC user guide states the statistics in
- *  prose while the layout itself is an image. Verified from the original source or a running Epi
- *  Info, or null. See TODO.md.
+ *  `epiInfoLabel` IS READ OFF A SOURCE OR IT IS NULL. Never filled from memory: that is how a
+ *  wrong label enters a teaching context, and the CDC user guide states the statistics in prose
+ *  while the 2x2 layout itself is an image, so the obvious route is closed.
+ *
+ *  WHICH SOURCE, AND WHY IT IS NAMED SEPARATELY. The practitioner, 2026-10-26: *"The Epi Info
+ *  labels can be deduced from the results panel that Epi Info AI prints. That's the closest I got
+ *  to the real thing."* So the labels now carried here were read from
+ *  `epi-info-ai/wasm/demo/app.ts`, where the classic TABLES results panel builds its estimate
+ *  table from literal strings -- and that is a SIBLING PROJECT'S rendering of Epi Info, not Epi
+ *  Info. The epi kernel it prints was synthesized from the original, which makes it a good
+ *  deduction and not a verification.
+ *
+ *  Hence `epiInfoLabelSource`, beside the label rather than folded into it. A label whose
+ *  provenance is unstated would let a deduced string be read as a verified one, which is the same
+ *  class of error as the Breslow-Day mislabelling this pair of fields exists to survive. The
+ *  receipt writes the source, and a reader can tell "what Epi Info AI prints" from "what Epi Info
+ *  prints" -- two claims that happen to coincide on these four rows and need not in general.
  *
  *  AN ESTIMATE MAY BE UNAVAILABLE WITHOUT THE TABLE BEING UNREADABLE. Snow's Lambeth-only
  *  stratum has 18 deaths and a defined risk ratio; a stratum with zero would not, while its risk
@@ -57,17 +69,31 @@ export interface EpiEstimate {
   /** The interval method by its real name -- `Katz log`, `Wald log`, `Wald unpooled`. Stated even
    *  when the value is null, so a reader can tell "not computed" from "computed differently". */
   method:string;
-  /** What Epi Info displays for the same quantity, or null when nobody has verified it. */
+  /** What Epi Info displays for the same quantity, or null when no source has been read for it. */
   epiInfoLabel:string|null;
+  /** Where that label was read from. Never omitted when a label is present: a deduced label and a
+   *  verified one are different claims, and only this field tells them apart. */
+  epiInfoLabelSource:EpiInfoLabelSource|null;
   /** Why this estimate has no value, when it has none. Null when it does. */
   unavailable:string|null;
   /** Said with the estimate rather than left for a venue. */
   notes:string[];
 }
 
+/** The sources a label may come from, narrowest claim first.
+ *
+ *  `epi-info-ai-results-panel` is a deduction from a sibling project's rendering;
+ *  `epi-info` would be the original's own output, which nobody here has read. Keeping them as
+ *  separate values rather than one boolean means upgrading a label later is a change of value and
+ *  not a change of meaning. */
+export const EPI_INFO_LABEL_SOURCES=['epi-info-ai-results-panel','epi-info'] as const;
+export type EpiInfoLabelSource=typeof EPI_INFO_LABEL_SOURCES[number];
+
 export const estimateUnavailable=(name:string,level:IntervalLevel,method:string,reason:string,
-  epiInfoLabel:string|null=null):EpiEstimate=>
-  ({name,value:null,lower:null,upper:null,level,method,epiInfoLabel,unavailable:reason,notes:[]});
+  epiInfoLabel:string|null=null,
+  epiInfoLabelSource:EpiInfoLabelSource|null=null):EpiEstimate=>
+  ({name,value:null,lower:null,upper:null,level,method,epiInfoLabel,epiInfoLabelSource,
+    unavailable:reason,notes:[]});
 
 /** A ratio's interval on the log scale, back-transformed: the shape every ratio here shares.
  *

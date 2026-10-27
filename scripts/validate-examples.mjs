@@ -42,6 +42,7 @@
  */
 import {readFileSync,existsSync,statSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {gunzipSync} from 'node:zlib';
 import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
 
@@ -85,6 +86,48 @@ for(const example of pinned(catalog)){
     if(file.sha256&&file.sha256!==sha256)
       problems.push(`${name}: ${file.path} hashes to ${sha256.slice(0,12)}… and the catalogue pins `
         +`${file.sha256.slice(0,12)}….`);
+  }
+
+  // THE DECLARED NODE TYPES, against the bundle that is pinned.
+  //
+  // `widgets/evidence.json` counts example use, and until 2026-10-27 it counted only the examples
+  // COMPILED INTO the application -- so every widget the South London bundle exercises read as
+  // used by nothing. `join_table_to_area` sat at "declared only" while the pinned bundle shipped a
+  // working choropleth built on it, which is the reverse of what that ledger is for.
+  //
+  // The fix cannot be "let the generator read the clone": a generated file whose contents depend
+  // on what somebody happens to have cloned is not a measurement, and the gate would then disagree
+  // between machines. So the catalogue DECLARES the node types and the generator reads the
+  // declaration; this recomputes it from the bundle wherever the checkout exists, so the
+  // declaration cannot drift from the bytes it describes.
+  if(Array.isArray(example.uses)){
+    const bundlePath=example.files.find(f=>f.path.endsWith('fieldwork-project.json.gz'))?.path;
+    const full=bundlePath&&join(checkout,bundlePath);
+    if(full&&existsSync(full)){
+      let bundle;
+      try{bundle=JSON.parse(gunzipSync(readFileSync(full)));}
+      catch(error){problems.push(`${name}: ${bundlePath} could not be read as a gzipped project `
+        +`document (${error.message}), so the declared node types could not be checked.`);bundle=null;}
+      if(bundle){
+        const found=[...new Set((bundle.workflows??[]).flatMap(w=>
+          (w.document?.nodes??[]).map(n=>n.type)))].sort();
+        const declared=[...example.uses].sort();
+        const missing=found.filter(t=>!declared.includes(t));
+        const phantom=declared.filter(t=>!found.includes(t));
+        if(missing.length||phantom.length)
+          problems.push(`${name}: the catalogue's "uses" does not match the pinned bundle. `
+            +`${missing.length?`The bundle instantiates ${missing.join(', ')} and the catalogue does not list `
+              +`${missing.length===1?'it':'them'}. `:''}`
+            +`${phantom.length?`The catalogue lists ${phantom.join(', ')} and the bundle instantiates `
+              +`${phantom.length===1?'it':'them'} nowhere. `:''}`
+            +'widgets/evidence.json counts example use from this list, so a wrong entry here is a '
+            +'wrong claim about which widgets have evidence.');
+        const workflows=(bundle.workflows??[]).length;
+        if(example.workflowCount!==undefined&&example.workflowCount!==workflows)
+          problems.push(`${name}: the catalogue says ${example.workflowCount} workflows and the `
+            +`pinned bundle carries ${workflows}.`);
+      }
+    }
   }
 
   let head;

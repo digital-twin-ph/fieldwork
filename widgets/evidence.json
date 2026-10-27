@@ -1,6 +1,6 @@
 {
  "schema": "fieldwork/widget-evidence/1",
- "measuredAt": "2026-10-12",
+ "measuredAt": "2026-10-27",
  "examplesShipped": [
   "coverage",
   "hagelloch",
@@ -14,6 +14,9 @@
   "snow-isochrone",
   "snow-voronoi"
  ],
+ "examplesPinned": [
+  "south-london-1854"
+ ],
  "ladder": [
   "declared only",
   "example only",
@@ -23,14 +26,14 @@
   "field use — nothing has this yet"
  ],
  "weakest": "exampleUseCount 0 and a lab check still owed. That is the bottom of the ladder and the population the pending exemption is about.",
- "note": "Derived by scripts/widget-evidence.mjs from the shipped example workflows and widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a micro_workflow node is its members. Field use is declared and empty: an empty top rung is a measurement, a missing one is a flattering omission.",
+ "note": "Derived by scripts/widget-evidence.mjs from the shipped example workflows, the node types declared for each pinned worked example in widgets/examples.json, and widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a micro_workflow node is its members. A pinned example in its own repository counts as one example use like any other, and is read from the catalogue declaration rather than from a clone, so this file does not depend on what any machine happens to have checked out. Field use is declared and empty: an empty top rung is a measurement, a missing one is a flattering omission.",
  "counts": {
-  "declared only": 5,
-  "example only": 10,
-  "parity only": 14,
-  "example, lab not applicable": 10,
-  "example+parity": 11,
-  "neither applies": 2
+  "declared only": 2,
+  "example only": 13,
+  "parity only": 10,
+  "example, lab not applicable": 11,
+  "example+parity": 15,
+  "neither applies": 1
  },
  "compositionsUsedByNoExample": [
   "compute_walking_catchment"
@@ -178,12 +181,14 @@
   },
   {
    "nodeType": "derive_value",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
-   "rung": "declared only"
+   "rung": "example only"
   },
   {
    "nodeType": "donut_geomask",
@@ -240,12 +245,14 @@
   },
   {
    "nodeType": "group_table",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "parity only"
+   "rung": "example+parity"
   },
   {
    "nodeType": "isochrone",
@@ -260,12 +267,14 @@
   },
   {
    "nodeType": "join_table_to_area",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
-   "rung": "declared only"
+   "rung": "example only"
   },
   {
    "nodeType": "map_output",
@@ -280,9 +289,10 @@
     "snow-extent",
     "snow-geoprivacy",
     "snow-isochrone",
-    "snow-voronoi"
+    "snow-voronoi",
+    "south-london-1854"
    ],
-   "exampleUseCount": 11,
+   "exampleUseCount": 12,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -384,21 +394,25 @@
   },
   {
    "nodeType": "rate",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
-   "rung": "declared only"
+   "rung": "example only"
   },
   {
    "nodeType": "rate_ratio",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "parity only"
+   "rung": "example+parity"
   },
   {
    "nodeType": "reachable_corridor",
@@ -420,12 +434,14 @@
   },
   {
    "nodeType": "relate_table",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "parity only"
+   "rung": "example+parity"
   },
   {
    "nodeType": "reproject",
@@ -450,12 +466,14 @@
   },
   {
    "nodeType": "select_rows",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "neither applies"
+   "rung": "example, lab not applicable"
   },
   {
    "nodeType": "slr_site_assignment",
@@ -506,9 +524,10 @@
     "sea-level",
     "snow-geoprivacy",
     "snow-isochrone",
-    "snow-voronoi"
+    "snow-voronoi",
+    "south-london-1854"
    ],
-   "exampleUseCount": 9,
+   "exampleUseCount": 10,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -553,9 +572,10 @@
     "sea-level",
     "snow-extent",
     "snow-isochrone",
-    "snow-voronoi"
+    "snow-voronoi",
+    "south-london-1854"
    ],
-   "exampleUseCount": 5,
+   "exampleUseCount": 6,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -572,9 +592,10 @@
     "snow-extent",
     "snow-geoprivacy",
     "snow-isochrone",
-    "snow-voronoi"
+    "snow-voronoi",
+    "south-london-1854"
    ],
-   "exampleUseCount": 9,
+   "exampleUseCount": 10,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -602,12 +623,14 @@
   },
   {
    "nodeType": "two_by_two",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "parity only"
+   "rung": "example+parity"
   },
   {
    "nodeType": "voronoi",

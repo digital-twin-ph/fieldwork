@@ -727,6 +727,44 @@
           "found": "Stated and measured the same day. Audit above. map_image_input, built hours earlier, already carries source {title,url,licence,note} and is the only one whose shape was designed for this question -- which is why it reads as the model rather than as the exception. Nothing else changed yet."
         }
       ]
+    },
+    {
+      "id": "the-practitioner-sees-their-data-not-our-description-of-it",
+      "stated": "2026-10-27",
+      "statedBy": "the practitioner",
+      "inTheirWords": "Epidemiologists will not open a JSON blob, that is friction for them. ... And the N3 receipts is the same thing, we are the only ones that would care to look at it so at some point we will make that inconspicuous as well.",
+      "requiresInCode": "No surface a practitioner meets in the ordinary course of work presents a serialisation of the application state as its primary content. At an import this means their own rows, before and after, with the reconciliation stated in words and numbers. Developer-facing records -- N3 receipts above all -- remain reachable and stop being prominent.",
+      "recordedIn": [
+        "docs/experiments/48-tabular-input.md"
+      ],
+      "workItem": "data-table-ui.ts and raster-ui.ts are the two user-facing JSON blobs, both at an import, audited 2026-10-27. The N3 surfaces are a separate and later pass, deferred by the practitioner.",
+      "status": "open",
+      "lastChecked": "2026-10-27",
+      "checks": [
+        {
+          "date": "2026-10-27",
+          "found": "Audited every JSON.stringify reaching a practitioner: exactly two, data-table-ui.ts:167,179 (table import, both the wide and long paths) and raster-ui.ts:21 (raster import). Everywhere else it is an internal baseline comparison and never displayed. Both are at the moment a file enters, which the practitioner names as the most consequential point: “Data quality is the most consequential upstream lever to a high quality downstream analysis.” The table one is being replaced now; the raster one and the N3 surfaces are not."
+        }
+      ]
+    },
+    {
+      "id": "fetp-trainees-bring-line-lists",
+      "stated": "2026-10-27",
+      "statedBy": "the practitioner",
+      "inTheirWords": "If epidemiologists will use FW, their data would almost always, 99.99% be wide. ... I am sad to say we modeled that incorrectly. FETP trainees deal with linelists, CSVs and Excel documents.",
+      "requiresInCode": "A line list can be imported: one row per CASE, columns of mixed type -- dates, categories, booleans, free text, numbers -- with no numeric value column and no coordinates required. Today neither door admits one. `table_input` refuses a nonnumeric value, and `csvPoints` refuses a mapping without distinct longitude and latitude columns, so a CSV of cases cannot enter the application at all.",
+      "recordedIn": [
+        "docs/experiments/48-tabular-input.md"
+      ],
+      "workItem": "Not yet scoped. The practitioner asked for no experiment record: the gap is a defect to close rather than a question to study.",
+      "status": "open",
+      "lastChecked": "2026-10-27",
+      "checks": [
+        {
+          "date": "2026-10-27",
+          "found": "Two doors, both shut. `table_input` melts to a keyed table whose value must be numeric -- data-table.ts refuses a nonnumeric cell by row and column -- so a line list could only enter by declaring every column but one as a key, which describes no line list. `point_input` reads CSV through `csvPoints`, which throws “Select distinct longitude and latitude columns” unless both are named; individual ROWS may lack coordinates, but the file must have the columns. So the shape FETP trainees actually carry has no path in. The wide finding stands and was the wrong half of the problem: a line list is wide, and what makes it a line list is that a row is a CASE and the columns are mixed-type attributes, not measures over a subject."
+        }
+      ]
     }
   ]
 }

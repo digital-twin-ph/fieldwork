@@ -40,8 +40,23 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   // The value column is proposed, not assumed: the remaining columns become the key.
   await expect(page.locator('#table-value')).toHaveValue('value_m');
   await expect(page.locator('#table-status')).toContainText('6 rows, 4 key columns, 1 values absent');
-  await expect(page.locator('#table-preview')).toContainText('"unit": "(unstated)"');
-  await expect(page.locator('#table-preview')).toContainText('"scenario": 2');
+
+  // WHAT THE PRACTITIONER SEES IS THEIR OWN DATA, before and after, not a description of the
+  // reading. These assertions stood on `#table-preview`, a collapsed <details> holding
+  // `JSON.stringify({sourceFile, readAs, subjectKeys, ...})`, and passed for as long as the blob
+  // contained the right words. "Epidemiologists will not open a JSON blob, that's friction for
+  // them" -- 2026-10-27.
+  await expect(page.locator('#table-check')).toBeVisible();
+  // Before: the file's own headers and its own cells.
+  await expect(page.locator('#table-before')).toContainText('ph-slr-psgc.csv');
+  await expect(page.locator('#table-before')).toContainText('psgc_code');
+  await expect(page.locator('#table-before')).toContainText('value_m');
+  // After: the table that will be imported.
+  await expect(page.locator('#table-after table')).toBeVisible();
+  // And the reconciliation, in numbers a reader can check against the two panes.
+  await expect(page.locator('#table-reconcile')).toContainText('6 rows');
+  await expect(page.locator('#table-reconcile')).toContainText('already long');
+  await expect(page.locator('#table-reconcile')).toContainText('No unit stated');
 
   // Dropping a key column makes the remaining key repeat, which is refused rather than
   // collapsed: two different projections would otherwise share one row.
@@ -53,7 +68,7 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
 
   await page.locator('#table-unit').fill('metre');
   await page.locator('#table-unit').blur();
-  await expect(page.locator('#table-preview')).toContainText('"unit": "metre"');
+  await expect(page.locator('#table-reconcile')).toContainText('in metre, as you stated it');
 
   await page.locator('#table-save').click();
   await expect(page.locator('#table-dialog')).toBeHidden();

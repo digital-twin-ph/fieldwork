@@ -644,3 +644,26 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .crosstab th[scope="col"]:first-child{text-align:left}
 .crosstab tfoot th,.crosstab tfoot td,.crosstab .crosstab-total{font-weight:600;
   border-top:1px solid var(--line)}
+
+/* THE FILE AS PUBLISHED, BESIDE THE TABLE IT BECOMES. Shown at the import, because that is where
+   the practitioner can still change their mind and because a description of the reading is not
+   evidence about the data. The two panes are deliberately not alike: the Before is the file as a
+   reader of the file sees it, and the After is a crosstab, so a measure under the wrong name or a
+   variable merged with another shows up as a wrong or missing column rather than as prose. */
+#table-check{margin:12px 0;padding-top:4px;border-top:1px solid var(--line)}
+#table-check h3{margin:12px 0 4px}
+#table-before table{border-collapse:collapse;font-size:13px}
+#table-before th,#table-before td{border:1px solid var(--line);padding:3px 8px;
+  text-align:left;white-space:nowrap}
+#table-before th{vertical-align:top;font-weight:600}
+#table-before .role-note{display:block;font-weight:400;font-size:11px}
+/* Role, not decoration: a column the selection does not take is dropped by decision, and the one
+   failure nobody notices is a column quietly left behind. */
+#table-before .role-key{background:var(--surface-tint)}
+#table-before .role-untaken{opacity:.45;text-decoration:line-through}
+#table-before .role-untaken .role-note{text-decoration:none}
+.table-scroll{overflow-x:auto;max-width:100%}
+.table-meta{font-size:12px;margin:0 0 4px}
+#table-after .crosstab,#table-after table{font-size:13px}
+#table-reconcile{margin:10px 0 0;padding-left:18px;font-size:13px;line-height:1.6}
+#table-reconcile strong{font-weight:600}

@@ -13,8 +13,13 @@ test('legacy map/table outputs normalize idempotently and retain the reasoning d
   // rather than the only one a decisions-mode map has.
   const mapPorts=nodeInputs(w.nodes.find(n=>n.id==='map'));
   assert.ok(mapPorts.some(([name,type])=>name==='decisions'&&type==='decisions'));
-  // Seven, not eight: the `coverage` port left with `coverage_check` on 2026-10-21.
-  assert.equal(mapPorts.length,7);
+  // Seven became eight on 2026-10-27: `ground` arrived with map_image_input, so a map can be
+  // given a georeferenced plate to draw beneath everything. The count is asserted rather than
+  // ranged because a port appearing or vanishing unnoticed is how `coverage` was found still
+  // declared after the widget that produced it had been retired.
+  assert.equal(mapPorts.length,8);
+  assert.ok(mapPorts.some(([name,type])=>name==='ground'&&type==='ground'));
+  // Seven until then: the `coverage` port left with `coverage_check` on 2026-10-21.
   assert.equal(mapPorts.some(([name])=>name==='coverage'),false);
   assert.deepEqual(validateWorkflow(w),w);
   // Points alongside decisions used to be refused as Incompatible, because a decisions-mode map

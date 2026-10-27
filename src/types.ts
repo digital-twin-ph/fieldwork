@@ -149,7 +149,7 @@ export interface ParamsByType {
   donut_geomask:{label:string;innerM:number;outerM:number;seed:number};
   aggregate_points_to_h3_cell:{label:string;resolution:number;minOccupancy:number};
   buffer_area:{label:string;distanceM:number};
-  table_input:{label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;dataRef?:string;source?:import('./data-table.js').DataTableSource;
+  table_input:{provenance?:import('./input-provenance.js').InputProvenance;label:string;keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;dataRef?:string;source?:import('./data-table.js').DataTableSource;
     /** Key columns whose DISTINCT values this input derives and carries.
      *
      *  P3 of experiment 115: the distinct values are a knob on the input widget, not a
@@ -313,7 +313,7 @@ export interface ParamsByType {
    *  raise the pause: the module takes the longest of the 60-second floor, the volume a response
    *  actually cost, and this. Being more respectful of a public service is always permitted;
    *  being less is not. */
-  network_input:{label:string;data:import('./catchments.js').Network;dataRef?:string;inputMethod?:'osm'|'file'|'extract';marginM?:number;maxNodes?:number;pauseSeconds?:number;travelMode?:import('./catchments.js').NetworkTravelMode};
+  network_input:{provenance?:import('./input-provenance.js').InputProvenance;label:string;data:import('./catchments.js').Network;dataRef?:string;inputMethod?:'osm'|'file'|'extract';marginM?:number;maxNodes?:number;pauseSeconds?:number;travelMode?:import('./catchments.js').NetworkTravelMode};
   voronoi:{label:string;zone:number;hemisphere:'north'|'south'};
   isochrone:{label:string;zone:number;hemisphere:'north'|'south';minutes:number;thresholds?:number[];fillHoles?:boolean;speedMPerMin:number;bufferM:number;maxSnapM:number;direction:'inbound'|'outbound'};
   clip_polygons:{label:string};
@@ -324,7 +324,7 @@ export interface ParamsByType {
   join_table_to_area:{label:string;keyField:string;normalisation:'exact'|'fuzzy'};
   /** `populationYear` is which published WorldPop year the download button offers; it chooses a
    *  link, never the data, which arrives only when a file is prepared. */
-  raster_input:{label:string;asset?:import('./raster.js').RasterAsset;populationYear?:string;
+  raster_input:{provenance?:import('./input-provenance.js').InputProvenance;label:string;asset?:import('./raster.js').RasterAsset;populationYear?:string;
     /** Which country's population surface the download button offers, when the study area does
      *  not state one. It chooses a link, never the data. */
     populationCountry?:string};

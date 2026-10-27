@@ -135,6 +135,25 @@ fw:northBound a owl:DatatypeProperty; rdfs:range xsd:decimal.
 fw:layerRole a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "What a drawn layer is for. \"context\" means it may not be measured or joined to.".
 
+# WHERE AN INPUT CAME FROM AND WHAT IT MAY BE USED FOR, asserted on the input that incurs it.
+# The practitioner's rule of 2026-10-27: all inputs carry their provenance and licence with them.
+# Before this, a figure decided whether to credit OpenStreetMap by testing whether its method
+# description contained the word "Dijkstra" -- an obligation discharged by substring-matching a
+# sentence written for a human to read.
+fw:licence a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "An SPDX identifier, \"none-applies\" where a positive claim is made that no terms attach, or \"unstated\" where nobody has said. Never blank: the three are different claims and a blank field has been read as all of them.".
+fw:licenceSource a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "Where the licence was read, so a reader can check the claim rather than trust it.".
+fw:requiredAttribution a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The exact text a figure redistributing this data must carry.".
+fw:shareAlike a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:comment "Whether the licence carries its terms onward to derived work. Absent where the licence is one nobody has encoded, which is not the same as false.".
+fw:describedAs a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:retrievedFrom a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:retrievedAt a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:represents a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The period the data represents, which is not when it was retrieved: a boundary fetched in 2026 may represent 1855.".
+
 fw:matchedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:outsideRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:multipleMembershipCount a owl:DatatypeProperty; rdfs:range xsd:integer.

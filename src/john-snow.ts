@@ -107,7 +107,16 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
       +'2nd ed., 1855, as digitised by Robin Wilson (blog.rtwilson.com/john-snows-cholera-data-in-more-formats). '
       +'Drawn in CRS84; see the run receipt for method and versions.',
     showLegend:true}});
-  if(iso)nodes.push({id:'network',type:'network_input',x:20,y:390,params:{label:'Soho OSM network snapshot',inputMethod:'file',marginM:250,data:structuredClone(graph)},references:[reference('network-source','Soho saved GraphML',isoSource+'outputs/soho.graphml','data','OpenStreetMap contributors, ODbL. Extraction date unknown. 738 nodes / 1619 directed edges; not a reconstructed 1854 network.')]});
+  if(iso)nodes.push({id:'network',type:'network_input',x:20,y:390,params:{label:'Soho OSM network snapshot',
+      // THE OBLIGATION TRAVELS WITH THE DATA, from 2026-10-27. `data.source` has said
+      // "OpenStreetMap contributors" in prose since this example was written, and a figure used
+      // to decide whether to credit them by testing its own method description for the word
+      // "Dijkstra". The licence is declared here instead, so the credit follows the data rather
+      // than a sentence somebody might reword.
+      provenance:{licence:'ODbL-1.0',source:'OpenStreetMap contributors',
+        what:'Soho street graph, GraphML snapshot from the PHI case study',
+        licenceSource:'https://www.openstreetmap.org/copyright',
+        note:'Date of OSM extraction unknown; this is a present-day graph and not an 1854 street reconstruction.'},inputMethod:'file',marginM:250,data:structuredClone(graph)},references:[reference('network-source','Soho saved GraphML',isoSource+'outputs/soho.graphml','data','OpenStreetMap contributors, ODbL. Extraction date unknown. 738 nodes / 1619 directed edges; not a reconstructed 1854 network.')]});
   if(iso){
     const study=nodes.find(n=>n.id==='study')!;if(study.type==='study_area')study.params={source:'drawn',label:'Soho isochrone reporting extent (illustrative)',selectionMode:'bbox',geometry:{type:'Polygon',coordinates:[[[-.155,51.502],[-.119,51.502],[-.119,51.525],[-.155,51.525],[-.155,51.502]]]}};
     nodes.push({id:'context-pumps',type:'point_input',x:910,y:450,params:{label:'All eight pumps (map context)',data:{type:'FeatureCollection',features:pumps}},references:structuredClone(nodes.find(n=>n.id==='pumps')!.references)});

@@ -105,14 +105,32 @@ test('the exported map carries title, legend, scale bar, north arrow and attribu
 });
 
 test('the attribution is derived from the data, not left to be typed', ()=>{
-  const workflow=johnSnowExample('snow-voronoi');
-  const node=workflow.nodes.find(n=>n.id==='map');
-  // Straight-line catchments touch no street network, so there is no ODbL obligation to assert.
-  const voronoi={polygons:{features:[{id:'c',name:'Broad Street'}],sites:[],method:'Half-plane intersection',notes:[]}};
-  assert.equal(mapPresentation(node,voronoi,workflow).attribution,'');
-  // A network-derived region carries one whether or not anybody remembered.
-  const network={polygons:{features:[{id:'c',name:'5 min',minutes:5}],sites:[],method:'Dijkstra outbound',notes:[]}};
-  assert.match(mapPresentation(node,network,workflow).attribution,/ODbL/);
+  // REWRITTEN 2026-10-27, and the old version is why. It asserted that a result whose METHOD
+  // DESCRIPTION contained the word "Dijkstra" carried an ODbL credit -- which is how the
+  // application decided it, by substring-matching a sentence written for a human to read.
+  // Rewording that sentence to "shortest path" would have taken the credit off a figure still
+  // redistributing OSM geometry: a licence breach by copy-edit. The practitioner's rule of the
+  // same day -- "all inputs should carry their provenance and license data with them" -- is what
+  // replaced it, and this now tests the mechanism the test was always named for.
+  const method=label=>({polygons:{features:[{id:'c',name:'5 min',minutes:5}],sites:[],method:label,notes:[]}});
+
+  // NO OSM DATA IN THE GRAPH, SO NO CREDIT -- even when the method says Dijkstra. The old
+  // version asserted the opposite, and would have credited OpenStreetMap for a figure drawn
+  // entirely from straight lines.
+  const voronoi=johnSnowExample('snow-voronoi');
+  const voronoiMap=voronoi.nodes.find(n=>n.id==='map');
+  assert.equal(mapPresentation(voronoiMap,method('Half-plane intersection'),voronoi).attribution,'');
+  assert.equal(mapPresentation(voronoiMap,method('Dijkstra outbound'),voronoi).attribution,'',
+    'a method description is not a licence');
+
+  // OSM DATA IN THE GRAPH, SO A CREDIT -- even when the method says nothing about it, and even
+  // though the network reaches the map through snap, reachable junctions and a corridor rather
+  // than directly. An obligation is incurred by USING data, so it travels the whole way.
+  const iso=johnSnowExample('snow-isochrone');
+  const isoMap=iso.nodes.find(n=>n.id==='map');
+  assert.match(mapPresentation(isoMap,method('Half-plane intersection'),iso).attribution,/ODbL/,
+    'the street network declares ODbL and the figure carries it however the method is worded');
+  assert.match(mapPresentation(isoMap,method('Dijkstra outbound'),iso).attribution,/OpenStreetMap/);
 });
 
 test('the map and the chart beside it agree about colour and type', ()=>{

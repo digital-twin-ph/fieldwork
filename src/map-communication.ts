@@ -2,6 +2,7 @@ import type {Output,Receipt} from './results.js';
 import {outputOf} from './core.js';
 import type {WorkflowNode,Workflow} from './types.js';
 import {basemapAvailable} from './basemaps.js';
+import {attributionsFor,provenanceOf} from './input-provenance.js';
 import type {LayerShape} from './presentation.js';
 import {markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
@@ -116,9 +117,43 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
     // OpenTopoMap is a style over OSM data under a different licence, so crediting it as
     // OpenStreetMap alone -- which this did until 2026-10-14 -- under-credits the style.
     basemap==='topo'?'Basemap style © OpenTopoMap, CC-BY-SA; data © OpenStreetMap contributors, ODbL':'',
-    output.polygons?.method?.includes('Dijkstra')||output.polygons?.notes?.some(n=>n.includes('OSM'))
-      ?'Street network © OpenStreetMap contributors, ODbL':'',
   ].filter(Boolean);
+  // EVERY INPUT'S OWN OBLIGATION, read from the node that incurs it.
+  //
+  // This line used to be here instead:
+  //
+  //     output.polygons?.method?.includes('Dijkstra') ? 'Street network © OpenStreetMap...' : ''
+  //
+  // An ODbL attribution discharged by substring-matching a sentence written for a human to read.
+  // Rewording that method description to "shortest path" would have taken the credit off a figure
+  // that went on redistributing OSM-derived geometry -- a licence breach by copy-edit. The
+  // practitioner's rule of 2026-10-27, "all inputs should carry their provenance and license data
+  // with them", is what replaces it: the obligation travels with the data, and a figure reads it
+  // rather than guessing at it.
+  //
+  // Every node upstream of this map, not only the ones whose ports this mode happened to draw:
+  // a licence obligation is incurred by USING data, and a map that drew a layer owes its terms
+  // whether or not the mode kept that layer in the value.
+  // EVERY ANCESTOR, not every neighbour. A licence obligation is incurred by USING data, and a
+  // street network reaches a map through snap, reachable junctions and a corridor -- none of
+  // which declares a licence, because none of them is the source. Reading only the map's direct
+  // inputs would credit nobody for a figure drawn entirely from OSM geometry, which is the
+  // failure the Dijkstra test was papering over.
+  const ancestors=new Map<string,typeof workflow.nodes[number]>();
+  const walk=(id:string,seen=new Set<string>()):void=>{
+    if(seen.has(id))return;
+    seen.add(id);
+    for(const edge of workflow.edges.filter(e=>e.to===id)){
+      const from=workflow.nodes.find(n=>n.id===edge.from);
+      if(from&&!ancestors.has(from.id))ancestors.set(from.id,from);
+      walk(edge.from,seen);
+    }
+  };
+  walk(node.id);
+  const upstreamNodes=[...ancestors.values()];
+  for(const text of attributionsFor(upstreamNodes.map(n=>
+    provenanceOf(n!.params as unknown as Record<string,unknown>))))
+    if(!credits.includes(text))credits.push(text);
   return {title:node.params.mapTitle?.trim()||node.params.label,subtitle:node.params.mapSubtitle?.trim()||'',sourceNote,legend:node.params.showLegend!==false,items,presentation:interactive?'interactive':'plot',basemap,
     attribution:credits.join(' · ')};
 }

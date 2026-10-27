@@ -86,7 +86,8 @@ import {rasteriseFigure,FIGURE_PIXEL_SCALE} from './figure-export.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
 import {populationRastersForCountry,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
 import type {BoundaryProvenance} from './types.js';
-import {basemapAvailable} from './basemaps.js';
+import {basemapAvailable,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM} from './basemaps.js';
+import {naturalEarthMarkup,NATURAL_EARTH,NATURAL_EARTH_CREDIT} from './natural-earth.js';
 import {openTableEditor,dataTableMarkup} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
@@ -122,7 +123,7 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label><input id="map-legend-toggle" type="checkbox" ${p.showLegend!==false?'checked':''}> Show map key</label>
     <label><input id="map-halo-toggle" type="checkbox" ${p.markHalo!==false?'checked':''}> Dark outline on point symbols</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
-    <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap,p.presentation==='interactive'?'interactive':'plot')}</select>
+    <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap,p.presentation==='interactive'?'interactive':'plot',workflowSpanKm())}</select>
     <p class="description">A basemap is layer 0, under everything the workflow produced.${p.presentation==='interactive'?'':' OpenStreetMap and OpenTopoMap are drawn into the figure itself. The OpenFreeMap styles are vector, so they move this map to the interactive presentation.'}</p>
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
 }
@@ -1506,6 +1507,29 @@ function labelForm(id:string,caption:string,value:string,maxLength=60):string{
     +`<input id="${id}" maxlength="${maxLength}" value="${esc(value)}">`
     +`<button type="submit" class="button small">Apply label</button></form>`;
 }
+/** HOW BROAD THIS WORKFLOW'S STUDY AREA IS, in kilometres, or undefined when nothing says.
+ *
+ *  Decides which basemaps are worth offering: the practitioner's rule of 2026-10-27, *"the
+ *  breadth of the study area should dictate the type of basemap used"*. Measured from the
+ *  coordinates the workflow actually carries -- `workflowPositions` is the same derivation the
+ *  UTM advice uses, so the two cannot disagree about where the work is.
+ *
+ *  Undefined rather than zero when there are no coordinates yet: a canvas being built has no
+ *  breadth, and withholding a choice because nothing has been measured is guessing in the other
+ *  direction. */
+function workflowSpanKm():number|undefined{
+  const positions=workflowPositions(workflow);
+  if(!positions.length)return undefined;
+  let west=Infinity,south=Infinity,east=-Infinity,north=-Infinity;
+  for(const [lon,lat] of positions){
+    if(!Number.isFinite(lon)||!Number.isFinite(lat))continue;
+    west=Math.min(west,lon);east=Math.max(east,lon);
+    south=Math.min(south,lat);north=Math.max(north,lat);
+  }
+  if(!Number.isFinite(west)||!Number.isFinite(south))return undefined;
+  return extentSpanKm([west,south,east,north]);
+}
+
 function renderInspector(){
   if(selected?.startsWith('result:')){renderEvidence(selected.slice(7));return;}
   if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><span class="inspector-section">Developmental evaluation · step 1</span><h2>Define the study area</h2><p class="description">Add Study area, then select the node to draw a bounding box or polygon on an online map.</p><div class="rule-preview">Predict what the selection will produce, inspect the N3 facts, then run the readiness rule.</div><p class="muted">Your other worked examples remain saved separately.</p></div>';return;}
@@ -3431,8 +3455,26 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
     ??runWorkflow?.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result.nodeId&&n.type==='map_output'));
   const choice=node?.params.basemap;
   if(!node||!choice||choice==='none')return;
-  const provider=choice==='osm'||choice==='topo'?TILE_PROVIDERS[choice]:undefined;
   const note=$('#map-panel').querySelector('#map-note');
+  // THE BUNDLED OUTLINE, which needs no network and no provider. Drawn in the figure's own
+  // projection: a coastline is lon/lat points and goes through `project` like every other layer,
+  // which is why it sidesteps the Mercator mismatch a raster tile forces.
+  if(choice==='natural-earth-110m'){
+    const {markup,drawn}=naturalEarthMarkup(frame.bounds,frame.project);
+    const background=[...svg.children].find(child=>child.tagName.toLowerCase()==='rect');
+    if(markup){
+      if(background)background.insertAdjacentHTML('afterend',markup);
+      else svg.insertAdjacentHTML('afterbegin',markup);
+      for(const shape of svg.querySelectorAll('[data-fill-role="context"]'))shape.setAttribute('fill','none');
+    }
+    if(note)note.textContent=drawn
+      ?`${NATURAL_EARTH_CREDIT} \u00b7 ${drawn} shapes drawn into this figure. Context only: these `
+        +'lines are generalised to kilometres and are not a frame to measure or report by.'
+      :`${NATURAL_EARTH_CREDIT} covers no land inside this extent, so this figure has no ground `
+        +'under it.';
+    return;
+  }
+  const provider=choice==='osm'||choice==='topo'?TILE_PROVIDERS[choice]:undefined;
   if(!provider){
     if(note)note.textContent=`${BASEMAP_OPTIONS.find(o=>o.value===choice)?.label||choice} is drawn from vector tiles, which this `
       +'static plot cannot bake in. Choose OpenStreetMap or OpenTopoMap here, or the interactive presentation for that style.';

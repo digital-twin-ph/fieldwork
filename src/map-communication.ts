@@ -107,6 +107,11 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
   // Derived, not authored: a basemap carries an obligation the practitioner cannot opt out of by
   // leaving a field blank, and a street network reached this figure through an ODbL download.
   const credits=[
+    // Public domain, so no licence COMPELS this line. It is here because a reader of a figure is
+    // entitled to know which ground it was drawn on and how generalised it is, which is a
+    // different obligation from the ODbL one and is not discharged by the absence of a licence.
+    basemap==='natural-earth-110m'
+      ?'Ground: Natural Earth 1:110m, public domain · context only, generalised to kilometres':'',
     basemap==='osm'?'Basemap © OpenStreetMap contributors, ODbL':'',
     // OpenTopoMap is a style over OSM data under a different licence, so crediting it as
     // OpenStreetMap alone -- which this did until 2026-10-14 -- under-credits the style.

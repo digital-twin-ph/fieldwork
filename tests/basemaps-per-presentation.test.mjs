@@ -16,16 +16,23 @@ import {BASEMAP_CHOICES,VECTOR_BASEMAP_CHOICES,basemapsFor,basemapAvailable,
   isVectorBasemapChoice,basemapOptions,BASEMAP_LABELS} from '../build/basemaps.js';
 
 test('a static figure is offered the raster basemaps and no vector style',()=>{
-  assert.deepEqual([...basemapsFor('plot')],['none','osm','topo']);
+  // Natural Earth is here too when the breadth allows it; the vector styles never are.
+  assert.deepEqual([...basemapsFor('plot',1000)],['none','osm','topo','natural-earth-110m']);
+  assert.deepEqual([...basemapsFor('plot',1)],['none','osm','topo']);
   assert.ok(basemapAvailable('osm','plot'));
   assert.ok(basemapAvailable('none','plot'));
   for(const choice of VECTOR_BASEMAP_CHOICES)
     assert.ok(!basemapAvailable(choice,'plot'),`${choice} cannot be baked into an SVG`);
 });
 
-test('an interactive map is offered every choice',()=>{
-  assert.deepEqual([...basemapsFor('interactive')],[...BASEMAP_CHOICES]);
-  for(const choice of BASEMAP_CHOICES)assert.ok(basemapAvailable(choice,'interactive'));
+test('an interactive map is offered every live choice',()=>{
+  // Every choice it can actually draw: all the tile basemaps, raster and vector. Natural Earth
+  // is bundled FOR A STATIC FIGURE -- an interactive map reaches live tiles and has no use for a
+  // 1:110m outline, so it is the one choice this list does not carry.
+  assert.deepEqual([...basemapsFor('interactive')],
+    BASEMAP_CHOICES.filter(c=>c!=='natural-earth-110m'));
+  for(const choice of BASEMAP_CHOICES)
+    assert.equal(basemapAvailable(choice,'interactive'),choice!=='natural-earth-110m');
 });
 
 // ONE LIST, which is the point. The Inspector once carried its own copy and drifted from the
@@ -35,7 +42,8 @@ test('every choice is classified, labelled and offered somewhere',()=>{
   for(const choice of BASEMAP_CHOICES){
     assert.equal(typeof isVectorBasemapChoice(choice),'boolean');
     assert.ok(BASEMAP_LABELS[choice]?.trim(),`${choice} has no label`);
-    assert.ok(basemapAvailable(choice,'interactive'),`${choice} is offered to no map type`);
+    assert.ok(basemapAvailable(choice,'interactive')||basemapAvailable(choice,'plot',1000),
+      `${choice} is offered to no map type at any breadth`);
   }
   // `none` is not a vector style, and is available everywhere: it is what works offline.
   assert.ok(!isVectorBasemapChoice('none'));
@@ -51,7 +59,8 @@ test('the options markup offers only what the presentation can draw',()=>{
     assert.ok(!plot.includes(`value="${choice}"`),`${choice} is offered to a static figure`);
   assert.ok(plot.includes('value="osm"'));
   const live=basemapOptions('none','interactive');
-  for(const choice of BASEMAP_CHOICES)assert.ok(live.includes(`value="${choice}"`));
+  for(const choice of BASEMAP_CHOICES)
+    assert.equal(live.includes(`value="${choice}"`),choice!=='natural-earth-110m');
   // Called without a presentation it still offers everything, which is what the map's own
   // toolbar wants: that control only exists on an interactive map.
   const all=basemapOptions('none');
@@ -116,4 +125,65 @@ test('an interactive map keeps whatever it was given',()=>{
     // basemap is never silently dropped for a map type that can draw it.
     if(spec.presentation==='interactive')assert.equal(spec.basemap,choice);
   }
+});
+
+// THE BREADTH OF THE STUDY AREA DECIDES WHICH BASEMAPS MAKE SENSE.
+//
+// The practitioner, 2026-10-27: "The breadth of the study area should dictate the type of
+// basemap used", then precisely: "NE should not appear as an option below city or province
+// level."
+//
+// The cut is measured, not picked. Natural Earth 1:110m is generalised to about two kilometres
+// -- experiment 52 calls it "displaced by kilometres" -- and against a study area's own breadth
+// that is 0.2% of southern Africa, 4% of Greater London and 200% of Soho. Fifty kilometres is
+// where the displacement falls under about a twentieth of what is drawn.
+import {NATURAL_EARTH_MIN_SPAN_KM,extentSpanKm} from '../build/basemaps.js';
+
+test('Natural Earth is withheld below city scale and offered above it',()=>{
+  // Soho, about a kilometre across: the outline would be wrong by twice the figure.
+  assert.ok(!basemapAvailable('natural-earth-110m','plot',1));
+  // The South London example, about twelve kilometres: still wrong, by a sixth.
+  assert.ok(!basemapAvailable('natural-earth-110m','plot',12));
+  // Greater London and anything broader.
+  assert.ok(basemapAvailable('natural-earth-110m','plot',50));
+  assert.ok(basemapAvailable('natural-earth-110m','plot',1000));
+  assert.equal(NATURAL_EARTH_MIN_SPAN_KM,50);
+});
+
+test('the raster bake is offered at every breadth, because it rescales',()=>{
+  for(const span of [1,12,50,1000,5000]){
+    assert.ok(basemapAvailable('osm','plot',span),`osm withheld at ${span} km`);
+    assert.ok(basemapAvailable('topo','plot',span));
+    assert.ok(basemapAvailable('none','plot',span));
+  }
+});
+
+test('an unmeasured breadth withholds nothing',()=>{
+  // A canvas being built has no coordinates yet. Hiding a choice because nothing has been
+  // measured is guessing in the other direction.
+  assert.ok(basemapAvailable('natural-earth-110m','plot',undefined));
+  assert.ok(basemapAvailable('natural-earth-110m','plot'));
+});
+
+test('Natural Earth is a static-figure basemap and is not offered to an interactive map',()=>{
+  for(const span of [50,1000,undefined])
+    assert.ok(!basemapAvailable('natural-earth-110m','interactive',span));
+  // And the options markup agrees, at every breadth.
+  assert.ok(!basemapOptions('none','interactive',1000).includes('natural-earth-110m'));
+  assert.ok(basemapOptions('none','plot',1000).includes('natural-earth-110m'));
+  assert.ok(!basemapOptions('none','plot',5).includes('natural-earth-110m'));
+});
+
+test('the label names the scale, because a generalisation is not a setting',()=>{
+  assert.match(BASEMAP_LABELS['natural-earth-110m'],/1:110m/);
+});
+
+test('extent breadth is the longer side, and shrinks with latitude',()=>{
+  // One degree of latitude, anywhere: about 110 km.
+  assert.ok(Math.abs(extentSpanKm([0,0,0,1])-110.57)<1);
+  // One degree of longitude at the equator is about 111 km, and about 79 km at 45 degrees.
+  assert.ok(Math.abs(extentSpanKm([0,0,1,0])-111.32)<1);
+  assert.ok(Math.abs(extentSpanKm([0,45,1,45])-78.7)<2);
+  // The longer side wins.
+  assert.ok(Math.abs(extentSpanKm([0,0,1,0.1])-111.32)<1);
 });

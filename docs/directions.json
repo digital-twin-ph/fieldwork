@@ -184,7 +184,7 @@
       ],
       "workItem": "126, whose closing condition is a bound named in the result and the receipt, plus best and worst computed over one current-day graph and differing by a measured amount",
       "status": "open",
-      "lastChecked": "2026-10-20",
+      "lastChecked": "2026-10-27",
       "checks": [
         {
           "date": "2026-10-20",
@@ -193,6 +193,10 @@
         {
           "date": "2026-10-20",
           "found": "Scope corrected the same day, before anything was built on the earlier reading. 126 had made the licence of a worst-case speed source a question for this project to settle; it is not. What is: every configurable speed in the application today -- isochrone's speedMPerMin, reachable_nodes', travel_time's, access' -- is a bare number with no note of where it came from, so in a receipt it is indistinguishable from a figure this application derived. That is the gap to close, and it is open now rather than when per-edge speeds arrive."
+        },
+        {
+          "date": "2026-10-27",
+          "found": "Unchanged, and the reason is worth recording rather than the fact. NOTHING READS A POSTED LIMIT. Travel time comes from a single declared speedMPerMin validated to 1-200 m/min in catchments.ts, and no code path consults an OSM maxspeed tag, so the requirement -- a bound named in the result, the N3 receipt and the Inspector, with the edges that fell back to a declared speed counted -- has nothing yet to be a bound OF. It is not violated; it is not reachable. Last substantive change to reachable-nodes.ts or travel-time-band.ts was 0c32256 on 2026-10-25 and touched travel mode, not speed provenance. One piece of the vocabulary does exist and is correct: reachable-nodes.ts:336 reports an off-network straight-line charge as 'a lower bound on the real walk, so these origins reach further here than on the ground', which is exactly the shape the direction asks for, applied to the one bound the current graph can state. This stays open and is gated on the graph carrying per-edge speeds at all -- see the-gis-kernel-owns-the-graph, whose stated missing piece is ownership of the graph. Checked by reading the code, not by running anything."
         }
       ]
     },
@@ -296,11 +300,15 @@
       ],
       "workItem": "127, whose first half is the manifest and whose second is the South London water-supply example that motivated it",
       "status": "open",
-      "lastChecked": "2026-10-20",
+      "lastChecked": "2026-10-27",
       "checks": [
         {
           "date": "2026-10-20",
           "found": "Nothing is built. Measured the premise: the precache is 247 files and 11.25 MB, of which 0.89 MB is example files by name -- 640 KB of it one GraphML -- plus Hagelloch's 63 KB case list compiled into build/app.js, Manila's facilities in a 72 KB chunk and Old Naledi's 43 KB data module, so roughly 1.0 MB of 11.25 MB is worked-example data. Confirmed the rule permits it: experiment 49 records that preparation may download RESOURCES, never widget DEFINITIONS, and experiment 43 corrected the same misreading on 2026-10-09. Also found examples/snow-gboh/deaths_nd_by_house.csv -- 236 KB, retrieved, digested and NOTICE'd on 2026-10-09 -- is in no build output and used by no example key."
+        },
+        {
+          "date": "2026-10-27",
+          "found": "SIX OF SEVEN REQUIREMENTS ARE BUILT, and six of those were exercised on the DEPLOYED instance today rather than only in a test. Fetching South London from the catalog there: 14 files pinned with both sha256 and bytes; verified in the browser before use, size first and then the digest, and refused on either (example-catalog.ts:68-72); the card distinguishes 'Fetched on this device' from 'Not fetched yet'; the fetch is an explicit button and not a fetch on load; the document goes through importProjectDocument and validateWorkflow on arrival; and the toast says 'It is on this device now and opens offline', which the second open confirmed. The contingency workflow then ran on the deployed build and produced the derived 2x2 and its three estimates. THE SEVENTH IS NOT BUILT: no receipt names the manifest version or the digests the files matched. EXAMPLE_CATALOG_VERSION is exported from example-catalog.ts and used NOWHERE -- a dead export that reads like it was written for this and never wired. The digests are kept, in localStorage under fieldwork-example-origins-v1 so Reset example can re-read the verified bytes, which is provenance retained on the device and not provenance in a receipt. So the manifest half of work item 127 is done and this stays OPEN on the receipt alone. Two defects found today while checking it, both now fixed: the catalog's notYet field still told readers nothing could join a table to a study area, which has been false since 2026-10-25 and is printed on the card a reader sees; and widgets/evidence.json could not see a pinned example at all, so every widget this bundle exercises counted as used by nothing. The second is why the catalogue now declares the node types its bundle instantiates."
         }
       ]
     },

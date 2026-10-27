@@ -1,6 +1,6 @@
 # Total within groups
 
-_Created 2026-10-26 · Updated 2026-10-26_
+_Created 2026-10-26 · Updated 2026-10-27_
 
 **Addition.** It takes a table, keeps the key columns you name, and adds up the values of every
 row that agrees on them.

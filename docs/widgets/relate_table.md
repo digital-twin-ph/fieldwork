@@ -1,6 +1,6 @@
 # Relate a column from another table
 
-_Created 2026-10-26 · Updated 2026-10-26_
+_Created 2026-10-26 · Updated 2026-10-27_
 
 **A join, narrowly.** It takes two tables that share a column, and brings a *category* from the
 second one onto the rows of the first.

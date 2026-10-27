@@ -170,7 +170,12 @@ export interface ParamsByType {
      *  something to the file it was given, and a reader of the receipt is entitled to know
      *  which columns were taken -- the more so because they are NAMED rather than inferred, so
      *  a column the file gained later is absent from the analysis by decision. */
-    wide?:{keys:string[];valueFields:string[];measureKey:string};
+    wide?:{keys:string[];valueFields:string[];measureKey:string;
+      /** What each value column is called in the analysis, where that is not its column
+       *  name. Keyed by column; a column absent here keeps its own. Recorded in the receipt,
+       *  because a rename changes what a name means and a reader checking the numbers
+       *  against the published file has to be able to follow it back. */
+      measureNames?:Record<string,string>};
     /** THE FILE AS IT WAS PUBLISHED, kept so the melt can happen during the run.
      *
      *  Headers and cells exactly as parsed. With `convertOnRun` set, this is the node's TRUTH

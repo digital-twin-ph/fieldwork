@@ -114,6 +114,19 @@ fw:measureKeyField a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The key column of the resulting long table that holds the melted columns' names.".
 fw:meltedValueFieldCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 
+# A MEASURE CALLED WHAT THE ANALYSIS CALLS IT. A published file's header is a machine name --
+# `population_1851`, `deaths_southwark_vauxhall` -- and an analysis has its own vocabulary. The
+# melt may be told one per column, and the renaming is RECORDED rather than only applied: a reader
+# who meets "population" in a result and `population_1851` in the file has to be able to follow one
+# to the other, and the reason for melting during the run rather than in a dialog was that the melt
+# becomes a step with a receipt.
+fw:measureRenaming a owl:ObjectProperty;
+  rdfs:comment "One column renamed on the way into the measure key, as a blank node carrying fw:fromColumn and fw:toMeasure. Absent where a melt took every column under its own name.".
+fw:fromColumn a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The column of the source file, as the file spells it.".
+fw:toMeasure a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "What that column is called in the analysis. Author-stated and never inferred from the column name: replacing underscores with spaces is right for \"deaths 1849\" and wrong for \"deaths pump-wells\", and a rule cannot tell which.".
+
 # A SCANNED OR PUBLISHED MAP, drawn as ground. Typed apart from fw:Raster on purpose: a raster
 # carries measurements and may be clipped and sampled, and a plate carries a printer's ink. The
 # port type makes the wrong connection impossible; this makes the distinction readable.

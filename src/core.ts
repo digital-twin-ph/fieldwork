@@ -654,6 +654,23 @@ export function validateWorkflow(raw:unknown):Workflow {
               +'measure column must together be the table\'s key columns.');
           if(new Set(wide.valueFields).size!==wide.valueFields.length)
             throw new Error('The value columns a wide table was read with must be distinct.');
+          // The same refusals the melt makes, made here too, so a saved workflow carrying a bad
+          // rename is refused when it opens rather than when somebody runs it.
+          if(wide.measureNames!==undefined){
+            if(typeof wide.measureNames!=='object'||wide.measureNames===null||Array.isArray(wide.measureNames))
+              throw new Error('Measure names are given per column, as a column-to-name mapping.');
+            for(const [column,measure] of Object.entries(wide.measureNames)){
+              if(typeof measure!=='string'||!measure.trim())
+                throw new Error(`${JSON.stringify(column)} is given an empty measure name.`);
+              if(!wide.valueFields.includes(column))
+                throw new Error(`${JSON.stringify(column)} is named as a measure but is not one of `
+                  +'the value columns being melted.');
+            }
+            const named=wide.valueFields.map(c=>wide.measureNames?.[c]?.trim()||c);
+            if(new Set(named).size!==named.length)
+              throw new Error('Two value columns would share a measure name. Each measure names '
+                +'one variable.');
+          }
         }
       }
       if(t.rows.length>MAX_TABLE_ROWS)throw new Error(`Tabular input supports at most ${MAX_TABLE_ROWS.toLocaleString()} rows.`);

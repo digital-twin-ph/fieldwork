@@ -217,3 +217,83 @@ test('a run refuses an empty source rather than producing an empty table',async(
   await assert.rejects(executeWorkflow(converting({sourceTable:{headers:SOURCE.headers,rows:[]}}),'test'),
     /carries no source table|source is empty/);
 });
+
+/* ---- a measure is called what the analysis calls it ----
+ *
+ *  The practitioner, 2026-10-27, after four of South London's six table inputs could not be
+ *  converted on run: "Let's do widetable first."
+ *
+ *  A melt named every measure after its column, so converting those four would have renamed the
+ *  vocabulary every downstream step refers to -- a Rate's measure key, a derived value's two
+ *  operands, a selection's values -- all at once. The columns below are Snow's Table VIII as
+ *  published, and the names beside them are what the South London workflows have always called
+ *  them.
+ */
+const TABLE_VIII={
+  headers:['sub_district','population_1851','deaths_seven_weeks','deaths_southwark_vauxhall',
+    'deaths_lambeth','deaths_pump_wells'],
+  rows:[['St. Saviour, Southwark','19709','125','115','0','0'],
+        ['St. Olave, Southwark','8015','53','43','0','0']]};
+const SNOW_NAMES={population_1851:'population',deaths_seven_weeks:'deaths',
+  deaths_southwark_vauxhall:'deaths Southwark and Vauxhall',deaths_lambeth:'deaths Lambeth',
+  deaths_pump_wells:'deaths pump-wells'};
+const selection=extra=>({keys:['sub_district'],
+  valueFields:['population_1851','deaths_seven_weeks','deaths_southwark_vauxhall',
+    'deaths_lambeth','deaths_pump_wells'],
+  measureKey:'measure',valueField:'count',...extra});
+
+test('a value column is melted under the name the analysis gives it',()=>{
+  const table=wideDataTable(TABLE_VIII,selection({measureNames:SNOW_NAMES}));
+  const measures=[...new Set(table.rows.map(r=>r.key.measure))];
+  assert.deepEqual(measures,['population','deaths','deaths Southwark and Vauxhall',
+    'deaths Lambeth','deaths pump-wells']);
+  // The value travels with it; only the name changed.
+  assert.equal(table.rows.find(r=>r.key.measure==='population').value,19709);
+  assert.equal(table.rows.find(r=>r.key.measure==='deaths Southwark and Vauxhall').value,115);
+});
+
+test('a column left out of the mapping keeps its own name',()=>{
+  const table=wideDataTable(TABLE_VIII,
+    selection({measureNames:{population_1851:'population'}}));
+  const measures=[...new Set(table.rows.map(r=>r.key.measure))];
+  assert.ok(measures.includes('population'));
+  assert.ok(measures.includes('deaths_seven_weeks'),'unnamed columns are not touched');
+});
+
+test('two columns cannot share a measure name, because that would merge two variables',()=>{
+  assert.throws(()=>wideDataTable(TABLE_VIII,selection({
+    measureNames:{deaths_lambeth:'deaths',deaths_seven_weeks:'deaths'}})),
+    /both be called "deaths"/);
+  // Including the case where the clash is with a column that was NOT renamed.
+  assert.throws(()=>wideDataTable(TABLE_VIII,selection({
+    measureNames:{deaths_lambeth:'deaths_seven_weeks'}})),/both be called/);
+});
+
+test('naming a column that is not being melted is refused rather than ignored',()=>{
+  assert.throws(()=>wideDataTable(TABLE_VIII,selection({
+    measureNames:{deaths_thames_ditches:'deaths Thames and ditches'}})),
+    /is not one of the value columns/);
+  assert.throws(()=>wideDataTable(TABLE_VIII,selection({
+    measureNames:{population_1851:'   '}})),/empty measure name/);
+});
+
+test('a name is never inferred from the column, because the inference is wrong where it matters',()=>{
+  // `deaths_pump_wells` would prettify to "deaths pump wells"; the analysis says "pump-wells".
+  const table=wideDataTable(TABLE_VIII,selection({}));
+  assert.ok([...new Set(table.rows.map(r=>r.key.measure))].includes('deaths_pump_wells'),
+    'without a stated name the column name is kept verbatim, underscores and all');
+});
+
+test('the receipt records the rename, so a reader can follow a measure back to its column',()=>{
+  const wide={keys:['sub_district'],
+    valueFields:['population_1851','deaths_seven_weeks'],measureKey:'measure',
+    measureNames:{population_1851:'population',deaths_seven_weeks:'deaths'}};
+  const table=wideDataTable(TABLE_VIII,{...wide,valueField:'count'});
+  const {receipt}=tableReceipt({id:'t',params:{label:'Table VIII',wide}},table,'run1');
+  assert.match(receipt.facts,/fw:readAs "wide"/);
+  assert.match(receipt.facts,/fw:fromColumn "population_1851"; fw:toMeasure "population"/);
+  assert.match(receipt.facts,/fw:fromColumn "deaths_seven_weeks"; fw:toMeasure "deaths"/);
+  // Applying a rename without recording it would leave a reader unable to check "population"
+  // against a file whose column is `population_1851`.
+  assert.equal((receipt.facts.match(/fw:measureRenaming/g)||[]).length,2);
+});

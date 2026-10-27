@@ -1,6 +1,6 @@
 # 142 — An epi kernel, exercised rather than listed
 
-_Created 2026-10-26 · Updated 2026-10-26_
+_Created 2026-10-26 · Updated 2026-10-27_
 
 **Status:** tried — three operations built, exercised end to end in the South London worked
 example, and one of them checked against an independent implementation.
@@ -120,6 +120,44 @@ subject, and the fixture carries both tables because the comparison between them
 
 **That is a lab check doing the job it exists for**, four days before a demo, on a claim this
 project would otherwise have shipped in a manual page and repeated out loud to epidemiologists.
+
+## What the deployed instance found that 576 browser checks did not
+
+The merge went to `main` on 2026-10-27 and Pages published it, and the last step was the one that
+matters for a demo: open the deployed site and fetch South London from the catalog the way a reader
+will. It worked — 14 files at the pinned commit, every digest matched, the derived 2x2 with the
+published house counts as its margins, the estimates on their own tab. It also threw.
+
+> `TypeError: Cannot read properties of null (reading 'outputs')`
+
+Resolved through the published source map to `src/app.ts:3694`, the line a finished run speaks on.
+What the practitioner sees is worse than a console entry: **"Workflow stopped: Cannot read
+properties of null"** — a run that completed, reported as a failure.
+
+**The mechanism.** `renderResults` discards a result whose workflow is no longer the open one, which
+is a rule this project added on 2026-10-24 and which is right. Nothing stops the workflow changing
+while a run is in flight: `loadExample` is behind `busy`, the import paths are not, and a catalog
+fetch resolves on its own schedule. So the run finished, had its result correctly discarded, and
+then read it anyway. `dirty=false` on the same line was the second half of it, marking a
+freshly adopted canvas as already run.
+
+**Why the gate could not find it.** Not a gap in coverage — a gap in *ordering*. Every import in
+the browser suite goes through the file input, which a test drives between runs; the catalog's
+fetch is the only import that lands inside one, and no test had ever started a run and then
+imported. 576 checks across two engines, and the defect needed a sequence rather than a case.
+
+The ordering is now a check of its own — `tests/run-outlives-its-canvas.browser.mjs`, which uses
+`snow-isochrone`'s 2.5 seconds of computing as the window, and fails on the unfixed build with the
+exact message above. The run now names the workflow it belonged to, says its results were not kept,
+and says what to do to see them, in the plain notice tone: nothing went wrong, and the canvas the
+practitioner moved to is untouched.
+
+**What this cost and what it did not.** One line, found in the ten minutes after a deploy, four
+days before the demo. The three epi operations and their arithmetic were never implicated. What it
+establishes about method is narrower than "verify on the deployed instance", which this project
+already did: it is that **a published build is a different test because it is reached in a
+different order**, and the order is the part a local suite does not inherit. The same sweep found
+one more unguarded dereference of that kind: none. The other three reads of `result` are guarded.
 
 ## What was not built, and why
 

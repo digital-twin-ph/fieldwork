@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-10-26_
+_Created 2026-10-10 · Updated 2026-10-27_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -55,6 +55,20 @@ so in its own closing section: its beneficiaries are us and future contributors,
 not a practitioner in the field.
 
 ## Urgent
+
+**Verify a deploy by reaching it the way a reader does, not only by rerunning the suite there.**
+Done 2026-10-27 and recorded because the finding was free: the first open of the published South
+London example threw `Cannot read properties of null (reading 'outputs')`, and the practitioner's
+view of it was *"Workflow stopped"* on a run that had completed. Fixed in `src/app.ts` and covered
+by `tests/run-outlives-its-canvas.browser.mjs`.
+
+The residual is the method, not the line. The gate had 576 browser checks on that commit across
+both engines and could not have caught it, because the defect needs an **ordering** no test
+performs: every import in the suite goes through the file input between runs, while the catalog's
+fetch is the only import that lands inside one. So a post-deploy pass is worth keeping as its own
+step, and what it should do is the sequence a reader does — arrive, fetch from the catalog, switch
+workflow, run — rather than the assertions the suite already makes. Written up in
+[142](experiments/142-an-epi-kernel-exercised.md).
 
 **N3 evidence is unreadable, and colour is the smaller half of it.** Asked by the
 practitioner on 2026-10-25: *"looking at N3 evidence, is there a way to make the N3

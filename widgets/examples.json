@@ -29,7 +29,7 @@
         "data": true,
         "geography": true
       },
-      "notYet": "Nothing joins a table to the parts of a study area, so the 32 mortality rates and the 32 named boundaries cannot colour one another. That join is the choropleth this example argues for in prose.",
+      "notYet": "The georeferenced plate and the three traced supply zones in geo/ are still for other tools: nothing in Fieldwork reads a raster plate or those zones onto a canvas. The figures, the boundaries and the choropleth are all live -- the 32 rates land on the 33 named parts through join_table_to_area.",
       "files": [
         {
           "path": "fieldwork-project.json.gz",
@@ -101,7 +101,28 @@
           "sha256": "8fb2a298458dd2b1b08fc39447d2ca51419c252e14b0e7cf1e7062a588ba0ec3",
           "bytes": 120806
         }
-      ]
+      ],
+      "notYetCorrected": {
+        "date": "2026-10-27",
+        "was": "Nothing joins a table to the parts of a study area, so the 32 mortality rates and the 32 named boundaries cannot colour one another. That join is the choropleth this example argues for in prose.",
+        "why": "That sentence was true when the pin was written and false from 2026-10-25, when join_table_to_area shipped and the bundle gained a working choropleth workflow. The example repository corrected its own README the same day -- it says \"Both are now false\" and keeps the old sentence as the record of what the join was built to close -- and this field did not. THIS FIELD IS THE ONE A READER SEES: renderExampleCatalog prints it as \"Not yet: ...\" on the catalog card, so the deployed application advertised the example as missing the very workflow it ships. Found 2026-10-27 while asking what was left of the join work."
+      },
+      "workflowCount": 6,
+      "uses": [
+        "derive_value",
+        "group_table",
+        "join_table_to_area",
+        "map_output",
+        "rate",
+        "rate_ratio",
+        "relate_table",
+        "select_rows",
+        "study_area",
+        "table_input",
+        "table_output",
+        "two_by_two"
+      ],
+      "usesNote": "The node types the pinned bundle's workflows instantiate, DECLARED HERE rather than read from the clone, so widgets/evidence.json is the same on a machine that has the checkout and one that does not. A generated ledger whose value depends on what somebody happens to have cloned is not a measurement. validate:examples recomputes this list from the bundle wherever the checkout exists and refuses on a difference, so the declaration cannot drift from the bytes it describes."
     }
   ]
 }

@@ -46,6 +46,25 @@ const examples=Object.fromEntries(WORKED_EXAMPLE_KEYS.flatMap(key=>{
   catch{return [];/* an example this build does not carry */}
 }));
 
+// AND THE EXAMPLES THAT LIVE IN THEIR OWN REPOSITORIES, which this counted as nothing until
+// 2026-10-27. `join_table_to_area` read as "declared only" -- bottom of the ladder, used by no
+// example -- while the pinned South London bundle shipped a working choropleth built on it, and
+// `rate`, `derive_value` and `select_rows` were in the same position. A ledger of evidence that
+// cannot see a shipped worked example understates exactly the widgets a demo is about to put on
+// screen.
+//
+// Read from the DECLARATION in widgets/examples.json, never from the clone. The clone is where
+// the bytes are and it is also optional, so a generator that read it would produce a different
+// evidence.json on a machine that has it -- a measurement that depends on who is measuring. The
+// catalogue declares the node types, `validate:examples` recomputes them from the bundle wherever
+// the checkout exists and refuses on a difference, and the trust root is the same per-file digest
+// the application itself verifies before opening the example.
+const pinned=read('widgets/examples.json').examples??[];
+const pinnedUses=pinned.flatMap(example=>{
+  const name=(example.id??example.repository??'pinned example').split(':').pop().split('/').pop();
+  return (example.uses??[]).map(type=>[type,name]);
+});
+
 /** A micro_workflow node is its members, so its members are used wherever it is. */
 const membersOf=node=>(node.params?.composition?.members??[]).map(member=>member.type??member.nodeType)
   .filter(Boolean);
@@ -61,6 +80,9 @@ export function widgetEvidence(){
   const uses={};
   for(const [name,workflow] of Object.entries(examples))
     for(const type of usedIn(workflow))(uses[type]??=[]).push(name);
+  // A pinned example counts as one example use, the same as a compiled one. It is a worked
+  // example; where its files live is a licence boundary and not a difference in evidence.
+  for(const [type,name] of pinnedUses)(uses[type]??=[]).push(name);
 
   const widgets=registry.widgets.filter(w=>statusOf(w)==='implemented').map(w=>{
     const exampleUses=(uses[w.nodeType]??[]).sort();
@@ -78,16 +100,24 @@ export function widgetEvidence(){
       labOwed:!labSettled,fieldUse:[],rung};
   }).sort((a,b)=>a.nodeType.localeCompare(b.nodeType));
 
-  return {schema:'fieldwork/widget-evidence/1',measuredAt:'2026-10-12',
+  return {schema:'fieldwork/widget-evidence/1',measuredAt:'2026-10-27',
     examplesShipped:Object.keys(examples).sort(),
+    // Named separately because the two are not the same kind of thing to a reader: one is
+    // compiled in and opens offline from the start, the other is fetched once from a repository
+    // at a pinned commit. They are the same kind of thing to this ledger.
+    examplesPinned:[...new Set(pinnedUses.map(([,name])=>name))].sort(),
     ladder:['declared only','example only','parity only','example, lab not applicable','example+parity',
       'field use — nothing has this yet'],
     weakest:'exampleUseCount 0 and a lab check still owed. That is the bottom of the ladder and the '
       +'population the pending exemption is about.',
-    note:'Derived by scripts/widget-evidence.mjs from the shipped example workflows and '
+    note:'Derived by scripts/widget-evidence.mjs from the shipped example workflows, the node types '
+      +'declared for each pinned worked example in widgets/examples.json, and '
       +'widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a '
-      +'micro_workflow node is its members. Field use is declared and empty: an empty top rung is a '
-      +'measurement, a missing one is a flattering omission.',
+      +'micro_workflow node is its members. A pinned example in its own repository counts as one '
+      +'example use like any other, and is read from the catalogue declaration rather than from a '
+      +'clone, so this file does not depend on what any machine happens to have checked out. Field '
+      +'use is declared and empty: an empty top rung is a measurement, a missing one is a '
+      +'flattering omission.',
     counts:Object.fromEntries(['declared only','example only','parity only',
       'example, lab not applicable','example+parity','neither applies']
       .map(rung=>[rung,widgets.filter(w=>w.rung===rung).length])),
@@ -121,7 +151,10 @@ if(process.argv.includes('--write')){
   writeFileSync(`${root}/widgets/evidence.json`,JSON.stringify(evidence,null,1)+'\n');
   console.log('Wrote widgets/evidence.json');
 }
-console.log(`Widget evidence across ${evidence.examplesShipped.length} worked examples:`);
+console.log(`Widget evidence across ${evidence.examplesShipped.length} shipped worked example`
+  +`${evidence.examplesShipped.length===1?'':'s'}`
+  +`${evidence.examplesPinned.length?` and ${evidence.examplesPinned.length} pinned in its own `
+    +`repositor${evidence.examplesPinned.length===1?'y':'ies'} (${evidence.examplesPinned.join(', ')})`:''}:`);
 for(const [rung,count] of Object.entries(evidence.counts))console.log(`  ${String(count).padStart(3)}  ${rung}`);
 const weakest=evidence.widgets.filter(w=>!w.exampleUseCount&&w.labOwed).map(w=>w.nodeType);
 if(weakest.length)console.log(`  weakest rung: ${weakest.join(', ')}`);

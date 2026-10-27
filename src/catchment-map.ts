@@ -483,7 +483,16 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       }).catch(()=>{status.textContent='Vector basemap unavailable; local layers remain visible.';});
       return;
     }
-    const source=BASEMAPS[choice];tiles=L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution});
+    // A choice this map has no tile source for draws nothing and says so, rather than throwing.
+    // `natural-earth-110m` is the case: it is a bundled outline for a STATIC figure, offered only
+    // there, and a saved workflow could still carry it here -- a stored value outliving the list
+    // that offered it is how an Inspector and a toolbar disagree.
+    if(!Object.hasOwn(BASEMAPS,choice)){
+      status.textContent=`${BASEMAP_LABELS[choice]} is drawn into a static figure, not onto an `
+        +'interactive map. Choose a tile basemap here, or the static presentation for that one.';
+      return;
+    }
+    const source=BASEMAPS[choice as keyof typeof BASEMAPS];tiles=L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution});
     tiles.on('tileerror',()=>{status.textContent='Basemap unavailable; local layers remain visible.';});
     tiles.addTo(map);tiles.bringToBack();status.textContent=`${source.label} online · viewed area sent to provider`;
   };

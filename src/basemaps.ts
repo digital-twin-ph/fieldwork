@@ -17,7 +17,7 @@
  *  style is a stylesheet a renderer applies, and a static figure carries no renderer. That is a
  *  property of the format, not of the provider, which is why this list is not "OpenFreeMap".
  */
-export const BASEMAP_CHOICES=['none','osm','topo','ofm-liberty','ofm-positron','ofm-bright'] as const;
+export const BASEMAP_CHOICES=['none','osm','topo','natural-earth-110m','ofm-liberty','ofm-positron','ofm-bright'] as const;
 export type BasemapChoice=typeof BASEMAP_CHOICES[number];
 
 /** The styles a static figure cannot bake. */
@@ -28,10 +28,32 @@ export const isVectorBasemapChoice=(choice:BasemapChoice):boolean=>
 /** What each presentation can draw. Derived, so a basemap added above appears in the right list
  *  without anybody remembering -- the defect `catchment-map.ts` already records from 2026-10-20,
  *  when the Inspector carried its own copy of this list and drifted from the map's toolbar. */
-export const basemapsFor=(presentation:'plot'|'interactive'):readonly BasemapChoice[]=>
-  BASEMAP_CHOICES.filter(choice=>presentation==='interactive'||!isVectorBasemapChoice(choice));
-export const basemapAvailable=(choice:BasemapChoice,presentation:'plot'|'interactive'):boolean=>
-  basemapsFor(presentation).includes(choice);
+export const NATURAL_EARTH_MIN_SPAN_KM=50;
+export const basemapsFor=(presentation:'plot'|'interactive',spanKm?:number):readonly BasemapChoice[]=>
+  BASEMAP_CHOICES.filter(choice=>{
+    // A static figure bakes raster tiles and cannot bake a vector style.
+    if(presentation!=='interactive'&&isVectorBasemapChoice(choice))return false;
+    if(choice==='natural-earth-110m'){
+      // Bundled for static figures, which is the job experiment 52 assigned it. An interactive
+      // map reaches live tiles and has no use for a 1:110m outline.
+      if(presentation==='interactive')return false;
+      return spanKm===undefined||spanKm>=NATURAL_EARTH_MIN_SPAN_KM;
+    }
+    return true;
+  });
+export const basemapAvailable=(choice:BasemapChoice,presentation:'plot'|'interactive',
+  spanKm?:number):boolean=>basemapsFor(presentation,spanKm).includes(choice);
+
+/** The ground breadth of a lon/lat extent, in kilometres: the longer of its two sides.
+ *
+ *  A degree of latitude is near enough constant; a degree of longitude shrinks with the cosine of
+ *  latitude, taken at the middle of the extent. Good to a few per cent, which is far inside what
+ *  this decides -- it chooses between "a city" and "a country", not between 49 and 51. */
+export function extentSpanKm(bounds:[number,number,number,number]):number{
+  const [west,south,east,north]=bounds;
+  const mid=(south+north)/2*Math.PI/180;
+  return Math.max(Math.abs(east-west)*111.32*Math.cos(mid),Math.abs(north-south)*110.57);
+}
 
 /** THE LABEL FOR EACH CHOICE, here with the ids rather than beside the tile URLs.
  *
@@ -50,6 +72,11 @@ export const BASEMAP_LABELS:Record<BasemapChoice,string>={
   'ofm-liberty':'OpenFreeMap Liberty',
   'ofm-positron':'OpenFreeMap Positron (muted)',
   'ofm-bright':'OpenFreeMap Bright',
+  // THE SCALE IS IN THE NAME, because experiment 52 says a profile that names a static context
+  // layer must name its scale, and because 1:110m is a limit rather than a setting: these lines
+  // are displaced by kilometres and a reader has to see which generalisation they are looking at
+  // without opening a receipt.
+  'natural-earth-110m':'Natural Earth 1:110m \u00b7 bundled, works offline',
 };
 export const BASEMAP_OPTIONS:readonly {value:BasemapChoice;label:string}[]=
   BASEMAP_CHOICES.map(value=>({value,label:BASEMAP_LABELS[value]}));
@@ -59,7 +86,7 @@ export const BASEMAP_OPTIONS:readonly {value:BasemapChoice;label:string}[]=
  *  `presentation` filters to what that map type can draw. Omitted, every choice is offered --
  *  which is what the interactive map's own toolbar wants, since that control exists only there. */
 export const basemapOptions=(selected:BasemapChoice|undefined,
-  presentation?:'plot'|'interactive'):string=>BASEMAP_OPTIONS
-  .filter(option=>!presentation||basemapAvailable(option.value,presentation))
+  presentation?:'plot'|'interactive',spanKm?:number):string=>BASEMAP_OPTIONS
+  .filter(option=>!presentation||basemapAvailable(option.value,presentation,spanKm))
   .map(option=>`<option value="${option.value}" ${(selected||'none')===option.value?'selected':''}>${option.label}</option>`)
   .join('');

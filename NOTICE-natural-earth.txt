@@ -1,0 +1,30 @@
+Natural Earth
+=============
+
+assets/natural-earth-110m.json is prepared from Natural Earth 1:110m vector data.
+
+  Source   https://github.com/nvkelso/natural-earth-vector
+  Upstream https://www.naturalearthdata.com/
+  Licence  Public domain. Natural Earth states no restrictions on use.
+
+Natural Earth asks for no attribution and imposes no share-alike. This notice is here
+because a reader of a figure is entitled to know which ground it was drawn on and how
+generalised that ground is, which is a different obligation from a licence one and is
+not discharged by the absence of a licence.
+
+WHAT WAS DONE TO IT
+  - Four layers taken: land, lakes, national boundary lines on land, and first-level
+    administrative boundary lines.
+  - Attributes dropped. Only geometry is carried, so that no name or code in this file
+    can be read as data.
+  - Coordinates rounded to two decimal places, about 1.1 km. That is finer than the
+    data's own generalisation and coarser than its stored precision.
+
+  scripts/prepare-natural-earth.mjs is the script, and it records the same facts inside
+  the asset itself.
+
+WHAT IT IS NOT FOR
+  Context, never frame. These boundaries are generalised, and disputed lines are a
+  cartographic choice rather than an adjudication. Joining data to them, computing areas
+  from them, or reporting results by them produces wrong answers that look professional.
+  The frame is a study area the practitioner supplies.

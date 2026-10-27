@@ -3,7 +3,8 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file\u2019s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "8d8b030cd12fe090871bbbb2f8855fae280d52f2"
+    "commit": "8800053f030b5468bafa670eedb253781b56547d",
+    "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
     "agrees": "Every case met the stated criterion.",

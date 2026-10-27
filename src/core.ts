@@ -174,7 +174,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // `clip_points_to_area` on open. It is in the retired list, so the palette never offers it.
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Retired — use Keep points inside the area',inputs:[['area','area'],['points','points']],output:'coverage-check'},
   map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['decisions','decisions'],['raster','raster'],['ground','ground'],['network','network']],output:null},
-  table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display point coordinates, attributes and available review decisions',inputs:[['points','points'],['coverage','coverage-check']],output:null},
+  table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display a keyed table, point coordinates, catchment summaries or review decisions',inputs:[['points','points'],['coverage','coverage-check'],['table','table'],['polygons','polygons'],['decisions','decisions']],output:null},
   chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Count reasoning results by decision, access zone or evidence tier',inputs:[['decisions','decisions']],output:null},
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
 };
@@ -217,11 +217,14 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // twice. Graph-dependent rather than node-dependent, which is why it is a parameter -- a node
   // alone cannot say whether anything is connected to it.
   if(options?.coverageConnected)return all.filter(([port])=>port==='coverage');
-  // A map insists on nothing: it draws the layers it is given, and which ones those are is the
-  // practitioner's business. It used to insist on an area and a points layer, which is why a map
-  // of a raster had to be told it was a raster map before it would accept one.
-  if(node.type==='map_output')return [];
-  return all.filter(([port])=>port!=='coverage');
+  // NEITHER A MAP NOR A TABLE INSISTS ON ANYTHING: each shows what it is given, and which ports
+  // those are is the practitioner's business. The map stopped insisting on an area and a points
+  // layer on 2026-10-14 -- that insistence is why a map of a raster had to be told it was a
+  // raster map before it would accept one. The table went on insisting until 2026-10-27, when
+  // declaring all of its ports turned "Table needs its points input connected" into a demand for
+  // four unrelated inputs at once. A view with nothing wired is unfinished, not failed, and
+  // `incomplete-workflow` already says so.
+  return [];
 }
 
 /** Which renderer a map uses, read from WHAT IS WIRED rather than from a mode it was told.
@@ -254,6 +257,31 @@ export function drawnMode(node:WorkflowNode<'map_output'>,edges:{to:string;port:
   return stored==='network'||stored==='raster'||stored==='polygons'||stored==='decisions'?stored:'spatial';
 }
 
+/** Which renderer a TABLE uses, read from what is wired. The same direction, one widget over.
+ *
+ *  `a-map-has-layers-not-modes`, 2026-10-14: *"There is no such thing as mode, only layers"*,
+ *  repeated on 2026-10-15 after the selector was still there. It was built for `map_output` and
+ *  left on `table_output`, which went on deciding its ports from `inputMode` for twelve days.
+ *
+ *  The practitioner met it on 2026-10-27 the same way as the first time -- in the running app,
+ *  trying to connect Relate a column to a table view and being refused. A freshly added node
+ *  defaults to points, so the `table` port the connection needed did not exist on the node. That
+ *  is the blocker `output-mode-set-before-the-shape-arrives`, unchanged.
+ *
+ *  Precedence is specificity: a keyed table, polygons and decisions each have their own renderer,
+ *  and the point/coverage path is the general one. The stored `inputMode` is read LAST, so a
+ *  workflow saved before this opens and shows what it showed. Nothing writes it any more. */
+export function shownMode(node:WorkflowNode<'table_output'>,edges:{to:string;port:string}[]):
+  'table'|'polygons'|'decisions'|'spatial'{
+  const wired=new Set(edges.filter(e=>e.to===node.id).map(e=>e.port));
+  if(wired.has('table'))return 'table';
+  if(wired.has('polygons'))return 'polygons';
+  if(wired.has('decisions'))return 'decisions';
+  if(wired.size)return 'spatial';
+  const stored=node.params.inputMode;
+  return stored==='table'||stored==='polygons'||stored==='decisions'?stored:'spatial';
+}
+
 export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // One node type serves every composition, so the ports are the composition's, pinned in
   // the node rather than looked up: a saved workflow validates without the file present.
@@ -279,19 +307,21 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
     // declaration alone is a port nothing may connect to -- which is how `ground` arrived
     // refusing its own widget with "Incompatible node connection" on 2026-10-27.
     ['raster','raster'],['ground','ground'],['network','network']];
-  if(['table_output','chart_output'].includes(node.type)&&'inputMode' in node.params&&node.params.inputMode==='polygons')return [['polygons','polygons']];
-  if(node.type==='table_output'&&node.params.inputMode==='table')return [['table','table']];
+  if(node.type==='chart_output'&&'inputMode' in node.params&&node.params.inputMode==='polygons')return [['polygons','polygons']];
   // A street network is a thing to look at, not only a thing to route over. Four widgets consume a
   // `network` and none of them was an output, so a downloaded network could not be seen.
-  if(node.type==='table_output'&&node.params.inputMode==='decisions')return [['decisions','decisions']];
   // Deduplication compares ACROSS sources, so two layers is its floor rather than its shape: a
   // practitioner with OSM, Overture and HDX over one area has three.
   if(node.type==='deduplicate_points')
     return Array.from({length:Math.max(2,Math.min(MAX_POINT_LAYERS,node.params.pointInputCount??2))},
       (_,i)=>[pointPort(i),'points']) as [string,PortType][];
-  // map_output returned above with every layer port it can draw, so only these two reach here.
-  if(node.type!=='table_output')return TYPES[node.type].inputs;
-  return [...(node.type==='table_output'?[]:[['area','area']]),...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points']),...(node.type==='table_output'?[['coverage','coverage-check']]:[])] as [string,PortType][];
+  // EVERY PORT A TABLE CAN SHOW, ALWAYS -- the same change `map_output` took above, and for the
+  // same reason: a port that exists only in one mode is a port a connection cannot be made to
+  // until the practitioner has answered a question about the shape before having the shape.
+  if(node.type==='table_output')return [
+    ...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points'] as [string,PortType]),
+    ['coverage','coverage-check'],['table','table'],['polygons','polygons'],['decisions','decisions']];
+  return TYPES[node.type].inputs;
 }
 export function exampleWorkflow():Workflow {
   return {schema:'fieldwork/workflow/1',name:'Heat outreach screening',nodes:[
@@ -565,7 +595,16 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='map_image_input'){
       const p=n.params;
       if(p.data!==undefined&&typeof p.data!=='string')throw new Error('A map image is carried as a data URI.');
-      if(p.bounds!==undefined){
+      // AN UNCONFIGURED PLATE IS A DRAFT, NOT A BAD ONE. A node added from the palette carries
+      // `[0,0,0,0]` because nobody has chosen an image yet, and until 2026-10-27 that tripped the
+      // crossed-corners check: the widget could be offered and could not be added, which is what
+      // `palette-add` reported as "could not be added as a draft". A study area with no boundary
+      // has always been allowed to sit on a canvas unconfigured, and this is the same state.
+      // The corners are checked once there is an image to place, and `mapImage` refuses at run
+      // time regardless, so nothing reaches a figure unchecked.
+      const placed=typeof p.data==='string'&&p.data.startsWith('data:');
+      const unset=Array.isArray(p.bounds)&&p.bounds.every(v=>v===0);
+      if(p.bounds!==undefined&&!(unset&&!placed)){
         if(!Array.isArray(p.bounds)||p.bounds.length!==4||!p.bounds.every(v=>typeof v==='number'&&Number.isFinite(v)))
           throw new Error('A map image needs four finite corners: west, south, east, north.');
         const [west,south,east,north]=p.bounds;
@@ -1510,7 +1549,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           +`outside -- so points alone have nothing to be placed against. The same Study area the `
           +`rest of this workflow uses will do.`);
         const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);value=mapped.value;if(mapped.receipt)receipts.push(mapped.receipt);break;}
-      case 'table_output':{if(node.params.inputMode==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(node.params.inputMode==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(node.params.inputMode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const table=tableOutput(node,{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
+      // The renderer follows the connections, not a stored mode: shownMode.
+      case 'table_output':{const shown=shownMode(node,workflow.edges);if(shown==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(shown==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(shown==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const table=tableOutput(node,{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
       case 'measure_area':{const computed=measureArea(node,inputs.area,runId);value=computed.value;receipts.push(computed.receipt);break;}
       case 'study_area':{
         if(node.params.source!=='drawn'){value={...await executeOldNode(node,inputs,reasoner,receipts,distanceKm,runId),areaId:`urn:fieldwork:area:${node.id}`,geometryId:`urn:fieldwork:geometry:${node.id}`,label:node.params.label||'Old Naledi',rows:[],centers:[]};break;}

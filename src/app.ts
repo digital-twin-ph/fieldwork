@@ -57,7 +57,7 @@ import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
-import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,IncompleteWorkflow} from './core.js';
+import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,shownMode,IncompleteWorkflow} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
@@ -1679,10 +1679,17 @@ function renderInspector(){
     // nor here: a map's communication controls are in its own branch.
   }else if(n.type==='table_output'){
 
-    const outputType=n.type==='table_output'?'table':'map',reasoning=n.params.inputMode==='decisions',raster=false,tabular=n.type==='table_output'&&n.params.inputMode==='table';
-    content+=`<div class="field"><label class="field-label" for="output-input-mode">Input mode</label><select id="output-input-mode"><option value="spatial" ${!reasoning&&!raster&&!tabular?'selected':''}>Point layers or spatial coverage</option><option value="polygons">Catchment polygons / summaries</option><option value="decisions" ${reasoning?'selected':''}>Reasoning results</option>${n.type==='table_output'?`<option value="table" ${tabular?'selected':''}>Tabular data</option>`:''}</select><small>Changing mode removes existing input connectors; Undo restores them.</small></div>`;
-    if(reasoning)content+=`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map" ${outputType==='map'?'selected':''}>Map</option><option value="table" ${outputType==='table'?'selected':''}>Table</option><option value="bars">Chart</option></select></div>`;
-    content+=`<div class="field"><label class="field-label" for="${outputType}-label">Results tab name</label><input id="${outputType}-label" maxlength="60" value="${esc(n.params.label)}"></div><p class="description">${tabular?'Connect a Tabular data source.':raster?'Connect Raster input or Clip raster.':reasoning?'Connect a reasoning result.':outputType==='table'?'Connect point data, or a coverage result.':'Connect a study area and points.'}</p>`;
+    // WHAT IS WIRED, NOT WHAT IT WAS TOLD. The selector that used to sit here asked the
+    // practitioner the shape of a thing before they had it, and cleared their connections when
+    // they answered. `a-map-has-layers-not-modes` removed it from the map on 2026-10-15 and left
+    // it here, where it refused a Relate-a-column connection on 2026-10-27.
+    const mode=shownMode(n,workflow.edges);
+    const outputType='table',reasoning=mode==='decisions',raster=false,tabular=mode==='table';
+    content+=`<p class="description">Every port a table can show is offered. What you connect `
+      +`decides how it is shown: a keyed table, catchment polygons, reasoning results, or point `
+      +`layers. Nothing to set first, and connecting removes nothing.</p>`;
+    if(reasoning)content+=`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map">Map</option><option value="table" selected>Table</option><option value="bars">Chart</option></select></div>`;
+    content+=`<div class="field"><label class="field-label" for="${outputType}-label">Results tab name</label><input id="${outputType}-label" maxlength="60" value="${esc(n.params.label)}"></div><p class="description">${tabular?'Showing a keyed table.':reasoning?'Showing reasoning results.':mode==='polygons'?'Showing catchment polygons and their summaries.':'Nothing connected yet \u2014 connect whatever you have.'}</p>`;
     content+=nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);return `<div class="field"><label class="field-label" for="${outputType}-${port}">${({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:raster?'Raster':'Or: Raster',network:'Street network'}[port]||'Point data '+(port==='points'?1:port.split('_')[1]))}</label><select id="${outputType}-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;}).join('');
     // THE MARGINS AN EPIDEMIOLOGIST READS FIRST, and the claim that earns them. A grid totals
     // where the table states a unit, which Snow's Table IX correctly does not: as imported it
@@ -2888,7 +2895,7 @@ function renderInspector(){
       // number, so a repair here would have nothing to repair: the file never got in. 117.
       onRepair:()=>{},onRemoveRepair:()=>{}},esc);
   });
-  optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table',inputMode:'table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
+  optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   optionalElement('#open-table')?.addEventListener('click',()=>{
     const baseline=JSON.stringify(workflow),current=getNode(workflow,n.id,'table_input').params;
     openTableEditor(result=>{

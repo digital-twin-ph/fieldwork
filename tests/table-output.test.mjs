@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {clipExercise} from '../build/clip-points.js';
 import {newTableOutput,tableOutput,pointTableMarkup} from '../build/table-output.js';
-import {executeWorkflow,executionPlan,validateWorkflow,nodeInputs} from '../build/core.js';
+import {executeWorkflow,executionPlan,validateWorkflow,nodeInputs,shownMode} from '../build/core.js';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function directWorkflow(){const w=clipExercise();w.nodes=[w.nodes[1],{...newTableOutput(),id:'table',x:350,y:50}];w.edges=[{id:'points',from:'observations',to:'table',port:'points'}];return w;}
@@ -15,8 +15,15 @@ test('Table executes point data without a study area or invented review decision
   assert.deepEqual(w,before);assert.equal(table.rows[0].attributes.count,0);assert.equal(table.rows[0].attributes.confirmed,false);
   assert.equal(table.spatialReference.geometryCRS,'OGC:CRS84');
   assert.match(result.receipts[0].facts,/fw:TableView/);assert.match(result.receipts[0].facts,/geo:wktLiteral/);
-  assert.deepEqual(nodeInputs(w.nodes[1]),[['points','points'],['coverage','coverage-check']]);
-  w.edges=[];assert.throws(()=>executionPlan(w),/points input connected/);
+  // EVERY PORT A TABLE CAN SHOW, ON EVERY TABLE. They used to appear and disappear with an
+  // `inputMode` parameter, so the port a connection needed might not exist on the node.
+  assert.deepEqual(nodeInputs(w.nodes[1]),
+    [['points','points'],['coverage','coverage-check'],['table','table'],
+     ['polygons','polygons'],['decisions','decisions']]);
+  // And it insists on none of them: a view with nothing wired is unfinished, not failed, which
+  // is what `incomplete-workflow` reports. It used to throw "needs its points input connected",
+  // which with every port declared would have demanded four unrelated inputs at once.
+  w.edges=[];assert.deepEqual(executionPlan(w).length>0,true);
 });
 
 test('a saved table fed by a coverage check opens as one fed by a clip',()=>{
@@ -69,4 +76,44 @@ test('Table paging and search include off-page rows and attributes and escape us
   const search=pointTableMarkup(output,esc,{query:'alert(1)'});assert.equal((search.body.match(/data-place=/g)||[]).length,1);assert.match(search.body,/Visit 104/);
   assert.match(pointTableMarkup(output,esc,{query:'not-a-record'}).body,/No matching records/);
   assert.match(pointTableMarkup({rows:[]},esc).body,/No point records/);
+});
+
+/* ---- a table shows what it is wired, with nothing set first ----
+ *
+ *  The practitioner, 2026-10-27, trying to view the output of Relate a column: "I tried to view
+ *  the output from relate table in table output widget but it won't connect. There is something
+ *  wrong there." A freshly added table defaulted to points, so the `table` port did not exist on
+ *  the node and the edge was refused -- the blocker `output-mode-set-before-the-shape-arrives`,
+ *  removed from `map_output` on 2026-10-15 under `a-map-has-layers-not-modes` and left here.
+ */
+test('a freshly added table accepts a table, with no mode set first',()=>{
+  const fresh=newTableOutput();
+  assert.equal(fresh.params.inputMode,undefined,'nothing writes a mode any more');
+  const ports=nodeInputs({...fresh,id:'t',x:0,y:0});
+  assert.ok(ports.some(([port,type])=>port==='table'&&type==='table'),
+    'the table port exists on a node nobody has configured');
+});
+
+test('the renderer is read from what is wired, and the stored mode only as a fallback',()=>{
+  const node={...newTableOutput(),id:'t',x:0,y:0};
+  const wire=port=>[{to:'t',port}];
+  assert.equal(shownMode(node,wire('table')),'table');
+  assert.equal(shownMode(node,wire('polygons')),'polygons');
+  assert.equal(shownMode(node,wire('decisions')),'decisions');
+  assert.equal(shownMode(node,wire('points')),'spatial');
+  assert.equal(shownMode(node,[]),'spatial','nothing wired is the general path, not a failure');
+  // A workflow saved before this opens and shows what it showed.
+  const saved={...node,params:{...node.params,inputMode:'decisions'}};
+  assert.equal(shownMode(saved,[]),'decisions');
+  // But a connection beats the stored mode, so a saved node is not stuck in it.
+  assert.equal(shownMode(saved,wire('table')),'table');
+});
+
+test('a table port and a points port coexist, so neither excludes the other',()=>{
+  const node={...newTableOutput(),id:'t',x:0,y:0};
+  const ports=nodeInputs(node).map(([port])=>port);
+  for(const port of ['points','coverage','table','polygons','decisions'])
+    assert.ok(ports.includes(port),`${port} is always offered`);
+  // Specificity decides which renderer runs when more than one is wired.
+  assert.equal(shownMode(node,[{to:'t',port:'points'},{to:'t',port:'table'}]),'table');
 });

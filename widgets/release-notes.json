@@ -900,12 +900,12 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.4.0",
-   "released": "2026-10-08",
+   "version": "0.5.0",
+   "released": "2026-10-27",
    "changes": [
     {
      "kind": "minor",
-     "description": "Accept a keyed data table as an input mode, displaying its key columns and value. Saved workflows keep their existing mode and need no migration. Chart and Map deliberately do not accept a table: charting one requires choosing which key varies and whether to aggregate, which is a design decision rather than a rendering detail."
+     "description": "Declare every port always, and read the renderer from the connections rather than from an inputMode parameter. A practitioner could not connect Relate a column to a freshly added table: it defaulted to points, so the table port did not exist on the node. This is the direction a-map-has-layers-not-modes (2026-10-14, “there is no such thing as mode, only layers”), which was built for map_output on 2026-10-15 and left here for twelve days. The stored inputMode is still read as a fallback so a saved workflow opens showing what it showed; nothing writes it any more. A table now insists on no input at all, as a map already did: a view with nothing wired is unfinished, not failed."
     }
    ],
    "breaking": false,

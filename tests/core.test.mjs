@@ -37,7 +37,10 @@ test('legacy output defaults to map and missing outputs are rejected',()=>{
 
 test('each output requires connected dependencies and a supported display',()=>{
   const w=exampleWorkflow();w.edges=w.edges.filter(e=>e.to!=='table');
-  assert.throws(()=>executionPlan(w),/decisions input connected/);
+  // A table with its input removed is unfinished rather than failed: it shows what it is given,
+  // and it is given nothing. It used to throw "needs its decisions input connected", which was
+  // the mode talking -- the port existed only because inputMode said decisions.
+  assert.doesNotThrow(()=>executionPlan(w));
   w.nodes.at(-1).type='output';w.nodes.at(-1).params.view='chart';
   assert.throws(()=>validateWorkflow(w),/map, table/);
 });

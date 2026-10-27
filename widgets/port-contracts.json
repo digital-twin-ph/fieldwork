@@ -1041,48 +1041,29 @@
       "contracts": [
         {
           "when": "inputMode=spatial",
-          "required": [
+          "required": [],
+          "optional": [
             [
               "points",
               "points"
-            ]
-          ],
-          "optional": [
+            ],
             [
               "coverage",
               "coverage-check"
-            ]
-          ]
-        },
-        {
-          "when": "inputMode=decisions",
-          "required": [
+            ],
+            [
+              "table",
+              "table"
+            ],
+            [
+              "polygons",
+              "polygons"
+            ],
             [
               "decisions",
               "decisions"
             ]
-          ],
-          "optional": []
-        },
-        {
-          "when": "inputMode=polygons",
-          "required": [
-            [
-              "polygons",
-              "polygons"
-            ]
-          ],
-          "optional": []
-        },
-        {
-          "when": "inputMode=table",
-          "required": [
-            [
-              "table",
-              "table"
-            ]
-          ],
-          "optional": []
+          ]
         }
       ]
     },

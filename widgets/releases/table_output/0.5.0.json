@@ -1,0 +1,95 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:table_output",
+  "version": "0.5.0",
+  "nodeType": "table_output",
+  "title": "Table",
+  "released": "2026-10-27",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['table_output']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      },
+      {
+        "name": "coverage",
+        "type": "coverage-check"
+      },
+      {
+        "name": "table",
+        "type": "table"
+      },
+      {
+        "name": "polygons",
+        "type": "polygons"
+      },
+      {
+        "name": "decisions",
+        "type": "decisions"
+      }
+    ],
+    "output": null,
+    "dynamicInputs": {
+      "kind": "point-layers",
+      "minimum": 1,
+      "maximum": 8,
+      "implementation": "src/core.ts#nodeInputs"
+    },
+    "note": "Every port a table can show, on every table, whatever its parameters say. The ports used to vary with an inputMode parameter -- reasoningInput, polygonInput and a table mode were three separate declarations of that -- so the port a connection needed might not exist on the node. Which renderer shows is now read from what is wired: src/core.ts#shownMode. The same change map_output took at 0.15.0."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:TableView",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "TableView activity is implemented; broader table artifact contracts remain open. `emits` records what the module named in implementation.definition asserts, and this widget is defined in src/core.ts#TYPES, which asserts nothing — the fw:TableView facts are built in the execution case and are gated by validate:ontology-coupling, which holds at zero undeclared. Same shape as map_output 0.15.0.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/table-output.ts",
+      "src/output-contract.ts",
+      "src/catchment-output.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "output",
+        "adapterVersion": "1",
+        "implementation": "src/output-contract.ts#migrateOutputNodes"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Declare every port always, and read the renderer from the connections rather than from an inputMode parameter. A practitioner could not connect Relate a column to a freshly added table: it defaulted to points, so the table port did not exist on the node. This is the direction a-map-has-layers-not-modes (2026-10-14, “there is no such thing as mode, only layers”), which was built for map_output on 2026-10-15 and left here for twelve days. The stored inputMode is still read as a fallback so a saved workflow opens showing what it showed; nothing writes it any more. A table now insists on no input at all, as a map already did: a view with nothing wired is unfinished, not failed."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  },
+  "description": "Display a keyed table, point coordinates, catchment summaries or review decisions"
+}

@@ -1,2 +1,2 @@
-import{a,b,c,d,e,f,g,h,i}from"./chunks/chunk-6ET7MFF6.js";import"./chunks/chunk-KVMUXFPB.js";export{d as KNOWN_OBLIGATIONS,b as NONE_APPLIES,a as UNSTATED,e as attributionFor,g as attributionsFor,h as provenanceFacts,i as provenanceOf,f as shareAlike,c as unstatedProvenance};
+import{a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p}from"./chunks/chunk-K6IMXJIS.js";import"./chunks/chunk-KVMUXFPB.js";export{d as CITATION_STYLES,k as KNOWN_OBLIGATIONS,b as NONE_APPLIES,a as UNSTATED,l as attributionFor,n as attributionsFor,e as citationGaps,f as citationOmissions,h as citationShort,c as normaliseDoi,o as provenanceFacts,p as provenanceOf,g as renderCitation,i as renderedCitations,m as shareAlike,j as unstatedProvenance};
 //# sourceMappingURL=input-provenance.js.map

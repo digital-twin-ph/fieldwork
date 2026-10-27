@@ -1,6 +1,6 @@
 # Fieldwork's glossary of terms
 
-_Created 2026-10-10 · Updated 2026-10-24_
+_Created 2026-10-10 · Updated 2026-10-27_
 
 ## Start here
 
@@ -158,6 +158,8 @@ _For reading the project's records. Start here if you are catching up on why som
 | **Parity** | Agreement with an independent external implementation of the same computation. Unavailable where no external implementation exists, in which case unit checks are the honest evidence and no parity claim is made ([57](experiments/57-parity-evidence.md)) |
 | **Competency question** | A question the vocabulary must be able to answer, or must refuse, recorded in [experiment 44](experiments/44-ontology-competency-questions.md). The questions it must *refuse* matter as much as the ones it can answer — a term that appeared to answer one would be a bug |
 | **Not established** | The explicit closing statement of what a record's evidence does not support. Required, and distinct from a finding |
+| **Citation** | The structured record of the **work** an input came from: type, authors split into family and given, title, container, place, publisher, volume, issue, pages, doi. Dates and URL are not repeated inside it — `published`, `edition`, `retrieved` and `url` already sit on the provenance record. It exists because a style cannot reorder a sentence: Vancouver, APA 7 and Chicago author-date each move the author, the date and the edition and repunctuate throughout, and none of that is recoverable from free text without parsing English. `renderCitation` returns **undefined** rather than a fragment where a field is missing, and `citationGaps` says which. Not every input has one — an origin that is an authority rather than a publication has a `source` and no citation ([144](experiments/144-provenance-as-structured-data.md)) |
+| **Citation style** | One of the three encoded in `CITATION_STYLES`, each recorded with the manual its rules were read from. A style absent from that table is one nobody has encoded, which is not the same as one that does not exist |
 
 ## The three things that get counted
 

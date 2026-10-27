@@ -4,6 +4,7 @@
 // widgets, and admitting a pack is a review decision recorded in widgets/packs.json. This
 // script needs network, so it is deliberately not part of `npm run check`, which must stay
 // offline and deterministic. Pass --local <path> to check a working copy instead.
+import {existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {Parser} from 'n3';
@@ -11,6 +12,24 @@ import {Parser} from 'n3';
 const HOST_NS='urn:fieldwork:';
 const STAGES=['discovery','acquisition','extraction','import','application','presentation'];
 const args=process.argv.slice(2);
+/** Where the pack's files are read from, preferring a sibling checkout.
+ *
+ *  `--local` has always existed and was opt-in, so the gate took the network path and this became
+ *  the ONE validator that fails when the wifi does -- twice on 2026-10-26, with `fetch failed`,
+ *  passing on retry. An offline-first project does not put a network call in its fast gate, and it
+ *  especially does not do so for a pack that was never admitted and is now parked: the practitioner,
+ *  2026-10-26, *"The pack idea was never tested extensively. We may revisit it at some time in the
+ *  future or not."*
+ *
+ *  So a checkout at `../<repo>` is used when it is there -- the same convention
+ *  `validate-examples.mjs` uses for the worked examples -- and the network remains the fallback for
+ *  a machine that has not cloned it. The source is already recorded in the report, so which of the
+ *  two ran is never a guess. */
+const siblingRoot=pack=>{
+  const name=new URL(pack.repository).pathname.split('/').pop().replace(/\.git$/,'');
+  const path=new URL(`../../${name}`,import.meta.url).pathname.replace(/\/$/,'');
+  return existsSync(path)?path:null;
+};
 const localRoot=args.includes('--local')?args[args.indexOf('--local')+1]:null;
 const sha256=text=>createHash('sha256').update(text).digest('hex');
 
@@ -64,7 +83,8 @@ const hostNodeTypes=new Set(registry.widgets.map(w=>w.nodeType));
 
 /** A pinned commit, never a branch: a moving reference is not an approval. */
 async function fetchFile(pack,path){
-  if(localRoot)return readFile(`${localRoot}/${path}`,'utf8');
+  const root=localRoot??siblingRoot(pack);
+  if(root)return readFile(`${root}/${path}`,'utf8');
   const url=`https://raw.githubusercontent.com/${new URL(pack.repository).pathname.replace(/^\//,'')}/${pack.commit}/${path}`;
   const response=await fetch(url);
   if(!response.ok)throw new Error(`${path}: HTTP ${response.status} from ${url}`);
@@ -185,7 +205,9 @@ const report={
   },
   rulesEvaluated:catalog.governance?.rules??[],
   catalogProblems,
-  source:localRoot?`local:${localRoot}`:'pinned commits over the network',
+  source:localRoot?`local:${localRoot}`
+    :catalog.packs.every(pack=>siblingRoot(pack))?'sibling checkouts at the pinned digests'
+    :'pinned commits over the network',
   packs:[],
 };
 let failed=catalogProblems.length>0;

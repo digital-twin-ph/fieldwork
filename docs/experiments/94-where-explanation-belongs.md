@@ -1,6 +1,6 @@
 # 94 · Where explanation belongs
 
-_Created 2026-10-11 · Updated 2026-10-20_
+_Created 2026-10-11 · Updated 2026-10-26_
 
 **Status:** asked — a finding that retires a claim three earlier experiments were
 carrying, and replaces it with a better question. The replacement answer — that

@@ -1,6 +1,6 @@
 # 74 · Start a worked example as a notebook
 
-_Created 2026-10-10 · Updated 2026-10-19_
+_Created 2026-10-10 · Updated 2026-10-25_
 
 **Status:** method, proposed by the practitioner. It has one worked instance and
 one counter-instance, both already in this repository.

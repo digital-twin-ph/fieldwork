@@ -1,6 +1,6 @@
 # Reports, story maps, infographics and dashboards
 
-_Created 2026-10-06 · Updated 2026-10-15_
+_Created 2026-10-06 · Updated 2026-10-26_
 
 **Superseded by [141](141-organising-snows-notes.md), which synthesizes this with 119 and 133 so there is one record to act on. What is actionable from here lives there; this stays as the record of how it was reached.**
 

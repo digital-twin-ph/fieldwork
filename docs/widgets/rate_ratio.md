@@ -1,6 +1,6 @@
 # Rate ratio with an interval
 
-_Created 2026-10-25 · Updated 2026-10-25_
+_Created 2026-10-25 · Updated 2026-10-26_
 
 **A comparison.** It takes a rate with several groups, divides one group's rate by another's, and
 reports the ratio with an interval and the counts behind it.

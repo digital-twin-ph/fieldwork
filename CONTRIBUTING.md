@@ -1,6 +1,6 @@
 # Contributing
 
-_Created 2026-10-25 · Updated 2026-10-25_
+_Created 2026-10-25 · Updated 2026-10-26_
 
 This is a developmental evaluation, not a build against a specification. Read
 [AGENTS.md](AGENTS.md) first: it holds the method, the admission checkpoints a new widget

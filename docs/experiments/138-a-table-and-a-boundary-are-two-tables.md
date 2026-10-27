@@ -1,6 +1,6 @@
 # 138 — A table and a boundary are two tables
 
-_Created 2026-10-25 · Updated 2026-10-25_
+_Created 2026-10-25 · Updated 2026-10-26_
 
 **Status:** tried — the admission audit is here, the operation is built as a pure module
 with its tests, and the widget is instantiated in the South London `choropleth` workflow,

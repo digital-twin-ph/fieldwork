@@ -1,6 +1,6 @@
 # 125 · Caps below the limit we are testing
 
-_Created 2026-10-19 · Updated 2026-10-22_
+_Created 2026-10-19 · Updated 2026-10-25_
 
 **Status:** asked — an inventory, with the measured caps separated from the guessed ones. What to
 do about the guessed ones is the open question, and it is a different answer per cap.

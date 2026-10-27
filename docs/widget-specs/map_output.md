@@ -1,6 +1,6 @@
 # Map · specification
 
-_Created 2026-10-14 · Updated 2026-10-23_
+_Created 2026-10-14 · Updated 2026-10-25_
 
 **This is the record, not the manual.** The manual a practitioner reads is
 [../widgets/map_output.md](../widgets/map_output.md); this is what the widget assumes, what has

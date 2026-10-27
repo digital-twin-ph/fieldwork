@@ -1,6 +1,6 @@
 # 133 · The planning stage, and where a historical note belongs
 
-_Created 2026-10-24 · Updated 2026-10-24_
+_Created 2026-10-24 · Updated 2026-10-26_
 
 **Superseded by [141](141-organising-snows-notes.md), which synthesizes this with 17 and 119. The spine, the danger and the computable omission are carried over there; this stays as the record of how they were reached, and it got there first.**
 

@@ -1,6 +1,6 @@
 # 119 — The conditions for a good story, and assuring they were met
 
-_Created 2026-10-17 · Updated 2026-10-17_
+_Created 2026-10-17 · Updated 2026-10-26_
 
 **Superseded by [141](141-organising-snows-notes.md), which synthesizes this with 17 and 133. The three measurable conditions and the assurance argument are carried over there; this stays as the record of how they were reached.**
 

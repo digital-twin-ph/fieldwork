@@ -1,6 +1,6 @@
 # 111 — Splitting `reproject` into ingest and transform
 
-_Created 2026-10-13 · Updated 2026-10-15_
+_Created 2026-10-13 · Updated 2026-10-26_
 
 **Status:** validated
 

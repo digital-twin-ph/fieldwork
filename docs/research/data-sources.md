@@ -1,6 +1,6 @@
 # Open data for exercising widgets — candidates, and what is actually known about them
 
-_Created 2026-10-17 · Updated 2026-10-19_
+_Created 2026-10-17 · Updated 2026-10-25_
 
 The practitioner, 2026-10-17: *"There are open data sets for epidemiology and geography available
 online that we can download and use for exercising widgets, can you look for them?"*

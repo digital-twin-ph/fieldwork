@@ -1,6 +1,7 @@
 import type {Output,Receipt} from './results.js';
 import {outputOf} from './core.js';
 import type {WorkflowNode,Workflow} from './types.js';
+import {basemapAvailable} from './basemaps.js';
 import type {LayerShape} from './presentation.js';
 import {markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
@@ -86,7 +87,23 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
   }
   else items=[{label:'Review',color:R.attention},{label:'No flag',color:R.agreement},{label:'Unknown',color:R.unknown},{label:'Facility',color:R.site,shape:'square'}];
   const interactive=node.params.presentation==='interactive'&&!!output.polygons;
-  const basemap=interactive?node.params.basemap||'none':'none';
+  // THE BASEMAP A STATIC FIGURE ACTUALLY BAKES, which this reported as `none` until 2026-10-27.
+  //
+  // `drawStaticBasemap` fetches OpenStreetMap or OpenTopoMap tiles once and inlines them, so the
+  // figure carries its ground. The spec said otherwise, and three things downstream believed it:
+  // the N3 asserted no fw:BasemapLayer, the exported figure omitted `basemap` and therefore its
+  // credit, and `BasemapIsCredited` reported `inapplicable` with the words "This figure drew no
+  // basemap, so no tile provider has to be credited" -- over a figure visibly full of OSM tiles.
+  //
+  // That is an attribution gap and not a cosmetic one. The comment below has always said a
+  // basemap carries an obligation the practitioner cannot opt out of by leaving a field blank;
+  // the coercion above was opting out on their behalf.
+  //
+  // A vector style stays `none` for a static figure, because that one genuinely is not drawn --
+  // the figure has no renderer for it, `drawStaticBasemap` says so in the note, and the
+  // Inspector no longer offers it there.
+  const chosen=node.params.basemap||'none';
+  const basemap=interactive?chosen:(basemapAvailable(chosen,'plot')?chosen:'none');
   // Derived, not authored: a basemap carries an obligation the practitioner cannot opt out of by
   // leaving a field blank, and a street network reached this figure through an ODbL download.
   const credits=[

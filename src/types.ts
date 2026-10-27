@@ -17,8 +17,15 @@ export type Scalar = string | number | boolean | null;
  *  is why the practitioner reported not having OpenFreeMap three days after it was built and
  *  drawing. The union is derived from this, the validator reads it, and the renderer owes every
  *  member a label by a Record type that will not compile if one is missing. */
-export const BASEMAP_CHOICES=['none','osm','topo','ofm-liberty','ofm-positron','ofm-bright'] as const;
-export type BasemapChoice=typeof BASEMAP_CHOICES[number];
+// The basemap vocabulary lives in its own module: it must be readable without Leaflet and it
+// must be testable, and this file is neither a build entry point nor free of type-only consumers.
+// Re-exported here because `BasemapChoice` is named across the node parameter types below.
+export {BASEMAP_CHOICES,VECTOR_BASEMAP_CHOICES,isVectorBasemapChoice,basemapsFor,
+  basemapAvailable,type BasemapChoice} from './basemaps.js';
+// Imported as well as re-exported: a re-exported type is not in scope for the parameter types
+// further down this file.
+import type {BasemapChoice} from './basemaps.js';
+
 export type AttributeType = 'text' | 'number' | 'integer' | 'boolean' | 'date';
 export interface AttributeDefinition {key:string; type:AttributeType; allowedValues?:Scalar[]; defaultValue?:Scalar; label?:string}
 export interface FormField extends AttributeDefinition {label:string}

@@ -71,6 +71,7 @@ import {validateAttributeSchema} from './attribute-schema.js';
 import {defaultSpatialReference,validateSpatialReference} from './spatial-reference.js';
 import {utmDefinition,projectFromCRS84} from './reproject.js';
 import {dataTable,wideDataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
+import {mapImage,mapImageReceipt} from './map-image.js';
 import type {DataTable} from './data-table.js';
 import {computeRate,fromPoints,fromTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
 import {computeRateRatio,rateRatioReceipt,rateRatioSentence,RATE_RATIO_TABLE_KEYS} from './rate-ratio.js';
@@ -87,6 +88,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   aggregate_points_to_h3_cell:{title:'Aggregate points to H3 cells',group:'Spatial operations',icon:'⬡',color:'teal',description:'Count points in hexagonal cells and omit sparse cells. Hexbinning, onto the fixed H3 index',inputs:[['points','points']],output:'polygons'},
   buffer_area:{title:'Buffer study area',group:'Spatial operations',icon:'◎',color:'teal',description:'Expand an acquisition boundary without changing the reporting area',inputs:[['area','area']],output:'area'},
   ...CATCHMENT_TYPES,
+  map_image_input:{title:'Georeferenced map image',group:'Sources',icon:'\u25a6',color:'blue',
+    description:'A scanned or published map, drawn under the workflow as ground; context, not data',
+    inputs:[],output:'ground'},
   table_input:{title:'Tabular data',group:'Sources',icon:'▤',color:'blue',description:'Import a long-format table keyed by declared columns; no geometry',inputs:[],output:'table'},
   join_table_to_area:{title:'Join a table to the study area',group:'Summaries',icon:'⋈',color:'teal',
     description:'Put a value from each row onto the part of the boundary it names',
@@ -169,7 +173,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // definition, and a saved workflow that still names this type is migrated to
   // `clip_points_to_area` on open. It is in the retired list, so the palette never offers it.
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Retired — use Keep points inside the area',inputs:[['area','area'],['points','points']],output:'coverage-check'},
-  map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['decisions','decisions'],['raster','raster'],['network','network']],output:null},
+  map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['decisions','decisions'],['raster','raster'],['ground','ground'],['network','network']],output:null},
   table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display point coordinates, attributes and available review decisions',inputs:[['points','points'],['coverage','coverage-check']],output:null},
   chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Count reasoning results by decision, access zone or evidence tier',inputs:[['decisions','decisions']],output:null},
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
@@ -554,6 +558,19 @@ export function validateWorkflow(raw:unknown):Workflow {
     validateSeaLevelNode(n);
     validateCaseSeriesNode(n);
     validateRateNode(n);
+    if(n.type==='map_image_input'){
+      const p=n.params;
+      if(p.data!==undefined&&typeof p.data!=='string')throw new Error('A map image is carried as a data URI.');
+      if(p.bounds!==undefined){
+        if(!Array.isArray(p.bounds)||p.bounds.length!==4||!p.bounds.every(v=>typeof v==='number'&&Number.isFinite(v)))
+          throw new Error('A map image needs four finite corners: west, south, east, north.');
+        const [west,south,east,north]=p.bounds;
+        if(!(east>west)||!(north>south))
+          throw new Error('A map image\'s extent runs west to east and south to north. These corners cross.');
+      }
+      if(p.opacity!==undefined&&(typeof p.opacity!=='number'||p.opacity<0||p.opacity>1))
+        throw new Error('A map image\'s opacity is between 0 and 1.');
+    }
     if(n.type==='table_input'){
       const t=n.params.data;
       if(!t||t.kind!=='data-table'||!Array.isArray(t.rows))throw new Error('Tabular input holds no table. Import a CSV.');
@@ -1143,6 +1160,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       // figures it came from -- "prepared outside the application", as the 0.12.0 notes put it
       // about this very example. Converting here puts it in the run, where `tableReceipt`
       // already asserts what was read and how.
+      case 'map_image_input':{
+        const image=mapImage(node);
+        value=image as unknown as DisplayValue;
+        receipts.push(mapImageReceipt(node,image,runId));break;}
       case 'table_input':{
         const p=node.params;
         const table=p.convertOnRun&&p.sourceTable&&p.wide

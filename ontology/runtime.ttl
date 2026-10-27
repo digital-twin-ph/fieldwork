@@ -114,6 +114,27 @@ fw:measureKeyField a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The key column of the resulting long table that holds the melted columns' names.".
 fw:meltedValueFieldCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 
+# A SCANNED OR PUBLISHED MAP, drawn as ground. Typed apart from fw:Raster on purpose: a raster
+# carries measurements and may be clipped and sampled, and a plate carries a printer's ink. The
+# port type makes the wrong connection impossible; this makes the distinction readable.
+fw:MapImageInput a owl:Class; rdfs:subClassOf prov:Activity;
+  rdfs:label "Map image input";
+  rdfs:comment "Reading a georeferenced image into a workflow as context. Not an acquisition of measurements.".
+fw:MapImage a owl:Class; rdfs:subClassOf prov:Entity;
+  rdfs:label "Map image";
+  rdfs:comment "A georeferenced image drawn under a workflow. CONTEXT, never frame: its pixels are ink, so sampling them returns the colour of a line rather than a measurement, and joining data to what it depicts is not supported.".
+fw:imageDigest a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:imagePixelWidth a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:imagePixelHeight a owl:DatatypeProperty; rdfs:range xsd:integer.
+fw:groundResolutionMetres a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:comment "Metres on the ground for one pixel, at the middle of the extent. What the plate can and cannot show.".
+fw:westBound a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:southBound a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:eastBound a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:northBound a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:layerRole a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "What a drawn layer is for. \"context\" means it may not be measured or joined to.".
+
 fw:matchedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:outsideRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:multipleMembershipCount a owl:DatatypeProperty; rdfs:range xsd:integer.

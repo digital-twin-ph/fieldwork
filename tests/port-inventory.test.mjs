@@ -25,7 +25,24 @@ import {OLD_TYPES} from '../build/old-naledi.js';
 // by nothing -- which is what a stud is. It is not a new coupling; it is an old one losing its far
 // end. It falls back to 6 when the archived definition is dropped, which this project does not do
 // while a saved workflow may still name the type.
-const CUSTOM_STUDS_TODAY=7;
+// Raised from 7 to 8 on 2026-10-27 for `ground`, deliberately, and the reason is a genuine
+// tension between two admission criteria rather than an oversight.
+//
+// D4 asks whether a wrong producer needs a HARD STOP, and here it does: a georeferenced plate must
+// not reach clip_raster or sample_raster, because sampling a printed map returns the colour of a
+// line and sample_raster requires an author to state what a sampled value MEASURES. A separate
+// port type makes that connection impossible instead of reporting it afterwards.
+//
+// D4a says a port type fitting only one other block is two things glued together. `ground` has one
+// producer and one consumer today, so it is a stud by this file's own measure, and recording it
+// honestly matters more than arguing it away.
+//
+// What would resolve it rather than excuse it: a SECOND PRODUCER. Natural Earth is currently a
+// value in the basemap enumeration and is the same kind of thing -- a context layer drawn under
+// the workflow -- so moving it to produce `ground` would shrink that enumeration and give the type
+// a second end. If that does not happen, the honest conclusion is that `ground` never earned its
+// own type and belongs folded back, which is the resolution this comment exists to make reachable.
+const CUSTOM_STUDS_TODAY=8;
 
 const definitions={...TYPES,...OLD_TYPES};
 const union=[...new Set(readFileSync(new URL('../src/types.ts',import.meta.url),'utf8')

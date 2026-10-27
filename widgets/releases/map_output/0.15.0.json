@@ -1,0 +1,116 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:map_output",
+  "version": "0.15.0",
+  "nodeType": "map_output",
+  "title": "Map",
+  "released": "2026-10-27",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['map_output']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      },
+      {
+        "name": "points",
+        "type": "points"
+      },
+      {
+        "name": "polygons",
+        "type": "polygons"
+      },
+      {
+        "name": "context",
+        "type": "points"
+      },
+      {
+        "name": "decisions",
+        "type": "decisions"
+      },
+      {
+        "name": "raster",
+        "type": "raster"
+      },
+      {
+        "name": "ground",
+        "type": "ground"
+      },
+      {
+        "name": "network",
+        "type": "network"
+      }
+    ],
+    "output": null,
+    "dynamicInputs": {
+      "kind": "point-layers",
+      "minimum": 1,
+      "maximum": 8,
+      "implementation": "src/core.ts#nodeInputs"
+    },
+    "note": "Every layer port, on every map, whatever its parameters say. The ports used to vary with an inputMode parameter -- reasoningInput, rasterInput, polygonInput, networkInput were four separate declarations of that -- so the port a connection needed might not exist on the node. Which renderer draws is now read from what is wired: src/core.ts#drawnMode."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:MapView",
+        "file": "ontology/fieldwork.ttl"
+      },
+      {
+        "role": "configuration",
+        "iri": "urn:fieldwork:MapSpecification",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Map presentation plan and MapView activity are implemented; broader map artifact and cartographic contracts remain open. 0.11.0 declared fw:MapSpecification and the fifteen encoding properties here. That was wrong: emits records what the module named in implementation.definition asserts, and this widget is defined in src/core.ts#TYPES, which asserts nothing. The encoding terms are asserted by src/map-communication.ts and are gated by validate:ontology-coupling, which holds at zero undeclared. A release file is immutable, so 0.11.0 keeps the over-declaration and this one corrects it.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/raster.ts",
+      "src/raster-workflow.ts",
+      "src/raster-ui.ts",
+      "src/app.ts",
+      "src/canvas.tsx",
+      "src/catchment-output.ts",
+      "src/catchment-map.ts",
+      "src/map-communication.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "output",
+        "adapterVersion": "1",
+        "implementation": "src/output-contract.ts#migrateOutputNodes"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Takes a `ground` layer: a georeferenced image drawn under everything the workflow produced. Additive and backward-compatible -- a map with nothing on that port draws exactly as before. The port type is separate from `raster` on purpose: a raster carries measurements and exists to be clipped and sampled, and ground carries a picture, so the two must not be interchangeable at a connector. See docs/experiments/143-a-georeferenced-plate-as-ground.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

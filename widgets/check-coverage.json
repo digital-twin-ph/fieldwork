@@ -8,10 +8,10 @@
   },
   "measuredAt": "2026-10-27",
   "counts": {
-    "widgets": 52,
+    "widgets": 53,
     "covered": 26,
     "awaiting": 13,
-    "none": 12,
+    "none": 13,
     "blocked": 1
   },
   "widgets": [
@@ -296,6 +296,11 @@
       "nodeType": "voronoi",
       "expectation": "parity",
       "check": "15-voronoi"
+    },
+    {
+      "nodeType": "map_image_input",
+      "expectation": "none",
+      "reason": "NOTHING TO RECOMPUTE INDEPENDENTLY. This step places an image where its georeference says, and there is no second implementation that could disagree: the arithmetic is reading six world-file coefficients and deriving four corners, which the unit tests check against the example's own map2.jgw. What a lab check would have to verify is whether the GEOREFERENCE IS CORRECT -- whether the plate, placed as recorded, lands on the ground it depicts -- and that is not a recomputation. It is a measurement against modern boundaries at the plate's four control points, and experiment 143 records it as the open question with the method for closing it. Declaring `parity` here would claim an independent check that would in fact be this project's arithmetic agreeing with itself."
     }
   ]
 }

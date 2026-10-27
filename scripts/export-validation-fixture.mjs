@@ -7,6 +7,7 @@
 //                   | deduplicate-facilities-001
 //                   | measure-area-001 | mean-center-001
 //                   | reachability-soho-001 | corridor-soho-001
+//                   | relate-snow-001 | group-snow-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -27,6 +28,9 @@ import {bufferPoint,BUFFER_POINT_STEPS} from '../build/buffer-point.js';
 import {bufferedBoundary} from '../build/area-buffer.js';
 import {aggregateHex} from '../build/geoprivacy.js';
 import {caseSeriesFromTable} from '../build/case-series.js';
+import {relateTable} from '../build/relate-table.js';
+import {groupTable} from '../build/group-table.js';
+import {gunzipSync} from 'node:zlib';
 import {deduplicatePoints,jaroWinkler,normaliseName} from '../build/deduplicate-points.js';
 import {extentN3,extentProjection} from '../build/rule-application.js';
 import {runInThisContext} from 'node:vm';
@@ -107,6 +111,32 @@ const sohoVoronoiChain=()=>{
   const summarised=summarizePolygons(clipped,deaths,node('summary').params);
   return {pumps,deaths,boundary,zone,hemisphere,cells,clipped,summarised,
     summaryParams:node('summary').params};
+};
+
+/** SNOW'S TWO TABLES, out of the worked example rather than retyped here.
+ *
+ *  The subject of checks 28 and 29 is the step a reader of the South London example actually
+ *  runs, so the input has to be that example's own data: Table VIII (32 sub-districts x two
+ *  measures, 64 long rows) as the left table, and Table XII (one row per sub-district, carrying
+ *  the company that supplied it) as the right. The alternative -- transcribing the figures into
+ *  this script -- would make the fixture a check on this file instead of on the example.
+ *
+ *  Read from the sibling checkout at the repository boundary, which is a LICENCE boundary: the
+ *  example cannot be merged into Fieldwork, so a fixture built from it is built from a clone.
+ *  Absent clone, absent fixture, said plainly rather than silently substituted.
+ */
+const southLondonTables=()=>{
+  const path=new URL('../../example-1855-cholera-south-london/fieldwork-project.json.gz',import.meta.url);
+  let bundle;
+  try{bundle=JSON.parse(gunzipSync(readFileSync(path)));}
+  catch{throw new Error('example-1855-cholera-south-london is not checked out beside this repository, '
+    +'and these fixtures are built from its tables rather than from figures retyped here. '
+    +'Clone it at ../example-1855-cholera-south-london and run this again.');}
+  const workflow=bundle.workflows.find(w=>w.key==='south-london/contingency');
+  if(!workflow)throw new Error('That checkout carries no south-london/contingency workflow.');
+  const node=id=>workflow.document.nodes.find(n=>n.id===id).params.data;
+  return {left:node('table-viii'),right:node('table-xii'),
+    commit:bundle.exportedAt,project:bundle.project.id};
 };
 
 const builders={
@@ -844,6 +874,126 @@ const builders={
       note:'Recompute the output from declaredParameters and the input only. Fieldwork\u2019s own intermediate values are deliberately absent. Coordinates are stored to three decimals, so agreement is expected at the millimetre rather than exactly.'
     },files:{}};
   },
+  'relate-snow-001'(){
+    // RELATE brings a CATEGORY across, so there is no arithmetic to check. What is worth an
+    // independent eye is the MATCHING, and one case in particular: a right table that gives one
+    // key two different values is REFUSED here, where a merge resolves it to whichever row came
+    // first and reports nothing. That is the comparison -- not whether two implementations agree,
+    // but what the other one does instead.
+    const {left,right}=southLondonTables();
+    const request={on:'sub_district',bring:'water_supply'};
+
+    // 1. The relate the example runs.
+    const joined=relateTable(left,right,request);
+
+    // 2. A key the right table does not carry. Snow's tables match exactly, so the gap is made
+    //    by withholding one sub-district -- both of its rows in the left table should be dropped
+    //    and named, never defaulted to an invented category.
+    const withheld='St. Saviour, Southwark';
+    const short={...right,rows:right.rows.filter(r=>r.key.sub_district!==withheld),
+      rowCount:right.rows.length-right.rows.filter(r=>r.key.sub_district===withheld).length};
+    const withGap=relateTable(left,short,request);
+
+    // 3. An ambiguous key. CONSTRUCTED, and said so: no sub-district in Snow's Table XII carries
+    //    two companies, which is exactly why the case has to be built. One row is duplicated
+    //    with a different company, and the expected behaviour is a refusal with a message naming
+    //    the key and both values.
+    const first=right.rows[0];
+    const ambiguousRows=[...right.rows,{key:{...first.key,water_supply:'Lambeth Company only'},value:1}];
+    const ambiguous={...right,rows:ambiguousRows,rowCount:ambiguousRows.length};
+    let refusal=null;
+    try{relateTable(left,ambiguous,request);}catch(error){refusal=error.message;}
+
+    const rowsOf=table=>table.rows.map(row=>({key:row.key,value:row.value}));
+    return {fixture:{
+      ...base('relate-snow-001','relate_table','Relate a table','src/relate-table.ts#relateTable'),
+      source:"John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855: Table VIII (population and deaths by sub-district) as the left table and Table XII (the company supplying each sub-district) as the right. Read from the example-1855-cholera-south-london checkout, not retyped.",
+      declaredParameters:{on:request.on,bring:request.bring,
+        semantics:'Each left row takes the single value its key has in the right table\'s bring column, which becomes an additional KEY column. The row count is unchanged -- nothing is added and nothing is multiplied. A left key the right table has no row for is reported by name and its rows are DROPPED, because a row with no category cannot be grouped by that category. A right table holding two different bring values for one key is REFUSED outright; it is not resolved to the first, the last, or any of them.',
+        matching:'Exact equality after trimming. No case folding, no punctuation folding, no resemblance.',
+        equivalentTo:'A pandas left merge on `on`, restricted to one brought column, followed by dropping the unmatched rows -- EXCEPT for the ambiguous case, where a merge multiplies rows and this refuses.'},
+      input:{left:{keys:left.keys,valueField:left.valueField,rowCount:left.rows.length,rows:rowsOf(left)},
+        right:{keys:right.keys,valueField:right.valueField,rowCount:right.rows.length,rows:rowsOf(right)}},
+      output:{cases:[
+        {note:'The relate the example runs: Table XII\'s company onto all 64 rows of Table VIII',
+          rightTable:'right',
+          table:{keys:joined.table.keys,rowCount:joined.table.rowCount,
+            missingValueCount:joined.table.missingValueCount,rows:rowsOf(joined.table)},
+          related:joined.related,dropped:joined.dropped,gaps:joined.gaps,values:joined.values,
+          refused:null},
+        {note:`A key the right table does not carry: ${withheld} withheld, so its rows are dropped and named`,
+          rightTable:'right, with every row for that sub-district removed',
+          withheldKey:withheld,
+          table:{keys:withGap.table.keys,rowCount:withGap.table.rowCount,
+            missingValueCount:withGap.table.missingValueCount,rows:rowsOf(withGap.table)},
+          related:withGap.related,dropped:withGap.dropped,gaps:withGap.gaps,values:withGap.values,
+          refused:null},
+        {note:'An ambiguous key, constructed: one sub-district given a second, different company',
+          rightTable:'right, with one row duplicated under a different company',
+          constructed:'No sub-district in Table XII carries two companies. The row is added here because the case cannot be drawn from the data.',
+          ambiguousKey:first.key.sub_district,
+          ambiguousValues:[first.key.water_supply,'Lambeth Company only'],
+          table:null,related:null,dropped:null,gaps:null,values:null,
+          refused:refusal}]},
+      note:'Recompute each case from `input` and `declaredParameters` with an independent merge. Case 3 has no table: the expected result is a refusal, and what a merge does there instead is the finding.'
+    },files:{}};
+  },
+
+  'group-snow-001'(){
+    // GROUP sums, and the sum is checkable by anyone. The case worth an independent eye is the
+    // one where the two implementations are MEANT to differ: pandas sums over a missing value as
+    // though it were zero, and this returns nothing known. A stratum whose population nobody
+    // recorded must come out unknown rather than come out smaller.
+    const {left,right}=southLondonTables();
+    const related=relateTable(left,right,{on:'sub_district',bring:'water_supply'}).table;
+    const request={by:['water_supply','measure']};
+
+    // 1. The six totals the contingency table is made of.
+    const totalled=groupTable(related,request);
+
+    // 2. One cell emptied, in the largest group, so the difference between nothing-known and a
+    //    smaller number is as large as this data can make it. The emptied row is named so the lab
+    //    can empty the same one.
+    const target=related.rows.find(row=>
+      row.key.water_supply==='Southwark and Vauxhall Company only'&&row.key.measure==='population_1851');
+    const holed={...related,rows:related.rows.map(row=>row===target?{...row,value:null}:row),
+      missingValueCount:related.missingValueCount+1};
+    const withHole=groupTable(holed,request);
+    // What the other behaviour would have given, recorded so the check can state the size of the
+    // disagreement rather than only its existence. Not what Fieldwork returns.
+    const summedOver=related.rows.filter(row=>
+      row.key.water_supply===target.key.water_supply&&row.key.measure===target.key.measure)
+      .reduce((n,row)=>n+(row===target?0:row.value),0);
+
+    const rowsOf=table=>table.rows.map(row=>({key:row.key,value:row.value}));
+    return {fixture:{
+      ...base('group-snow-001','group_table','Total a table within groups','src/group-table.ts#groupTable'),
+      source:"John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855: Table VIII related to Table XII's declared water supply. The input here is the OUTPUT of relate_table over that pair, which is what the example feeds this step.",
+      declaredParameters:{by:request.by,operation:'sum',
+        semantics:'Rows agreeing on every column in `by` become one row whose value is their total. The columns to KEEP are named; every other key column is dropped. Sum and nothing else -- no mean, no count -- because this step cannot tell a count from a rate and summing rates gives a number with no referent. A group holding ANY empty cell totals to null and is reported by name: not to the sum of the cells that were present.',
+        equivalentTo:'A pandas groupby(by).sum() over the value column, EXCEPT for the empty cell: pandas sums over NaN as though it were zero by default, and `min_count=1` is the option that reproduces this behaviour. That difference is case 2.'},
+      input:{relatedFrom:'relate-snow-001 case 1',
+        table:{keys:related.keys,valueField:related.valueField,rowCount:related.rows.length,
+          missingValueCount:related.missingValueCount,rows:rowsOf(related)}},
+      output:{cases:[
+        {note:'The six totals of the Snow contingency table: three companies against two measures',
+          emptied:null,
+          table:{keys:totalled.table.keys,rowCount:totalled.table.rowCount,
+            missingValueCount:totalled.table.missingValueCount,rows:rowsOf(totalled.table)},
+          groups:totalled.groups,collapsedFrom:totalled.collapsedFrom,
+          dropped:totalled.dropped,gaps:totalled.gaps},
+        {note:'One cell emptied: that group totals to nothing known, and the other five are unchanged',
+          emptied:{key:target.key,wasValue:target.value},
+          sumIgnoringTheEmptyCell:summedOver,
+          whyItIsNotThat:'That number is what a default sum returns and it is wrong here by exactly the population of one sub-district, which nobody recorded in this case. A total too small by an unknown amount reads as a finding.',
+          table:{keys:withHole.table.keys,rowCount:withHole.table.rowCount,
+            missingValueCount:withHole.table.missingValueCount,rows:rowsOf(withHole.table)},
+          groups:withHole.groups,collapsedFrom:withHole.collapsedFrom,
+          dropped:withHole.dropped,gaps:withHole.gaps}]},
+      note:'Recompute both cases from `input` and `declaredParameters`. Case 2 empties the row named in `emptied` and is the case where the two implementations are meant to disagree under pandas\' default.'
+    },files:{}};
+  },
+
   'clip-all-touched-001'(){
     // A small north-up CRS84 grid with a deterministic ramp, so a value disagreement is
     // traceable to a cell rather than hidden in noise.

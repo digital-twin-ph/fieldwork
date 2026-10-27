@@ -6,11 +6,11 @@
     "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
     "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
   },
-  "measuredAt": "2026-10-26",
+  "measuredAt": "2026-10-27",
   "counts": {
     "widgets": 52,
-    "covered": 23,
-    "awaiting": 16,
+    "covered": 25,
+    "awaiting": 14,
     "none": 12,
     "blocked": 1
   },
@@ -117,7 +117,8 @@
     {
       "nodeType": "group_table",
       "expectation": "parity",
-      "computes": "Totals of the rows agreeing on the key columns kept. An independent implementation -- a pandas groupby sum over the related Table VIII -- recomputes all six totals of the Snow contingency table and, separately, that a group holding an empty cell comes back as nothing known rather than as a smaller number. That second case is the one worth an independent check: pandas sums over a missing value by default, so the check is a comparison with the behaviour this widget deliberately does NOT have."
+      "computes": "Totals of the rows agreeing on the key columns kept. An independent implementation -- a pandas groupby sum over the related Table VIII -- recomputes all six totals of the Snow contingency table and, separately, that a group holding an empty cell comes back as nothing known rather than as a smaller number. That second case is the one worth an independent check: pandas sums over a missing value by default, so the check is a comparison with the behaviour this widget deliberately does NOT have.",
+      "check": "29-group-table"
     },
     {
       "nodeType": "isochrone",
@@ -201,7 +202,8 @@
     {
       "nodeType": "relate_table",
       "expectation": "parity",
-      "computes": "A key column brought from a second table onto these rows, matched on a shared column. An independent implementation -- a pandas left merge of Snow's Table VIII onto Table XII on `sub_district` -- recomputes which rows receive which category, how many are dropped for keys the second table does not carry, and that the row count is unchanged. The arithmetic is none; what is worth recomputing is the MATCHING, and in particular that an ambiguous key is refused rather than resolved to whichever row came first, which is the failure a merge implementation would silently commit."
+      "computes": "A key column brought from a second table onto these rows, matched on a shared column. An independent implementation -- a pandas left merge of Snow's Table VIII onto Table XII on `sub_district` -- recomputes which rows receive which category, how many are dropped for keys the second table does not carry, and that the row count is unchanged. The arithmetic is none; what is worth recomputing is the MATCHING, and in particular that an ambiguous key is refused rather than resolved to whichever row came first, which is the failure a merge implementation would silently commit.",
+      "check": "28-relate-table"
     },
     {
       "nodeType": "reproject",

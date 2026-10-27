@@ -55,3 +55,18 @@ rows collapsed into how many groups, and every group that held an empty cell.
 ## Where it is used
 
 The South London example: *Died or survived, by water supply*.
+
+## How it was checked
+
+Validation Lab check **29**, `29-group-table-vs-pandas.ipynb`, against a pandas groupby. All six
+totals of the Snow contingency table agree exactly — they are integer counts, so the tolerance is
+zero rather than small.
+
+The empty cell is the case worth checking, and **pandas has no option for the rule this widget
+states**. `min_count=1` reads like it and is the first thing anyone writes: it bounds how many
+values must be *present*, not whether any are *absent*, so on eleven numbers and one empty cell it
+returns the eleven. On this data that is 147,945 people instead of nothing known — short by the one
+sub-district nobody recorded. The comparison that does hold is a per-group `sum(skipna=False)`.
+
+What no check can verify is the protection that matters most here: summing is the only operation
+offered, because this step cannot tell a count from a rate.

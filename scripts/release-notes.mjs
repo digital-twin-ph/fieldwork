@@ -33,7 +33,14 @@ export function releaseNotes(){
   const widgets={};
   for(const entry of registry.widgets){
     const release=entry.releases.find(r=>r.version===entry.currentVersion);
-    if(!release)continue;
+    // A BUMPED currentVersion WITH NO RELEASE ENTRY IS A MISTAKE, not a widget to skip. This
+    // read `continue`, so bumping table_input to 0.2.0 and forgetting to register the file
+    // DELETED it from the notes -- 62 widgets became 61 -- and the validator then agreed with
+    // the file it had just generated. Caught on 2026-10-27 only by noticing the count.
+    if(!release)throw new Error(`${entry.nodeType} declares currentVersion ${entry.currentVersion} `
+      +`and its releases list carries ${entry.releases.map(r=>r.version).join(', ')||'nothing'}. `
+      +'Add the release file to widgets/registry.json, with its path and sha256. Skipping it here '
+      +'would drop the widget from the release notes and the gate would then check the gap.');
     const file=read(release.path);
     const changes=(file.changes||[]).filter(c=>c&&typeof c==='object').map(change=>{
       if(change.kind)kinds.add(change.kind);

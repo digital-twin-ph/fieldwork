@@ -1,0 +1,68 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:table_input",
+  "nodeType": "table_input",
+  "version": "0.2.0",
+  "title": "Tabular data",
+  "released": "2026-10-27",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['table_input']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "A source. The output is a keyed table with no geometry and no CRS, which is why it is not the points port: flattening a table to points would mint one point per row and lose the key."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "GAP, meaning no alignment to an external tabular vocabulary -- not meaning the terms are undeclared. fw:DataTable and fw:TabularInput are declared in ontology/runtime.ttl with their properties, so the coupling gate passes on every term the receipt asserts.\n\nWHY `emits` IS EMPTY WHILE THIS WIDGET'S RECEIPT ASSERTS NINETEEN TERMS. The field is measured against the release's `definition`, which for an input widget is src/core.ts#TYPES and asserts nothing of its own; the receipt is built in src/data-table.ts, which is listed under implementation.files and is not the definition. So the drift signal `emits` exists to give -- a change to the terms forcing a release -- does not cover this widget, and the terms are named here instead: DataTable and TabularInput, with boundAttribute, distinctValue, distinctValueCount, distinctValuesOf, keyField, measureKeyField, meltedValueField, meltedValueFieldCount, readAs, sourceDigest, sourceFile, subjectKeyField, tableMissingValueCount, tableRowCount, valueField, valueUnit and valueUnitStatus. Recorded as a limitation rather than worked around by moving the definition, which would be a claim about where this widget is implemented in order to satisfy a checker.\n\nWHAT 0.2.0 ADDS is the shape of the READING rather than of the table: fw:readAs is asserted on the activity for both shapes, because a file that was already long is as much a fact about the reading as a melt is, and for a melt the subject keys, the measure key and each column taken are named. They hang off the activity and not off the table on purpose -- the table is long either way and only the reading differs. The melted columns are NAMED rather than inferred from what is left over, so a column absent from a receipt was not asked for rather than not present, and that distinction is the one a reader of a published figure needs.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/data-table.ts",
+      "src/data-table-ui.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "added",
+      "description": "Reads a WIDE file, and assumes wide on a fresh import. One row per subject and a column per variable is what a line list, a surveillance export and a published table look like, and until now every such file had to be melted outside the application -- including the ones its own worked examples ship. The practitioner's instruction, 2026-10-26: \"We have to assume wide in as default, that's the epidemiology mindset.\" The reader for it was written the same day and wired to nothing, which is the defect this release closes rather than the capability it adds."
+    },
+    {
+      "kind": "added",
+      "description": "Detects a file that is already long and REFUSES TO CONVERT IT SILENTLY. The subject keys of a wide file identify a row; a long file repeats them, which is the whole signature. Detected from the data rather than by catching the reader's refusal, reported with the number of repeated rows and an example, and acted on only by a button that says what it will do. Asked for on 2026-10-27: \"Table input should alert the user if table is in long format and confirm to convert.\""
+    },
+    {
+      "kind": "added",
+      "description": "The receipt states the shape the file was read in -- fw:readAs, asserted for long as well as wide -- and for a melt names the subject keys, the measure key and every column taken. The columns are named rather than inferred from what is left over, so a column absent from the receipt was not asked for rather than not present."
+    },
+    {
+      "kind": "unchanged",
+      "description": "The stored table is long in both shapes, so nothing downstream learns a second representation. Both readers are kept because they give opposite diagnoses of the same file: a repeated key tuple is the long shape to one and a duplicate subject record to the other. A table saved before this release has no wide selection and reopens as long, because re-reading it as wide would change the table under a workflow already built on it."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks cover the long-format contract, duplicate key rejection, missing values retained and counted, stated and unstated units, absent columns and the row cap. The importer checks shape and identity, not whether a table's units or values are correct."
+  }
+}

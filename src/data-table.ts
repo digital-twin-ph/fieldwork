@@ -76,6 +76,22 @@ export function dataTable(table:TableRows,selection:TableSelection):DataTable {
  *  names them: a Rate takes its measure key, and a derived value names two of its values. */
 export interface WideSelection {
   keys:string[]; valueFields:string[]; measureKey:string; valueField:string; unit?:string;
+  /** WHAT A VALUE COLUMN IS CALLED IN THE ANALYSIS, where that is not what the file calls it.
+   *  Keyed by column name; a column absent here keeps its own.
+   *
+   *  A published file's header is a machine name and an analysis has its own vocabulary. Snow's
+   *  Table VIII ships `deaths_southwark_vauxhall` and the South London workflows say "deaths
+   *  Southwark and Vauxhall"; four of its six table inputs were melted by hand for that reason
+   *  alone and could not be converted on run, because a melt forced the file's names onto every
+   *  downstream step at once -- a Rate's measure key, a derived value's two operands, a selection's
+   *  values.
+   *
+   *  NOT INFERRED FROM THE COLUMN NAME. Replacing underscores with spaces gives "deaths 1849"
+   *  correctly and "deaths pump wells" where the analysis says "deaths pump-wells", and the
+   *  difference is not something a rule can know. A guess that is usually right is worse here than
+   *  a name the author states, because the wrong ones are the quiet ones -- and an inferred name
+   *  would change under the author when a publisher reformatted a header. */
+  measureNames?:Record<string,string>;
 }
 export function wideDataTable(table:TableRows,selection:WideSelection):DataTable {
   const headers=table.headers.map(trimmed);
@@ -96,6 +112,29 @@ export function wideDataTable(table:TableRows,selection:WideSelection):DataTable
     +'so it cannot also name the column holding the variable names.');
   for(const name of [...keys,...valueFields])
     if(!headers.includes(name))throw new Error(`The file has no column named ${JSON.stringify(name)}.`);
+  // A rename is checked against the SELECTION, not the file: renaming a column that is not being
+  // melted does nothing, and silently doing nothing is how a typo survives a review.
+  const renames=selection.measureNames??{};
+  const measureOf=(column:string)=>trimmed(renames[column]??'')||column;
+  for(const column of Object.keys(renames)){
+    if(!valueFields.includes(trimmed(column)))
+      throw new Error(`${JSON.stringify(column)} is named as a measure but is not one of the value `
+        +'columns being melted, so the name would have no effect.');
+    if(!trimmed(renames[column]))
+      throw new Error(`${JSON.stringify(column)} is given an empty measure name. Leave it out to `
+        +'keep the column\'s own name.');
+  }
+  // Two columns under one measure would merge two variables into one set of rows, and the melt
+  // would report a plausible row count for a table that had quietly lost a variable.
+  const measures=valueFields.map(measureOf);
+  if(new Set(measures).size!==measures.length){
+    // `Set.add` returns the set, so `!seen.add(name)` is never true: the first version of this
+    // named the clash as `undefined` and the message said so. Found by its own test.
+    const seenNames=new Set<string>();
+    const clash=measures.find(name=>seenNames.has(name)||(seenNames.add(name),false));
+    throw new Error(`Two value columns would both be called ${JSON.stringify(clash)}. Each measure `
+      +'names one variable, so two columns cannot share a name.');
+  }
   if(!table.rows.length)throw new Error('The selected file contains no rows.');
   const melted=table.rows.length*valueFields.length;
   if(melted>MAX_TABLE_ROWS)throw new Error(`${table.rows.length.toLocaleString()} rows across `
@@ -121,11 +160,11 @@ export function wideDataTable(table:TableRows,selection:WideSelection):DataTable
     seen.set(signature,position);
     for(const name of valueFields){
       const raw=trimmed(row[index(name)]??'');
-      if(!raw){missingValueCount++;rows.push({key:{...key,[measureKey]:name},value:null});continue;}
+      if(!raw){missingValueCount++;rows.push({key:{...key,[measureKey]:measureOf(name)},value:null});continue;}
       const value=Number(raw);
       if(!Number.isFinite(value))throw new Error(`Row ${position+1} has a nonnumeric value `
         +`${JSON.stringify(raw)} in ${JSON.stringify(name)}.`);
-      rows.push({key:{...key,[measureKey]:name},value});
+      rows.push({key:{...key,[measureKey]:measureOf(name)},value});
     }
   });
   return {kind:'data-table',keys:[...keys,measureKey],valueField,
@@ -167,7 +206,8 @@ export function distinctValues(table:DataTable,columns:readonly string[]):Record
 }
 
 export function tableReceipt(node:{id:string;params:{label:string;unit?:string;distinctValuesFor?:string[];
-  wide?:{keys:string[];valueFields:string[];measureKey:string}}},table:DataTable,runId:string){
+  wide?:{keys:string[];valueFields:string[];measureKey:string;
+    measureNames?:Record<string,string>}}},table:DataTable,runId:string){
   const entity=`<urn:fieldwork:run:${runId}:table:${node.id}>`,activity=`<urn:fieldwork:run:${runId}:tableinput:${node.id}>`;
   const quote=(value:string)=>JSON.stringify(value);
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcat: <http://www.w3.org/ns/dcat#>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
@@ -192,6 +232,12 @@ export function tableReceipt(node:{id:string;params:{label:string;unit?:string;d
         +'; '+node.params.wide.valueFields.map(name=>`fw:meltedValueField ${quote(name)}`).join('; ')
         +`; fw:measureKeyField ${quote(node.params.wide.measureKey)}`
         +`; fw:meltedValueFieldCount "${node.params.wide.valueFields.length}"^^xsd:integer`
+        // A RENAME IS RECORDED, NOT JUST APPLIED. "population" in this analysis is
+        // `population_1851` in the file, and a reader who cannot see that cannot check the
+        // numbers against the source. One statement per renamed column, naming both.
+        +Object.entries(node.params.wide.measureNames??{})
+          .map(([column,measure])=>`; fw:measureRenaming [ fw:fromColumn ${quote(column)}; `
+            +`fw:toMeasure ${quote(measure)} ]`).join('')
       :'')
     +`.\n`;
   const declared=node.params.distinctValuesFor??[];

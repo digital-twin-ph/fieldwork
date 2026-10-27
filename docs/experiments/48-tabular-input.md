@@ -1,6 +1,6 @@
 # Experiment 48: tabular input
 
-_Created 2026-10-08 · Updated 2026-10-14_
+_Created 2026-10-08 · Updated 2026-10-27_
 
 Date: October 8, 2026. Status: semantic admission review, then implementation.
 This closes the host gap that [experiment 47](47-sea-level-pack.md) found: the
@@ -120,3 +120,53 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-08 | Import a long-format table, and refuse to guess what it means |
 | 2026-10-08 | Clear the pack's blocker, and stop taking its word for it |
 | 2026-10-08 | Date every documentation file from git history, and check it in the gate |
+| 2026-10-26 | Read a wide file at the door: one row per subject, a column per variable |
+| 2026-10-27 | Carry the file as published and melt it during the run, not once in a dialog |
+| 2026-10-27 | A measure is called what the analysis calls it, not what the column is called |
+
+## A measure is called what the analysis calls it
+
+_2026-10-27._ The melt named every measure after its column. That is right when a file's headers
+are the analysis's vocabulary and wrong when they are not, and South London is the case where they
+are not: Snow's Table VIII ships `deaths_southwark_vauxhall`, `deaths_pump_wells`,
+`population_1851`, and the workflows have always said "deaths Southwark and Vauxhall", "deaths
+pump-wells", "population".
+
+**What that cost, measured.** Four of the example's six table inputs could not convert on run.
+Converting them would have renamed the vocabulary every downstream step refers to — a Rate's
+measure key, a derived value's two operands, a selection's values — all at once, which is a
+different change from reading a file during the run. So the four stayed melted by hand, which is
+the state this whole line of work exists to end.
+
+`WideSelection.measureNames` maps column to measure name. A column absent from it keeps its own.
+
+**Why it is stated and never inferred.** Replacing underscores with spaces gives "deaths 1849"
+correctly and "deaths pump wells" where the analysis says "deaths pump-wells". A rule cannot know
+the difference, a guess that is usually right makes its mistakes quietly, and an inferred name
+would change under the author the day a publisher reformatted a header.
+
+**What it refuses**, each because the alternative is silent:
+
+- **Two columns under one measure.** It would merge two variables into one set of rows and report
+  a plausible row count for a table that had lost one. Including the case where the clash is with
+  a column that was *not* renamed.
+- **A name for a column that is not being melted.** Doing nothing quietly is how a typo survives
+  a review.
+- **An empty name.** Leaving the column out is how you keep its own name.
+
+**The receipt records the rename.** One `fw:measureRenaming` per column, naming both. A rename
+applied and not recorded would leave a reader unable to check "population" against a file whose
+column is `population_1851` — and the point of melting during the run rather than in a dialog was
+that the melt becomes a step with a receipt.
+
+**What this does not establish**
+
+- **That three of the four were the hard part.** `south-london/contingency/table-xii` still cannot
+  convert, for an unrelated reason: it keys on `sub_district` and `water_supply` and melts one
+  value column, and a melt always adds the measure column. With one value column that column
+  carries a single constant and the stored table does not have it. Whether a one-column melt
+  should omit it — or whether that operation is a *selection* rather than a melt — is not decided
+  here.
+- **That the stored `data` and `sourceTable` cannot drift.** Both are kept on the five converted
+  nodes and were identical when written. `sourceTable` is the declared truth; nothing checks the
+  other against it, so an edited CSV would leave a stale long table behind it.

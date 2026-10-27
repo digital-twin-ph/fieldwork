@@ -1,6 +1,6 @@
 # Widget registry
 
-_Created 2026-10-06 · Updated 2026-10-15_
+_Created 2026-10-06 · Updated 2026-10-10_
 
 The [catalog](registry.json) tracks all 39 current node identities (including legacy import identities). Each widget has a stable `urn:fieldwork:widget:<nodeType>` identity, an independent current version, and a history of release files under `releases/<nodeType>/<version>.json`. The first `0.1.0` releases record the existing prototype on October 6, 2026; they do not reconstruct historical versions or claim a new implementation.
 

@@ -1,6 +1,6 @@
 # 96 · The experiment document
 
-_Created 2026-10-11 · Updated 2026-10-15_
+_Created 2026-10-11 · Updated 2026-10-14_
 
 **Status:** tried — the standard is written, a validator gates it, and 8 of 95
 documents conform. Whether a reader can actually answer the five questions from

@@ -1,6 +1,6 @@
 # Vega-Lite Chart enhancement spike
 
-_Created 2026-10-07 · Updated 2026-10-15_
+_Created 2026-10-07 · Updated 2026-10-14_
 
 Date: October 7, 2026. Status: local architectural spike; not published or scientifically validated.
 

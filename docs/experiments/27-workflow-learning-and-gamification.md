@@ -1,6 +1,6 @@
 # Learning through workflow construction
 
-_Created 2026-10-06 · Updated 2026-10-15_
+_Created 2026-10-06 · Updated 2026-10-14_
 
 **Status:** asked — a proposed design experiment, carrying its own update of
 2026-10-07 (worked examples packaged as games). It implements no points,

@@ -1,6 +1,6 @@
 # 88 · Filling interior gaps
 
-_Created 2026-10-10 · Updated 2026-10-15_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 **Status:** built and measured, after asking whether it was reusable at all.
 

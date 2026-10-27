@@ -1,6 +1,6 @@
 # 87 · Declarative chart transforms
 
-_Created 2026-10-10 · Updated 2026-10-15_
+_Created 2026-10-10 · Updated 2026-10-14_
 
 **Status:** prototype, built and measured. A chart experiment, not a spatial one.
 

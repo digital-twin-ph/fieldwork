@@ -70,7 +70,7 @@ import {MAX_POINT_LAYERS,pointPort,isPointPort} from './point-layers.js';
 import {validateAttributeSchema} from './attribute-schema.js';
 import {defaultSpatialReference,validateSpatialReference} from './spatial-reference.js';
 import {utmDefinition,projectFromCRS84} from './reproject.js';
-import {dataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
+import {dataTable,wideDataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
 import type {DataTable} from './data-table.js';
 import {computeRate,fromPoints,fromTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
 import {computeRateRatio,rateRatioReceipt,rateRatioSentence,RATE_RATIO_TABLE_KEYS} from './rate-ratio.js';
@@ -556,7 +556,21 @@ export function validateWorkflow(raw:unknown):Workflow {
     validateRateNode(n);
     if(n.type==='table_input'){
       const t=n.params.data;
-      if(!t||t.kind!=='data-table'||!Array.isArray(t.rows))throw new Error('Tabular input holds no table. Import a long-format CSV.');
+      if(!t||t.kind!=='data-table'||!Array.isArray(t.rows))throw new Error('Tabular input holds no table. Import a CSV.');
+      // CONVERTING ON RUN NEEDS SOMETHING TO CONVERT, and a declaration of how. The stored table
+      // may then be empty -- it is recomputed on every run -- so this is checked here rather than
+      // inside the `t.rows.length` branch below, which a converting node legitimately skips.
+      if(n.params.convertOnRun){
+        const source=n.params.sourceTable;
+        if(!source||!Array.isArray(source.headers)||!source.headers.length
+          ||!Array.isArray(source.rows)||!source.rows.length)
+          throw new Error('This tabular input is set to convert its source on each run and carries no source table.');
+        if(!n.params.wide)
+          throw new Error('This tabular input is set to convert its source on each run and does not say which columns to take.');
+        for(const name of [...n.params.wide.keys,...n.params.wide.valueFields])
+          if(!source.headers.map(h=>h.trim()).includes(name))
+            throw new Error(`The source table has no column named ${JSON.stringify(name)}, which the conversion asks for.`);
+      }
       // An unconfigured node is a valid draft, as a Reproject node without a file is; the
       // contract is checked once a table exists, and execution refuses to run without one.
       if(t.rows.length){
@@ -1121,7 +1135,23 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             resolveRuleset(pin.id,pin.version));
         }const assignments=assignSites(inputs.points,inputs.sites,extract);value=assignmentTable(assignments) as unknown as DisplayValue;const edge=(port:string)=>workflow.edges.find(e=>e.to===node.id&&e.port===port)!.from;receipts.push(assignmentReceipt(node,assignments,runId,{points:edge('points'),sites:edge('sites'),projections:edge('projections')}));break;}
       case 'slr_threshold_comparison':{const table=inputs.assignments;if(!table?.assignments)throw new Error('Connect Assign projection site: a comparison needs the assignments, not a plain table.');const comparison=compareToElevation(table.assignments,{selection:{scenario:node.params.scenario,basis:node.params.basis,family:node.params.family,year:node.params.year,quantile:node.params.quantile},elevationField:node.params.elevationField,verticalDatum:node.params.verticalDatum,elevationReference:node.params.elevationReference});value=comparison as unknown as DisplayValue;receipts.push(thresholdReceipt(node,comparison,table.assignments,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='assignments')!.from));break;}
-      case 'table_input':{if(!node.params.data.rows.length)throw new Error('Import a long-format table before running.');const imported=tableReceipt(node,node.params.data,runId);value=imported.value;receipts.push(imported.receipt);break;}
+      // THE MELT IS A STEP OF THE RUN when the node carries the file as published.
+      //
+      // A table read from a wide file used to be melted once, in the import dialog, and only the
+      // result was kept. That made the conversion invisible: nothing downstream could say which
+      // columns had been taken, and a worked example shipped a table nobody could trace to the
+      // figures it came from -- "prepared outside the application", as the 0.12.0 notes put it
+      // about this very example. Converting here puts it in the run, where `tableReceipt`
+      // already asserts what was read and how.
+      case 'table_input':{
+        const p=node.params;
+        const table=p.convertOnRun&&p.sourceTable&&p.wide
+          ?wideDataTable(p.sourceTable,{...p.wide,valueField:p.valueField,...(p.unit?{unit:p.unit}:{})})
+          :p.data;
+        if(!table.rows.length)throw new Error(p.convertOnRun
+          ?'This step converts its source table on each run, and that source is empty.'
+          :'Import a table before running.');
+        const imported=tableReceipt(node,table,runId);value=imported.value;receipts.push(imported.receipt);break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
       case 'deduplicate_points':{
         const layers=pointInputs().layers;

@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {wideDataTable,tableReceipt} from '../build/data-table.js';
-import {validateWorkflow} from '../build/core.js';
+import {validateWorkflow,executeWorkflow} from '../build/core.js';
 
 // data/table-ix-first-seven-weeks.csv, byte for byte.
 const TABLE_IX={
@@ -148,4 +148,72 @@ test('a wide selection that does not describe the table is refused',()=>{
 
 test('a table read as long needs no wide block, and is still valid', ()=>{
   assert.ok(validateWorkflow(tableNode(undefined)));
+});
+
+// CONVERTING DURING THE RUN. The practitioner, 2026-10-27, on the worked examples: can this be
+// "a check box and wide table conversion happens during the workflow run". The reason to want it
+// is not the checkbox: a melt done once in a dialog leaves nothing behind, and a melt done by
+// the run is a step whose receipt names every column it took. The example that prompted it ships
+// 52,619 bytes of melted tables whose source CSVs are 3,972.
+const SOURCE={headers:['supplier','houses','deaths','deaths_per_10000_houses'],
+  rows:[['Southwark and Vauxhall Company','40046','1263','315'],
+        ['Lambeth Company','26107','98','37'],
+        ['Rest of London','256423','1422','59']]};
+const converting=(overrides={})=>({
+  schema:'fieldwork/workflow/1',id:'w',name:'Converts on run',
+  nodes:[{id:'t',type:'table_input',x:0,y:0,params:{
+    label:'Snow Table IX, as published',
+    keys:['supplier','measure'],valueField:'count',unit:'houses',
+    // Empty until a run computes it -- the state core.ts already allows for a node with no file.
+    data:{kind:'data-table',keys:['supplier','measure'],valueField:'count',rows:[],rowCount:0,missingValueCount:0},
+    sourceTable:SOURCE,convertOnRun:true,
+    wide:{keys:['supplier'],valueFields:['houses','deaths'],measureKey:'measure'},
+    ...overrides}},
+  // A run needs something that displays a result, so the table is shown.
+  {id:'out',type:'table_output',x:300,y:0,params:{label:'The table, as read',inputMode:'table'}}],
+  edges:[{id:'e1',from:'t',to:'out',port:'table'}]});
+
+test('a node may carry the file as published and no computed table',()=>{
+  assert.ok(validateWorkflow(converting()));
+});
+
+test('converting on run is refused without a source or without a selection',()=>{
+  assert.throws(()=>validateWorkflow(converting({sourceTable:undefined})),/carries no source table/);
+  assert.throws(()=>validateWorkflow(converting({sourceTable:{headers:[],rows:[]}})),/carries no source table/);
+  assert.throws(()=>validateWorkflow(converting({wide:undefined})),/does not say which columns/);
+});
+
+test('a conversion naming a column the file does not have is refused by name',()=>{
+  assert.throws(()=>validateWorkflow(converting(
+    {wide:{keys:['supplier'],valueFields:['houses','fatalities'],measureKey:'measure'}})),
+    /no column named "fatalities"/);
+  assert.throws(()=>validateWorkflow(converting(
+    {wide:{keys:['district'],valueFields:['houses'],measureKey:'measure'},keys:['district','measure']})),
+    /no column named "district"/);
+});
+
+test('the run computes the table from the file, and says in the receipt that it did',async()=>{
+  const run=await executeWorkflow(converting(),'test');
+  const table=run.tables?.t;
+  assert.ok(table,'the run kept no table for the converting node');
+  assert.equal(table.rowCount,6,'three suppliers times two value columns');
+  assert.deepEqual(table.keys,['supplier','measure']);
+  assert.equal(table.valueField,'count');
+  assert.equal(table.unit,'houses');
+  const value=(s,m)=>table.rows.find(r=>r.key.supplier===s&&r.key.measure===m).value;
+  assert.equal(value('Southwark and Vauxhall Company','houses'),40046);
+  assert.equal(value('Lambeth Company','deaths'),98);
+  // The column the file carries and the conversion did not take is absent, and the receipt says
+  // which were taken -- which is the whole difference from melting in a dialog.
+  assert.ok(!table.rows.some(r=>r.key.measure==='deaths_per_10000_houses'));
+  const facts=run.receipts.find(r=>r.nodeId==='t').facts;
+  assert.match(facts,/fw:readAs "wide"/);
+  assert.match(facts,/fw:meltedValueField "houses"/);
+  assert.match(facts,/fw:meltedValueField "deaths"/);
+  assert.ok(!/deaths_per_10000_houses/.test(facts));
+});
+
+test('a run refuses an empty source rather than producing an empty table',async()=>{
+  await assert.rejects(executeWorkflow(converting({sourceTable:{headers:SOURCE.headers,rows:[]}}),'test'),
+    /carries no source table|source is empty/);
 });

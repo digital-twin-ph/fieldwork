@@ -1707,6 +1707,20 @@ function renderInspector(){
       +'<div class="detail-row"><span>Geometry</span><strong>None; a table is not a point set</strong></div>'
       +'</section><button id="open-table" class="button primary">Import tabular data</button>'
       +(p.data.rows.length&&!workflow.edges.some(e=>e.from===n.id)?'<div class="inspector-actions"><button id="add-table-view" class="button small">＋ Display as table</button></div>':'')
+      // CONVERT ON RUN, offered only where there is a source and a selection to convert with.
+      //
+      // The practitioner, 2026-10-27, on the worked examples: can the conversion be "a check box
+      // and wide table conversion happens during the workflow run". It can, and the reason to
+      // want it is not the checkbox -- it is that a melt done once in a dialog leaves nothing
+      // behind, while a melt done by the run is a step with a receipt naming every column taken.
+      // The example that prompted it ships 52,619 bytes of melted tables whose source CSVs are
+      // 3,972, and could not say which columns made them.
+      +(p.sourceTable?`<label class="field"><input id="table-convert-on-run" type="checkbox" `
+        +`${p.convertOnRun?'checked':''}> Convert the source table on each run</label>`
+        +`<p class="description">The file is kept as published -- ${p.sourceTable.rows.length} `
+        +`row${p.sourceTable.rows.length===1?'':'s'} of ${p.sourceTable.headers.length} columns -- `
+        +`and melted when the workflow runs, so the run's receipt names the columns it took. `
+        +`Unchecked, the table stored at import is used and the source is kept only as provenance.</p>`:'')
       +'<p class="description">Reads a long-format CSV: one row per observation, with the key columns you choose and one value column. Every key tuple must be unique, so a wide table or a missing key column is refused rather than silently collapsed.</p>';
     // The table itself, at a width it can be read at. The Inspector is 292px wide and this
     // offered a description of the table's shape inside it -- everything about the table except
@@ -2852,6 +2866,11 @@ function renderInspector(){
   optionalElement('#add-series-chart')?.addEventListener('click',()=>change(w=>{const id=`curve-${Date.now()}`;w.nodes.push({id,type:'chart_output',x:n.x+270,y:n.y,params:{label:'Epidemic curve',inputMode:'series'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'series'});selected=id;}));
   document.querySelectorAll<HTMLInputElement>('#chart-label').forEach(el=>el.addEventListener('change',()=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=el.value.trim()||'Epidemic curve';})));
   // Reading, not editing: it opens a dialog and touches nothing that is saved.
+  optionalElement('#table-convert-on-run')?.addEventListener('change',e=>{
+    const on=(e.currentTarget as HTMLInputElement).checked;
+    change(w=>{getNode(w,n.id,'table_input').params.convertOnRun=on;});
+    renderInspector();
+  });
   optionalElement('#quick-look')?.addEventListener('click',()=>{
     const table=getNode(workflow,n.id,'table_input').params;
     openTableViewer(tableViewOf(table.data,n.params.label||'Tabular data'),esc);
@@ -2878,7 +2897,11 @@ function renderInspector(){
         // columns taken. Deleted rather than set undefined when a table is re-read as long: a
         // stored `wide` block that no longer describes the table is a claim, and core.ts refuses
         // one that disagrees with the keys.
-        if(result.wide)node.params.wide=result.wide;else delete node.params.wide;},{requirePersistence:true});
+        if(result.wide)node.params.wide=result.wide;else delete node.params.wide;
+        // The file as published, kept whenever it was read as wide, so `convertOnRun` has
+        // something to convert and the node can say what it was made from either way.
+        if(result.source_table)node.params.sourceTable=result.source_table;
+        else{delete node.params.sourceTable;delete node.params.convertOnRun;}},{requirePersistence:true});
     },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,
       ...(current.wide?{wide:current.wide}:{})}:undefined);
   });

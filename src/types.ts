@@ -170,7 +170,20 @@ export interface ParamsByType {
      *  something to the file it was given, and a reader of the receipt is entitled to know
      *  which columns were taken -- the more so because they are NAMED rather than inferred, so
      *  a column the file gained later is absent from the analysis by decision. */
-    wide?:{keys:string[];valueFields:string[];measureKey:string}};
+    wide?:{keys:string[];valueFields:string[];measureKey:string};
+    /** THE FILE AS IT WAS PUBLISHED, kept so the melt can happen during the run.
+     *
+     *  Headers and cells exactly as parsed. With `convertOnRun` set, this is the node's TRUTH
+     *  and `data` may be empty until a run computes it -- the state `core.ts` already allows for
+     *  a Reproject node with no file.
+     *
+     *  Why a worked example wants it: the baked long tables in the South London bundle are
+     *  52,619 bytes and the four CSVs they came from are 3,972. More than the size, it is that a
+     *  melt done once in a dialog is invisible, and a melt done by the run is a step with a
+     *  receipt -- which is what "prepared outside the application" meant and what this ends. */
+    sourceTable?:{headers:string[];rows:string[][]};
+    /** Melt `sourceTable` on every run rather than reading the stored `data`. */
+    convertOnRun?:boolean};
   rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:import('./rate-ratio.js').IntervalMethod};
   rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   derive_value:{label:string;keyColumn:string;left:string;operator:import('./derive-value.js').Operator;right:string;name:string};

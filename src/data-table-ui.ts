@@ -7,7 +7,9 @@ import {contentHash} from './project-files.js';
 const FILE_BYTES=5_000_000;
 export interface WideChoice {keys:string[]; valueFields:string[]; measureKey:string}
 export interface TableImport {data:DataTable; source:DataTableSource; keys:string[]; valueField:string;
-  unit?:string; wide?:WideChoice}
+  unit?:string; wide?:WideChoice;
+  /** The parsed file, carried only for a wide read, so the node can melt it again on each run. */
+  source_table?:{headers:string[];rows:string[][]}}
 /** What the editor reopens with. `wide` present means the file was read as wide. */
 export interface TableReopen extends TableSelection {wide?:WideChoice}
 
@@ -160,7 +162,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
         }
         table=wideDataTable(parsed,{keys,valueFields,measureKey,valueField,...(unit?{unit}:{})});
         imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
-          keys:table.keys,valueField,...(unit?{unit}:{}),wide:{keys,valueFields,measureKey}};
+          keys:table.keys,valueField,...(unit?{unit}:{}),wide:{keys,valueFields,measureKey},
+          source_table:{headers:parsed.headers.map(h=>h.trim()),rows:parsed.rows}};
         preview.textContent=JSON.stringify({sourceFile:file.name,readAs:'wide',subjectKeys:keys,
           valueColumns:valueFields,measureKey,valueField,unit:unit||'(unstated)',
           subjects:parsed.rows.length,rows:table.rowCount,missingValues:table.missingValueCount,

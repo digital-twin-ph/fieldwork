@@ -32,6 +32,11 @@ export interface TableReopen extends TableSelection {wide?:WideChoice}
  *
  *  Either way the stored table is LONG. Nothing downstream learns a second shape; this is a door,
  *  not a second representation. */
+/** The same escape `app.ts` passes into `dataTableMarkup`, kept here so the dialog can render its
+ *  own panes without the caller having to hand one in. */
+const esc:Escape=(value:unknown)=>String(value??'')
+  .replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+
 export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:TableReopen):void{
   const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.setAttribute('aria-labelledby','table-title');
   dialog.innerHTML='<h2 id="table-title">Import tabular data</h2>'
@@ -54,7 +59,20 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     +'<p class="muted">Both are your words, because every downstream step names them: a Rate takes its measure key, and a derived value names two of its values.</p></div>'
     +'<label class="field-label" for="table-unit">Unit of the value (entered by you)</label><input id="table-unit" maxlength="40" placeholder="for example metre; leave empty if unstated">'
     +'<p class="muted">A unit is recorded as you state it and is never inferred from the file. An empty value cell is kept as unknown and counted, never read as zero.</p>'
-    +'<p id="table-status" role="status"></p><details><summary>Table shape and provenance</summary><pre id="table-preview"></pre></details>'
+    +'<p id="table-status" role="status"></p>'
+    // SHOWN, NOT FOLDED AWAY, AND NOT A SERIALISATION. This was a collapsed <details> holding
+    // `JSON.stringify({sourceFile, readAs, subjectKeys, ...})`. The practitioner, 2026-10-27:
+    // *"Epidemiologists will not open a JSON blob, that's friction for them."* At the moment a
+    // file enters -- which the same conversation names as the most consequential point there is,
+    // *"data quality is the most consequential upstream lever"* -- the application was showing a
+    // description of its own reading instead of the practitioner's rows.
+    +'<div id="table-check" hidden>'
+    +'<h3 class="field-label">Before \u00b7 the file as published</h3>'
+    +'<div id="table-before"></div>'
+    +'<h3 class="field-label">After \u00b7 the table this will import</h3>'
+    +'<div id="table-after"></div>'
+    +'<ul id="table-reconcile" class="muted"></ul>'
+    +'</div>'
     +'<p id="table-error" role="alert" hidden></p><div class="package-actions"><button id="table-cancel" class="button">Cancel</button><button id="table-save" class="button primary" disabled>Save table</button></div>';
   document.body.append(dialog);
   const q=<T extends HTMLElement>(id:string)=>dialog.querySelector<T>(id)!;
@@ -65,7 +83,9 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   const keysSays=q<HTMLElement>('#table-keys-says');
   const shapeAlert=q<HTMLElement>('#table-shape-alert'),shapeSays=q<HTMLElement>('#table-shape-says');
   const shapeAccept=q<HTMLButtonElement>('#table-shape-accept');
-  const unitInput=q<HTMLInputElement>('#table-unit'),status=q<HTMLElement>('#table-status'),preview=q<HTMLElement>('#table-preview');
+  const unitInput=q<HTMLInputElement>('#table-unit'),status=q<HTMLElement>('#table-status');
+  const check=q<HTMLElement>('#table-check'),beforePane=q<HTMLElement>('#table-before');
+  const afterPane=q<HTMLElement>('#table-after'),reconcile=q<HTMLElement>('#table-reconcile');
   const error=q<HTMLElement>('#table-error'),save=q<HTMLButtonElement>('#table-save'),cancel=q<HTMLButtonElement>('#table-cancel');
   if(existing?.unit)unitInput.value=existing.unit;
   // AN EXISTING TABLE REOPENS IN ITS OWN SHAPE. A workflow saved before this control came in has
@@ -104,6 +124,47 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     });
     return repeats?{repeats,example}:undefined;
   };
+
+  /** THE FILE AS PUBLISHED: its own headers, its own cells, nothing coerced.
+   *
+   *  Deliberately NOT rendered like the After pane. The two panes are a comparison, and a
+   *  comparison between two identical renderings hides the thing it exists to show -- a measure
+   *  that came out under the wrong name, a variable that was merged with another, a column that
+   *  was never taken. So this is the file as a reader of the file would see it, and the other is
+   *  the table as an epidemiologist reads a table.
+   *
+   *  Every column carries its ROLE, because the one failure nobody notices is a column quietly
+   *  left behind: value columns are named rather than inferred, so a column the file has and the
+   *  selection does not is dropped by decision and said so here. */
+  const SHOWN_ROWS=5;
+  function renderBefore(keys:string[],valueFields:string[]):string[]{
+    if(!parsed||!file)return [];
+    const headers=parsed.headers.map(h=>h.trim());
+    const role=(name:string)=>keys.includes(name)?'key':valueFields.includes(name)?'value':'untaken';
+    const label={key:'subject',value:'variable',untaken:'not taken'} as const;
+    const shown=parsed.rows.slice(0,SHOWN_ROWS);
+    beforePane.innerHTML=
+      `<div class="table-meta muted">${esc(file.name)} \u00b7 ${parsed.rows.length.toLocaleString()} `
+      +`row${parsed.rows.length===1?'':'s'} \u00b7 ${headers.length} columns</div>`
+      +'<div class="table-scroll"><table><thead><tr>'
+      +headers.map(h=>`<th scope="col" class="role-${role(h)}">${esc(h)}`
+        +`<span class="muted role-note">${label[role(h)]}</span></th>`).join('')
+      +'</tr></thead><tbody>'
+      +shown.map(row=>'<tr>'+headers.map((h,i)=>
+        `<td class="role-${role(h)}">${esc((row[i]??'').trim())}</td>`).join('')+'</tr>').join('')
+      +'</tbody></table></div>'
+      +(parsed.rows.length>shown.length
+        ?`<p class="muted">${shown.length} of ${parsed.rows.length.toLocaleString()} rows shown.</p>`
+        :'');
+    return headers.filter(h=>role(h)==='untaken');
+  }
+
+  /** What the reading claims, as arithmetic a reader can check against the two panes rather than
+   *  as a sentence they have to trust. */
+  function renderReconcile(lines:string[]){
+    reconcile.innerHTML=lines.map(line=>`<li>${line}</li>`).join('');
+    check.hidden=false;
+  }
 
   function build(){
     error.hidden=true;result=undefined;save.disabled=true;shapeAlert.hidden=true;
@@ -164,10 +225,24 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
         imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
           keys:table.keys,valueField,...(unit?{unit}:{}),wide:{keys,valueFields,measureKey},
           source_table:{headers:parsed.headers.map(h=>h.trim()),rows:parsed.rows}};
-        preview.textContent=JSON.stringify({sourceFile:file.name,readAs:'wide',subjectKeys:keys,
-          valueColumns:valueFields,measureKey,valueField,unit:unit||'(unstated)',
-          subjects:parsed.rows.length,rows:table.rowCount,missingValues:table.missingValueCount,
-          firstRows:table.rows.slice(0,3)},null,2);
+        const untaken=renderBefore(keys,valueFields);
+        afterPane.innerHTML=dataTableMarkup(table,esc);
+        renderReconcile([
+          `<strong>${parsed.rows.length.toLocaleString()} subjects \u00d7 ${valueFields.length} `
+            +`variable${valueFields.length===1?'':'s'} = `
+            +`${table.rowCount.toLocaleString()} cells</strong>, which is what the table above holds.`,
+          table.missingValueCount
+            ?`${table.missingValueCount.toLocaleString()} cells are empty in the file and are kept `
+              +'as unknown. They are never read as zero.'
+            :'No cell is empty.',
+          untaken.length
+            ?`<strong>Not taken:</strong> ${untaken.map(h=>esc(h)).join(', ')}. `
+              +'These columns stay in the file and are absent from the analysis.'
+            :'Every column in the file is taken as a subject or a variable.',
+          `The variables are named <strong>${esc(measureKey)}</strong> and their values `
+            +`<strong>${esc(valueField)}</strong>. Every later step uses those words.`,
+          unit?`The value is in ${esc(unit)}, as you stated it.`
+            :'<strong>No unit stated.</strong> It is recorded as unstated, never guessed.']);
         status.textContent=`${parsed.rows.length} subjects \u00d7 ${valueFields.length} value `
           +`column${valueFields.length===1?'':'s'} = ${table.rowCount} rows, `
           +`${table.missingValueCount} values absent.`;
@@ -176,10 +251,22 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
         table=dataTable(parsed,{keys,valueField,...(unit?{unit}:{})});
         imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
           keys,valueField,...(unit?{unit}:{})};
-        preview.textContent=JSON.stringify({sourceFile:file.name,readAs:'long',keys,valueField,
-          unit:unit||'(unstated)',rows:table.rowCount,missingValues:table.missingValueCount,
-          distinctValuesPerKey:Object.fromEntries(Object.entries(keyDomains(table)).map(([k,v])=>[k,v.length])),
-          firstRows:table.rows.slice(0,3)},null,2);
+        const untaken=renderBefore(keys,[valueField]);
+        afterPane.innerHTML=dataTableMarkup(table,esc);
+        const domains=keyDomains(table);
+        renderReconcile([
+          `<strong>${table.rowCount.toLocaleString()} rows</strong> read as they stand: this file `
+            +'is already long, so nothing was melted.',
+          Object.entries(domains).map(([k,v])=>`${esc(k)}: ${v.length.toLocaleString()} distinct`)
+            .join(' \u00b7 ')||'No key columns.',
+          table.missingValueCount
+            ?`${table.missingValueCount.toLocaleString()} values are absent and kept as unknown.`
+            :'No value is absent.',
+          untaken.length
+            ?`<strong>Not taken:</strong> ${untaken.map(h=>esc(h)).join(', ')}.`
+            :'Every column in the file is taken.',
+          unit?`The value is in ${esc(unit)}, as you stated it.`
+            :'<strong>No unit stated.</strong> It is recorded as unstated, never guessed.']);
         status.textContent=`${table.rowCount} rows, ${Object.keys(table.rows[0]?.key??{}).length} key columns, ${table.missingValueCount} values absent.`;
       }
       result=imported;
@@ -260,7 +347,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     keysBox.innerHTML='<legend>Key columns</legend><p class="muted" id="table-keys-says"></p>';
     valuesBox.innerHTML='<legend>Value columns</legend><p class="muted">The variables to take. Named rather than inferred, so a column the file gains later is absent from this analysis by decision rather than by accident.</p>';
     valuesBox.hidden=true;shapeAlert.hidden=true;
-    valueSelect.innerHTML='';preview.textContent='';result=undefined;save.disabled=true;error.hidden=true;
+    valueSelect.innerHTML='';result=undefined;save.disabled=true;error.hidden=true;
+    check.hidden=true;beforePane.innerHTML='';afterPane.innerHTML='';reconcile.innerHTML='';
     if(!file){status.textContent='';return;}
     if(file.size>FILE_BYTES){status.textContent='';fail(new Error('Select a file of at most 5 MB.'));return;}
     status.textContent='Reading the file…';

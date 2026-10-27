@@ -86,6 +86,7 @@ import {rasteriseFigure,FIGURE_PIXEL_SCALE} from './figure-export.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
 import {populationRastersForCountry,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
 import type {BoundaryProvenance} from './types.js';
+import {basemapAvailable} from './basemaps.js';
 import {openTableEditor,dataTableMarkup} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
@@ -121,7 +122,7 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label><input id="map-legend-toggle" type="checkbox" ${p.showLegend!==false?'checked':''}> Show map key</label>
     <label><input id="map-halo-toggle" type="checkbox" ${p.markHalo!==false?'checked':''}> Dark outline on point symbols</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
-    <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap)}</select>
+    <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap,p.presentation==='interactive'?'interactive':'plot')}</select>
     <p class="description">A basemap is layer 0, under everything the workflow produced.${p.presentation==='interactive'?'':' OpenStreetMap and OpenTopoMap are drawn into the figure itself. The OpenFreeMap styles are vector, so they move this map to the interactive presentation.'}</p>
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
 }
@@ -2541,6 +2542,28 @@ function renderInspector(){
       // otherwise lands here as NaN, and both are figures nobody typed.
       if(el.dataset.optional==='true'&&el.value.trim()===''){delete params[el.dataset.catchmentParam!];return;}
       params[el.dataset.catchmentParam!]=el.dataset.catchmentParam==='thresholds'?(el.value.trim()?el.value.split(',').map(v=>Number(v.trim())):[]):el instanceof HTMLInputElement&&el.type==='checkbox'?el.checked:el instanceof HTMLInputElement&&el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value;}));
+  // CHANGING THE MAP TYPE CAN STRAND THE BASEMAP, and the select would then disagree with what is
+  // stored: the list drops a vector style on the way to a static figure, the held value stays
+  // `ofm-liberty`, and the control shows `None` while the node says otherwise. So the param is
+  // moved too, and the practitioner is told -- a presentation change is theirs, and quietly
+  // discarding a choice they made inside it is not.
+  //
+  // Added with the per-presentation list on 2026-10-27. The listener is separate from the generic
+  // `data-catchment-param` writer above so that one keeps its single job; it runs after it,
+  // because that one is assigned as `onchange` and this is added as a listener.
+  optionalElement('#polygon-presentation')?.addEventListener('change',e=>{
+    if(n.type!=='map_output')return;
+    const presentation=control(e).value==='interactive'?'interactive':'plot';
+    const held=(workflow.nodes.find(x=>x.id===n.id) as WorkflowNode<'map_output'>|undefined)?.params.basemap;
+    if(!held||held==='none'||basemapAvailable(held,presentation))return;
+    const name=BASEMAP_OPTIONS.find(o=>o.value===held)?.label||held;
+    change(w=>{getNode(w,n.id,'map_output').params.basemap='none';});
+    toast(`${name} is drawn from vector tiles, which a static figure cannot bake in, so this map `
+      +'now has no basemap. OpenStreetMap and OpenTopoMap are fetched once and drawn into the '
+      +'figure, and are offered here; the vector styles are offered on the interactive map.',
+      {tone:'notice'});
+    renderInspector();renderResults();
+  });
   for(const key of ['innerM','outerM','seed','resolution','minOccupancy'])optionalElement(`#privacy-${key}`)?.addEventListener('change',e=>change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>)[key]=control(e).value===''?NaN:Number(control(e).value);}));
   optionalElement('#comparison-zone')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'compare_point_sets').params.zone=control(e).value===''?NaN:Number(control(e).value)));
   optionalElement('#comparison-hemisphere')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'compare_point_sets').params.hemisphere=control(e).value as 'north'|'south'));

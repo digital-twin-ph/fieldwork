@@ -5,7 +5,7 @@ export const INTERACTIVE_SEGMENT_LIMIT=200_000;
 import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
-import {BASEMAP_CHOICES,type BasemapChoice} from './types.js';
+import {BASEMAP_CHOICES,basemapAvailable,basemapOptions,BASEMAP_LABELS,type BasemapChoice} from './basemaps.js';
 import {layerSymbol,markPath,markRadius,classifyValues,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
@@ -61,20 +61,17 @@ const BASEMAPS={
  *
  *  One source now, used by both selects. What still needs a human is the `BasemapChoice` union in
  *  types.ts, which cannot import this module because the workers build types.ts without Leaflet. */
-const BASEMAP_LABELS:Record<BasemapChoice,string>={
-  none:'None \u00b7 works offline',
-  osm:BASEMAPS.osm.label,
-  topo:BASEMAPS.topo.label,
-  'ofm-liberty':VECTOR_BASEMAPS['ofm-liberty'].label,
-  'ofm-positron':VECTOR_BASEMAPS['ofm-positron'].label,
-  'ofm-bright':VECTOR_BASEMAPS['ofm-bright'].label,
-};
-export const BASEMAP_OPTIONS:readonly {value:BasemapChoice;label:string}[]=
-  BASEMAP_CHOICES.map(value=>({value,label:BASEMAP_LABELS[value]}));
-/** The options as markup, so the two selects cannot drift in their labels either. */
-export const basemapOptions=(selected:BasemapChoice|undefined):string=>BASEMAP_OPTIONS
-  .map(option=>`<option value="${option.value}" ${(selected||'none')===option.value?'selected':''}>${option.label}</option>`)
-  .join('');
+
+/** THE BASEMAP VOCABULARY, which lives in `basemaps.ts` and is re-exported here so the callers
+ *  that already import this module do not all have to change.
+ *
+ *  Why it moved, 2026-10-27: the format question -- can a static figure bake this? -- has to be
+ *  answerable where Leaflet is not, because `map-communication.ts` decides what a figure credits
+ *  and the workers build compiles without Leaflet. It also has to be TESTABLE, and neither this
+ *  module nor `types.ts` is a build entry point, so a rule about what the interface may offer had
+ *  no output a unit test could import. This module keeps what needs Leaflet: the tile URLs, the
+ *  style URLs and the rendering. */
+export {basemapsFor,basemapAvailable,BASEMAP_OPTIONS,BASEMAP_LABELS,basemapOptions} from './basemaps.js';
 
 /** What an interactive map can draw. Every field optional, because a map draws the layers it is
  *  given: the practitioner's model of 2026-10-14, reaching the renderer on 2026-10-15.

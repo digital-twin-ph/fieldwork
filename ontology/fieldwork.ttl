@@ -409,6 +409,9 @@ fw:portType a owl:ObjectProperty;
 # and must not be displayed. That is what an old identifier is after a rename, and it is why
 # `samples` is recorded below against the port type it was never on, and in widgets/registry.json
 # as `previousNodeTypes` for the widget identifiers, which are not yet ontology terms.
+fw:GroundPort a fw:PortType; rdfs:label "ground";
+  rdfs:comment "A layer drawn UNDER a workflow as context: a georeferenced image placed where its georeference says. Separate from fw:RasterPort on purpose and this is the whole reason for the type -- a raster carries measurements and exists to be clipped and sampled, and ground carries a picture. The test is not how many bands it has but whether an author can state what a sampled value MEASURES, which sample_raster requires as `valueUnit` and which a printed map fails permanently. Keeping the types apart makes the wrong connection impossible rather than reported after it is made (D4). It is a custom stud under D4a -- one producer, one consumer -- and is recorded as such in tests/port-inventory.test.mjs.";
+  fw:implementationStatus "implemented".
 fw:GradedFacilitiesPort a fw:PortType; rdfs:label "gradedFacilities";
   rdfs:comment "Retired 2026-10-12. A producer-named port type -- D4a's custom stud -- replaced by a general point layer carrying the grading in each feature's attributes.";
   owl:deprecated true;

@@ -85,6 +85,12 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // The first time this count has fallen because a widget LEFT rather than because one arrived.
   // 47 on 2026-10-26: slr_extract_import retired into apply_ruleset with the extract-contract
   // ruleset, the second removal and the first of the three sea-level widgets.
+  // 53 on 2026-10-27, with map_image_input: a georeferenced plate drawn as ground. The South
+  // London example had carried map2-georeference.json, two world files and the plate's digests
+  // since 2026-10-24 with no widget able to read any of them. The second addition to raise
+  // pendingCeiling under the practitioner's rule. Its near miss is raster_input, and what keeps
+  // them apart is not the band count -- multi-band is coming for satellite imagery -- but whether
+  // an author can state what a sampled value MEASURES, which a printed map never can.
   // 49 on 2026-10-26: derive_value and select_rows, arithmetic over a table and selection of its
   // rows. Both raise pendingCeiling under the same rule -- a widget may be added if its function
   // did not exist before -- and both are PENDING, because a verdict on a name is a practitioner's
@@ -96,7 +102,7 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // about increasing the widgets because I see some more widgets to retire" -- so the room is
   // promised from retirements they will name, and this count records the rise rather than a trade
   // that has not happened.
-  assert.equal(review.reviews.length,52);
+  assert.equal(review.reviews.length,53);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

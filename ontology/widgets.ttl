@@ -87,3 +87,5 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/two_by_two.md>.
 <urn:fieldwork:widget:voronoi> a fw:WidgetDefinition; fw:nodeType "voronoi"; rdfs:label "Voronoi catchments".
 <urn:fieldwork:widget:xpert> a fw:WidgetDefinition; fw:nodeType "xpert"; rdfs:label "Diagnostic evidence".
+<urn:fieldwork:widget:map_image_input> a fw:WidgetDefinition; fw:nodeType "map_image_input"; rdfs:label "Georeferenced map image";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_image_input.md>.

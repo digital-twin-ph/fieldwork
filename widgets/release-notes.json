@@ -406,12 +406,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.14.0",
-   "released": "2026-10-23",
+   "version": "0.15.0",
+   "released": "2026-10-27",
    "changes": [
     {
-     "kind": "fix",
-     "description": "A raster wired to a map is drawn under the streets instead of discarded. drawnMode returns one renderer and checks network before raster, so a map carrying both drew the streets and threw the raster away -- with no error, while the Inspector read \"4 layer sources connected; the map draws what it is given, ground first\". That sentence was false. Both network branches now carry the raster and the interactive map draws it as ground beneath the boundary, with its own entry in the layer control. THIS IS THE THIRD RELEASE OF THIS WIDGET TO PAY THE SAME LIMIT ONE LAYER AT A TIME: the study area was dropped on 2026-10-20, the point layers on 2026-10-22, the raster until today. The limit itself -- that a map draws one mode and the winning mode discards every other wired layer -- is undeclared, and a fourth layer will meet it. The practitioner named it: \"That must be another unwanted cap.\" Two combinations are still unpaid: the static plot checks polygons before raster, and a raster wired beside polygons with no network drops the polygons instead."
+     "kind": "minor",
+     "description": "Takes a `ground` layer: a georeferenced image drawn under everything the workflow produced. Additive and backward-compatible -- a map with nothing on that port draws exactly as before. The port type is separate from `raster` on purpose: a raster carries measurements and exists to be clipped and sampled, and ground carries a picture, so the two must not be interchangeable at a connector. See docs/experiments/143-a-georeferenced-plate-as-ground.md."
     }
    ],
    "breaking": false,
@@ -985,6 +985,26 @@
    "breaking": false,
    "migrationFrom": [],
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
+  },
+  "map_image_input": {
+   "version": "0.1.0",
+   "released": "2026-10-27",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Draws a scanned or published map under a workflow, in the workflow's own projection, as ground. Built for Snow's 1855 Map 2, whose georeference the South London example has carried since 2026-10-24 with nothing able to read it. See docs/experiments/143-a-georeferenced-plate-as-ground.md."
+    },
+    {
+     "kind": "added",
+     "description": "Refuses a rotated world file by name. Drawing a rotated plate as an upright rectangle would put the map in the wrong place while looking correct, which is a hard stop rather than a limitation. A world file whose origin is the centre of the top-left pixel is read as such, so the extent runs half a pixel further out on each side."
+    },
+    {
+     "kind": "added",
+     "description": "Refuses corners outside CRS84 degrees, which usually means a projected georeference. Reading one datum's coordinates as another's moves a map by hundreds of metres and looks like a correct map."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
   }
  }
 }

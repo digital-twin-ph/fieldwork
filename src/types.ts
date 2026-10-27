@@ -184,6 +184,23 @@ export interface ParamsByType {
     sourceTable?:{headers:string[];rows:string[][]};
     /** Melt `sourceTable` on every run rather than reading the stored `data`. */
     convertOnRun?:boolean};
+  /** A SCANNED OR PUBLISHED MAP, drawn under a workflow in the workflow's own projection.
+   *
+   *  `data` is the image as a data URI and `dataRef` its digest, which is the same pair
+   *  `point_input` uses: `dehydrateWorkflow` lifts one copy into the payload store and every
+   *  workflow that shows the same plate shares it. The field is called `data` for that reason
+   *  rather than for elegance -- the machinery is generic and reusing it beats a second copy of
+   *  it. See docs/experiments/143-a-georeferenced-plate-as-ground.md. */
+  map_image_input:{label:string;data?:string;dataRef?:string;
+    /** The image's own facts, so a figure can say what it drew without decoding it. */
+    image:{width:number;height:number;bytes:number;sha256:string;filename?:string};
+    /** West, south, east, north in CRS84. A north-up affine world file reduces to exactly this;
+     *  a rotated one does not, and is refused rather than drawn as a box in the wrong place. */
+    bounds:[number,number,number,number];
+    /** 0 to 1. Ground is under everything, and a plate a practitioner wants to read through is
+     *  the ordinary case rather than an edge one. */
+    opacity?:number;
+    source?:{title?:string;url?:string;licence?:string;note?:string}};
   rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:import('./rate-ratio.js').IntervalMethod};
   rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   derive_value:{label:string;keyColumn:string;left:string;operator:import('./derive-value.js').Operator;right:string;name:string};
@@ -401,7 +418,14 @@ export type DistanceUnit = 'metres'|'kilometres';
  *  condition (experiment 106), pointed at selection rather than at classification — a third caller
  *  for that form, after classification and the role binding experiment 61 proposes. */
 export interface CandidateCondition {field:string; comparator:'in'|'notIn'; values:Scalar[]}
-export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'polygons'|'network'|'mean-center'|'point-comparison';
+/** `ground` added 2026-10-27, and it is a BASE-CONTRACT CHANGE made on purpose.
+ *
+ *  A georeferenced plate is ink, not measurement. Giving it the `raster` type would make it
+ *  connectable to `clip_raster` and `sample_raster`, and sampling a printed map returns the
+ *  colour of a line -- a number with no referent, arrived at through a connection the application
+ *  offered. D4 asks whether a wrong producer needs a hard stop; here it does, and a separate port
+ *  type is the stop. See docs/experiments/143-a-georeferenced-plate-as-ground.md. */
+export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'ground'|'polygons'|'network'|'mean-center'|'point-comparison';
 export interface NodeDefinition {title:string; group:string; icon:string; color:string; description:string; inputs:[string,PortType][]; output:PortType|null}
 export type Escape = (value:unknown)=>string;
 export type SpatialRelation = 'Inside'|'Boundary'|'Outside'|'MissingLocation';

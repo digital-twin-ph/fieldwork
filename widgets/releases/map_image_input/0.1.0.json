@@ -1,0 +1,77 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:map_image_input",
+  "version": "0.1.0",
+  "nodeType": "map_image_input",
+  "title": "Georeferenced map image",
+  "released": "2026-10-27",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['map_image_input']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "note": "Bounds, opacity and the data URI are checked in validateWorkflow; the georeference's CORRECTNESS is not checkable here and is recorded as not established in experiment 143."
+  },
+  "ports": {
+    "inputs": [],
+    "output": "ground",
+    "note": "The `ground` port type was added to the closed union for this widget, which is a base-contract change made deliberately under D4. A plate must not reach clip_raster or sample_raster: its pixels are ink, and sampling them returns the colour of a line. The port type makes that connection impossible rather than reporting it after it is made."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "GAP, meaning no alignment to an external cartographic vocabulary -- not meaning the terms are undeclared. fw:MapImageInput and fw:MapImage are declared in ontology/runtime.ttl with their properties. The receipt asserts the digest, the pixel dimensions, the four bounds, the ground resolution in metres and `fw:layerRole \"context\"`, which is the limit stated where a reader meets the layer rather than only in a document.",
+    "emits": {
+      "classes": [
+        "MapImage",
+        "MapImageInput"
+      ],
+      "properties": [
+        "eastBound",
+        "groundResolutionMetres",
+        "imageDigest",
+        "imagePixelHeight",
+        "imagePixelWidth",
+        "layerRole",
+        "northBound",
+        "southBound",
+        "westBound"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/map-image.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/map-image.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Draws a scanned or published map under a workflow, in the workflow's own projection, as ground. Built for Snow's 1855 Map 2, whose georeference the South London example has carried since 2026-10-24 with nothing able to read it. See docs/experiments/143-a-georeferenced-plate-as-ground.md."
+    },
+    {
+      "kind": "added",
+      "description": "Refuses a rotated world file by name. Drawing a rotated plate as an upright rectangle would put the map in the wrong place while looking correct, which is a hard stop rather than a limitation. A world file whose origin is the centre of the top-left pixel is read as such, so the extent runs half a pixel further out on each side."
+    },
+    {
+      "kind": "added",
+      "description": "Refuses corners outside CRS84 degrees, which usually means a projected georeference. Reading one datum's coordinates as another's moves a map by hundreds of metres and looks like a correct map."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Nine unit tests over the world-file reader, the extent it derives, the ground resolution and each refusal: a rotated world file, a flipped image, crossed corners, corners outside the world, and a projection that sends the plate nowhere finite. Checked against the example's own geo/map2.jgw byte for byte. That the georeference is CORRECT. The control points were placed by a reader of the plate and this draws what they recorded; an alignment error looks exactly like a correct placement. Measuring the residual against modern boundaries is what would close it. That a reader understands what a historical wash means. The plate's own legend and the example's prose do that work. That 1002x788 over South London, about 40 m per pixel, is enough for anything but ground. There is nothing here for a lab check to recompute -- placing an image where its georeference says has no second implementation that could disagree -- so widgets/check-coverage.json records `none` with that reason rather than claiming parity this project's arithmetic would be agreeing with itself about."
+  }
+}

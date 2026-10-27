@@ -2,7 +2,7 @@
 
 _Created 2026-10-27 · Updated 2026-10-27_
 
-**Status:** asked — designed here, implementation follows this record.
+**Status:** tried — built, and instantiated by the South London example on 2026-10-27.
 
 The practitioner, 2026-10-27, on Snow's Map 2: *"We still need the original and since it's
 georeferenced, it could be overlaid as a layer. It helps learners appreciate something from the
@@ -49,7 +49,7 @@ than a note nobody reads at the moment of the mistake.
 | **D5** | Readable off built code | Not swept; recorded as contestable, as for every widget. |
 | **D7** | Is the name the practitioner's word? | `map_image_input` — a source, no transform verb, and it names the subject rather than a category. "Georeferenced map image" is the title. Goes to name review like every other. |
 | **D8** | Positive and negative cases | Both: a plate placed at its recorded bounds, and a rotated world file refused by name. |
-| **D9** | Does an example instantiate it? | South London, with Snow's Map 2. |
+| **D9** | Does an example instantiate it? | **Now yes, and it did not when this was written.** South London was named here on 2026-10-27 and wired on 2026-10-27, three commits later: the repository shipped the plate, both world files and the georeference with nothing reading them, and this row claimed an instantiation that did not exist. The plate now sits under the sub-district choropleth on the `ground` port. |
 | **D10** | Is it reachable from the palette? | Added to `ALWAYS_ADDABLE`; `tests/palette.test.mjs` fails otherwise. |
 | **D11** | Does a residual function remain that nothing else performs? | Yes: no widget draws a supplied georeferenced image, and the example has carried the georeference for three days with nothing able to read it. |
 
@@ -110,7 +110,7 @@ imported, or that operation is added here later.
   points against a modern boundary is what would close that, and it is not done here.
 - **That a reader understands what the washes mean.** The purple zone is the intermingled supply
   and is the point of Snow's design; nothing in the drawing says so. The example's prose does.
-- **That the small plate is enough.** 1002 × 788 over South London is roughly 40 m per pixel.
+- **That the small plate is enough.** 1002 × 788 over South London is **15.8 m per pixel**, measured from the world file when the example first wired one on 2026-10-27. This record said “roughly 40”, which was an estimate nobody had checked and is wrong by two and a half times.
   Legible as ground, and not a basis for reading a street.
 
 ## What would close it

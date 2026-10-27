@@ -118,9 +118,17 @@ export function mapImageMarkup(image:MapImage,
 
 /** One line of credit, from what the plate declares. Public domain or not, a reader of a figure
  *  is entitled to know which ground it was drawn on and when that ground was made. */
-export const mapImageCredit=(image:MapImage):string=>
-  [image.source?.title,image.source?.licence].filter(Boolean).join(' · ')
-  ||image.filename||'Supplied map image';
+export const mapImageCredit=(image:MapImage):string=>{
+  // `none-applies` and `unstated` are the provenance vocabulary's internal words and neither
+  // imposes an obligation to display anything, so neither reaches a figure. They were being
+  // printed verbatim: the South London plate's credit read "John Snow, Map 2, 1855 ·
+  // none-applies" the first time a worked example wired one, on 2026-10-27. A named licence is
+  // different -- it is a term a reader can go and check, and an obligation may attach to it.
+  const licence=image.source?.licence;
+  const named=licence&&licence!=='none-applies'&&licence!=='unstated'?licence:'';
+  return [image.source?.title,named].filter(Boolean).join(' · ')
+    ||image.filename||'Supplied map image';
+};
 
 export function mapImageReceipt(node:WorkflowNode<'map_image_input'>,image:MapImage,
   runId:string):Receipt{

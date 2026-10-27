@@ -28,8 +28,8 @@ Its output goes to a **Map**, on the `ground` port.
 ## Reading what you get
 
 The figure says which plate it drew, where it came from, and **about how many metres one of its
-pixels covers**. Snow's small plate over south London is about 40 metres per pixel: enough to
-recognise the river and the parish outlines, not enough to read a street.
+pixels covers**. Snow's plate over south London is about 16 metres per pixel: enough to recognise
+the river and the parish outlines, not enough to read a street.
 
 The receipt records the image's digest, its pixel size, the four bounds, that ground resolution,
 and `layerRole "context"`.

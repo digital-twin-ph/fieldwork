@@ -31,9 +31,9 @@
   "declared only": 2,
   "example only": 12,
   "parity only": 10,
-  "example, lab not applicable": 11,
+  "example, lab not applicable": 12,
   "example+parity": 16,
-  "neither applies": 2
+  "neither applies": 1
  },
  "compositionsUsedByNoExample": [
   "compute_walking_catchment"
@@ -278,12 +278,14 @@
   },
   {
    "nodeType": "map_image_input",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "neither applies"
+   "rung": "example, lab not applicable"
   },
   {
    "nodeType": "map_output",

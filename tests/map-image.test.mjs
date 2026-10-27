@@ -71,7 +71,11 @@ test('a plate carries its resolution, its credit and a default opacity',()=>{
   assert.equal(image.opacity,DEFAULT_OPACITY);
   assert.ok(image.groundResolutionM>10&&image.groundResolutionM<25);
   assert.match(mapImageCredit(image),/John Snow/);
-  assert.match(mapImageCredit(image),/Public domain/);
+  // A credit names the work, never the provenance vocabulary's internal words. `none-applies`
+  // says no terms attach, which is not a thing to print on a map.
+  assert.ok(!/none-applies|unstated/.test(mapImageCredit({...image,
+    source:{title:'John Snow, Map 2, 1855',licence:'none-applies'}})));
+  assert.match(mapImageCredit({...image,source:{title:'Zones',licence:'ODbL-1.0'}}),/ODbL-1\.0/);
 });
 
 test('a plate with no image, crossed corners or corners off the world is refused',()=>{

@@ -30,7 +30,17 @@ const buildPlateWorkflow=async page=>{
       bounds:[-0.141,51.509,-0.131,51.517],opacity:0.8,
       source:{title:"Snow's Map 2, 1855",licence:'Public domain'}}});
     stored.edges.push({id:'plate-edge',from:'plate',to:map.id,port:'ground'});
+    // THE PROJECT MANIFEST RECORDS AN INVENTORY OF WHAT THE WORKFLOW CONTAINS, and a saved
+    // workflow whose manifest disagrees is refused on open -- which silently reset this edit to
+    // the published template. Dropped so the app re-derives it, as it does for a workflow that
+    // has none.
+    delete stored.manifest;
+    // BOTH KEYS: the single workspace the app boots from and the per-example map a reload with
+    // `?example=` reads. Writing only the first is silently discarded on reload.
     localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(stored));
+    const workspaces=JSON.parse(localStorage.getItem('fieldwork-examples-v1')||'{}');
+    workspaces['snow-voronoi']=stored;
+    localStorage.setItem('fieldwork-examples-v1',JSON.stringify(workspaces));
   },PNG);
   await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
@@ -72,7 +82,14 @@ test('the plate is a layer of the map, not of the canvas: disconnecting removes 
   await page.evaluate(()=>{
     const stored=JSON.parse(localStorage.getItem('fieldwork-workflow-v1'));
     stored.edges=stored.edges.filter(e=>e.port!=='ground');
+    // Both keys and no manifest, for the same reasons as the setup above. Written to the one key
+    // alone, this edit was discarded on reload and the plate stayed on the map -- so the test
+    // read a still-connected plate as a disconnection that had failed to remove it.
+    delete stored.manifest;
     localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(stored));
+    const workspaces=JSON.parse(localStorage.getItem('fieldwork-examples-v1')||'{}');
+    workspaces['snow-voronoi']=stored;
+    localStorage.setItem('fieldwork-examples-v1',JSON.stringify(workspaces));
   });
   await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});

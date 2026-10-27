@@ -67,3 +67,18 @@ landed — which is what you need to see before grouping by it.
 ## Where it is used
 
 The South London example: *Died or survived, by water supply*.
+
+## How it was checked
+
+Validation Lab check **28**, `28-relate-table-vs-pandas.ipynb`, against a pandas left merge of
+Snow's Table XII onto his Table VIII. There is no arithmetic to check, so what was recomputed is
+the matching: the same category on the same row, the row count unchanged at 64, and the same rows
+dropped and named when a sub-district is withheld.
+
+The case worth an outside eye is the ambiguous key. A merge resolves it by **multiplying rows** —
+66 rows out of a 64-row table — so the sub-district's population would appear under both companies
+with no total revealing it. This refuses instead, and the check records the merge's row count as
+the measure of what the refusal prevents.
+
+What it does not reach: Snow's two tables spell every sub-district identically, so a name
+differing by punctuation or case — the case you will actually meet — is never exercised.

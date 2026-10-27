@@ -522,6 +522,48 @@
       "notebook": "27-rate-ratio-vs-statsmodels.ipynb"
     },
     {
+      "widget": "urn:fieldwork:widget:relate_table",
+      "coversRelease": "0.1.0",
+      "check": "28-relate-table",
+      "result": "content/results/check-28-relate-table.json",
+      "sha256": "da695012f254e1c61f434b33c387f1392cdce016bd2214811958428c9dc91ae1",
+      "external": [
+        "pandas 2.3.3"
+      ],
+      "criterion": "every related row identical to a pandas left merge of Snow's Table XII onto his Table VIII -- compared as an ordered set of records so row order is not mistaken for disagreement -- with the row count UNCHANGED at 64, the distinct brought categories in the same first-seen order, and, with one sub-district withheld from the right table, the same rows dropped AND the gap named with its count. The fifth criterion is the one worth an outside eye: an ambiguous key must be REFUSED, with a message naming the key and both values, where a merge resolves it by multiplying rows.",
+      "outcome": "agrees",
+      "notEstablished": [
+        "That exact matching is the right matching. Snow's two tables spell every sub-district identically, so this data never exercises a name that differs by punctuation or case -- the case a practitioner will actually meet. Fieldwork folds surrounding whitespace and nothing else, by decision rather than by this result.",
+        "That relating is right for bringing MEASURES across. That adds rows rather than a column and is deliberately not built, so nothing here speaks to it.",
+        "That the category is the right stratifier. Snow's third group -- sub-districts supplied by both companies -- is 300,149 of the 486,936 people in the table, and what to do with it is the practitioner's judgement, not an outcome of the join."
+      ],
+      "ranAt": "2026-10-27T11:40:43.555329+00:00",
+      "measured": "Three cases. The relate the example runs: 64 rows in, 64 out, 0 dropped, three categories in order, identical to the merge record for record. One sub-district withheld: 62 related, 2 dropped, the gap reported as {\"St. Saviour, Southwark\": 2 rows} and the same two rows a merge drops. An ambiguous key, constructed: refused with both company names in the message, where the same input through a merge returns 66 rows for a 64-row left table.",
+      "note": "THE ARITHMETIC IS NONE, so this check is about the matching and about one deliberate disagreement. A right table giving one key two values is refused here and multiplied by a merge: the two rows for that sub-district each match twice, so its population would appear under both companies and no total in the result would reveal it. The refusal is the behaviour under check and the merge's row count is the measure of what it prevents. The case is CONSTRUCTED and the fixture says so -- no sub-district in Table XII carries two companies, which is why it cannot be drawn from the data. What this does not reach is the case a practitioner will actually meet: Snow's tables spell every sub-district identically, so a name differing by punctuation or case is never exercised.",
+      "notebook": "28-relate-table-vs-pandas.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:group_table",
+      "coversRelease": "0.1.0",
+      "check": "29-group-table",
+      "result": "content/results/check-29-group-table.json",
+      "sha256": "31eecf60390f16c67f59d5608bf57a73d2720cb499c27c39e5df874c0fb929a1",
+      "external": [
+        "pandas 2.3.3"
+      ],
+      "criterion": "all six totals of the Snow contingency table exactly equal to pandas groupby(['water_supply','measure']).sum() -- integers, so the tolerance is zero rather than small -- with 6 groups from 64 rows and sub_district reported as the dropped column; and, with one cell emptied, that group null, equal to a per-group sum(skipna=False), the other five unchanged, and the gap naming the group with the rows summed and the rows empty adding to its row count. The size of the disagreement with the default sum is recorded in people rather than asserted.",
+      "outcome": "agrees",
+      "notEstablished": [
+        "That summing is right for these columns. It is right for counts and wrong for rates, and neither implementation can tell which it has been given. Fieldwork offers sum and nothing else for that reason; the protection is the absence of the other option, which no check can verify.",
+        "That nothing known is the right answer rather than the honest one. It refuses to guess; a practitioner who needs the number still has to find the missing cell.",
+        "That the three supply categories are the right strata. The both-companies group is 300,149 of 486,936 people, and what to do with it is the practitioner's judgement."
+      ],
+      "ranAt": "2026-10-27T11:40:43.905450+00:00",
+      "measured": "Six totals exact: 167,654 and 844 for Southwark and Vauxhall only, 300,149 and 652 for both companies, 19,133 and 18 for Lambeth only. With St. Saviour's population emptied, that group returns nothing known, matching a per-group sum(skipna=False); a default sum returns 147,945, short by 19,709 people. The gap is reported as 11 rows summed and 1 empty against the group's 12 rows.",
+      "note": "PANDAS HAS NO OPTION FOR THIS RULE, which the check found by reaching for the obvious one and watching it not work. `min_count=1` reads as \"at least one value required\" and is the first thing anyone writes here; it bounds how many values must be PRESENT rather than noticing any that are ABSENT, so on eleven numbers and one empty cell it returns 147,945 -- the default's answer, from the option named for missing data. `min_count=12` does return nothing known and only because this group has twelve rows: it would null every smaller group. The comparison is a per-group `sum(skipna=False)`, which is the rule itself and does not depend on the group size. Recorded because the next author will reach for min_count too, and because a check written against it would have reported a disagreement and called it a defect. What no check can verify is the protection that matters most here: sum is the only operation offered, because this step cannot tell a count from a rate and summing rates gives a number with no referent.",
+      "notebook": "29-group-table-vs-pandas.ipynb"
+    },
+    {
       "widget": "urn:fieldwork:widget:two_by_two",
       "coversRelease": "0.1.0",
       "check": "30-two-by-two",

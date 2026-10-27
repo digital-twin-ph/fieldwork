@@ -2530,6 +2530,46 @@ function renderInspector(){
     }
   }
   $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
+  // QUICK LOOK AT WHAT THIS STEP PRODUCED, for every widget that emits a table.
+  //
+  // The practitioner, 2026-10-27: *"Any widget that works on a table and outputs a table should
+  // enable Quick Look at the output table."* There were two Quick Looks and neither was this
+  // one: `table_input` offered a look at the table it IMPORTED, and the records panel offered
+  // one for point records. A step in the middle of a chain -- relate, group, derive, select rows,
+  // two-by-two -- produced a table a practitioner could only read by switching to the Results
+  // tab and finding the right one among several.
+  //
+  // DERIVED FROM THE PORT CONTRACT rather than listed per widget: `TYPES[type].output==='table'`
+  // is the same declaration the canvas uses to decide what may connect to what. A table-emitting
+  // widget added later gets this without anybody remembering, which is the failure this file has
+  // recorded twice already -- the Inspector's hand-written basemap list, and the catalogue's
+  // hand-written group list that left a widget out entirely.
+  //
+  // The INSPECTED node's own output, not the active result tab: the practitioner is looking at
+  // this step, and the panel on the right is showing whichever tab was last chosen.
+  if(TYPES[n.type].output==='table'&&n.type!=='table_input'){
+    const produced=result?.tables?.[n.id];
+    const anchor=$('#inspector-content').querySelector('.inspector-body');
+    if(anchor){
+      const block=document.createElement('div');
+      if(produced){
+        block.innerHTML='<div class="inspector-actions">'
+          +'<button id="output-quick-look" class="button">\u2922 Quick look at the output table</button></div>';
+      }else{
+        // Said rather than hidden. A missing button reads as "this widget cannot do that"; the
+        // truth is that there is nothing to look at yet, which is a different thing and is
+        // fixed by pressing Run.
+        block.innerHTML=`<p class="description">This step emits a table. Run the workflow to `
+          +'look at what it produces.</p>';
+      }
+      anchor.append(block);
+    }
+  }
+  optionalElement('#output-quick-look')?.addEventListener('click',()=>{
+    const produced=result?.tables?.[n.id];
+    if(!produced)return;
+    openTableViewer(tableViewOf(produced,`${n.params.label||TYPES[n.type].title} \u00b7 output`),esc);
+  });
   document.querySelectorAll<HTMLButtonElement>('[data-raster-step]').forEach(button=>button.onclick=()=>{selected=button.dataset.rasterStep;render();});
   optionalElement('#manage-references')?.addEventListener('click',()=>{let baseline=JSON.stringify(n.references||[]);openEvidenceEditor(n,refs=>{const current=workflow.nodes.find(x=>x.id===n.id);if(!current||JSON.stringify(current.references||[])!==baseline)throw new Error('The node changed while editing. Close and reopen its references.');const saved=change(w=>{required(w.nodes.find(x=>x.id===n.id)).references=structuredClone(refs);},{requirePersistence:true});if(saved)baseline=JSON.stringify(refs);return saved;});});
   optionalElement('#add-point-input')?.addEventListener('click',()=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'|'table_output'>;node.params.pointInputCount=(node.params.pointInputCount??1)+1;w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port==='coverage'));}));
@@ -5424,7 +5464,11 @@ $('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElemen
   if((parsed as {schema?:string})?.schema===PROJECT_DOCUMENT_SCHEMA){await importProjectDocument(parsed);control(e).value='';return;}
   const next=await importWorkflowDocument(parsed,validateWorkflow);const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes.find(n=>n.type==='output')?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');discardPreviousRun();renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}catch(err){toast(errorMessage(err),{tone:'failure'});}control(e).value='';};
 $('#geojson-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>5e6)throw new Error('GeoJSON file is too large (5 MB maximum).');const data=validateGeoJSON(JSON.parse(await file.text()));change(w=>{const n=w.nodes.find(n=>n.id===importNode);if(!n)throw new Error('Source node no longer exists.');updateParam(w,n.id,'data',data);});toast('Local geographic data loaded. Run to update results.');}catch(err){toast(errorMessage(err),{tone:'failure'});}control(e).value='';};
-$('#download-evidence').onclick=async()=>{if(!result||!runWorkflow){toast('Run the workflow first.');return;}const snapshot=structuredClone({schema:'fieldwork/run/1',workflow:runWorkflow,...result});try{const attachments=await exportEvidenceFiles(snapshot.workflow);download('fieldwork-run-receipt.json',JSON.stringify({...snapshot,...(attachments.length?{attachments}:{})},null,2));}catch(error){toast(errorMessage(error),{tone:'failure'});}};
+$('#download-evidence').onclick=async()=>{if(!result||!runWorkflow){toast('Run the workflow first.');return;}const {tables:_held,...reported}=result;
+  // The run's retained tables are a reading convenience for the open session, not evidence: the
+  // receipt already carries the facts each step asserted, and copying every intermediate table
+  // into it would grow an export by the size of the data it describes.
+  const snapshot=structuredClone({schema:'fieldwork/run/1',workflow:runWorkflow,...reported});try{const attachments=await exportEvidenceFiles(snapshot.workflow);download('fieldwork-run-receipt.json',JSON.stringify({...snapshot,...(attachments.length?{attachments}:{})},null,2));}catch(error){toast(errorMessage(error),{tone:'failure'});}};
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view!));
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});

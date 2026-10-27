@@ -71,6 +71,7 @@ import {validateAttributeSchema} from './attribute-schema.js';
 import {defaultSpatialReference,validateSpatialReference} from './spatial-reference.js';
 import {utmDefinition,projectFromCRS84} from './reproject.js';
 import {dataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
+import type {DataTable} from './data-table.js';
 import {computeRate,fromPoints,fromTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
 import {computeRateRatio,rateRatioReceipt,rateRatioSentence,RATE_RATIO_TABLE_KEYS} from './rate-ratio.js';
 import {caseSeries,caseSeriesFromTable,seriesTable,seriesChart,seriesReceipt,validateCaseSeriesNode} from './case-series.js';
@@ -1507,6 +1508,24 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       ?[{nodeId:node.id,unconnected,offNetwork,...(gaps.length?{gaps}:{}),
          ...(dataIssues.length?{dataIssues}:{})}]:[];
   });
+  // THE TABLES THE RUN PASSED BETWEEN STEPS, kept so a practitioner can look at one.
+  //
+  // The practitioner, 2026-10-27: *"Any widget that works on a table and outputs a table should
+  // enable Quick Look at the output table."* The obstacle was not the button. Only an OUTPUT
+  // widget produces a result tab, so a relate, a group, a derived value or a selection in the
+  // middle of a chain had no surface at all: its table existed for the length of this function
+  // and was then dropped. On Snow's contingency workflow that is four of the nine steps, and the
+  // practitioner could see the first table and the last and nothing in between.
+  //
+  // TABLES ONLY, deliberately. Every intermediate value passes through `values` -- geometry,
+  // rasters, street graphs -- and keeping all of them would put a copy of every layer on the run
+  // object. A table is already bounded at MAX_TABLE_ROWS, so this is a known cost; the rest is
+  // not, and a figure for "how much memory does a run hold" that depends on the workflow is not
+  // one anybody can act on.
+  const tables:Record<string,DataTable>={};
+  for(const [nodeId,value] of values)
+    if((value as {kind?:string})?.kind==='data-table')tables[nodeId]=value as DataTable;
   return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString(),
+    ...(Object.keys(tables).length?{tables}:{}),
     ...(Object.keys(linkages).length?{linkages}:{})};
 }

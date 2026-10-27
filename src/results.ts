@@ -148,4 +148,11 @@ export function dataIssuesOf(value:unknown,nodeId:string):import('./authored-app
  *  because the review band is a question the widget asks and the answer belongs on the node
  *  rather than in whichever result tab happens to be open. */
 export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; provenanceN3:string; outputs:Output[]; trace:{nodeId:string; type:string; milliseconds:number}[]; receipts:Receipt[]; runId:string; engine:string; runAt:string;
-  linkages?:Record<string,import('./deduplicate-points.js').DeduplicateResult>}
+  linkages?:Record<string,import('./deduplicate-points.js').DeduplicateResult>;
+  /** The table each step produced, by node id, for the steps that produced one.
+   *
+   *  Only an output widget makes a result tab, so without this a table computed in the middle of
+   *  a chain has nowhere to be seen. Tables only -- they are bounded at MAX_TABLE_ROWS, and the
+   *  other intermediate values are not. In memory for the open run; stripped from an exported
+   *  receipt, which carries the facts rather than the data. */
+  tables?:Record<string,import('./data-table.js').DataTable>}

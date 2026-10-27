@@ -1,6 +1,6 @@
 # 107 · Intersections, unions and memberships — and where each belongs
 
-_Created 2026-10-12 · Updated 2026-10-19_
+_Created 2026-10-12 · Updated 2026-10-25_
 _Uses a term this project withdrew on 2026-10-12, named in [the withdrawn-vocabulary ledger](../withdrawn-vocabulary.json). The text stands as written — it is evidence of what was thought then, and rewording a dated record would falsify it. Live text says **port type** for what a connection is checked against._
 
 

@@ -1,6 +1,6 @@
 # Geometry engines: JavaScript against WASM GEOS, measured
 
-_Created 2026-10-11 · Updated 2026-10-11_
+_Created 2026-10-11 · Updated 2026-10-26_
 
 Fieldwork does every spatial operation in JavaScript. The Validation Lab runs
 GEOS, PROJ and GDAL through Pyodide, which is WebAssembly. The question is

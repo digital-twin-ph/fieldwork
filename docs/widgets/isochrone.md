@@ -1,6 +1,6 @@
 # Network isochrone
 
-_Created 2026-10-14 · Updated 2026-10-22_
+_Created 2026-10-14 · Updated 2026-10-25_
 
 **A process widget.** It draws the area you can reach on foot within a stated time, walking
 along real streets, from one or more sites.

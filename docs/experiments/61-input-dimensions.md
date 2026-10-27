@@ -1,6 +1,6 @@
 # 61 · Person, place and time belong to the input data
 
-_Created 2026-10-08 · Updated 2026-10-15_
+_Created 2026-10-08 · Updated 2026-10-26_
 
 **Status:** admission review. Written before code, as experiments 48 and 58 were. Proposes a
 declaration on existing inputs and **no new port type**.

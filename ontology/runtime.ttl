@@ -154,6 +154,33 @@ fw:retrievedAt a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:represents a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The period the data represents, which is not when it was retrieved: a boundary fetched in 2026 may represent 1855.".
 
+# THE WORK AN INPUT CAME FROM, ASSERTED AS FIELDS RATHER THAN AS A RENDERED SENTENCE.
+# Experiment 144. A receipt that recorded only "Snow J. On the mode... 1855." would be the
+# free-text problem one layer down: a reader could not re-render it in their own citation style.
+# So each part is its own statement, and the three styles are rendered by the reader rather than
+# baked in by the writer. Standard terms are used where they exist -- dcterms:title, creator,
+# publisher, isPartOf, issued -- and only what Dublin Core does not name is minted here.
+fw:citationType a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "What kind of work the origin is: book, chapter, article, map, dataset, report or webpage. Each citation style punctuates the kinds differently and two of them add a bracketed designator for the non-print ones, so the kind is recorded rather than inferred from which fields are filled.".
+fw:publicationPlace a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The place of publication, as a citation prints it. Not a geography: \"London\" here is part of a reference and is never read as a location.".
+fw:volume a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:issue a owl:DatatypeProperty; rdfs:range xsd:string.
+fw:pages a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The page range as printed, including the dash the source used. A string rather than two integers, because a reference may read \"S12-S19\" or \"e0123456\".".
+fw:doi a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The DOI, bare: 10.1016/j.healthplace.2006.01.001, never a doi.org URL. Preferred over a URL wherever one exists, because a DOI still resolves after a publisher moves its site. A malformed DOI is refused rather than asserted: a broken one looks resolvable.".
+
+# The edition actually read, where that is not the publication. Snow's second edition is 1855 and
+# the Project Gutenberg transcription of it was released 2024-02-07; a citation says both, and an
+# ordering by literature uses the first.
+fw:editionStatement a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The edition as a citation style prints it: \"2nd\", \"rev.\". Distinct from the edition's own date and publisher, which are the two properties below.".
+fw:editionIssued a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "When the edition read was released, which is not when the work was published.".
+fw:editionPublisher a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "Who released the edition read, where that is not the work's own publisher -- a transcription, a reprint, a digitisation.".
+
 fw:matchedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:outsideRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:multipleMembershipCount a owl:DatatypeProperty; rdfs:range xsd:integer.

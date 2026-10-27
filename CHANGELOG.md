@@ -10,6 +10,14 @@ _A note on the number: `package.json` read 0.11.0 while the newest section below
 earlier sections are left as written rather than reshuffled — the dated record is the point — and
 this section covers the work of 2026-10-25 and 26._
 
+- **A run whose canvas moved on reports honestly instead of looking like a failure.** Opening a
+  worked example from the catalog while another run was still computing threw an error, so a run
+  that had finished said *"Workflow stopped"*. The results of that run belong to the workflow that
+  produced them and are still discarded, which is the existing rule; what changed is that the run
+  now names the workflow it belonged to, says its results were not kept, and says to open it again
+  to see them — and the canvas you moved to is no longer marked as already run. Found on the
+  deployed instance, 2026-10-27.
+
 - **An Epidemiology group, and a rate ratio with an interval.** Rate with a denominator and Cases
   by period already existed, in a generic Summaries group beside twenty-one spatial operations,
   and an epidemiologist looking at the framework reported seeing no epi widget at all. **Rate

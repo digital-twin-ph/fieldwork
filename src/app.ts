@@ -3677,7 +3677,25 @@ async function run(){if(busy)return;
   // a state line that says what is true -- not "Run failed", which claims something went wrong.
   try{executionPlan(workflow);}catch(e){
     if(e instanceof IncompleteWorkflow){runIncomplete=true;toast(errorMessage(e),{tone:'notice'});render();return;}
-    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;result=next;runWorkflow=snapshot;dirty=false;
+    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;
+    // THE CANVAS CAN MOVE WHILE A RUN IS IN FLIGHT, and this run is then nobody's results.
+    //
+    // `renderResults` discards a result whose workflow is no longer the open one -- the rule
+    // above it, *"results belong to the workflow that produced them"*. Nothing stopped the
+    // workflow changing during the await: `loadExample` is behind `busy`, but the import paths
+    // are not, and a catalog fetch resolves on its own schedule. So the run below finished, had
+    // its result correctly discarded, and then read it anyway.
+    //
+    // Found 2026-10-27 on the DEPLOYED instance, which is the only place it had ever been done
+    // in that order: fetching South London from the catalog while the first example's run was
+    // still going threw `Cannot read properties of null (reading 'outputs')`, and the run
+    // reported nothing at all. Every local test either waits for the run or imports from a file
+    // input, which lands between runs rather than inside one.
+    const stillOurs=storageKey(snapshot)===storageKey(workflow);
+    // `dirty` says the open canvas has changes this run has not covered. For a canvas this run
+    // never touched that is true, and clearing it here marked a freshly adopted workflow as
+    // already run.
+    result=next;runWorkflow=snapshot;if(stillOurs)dirty=false;
     // A use instance is a widget connected and RUN, so it is counted here and nowhere else:
     // placing one on a canvas is not using it. Local to this browser, never sent.
     recordRun(next.trace);
@@ -3691,8 +3709,19 @@ async function run(){if(busy)return;
   // how long it took -- taking something away from the practitioner in the act of telling them
   // something. The run succeeded; it is amber rather than red for that reason, and it stays
   // until it is closed.
-  toast(`Complete in ${elapsedText(lastRunMs)}: ${result.outputs.length} output tabs updated.`
-    +supersessionNotice(snapshot)+(issues?` ${issues}`:''),issues?{tone:'warning'}:undefined);}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure'});runFailed=true;console.error(e);}
+  //
+  // READ FROM `next`, NOT FROM `result`. `next` is this run; `result` is whatever the application
+  // is holding by the time this line runs, which after a mid-run canvas change is null. And when
+  // the result was discarded, do not announce tabs that are not there: say what happened, in the
+  // plain notice tone, because nothing went wrong -- the practitioner moved on, and the work they
+  // moved to is untouched.
+  toast(stillOurs
+    ?`Complete in ${elapsedText(lastRunMs)}: ${next.outputs.length} output tabs updated.`
+      +supersessionNotice(snapshot)+(issues?` ${issues}`:'')
+    :`A run of ${snapshot.name||'another workflow'} finished in ${elapsedText(lastRunMs)}, after this `
+      +`canvas had already moved on. Its results belong to that workflow, so they were not kept. `
+      +`Open it again and run it to see them.`,
+    stillOurs?(issues?{tone:'warning'}:undefined):{tone:'notice'});}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure'});runFailed=true;console.error(e);}
   finally{
     busy=false;
     // A FINISHED RUN DOES NOT MOVE THE PRACTITIONER. The first version of the tab switched to

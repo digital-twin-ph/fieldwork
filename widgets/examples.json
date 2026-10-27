@@ -34,12 +34,12 @@
         {
           "path": "fieldwork-project.json.gz",
           "sha256": "e4af3cdfdc867de9a9d8d757e60211621d6a84dff5d9a2e886402ed7b8ed87ac",
-          "bytes": 65608
+          "bytes": 67576
         },
         {
           "path": "README.md",
           "sha256": "b5ac7e9f0dcdc2a7ae2bff5e768c0e40a0f5ee6c526d7f53b4569271d87a4529",
-          "bytes": 26881
+          "bytes": 28963
         },
         {
           "path": "NOTICE.txt",

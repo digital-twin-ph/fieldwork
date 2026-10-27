@@ -3176,15 +3176,20 @@ function renderInspector(){
     change(w=>{
       const target=getNode(w,n.id,'map_output');
       target.params.basemap=choice;
-      // ONLY THE STYLES A STATIC PLOT CANNOT DRAW FORCE THE INTERACTIVE PRESENTATION. This
-      // switched for EVERY choice, which was true while tiles could only be drawn by MapLibre --
-      // and it is what the practitioner met on 2026-10-25: *"I still don't see the static map
-      // basemap"*. Picking one silently moved the map away from the presentation they wanted.
+      // CHOOSING A BASEMAP NO LONGER MOVES THE MAP, retired 2026-10-27.
       //
-      // Raster tiles are baked into the static figure now (experiment 137), so osm and topo leave
-      // the presentation alone. OpenFreeMap serves vector tiles that need a GL canvas, so those
-      // still switch -- a control that appeared to do nothing would read as broken.
-      if(choice!=='none'&&choice!=='osm'&&choice!=='topo')target.params.presentation='interactive';
+      // It used to: a style the static plot could not draw switched the presentation to
+      // interactive, on the reasoning that a control which appeared to do nothing would read as
+      // broken. That was the right fix while the Inspector offered all six styles to both
+      // presentations. It is the wrong one now the list is filtered -- the practitioner chooses
+      // the map type and is then offered what that type can draw, which is their rule of
+      // 2026-10-27, and a basemap that silently changed the map type would invert it.
+      //
+      // IT HAD ALSO JUST BECOME A DEFECT. The condition was "not none, osm or topo", written when
+      // those were the only three a figure could bake. `natural-earth-110m` is none of them and
+      // is bundled FOR a static figure, so choosing it would have moved the map to the one
+      // presentation that cannot draw it. Caught the same day by reading this line rather than by
+      // a test, because no test could reach the state any more.
     },{spatial:false});
     // AND THE FIGURE REDRAWS. `change` calls `render`, which redraws the library, the project
     // bar and the Inspector and NOT the map -- so choosing a basemap did nothing visible until

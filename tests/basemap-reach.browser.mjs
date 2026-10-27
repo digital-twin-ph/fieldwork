@@ -15,7 +15,7 @@ import {collectPageErrors} from './page-errors.mjs';
 // defect: *"I still don't see the static map basemap"*, after choosing one had quietly taken the
 // map away from the presentation they wanted.
 
-test('a raster basemap is drawn into the static plot, and a vector one moves the map',async({page})=>{
+test('a raster basemap is drawn into the static plot, and a vector one is not offered there',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
@@ -44,11 +44,19 @@ test('a raster basemap is drawn into the static plot, and a vector one moves the
   await expect.poll(recorded).toBe('osm/plot');
   await expect(page.locator('#polygon-presentation')).toHaveValue('plot');
 
-  // A VECTOR STYLE STILL MOVES IT. OpenFreeMap serves vector tiles that need a GL canvas, so the
-  // interactive presentation is the only one that can draw them, and switching is honest.
+  // A VECTOR STYLE IS NOT OFFERED HERE AT ALL, from 2026-10-27. It used to be, and choosing one
+  // moved the map to the interactive presentation so it could be drawn. The practitioner's rule
+  // reversed that: *"if I change the map type to static, it should show only which basemaps are
+  // available for that type"* -- so the map type is chosen first and the list follows it, and a
+  // basemap that silently changed the map type would invert the rule.
+  await expect(basemap.locator('option[value="ofm-positron"]')).toHaveCount(0);
+  await expect(basemap.locator('option[value="ofm-liberty"]')).toHaveCount(0);
+
+  // Changing the map type is what reaches them, and the list follows immediately.
+  await page.locator('#polygon-presentation').selectOption('interactive');
+  await expect(basemap.locator('option[value="ofm-positron"]')).toHaveCount(1);
   await basemap.selectOption('ofm-positron');
   await expect.poll(recorded).toBe('ofm-positron/interactive');
-  await expect(page.locator('#polygon-presentation')).toHaveValue('interactive');
 
   // And back to none leaves the presentation where the practitioner put it, rather than
   // undoing a change they may now want.

@@ -117,7 +117,35 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
         const valueField=valueNameInput.value.trim()||'value';
         // THE ALERT. Raised before the read, so the practitioner meets the diagnosis rather than
         // `wideDataTable`'s refusal, and with the one action that resolves it.
+        // TWO SIGNATURES OF A LONG FILE, and the second was missing until a browser test caught
+        // it on the sea-level extract.
+        //
+        // The first is a repeated subject: a wide file has one row per subject, a long one
+        // repeats it. The second is subtler and commoner -- A WIDE TABLE HAS A COLUMN PER
+        // VARIABLE, so taking exactly ONE value column is not reading it as wide at all. It
+        // produces the same rows the long reader would, plus a measure column holding one
+        // distinct value, which is a key that carries no information.
+        //
+        // The sea-level extract is exactly that shape: psgc_code, scenario, year and quantile
+        // are unique TOGETHER, so no subject repeats and the first signature stays silent, while
+        // `value_m` is the only column left. Read as wide it imports with a fifth key column
+        // nobody asked for. Found 2026-10-27 by `data-table.browser.mjs`, which had encoded the
+        // old reading and failed on the new one -- the test was right and the detection was thin.
         const repeated=longSignature(keys);
+        const oneValue=valueFields.length===1&&!repeated;
+        if(repeated||oneValue){
+          if(oneValue&&!repeated){
+            shapeSays.textContent=`This file looks like it is already in LONG format. A wide table `
+              +`has a column per variable, and only one column here is left to be a value `
+              +`(${valueFields[0]}), so reading it as wide would add a "${measureKey}" column `
+              +`holding one value and nothing else. Nothing has been changed.`;
+            shapeAccept.textContent='Read it as long instead';
+            shapeAlert.hidden=false;
+            status.textContent='This table has not been imported.';
+            save.disabled=true;result=undefined;
+            return;
+          }
+        }
         if(repeated){
           shapeSays.textContent=`This file looks like it is already in LONG format. `
             +`${repeated.repeats.toLocaleString()} row${repeated.repeats===1?'':'s'} repeat a subject that `
@@ -156,6 +184,61 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     }catch(e){status.textContent='This table has not been imported.';fail(e);}
   }
 
+  /** A column cannot be both the subject and a variable of it. Enforced in `wideDataTable` as a
+   *  refusal; reflected here so the refusal is rarely met. */
+  function syncValueBoxes(){
+    const keys=new Set(chosenKeys());
+    for(const box of valuesBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]')){
+      const clash=keys.has(box.value);
+      box.disabled=clash;if(clash)box.checked=false;
+      box.parentElement?.classList.toggle('muted',clash);
+    }
+  }
+
+  /** WHAT TO PRESELECT, which differs between the two shapes and used to be chosen once.
+   *
+   *  The long reader's default -- every column but the guessed value one is a key -- is right for
+   *  a long file and wrong for a wide one, where it leaves exactly one column to be a value and
+   *  so describes the long shape again. On `psgc_code,y2050,y2100` it preselected psgc_code and
+   *  y2050 as keys, and the import then reported the file as long. Found 2026-10-27 by the
+   *  browser test that covers that exact CSV.
+   *
+   *  For a WIDE file the subject is what is not a measurement: columns whose first row does not
+   *  parse as a number. That reads Snow's four tables correctly -- `supplier`, `sub_district`,
+   *  and `water_supply` and `supply_partly_computed` as further keys rather than as variables
+   *  nobody can average. Where every column is numeric, as in a file keyed by a numeric code,
+   *  the first column is the subject and the rest are variables.
+   *
+   *  A PRESELECTION AND NOT A RULE. The practitioner changes it, and the readers refuse what
+   *  cannot work either way. Re-applied when the shape changes, because the shape is the whole
+   *  question and a default carried over from the other answer is not a default. */
+  function preselect(){
+    if(!parsed)return;
+    const headers=parsed.headers.map(h=>h.trim());
+    const numeric=headers.map((_,i)=>{
+      const cell=(parsed!.rows[0]?.[i]??'').trim();
+      return cell!==''&&Number.isFinite(Number(cell));
+    });
+    const wide=shape()==='wide';
+    let keyNames:string[];
+    if(wide){
+      keyNames=headers.filter((_,i)=>!numeric[i]);
+      if(!keyNames.length)keyNames=headers.slice(0,1);
+    }else{
+      const guess=headers.findIndex(h=>/^(value|value_m|amount|measure|level)$/i.test(h));
+      const valueAt=guess<0?headers.length-1:guess;
+      keyNames=headers.filter((_,i)=>i!==valueAt);
+      valueSelect.value=headers[valueAt];
+    }
+    const held=existing?.wide;
+    for(const box of keysBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))
+      box.checked=held&&wide?held.keys.includes(box.value.trim()):keyNames.includes(box.value.trim());
+    for(const box of valuesBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]')){
+      const name=box.value.trim();
+      box.checked=held?held.valueFields.includes(name):!keyNames.includes(name);
+    }
+  }
+
   /** Which controls belong to the chosen shape, and what the key columns are called in it. */
   function applyShape(){
     const wide=shape()==='wide';
@@ -163,6 +246,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     keysSays.textContent=wide
       ?'The columns that identify the subject of a row. A wide file has one row per subject, so together these must be unique.'
       :'Together these identify a row. Every key tuple must be unique.';
+    preselect();
+    syncValueBoxes();
     build();
   }
   shapeSelect.onchange=applyShape;
@@ -201,18 +286,9 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
       // A column cannot be both the subject and a variable of it, so taking one as a key drops it
       // from the values offered -- and the other way round. Enforced in `wideDataTable` as a
       // refusal; reflected here so the refusal is rarely met.
-      const syncValues=()=>{
-        const keys=new Set(chosenKeys());
-        for(const box of valuesBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]')){
-          const clash=keys.has(box.value);
-          box.disabled=clash;if(clash)box.checked=false;
-          box.parentElement?.classList.toggle('muted',clash);
-        }
-      };
       for(const box of keysBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))
-        box.onchange=()=>{syncValues();build();};
+        box.onchange=()=>{syncValueBoxes();build();};
       for(const box of valuesBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))box.onchange=build;
-      syncValues();
       applyShape();
     }catch(e){if(request===serial){status.textContent='The file could not be read.';fail(e);}}
   };

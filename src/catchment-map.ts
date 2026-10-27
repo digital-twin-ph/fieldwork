@@ -129,7 +129,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   const p:Polygons=layers.polygons??{features:[],sites:[],observations:undefined} as unknown as Polygons;
   const toolbar=document.createElement('div');toolbar.className='catchment-map-toolbar';
   toolbar.innerHTML='<button class="button small" data-fit>Fit all layers</button><button class="button small" data-fullscreen>Full screen</button><label>Basemap <select data-basemap aria-label="Interactive map basemap">'
-    +basemapOptions(basemap)
+    +basemapOptions(basemap,'interactive')
     +'</select></label><span data-tile-status role="status">Local layers work offline</span>';
   const canvas=document.createElement('div');canvas.className='catchment-leaflet';canvas.setAttribute('aria-label','Interactive catchment map');
   host.append(toolbar,canvas);

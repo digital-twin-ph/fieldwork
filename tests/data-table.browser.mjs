@@ -27,6 +27,16 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await page.locator('#table-file').setInputFiles({name:'ph-slr-psgc.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
   await expect(page.locator('#table-keys')).toBeVisible();
 
+  // THE IMPORT ASSUMES WIDE from 2026-10-27 -- "we have to assume wide in as default, that's the
+  // epidemiology mindset" -- and this extract is long. It is detected and reported rather than
+  // converted: a wide table has a column per variable, and only `value_m` is left to be one here.
+  // Nothing is read in the other shape until the button is pressed.
+  await expect(page.locator('#table-shape-alert')).toBeVisible();
+  await expect(page.locator('#table-shape-says')).toContainText('already in LONG format');
+  await expect(page.locator('#table-save')).toBeDisabled();
+  await page.locator('#table-shape-accept').click();
+  await expect(page.locator('#table-shape-alert')).toBeHidden();
+
   // The value column is proposed, not assumed: the remaining columns become the key.
   await expect(page.locator('#table-value')).toHaveValue('value_m');
   await expect(page.locator('#table-status')).toContainText('6 rows, 4 key columns, 1 values absent');
@@ -96,25 +106,46 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await page.screenshot({path:'test-results/table-input.png',fullPage:true});
 });
 
-test('a table that is not long format is refused with a recoverable draft',async({page})=>{
+// WHAT THIS TEST USED TO SAY, kept because it dates the change: until 2026-10-27 it was called
+// "a table that is not long format is refused with a recoverable draft", and its comment read
+// "a wide table carries one column per year -- nothing can detect that from the file alone".
+// Both are now false. The import assumes wide, reads it, and the CSV below is the very shape it
+// used to refuse. What survives unchanged is the second half: the refusals the contract CAN
+// state, and that a cancelled dialog leaves a draft rather than a broken node.
+test('a wide table imports, and the refusals each shape can state still hold',async({page})=>{
   await page.goto('/?example=blank');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="table_input"]').click();
   await page.locator('#open-table').click();
 
-  // A wide table carries one column per year. Nothing can detect that from the file alone,
-  // so the refusals are the ones the contract can state: the value column cannot also be a
-  // key, and a value that is not a number is not read as one.
+  // One column per year: two value columns, so it is wide and is read as wide with no alert.
   await page.locator('#table-file').setInputFiles({name:'wide.csv',mimeType:'text/csv',
     buffer:Buffer.from('psgc_code,y2050,y2100\n1380100000,0.21,0.52\n0303500000,0.19,0.44\n')});
   await expect(page.locator('#table-keys')).toBeVisible();
+  await expect(page.locator('#table-shape-alert')).toBeHidden();
+  await expect(page.locator('#table-status')).toContainText('2 subjects');
+  await expect(page.locator('#table-status')).toContainText('4 rows');
+  await expect(page.locator('#table-save')).toBeEnabled();
+
+  // A column cannot be both the subject and a variable of it. Reflected in the controls -- the
+  // value box for a key column is disabled -- and refused underneath either way.
+  await expect(page.locator('#table-values input[value="y2050"]')).toBeEnabled();
+  await page.locator('#table-keys input[value="y2050"]').check();
+  await expect(page.locator('#table-values input[value="y2050"]')).toBeDisabled();
+  await page.locator('#table-keys input[value="y2050"]').uncheck();
+
+  // In LONG mode the old refusal is unchanged: one value column, and it cannot also be a key.
+  await page.locator('#table-shape').selectOption('long');
+  await expect(page.locator('#table-value')).toBeVisible();
   await page.locator('#table-value').selectOption('psgc_code');
   await expect(page.locator('#table-error')).toContainText('cannot also be a key');
   await expect(page.locator('#table-save')).toBeDisabled();
 
+  // A value that is not a number is not read as one, in either shape.
   await page.locator('#table-file').setInputFiles({name:'text.csv',mimeType:'text/csv',
-    buffer:Buffer.from('psgc_code,scenario,value_m\n1380100000,ssp126,high\n')});
+    buffer:Buffer.from('psgc_code,scenario,value_m,value_b\n1380100000,ssp126,high,2\n')});
+  await expect(page.locator('#table-keys')).toBeVisible();
   await expect(page.locator('#table-error')).toContainText('nonnumeric value "high"');
   await page.locator('#table-cancel').click();
   await expect(page.locator('.inspector')).toContainText('cannot run until a table is imported');

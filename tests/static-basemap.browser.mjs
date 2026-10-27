@@ -65,14 +65,16 @@ test('a vector style says why it cannot be baked, rather than drawing nothing',a
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access-map"]').click();
-  await page.locator('#map-basemap').selectOption('ofm-positron');
-  // Choosing a vector style MOVES the map to the interactive presentation, which can draw it, so
-  // there is no static figure left to refuse. The reachable case is a workflow that holds a
-  // vector basemap and a static plot together -- which a practitioner reaches by putting the
-  // presentation back, and a saved workflow can simply carry.
+  // A VECTOR STYLE CANNOT BE CHOSEN HERE ANY MORE, from 2026-10-27: a static figure is offered
+  // only what it can bake. So the state this test is about is no longer reachable by clicking --
+  // it is reached by a SAVED WORKFLOW that carries the pair, which is exactly what a workflow
+  // written before that change does. Set directly for that reason, and the test is kept rather
+  // than retired because the figure still has to explain itself when it meets one.
+  await expect(page.locator('#map-basemap option[value="ofm-positron"]')).toHaveCount(0);
   await page.evaluate(()=>{
     const stored=JSON.parse(localStorage.getItem('fieldwork-workflow-v1'));
     const map=stored.nodes.find(n=>n.id==='access-map');
+    map.params.basemap='ofm-positron';
     map.params.presentation='plot';
     localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(stored));
   });

@@ -274,7 +274,11 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   if(node.type==='map_output')return [['area','area'],
     ...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points'] as [string,PortType]),
     ['polygons','polygons'],['context','points'],['decisions','decisions'],
-    ['raster','raster'],['network','network']];
+    // THE DYNAMIC LIST IS THE ONE THAT BINDS. `TYPES.map_output.inputs` declares the ports and
+    // this function is what a connection is actually checked against, so a port added to the
+    // declaration alone is a port nothing may connect to -- which is how `ground` arrived
+    // refusing its own widget with "Incompatible node connection" on 2026-10-27.
+    ['raster','raster'],['ground','ground'],['network','network']];
   if(['table_output','chart_output'].includes(node.type)&&'inputMode' in node.params&&node.params.inputMode==='polygons')return [['polygons','polygons']];
   if(node.type==='table_output'&&node.params.inputMode==='table')return [['table','table']];
   // A street network is a thing to look at, not only a thing to route over. Four widgets consume a

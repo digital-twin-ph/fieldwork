@@ -3390,7 +3390,23 @@ function renderResults(){
   // Hidden by default and turned on by `renderMap`, which is the only place that knows which
   // renderer drew: reading the DOM here asked before the map was built.
   $('#map-layer-list').hidden=true;
-  $('#map-layer-list').innerHTML=(output?.pointLayers||[]).map(layer=>`<label><input type="checkbox" data-map-layer="${esc(layer.sourceNodeId)}" ${hiddenMapLayers.get(output!.nodeId)?.has(layer.sourceNodeId)?'':'checked'}> ${esc(layer.label)} (${layer.count})</label>`).join('');
+  // THE PLATE IS A LAYER HERE TOO, with the same checkbox the point layers get.
+  //
+  // The practitioner, 2026-10-27: *"I meant for the water supply map to be a layer, so checkbox
+  // can show and hide it."* On the interactive map Leaflet's own control does it; a static figure
+  // has this list instead, and the plate belongs in it for the same reason -- flipping 1855 on
+  // and off under a modern result IS the comparison, and a backdrop nobody can remove is a
+  // picture rather than evidence.
+  //
+  // It is listed FIRST because it is drawn first, so the list reads in the order the figure
+  // stacks. Keyed by the plate node's own id, which is what `hiddenMapLayers` already stores.
+  const listedPlate=groundImageFor(output?.nodeId);
+  const plateEntry=listedPlate&&output
+    ?`<label><input type="checkbox" data-map-layer="${esc(listedPlate.sourceNodeId)}" `
+      +`${hiddenMapLayers.get(output.nodeId)?.has(listedPlate.sourceNodeId)?'':'checked'}> `
+      +`${esc(mapImageCredit(listedPlate))} (backdrop)</label>`
+    :'';
+  $('#map-layer-list').innerHTML=plateEntry+(output?.pointLayers||[]).map(layer=>`<label><input type="checkbox" data-map-layer="${esc(layer.sourceNodeId)}" ${hiddenMapLayers.get(output!.nodeId)?.has(layer.sourceNodeId)?'':'checked'}> ${esc(layer.label)} (${layer.count})</label>`).join('');
   $('#map-layer-list').querySelectorAll<HTMLInputElement>('[data-map-layer]').forEach(el=>el.onchange=()=>{const hidden=hiddenMapLayers.get(output!.nodeId)||new Set();if(el.checked)hidden.delete(el.dataset.mapLayer!);else hidden.add(el.dataset.mapLayer!);hiddenMapLayers.set(output!.nodeId,hidden);renderMap();});
   // THE SAME CHECK AN INPUT GETS, over the table a practitioner actually reads. An output table
   // is the last point before a figure or a count leaves this application, and OSM is known for
@@ -3484,14 +3500,16 @@ function resultsOnScreen(){return $('.work-area').classList.contains('showing-re
  *
  *  Undefined where nothing is connected, where the connected node has no image yet, or where its
  *  georeference does not survive `mapImage` -- a figure without ground rather than a broken one. */
-function groundImageFor(mapNodeId:string|undefined):MapImage|undefined{
+function groundImageFor(mapNodeId:string|undefined):(MapImage&{sourceNodeId:string})|undefined{
   if(!mapNodeId)return undefined;
   const edge=workflow.edges.find(e=>e.to===mapNodeId&&e.port==='ground');
   if(!edge)return undefined;
   const node=workflow.nodes.find((n):n is WorkflowNode<'map_image_input'>=>
     n.id===edge.from&&n.type==='map_image_input');
   if(!node)return undefined;
-  try{return mapImage(node);}catch{return undefined;}
+  // The node id travels with it: the layer list keys a checkbox by the SOURCE node, the way it
+  // does for every point layer, so hiding one plate does not hide another.
+  try{return {...mapImage(node),sourceNodeId:node.id};}catch{return undefined;}
 }
 
 async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
@@ -3507,7 +3525,10 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
   // a basemap says where this is and a plate says what was there -- so it sits over the tiles
   // and under everything the workflow produced.
   const plate=groundImageFor(node?.id);
-  if(plate){
+  // Unchecked in the layer list means not drawn. The same per-output set the point layers use.
+  const plateHidden=!!plate&&!!result.nodeId
+    &&!!hiddenMapLayers.get(result.nodeId)?.has(plate.sourceNodeId);
+  if(plate&&!plateHidden){
     const markup=mapImageMarkup(plate,frame.project as (c:[number,number])=>[number,number]);
     const background=[...svg.children].find(child=>child.tagName.toLowerCase()==='rect');
     if(markup){
@@ -3686,7 +3707,8 @@ function renderMap(){
       `${networkPreviewCaption(networkCoverage(result.network))} The streets are drawn with the `
       +`points on this map's interactive presentation; this plot shows the points.`;
   // The static plot is what those checkboxes act on: they set display:none on its marks.
-  $('#map-layer-list').hidden=!activeOutput()?.pointLayers?.length;
+  $('#map-layer-list').hidden=!activeOutput()?.pointLayers?.length
+    &&!groundImageFor(activeOutput()?.nodeId);
   if(result?.comparison){svg.style.display='none';const host=document.createElement('div');host.id='comparison-map-host';host.innerHTML=pointComparisonMarkup(result.comparison,esc);$('#map-panel').append(host);return;}
   // INTERACTIVE IS FOR ANY MAP, and until 2026-10-17 it was unreachable without polygons.
   //
@@ -3704,7 +3726,16 @@ function renderMap(){
     const host=document.createElement('div');host.id='catchment-map-host';
     $('#map-panel').insertBefore(host,$('#map-communication-key'));
     svg.style.display='none';$('#map-layer-list').hidden=true;
-    disposeCatchmentMap=mountCatchmentMap(host,result.polygons?{...result,polygons:result.polygons}:result,
+    // THE PLATE TRAVELS WITH THE LAYERS, so the map can give it a checkbox. Read from the node
+    // like the basemap is, because `map_output` is single-mode and the mode that wins drops
+    // every other layer from the value before a renderer sees it -- the defect that took the
+    // study area on 2026-10-20, the facilities on 2026-10-22 and the raster on 2026-10-23.
+    const livePlate=groundImageFor(mapNode?.id);
+    const withPlate=livePlate
+      ?{...result,plate:{data:livePlate.data,bounds:livePlate.bounds,opacity:livePlate.opacity,
+          label:mapImageCredit(livePlate)}}
+      :result;
+    disposeCatchmentMap=mountCatchmentMap(host,withPlate.polygons?{...withPlate,polygons:withPlate.polygons}:withPlate,
       result.contextPoints,esc,mapNode?.params.basemap||'none',
       choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);},
       // The node is the view's identity. Without it every presentation change -- and Mark radius

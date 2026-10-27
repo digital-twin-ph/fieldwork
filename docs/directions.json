@@ -704,6 +704,23 @@
           "found": "Repository archived (isArchived true, still public, pinned commit still HTTP 200), entry parked with the reason rewritten, and the gate's last network call removed. Only 2 of the pack's 5 files are vendored in-tree -- ontology/sea-level.ttl and ontology/shapes/sea-level.ttl, both byte-identical to their pins -- while pack.json, the Manila CSV and extract-projection.py live only in that repository, which is why a sibling clone was the right answer rather than vendoring the rest: the clone verifies all five and a local-only check would have verified two and had to say so."
         }
       ]
+    },
+    {
+      "id": "every-input-carries-its-provenance-and-licence",
+      "stated": "2026-10-27",
+      "statedBy": "the practitioner",
+      "inTheirWords": "All inputs to the workflow should carry their provenance and license data with them",
+      "requiresInCode": "ONE SHAPE ON EVERY SOURCE WIDGET, carried on the node and asserted in its receipt, rather than reconstructed downstream. Measured on 2026-10-27 across every shipped example: study_area, find_health_facilities and point_input each carry a licence in a DIFFERENTLY SHAPED field; table_input carries a file digest and no licence; raster_input and network_input carry neither. Four shapes and three gaps for one question.\n\nTHE GAP IS NOT COSMETIC. map-communication.ts decides whether a figure credits OpenStreetMap by testing `output.polygons?.method?.includes('Dijkstra')` -- so an ODbL attribution obligation is discharged by substring-matching a human-readable method description. Rewording that sentence to 'shortest path' removes the credit from the figure while the figure goes on redistributing OSM-derived geometry. A licence breach produced by a copy-edit, and the strongest argument for the rule.\n\nWhat the shape has to carry: what the data IS, where it came from, when it was retrieved, what terms it is under, and what the terms require of a figure that redistributes it -- attribution text for ODbL and CC-BY, share-alike where it applies, and the explicit statement that none applies where none does, because a blank licence and a public-domain licence are different claims. The figure then reads the obligation from the node instead of inferring it, and the receipt states it where a reader meets the data.",
+      "recordedIn": "src/types.ts, src/map-communication.ts, widgets/releases/*",
+      "workItem": "TODO.md \u2014 one shape across seven source widgets, their receipts and the figure's credits",
+      "status": "open",
+      "lastChecked": "2026-10-27",
+      "checks": [
+        {
+          "date": "2026-10-27",
+          "found": "Stated and measured the same day. Audit above. map_image_input, built hours earlier, already carries source {title,url,licence,note} and is the only one whose shape was designed for this question -- which is why it reads as the model rather than as the exception. Nothing else changed yet."
+        }
+      ]
     }
   ]
 }

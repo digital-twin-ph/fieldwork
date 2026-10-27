@@ -100,6 +100,13 @@ export interface MapLayers {
    *  made one and from the layer's position where they did not. */
   layerSymbols?:Record<string,{colour:string;shape:LayerShape;size?:number}>;
   centers?:{id?:string;name?:string;geometry?:{coordinates:Position}|null}[];
+  /** A georeferenced image drawn beneath everything, and toggled like any other layer.
+   *
+   *  The practitioner, 2026-10-27: *"I meant for the water supply map to be a layer, so checkbox
+   *  can show and hide it."* That is the point of it for a learner -- flipping 1855 on and off
+   *  under a modern result is the comparison, and a backdrop nobody can remove is a picture
+   *  rather than evidence. */
+  plate?:{data:string; bounds:[number,number,number,number]; opacity:number; label:string};
   /** A street graph, drawn as itself. Added 2026-10-20: a Map showing a network could not be made
    *  interactive and could carry no basemap, because the static branch returned before the
    *  interactive one was reached. */
@@ -147,6 +154,15 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // is still no raster on the map"*. It did not appear because a map drew one mode and the
   // network outranked the raster. The same defect took the study area on 2026-10-20 and the
   // facilities on 2026-10-22, each patched one layer at a time; this is the third.
+  // THE PLATE FIRST, so every other layer draws over it, and `bringToBack` for the case where a
+  // later layer is added to the map before this one has painted.
+  if(layers.plate){
+    const [west,south,east,north]=layers.plate.bounds;
+    const plate=L.imageOverlay(layers.plate.data,[[south,west],[north,east]],
+      {opacity:layers.plate.opacity,interactive:false,className:'map-plate-image'});
+    plate.addTo(map);plate.bringToBack();all.addLayer(plate);
+    overlays[layers.plate.label]=plate;
+  }
   if(layers.raster?.metadata){
     const [west,south,east,north]=layers.raster.metadata.bounds;
     const overlay=L.imageOverlay(rasterImage(layers.raster),[[south,west],[north,east]],

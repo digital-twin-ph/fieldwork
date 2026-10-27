@@ -6,7 +6,7 @@ import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
 import {BASEMAP_CHOICES,type BasemapChoice} from './types.js';
-import {layerSymbol,markPath,classifyValues,FIGURE_ROLE} from './presentation.js';
+import {layerSymbol,markPath,markRadius,classifyValues,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
 import {rasterImage} from './raster-image.js';
@@ -101,7 +101,7 @@ export interface MapLayers {
   layerNames?:Record<string,string>;
   /** The symbol each source is drawn with, resolved from the practitioner's choice where they
    *  made one and from the layer's position where they did not. */
-  layerSymbols?:Record<string,{colour:string;shape:LayerShape}>;
+  layerSymbols?:Record<string,{colour:string;shape:LayerShape;size?:number}>;
   centers?:{id?:string;name?:string;geometry?:{coordinates:Position}|null}[];
   /** A street graph, drawn as itself. Added 2026-10-20: a Map showing a network could not be made
    *  interactive and could carry no basemap, because the static branch returned before the
@@ -275,7 +275,10 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const named=layers.layerNames||{};
     let index=0;
     for(const [source,rows] of bySource){
-      const symbol=layers.layerSymbols?.[source]??layerSymbol(index);
+      // Spread into one shape so the fallback does not narrow `size` away: `layerSymbol`
+      // derives a colour and a mark from the layer's position and has no opinion on radius.
+      const symbol:{colour:string;shape:LayerShape;size?:number}=
+        layers.layerSymbols?.[source]??{...layerSymbol(index)};
       const group=L.featureGroup();
       for(const row of rows){
         if(!row.coordinates)continue;
@@ -302,12 +305,30 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         // is a neutral, not a seventh hue: it separates the symbol from the ground without
         // competing with the layer colours. A circle no longer takes the cheaper circleMarker
         // path, because one stroke cannot be both the halo and the hue.
+        // MARK RADIUS, WHICH THIS DREW AT A CONSTANT 5 UNTIL 2026-10-27. The Inspector's slider
+        // stores a size, `resolveLayerSymbol` resolves it, and the static figure has honoured it
+        // all along -- `app.ts` passes the resolved symbols straight onto the result. This
+        // renderer took the shape and the colour off that symbol and hard-coded the radius, so
+        // the control worked on the plot and did nothing on the map.
+        //
+        // It read as "the slider does nothing" only after the view fix landed the day before:
+        // moving the slider used to remount the map and refit the bounds, so the picture visibly
+        // jumped and the jump looked like the mark changing. Keeping the view removed the
+        // side effect that had been standing in for the effect. Reported as exactly that:
+        // *"the mark radius does not reset the canvas zoom anymore but it does not change the
+        // radius."* One bug hid the other, and fixing the first is what exposed it.
+        //
+        // THE ICON BOX IS DERIVED, because a 16x16 box clips anything past radius 5: the halo is
+        // stroked at 3.4 and the symbol at 1.5, so the drawn extent is the radius plus about 2.5.
+        // A fixed box would have silently capped the slider at a third of its range.
+        const r=markRadius(symbol.size);
+        const box=Math.ceil(2*(r+2.5)),centre=box/2;
         L.marker([lat,lon],{title:row.name,icon:L.divIcon({className:'catchment-point-mark',
-          iconSize:[16,16],iconAnchor:[8,8],
-          html:`<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">`
-            +(layers.markHalo===false?'':`<path d="${markPath(symbol.shape,8,8,5)}" fill="none" `
+          iconSize:[box,box],iconAnchor:[centre,centre],
+          html:`<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" aria-hidden="true">`
+            +(layers.markHalo===false?'':`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="none" `
               +`stroke="${MARK_HALO}" stroke-width="3.4" stroke-linejoin="round"/>`)
-            +`<path d="${markPath(symbol.shape,8,8,5)}" fill="${inside?ink:'none'}" `
+            +`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="${inside?ink:'none'}" `
             +`stroke="${ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`})})
           .bindPopup(`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}`
             +`<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`)

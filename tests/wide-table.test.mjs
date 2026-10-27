@@ -9,7 +9,8 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {wideDataTable} from '../build/data-table.js';
+import {wideDataTable,tableReceipt} from '../build/data-table.js';
+import {validateWorkflow} from '../build/core.js';
 
 // data/table-ix-first-seven-weeks.csv, byte for byte.
 const TABLE_IX={
@@ -78,4 +79,73 @@ test('the row ceiling counts melted values, not file rows',()=>{
   assert.throws(()=>wideDataTable({headers:TABLE_IX.headers,rows},
     {keys:['supplier'],valueFields:['houses','deaths','deaths_per_10000_houses'],
       measureKey:'measure',valueField:'count'}),/is 2,100 values/);
+});
+
+// THE READING IS IN THE RECEIPT, from 2026-10-27. Melting is something done to the file the
+// practitioner supplied, and the long result cannot describe it: a receipt citing only the long
+// table would name a shape the file does not contain and say nothing about which columns were
+// taken. The columns are NAMED rather than inferred, so their absence is meaningful too.
+test('a melted import says so in its receipt, and names the columns it took',()=>{
+  const table=read();
+  const {receipt}=tableReceipt(
+    {id:'t1',params:{label:'Snow Table IX',unit:'houses',
+      wide:{keys:['supplier'],valueFields:['houses','deaths'],measureKey:'measure'}}},
+    table,'run1');
+  assert.match(receipt.facts,/fw:readAs "wide"/);
+  assert.match(receipt.facts,/fw:subjectKeyField "supplier"/);
+  assert.match(receipt.facts,/fw:meltedValueField "houses"/);
+  assert.match(receipt.facts,/fw:meltedValueField "deaths"/);
+  assert.match(receipt.facts,/fw:measureKeyField "measure"/);
+  assert.match(receipt.facts,/fw:meltedValueFieldCount "2"\^\^xsd:integer/);
+  // The column the file carries and the analysis did not take is absent, which is the point of
+  // naming them: it is the difference between "not in the file" and "not asked for".
+  assert.ok(!/deaths_per_10000_houses/.test(receipt.facts));
+});
+
+test('a table that was already long says THAT, rather than saying nothing',()=>{
+  const {receipt}=tableReceipt({id:'t2',params:{label:'Long table'}},
+    {kind:'data-table',keys:['sub_district','measure'],valueField:'count',
+      rows:[{key:{sub_district:'Brixton',measure:'deaths'},value:3}],
+      rowCount:1,missingValueCount:0},'run2');
+  assert.match(receipt.facts,/fw:readAs "long"/);
+  // No melt happened, so nothing claims one.
+  assert.ok(!/fw:meltedValueField|fw:subjectKeyField|fw:measureKeyField/.test(receipt.facts));
+});
+
+// THE SELECTION IS CHECKED AGAINST THE TABLE IT CLAIMS TO HAVE PRODUCED. The two descriptions
+// are redundant -- a melt gives keys = [...subject keys, measureKey] -- which is exactly what
+// makes them checkable. A stored `wide` block that disagrees would put columns in a receipt that
+// the table was not built from, which is the failure mode of every unverified claim in here.
+const tableNode=(wide)=>({
+  schema:'fieldwork/workflow/1',id:'w',name:'Wide import',
+  nodes:[{id:'t',type:'table_input',x:0,y:0,params:{
+    label:'Snow Table IX',keys:['supplier','measure'],valueField:'count',
+    data:read(),...(wide?{wide}:{})}}],
+  edges:[]});
+
+test('a wide selection agreeing with the table it produced is accepted',()=>{
+  assert.ok(validateWorkflow(tableNode(
+    {keys:['supplier'],valueFields:['houses','deaths'],measureKey:'measure'})));
+});
+
+test('a wide selection that does not describe the table is refused',()=>{
+  // The melt would have given keys ['supplier','measure'], not ['supplier','variable'].
+  assert.throws(()=>validateWorkflow(tableNode(
+    {keys:['supplier'],valueFields:['houses','deaths'],measureKey:'variable'})),
+    /must together be the table's key columns/);
+  // A subject key the table does not carry.
+  assert.throws(()=>validateWorkflow(tableNode(
+    {keys:['district'],valueFields:['houses'],measureKey:'measure'})),
+    /must together be the table's key columns/);
+  // Empty selections are refused by name rather than producing an empty receipt.
+  assert.throws(()=>validateWorkflow(tableNode(
+    {keys:[],valueFields:['houses'],measureKey:'measure'})),/subject key columns/);
+  assert.throws(()=>validateWorkflow(tableNode(
+    {keys:['supplier'],valueFields:[],measureKey:'measure'})),/value columns/);
+  assert.throws(()=>validateWorkflow(tableNode(
+    {keys:['supplier'],valueFields:['houses','houses'],measureKey:'measure'})),/distinct/);
+});
+
+test('a table read as long needs no wide block, and is still valid', ()=>{
+  assert.ok(validateWorkflow(tableNode(undefined)));
 });

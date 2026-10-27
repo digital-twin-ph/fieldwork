@@ -562,6 +562,24 @@ export function validateWorkflow(raw:unknown):Workflow {
         if(!Array.isArray(n.params.keys)||!n.params.keys.length)throw new Error('Tabular input needs at least one key column.');
         if(typeof n.params.valueField!=='string'||!n.params.valueField)throw new Error('Tabular input needs a value column.');
         if(t.keys.join('\u0000')!==n.params.keys.join('\u0000')||t.valueField!==n.params.valueField)throw new Error('The saved table does not match its declared key and value columns.');
+        // THE WIDE SELECTION, checked against the table it claims to have produced. A wide file
+        // melts to keys = [...subject keys, measureKey], so the two descriptions are redundant
+        // and therefore checkable: a `wide` block that disagrees with `keys` is a receipt that
+        // would cite columns this table was not built from.
+        const wide=n.params.wide;
+        if(wide!==undefined){
+          if(!Array.isArray(wide.keys)||!wide.keys.length||!wide.keys.every(k=>typeof k==='string'&&k))
+            throw new Error('A wide table input needs the subject key columns it was read with.');
+          if(!Array.isArray(wide.valueFields)||!wide.valueFields.length||!wide.valueFields.every(k=>typeof k==='string'&&k))
+            throw new Error('A wide table input needs the value columns it was read with.');
+          if(typeof wide.measureKey!=='string'||!wide.measureKey)
+            throw new Error('A wide table input needs the name of the column holding the variable names.');
+          if([...wide.keys,wide.measureKey].join('\u0000')!==n.params.keys.join('\u0000'))
+            throw new Error('The wide selection does not describe this table: its subject keys and '
+              +'measure column must together be the table\'s key columns.');
+          if(new Set(wide.valueFields).size!==wide.valueFields.length)
+            throw new Error('The value columns a wide table was read with must be distinct.');
+        }
       }
       if(t.rows.length>MAX_TABLE_ROWS)throw new Error(`Tabular input supports at most ${MAX_TABLE_ROWS.toLocaleString()} rows.`);
     }

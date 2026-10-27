@@ -2786,8 +2786,14 @@ function renderInspector(){
     const baseline=JSON.stringify(workflow),current=getNode(workflow,n.id,'table_input').params;
     openTableEditor(result=>{
       if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Import tabular data.');
-      return change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;node.params.unit=result.unit;node.params.source=result.source;},{requirePersistence:true});
-    },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit}:undefined);
+      return change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;node.params.unit=result.unit;node.params.source=result.source;
+        // The shape the FILE was in, so the editor reopens in it and the receipt can cite the
+        // columns taken. Deleted rather than set undefined when a table is re-read as long: a
+        // stored `wide` block that no longer describes the table is a claim, and core.ts refuses
+        // one that disagrees with the keys.
+        if(result.wide)node.params.wide=result.wide;else delete node.params.wide;},{requirePersistence:true});
+    },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,
+      ...(current.wide?{wide:current.wide}:{})}:undefined);
   });
   optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
   // The year chooses which link the button carries, so the panel redraws to carry it.

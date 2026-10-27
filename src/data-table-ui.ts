@@ -1,20 +1,55 @@
 import type {Escape} from './types.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
-import {dataTable,keyDomains,MAX_TABLE_ROWS} from './data-table.js';
+import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS} from './data-table.js';
 import {parseCSV} from './input-data.js';
 import {contentHash} from './project-files.js';
 
 const FILE_BYTES=5_000_000;
-export interface TableImport {data:DataTable; source:DataTableSource; keys:string[]; valueField:string; unit?:string}
+export interface WideChoice {keys:string[]; valueFields:string[]; measureKey:string}
+export interface TableImport {data:DataTable; source:DataTableSource; keys:string[]; valueField:string;
+  unit?:string; wide?:WideChoice}
+/** What the editor reopens with. `wide` present means the file was read as wide. */
+export interface TableReopen extends TableSelection {wide?:WideChoice}
 
-/** Reads a long-format CSV. The author names the key columns and the value column; nothing is
- *  inferred, and a duplicate key tuple is refused rather than silently collapsed. */
-export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:TableSelection):void{
+/** Reads a CSV in either shape, and ASSUMES WIDE on a fresh import.
+ *
+ *  The practitioner, 2026-10-26: *"We have to assume wide in as default, that's the epidemiology
+ *  mindset."* One row per subject and a column per variable is what a case line list, a
+ *  surveillance export and a published table all look like. `wideDataTable` was written that day
+ *  and wired to nothing -- it had a full test file and no call site in the application, so the
+ *  default was a decision recorded in code that no practitioner could reach. Reported on
+ *  2026-10-27 as a question: *"I also thought we automatically convert tables to wide format?"*
+ *
+ *  Both readers stay, because they give OPPOSITE diagnoses of the same file. A repeated key tuple
+ *  is the long shape to one and a duplicate subject record to the other, and a flag over one
+ *  reader would have to pick a side. So the shape is chosen and the choice is recorded.
+ *
+ *  AN EXISTING TABLE REOPENS IN THE SHAPE IT WAS READ WITH, never in the new default: a saved
+ *  workflow whose table came in long predates this control, and re-reading it as wide would
+ *  change the table under a workflow built on it.
+ *
+ *  Either way the stored table is LONG. Nothing downstream learns a second shape; this is a door,
+ *  not a second representation. */
+export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:TableReopen):void{
   const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.setAttribute('aria-labelledby','table-title');
-  dialog.innerHTML='<h2 id="table-title">Import tabular data</h2><p>Select a <strong>long-format</strong> CSV: one row per observation, with the columns that identify a row chosen as keys and one column holding the value. A table has no geometry; latitude and longitude columns, if present, are ordinary columns.</p>'
+  dialog.innerHTML='<h2 id="table-title">Import tabular data</h2>'
+    +'<p>A <strong>wide</strong> CSV is assumed: one row per subject and a column per variable, which is what a line list, a surveillance export and a published table look like. Name the columns that identify the subject and the columns holding values; the rest of the application reads one long table, and this converts. A table has no geometry; latitude and longitude columns, if present, are ordinary columns.</p>'
     +'<label class="field-label" for="table-file">CSV file (up to 5 MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv">'
-    +'<fieldset id="table-keys" hidden><legend>Key columns</legend><p class="muted">Together these identify a row. Every key tuple must be unique.</p></fieldset>'
-    +'<label class="field-label" for="table-value">Value column</label><select id="table-value" disabled></select>'
+    +'<label class="field-label" for="table-shape">Shape of the file</label><select id="table-shape">'
+    +'<option value="wide">Wide \u00b7 one row per subject, a column per variable</option>'
+    +'<option value="long">Long \u00b7 one row per observation, one value column</option></select>'
+    // THE ALERT, not a silent switch. The practitioner, 2026-10-27: "Table input should alert the
+    // user if table is in long format and confirm to convert." Detected rather than guessed, and
+    // acted on only by the button: reading a file in the other shape changes what every
+    // downstream step sees, and this application does not make that choice for anybody.
+    +'<div id="table-shape-alert" class="notice" hidden role="alert"><p id="table-shape-says"></p>'
+    +'<button id="table-shape-accept" class="button" type="button"></button></div>'
+    +'<fieldset id="table-keys" hidden><legend>Key columns</legend><p class="muted" id="table-keys-says"></p></fieldset>'
+    +'<fieldset id="table-values" hidden><legend>Value columns</legend><p class="muted">The variables to take. Named rather than inferred, so a column the file gains later is absent from this analysis by decision rather than by accident.</p></fieldset>'
+    +'<div id="table-long-value"><label class="field-label" for="table-value">Value column</label><select id="table-value" disabled></select></div>'
+    +'<div id="table-wide-names" hidden><label class="field-label" for="table-measure-key">Name for the column holding the variable names</label><input id="table-measure-key" maxlength="40" value="measure">'
+    +'<label class="field-label" for="table-value-name">Name for the column holding their values</label><input id="table-value-name" maxlength="40" value="value">'
+    +'<p class="muted">Both are your words, because every downstream step names them: a Rate takes its measure key, and a derived value names two of its values.</p></div>'
     +'<label class="field-label" for="table-unit">Unit of the value (entered by you)</label><input id="table-unit" maxlength="40" placeholder="for example metre; leave empty if unstated">'
     +'<p class="muted">A unit is recorded as you state it and is never inferred from the file. An empty value cell is kept as unknown and counted, never read as zero.</p>'
     +'<p id="table-status" role="status"></p><details><summary>Table shape and provenance</summary><pre id="table-preview"></pre></details>'
@@ -22,30 +57,121 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   document.body.append(dialog);
   const q=<T extends HTMLElement>(id:string)=>dialog.querySelector<T>(id)!;
   const fileInput=q<HTMLInputElement>('#table-file'),keysBox=q<HTMLFieldSetElement>('#table-keys'),valueSelect=q<HTMLSelectElement>('#table-value');
+  const shapeSelect=q<HTMLSelectElement>('#table-shape'),valuesBox=q<HTMLFieldSetElement>('#table-values');
+  const longValue=q<HTMLElement>('#table-long-value'),wideNames=q<HTMLElement>('#table-wide-names');
+  const measureKeyInput=q<HTMLInputElement>('#table-measure-key'),valueNameInput=q<HTMLInputElement>('#table-value-name');
+  const keysSays=q<HTMLElement>('#table-keys-says');
+  const shapeAlert=q<HTMLElement>('#table-shape-alert'),shapeSays=q<HTMLElement>('#table-shape-says');
+  const shapeAccept=q<HTMLButtonElement>('#table-shape-accept');
   const unitInput=q<HTMLInputElement>('#table-unit'),status=q<HTMLElement>('#table-status'),preview=q<HTMLElement>('#table-preview');
   const error=q<HTMLElement>('#table-error'),save=q<HTMLButtonElement>('#table-save'),cancel=q<HTMLButtonElement>('#table-cancel');
   if(existing?.unit)unitInput.value=existing.unit;
+  // AN EXISTING TABLE REOPENS IN ITS OWN SHAPE. A workflow saved before this control came in has
+  // no `wide` block and was read long; re-reading it as wide would change the table under
+  // whatever was built on it.
+  shapeSelect.value=existing?(existing.wide?'wide':'long'):'wide';
+  if(existing?.wide){measureKeyInput.value=existing.wide.measureKey;valueNameInput.value=existing.valueField;}
   let file:File|undefined,text='',parsed:ReturnType<typeof parseCSV>|undefined,result:TableImport|undefined,busy=false,serial=0;
+  const shape=()=>shapeSelect.value==='wide'?'wide':'long';
   const fail=(e:unknown)=>{error.textContent=e instanceof Error?e.message:String(e);error.hidden=false;save.disabled=true;result=undefined;error.scrollIntoView({block:'nearest'});};
   const chosenKeys=()=>[...keysBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]:checked')].map(box=>box.value);
+  const chosenValues=()=>[...valuesBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]:checked')].map(box=>box.value);
+
+  /** WHETHER THE FILE IS ACTUALLY LONG, decided from the file and the chosen subject keys rather
+   *  than from a failed read.
+   *
+   *  A wide file has one row per subject, so the subject keys identify a row. A long file repeats
+   *  them -- one row per subject per measure -- and that repetition is the whole signature. Asked
+   *  here instead of catching `wideDataTable`'s refusal, because matching an error's prose is a
+   *  test of the wording and this is a test of the data.
+   *
+   *  Reported rather than acted on: the button converts, and only the button. */
+  const longSignature=(keys:string[]):{repeats:number;example:string}|undefined=>{
+    if(!parsed||!keys.length)return undefined;
+    const index=(name:string)=>parsed!.headers.map(h=>h.trim()).indexOf(name);
+    const at=keys.map(index);
+    if(at.some(i=>i<0))return undefined;
+    const seen=new Map<string,number>();
+    let repeats=0,example='';
+    parsed.rows.forEach((row,position)=>{
+      const signature=at.map(i=>(row[i]??'').trim()).join('\u0000');
+      const earlier=seen.get(signature);
+      if(earlier===undefined){seen.set(signature,position);return;}
+      repeats++;
+      if(!example)example=keys.map((name,i)=>`${name}=${(row[at[i]]??'').trim()}`).join(', ');
+    });
+    return repeats?{repeats,example}:undefined;
+  };
+
   function build(){
-    error.hidden=true;result=undefined;save.disabled=true;
+    error.hidden=true;result=undefined;save.disabled=true;shapeAlert.hidden=true;
     if(!file||!parsed)return;
+    const wide=shape()==='wide';
+    const unit=unitInput.value.trim();
     try{
-      const keys=chosenKeys(),valueField=valueSelect.value,unit=unitInput.value.trim();
-      const table=dataTable(parsed,{keys,valueField,...(unit?{unit}:{})});
-      result={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},keys,valueField,...(unit?{unit}:{})};
-      preview.textContent=JSON.stringify({sourceFile:file.name,keys,valueField,unit:unit||'(unstated)',
-        rows:table.rowCount,missingValues:table.missingValueCount,distinctValuesPerKey:
-        Object.fromEntries(Object.entries(keyDomains(table)).map(([k,v])=>[k,v.length])),
-        firstRows:table.rows.slice(0,3)},null,2);
-      status.textContent=`${table.rowCount} rows, ${Object.keys(table.rows[0]?.key??{}).length} key columns, ${table.missingValueCount} values absent.`;
+      const keys=chosenKeys();
+      let table:DataTable,imported:TableImport;
+      if(wide){
+        const valueFields=chosenValues();
+        const measureKey=measureKeyInput.value.trim()||'measure';
+        const valueField=valueNameInput.value.trim()||'value';
+        // THE ALERT. Raised before the read, so the practitioner meets the diagnosis rather than
+        // `wideDataTable`'s refusal, and with the one action that resolves it.
+        const repeated=longSignature(keys);
+        if(repeated){
+          shapeSays.textContent=`This file looks like it is already in LONG format. `
+            +`${repeated.repeats.toLocaleString()} row${repeated.repeats===1?'':'s'} repeat a subject that `
+            +`${keys.length===1?'the key column':'the key columns'} should identify once -- for example `
+            +`${repeated.example}. A wide file has one row per subject, so reading this as wide would `
+            +`refuse it. Nothing has been changed.`;
+          shapeAccept.textContent='Read it as long instead';
+          shapeAlert.hidden=false;
+          status.textContent='This table has not been imported.';
+          save.disabled=true;result=undefined;
+          return;
+        }
+        table=wideDataTable(parsed,{keys,valueFields,measureKey,valueField,...(unit?{unit}:{})});
+        imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
+          keys:table.keys,valueField,...(unit?{unit}:{}),wide:{keys,valueFields,measureKey}};
+        preview.textContent=JSON.stringify({sourceFile:file.name,readAs:'wide',subjectKeys:keys,
+          valueColumns:valueFields,measureKey,valueField,unit:unit||'(unstated)',
+          subjects:parsed.rows.length,rows:table.rowCount,missingValues:table.missingValueCount,
+          firstRows:table.rows.slice(0,3)},null,2);
+        status.textContent=`${parsed.rows.length} subjects \u00d7 ${valueFields.length} value `
+          +`column${valueFields.length===1?'':'s'} = ${table.rowCount} rows, `
+          +`${table.missingValueCount} values absent.`;
+      }else{
+        const valueField=valueSelect.value;
+        table=dataTable(parsed,{keys,valueField,...(unit?{unit}:{})});
+        imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
+          keys,valueField,...(unit?{unit}:{})};
+        preview.textContent=JSON.stringify({sourceFile:file.name,readAs:'long',keys,valueField,
+          unit:unit||'(unstated)',rows:table.rowCount,missingValues:table.missingValueCount,
+          distinctValuesPerKey:Object.fromEntries(Object.entries(keyDomains(table)).map(([k,v])=>[k,v.length])),
+          firstRows:table.rows.slice(0,3)},null,2);
+        status.textContent=`${table.rowCount} rows, ${Object.keys(table.rows[0]?.key??{}).length} key columns, ${table.missingValueCount} values absent.`;
+      }
+      result=imported;
       save.disabled=false;
     }catch(e){status.textContent='This table has not been imported.';fail(e);}
   }
+
+  /** Which controls belong to the chosen shape, and what the key columns are called in it. */
+  function applyShape(){
+    const wide=shape()==='wide';
+    valuesBox.hidden=!wide;wideNames.hidden=!wide;longValue.hidden=wide;
+    keysSays.textContent=wide
+      ?'The columns that identify the subject of a row. A wide file has one row per subject, so together these must be unique.'
+      :'Together these identify a row. Every key tuple must be unique.';
+    build();
+  }
+  shapeSelect.onchange=applyShape;
+  shapeAccept.onclick=()=>{shapeSelect.value='long';applyShape();};
   fileInput.onchange=async()=>{
     const request=++serial;file=fileInput.files?.[0];parsed=undefined;keysBox.hidden=true;valueSelect.disabled=true;
-    keysBox.innerHTML='<legend>Key columns</legend><p class="muted">Together these identify a row. Every key tuple must be unique.</p>';
+    keysBox.innerHTML='<legend>Key columns</legend><p class="muted" id="table-keys-says"></p>';
+    valuesBox.innerHTML='<legend>Value columns</legend><p class="muted">The variables to take. Named rather than inferred, so a column the file gains later is absent from this analysis by decision rather than by accident.</p>';
+    valuesBox.hidden=true;shapeAlert.hidden=true;
     valueSelect.innerHTML='';preview.textContent='';result=undefined;save.disabled=true;error.hidden=true;
     if(!file){status.textContent='';return;}
     if(file.size>FILE_BYTES){status.textContent='';fail(new Error('Select a file of at most 5 MB.'));return;}
@@ -64,11 +190,34 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
         const chosen=existing?header.trim()===existing.valueField:i===(guessValue<0?parsed!.headers.length-1:guessValue);
         return `<option value="${escaped}" ${chosen?'selected':''}>${escaped}</option>`;}).join('');
       valueSelect.disabled=false;
-      for(const box of keysBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))box.onchange=build;
-      build();
+      // THE VALUE COLUMNS, for the wide reader. Preselected as everything that is not a chosen
+      // subject key, because that is the common case and the practitioner can take fewer -- but
+      // named in the markup either way, so the selection is a decision and not a leftover.
+      valuesBox.innerHTML+=parsed.headers.map(header=>{
+        const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
+        const held=existing?.wide?.valueFields;
+        const preselect=held?held.includes(header.trim()):!keysBox.querySelector<HTMLInputElement>(`input[value="${CSS.escape(escaped)}"]`)?.checked;
+        return `<label><input type="checkbox" value="${escaped}" ${preselect?'checked':''}> ${escaped}</label>`;}).join('');
+      // A column cannot be both the subject and a variable of it, so taking one as a key drops it
+      // from the values offered -- and the other way round. Enforced in `wideDataTable` as a
+      // refusal; reflected here so the refusal is rarely met.
+      const syncValues=()=>{
+        const keys=new Set(chosenKeys());
+        for(const box of valuesBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]')){
+          const clash=keys.has(box.value);
+          box.disabled=clash;if(clash)box.checked=false;
+          box.parentElement?.classList.toggle('muted',clash);
+        }
+      };
+      for(const box of keysBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))
+        box.onchange=()=>{syncValues();build();};
+      for(const box of valuesBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))box.onchange=build;
+      syncValues();
+      applyShape();
     }catch(e){if(request===serial){status.textContent='The file could not be read.';fail(e);}}
   };
   valueSelect.onchange=build;unitInput.onchange=build;
+  measureKeyInput.onchange=build;valueNameInput.onchange=build;
   cancel.onclick=()=>dialog.close();dialog.oncancel=e=>{if(busy)e.preventDefault();};
   dialog.onclose=()=>{serial++;file=undefined;result=undefined;dialog.remove();};
   save.onclick=async()=>{

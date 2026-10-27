@@ -149,7 +149,21 @@ export interface ParamsByType {
      *  derivation in the middle of the graph. The constraint then lives where the data
      *  enters, which is where it can be acted on -- a practitioner who meets it at import
      *  can fix the file, one who meets it three steps downstream cannot. */
-    distinctValuesFor?:string[]};
+    distinctValuesFor?:string[];
+    /** THE SELECTION A WIDE FILE WAS READ WITH, absent on a table read as long.
+     *
+     *  The stored table is long either way -- `keys` and `valueField` above describe it, and the
+     *  rest of the application reads one shape. What this records is the shape the FILE was in
+     *  and the columns taken from it, which the long fields cannot reconstruct: `keys` holds the
+     *  subject keys plus `measureKey`, and the value columns have become values of that key, so
+     *  reopening the editor without this would offer a melted table's columns against the
+     *  original file's headers and preselect nothing.
+     *
+     *  Also what the receipt cites. A run that melted four columns into a measure key did
+     *  something to the file it was given, and a reader of the receipt is entitled to know
+     *  which columns were taken -- the more so because they are NAMED rather than inferred, so
+     *  a column the file gained later is absent from the analysis by decision. */
+    wide?:{keys:string[];valueFields:string[];measureKey:string}};
   rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:import('./rate-ratio.js').IntervalMethod};
   rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   derive_value:{label:string;keyColumn:string;left:string;operator:import('./derive-value.js').Operator;right:string;name:string};

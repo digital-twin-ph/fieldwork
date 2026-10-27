@@ -11,7 +11,8 @@
   "initial",
   "major",
   "minor",
-  "patch"
+  "patch",
+  "unchanged"
  ],
  "widgets": {
   "access": {
@@ -875,12 +876,24 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.1.0",
-   "released": "2026-10-08",
+   "version": "0.2.0",
+   "released": "2026-10-27",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Long-format tabular import with declared key and value columns, an author-stated unit and rejection of duplicate key tuples. Closes the host gap that blocked the sea-level pack; see docs/experiments/48-tabular-input.md."
+     "kind": "added",
+     "description": "Reads a WIDE file, and assumes wide on a fresh import. One row per subject and a column per variable is what a line list, a surveillance export and a published table look like, and until now every such file had to be melted outside the application -- including the ones its own worked examples ship. The practitioner's instruction, 2026-10-26: \"We have to assume wide in as default, that's the epidemiology mindset.\" The reader for it was written the same day and wired to nothing, which is the defect this release closes rather than the capability it adds."
+    },
+    {
+     "kind": "added",
+     "description": "Detects a file that is already long and REFUSES TO CONVERT IT SILENTLY. The subject keys of a wide file identify a row; a long file repeats them, which is the whole signature. Detected from the data rather than by catching the reader's refusal, reported with the number of repeated rows and an example, and acted on only by a button that says what it will do. Asked for on 2026-10-27: \"Table input should alert the user if table is in long format and confirm to convert.\""
+    },
+    {
+     "kind": "added",
+     "description": "The receipt states the shape the file was read in -- fw:readAs, asserted for long as well as wide -- and for a melt names the subject keys, the measure key and every column taken. The columns are named rather than inferred from what is left over, so a column absent from the receipt was not asked for rather than not present."
+    },
+    {
+     "kind": "unchanged",
+     "description": "The stored table is long in both shapes, so nothing downstream learns a second representation. Both readers are kept because they give opposite diagnoses of the same file: a repeated key tuple is the long shape to one and a duplicate subject record to the other. A table saved before this release has no wide selection and reopens as long, because re-reading it as wide would change the table under a workflow already built on it."
     }
    ],
    "breaking": false,

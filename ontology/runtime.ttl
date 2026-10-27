@@ -98,6 +98,22 @@ fw:networkVertexId a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:snapDistance a owl:ObjectProperty; rdfs:range qudt:QuantityValue.
 fw:boundaryPolicy a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:valueField a owl:DatatypeProperty; rdfs:range xsd:string.
+
+# THE SHAPE A TABULAR FILE WAS READ IN, asserted on the reading rather than on the table.
+# A wide file is melted at the door -- one row per subject becomes one row per subject per
+# variable -- so the long table a run computes over is not the shape the practitioner supplied.
+# The distinction is about the ACTIVITY, which is why these hang off fw:TabularInput and not
+# off fw:DataTable: the table is long in both cases and only the reading differs.
+fw:readAs a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "Either \"wide\" or \"long\": the shape the source file was read in. Asserted for both, because a file that was already long is as much a fact about the reading as a melt is.".
+fw:subjectKeyField a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "A column of a wide file identifying the subject of a row. One row per subject, so these together identify a row before the melt.".
+fw:meltedValueField a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "A column of a wide file taken as a variable and melted into the measure key. NAMED rather than inferred from what is left over, so a column the file gains later is absent from the analysis by decision; its absence here is therefore meaningful.".
+fw:measureKeyField a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The key column of the resulting long table that holds the melted columns' names.".
+fw:meltedValueFieldCount a owl:DatatypeProperty; rdfs:range xsd:integer.
+
 fw:matchedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:outsideRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:multipleMembershipCount a owl:DatatypeProperty; rdfs:range xsd:integer.

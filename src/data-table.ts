@@ -166,7 +166,8 @@ export function distinctValues(table:DataTable,columns:readonly string[]):Record
   return out;
 }
 
-export function tableReceipt(node:{id:string;params:{label:string;unit?:string;distinctValuesFor?:string[]}},table:DataTable,runId:string){
+export function tableReceipt(node:{id:string;params:{label:string;unit?:string;distinctValuesFor?:string[];
+  wide?:{keys:string[];valueFields:string[];measureKey:string}}},table:DataTable,runId:string){
   const entity=`<urn:fieldwork:run:${runId}:table:${node.id}>`,activity=`<urn:fieldwork:run:${runId}:tableinput:${node.id}>`;
   const quote=(value:string)=>JSON.stringify(value);
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcat: <http://www.w3.org/ns/dcat#>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
@@ -176,7 +177,23 @@ export function tableReceipt(node:{id:string;params:{label:string;unit?:string;d
     +table.keys.map(name=>`fw:keyField ${quote(name)}`).join('; ')+'; '
     +`fw:valueField ${quote(table.valueField)}; fw:valueUnitStatus ${quote(table.unit?'stated':'unstated')}`
     +(table.unit?`; fw:valueUnit ${quote(table.unit)}`:'')
-    +`; fw:tableRowCount "${table.rowCount}"^^xsd:integer; fw:tableMissingValueCount "${table.missingValueCount}"^^xsd:integer.\n`;
+    +`; fw:tableRowCount "${table.rowCount}"^^xsd:integer; fw:tableMissingValueCount "${table.missingValueCount}"^^xsd:integer.\n`
+    // THE SHAPE THE FILE WAS IN, and the columns taken from it.
+    //
+    // A wide file is MELTED on the way in, which is something done to the data the practitioner
+    // supplied: one row per subject becomes one row per subject per variable, and the variables
+    // are NAMED rather than taken as whatever was left over. A receipt that recorded only the
+    // long result would describe a table the file does not contain and say nothing about the
+    // columns that were and were not taken. `fw:readAs` is asserted either way, because "this
+    // file was already long" is as much a fact about the reading as the melt is.
+    +`${activity} fw:readAs ${quote(node.params.wide?'wide':'long')}`
+    +(node.params.wide
+      ?'; '+node.params.wide.keys.map(name=>`fw:subjectKeyField ${quote(name)}`).join('; ')
+        +'; '+node.params.wide.valueFields.map(name=>`fw:meltedValueField ${quote(name)}`).join('; ')
+        +`; fw:measureKeyField ${quote(node.params.wide.measureKey)}`
+        +`; fw:meltedValueFieldCount "${node.params.wide.valueFields.length}"^^xsd:integer`
+      :'')
+    +`.\n`;
   const declared=node.params.distinctValuesFor??[];
   const distinct=declared.length?distinctValues(table,declared):undefined;
   const distinctFacts=distinct

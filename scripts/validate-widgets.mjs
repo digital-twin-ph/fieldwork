@@ -176,7 +176,10 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
           check(types.includes(needed),`map_output must offer a ${needed} port whatever inputMode says`);
       }
     }
-    if(['table_output','chart_output'].includes(entry.nodeType)){
+    // chart_output still has modes: a chart of a table has to be told which key varies and
+    // whether to aggregate, which is a design decision rather than a port. table_output left
+    // this pair on 2026-10-27 for the same reason map_output did.
+    if(entry.nodeType==='chart_output'){
       check(current.ports.polygonInput?.value==='polygons','Missing polygon input mode');
       if(nodeInputs)check(JSON.stringify(nodeInputs({type:entry.nodeType,params:{inputMode:'polygons'}}))===JSON.stringify([['polygons','polygons']]),'Polygon port contract drift');
     }
@@ -185,9 +188,18 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
     // ACROSS sources, so its floor is two layers rather than one.
     const dynamic=['map_output','table_output','deduplicate_points'].includes(entry.nodeType);
     check(dynamic===Boolean(current.ports.dynamicInputs),'Dynamic port contract drift');
+    // The same shape as map_output above, and for the same reason. These checks REQUIRED the
+    // mode model until 2026-10-27 -- "Missing reasoning input mode" -- which is how a model the
+    // project ruled against on 2026-10-14 stayed enforced by its own gate for a second widget
+    // twelve days after it was removed from the first.
     if(entry.nodeType==='table_output'){
-      check(current.ports.reasoningInput?.parameter==='inputMode'&&current.ports.reasoningInput.value==='decisions','Missing reasoning input mode');
-      if(nodeInputs)check(JSON.stringify(nodeInputs({type:entry.nodeType,params:{inputMode:'decisions'}}))===JSON.stringify([['decisions','decisions']]),'Reasoning port contract drift');
+      for(const stale of ['polygonInput','reasoningInput','tableInput'])
+        check(!current.ports[stale],`table_output still declares ${stale}: a table has ports, not modes`);
+      if(nodeInputs)for(const inputMode of ['table','polygons','decisions','spatial',undefined]){
+        const types=nodeInputs({type:'table_output',params:{inputMode,pointInputCount:1}}).map(([,t])=>t);
+        for(const needed of ['points','coverage-check','table','polygons','decisions'])
+          check(types.includes(needed),`table_output must offer a ${needed} port whatever inputMode says`);
+      }
     }
     if(dynamic){
       const d=current.ports.dynamicInputs;

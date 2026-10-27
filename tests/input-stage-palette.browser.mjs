@@ -16,15 +16,23 @@ test('a canvas with no input offers the input stage, and everything after one is
   await page.goto('/?example=blank');
 
   const entries=page.locator('#node-library [data-add]');
-  await expect(entries).toHaveCount(4);
-  // The input stage is seven by contract; `places` and `centers` are retired from the palette,
+  await expect(entries).toHaveCount(5);
+  // The input stage is eight by contract; `places` and `centers` are retired from the palette,
   // and `alert` joined them on 2026-10-25 -- a declaration wearing a node type, whose condition
-  // is now stated on the node that applies the ruleset asking for it. Four are offered.
-  for(const name of ['Study area','Point data','Tabular data','Street network'])
+  // is now stated on the node that applies the ruleset asking for it. Five are offered.
+  //
+  // It was four until `map_image_input` joined the input stage on 2026-10-27. This count was left
+  // at four by that change and the test failed from then until the plate was made addable: a
+  // DRAFT plate carries `[0,0,0,0]` corners, which `validateWorkflow` was refusing as crossed, so
+  // the widget was offered on the palette and could not be placed from it.
+  for(const name of ['Study area','Point data','Tabular data','Street network',
+    'Georeferenced map image'])
     await expect(page.locator('#node-library [data-add]').filter({hasText:name})).toHaveCount(1);
-  // Nothing that needs something is offered yet.
-  for(const name of ['Map','Buffer','Reproject'])
-    await expect(page.locator('#node-library [data-add]').filter({hasText:name})).toHaveCount(0);
+  // Nothing that needs something is offered yet. Asserted by NODE TYPE rather than by title
+  // text: `hasText:'Map'` also matched "Georeferenced map image" once a plate joined the input
+  // stage, so a title that merely contains another widget's name could fail this on its own.
+  for(const type of ['map_output','buffer_area','reproject'])
+    await expect(page.locator(`#node-library [data-add="${type}"]`)).toHaveCount(0);
 
   // Place one input and the palette opens. The gate is "start with an input", not a running
   // filter: after that, judging what is sensible is the practitioner's.

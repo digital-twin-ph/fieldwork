@@ -5,6 +5,7 @@
 // is what stops them rotting, because a link to a renamed notebook fails in the practitioner's
 // browser and nowhere else -- the application has no way to know the lab moved.
 import {readFileSync,existsSync,readdirSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 
@@ -33,6 +34,53 @@ if(!existsSync(lab)){
 }
 
 const present=new Set(readdirSync(lab).filter(f=>f.endsWith('.ipynb')));
+
+// AND THE SAME QUESTION ASKED OF THE PIN, which is what a clean runner answers.
+//
+// This validator reads the CLONE beside this repository. CI does not: pages.yml checks the lab
+// out at `jq -r .lab.commit widgets/parity.json`, so what it verifies is the pin. The two
+// disagree the moment a check lands in the lab and the pin is not advanced -- and then this
+// passes on the machine the work was done on and fails on the runner, which is the exact shape
+// the dive-deeper checkout itself was added to fix on 2026-10-20.
+//
+// It happened again, unnoticed, because `verify` runs beside `deploy` rather than in front of it:
+// the pin sat at 8d8b030 with 24 notebooks while main reached 29, so every push since check 27
+// landed deployed with a red verify naming notebooks that exist on main and not at the pin.
+// Found 2026-10-27 by reading a CI failure on a commit this machine's gate had passed.
+//
+// Local and offline: `git cat-file -e <commit>:<path>` asks the object database, not the network.
+const labRoot=join(root,'../validation-lab');
+const pinned=parity.lab?.commit;
+const atPin=(path)=>{
+  try{execFileSync('git',['-C',labRoot,'cat-file','-e',`${pinned}:${path}`],{stdio:'ignore'});return true;}
+  catch{return false;}
+};
+let pinChecked=false;
+if(pinned){
+  let known=true;
+  try{execFileSync('git',['-C',labRoot,'cat-file','-e',`${pinned}^{commit}`],{stdio:'ignore'});}
+  catch{known=false;}
+  if(!known)console.log(`  unchecked — the lab pin ${pinned.slice(0,7)} is not in the clone beside this `
+    +'repository, so what CI will check out could not be read. Fetch the lab.');
+  else{
+    pinChecked=true;
+    for(const entry of entries)
+      if(entry.notebook&&!atPin(`content/${entry.notebook}`))
+        problems.push(`${entry.widget.split(':').pop()}: names ${entry.notebook}, which is not in the lab `
+          +`at the PINNED commit ${pinned.slice(0,7)}. It may well be on the lab's main branch and on this `
+          +'machine; CI checks out the pin, so this is the link a practitioner would follow and the one '
+          +'that 404s. Advance widgets/parity.json lab.commit -- push the lab first, then pin.');
+    // Pushed, read from the remote-tracking ref rather than over the network, the way
+    // validate-examples.mjs does it.
+    try{
+      const upstream=execFileSync('git',['-C',labRoot,'rev-parse','--abbrev-ref','--symbolic-full-name','@{u}'],
+        {encoding:'utf8'}).trim();
+      try{execFileSync('git',['-C',labRoot,'merge-base','--is-ancestor',pinned,upstream],{stdio:'ignore'});}
+      catch{problems.push(`the lab pin ${pinned.slice(0,7)} is not an ancestor of ${upstream}, so it has not `
+        +'been pushed. CI will fail to check it out and every link into the lab would 404.');}
+    }catch{console.log('  unchecked — the lab clone has no upstream branch, so nothing says where it publishes.');}
+  }
+}
 let verified=0,withSection=0;
 for(const entry of entries){
   const widget=entry.widget.split(':').pop();

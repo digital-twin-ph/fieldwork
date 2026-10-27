@@ -70,3 +70,24 @@ did not, and every part left without a value, so a figure made from this can say
 - **It will not decide whether the number is worth mapping.** Whether the rate was computed over
   the right denominator, whether the classes are honest, and whether a reader will take area for
   magnitude are questions this widget does not answer.
+
+## How it was checked
+
+Validation Lab check **31**, `31-area-join-vs-pandas.ipynb`, against a pandas left merge. Every
+part takes the value a merge gives it, nulls included, and the counts agree — 33 of 33 parts and
+32 of 32 rows after folding, with Streatham's two parts carrying one value between them.
+
+**What the folding bought, measured.** On the raw strings only 23 of 32 rows match. The nine that
+need folding are all a comma: the table writes `St. George, Camberwell` where the boundary file
+writes `St. George  Camberwell`. A join on raw keys would have drawn a choropleth missing 28% of
+its sub-districts. The check also confirms the folding touched nothing *but* punctuation — it is
+not reimplemented there, because a second copy by the same author is not a second opinion, so what
+is checked is the property it must satisfy.
+
+**And the data cannot supply a negative control**, which is worth knowing when you rely on this.
+Snow's table and these boundaries contain no pair differing by more than punctuation, so nothing
+in the example tests a name that *ought* not to match — 32 of 32 is also what a rule that matched
+too readily would score. The check constructs one: a part renamed to `Camberwell Green`, which
+this join reports unmatched. Jaro-Winkler to `Camberwell` is 0.925, so a similarity-based linkage
+at the usual 0.90 threshold would have accepted it. That figure is what having no threshold here
+is worth.

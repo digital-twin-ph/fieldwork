@@ -7,7 +7,7 @@
 //                   | deduplicate-facilities-001
 //                   | measure-area-001 | mean-center-001
 //                   | reachability-soho-001 | corridor-soho-001
-//                   | relate-snow-001 | group-snow-001
+//                   | relate-snow-001 | group-snow-001 | area-join-snow-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -30,6 +30,8 @@ import {aggregateHex} from '../build/geoprivacy.js';
 import {caseSeriesFromTable} from '../build/case-series.js';
 import {relateTable} from '../build/relate-table.js';
 import {groupTable} from '../build/group-table.js';
+import {joinTableToAreas} from '../build/area-join.js';
+import {computeRate,fromTable,rateTable as rateTableOf} from '../build/rate.js';
 import {gunzipSync} from 'node:zlib';
 import {deduplicatePoints,jaroWinkler,normaliseName} from '../build/deduplicate-points.js';
 import {extentN3,extentProjection} from '../build/rule-application.js';
@@ -135,7 +137,23 @@ const southLondonTables=()=>{
   const workflow=bundle.workflows.find(w=>w.key==='south-london/contingency');
   if(!workflow)throw new Error('That checkout carries no south-london/contingency workflow.');
   const node=id=>workflow.document.nodes.find(n=>n.id===id).params.data;
+  const choropleth=bundle.workflows.find(w=>w.key==='south-london/choropleth');
+  const cnode=id=>choropleth.document.nodes.find(n=>n.id===id);
   return {left:node('table-viii'),right:node('table-xii'),
+    // The choropleth chain: Table VIII, the rate declared over it, and the study area's named
+    // parts. The join matches on NAMES, so no geometry is needed and none travels -- which also
+    // keeps a BSD-2-Clause boundary file out of a fixture that would otherwise redistribute it.
+    // The choropleth has its OWN Table VIII node: 224 rows over seven measures, keyed `count`,
+    // where the contingency workflow's carries 64 rows over two, keyed `people`. Same label, same
+    // published table, different transcription for a different question -- so the rate has to be
+    // computed over this one, not over the other.
+    rateTable:cnode('table-viii').params.data,
+    rateParams:cnode('mortality').params,
+    joinParams:cnode('shaded').params,
+    units:cnode('sub-districts').params.boundary.units,
+    boundaryProvenance:(({boundaryID,source,licence,licenceSource,canonical,yearRepresented})=>
+      ({boundaryID,source,licence,licenceSource,canonical,yearRepresented}))(
+      cnode('sub-districts').params.boundary),
     commit:bundle.exportedAt,project:bundle.project.id};
 };
 
@@ -991,6 +1009,74 @@ const builders={
           groups:withHole.groups,collapsedFrom:withHole.collapsedFrom,
           dropped:withHole.dropped,gaps:withHole.gaps}]},
       note:'Recompute both cases from `input` and `declaredParameters`. Case 2 empties the row named in `emptied` and is the case where the two implementations are meant to disagree under pandas\' default.'
+    },files:{}};
+  },
+
+  'area-join-snow-001'(){
+    // THE CHOROPLETH'S JOIN, run exactly as the worked example runs it: Table VIII through the
+    // declared rate, then onto the study area's 33 named parts.
+    //
+    // What is independently checkable here is NOT the normalisation. `normaliseName` is this
+    // project's own, and a check that re-implemented it would be this author's arithmetic
+    // checking this author's arithmetic -- the trap check 27's record names. So the fixture
+    // carries three things a separate implementation can recompute without it:
+    //
+    //   1. The JOIN given keys -- which part takes which value -- which is a merge.
+    //   2. The RAW-STRING baseline, which needs no normalisation at all: 23 of 32 on equality.
+    //   3. The pairs that only match once folded, so the check can state what the folding did
+    //      rather than assume it, and refuse a folding that did something else.
+    //
+    // And a NEGATIVE CONTROL, constructed, because Snow's data has no near-miss pair that ought
+    // to fail. Without one, 32 of 32 is also what a wrong-but-permissive rule scores.
+    const {rateParams,joinParams,units,boundaryProvenance,rateTable:source}=southLondonTables();
+    const rate=computeRate(fromTable(source,rateParams.measureKey||'measure'),rateParams);
+    const table=rateTableOf(rate);
+    const joined=joinTableToAreas(units,table,
+      {keyField:joinParams.keyField,normalisation:joinParams.normalisation});
+    const raw=joinTableToAreas(units,table,{keyField:joinParams.keyField,normalisation:'exact'});
+
+    // A name differing by more than punctuation must NOT match. One boundary part is renamed to a
+    // real place that is not in the table; the join has to report it rather than find a home for it.
+    const renamed=units.map((unit,index)=>index===16?{id:'Camberwell Green',name:'Camberwell Green'}:unit);
+    const control=joinTableToAreas(renamed,table,
+      {keyField:joinParams.keyField,normalisation:joinParams.normalisation});
+
+    const shape=result=>({
+      counts:result.counts,
+      declared:result.declared,
+      parts:result.parts.map(p=>({index:p.index,id:p.id,name:p.name,key:p.key,
+        value:p.value,matched:p.matched,shared:p.shared})),
+      diagnostics:result.diagnostics});
+
+    return {fixture:{
+      ...base('area-join-snow-001','join_table_to_area','Join a table to the study area',
+        'src/area-join.ts#joinTableToAreas'),
+      source:"John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, Table VIII, through the rate the example declares over it. The part names are the study area's, digitised by Koch and Denike (2006) and modified by the Center for Spatial Data Science; see boundaryProvenance. Read from the example-1855-cholera-south-london checkout, not retyped.",
+      boundaryProvenance,
+      declaredParameters:{keyField:joinParams.keyField,normalisation:joinParams.normalisation,
+        rate:{numeratorField:rateParams.numeratorField,denominatorField:rateParams.denominatorField,
+          groupBy:rateParams.groupBy,multiplier:rateParams.multiplier,
+          minimumDenominator:rateParams.minimumDenominator,rateKind:rateParams.rateKind,
+          measureKey:rateParams.measureKey,denominatorUnit:rateParams.denominatorUnit},
+        semantics:'Each part of the study area takes the value of the one table row whose key matches its name, compared for EQUALITY after a declared folding. `fuzzy` folds every run of non-alphanumeric characters to one space and lowercases; `exact` only trims and lowercases. There is no similarity, no threshold and no review band: a name differing by more than the folding is reported unmatched rather than resolved. A part no row names keeps its place with a null value, because a boundary with no data is a fact about the data and not a reason to leave a hole in the map. Two parts sharing one name both take that value and are flagged `shared`.',
+        equivalentTo:'A pandas merge of the rate table onto the parts on a folded key, left on the parts so every part survives. The folding itself is NOT independently reimplemented here -- see notEstablished.'},
+      input:{
+        units:units.map((u,index)=>({index,id:u.id,name:u.name})),
+        table:{keys:table.keys,valueField:table.valueField,unit:table.unit,
+          rowCount:table.rows.length,
+          rows:table.rows.map(r=>({key:r.key,value:r.value}))}},
+      output:{cases:[
+        {note:'The join the example runs, folding punctuation',normalisation:'fuzzy',
+          units:'input.units',...shape(joined)},
+        {note:'The same join on the raw strings, which needs no normalisation to recompute',
+          normalisation:'exact',units:'input.units',...shape(raw)},
+        {note:'A negative control, constructed: one part renamed to a place the table does not carry',
+          normalisation:'fuzzy',
+          units:'input.units with index 16 renamed from Camberwell to Camberwell Green',
+          constructed:'Snow\'s table and these boundaries have no pair that differs by more than punctuation, so nothing in the data tests a name that OUGHT not to match. Without this case, 32 of 32 is also the score of a rule that matched too readily.',
+          renamedIndex:16,renamedFrom:units[16].name,renamedTo:'Camberwell Green',
+          ...shape(control)}]},
+      note:'Recompute each case from `input` and `declaredParameters`. Case 2 is the baseline the folding is measured against; case 1 minus case 2 is what the folding bought, and case 3 is what it must still refuse.'
     },files:{}};
   },
 

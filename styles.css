@@ -667,3 +667,17 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 #table-after .crosstab,#table-after table{font-size:13px}
 #table-reconcile{margin:10px 0 0;padding-left:18px;font-size:13px;line-height:1.6}
 #table-reconcile strong{font-weight:600}
+
+/* THE FRAME: a table as an epidemiologist meets one everywhere else. Not a tabulation -- that is
+   `.crosstab`, which keeps its margins and is the better view of a two-by-two. This is the shape a
+   published table, a line list and a merged dataframe all have, and the shape a relate result
+   could not be read in until 2026-10-27. */
+.wide-frame{border-collapse:collapse;font-variant-numeric:tabular-nums}
+.wide-frame th,.wide-frame td{border-bottom:1px solid var(--line);padding:4px 10px;white-space:nowrap}
+.wide-frame thead th{text-align:right;font-weight:600;border-bottom:2px solid var(--line)}
+.wide-frame thead th:first-child{text-align:left}
+.wide-frame th[scope="row"]{text-align:left;font-weight:600}
+.wide-frame td{text-align:right}
+/* An attribute DESCRIBES the subject; it is not a number to total down a column. */
+.wide-frame .frame-attribute{text-align:left;font-weight:400;color:var(--muted-strong,inherit)}
+.wide-frame thead .frame-attribute{font-style:italic}

@@ -899,7 +899,7 @@
       "id": "a-label-cannot-be-pinned-to-one-study",
       "stated": "2026-10-28",
       "statedBy": "the practitioner",
-      "inTheirWords": "We cannot pin labels to a specific project. Labels have to be generic and applicable to similar artifacts in other studies. If we need to identify polygons, we can use polygon_id.",
+      "inTheirWords": "We cannot pin labels to a specific project. Labels have to be generic and applicable to similar artifacts in other studies. If we need to identify polygons, we can use polygon_id. ... Voronoi cells can also indicate access or service delivery catchments. And it does not necessarily mean the access or service delivery happens as the Voronoi cells dictate.",
       "requiresInCode": "No name a practitioner meets -- a column, a layer label, a chart caption, a type -- records which study it was first built for. A name says what the artifact IS, so that the same name is true of the same artifact in another investigation. Where a polygon needs identifying, it is `polygon_id`: every producer of polygons has one, and no study is privileged by it.",
       "recordedIn": [
         "docs/experiments/145-polygons-as-a-source.md"
@@ -911,6 +911,10 @@
         {
           "date": "2026-10-28",
           "found": "Stated while reviewing `polygon_input` for admission, and it decided a question the review had got wrong. I had proposed making `Catchment.siteId` optional and recording the name as debt. The rule says the label itself is the defect, and the evidence is worse than the review found: `siteId` was not merely inapplicable to a file-sourced layer, it was ALREADY being fabricated for a shipped one. `area-join.ts:141` sets `siteId:part.id`, making each of South London's 32 sub-districts its own site to satisfy a required field, and casts the result past the compiler with `as unknown as`. So a practitioner opening the choropleth's table met a column called `siteId` holding a sub-district's name, beneath a layer labelled \\\"Catchments (coordinates locate source sites)\\\" over administrative units that are catchments of nothing and have no sites. Five producers already emit `sites:[]`. Fixed in the output; the type name is recorded as the larger piece."
+        },
+        {
+          "date": "2026-10-28",
+          "found": "The practitioner sharpened the case, and it now reaches the ORIGINAL producer rather than only the borrowed ones. A Voronoi cell is a PROXIMITY MODEL: it can indicate an access or service delivery catchment and does not establish that access happens that way, because nearest by straight line is an assumption about behaviour and not an observation of it. So `Catchment` overclaims even for the widget it was named after. THE APPLICATION ALREADY SAYS SO AND IS ARGUING WITH ITSELF. `catchments.ts` attaches the note \\\"Cells model proximity, not actual pump use.\\\" and `app.ts:3626` prints it under the map, while the widget's title says `Voronoi catchments` and its own description says the honest thing -- \\\"Allocate an extent to the nearest site in a metric CRS\\\". A caveat in the note and an assertion in the name is the mechanism `two-by-two.ts` records for a different failure: the name is what a trained reader remembers. Fixed in this pass: the results metrics header said \\\"N catchments\\\" for every polygon layer -- 32 for the choropleth's administrative sub-districts -- and now says \\\"N polygons\\\"; the Inspector's prose says \\\"polygon layers\\\" rather than \\\"catchment polygons\\\". Still open: the type name, and the widget title `Voronoi catchments`, which should name the artifact rather than assert a service relationship -- the use is the practitioner's interpretation and belongs in the description, where it already is."
         }
       ]
     }

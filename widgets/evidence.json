@@ -28,8 +28,8 @@
  "weakest": "exampleUseCount 0 and a lab check still owed. That is the bottom of the ladder and the population the pending exemption is about.",
  "note": "Derived by scripts/widget-evidence.mjs from the shipped example workflows, the node types declared for each pinned worked example in widgets/examples.json, and widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a micro_workflow node is its members. A pinned example in its own repository counts as one example use like any other, and is read from the catalogue declaration rather than from a clone, so this file does not depend on what any machine happens to have checked out. Field use is declared and empty: an empty top rung is a measurement, a missing one is a flattering omission.",
  "counts": {
-  "declared only": 3,
-  "example only": 12,
+  "declared only": 2,
+  "example only": 13,
   "parity only": 10,
   "example, lab not applicable": 12,
   "example+parity": 16,
@@ -395,12 +395,14 @@
   },
   {
    "nodeType": "polygon_input",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
-   "rung": "declared only"
+   "rung": "example only"
   },
   {
    "nodeType": "raster_input",

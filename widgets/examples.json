@@ -16,12 +16,12 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "a61a39dbc1e76697d92ea96361082fc4816bf0be",
+      "commit": "b9443ff625ba2eaa7d423792f469efc3ae032ad6",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
-        "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause",
+        "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause and geo/thames-reaches.geojson and geo/thames-tidal-limit.geojson which are ODbL-1.0",
         "source": "Public domain. John Snow, On the Mode of Communication of Cholera, 1855.",
-        "note": "Why this is recorded per example rather than assumed: the mechanism exists so an example may carry terms this project could not adopt. Here the terms are none, because the figures were transcribed from an 1855 publication rather than from HistData (GPL) or causaldata (MIT). One file is an exception and is named in the licence field: the sub-district polygons are redistributed under BSD-2-Clause, which asks for attribution and does not restrict who may receive a map derived from them. That is why this example can carry them where the UK Data Service's sub-district shapefile, whose licence reaches derived datasets, could not be carried by anyone."
+        "note": "Why this is recorded per example rather than assumed: the mechanism exists so an example may carry terms this project could not adopt. Here the terms are none, because the figures were transcribed from an 1855 publication rather than from HistData (GPL) or causaldata (MIT). One file is an exception and is named in the licence field: the sub-district polygons are redistributed under BSD-2-Clause, which asks for attribution and does not restrict who may receive a map derived from them. That is why this example can carry them where the UK Data Service's sub-district shapefile, whose licence reaches derived datasets, could not be carried by anyone. A second exception was added on 2026-10-28 and it is the first SHARE-ALIKE one: the two Thames files are derived from OpenStreetMap, so a Derivative Database of them must be offered under the ODbL and a Produced Work must credit the contributors. That reaches only those two files -- they are additions beside the CC0 content, neither derived from it nor it from them -- which is why this example can still be used by a project under any licence, as long as it carries OpenStreetMap’s notice with the river."
       },
       "description": "An investigation and its questions. Deaths per 1,000 people across the 32 sub-districts behind Snow's Table IX, the boundaries themselves as a 33-part study area with every part named, and 1849 against 1854 across Lambeth moving its intake upstream. Four transcribed tables, a georeferenced plate and three traced supply zones, with the terms of each.",
       "carries": {
@@ -29,12 +29,12 @@
         "data": true,
         "geography": true
       },
-      "notYet": "The georeferenced plate and the three traced supply zones in geo/ are still for other tools: nothing in Fieldwork reads a raster plate or those zones onto a canvas. The figures, the boundaries and the choropleth are all live -- the 32 rates land on the 33 named parts through join_table_to_area.",
+      "notYet": "The georeferenced plate and the three traced supply zones in geo/ are still for other tools: nothing in Fieldwork reads a raster plate or those zones onto a canvas. geo/thames-tidal-limit.geojson is unread for a different reason -- it is a LineString, and no widget takes a line as a layer, so the limit ships as a file and is drawn by nothing. The two Thames reaches ARE live, through polygon_input on the ground workflow. The figures, the boundaries and the choropleth are all live -- the 32 rates land on the 33 named parts through join_table_to_area.",
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "6e83ca5da983db0463940d7a3eb6acbeb11a9bef011f4540ce9d12a3966b1b04",
-          "bytes": 337372
+          "sha256": "1e75adf1553e71bdfd293ca60e595e50a79a76e918c2e4ff0e75c0f55e49fd9e",
+          "bytes": 388021
         },
         {
           "path": "README.md",
@@ -43,8 +43,8 @@
         },
         {
           "path": "NOTICE.txt",
-          "sha256": "6f2f81098f2649664cb04873ba1f3c750eef6d0b78ae46ea2585f9da72e13275",
-          "bytes": 5735
+          "sha256": "5419a566290f202283fe4af6985e981ebca5ce17e9c852afd7dd9c2a7f12d8ab",
+          "bytes": 9892
         },
         {
           "path": "LICENSE",
@@ -53,8 +53,8 @@
         },
         {
           "path": "provenance.json",
-          "sha256": "e5929c130fc4161a8ed1f5c54bcc672d26b5319a905bc21f5023ccc3a1cd562d",
-          "bytes": 7493
+          "sha256": "c865bad2d1c84de59e60ccb3c80ecc7a582d990bf044bc82cc84c77757483ae3",
+          "bytes": 8853
         },
         {
           "path": "data/table-ix-first-seven-weeks.csv",
@@ -110,6 +110,16 @@
           "path": "notes/snow-quotations.json",
           "bytes": 6972,
           "sha256": "0af2ad02c28b51fb857c3063977cbbb24f6ee9cfdb869986db498a45bdf94188"
+        },
+        {
+          "path": "geo/thames-reaches.geojson",
+          "sha256": "57f2965feb93233d575d0ea76f677a7a158092bdb171f3d165a9462533d3c90f",
+          "bytes": 182714
+        },
+        {
+          "path": "geo/thames-tidal-limit.geojson",
+          "sha256": "57f083fbd6f12567b5d92f9e69086f2a2cbb81244491fb3764d1b6525dd461ee",
+          "bytes": 1114
         }
       ],
       "notYetCorrected": {
@@ -125,6 +135,7 @@
         "map_image_input",
         "map_output",
         "point_input",
+        "polygon_input",
         "rate",
         "rate_ratio",
         "relate_table",

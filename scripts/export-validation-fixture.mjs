@@ -205,7 +205,7 @@ const builders={
         note:hexed.notes[0]};
     });
     return {fixture:{
-      ...base('hex-soho-001','hex_aggregate','Aggregate points in hexagons','src/geoprivacy.ts#aggregateHex'),
+      ...base('hex-soho-001','aggregate_points_to_h3_cell','Aggregate points in hexagons','src/geoprivacy.ts#aggregateHex'),
       declaredParameters:{
         computationCRS:'OGC:CRS84',minOccupancy,resolutions:[9,11],
         indexRule:'Each located point is indexed to the H3 cell containing it at the stated resolution, by latitude and longitude. The cell boundary returned is h3\u2019s own boundary for that cell.',
@@ -576,7 +576,7 @@ const builders={
     // that is what makes the per-cell totals unsafe to add.
     const {deaths,clipped,summarised,summaryParams}=sohoVoronoiChain();
     return {fixture:{
-      ...base('summarize-polygons-soho-001','summarize_polygons','Summarize points in polygons','src/catchments.ts#summarizePolygons'),
+      ...base('summarize-polygons-soho-001','summarize_points_to_polygon','Summarize points in polygons','src/catchments.ts#summarizePolygons'),
       declaredParameters:{
         computationCRS:'OGC:CRS84',
         boundary:summaryParams.boundary,
@@ -1202,8 +1202,49 @@ const builders={
   }
 };
 
+// A DRY RUN OVER EVERY BUILDER, which exists because of a failure nothing caught.
+//
+// relate_table 0.3.0 made an undeclared gap a refusal, and two of the three cases in the relate
+// builder withhold or corrupt a key on purpose. So this script threw, the lab's input could not be
+// regenerated, and nothing reported it: `check` does not run this file. The breakage was found by
+// hand on 2026-10-28 while re-establishing parity, which is the wrong way to find it.
+//
+// Builds every fixture in memory and writes nothing. A builder that throws is the finding, and the
+// message is the widget's own refusal, which is usually enough to say what changed.
+//
+// SKIPS RATHER THAN FAILS where the worked example is not checked out beside this repository: the
+// builders read their tables from it, that is a clone that has not happened rather than a defect,
+// and `validate:examples` already treats a missing sibling the same way.
+if(process.argv.includes('--dry-run')){
+  const missing=/is not checked out beside this repository/;
+  const broken=[];
+  let skipped=null;
+  for(const [fixtureId,build] of Object.entries(builders)){
+    try{await build();}
+    catch(error){
+      const message=error instanceof Error?error.message:String(error);
+      if(missing.test(message)){skipped=message;break;}
+      broken.push({fixtureId,message});
+    }
+  }
+  if(skipped){
+    console.log('Validation fixtures: not built. '+skipped);
+    process.exit(0);
+  }
+  const total=Object.keys(builders).length;
+  if(broken.length){
+    console.error(`Validation fixtures: ${broken.length} of ${total} builder(s) cannot build.`);
+    for(const {fixtureId,message} of broken)console.error(`  \u2022 ${fixtureId}: ${message}`);
+    console.error('  A builder that throws means the lab cannot regenerate its own input, so a');
+    console.error('  parity check is pinned to a release the application no longer behaves like.');
+    process.exit(1);
+  }
+  console.log(`Validation fixtures: ${total} builders build, nothing written.`);
+  process.exit(0);
+}
+
 const [id,outputDir]=process.argv.slice(2);
-if(!builders[id]||!outputDir)throw new Error(`Usage: node scripts/export-validation-fixture.mjs <${Object.keys(builders).join('|')}> <outputDir>`);
+if(!builders[id]||!outputDir)throw new Error(`Usage: node scripts/export-validation-fixture.mjs <${Object.keys(builders).join('|')}> <outputDir>\n       node scripts/export-validation-fixture.mjs --dry-run`);
 const {fixture,files}=await builders[id]();
 // Binary assets travel with their digest declared inside the fixture. A sidecar cannot be
 // read from the lab's browser kernel at all, which is the other half of the 2026-10-11

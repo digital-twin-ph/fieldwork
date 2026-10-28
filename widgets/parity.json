@@ -198,10 +198,10 @@
     },
     {
       "widget": "urn:fieldwork:widget:summarize_points_to_polygon",
-      "coversRelease": "0.1.0",
+      "coversRelease": "0.2.0",
       "check": "14-summarize-polygons",
       "result": "content/results/check-14-summarize-polygons.json",
-      "sha256": "9ad17eec6874fc02f3c72e8ca3801211b434189cdbefcfb9f1e8ea8426d58c85",
+      "sha256": "8ee532107c814c2d053c368d2ea98011d38b2584b726ff91da5382a8cf330db5",
       "external": [
         "shapely 2.2.0",
         "GEOS 3.14.1"
@@ -210,7 +210,7 @@
       "outcome": "agrees",
       "measured": "every per-polygon count and total exact over 250 locations in 8 polygons, summary exact, worst total difference 0",
       "ranAt": "2026-10-11T21:06:17.277525+00:00",
-      "note": "Fieldwork's own point-in-polygon test against GEOS predicates, with the boundary policy mapped explicitly: include is covers, exclude is contains. The fixture contains no location on a polygon edge and none in two polygons, so that mapping is declared and NOT exercised by the comparison -- the notebook constructs the missing case to show that include counts an edge location for both cells and exclude for neither. Agreement says nothing about whether nearest-pump assignment models which pump anybody drank from.",
+      "note": "Re-established at 0.2.0 on 2026-10-28, and the regeneration MOVED NO COMPARED NUMBER: the fixture rebuilt from the current build has input and output byte-identical to the one generated under 0.1.0, so the release bump did not change this computation. Only the fixture's metadata differs. Stale for the same reason as the H3 check and found the same way: this widget was renamed from `summarize_polygons`, the builder kept the old type and threw, so the fixture could not be regenerated and the parity warning had no reachable cause until a --dry-run over every builder was added.",
       "notebook": "14-summarize-polygons-vs-shapely.ipynb",
       "diveDeeper": "Dive deeper · why the per-polygon totals must not be added"
     },
@@ -327,10 +327,10 @@
     },
     {
       "widget": "urn:fieldwork:widget:aggregate_points_to_h3_cell",
-      "coversRelease": "0.1.0",
+      "coversRelease": "0.2.0",
       "check": "21-hex",
       "result": "content/results/check-21-hex.json",
-      "sha256": "1463c8aeacb9278d82ef79c8bfef773416a99c5eb23fdd506079420d87682447",
+      "sha256": "a41937c979980cb104e99f8d1dbe7dccbbf819b27d0458e591b5fa211566766f",
       "external": [
         "h3-py 4.5.0"
       ],
@@ -338,7 +338,7 @@
       "outcome": "agrees",
       "measured": "at resolution 9, 5 cells kept and nothing dropped; at resolution 11, 52 cells kept, 13 withheld and 13 of 250 deaths removed from the output; cells, counts and order exact and every boundary and centre within 3.6e-14 degrees",
       "ranAt": "2026-10-11T22:41:29.311283+00:00",
-      "note": "WEAKER THAN IT LOOKS, and the check says so: Fieldwork indexes with h3-js and the reference with h3-py, two bindings of the same C library, so the indexing is not independently verified. What is verified is that Fieldwork calls it correctly, orders by H3 index as declared, and applies its own sparse-cell rule. Two resolutions are used because the example's own setting does not exercise that rule: at resolution 9 all 250 deaths fall into five cells above the minimum and nothing is dropped, so resolution 11 is included to reach the case where points vanish. Agreement says nothing about whether aggregating to cells protects anybody; occupancy is not an anonymity guarantee, and at resolution 11 the rule silently removes 13 deaths rather than disclosing them.",
+      "note": "Re-established at 0.2.0 on 2026-10-28, and the regeneration MOVED NO COMPARED NUMBER: the fixture rebuilt from the current build has input and output byte-identical to the one generated under 0.1.0, so the release bump did not change this computation. Only the fixture's metadata differs -- the widget URN, the release, the label and the integrity digest. WHY IT WAS STALE, which is the part worth recording: this widget was renamed from `hex_aggregate`, the fixture builder was left naming the old type, `widgetOf` returned undefined and the builder THREW. So the fixture could not be regenerated, so parity could not be re-established, and the validator had been reporting \"covers 0.1.0, but 0.2.0 is current\" with nothing connecting that warning to its cause -- because no gate ran the builder. A --dry-run over every builder now does, and found this on its first run.",
       "notebook": "21-hex-vs-h3py.ipynb",
       "diveDeeper": "Dive deeper · choosing the resolution, and for what"
     },

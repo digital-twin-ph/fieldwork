@@ -16,7 +16,7 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "148b2cc9eeabdac2b4ecbe43265fa80ccae0f62e",
+      "commit": "a61a39dbc1e76697d92ea96361082fc4816bf0be",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause",
@@ -33,8 +33,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "0ba2a01fd2328daf6079e0cfa2a77db260e0382eedef73e91cade2415b39763d",
-          "bytes": 337269
+          "sha256": "6e83ca5da983db0463940d7a3eb6acbeb11a9bef011f4540ce9d12a3966b1b04",
+          "bytes": 337372
         },
         {
           "path": "README.md",
@@ -105,6 +105,11 @@
           "path": "geo/map2.jpg",
           "sha256": "a3131c5fc9ad7605ae1c9b79d58ad3f54baab1cda26bfa176b9a2cfa2cc297f0",
           "bytes": 260535
+        },
+        {
+          "path": "notes/snow-quotations.json",
+          "bytes": 6972,
+          "sha256": "0af2ad02c28b51fb857c3063977cbbb24f6ee9cfdb869986db498a45bdf94188"
         }
       ],
       "notYetCorrected": {

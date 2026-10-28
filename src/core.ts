@@ -56,6 +56,7 @@ import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} fro
 import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
 import {polygonLayer,polygonLayerFacts} from './polygon-layer.js';
+import {shareAlike} from './input-provenance.js';
 import type {MachinedNote} from './notes.js';
 import {groupTable} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt} from './two-by-two.js';
@@ -106,7 +107,11 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   select_rows:{title:'Select rows by value',group:'Summaries',icon:'⊂',color:'teal',
     description:'Keep only the rows whose key column holds one of the values you name, in that order',
     inputs:[['records','table']],output:'table'},
-  polygon_input:{title:'Polygon layer',group:'Sources',icon:'⬟',color:'blue',description:'Read a published polygon layer from a GeoJSON file, as published',inputs:[],output:'polygons'},
+  // The area port is OPTIONAL and scopes acquisition: connected, it supplies the bounding box
+  // and the country an extract is read for, which is what `network_input` already does with
+  // the same port. Absent, the widget still reads a file, which is why `required` stays empty
+  // in the contract and this stays an input-stage widget.
+  polygon_input:{title:'Polygon layer',group:'Sources',icon:'⬟',color:'blue',description:'Read a polygon layer from a GeoJSON file as published, or from a published OSM extract within the study area',inputs:[['area','area']],output:'polygons'},
   relate_table:{title:'Relate a column from another table',group:'Summaries',icon:'⋈',color:'teal',
     description:'Bring a category from a second table onto these rows, matched on a column both carry',
     inputs:[['records','table'],['related','table']],output:'table'},
@@ -213,7 +218,13 @@ export function outputOf(node:WorkflowNode):PortType|null{
 export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:boolean}):[string,PortType][]{
   const all=nodeInputs(node);
   // A country can name the scope instead, so the area is optional rather than absent.
-  if(node.type==='network_input')return all.filter(([port])=>port!=='area');
+  // `polygon_input` joins it for the same reason and one more: it may simply READ a published
+  // GeoJSON file, where there is no scope to name. The area scopes ACQUISITION from an extract,
+  // so insisting on it would make the widget's original job impossible and -- because
+  // `INPUT_STAGE` is derived from what a widget requires -- would also drop it off a blank
+  // canvas, which is where a source widget has to be.
+  if(node.type==='network_input'||node.type==='polygon_input')
+    return all.filter(([port])=>port!=='area');
   if(!['map_output','table_output'].includes(node.type))return all;
   // A view fed by a coverage check takes THAT and nothing else: the check already carries the
   // points and the area it was run over, so insisting on them again would ask for the same data
@@ -1119,13 +1130,43 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // needed no new port type.
         const features=node.params.data.features;
         if(!features.length)throw new Error('Import a polygon layer before running.');
+        // A LAYER READ FOR ONE STUDY AREA IS STALE FOR ANOTHER, and this is the one thing the
+        // optional `area` port is checked for at run time. Acquisition happens at import, so a
+        // study area nudged afterwards leaves a layer that provably holds no features for part of
+        // it. Refused rather than noted: the alternative is a map with a hole in it and a receipt
+        // that reads as if everything were read.
+        const read=node.params.retrieval;
+        const scope=inputs.area as {bounds?:[number,number,number,number]}|undefined;
+        if(read&&scope?.bounds){
+          const [w,s,e,n]=scope.bounds,[rw,rs,re,rn]=read.bbox;
+          if(w<rw||s<rs||e>re||n>rn)
+            throw new Error('This layer was read for a different study area. Its box covers '
+              +`${rw.toFixed(4)}, ${rs.toFixed(4)} to ${re.toFixed(4)}, ${rn.toFixed(4)} and the `
+              +`area now reaches ${w.toFixed(4)}, ${s.toFixed(4)} to ${e.toFixed(4)}, `
+              +`${n.toFixed(4)}, so part of it has no features because none were read there. `
+              +'Read the extract again.');
+        }
         value=polygonLayer(features,node.params) as unknown as DisplayValue;
         const {facts,vertices}=polygonLayerFacts(features,node.params,{runId,nodeId:node.id});
         receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
-          method:`${features.length} polygon feature${features.length===1?'':'s'} read from `
-            +`${node.params.source?.filename??'a file'} as published, ${vertices.toLocaleString()} `
-            +'vertices, nothing clipped, simplified or reprojected'
-            +(node.params.nameField?`, named by ${node.params.nameField}`:'')+'.'});
+          method:read
+            ? `${features.length} ${read.kinds.join(' and ')} feature`
+              +`${features.length===1?'':'s'} read from ${node.params.source?.filename
+                ??'a published OpenStreetMap extract'} within `
+              +`${read.bbox.map(c=>c.toFixed(4)).join(', ')}, ${vertices.toLocaleString()} `
+              +'vertices, nothing clipped, simplified or reprojected'
+              +(read.dropped.belowMinVertices
+                ?`; ${read.dropped.belowMinVertices.toLocaleString()} below `
+                  +`${node.params.minVertices} vertices and `
+                  +`${read.dropped.outsideBox.toLocaleString()} outside the box were not read`
+                :`; ${read.dropped.outsideBox.toLocaleString()} outside the box were not read`)
+              +`. ${read.attribution}, ${read.licence}`
+              +(shareAlike(node.params.provenance)?' — share-alike: a figure built on this '
+                +'carries the same terms.':'.')
+            : `${features.length} polygon feature${features.length===1?'':'s'} read from `
+              +`${node.params.source?.filename??'a file'} as published, ${vertices.toLocaleString()} `
+              +'vertices, nothing clipped, simplified or reprojected'
+              +(node.params.nameField?`, named by ${node.params.nameField}`:'')+'.'});
         break;}
       case 'relate_table':{
         // RELATE, not MERGE. Epi Info has three join commands and this project had none, which

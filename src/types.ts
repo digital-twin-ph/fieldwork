@@ -237,7 +237,21 @@ export interface ParamsByType {
     /** Where the file came from and on what terms, so a published boundary is not redistributed
      *  through a workflow without saying whose line it is. */
     provenance?:import('./input-provenance.js').InputProvenance;
-    source?:{filename:string;bytes:number;sha256:string;features:number}};
+    source?:{filename:string;bytes:number;sha256:string;features:number};
+    /** Where the features came from. `file` reads a GeoJSON layer as published; `extract` reads
+     *  areas of the chosen kinds out of a published .osm.pbf the practitioner already holds,
+     *  within the connected study area's bounds. Absent means `file`, which is every layer that
+     *  existed before acquisition did. */
+    inputMethod?:'file'|'extract';
+    /** Which kinds of area to read from an extract, and the threshold below which a feature is
+     *  too small to be the study's own geometry. Both are stated, never inferred. */
+    kinds?:readonly import('./osm-areas.js').AreaKind[];
+    minVertices?:number;
+    /** Metres beyond the study area's bounds, as the street network's download already uses.
+     *  South London needed 5,000 because Teddington Lock sits 4,460 m outside its bounds. */
+    marginM?:number;
+    /** What was read and on what terms, kept beside the features it produced. */
+    retrieval?:import('./osm-areas.js').AreaRetrieval};
   relate_table:{label:string;on:string;bring:string;
     /** How key cells are compared, in `join_table_to_area`'s vocabulary and through the same
      *  `normaliseName`. Absent means `fuzzy`, which is that widget's default too. */

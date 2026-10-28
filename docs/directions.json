@@ -894,6 +894,25 @@
           "found": "Looked up how a field-epidemiology title is actually built, on the practitioner's pointer to EIS Conference presentations. Twelve MMWR titles read verbatim: the shape is `[prefix:] <topic> -- [data source,] <place>, <time>`, em dash in every one, and NONE of the twelve names a study design -- not even the one whose topic is explicitly methods. So the design does NOT belong in the machined title, which corrects the plan recorded earlier today. It does not weaken the declaration: it relocates what the declaration contributes. The design carries the study PERIOD and the period is the title's <time>, so the design still feeds the title, through its period rather than its name. South London machines as \\\"Cholera Mortality by Water Supply -- South London, 1854\\\". NOT established: anything about EIS presentations first-hand. The 2009 EIS conference PDF 404s and the CDC Stacks copy timed out at 300s, so this is MMWR house style, which EIS follows, and the pointer has not been followed to its own source. Twelve titles from one surveillance-oriented journal is a small corpus, and no written rule was found -- the MMWR author checklist says to read recent reports for format, which is what was done."
         }
       ]
+    },
+    {
+      "id": "a-label-cannot-be-pinned-to-one-study",
+      "stated": "2026-10-28",
+      "statedBy": "the practitioner",
+      "inTheirWords": "We cannot pin labels to a specific project. Labels have to be generic and applicable to similar artifacts in other studies. If we need to identify polygons, we can use polygon_id.",
+      "requiresInCode": "No name a practitioner meets -- a column, a layer label, a chart caption, a type -- records which study it was first built for. A name says what the artifact IS, so that the same name is true of the same artifact in another investigation. Where a polygon needs identifying, it is `polygon_id`: every producer of polygons has one, and no study is privileged by it.",
+      "recordedIn": [
+        "docs/experiments/145-polygons-as-a-source.md"
+      ],
+      "workItem": "Done on 2026-10-28 in `catchment-output.ts`: the table a practitioner reads now carries `polygon_id` from the polygon's own id, and `site_id` only where the layer actually holds that site; the layer label is `Polygons` rather than `Catchments (coordinates locate source sites)`, and the chart captions say `by polygon`. STILL OPEN and larger: the feature type is called `Catchment`, which names the first way polygons were produced -- Snow's pumps -- and now covers H3 hexagons, a convex hull, a combined area, stacked layers and 32 administrative sub-districts. `PolygonFeature` is the generic name and needs no coinage, since `PointFeature` already exists. 14 files, 21 type references, 55 occurrences of the word in app.ts. Also open: the `area` port type names a role rather than its content, and `sites` covers pumps, health facilities, snapped locations and AR6 tide gauges, which are alike only in being points.",
+      "status": "open",
+      "lastChecked": "2026-10-28",
+      "checks": [
+        {
+          "date": "2026-10-28",
+          "found": "Stated while reviewing `polygon_input` for admission, and it decided a question the review had got wrong. I had proposed making `Catchment.siteId` optional and recording the name as debt. The rule says the label itself is the defect, and the evidence is worse than the review found: `siteId` was not merely inapplicable to a file-sourced layer, it was ALREADY being fabricated for a shipped one. `area-join.ts:141` sets `siteId:part.id`, making each of South London's 32 sub-districts its own site to satisfy a required field, and casts the result past the compiler with `as unknown as`. So a practitioner opening the choropleth's table met a column called `siteId` holding a sub-district's name, beneath a layer labelled \\\"Catchments (coordinates locate source sites)\\\" over administrative units that are catchments of nothing and have no sites. Five producers already emit `sites:[]`. Fixed in the output; the type name is recorded as the larger piece."
+        }
+      ]
     }
   ]
 }

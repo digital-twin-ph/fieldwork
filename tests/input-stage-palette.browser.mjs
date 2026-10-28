@@ -16,17 +16,25 @@ test('a canvas with no input offers the input stage, and everything after one is
   await page.goto('/?example=blank');
 
   const entries=page.locator('#node-library [data-add]');
-  await expect(entries).toHaveCount(5);
-  // The input stage is eight by contract; `places` and `centers` are retired from the palette,
+  await expect(entries).toHaveCount(6);
+  // The input stage is nine by contract; `places` and `centers` are retired from the palette,
   // and `alert` joined them on 2026-10-25 -- a declaration wearing a node type, whose condition
-  // is now stated on the node that applies the ruleset asking for it. Five are offered.
+  // is now stated on the node that applies the ruleset asking for it. Six are offered.
   //
   // It was four until `map_image_input` joined the input stage on 2026-10-27. This count was left
   // at four by that change and the test failed from then until the plate was made addable: a
   // DRAFT plate carries `[0,0,0,0]` corners, which `validateWorkflow` was refusing as crossed, so
   // the widget was offered on the palette and could not be placed from it.
+  //
+  // AND IT HAPPENED AGAIN, the same way. `polygon_input` landed on 2026-10-28 declaring an
+  // `output` and a contract requiring nothing, which is the whole of what makes a widget an
+  // input, so it joined the input stage the moment it was declared -- and this count stayed at
+  // five. The gate that catches it is the browser suite, and only `check:fast` was run on that
+  // commit, so the addition reached the palette with this test red. The count is derived nowhere:
+  // it is typed here, which is why it goes stale, and it is typed here deliberately so that a
+  // widget cannot quietly join the first thing a practitioner sees.
   for(const name of ['Study area','Point data','Tabular data','Street network',
-    'Georeferenced map image'])
+    'Georeferenced map image','Polygon layer'])
     await expect(page.locator('#node-library [data-add]').filter({hasText:name})).toHaveCount(1);
   // Nothing that needs something is offered yet. Asserted by NODE TYPE rather than by title
   // text: `hasText:'Map'` also matched "Georeferenced map image" once a plate joined the input

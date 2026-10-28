@@ -46,7 +46,20 @@ export type WriteUpPart=typeof WRITE_UP_PARTS[number];
  *  by nothing. A vocabulary closed before its producers exist is a vocabulary that gets withdrawn,
  *  and this repository already carries a withdrawn-term ratchet at 131 occurrences. The known ones
  *  are ordered first for reading; anything else is shown as it was written. */
-export const KNOWN_NOTE_FUNCTIONS=['background','related literature','purpose','method','source'];
+/** `limitation` was added 2026-10-28 on the practitioner's ruling about a modern geometry standing
+ *  in for a historical one: *"If it's a modern polygon, a machined note for it goes under
+ *  Limitations (notes)"*.
+ *
+ *  LIMITATIONS IS A FUNCTION, NOT A FIFTH PART. In IMRAD it is a subsection of Discussion, and the
+ *  four parts above are the body -- a reconciliation this repository has already been through once,
+ *  with the practitioner correcting that *"Title and Abstract are not in IMRAD"*, that it *"does not
+ *  have the References"*, and that it does not have the Appendix. So a note stating a vintage
+ *  mismatch is `section:'Discussion'`, `fn:'limitation'`. Filing it under a section named
+ *  `Limitations` would make `readNotes` DROP it, because a section outside the body is refused
+ *  rather than coerced -- which is the behaviour working as intended, and the reason this is a
+ *  function instead. */
+export const KNOWN_NOTE_FUNCTIONS=['background','related literature','purpose','method','source',
+  'limitation'];
 
 export interface QuotedNote {
   kind:'quoted';
@@ -68,6 +81,10 @@ export interface QuotedNote {
 export interface MachinedNote {
   kind:'machined';
   section:WriteUpPart;
+  /** What it does inside the section, as on a quoted note. Added when the first machined
+   *  `limitation` was called for: `groupNotes` was already reading this field off either kind
+   *  (`'fn' in note&&note.fn`), so only the type and the reader were missing. */
+  fn?:string;
   text:string;
   /** The node that machined it, where the run recorded one. A note produced by a workflow links to
    *  the workflow, which the practitioner asked for of the prototype. */
@@ -109,6 +126,7 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
       const body=text(entry.text);
       if(!body){unreadable++;continue;}
       notes.push({kind:'machined',section,text:body,
+        ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
         ...(text(entry.nodeId)?{nodeId:text(entry.nodeId)}:{})});
       continue;
     }

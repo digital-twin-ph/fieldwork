@@ -54,7 +54,7 @@ import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
-import {relateTable,relateOutcome,type RelateOutcome} from './relate-table.js';
+import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome,type MachinedNote} from './relate-table.js';
 import {groupTable} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt} from './two-by-two.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
@@ -271,6 +271,26 @@ export function drawnMode(node:WorkflowNode<'map_output'>,edges:{to:string;port:
  *  Precedence is specificity: a keyed table, polygons and decisions each have their own renderer,
  *  and the point/coverage path is the general one. The stored `inputMode` is read LAST, so a
  *  workflow saved before this opens and shows what it showed. Nothing writes it any more. */
+/** WHICH TABLE IS ON THIS PORT, by the name a reader of this canvas would use.
+ *
+ *  The node's label, except where it is still the palette's default and a tabular input has a
+ *  filename. `table_input` has no label control of its own, so two imported tables are both
+ *  "Tabular data" until a project file renames them -- and a relate panel reading "from Tabular
+ *  data, brought from Tabular data" names neither. The filename is then the only name the
+ *  practitioner has actually given them.
+ */
+export function portSourceName(w:Workflow,nodeId:string,port:string,fallback:string):string{
+  const edge=w.edges.find(e=>e.to===nodeId&&e.port===port);
+  const from=edge&&w.nodes.find(x=>x.id===edge.from);
+  if(!from)return fallback;
+  const label=from.params.label?.trim();
+  if(from.type==='table_input'){
+    const file=from.params.source?.filename?.trim();
+    if(file&&(!label||label===TYPES.table_input.title))return file;
+  }
+  return label||TYPES[from.type].title;
+}
+
 export function shownMode(node:WorkflowNode<'table_output'>,edges:{to:string;port:string}[]):
   'table'|'polygons'|'decisions'|'spatial'{
   const wired=new Set(edges.filter(e=>e.to===node.id).map(e=>e.port));
@@ -891,6 +911,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // produced, so a step that silently halved a stratification looks exactly like one that did
   // not. See `relateOutcome` in src/relate-table.ts.
   const relations:Record<string,RelateOutcome>={};
+  // NOTES THE WIDGETS MACHINED, for the write-up rather than for a panel. One producer so far.
+  const machined:Record<string,MachinedNote[]>={};
   const expansion=expandMicroWorkflows(workflow,resolveComposition,runId);
   workflow=expansion.workflow;receipts.push(...expansion.receipts);
   const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];
@@ -1102,13 +1124,40 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           +'this step brings a column across from it.');
         const result=relateTable(table,other,node.params);
         value=result.table as unknown as DisplayValue;
-        relations[node.id]=relateOutcome(table,node.params,result);
+        const outcome=relateOutcome(table,node.params,result);
+        relations[node.id]=outcome;
+        machined[node.id]=machinedNotes(outcome,
+          {left:portSourceName(workflow,node.id,'records','the first table'),
+           right:portSourceName(workflow,node.id,'related','the second table')});
+        // THE CHOICE IS PART OF HOW THE NUMBERS WERE MADE, so it is in the receipt beside them.
+        // The practitioner, 2026-10-28: *"The choice should be reflected in the receipts."* What
+        // a reader needs in order to recompute this is the comparison the keys were matched
+        // with, what was decided about the rows that did not match, and what the join did to
+        // each numeric variable -- the shares, from which the multiplier on any rate of one
+        // variable over another follows exactly.
+        const decided=result.declared;
+        const shareText=result.shares.map(s=>`${s.measure}: `
+          +(s.share===null?'nothing to divide':`${(s.share*100).toFixed(1)}% of ${s.all.toLocaleString()} retained`))
+          .join('; ');
+        // THE FACTS, as N3. Built in `relate-table.ts` beside the computation, the way
+        // `deduplicate-points.ts` and `area-join.ts` build theirs -- and because a release
+        // declares the terms its own module asserts, which the gate checks.
+        const relateFacts=relateReceiptFacts(outcome,machined[node.id],{runId,nodeId:node.id});
         receipts.push({nodeId:node.id,kind:'computation',
+          facts:relateFacts,rules:'',input:relateFacts,conclusions:[],
           method:`${node.params.bring} brought across on ${node.params.on}`
+            +`, keys compared ${result.normalisation==='fuzzy'?'with punctuation folded':'exactly'}`
             +`, ${result.related} row${result.related===1?'':'s'} related`
-            +(result.dropped?`, ${result.dropped} dropped for keys the second table does not carry`:''),
-          related:result.related,dropped:result.dropped,gaps:result.gaps,
-          values:result.values} as unknown as Receipt);
+            +(result.dropped?`, ${result.dropped} dropped for keys the second table does not carry `
+              +'at the practitioner\u2019s declared choice':'')
+            +(result.kept?`, ${result.kept} kept as \u201c${decided?.label}\u201d at the `
+              +'practitioner\u2019s declared choice, a category the second table never measured':'')
+            +(shareText?`. Retained by variable \u2014 ${shareText}`:''),
+          related:result.related,dropped:result.dropped,kept:result.kept,gaps:result.gaps,
+          values:result.values,normalisation:result.normalisation,
+          overlap:result.overlap,shares:result.shares,
+          machinedNotes:machined[node.id],
+          ...(decided?{declared:decided}:{})} as unknown as Receipt);
         break;}
       case 'group_table':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;
@@ -1645,5 +1694,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString(),
     ...(Object.keys(tables).length?{tables}:{}),
     ...(Object.keys(linkages).length?{linkages}:{}),
-    ...(Object.keys(relations).length?{relations}:{})};
+    ...(Object.keys(relations).length?{relations}:{}),
+    ...(Object.keys(machined).length?{machined}:{})};
 }

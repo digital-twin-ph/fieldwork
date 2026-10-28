@@ -33,6 +33,65 @@ only read.
 | --- | --- |
 | **Matched on** | the column both tables carry, such as `sub_district` |
 | **Bring across** | the second table's column to add, such as `water_supply` |
+| **Compare keys** | folding punctuation and case, or exactly after trimming |
+
+Everything else happens in **Open the join**, a dialog wide enough to show what you are deciding.
+
+### Compare keys
+
+Two sources spell names differently. Snow's own tables agree with each other, because both
+transcribe the same book — but his sub-district names against the published boundaries match **23
+of 32** exactly and **32 of 32** once punctuation is folded, and every one of the nine differences
+is a single comma. So folding is the default, and the choice is recorded in the evidence.
+
+Tighten it to **exactly** when a punctuation difference means two different subjects. Loosen it
+when it means one subject written twice.
+
+### The join, in the dialog
+
+**Open the join** shows three things, and they change together as you choose:
+
+1. **The shape of the join** — a bar of the keys only in the first table, in both, and only in the
+   second. Keys, not rows: a table here holds several rows per subject, so counting rows would say
+   that nine unmatched sub-districts are eighteen unmatched things.
+2. **The effect on each numeric variable** — what each one totals over the whole table, over the
+   rows that matched, and the share retained. Read this before anything else; see below.
+3. **The Methods note** this step will machine, and a **preview of the table** that will travel on.
+
+Then **Finalize**. Nothing is written until you press it.
+
+### What the shares are telling you
+
+If two variables keep different shares, the rows that did not match are **not a random sample** of
+what you are measuring. On Snow's Table VIII against the published boundaries, 68.2% of population
+is retained against 61.2% of deaths — so a mortality rate computed on the matched rows comes out at
+**89.6% of its value over the whole table**, 2.787 per 1000 against 3.109.
+
+That multiplier is arithmetic and not an estimate: a rate of one variable over another is
+multiplied by exactly the ratio of their retained shares. It runs backwards too. If the figure you
+expected and the figure you are looking at differ by that ratio, you are looking at a number
+produced by a join you did not intend — and the shares say which one.
+
+Had both variables kept the same share, the exclusion would cost precision and leave the estimate
+alone.
+
+### The rows that did not match
+
+Where any key of the first table has no row in the second, **the step will not run until you say
+what to do**. The two answers give different totals and the result cannot be read for which one you
+got, so nothing here chooses for you.
+
+| Choice | What you get |
+| --- | --- |
+| **Drop them** | only the matched rows, and the totals the shares describe |
+| **Keep them under a category I name** | every row, and the totals of the whole first table |
+
+Keeping needs a name, and it has to be yours — nothing here will invent a stratum the data never
+measured, and a name already used by the second table is refused so that unmeasured rows cannot
+join a measured group.
+
+Your decision is stored with a signature of the gap it was made about. Edit either table, or change
+how keys are compared, and the decision lapses rather than riding on data it was not made about.
 
 ### Why it brings a category and not a number
 
@@ -64,6 +123,17 @@ what you need to see before grouping by it.
 
 Quick look at the output table repeats the column origins above each column heading, so a wide
 related table says which half of the row came from where.
+
+### The Methods note
+
+This step machines a note for the **Methods** section of a write-up: what was brought from where,
+on what key, compared how, how many keys appeared in both tables, and — where rows were
+excluded — which keys those were and what share of each variable survived. A join is a thing you
+did to the data, and the count of what it excluded is Methods prose in an epidemiology paper rather
+than a limitation.
+
+The dialog shows the note each choice would produce, so you can read the sentence before committing
+to it. The run records it in the evidence.
 
 ## What it will not do
 

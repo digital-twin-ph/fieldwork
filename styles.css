@@ -275,6 +275,49 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 /* Reading a table at a width it can be read at. Wider than the rule editor, because a table
    that needs this dialog is one with columns the Inspector could not hold; tall, because
    scanning rows is what somebody opened it to do. */
+/* DECIDING A JOIN. Sized like the table viewer, because it is the same kind of surface: a thing
+   the Inspector's 292px cannot show, read and then acted on once. */
+#relate-join{width:min(1180px,94vw);max-width:min(1180px,94vw);padding:0}
+#relate-join .manual-head{padding:20px 24px;border-bottom:1px solid var(--line);margin:0}
+#relate-join .table-viewer-body{overflow:auto}
+#relate-join .inspector-section{margin-top:18px}
+.relate-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.relate-row .description{margin:0;flex:1 1 320px;min-width:0}
+.relate-row .field-label{margin:0}
+.relate-row select{font-size:11px;padding:5px 8px;border-radius:6px;border:1px solid var(--line);
+  background:var(--surface-raised-1);color:var(--ink)}
+.relate-preview{border:1px solid var(--line);border-radius:6px;padding:10px;overflow:auto;
+  max-height:340px}
+/* A note the widget machined, which is prose for a paper rather than interface text. Set wider
+   and looser than the panel around it, because it is read as sentences. */
+.machined-note{border-left:3px solid var(--accent-muted);background:var(--surface-tint);
+  padding:10px 14px;border-radius:0 6px 6px 0;margin:4px 0 6px}
+.machined-note p{margin:0;font-size:12px;line-height:1.65;max-width:72ch;color:var(--ink)}
+.machined-note p+p{margin-top:8px}
+
+/* THE SHAPE OF THE JOIN, sized by DISTINCT KEYS. A segment that exists is never thinner than a
+   sliver: "a few" and "none" are the difference the bar is drawn to show, and a 1-in-300 segment
+   rendered to scale is invisible. */
+.overlap-bar{display:flex;align-items:stretch;gap:2px;margin:8px 0 6px;min-height:34px;
+  font-variant-numeric:tabular-nums}
+.overlap-seg{display:flex;flex-direction:column;justify-content:center;align-items:center;
+  border-radius:5px;padding:4px 6px;min-width:0;overflow:hidden;white-space:nowrap}
+.overlap-seg span{font-size:9px;letter-spacing:.03em;opacity:.85;overflow:hidden;
+  text-overflow:ellipsis;max-width:100%}
+.overlap-seg strong{font-size:13px;line-height:1.2}
+/* Matched is the figure the result rests on, so it carries the accent; the two unmatched sides are
+   the same warning colour because they are the same kind of fact about the data. */
+.overlap-both{background:var(--accent-muted);color:var(--accent-contrast)}
+.overlap-left,.overlap-right{background:var(--warning-wash-3);color:var(--warning-4)}
+
+.relate-shares{width:100%;border-collapse:collapse;font-size:11px;margin:4px 0 10px;
+  font-variant-numeric:tabular-nums}
+.relate-shares thead th{text-align:right;font-size:9px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--text-faint-28);padding:0 0 4px 6px;font-weight:600}
+.relate-shares thead th:first-child{text-align:left}
+.relate-shares tbody th{text-align:left;font-weight:400;padding:4px 6px 4px 0;color:var(--text-muted-11)}
+.relate-shares tbody td{text-align:right;padding:4px 0 4px 6px}
+.relate-shares tbody tr+tr th,.relate-shares tbody tr+tr td{border-top:1px solid var(--line)}
 #table-viewer{width:min(1180px,94vw);max-width:min(1180px,94vw);padding:0}
 #table-viewer .manual-head{padding:20px 24px;border-bottom:1px solid var(--line);margin:0}
 .table-viewer-body{padding:16px 24px 24px;max-height:min(74vh,760px);display:flex;flex-direction:column;min-height:0}

@@ -690,12 +690,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.2.0",
+   "version": "0.3.0",
    "released": "2026-10-28",
    "changes": [
     {
      "kind": "minor",
-     "description": "Report the join on the step that did it. The four things a relate computes -- rows offered, rows related, rows dropped, and the keys that did not match -- were computed from the first release and shown only in the N3 receipt, which this project had already settled nobody opens for this purpose. A relate whose second table was missing a third of its keys therefore produced a table that looked finished: the dropped rows are ABSENT from the result, so the table is internally consistent at any size and cannot be read for what left it. This is where it differs from a pandas left merge, which keeps the unmatched row and writes NaN -- dropping is the better default for a stratification and the worse one for a reader who only sees the result, so the report is not optional. The panel leads with the counts against the offered denominator, names the gap keys rather than totalling them, and says which table each column came from; Quick Look repeats the column origins above each heading, which is what a merge writes as an _x/_y suffix. No computation changed: `relateTable` is untouched and lab check 28 still covers it."
+     "description": "The join becomes a decision the practitioner makes, with its consequence in front of them. Where any key of the first table has no row in the second, the run now REFUSES until they say whether to drop those rows or keep them under a category they name -- the two give different totals and the result cannot be read for which was chosen. The decision is stored with a signature of the gap, after `deduplicate_points`' review decisions, so editing either table or changing the key comparison lapses it instead of letting a stale answer ride on changed rows. A dialog shows the shape of the join as distinct keys on each side, what the join does to each numeric variable as a retained share, the Methods note the step will machine, and a preview of the table that will travel on; nothing is written until Finalize. Keys are now compared through `normaliseName` with punctuation folded by default, as `join_table_to_area` already did -- the weaker join had been the stricter one, and 9 of Snow's 32 sub-districts differ from the published boundaries by a single comma. The shares are the decision-relevant figure and are exact rather than advisory: an inner join multiplies a rate of one variable over another by the ratio of their retained shares, which also runs backwards, so a reader holding an unexpected figure can identify the join that produced it from the receipt alone. And the receipt is now N3 rather than a prose `method` string, which is what it had to be for any of that to leave the application."
     }
    ],
    "breaking": false,

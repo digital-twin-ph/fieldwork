@@ -127,6 +127,59 @@ fw:fromColumn a owl:DatatypeProperty; rdfs:range xsd:string;
 fw:toMeasure a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "What that column is called in the analysis. Author-stated and never inferred from the column name: replacing underscores with spaces is right for \"deaths 1849\" and wrong for \"deaths pump-wells\", and a rule cannot tell which.".
 
+# RELATING TWO TABLES, and the decision a practitioner made about the rows that did not match.
+#
+# The counts were computed from this widget's first release and reached the panel only; a reader of
+# the evidence got nothing. Declared here from 2026-10-28 so the join is machine readable, which
+# matters most for fw:retainedShare: an inner join multiplies a rate of one variable over another
+# by exactly the ratio of their retained shares, so these numbers let somebody reconcile a figure
+# they did not expect against the join that produced it, from the receipt alone.
+fw:TableRelate a owl:Class;
+  rdfs:comment "One relate step: a key column brought from a second table onto the rows of a first, matched on a shared key. Epi Info's RELATE and deliberately not its MERGE -- the row count does not change, because a category brought across can only be a key column.".
+fw:matchedOn a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The key column both tables carry, as the tables spell it.".
+fw:broughtColumn a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The second table's column added to the first table's rows.".
+fw:keyComparison a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "How key cells were compared: \"exact\" after trimming, or \"punctuation-folded\". Stated because it decides WHICH rows matched -- 23 of Snow's 32 sub-districts match the published boundaries exactly and 32 of 32 once punctuation is folded, every difference a single comma.".
+fw:offeredRowCount a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:comment "Rows the first table brought in. The denominator the other counts mean something against, and absent from the result table, which holds only what survived.".
+fw:relatedRowCount a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:comment "Rows that found a match in the second table.".
+fw:droppedRowCount a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:comment "Rows excluded because the second table had no row for their key, at the practitioner's declared choice. Never a default: the run refuses until the choice is made.".
+fw:keptRowCount a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:comment "Rows retained under a declared category despite having no match. Zero unless the practitioner chose to keep them.".
+fw:unmatchedKey a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "One key of the first table that the second had no row for, by its raw spelling. Named rather than counted, because a name is what a practitioner can go and look for in the file.".
+fw:unmatchedDecision a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "What the practitioner decided about the unmatched rows: \"drop\" or \"keep\". Recorded because the two give different totals and the result table cannot be read for which was chosen.".
+# fw:decisionReason is NOT declared here. `deduplicate_points` already declared it in
+# fieldwork.ttl for the same thing -- why a practitioner decided as they did -- and a second
+# declaration would be a second term's worth of maintenance for one meaning.
+fw:declaredCategory a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The category the kept rows carry, in the practitioner's own words. Nothing here invents a stratum the data never measured; a declared one is attributable.".
+fw:retainedShare a owl:ObjectProperty;
+  rdfs:comment "What the join did to one numeric variable, as a blank node carrying fw:ofVariable, fw:offeredTotal, fw:relatedTotal and fw:retainedFraction. One per variable the table holds.".
+fw:VariableShare a owl:Class;
+  rdfs:comment "The totals of one numeric variable before and after a join, and the fraction retained.".
+fw:ofVariable a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "Which numeric variable this share is of: a value of the table's measure key, or its value field where nothing names one.".
+fw:offeredTotal a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:comment "This variable's total over every row the first table offered.".
+fw:relatedTotal a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:comment "This variable's total over the rows that matched.".
+fw:retainedFraction a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:comment "fw:relatedTotal divided by fw:offeredTotal. Absent where the variable totals nothing to divide by. Where two of these differ, the rows that did not match are not a random sample of what is being measured, and a rate of one variable over another is multiplied by the ratio of their fractions.".
+fw:machinedNote a owl:ObjectProperty;
+  rdfs:comment "A note this widget machined for the write-up, as a blank node carrying fw:noteSection and fw:noteText. The sibling of a quoted note: a quoted note carries an author's own sentence, a machined one carries the application's account of what it did.".
+fw:MachinedNote a owl:Class;
+  rdfs:comment "Prose generated by a widget for an IMRAD section of a write-up, rather than for the interface.".
+fw:noteSection a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The IMRAD section the note belongs under. A join maps to \"methods\": it is a thing done to the data, and the count of what it excluded is Methods prose in an epidemiology paper.".
+fw:noteText a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The note itself, written as sentences for a reader of the paper.".
+
 # A SCANNED OR PUBLISHED MAP, drawn as ground. Typed apart from fw:Raster on purpose: a raster
 # carries measurements and may be clipped and sampled, and a plate carries a printer's ink. The
 # port type makes the wrong connection impossible; this makes the distinction readable.

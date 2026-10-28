@@ -1,0 +1,92 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "released": "2026-10-28",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "typescriptType": "ParamsByType['relate_table']"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "id": "urn:fieldwork:widget:relate_table",
+  "nodeType": "relate_table",
+  "version": "0.3.0",
+  "title": "Relate a column from another table",
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      },
+      {
+        "name": "related",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes the table being added to on `records` and the table being read from on `related`, and gives back the first with one more key column. The row count does not change: a category brought across lands on every row that matched."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No mapping to an external vocabulary yet, which is what `status` records. The fw: terms themselves ARE declared from 2026-10-28 and are listed under `emits`: fw:TableRelate with fw:keyComparison, the four row counts, fw:unmatchedKey, fw:unmatchedDecision with fw:declaredCategory and fw:decisionReason, fw:retainedShare over fw:VariableShare, and fw:machinedNote over fw:MachinedNote. fw:decisionReason is reused from the declaration `deduplicate_points` already made, rather than declared twice for one meaning. Until this release the receipt carried only a `method` string, and `receiptText` prints a computation receipt's `input` -- so the counts this widget had computed since 0.1.0 reached the panel and never reached the evidence at all.",
+    "emits": {
+      "classes": [
+        "MachinedNote",
+        "TableRelate",
+        "VariableShare"
+      ],
+      "properties": [
+        "broughtColumn",
+        "decisionReason",
+        "declaredCategory",
+        "droppedRowCount",
+        "keptRowCount",
+        "keyComparison",
+        "machinedNote",
+        "matchedOn",
+        "noteSection",
+        "noteText",
+        "ofVariable",
+        "offeredRowCount",
+        "offeredTotal",
+        "relatedRowCount",
+        "relatedTotal",
+        "retainedFraction",
+        "retainedShare",
+        "unmatchedDecision",
+        "unmatchedKey"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/relate-table.ts",
+      "src/relate-ui.ts",
+      "src/core.ts",
+      "src/app.ts",
+      "src/results.ts",
+      "src/table-viewer.ts"
+    ],
+    "definition": "src/relate-table.ts"
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "The join becomes a decision the practitioner makes, with its consequence in front of them. Where any key of the first table has no row in the second, the run now REFUSES until they say whether to drop those rows or keep them under a category they name -- the two give different totals and the result cannot be read for which was chosen. The decision is stored with a signature of the gap, after `deduplicate_points`' review decisions, so editing either table or changing the key comparison lapses it instead of letting a stale answer ride on changed rows. A dialog shows the shape of the join as distinct keys on each side, what the join does to each numeric variable as a retained share, the Methods note the step will machine, and a preview of the table that will travel on; nothing is written until Finalize. Keys are now compared through `normaliseName` with punctuation folded by default, as `join_table_to_area` already did -- the weaker join had been the stricter one, and 9 of Snow's 32 sub-districts differ from the published boundaries by a single comma. The shares are the decision-relevant figure and are exact rather than advisory: an inner join multiplies a rate of one variable over another by the ratio of their retained shares, which also runs backwards, so a reader holding an unexpected figure can identify the join that produced it from the receipt alone. And the receipt is now N3 rather than a prose `method` string, which is what it had to be for any of that to leave the application."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested against the two tables the South London repository already ships, plus the published sub-district boundaries as a second source -- which is the case the panel exists for: 23 of 32 keys match exactly, 32 of 32 folded, and the retained shares of population and deaths differ (68.2% against 61.2%), so the mortality rate moves 3.109 to 2.787 per 1000 while the result still looks like a complete table of 23 sub-districts. The multiplier identity is asserted exactly, against the published figures rather than against this application's output: 0.8963, and 3.109 x 0.8963 = 2.787 to within 1e-9. Also covered: the refusal when no decision exists, the decision lapsing when the data changes and when the key comparison changes the gap, a stale decision being ignored where nothing is unmatched, a label that is required and a label that collides with a measured category, and the machined note's section, its quoting of keys that contain commas, and its statement of both rate directions. Five browser checks cover the dialog and the receipt. What none of this establishes: that the shares read as intended to an epidemiologist, and that two tables keyed on the same column describe the same subjects -- the match is on the string, and lab check 28 compares the relate itself against pandas."
+  }
+}

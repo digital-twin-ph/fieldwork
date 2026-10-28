@@ -92,65 +92,155 @@ const importTable=async (page,name,csv,{alreadyLong=false}={})=>{
   await expect(page.locator('#table-dialog')).toBeHidden();
 };
 
-test('a dropped row is named by its key, not only counted',{skip},async({page})=>{
-  const errors=collectPageErrors(page);
+/** THE JOIN AS A DECISION, taken in a dialog, with the consequence in front of you.
+ *
+ *  The practitioner, 2026-10-28: *"I expect the views to show up in a Quick Look dialog modal
+ *  where the user can make a decision about the type of join. The modal dialog should also show
+ *  the preview of the joined tables depending on the type of join selected and a Finalize button
+ *  after the selection. The choice should be reflected in the receipts."* And: *"the dialog itself
+ *  should show the machined note, in addition to the visual aid, and the wide table view."*
+ *
+ *  Six rows offered, four matched, two dropped -- and the two variables do NOT fall in step
+ *  (84.6% of cases against 66.7% of population), which is the case the shares exist to show.
+ */
+const buildTwoTables=async page=>{
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('[data-view="workflow"]').click();
-
-  // Three districts, two measures each: six rows offered.
+  // Three districts, two variables each: six rows offered.
   await importTable(page,'cases.csv',
     'district,cases,population\nAlpha,4,1000\nBravo,7,2000\nCharlie,2,1500\n');
-  // Two of them supplied. Charlie is in the first table and not in this one, which is the whole
-  // case: the result will be internally consistent at four rows and will not mention the other two.
+  // Two of them supplied, and one district this table knows that the first does not. Both
+  // directions of disagreement, which is the ordinary case with two sources: Charlie is only in
+  // cases.csv and Delta only here.
   await importTable(page,'supply.csv',
-    'district,supply,connections\nAlpha,North works,120\nBravo,South works,240\n',
+    'district,supply,connections\nAlpha,North works,120\nBravo,South works,240\nDelta,West works,90\n',
     {alreadyLong:true});
-
   await page.locator('[data-add="relate_table"]').click();
-  // By position, because `table_input` has no node-label control: both of these nodes are
-  // labelled "Tabular data" and the port select offers them in canvas order. That the panel can
-  // still tell them apart -- by filename, which is the only name they have been given -- is the
-  // thing asserted below.
   await page.locator('#relate-records').selectOption({index:1});
   await page.locator('#relate-related').selectOption({index:2});
   await page.locator('#relate-on').selectOption('district');
   await page.locator('#relate-bring').selectOption('supply');
-
-  // A workflow with nothing to show is not ready to run, so the relate gets a reader.
   await page.locator('[data-add="table_output"]').click();
   const relateId=await page.locator('#table-table option')
     .filter({hasText:'Relate a column'}).first().getAttribute('value');
   await page.locator('#table-table').selectOption(relateId);
+};
+const selectRelate=page=>
+  page.locator('.react-flow__node[data-id^="relate_table-"]').dispatchEvent('click');
+
+test('a join with unmatched rows refuses to run until the practitioner decides',{skip},async({page})=>{
+  const errors=collectPageErrors(page);
+  await buildTwoTables(page);
+  await page.locator('#run-button').click();
+  // REFUSED, not defaulted. The two answers give different totals and the result cannot be read
+  // for which one you got, so the application does not choose.
+  await expect(page.locator('#workflow-state')).toContainText('Run failed',{timeout:60000});
+
+  await selectRelate(page);
+  const inspector=page.locator('#inspector-content');
+  await expect(inspector).toContainText('This join needs a decision before it can run');
+  // The shape is on the node even though no run succeeded: the dialog has to be able to draw the
+  // thing being decided, so the tables are resolved without a run.
+  await expect(inspector).toContainText('2 districts in both');
+  await expect(inspector).toContainText('1 only in cases.csv');
+  await expect(inspector).toContainText('1 only in supply.csv');
+  await expect(page.locator('#relate-open-join')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('the dialog shows the shape, the effect on each variable, the note and the table',{skip},async({page})=>{
+  const errors=collectPageErrors(page);
+  await buildTwoTables(page);
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run failed',{timeout:60000});
+  await selectRelate(page);
+  await page.locator('#relate-open-join').click();
+  const dialog=page.locator('#relate-join');
+  await expect(dialog).toBeVisible();
+
+  // THE VISUAL AID: three segments, because one key is only on each side.
+  expect(await dialog.locator('.overlap-bar .overlap-seg').count()).toBe(3);
+  await expect(dialog.locator('.overlap-both')).toContainText('2');
+
+  // THE EFFECT ON THE NUMERIC VARIABLES, and the exact multiplier that follows from the shares.
+  const shares=dialog.locator('.relate-shares');
+  await expect(shares).toContainText('cases');
+  await expect(shares).toContainText('population');
+  await expect(shares).toContainText('84.6%');
+  await expect(shares).toContainText('66.7%');
+  await expect(dialog).toContainText('1.2692');
+  await expect(dialog).toContainText('do not drop in step');
+
+  // THE MACHINED NOTE, which is Methods prose and names the key that did not match.
+  const note=dialog.locator('.machined-note');
+  await expect(note).toContainText('supply was brought from');
+  await expect(note).toContainText('Charlie');
+  await expect(note).toContainText('84.6% of cases');
+
+  // THE WIDE TABLE VIEW of the join: the brought column beside the variables, not a long list.
+  const preview=dialog.locator('.relate-preview');
+  await expect(preview).toContainText('supply');
+  await expect(preview).toContainText('North works');
+
+  // CHOOSING THE OTHER JOIN redraws all three.
+  await dialog.locator('input[value="keep"]').check();
+  await expect(dialog).toContainText('Name for the category');
+  await dialog.locator('#relate-join-label').fill('Supply not recorded');
+  await dialog.locator('#relate-join-label').blur();
+  await expect(dialog).toContainText('every row kept');
+  await expect(dialog.locator('.relate-preview')).toContainText('Supply not recorded');
+  await expect(dialog.locator('.machined-note'))
+    .toContainText('retained and recorded as \u201cSupply not recorded\u201d');
+  expect(errors).toEqual([]);
+});
+
+test('finalizing drops the rows, names them, and the choice reaches the receipt',{skip},async({page})=>{
+  const errors=collectPageErrors(page);
+  await buildTwoTables(page);
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run failed',{timeout:60000});
+  await selectRelate(page);
+  await page.locator('#relate-open-join').click();
+  await page.locator('#relate-join-reason').fill('Charlie has no supply record');
+  await page.locator('#relate-join-finalize').click();
+  await expect(page.locator('#relate-join')).toBeHidden();
 
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
-
-  // Back to the step that did the join: the panel belongs on it, not on whichever tab is open.
-  // Forced, because nodes added from the palette land stacked on a blank canvas and the output
-  // node sits over this one. Selecting the node is the point; where it was dropped is not.
-  await page.locator('.react-flow__node[data-id^="relate_table-"]').dispatchEvent('click');
+  await selectRelate(page);
   const inspector=page.locator('#inspector-content');
-  await expect(inspector).toContainText('This run');
-  // THE FOUR NUMBERS, against the denominator that makes them mean something.
+  await expect(inspector).toContainText('Decided: drop the unmatched rows');
+  await expect(inspector).toContainText('Charlie has no supply record');
   const summary=inspector.locator('.dedup-summary');
   await expect(summary).toContainText('Offered');
   await expect(summary).toContainText('6');
-  await expect(summary).toContainText('Related');
   await expect(summary).toContainText('4');
-  await expect(summary).toContainText('Dropped');
-  // The key BY NAME, which is the thing a practitioner can act on. "Two rows dropped" is a
-  // number; "Charlie" is a table to go and look at.
   await expect(inspector).toContainText('2 rows left the table');
-  await expect(inspector).toContainText('Charlie');
   await expect(inspector).toContainText('4 of 6 rows');
-  await expect(inspector).not.toContainText('No row was dropped');
-  // And which half of the row came from where, by filename rather than by "Tabular data" twice.
-  await expect(inspector).toContainText('From cases.csv: district, measure');
-  await expect(inspector).toContainText('Brought from supply.csv');
-  await expect(inspector).toContainText('North works');
+  // THE METHODS NOTE the run machined, on the step, and the choice inside it.
+  await expect(inspector.locator('.machined-note')).toContainText('were excluded');
+  await expect(inspector.locator('.machined-note')).toContainText('Charlie has no supply record');
+
+  // AND IN THE RECEIPT, machine readable, which is where a reader checking the numbers goes.
+  //
+  // `receiptText` prints a computation receipt's `input`, so a receipt carrying only `method` put
+  // nothing in the evidence -- which is how this widget shipped 0.1.0 and 0.2.0. Asserted as the
+  // triples rather than as prose for that reason.
+  await page.locator('[data-view="rules"]').click();
+  const n3=page.locator('#n3-preview');
+  await expect(n3).toContainText('a fw:TableRelate');
+  await expect(n3).toContainText('fw:keyComparison "punctuation-folded"');
+  await expect(n3).toContainText('fw:unmatchedDecision "drop"');
+  await expect(n3).toContainText('fw:unmatchedKey "Charlie"');
+  await expect(n3).toContainText('fw:decisionReason "Charlie has no supply record"');
+  // THE SHARES, which are what let a reader reconcile a figure they did not expect against the
+  // join that produced it -- outside this application, later, from the receipt alone.
+  await expect(n3).toContainText('fw:ofVariable "cases"');
+  await expect(n3).toContainText('fw:retainedFraction');
+  await expect(n3).toContainText('fw:noteSection "methods"');
   expect(errors).toEqual([]);
 });
 

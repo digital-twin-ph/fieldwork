@@ -1,4 +1,5 @@
 import {isRecord} from './guards.js';
+import {readNotes} from './notes.js';
 
 /** A project is one investigation. One subject, several questions, one workflow per question.
  *
@@ -49,6 +50,12 @@ export interface Project {
   schema:'fieldwork/project/2'; id:string; name:string; subject:string; workflows:string[];
   /** When any workflow in it last changed. Absent on a project carried over. */
   changedAt?:string;
+  /** THE NOTES THE WRITE-UP IS MADE OF, which belong to the project rather than to a workflow.
+   *
+   *  South London's six workflows are six analyses of one investigation, and a sentence of Snow's
+   *  is not about any one of them. Machined notes are NOT here: a run produces them and the node
+   *  that produced them owns them, so the notes surface reads these and the run's together. */
+  notes?:import('./notes.js').Note[];
   /** What the project held when that export was performed, so what has been added since can be
    *  said in the units it cost to make: workflows, widgets, and megabytes of data. */
   exportedWork?:{workflows:number;nodes:number;bytes:number};
@@ -163,9 +170,14 @@ export function validateProject(raw:unknown):Project{
   const work=isRecord(raw.exportedWork)
     ?{workflows:count(raw.exportedWork.workflows),nodes:count(raw.exportedWork.nodes),bytes:count(raw.exportedWork.bytes)}
     :undefined;
+  // Notes are read tolerantly and a note that cannot be read is DROPPED, never coerced: putting
+  // somebody's sentence under a heading they did not choose is worse than leaving it out. A project
+  // that carries none is the ordinary case and says so by having no field.
+  const {notes}=readNotes(raw.notes);
   return {schema:'fieldwork/project/2',id:raw.id,name:raw.name,subject:raw.subject,
     workflows:[...new Set(raw.workflows as string[])],
-    ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(work?{exportedWork:work}:{})};
+    ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(work?{exportedWork:work}:{}),
+    ...(notes.length?{notes}:{})};
 }
 
 /** The input widgets whose payload two workflows can genuinely share.

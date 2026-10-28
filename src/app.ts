@@ -33,6 +33,9 @@ import {rulesetExample} from './ruleset-example.js';
 import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openTableViewer,tableViewOf} from './table-viewer.js';
+import {openRelateJoin} from './relate-ui.js';
+import {relateShape} from './relate-table.js';
+import {wideDataTable} from './data-table.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
 import {settingNamed} from './authored-rules.js';
@@ -57,7 +60,7 @@ import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
-import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,shownMode,IncompleteWorkflow} from './core.js';
+import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,shownMode,portSourceName,IncompleteWorkflow} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
@@ -1503,24 +1506,26 @@ function recordsPanel(nodeId:string,data:{features:{id?:string|number;properties
  *  button."* Three different controls existed -- a study-area form, the catchment inspector's
  *  shared field, and a plain `source-label` input on the input widgets -- and a fourth widget had
  *  none at all. One shape now, so a practitioner learns the gesture once. */
-/** WHICH TABLE IS ON THIS PORT, by the name a reader of this canvas would use.
+/** THE TABLE ON A PORT, resolved without a successful run where that is possible.
  *
- *  The node's label, except where it is still the palette's default and a tabular input has a
- *  filename. `table_input` has no label control of its own, so two imported tables are both
- *  "Tabular data" until a project file renames them -- and a relate panel reading "from Tabular
- *  data, brought from Tabular data" names neither. The filename is then the only name the
- *  practitioner has actually given them.
+ *  The join dialog has to draw the thing being decided, and from 0.3.0 the run REFUSES while the
+ *  decision is unmade -- so there is no run result to read, which is exactly when the practitioner
+ *  needs the dialog. A `table_input` carries its table in its own params, melting its source file
+ *  the way the run would so the dialog sees what the run will see. Anything further upstream needs
+ *  a run that got that far, and null says so rather than drawing an empty frame.
  */
-function portSourceName(w:Workflow,nodeId:string,port:string,fallback:string):string{
+function tableOnPort(w:Workflow,nodeId:string,port:string):import('./data-table.js').DataTable|null{
   const edge=w.edges.find(e=>e.to===nodeId&&e.port===port);
   const from=edge&&w.nodes.find(x=>x.id===edge.from);
-  if(!from)return fallback;
-  const label=from.params.label?.trim();
+  if(!from)return null;
   if(from.type==='table_input'){
-    const file=from.params.source?.filename?.trim();
-    if(file&&(!label||label===TYPES.table_input.title))return file;
+    const p=from.params;
+    if(p.convertOnRun&&p.sourceTable&&p.wide)
+      return wideDataTable(p.sourceTable,
+        {...p.wide,valueField:p.valueField,...(p.unit?{unit:p.unit}:{})});
+    return p.data.rows.length?p.data:null;
   }
-  return label||TYPES[from.type].title;
+  return result?.tables?.[from.id]??null;
 }
 function labelForm(id:string,caption:string,value:string,maxLength=60):string{
   return `<form class="field" data-label-form="${id}"><label class="field-label" for="${id}">${caption}</label>`
@@ -1846,6 +1851,60 @@ function renderInspector(){
       +(Object.keys(there).length&&!shared.length
         ?'<div class="notice notice-warning">These two tables share no key column, so there is nothing to match on. Check that both carry the same kind of key.</div>':'')
       +'<div class="notice">A second table giving one key two different values is refused rather than resolved, because choosing between them would produce a grouping that is wrong in a way no total reveals. A key the second table does not carry is named in the evidence and those rows are dropped, since an invented “unknown” would put a stratum in your table that nobody measured. The match is on the exact text: this is Epi Info’s RELATE and not its MATCH.</div>';
+    // THE JOIN AS A DECISION, with the shape of it on the node and the deciding in a dialog.
+    //
+    // The band here is the glance -- the Inspector is 292px and a bar with three numbers fits it.
+    // The decision does not fit, and from 2026-10-21 this project has a standing answer for that:
+    // *"this really needs to be a modal dialog so the view is not limited by the inspector
+    // panel."* So the band says what the shape is and whether a decision is outstanding, and the
+    // dialog is where the preview and the choice live.
+    const joinLeft=tableOnPort(workflow,n.id,'records');
+    const joinRight=tableOnPort(workflow,n.id,'related');
+    if(joinLeft&&joinRight&&p.on&&p.bring){
+      const request={on:p.on,bring:p.bring,
+        ...(p.normalisation?{normalisation:p.normalisation}:{}),
+        ...(p.measureKey?{measureKey:p.measureKey}:{})};
+      let planned:ReturnType<typeof relateShape>|{refusal:string};
+      try{planned=relateShape(joinLeft,joinRight,request);}
+      catch(error){planned={refusal:errorMessage(error)};}
+      content+='<div class="inspector-divider"></div><span class="inspector-section">The join</span>';
+      if('refusal' in planned){
+        content+=`<div class="notice notice-warning">${esc(planned.refusal)}</div>`;
+      }else{
+        const {leftOnly,matched,rightOnly}=planned.overlap;
+        const total=leftOnly+matched+rightOnly||1;
+        const seg=(count:number,kind:string)=>count
+          ?`<div class="overlap-seg overlap-${kind}" style="flex:0 0 ${Math.max(count/total*100,7)}%">`
+            +`<strong>${count.toLocaleString()}</strong></div>`:'';
+        const decided=p.unmatched&&p.unmatched.signature===planned.signature?p.unmatched:undefined;
+        content+=`<div class="overlap-bar">${seg(leftOnly,'left')}${seg(matched,'both')}`
+          +`${seg(rightOnly,'right')}</div>`
+          +`<p class="muted">${matched.toLocaleString()} ${esc(p.on)}`
+          +`${matched===1?'':'s'} in both`
+          +(leftOnly?`, ${leftOnly.toLocaleString()} only in ${esc(portSourceName(workflow,n.id,'records','the first table'))}`:'')
+          +(rightOnly?`, ${rightOnly.toLocaleString()} only in ${esc(portSourceName(workflow,n.id,'related','the second table'))}`:'')
+          +`. Keys compared ${planned.normalisation==='fuzzy'?'with punctuation folded':'exactly'}.</p>`
+          +(!planned.overlap.gaps.length
+            ?'<div class="rule-preview">Nothing was left out, so there is no decision to make.</div>'
+            :decided
+              ?`<div class="rule-preview">Decided: `
+                +(decided.decision==='drop'
+                  ?`drop the unmatched rows`
+                  :`keep them as \u201c${esc(decided.label??'')}\u201d`)
+                +(decided.reason?` \u2014 ${esc(decided.reason)}`:'')+'.</div>'
+              :`<div class="notice notice-warning">This join needs a decision before it can run: `
+                +`${planned.overlap.gaps.length} key`
+                +`${planned.overlap.gaps.length===1?'':'s'} in the first table `
+                +`${planned.overlap.gaps.length===1?'has':'have'} no row in the second, and `
+                +`dropping them gives different totals from keeping them.</div>`)
+          +'<div class="inspector-actions"><button id="relate-open-join" class="button primary">'
+          +'\u2922 Open the join</button></div>';
+      }
+    }else if(p.on&&p.bring){
+      content+='<div class="inspector-divider"></div><span class="inspector-section">The join</span>'
+        +'<p class="description">Run the workflow to look at the shape of this join. The tables '
+        +'above this step are computed by a run, so there is nothing to measure yet.</p>';
+    }
     // WHAT THE JOIN DID, before the table it produced.
     //
     // The four numbers were computed from the first commit of `relate-table.ts` and shown
@@ -1886,6 +1945,14 @@ function renderInspector(){
           :`<div class="rule-preview">Every ${esc(relation.on)} in ${esc(left)} was found in `
             +`${esc(right)}. No row was dropped, so a total over this table is a total over the `
             +`whole of ${esc(left)}.</div>`)
+        // THE NOTE THE RUN MACHINED, where the run made one. The dialog shows the note a
+        // prospective choice would produce; this is the one that actually went into the evidence.
+        +((result?.machined?.[n.id]??[]).length
+          ?'<span class="inspector-section">Methods note</span>'
+            +'<div class="machined-note">'
+            +(result?.machined?.[n.id]??[]).map(note=>`<p>${esc(note.text)}</p>`).join('')
+            +'</div>'
+          :'')
         +`<span class="inspector-section">Columns</span>`
         +`<p class="muted">From ${esc(left)}: ${esc(relation.carried.join(', '))}. `
         +`Brought from ${esc(right)}: <strong>${esc(relation.bring)}</strong>`
@@ -2706,6 +2773,38 @@ function renderInspector(){
           +`because they are not in this table`:' and none dropped')+'.';
     }
     openTableViewer(view,esc);
+  });
+  // DECIDING THE JOIN. The dialog is given the two tables and a way to re-plan, so changing the
+  // comparison or the category name inside it redraws the consequence without touching the
+  // workflow. Only Finalize writes, and what it writes is the practitioner's choice together with
+  // a signature of the gap it was made about.
+  optionalElement('#relate-open-join')?.addEventListener('click',()=>{
+    const node=workflow.nodes.find(x=>x.id===n.id);
+    if(node?.type!=='relate_table')return;
+    const p=node.params;
+    const left=tableOnPort(workflow,n.id,'records'),right=tableOnPort(workflow,n.id,'related');
+    if(!left||!right)return;
+    openRelateJoin({
+      title:`${p.label||TYPES[n.type].title} \u00b7 the join`,
+      leftLabel:portSourceName(workflow,n.id,'records','the first table'),
+      rightLabel:portSourceName(workflow,n.id,'related','the second table'),
+      on:p.on,bring:p.bring,
+      normalisation:p.normalisation??'fuzzy',
+      ...(p.unmatched?{settled:p.unmatched}:{}),
+      shapeFor:(normalisation,label)=>{
+        try{
+          return relateShape(left,right,{on:p.on,bring:p.bring,normalisation,
+            ...(p.measureKey?{measureKey:p.measureKey}:{}),
+            ...(label!==undefined?{unmatched:{decision:'keep' as const,label,signature:''}}:{})});
+        }catch(error){return {refusal:errorMessage(error)};}
+      },
+      onFinalize:choice=>{change(w=>{
+        const target=getNode(w,n.id,'relate_table');
+        target.params.normalisation=choice.normalisation;
+        if(choice.unmatched)target.params.unmatched=choice.unmatched;
+        else delete target.params.unmatched;
+      },{requirePersistence:true});},
+    },esc);
   });
   document.querySelectorAll<HTMLButtonElement>('[data-raster-step]').forEach(button=>button.onclick=()=>{selected=button.dataset.rasterStep;render();});
   optionalElement('#manage-references')?.addEventListener('click',()=>{let baseline=JSON.stringify(n.references||[]);openEvidenceEditor(n,refs=>{const current=workflow.nodes.find(x=>x.id===n.id);if(!current||JSON.stringify(current.references||[])!==baseline)throw new Error('The node changed while editing. Close and reopen its references.');const saved=change(w=>{required(w.nodes.find(x=>x.id===n.id)).references=structuredClone(refs);},{requirePersistence:true});if(saved)baseline=JSON.stringify(refs);return saved;});});

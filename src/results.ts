@@ -153,6 +153,13 @@ export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; proven
    *  interface has to show, and for a sharper reason than the first: the rows a relate drops are
    *  absent from the table it hands on, so the outcome cannot be read off the data. */
   relations?:Record<string,import('./relate-table.js').RelateOutcome>;
+  /** NOTES THE WIDGETS MACHINED, by the node that machined them: the application's own account of
+   *  what it did, written for an IMRAD section rather than for a panel.
+   *
+   *  The practitioner, 2026-10-28, on why transparency about a join is not a panel feature: *"this
+   *  should be in fact a machined note from the widget."* Sibling of the quoted notes the South
+   *  London repository carries -- Snow's own sentences are quoted, this is machined. */
+  machined?:Record<string,import('./relate-table.js').MachinedNote[]>;
   /** The table each step produced, by node id, for the steps that produced one.
    *
    *  Only an output widget makes a result tab, so without this a table computed in the middle of

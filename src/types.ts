@@ -210,7 +210,17 @@ export interface ParamsByType {
   rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   derive_value:{label:string;keyColumn:string;left:string;operator:import('./derive-value.js').Operator;right:string;name:string};
   select_rows:{label:string;keyColumn:string;values:string[]};
-  relate_table:{label:string;on:string;bring:string};
+  relate_table:{label:string;on:string;bring:string;
+    /** How key cells are compared, in `join_table_to_area`'s vocabulary and through the same
+     *  `normaliseName`. Absent means `fuzzy`, which is that widget's default too. */
+    normalisation?:'exact'|'fuzzy';
+    /** The key column whose values name the numeric variables, so the join's effect is reported
+     *  per variable. The same pivot `rate` names `measureKey`. */
+    measureKey?:string;
+    /** WHAT THE PRACTITIONER DECIDED about the rows that did not match. Required by the run where
+     *  anything is unmatched -- the choice changes the totals, so the application does not make
+     *  it. Carries a signature of the gap, so editing the data or the comparison lapses it. */
+    unmatched?:import('./relate-table.js').UnmatchedDeclaration};
   group_table:{label:string;by:string[]};
   two_by_two:{label:string;exposureColumn:string;exposed:string;unexposed:string;outcomeColumn:string;caseValue:string;nonCaseValue:string;level:90|95|99};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {crossTab,CROSSTAB_MAX_COLUMNS} from '../build/data-table-ui.js';
+import {crossTab,wideFrame,CROSSTAB_MAX_COLUMNS} from '../build/data-table-ui.js';
 
 /** THE EPIDEMIOLOGIST'S 2x2 IS PREDICTABLE, and this is the shape it expects.
  *
@@ -119,4 +119,82 @@ test('an assertion cannot conjure a total over an unknown cell',()=>{
   const grid=crossTab(table,{assertCommensurable:true});
   assert.equal(grid.rows[0].total,null,'a row holding an unknown has an unknown total');
   assert.equal(grid.grandTotal,null);
+});
+
+/* ---- the frame: a table as an epidemiologist meets one everywhere else ----
+ *
+ *  The practitioner, 2026-10-27: "pandas does not show you a long table", and on the relate
+ *  result specifically: "I want to see a wider table with rows correctly linked on the linking
+ *  key ... not in JSON."
+ *
+ *  `crossTab` is a tabulation of two keys with margins and stays the better view where it
+ *  applies. Everything else fell through to a paged list of key-value pairs.
+ */
+const frameOf=rows=>({kind:'data-table',keys:Object.keys(rows[0].key),valueField:'count',
+  rows,rowCount:rows.length,missingValueCount:0});
+
+test('a key every subject carries in full is an axis; one they carry once describes them',()=>{
+  // Snow's shape: each sub-district has both measures and exactly one supplier.
+  const table=frameOf([
+    {key:{sub:'A',supply:'S&V',measure:'population'},value:19709},
+    {key:{sub:'A',supply:'S&V',measure:'deaths'},value:125},
+    {key:{sub:'B',supply:'Lambeth',measure:'population'},value:8015},
+    {key:{sub:'B',supply:'Lambeth',measure:'deaths'},value:53}]);
+  const frame=wideFrame(table);
+  assert.equal(frame.subject,'sub');
+  assert.deepEqual(frame.attributes,['supply']);
+  assert.deepEqual(frame.columns,['population','deaths']);
+  assert.deepEqual(frame.rows.map(r=>[r.label,...r.attributes,...r.cells]),
+    [['A','S&V',19709,125],['B','Lambeth',8015,53]]);
+});
+
+test('a measure key holding ONE value is still an axis, which cardinality cannot tell',()=>{
+  // South London's contingency Table XII: one value column melted, so `measure` has a single
+  // value and looks exactly like an attribute until you ask whether every subject has it.
+  const table=frameOf([
+    {key:{sub:'A',supply:'S&V',measure:'deaths 1854'},value:371},
+    {key:{sub:'B',supply:'Lambeth',measure:'deaths 1854'},value:161}]);
+  const frame=wideFrame(table);
+  assert.deepEqual(frame.attributes,['supply'],'the supplier describes the sub-district');
+  assert.deepEqual(frame.columns,['deaths 1854'],'the measure stays the axis');
+  assert.deepEqual(frame.rows[0].cells,[371]);
+});
+
+test('position cannot decide it either, because relate appends its brought column last',()=>{
+  // `relateTable` returns [...left.keys, bring], so the LAST key is an attribute here and the
+  // measure key sits in the middle. The melt puts the measure last. Both shapes must work.
+  const table=frameOf([
+    {key:{sub:'A',measure:'population',supply:'S&V'},value:19709},
+    {key:{sub:'A',measure:'deaths',supply:'S&V'},value:125},
+    {key:{sub:'B',measure:'population',supply:'Lambeth'},value:8015},
+    {key:{sub:'B',measure:'deaths',supply:'Lambeth'},value:53}]);
+  const frame=wideFrame(table);
+  assert.deepEqual(frame.attributes,['supply']);
+  assert.deepEqual(frame.columns,['population','deaths']);
+});
+
+test('a table that resolves to no single axis returns null rather than guessing',()=>{
+  // Two keys that each vary WITHIN a subject: both are axes and nothing says which one names
+  // the variables, so there is no frame to draw.
+  const table=frameOf([
+    {key:{sub:'A',year:'1849',measure:'deaths'},value:283},
+    {key:{sub:'A',year:'1849',measure:'population'},value:19709},
+    {key:{sub:'A',year:'1854',measure:'deaths'},value:371},
+    {key:{sub:'A',year:'1854',measure:'population'},value:19800},
+    {key:{sub:'B',year:'1849',measure:'deaths'},value:157},
+    {key:{sub:'B',year:'1849',measure:'population'},value:8000},
+    {key:{sub:'B',year:'1854',measure:'deaths'},value:161},
+    {key:{sub:'B',year:'1854',measure:'population'},value:8015}]);
+  assert.equal(wideFrame(table),null);
+  assert.equal(wideFrame(frameOf([{key:{only:'A'},value:1}])),null,'one key is already a list');
+});
+
+test('an absent cell is drawn as absent, and a null as unknown',()=>{
+  const table=frameOf([
+    {key:{sub:'A',measure:'population'},value:19709},
+    {key:{sub:'A',measure:'deaths'},value:null},
+    {key:{sub:'B',measure:'population'},value:8015}]);
+  const frame=wideFrame(table);
+  assert.deepEqual(frame.rows[0].cells,[19709,null],'null is a cell the file left empty');
+  assert.deepEqual(frame.rows[1].cells,[8015,undefined],'undefined is a row that has no such cell');
 });

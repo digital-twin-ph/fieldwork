@@ -428,6 +428,85 @@ export const CROSSTAB_MAX_COLUMNS=12;
  *  those is a table nobody has shown us yet. */
 export const CROSSTAB_MIN_DENSITY=0.5;
 
+/** A FLAT WIDE VIEW of any table: the frame, not a tabulation.
+ *
+ *  The practitioner, 2026-10-27, on what an epidemiologist meets everywhere else: *"If I have a
+ *  widget that links two wide tables, I want to see a wider table with rows correctly linked on
+ *  the linking key. It's easier for epidemiologists to view the relate table result that way, not
+ *  in JSON."* And on the shape itself: *"pandas does not show you a long table."*
+ *
+ *  `crossTab` stays and is the better view where it applies -- *"2x2 tables is OK, epidemiologists
+ *  feel at home with that"* -- but it is a TABULATION of exactly two keys with margins. A table
+ *  with any other number of keys fell through to a paged list of key-value pairs, which is the
+ *  internal long shape shown to somebody who never asked for it. `relate_table` returns
+ *  `[...left.keys, bring]`, so the one table a practitioner opens to check a join worked was the
+ *  one they could not read it in.
+ *
+ *  WHICH KEYS ARE AXES, decided by COMPLETENESS. Every subject carries every measure by
+ *  construction and exactly one of each attribute: Snow's 32 sub-districts each have all seven of
+ *  Table VIII's variables, and each has one water supplier. So a key whose values repeat in full
+ *  for every subject is an axis, and one that does not describes the subject and rides alongside
+ *  it as a column.
+ *
+ *  Two simpler rules were tried against the real tables and both failed:
+ *
+ *    POSITION. The melt puts the measure key last and `relateTable` appends the brought column
+ *    after it, so "the last key" is the measure in one table and an attribute in the next.
+ *    CARDINALITY. A melt of a single value column gives a measure key with ONE value, which looks
+ *    exactly like an attribute -- South London's contingency Table XII is that table -- until you
+ *    ask whether every subject has it.
+ *
+ *  Returns null rather than guessing where the keys do not resolve to one axis. A caller then
+ *  shows the rows, which is honest about a table nobody can pivot. */
+export interface WideFrame {
+  subject:string; attributes:string[]; columns:string[];
+  rows:{label:string; attributes:string[]; cells:(number|null|undefined)[]}[];
+}
+export function wideFrame(table:DataTable):WideFrame|null{
+  const keys=table.keys;
+  if(keys.length<2)return null;
+  const distinct=(k:string)=>new Set(table.rows.map(r=>String(r.key[k]))).size;
+  // The subject identifies a row most finely.
+  const subject=[...keys].sort((a,b)=>distinct(b)-distinct(a))[0];
+  /** A key DESCRIBES the subject where every subject has exactly one of its values, and it has
+   *  more than one value to give. Both halves are load-bearing:
+   *
+   *  ONE PER SUBJECT, rather than "every subject has them all". Requiring the full set made a
+   *  single missing cell disqualify the measure axis, so any ragged table -- Dulwich's empty 1854
+   *  cell is one -- fell back to the list this view exists to replace.
+   *
+   *  MORE THAN ONE VALUE, because a key holding one value throughout cannot be describing
+   *  anything: it distinguishes no subject from another. That is a melt of a single column, where
+   *  the measure key carries one name, and it is the axis. */
+  const describesSubject=(k:string)=>{
+    if(distinct(k)<2)return false;
+    const perSubject=new Map<string,Set<string>>();
+    for(const r of table.rows){
+      const s=String(r.key[subject]);
+      if(!perSubject.has(s))perSubject.set(s,new Set());
+      perSubject.get(s)!.add(String(r.key[k]));
+    }
+    return [...perSubject.values()].every(set=>set.size===1);
+  };
+  const others=keys.filter(k=>k!==subject);
+  const axes=others.filter(k=>!describesSubject(k)),attributes=others.filter(describesSubject);
+  if(axes.length!==1)return null;
+  const columnAxis=axes[0];
+  const columns=[...new Set(table.rows.map(r=>String(r.key[columnAxis])))];
+  if(!columns.length||columns.length>CROSSTAB_MAX_COLUMNS)return null;
+  const order:string[]=[],byRow=new Map<string,WideFrame['rows'][number]>();
+  for(const r of table.rows){
+    const id=String(r.key[subject]);
+    if(!byRow.has(id)){
+      byRow.set(id,{label:id,attributes:attributes.map(k=>String(r.key[k])),
+        cells:columns.map(()=>undefined)});
+      order.push(id);
+    }
+    byRow.get(id)!.cells[columns.indexOf(String(r.key[columnAxis]))]=r.value;
+  }
+  return {subject,attributes,columns,rows:order.map(id=>byRow.get(id)!)};
+}
+
 export function crossTab(table:DataTable,{assertCommensurable=false}={}):{rowKey:string;colKey:string;columns:string[];
   rows:{label:string;cells:(number|null|undefined)[];total:number|null}[];
   columnTotals:(number|null)[];grandTotal:number|null}|null{
@@ -485,6 +564,29 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
   // The grid, where the shape allows one and nothing is being searched -- a filter is about
   // finding a row, and a matrix has no rows to page through in the same sense.
   const grid=query?null:crossTab(table,{assertCommensurable:assertTotals});
+  // THE FRAME, where a tabulation is not available and nothing is being searched. Before this a
+  // table with any number of keys but two fell through to the paged list of key-value pairs
+  // below -- the internal long shape, shown to a reader who never asked for it. A relate result
+  // has three keys, so the table a practitioner opens to check a join was the one they could
+  // least read it in.
+  const frame=grid||query?null:wideFrame(table);
+  if(frame)
+    return `<div class="table-meta muted">${frame.rows.length} rows \u00b7 `
+      +`${esc(frame.subject)}${frame.attributes.length?' with '+frame.attributes.map(esc).join(', '):''}`
+      +` \u00b7 ${frame.columns.length} variable${frame.columns.length===1?'':'s'} \u00b7 value in ${unit}</div>`
+      +'<div class="table-scroll"><table class="wide-frame"><thead><tr>'
+      +`<th scope="col">${esc(frame.subject)}</th>`
+      // An attribute is marked, because it describes the subject rather than measuring it and a
+      // reader totalling a column needs to know which columns are numbers.
+      +frame.attributes.map(a=>`<th scope="col" class="frame-attribute">${esc(a)}</th>`).join('')
+      +frame.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')
+      +'</tr></thead><tbody>'
+      +frame.rows.map(r=>`<tr><th scope="row">${esc(r.label)}</th>`
+        +r.attributes.map(a=>`<td class="frame-attribute">${esc(a)}</td>`).join('')
+        +r.cells.map(v=>`<td>${v===undefined?'<span class="muted">\u2014</span>'
+          :v===null?'<span class="muted">unknown</span>':esc(v)}</td>`).join('')
+        +'</tr>').join('')
+      +'</tbody></table></div>';
   if(grid)
     return `<div class="table-meta muted">${table.rowCount} cells · ${esc(grid.rowKey)} by ${esc(grid.colKey)}`
       +` · value in ${unit}</div>`

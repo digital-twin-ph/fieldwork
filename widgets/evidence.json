@@ -384,9 +384,10 @@
     "snow-extent",
     "snow-geoprivacy",
     "snow-isochrone",
-    "snow-voronoi"
+    "snow-voronoi",
+    "south-london-1854"
    ],
-   "exampleUseCount": 10,
+   "exampleUseCount": 11,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

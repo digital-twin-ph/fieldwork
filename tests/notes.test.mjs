@@ -100,3 +100,24 @@ test('the running count is over what a reader would read',()=>{
   assert.equal(extent.words,5);
   assert.equal(extent.characters,'two words'.length+'three more words'.length);
 });
+
+/** A MODERN GEOMETRY STANDING IN FOR A HISTORICAL ONE is the first machined `limitation`, on the
+ *  ruling that *"If it's a modern polygon, a machined note for it goes under Limitations (notes)"*.
+ *  Both halves are pinned here: that it reaches Discussion under that function, and that filing it
+ *  under a section called `Limitations` is refused rather than coerced. */
+test('a machined limitation is a function of Discussion, and a Limitations section is refused',()=>{
+  const {notes,unreadable}=readNotes([
+    {kind:'machined',section:'Discussion',fn:'limitation',nodeId:'thames',
+      text:'The waterway polygon is modern; the 1854 banks differ, the Victoria Embankment '
+        +'narrowing the central river from 1865.'},
+    {kind:'machined',section:'Limitations',text:'This one names a part the body does not have.'},
+  ]);
+  assert.equal(notes.length,1,'the note under a section outside the body is dropped');
+  assert.equal(unreadable,1,'and the drop is counted, so a caller can say so');
+  assert.equal(notes[0].fn,'limitation');
+
+  const discussion=groupNotes(notes).find(part=>part.section==='Discussion');
+  assert.equal(discussion.count,1);
+  assert.deepEqual(discussion.groups.map(g=>g.fn),['limitation'],
+    'grouped by the function, which needed no change to the closed set of body parts');
+});

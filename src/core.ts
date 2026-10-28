@@ -55,6 +55,7 @@ import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAcc
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
+import {polygonLayer,polygonLayerFacts} from './polygon-layer.js';
 import type {MachinedNote} from './notes.js';
 import {groupTable} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt} from './two-by-two.js';
@@ -105,6 +106,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   select_rows:{title:'Select rows by value',group:'Summaries',icon:'⊂',color:'teal',
     description:'Keep only the rows whose key column holds one of the values you name, in that order',
     inputs:[['records','table']],output:'table'},
+  polygon_input:{title:'Polygon layer',group:'Sources',icon:'⬟',color:'blue',description:'Read a published polygon layer from a GeoJSON file, as published',inputs:[],output:'polygons'},
   relate_table:{title:'Relate a column from another table',group:'Summaries',icon:'⋈',color:'teal',
     description:'Bring a category from a second table onto these rows, matched on a column both carry',
     inputs:[['records','table'],['related','table']],output:'table'},
@@ -1110,6 +1112,20 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push({nodeId:node.id,kind:'computation',
           method:`${node.params.left} ${OPERATORS[node.params.operator].label} ${node.params.right}`,
           derived:result.derived,gaps:result.gaps} as unknown as Receipt);
+        break;}
+      case 'polygon_input':{
+        // READ AS PUBLISHED. The features were parsed and refused at import; this emits them as the
+        // `polygons` value the seven existing consumers already accept, which is why the widget
+        // needed no new port type.
+        const features=node.params.data.features;
+        if(!features.length)throw new Error('Import a polygon layer before running.');
+        value=polygonLayer(features,node.params) as unknown as DisplayValue;
+        const {facts,vertices}=polygonLayerFacts(features,node.params,{runId,nodeId:node.id});
+        receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
+          method:`${features.length} polygon feature${features.length===1?'':'s'} read from `
+            +`${node.params.source?.filename??'a file'} as published, ${vertices.toLocaleString()} `
+            +'vertices, nothing clipped, simplified or reprojected'
+            +(node.params.nameField?`, named by ${node.params.nameField}`:'')+'.'});
         break;}
       case 'relate_table':{
         // RELATE, not MERGE. Epi Info has three join commands and this project had none, which

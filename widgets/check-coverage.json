@@ -8,9 +8,9 @@
   },
   "measuredAt": "2026-10-27",
   "counts": {
-    "widgets": 53,
+    "widgets": 54,
     "covered": 26,
-    "awaiting": 13,
+    "awaiting": 14,
     "none": 13,
     "blocked": 1
   },
@@ -133,6 +133,11 @@
       "check": "31-area-join"
     },
     {
+      "nodeType": "map_image_input",
+      "expectation": "none",
+      "reason": "NOTHING TO RECOMPUTE INDEPENDENTLY. This step places an image where its georeference says, and there is no second implementation that could disagree: the arithmetic is reading six world-file coefficients and deriving four corners, which the unit tests check against the example's own map2.jgw. What a lab check would have to verify is whether the GEOREFERENCE IS CORRECT -- whether the plate, placed as recorded, lands on the ground it depicts -- and that is not a recomputation. It is a measurement against modern boundaries at the plate's four control points, and experiment 143 records it as the open question with the method for closing it. Declaring `parity` here would claim an independent check that would in fact be this project's arithmetic agreeing with itself."
+    },
+    {
       "nodeType": "map_output",
       "expectation": "none",
       "reason": "Draws what it is given and derives no value."
@@ -173,6 +178,12 @@
       "nodeType": "point_input",
       "expectation": "none",
       "reason": "Supplied point data."
+    },
+    {
+      "nodeType": "polygon_input",
+      "expectation": "parity",
+      "reason": "READ AS PUBLISHED IS A CHECKABLE CLAIM, which is why this owes a check rather than declaring none. The widget computes no value, so the instinct is to file it beside `map_image_input` as nothing-to-recompute -- but its whole assertion is that the geometry handed on is the author's, unclipped, unsimplified and unreprojected, and an independent reader is exactly how that is verified. A check would read `geo/map2-water-supply-zones.geojson` with geopandas or shapely and compare, feature by feature: the ring structure (2 parts of one ring, then one part of three, then one part of one), the vertex count of every ring (97 and 56; 107, 9 and 12; 107), the coordinates themselves, and the attributes. Lambeth's two interior rings are the case worth an outside eye: a hole is the first thing a simplifier takes and the last thing a feature count reveals. What such a check could NOT establish is whether the traced lines are where Snow's printed wash was -- two readers of the same file agreeing says nothing about the plate.",
+      "computes": "Reads a GeoJSON FeatureCollection into polygon features and hands them on unchanged: the ring structure, every vertex of every ring, each feature's attributes, and the name taken from the property the practitioner chose. The computation is the ABSENCE of one -- it refuses rather than converts a file that is not in CRS84 degrees, and clips nothing -- so what an independent reader recomputes is that the geometry out equals the geometry in."
     },
     {
       "nodeType": "raster_input",
@@ -296,11 +307,6 @@
       "nodeType": "voronoi",
       "expectation": "parity",
       "check": "15-voronoi"
-    },
-    {
-      "nodeType": "map_image_input",
-      "expectation": "none",
-      "reason": "NOTHING TO RECOMPUTE INDEPENDENTLY. This step places an image where its georeference says, and there is no second implementation that could disagree: the arithmetic is reading six world-file coefficients and deriving four corners, which the unit tests check against the example's own map2.jgw. What a lab check would have to verify is whether the GEOREFERENCE IS CORRECT -- whether the plate, placed as recorded, lands on the ground it depicts -- and that is not a recomputation. It is a measurement against modern boundaries at the plate's four control points, and experiment 143 records it as the open question with the method for closing it. Declaring `parity` here would claim an independent check that would in fact be this project's arithmetic agreeing with itself."
     }
   ]
 }

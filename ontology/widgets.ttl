@@ -40,6 +40,8 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/isochrone.md>.
 <urn:fieldwork:widget:join_table_to_area> a fw:WidgetDefinition; fw:nodeType "join_table_to_area"; rdfs:label "Join a table to the study area";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/join_table_to_area.md>.
+<urn:fieldwork:widget:map_image_input> a fw:WidgetDefinition; fw:nodeType "map_image_input"; rdfs:label "Georeferenced map image";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_image_input.md>.
 <urn:fieldwork:widget:map_output> a fw:WidgetDefinition; fw:nodeType "map_output"; rdfs:label "Map";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_output.md>.
 <urn:fieldwork:widget:mean_center> a fw:WidgetDefinition; fw:nodeType "mean_center"; rdfs:label "Mean center".
@@ -54,6 +56,7 @@
 <urn:fieldwork:widget:point_input> a fw:WidgetDefinition; fw:nodeType "point_input"; rdfs:label "Point data";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/point_input.md>.
 <urn:fieldwork:widget:policy> a fw:WidgetDefinition; fw:nodeType "policy"; rdfs:label "Outreach criteria".
+<urn:fieldwork:widget:polygon_input> a fw:WidgetDefinition; fw:nodeType "polygon_input"; rdfs:label "Polygon layer".
 <urn:fieldwork:widget:raster_input> a fw:WidgetDefinition; fw:nodeType "raster_input"; rdfs:label "Raster input".
 <urn:fieldwork:widget:rate> a fw:WidgetDefinition; fw:nodeType "rate"; rdfs:label "Rate with a denominator".
 <urn:fieldwork:widget:rate_ratio> a fw:WidgetDefinition; fw:nodeType "rate_ratio"; rdfs:label "Rate ratio with an interval";
@@ -88,5 +91,3 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/two_by_two.md>.
 <urn:fieldwork:widget:voronoi> a fw:WidgetDefinition; fw:nodeType "voronoi"; rdfs:label "Voronoi catchments".
 <urn:fieldwork:widget:xpert> a fw:WidgetDefinition; fw:nodeType "xpert"; rdfs:label "Diagnostic evidence".
-<urn:fieldwork:widget:map_image_input> a fw:WidgetDefinition; fw:nodeType "map_image_input"; rdfs:label "Georeferenced map image";
-  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_image_input.md>.

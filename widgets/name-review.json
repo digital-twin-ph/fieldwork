@@ -3,7 +3,7 @@
   "note": "The human half of the naming gate. scripts/validate-naming.mjs checks the six mechanical rules; this records a practitioner's judgement on the rule that cannot be mechanised -- whether the name is what someone would say to ask for the operation. Review docs/widget-names.md, which is generated, and record verdicts here. A verdict is pinned to the digest of (nodeType, title, group): change any of the three and the review goes stale rather than carrying over.",
   "stampedAt": "2026-10-26",
   "reviewer": "practitioner",
-  "pendingCeiling": 42,
+  "pendingCeiling": 43,
   "ceilingRule": "pendingCeiling may be lowered freely. It may be raised only when a widget is added whose FUNCTION DID NOT EXIST BEFORE -- the practitioner's rule, 2026-10-25: \"we can add a widget if its function did not exist before\" -- with an entry in ceilingRaises naming the widget and what it does that nothing did. That is D2 of the admission audit asked of the ceiling: a widget duplicating an existing function must not buy itself room by raising this, and a widget carrying a function the framework lacked is not review debt incurred carelessly. The ratchet exists so review debt cannot grow SILENTLY, not so that nothing may be added. As first written this rule said 'never raised' and also that the pending list 'can only shrink', which cannot both hold: a widget added after 2026-10-13 has no entry, fails the build until one is written, and a written entry starts pending. The contradiction surfaced on 2026-10-25, when rate_ratio was the second widget added in one day and the first to find no slack left.",
   "verdicts": {
     "accepted": "The name is what a practitioner would say to ask for this operation.",
@@ -212,6 +212,15 @@
       "note": "Pending because the practitioner named the tension while the widget was being designed, 2026-10-25: \"We are not strictly joining table to polygon here. What we are joining are a table and another table with geometry.\" The title says \"to the study area\", which is the object a practitioner points at, and the identifier says `area`, which is the port. Neither says that the area carries a table of named parts and that the join is table-to-table on those names. Whether that matters to a reader is the question a review has to answer; it is not settled by the author who chose the name."
     },
     {
+      "nodeType": "map_image_input",
+      "title": "Georeferenced map image",
+      "group": "Sources",
+      "fingerprint": "0c82fa08e890",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
       "nodeType": "map_output",
       "title": "Map",
       "group": "Outputs",
@@ -279,6 +288,15 @@
       "title": "Point data",
       "group": "Sources",
       "fingerprint": "ec45be738aa6",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null
+    },
+    {
+      "nodeType": "polygon_input",
+      "title": "Polygon layer",
+      "group": "Sources",
+      "fingerprint": "9b905d9fd734",
       "verdict": "pending",
       "reviewed": null,
       "reviewedBy": null
@@ -496,15 +514,6 @@
       "verdict": "pending",
       "reviewed": null,
       "reviewedBy": null
-    },
-    {
-      "nodeType": "map_image_input",
-      "title": "Georeferenced map image",
-      "group": "Sources",
-      "fingerprint": "0c82fa08e890",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
     }
   ],
   "rule": "After a transform verb the slot names what the verb acts ON. A second operand is stated with a preposition -- summarize_points_to_polygon, aggregate_points_to_h3_cell, snap_to_network -- never left to the reader and never put in the object slot. A method name stands in for the operation only where the method name IS the practitioner's term, which is the existing exemption that keeps `voronoi`, `isochrone` and `summarize_hull`. Recorded 2026-10-19 with the first two reviews; see docs/audits/ontology-audit.md for the convention it corrects.",
@@ -540,6 +549,14 @@
       "widget": "map_image_input",
       "functionThatDidNotExist": "Drawing a supplied georeferenced image as ground. raster_input reads a GeoTIFF into VALUES for clip_raster and sample_raster to measure; a basemap is a tile service or a bundled vector outline, neither of which is a file the practitioner supplies. Nothing could place a scanned or published map under a workflow. The South London example has carried map2-georeference.json, two world files and the plate's digests since 2026-10-24 with no widget able to read any of them, which answers D11 with three days of inert data rather than with an argument.",
       "why": "D2's near miss is raster_input and is the reason this is separate rather than an extension of it: a raster carries measurements, a plate carries a printer's ink, and sampling ink returns the colour of a line. Reusing the raster port would have made that connection offerable, so the `ground` port type is a hard stop under D4 and a deliberate change to the closed union. The debt rises by one and is recorded rather than absorbed; the name goes to review pending a verdict like every other."
+    },
+    {
+      "at": "2026-10-28",
+      "from": 42,
+      "to": 43,
+      "widget": "polygon_input",
+      "functionThatDidNotExist": "Reading a polygon layer from a published file. Seven node types emitted the `polygons` port type and every one of them DERIVED its polygons from something else -- points allocated to cells, a table joined to a study area, a convex hull, a street corridor, a stack of other layers. None was a source. So a layer that existed as a file had no way into a workflow at all, which is not a high cost but an infinite one: South London's geo/map2-water-supply-zones.geojson had been in that repository since 2026-10-24 and had reached a workflow never. `study_area` is the near neighbour and is not the same function -- it is the FRAME, one boundary, consumed by 27 references to the `area` port, where this is a LAYER of many attributed features. The practitioner settled that distinction by revising the study area to the extent enclosing Snow's Map 2, so the sub-districts and the river become layers within it.",
+      "why": "The ceiling had no slack. The name itself is NOT reviewed by this raise -- it enters pending like every other unreviewed name, and `polygon_input` is asserted only to match the four sibling sources it stands beside (point_input, table_input, raster_input, map_image_input) and to say what it carries rather than what it is for. Admission review: docs/experiments/145-polygons-as-a-source.md."
     }
   ]
 }

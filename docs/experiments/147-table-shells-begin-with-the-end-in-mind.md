@@ -265,6 +265,124 @@ list: `exposureColumn`, `exposed`, `unexposed`, `outcomeColumn`, `caseValue`, `n
 are not a vocabulary anybody has to design; they are the parameters four widgets already have, moved
 to where the data enters.
 
+### The terms are a, b, c, d, and we already use them
+
+The practitioner, closing the vocabulary question this experiment had left as a risk:
+
+> That's why labeling the 2x2 cells as a,b,c,d helps with the mapping to rate and ratio
+> computations
+
+This is the answer to the objection recorded below as *"that the computation set is stable"*. The
+term vocabulary does not have to be invented, kept small by discipline, or withdrawn later. It is
+four letters, it is what every textbook formula is written in, and the reference added the same day
+opens with it: *"For a 2×2 table with exposed cases `a`, exposed noncases `b`, unexposed cases `c`,
+and unexposed noncases `d`"*.
+
+**And this application already uses them.** `src/two-by-two.ts:144`:
+
+```ts
+const {exposedCases:a,exposedNonCases:b,unexposedCases:c,unexposedNonCases:d}=cells;
+```
+
+The letters are the computation's own vocabulary and are surfaced nowhere. `TwoByTwoCells` declares
+long names, the receipt emits `fw:exposedCaseCount`, the grid carries no cell labels, and nothing
+can be mapped onto them. Promoting a local destructuring to the declared interface is a much
+smaller change than anything else in this experiment.
+
+**Why it reaches `rate` and `rate_ratio`, which is the practitioner's point.** Every measure is a
+function of the same four letters, so one mapping serves three of the four epidemiology widgets:
+
+| | in the letters |
+| --- | --- |
+| exposed risk | `a/(a+b)` |
+| unexposed risk | `c/(c+d)` |
+| risk ratio | `[a/(a+b)] / [c/(c+d)]` |
+| risk difference | `a/(a+b) - c/(c+d)` |
+| odds ratio | `ad/bc` |
+
+`case_series` is the exception: it needs a date, not a table of four cells.
+
+**It would have made the 8.40/5.35 investigation legible on sight.** `two-by-two.ts` records that
+the project's rate ratio of 8.40 on houses sat beside a risk ratio of 5.35 on people, that the first
+explanation was refuted by lab check 30 — *"a risk ratio over the same houses is 8.401853429780243,
+which is the rate ratio's value BIT FOR BIT"* — and that the cause is the denominator unit. In the
+letters that is immediate: one computation took `a+b` as houses and the other took `a+b` as people.
+The conclusion needed sixteen significant figures from an independent implementation to establish;
+stated in terms, it is visible in the terms.
+
+**The audience already knows them**, which is the D9 argument and the practitioner's: *"FETP
+trainees know the ABCD cells."* They are trained on them. So the mapping question becomes one a
+trainee can answer on sight — *which column is `a`?* — where `exposureColumn`, `caseValue` and
+`nonCaseValue` are this application's words and have to be learned first.
+
+That also **inverts a hazard this repository already recorded**. The direction
+`recognisable-not-identical-an-epi-kernel-of-our-own`, quoted at the top of `two-by-two.ts`, says
+*"training makes the misreading near-certain, and this is the mechanism: the layout shows the
+statistics and not the subject."* Training is strong and automatic either way. It works against a
+layout that shows statistics without their subject, and it works **for** a vocabulary the reader was
+trained in. Same fact about the audience, opposite sign, depending on whether we use their words.
+
+**And it makes the design gating precise rather than a gesture.** The design decides which functions
+of a, b, c, d are estimable:
+
+| Design | What `a+b` and `c+d` are | Estimable |
+| --- | --- | --- |
+| Cohort | populations at risk | `a/(a+b)`, the ratio, the difference, `ad/bc` |
+| Case-control | artefacts of how many cases and controls were sampled | `ad/bc` only |
+| Cross-sectional | populations at a point in time | the same arithmetic, named prevalence |
+
+### The shell is also the Methods presentation
+
+The practitioner, closing the loop:
+
+> In fact when presenting computations in Methods, it would be good to show the empty 2x2 tables and
+> the variables that will go into the cells, and table mappings to the variables. That makes the
+> paper very readable.
+
+This reconciles the two halves of this experiment. A table shell is not only something drawn before
+data exists; **shown in Methods with its mappings, it is the presentation**. Same object, two times:
+
+| When | What it is | What it is for |
+| --- | --- | --- |
+| before data | a shell to fill | says what to collect |
+| in Methods | an empty table with its mappings | lets a reader audit the analysis before seeing a number |
+
+What it looks like for South London's contingency table:
+
+```
+                              Died   Survived   Total
+Southwark & Vauxhall only        a          b     a+b
+Lambeth only                     c          d     c+d
+```
+
+| Cell | Variable | From |
+| --- | --- | --- |
+| `a` | `deaths_seven_weeks` where `water_supply` = Southwark & Vauxhall only | Table VIII, with supply related from Table XII |
+| `b` | `population_1851` − `deaths_seven_weeks`, same stratum | derived |
+| `c` | `deaths_seven_weeks` where `water_supply` = Lambeth only | as `a` |
+| `d` | `population_1851` − `deaths_seven_weeks`, same stratum | derived |
+
+**Every part of that is already computable here.** `two_by_two`'s parameters give the row and column
+headings; `cellOf(table, request, exposed, caseValue)` is precisely the mapping from a letter to a
+(column, value) selection; the source of each variable is in the table input's provenance and in the
+relate's machined note. Nothing has to be gathered that the widget does not hold.
+
+**Two consequences for what was built on 2026-10-28.**
+
+A machined note is `text:string`, and this is a **table**. It would carry its shell as markdown
+inside the text, which renders in a write-up and is what the Notes work already assumes — that
+prototype offers insert-table among its editing tools.
+
+And `two_by_two` becomes the **second** producer of machined notes, which `relate-table.ts` already
+anticipates in a comment: *"Defined here because `relate_table` is its only producer. When there is
+a second, this type moves to `results.ts` and nothing else about it changes."*
+
+**Why it makes the paper readable**, stated as the mechanism rather than as a preference: a reader
+meets the design of the analysis before meeting its result, so the result cannot do the arguing for
+the method. It is the pre-specification virtue of a shell, surviving into the write-up — and it is
+also the reconciliation check of experiment 146 applied to the 2×2, because a reader given the cell
+mappings can verify that the four cells were filled from the variables claimed.
+
 ### Two openings, not one
 
 `study_area` declares **where**, and a workflow already starts with it. Nothing declares **how**.
@@ -286,9 +404,27 @@ per-node note.
 2. **How a table input learns the design.** Either it gains an input port, which stops it being a
    source, or the import dialog finds the design by walking the workflow — which is what
    `declaredKinds(workflow, nodeId)` and `upstreamKeyValues` already do, and is the cheaper answer.
-3. **A title needs a study period and nothing declares one.** `rate` carries `numeratorPeriod` and
-   `denominatorVintage`, `case_series` carries a period; all three are properties of a computation
-   rather than of the study, which is backwards for a title.
+3. ~~**A title needs a study period and nothing declares one.**~~ **Answered the same day:**
+   *"Study period is part of study design."* Which is right in substance — a design specifies its
+   observation window, and the window's SHAPE is design-determined: a cross-sectional study is at a
+   point and yields prevalence, a cohort runs over an interval and yields incidence. So declaring
+   the design decides which period fields are even asked for.
+
+   And it fixes something already shipped. `rate` requires `numeratorPeriod` and
+   `denominatorVintage` as free strings (`rate.ts:49-50` refuse them empty) and then checks their
+   agreement at `rate.ts:98` as **string equality**:
+
+   ```ts
+   vintagesAgree:text(options.numeratorPeriod)===text(options.denominatorVintage)
+   ```
+
+   The glossary defines a fitness condition as *"a denominator whose period **covers** the
+   numerator's"* — a covering relation — and the implementation is `===` on two hand-typed strings.
+   On South London the two are "1854 outbreak" and "1855 map", so the check can only ever report
+   that the strings differ, which is true and is not the question. A study period declared once on
+   the design makes the comparison a real one, states the period in one place instead of twice per
+   rate, stops two rates in one workflow claiming different periods, and gives the machined title
+   its date.
 4. **One shape of the earlier reading was wrong.** A design cannot be a pass-through threaded
    between a table and its computation, because the mapping happens *at* table input — so the
    design sits upstream of everything, as `study_area` does.

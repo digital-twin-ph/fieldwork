@@ -9,6 +9,8 @@
  *  This is a reader, not an editor. Nothing here changes a workflow: it opens, it is read, it
  *  closes, and the step is exactly as it was. That is why it can afford to be wide.
  */
+import type {DataTable} from './data-table.js';
+import {wideFrame} from './data-table-ui.js';
 import type {Escape} from './types.js';
 import {profileColumn,type ColumnKind,type ColumnProfile} from './column-profile.js';
 
@@ -140,12 +142,37 @@ export function openTableViewer(view:TableView,esc:Escape):void{
 
 /** A long-format table as columns and rows: the key columns it is keyed by, then its one value
  *  field. The shape the table widget already declares, read the way a reader reads it. */
+/** A table as a QUICK LOOK shows it: a frame where one can be drawn, and the stored rows where
+ *  one cannot.
+ *
+ *  This flattened every table to its storage -- `[...keys, valueField]`, one row per key-value
+ *  pair -- so Quick Look on Snow's Table VIII showed 224 rows of `sub_district | measure | count`.
+ *  The practitioner, 2026-10-27: *"If I showed the long table from South London for this Friday
+ *  demo, I would probably get weird looks."* And on the shape itself: *"pandas does not show you
+ *  a long table."*
+ *
+ *  Quick Look is the view a practitioner opens to CHECK A STEP, so it met the internal long shape
+ *  at the one moment the point was to read the data. `wideFrame` refuses where the keys do not
+ *  resolve -- an assignment table keeps its value column's heading -- and the stored rows are
+ *  shown then, which is honest about a table nobody can pivot. */
 export function tableViewOf(
-  data:{keys:string[];valueField:string;unit?:string;rows:{key:Record<string,string>;value:number|null}[];rowCount:number},
+  data:{kind?:string;keys:string[];valueField:string;unit?:string;rows:{key:Record<string,string>;value:number|null}[];rowCount:number},
   title:string,
 ):TableView{
+  const unit=data.unit?`${data.unit}`:'an unstated unit';
+  const frame=wideFrame({kind:'data-table',...data} as DataTable);
+  if(frame)
+    return {title,
+      columns:[frame.subject,...frame.attributes,...frame.columns],
+      rows:frame.rows.map(row=>({[frame.subject]:row.label,
+        ...Object.fromEntries(frame.attributes.map((name,i)=>[name,row.attributes[i]])),
+        ...Object.fromEntries(frame.columns.map((name,i)=>[name,row.cells[i]??null]))})),
+      note:`${frame.rows.length} ${frame.subject}`
+        +(frame.attributes.length?`, with ${frame.attributes.join(' and ')}`:'')
+        +`, and ${frame.columns.length} variable${frame.columns.length===1?'':'s'} in ${unit}. `
+        +`${data.rowCount} values in all.`};
   return {title,columns:[...data.keys,data.valueField],
     rows:data.rows.map(row=>({...row.key,[data.valueField]:row.value})),
     note:`Keyed by ${data.keys.join(', ')}. One value column, ${data.valueField}, `
-      +`in ${data.unit?`${data.unit}`:'an unstated unit'}. ${data.rowCount} rows in all.`};
+      +`in ${unit}. ${data.rowCount} rows in all.`};
 }

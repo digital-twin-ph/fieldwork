@@ -361,7 +361,7 @@ test('the machined note maps to Methods and states what the join did',()=>{
     declared:{decision:'drop',reason:'the boundary file spells nine of these without their comma'}},
     {left:'Table VIII',right:'the published boundaries'});
   assert.ok(notes.length>=1);
-  assert.ok(notes.every(n=>n.section==='methods'),'a join is a method, not a limitation');
+  assert.ok(notes.every(n=>n.section==='Methods'),'a join is a method, not a limitation');
   assert.ok(notes.every(n=>n.kind==='machined'),'the sibling of a quoted note');
 
   const all=notes.map(n=>n.text).join(' ');

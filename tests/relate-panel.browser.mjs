@@ -261,7 +261,7 @@ test('finalizing drops the rows, names them, and the choice reaches the receipt'
   // join that produced it -- outside this application, later, from the receipt alone.
   await expect(n3).toContainText('fw:ofVariable "cases"');
   await expect(n3).toContainText('fw:retainedFraction');
-  await expect(n3).toContainText('fw:noteSection "methods"');
+  await expect(n3).toContainText('fw:noteSection "Methods"');
   expect(errors).toEqual([]);
 });
 

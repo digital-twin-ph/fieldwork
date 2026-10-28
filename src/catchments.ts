@@ -214,7 +214,18 @@ export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
  *
  *  `value` repeats whichever property a figure is drawn by, in a fixed place, so a renderer can
  *  colour by it without being told which column to read. */
-export interface Catchment {id:string;name:string;siteId:string;geometry:Boundary;properties?:Record<string,import('./types.js').Scalar>;value?:number;status?:'Review'|'NoFlag'|'Unknown';explanation?:string;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
+/** `siteId` is OPTIONAL from 2026-10-28. It names the site a polygon was derived from, and
+ *  seven producers had one because every one of them derived polygons from sites. A polygon read
+ *  from a published file is derived from nothing, so it has no site -- and `area-join.ts` was
+ *  already fabricating one, setting `siteId:part.id` so each of South London's 32 administrative
+ *  sub-districts was its own site, then casting past the compiler with `as unknown as`. A field
+ *  that has to be invented to be satisfied is a field that should not be required.
+ *
+ *  The type's NAME is a separate and larger problem, recorded in the direction
+ *  `a-label-cannot-be-pinned-to-one-study`: a Voronoi cell models proximity rather than service
+ *  delivery, so `Catchment` overclaims even for the producer it was named after, and it now also
+ *  carries H3 cells, a hull, a union and administrative units. */
+export interface Catchment {id:string;name:string;siteId?:string;geometry:Boundary;properties?:Record<string,import('./types.js').Scalar>;value?:number;status?:'Review'|'NoFlag'|'Unknown';explanation?:string;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
 /** `unconnected` lists the sites that got no catchment, and `offNetwork` the sites that got one
  *  across a leg no street covers.
  *

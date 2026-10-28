@@ -1,0 +1,111 @@
+/** A PUBLISHED POLYGON LAYER, read as published.
+ *
+ *  The fixture is the layer the widget was built for and not a constructed one: the three
+ *  territories traced from the colour wash on Snow's Map 2, which had been in the South London
+ *  repository since 2026-10-24 and had reached a workflow never, because seven node types emitted
+ *  `polygons` and every one of them derived them from something else.
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,existsSync} from 'node:fs';
+import {readPolygonFeatures,polygonLayer,MAX_LAYER_FEATURES} from '../build/polygon-layer.js';
+
+const ZONES='../example-1855-cholera-south-london/geo/map2-water-supply-zones.geojson';
+const skip=existsSync(ZONES)?false
+  :'example-1855-cholera-south-london is not checked out beside this repository.';
+const zones=()=>JSON.parse(readFileSync(ZONES,'utf8'));
+const square=[[[0,0],[0,1],[1,1],[1,0],[0,0]]];
+const collection=features=>({type:'FeatureCollection',features});
+const polygon=(props={},coords=square)=>
+  ({type:'Feature',properties:props,geometry:{type:'Polygon',coordinates:coords}});
+
+test('Snow\'s three territories arrive as published',{skip},()=>{
+  const features=readPolygonFeatures(zones(),{nameField:'supply'});
+  assert.equal(features.length,3);
+  assert.deepEqual(features.map(f=>f.name),
+    ['Southwark and Vauxhall Company','Lambeth Company',
+     'Area in which the pipes of both Companies are intermingled']);
+  // EVERY VERTEX, ACROSS EVERY RING, which is the measure of what was not simplified: 153, 128 and
+  // 107 as published, matching the table in experiment 145. Counted across all rings and not only
+  // the outer one -- the first measurement taken for this test summed the first ring of each part
+  // and reported 153/107/107, missing Lambeth's two holes entirely. The record was right and the
+  // measurement was wrong.
+  const vertices=f=>f.geometry.type==='Polygon'
+    ?f.geometry.coordinates.reduce((n,r)=>n+r.length,0)
+    :f.geometry.coordinates.reduce((n,p)=>n+p.reduce((m,r)=>m+r.length,0),0);
+  assert.deepEqual(features.map(vertices),[153,128,107]);
+  assert.ok(features.every(f=>f.geometry.type==='MultiPolygon'),'as the file holds them');
+
+  // AND THE HOLES SURVIVE, which is what makes this layer worth reading as published. Lambeth's
+  // territory is one part of three rings -- an outer boundary of 107 positions and two interior
+  // rings of 9 and 12 -- so there are enclaves inside the Lambeth zone that Lambeth did not
+  // supply. A reader cannot see that from a count of features, and a simplifier would have taken
+  // them first.
+  const rings=f=>f.geometry.coordinates.map(part=>part.map(ring=>ring.length));
+  assert.deepEqual(rings(features[0]),[[97],[56]],'two parts, one ring each');
+  assert.deepEqual(rings(features[1]),[[107,9,12]],'one part, an outer ring and two holes');
+  assert.deepEqual(rings(features[2]),[[107]]);
+  // The attributes travel: the purple wash is the zone where supply by sub-district misclassifies,
+  // and a reader cannot see that unless the colour and the note come with the shape.
+  assert.equal(features[2].properties.snow_colour,'purple');
+});
+
+test('the layer is the value seven widgets already consume, with no site',{skip},()=>{
+  const value=polygonLayer(readPolygonFeatures(zones(),{nameField:'supply'}),
+    {nameField:'supply',layerName:'Water supply territories'});
+  assert.equal(value.layerName,'Water supply territories');
+  assert.equal(value.crs,'OGC:CRS84');
+  assert.deepEqual(value.sites,[],'a polygon read from a file is derived from nothing');
+  assert.ok(value.features.every(f=>f.siteId===undefined),
+    'and so carries no siteId, rather than one invented to satisfy the field');
+  assert.match(value.method,/as published/);
+  assert.ok(value.notes.some(n=>/named by supply/.test(n)));
+  assert.ok(value.notes.some(n=>/Clipping to the study area is a separate step/.test(n)));
+});
+
+test('a layer with no naming property chosen is numbered, not guessed',()=>{
+  const features=readPolygonFeatures(collection([polygon({zone:'north'}),polygon({zone:'south'})]),{});
+  assert.deepEqual(features.map(f=>f.name),['Feature 1','Feature 2']);
+  assert.deepEqual(features.map(f=>f.properties.zone),['north','south'],'attributes are kept');
+});
+
+test('a naming property the file does not carry is refused, not fallen back from',()=>{
+  assert.throws(()=>readPolygonFeatures(collection([polygon({zone:'north'})]),{nameField:'supply'}),
+    /carries no "supply" property/);
+  // And the refusal says what the feature DOES carry, so the practitioner can choose again.
+  assert.throws(()=>readPolygonFeatures(collection([polygon({zone:'north'})]),{nameField:'supply'}),
+    /This feature carries zone\./);
+});
+
+test('coordinates that are not CRS84 degrees are refused rather than converted',()=>{
+  // Easting and northing in metres, which is what a shapefile exported from a projected CRS gives.
+  const projected=[[[529_000,181_000],[529_100,181_000],[529_100,181_100],[529_000,181_000]]];
+  assert.throws(()=>readPolygonFeatures(collection([polygon({},projected)]),{}),
+    /not in CRS84 degrees/);
+  assert.throws(()=>readPolygonFeatures(collection([polygon({},projected)]),{}),
+    /refused rather than converted/);
+});
+
+test('an unclosed ring is refused, because nothing here closes it for you',()=>{
+  const open=[[[0,0],[0,1],[1,1],[1,0]]];
+  assert.throws(()=>readPolygonFeatures(collection([polygon({},open)]),{}),
+    /does not repeat its first/);
+});
+
+test('a geometry that is not a polygon is refused by name',()=>{
+  const line={type:'Feature',properties:{},geometry:{type:'LineString',coordinates:[[0,0],[1,1]]}};
+  assert.throws(()=>readPolygonFeatures(collection([line]),{}),/is a LineString/);
+  const missing={type:'Feature',properties:{}};
+  assert.throws(()=>readPolygonFeatures(collection([missing]),{}),/missing its geometry/);
+});
+
+test('an empty file is refused rather than imported as an empty layer',()=>{
+  assert.throws(()=>readPolygonFeatures(collection([]),{}),/holds no features/);
+  assert.throws(()=>readPolygonFeatures({type:'Feature'},{}),/not a GeoJSON FeatureCollection/);
+});
+
+test('a layer larger than a study\'s own geometry is refused with its count',()=>{
+  const many=collection(Array.from({length:MAX_LAYER_FEATURES+1},()=>polygon()));
+  assert.throws(()=>readPolygonFeatures(many,{}),
+    new RegExp(`holds ${MAX_LAYER_FEATURES+1} features`));
+});

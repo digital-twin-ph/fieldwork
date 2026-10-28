@@ -102,7 +102,16 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // about increasing the widgets because I see some more widgets to retire" -- so the room is
   // promised from retirements they will name, and this count records the rise rather than a trade
   // that has not happened.
-  assert.equal(review.reviews.length,53);
+  // 54 on 2026-10-28, with polygon_input: a polygon layer READ rather than derived. Seven node
+  // types emitted the polygons port type and every one of them computed its polygons from
+  // something else, so a layer that existed as a file had no way in -- and South London's three
+  // traced territories had sat in that repository since 2026-10-24 and reached a workflow never.
+  // The third addition to raise pendingCeiling under the practitioner's rule, and PENDING for the
+  // same reason as the others: a verdict on a name is a practitioner's judgement, not its author's.
+  // Its near miss is study_area, and what keeps them apart is frame against layer -- one boundary
+  // the workflow is about, against many attributed features inside it. The practitioner settled
+  // that by revising the study area to the extent enclosing Snow's Map 2.
+  assert.equal(review.reviews.length,54);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

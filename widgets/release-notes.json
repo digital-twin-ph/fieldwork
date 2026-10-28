@@ -405,6 +405,26 @@
    "breaking": false,
    "migrationFrom": []
   },
+  "map_image_input": {
+   "version": "0.1.0",
+   "released": "2026-10-27",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Draws a scanned or published map under a workflow, in the workflow's own projection, as ground. Built for Snow's 1855 Map 2, whose georeference the South London example has carried since 2026-10-24 with nothing able to read it. See docs/experiments/143-a-georeferenced-plate-as-ground.md."
+    },
+    {
+     "kind": "added",
+     "description": "Refuses a rotated world file by name. Drawing a rotated plate as an upright rectangle would put the map in the wrong place while looking correct, which is a hard stop rather than a limitation. A world file whose origin is the centre of the top-left pixel is read as such, so the extent runs half a pixel further out on each side."
+    },
+    {
+     "kind": "added",
+     "description": "Refuses corners outside CRS84 degrees, which usually means a projected georeference. Reading one datum's coordinates as another's moves a map by hundreds of metres and looks like a correct map."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
   "map_output": {
    "version": "0.15.0",
    "released": "2026-10-27",
@@ -604,6 +624,18 @@
    "breaking": false,
    "migrationFrom": [],
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
+  },
+  "polygon_input": {
+   "version": "0.1.0",
+   "released": "2026-10-28",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Reads a published polygon layer from a GeoJSON file and emits it as the existing `polygons` value, so everything that already consumes polygons accepts it. Until this existed, seven node types emitted polygons and every one DERIVED them from something else -- points allocated to cells, a table joined to an area, a hull, a corridor, a stack of other layers -- so a layer that existed as a file had no way into a workflow at all. South London's `geo/map2-water-supply-zones.geojson` had been in that repository since 2026-10-24 and had reached a workflow never: the three territories Snow drew, of which the purple one, the area where the pipes of both companies are intermingled, is the zone where attributing supply by sub-district misclassifies. READ AS PUBLISHED is the distinction it enforces: nothing is clipped, simplified or reprojected, and a file whose coordinates are not CRS84 degrees is refused rather than converted, because converting it silently would hand on a different shape from the one its author published. The feature-naming property is chosen by the practitioner and never inferred from a column name. Admitted under the review in experiment 145, where D2 turns on the distinction between a study area -- the frame, one boundary -- and a layer, which is many attributed features; the practitioner settled it by revising the study area to the enclosing extent so the sub-districts and the river become layers within it."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
   },
   "raster_input": {
    "version": "0.5.0",
@@ -985,26 +1017,6 @@
    "breaking": false,
    "migrationFrom": [],
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
-  },
-  "map_image_input": {
-   "version": "0.1.0",
-   "released": "2026-10-27",
-   "changes": [
-    {
-     "kind": "initial",
-     "description": "Draws a scanned or published map under a workflow, in the workflow's own projection, as ground. Built for Snow's 1855 Map 2, whose georeference the South London example has carried since 2026-10-24 with nothing able to read it. See docs/experiments/143-a-georeferenced-plate-as-ground.md."
-    },
-    {
-     "kind": "added",
-     "description": "Refuses a rotated world file by name. Drawing a rotated plate as an upright rectangle would put the map in the wrong place while looking correct, which is a hard stop rather than a limitation. A world file whose origin is the centre of the top-left pixel is read as such, so the extent runs half a pixel further out on each side."
-    },
-    {
-     "kind": "added",
-     "description": "Refuses corners outside CRS84 degrees, which usually means a projected georeference. Reading one datum's coordinates as another's moves a map by hundreds of metres and looks like a correct map."
-    }
-   ],
-   "breaking": false,
-   "migrationFrom": []
   }
  }
 }

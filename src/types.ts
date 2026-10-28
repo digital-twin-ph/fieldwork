@@ -210,6 +210,34 @@ export interface ParamsByType {
   rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   derive_value:{label:string;keyColumn:string;left:string;operator:import('./derive-value.js').Operator;right:string;name:string};
   select_rows:{label:string;keyColumn:string;values:string[]};
+  /** A POLYGON LAYER READ FROM A FILE, which nothing could do until 2026-10-28.
+   *
+   *  Seven node types emit `polygons` and every one of them DERIVES polygons from something else --
+   *  points allocated to cells, a table joined to an area, a hull, a corridor, a stack of other
+   *  layers. None was a source, so a layer that exists as a published file had no way in. South
+   *  London's `geo/map2-water-supply-zones.geojson` had been in that repository since 2026-10-24
+   *  and had reached a workflow never: the three territories Snow drew, of which the purple one,
+   *  *"Area in which the pipes of both Companies are intermingled"*, is the zone where attributing
+   *  supply by sub-district misclassifies. See docs/experiments/145-polygons-as-a-source.md for the
+   *  admission review.
+   *
+   *  READ AS PUBLISHED. Nothing is clipped, simplified or reprojected on the way in. A file whose
+   *  coordinates are not CRS84 degrees is refused rather than converted, because converting it
+   *  silently would hand on a different shape from the one its author published. */
+  polygon_input:{label:string;
+    /** The features, as parsed. Empty until a file is imported, which is the state `core.ts`
+     *  already allows for a raster or a network with no file. */
+    data:{features:{id:string;name:string;geometry:import('./types.js').Boundary;
+      properties:Record<string,Scalar>}[]};
+    /** Which property names each feature, chosen by the practitioner rather than guessed. Nothing
+     *  here is inferred from a column name -- the same rule the records table states. */
+    nameField?:string;
+    /** What to call the layer where a reader toggles it. */
+    layerName?:string;
+    /** Where the file came from and on what terms, so a published boundary is not redistributed
+     *  through a workflow without saying whose line it is. */
+    provenance?:import('./input-provenance.js').InputProvenance;
+    source?:{filename:string;bytes:number;sha256:string;features:number}};
   relate_table:{label:string;on:string;bring:string;
     /** How key cells are compared, in `join_table_to_area`'s vocabulary and through the same
      *  `normaliseName`. Absent means `fuzzy`, which is that widget's default too. */

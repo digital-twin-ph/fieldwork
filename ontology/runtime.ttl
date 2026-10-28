@@ -127,6 +127,27 @@ fw:fromColumn a owl:DatatypeProperty; rdfs:range xsd:string;
 fw:toMeasure a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "What that column is called in the analysis. Author-stated and never inferred from the column name: replacing underscores with spaces is right for \"deaths 1849\" and wrong for \"deaths pump-wells\", and a rule cannot tell which.".
 
+# A PUBLISHED POLYGON LAYER, read rather than derived.
+#
+# Declared 2026-10-28 with `polygon_input`. Seven producers of polygons derived them from something
+# else, so nothing in the evidence had to distinguish a read shape from a computed one. Now one
+# does, and fw:readAsPublished is the assertion a reader needs: it says the vertices are the
+# author's and that nothing in this application clipped, simplified or reprojected them.
+fw:PolygonLayer a owl:Class;
+  rdfs:comment "A layer of polygon features read from a published file, as published. Distinct from every other value on the polygons port, each of which was DERIVED -- allocated to cells, joined to an area, hulled, buffered or stacked.".
+fw:featureCount a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:comment "How many features the layer holds.".
+fw:vertexCount a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:comment "Positions across every ring of every feature. Stated because it is the measure of what was NOT simplified: a layer whose vertex count changed between the file and the figure was altered on the way in.".
+fw:readAsPublished a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:comment "True where the geometry is the author's own, unclipped, unsimplified and unreprojected. Clipping to a study area is a separate step with its own receipt, so that what was cut is a choice a reader can see rather than something that happened at the door.".
+fw:namedBy a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The property each feature was named by, chosen by the practitioner. Never inferred from a property name: the same rule the records table states, and a name the file does not carry is a refusal rather than a fallback.".
+fw:layerFile a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The file the layer was read from, as the practitioner's filesystem spelled it.".
+fw:layerFileDigest a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "SHA-256 of that file's bytes, so a figure can be traced to the geometry it was drawn from rather than to a filename somebody could have changed under it.".
+
 # RELATING TWO TABLES, and the decision a practitioner made about the rows that did not match.
 #
 # The counts were computed from this widget's first release and reached the panel only; a reader of

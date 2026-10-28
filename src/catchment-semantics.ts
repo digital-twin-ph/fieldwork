@@ -44,7 +44,11 @@ export function catchmentSemantics(node:WorkflowNode,value:Network|Polygons,enti
   }
   facts+=`<${entity}> a fw:CatchmentDataset, geo:FeatureCollection; fw:countSemantics ${lit(value.features.some(f=>f.minutes!==undefined)?'cumulative-threshold-memberships':'all-polygon-memberships')}.\n`;
   for(const f of value.features){const id=`${entity}:cell:${encodeURIComponent(f.id)}`;facts+=`<${id}> a fw:Catchment; dcterms:title ${lit(f.name)}.\n`;
-    if(value.siteSourceNodeId)facts+=`<${id}> fw:sourceSite <urn:fieldwork:run:${runId}:output:${value.siteSourceNodeId}:record:${encodeURIComponent(f.siteId)}>.\n`;
+    // BOTH CONDITIONS, from 2026-10-28. A layer can name a site source and still hold a feature
+    // that came from no site -- a stacked layer mixes producers -- and `siteId` is optional now,
+    // so asserting fw:sourceSite from an absent one would have written the string "undefined"
+    // into the evidence as a record id.
+    if(value.siteSourceNodeId&&f.siteId!==undefined)facts+=`<${id}> fw:sourceSite <urn:fieldwork:run:${runId}:output:${value.siteSourceNodeId}:record:${encodeURIComponent(f.siteId)}>.\n`;
     if(f.minutes!==undefined)facts+=`<${id}> fw:travelTime ${quantity(f.minutes,'MIN')}.\n`;
   }
   if(node.type==='isochrone'){

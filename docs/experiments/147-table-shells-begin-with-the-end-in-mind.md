@@ -396,6 +396,55 @@ can live. A note is owned by one widget and rides on that widget's receipt. A ti
 from the workflow** — design, place, outcome, period — so it is a run-level product and cannot be a
 per-node note.
 
+### IMRAD is the body, and the Notes need the matter either side of it
+
+The practitioner, 2026-10-28, in three corrections: *"Title and Abstract are not in IMRAD so we have
+to account for that in the Notes."* — *"IMRAD also does not have the References."* — *"And it does
+not have the Appendix, which will probably have the files needed to reproduce the study."*
+
+All correct, and "IMRAD section" was wrong in four places shipped the same day: the `section` field's
+own comment, `fw:MachinedNote`'s and `fw:noteSection`'s rdfs:comments, and the glossary. Corrected.
+
+| Part | Where | How it is produced | State here |
+| --- | --- | --- | --- |
+| Title | front matter | **assembled** — design, place, outcome, period | nothing |
+| Abstract | front matter | **assembled** — a précis of the body | nothing |
+| Introduction | body (IMRAD) | targeted — background, related literature, purpose | nothing machined; South London's quoted notes sit here |
+| Methods | body (IMRAD) | targeted | **`relate_table` today**; `two_by_two` next |
+| Results | body (IMRAD) | targeted — the computing widgets | nothing |
+| Discussion | body (IMRAD) | targeted; where limitations sit is unsettled | nothing |
+| References | back matter | **assembled** — every input's citation | **already built** |
+| Appendix | back matter | **assembled** — what reproduces the study | **already built** |
+
+**Two shapes, not one.** The matter either side of the body is **assembled** from declarations spread
+across a workflow; the body is **targeted** by notes a single node owns. So a machined note's
+`section` ranges over the body only, and title, abstract, references and appendix are run-level
+products the way `provenanceN3` already is. The reason is the same in every case: no one node owns
+them. A title's design comes from one node and its place from a study area or `Project.subject`; a
+reference list gathers every input's citation; an appendix gathers the whole bundle.
+
+**The striking thing about that table is where the work already is.** Both ends are done and the
+middle is empty:
+
+- **References.** `input-provenance.ts` already carries structured `Citation` records, renders them
+  in three styles against the manual each was read from — Vancouver, APA 7, Chicago author-date —
+  and reports `citationGaps` where a field is missing rather than emitting a fragment
+  (experiment 144).
+- **Appendix.** The project exports as a bundle, each input carries a sha256, each node carries a
+  receipt, and every run records its `runId`, its engine version and `runAt`. That is what
+  reproduces a study.
+
+And the reason is not an accident: **both ends are mechanical.** A citation list and a reproduction
+bundle are assembled from records the application already keeps. The body is where somebody has to
+say what they found — which is why Methods, the most mechanical part of the body, is the first place
+machining has reached.
+
+**The abstract is the one part of the body's summary that could be machined in full**, being a
+précis rather than new content — and epidemiology journals want it structured, with Background,
+Methods, Results and Conclusions, mirroring what it summarises. Nothing here has tried it, and the
+obvious risk is that a machined abstract reads as though a machine wrote it, which is worse than
+none.
+
 ### What remains open, which is narrower than what this experiment started with
 
 1. **The cascade costs four widgets.** `relate_table`, `group_table`, `derive_value` and

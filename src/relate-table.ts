@@ -466,13 +466,21 @@ export function relateOutcome(left:DataTable,request:RelateRequest,result:Relate
  *  Defined here because `relate_table` is its only producer. When there is a second, this type
  *  moves to `results.ts` and nothing else about it changes. */
 export interface MachinedNote {
-  /** Where it belongs in an IMRAD write-up.
+  /** Which PART of a write-up it belongs to.
    *
    *  The practitioner, 2026-10-28: *"The table join will produce notes that map to Methods."* A
    *  join is a thing you did to the data, and the count of what it excluded is Methods prose in
    *  an epidemiology paper rather than a limitation -- STROBE puts participants excluded, and why,
-   *  in Methods. So this widget maps to one section and the vocabulary has one value; it widens
-   *  when a producer genuinely needs another, rather than being guessed at now. */
+   *  in Methods. So this widget maps to one part and the vocabulary has one value; it widens
+   *  when a producer genuinely needs another, rather than being guessed at now.
+   *
+   *  NOT "an IMRAD section", which this said until the practitioner corrected it the same day:
+   *  *"Title and Abstract are not in IMRAD so we have to account for that in the Notes."* IMRAD is
+   *  the BODY -- introduction, methods, results, discussion. A title and an abstract are front
+   *  matter, and they are also not things a single node can target: both are assembled from
+   *  declarations spread across a workflow, so they are run-level products rather than values of
+   *  this field. The two facts point the same way, which is why this union will widen to the body
+   *  sections only. */
   section:'methods';
   kind:'machined';
   text:string;

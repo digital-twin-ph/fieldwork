@@ -468,18 +468,12 @@ export function wideFrame(table:DataTable):WideFrame|null{
   const distinct=(k:string)=>new Set(table.rows.map(r=>String(r.key[k]))).size;
   // The subject identifies a row most finely.
   const subject=[...keys].sort((a,b)=>distinct(b)-distinct(a))[0];
-  /** A key DESCRIBES the subject where every subject has exactly one of its values, and it has
-   *  more than one value to give. Both halves are load-bearing:
+  /** A key DESCRIBES the subject where every subject has exactly one of its values.
    *
    *  ONE PER SUBJECT, rather than "every subject has them all". Requiring the full set made a
    *  single missing cell disqualify the measure axis, so any ragged table -- Dulwich's empty 1854
-   *  cell is one -- fell back to the list this view exists to replace.
-   *
-   *  MORE THAN ONE VALUE, because a key holding one value throughout cannot be describing
-   *  anything: it distinguishes no subject from another. That is a melt of a single column, where
-   *  the measure key carries one name, and it is the axis. */
+   *  cell is one -- fell back to the list this view exists to replace. */
   const describesSubject=(k:string)=>{
-    if(distinct(k)<2)return false;
     const perSubject=new Map<string,Set<string>>();
     for(const r of table.rows){
       const s=String(r.key[subject]);
@@ -489,11 +483,29 @@ export function wideFrame(table:DataTable):WideFrame|null{
     return [...perSubject.values()].every(set=>set.size===1);
   };
   const others=keys.filter(k=>k!==subject);
-  const axes=others.filter(k=>!describesSubject(k)),attributes=others.filter(describesSubject);
+  let axes=others.filter(k=>!describesSubject(k));
+  let attributes=others.filter(describesSubject);
+  // A MELT OF ONE COLUMN leaves a measure key carrying a single name, which is one per subject
+  // like any description. The melt puts that key last, so where nothing else can be the axis the
+  // last key is promoted back to it.
+  if(!axes.length&&attributes.length){
+    const last=attributes[attributes.length-1];
+    axes=[last];attributes=attributes.filter(k=>k!==last);
+  }
   if(axes.length!==1)return null;
   const columnAxis=axes[0];
   const columns=[...new Set(table.rows.map(r=>String(r.key[columnAxis])))];
   if(!columns.length||columns.length>CROSSTAB_MAX_COLUMNS)return null;
+  /* ONE COLUMN AND NOTHING DESCRIBING THE SUBJECT IS A LIST, drawn with extra lines. It says
+   * nothing a list does not and it costs the value field its heading -- which is the defect
+   * `crossTab` records above and which this view reintroduced on 2026-10-27: Manila's facilities
+   * all take gauge 145, so the assignment pivoted to a single column headed "145" and lost
+   * `distance_m`, the column a reader came for. The browser test for the sea-level example caught
+   * it before it shipped.
+   *
+   * With something describing the subject it is a table rather than a list: South London's
+   * contingency Table XII melts one column and reads sub-district, water supply, deaths 1854. */
+  if(columns.length<2&&!attributes.length)return null;
   const order:string[]=[],byRow=new Map<string,WideFrame['rows'][number]>();
   for(const r of table.rows){
     const id=String(r.key[subject]);

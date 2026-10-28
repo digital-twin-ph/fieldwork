@@ -198,3 +198,25 @@ test('an absent cell is drawn as absent, and a null as unknown',()=>{
   assert.deepEqual(frame.rows[0].cells,[19709,null],'null is a cell the file left empty');
   assert.deepEqual(frame.rows[1].cells,[8015,undefined],'undefined is a row that has no such cell');
 });
+
+test('one column and nothing describing the subject is a list, not a frame',()=>{
+  // Manila's assignment: every facility takes gauge 145, so pivoting draws a single column
+  // headed "145" and loses `distance_m`, the column a reader came for. `crossTab` has refused
+  // this since 2026-10-26; the frame reintroduced it on 2026-10-27 and the sea-level browser
+  // test caught it before it shipped.
+  const assignment=frameOf([
+    {key:{point_id:'F1',projection_site:'145'},value:1000},
+    {key:{point_id:'F2',projection_site:'145'},value:1200}]);
+  assert.equal(wideFrame(assignment),null);
+});
+
+test('one column WITH something describing the subject is a table',()=>{
+  // The same single-column shape, but the supplier makes it worth drawing: a melt of one value
+  // column reads sub-district, water supply, deaths 1854.
+  const table=frameOf([
+    {key:{sub_district:'A',water_supply:'S&V',measure:'deaths 1854'},value:371},
+    {key:{sub_district:'B',water_supply:'Lambeth',measure:'deaths 1854'},value:161}]);
+  const frame=wideFrame(table);
+  assert.deepEqual(frame.attributes,['water_supply']);
+  assert.deepEqual(frame.columns,['deaths 1854']);
+});

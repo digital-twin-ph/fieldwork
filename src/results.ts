@@ -161,7 +161,7 @@ export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; proven
    *  The practitioner, 2026-10-28, on why transparency about a join is not a panel feature: *"this
    *  should be in fact a machined note from the widget."* Sibling of the quoted notes the South
    *  London repository carries -- Snow's own sentences are quoted, this is machined. */
-  machined?:Record<string,import('./relate-table.js').MachinedNote[]>;
+  machined?:Record<string,import('./notes.js').MachinedNote[]>;
   /** The table each step produced, by node id, for the steps that produced one.
    *
    *  Only an output widget makes a result tab, so without this a table computed in the middle of

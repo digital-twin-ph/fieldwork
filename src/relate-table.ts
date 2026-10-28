@@ -31,6 +31,11 @@
  *  inventing "unknown" for it would put a stratum in the table that the data never measured.
  */
 import {normaliseName} from './deduplicate-points.js';
+// MachinedNote moved to notes.ts on 2026-10-28, beside the quoted note it is the sibling of.
+// This file's own comment said the move would happen when a second PRODUCER appeared; a second
+// READER arrived first -- the notes surface, which has to group the two kinds together -- and
+// that is the same reason. This file still machines them; it no longer owns the type.
+import type {MachinedNote} from './notes.js';
 import type {DataTable} from './data-table.js';
 
 export interface RelateRequest {
@@ -448,49 +453,6 @@ export function relateOutcome(left:DataTable,request:RelateRequest,result:Relate
     gaps:result.gaps,values:result.values,carried:[...left.keys],
     overlap:result.overlap,shares:result.shares,normalisation:result.normalisation,
     ...(result.declared?{declared:result.declared}:{})};
-}
-
-/** A NOTE THE WIDGET MACHINED, for the write-up rather than for the panel.
- *
- *  The practitioner, 2026-10-28, correcting the framing of experiment 146: *"It's not so much
- *  about offering a choice but about (1) being transparent about the effects of table joins (this
- *  should be in fact a machined note from the widget) and (2) serving as a check if the
- *  computations produce values that match with any of those joins and it happens to be the join
- *  the user did not intend to make."*
- *
- *  SIBLING OF A QUOTED NOTE. The South London repository already carries Snow's own sentences as
- *  `fieldwork/quoted-notes/1` with `kind: 'quoted'`; this is the other kind -- the application's
- *  account of what it did to his numbers. A panel is read by whoever is sitting in front of the
- *  step; a note is what survives into the paper, next to the figure it qualifies.
- *
- *  Defined here because `relate_table` is its only producer. When there is a second, this type
- *  moves to `results.ts` and nothing else about it changes. */
-export interface MachinedNote {
-  /** Which PART of a write-up it belongs to.
-   *
-   *  The practitioner, 2026-10-28: *"The table join will produce notes that map to Methods."* A
-   *  join is a thing you did to the data, and the count of what it excluded is Methods prose in
-   *  an epidemiology paper rather than a limitation -- STROBE puts participants excluded, and why,
-   *  in Methods. So this widget maps to one part and the vocabulary has one value; it widens
-   *  when a producer genuinely needs another, rather than being guessed at now.
-   *
-   *  CAPITALISED, and that is not a style choice. The South London example already ships nine
-   *  QUOTED notes under `Introduction`, `Methods` and `Discussion` -- so the sibling schema had a
-   *  spelling before this one existed, and two kinds of note that cannot be grouped together are
-   *  two kinds of note nobody can read in one place. Settled by the practitioner on 2026-10-28:
-   *  *"Reconcile, use capital M, Methods."* Nothing read both until now, which is the only reason
-   *  the clash survived being written.
-   *
-   *  NOT "an IMRAD section", which this said until the practitioner corrected it the same day:
-   *  *"Title and Abstract are not in IMRAD so we have to account for that in the Notes."* IMRAD is
-   *  the BODY -- introduction, methods, results, discussion. A title and an abstract are front
-   *  matter, and they are also not things a single node can target: both are assembled from
-   *  declarations spread across a workflow, so they are run-level products rather than values of
-   *  this field. The two facts point the same way, which is why this union will widen to the body
-   *  sections only. */
-  section:'Methods';
-  kind:'machined';
-  text:string;
 }
 
 const rounded=(share:number)=>`${(share*100).toFixed(1)}%`;

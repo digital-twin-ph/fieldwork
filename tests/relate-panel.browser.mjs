@@ -62,6 +62,27 @@ test('the relate step reports the join before the table it produced',{skip},asyn
   await expect(inspector).toContainText('water_supply');
   // The categories that actually landed: what a reader checks before grouping by them.
   await expect(inspector).toContainText('Lambeth Company only');
+
+  // THE METHODS NOTE, on the example that is the demo. Asserted here and not only on the
+  // synthetic fixture: the note is the deliverable, and "the code path is the same" is not a
+  // verification of the workflow a reader will actually be shown.
+  const note=inspector.locator('.machined-note');
+  await expect(note).toContainText('water_supply was brought from');
+  await expect(note).toContainText('Snow 1855 Table XII');
+  await expect(note).toContainText('comparing keys with punctuation and case folded');
+  await expect(note).toContainText('32 sub_district values appeared in both tables');
+  await expect(note).toContainText('No row was excluded');
+
+  // AND THE RECEIPT, on the example too. No decision is recorded here because nothing was
+  // unmatched, but the comparison and the per-variable shares are what a reader reconciling a
+  // figure works from, so they are asserted where the demo will be shown.
+  await page.locator('[data-view="rules"]').click();
+  const n3=page.locator('#n3-preview');
+  await expect(n3).toContainText('a fw:TableRelate');
+  await expect(n3).toContainText('fw:keyComparison "punctuation-folded"');
+  await expect(n3).toContainText('fw:ofVariable "population_1851"');
+  await expect(n3).toContainText('fw:ofVariable "deaths_seven_weeks"');
+  await expect(n3).toContainText('fw:retainedFraction "1.000000"');
   expect(errors).toEqual([]);
 });
 

@@ -1,6 +1,6 @@
 {
   "schema": "fieldwork/parity-evidence/1",
-  "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file\u2019s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
+  "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
     "commit": "8800053f030b5468bafa670eedb253781b56547d",
@@ -29,7 +29,7 @@
       "ranAt": "2026-10-11T15:31:45.181390+00:00",
       "note": "Recomputed from the declared PROJ definition rather than the source EPSG code, so the comparison tests what the widget says it did. Covers a projection change on one datum; no datum shift is exercised.",
       "notebook": "01-reproject-vs-pyproj.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 what a projection is, and what the zone choice costs"
+      "diveDeeper": "Dive deeper · what a projection is, and what the zone choice costs"
     },
     {
       "widget": "urn:fieldwork:widget:clip_raster",
@@ -62,7 +62,7 @@
       ],
       "criterion": "relative difference at most 1e-9 against an independent expression of the declared spherical formula, over five boundaries including one with a hole",
       "outcome": "agrees",
-      "measured": "Implementation: relative difference at most 4.78e-14. Reported separately as method context, not as failures \u2014 against a geodesic area with great-circle edges on the same sphere, boxes differ by under 0.01 % and a mid-latitude triangle with oblique edges by 0.30 %; against WGS84 the declared spherical approximation runs +0.45 % at the equator to -0.56 % at 60 N, so its sign changes with latitude.",
+      "measured": "Implementation: relative difference at most 4.78e-14. Reported separately as method context, not as failures — against a geodesic area with great-circle edges on the same sphere, boxes differ by under 0.01 % and a mid-latitude triangle with oblique edges by 0.30 %; against WGS84 the declared spherical approximation runs +0.45 % at the equator to -0.56 % at 60 N, so its sign changes with latitude.",
       "ranAt": "2026-10-11T15:31:45.916652+00:00",
       "note": "Three questions kept apart: whether the widget computes the formula it declares, how far that formula is from a great-circle-edged geodesic area, and how far from an ellipsoidal one. Only the first is a criterion; the other two quantify the approximation the widget already discloses when it calls its result approximate.",
       "notebook": "05-area-vs-geodesic.ipynb"
@@ -136,7 +136,7 @@
       "ranAt": "2026-10-11T20:27:47.774876+00:00",
       "note": "A convex hull is exact, so there is no approximation to allow for and a disagreement would be real. The reference projects the points itself with pyproj rather than using Fieldwork's projected metres, so the projection and the hull are checked together. The area compared is the planar area of the ring in EPSG:32630, which is what the widget claims, and not a geodesic area. Agreement says nothing about whether a convex hull is a sensible summary: it fills in ground the outbreak did not cross, and both implementations fill it in identically.",
       "notebook": "10-hull-vs-shapely.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 the assumption is the projection"
+      "diveDeeper": "Dive deeper · the assumption is the projection"
     },
     {
       "widget": "urn:fieldwork:widget:fill_interior_gaps",
@@ -156,7 +156,7 @@
       "ranAt": "2026-10-11T20:48:38.525152+00:00",
       "note": "Dropping interior rings is exact, so this checks the bookkeeping rather than a tolerance: the gap count, the area net of holes before, the outer rings after, and the difference. Two bands are used because the example has one pump, and a one-part fixture could not distinguish filling from joining up. Agreement says nothing about whether filling is right: the added ground was never computed as reachable, and the reference asserts it identically because it is the same operation.",
       "notebook": "11-fill-gaps-vs-shapely.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 what the fill claims"
+      "diveDeeper": "Dive deeper · what the fill claims"
     },
     {
       "widget": "urn:fieldwork:widget:summarize_combined_area",
@@ -176,7 +176,7 @@
       "ranAt": "2026-10-11T20:48:38.645737+00:00",
       "note": "The most independent check in the lab so far: Fieldwork unions with polyclip-ts and measures with a shoelace sum, the reference unions with GEOS and measures with GEOS. A union is where two libraries most plausibly differ. The parts are three nested bands, so they overlap heavily and the union is not trivially the sum. Parts are summed net of their holes, which is the defect Fieldwork's own comment records finding on the isochrone chain: summing outer rings alone reported a hole-bearing area as overlapping itself.",
       "notebook": "12-combined-area-vs-shapely.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 the sum is not the area"
+      "diveDeeper": "Dive deeper · the sum is not the area"
     },
     {
       "widget": "urn:fieldwork:widget:clip_polygons",
@@ -194,7 +194,7 @@
       "ranAt": "2026-10-11T21:05:45.351537+00:00",
       "note": "polyclip-ts against GEOS on the John Snow chain: nearest-pump cells clipped to the reporting rectangle, which extend past it, so the clip does real work. Compared in square degrees because the widget intersects on longitude and latitude without projecting, which is declared rather than hidden. The notebook measures the cost of that: clipping in degrees and clipping in metres agree to 5.9e-5 relative at worst over a rectangle 1.4 km across -- 59 parts per million, about 6 m2 of 100,000 -- and the simplification would not hold for a continental boundary.",
       "notebook": "13-clip-polygons-vs-shapely.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 the assumption is that degrees will do"
+      "diveDeeper": "Dive deeper · the assumption is that degrees will do"
     },
     {
       "widget": "urn:fieldwork:widget:summarize_points_to_polygon",
@@ -212,7 +212,7 @@
       "ranAt": "2026-10-11T21:06:17.277525+00:00",
       "note": "Fieldwork's own point-in-polygon test against GEOS predicates, with the boundary policy mapped explicitly: include is covers, exclude is contains. The fixture contains no location on a polygon edge and none in two polygons, so that mapping is declared and NOT exercised by the comparison -- the notebook constructs the missing case to show that include counts an edge location for both cells and exclude for neither. Agreement says nothing about whether nearest-pump assignment models which pump anybody drank from.",
       "notebook": "14-summarize-polygons-vs-shapely.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 why the per-polygon totals must not be added"
+      "diveDeeper": "Dive deeper · why the per-polygon totals must not be added"
     },
     {
       "widget": "urn:fieldwork:widget:voronoi",
@@ -232,7 +232,7 @@
       "ranAt": "2026-10-11T21:25:23.644223+00:00",
       "note": "Two unrelated algorithms for the same partition: Fieldwork clips a rectangle with one half-plane per other site, the reference asks GEOS for the Voronoi diagram of the same projected points. Neither method informs the other. The envelope is recomputed from the boundary by the declared rule rather than taken from the fixture, so that derivation is checked too. This completes the John Snow Voronoi chain: cells, clip and count are all now independently recomputed. Agreement says nothing about whether a nearest-pump cell models which pump anybody drank from -- the notebook measures that 138,081 m2 of the ground reachable on foot in five minutes falls outside the cell, and the two answer different questions.",
       "notebook": "15-voronoi-vs-shapely.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 the assumption is straight-line distance"
+      "diveDeeper": "Dive deeper · the assumption is straight-line distance"
     },
     {
       "widget": "urn:fieldwork:widget:stack_polygons",
@@ -250,7 +250,7 @@
       "ranAt": "2026-10-11T21:25:52.043065+00:00",
       "note": "A check of a rule rather than of arithmetic: this widget concatenates layers and sorts by extent, and has no geometry to compare. Extent is deliberately crude and is declared in full -- the sum of every ring's absolute shoelace area in SQUARE DEGREES, unprojected, holes added not subtracted -- because it is a sort key and not a measurement. The notebook measures the gap on the real bands: extent exceeds the net area by 0.6%, 10.8% and 7.6% for the 2, 5 and 10 minute corridors. Ties are reported because a tie would leave the order ambiguous while this check still passed; there are none here.",
       "notebook": "16-stack-polygons-vs-sort.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 why extent is the wrong number to quote"
+      "diveDeeper": "Dive deeper · why extent is the wrong number to quote"
     },
     {
       "widget": "urn:fieldwork:widget:buffer_point",
@@ -268,7 +268,7 @@
       "ranAt": "2026-10-11T21:48:18.524100+00:00",
       "note": "Checked against theory rather than a second implementation: Turf buffers in a local azimuthal equidistant projection, so there is nothing equivalent to compare the construction with. A circle buffered with n/4 segments per quadrant is a polygon of n vertices inscribed in it, whose area is (n/2pi) sin(2pi/n) of the circle's -- arithmetic that owes nothing to any geometry library, and which reproduces the 0.99359 and 0.99960 this project measured by hand. This check FAILED on its first run at 1.589 m against a 1 m radius criterion, and the fault was the criterion. Turf buffers on a sphere of radius 6,371,008.8 m and does so exactly: the measured spread of vertex distances there is 0.0000 m. On the WGS84 ellipsoid the same ring is 500.28 to 501.59 m from the centre. So a 500 m buffer is 500 m on a sphere and up to 1.59 m more on the ground, varying with direction -- 0.32%, about 16 m on a 5 km scope. Nothing recorded that before, and it was found only because a criterion fixed in advance failed and was investigated instead of relaxed.",
       "notebook": "17-buffer-point-vs-theory.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 what the step count buys"
+      "diveDeeper": "Dive deeper · what the step count buys"
     },
     {
       "widget": "urn:fieldwork:widget:buffer_area",
@@ -288,7 +288,7 @@
       "ranAt": "2026-10-11T21:48:18.678187+00:00",
       "note": "Exact agreement is not available and is not claimed: Turf buffers in a local azimuthal equidistant projection and the reference buffers in UTM, so the criterion is a relative area difference with the quadrant count declared. 8 segments per quadrant leaves 0.64% of an ideal circle outside the polygon against 0.04% at the 32 buffer_point uses, which is deliberate: this widget expands a boundary that already exists, so its edge decides nothing, while buffer_point's edge decides membership. The notebook measures where the approximation can even apply -- the corners are 13.4% of what this buffer adds and the sides are the rest, so the polygon approximation costs 0.086% of the addition.",
       "notebook": "18-buffer-area-vs-shapely.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 the buffer only matters at the corners"
+      "diveDeeper": "Dive deeper · the buffer only matters at the corners"
     },
     {
       "widget": "urn:fieldwork:widget:snap_to_network",
@@ -306,7 +306,7 @@
       "ranAt": "2026-10-11T22:07:42.204889+00:00",
       "note": "A nearest-neighbour search and a distance, both exact. Eight pumps rather than the isochrone example's one, because a search over a single site exercises almost nothing. The criterion is 5 mm rather than 1 mm, and the reason is worth stating: the widget reports snapDistanceM as Number(d.toFixed(2)), so it computes in full precision and publishes centimetres, and 5 mm is half of its last reported digit rather than a statement about its accuracy. The first version of this check asked for 1 mm and failed at 3.7 mm, which was rounding and nothing else. The margin to the second-nearest node is reported because one site's is 0.43 m: no tie, so the answer is unambiguous, but the choice is decided by less than a pavement's width and a different datum would flip it. Agreement says nothing about whether snapping is harmless -- it moves the pumps 2.2 to 20.9 m, up to 5.6% of the five-minute band budget, and both implementations move them identically.",
       "notebook": "19-snap-vs-pyproj.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 snapping moves the site"
+      "diveDeeper": "Dive deeper · snapping moves the site"
     },
     {
       "widget": "urn:fieldwork:widget:travel_time_band",
@@ -323,7 +323,7 @@
       "ranAt": "2026-10-11T22:08:17.123562+00:00",
       "note": "The arithmetic is a threshold and is not what this check is for. The design claim is that the widget restates neither the speed nor the direction, reading both from the junctions, so a band cannot disagree with the traversal that produced it -- and the reference tests exactly that, recomputing the budget from the speed carried on the junctions rather than from a parameter of its own. It also checks the part most likely to be got wrong: a junction's remaining budget is recomputed against the band, not carried over from the traversal. Here the traversal was 1,125 m and the band 375 m, so carrying it over would put fifteen minutes of reach at the edge of a five-minute corridor. The notebook measures the sensitivity to the walking speed, which is an estimate from photographs of 1854 London rather than a measurement: at 50 m/min 69 junctions are in the band, at 75 m/min 142, at 100 m/min 246. Walking 20% slower keeps about two thirds; a third slower halves it.",
       "notebook": "20-band-vs-threshold.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 the assumption is the walking speed"
+      "diveDeeper": "Dive deeper · the assumption is the walking speed"
     },
     {
       "widget": "urn:fieldwork:widget:aggregate_points_to_h3_cell",
@@ -340,7 +340,7 @@
       "ranAt": "2026-10-11T22:41:29.311283+00:00",
       "note": "WEAKER THAN IT LOOKS, and the check says so: Fieldwork indexes with h3-js and the reference with h3-py, two bindings of the same C library, so the indexing is not independently verified. What is verified is that Fieldwork calls it correctly, orders by H3 index as declared, and applies its own sparse-cell rule. Two resolutions are used because the example's own setting does not exercise that rule: at resolution 9 all 250 deaths fall into five cells above the minimum and nothing is dropped, so resolution 11 is included to reach the case where points vanish. Agreement says nothing about whether aggregating to cells protects anybody; occupancy is not an anonymity guarantee, and at resolution 11 the rule silently removes 13 deaths rather than disclosing them.",
       "notebook": "21-hex-vs-h3py.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 choosing the resolution, and for what"
+      "diveDeeper": "Dive deeper · choosing the resolution, and for what"
     },
     {
       "widget": "urn:fieldwork:widget:case_series",
@@ -357,7 +357,7 @@
       "ranAt": "2026-10-11T22:42:46.665061+00:00",
       "note": "Genuinely independent: Fieldwork bins with its own calendar arithmetic and pandas with resample, a different implementation of a different design, sharing no code -- unlike check 21 next door where both sides call the same C library. The week mapping was wrong on the first attempt, which is worth recording because the check's own docstring had already named the week as the dangerous case. Fieldwork keys a week by the Monday of its ISO week; the check used W-SUN with a left label, whose label is the preceding Sunday, so every key came out a day early while every count stayed plausible -- 7 bins, total 616, the peak in the right week. Only comparing the keys caught it. The correct mapping is W-MON with label and closed both left, and it is now spelled out rather than left implicit in a frequency string. Agreement says nothing about whether a curve by date of death says what a reader will take it to say: the shape by date of onset would be shifted earlier, and nobody recorded onset dates.",
       "notebook": "22-case-series-vs-pandas.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 what the period choice does to the curve"
+      "diveDeeper": "Dive deeper · what the period choice does to the curve"
     },
     {
       "widget": "urn:fieldwork:widget:policy",
@@ -374,7 +374,7 @@
       "ranAt": "2026-10-12T15:44:44.436232+00:00",
       "note": "The exemption this replaces said the decision is the reasoner's, which was a claim that no independent check was possible. Each ruleset's input space is finite, so the lab enumerates it completely. Two claims are recorded separately because they fail differently: a right answer nobody can audit, against a well-formed receipt for the wrong conclusion. Neither claim says any threshold is right; one ruleset claims a published basis and none of the three carries evidence a reader can open.",
       "notebook": "23-rulesets-vs-decision-table.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 the subset is the safety argument"
+      "diveDeeper": "Dive deeper · the subset is the safety argument"
     },
     {
       "widget": "urn:fieldwork:widget:access_policy",
@@ -391,7 +391,7 @@
       "ranAt": "2026-10-12T15:44:44.436232+00:00",
       "note": "The exemption this replaces said the decision is the reasoner's, which was a claim that no independent check was possible. Each ruleset's input space is finite, so the lab enumerates it completely. Two claims are recorded separately because they fail differently: a right answer nobody can audit, against a well-formed receipt for the wrong conclusion. Neither claim says any threshold is right; one ruleset claims a published basis and none of the three carries evidence a reader can open.",
       "notebook": "23-rulesets-vs-decision-table.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 the subset is the safety argument"
+      "diveDeeper": "Dive deeper · the subset is the safety argument"
     },
     {
       "widget": "urn:fieldwork:widget:xpert",
@@ -408,7 +408,7 @@
       "ranAt": "2026-10-12T15:44:44.436232+00:00",
       "note": "The exemption this replaces said the decision is the reasoner's, which was a claim that no independent check was possible. Each ruleset's input space is finite, so the lab enumerates it completely. Two claims are recorded separately because they fail differently: a right answer nobody can audit, against a well-formed receipt for the wrong conclusion. Neither claim says any threshold is right; one ruleset claims a published basis and none of the three carries evidence a reader can open.",
       "notebook": "23-rulesets-vs-decision-table.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 the subset is the safety argument"
+      "diveDeeper": "Dive deeper · the subset is the safety argument"
     },
     {
       "widget": "urn:fieldwork:widget:apply_ruleset",
@@ -425,7 +425,7 @@
       "ranAt": "2026-10-12T15:44:44.436232+00:00",
       "note": "The widget that now hosts all three rulesets. The three entries beside this one cover policy, access_policy and xpert at the releases they were retired at, which is why they remain: parity covers a release, and those releases ran. This entry covers the host, and the check is the same check because the rulesets are the same rulesets -- the assembled rule text was proved byte-identical when they became data.",
       "notebook": "23-rulesets-vs-decision-table.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 the subset is the safety argument"
+      "diveDeeper": "Dive deeper · the subset is the safety argument"
     },
     {
       "widget": "urn:fieldwork:widget:reproject",
@@ -461,7 +461,7 @@
       "ranAt": "2026-10-14T22:14:51.637692+00:00",
       "note": "Covers a rule over a quantity DERIVED from geometry rather than over an imported column, which is what experiment 113 doubted was possible. The reference rebuilds the whole chain -- hull, area, threshold -- so a disagreement in the status would be as likely to be about the area as about the rule. The explanation is read for the same two numbers, so a status that agreed by accident would fail. It does not check the reasoner: the fixture records what EYE concluded and the reference recomputes the comparison in Python, which is check 23's job. Nor does it establish that 250,000 m2 is the right threshold, or a convex hull the right outline; the notebook beside it classifies the same observed outbreak as Review at 0.139 km2 and NoFlag at 0.250, against a figure the case study records no reason for.",
       "notebook": "25-extent-vs-shapely.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 three leaps this makes"
+      "diveDeeper": "Dive deeper · three leaps this makes"
     },
     {
       "widget": "urn:fieldwork:widget:summarize_hull",
@@ -480,7 +480,7 @@
       "ranAt": "2026-10-14T22:14:51.637692+00:00",
       "note": "The same check, listed here because the first of its three leaps is this widget's: the area a hull derives has to be a FIELD on the polygon rather than a line in the run receipt, or no rule downstream can read it. Until 2026-10-14 it was computed, published as fw:hullAreaSquareMetres, and dropped. The hull geometry itself is checked by 10-hull.",
       "notebook": "25-extent-vs-shapely.ipynb",
-      "diveDeeper": "Dive deeper \u00b7 three leaps this makes"
+      "diveDeeper": "Dive deeper · three leaps this makes"
     },
     {
       "widget": "urn:fieldwork:widget:deduplicate_points",
@@ -524,14 +524,14 @@
     },
     {
       "widget": "urn:fieldwork:widget:relate_table",
-      "coversRelease": "0.1.0",
+      "coversRelease": "0.3.0",
       "check": "28-relate-table",
       "result": "content/results/check-28-relate-table.json",
-      "sha256": "da695012f254e1c61f434b33c387f1392cdce016bd2214811958428c9dc91ae1",
+      "sha256": "240790090a6e4a181767eb82e0ee64029c2b3241001fb72e1f665112fb526a96",
       "external": [
         "pandas 2.3.3"
       ],
-      "criterion": "every related row identical to a pandas left merge of Snow's Table XII onto his Table VIII -- compared as an ordered set of records so row order is not mistaken for disagreement -- with the row count UNCHANGED at 64, the distinct brought categories in the same first-seen order, and, with one sub-district withheld from the right table, the same rows dropped AND the gap named with its count. The fifth criterion is the one worth an outside eye: an ambiguous key must be REFUSED, with a message naming the key and both values, where a merge resolves it by multiplying rows.",
+      "criterion": "Eight cases, each recomputed from the fixture's three input tables and its own request with a pandas left merge on the FOLDED key -- the declared comparison reimplemented in the lab from its stated rule and never imported, because the folding is the thing under check. Compared as an ordered set of records so row order is not mistaken for disagreement: the produced rows, the row count, related, dropped and kept, the distinct brought categories in first-seen order, every unmatched key named with its count, the number of keys matched, and the retained share of each numeric variable summed independently. Two cases expect a REFUSAL and record what a merge does instead: an ambiguous key, where a merge returns 66 rows for a 64-row left table; and an undeclared gap, where a merge proceeds and leaves NaN. And the identity: a rate of one variable over another computed on the matched rows equals its value over every offered row multiplied by the ratio of their retained shares.",
       "outcome": "agrees",
       "notEstablished": [
         "That exact matching is the right matching. Snow's two tables spell every sub-district identically, so this data never exercises a name that differs by punctuation or case -- the case a practitioner will actually meet. Fieldwork folds surrounding whitespace and nothing else, by decision rather than by this result.",
@@ -540,7 +540,7 @@
       ],
       "ranAt": "2026-10-27T11:40:43.555329+00:00",
       "measured": "Three cases. The relate the example runs: 64 rows in, 64 out, 0 dropped, three categories in order, identical to the merge record for record. One sub-district withheld: 62 related, 2 dropped, the gap reported as {\"St. Saviour, Southwark\": 2 rows} and the same two rows a merge drops. An ambiguous key, constructed: refused with both company names in the message, where the same input through a merge returns 66 rows for a 64-row left table.",
-      "note": "THE ARITHMETIC IS NONE, so this check is about the matching and about one deliberate disagreement. A right table giving one key two values is refused here and multiplied by a merge: the two rows for that sub-district each match twice, so its population would appear under both companies and no total in the result would reveal it. The refusal is the behaviour under check and the merge's row count is the measure of what it prevents. The case is CONSTRUCTED and the fixture says so -- no sub-district in Table XII carries two companies, which is why it cannot be drawn from the data. What this does not reach is the case a practitioner will actually meet: Snow's tables spell every sub-district identically, so a name differing by punctuation or case is never exercised.",
+      "note": "Rebuilt 2026-10-28 for 0.3.0, and the regeneration MOVED NO COMPARED NUMBER on Snow's own two tables: they match 32 of 32 under either comparison, so the folded default leaves the example's figures exactly where they were. What changed is what the fixture can now reach. Check 28 had recorded, under what it could not establish, that \"'St. George, Camberwell' against 'St George Camberwell' is the case a practitioner will actually meet, and neither this fixture nor this check reaches it\" -- so the fixture now carries the published sub-district boundary as a second source for the same 32 names, which spells nine of them without their comma. The same two tables match 23 of 32 compared exactly and 32 of 32 compared folded: one knob, eighteen rows, and two retained shares that differ (68.24% of population against 61.16% of deaths). The lab confirms the identity that follows independently -- 3.109 x 0.8963 = 2.787 per 1000, observed 2.787 -- which is the arithmetic Fieldwork states and had not been checked from outside. Found on the way: 0.3.0 had BROKEN the fixture export outright, because two of the three old cases withhold or corrupt a key and the widget now refuses an undeclared gap. No gate runs export-validation-fixture.mjs, so nothing caught it.",
       "notebook": "28-relate-table-vs-pandas.ipynb"
     },
     {

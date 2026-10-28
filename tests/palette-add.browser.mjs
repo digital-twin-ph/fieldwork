@@ -18,12 +18,38 @@ test('every palette entry can be added to a blank canvas as a draft',async({page
   const types=await page.locator('#node-library [data-add]').evaluateAll(
     els=>els.map(e=>e.dataset.add));
   expect(types.length).toBeGreaterThan(5);
+  // THE PALETTE OUTGREW THE WORKFLOW. A workflow holds at most 50 nodes (`core.ts`), and placing
+  // one study area plus every entry on offer now wants 54. So this test's old shape -- add all of
+  // them to one canvas -- stopped measuring addability and started measuring the cap: on
+  // 2026-10-28 it reported `chart_output` as unaddable, and `chart_output` is fine. It was simply
+  // the 51st node, and the three genuinely-unaddable widgets below were refused for the same
+  // wrong reason rather than their own.
+  //
+  // The claim is PER WIDGET -- "this widget can be added as a draft" -- so the canvas is cleared
+  // before it would hit the cap and a study area re-placed, which is the state each add needs. A
+  // count typed here would go stale the next time a widget lands; this reads the cap's own
+  // headroom instead.
+  const CANVAS_LIMIT=45;
+  const place=async()=>{
+    // CLEARING IS TWO STEPS AND BOTH MATTER. A reload does not empty the canvas: the workflow is
+    // in localStorage, so `goto` alone came back with the 46 nodes already placed. And
+    // localStorage is per origin, so it cannot be cleared before a page from that origin has
+    // loaded -- hence the bare `/` first, which is the same pair `input-stage-palette` uses.
+    await page.goto('/');
+    await page.evaluate(()=>localStorage.clear());
+    await page.goto('/?example=blank');
+    await page.locator('[data-view="workflow"]').click();
+    await page.locator('#node-library [data-add="study_area"]').click();
+    await page.locator('[data-view="workflow"]').click();
+    await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(1);
+  };
   const refused=[];
   for(const type of types){
+    if(await page.locator('.react-flow__node').count()>=CANVAS_LIMIT)await place();
     const before=await page.locator('.react-flow__node').count();
-  await page.locator('[data-view="workflow"]').click();
+    await page.locator('[data-view="workflow"]').click();
     await page.locator(`#node-library [data-add="${type}"]`).click();
-  await page.locator('[data-view="workflow"]').click();
+    await page.locator('[data-view="workflow"]').click();
     await expect.poll(()=>page.locator('.react-flow__node').count()).toBeGreaterThanOrEqual(before);
     if(await page.locator('.react-flow__node').count()===before)refused.push(type);
   }

@@ -79,12 +79,24 @@ reader will supply a design from habit.
 
 ## What is worth doing, in order
 
-1. **Gate `two_by_two`'s measures on a declared design.** The smallest change that prevents a wrong
-   number rather than annotating a right one: a case-control table offered the odds ratio alone, a
-   cross-sectional one with its measures named prevalence. Separable from everything else here.
+0. **Surface the cells as `a`, `b`, `c`, `d`.** `two-by-two.ts:144` already destructures them into
+   those letters to do the arithmetic; nothing shows them. Promoting that local destructuring to the
+   declared interface, the grid and the receipt is the smallest change on this list, it needs no
+   design declaration to be worth doing, and it gives every item below a precise vocabulary —
+   including `rate` and `rate_ratio`, whose measures are functions of the same four letters.
+1. **Gate `two_by_two`'s measures on a declared design**, stated in those letters: in a case-control
+   design `a+b` and `c+d` are artefacts of how many cases and controls were sampled, so `a/(a+b)` is
+   not a risk and only `ad/bc` survives; in a cross-sectional one `a/(a+b)` is a prevalence and the
+   arithmetic keeps its value while losing the name "risk". The smallest change that prevents a
+   wrong number rather than annotating a right one. Separable from everything else here.
 2. **Declare the design on the two South London workflows**, which costs nothing and tests whether a
    declaration carries anything: it should make the machined Methods note say that the unit of
    analysis is the sub-district.
+2a. **Machine the empty 2x2 with its cell mappings into the Methods note.** Everything it needs is
+   already held: the parameters give the headings, `cellOf` is the letter-to-(column, value)
+   mapping, and the variables' sources are in the input provenance. It makes `two_by_two` the second
+   machined-note producer, which is the trigger `relate-table.ts` names for moving `MachinedNote`
+   into `results.ts`.
 3. **Add `estimand` and sampling design to what a receipt records.** The reference's list of what
    every result should carry is: estimand, target population, observation period, units, sampling
    design, source versions, transformations, missingness, assumptions, uncertainty method, code

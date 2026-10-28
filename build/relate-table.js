@@ -1,2 +1,2 @@
-import{a}from"./chunks/chunk-YIA74O2P.js";import"./chunks/chunk-KVMUXFPB.js";export{a as relateTable};
+import{a,b}from"./chunks/chunk-A4OVGGDO.js";import"./chunks/chunk-KVMUXFPB.js";export{b as relateOutcome,a as relateTable};
 //# sourceMappingURL=relate-table.js.map

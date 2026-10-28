@@ -936,12 +936,17 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/relate_table/0.1.0.json",
           "sha256": "0ef1f8764926acec0ca1b4bffb20d7b4c47d35927c3db474bd3c846cf2f12e02"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/relate_table/0.2.0.json",
+          "sha256": "e07ae8843354b1c5730ef022dd78e05b94a334f6ecf37a0081c0feab1be238f2"
         }
       ]
     },

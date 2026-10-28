@@ -101,3 +101,40 @@ export function relateTable(left:DataTable,right:DataTable,request:RelateRequest
     related:rows.length,dropped:left.rows.length-rows.length,
     gaps:[...gapRows.entries()].map(([key,count])=>({key,rows:count})),values};
 }
+
+/** WHAT THE STEP DID, kept on the run so the step itself can show it.
+ *
+ *  `RelateResult` computed all four numbers from the first day and displayed none of them: the
+ *  table travelled on and the counts went into the N3 receipt, which is the one surface this
+ *  project has already agreed nobody reads for this purpose. So a relate whose second table was
+ *  missing a third of the keys produced a table that looked complete, because the rows that left
+ *  left quietly.
+ *
+ *  THAT IS THE DIFFERENCE FROM PANDAS, and it is why the panel leads with the count rather than
+ *  the data. A left join in pandas keeps the unmatched row and writes NaN into the brought
+ *  column, so the table itself tells you; this application drops the row and reports it, which
+ *  is the better default for a stratification and the worse one for a reader who only looks at
+ *  the result. The report is therefore not optional.
+ *
+ *  The labels of the two tables are NOT here. A node's label belongs to the workflow and is
+ *  editable after the run; resolving it from the edges at the moment of display keeps one answer
+ *  rather than two that can disagree. */
+export interface RelateOutcome {
+  on:string; bring:string;
+  /** Rows the left table brought in: `related + dropped`, stated rather than derived, because it
+   *  is the denominator the other two numbers mean something against. */
+  offered:number;
+  related:number; dropped:number; gaps:RelateGap[]; values:string[];
+  /** The left table's own columns, in its order. With `bring`, this is the whole of the result's
+   *  key columns and says which table each came from -- what pandas writes as an `_x`/`_y`
+   *  suffix, said in words because here only one column crosses over. */
+  carried:string[];
+}
+
+/** The outcome of a relate, as the run records it. Separate from `relateTable` so the computation
+ *  returns the table it computed and nothing about how it will be displayed. */
+export function relateOutcome(left:DataTable,request:RelateRequest,result:RelateResult):RelateOutcome{
+  return {on:request.on.trim(),bring:request.bring.trim(),
+    offered:left.rows.length,related:result.related,dropped:result.dropped,
+    gaps:result.gaps,values:result.values,carried:[...left.keys]};
+}

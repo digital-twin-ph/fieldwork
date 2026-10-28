@@ -690,12 +690,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.1.0",
-   "released": "2026-10-26",
+   "version": "0.2.0",
+   "released": "2026-10-28",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Brings a key column from a second table onto these rows, matched on a column both tables carry. This is Epi Info's RELATE and deliberately not its MERGE: a long table's value column holds only numbers, so a CATEGORY brought across can only be a key column and the row count is unchanged, while bringing MEASURES across would add rows and has a different failure mode. A second table giving one key two different values is REFUSED rather than resolved, because choosing between them would produce a stratification that is wrong in a way no total reveals. A left key the second table does not carry is reported by name and its rows are dropped, since inventing an \"unknown\" category would put a stratum in the table that nobody measured. What this unblocks is recorded in the 0.12.0 release notes as the reason South London's contingency table was prepared outside the application."
+     "kind": "minor",
+     "description": "Report the join on the step that did it. The four things a relate computes -- rows offered, rows related, rows dropped, and the keys that did not match -- were computed from the first release and shown only in the N3 receipt, which this project had already settled nobody opens for this purpose. A relate whose second table was missing a third of its keys therefore produced a table that looked finished: the dropped rows are ABSENT from the result, so the table is internally consistent at any size and cannot be read for what left it. This is where it differs from a pandas left merge, which keeps the unmatched row and writes NaN -- dropping is the better default for a stratification and the worse one for a reader who only sees the result, so the report is not optional. The panel leads with the counts against the offered denominator, names the gap keys rather than totalling them, and says which table each column came from; Quick Look repeats the column origins above each heading, which is what a merge writes as an _x/_y suffix. No computation changed: `relateTable` is untouched and lab check 28 still covers it."
     }
    ],
    "breaking": false,

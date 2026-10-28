@@ -24,6 +24,16 @@ export interface TableView {
   /** What a ruleset has declared each column to be, where anything has. A column nobody has
    *  bound is not wrong; it is undeclared, and the profile says so by saying nothing. */
   declared?:Record<string,ColumnKind>;
+  /** Where a column came from, for the columns whose origin is not obvious from the table alone.
+   *
+   *  The practitioner, 2026-10-27, on reading a related table: *"pandas also gives you the
+   *  original keys so you know which half of the row came from which table."* It does that with
+   *  an `_x`/`_y` suffix on the column name; this says it in words above the column, because a
+   *  renamed column is a different column downstream and a note is not.
+   *
+   *  Only the columns named here are annotated. A table whose columns all came from one place
+   *  passes nothing and reads as it did. */
+  origins?:Record<string,string>;
   /** Offered per column when a repair is possible and the caller can carry it out. Given the
    *  column and told what the practitioner asked for; the dialog closes and the caller decides
    *  what to record. */
@@ -98,7 +108,10 @@ export function openTableViewer(view:TableView,esc:Escape):void{
         ?`<div class="table-viewer-table"><table><thead><tr><th>#</th>`
           +view.columns.map(c=>{
             const p=profiles.get(c)!,said=summary(p);
-            return `<th>${esc(c)}${said?`<span class="profile">${said}</span>`:''}`
+            const from=view.origins?.[c];
+            return `<th>${esc(c)}`
+              +(from?`<span class="column-origin">${esc(from)}</span>`:'')
+              +(said?`<span class="profile">${said}</span>`:'')
               // The repair, where the column has values that would survive one and the caller
               // can carry it out. Named with its count, so what it will and will not fix is
               // stated before it is pressed rather than after.

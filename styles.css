@@ -341,6 +341,10 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .profile{display:block;font-weight:400;font-size:9px;line-height:1.6;color:var(--text-faint-28);
   margin-top:3px;white-space:normal;max-width:320px}
 .profile-flag{color:var(--warning-4);font-weight:650}
+/* Where the column came from, where that is not one table. Above the profile, because which
+   table a column came from decides whether its numbers are comparable at all. */
+.column-origin{display:block;font-weight:600;font-size:9px;line-height:1.6;color:var(--text-muted-11);
+  margin-top:3px;white-space:normal;max-width:320px}
 .table-viewer-table th .button{margin-top:6px;white-space:normal;text-align:left}
 /* A value that is not what its column was declared to be. Marked where it is, so a practitioner
    can see WHICH rows are the problem rather than only how many. */

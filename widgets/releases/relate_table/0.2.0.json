@@ -1,0 +1,67 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "released": "2026-10-28",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "typescriptType": "ParamsByType['relate_table']"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "id": "urn:fieldwork:widget:relate_table",
+  "nodeType": "relate_table",
+  "version": "0.2.0",
+  "title": "Relate a column from another table",
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      },
+      {
+        "name": "related",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes the table being added to on `records` and the table being read from on `related`, and gives back the first with one more key column. The row count does not change: a category brought across lands on every row that matched."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No ontology mapping yet. The receipt names the matched column, the column brought across, how many rows were related, how many were dropped for keys the second table does not carry, and the distinct values that landed. From 0.2.0 the run also carries those as structured data on `WorkflowRun.relations`, so the step can show them without a reader opening the receipt.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/relate-table.ts",
+      "src/core.ts",
+      "src/app.ts",
+      "src/results.ts",
+      "src/table-viewer.ts"
+    ],
+    "definition": "src/relate-table.ts"
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Report the join on the step that did it. The four things a relate computes -- rows offered, rows related, rows dropped, and the keys that did not match -- were computed from the first release and shown only in the N3 receipt, which this project had already settled nobody opens for this purpose. A relate whose second table was missing a third of its keys therefore produced a table that looked finished: the dropped rows are ABSENT from the result, so the table is internally consistent at any size and cannot be read for what left it. This is where it differs from a pandas left merge, which keeps the unmatched row and writes NaN -- dropping is the better default for a stratification and the worse one for a reader who only sees the result, so the report is not optional. The panel leads with the counts against the offered denominator, names the gap keys rather than totalling them, and says which table each column came from; Quick Look repeats the column origins above each heading, which is what a merge writes as an _x/_y suffix. No computation changed: `relateTable` is untouched and lab check 28 still covers it."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested against the two tables the South London repository already ships: Snow's Table VIII, 32 sub-districts with population and deaths, related to Table XII's water supply category on `sub_district`. The oracle is the hand-computed contingency table inlined in that example project with an empty digest -- relating and then totalling reproduces its six numbers exactly, which is what makes the hand computation removable. Covers an ambiguous key, an absent key, and a column the left table already holds. Nothing here establishes that two tables keyed on the same column describe the same subjects: the match is on the string, and a sub-district renamed between two sources would match nothing or, worse, match the wrong row. Lab check 28 is where this is compared against an independent implementation. The 0.2.0 report is covered by three browser checks over the South London contingency workflow and over two tables built in the interface, one of which withholds a key: the counts, the named gap, and the per-column origins. All three fail when the panel is removed."
+  }
+}

@@ -1503,6 +1503,25 @@ function recordsPanel(nodeId:string,data:{features:{id?:string|number;properties
  *  button."* Three different controls existed -- a study-area form, the catchment inspector's
  *  shared field, and a plain `source-label` input on the input widgets -- and a fourth widget had
  *  none at all. One shape now, so a practitioner learns the gesture once. */
+/** WHICH TABLE IS ON THIS PORT, by the name a reader of this canvas would use.
+ *
+ *  The node's label, except where it is still the palette's default and a tabular input has a
+ *  filename. `table_input` has no label control of its own, so two imported tables are both
+ *  "Tabular data" until a project file renames them -- and a relate panel reading "from Tabular
+ *  data, brought from Tabular data" names neither. The filename is then the only name the
+ *  practitioner has actually given them.
+ */
+function portSourceName(w:Workflow,nodeId:string,port:string,fallback:string):string{
+  const edge=w.edges.find(e=>e.to===nodeId&&e.port===port);
+  const from=edge&&w.nodes.find(x=>x.id===edge.from);
+  if(!from)return fallback;
+  const label=from.params.label?.trim();
+  if(from.type==='table_input'){
+    const file=from.params.source?.filename?.trim();
+    if(file&&(!label||label===TYPES.table_input.title))return file;
+  }
+  return label||TYPES[from.type].title;
+}
 function labelForm(id:string,caption:string,value:string,maxLength=60):string{
   return `<form class="field" data-label-form="${id}"><label class="field-label" for="${id}">${caption}</label>`
     +`<input id="${id}" maxlength="${maxLength}" value="${esc(value)}">`
@@ -1827,6 +1846,52 @@ function renderInspector(){
       +(Object.keys(there).length&&!shared.length
         ?'<div class="notice notice-warning">These two tables share no key column, so there is nothing to match on. Check that both carry the same kind of key.</div>':'')
       +'<div class="notice">A second table giving one key two different values is refused rather than resolved, because choosing between them would produce a grouping that is wrong in a way no total reveals. A key the second table does not carry is named in the evidence and those rows are dropped, since an invented “unknown” would put a stratum in your table that nobody measured. The match is on the exact text: this is Epi Info’s RELATE and not its MATCH.</div>';
+    // WHAT THE JOIN DID, before the table it produced.
+    //
+    // The four numbers were computed from the first commit of `relate-table.ts` and shown
+    // nowhere: they went into the N3 receipt, which this project has already settled nobody
+    // opens for this purpose. So a relate missing a third of its keys produced a table that
+    // looked finished -- `rowCount` agreed with itself, the totals were internally consistent,
+    // and the rows that left had left quietly.
+    //
+    // THE ORDER IS THE POINT. A pandas left join keeps the unmatched row and writes NaN, so the
+    // reader meets the gap in the data. This application drops the row, which is the better
+    // default for a stratification -- an invented "unknown" stratum is worse than a smaller
+    // table -- and the worse one for anybody who only looks at the result. So the count comes
+    // first and the data second, and the gap keys are named rather than totalled: "three keys
+    // did not match" is a number, and `Rotherhithe` is something a practitioner can go and fix.
+    const relation=result?.relations?.[n.id];
+    if(relation){
+      const left=portSourceName(workflow,n.id,'records','the first table');
+      const right=portSourceName(workflow,n.id,'related','the second table');
+      const row=(label:string,count:number,{emphasis=false}={})=>
+        `<tr${emphasis?' class="emphasis"':''}><th scope="row">${esc(label)}</th>`
+        +`<td>${count.toLocaleString()}</td>`
+        +`<td>${relation.offered?`${(count/relation.offered*100).toFixed(count/relation.offered<0.01&&count?2:0)}%`:'\u2014'}</td></tr>`;
+      content+=`<div class="inspector-divider"></div><span class="inspector-section">This run</span>`
+        +`<table class="dedup-summary"><thead><tr><th>Rows</th><th>Count</th>`
+        +`<th title="Of the rows the first table offered">% offered</th></tr></thead><tbody>`
+        +row('Offered',relation.offered)
+        +row('Related',relation.related,{emphasis:true})
+        +row('Dropped',relation.dropped,{emphasis:!!relation.dropped})
+        +`</tbody></table>`
+        +(relation.dropped
+          ?`<div class="notice notice-warning">${relation.dropped.toLocaleString()} row`
+            +`${relation.dropped===1?'':'s'} left the table because `
+            +`${esc(right)} carries no ${esc(relation.on)} of `
+            +relation.gaps.map(g=>`<strong>${esc(g.key)}</strong>`).join(', ')
+            +`. They are not in the result and nothing downstream counts them — a total over `
+            +`this table is a total over ${relation.related.toLocaleString()} of `
+            +`${relation.offered.toLocaleString()} rows.</div>`
+          :`<div class="rule-preview">Every ${esc(relation.on)} in ${esc(left)} was found in `
+            +`${esc(right)}. No row was dropped, so a total over this table is a total over the `
+            +`whole of ${esc(left)}.</div>`)
+        +`<span class="inspector-section">Columns</span>`
+        +`<p class="muted">From ${esc(left)}: ${esc(relation.carried.join(', '))}. `
+        +`Brought from ${esc(right)}: <strong>${esc(relation.bring)}</strong>`
+        +(relation.values.length?`, holding ${relation.values.map(v=>esc(v)).join(', ')}`:'')
+        +`.</p>`;
+    }
   }else if(n.type==='group_table'){
     const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
     content+='<p class="description">Adds up the values of the rows that agree on the key columns you keep. The columns you do not keep are gone from the result.</p>'
@@ -2614,7 +2679,33 @@ function renderInspector(){
   optionalElement('#output-quick-look')?.addEventListener('click',()=>{
     const produced=result?.tables?.[n.id];
     if(!produced)return;
-    openTableViewer(tableViewOf(produced,`${n.params.label||TYPES[n.type].title} \u00b7 output`),esc);
+    const view=tableViewOf(produced,`${n.params.label||TYPES[n.type].title} \u00b7 output`);
+    // WHICH HALF OF THE ROW CAME FROM WHICH TABLE, for a related table only.
+    //
+    // The practitioner, 2026-10-27: *"pandas also gives you the original keys so you know which
+    // half of the row came from which table."* Here exactly one column crosses over, so the
+    // annotation is a sentence rather than an `_x`/`_y` suffix -- and a note above the column
+    // beats a suffix in the name, because a renamed column is a different column to everything
+    // downstream and a note is not.
+    const relation=result?.relations?.[n.id];
+    if(relation){
+      const left=portSourceName(workflow,n.id,'records','the first table');
+      const right=portSourceName(workflow,n.id,'related','the second table');
+      // Over the columns the VIEW shows, not the stored keys. Quick Look draws a frame, so the
+      // left table's `measure` column is gone and its values are the headings -- and those
+      // headings are the numbers a reader is here to check. Naming only the stored keys would
+      // have left every number column unattributed, which is the half of the row the question
+      // was about.
+      view.origins=Object.fromEntries(view.columns.map(column=>
+        [column,column===relation.bring?`brought from ${right}, matched on ${relation.on}`
+          :`from ${left}`]));
+      view.note=`${view.note??''} ${relation.related.toLocaleString()} of `
+        +`${relation.offered.toLocaleString()} offered rows related`
+        +(relation.dropped?`; ${relation.dropped.toLocaleString()} dropped for `
+          +`${relation.on} ${relation.gaps.map(g=>g.key).join(', ')}, which are not shown here `
+          +`because they are not in this table`:' and none dropped')+'.';
+    }
+    openTableViewer(view,esc);
   });
   document.querySelectorAll<HTMLButtonElement>('[data-raster-step]').forEach(button=>button.onclick=()=>{selected=button.dataset.rasterStep;render();});
   optionalElement('#manage-references')?.addEventListener('click',()=>{let baseline=JSON.stringify(n.references||[]);openEvidenceEditor(n,refs=>{const current=workflow.nodes.find(x=>x.id===n.id);if(!current||JSON.stringify(current.references||[])!==baseline)throw new Error('The node changed while editing. Close and reopen its references.');const saved=change(w=>{required(w.nodes.find(x=>x.id===n.id)).references=structuredClone(refs);},{requirePersistence:true});if(saved)baseline=JSON.stringify(refs);return saved;});});

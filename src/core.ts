@@ -54,7 +54,7 @@ import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
-import {relateTable} from './relate-table.js';
+import {relateTable,relateOutcome,type RelateOutcome} from './relate-table.js';
 import {groupTable} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt} from './two-by-two.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
@@ -887,6 +887,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   const runId=crypto.randomUUID(), receipts:Receipt[]=[];
   // What each deduplication found, so the node can show the band it is waiting on.
   const linkages:Record<string,DeduplicateResult>={};
+  // What each relate did, for the same reason: the rows it dropped are not in the table it
+  // produced, so a step that silently halved a stratification looks exactly like one that did
+  // not. See `relateOutcome` in src/relate-table.ts.
+  const relations:Record<string,RelateOutcome>={};
   const expansion=expandMicroWorkflows(workflow,resolveComposition,runId);
   workflow=expansion.workflow;receipts.push(...expansion.receipts);
   const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];
@@ -1098,6 +1102,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           +'this step brings a column across from it.');
         const result=relateTable(table,other,node.params);
         value=result.table as unknown as DisplayValue;
+        relations[node.id]=relateOutcome(table,node.params,result);
         receipts.push({nodeId:node.id,kind:'computation',
           method:`${node.params.bring} brought across on ${node.params.on}`
             +`, ${result.related} row${result.related===1?'':'s'} related`
@@ -1639,5 +1644,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     if((value as {kind?:string})?.kind==='data-table')tables[nodeId]=value as DataTable;
   return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString(),
     ...(Object.keys(tables).length?{tables}:{}),
-    ...(Object.keys(linkages).length?{linkages}:{})};
+    ...(Object.keys(linkages).length?{linkages}:{}),
+    ...(Object.keys(relations).length?{relations}:{})};
 }

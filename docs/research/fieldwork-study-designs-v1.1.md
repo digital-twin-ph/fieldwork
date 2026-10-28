@@ -20,6 +20,9 @@ _Created 2026-10-28 · Updated 2026-10-28_
 >
 > It is kept because its design-to-computation mapping is the thing experiment
 > [147](../experiments/147-table-shells-begin-with-the-end-in-mind.md) needs and does not have.
+> Adapted to the widgets this application actually has in
+> [the study-design audit](../audits/study-designs-and-our-computations.md), which is the version to
+> read before acting on anything here.
 > Where it disagrees with a measurement taken in this repository, the measurement wins. **One
 > disagreement is already known:** it maps South London to a single design, "historical ecological
 > natural experiment", and the repository carries **two**. `water-company` reads Table IX, deaths

@@ -21,7 +21,13 @@ const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');
 const write=process.argv.includes('--write');
 const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
 // CHANGELOG is dated by its own release headings; a second date beside them would compete.
-const SKIP=new Set(['CHANGELOG.md']);
+//
+// widget-names.md is GENERATED, by scripts/widget-names.mjs, which writes its stamp along with
+// everything else in it. Stamping it here makes two generators claim one file: `--write` moved it
+// to today, `validate:names` compared it against the definitions, found it drifted and failed the
+// build -- on 2026-10-28, from a stamping run that changed nothing else about it. Same reason as
+// CHANGELOG, found the same way.
+const SKIP=new Set(['CHANGELOG.md','widget-names.md']);
 const STAMP=/^_Created (\d{4}-\d{2}-\d{2}) · Updated (\d{4}-\d{2}-\d{2})_$/;
 
 function markdownFiles(dir,found=[]){

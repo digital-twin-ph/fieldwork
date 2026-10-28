@@ -2,7 +2,7 @@
 
 _Created 2026-10-28 · Updated 2026-10-28_
 
-**Status:** asked — the question is recorded here and deliberately not answered.
+**Status:** asked — and the central question was answered on the day it was asked, by the practitioner, in the section below. What remains unanswered is narrower and is named there.
 
 The practitioner, 2026-10-28, while the join work was in progress:
 
@@ -232,6 +232,67 @@ finding: the denominator already accounts for the gap, and nothing has been comp
 anything is left over for misclassification to explain. A declared design is what would make the
 question askable at all.
 
+## Answered: the design supplies the terms
+
+The practitioner, the same day:
+
+> If we start with a study design the way we start with study area the workflow becomes more
+> focused. The study area identifies the location (for a study it becomes part of the title). Then
+> study design widget cascades metadata downstream for its computations. For example, during table
+> input, the variables can be mapped to computation/equation terms already.
+
+> The study design then also becomes part of the machined title.
+
+**This is neither of the two options this experiment was weighing.** Not a blank table shell, which
+asks a practitioner to draw a table before anything exists; not detection, which asks the
+application to guess what columns mean. The design names the computations it licenses, each
+computation carries **its own equation terms**, and the import offers those terms for the
+practitioner's columns to be mapped onto. Nothing is invented and nothing is guessed.
+
+    design → the computations it licenses → their equation terms → columns mapped onto the terms
+
+**It also dodges the objection recorded above.** A role is not a property of a column — correct, and
+under this scheme the role is not on the column. The term belongs to the **equation**; the mapping
+says which column plays that term in that computation. `population_1851` can be a denominator in a
+mortality rate and a numerator in population-per-house, and both mappings can exist, because they
+belong to different equations.
+
+**And the term lists already exist here, written longhand.** This experiment already observed that
+`two_by_two`'s parameters are a table shell entered at the computing step. They are also the term
+list: `exposureColumn`, `exposed`, `unexposed`, `outcomeColumn`, `caseValue`, `nonCaseValue`. So are
+`rate`'s: `numeratorField`, `denominatorField`, `denominatorUnit` — which already distinguishes
+`person-time` from `people`, and so already distinguishes an incidence rate from a risk. The terms
+are not a vocabulary anybody has to design; they are the parameters four widgets already have, moved
+to where the data enters.
+
+### Two openings, not one
+
+`study_area` declares **where**, and a workflow already starts with it. Nothing declares **how**.
+Both belong at the opening, and both reach the machined title — which makes the title the cheapest
+demonstration of what a declaration buys, because it visibly improves: *"Cholera mortality by water
+supply, South London, 1854"* without a design, *"A retrospective cohort study of cholera mortality
+by water supply, South London, 1854"* with one.
+
+A machined title differs structurally from a machined note, and the difference matters for where it
+can live. A note is owned by one widget and rides on that widget's receipt. A title is **assembled
+from the workflow** — design, place, outcome, period — so it is a run-level product and cannot be a
+per-node note.
+
+### What remains open, which is narrower than what this experiment started with
+
+1. **The cascade costs four widgets.** `relate_table`, `group_table`, `derive_value` and
+   `select_rows` sit between a declaration and a `two_by_two`, and each must carry the design
+   through rather than drop it. That is the price, and it is not the widget budget.
+2. **How a table input learns the design.** Either it gains an input port, which stops it being a
+   source, or the import dialog finds the design by walking the workflow — which is what
+   `declaredKinds(workflow, nodeId)` and `upstreamKeyValues` already do, and is the cheaper answer.
+3. **A title needs a study period and nothing declares one.** `rate` carries `numeratorPeriod` and
+   `denominatorVintage`, `case_series` carries a period; all three are properties of a computation
+   rather than of the study, which is backwards for a title.
+4. **One shape of the earlier reading was wrong.** A design cannot be a pass-through threaded
+   between a table and its computation, because the mapping happens *at* table input — so the
+   design sits upstream of everything, as `study_area` does.
+
 ## What would close this
 
 0. **Nothing here is urgent, and the ordering is now obvious.** Detection serves the practitioner
@@ -258,7 +319,12 @@ question askable at all.
 6. **Gate the 2x2's measures on the design**, which is the first place a declaration would prevent
    a wrong number rather than merely annotate a right one: a case-control table should not be
    offered a risk ratio, and a cross-sectional one should not have its prevalence called risk.
-   This is separable from everything else in this experiment and is worth doing on its own.
+   This is separable from everything else in this experiment and is worth doing on its own. Worked
+   out against the widgets we actually have in
+   [the study-design audit](../audits/study-designs-and-our-computations.md), which also records
+   the two things this application already gets right: `denominatorUnit` carries `person-time`, and
+   the widget is named `rate_ratio` rather than risk ratio, so the estimand vocabulary is not what
+   is missing -- the design is.
 7. **Settle the 8.40 / 5.35 remainder.** The denominator unit accounts for the gap; whether
    anything is left for ecological misclassification has not been computed. The lab is where that
    belongs, since the expectation must come from outside this application.

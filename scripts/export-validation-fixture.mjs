@@ -28,7 +28,7 @@ import {bufferPoint,BUFFER_POINT_STEPS} from '../build/buffer-point.js';
 import {bufferedBoundary} from '../build/area-buffer.js';
 import {aggregateHex} from '../build/geoprivacy.js';
 import {caseSeriesFromTable} from '../build/case-series.js';
-import {relateTable} from '../build/relate-table.js';
+import {relateTable,relateShape,gapSignature} from '../build/relate-table.js';
 import {groupTable} from '../build/group-table.js';
 import {joinTableToAreas} from '../build/area-join.js';
 import {computeRate,fromTable,rateTable as rateTableOf} from '../build/rate.js';
@@ -155,6 +155,31 @@ const southLondonTables=()=>{
       ({boundaryID,source,licence,licenceSource,canonical,yearRepresented}))(
       cnode('sub-districts').params.boundary),
     commit:bundle.exportedAt,project:bundle.project.id};
+};
+
+/** THE SAME 32 SUBJECTS, SPELLED BY A SECOND SOURCE.
+ *
+ *  Snow's two tables agree with each other letter for letter, because both transcribe one book --
+ *  which is why check 28 recorded that it could not reach the case a practitioner actually meets:
+ *  *"St. George, Camberwell" against "St George Camberwell" is the case a practitioner will
+ *  actually meet, and neither this fixture nor this check reaches it.*
+ *
+ *  The published sub-district boundaries are that second source, and they spell nine of the 32
+ *  without their comma. Names and the supplying company only -- NO geometry, the same restraint
+ *  `southLondonTables` states for the units it carries, so a BSD-2-Clause boundary file is not
+ *  redistributed through a fixture. The provenance travels with the names. */
+const southLondonBoundaryTable=()=>{
+  const path=new URL('../../example-1855-cholera-south-london/geo/sub-districts-csds.geojson',import.meta.url);
+  let collection;
+  try{collection=JSON.parse(readFileSync(path,'utf8'));}
+  catch{throw new Error('example-1855-cholera-south-london is not checked out beside this repository, '
+    +'and the boundary spellings these cases turn on are read from its published boundary file.');}
+  const rows=collection.features
+    .filter(feature=>typeof feature.properties?.subdist==='string')
+    .map(feature=>({key:{sub_district:feature.properties.subdist,
+      supplier:String(feature.properties.supplier)},value:Number(feature.properties.pop1851)}));
+  return {kind:'data-table',keys:['sub_district','supplier'],valueField:'people',
+    rows,rowCount:rows.length,missingValueCount:0};
 };
 
 const builders={
@@ -894,66 +919,127 @@ const builders={
   },
   'relate-snow-001'(){
     // RELATE brings a CATEGORY across, so there is no arithmetic to check. What is worth an
-    // independent eye is the MATCHING, and one case in particular: a right table that gives one
-    // key two different values is REFUSED here, where a merge resolves it to whichever row came
-    // first and reports nothing. That is the comparison -- not whether two implementations agree,
-    // but what the other one does instead.
-    const {left,right}=southLondonTables();
-    const request={on:'sub_district',bring:'water_supply'};
+    // independent eye is the MATCHING -- and from 0.3.0 two things besides: what the practitioner
+    // DECLARED about rows that did not match, and what the join did to each numeric variable.
+    //
+    // Rebuilt 2026-10-28, because 0.3.0 changed the subject in three ways and this export broke
+    // outright on the second of them: keys are compared with punctuation folded by default, a gap
+    // REFUSES until the practitioner declares what to do with it, and the retained share of each
+    // variable is now part of the result. The old fixture declared "no case folding, no
+    // punctuation folding", which is no longer true of the widget.
+    const {left,right,boundaryProvenance}=southLondonTables();
+    const boundaries=southLondonBoundaryTable();
+    const on='sub_district';
+    const rowsOf=table=>table.rows.map(row=>({key:row.key,value:row.value}));
+    const shapeOf=result=>({overlap:result.overlap,shares:result.shares,
+      normalisation:result.normalisation});
+    const declare=(l,r,request,decision,extra={})=>({...request,unmatched:{decision,...extra,
+      signature:gapSignature(relateShape(l,r,request).overlap.gaps,request.normalisation??'fuzzy')}});
+    const refusalOf=(l,r,request)=>{try{relateTable(l,r,request);return null;}catch(e){return e.message;}};
 
-    // 1. The relate the example runs.
-    const joined=relateTable(left,right,request);
+    // Snow's own two tables. 32 of 32 under either comparison, because both transcribe one book --
+    // which is the control for the pair of cases further down.
+    const snow={on,bring:'water_supply'};
+    const folded=relateTable(left,right,{...snow,normalisation:'fuzzy'});
+    const strict=relateTable(left,right,{...snow,normalisation:'exact'});
 
-    // 2. A key the right table does not carry. Snow's tables match exactly, so the gap is made
-    //    by withholding one sub-district -- both of its rows in the left table should be dropped
-    //    and named, never defaulted to an invented category.
+    // A key the right table does not carry, three ways: refused, dropped, kept. The three are the
+    // whole of what 0.3.0 added, and the point is that the second and third give DIFFERENT totals
+    // from the same input -- which is why the first exists.
     const withheld='St. Saviour, Southwark';
     const short={...right,rows:right.rows.filter(r=>r.key.sub_district!==withheld),
-      rowCount:right.rows.length-right.rows.filter(r=>r.key.sub_district===withheld).length};
-    const withGap=relateTable(left,short,request);
+      rowCount:right.rows.filter(r=>r.key.sub_district!==withheld).length};
+    const undeclared=refusalOf(left,short,snow);
+    const dropped=relateTable(left,short,declare(left,short,snow,'drop',
+      {reason:'withheld from the right table to make the case'}));
+    const keptLabel='Supply not recorded';
+    const kept=relateTable(left,short,declare(left,short,snow,'keep',{label:keptLabel,
+      reason:'withheld from the right table to make the case'}));
 
-    // 3. An ambiguous key. CONSTRUCTED, and said so: no sub-district in Snow's Table XII carries
-    //    two companies, which is exactly why the case has to be built. One row is duplicated
-    //    with a different company, and the expected behaviour is a refusal with a message naming
-    //    the key and both values.
+    // An ambiguous key. CONSTRUCTED, and said so: no sub-district in Table XII carries two
+    // companies, which is exactly why the case has to be built.
     const first=right.rows[0];
     const ambiguousRows=[...right.rows,{key:{...first.key,water_supply:'Lambeth Company only'},value:1}];
     const ambiguous={...right,rows:ambiguousRows,rowCount:ambiguousRows.length};
-    let refusal=null;
-    try{relateTable(left,ambiguous,request);}catch(error){refusal=error.message;}
+    const ambiguousRefusal=refusalOf(left,ambiguous,snow);
 
-    const rowsOf=table=>table.rows.map(row=>({key:row.key,value:row.value}));
+    // THE CASE CHECK 28 RECORDED THAT IT COULD NOT REACH, now reachable from published data.
+    // The boundary file spells nine of the 32 sub-districts without their comma, so the same two
+    // tables match 23 of 32 compared exactly and 32 of 32 compared folded. One knob, nine rows.
+    const bring={on,bring:'supplier'};
+    const boundaryStrictRequest={...bring,normalisation:'exact'};
+    const boundaryStrict=relateTable(left,boundaries,
+      declare(left,boundaries,boundaryStrictRequest,'drop',
+        {reason:'the boundary file spells these without their comma'}));
+    const boundaryFolded=relateTable(left,boundaries,{...bring,normalisation:'fuzzy'});
+
     return {fixture:{
       ...base('relate-snow-001','relate_table','Relate a table','src/relate-table.ts#relateTable'),
-      source:"John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855: Table VIII (population and deaths by sub-district) as the left table and Table XII (the company supplying each sub-district) as the right. Read from the example-1855-cholera-south-london checkout, not retyped.",
-      declaredParameters:{on:request.on,bring:request.bring,
-        semantics:'Each left row takes the single value its key has in the right table\'s bring column, which becomes an additional KEY column. The row count is unchanged -- nothing is added and nothing is multiplied. A left key the right table has no row for is reported by name and its rows are DROPPED, because a row with no category cannot be grouped by that category. A right table holding two different bring values for one key is REFUSED outright; it is not resolved to the first, the last, or any of them.',
-        matching:'Exact equality after trimming. No case folding, no punctuation folding, no resemblance.',
-        equivalentTo:'A pandas left merge on `on`, restricted to one brought column, followed by dropping the unmatched rows -- EXCEPT for the ambiguous case, where a merge multiplies rows and this refuses.'},
+      source:"John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855: Table VIII (population and deaths by sub-district) as the left table and Table XII (the company supplying each sub-district) as the right. The third table is the published sub-district boundary's own spelling of the same 32 names with the company it records, names and category only and no geometry. All read from the example-1855-cholera-south-london checkout, not retyped.",
+      declaredParameters:{on,measureKey:'measure',
+        semantics:'Each left row takes the single value its key has in the right table\'s bring column, which becomes an additional KEY column. The row count is unchanged -- nothing is added and nothing is multiplied. A right table holding two different bring values for one key is REFUSED outright; it is not resolved to the first, the last, or any of them. From 0.3.0 a left key the right table has no row for is also REFUSED until the practitioner declares what to do with it: `drop` excludes those rows, `keep` retains them under a category the practitioner names, and the two give different totals.',
+        matching:'Compared after NFKC normalisation, trimming and lowercasing. `exact` stops there. `fuzzy`, the DEFAULT from 0.3.0, additionally replaces every run of characters that are neither letters nor digits with a single space and trims again. Reimplement this from the rule rather than importing it: the folding is the thing under check.',
+        shares:'Each numeric variable\'s total over every offered row and over the rows that matched, and the fraction retained. The variable is the value of the measure key column where the table has one. An inner join multiplies a rate of one variable over another by exactly the ratio of their retained fractions, which is the identity worth recomputing.',
+        equivalentTo:'A pandas left merge on `on` after applying the declared folding to both key columns, restricted to one brought column -- then dropping the unmatched rows for `drop`, or filling them with the declared label for `keep`. EXCEPT for the ambiguous case, where a merge multiplies rows and this refuses, and for an undeclared gap, where a merge proceeds and this refuses.'},
+      boundaryProvenance,
       input:{left:{keys:left.keys,valueField:left.valueField,rowCount:left.rows.length,rows:rowsOf(left)},
-        right:{keys:right.keys,valueField:right.valueField,rowCount:right.rows.length,rows:rowsOf(right)}},
+        right:{keys:right.keys,valueField:right.valueField,rowCount:right.rows.length,rows:rowsOf(right)},
+        boundaries:{keys:boundaries.keys,valueField:boundaries.valueField,
+          rowCount:boundaries.rows.length,rows:rowsOf(boundaries)}},
       output:{cases:[
-        {note:'The relate the example runs: Table XII\'s company onto all 64 rows of Table VIII',
-          rightTable:'right',
-          table:{keys:joined.table.keys,rowCount:joined.table.rowCount,
-            missingValueCount:joined.table.missingValueCount,rows:rowsOf(joined.table)},
-          related:joined.related,dropped:joined.dropped,gaps:joined.gaps,values:joined.values,
-          refused:null},
-        {note:`A key the right table does not carry: ${withheld} withheld, so its rows are dropped and named`,
+        {note:'The relate the example runs, folded: Table XII\'s company onto all 64 rows of Table VIII',
+          rightTable:'right',rightInput:'right',request:{...snow,normalisation:'fuzzy'},
+          table:{keys:folded.table.keys,rowCount:folded.table.rowCount,
+            missingValueCount:folded.table.missingValueCount,rows:rowsOf(folded.table)},
+          related:folded.related,dropped:folded.dropped,kept:folded.kept,
+          gaps:folded.gaps,values:folded.values,...shapeOf(folded),refused:null},
+        {note:'The same, compared exactly. The control: Snow\'s two tables agree letter for letter, so folding changes nothing here and the difference further down is not an artefact of the knob',
+          rightTable:'right',rightInput:'right',request:{...snow,normalisation:'exact'},
+          table:{keys:strict.table.keys,rowCount:strict.table.rowCount,
+            missingValueCount:strict.table.missingValueCount,rows:rowsOf(strict.table)},
+          related:strict.related,dropped:strict.dropped,kept:strict.kept,
+          gaps:strict.gaps,values:strict.values,...shapeOf(strict),refused:null},
+        {note:`A key the right table does not carry, UNDECLARED: ${withheld} withheld and nothing said about it. Refused, where a merge would proceed`,
           rightTable:'right, with every row for that sub-district removed',
-          withheldKey:withheld,
-          table:{keys:withGap.table.keys,rowCount:withGap.table.rowCount,
-            missingValueCount:withGap.table.missingValueCount,rows:rowsOf(withGap.table)},
-          related:withGap.related,dropped:withGap.dropped,gaps:withGap.gaps,values:withGap.values,
-          refused:null},
+          rightInput:'right',request:snow,withheldKey:withheld,
+          table:null,related:null,dropped:null,kept:null,gaps:null,values:null,
+          refused:undeclared},
+        {note:`The same gap, declared \u201cdrop\u201d: the rows are excluded and the key named`,
+          rightTable:'right, with every row for that sub-district removed',
+          rightInput:'right',request:{...snow,unmatched:{decision:'drop'}},withheldKey:withheld,
+          table:{keys:dropped.table.keys,rowCount:dropped.table.rowCount,
+            missingValueCount:dropped.table.missingValueCount,rows:rowsOf(dropped.table)},
+          related:dropped.related,dropped:dropped.dropped,kept:dropped.kept,
+          gaps:dropped.gaps,values:dropped.values,...shapeOf(dropped),refused:null},
+        {note:`The same gap, declared \u201ckeep\u201d under \u201c${keptLabel}\u201d: every row stays and the totals are the whole left table\u2019s`,
+          rightTable:'right, with every row for that sub-district removed',
+          rightInput:'right',request:{...snow,unmatched:{decision:'keep',label:keptLabel}},withheldKey:withheld,
+          table:{keys:kept.table.keys,rowCount:kept.table.rowCount,
+            missingValueCount:kept.table.missingValueCount,rows:rowsOf(kept.table)},
+          related:kept.related,dropped:kept.dropped,kept:kept.kept,
+          gaps:kept.gaps,values:kept.values,...shapeOf(kept),refused:null},
         {note:'An ambiguous key, constructed: one sub-district given a second, different company',
           rightTable:'right, with one row duplicated under a different company',
+          rightInput:'right',request:snow,
           constructed:'No sub-district in Table XII carries two companies. The row is added here because the case cannot be drawn from the data.',
           ambiguousKey:first.key.sub_district,
           ambiguousValues:[first.key.water_supply,'Lambeth Company only'],
-          table:null,related:null,dropped:null,gaps:null,values:null,
-          refused:refusal}]},
-      note:'Recompute each case from `input` and `declaredParameters` with an independent merge. Case 3 has no table: the expected result is a refusal, and what a merge does there instead is the finding.'
+          table:null,related:null,dropped:null,kept:null,gaps:null,values:null,
+          refused:ambiguousRefusal},
+        {note:'The published boundary\'s own spelling, compared EXACTLY: nine of the 32 sub-districts are written without their comma, so nine do not match and their rows are excluded at a declared choice',
+          rightTable:'boundaries',rightInput:'boundaries',
+          request:{...boundaryStrictRequest,unmatched:{decision:'drop',reason:'the boundary file spells these without their comma'}},
+          table:{keys:boundaryStrict.table.keys,rowCount:boundaryStrict.table.rowCount,
+            missingValueCount:boundaryStrict.table.missingValueCount,rows:rowsOf(boundaryStrict.table)},
+          related:boundaryStrict.related,dropped:boundaryStrict.dropped,kept:boundaryStrict.kept,
+          gaps:boundaryStrict.gaps,values:boundaryStrict.values,...shapeOf(boundaryStrict),refused:null},
+        {note:'The same two tables, compared FOLDED: every one of the 32 matches, and nothing is excluded. The pair is the finding -- one knob, nine rows, and two different retained shares',
+          rightTable:'boundaries',rightInput:'boundaries',request:{...bring,normalisation:'fuzzy'},
+          table:{keys:boundaryFolded.table.keys,rowCount:boundaryFolded.table.rowCount,
+            missingValueCount:boundaryFolded.table.missingValueCount,rows:rowsOf(boundaryFolded.table)},
+          related:boundaryFolded.related,dropped:boundaryFolded.dropped,kept:boundaryFolded.kept,
+          gaps:boundaryFolded.gaps,values:boundaryFolded.values,...shapeOf(boundaryFolded),refused:null}]},
+      note:'Recompute each case from `input`, `declaredParameters` and the case\'s own `request` with an independent merge, applying the declared folding yourself. Three cases have no table: two expect a refusal, and what a merge does there instead is the finding. The last two cases share their input and differ only in the comparison.'
     },files:{}};
   },
 

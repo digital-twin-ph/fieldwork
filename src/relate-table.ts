@@ -474,6 +474,13 @@ export interface MachinedNote {
    *  in Methods. So this widget maps to one part and the vocabulary has one value; it widens
    *  when a producer genuinely needs another, rather than being guessed at now.
    *
+   *  CAPITALISED, and that is not a style choice. The South London example already ships nine
+   *  QUOTED notes under `Introduction`, `Methods` and `Discussion` -- so the sibling schema had a
+   *  spelling before this one existed, and two kinds of note that cannot be grouped together are
+   *  two kinds of note nobody can read in one place. Settled by the practitioner on 2026-10-28:
+   *  *"Reconcile, use capital M, Methods."* Nothing read both until now, which is the only reason
+   *  the clash survived being written.
+   *
    *  NOT "an IMRAD section", which this said until the practitioner corrected it the same day:
    *  *"Title and Abstract are not in IMRAD so we have to account for that in the Notes."* IMRAD is
    *  the BODY -- introduction, methods, results, discussion. A title and an abstract are front
@@ -481,7 +488,7 @@ export interface MachinedNote {
    *  declarations spread across a workflow, so they are run-level products rather than values of
    *  this field. The two facts point the same way, which is why this union will widen to the body
    *  sections only. */
-  section:'methods';
+  section:'Methods';
   kind:'machined';
   text:string;
 }
@@ -512,7 +519,7 @@ export function machinedNotes(view:MachinedNoteInput,tables:{left:string;right:s
   const compared=normalisation==='fuzzy'
     ?'comparing keys with punctuation and case folded'
     :'comparing keys exactly, after trimming';
-  const notes:MachinedNote[]=[{section:'methods',kind:'machined',
+  const notes:MachinedNote[]=[{section:'Methods',kind:'machined',
     text:`${bring} was brought from ${tables.right} onto the rows of ${tables.left}, matched on `
       +`${on}, ${compared}. ${overlap.matched} ${on} value`
       +`${overlap.matched===1?'':'s'} appeared in both tables`
@@ -559,7 +566,7 @@ export function machinedNotes(view:MachinedNoteInput,tables:{left:string;right:s
       })()
     :' A rate of any one of these variables over another, computed on this table, is multiplied by '
       +'the ratio of their retained shares.';
-  notes.push({section:'methods',kind:'machined',
+  notes.push({section:'Methods',kind:'machined',
     text:`${overlap.gaps.length} ${on} value${overlap.gaps.length===1?'':'s'} present in `
       +`${tables.left} had no row in ${tables.right} (${named}) and the corresponding rows are `
       +`absent from this analysis. Of the totals ${tables.left} holds, `

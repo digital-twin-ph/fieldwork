@@ -154,7 +154,9 @@ export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; proven
    *  absent from the table it hands on, so the outcome cannot be read off the data. */
   relations?:Record<string,import('./relate-table.js').RelateOutcome>;
   /** NOTES THE WIDGETS MACHINED, by the node that machined them: the application's own account of
-   *  what it did, written for an IMRAD section rather than for a panel.
+   *  what it did, written for a part of a write-up rather than for a panel. IMRAD is the body;
+   *  a title and an abstract are front matter and are assembled from the whole workflow rather
+   *  than owned by a node, so they are not values of a note's `section`.
    *
    *  The practitioner, 2026-10-28, on why transparency about a join is not a panel feature: *"this
    *  should be in fact a machined note from the widget."* Sibling of the quoted notes the South

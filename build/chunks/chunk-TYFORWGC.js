@@ -15,4 +15,4 @@ ${`<urn:fieldwork:run:${t.runId}:output:${t.nodeId}>`} a fw:TableRelate;
   fw:retainedShare [ a fw:VariableShare; fw:ofVariable ${e(a.measure)}; fw:offeredTotal "${a.all}"^^xsd:decimal; fw:relatedTotal "${a.related}"^^xsd:decimal`+(a.share===null?"":`; fw:retainedFraction "${a.share.toFixed(6)}"^^xsd:decimal`)+" ]").join("")+r.map(a=>`;
   fw:machinedNote [ a fw:MachinedNote; fw:noteSection ${e(a.section)}; fw:noteText ${e(a.text)} ]`).join("")+`.
 `}export{I as a,K as b,G as c,A as d,L as e,P as f,U as g};
-//# sourceMappingURL=chunk-MRO2YR76.js.map
+//# sourceMappingURL=chunk-TYFORWGC.js.map

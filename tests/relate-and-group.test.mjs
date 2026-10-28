@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {relateTable} from '../build/relate-table.js';
+import {relateTable,relateOutcome} from '../build/relate-table.js';
 import {groupTable} from '../build/group-table.js';
 import {deriveValue,selectRows} from '../build/derive-value.js';
 
@@ -122,4 +122,50 @@ test('a group holding an empty cell totals to null and is named',()=>{
 test('grouping by every column is refused as a no-op',()=>{
   assert.throws(()=>groupTable(tableVIII(),{by:['sub_district','measure']}),
     /every row is already its own group/);
+});
+
+/** THE OUTCOME, which is the part of a relate that the table it produces cannot tell you.
+ *
+ *  A dropped row is absent from the result, so `table.rowCount` agrees with itself whether the
+ *  second table carried every key or two thirds of them. These assert that the number a reader
+ *  needs -- the denominator the result is a part of -- survives to the run object. */
+test('the outcome carries the denominator the result is a part of',()=>{
+  const left=tableVIII();
+  const request={on:'sub_district',bring:'water_supply'};
+  const outcome=relateOutcome(left,request,relateTable(left,tableXII(),request));
+  assert.equal(outcome.offered,64);
+  assert.equal(outcome.related,64);
+  assert.equal(outcome.dropped,0);
+  assert.equal(outcome.offered,outcome.related+outcome.dropped);
+  assert.deepEqual(outcome.gaps,[]);
+  assert.deepEqual(outcome.carried,['sub_district','measure'],
+    "the left table's own columns, in its order, so the brought one is identifiable");
+  assert.equal(outcome.bring,'water_supply');
+  assert.equal(outcome.on,'sub_district');
+  assert.equal(outcome.values.length,3);
+});
+
+test('the outcome names the keys that did not match, not only how many',()=>{
+  const right=tableXII();
+  const missing=right.rows[0].key.sub_district;
+  right.rows=right.rows.slice(1);
+  const left=tableVIII();
+  const request={on:'sub_district',bring:'water_supply'};
+  const outcome=relateOutcome(left,request,relateTable(left,right,request));
+  // 62 of 64 is the whole finding: the table that travels on holds 62 rows and says nothing
+  // about the 64 it was made from.
+  assert.equal(outcome.offered,64);
+  assert.equal(outcome.related,62);
+  assert.equal(outcome.dropped,2);
+  assert.deepEqual(outcome.gaps,[{key:missing,rows:2}]);
+});
+
+test('the outcome is unaffected by a request whose column names carry whitespace',()=>{
+  const left=tableVIII();
+  const request={on:' sub_district ',bring:' water_supply '};
+  const outcome=relateOutcome(left,request,relateTable(left,tableXII(),request));
+  // The panel prints `on` and `bring` in a sentence and the Quick Look matches `bring` against
+  // a column name, so an untrimmed value here would read as a typo and annotate nothing.
+  assert.equal(outcome.on,'sub_district');
+  assert.equal(outcome.bring,'water_supply');
 });

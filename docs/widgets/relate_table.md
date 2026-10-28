@@ -1,6 +1,6 @@
 # Relate a column from another table
 
-_Created 2026-10-26 · Updated 2026-10-27_
+_Created 2026-10-26 · Updated 2026-10-28_
 
 **A join, narrowly.** It takes two tables that share a column, and brings a *category* from the
 second one onto the rows of the first.
@@ -45,9 +45,25 @@ different way of going wrong: two tables can disagree about the same measure. It
 
 ## Reading what you get
 
-The same table with one more column, and a receipt stating the matched column, the column brought
-across, how many rows were related, how many were dropped, and the distinct values that actually
-landed — which is what you need to see before grouping by it.
+The same table with one more column — and, on the step itself after a run, **what the join did**:
+
+| Rows | What it means |
+| --- | --- |
+| **Offered** | the rows the first table brought in |
+| **Related** | the rows that found a match and are in the result |
+| **Dropped** | the rows that did not, and are not |
+
+Read the dropped count first. A row that found no match is **absent from the table that travels
+on**, so the result is internally consistent whether it holds all of your rows or two thirds of
+them. The panel names the keys that did not match, so you can go and look at the second table
+rather than only know that something is missing. Where nothing was dropped it says so, because
+"none" is the claim you need and a zero in a table is easy to pass over.
+
+Underneath, which table each column came from, and the distinct values that actually landed —
+what you need to see before grouping by it.
+
+Quick look at the output table repeats the column origins above each column heading, so a wide
+related table says which half of the row came from where.
 
 ## What it will not do
 

@@ -149,6 +149,10 @@ export function dataIssuesOf(value:unknown,nodeId:string):import('./authored-app
  *  rather than in whichever result tab happens to be open. */
 export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; provenanceN3:string; outputs:Output[]; trace:{nodeId:string; type:string; milliseconds:number}[]; receipts:Receipt[]; runId:string; engine:string; runAt:string;
   linkages?:Record<string,import('./deduplicate-points.js').DeduplicateResult>;
+  /** What each relate step did, keyed by the node that did it. The second intermediate result the
+   *  interface has to show, and for a sharper reason than the first: the rows a relate drops are
+   *  absent from the table it hands on, so the outcome cannot be read off the data. */
+  relations?:Record<string,import('./relate-table.js').RelateOutcome>;
   /** The table each step produced, by node id, for the steps that produced one.
    *
    *  Only an output widget makes a result tab, so without this a table computed in the middle of

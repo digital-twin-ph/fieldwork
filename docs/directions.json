@@ -739,11 +739,15 @@
       ],
       "workItem": "data-table-ui.ts and raster-ui.ts are the two user-facing JSON blobs, both at an import, audited 2026-10-27. The N3 surfaces are a separate and later pass, deferred by the practitioner.",
       "status": "open",
-      "lastChecked": "2026-10-27",
+      "lastChecked": "2026-10-28",
       "checks": [
         {
           "date": "2026-10-27",
           "found": "Audited every JSON.stringify reaching a practitioner: exactly two, data-table-ui.ts:167,179 (table import, both the wide and long paths) and raster-ui.ts:21 (raster import). Everywhere else it is an internal baseline comparison and never displayed. Both are at the moment a file enters, which the practitioner names as the most consequential point: “Data quality is the most consequential upstream lever to a high quality downstream analysis.” The table one is being replaced now; the raster one and the N3 surfaces are not."
+        },
+        {
+          "date": "2026-10-28",
+          "found": "Acted on past the import, at the other end of the same friction. `relate_table` computed rows offered, related, dropped and the keys that did not match, and put all four in the N3 receipt only -- which is precisely the surface this direction says nobody reads. The step now reports them on itself, with the gap keys named rather than counted, and the Quick Look says which table each column came from. No JSON.stringify was involved, so the audited count of user-facing blobs is unchanged at two; what this found is that the direction is not only about serialisations. A finding that exists ONLY in a receipt is the same failure in a tidier format, and here it was load-bearing: the dropped rows are absent from the table that travels on, so nothing downstream could have told a reader."
         }
       ]
     },

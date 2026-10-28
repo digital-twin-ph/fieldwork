@@ -409,35 +409,45 @@ own comment, `fw:MachinedNote`'s and `fw:noteSection`'s rdfs:comments, and the g
 | --- | --- | --- | --- |
 | Title | front matter | **assembled** — design, place, outcome, period | nothing |
 | Abstract | front matter | **assembled** — a précis of the body | nothing |
-| Introduction | body (IMRAD) | targeted — background, related literature, purpose | nothing machined; South London's quoted notes sit here |
-| Methods | body (IMRAD) | targeted | **`relate_table` today**; `two_by_two` next |
-| Results | body (IMRAD) | targeted — the computing widgets | nothing |
-| Discussion | body (IMRAD) | targeted; where limitations sit is unsettled | nothing |
+| Introduction | body (IMRAD) | prose, by judgement | nothing; South London's quoted notes sit here |
+| Methods | body (IMRAD) | prose, machinable | **`relate_table` today**; `two_by_two` next |
+| Results | body (IMRAD) | **artifacts**, plus connecting prose | **artifacts built**; prose nothing |
+| Discussion | body (IMRAD) | prose, by judgement | nothing |
 | References | back matter | **assembled** — every input's citation | **already built** |
 | Appendix | back matter | **assembled** — what reproduces the study | **already built** |
 
-**Two shapes, not one.** The matter either side of the body is **assembled** from declarations spread
-across a workflow; the body is **targeted** by notes a single node owns. So a machined note's
-`section` ranges over the body only, and title, abstract, references and appendix are run-level
-products the way `provenanceN3` already is. The reason is the same in every case: no one node owns
-them. A title's design comes from one node and its place from a study area or `Project.subject`; a
-reference list gathers every input's citation; an appendix gathers the whole bundle.
+**Three shapes, not two.** The first reading of this table said two and was corrected by the
+practitioner: *"Parts of results are also available right now, like maps, charts, output tables, 2x2
+tables."* Quite so, and the error was conflating "has machined prose" with "is available". A Results
+section is mostly **artifacts** — figures and tables with a little connecting prose — and the
+artifacts are the part of this application that has had the most work:
 
-**The striking thing about that table is where the work already is.** Both ends are done and the
-middle is empty:
+- `map_output` for choropleths, dot density and point layers, with static basemaps and PNG/SVG export
+- `chart_output` for bars and series
+- `table_output`, which renders a two-key table as a grid with margins and totals
+- `two_by_two`, with risk, risk ratio, odds ratio and risk difference
 
-- **References.** `input-provenance.ts` already carries structured `Citation` records, renders them
-  in three styles against the manual each was read from — Vancouver, APA 7, Chicago author-date —
-  and reports `citationGaps` where a field is missing rather than emitting a fragment
-  (experiment 144).
+So the shapes are **assembled** (front and back matter, from records), **artifacts** (Results), and
+**prose** (the rest of the body). A machined note's `section` ranges over the prose parts only.
+
+**And the honest conclusion is sharper than "both ends done".** What exists is everything derivable
+from records: the matter at both ends, the Results artifacts, and now Methods prose.
+
+- **References.** `input-provenance.ts` carries structured `Citation` records, renders them in three
+  styles against the manual each was read from — Vancouver, APA 7, Chicago author-date — and reports
+  `citationGaps` where a field is missing rather than emitting a fragment (experiment 144).
 - **Appendix.** The project exports as a bundle, each input carries a sha256, each node carries a
-  receipt, and every run records its `runId`, its engine version and `runAt`. That is what
-  reproduces a study.
+  receipt, and every run records its `runId`, engine version and `runAt`.
 
-And the reason is not an accident: **both ends are mechanical.** A citation list and a reproduction
-bundle are assembled from records the application already keeps. The body is where somebody has to
-say what they found — which is why Methods, the most mechanical part of the body, is the first place
-machining has reached.
+**What is missing is what requires judgement**: the framing (Introduction), the interpretation
+(Discussion), the claim (Abstract), and the prose that connects one figure to the next. An
+application arguably should not machine those, which makes their absence a boundary rather than a
+gap.
+
+**The title is the exception that proves the rule.** It is front matter, it requires no judgement,
+and it is assembled entirely from declarations — design, place, outcome, period. Which is exactly
+why it is the right next thing to machine after Methods, and why the practitioner named it
+unprompted.
 
 **The abstract is the one part of the body's summary that could be machined in full**, being a
 précis rather than new content — and epidemiology journals want it structured, with Background,

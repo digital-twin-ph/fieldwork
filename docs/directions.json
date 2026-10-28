@@ -765,6 +765,63 @@
           "found": "Two doors, both shut. `table_input` melts to a keyed table whose value must be numeric -- data-table.ts refuses a nonnumeric cell by row and column -- so a line list could only enter by declaring every column but one as a key, which describes no line list. `point_input` reads CSV through `csvPoints`, which throws “Select distinct longitude and latitude columns” unless both are named; individual ROWS may lack coordinates, but the file must have the columns. So the shape FETP trainees actually carry has no path in. The wide finding stands and was the wrong half of the problem: a line list is wide, and what makes it a line list is that a row is a CASE and the columns are mixed-type attributes, not measures over a subject."
         }
       ]
+    },
+    {
+      "id": "geoparquet-is-a-door-fieldwork-should-have",
+      "stated": "2026-10-27",
+      "statedBy": "the practitioner",
+      "inTheirWords": "geoparquet",
+      "requiresInCode": "A GeoParquet file can be opened. The reader is already shipped -- hyparquet, wired only to Overture Places over a URL -- and the geometry is WKB, which src/wkb.ts now decodes beyond Point. What is missing is a file path into it, the `geo` file metadata naming the primary geometry column, and a consumer for a polygon layer.",
+      "recordedIn": [
+        "docs/experiments/145-polygons-as-a-source.md"
+      ],
+      "workItem": "Depends on a polygon layer having somewhere to go: experiment 145, D1.",
+      "status": "open",
+      "lastChecked": "2026-10-27",
+      "checks": [
+        {
+          "date": "2026-10-27",
+          "found": "Audited what is already here: hyparquet ships and reads Overture places from a URL, accepting Point geometry only; sql.js reads GeoPackage, whose layer list filters to geometry_type_name=POINT because the WKB decoder read type 1 and nothing else. That decoder is now general (src/wkb.ts, 9 byte-level tests), so the remaining work is the file path and the consumer, not the geometry."
+        }
+      ]
+    },
+    {
+      "id": "the-formats-a-trainee-actually-has",
+      "stated": "2026-10-27",
+      "statedBy": "the practitioner",
+      "inTheirWords": "CSV, TSV - depends on how user exported from Excel or some other tool. Both CSV and TSV should be consumable by FW table input. ... FETP trainees deal with linelists, CSVs and Excel documents.",
+      "requiresInCode": "A .tsv and a .xlsx can be imported. Dispatch on the extension as epi-info-ai does -- .csv comma, .tsv tab, .xlsx through a sheet reader -- with the PK magic-byte check that catches a workbook renamed .csv, UTF-16 BOM decoding, and refusals that say what to do in Excel.",
+      "recordedIn": [
+        "docs/experiments/48-tabular-input.md"
+      ],
+      "workItem": "epi-info-ai wasm/app/forms/importers.ts is the shape to follow; same authorship, Apache-2.0.",
+      "status": "open",
+      "lastChecked": "2026-10-27",
+      "checks": [
+        {
+          "date": "2026-10-27",
+          "found": "parseCSV splits on commas only and is shared by both importers, so a TSV does not fail -- it parses as ONE column whose header is the entire header row, with no error. A semicolon file from Excel in a comma-decimal locale does the same. Every importer accepts .csv only and there is no xlsx reader in src/ or in the dependencies. A delimiter sniffer was prototyped and verified against the real files; epi-info-ai sidesteps it by dispatching on extension and covering the formats Excel actually writes, which removes the guess rather than making it safer."
+        }
+      ]
+    },
+    {
+      "id": "a-table-must-be-able-to-leave-as-a-table",
+      "stated": "2026-10-27",
+      "statedBy": "the practitioner",
+      "inTheirWords": "However we represent the data inside FW to do computations, as long as we are able to give them CSV, JSON, or GeoJSON exports we are fine. ... In an epidemiology publication, it is also wide tables so there is that too.",
+      "requiresInCode": "A DataTable can be exported as CSV, written WIDE. The import melts on the way in and the export must pivot on the way out, and say that it did -- otherwise fidelity is kept at the door and broken at the exit.",
+      "recordedIn": [
+        "docs/experiments/48-tabular-input.md"
+      ],
+      "workItem": "epi-info-ai serializeCsv is the writer to follow. The wide shape is src/data-table-ui.ts#wideFrame, already built.",
+      "status": "open",
+      "lastChecked": "2026-10-27",
+      "checks": [
+        {
+          "date": "2026-10-27",
+          "found": "Audited every file the application writes: .geojson, fieldwork-run-receipt.json, fieldwork-project.zip, PNG and SVG figures, GeoTIFF. There is no CSV writer anywhere in src/ -- every .csv reference is an import or a source filename. A table can be computed, joined, rated, cross-tabbed and charted, and cannot leave as a table. The natural implementation would serialise the stored long rows, which is correct, round-trippable and wrong for a paper, an Excel sheet, an R import and a pandas read."
+        }
+      ]
     }
   ]
 }

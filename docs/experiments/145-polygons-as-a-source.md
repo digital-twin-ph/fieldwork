@@ -77,3 +77,30 @@ does not assert that it is.
 1. The D2 comparison against `study_area`, written out, deciding widget or parameter.
 2. One analysis the example cannot do without the vector. If none can be named, the answer is that
    the plate is enough and this record closes as *out of scope* rather than unbuilt.
+
+## A second case, 2026-10-27
+
+The closing condition above asked for **one** analysis the example cannot express. There are now
+two, arrived at independently.
+
+The practitioner, researching why Lambeth's 1852 move mattered: *"Can we delineate the tidal Thames
+on the map and show the intakes in relation to that?"*
+
+The tidal limit is the exposure variable — below Teddington the flood tide carries London's sewage
+back past an intake twice a day, above it the river runs one way — and the intakes can be shown
+**in relation** to it, as a point at Teddington Lock. The reach itself cannot be drawn. Every
+widget that emits `polygons` derives them from something else, and the two that accept a second
+area *merge* it: `summarize_combined_area` makes "areas become one area", so feeding it the
+sub-districts and the river would draw their union, which is a shape that means nothing.
+
+**And it is the same capability, not a second one.** The first reading of this was that a river
+needs a *line* source. It does not: the practitioner, 2026-10-27, *"Waterways can be polygons."*
+OpenStreetMap carries the Thames as water polygons rather than only a centreline, so the tidal
+reach and the water-supply zones want exactly the same thing — a polygon layer read from a file,
+with attributes, that is a LAYER and not the frame.
+
+So the same missing capability now blocks two unrelated things in one example: the water-supply
+zones traced from the wash, and the tidal reach. That is the evidence this record asked for, and it
+narrows **D1** rather than widening it: the question is not polygons versus lines, but whether a
+polygon layer is its own source widget or a mode of `study_area` that admits a layer rather than a
+frame.

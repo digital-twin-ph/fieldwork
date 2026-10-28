@@ -857,6 +857,26 @@
           "found": "Built as relate_table 0.3.0, and the practitioner corrected the framing twice on the way. It is not about offering a choice: the purposes are transparency as a MACHINED NOTE -- Methods prose the widget generates, sibling of the quoted notes the example carries -- and a reconciliation CHECK, because the share identity runs backwards and names the join that produced an unexpected figure. Shipped: keys compared through normaliseName with punctuation folded by default as join_table_to_area already did; a dialog showing the overlap as distinct keys, the retained share of each numeric variable, the Methods note and a wide preview, with Finalize; a refusal until the practitioner declares what happens to unmatched rows, stored with a signature of the gap so editing the data or the comparison lapses it. One defect found while testing: `receiptText` prints a computation receipt's `input`, and this widget had only ever set `method`, so the counts it computed from 0.1.0 reached the panel and NEVER reached the evidence. The receipt is now N3 over 19 declared fw: terms. Still open: the three joins remain three standards, and purposes (1) and (2) are half done -- the note is generated and shown but lands in no write-up, and the reconciliation is a division a reader does by hand."
         }
       ]
+    },
+    {
+      "id": "a-study-design-opens-a-workflow-as-a-study-area-does",
+      "stated": "2026-10-28",
+      "statedBy": "the practitioner",
+      "inTheirWords": "If we start with a study design the way we start with study area the workflow becomes more focused. The study area identifies the location (for a study it becomes part of the title). Then study design widget cascades metadata downstream for its computations. For example, during table input, the variables can be mapped to computation/equation terms already. ... The study design then also becomes part of the machined title. ... Case control, cohort, cross-sectional studies carry with them pathways to specific epidemiology computations. So identifying the study design is key.",
+      "requiresInCode": "A workflow opens with two declarations rather than one: WHERE, which `study_area` already is, and HOW, which nothing is. The design names the computations it licenses; those computations have equation terms; and a table input offers those terms for the practitioner's columns to be mapped onto, so a variable's meaning is declared where the data enters rather than re-entered at each computing widget. The declaration reaches a computation through the graph and not as ambient workflow state -- D5, each qualifier on the input rather than in each consumer. The design appears in the machined title and in the machined Methods note, and a measure the design cannot estimate is refused rather than printed.",
+      "recordedIn": [
+        "docs/experiments/147-table-shells-begin-with-the-end-in-mind.md",
+        "docs/audits/study-designs-and-our-computations.md"
+      ],
+      "workItem": "Not started. The costly part is the cascade: `relate_table`, `group_table`, `derive_value` and `select_rows` sit between a declaration and a `two_by_two`, and each must carry the design through rather than drop it -- four widgets to touch, which is the real price and not the widget budget. Smallest first step with its own value: gate `two_by_two`'s measures on a declared design, since a case-control table is currently offered a risk, a risk ratio and a risk difference, none of which its sampling can estimate.",
+      "status": "open",
+      "lastChecked": "2026-10-28",
+      "checks": [
+        {
+          "date": "2026-10-28",
+          "found": "Stated and recorded the same day, and it ANSWERS the question experiment 147 had left open. 147 weighed a blank table shell against detection of incoming columns; this is neither. The design names the computations, the computations carry their own equation terms, and the import maps columns onto those terms -- so nothing is invented and nothing is guessed. It also dodges 147's recorded objection that a role is not a property of a column: the term belongs to the EQUATION, and the mapping says which column plays it in which computation, so one column can be a denominator in one and a numerator in another. And the term lists already exist written longhand, as the parameters of `two_by_two` (exposureColumn, exposed, unexposed, outcomeColumn, caseValue, nonCaseValue) and `rate` (numeratorField, denominatorField, denominatorUnit). One shape of mine was backwards and is corrected here: a design cannot be a pass-through threaded between a table and its computation, because the mapping happens AT table input, so the design is upstream of everything like `study_area` is. Two mechanisms follow -- the design travels on a port to the computations it gates, and the import dialog finds it by walking the workflow, which is what `declaredKinds(workflow, nodeId)` and `upstreamKeyValues` already do. One gap found while writing this down: a machined title needs a study PERIOD, and nothing declares one at workflow level -- `rate` has numeratorPeriod and denominatorVintage and `case_series` has a period, all of which are properties of a computation rather than of the study, which is backwards for a title."
+        }
+      ]
     }
   ]
 }

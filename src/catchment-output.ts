@@ -10,7 +10,21 @@ export function polygonDisplay(p:Polygons,view:'map'|'table'|'chart'):DisplayVal
   if(view==='chart'&&!p.summary)throw new Error('Connect Summarize points in polygons before a catchment chart.');
   if(view==='chart'&&p.summary?.valueField&&p.features.some(f=>f.total!<0))throw new Error('This chart supports nonnegative totals; use Table for signed summaries.');
   return {kind:'point-table',polygons:p,pointTable:true,centers:[],boundary:p.boundary,
-    rows:p.features.map(f=>({id:f.id,recordId:f.id,name:f.name,coordinates:p.sites.find(s=>s.id===f.siteId)?.geometry?.coordinates||null,sourceNodeId:'catchments',layerLabel:'Catchments (coordinates locate source sites)',attributeTypes:{},attributes:{siteId:f.siteId,...(f.minutes!==undefined?{minutes:f.minutes}:{}),
+    // A LABEL CANNOT BE PINNED TO ONE STUDY. The practitioner, 2026-10-28: *"Labels have to be
+    // generic and applicable to similar artifacts in other studies. If we need to identify
+    // polygons, we can use polygon_id."*
+    //
+    // This table said `siteId` for every polygon layer and called them all "Catchments". Neither
+    // was true of what it was showing. South London's choropleth shades 32 ADMINISTRATIVE
+    // SUB-DISTRICTS, which are not catchments of anything and have no sites -- `area-join.ts:141`
+    // sets `siteId:part.id`, making each sub-district its own site to satisfy a required field,
+    // and casts the result past the compiler with `as unknown as`. So a practitioner opening that
+    // table met a column called `siteId` holding a sub-district's name, under a heading saying the
+    // coordinates locate source sites when there are none.
+    //
+    // `polygon_id` identifies the polygon, which every producer has. `site_id` is emitted only
+    // where the layer actually carries that site, which is what the field always meant.
+    rows:p.features.map(f=>({id:f.id,recordId:f.id,name:f.name,coordinates:p.sites.find(s=>s.id===f.siteId)?.geometry?.coordinates||null,sourceNodeId:'catchments',layerLabel:p.sites.length?'Polygons (coordinates locate the site each was derived from)':'Polygons',attributeTypes:{},attributes:{polygon_id:f.id,...(p.sites.some(s=>s.id===f.siteId)?{site_id:f.siteId}:{}),...(f.minutes!==undefined?{minutes:f.minutes}:{}),
       // A rule's conclusion about this polygon, and what it enclosed, shown where the polygon is
       // shown. Added 2026-10-14 with the port change that made a ruleset hand back the shapes it
       // judged: a judgement that travels with the record has to be visible on the record, or the
@@ -19,7 +33,7 @@ export function polygonDisplay(p:Polygons,view:'map'|'table'|'chart'):DisplayVal
       ...(f.status!==undefined?{status:f.status,explanation:f.explanation??null}:{}),
       ...(f.areaSquareMetres!==undefined?{areaSquareMetres:f.areaSquareMetres}:{}),
       ...(p.summary?{locations:f.count!,numericTotal:p.summary.valueField?f.total!:null,missingValues:f.missingValues!}:{})}})),
-    ...(view==='chart'?{chart:{field:p.summary!.valueField?'total' as const:'count' as const,caption:(p.features.some(f=>f.minutes!==undefined)?'Cumulative thresholds (not time bands). ':'')+(p.summary!.valueField?`Sum ${p.summary!.valueField} by catchment; missing values reported in Table`:'Location memberships by catchment; overlaps can count more than once'),total:p.summary!.records,bins:p.features.map(f=>({key:f.id,label:f.name,count:p.summary!.valueField?f.total!:f.count!,...(f.minutes===undefined?{}:{order:f.minutes})}))}}:{})};
+    ...(view==='chart'?{chart:{field:p.summary!.valueField?'total' as const:'count' as const,caption:(p.features.some(f=>f.minutes!==undefined)?'Cumulative thresholds (not time bands). ':'')+(p.summary!.valueField?`Sum ${p.summary!.valueField} by polygon; missing values reported in Table`:'Location memberships by polygon; overlaps can count more than once'),total:p.summary!.records,bins:p.features.map(f=>({key:f.id,label:f.name,count:p.summary!.valueField?f.total!:f.count!,...(f.minutes===undefined?{}:{order:f.minutes})}))}}:{})};
 }
 export function polygonPresentationReceipt(node:WorkflowNode,source:string,runId:string,contextSource?:string):Receipt{
   const entity=`urn:fieldwork:run:${runId}:output:${node.id}`,activity=`${entity}:view`,kind=node.type==='map_output'?'MapView':node.type==='table_output'?'TableView':'ChartView';

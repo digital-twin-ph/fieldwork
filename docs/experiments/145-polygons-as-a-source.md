@@ -57,6 +57,84 @@ and building a second widget would be the duplicate D2 exists to catch.
 **D11.** What residual function remains? Drawing and attributing a polygon layer that nothing in
 the workflow computed.
 
+## The admission review, 2026-10-28
+
+Asked for by the practitioner, who also settled the question D2 left open: *"Since the Thames and
+the sub-districts are the study area, we can revise the study area to be a polygon, like the square
+that encloses the map2 that John Snow did. So the subdistricts and the river become layers within
+that study area."*
+
+**D1 — what is it, and where does it belong?** A primitive, in Sources. It reads a file and emits a
+value; nothing decomposes into it.
+
+**D2 — does it already exist?** No, and the distinction this record posed above is the one that
+decides it. A **study area is the frame**: one boundary, the thing a workflow is about, consumed by
+27 references to the `area` port. A **polygon layer is many features**, each with attributes, none of
+them the frame. The practitioner's revision makes the two coexist rather than compete — the frame
+becomes the square enclosing Snow's Map 2, and the sub-districts and the Thames become layers inside
+it. A parameter on `study_area` could not express that, because the frame and the layers would be
+the same node.
+
+**D3 — is every distinction enforced?** The one that matters is "read as published". Nothing is
+clipped, simplified or reprojected on the way in, which is a **run-time check** on the coordinates
+(CRS84 degrees, the same `coordinate` guard `catchments.ts` already applies) and a **limitation**
+otherwise: a file in another projection is refused rather than converted, because converting it
+silently would make the layer a different shape from the one the author published.
+
+**D4 — are the conditions in the right place?** This is where the review found something, and it is
+a base-contract problem rather than a detail. `Catchment.siteId` is **required**, because all seven
+existing producers of `polygons` derive them from sites. A polygon read from a file belongs to no
+site. Two consequences, both verified:
+
+- `catchment-semantics.ts:47` already guards: it emits `fw:sourceSite` only where
+  `siteSourceNodeId` is set, so a siteless layer is anticipated there and nothing has to change.
+- `catchment-output.ts:13` does not: it puts `siteId` into every table row unconditionally, and
+  looks a site's coordinates up with `sites.find(...)` and a `||null` fallback. A file-sourced layer
+  would put an empty `siteId` column in a table a practitioner reads.
+
+So admitting this widget requires making `siteId` **optional** on `Catchment` and omitting the
+attribute where it is absent. That is a base-contract change, of the same kind and made for the same
+reason as `ground` on 2026-10-27: a field that encodes "every polygon comes from a site" is a field
+that was true of the producers that existed and is false of this one. Fabricating a site id to
+satisfy the type would be the thing this project refuses.
+
+**D4a — block or pre-glued assembly?** A block. One input stud, no composition.
+
+**D5 — does each qualifier live on the input?** Yes, and that is the point of it: the layer's name,
+its licence and the attribute that names each feature are declared where the file enters, not at
+each consumer.
+
+**D7 — does the name state what was done, including the ports?** `polygon_input` names what it
+carries and matches `point_input`, `table_input`, `raster_input` and `map_image_input`. It has no
+input ports and emits `polygons`, which is the existing port type and needs no new stud. Noted
+against it: `area` remains a port type that names a role rather than its content, which is the same
+D7 problem `ground` was admitted with and is still unresolved — this widget does not make it worse.
+
+**D8 — does the evidence test the distinction?** It must test that the layer arrives **as
+published**: the same vertex count, the same ring winding, the same attributes, and a refusal for a
+file whose coordinates are not CRS84. Counting features would not test anything a reader cares
+about.
+
+**D9 — does it lower the practitioner's effort, measured?** `geo/map2-water-supply-zones.geojson`
+has been in the South London repository since 2026-10-24 and has reached a workflow **never**. The
+effort today is not high, it is infinite: there is no path.
+
+**D10 — does a worked example instantiate it?** South London, immediately: the three territories
+Snow drew, of which the purple one — *"Area in which the pipes of both Companies are
+intermingled"* — is the zone where a sub-district-level supply attribution misclassifies, which is
+the finding experiment 147 records and nothing in the application can currently draw.
+
+**D11 — what residual function remains?** Drawing and attributing a polygon layer that nothing in
+the workflow computed. Unchanged from the first reading of this record, and still true.
+
+### The cost, named rather than implied
+
+The widget budget goes to **54 live against a reference of 41**, and `widgets/admission.json`'s
+count from 63 to 64. The practitioner has already said what does and does not gate this kind of
+decision: *"The reason building footprint got deferred is not the budget. There are more urgent
+things to address."* So the budget is recorded as a fact about the set and not offered as an
+argument either way.
+
 ## What it would cost
 
 The widget budget stands at **53 live widgets against a reference of 41, exceeded by 12**. Another

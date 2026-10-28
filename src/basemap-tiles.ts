@@ -177,6 +177,23 @@ export async function fetchTileAsDataURI(url:string,timeoutMs=8000):Promise<stri
   fetched.set(url,href);
   // A failure is remembered for the session and NOT written down: the next visit should try
   // again rather than inherit one bad afternoon's network.
-  if(href&&store)await store.write(tileCacheKey(url),href);
+  //
+  // NOT AWAITED, from 2026-10-28. The tile is already in hand; the write is a durability
+  // convenience for the NEXT visit, and this function's contract is to return a tile or null. So
+  // a storage layer that neither completes nor fails should not be able to hold a tile hostage --
+  // and `payload-store.ts` has a timeout on OPENING the database and none on a transaction, so
+  // `committed(tx)` can wait forever.
+  //
+  // That hazard is real and this removes it. It was NOT, however, the cause of the webkit figure
+  // failure it was first written to fix: that was `page.route` failing to intercept a request
+  // that passes through the service worker, measured 2026-10-28 as 3 tile requests seen and 0
+  // routed, so the test reached the real tile server. Recorded here because the wrong attribution
+  // was briefly in this comment, and a fix that credits itself with someone else's bug teaches
+  // the next reader the wrong lesson.
+  //
+  // The rejection is swallowed deliberately and for the same reason the failure above is not
+  // written down: a tile that could not be cached is still a tile, and the practitioner is told
+  // about a degraded store by `payload-store.ts` itself, which is where that belongs.
+  if(href&&store)void store.write(tileCacheKey(url),href).catch(()=>{});
   return href;
 }

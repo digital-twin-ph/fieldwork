@@ -10,6 +10,24 @@ import {test,expect} from '@playwright/test';
  *  Both are kept, because they answer different questions -- a journal usually wants vector line
  *  art and will reject a raster; a slide wants a file that just appears -- and both are built
  *  from the SAME markup, so they cannot come to say different things. */
+// THE TILE FIXTURE ONLY APPLIES IF NOTHING STANDS BETWEEN THE PAGE AND THE ROUTE.
+//
+// `page.route` below stubs the tile server so this test measures the baking and the export rather
+// than whether OpenStreetMap is up. On webkit it did not: this application registers a service
+// worker, and a request that passes through one is not intercepted by `page.route` there, so the
+// stub was bypassed and the test reached the real tile server. Measured 2026-10-28 -- three tile
+// requests seen, zero routed, two cancelled, and no `<g data-basemap>` emitted because
+// `basemap-tiles.ts` emits its group only where a tile resolved. With service workers blocked:
+// sixteen seen, sixteen routed, sixteen baked images.
+//
+// It passed on chromium throughout, which is why it read as a flake for two gates: the test was
+// measuring the tile server's mood on one engine and the code on the other. The project has
+// recorded that failure mode twice before, which is what `openfreemap-basemap.browser.mjs` means
+// by refusing "a flake that says nothing".
+//
+// The service worker is not what this test is about. `offline.browser.mjs` is where it belongs.
+test.use({serviceWorkers:'block'});
+
 const PNG=Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000a49444154789c6360000002000154a24f7e0000000049454e44ae426082','hex');
 
 test('a map exports as a PNG, at a stated size, carrying its baked ground',async({page})=>{

@@ -308,7 +308,12 @@
         {
           "when": "default",
           "required": [],
-          "optional": []
+          "optional": [
+            [
+              "area",
+              "area"
+            ]
+          ]
         }
       ]
     },

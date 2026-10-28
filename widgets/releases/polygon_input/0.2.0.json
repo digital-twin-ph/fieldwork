@@ -1,0 +1,79 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:polygon_input",
+  "version": "0.2.0",
+  "nodeType": "polygon_input",
+  "title": "Polygon layer",
+  "released": "2026-10-28",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['polygon_input']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "note": "Ring closure, winding and CRS84 bounds are checked when the file is read. What is NOT checkable here is whether the lines are where the author meant them to be: a traced territory is a reading of a printed wash, and experiment 145 records that as not established."
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      }
+    ],
+    "output": "polygons",
+    "optionalInputs": [
+      "area"
+    ],
+    "note": "One OPTIONAL input, `area`, which scopes acquisition rather than enabling the widget: connected, it supplies the bounding box and the country a published OpenStreetMap extract is read for, which is what `network_input` already does with the same port. Absent, the widget still reads a GeoJSON file as published, so `required` stays empty and this remains an input-stage widget -- `INPUT_STAGE` is derived from `required`, not from `optional`, so the palette's blank-canvas behaviour is unchanged. At run time the port is checked for one thing: a layer whose retrieval box no longer covers the connected area is REFUSED, because acquisition happens at import and a study area nudged afterwards leaves a layer that provably holds no features for part of it. Emits the existing `polygons` port type, as before."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No mapping to an external vocabulary yet. The receipt states the file, its digest, the feature count, the property each feature was named by, and that nothing was clipped, simplified or reprojected. An acquired layer adds no terms of its own: its licence and retrieval are recorded through `input-provenance.ts`, whose `fw:licence`, `fw:retrievedFrom` and `fw:retrievedAt` are already declared and whose KNOWN_OBLIGATIONS already carries `ODbL-1.0` with its attribution and share-alike obligation. Asserting a parallel vocabulary here would have earned a receipt nothing else reads.",
+    "emits": {
+      "classes": [
+        "PolygonLayer"
+      ],
+      "properties": [
+        "featureCount",
+        "layerFile",
+        "layerFileDigest",
+        "namedBy",
+        "readAsPublished",
+        "vertexCount"
+      ]
+    }
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "implementation": {
+    "files": [
+      "src/polygon-layer.ts",
+      "src/osm-areas.ts",
+      "src/core.ts",
+      "src/app.ts",
+      "src/types.ts"
+    ],
+    "definition": "src/polygon-layer.ts"
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Reads a published polygon layer from a GeoJSON file and emits it as the existing `polygons` value, so everything that already consumes polygons accepts it. Until this existed, seven node types emitted polygons and every one DERIVED them from something else -- points allocated to cells, a table joined to an area, a hull, a corridor, a stack of other layers -- so a layer that existed as a file had no way into a workflow at all. South London's `geo/map2-water-supply-zones.geojson` had been in that repository since 2026-10-24 and had reached a workflow never: the three territories Snow drew, of which the purple one, the area where the pipes of both companies are intermingled, is the zone where attributing supply by sub-district misclassifies. READ AS PUBLISHED is the distinction it enforces: nothing is clipped, simplified or reprojected, and a file whose coordinates are not CRS84 degrees is refused rather than converted, because converting it silently would hand on a different shape from the one its author published. The feature-naming property is chosen by the practitioner and never inferred from a column name. Admitted under the review in experiment 145, where D2 turns on the distinction between a study area -- the frame, one boundary -- and a layer, which is many attributed features; the practitioner settled it by revising the study area to the enclosing extent so the sub-districts and the river become layers within it."
+    },
+    {
+      "kind": "changed",
+      "description": "ACQUISITION, not just reading. The widget could read a GeoJSON file and nothing else, so finding the polygons was the practitioner's problem: acquiring the Thames for South London meant locating a Geofabrik extract by hand, writing a reader, deriving the country by eye and writing the ODbL into the example's notice. The practitioner, 2026-10-28: “what we just need from the polygon widget is something like what study area does already with geoboundary and what street network does with Geofabrik”, then “street network does as well based on study area” — so the study area is the scope, supplying both the country (`countryOfArea`) and the box (`geometryBounds ± marginM`). `src/osm-areas.ts` reads areas of a stated kind out of a published .osm.pbf the practitioner already holds, in three passes, stitching multipolygon rings from member ways in either direction and COUNTING a ring that will not close rather than closing it on the author's behalf. Scope is not clipping: the box selects which features are read, in or out, never cut. Measured against a 124 MB extract: 16.1 s, 1,030 water features in South London's box, 0 unclosed, 0 without geometry. That measurement changed the design — 1,030 against a layer cap of 500 means the first realistic request refused, because 916 of them are ponds and basins, so a kind is too coarse on its own. There is now a stated `minVertices` threshold defaulting to nothing, and the cap counts before refusing so the refusal names a threshold that would fit, read off the distribution found rather than guessed."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested against the three MultiPolygon territories the South London repository ships, which is the layer the widget was built for: 153, 128 and 107 vertices across six rings, every vertex preserved, the attributes carried as published, and the three supply categories read from the property the practitioner named. The HOLES are asserted explicitly, because they are what makes reading as published worth enforcing: Lambeth's territory is one part of three rings -- an outer boundary of 107 positions and two interior rings of 9 and 12 -- so there are enclaves inside the Lambeth zone that Lambeth did not supply, which no count of features reveals and which a simplifier would take first. Refusals covered: coordinates outside CRS84 bounds (easting and northing in metres, which is what an export from a projected CRS gives), a geometry that is not a polygon, an unclosed ring, a named property no feature carries, a file that is not a FeatureCollection, an empty one, and one larger than a study's own geometry. What this does not establish is whether the traced lines are where Snow's printed wash actually was: the geometry is a reading of a colour boundary on a scanned plate, and experiment 145 records it as a reading rather than a measurement. The acquisition half is tested against a .osm.pbf the test writes itself, there being no fixture in this repository and no decode test for the street engine either: eight cases over tag matching, multipolygon assembly from reversed fragments, the box, the vertex threshold, the measured refusal and the granularity assumption. Three further cases cover the port -- that a layer read for the study area runs and states its obligation, that one read for a different area is refused by name, and that a plain read file is unaffected. Verified end to end against the real extract: all six water relations the hand-built South London partition used are present and the one outside the box is excluded."
+  }
+}

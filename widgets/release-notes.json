@@ -626,12 +626,16 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "polygon_input": {
-   "version": "0.1.0",
+   "version": "0.2.0",
    "released": "2026-10-28",
    "changes": [
     {
      "kind": "initial",
      "description": "Reads a published polygon layer from a GeoJSON file and emits it as the existing `polygons` value, so everything that already consumes polygons accepts it. Until this existed, seven node types emitted polygons and every one DERIVED them from something else -- points allocated to cells, a table joined to an area, a hull, a corridor, a stack of other layers -- so a layer that existed as a file had no way into a workflow at all. South London's `geo/map2-water-supply-zones.geojson` had been in that repository since 2026-10-24 and had reached a workflow never: the three territories Snow drew, of which the purple one, the area where the pipes of both companies are intermingled, is the zone where attributing supply by sub-district misclassifies. READ AS PUBLISHED is the distinction it enforces: nothing is clipped, simplified or reprojected, and a file whose coordinates are not CRS84 degrees is refused rather than converted, because converting it silently would hand on a different shape from the one its author published. The feature-naming property is chosen by the practitioner and never inferred from a column name. Admitted under the review in experiment 145, where D2 turns on the distinction between a study area -- the frame, one boundary -- and a layer, which is many attributed features; the practitioner settled it by revising the study area to the enclosing extent so the sub-districts and the river become layers within it."
+    },
+    {
+     "kind": "changed",
+     "description": "ACQUISITION, not just reading. The widget could read a GeoJSON file and nothing else, so finding the polygons was the practitioner's problem: acquiring the Thames for South London meant locating a Geofabrik extract by hand, writing a reader, deriving the country by eye and writing the ODbL into the example's notice. The practitioner, 2026-10-28: “what we just need from the polygon widget is something like what study area does already with geoboundary and what street network does with Geofabrik”, then “street network does as well based on study area” — so the study area is the scope, supplying both the country (`countryOfArea`) and the box (`geometryBounds ± marginM`). `src/osm-areas.ts` reads areas of a stated kind out of a published .osm.pbf the practitioner already holds, in three passes, stitching multipolygon rings from member ways in either direction and COUNTING a ring that will not close rather than closing it on the author's behalf. Scope is not clipping: the box selects which features are read, in or out, never cut. Measured against a 124 MB extract: 16.1 s, 1,030 water features in South London's box, 0 unclosed, 0 without geometry. That measurement changed the design — 1,030 against a layer cap of 500 means the first realistic request refused, because 916 of them are ponds and basins, so a kind is too coarse on its own. There is now a stated `minVertices` threshold defaulting to nothing, and the cap counts before refusing so the refusal names a threshold that would fit, read off the distribution found rather than guessed."
     }
    ],
    "breaking": false,

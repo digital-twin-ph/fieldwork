@@ -1,4 +1,5 @@
 import type {Boundary,Scalar} from './types.js';
+import type {InputProvenance} from './input-provenance.js';
 import {MAX_LAYER_FEATURES,MAX_LAYER_VERTICES,type ParsedFeature} from './polygon-layer.js';
 
 /** POLYGON FEATURES FROM A PUBLISHED EXTRACT, scoped by the study area.
@@ -366,4 +367,29 @@ export async function areasFromExtract(bytes:Uint8Array,request:AreaRequest):Pro
     kinds:[...request.kinds],bbox:[west,south,east,north],
     at:new Date().toISOString(),kept:features.length,dropped,
   }};
+}
+
+/** The retrieval as the provenance record every other input already carries.
+ *
+ *  NOT A NEW VOCABULARY. `input-provenance.ts` already declares `fw:licence`,
+ *  `fw:retrievedFrom` and `fw:retrievedAt`, already knows `ODbL-1.0` as a KNOWN_OBLIGATION
+ *  carrying `shareAlike: true` and the attribution OpenStreetMap asks for, and `polygon_input`
+ *  already declares a `provenance` parameter for exactly this -- *"so a published boundary is not
+ *  redistributed through a workflow without saying whose line it is"*. Asserting new terms here
+ *  would mean declaring them in the ontology and earning a receipt nobody else reads; mapping
+ *  onto the record every other input uses means `attributionFor` and `shareAlike` answer for this
+ *  layer the way they answer for the rest, and a figure's credits need no special case. */
+export function retrievalProvenance(retrieval:AreaRetrieval,
+  file?:{filename:string;sha256?:string}):InputProvenance{
+  const box=retrieval.bbox.map(n=>n.toFixed(4)).join(', ');
+  return {
+    what:`${retrieval.kinds.join(' and ')} areas read from a published OpenStreetMap extract`
+      +`${file?` (${file.filename})`:''}, within ${box}`,
+    source:'OpenStreetMap contributors',
+    url:retrieval.sourceIRI,
+    licence:retrieval.licence,
+    licenceSource:retrieval.licenceIRI,
+    retrievedFrom:file?.filename??retrieval.source,
+    retrievedAt:retrieval.at.slice(0,10),
+  } as InputProvenance;
 }

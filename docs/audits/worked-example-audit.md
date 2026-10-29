@@ -79,6 +79,33 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `stack_polygons` | south-london-1854 |
 | `two_by_two` | south-london-1854 |
 
+### Used across examples — emerging as genuinely useful
+
+A widget two unrelated problems both needed is the strongest evidence of usefulness this
+project collects. It is a different claim from being used heavily inside one example, which is
+evidence about that example.
+
+| Widget | Examples | Which |
+| --- | ---: | --- |
+| `map_output` | 12 | coverage, hagelloch, heat, old-naledi, raster, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
+| `point_input` | 11 | coverage, hagelloch, heat, old-naledi, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
+| `study_area` | 10 | coverage, hagelloch, old-naledi, raster, rulesets, sea-level, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
+| `table_output` | 10 | hagelloch, heat, old-naledi, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
+| `chart_output` | 6 | hagelloch, old-naledi, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
+| `table_input` | 6 | rulesets, sea-level, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
+| `apply_ruleset` | 5 | heat, old-naledi, rulesets, sea-level, snow-extent |
+| `case_series` | 4 | hagelloch, snow-extent, snow-isochrone, snow-voronoi |
+| `clip_polygons` | 2 | snow-isochrone, snow-voronoi |
+| `measure_distance` | 2 | heat, old-naledi |
+| `reproject` | 2 | snow-isochrone, snow-voronoi |
+| `summarize_points_to_polygon` | 2 | snow-isochrone, snow-voronoi |
+
+**Read the bottom of that table with care.** Two examples of the SAME study are weaker evidence
+than two unrelated ones, and `clip_polygons`, `reproject` and `summarize_points_to_polygon` each
+reach exactly two: `snow-isochrone` and `snow-voronoi`, which are two questions about one
+outbreak in one place. They have crossed an example boundary without crossing a problem. The
+rows above `case_series` are the ones that have genuinely done both.
+
 ### Which example is carrying the evidence
 
 | Example | Widgets it is the sole user of |
@@ -137,7 +164,56 @@ Across the shipped examples, **11 nodes carry data and declare no source**. That
   that nothing else performs. A widget may be unused because no example poses its problem yet,
   which is a gap in the examples rather than in the palette.
 
+### How finished each example is
+
+The practitioner, 2026-10-29: *"Many examples are half baked."* Four conditions, none of them
+invented here — every data-carrying node names its source, no widget is attached to the example
+by name, the inputs are published as files a reader can download, and a rebuild from an empty
+canvas exists as a test. Node count is shown beside them because small and unfinished are
+different things: an example can be four nodes and complete, or eighteen and not.
+
+| Example | Nodes | Conditions met | Missing |
+| --- | ---: | ---: | --- |
+| `hagelloch` | 6 | 2 / 4 | published files, rebuilt from scratch |
+| `raster` | 4 | 2 / 4 | published files, rebuilt from scratch |
+| `snow-isochrone` | 18 | 1 / 4 | sources, published files, rebuilt from scratch |
+| `snow-voronoi` | 15 | 1 / 4 | sources, published files, rebuilt from scratch |
+| `snow-geoprivacy` | 15 | 1 / 4 | unattached, published files, rebuilt from scratch |
+| `rulesets` | 14 | 1 / 4 | sources, published files, rebuilt from scratch |
+| `old-naledi` | 13 | 1 / 4 | unattached, published files, rebuilt from scratch |
+| `snow-extent` | 9 | 1 / 4 | sources, published files, rebuilt from scratch |
+| `heat` | 6 | 1 / 4 | sources, published files, rebuilt from scratch |
+| `coverage` | 4 | 1 / 4 | sources, published files, rebuilt from scratch |
+| `sea-level` | 8 | 0 / 4 | sources, unattached, published files, rebuilt from scratch |
+| `south-london-1854` (pinned) | — | **3 / 4** | rebuilt from scratch: 1 of its 6 workflows |
+
+No shipped example meets more than two, and every one of them fails on published inputs for the
+same structural reason: a shipped example's data lives in this repository's source rather than
+as files a reader fetches. Only the pinned example publishes its inputs, which is what made a
+from-scratch rebuild possible for it and impossible for the rest. That is one decision, not
+eleven oversights — and it is the decision to revisit if more examples are to become robust.
+
 ### The pinned example
 
 - `urn:fieldwork:example:south-london-1854` declares 17 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+
+## 3 · Recommendations
+
+Generated from the numbers above, so a recommendation cannot outlive the gap that produced it.
+Each says what was measured and what closing it would mean. None says whether it is worth
+doing: that is a decision with a cost, and this file measures.
+
+**R1. Give the 11 data-carrying nodes a declared source.** 7 shipped examples hold 11 nodes that carry data and name no origin: `heat` (2), `coverage` (1), `snow-voronoi` (1), `snow-isochrone` (2), `sea-level` (2), `snow-extent` (1), `rulesets` (2). Closing it means either a `sourceInfo`/`provenance` block naming where the data came from, or a published file beside the example the way `geo/water-intakes.geojson` was written on 2026-10-29. Until then each is a payload a rebuild must copy rather than fetch.
+
+**R2. Ask D11 of the 7 widgets no workflow reaches.** `buffer_point`, `deduplicate_points`, `fill_interior_gaps`, `measure_area`, `sample_raster`, `slr_threshold_comparison`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
+
+**R3. Settle what a monolith and its decomposition owe each other.** Use propagates from a composition to its members and not from an equivalent monolith, so 4 widgets read as unreached while a workflow performs their work. It is a question about the admission criteria rather than about those widgets, and the count is deliberately left as it is until it is answered.
+
+**R4. Give a second workflow to the widgets one example carries alone.** `south-london-1854` is the sole evidence for 11 widgets. Restructuring an example can take that evidence with it and nothing reports the loss. Closing it means a second workflow reaching those widgets, or recording the fragility as accepted.
+
+**R5. Extend the from-scratch rebuild past one workflow.** `tests/recreate-from-scratch.browser.mjs` proves `south-london/ground` can be built from an empty canvas and published files. The other five South London workflows and all 11 shipped examples are unproven, and it is the only test that can show a parameter is reachable from its own panel.
+
+**R6. Check that a declared source resolves, not only that it exists.** This audit reads whether `sourceInfo` or `provenance` is present. `validate:examples` verifies the pinned bundle's per-file digests; nothing verifies a shipped example's declared source, so a dead URL or a moved file reads as declared.
+
+**R7. Resolve the 4 widgets attached to one example.** `old-naledi`: `facilities`, `facility_audit`; `snow-geoprivacy`: `comparison_map`; `sea-level`: `slr_site_assignment`. Each is already carried in `widgets/standardization.json` with the record that would remove it, and the exemption ceiling may fall and may never rise.
 

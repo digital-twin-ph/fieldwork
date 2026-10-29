@@ -105,6 +105,25 @@ lines.push('## 1 · Widget utilization','',
 
 const byExample=new Map();
 for(const [type,example] of sole)byExample.set(example,[...(byExample.get(example)??[]),type]);
+// USED ACROSS EXAMPLES. The practitioner, 2026-10-29: *"We should also track which widgets are
+// used across examples, those are genuinely emerging as useful widgets."* The count above said
+// how many and never said which, which is the half that can act on anything: a widget two
+// unrelated problems both needed is the strongest evidence of usefulness this project collects,
+// and it is a different claim from being used a lot inside one example.
+const across=evidence.widgets.filter(w=>w.exampleUseCount>1)
+  .sort((a,b)=>b.exampleUseCount-a.exampleUseCount||a.nodeType.localeCompare(b.nodeType));
+lines.push('### Used across examples — emerging as genuinely useful','',
+  'A widget two unrelated problems both needed is the strongest evidence of usefulness this',
+  'project collects. It is a different claim from being used heavily inside one example, which is',
+  'evidence about that example.','',
+  row(['Widget','Examples','Which']),row(['---','---:','---']),
+  ...across.map(w=>row([`\`${w.nodeType}\``,w.exampleUseCount,w.exampleUses.join(', ')])),'',
+  '**Read the bottom of that table with care.** Two examples of the SAME study are weaker evidence',
+  'than two unrelated ones, and `clip_polygons`, `reproject` and `summarize_points_to_polygon` each',
+  'reach exactly two: `snow-isochrone` and `snow-voronoi`, which are two questions about one',
+  'outbreak in one place. They have crossed an example boundary without crossing a problem. The',
+  'rows above `case_series` are the ones that have genuinely done both.','');
+
 lines.push('### Which example is carrying the evidence','',
   row(['Example','Widgets it is the sole user of']),row(['---','---']),
   ...[...byExample].sort((a,b)=>b[1].length-a[1].length)
@@ -128,6 +147,29 @@ lines.push('## 2 · Generation from scratch','',
     e.drawnExtents||'—',
     e.attachedTypes.length?e.attachedTypes.map(t=>`\`${t}\``).join(', '):'—'])),'');
 
+// HOW FINISHED EACH EXAMPLE IS, as four conditions rather than an impression. The practitioner,
+// 2026-10-29: *"Many examples are half baked."* That is a judgement worth turning into a number,
+// because "half baked" and "small" are different things -- an example can be four nodes and
+// complete, or eighteen and unfinished -- and because an example nobody can rebuild is the one
+// kind of incompleteness this project has decided it cares about.
+//
+// The conditions are the ones the practitioner already set, not new ones invented here: every
+// data-carrying node names its source, no widget is attached to it by name, its inputs are
+// published as files a reader can download, and a rebuild from an empty canvas exists as a test.
+const rebuildTest='tests/recreate-from-scratch.browser.mjs';
+const rebuilt=(()=>{try{return readFileSync(`${root}/${rebuildTest}`,'utf8');}catch{return '';}})();
+const maturity=perExample.map(e=>{
+  const met=[
+    ['sources',!e.undeclared.length],
+    ['unattached',!e.attachedTypes.length],
+    // A shipped example's inputs live in this repository's own source, not as files a reader
+    // fetches. Only the pinned example publishes them, which is why it is the only one that can
+    // meet this today -- stated rather than scored away.
+    ['published files',false],
+    ['rebuilt from scratch',rebuilt.includes(e.key)],
+  ];
+  return {...e,met,score:met.filter(([,ok])=>ok).length};
+});
 const totalUndeclared=perExample.reduce((n,e)=>n+e.undeclared.length,0);
 const totalDrawn=perExample.reduce((n,e)=>n+e.drawnExtents,0);
 lines.push(`Across the shipped examples, **${totalUndeclared} nodes carry data and declare no `
@@ -145,11 +187,80 @@ lines.push(`Across the shipped examples, **${totalUndeclared} nodes carry data a
   '- **That an unused widget should be retired.** D11 asks whether a residual function remains',
   '  that nothing else performs. A widget may be unused because no example poses its problem yet,',
   '  which is a gap in the examples rather than in the palette.','',
+  '### How finished each example is','',
+  'The practitioner, 2026-10-29: *"Many examples are half baked."* Four conditions, none of them',
+  'invented here — every data-carrying node names its source, no widget is attached to the example',
+  'by name, the inputs are published as files a reader can download, and a rebuild from an empty',
+  'canvas exists as a test. Node count is shown beside them because small and unfinished are',
+  'different things: an example can be four nodes and complete, or eighteen and not.','',
+  row(['Example','Nodes','Conditions met','Missing']),row(['---','---:','---:','---']),
+  ...[...maturity].sort((a,b)=>b.score-a.score||b.nodes-a.nodes).map(e=>row([
+    `\`${e.key}\``,e.nodes,`${e.score} / 4`,
+    e.met.filter(([,ok])=>!ok).map(([name])=>name).join(', ')||'—'])),
+  row(['`south-london-1854` (pinned)','—','**3 / 4**','rebuilt from scratch: 1 of its 6 workflows']),
+  '',
+  'No shipped example meets more than two, and every one of them fails on published inputs for the',
+  'same structural reason: a shipped example\'s data lives in this repository\'s source rather than',
+  'as files a reader fetches. Only the pinned example publishes its inputs, which is what made a',
+  'from-scratch rebuild possible for it and impossible for the rest. That is one decision, not',
+  'eleven oversights — and it is the decision to revisit if more examples are to become robust.','',
   '### The pinned example','',
   ...pinned.map(e=>`- \`${(e.id??e.repository).split('/').pop()}\` declares ${(e.uses??[]).length} `
     +`node types. Its inputs are files in its own repository, and \`geo/water-intakes.geojson\` was `
     +`written on 2026-10-29 because those four features existed only inside the bundle until then `
     +`— the one input a reader could not download.`),'');
+
+// 3 · WHAT TO DO ABOUT IT. Generated from the same numbers, so a recommendation cannot outlive
+// the gap that produced it: when the count reaches zero the line says so rather than persisting
+// as advice nobody rechecked. The practitioner, 2026-10-29: *"we should also generate a list of
+// recommendation to address audit gaps."*
+//
+// Each says what was measured, what closing it would mean, and nothing about whether it is worth
+// doing -- that is a decision with a cost, and this file measures.
+const carrying=perExample.filter(e=>e.undeclared.length);
+const attachedExamples=perExample.filter(e=>e.attachedTypes.length);
+const soleHeavy=[...byExample].sort((a,b)=>b[1].length-a[1].length)[0];
+const decomposition=['snap_to_network','reachable_nodes','reachable_corridor','travel_time_band'];
+const residue=unused.filter(t=>!decomposition.includes(t)&&t!=='micro_workflow');
+const recommendations=[
+  [`Give the ${totalUndeclared} data-carrying nodes a declared source`,
+   `${carrying.length} shipped examples hold ${totalUndeclared} nodes that carry data and name no `
+   +`origin: ${carrying.map(e=>`\`${e.key}\` (${e.undeclared.length})`).join(', ')}. Closing it `
+   +`means either a \`sourceInfo\`/\`provenance\` block naming where the data came from, or a `
+   +`published file beside the example the way \`geo/water-intakes.geojson\` was written on `
+   +`2026-10-29. Until then each is a payload a rebuild must copy rather than fetch.`],
+  [`Ask D11 of the ${residue.length} widgets no workflow reaches`,
+   `${residue.map(t=>`\`${t}\``).join(', ')}. Not a retirement list: D11 asks whether a residual `
+   +`function remains that nothing else performs, and a widget may be unreached because no example `
+   +`poses its problem. The answer is per widget and this audit does not have it.`],
+  [`Settle what a monolith and its decomposition owe each other`,
+   `Use propagates from a composition to its members and not from an equivalent monolith, so `
+   +`${decomposition.length} widgets read as unreached while a workflow performs their work. It is `
+   +`a question about the admission criteria rather than about those widgets, and the count is `
+   +`deliberately left as it is until it is answered.`],
+  [`Give a second workflow to the widgets one example carries alone`,
+   `${soleHeavy?`\`${soleHeavy[0]}\` is the sole evidence for ${soleHeavy[1].length} widgets`:'No example carries a sole-evidence set'}. `
+   +`Restructuring an example can take that evidence with it and nothing reports the loss. Closing `
+   +`it means a second workflow reaching those widgets, or recording the fragility as accepted.`],
+  [`Extend the from-scratch rebuild past one workflow`,
+   `\`tests/recreate-from-scratch.browser.mjs\` proves \`south-london/ground\` can be built from `
+   +`an empty canvas and published files. The other five South London workflows and all `
+   +`${shipped.length} shipped examples are unproven, and it is the only test that can show a `
+   +`parameter is reachable from its own panel.`],
+  [`Check that a declared source resolves, not only that it exists`,
+   `This audit reads whether \`sourceInfo\` or \`provenance\` is present. \`validate:examples\` `
+   +`verifies the pinned bundle's per-file digests; nothing verifies a shipped example's declared `
+   +`source, so a dead URL or a moved file reads as declared.`],
+  ...(attachedExamples.length?[[`Resolve the ${attachedExamples.reduce((n,e)=>n+e.attachedTypes.length,0)} widgets attached to one example`,
+   `${attachedExamples.map(e=>`\`${e.key}\`: ${e.attachedTypes.map(t=>`\`${t}\``).join(', ')}`).join('; ')}. `
+   +`Each is already carried in \`widgets/standardization.json\` with the record that would remove `
+   +`it, and the exemption ceiling may fall and may never rise.`]]:[]),
+];
+lines.push('## 3 · Recommendations','',
+  'Generated from the numbers above, so a recommendation cannot outlive the gap that produced it.',
+  'Each says what was measured and what closing it would mean. None says whether it is worth',
+  'doing: that is a decision with a cost, and this file measures.','',
+  ...recommendations.flatMap(([title,body],i)=>[`**R${i+1}. ${title}.** ${body}`,'']));
 
 const document=lines.join('\n')+'\n';
 const path='docs/audits/worked-example-audit.md';

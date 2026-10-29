@@ -154,8 +154,11 @@ test('a minimum vertex count drops the small features and accounts for them',asy
   assert.equal(big.retrieval.dropped.belowMinVertices,2,'both counted, so an empty layer has an account');
 });
 
-test('the feature cap states a threshold that would fit, read off what was found',async()=>{
-  // Three squares of five positions each, against a cap of two.
+/** The vertex budget is the only thing that refuses a read now. `maxFeatures` went on
+ *  2026-10-29: it guarded a resource this already guards, on a measured total rather than on a
+ *  count, and it refused a practitioner 606 water features from an extract on their own disk. */
+test('the vertex budget states a threshold that would fit, read off what was found',async()=>{
+  // Three squares of five positions each: fifteen vertices in all, against a budget of eight.
   const file=pbf([block(S,{
     dense:[[1,-0.095,51.505],[2,-0.090,51.505],[3,-0.090,51.510],[4,-0.095,51.510],
       [5,-0.094,51.506],[6,-0.0935,51.506],[7,-0.0935,51.5065],[8,-0.094,51.5065],
@@ -164,13 +167,17 @@ test('the feature cap states a threshold that would fit, read off what was found
       {id:11,keys:[1],values:[2],refs:[5,6,7,8,5]},
       {id:12,keys:[1],values:[2],refs:[11,12,13,14,11]}],
   })]);
-  await assert.rejects(()=>areasFromExtract(file,{kinds:['water'],bbox:BOX,maxFeatures:2}),
+  await assert.rejects(()=>areasFromExtract(file,{kinds:['water'],bbox:BOX,maxVertices:8}),
     err=>{
-      assert.match(err.message,/holds 3 water features and this reads at most 2/);
-      assert.match(err.message,/minimum of 5 vertices would keep the largest 2/,
+      assert.match(err.message,/carry 15 vertices, past the 8/);
+      assert.match(err.message,/minimum of 5 vertices would keep the largest 1/,
         'the number comes from the distribution, not from a guess');
       return true;
     });
+
+  // AND THE COUNT ITSELF REFUSES NOTHING. Three features under the budget import as three.
+  const read=await areasFromExtract(file,{kinds:['water'],bbox:BOX});
+  assert.equal(read.features.length,3);
 });
 
 test('the refusals a caller can rely on',async()=>{

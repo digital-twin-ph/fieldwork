@@ -1,2 +1,2 @@
-import{a,b,c,d,e}from"./chunks/chunk-TQC3HHWT.js";import"./chunks/chunk-KVMUXFPB.js";export{a as MAX_LAYER_FEATURES,b as MAX_LAYER_VERTICES,d as polygonLayer,e as polygonLayerFacts,c as readPolygonFeatures};
+import{a,b,c,d}from"./chunks/chunk-65TS5SZF.js";import"./chunks/chunk-KVMUXFPB.js";export{a as MAX_LAYER_VERTICES,c as polygonLayer,d as polygonLayerFacts,b as readPolygonFeatures};
 //# sourceMappingURL=polygon-layer.js.map

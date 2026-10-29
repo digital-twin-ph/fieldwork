@@ -1,6 +1,6 @@
 import type {Boundary,Scalar} from './types.js';
 import type {InputProvenance} from './input-provenance.js';
-import {MAX_LAYER_FEATURES,MAX_LAYER_VERTICES,type ParsedFeature} from './polygon-layer.js';
+import {MAX_LAYER_VERTICES,type ParsedFeature} from './polygon-layer.js';
 
 /** POLYGON FEATURES FROM A PUBLISHED EXTRACT, scoped by the study area.
  *
@@ -70,7 +70,6 @@ export interface AreaRequest {
    *  threshold, defaulting to nothing: a default tuned until one example's own features survive
    *  is a number fitted to one answer, and the next study area would inherit it. */
   minVertices?:number;
-  maxFeatures?:number;
   maxVertices?:number;
 }
 
@@ -223,7 +222,6 @@ export async function areasFromExtract(bytes:Uint8Array,request:AreaRequest,
   const [west,south,east,north]=request.bbox;
   if(!(east>west&&north>south))throw new Error('The bounding box has no area. It comes from the '
     +'study area’s own bounds, so an empty one means nothing upstream has a boundary yet.');
-  const maxFeatures=request.maxFeatures??MAX_LAYER_FEATURES;
   const maxVertices=request.maxVertices??MAX_LAYER_VERTICES;
   const matches=(tags:Record<string,string>):boolean=>
     request.kinds.some(kind=>MATCHES[kind](tags));
@@ -350,22 +348,34 @@ export async function areasFromExtract(bytes:Uint8Array,request:AreaRequest,
     take(`osm-w${c.id}`,c.tags,ring?[ring]:[],[]);
   }
 
-  // COUNTED FIRST, THEN REFUSED, so a refusal can state a threshold that WOULD fit instead of
-  // telling a practitioner to narrow something and leaving them to work out by how much. The
-  // number is read off the distribution this read actually found, not chosen.
-  if(found.length>maxFeatures){
-    const sorted=found.map(f=>f.vertices).sort((a,b)=>b-a);
-    throw new Error(`That box holds ${found.length.toLocaleString()} `
-      +`${request.kinds.join(' and ')} features and this reads at most `
-      +`${maxFeatures.toLocaleString()}. A minimum of ${sorted[maxFeatures-1]} vertices would `
-      +`keep the largest ${maxFeatures.toLocaleString()} of them. Or narrow the study area, or `
-      +'its margin.');
-  }
+  // HOW MANY FEATURES IS NOT A LIMIT. It was: a read stopped at 500 of them, and a practitioner
+  // with Greater London on their own disk was refused 606 water features on 2026-10-29 --
+  // *"The file is already downloaded and it seems to be now an import cap which I do not
+  // understand what is the rationale."* There was not one that held. The number stood on two
+  // claims, and the code refuted both four lines below itself: that past it "a layer is a
+  // basemap rather than a study's own geometry", which is a definition asserted rather than a
+  // constraint measured, and that "the vertex budget the rest of the application assumes no
+  // longer holds" -- while the vertex budget has its own check, right here, on the measured
+  // total. One resource, two guards, and only one of them counted anything.
+  //
+  // This is the shape `network-tiles.ts` already named: *"nothing here decides in advance how
+  // much a practitioner may have"*. So nothing does. What remains refuses on what was actually
+  // measured, and says which threshold would fit, because that is the part of the old refusal
+  // worth keeping.
   const total=found.reduce((n,f)=>n+f.vertices,0);
-  if(total>maxVertices)
-    throw new Error(`Those ${found.length.toLocaleString()} features carry `
-      +`${total.toLocaleString()} vertices, past the ${maxVertices.toLocaleString()} the rest of `
-      +'this application assumes a study’s geometry holds.');
+  if(total>maxVertices){
+    // Read off the distribution this read found, not chosen: the vertex floor that would bring
+    // the total inside the budget, so a practitioner is told how far rather than to narrow
+    // something and work it out.
+    const sorted=found.map(f=>f.vertices).sort((a,b)=>b-a);
+    let kept=0,fits=0;
+    for(const vertices of sorted){if(kept+vertices>maxVertices)break;kept+=vertices;fits++;}
+    throw new Error(`Those ${found.length.toLocaleString()} `
+      +`${request.kinds.join(' and ')} features carry ${total.toLocaleString()} vertices, past `
+      +`the ${maxVertices.toLocaleString()} the rest of this application assumes a study’s `
+      +`geometry holds.${fits?` A minimum of ${sorted[fits-1]} vertices would keep the largest `
+      +`${fits.toLocaleString()} of them.`:''} Or narrow the study area, or its margin.`);
+  }
   const features=found.map(({feature},i)=>({...feature,name:feature.name||`Feature ${i+1}`}));
 
   return {features,retrieval:{

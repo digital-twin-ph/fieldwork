@@ -787,3 +787,31 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .notes-kind-authored{background:rgba(156,59,46,.18)}
 .notes-fork{color:#9c3b2e;opacity:.85}
 .notes-kind-derived{background:rgba(95,74,120,.2)}
+
+/* THE NOTES BOARD. Ordinals and counts in mono so a reader can scan them; a card's left edge
+   carries its kind, because kind and section are two coordinates and must not be read off one. */
+.notes-part h3{display:flex;align-items:baseline;gap:.5rem}
+.notes-part h3 .button{margin-left:auto}
+.notes-empty{border:1px dashed var(--rule,#2a3a36);border-radius:.4rem;padding:.8rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+.notes-empty p{flex:1 1 16rem;margin:0}
+.notes-drop{display:grid;gap:.6rem;min-height:1rem;border-radius:.4rem}
+.notes-drop.over{outline:2px dashed var(--accent,#5aa88f);outline-offset:4px}
+.notes-note{border-left:3px solid var(--kind,#3a4a46);cursor:grab}
+.notes-note.dragging{opacity:.4}
+.notes-note.k-derived{--kind:#5f4a78}
+.notes-note.k-authored{--kind:#9c3b2e}
+.notes-note.k-machined{--kind:#2d4a7c}
+.notes-note.k-quoted{--kind:#4d6b57}
+.notes-labels .ord{font-family:ui-monospace,monospace;opacity:.6;min-width:1.2rem}
+.notes-note .len{font-size:.72rem;font-family:ui-monospace,monospace;margin:.35rem 0 0}
+.chip{font:inherit;font-size:.72rem;background:none;border:1px solid var(--rule,#2a3a36);border-radius:.2rem;padding:.05rem .35rem;color:inherit;cursor:pointer}
+.chip.flowlink::before{content:"\2197\00a0";opacity:.6}
+#note-dialog{max-width:44rem;width:92vw}
+#note-dialog .coords{display:flex;gap:1rem;flex-wrap:wrap;margin:.4rem 0}
+#note-dialog .field{display:flex;flex-direction:column;gap:.15rem}
+#note-dialog .field label{font-size:.66rem;letter-spacing:.04em;text-transform:uppercase;opacity:.7}
+#note-dialog .readonly{border:1px solid var(--rule,#2a3a36);border-radius:.3rem;padding:.7rem .8rem;background:rgba(255,255,255,.03)}
+#note-dialog .why{font-size:.8rem;opacity:.8}
+#note-dialog .panel{margin-top:.8rem;padding-top:.7rem;border-top:1px solid var(--rule,#2a3a36)}
+#note-dialog .dlg-foot{display:flex;gap:.6rem;align-items:center}
+#note-dialog .grow{margin-left:auto}

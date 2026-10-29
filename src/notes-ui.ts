@@ -1,108 +1,193 @@
 import type {Escape} from './types.js';
-import {groupNotes,noteExtent,forkHasDrifted,WRITE_UP_PARTS,
+import {element} from './dom.js';
+import {groupNotes,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,
   type Note,type MachinedNote} from './notes.js';
 
-/** THE NOTES SURFACE. A SPIKE.
+/** THE NOTES SURFACE, reaching for the Notes Board prototype.
  *
- *  `notes.ts` has existed since 2026-10-28 and `app.ts` has never imported it: notes were defined,
- *  produced by `relate_table`, stored on the project, counted and grouped -- and no practitioner
- *  could see one. The module was built as the half a surface would sit on, and the surface was not
- *  built.
+ *  `notes.ts` existed from 2026-10-28 and `app.ts` never imported it: notes were defined,
+ *  produced, stored, grouped and counted where no practitioner could see one.
  *
- *  This is a spike, which means it answers questions rather than finishes a feature. What it is
- *  for: to find out whether the IMRAD body is the right spine for reading notes, whether the two
- *  kinds read together, and where this belongs. It is READ-ONLY. The practitioner's own spec from
- *  the prototype -- *"Each note should be editable as a modal dialog"* -- is not built here, and
- *  the empty-section button says so rather than pretending.
+ *  The practitioner, 2026-10-29, on the first version of this: *"The UI is not quite what it is
+ *  in the prototype. The notes in the prototype are movable. Notes can be added, existing notes
+ *  can be opened in a modal dialog, not editable yet. The one we built right now, very far from
+ *  the original prototype."* All three are here now. Editing is not, and the modal says so in the
+ *  words that belong to each kind rather than one apology for all of them.
  *
- *  What it does honour, because those are already settled:
- *    - the body in IMRAD order, every part shown including the empty ones;
- *    - the function of each note as a label, which is the "colored labels" the prototype asked
- *      for, drawn from `KNOWN_NOTE_FUNCTIONS` and not invented here;
- *    - a machined note linking to the node that machined it, *"if produced by a workflow it
- *      should link to the workflow"*;
- *    - a running count of notes, words and characters.
- */
+ *  WHAT A SECTION'S EMPTINESS MEANS is said where it is empty, which the prototype does and the
+ *  first version did not: an Introduction holds background, related literature and purpose, and
+ *  no workflow produces any of the three. Telling a practitioner *"no notes yet"* and stopping
+ *  leaves them to wonder whether something failed. */
+
+export interface NoteContext {
+  /** What produced a note, for the link and for the modal's heading. */
+  labelOf:(nodeId:string)=>string|undefined;
+  machined:readonly MachinedNote[];
+}
+
+/** Why a part has nothing in it, which differs by part and is not a failure in any of them. */
+const EMPTINESS:Record<string,string>={
+  Introduction:'An introduction holds background, related literature and purpose — and no '
+    +'workflow produces any of the three. All of it is the author’s to write.',
+  Methods:'Methods fill themselves as inputs declare their sources and steps report what they '
+    +'did. Nothing has yet.',
+  Results:'A results section is mostly figures and tables, which this application makes as '
+    +'artifacts rather than as prose. What belongs here is what the figures do not say.',
+  Discussion:'A discussion is the author’s reading of the result, and the limitations the '
+    +'run could not find for itself.',
+};
+
+/** What a function does for a reader, in a line. Shown in the modal beside the chip, because a
+ *  one-word label is a filing code until somebody says what it files. */
+const FUNCTION_GLOSS:Record<string,string>={
+  context:'sets the world the data came from',
+  rationale:'says why the study was done this way',
+  source:'records where data came from',
+  method:'says how something was measured or computed',
+  verification:'records checking a source, and what was found',
+  finding:'states what the work showed',
+  limitation:'states what it cannot show',
+};
+
+const bodyOf=(note:Note)=>note.kind==='quoted'?note.quote:note.text;
+const words=(text:string)=>text.split(/\s+/).filter(Boolean).length;
+
 export function notesPanel(notes:readonly Note[],
   machined:Record<string,MachinedNote[]>|undefined,
   labelOf:(nodeId:string)=>string|undefined,esc:Escape,
-  /** The sources the run read back from its inputs' declarations. */
   derived:readonly Note[]=[]):string{
-  // THE PROJECT'S AND THE RUN'S, READ TOGETHER. A quoted sentence belongs to the investigation
-  // and a machined one to the step that produced it; a write-up does not care which, so the
-  // surface does not separate them. It says which is which on each note instead.
   const fromRun:Note[]=Object.entries(machined||{})
     .flatMap(([nodeId,list])=>list.map(note=>({...note,nodeId})));
   const all=[...notes,...derived,...fromRun];
   const extent=noteExtent(all);
   const parts=groupNotes(all);
+  const count=(kind:Note['kind'])=>all.filter(note=>note.kind===kind).length;
 
+  // COUNTED BY KIND, as the prototype counts them. "14 notes" says how much there is; "9 derived,
+  // 2 machined, 3 authored" says who wrote it, which is the question a reader of a write-up asks
+  // about a sentence before any other.
   const head=`<div class="notes-head"><strong>Notes</strong>`
-    +`<span class="muted">${extent.notes} note${extent.notes===1?'':'s'} · `
-    +`${extent.words.toLocaleString()} words · `
-    +`${extent.characters.toLocaleString()} characters</span></div>`
-    +`<p class="description">What survives into the write-up, in the order a reader meets it. A `
-    +`quoted note is an author’s own sentence; a machined note is this application’s `
-    +`account of what it did to your numbers.</p>`;
+    +`<span class="muted">${extent.notes} note${extent.notes===1?'':'s'}`
+    +(['derived','machined','authored','quoted'] as const)
+      .map(kind=>count(kind)?` · ${count(kind)} ${kind}`:'').join('')
+    +` · ${extent.words.toLocaleString()} words`
+    +` · ${extent.characters.toLocaleString()} characters</span></div>`
+    +`<p class="description">What survives into the write-up, in the order a reader meets it. `
+    +`Quoted and authored notes belong to the investigation; derived and machined ones come from `
+    +`the last run of this workflow.</p>`;
 
+  let ordinal=0;
   const body=parts.map(part=>{
-    // AN EMPTY PART IS WHERE A NOTE GOES, which the prototype settled: *"In the UI, if there is
-    // no notes under an IMRAD section, there should be an Add Notes button."* The button is here
-    // and does nothing yet, and says which -- a control that looks live and is not is a worse
-    // lie than a missing one.
-    if(!part.count)return `<section class="notes-part is-empty">`
-      +`<h3>${esc(part.section)}</h3>`
-      +`<p class="muted">No notes yet. `
-      +`<button class="button small" data-add-note="${esc(part.section)}" disabled>`
-      +`Add a note</button> \u2014 not built yet.</p></section>`;
-    return `<section class="notes-part"><h3>${esc(part.section)} `
-      +`<span class="muted">${part.count}</span></h3>`
+    const add=`<button class="button small" data-add-note="${esc(part.section)}">`
+      +`+ note</button>`;
+    if(!part.count)return `<section class="notes-part is-empty" data-section="${esc(part.section)}">`
+      +`<h3>${esc(part.section)} <span class="muted">nothing yet</span>${add}</h3>`
+      +`<div class="notes-empty"><p class="muted">${esc(EMPTINESS[part.section]||'')}</p>`
+      +`<button class="button" data-add-note="${esc(part.section)}">`
+      +`Add note to ${esc(part.section)}</button></div></section>`;
+    const inPart=part.groups.flatMap(group=>group.notes);
+    const extentOf=noteExtent(inPart);
+    return `<section class="notes-part" data-section="${esc(part.section)}">`
+      +`<h3>${esc(part.section)} <span class="muted">${part.count} note`
+      +`${part.count===1?'':'s'} · ${extentOf.words.toLocaleString()} words</span>${add}</h3>`
+      +`<div class="notes-drop" data-drop="${esc(part.section)}">`
       +part.groups.map(group=>group.notes.map(note=>{
-        const body=note.kind==='quoted'?note.quote:note.text;
-        // WHERE IT COMES FROM, which differs by kind: a machined note names the node that wrote
-        // it, an authored one names what it annotates. A quoted note's source is its citation,
-        // which belongs to the reference list rather than to the card.
-        const where=note.kind==='machined'&&note.nodeId
-          ?`<span class="notes-source">from ${esc(labelOf(note.nodeId)||note.nodeId)}</span>`
-          :note.kind==='authored'&&note.about
-          ?`<span class="notes-source">on ${esc(labelOf(note.about)||note.about)}</span>`
-          :note.kind==='derived'&&note.nodeId
-          ?`<span class="notes-source">declared by ${esc(labelOf(note.nodeId)||note.nodeId)}</span>`
-          :'';
-        // BOTH WARRANTS, ON A FORK. A machined note that was edited carries the computation that
-        // produced the wording and the person who changed it, and a reader needs both: neither
-        // alone says what the sentence is.
-        const forked=note.kind==='authored'&&note.forkedFrom
-          ?`<span class="notes-fork">edited from ${note.forkedFrom.nodeId
-              ?esc(labelOf(note.forkedFrom.nodeId)||note.forkedFrom.nodeId):'a machined note'}`
-            +`${forkHasDrifted(note,fromRun as MachinedNote[])
-              ?' \u00b7 the run has moved since':''}</span>`
-          :'';
-        return `<article class="notes-note">`
+        const text=bodyOf(note);
+        ordinal++;
+        const id=noteKey(note);
+        const from=note.kind==='machined'&&note.nodeId?note.nodeId
+          :note.kind==='derived'&&note.nodeId?note.nodeId:undefined;
+        return `<article class="notes-note k-${note.kind}" draggable="true" `
+          +`data-note="${esc(id)}" data-section="${esc(part.section)}">`
           +`<div class="notes-labels">`
+          +`<span class="ord">${ordinal}.</span>`
           +`<span class="notes-kind notes-kind-${note.kind}">${note.kind}</span>`
           +(group.fn?`<span class="notes-fn">${esc(group.fn)}</span>`:'')
-          +where+forked+`</div>`
+          +(from?`<button class="chip flowlink" data-open-node="${esc(from)}">`
+            +`${esc(labelOf(from)||from)}</button>`:'')
+          +(note.kind==='authored'&&note.forkedFrom
+            ?`<span class="notes-fork">edited from a machined note`
+              +`${forkHasDrifted(note,fromRun as MachinedNote[])
+                ?' · the run has moved since':''}</span>`:'')
+          +`<button class="chip notes-open" data-note-open="${esc(id)}">open</button>`
+          +`</div>`
           +(note.kind==='quoted'
-            ?`<blockquote>${esc(body)}</blockquote>`
+            ?`<blockquote>${esc(text)}</blockquote>`
               +(note.establishes?`<p class="muted">Establishes: ${esc(note.establishes)}</p>`:'')
-            :`<p>${esc(body)}</p>`
+            :`<p>${esc(text)}</p>`
               +(note.kind==='derived'&&note.detail
                 ?`<p class="muted">${esc(note.detail)}</p>`:''))
+          +`<p class="len muted">${words(text)} words · ${text.length} chars</p>`
           +`</article>`;
       }).join('')).join('')
-      +`</section>`;
+      +`</div></section>`;
   }).join('');
 
-  // WHAT THIS SPIKE DOES NOT DO, said here rather than discovered. A surface that looks finished
-  // and is not is worse than one that says where it stops.
-  // WHAT THIS SPIKE DOES NOT DO, said here rather than discovered.
-  const gap=`<p class="notice">A spike: notes can be read here and not yet written, edited or `
-    +`added. Quoted and authored notes come from the project; derived and machined ones from the `
-    +`last run, so they are this workflow's sources and findings rather than the investigation's. `
-    +`Only an authored note would be editable here \u2014 a quotation is somebody else\u2019s `
-    +`sentence, and a machined one is rewritten by running the workflow again.</p>`;
-  return head+body+gap;
+  return head+body;
 }
 
-export const NOTES_PARTS=WRITE_UP_PARTS;
+/** A note's handle, stable enough to find it again in a list rebuilt from scratch. */
+export function noteKey(note:Note):string{
+  if('id' in note&&note.id)return note.id;
+  return `${note.kind}:${note.section}:${bodyOf(note).slice(0,40)}`;
+}
+
+const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">
+<div class="dlg"><div class="dlg-head"><h3 id="note-dialog-title">Note</h3>
+<div id="note-coords" class="coords"></div><p id="note-gloss" class="gloss"></p></div>
+<div class="dlg-body"><div id="note-body" class="readonly"></div>
+<p id="note-why" class="why"></p><div id="note-detail" class="panel"></div></div>
+<div class="dlg-foot"><span id="note-count"></span>
+<button id="note-close" class="button primary grow">Close</button></div></div></dialog>`;
+
+/** WHY THIS NOTE MAY NOT BE EDITED, in terms of what it is.
+ *
+ *  Not one apology for every kind. A derived note restates a declaration, so editing it here
+ *  detaches the citation from the input it cites while the receipt goes on asserting the input's
+ *  own words. A quotation is somebody else's sentence. A machined note is an account of a
+ *  computation, and editing one forks it rather than overwriting it -- the practitioner's rule of
+ *  2026-10-29, which is why the sentence for that kind promises a fork rather than refusing. */
+const WHY:Record<Note['kind'],(what:string)=>string>={
+  derived:what=>`This note is derived: it restates what ${what} declares in its provenance. `
+    +`Editing it here would detach the citation from the input it cites, and the receipt would `
+    +`still assert the input’s own words. Change it at the input.`,
+  machined:what=>`This note is machined: ${what} wrote it from the numbers it computed, and `
+    +`rewrites it on every run. Editing it forks it into a note of your own carrying both `
+    +`provenances — the computation and you. Not built yet.`,
+  quoted:()=>'This note is quoted: the sentence is its author’s, carried verbatim with the '
+    +'claim it establishes. An edited quotation is not a quotation, so there is nothing to change '
+    +'here.',
+  authored:()=>'This note is yours. Editing is not built yet.',
+};
+
+export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
+  if(!document.querySelector('#note-dialog'))
+    document.body.insertAdjacentHTML('beforeend',DIALOG);
+  const dialog=element('#note-dialog') as HTMLDialogElement;
+  const $=<S extends string>(s:S)=>element(s,dialog);
+  const text=bodyOf(note);
+  const fn=('fn' in note&&note.fn)||'';
+  const from=('nodeId' in note&&note.nodeId)||undefined;
+  $('#note-dialog-title').textContent=`Note — ${note.kind}`;
+  // FIXED, AND SAID TO BE. A derived note's section and function are decided by what it restates,
+  // not chosen here, and a control that looks adjustable and is not is worse than a label.
+  $('#note-coords').innerHTML=`<span class="field"><label>IMRaD section</label>`
+    +`<span class="fixed">${esc(note.section)} — fixed</span></span>`
+    +`<span class="field"><label>Function</label>`
+    +`<span class="fixed">${esc(fn||'unstated')}${fn?' — fixed':''}</span></span>`
+    +(from?`<span class="field"><label>Produced by</label>`
+      +`<span class="fixed">${esc(context.labelOf(from)||from)}</span></span>`:'');
+  $('#note-gloss').textContent=fn&&FUNCTION_GLOSS[fn]
+    ?`${fn} — ${FUNCTION_GLOSS[fn]}`
+    :fn&&!KNOWN_NOTE_FUNCTIONS.includes(fn)
+    ?`${fn} — a function this application does not name, kept as its author wrote it`:'';
+  $('#note-body').textContent=text;
+  $('#note-why').textContent=WHY[note.kind](
+    from?context.labelOf(from)||from:'the step that produced it');
+  $('#note-detail').innerHTML=note.kind==='quoted'&&note.establishes
+    ?`<h4>Establishes</h4><p>${esc(note.establishes)}</p>`
+    :note.kind==='derived'&&note.detail?`<h4>Detail</h4><p>${esc(note.detail)}</p>`:'';
+  $('#note-count').textContent=`${words(text)} words · ${text.length} chars`;
+  $('#note-close').onclick=()=>dialog.close();
+  dialog.showModal();
+}

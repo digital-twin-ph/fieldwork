@@ -66,19 +66,47 @@ test('the tab counts what it holds',{skip},async({page})=>{
   await expect(page.locator('#notes-view-count')).toHaveText('9');
 });
 
-test('an empty section is where a note goes, and says the button is not built',{skip},async({page})=>{
+test('an empty section says why it is empty, and offers a note',{skip},async({page})=>{
   await southLondon(page);
   const results=page.locator('.notes-part').nth(2);
   await expect(results).toContainText('Results');
-  await expect(results.locator('[data-add-note]')).toBeDisabled();
-  await expect(results).toContainText('not built yet');
+  // NOT "no notes yet". A results section is mostly figures and tables, which this application
+  // makes as artifacts -- so what belongs here is what the figures do not say, and telling a
+  // practitioner only that it is empty leaves them wondering whether something failed.
+  await expect(results).toContainText('what the figures do not say');
+  await expect(results.locator('[data-add-note]').first()).toBeEnabled();
 });
 
-test('the spike says where it stops',{skip},async({page})=>{
+test('a note can be added to a section, and it is yours',{skip},async({page})=>{
   await southLondon(page);
-  // A surface that looks finished and is not is worse than one that says so.
-  await expect(page.locator('#notes-view .notice'))
-    .toContainText('not yet written, edited or added');
+  const before=await page.locator('.notes-note').count();
+  await page.locator('.notes-part').nth(2).locator('[data-add-note]').first().click();
+  await expect(page.locator('.notes-note')).toHaveCount(before+1);
+  // Added as authored, because that is the only kind a person writes here.
+  await expect(page.locator('.notes-part').nth(2).locator('.notes-kind-authored')).toHaveCount(1);
+});
+
+test('a note opens in a modal, and says why it may not be edited',{skip},async({page})=>{
+  await southLondon(page);
+  await page.locator('.notes-note').first().locator('[data-note-open]').click();
+  await expect(page.locator('#note-dialog')).toBeVisible();
+  // The section and the function are FIXED for a quotation: both follow from what it establishes.
+  await expect(page.locator('#note-coords')).toContainText('fixed');
+  // And the reason is this kind's reason, not one apology for every kind.
+  await expect(page.locator('#note-why'))
+    .toContainText('An edited quotation is not a quotation');
+  await expect(page.locator('#note-count')).toContainText('words');
+  await page.locator('#note-close').click();
+  await expect(page.locator('#note-dialog')).not.toBeVisible();
+});
+
+test('a derived note is sent to the input that declares it',{skip},async({page})=>{
+  await southLondon(page);
+  await andRun(page);
+  await page.locator('.notes-note.k-derived').first().locator('[data-note-open]').click();
+  await expect(page.locator('#note-why'))
+    .toContainText('restates what');
+  await expect(page.locator('#note-why')).toContainText('Change it at the input');
 });
 
 /** THE SOURCES A WORKFLOW WRITES BY ITSELF.
@@ -100,7 +128,9 @@ test('the inputs cite themselves, without being asked twice',{skip},async({page}
   // sub-districts' BSD-2 licence belongs to `ground` and `choropleth` and is cited when those
   // run. A reference list spanning all six workflows is a project-level question, not this one.
   await expect(page.locator('#notes-view')).toContainText('CC0-1.0');
-  await expect(page.locator('#notes-view')).toContainText('declared by');
+  // AND IT LINKS THE INPUT THAT DECLARES IT. The practitioner asked this of the prototype:
+  // "if produced by a workflow it should link to the workflow".
+  await expect(page.locator('.notes-note.k-derived [data-open-node]').first()).toBeVisible();
   // The citation is read back, never composed here: these are the practitioner's own words for
   // what the data is, and the attribution the licence requires.
   await expect(page.locator('#notes-view'))

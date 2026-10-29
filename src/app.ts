@@ -67,8 +67,8 @@ import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from './old-naledi-ui.js';
 import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {openPolygonReview} from './polygon-review.js';
-import {notesPanel} from './notes-ui.js';
-import {readNotes} from './notes.js';
+import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
+import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart} from './notes.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
  *  Inspector re-renders on every setting change. */
@@ -4961,12 +4961,32 @@ function renderProjectDetails(){
  *  Read from the project and from the last run together, because a write-up does not care which
  *  of the two wrote a sentence and a reader checking one does -- so the label carries that and
  *  the grouping does not. */
-function renderNotesView(){
+/** The notes on screen, so a click can find the one it names. Rebuilt with the view. */
+let shownNotes:Note[]=[];
+const projectNow=()=>{
   const key=storageKey(workflow);
-  const project=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId)
+  return workflow.projectId?readProjects().find(p=>p.id===workflow.projectId)
     :projectOfWorkflow(key,readProjects());
+};
+/** Write notes back to the project they belong to. A note is about the investigation, so it does
+ *  not travel on the workflow -- which also means `change()` is the wrong door for it. */
+function writeNotes(notes:Note[]):boolean{
+  const project=projectNow();
+  if(!project)return false;
+  const stored=readProjects();
+  const at=stored.findIndex(p=>p.id===project.id);
+  if(at<0)return false;
+  stored[at]={...stored[at],notes};
+  return writeProjects(stored);
+}
+function renderNotesView(){
+  const project=projectNow();
+  const labelOf=(id:string)=>workflow.nodes.find(node=>node.id===id)?.params.label;
+  const fromRun=Object.entries(result?.machined||{})
+    .flatMap(([nodeId,list])=>list.map(note=>({...note,nodeId})));
+  shownNotes=[...(project?.notes||[]),...(result?.derived||[]),...fromRun] as Note[];
   $('#notes-view').innerHTML=notesPanel(project?.notes||[],result?.machined,
-    id=>workflow.nodes.find(node=>node.id===id)?.params.label,esc,result?.derived||[]);
+    labelOf,esc,result?.derived||[]);
   const total=(project?.notes||[]).length+(result?.derived||[]).length
     +Object.values(result?.machined||{}).reduce((n,list)=>n+list.length,0);
   $('#notes-view-count').textContent=total?String(total):'';
@@ -6369,6 +6389,70 @@ document.addEventListener('click',event=>{
     toast(said.length?`${said.join(', ')}. Rerun to update results.`
       :'Every feature kept as read. Rerun to update results.');
   },frame);
+});
+// THE NOTES TAB'S OWN CONTROLS: open one, add one, move one.
+document.addEventListener('click',event=>{
+  const target=event.target as HTMLElement;
+  const opened=target.closest('[data-note-open]')?.getAttribute('data-note-open');
+  if(opened){
+    const note=shownNotes.find(n=>noteKey(n)===opened);
+    if(note)openNoteDialog(note,{labelOf:id=>workflow.nodes.find(n=>n.id===id)?.params.label,
+      machined:Object.values(result?.machined||{}).flat()},esc);
+    return;
+  }
+  // THE NODE THAT PRODUCED IT, which the prototype links and the practitioner asked of it:
+  // "if produced by a workflow it should link to the workflow".
+  const node=target.closest('[data-open-node]')?.getAttribute('data-open-node');
+  if(node){switchView('workflow');selected=node;render();return;}
+  const section=target.closest('[data-add-note]')?.getAttribute('data-add-note');
+  if(!section)return;
+  // ADDED AS AUTHORED, because that is the only kind a person writes here. It starts empty and
+  // says so: a note with placeholder prose in it is a note somebody has to notice and delete.
+  const project=projectNow();
+  if(!project){toast('A note belongs to an investigation. File this workflow under a project first.',
+    {tone:'failure'});return;}
+  const held=[...(project.notes||[])] as Note[];
+  const made:Note={kind:'authored',id:`note-${Date.now().toString(36)}`,
+    section:section as WriteUpPart,text:'(empty \u2014 writing is not built yet)'};
+  if(writeNotes([...held,made])){renderNotesView();toast(`A note was added to ${section}.`);}
+  else toast('That note could not be kept on this device.',{tone:'failure'});
+});
+// MOVING A NOTE BETWEEN SECTIONS, which the prototype does by dragging. A note's section is where
+// it belongs in the write-up, and that is the practitioner's judgement -- but only for a note
+// they own. A derived or machined note's section follows what produced it, and a quotation's
+// follows what it establishes, so those are refused with the reason rather than silently snapped
+// back.
+document.addEventListener('dragstart',event=>{
+  const card=(event.target as HTMLElement).closest?.('[data-note]') as HTMLElement|null;
+  if(!card)return;
+  event.dataTransfer?.setData('text/plain',card.getAttribute('data-note')||'');
+  card.classList.add('dragging');
+});
+document.addEventListener('dragend',event=>{
+  (event.target as HTMLElement).closest?.('[data-note]')?.classList.remove('dragging');
+});
+document.addEventListener('dragover',event=>{
+  const drop=(event.target as HTMLElement).closest?.('[data-drop]');
+  if(drop)event.preventDefault();
+});
+document.addEventListener('drop',event=>{
+  const drop=(event.target as HTMLElement).closest?.('[data-drop]') as HTMLElement|null;
+  if(!drop)return;
+  event.preventDefault();
+  const key=event.dataTransfer?.getData('text/plain');
+  const into=drop.getAttribute('data-drop') as WriteUpPart;
+  if(!key||!WRITE_UP_PARTS.includes(into))return;
+  const project=projectNow();
+  const held=[...(project?.notes||[])] as Note[];
+  const at=held.findIndex(n=>noteKey(n)===key);
+  if(at<0){
+    toast('Only a note you wrote can be moved. A derived or machined note sits where the step '
+      +'that produced it put it, and a quotation where its claim belongs.',{tone:'failure'});
+    return;
+  }
+  if(held[at].section===into)return;
+  held[at]={...held[at],section:into};
+  if(writeNotes(held)){renderNotesView();toast(`Moved to ${into}.`);}
 });
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});

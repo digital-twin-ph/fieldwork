@@ -156,3 +156,21 @@ test('clearing the selection decides nothing',{skip},async({page})=>{
   await expect(page.locator('#polygon-review-selection')).toBeHidden();
   await expect(page.locator('#polygon-review-status')).toContainText('32 of 32 features kept');
 });
+
+/** ONE CANVAS, OR THE MAP ANSWERS NO CLICKS.
+ *
+ *  Each feature was given its own `L.canvas()` renderer, which is one canvas ELEMENT each. They
+ *  stack, and only the topmost receives a pointer event -- so the map drew all 32 correctly and
+ *  responded to none of them. Reported 2026-10-29: *"I still cannot select polygons from the map
+ *  canvas."*
+ *
+ *  Asserted on the count of canvases rather than by clicking one, and the distinction is worth
+ *  stating: this proves the condition that made clicks impossible is gone, not that a click on a
+ *  given polygon selects it. Aiming at one 25-vertex island among hundreds is what the row list
+ *  is for, and that path is covered above. */
+test('the features share one canvas, so the map can be clicked at all',{skip},async({page})=>{
+  await layer(page);
+  await open(page);
+  await expect(page.locator('#polygon-review-map canvas')).toHaveCount(1);
+  await expect(page.locator('.polygon-review-row')).toHaveCount(32);
+});

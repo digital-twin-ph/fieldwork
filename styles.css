@@ -782,3 +782,5 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .notes-kind-quoted{background:rgba(0,114,178,.18)}
 .notes-kind-machined{background:rgba(213,94,0,.18)}
 .notes-source{opacity:.7}
+.notes-view{padding:1rem 0;max-width:52rem}
+.notes-view .notes-part h3{border-bottom:1px solid var(--rule,#2a3a36);padding-bottom:.25rem}

@@ -43,9 +43,15 @@ export function notesPanel(notes:readonly Note[],
     +`account of what it did to your numbers.</p>`;
 
   const body=parts.map(part=>{
+    // AN EMPTY PART IS WHERE A NOTE GOES, which the prototype settled: *"In the UI, if there is
+    // no notes under an IMRAD section, there should be an Add Notes button."* The button is here
+    // and does nothing yet, and says which -- a control that looks live and is not is a worse
+    // lie than a missing one.
     if(!part.count)return `<section class="notes-part is-empty">`
       +`<h3>${esc(part.section)}</h3>`
-      +`<p class="muted">No notes yet.</p></section>`;
+      +`<p class="muted">No notes yet. `
+      +`<button class="button small" data-add-note="${esc(part.section)}" disabled>`
+      +`Add a note</button> \u2014 not built yet.</p></section>`;
     return `<section class="notes-part"><h3>${esc(part.section)} `
       +`<span class="muted">${part.count}</span></h3>`
       +part.groups.map(group=>group.notes.map(note=>{

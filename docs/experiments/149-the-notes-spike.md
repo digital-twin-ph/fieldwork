@@ -62,9 +62,11 @@ Add Notes button"* — is not built. The panel states that rather than looking f
 
 ## What this does not establish
 
-- **That the Project view is where it belongs.** It was put there because a quoted note belongs to
-  the investigation, which made the spike cheap. A fifth view beside N3 & evidence is still open,
-  and nothing here measures which a practitioner reaches for.
+- ~~That the Project view is where it belongs.~~ **Settled the same day by the practitioner: *"It
+  should be a tab."*** It is now a fifth tab beside N3 & evidence, carrying a count of what it
+  holds. The reason it is not a panel is readable off the thing itself: a write-up is read in
+  order, and under the project's own controls a reader reaches the Introduction by scrolling past
+  backup buttons.
 - **That machined notes read well at volume.** `relate_table` is the only producer and South
   London's run makes few. Nine quoted notes is not a write-up.
 - **That the word count means anything yet.** It counts what a reader would read and nobody has
@@ -73,10 +75,27 @@ Add Notes button"* — is not built. The panel states that rather than looking f
   source; whether it should be editable afterwards, and what that does to its provenance, is the
   question the modal would force and the spike deliberately did not touch.
 
+## The prototype this is reaching for
+
+The practitioner, 2026-10-29: *"We developed an earlier prototype of the UI and that looked
+excellent"* — and, asked where it is, *"It was a standalone Claude prototype."* So it is not in
+this repository and cannot be read. What survives of it is four requirements, quoted in
+`src/notes.ts` as they were given:
+
+| Quoted requirement | In the spike |
+| --- | --- |
+| *"show intent (IMRAD, not sure where limitation goes in) as colored labels"* | the body in IMRAD order; each note labelled with its function and its kind |
+| *"if produced by a workflow it should link to the workflow"* | a machined note names the node that machined it |
+| *"We can also show number of characters, words so we have a running word / character count"* | notes, words and characters, in the header |
+| *"if there is no notes under an IMRAD section, there should be an Add Notes button"* | the button is there, disabled, and says it is not built |
+| *"Each note should be editable as a modal dialog"* | **not built** — see below |
+
+Four of five. Whether the fifth should be built as specified is the open question, not a task.
+
 ## What would close it
 
-- A decision on placement, which needs the surface in front of a practitioner rather than a
-  measurement.
+- The prototype itself, or a screenshot of it, if the shape is to be matched more closely than
+  four sentences allow.
 - One more machined producer, so grouping is tested across two widgets rather than one.
 - The editing question answered before the modal is built, because an edited quotation is no
   longer a quotation and the surface should not be able to make one silently.

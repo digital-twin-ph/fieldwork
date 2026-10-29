@@ -4585,6 +4585,7 @@ function switchView(view:string){
   $('#workflow-view').hidden=view!=='workflow';
   $('#rules-view').hidden=view!=='rules';
   $('#project-view').hidden=view!=='project';
+  $('#notes-view').hidden=view!=='notes';
   document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>{
     const active=b.dataset.view===view;
     b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));
@@ -4595,6 +4596,11 @@ function switchView(view:string){
   // forces the layout it needs. Deferred to a frame, anything that looked at the map in the
   // same turn as the tab click found no map -- a race in the application, not only in a test.
   if(view==='project')renderProjectView();
+  // THE WRITE-UP IS A STAGE OF THE WORK, not a corner of the project record. The practitioner,
+  // 2026-10-29: *"It should be a tab."* Read in order, which means not below the project's own
+  // controls: a reader of a write-up should not scroll past backup buttons to reach the
+  // Introduction.
+  if(view==='notes')renderNotesView();
   if(view==='results')renderMap();
   if(view==='workflow')requestAnimationFrame(()=>flow?.fit());
 }
@@ -4943,11 +4949,22 @@ function renderProjectDetails(){
   $('#project-stats').textContent=project
     ?`${held.length===1?'1 workflow':`${held.length} workflows`}: ${named.join(' · ')}. Project id ${project.id}.`
     :'This canvas belongs to no investigation. Choose one below, or create a project to group the questions you are asking.';
-  // THE NOTES, read from the project and the last run together. A spike: `notes.ts` has existed
-  // since 2026-10-28 and nothing imported it, so notes were produced, stored, grouped and counted
-  // where no practitioner could see one.
-  $('#project-notes').innerHTML=notesPanel(project?.notes||[],result?.machined,
+}
+/** THE NOTES VIEW. A spike: `notes.ts` has existed since 2026-10-28 and nothing imported it, so
+ *  notes were produced, stored, grouped and counted where no practitioner could see one.
+ *
+ *  Read from the project and from the last run together, because a write-up does not care which
+ *  of the two wrote a sentence and a reader checking one does -- so the label carries that and
+ *  the grouping does not. */
+function renderNotesView(){
+  const key=storageKey(workflow);
+  const project=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId)
+    :projectOfWorkflow(key,readProjects());
+  $('#notes-view').innerHTML=notesPanel(project?.notes||[],result?.machined,
     id=>workflow.nodes.find(node=>node.id===id)?.params.label,esc);
+  const total=(project?.notes||[]).length
+    +Object.values(result?.machined||{}).reduce((n,list)=>n+list.length,0);
+  $('#notes-view-count').textContent=total?String(total):'';
 }
 function applyProjectDetails(){
   const key=storageKey(workflow);

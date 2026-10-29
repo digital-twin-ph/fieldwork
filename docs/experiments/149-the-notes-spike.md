@@ -75,6 +75,69 @@ Add Notes button"* — is not built. The panel states that rather than looking f
   source; whether it should be editable afterwards, and what that does to its provenance, is the
   question the modal would force and the spike deliberately did not touch.
 
+## The prototype, read
+
+The practitioner supplied it on 2026-10-29: <https://claude.ai/artifact/XHXnyV4mhbVuZnXZyZ2V7e>,
+*"Notes from Snow's South London study"*. It is a standalone Claude artifact, so it is not in this
+repository and cannot be gated; what it settles is written down here instead, because a design
+that lives only in an artifact is a design this project cannot check itself against.
+
+It is the design [141](141-organising-snows-notes.md) proposed, built. Read with 141 beside it:
+
+**Three kinds, not two.** `derived`, `authored`, `machined` — carrying Snow's own Map 2 palette:
+the Southwark and Vauxhall indigo, the Lambeth oxide red, and the purple of the zone where both
+companies' pipes are intermingled. `quoted`, which is what `notes.ts` ships, **does not appear in
+it at all.**
+
+**And its fourteen notes contain no quotations.** They are the example's own declarations: the
+source of each table, the title and caption of the choropleth, the rate ratio `two_by_two`
+machined, the empty cell `group_table` reported. Its subtitle says so — *"Harvested from the
+example, not written for this page."* So the write-up is **assembled from what the workflows
+already declare**, which is a different proposition from a place to keep sentences, and the one
+141 means by *"References are the one section a workflow can write by itself."*
+
+**Two coordinates, two palettes, and a rule.** The CSS states it: *"The four IMRaD sections carry
+a separate, quieter ramp, because kind and narrative position are two coordinates and must not be
+read off one colour."* That is 141's independence claim, enforced in the design rather than
+asserted.
+
+**Three arrangements**: IMRaD, Chronological, Board — with notes draggable between sections and
+reorderable within them.
+
+**It answers the editing question this spike deliberately left.** A note that may not be edited is
+shown read-only with a reason — *"read-only: the place to change it is …"* — so a derived note is
+edited at the widget that derived it, not in the write-up. The surface cannot silently make an
+edited quotation, because the edit happens where the thing is made.
+
+**And it carries what a note is about**: the table it cites, spelled as the file spells it; the
+figure, with its conformance rules and verdicts; a markup view showing the variables a machined
+note was built from; flags and suggestions; `live` and `edited` markers; a reference list
+assembled with `usedBy`, licence, and the missing fields marked.
+
+### The vocabulary has drifted from its own design
+
+| | Functional purposes |
+| --- | --- |
+| `notes.ts` ships | background · related literature · purpose · method · source · limitation |
+| 141 settled | source · limitation · rationale · context · method · finding |
+| the prototype uses | source · finding · method · limitation |
+
+`finding`, `rationale` and `context` are in the design and not in the code; `background`,
+`related literature` and `purpose` are in the code and not in the design. And 141 records a
+seventh that belongs in neither yet: **`verification`** — *"checking the source and finding it
+wrong, which is a distinct act and arguably the most valuable prose in the file"*.
+
+This is not a rename to do quietly. A closed vocabulary that disagrees with the experiment that
+settled it is the thing to reconcile first, and the reconciliation is a decision.
+
+## What the spike has, against that
+
+Four of the prototype's properties: the IMRaD spine with every part shown, a label per note, the
+link from a machined note to its node, and the running count. It has none of the three
+arrangements, one coordinate drawn as labels rather than two drawn as palettes, no references, no
+tables or figures carried, no drag, no editing, and `quoted` where the prototype has `derived` and
+`authored`.
+
 ## The prototype this is reaching for
 
 The practitioner, 2026-10-29: *"We developed an earlier prototype of the UI and that looked

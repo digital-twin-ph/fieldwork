@@ -58,7 +58,11 @@ test('a map draws a raster under a street network, not instead of it',async({pag
   // The claim is a drawn raster, not a stored edge: every test that asserted the edge passed
   // while nothing was drawn.
   await expect(page.locator('img.raster-result-image')).toHaveCount(1);
-  await expect(page.locator('.leaflet-control-layers-overlays')).toContainText('Population raster');
+  // NAMED BY ITS WIDGET, not by a string this renderer invented. The control said "Population
+  // raster" for any raster at all until 2026-10-29, when every overlay's name moved to the layer
+  // list: a layer is called what the widget that produced it is called, and the practitioner
+  // renames it there. The node here is labelled "Raster input".
+  await expect(page.locator('.leaflet-control-layers-overlays')).toContainText('Raster input');
   await expect(page.locator('.leaflet-control-layers-overlays')).toContainText('Street network');
   await page.screenshot({path:'test-results/map-raster-under-network.png'});
 });
@@ -115,8 +119,12 @@ test('a map draws a raster with an area, points and a network all wired',async({
   // reported a raster that was drawn perfectly well on a map nobody had selected.
   await page.locator(`[data-output="${map.id}"]`).click();
   await expect(page.locator('img.raster-result-image')).toHaveCount(1);
-  await expect(page.locator('.leaflet-control-layers-overlays')).toContainText('Population raster');
-  await expect(page.locator('.leaflet-control-layers-overlays')).toContainText('Study area');
+  // NAMED BY ITS WIDGET, not by a string this renderer invented. The control said "Population
+  // raster" for any raster at all until 2026-10-29, when every overlay's name moved to the layer
+  // list: a layer is called what the widget that produced it is called, and the practitioner
+  // renames it there. The node here is labelled "Raster input".
+  await expect(page.locator('.leaflet-control-layers-overlays')).toContainText('Raster input');
+  await expect(page.locator('.leaflet-control-layers-overlays')).toContainText('Soho isochrone reporting extent');
 });
 
 // AND THE STATIC PLOT, which neither test above reaches: both select the interactive

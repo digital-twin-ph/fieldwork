@@ -196,6 +196,34 @@ this repository and cannot be read. What survives of it is four requirements, qu
 
 Four of five. Whether the fifth should be built as specified is the open question, not a task.
 
+## The application cannot make anybody write
+
+The practitioner, 2026-10-29, settling what this surface is for:
+
+> About the rules, there's really not much the application can do to ensure the user who will
+> publish will write notes. That is not the application's job, it's the user's and the user alone.
+> What the application can do is provide the user with the best tool to get that job of writing
+> and organizing done.
+
+**This rules things out, which is why it is worth writing down.** No completeness gate: no refusing
+to export a figure because its Discussion is empty, no score for how much of IMRaD a write-up
+covers, no badge for a project whose sections are full. Experiment 141 already named the danger in
+its own terms — *"Assurance, and why a green list is the danger"* — and this is the same rule
+arriving from the other side: a tool that can certify a write-up as complete has told a reader
+something it cannot know.
+
+**It also says what the surface owes.** Being the best tool for writing and organising is
+measurable in a way "ensuring notes get written" is not: how much of the apparatus a practitioner
+does NOT have to write, how fast they can find the note they half-remember, whether the thing they
+wrote survives the run that follows. The empty `Results` section carries an *Add a note* button
+because that is an offer; it carries no warning, because an absent Results section is a fact about
+a write-up and not a failure of one.
+
+What the application *does* owe, and this is not softness: that every note it produces itself is
+correct and carries its warrant. A derived note that misstates a licence, or a machined note that
+survives a run whose numbers moved, is the application failing at its own half of the work — which
+is why `forkHasDrifted` reports and the derived note is read back rather than composed.
+
 ## What would close it
 
 - The prototype itself, or a screenshot of it, if the shape is to be matched more closely than

@@ -30,6 +30,12 @@ const southLondon=async page=>{
   // THE WRITE-UP IS ITS OWN TAB. The practitioner, 2026-10-29: *"It should be a tab."*
   await page.locator('[data-view="notes"]').click();
 };
+/** Derived notes come from a RUN, because they are read back off the inputs a run resolved. */
+const andRun=async page=>{
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="notes"]').click();
+};
 
 test('Snow’s own sentences are readable, in the order a reader meets them',{skip},async({page})=>{
   await southLondon(page);
@@ -73,4 +79,34 @@ test('the spike says where it stops',{skip},async({page})=>{
   // A surface that looks finished and is not is worse than one that says so.
   await expect(page.locator('#notes-view .notice'))
     .toContainText('not yet written, edited or added');
+});
+
+/** THE SOURCES A WORKFLOW WRITES BY ITSELF.
+ *
+ *  Experiment 141, trying the design on a real write-up: *"References are the one section a
+ *  workflow can write by itself."* Nine of the Notes Board prototype's fourteen cards are this
+ *  kind -- each table's source, the boundaries' licence, the plate's terms -- and none of them
+ *  was written for the page.
+ *
+ *  A practitioner who told an input what its data is has already written the Methods sentence
+ *  that cites it. */
+test('the inputs cite themselves, without being asked twice',{skip},async({page})=>{
+  await southLondon(page);
+  await andRun(page);
+  const derived=page.locator('.notes-kind-derived');
+  expect(await derived.count()).toBeGreaterThan(0);
+  // DERIVED NOTES ARE THIS RUN'S, which is what makes them honest and also what limits them: the
+  // workflow open after an import is `mortality`, and its one declared input is Table VIII. The
+  // sub-districts' BSD-2 licence belongs to `ground` and `choropleth` and is cited when those
+  // run. A reference list spanning all six workflows is a project-level question, not this one.
+  await expect(page.locator('#notes-view')).toContainText('CC0-1.0');
+  await expect(page.locator('#notes-view')).toContainText('declared by');
+  // The citation is read back, never composed here: these are the practitioner's own words for
+  // what the data is, and the attribution the licence requires.
+  await expect(page.locator('#notes-view'))
+    .toContainText('Snow 1855, Table VIII \u2014 population and cholera deaths by sub-district');
+  // A source two workflows share is one citation. A write-up that says it twice reads as two.
+  const texts=await page.locator('.notes-kind-derived').evaluateAll(
+    nodes=>nodes.map(n=>n.closest('.notes-note').textContent.trim()));
+  expect(new Set(texts).size).toBe(texts.length);
 });

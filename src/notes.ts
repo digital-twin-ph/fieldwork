@@ -165,7 +165,35 @@ export interface AuthoredNote {
   };
 }
 
-export type Note=QuotedNote|MachinedNote|AuthoredNote;
+/** WHAT AN INPUT DECLARES ABOUT ITSELF, as a note.
+ *
+ *  The fourth kind, and the one the Notes Board prototype is mostly made of: nine of its fourteen
+ *  cards are `derived` -- each table's source, the boundaries' licence, the plate's terms. Nobody
+ *  wrote them and no computation produced them. They are the application reading back what an
+ *  input widget was told about its own data.
+ *
+ *  This is what experiment 141 means by *"References are the one section a workflow can write by
+ *  itself"*, and it is the difference between a surface for keeping sentences and a write-up
+ *  assembled from the work. A practitioner who declared the provenance of a table has already
+ *  written the Methods sentence that cites it; they should not have to write it twice.
+ *
+ *  Not editable, and for the same reason a quotation is not: the place to change it is the widget
+ *  that declares it. Editing one would fork it into an authored note, which is the rule the
+ *  practitioner settled for machined notes and which holds here unchanged. */
+export interface DerivedNote {
+  kind:'derived';
+  id:string;
+  section:WriteUpPart;
+  fn?:string;
+  /** What the data IS, in the words the practitioner gave the widget. */
+  text:string;
+  /** The attribution the licence and citation require, as `attributionFor` renders it. */
+  detail?:string;
+  /** The input that declares it. */
+  nodeId?:string;
+}
+
+export type Note=QuotedNote|MachinedNote|AuthoredNote|DerivedNote;
 
 const part=(value:unknown):WriteUpPart|null=>
   WRITE_UP_PARTS.includes(value as WriteUpPart)?value as WriteUpPart:null;
@@ -194,6 +222,15 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
       notes.push({kind:'quoted',id,section,quote,
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
         ...(text(entry.establishes)?{establishes:text(entry.establishes)}:{})});
+      continue;
+    }
+    if(entry.kind==='derived'){
+      const body=text(entry.text),id=text(entry.id);
+      if(!body||!id){unreadable++;continue;}
+      notes.push({kind:'derived',id,section,text:body,
+        ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
+        ...(text(entry.detail)?{detail:text(entry.detail)}:{}),
+        ...(text(entry.nodeId)?{nodeId:text(entry.nodeId)}:{})});
       continue;
     }
     if(entry.kind==='authored'){

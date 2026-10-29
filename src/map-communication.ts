@@ -274,33 +274,38 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   if(!output.polygons&&!output.raster&&output.rows?.length)
     drawn.push({kind:'PointsLayer',features:output.rows.filter(r=>r.coordinates).length,port:portOf('points')?.port});
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n<${iri}> a fw:MapSpecification, prov:Plan; dcterms:title ${JSON.stringify(spec.title)}; dcterms:description ${JSON.stringify(spec.subtitle)}; fw:mapLegend ${spec.legend}; fw:mapPresentation ${JSON.stringify(spec.presentation)}; fw:mapBasemap ${JSON.stringify(spec.basemap)}; fw:mapSourceNote ${JSON.stringify(spec.sourceNote)}; prov:wasDerivedFrom ${sources.join(', ')}.\n<${activity}> fw:mapSpecification <${iri}>; prov:used <${iri}>.\n`;
-  // THE DESCRIPTION IS EMITTED FROM THE LIST THE RENDERER READ, where there is one.
+  // THE PRACTITIONER'S DECISIONS, FOLDED INTO WHAT IS ACTUALLY DRAWN -- not instead of it.
   //
-  // This array was assembled here, separately, for the sole purpose of emitting N3 after the
-  // picture had been decided: a description nothing read back, which could disagree with the
-  // drawing and never say so. The practitioner, 2026-10-29: *"Let's stop the backward direction.
-  // Let's begin with the ontology representation in mind so the exhaust becomes more logical and
-  // can be queried after render."* So where the run attached a layer list -- the same one the
-  // interactive control and the dialog work from -- the receipt states THAT, with the names and
-  // the grouping the practitioner gave, and whether each layer was actually drawn. Experiment 148.
+  // This was replaced on 2026-10-29 with the layer LIST, so that the receipt would state the same
+  // thing the renderer and the Manage layers dialog read. The list is built from the wired
+  // drawable ports, and that reverted a correction this file had already made on 2026-10-14:
+  // *"layer count should be about layers not ports."* The isochrone map went back to reporting
+  // `fw:layerCount 2` for a picture a reader sees four layers in, because the 250 death locations
+  // arrive inside the polygons value and reach no port at all. `tests/map-output.browser.mjs`
+  // caught it; the glossary's Layer row is built on the same example.
+  //
+  // So the enumeration below stays the base -- it is the one that finds a layer which arrived
+  // inside another layer's value -- and the list contributes what only a practitioner can say:
+  // what a layer is called, whether it was drawn, and which group it was put in. Matched by port,
+  // and a drawn layer the list does not know about keeps its facts and gains none.
   const stated=output.mapLayers?.length?output.mapLayers:null;
   const groupIri=(id:string)=>`${iri}:group:${id}`;
-  const layerFacts=stated
-    ?`<${iri}> fw:layerCount ${stated.length}.\n`
-      +[...new Map(stated.filter(l=>l.group).map(l=>[l.group!.id,l.group!])).values()]
-        .map(group=>`<${groupIri(group.id)}> a fw:LayerGroup; fw:groupLabel ${JSON.stringify(group.label)}; `
-          +`fw:groupIndex ${group.index}.\n`).join('')
-      +stated.map(layer=>`<${iri}> fw:layer [ fw:layerIndex ${layer.index}; `
-        +`fw:layerKind <urn:fieldwork:${layer.kind}>; fw:layerLabel ${JSON.stringify(layer.label)}; `
-        +`fw:layerDrawn ${layer.drawn}; `
-        +`${layer.parts!==undefined?`fw:layerFeatureCount ${layer.parts}; `:''}`
-        +`${layer.group?`fw:layerGroup <${groupIri(layer.group.id)}>; `:''}`
-        +`${layer.origin==='within'?`fw:layerWithin ${JSON.stringify(layer.within||'the value')}`
-          :`fw:layerPort ${JSON.stringify(layer.port)}`} ].\n`).join('')
-    :`<${iri}> fw:layerCount ${drawn.length}.\n`
+  const decided=(port?:string)=>{
+    const found=port?stated?.find(layer=>layer.port===port&&layer.origin==='port'):undefined;
+    if(!found)return '';
+    return `fw:layerLabel ${JSON.stringify(found.label)}; fw:layerDrawn ${found.drawn}; `
+      +(found.group?`fw:layerGroup <${groupIri(found.group.id)}>; `:'');
+  };
+  const groupFacts=[...new Map((stated||[]).filter(l=>l.group)
+    .map(l=>[l.group!.id,l.group!])).values()]
+    .map(group=>`<${groupIri(group.id)}> a fw:LayerGroup; `
+      +`fw:groupLabel ${JSON.stringify(group.label)}; fw:groupIndex ${group.index}.\n`).join('');
+  const layerFacts=groupFacts
+    +`<${iri}> fw:layerCount ${drawn.length}.\n`
     +drawn.map((layer,index)=>`<${iri}> fw:layer [ fw:layerIndex ${index}; fw:layerKind <urn:fieldwork:${layer.kind}>; `
       +`${layer.features!==undefined?`fw:layerFeatureCount ${layer.features}; `:''}`
       +`${layer.role?`fw:layerRole ${JSON.stringify(layer.role)}; `:''}`
+      +decided(layer.port)
       +`${layer.provider?`fw:layerTileProvider ${JSON.stringify(layer.provider)}`
         :layer.port?`fw:layerPort ${JSON.stringify(layer.port)}`
         :`fw:layerWithin ${JSON.stringify(layer.within||'the value')}`} ].\n`).join('');

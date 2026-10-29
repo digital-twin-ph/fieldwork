@@ -11,7 +11,7 @@
     "test": "npm run build && node scripts/test-unit.mjs",
     "test:browser": "playwright test",
     "test:report": "playwright show-report",
-    "check": "npm run build && npm run validate:docs && npm run validate:experiments && npm run validate:check-coverage && npm run validate:evidence && npm run validate:rulesets && npm run validate:blockers && npm run validate:directions && npm run validate:standardization && npm run validate:naming && npm run validate:names && npm run validate:widget-budget && npm run validate:admission && npm run validate:ontology-coupling && npm run validate:dive-deeper && npm run validate:manual && npm run validate:inspector-prose && npm run validate:caps && npm run validate:extracts && npm run validate:fixtures && npm run validate:examples && npm run validate:port-contracts && npm run validate:release-notes && npm run validate:vocabulary && npm run validate:audit-queue && npm run validate:packs && node scripts/test-unit.mjs && npm run test:browser",
+    "check": "npm run build && npm run validate:docs && npm run validate:experiments && npm run validate:check-coverage && npm run validate:evidence && npm run validate:rulesets && npm run validate:blockers && npm run validate:directions && npm run validate:standardization && npm run validate:naming && npm run validate:names && npm run validate:widget-budget && npm run validate:admission && npm run validate:ontology-coupling && npm run validate:dive-deeper && npm run validate:manual && npm run validate:inspector-prose && npm run validate:caps && npm run validate:extracts && npm run validate:fixtures && npm run validate:examples && npm run validate:example-audit && npm run validate:port-contracts && npm run validate:release-notes && npm run validate:vocabulary && npm run validate:audit-queue && npm run validate:packs && node scripts/test-unit.mjs && npm run test:browser",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.workers.json --noEmit",
     "validate:ontology": "node scripts/validate-ontology.mjs",
     "validate:widgets": "node scripts/validate-widgets.mjs",
@@ -44,7 +44,7 @@
     "evidence:widgets": "node scripts/widget-evidence.mjs --write",
     "validate:port-contracts": "node scripts/validate-port-contracts.mjs",
     "validate:vocabulary": "node scripts/validate-vocabulary.mjs",
-    "check:fast": "npm run build && npm run validate:docs && npm run validate:experiments && npm run validate:check-coverage && npm run validate:evidence && npm run validate:rulesets && npm run validate:ruleset-sources && npm run validate:blockers && npm run validate:directions && npm run validate:standardization && npm run validate:naming && npm run validate:names && npm run validate:widget-budget && npm run validate:admission && npm run validate:ontology-coupling && npm run validate:dive-deeper && npm run validate:manual && npm run validate:fixtures && npm run validate:examples && npm run validate:port-contracts && npm run validate:release-notes && npm run validate:vocabulary && npm run validate:audit-queue && npm run validate:packs && node scripts/test-unit.mjs",
+    "check:fast": "npm run build && npm run validate:docs && npm run validate:experiments && npm run validate:check-coverage && npm run validate:evidence && npm run validate:rulesets && npm run validate:ruleset-sources && npm run validate:blockers && npm run validate:directions && npm run validate:standardization && npm run validate:naming && npm run validate:names && npm run validate:widget-budget && npm run validate:admission && npm run validate:ontology-coupling && npm run validate:dive-deeper && npm run validate:manual && npm run validate:fixtures && npm run validate:examples && npm run validate:example-audit && npm run validate:port-contracts && npm run validate:release-notes && npm run validate:vocabulary && npm run validate:audit-queue && npm run validate:packs && node scripts/test-unit.mjs",
     "test:browser:chromium": "playwright test --project=chromium",
     "hooks:install": "node scripts/install-hooks.mjs",
     "notes:releases": "node scripts/release-notes.mjs --write",
@@ -56,7 +56,9 @@
     "notes:extracts": "node scripts/geofabrik-catalogue.mjs --write",
     "validate:extracts": "node scripts/geofabrik-catalogue.mjs",
     "test:browser:linux": "bash scripts/linux-webkit.sh",
-    "validate:examples": "node scripts/validate-examples.mjs"
+    "validate:examples": "node scripts/validate-examples.mjs",
+    "audit:examples": "node scripts/audit-worked-examples.mjs --write",
+    "validate:example-audit": "node scripts/audit-worked-examples.mjs"
   },
   "engines": {
     "node": ">=22"

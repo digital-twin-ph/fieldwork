@@ -956,7 +956,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   const relations:Record<string,RelateOutcome>={};
   // NOTES THE WIDGETS MACHINED, for the write-up rather than for a panel. One producer so far.
   const machined:Record<string,MachinedNote[]>={};
-  const sources=derivedNotes(workflow.nodes);
+  const sources=derivedNotes(workflow.nodes,workflow.workflowKey);
   const expansion=expandMicroWorkflows(workflow,resolveComposition,runId);
   workflow=expansion.workflow;receipts.push(...expansion.receipts);
   const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];

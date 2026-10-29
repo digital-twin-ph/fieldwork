@@ -803,6 +803,9 @@ fw:pinClass a owl:DatatypeProperty; rdfs:range xsd:string;
 fw:pinClassField a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "The attribute a layer's pin class is read from";
   rdfs:comment "Nominated by the practitioner per layer, never guessed from a property name -- the same rule the polygon layer's naming property follows.".
+fw:noteRelatesTo a owl:ObjectProperty;
+  rdfs:label "Another note this one stands with";
+  rdfs:comment "The edge of a note composition. The practitioner, 2026-10-29: \"It's like workflow composition but it's not composing widgets, but notes.\" A write-up is an argument assembled from pieces, and the assembly carries meaning the pieces do not, so the edges are recorded rather than left in the order of a list. An edge naming a note that does not exist yet is kept: a companion not written is an ordinary state of a draft.".
 fw:LayerGroup a owl:Class;
   rdfs:label "A group of layers, declared once and joined";
   rdfs:comment "A bundle a practitioner declares and then adds existing layers to. Declared on 2026-10-29 on the practitioner's instruction -- \"Groupings can be declared, and then existing artifacts added to it\" -- which rules out the alternative it replaced: a free-text group name repeated on every layer, where two layers join a group only by being spelled identically. A group has an identity, so renaming it renames one thing. Distinct from fw:layerRole, which is a READING of a layer (observations, sites, context) and not a bundle: a group may hold layers of different roles and different kinds. The established term in the surrounding tools is the same one -- a group layer in Esri, a group in QGIS -- so no new word is coined here. See experiment 148.".

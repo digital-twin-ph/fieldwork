@@ -88,6 +88,30 @@ export type WriteUpPart=typeof WRITE_UP_PARTS[number];
 export const KNOWN_NOTE_FUNCTIONS=['context','rationale','source','method','verification',
   'finding','limitation'];
 
+/** NOTES ARE COMPOSED, THE WAY WIDGETS ARE.
+ *
+ *  The practitioner, 2026-10-29: *"The reason why I need a UUID is because I want to be able to
+ *  connect the notes to each other"*, and then the shape of it: *"It's like workflow composition
+ *  but it's not composing widgets, but notes."*
+ *
+ *  Which is what a write-up IS -- an argument assembled from pieces, where the assembly carries
+ *  meaning the pieces do not. A composition of widgets has nodes and edges; so does this.
+ *
+ *  THE EDGE: one note standing in a stated relation to another. `relatesTo` holds the ids, and an
+ *  id that names nothing is kept rather than dropped, because a note whose companion has not been
+ *  written yet is an ordinary state of a draft and not an error.
+ *
+ *  AND WHY IDENTITY HAD TO BE SETTLED FIRST. A link is worth exactly as much as the id surviving
+ *  the next run. Three of the four kinds carried an id and `machined` carried none, so its handle
+ *  was the first forty characters of its own text -- which changes the moment the numbers it
+ *  reports change, so a link to it would break on precisely the run that made it interesting.
+ *
+ *  And the ids that existed were not unique. `derived:${nodeId}` reads as a name until you look:
+ *  the South London example has a node called `table-viii` in THREE of its six workflows, and
+ *  `table-xii` in two. Measured, not supposed. A project-wide graph keyed on those would have
+ *  joined three different citations into one node. */
+export type NoteId=string;
+
 export interface QuotedNote {
   kind:'quoted';
   id:string;
@@ -97,6 +121,8 @@ export interface QuotedNote {
   /** Why it is quoted: the claim it supports. Not the quote's own words. */
   establishes?:string;
   quote:string;
+  /** Other notes this one stands with: the edges of the composition. */
+  relatesTo?:NoteId[];
 }
 
 /** Prose a widget generated for a part of a write-up, rather than for the interface.
@@ -107,6 +133,9 @@ export interface QuotedNote {
  *  before the second producer -- this module, which has to group it beside a quoted note. */
 export interface MachinedNote {
   kind:'machined';
+  /** Stable across runs, because a note that re-machines must stay the same note: the widget
+   *  rewrites its wording and the thing a link points at does not move. */
+  id?:NoteId;
   section:WriteUpPart;
   /** What it does inside the section, as on a quoted note. Added when the first machined
    *  `limitation` was called for: `groupNotes` was already reading this field off either kind
@@ -116,6 +145,8 @@ export interface MachinedNote {
   /** The node that machined it, where the run recorded one. A note produced by a workflow links to
    *  the workflow, which the practitioner asked for of the prototype. */
   nodeId?:string;
+  /** Other notes this one stands with: the edges of the composition. */
+  relatesTo?:NoteId[];
 }
 
 /** THE EXAMPLE'S AUTHORS, IN THEIR OWN WORDS.
@@ -163,6 +194,8 @@ export interface AuthoredNote {
     /** When the fork was taken. */
     at?:string;
   };
+  /** Other notes this one stands with: the edges of the composition. */
+  relatesTo?:NoteId[];
 }
 
 /** WHAT AN INPUT DECLARES ABOUT ITSELF, as a note.
@@ -191,6 +224,8 @@ export interface DerivedNote {
   detail?:string;
   /** The input that declares it. */
   nodeId?:string;
+  /** Other notes this one stands with: the edges of the composition. */
+  relatesTo?:NoteId[];
 }
 
 export type Note=QuotedNote|MachinedNote|AuthoredNote|DerivedNote;
@@ -198,6 +233,11 @@ export type Note=QuotedNote|MachinedNote|AuthoredNote|DerivedNote;
 const part=(value:unknown):WriteUpPart|null=>
   WRITE_UP_PARTS.includes(value as WriteUpPart)?value as WriteUpPart:null;
 const text=(value:unknown):string=>typeof value==='string'?value.trim():'';
+/** The ids this note stands with. An id naming nothing yet is KEPT: a note whose companion has
+ *  not been written is an ordinary state of a draft, and dropping the edge would quietly undo a
+ *  practitioner's decision at the moment it is hardest to notice. */
+const edges=(value:unknown):string[]=>Array.isArray(value)
+  ?[...new Set(value.map(text).filter(Boolean))]:[];
 
 /** At most this many notes on one project. A write-up is not a database, and a surface that has to
  *  page is a surface nobody reads in order. */
@@ -221,7 +261,8 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
       if(!quote||!id){unreadable++;continue;}
       notes.push({kind:'quoted',id,section,quote,
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
-        ...(text(entry.establishes)?{establishes:text(entry.establishes)}:{})});
+        ...(text(entry.establishes)?{establishes:text(entry.establishes)}:{}),
+        ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{})});
       continue;
     }
     if(entry.kind==='derived'){
@@ -230,7 +271,8 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
       notes.push({kind:'derived',id,section,text:body,
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
         ...(text(entry.detail)?{detail:text(entry.detail)}:{}),
-        ...(text(entry.nodeId)?{nodeId:text(entry.nodeId)}:{})});
+        ...(text(entry.nodeId)?{nodeId:text(entry.nodeId)}:{}),
+        ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{})});
       continue;
     }
     if(entry.kind==='authored'){
@@ -246,15 +288,18 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
         ...(text(entry.about)?{about:text(entry.about)}:{}),
         ...(was?{forkedFrom:{text:was,
           ...(text(from!.nodeId)?{nodeId:text(from!.nodeId)}:{}),
-          ...(text(from!.at)?{at:text(from!.at)}:{})}}:{})});
+          ...(text(from!.at)?{at:text(from!.at)}:{})}}:{}),
+        ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{})});
       continue;
     }
     if(entry.kind==='machined'){
       const body=text(entry.text);
       if(!body){unreadable++;continue;}
       notes.push({kind:'machined',section,text:body,
+        ...(text(entry.id)?{id:text(entry.id)}:{}),
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
-        ...(text(entry.nodeId)?{nodeId:text(entry.nodeId)}:{})});
+        ...(text(entry.nodeId)?{nodeId:text(entry.nodeId)}:{}),
+        ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{})});
       continue;
     }
     unreadable++;

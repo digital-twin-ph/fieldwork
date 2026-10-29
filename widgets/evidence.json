@@ -106,9 +106,10 @@
     "old-naledi",
     "snow-extent",
     "snow-isochrone",
-    "snow-voronoi"
+    "snow-voronoi",
+    "south-london-1854"
    ],
-   "exampleUseCount": 5,
+   "exampleUseCount": 6,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

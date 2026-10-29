@@ -176,12 +176,20 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
           check(types.includes(needed),`map_output must offer a ${needed} port whatever inputMode says`);
       }
     }
-    // chart_output still has modes: a chart of a table has to be told which key varies and
-    // whether to aggregate, which is a design decision rather than a port. table_output left
-    // this pair on 2026-10-27 for the same reason map_output did.
+    // THE THIRD TIME. This block REQUIRED the mode model -- "Missing polygon input mode" -- a
+    // fortnight after the project ruled against it, which is exactly what the two comments above
+    // record for map_output and table_output. It said a chart of a table "has to be told which
+    // key varies and whether to aggregate"; a table declares both itself in `keys` and
+    // `valueField`, and one bar per row aggregates nothing. chart_output stopped choosing its
+    // ports by a mode on 2026-10-28, so its gate stops demanding that it does.
     if(entry.nodeType==='chart_output'){
-      check(current.ports.polygonInput?.value==='polygons','Missing polygon input mode');
-      if(nodeInputs)check(JSON.stringify(nodeInputs({type:entry.nodeType,params:{inputMode:'polygons'}}))===JSON.stringify([['polygons','polygons']]),'Polygon port contract drift');
+      for(const stale of ['polygonInput','reasoningInput','tableInput'])
+        check(!current.ports[stale],`chart_output still declares ${stale}: a chart has ports, not modes`);
+      if(nodeInputs)for(const inputMode of ['polygons','decisions','series',undefined]){
+        const types=nodeInputs({type:'chart_output',params:{inputMode}}).map(([,t])=>t);
+        for(const needed of ['table','decisions','polygons'])
+          check(types.includes(needed),`chart_output must offer a ${needed} port whatever inputMode says`);
+      }
     }
     // `coverage_check` was here until it was retired on 2026-10-21. A retired widget expands
     // nothing, because nothing adds one. `deduplicate_points` joined the same day: it compares

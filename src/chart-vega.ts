@@ -129,8 +129,11 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
   const categoryAxis={labelOverlap:'parity' as const,labelSeparation:2};
   const category={field:'displayLabel',type:'nominal' as const,sort:values.map(b=>b.displayLabel),axis:categoryAxis};
   const quantity={field:difference?'bandCount':'count',type:'quantitative' as const,scale:{domainMin:0}};
+  // THE AXIS SAYS WHAT THE NUMBER IS. "Recorded count" over deaths per 1,000 people is a wrong
+  // label on a right figure, and the unit was available the whole time.
   const quantityTitle=difference
     ?(chart.field==='total'?'Numeric total in this band alone':'Records in this band alone')
+    :chart.measure==='value'?(chart.unit?.trim()||'Value')
     :(chart.field==='total'?'Recorded numeric total':'Recorded count');
   // lag over the bands innermost-first, then subtract. The first band has no inner
   // neighbour, so its difference is its own count.

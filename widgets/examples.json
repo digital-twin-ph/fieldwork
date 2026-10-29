@@ -1,7 +1,7 @@
 {
   "schema": "fieldwork/example-catalog/1",
   "catalogVersion": "0.1.0",
-  "updated": "2026-10-27",
+  "updated": "2026-10-28",
   "description": "Curated worked-example repositories. This file is the trust root, on the same terms as widgets/packs.json: an example is admitted only at a full commit SHA, only from a curated owner, and every file it may fetch is pinned by digest here. A branch is never fetched, because a digest pinned against a moving ref verifies nothing.\n\nAn example is a RESOURCE -- a workflow document, data and a provenance record -- and declares no node type, so runtimeFetching: \"none\" in widgets/packs.json does not reach it. That rule governs widget definitions. See docs/experiments/127-examples-as-repositories.md.",
   "governance": {
     "curatedOwners": [
@@ -16,7 +16,7 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "b9443ff625ba2eaa7d423792f469efc3ae032ad6",
+      "commit": "8d9049870c160297b04642266ab81bfb2df7fdd7",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause and geo/thames-reaches.geojson and geo/thames-tidal-limit.geojson which are ODbL-1.0",
@@ -33,13 +33,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "1e75adf1553e71bdfd293ca60e595e50a79a76e918c2e4ff0e75c0f55e49fd9e",
-          "bytes": 388021
+          "sha256": "44a525826c89b9883d52fc981d297ba988bc2fe316c3a63d9f5e150957fe3906",
+          "bytes": 388308
         },
         {
           "path": "README.md",
-          "sha256": "062a8197c7bca7b460fc2293936cf1f7775f92bbadd6023aac927746821b59ba",
-          "bytes": 31373
+          "sha256": "ae568dc7b4bc161e9ff9b1a89ed85f555a293176809c23b1581b8665b0d6e4db",
+          "bytes": 31851
         },
         {
           "path": "NOTICE.txt",
@@ -129,6 +129,7 @@
       },
       "workflowCount": 6,
       "uses": [
+        "chart_output",
         "derive_value",
         "group_table",
         "join_table_to_area",

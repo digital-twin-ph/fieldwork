@@ -80,7 +80,18 @@ export interface DisplayRow {
  *  its categories are. Without it a chart falls back to "Category", which is true of every chart
  *  and says nothing: an epidemic curve published with "Category" under its dates has not told the
  *  reader what it binned. Optional, so a producer that has nothing better to say omits it. */
-export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'period'; caption:string; categoryTitle?:string; total:number; bins:{key:string; label:string; count:number; order?:number}[]}
+/** A chart is a set of labelled categories with a number each. WHAT THAT NUMBER IS varies, and
+ *  until 2026-10-28 nothing said so: every bar's magnitude is `count`, which is true for a
+ *  frequency and false for a rate. `measure` states it, and `unit` carries the unit when the
+ *  source declared one, so an axis can be titled with what it is showing rather than with
+ *  "Recorded count" over deaths per 1,000 people.
+ *
+ *  `count` keeps its name, which is now a misnomer for the `value` measure. Renaming it reaches
+ *  every chart producer, consumer and test; stating the measure beside it is what makes the
+ *  figure honest, and the rename is recorded as debt rather than smuggled in here. */
+export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'period'|'value'; caption:string; categoryTitle?:string; total:number;
+  measure?:'record-count'|'numeric-total'|'value'; unit?:string;
+  bins:{key:string; label:string; count:number; order?:number}[]}
 export interface DisplayValue {
   comparison?:import('./point-comparison.js').PointComparison;
   polygonPresentation?:'plot'|'interactive';

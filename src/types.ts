@@ -435,7 +435,14 @@ export interface ParamsByType {
      *  to pick out. It is a checkbox rather than a rule because a map on a pale ground, or one
      *  going into a printed figure, may not want it. */
     markHalo?:boolean; inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
-  chart_output:{label:string;inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference'};
+  chart_output:{label:string;
+    /** Which key column a table is charted against. Absent takes the table's first, which is the
+     *  whole answer for a table with one key column -- a rate's is `group` -- and a stated
+     *  choice for one with several. Nothing is guessed from a column's name. */
+    keyColumn?:string;
+    /** Retained so a workflow saved under the old modes keeps drawing what it drew. It is read
+     *  LAST, after the connected port, which is what stopped it deciding which ports exist. */
+    inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference'};
   output:{label?:string; view:'map'|'table'|'bars'};
   facilities:{dataset:string; radiusKm:number; sourceMode?:'connected'}; point_grid:{spacingM:number};
   xpert:Record<string,never>; facility_audit:Record<string,never>;

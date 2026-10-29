@@ -151,17 +151,31 @@ export const RATE_TABLE_KEYS=['group'] as const;
 export function rateTable(result:RateResult):DataTable&{rate:RateResult}{
   const {multiplier,denominatorUnit}=result.options;
   return {kind:'data-table',keys:[...RATE_TABLE_KEYS],valueField:`per ${multiplier.toLocaleString()} ${denominatorUnit}`,
+    // THE UNIT TRAVELS WITH THE NUMBER. It was set on `valueField` and nowhere else, so the table
+    // showed a column headed "per 1,000 people" above the line "value in an unstated unit", and a
+    // chart of it had nothing to title an axis with.
+    unit:`per ${multiplier.toLocaleString()} ${denominatorUnit}`,
     rows:result.rows.map(row=>({key:{group:row.label},value:row.rate})),
     rowCount:result.rows.length,missingValueCount:result.suppressed,rate:result};
 }
 
 export function rateChart(result:RateResult):ChartSummary{
   const {multiplier,denominatorUnit,rateKind,numeratorField}=result.options;
-  return {field:'count',total:Math.round(result.totalNumerator),
+  // NOT ROUNDED, and not a count. `Math.round(row.rate)` stood here until 2026-10-28: on South
+  // London's 32 sub-districts it turned 16 distinct rates into 6 distinct bars -- Battersea 5.11,
+  // Leather Market 5.30 and Camberwell 5.41 became one identical bar, while Clapham 1.47 and
+  // Christchurch 1.56, nine hundredths apart, landed on different ones. The variation between
+  // sub-districts is what the chart is for, and rounding is what removed it.
+  return {field:'value' as const,measure:'value' as const,
+    unit:`per ${multiplier.toLocaleString()} ${denominatorUnit}`,
+    // The column the bars are labelled by, so the receipt's `fw:groupingField` names a column of
+    // the table rather than the word "value".
+    categoryTitle:RATE_TABLE_KEYS[0],
+    total:Math.round(result.totalNumerator),
     caption:`${numeratorField} per ${multiplier.toLocaleString()} ${denominatorUnit} (${rateKind})`
       +(result.vintagesAgree?'':' · numerator and denominator come from different vintages')
       +(result.suppressed?` · ${result.suppressed} group(s) without a reportable rate`:''),
-    bins:result.rows.map(row=>({key:row.group,label:row.label,count:Math.round(row.rate??0)}))};
+    bins:result.rows.map(row=>({key:row.group,label:row.label,count:row.rate??0}))};
 }
 
 export function rateReceipt(node:{id:string},result:RateResult,runId:string,source:string):Receipt{

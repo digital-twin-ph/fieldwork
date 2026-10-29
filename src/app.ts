@@ -2653,8 +2653,52 @@ function renderInspector(){
     content+='<button id="filter-add" class="button small">Add a condition</button>';
     content+=`<span class="inspector-section">Spatial operation</span><div class="detail-row"><span>Method</span><strong>Haversine</strong></div><div class="detail-row"><span>Earth model</span><strong>Sphere · 6,371.0088 km</strong></div><div class="detail-row"><span>Units</span><strong>Kilometers</strong></div><div class="rule-preview">For each neighborhood, find the cooling center with the <b>shortest great-circle distance</b>.</div><p class="description">Computed in JavaScript before N3 inference. Source coordinates are longitude and latitude. Full precision is used for classification; the map and table round for display.</p><div class="notice">This is not road distance, travel time, facility availability, or evidence of service access.</div>`;
   }else if(n.type==='chart_output'||n.type==='output'){
-    if(n.type==='chart_output')content+='<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="decisions">Reasoning results</option><option value="polygons">Catchment summaries</option></select>';
-    content+=`<div class="field"><label class="field-label" for="chart-decisions">Reasoning result</label><select id="chart-decisions" data-map-port="decisions"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='decisions').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='decisions'&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div><p class="description">Counts every input record once by decision, access zone or evidence tier. Unclassified values are shown separately. Counts and source provenance are included in evidence; sample locations are not population estimates.</p><div class="field"><label class="field-label" for="output-label">Results tab name</label><input id="output-label" maxlength="60" value="${esc(n.params.label||'')}"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map" ${n.type==='output'&&n.params.view==='map'?'selected':''}>Map</option><option value="table" ${n.type==='output'&&n.params.view==='table'?'selected':''}>Table</option><option value="bars" ${n.type==='chart_output'||n.params.view==='bars'?'selected':''}>Bar chart</option></select></div><div class="rule-preview">Each output node creates a named tab in Results. Connect it to the results you want to display, then run the workflow.</div><p class="description">All output branches run together. Shared analysis nodes run once. Select a location in the map or table to inspect its evidence.</p>`;
+    // ONE PICKER PER PORT, no mode. The question "what shape is this?" was asked before the
+    // practitioner had the shape, and it decided which ports existed -- so a table of rates met a
+    // node with a single "Reasoning result" port and nothing to aim at. The practitioner,
+    // 2026-10-28: *"If the table's role is to represent decisions, it's still a table and if it
+    // has categories with numeric values, it can be presented as a chart."* So the chart draws
+    // what it is given, and what is connected decides.
+    if(n.type==='chart_output'){
+      const port=(id:string,label:string,type:string,hint:string)=>{
+        const sources=workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type);
+        if(!sources.length)return '';
+        return `<div class="field"><label class="field-label" for="chart-${id}">${label}</label>`
+          +`<select id="chart-${id}" data-map-port="${id}"><option value="">Not connected</option>`
+          +sources.map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')
+          +`</select><small>${hint}</small></div>`;
+      };
+      content+=port('records','Table','table',
+        'A bar per row: the category column against the number. A rate, a total within groups, a '
+        +'derived value or a case series \u2014 whatever the table was made for.')
+        +port('decisions','Reasoning result','decisions',
+          'Counts every input record once by decision, access zone or evidence tier.')
+        +port('polygons','Polygon summaries','polygons',
+          'Counts or totals by polygon, from a summarised layer.');
+      // WHICH COLUMN, only where there is a choice to make. A rate keys on `group` alone, so
+      // asking would be asking a question with one answer.
+      const table=workflow.edges.find(e=>e.to===n.id&&e.port==='records');
+      const columns=table?tableKeyColumns(workflow.nodes.find(x=>x.id===table.from)):[];
+      if(columns.length>1)
+        content+=`<div class="field"><label class="field-label" for="chart-key-column">Category column</label>`
+          +`<select id="chart-key-column"><option value="">First column \u00b7 ${esc(columns[0])}</option>`
+          +columns.map(name=>`<option value="${esc(name)}" ${n.params.keyColumn===name?'selected':''}>${esc(name)}</option>`).join('')
+          +`</select><small>This table keys on ${esc(columns.join(', '))}. One bar per row either way; the column chosen is the one the bars are labelled by.</small></div>`;
+      // WHAT THE READER CALLS IT, and how it is shown. Both were in the markup this branch
+      // replaced and both are still the practitioner's to set; only the question about shape is
+      // gone.
+      content+=`<div class="field"><label class="field-label" for="output-label">Results tab name</label>`
+        +`<input id="output-label" maxlength="60" value="${esc(n.params.label||'')}"></div>`
+        // DISPLAY AS is not the mode that was removed. It chooses which OUTPUT WIDGET this is --
+        // a map, a table or a chart -- and the node becomes that widget. The question that went
+        // was the one asked INSIDE a chart about the shape of its own input.
+        +`<div class="field"><label class="field-label" for="output-view">Display as</label>`
+        +`<select id="output-view"><option value="map">Map</option>`
+        +`<option value="table">Table</option><option value="bars" selected>Bar chart</option>`
+        +`</select></div>`
+        +`<div class="rule-preview">Each output node creates a named tab in Results. Connect it `
+        +`to the results you want to display, then run the workflow.</div>`;
+    }else content+=`<div class="field"><label class="field-label" for="chart-decisions">Reasoning result</label><select id="chart-decisions" data-map-port="decisions"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='decisions').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='decisions'&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;
     if(n.type==='chart_output')content+=chartControls(n);
   }
   if(['study_area','point_input','places','centers','measure_area','coverage_check','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). A source reads degrees or a UTM zone and converts on import; Reproject points projects mid-workflow.</p></div>';
@@ -2876,6 +2920,10 @@ function renderInspector(){
     flow?.fit();
     toast('Exploded into its primitives. Undo to put it back as one step.');
   });
+  optionalElement('#chart-key-column')?.addEventListener('change',e=>change(w=>{
+    const target=getNode(w,n.id,'chart_output'),raw=control(e).value.trim();
+    if(raw==='')delete target.params.keyColumn;else target.params.keyColumn=raw;
+  }));
   optionalElement('#series-orientation')?.addEventListener('change',e=>change(w=>{
     getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical';
   },{spatial:false}));

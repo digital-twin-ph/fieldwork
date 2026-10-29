@@ -10,6 +10,26 @@ _A note on the number: `package.json` read 0.11.0 while the newest section below
 earlier sections are left as written rather than reshuffled — the dated record is the point — and
 this section covers the work of 2026-10-25 and 26._
 
+- **A chart draws a table.** A rate, a total within groups, a derived value, a two-by-two — every
+  one of them produces a table, and no chart in the application could receive one. Chart declared a
+  single port, *Reasoning result*, and its Input mode offered a choice between two things that were
+  not what you had; a table of deaths per 1,000 people across 32 sub-districts had nowhere to go.
+  As the practitioner put it: *"If the table's role is to represent decisions, it's still a table
+  and if it has categories with numeric values, it can be presented as a chart."* A reasoning
+  result was always rows with a category column — Table already accepted all four shapes on one
+  widget — so the distinction was about where the rows came from, not what they were. Chart now
+  declares every port it can draw, requires none of them, and lets whatever you connect decide; the
+  mode question is gone. A table says itself which column labels the bars and which number they
+  carry, so nothing is asked of you. **And the bars are now the numbers.** A rate was being rounded
+  to a whole number before it was drawn, which on those 32 sub-districts turned 16 distinct rates
+  into 6 distinct bars — Battersea 5.11, Leather Market 5.30 and Camberwell 5.41 drew one identical
+  bar, while Clapham 1.47 and Christchurch 1.56, nine hundredths apart, drew different ones. The
+  variation between sub-districts is the whole point of the figure. A chart now states what its
+  bars measure and carries the unit the table declared, so the axis reads "per 1,000 people"
+  instead of "Recorded count", and the rate table carries that unit at all — it used to show a
+  column headed *per 1,000 people* above the line *value in an unstated unit*. Snow's South London
+  example draws its 32 sub-districts as bars, from the rate's own chart, so the figure keeps the
+  caveat that the 1854 deaths and the 1851 census are three years apart.
 - **Polygon layer acquires its own features, and has a panel to do it from.** The widget could
   read a GeoJSON file, and nothing in the application could tell it to: its naming property, its
   layer name and its optional study-area port could be set only by editing a workflow file, so the

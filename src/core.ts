@@ -29,7 +29,8 @@ import {loadRaster,clipRaster,rasterReceipt,validateRasterAsset} from './raster-
 import {validateClipOptions} from './raster.js';
 import {projectFiles} from './project-files.js';
 import type {RasterGrid} from './raster.js';
-import {chartOutput} from './chart-output.js';
+import {chartOutput,tableChart} from './chart-output.js';
+import type {ChartSummary} from './results.js';
 import {chartSpecificationFacts,chartRenderer} from './chart-vega.js';
 import {mapSpecificationFacts} from './map-communication.js';
 import {assertProjectManifest,syncProjectManifest} from './project-manifest.js';
@@ -183,7 +184,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Retired — use Keep points inside the area',inputs:[['area','area'],['points','points']],output:'coverage-check'},
   map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['decisions','decisions'],['raster','raster'],['ground','ground'],['network','network']],output:null},
   table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display a keyed table, point coordinates, catchment summaries or review decisions',inputs:[['points','points'],['coverage','coverage-check'],['table','table'],['polygons','polygons'],['decisions','decisions']],output:null},
-  chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Count reasoning results by decision, access zone or evidence tier',inputs:[['decisions','decisions']],output:null},
+  chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Draw a table\u2019s categories as bars, or count records by decision, access zone or evidence tier',inputs:[['records','table'],['decisions','decisions'],['polygons','polygons']],output:null},
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
 };
 const point = (id:string,name:string,coordinates:Position|null|undefined):PointFeature => ({type:'Feature',id,properties:{name},geometry: coordinates ? {type:'Point',coordinates} : null});
@@ -225,7 +226,11 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // canvas, which is where a source widget has to be.
   if(node.type==='network_input'||node.type==='polygon_input')
     return all.filter(([port])=>port!=='area');
-  if(!['map_output','table_output'].includes(node.type))return all;
+  // `chart_output` joins them on 2026-10-28, the day it stopped choosing its ports by a mode.
+  // A chart insists on nothing for the same reason a map and a table do not: it draws what it is
+  // given, and declaring three ports while requiring them all turned one unconnected node into
+  // "Chart needs its records input connected" on every workflow that charts a decision.
+  if(!['map_output','table_output','chart_output'].includes(node.type))return all;
   // A view fed by a coverage check takes THAT and nothing else: the check already carries the
   // points and the area it was run over, so insisting on them again would ask for the same data
   // twice. Graph-dependent rather than node-dependent, which is why it is a parameter -- a node
@@ -324,7 +329,18 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   if(node.type==='apply_ruleset')return structuredClone(node.params.ruleset?.inputs??[]);
   if(node.type==='micro_workflow')return structuredClone(node.params.composition?.inputs??[]);
   if(node.type==='compare_point_sets'&&node.params.centers)return [...TYPES.compare_point_sets.inputs,['originalCenter','mean-center'],['movedCenter','mean-center']];
-  if(node.type==='chart_output'&&node.params.inputMode==='series')return [['series','table']];
+  // EVERY PORT A CHART CAN DRAW, ALWAYS -- the change `map_output` and `table_output` already
+  // took, and the one the blocker `output-mode-set-before-the-shape-arrives` prescribes for this
+  // widget by name: *"On table_output and chart_output the mode is fully determined by the
+  // connected port type -- no type appears in two modes -- so the question is redundant."* It
+  // was the one output left choosing its ports by a mode, so a practitioner holding a table of
+  // rates found a node with a single "Reasoning result" port and nothing to aim at.
+  //
+  // `series` stays only where a saved workflow already uses it. A Cases by period table
+  // connected to `records` draws its curve just the same: the shape decides, not the port.
+  if(node.type==='chart_output')return node.params.inputMode==='series'
+    ?[['series','table'],...TYPES.chart_output.inputs]
+    :[...TYPES.chart_output.inputs];
   if(node.type==='case_series')return node.params.source==='table'?[['cases','table']]:[['points','points']];
   // The same shape, for the same reason: a rate's denominator usually arrives as a table.
   // The port keeps its name either way, because what it carries is the records to divide.
@@ -341,7 +357,7 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
     // declaration alone is a port nothing may connect to -- which is how `ground` arrived
     // refusing its own widget with "Incompatible node connection" on 2026-10-27.
     ['raster','raster'],['ground','ground'],['network','network']];
-  if(node.type==='chart_output'&&'inputMode' in node.params&&node.params.inputMode==='polygons')return [['polygons','polygons']];
+
   // A street network is a thing to look at, not only a thing to route over. Four widgets consume a
   // `network` and none of them was an output, so a downloaded network could not be seen.
   // Deduplication compares ACROSS sources, so two layers is its floor rather than its shape: a
@@ -1572,8 +1588,47 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         value={rows:rows.map(r=>{const status=decisions.get(r.id);if(!status)throw new Error(`Reasoner did not classify ${r.name}.`);return {...r,status,explanation: status==='Unknown' ? (r.reason || 'Heat alert status is missing.') : `Nearest center: ${r.center!.name}. Distance ${r.distance!.toFixed(2)} km ${r.distance!>threshold?'>':'≤'} ${threshold} km. Heat alert ${alert.active?'active':'inactive'} on ${alert.date}.`};}),centers,method,threshold,alert};
         receipts.push({nodeId:node.id,...n3,conclusions});break;
       }
-      case 'chart_output':{if(node.params.inputMode==='series'){const table=inputs.series;if(!table?.series)throw new Error('Connect Cases by period: a series chart needs the series, not a plain table.');const chart=seriesChart(table.series);const source=workflow.edges.find(e=>e.to===node.id&&e.port==='series')!.from;const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:ChartView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; fw:groupingField "period"; fw:eventDateKind ${JSON.stringify(table.series.dateKind)}.\n`+chartSpecificationFacts(node,runId,source,chart,table.series.weightField?'numeric-total':'record-count');value={...structuredClone(table) as unknown as DisplayValue,chart,rows:[],centers:[]};receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:chart.caption});break;}
-      if(node.params.inputMode==='polygons'){const shown=polygonDisplay(inputs.polygons,'chart');value=shown;const sourceId=workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from;const receipt=polygonPresentationReceipt(node,sourceId,runId);receipt.facts+=chartSpecificationFacts(node,runId,sourceId,shown.chart!,shown.chart!.field==='total'?'numeric-total':'location-membership-count');receipt.input=receipt.facts;receipts.push(receipt);break;}const shown=chartOutput(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}
+      case 'chart_output':{
+        // WHICH EDGE IS CONNECTED DECIDES, and the stored mode is read only after that, so a
+        // workflow saved under the old modes keeps drawing what it drew. A table arriving on
+        // `records` is charted by its own declared shape: `keys` names the category column and
+        // `valueField` the number, so nothing is asked for and nothing is guessed.
+        const wired=(port:string)=>workflow.edges.find(e=>e.to===node.id&&e.port===port);
+        const recordsEdge=wired('records');
+        if(recordsEdge){
+          const arrived=inputs.records as unknown as (DisplayValue&{series?:unknown;
+            kind?:string;keys?:string[];valueField?:string;chart?:ChartSummary})|undefined;
+          if(!arrived)throw new Error('Connect a table to this Chart.');
+          // A CASE SERIES IS STILL A TABLE, and it carries its periods with it: the curve is
+          // drawn from the shape that arrived rather than from a mode somebody selected.
+          const chart=arrived.series
+            ?seriesChart(arrived.series as Parameters<typeof seriesChart>[0])
+            // A table that already carries its own chart keeps it. A rate's chart states the
+            // vintage disagreement and the groups it could not report, which a chart derived
+            // from the rows alone cannot know.
+            :arrived.chart??tableChart(arrived as unknown as import('./data-table.js').DataTable,
+              node.params.keyColumn);
+          const measure=chart.measure??'record-count';
+          const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+            +`<urn:fieldwork:run:${runId}:view:${node.id}> a fw:ChartView, prov:Activity; `
+            +`prov:used <urn:fieldwork:run:${runId}:output:${recordsEdge.from}>; `
+            +`fw:groupingField ${JSON.stringify(chart.categoryTitle??chart.field)}`
+            +`${chart.unit?`; fw:chartValueUnit ${JSON.stringify(chart.unit)}`:''}.\n`
+            +chartSpecificationFacts(node,runId,recordsEdge.from,chart,measure);
+          value={...structuredClone(arrived) as unknown as DisplayValue,chart,rows:[],centers:[]};
+          receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,
+            conclusions:[],method:chart.caption});
+          break;
+        }
+        if(node.params.inputMode==='series'){const table=inputs.series;if(!table?.series)throw new Error('Connect Cases by period: a series chart needs the series, not a plain table.');const chart=seriesChart(table.series);const source=workflow.edges.find(e=>e.to===node.id&&e.port==='series')!.from;const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:ChartView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; fw:groupingField "period"; fw:eventDateKind ${JSON.stringify(table.series.dateKind)}.\n`+chartSpecificationFacts(node,runId,source,chart,table.series.weightField?'numeric-total':'record-count');value={...structuredClone(table) as unknown as DisplayValue,chart,rows:[],centers:[]};receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:chart.caption});break;}
+      if(node.params.inputMode==='polygons'){const shown=polygonDisplay(inputs.polygons,'chart');value=shown;const sourceId=workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from;const receipt=polygonPresentationReceipt(node,sourceId,runId);receipt.facts+=chartSpecificationFacts(node,runId,sourceId,shown.chart!,shown.chart!.field==='total'?'numeric-total':'location-membership-count');receipt.input=receipt.facts;receipts.push(receipt);break;}const decisionsEdge=wired('decisions');
+        // NOTHING CONNECTED IS A SENTENCE, not a crash. A chart insists on no particular port
+        // now, so the last branch could be reached with no edge at all and took `.from` off
+        // undefined. The map says this in its own words and this says it in the chart's.
+        if(!decisionsEdge)throw new Error(`Connect something to "${node.params.label||node.id}". `
+          +'A Chart draws bars from what it is given \u2014 a table of categories and numbers, a '
+          +'reasoning result, or a summarised polygon layer \u2014 and nothing is connected to it.');
+        const shown=chartOutput(node,inputs.decisions,decisionsEdge.from,runId);value=shown.value;receipts.push(shown.receipt);break;}
       case 'output':value=inputs.decisions;break;
       case 'map_output':{const mode=drawnMode(node,workflow.edges);
         // A map insists on no particular port and still insists on something: it draws what it is

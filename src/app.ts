@@ -6412,7 +6412,10 @@ document.addEventListener('click',event=>{
   if(!project){toast('A note belongs to an investigation. File this workflow under a project first.',
     {tone:'failure'});return;}
   const held=[...(project.notes||[])] as Note[];
-  const made:Note={kind:'authored',id:`note-${Date.now().toString(36)}`,
+  // A UUID, because a note somebody writes has no natural key and the whole point of the id is
+  // that another note can point at it. `Date.now()` collides within a millisecond, which is never
+  // by hand and certain under a loop.
+  const made:Note={kind:'authored',id:crypto.randomUUID(),
     section:section as WriteUpPart,text:'(empty \u2014 writing is not built yet)'};
   if(writeNotes([...held,made])){renderNotesView();toast(`A note was added to ${section}.`);}
   else toast('That note could not be kept on this device.',{tone:'failure'});

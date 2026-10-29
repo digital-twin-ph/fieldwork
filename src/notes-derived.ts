@@ -24,7 +24,12 @@ import type {DerivedNote} from './notes.js';
  *  `Methods` because a source is part of how the study was made, which is where IMRaD puts it and
  *  where 141 found the example's own README had already put it. The same note is not repeated for
  *  a source two workflows share: the id is the node's, and a reader meets the citation once. */
-export function derivedNotes(nodes:readonly WorkflowNode[]):DerivedNote[]{
+export function derivedNotes(nodes:readonly WorkflowNode[],
+  /** Which workflow these inputs belong to. Part of the note's id, because a node id is unique
+   *  only inside its own canvas: the South London example has a node called `table-viii` in three
+   *  of its six workflows and `table-xii` in two, so a project-wide graph keyed on the node alone
+   *  would join three different citations into one. Measured, not supposed. */
+  workflowKey?:string):DerivedNote[]{
   const made:DerivedNote[]=[];
   const seen=new Set<string>();
   for(const node of nodes){
@@ -41,7 +46,14 @@ export function derivedNotes(nodes:readonly WorkflowNode[]):DerivedNote[]{
     const key=`${what}\u0000${detail}`;
     if(seen.has(key))continue;
     seen.add(key);
-    made.push({kind:'derived',id:`derived:${node.id}`,section:'Methods',fn:'source',
+    // STABLE ACROSS RUNS, which is what a link needs. A UUID minted while the run is happening
+    // would be a new id every run, so every edge pointing at this note would break on the next
+    // one -- the opposite of what connecting notes is for. The identity is therefore derived from
+    // the thing that owns the note, and a widget that has been given an id of its own uses that.
+    const owned=(node.params as {noteId?:string}).noteId?.trim();
+    made.push({kind:'derived',
+      id:owned||`derived:${workflowKey||'workflow'}/${node.id}`,
+      section:'Methods',fn:'source',
       text:what,...(detail?{detail}:{}),nodeId:node.id});
   }
   return made;

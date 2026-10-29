@@ -1,0 +1,2 @@
+import{l as s}from"./chunk-K6IMXJIS.js";function m(a,c){let r=[],i=new Set;for(let e of a){let o=e.params.provenance;if(!o)continue;let t=o.what?.trim();if(!t)continue;let n=s(o).trim(),d=`${t}\0${n}`;if(i.has(d))continue;i.add(d);let p=e.params.noteId?.trim();r.push({kind:"derived",id:p||`derived:${c||"workflow"}/${e.id}`,section:"Methods",fn:"source",text:t,...n?{detail:n}:{},nodeId:e.id})}return r}export{m as a};
+//# sourceMappingURL=chunk-6KQ2GOIF.js.map

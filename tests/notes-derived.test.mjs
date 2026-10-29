@@ -46,3 +46,27 @@ test('two different sources are two citations',()=>{
   assert.equal(notes.length,2);
   assert.deepEqual(notes.map(n=>n.nodeId),['table-viii','sub-districts']);
 });
+
+/** IDENTITY, BECAUSE NOTES ARE COMPOSED.
+ *
+ *  The practitioner, 2026-10-29: *"The reason why I need a UUID is because I want to be able to
+ *  connect the notes to each other"*, and *"It's like workflow composition but it's not composing
+ *  widgets, but notes."* A link is worth exactly as much as the id surviving the next run. */
+test('a derived note’s id carries its workflow, because node ids repeat across them',()=>{
+  const [a]=derivedNotes([input('table-viii',snow)],'south-london/mortality');
+  const [b]=derivedNotes([input('table-viii',snow)],'south-london/choropleth');
+  assert.notEqual(a.id,b.id,'three workflows name a node table-viii; they are not one citation');
+  assert.match(a.id,/south-london\/mortality/);
+});
+
+test('the same input yields the same id on every run, so a link to it holds',()=>{
+  const first=derivedNotes([input('table-viii',snow)],'w')[0].id;
+  const again=derivedNotes([input('table-viii',snow)],'w')[0].id;
+  assert.equal(first,again,'a UUID minted during the run would break every edge on the next one');
+});
+
+test('a widget given an id of its own owns the note’s identity',()=>{
+  const node=input('table-viii',snow);
+  node.params.noteId='0f9c2b2e-7a1e-4f3a-9a5a-1d2c3b4a5e6f';
+  assert.equal(derivedNotes([node],'w')[0].id,'0f9c2b2e-7a1e-4f3a-9a5a-1d2c3b4a5e6f');
+});

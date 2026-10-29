@@ -14,7 +14,12 @@ test('legacy bars migrate idempotently with stable connections, settings and ref
   assert.deepEqual(w,before);assert.deepEqual(normalized.edges,w.edges);assert.deepEqual(normalized.nodes.at(-1).references,w.nodes.at(-1).references);assert.equal(normalized.nodes.at(-1).type,'chart_output');
   assert.deepEqual(normalized.nodes.at(-1).params,{label:'Decisions'});assert.deepEqual(validateWorkflow(normalized),normalized);
   normalized.nodes.at(-1).params.label='';assert.throws(()=>validateWorkflow(normalized),/names must/);
-  normalized.nodes.at(-1).params.label='Chart';normalized.edges.pop();assert.throws(()=>executionPlan(normalized),/Chart needs its decisions/);
+  // A CHART INSISTS ON NOTHING from 2026-10-28, the day it stopped choosing its ports by a mode
+  // -- the change `map_output` took on 2026-10-14 and `table_output` on 2026-10-27. An unwired
+  // view is unfinished rather than failed, so the plan is built and the refusal comes at the
+  // run, in the chart's own words.
+  normalized.nodes.at(-1).params.label='Chart';normalized.edges.pop();
+  assert.doesNotThrow(()=>executionPlan(normalized));
 });
 
 test('categorical counts conserve rows, expose missing categories, preserve inputs and parse as RDF',()=>{

@@ -314,14 +314,11 @@
     {
       "id": "output-mode-set-before-the-shape-arrives",
       "claim": "An output widget draws the ports its CURRENT mode gives it, so the port a connection needs may not exist on the node. A map_output in the default spatial mode draws area, points, coverage and raster; in polygons mode it draws polygons alone. A practitioner who has made catchments and wants to map them finds no port to aim at -- not an error, nothing to drop onto -- and must select the map, change Input mode in the Inspector to 'Catchment polygons / summaries', and wait for the node to redraw before the connection can be made. validConnection would reject it for the same reason, but nobody reaches that check. On table_output and chart_output the mode is fully determined by the connected port type -- no type appears in two modes -- so the question is redundant; on map_output three types are genuinely ambiguous: points as subject or as context, raster as subject or as overlay, polygons with context or without.",
-      "blocks": [
-        "Connecting a polygon producer to a map without first changing its mode",
-        "Revealing an output widget by its type, which does not say what it takes"
-      ],
+      "blocks": [],
       "recorded": "2026-10-14",
-      "lastRevisited": "2026-10-22",
-      "status": "narrowed",
-      "liftTest": "Dragging a connection to an output widget whose current mode does not accept it switches the mode when exactly one mode accepts that port type, and asks which the practitioner meant when more than one does. Measured: 2 of 3 output widgets need no question at all. NOTE 2026-10-14: the Map widget page (docs/widget-specs/map_output.md) records that the mode model is itself the defect -- a map has layers, not modes -- so automating the switch would entrench what it would remove. Read that page before lifting this.",
+      "lastRevisited": "2026-10-28",
+      "status": "lifted",
+      "liftTest": "No output widget chooses which ports it has from a stored mode: for every value of inputMode, nodeInputs returns every port the widget can draw, and requiredInputs returns none of them.",
       "why": "Raised by the practitioner on 2026-10-14: the output widgets depend on the shape of the process widget outputs for inputs.",
       "revisits": [
         {
@@ -333,7 +330,8 @@
           "found": "NARROWED to the widgets that still have a mode. map_output no longer chooses its ports by mode: every layer port is declared and the stored inputMode is read LAST, only so a workflow saved before the change still opens (src/core.ts:201-215). chart_output and table_output still key their ports off inputMode -- series, polygons, table -- so a connection may still need a port the node does not have. The claim holds for those two and no longer for the map."
         }
       ],
-      "whatChanged": "map_output stopped choosing its ports by mode on 2026-10-20: every layer port is declared and the stored inputMode is read last, only so a workflow saved before the change still opens. The claim now holds for chart_output and table_output alone, which still key their ports off inputMode -- series, polygons, table -- so a connection can still need a port the node does not have. Re-derived 2026-10-22 from src/core.ts:201-238."
+      "whatChanged": "The gate had been enforcing the model the project ruled against. scripts/validate-widgets.mjs REQUIRED \"Missing polygon input mode\" of chart_output and would have failed the fix -- the third widget in a row where that happened, each one already recorded in a comment beside the last. A blocker about a model nobody wanted survived because its own validator insisted on it. Both things this blocked are now done: a polygon producer connects to a map, a table or a chart with no mode to change first, and an output widget is revealed by the ports it declares rather than by a type that did not say what it took.",
+      "liftedBy": "chart_output 0.7.0 was the last one. map_output stopped on 2026-10-14 and table_output on 2026-10-27; this widget held out until 2026-10-28, when a practitioner with a table of deaths per 1,000 people across 32 sub-districts found a Chart node carrying one port labelled \"Reasoning result\" and nothing to aim at -- the exact failure this blocker describes, three weeks after it was recorded. Every port is now declared always and the stored inputMode is read LAST, so a saved workflow draws what it drew. tests/table-chart.test.mjs asserts the lift test directly over all four inputMode values."
     }
   ]
 }

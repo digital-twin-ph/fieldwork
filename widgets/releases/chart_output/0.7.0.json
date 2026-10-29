@@ -1,0 +1,125 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:chart_output",
+  "version": "0.7.0",
+  "nodeType": "chart_output",
+  "title": "Chart",
+  "released": "2026-10-28",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['chart_output']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      },
+      {
+        "name": "decisions",
+        "type": "decisions"
+      },
+      {
+        "name": "polygons",
+        "type": "polygons"
+      }
+    ],
+    "output": null,
+    "optionalInputs": [
+      "records",
+      "decisions",
+      "polygons"
+    ],
+    "note": "Every port a chart can draw, declared always, and none of them required. A chart draws what it is given, so which ports exist is not a question for the practitioner to answer before they have the shape -- the treatment map_output took on 2026-10-14 and table_output on 2026-10-27. `series` remains reachable only on a workflow saved with inputMode 'series'; a Cases by period table connected to `records` draws the same curve, because the shape that arrives decides and not the port it arrived on."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:ChartView",
+        "file": "ontology/fieldwork.ttl"
+      },
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:CategoricalCount",
+        "file": "ontology/fieldwork.ttl"
+      },
+      {
+        "role": "configuration",
+        "iri": "urn:fieldwork:ChartSpecification",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/chart-output.ts",
+      "src/chart-vega.ts",
+      "src/rate.ts",
+      "src/core.ts",
+      "src/app.ts",
+      "src/results.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "output",
+        "adapterVersion": "1",
+        "implementation": "src/output-contract.ts#migrateOutputNodes"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "changed",
+      "description": "A TABLE IS A CHART. The practitioner, 2026-10-28: \"If the table's role is to represent decisions, it's still a table and if it has categories with numeric values, it can be presented as a chart.\" A `decisions` value was already rows with a categorical column -- `summarizeChart` counts `input.rows` by `status`, `zone` or `tier` -- and `table_output` already accepted all four shapes on one widget. Only this widget treated the difference as structural, so `rate`, `derive_value`, `group_table`, `relate_table` and `two_by_two` all emitted tables that no chart could receive. A `records` port now takes any table and draws a bar per row: `keys` names the category column and `valueField` the number, so nothing is asked for and nothing is guessed. Where a table carries its own chart -- a rate's does -- that chart is used, because it states the vintage disagreement and the unreported groups which rows alone cannot say.\n\nPORTS DECLARED ALWAYS, and none required. This was the last output choosing its ports by a mode, which the blocker `output-mode-set-before-the-shape-arrives` names by name: \"On table_output and chart_output the mode is fully determined by the connected port type -- no type appears in two modes -- so the question is redundant.\" A practitioner holding 32 sub-districts of deaths per 1,000 people met a node with one port labelled Reasoning result and nothing to aim at. The stored `inputMode` is read LAST, so a workflow saved under the old modes draws what it drew. An unwired chart now refuses in a sentence at the run rather than dereferencing an edge that is not there.\n\nA BAR'S NUMBER IS NOT ALWAYS A COUNT. `rateChart` rounded every rate to an integer: on South London's 32 sub-districts that turned 16 distinct rates into 6 distinct bars -- Battersea 5.11, Leather Market 5.30 and Camberwell 5.41 drew one identical bar, while Clapham 1.47 and Christchurch 1.56, nine hundredths apart, drew different ones. The variation between sub-districts is what the chart is for. ChartSummary now states its `measure` and carries the `unit` the source declared, the Vega axis is titled with that unit instead of \"Recorded count\", and a value prints to three decimal places rather than as the division's whole tail. `rateTable` sets `unit`, which it never had: the table showed a column headed \"per 1,000 people\" above the line \"value in an unstated unit\".\n\nKNOWN DEBT: `ChartSummary.bins[].count` keeps its name and is now a misnomer for the `value` measure. Renaming it reaches every producer, consumer and test; stating the measure beside it is what makes the figure honest, and the rename is recorded here rather than smuggled in."
+    },
+    {
+      "kind": "minor",
+      "description": "Pins the renderers. fw:chartRendererVersion has been written into receipts since the Vega-Lite prototype, but the widget metadata said nothing about the engine, so a release digest could stay identical while the library that draws every figure changed underneath it. scripts/validate-widgets.mjs now checks the pinned libraries against package.json and the declared default against chartRenderer(), so bumping vega-lite forces a new release. Records vega-lite as the default, changed the same day."
+    },
+    {
+      "kind": "minor",
+      "description": "Adds a case-series mode: a Chart output connected to Cases by period draws an epidemic curve, with the period on the axis and the kind of date stated in the caption. A presentation of the series with no smoothing and no interpolation."
+    },
+    {
+      "kind": "added",
+      "description": "bandMeasure: 'difference' charts the difference between neighbouring nested bands instead of their cumulative counts, and does it with a Vega-Lite window/calculate transform in the specification rather than arithmetic in the application. Nested travel-time bands give cumulative counts -- a location one minute from a pump is inside all four rings -- while the case study's own bar chart subtracts as it walks outward (Advanced-1 NB04 cell 19). A prototype that deliberately departs from the house style of charting already computed bins: the whole spec is recorded as fw:rendererSpecification, so a declared transform is more inspectable in the provenance than the same subtraction in TypeScript. It requires the Vega-Lite renderer, renames the measure, says so in the caption, keeps the cumulative count in the tooltip, and asserts a distinct fw:chartMeasureKind of band-difference-of-<kind> with unit status location-memberships-differenced-between-bands. Refused unless every bin carries a distinct travel time and the counts actually increase outward, which proves nesting from the data rather than assuming it. See docs/experiments/87-declarative-chart-transforms.md."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  },
+  "renderers": {
+    "defaultRenderer": "vega-lite",
+    "vega-lite": {
+      "libraries": {
+        "vega-lite": "6.4.3",
+        "vega": "6.4.0",
+        "vega-embed": "7.3.0"
+      },
+      "specificationRecordedAs": "fw:rendererSpecification"
+    },
+    "html": {
+      "implementation": "src/chart-output.ts#chartMarkup",
+      "note": "This project's own bars. Versioned by this release rather than by a library, and it emits no specification because it has none to give."
+    }
+  }
+}

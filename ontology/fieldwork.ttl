@@ -1028,6 +1028,9 @@ fw:chartUnitStatus a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rd
   rdfs:comment "Record-count and location-membership-count have explicit counting units. Numeric totals whose source unit is unavailable are marked source-unit-not-specified; no physical unit is inferred.".
 fw:chartLegend a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:boolean;
   rdfs:comment "True means categories are color encoded and a corresponding legend is shown.".
+fw:chartValueUnit a owl:DatatypeProperty; rdfs:domain fw:ChartView; rdfs:range xsd:string;
+  rdfs:comment "The unit each bar's number is in, as the source table declared it -- \"per 1,000 people\" for a rate. Absent where the source stated none, which is not the same as a count: fw:chartMeasureKind says what the number is, and this says what it is in.".
+
 fw:chartXAxisTitle a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
 fw:chartYAxisTitle a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
 fw:chartSourceNote a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string;

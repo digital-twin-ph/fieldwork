@@ -17,7 +17,8 @@
 <urn:fieldwork:widget:buffer_point> a fw:WidgetDefinition; fw:nodeType "buffer_point"; rdfs:label "Area around a point".
 <urn:fieldwork:widget:case_series> a fw:WidgetDefinition; fw:nodeType "case_series"; rdfs:label "Cases by period".
 <urn:fieldwork:widget:centers> a fw:WidgetDefinition; fw:nodeType "centers"; rdfs:label "Cooling centers".
-<urn:fieldwork:widget:chart_output> a fw:WidgetDefinition; fw:nodeType "chart_output"; rdfs:label "Chart".
+<urn:fieldwork:widget:chart_output> a fw:WidgetDefinition; fw:nodeType "chart_output"; rdfs:label "Chart";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/chart_output.md>.
 <urn:fieldwork:widget:clip_points_to_area> a fw:WidgetDefinition; fw:nodeType "clip_points_to_area"; rdfs:label "Keep points inside the area";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/clip_points_to_area.md>.
 <urn:fieldwork:widget:clip_polygons> a fw:WidgetDefinition; fw:nodeType "clip_polygons"; rdfs:label "Clip polygons".

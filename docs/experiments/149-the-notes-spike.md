@@ -127,8 +127,25 @@ assembled with `usedBy`, licence, and the missing fields marked.
 seventh that belongs in neither yet: **`verification`** — *"checking the source and finding it
 wrong, which is a distinct act and arguably the most valuable prose in the file"*.
 
-This is not a rename to do quietly. A closed vocabulary that disagrees with the experiment that
-settled it is the thing to reconcile first, and the reconciliation is a decision.
+**Reconciled the same day**, on the practitioner's decision: *"Reconcile the vocabulary towards
+the earlier prototype we developed and discussed extensively one afternoon."*
+
+`KNOWN_NOTE_FUNCTIONS` is now **context · rationale · source · method · verification · finding ·
+limitation** — 141's six, plus the seventh 141 found missing and argued for on evidence. They are
+ordered as a reader meets them inside a section: what this is about, why it was done, what it was
+made from, how, what checking it found, what it showed, and what it cannot show.
+
+`background`, `related literature` and `purpose` are gone. Nothing refuses a note that still uses
+them: the list governs grouping, and a function outside it is kept and sorted after, because
+somebody else's word for what their note does is not ours to drop.
+
+**The example's four were relabelled, not rewritten.** `snow-ready-made-experiment` is
+`rationale` — *"no experiment could have been devised which would more thoroughly test the effect
+of water supply"* is the reasoning that makes the comparison work. The three on the grandest
+scale, the tidal limit and the Lambeth supply are `context`: each is a claim about the world the
+data came from rather than about the dataset, which is 141's own test. A function is this
+project's account of what a sentence does; the sentence is Snow's and is untouched — the
+distinction the prototype's read-only rule exists to protect.
 
 ## What the spike has, against that
 

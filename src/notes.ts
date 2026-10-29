@@ -58,8 +58,35 @@ export type WriteUpPart=typeof WRITE_UP_PARTS[number];
  *  `Limitations` would make `readNotes` DROP it, because a section outside the body is refused
  *  rather than coerced -- which is the behaviour working as intended, and the reason this is a
  *  function instead. */
-export const KNOWN_NOTE_FUNCTIONS=['background','related literature','purpose','method','source',
-  'limitation'];
+/** WHAT A NOTE DOES FOR A READER, which is independent of where it sits in the body.
+ *
+ *  Two coordinates, and 141 proved they are independent rather than assuming it: `Limits` and
+ *  `The three dates` are both `limitation` and land in Discussion and Methods, because one is
+ *  about what the study cannot show and the other about how it was measured. One vocabulary
+ *  could not have expressed that. The Notes Board prototype enforces the same separation in its
+ *  palette -- *"kind and narrative position are two coordinates and must not be read off one
+ *  colour."*
+ *
+ *  RECONCILED 2026-10-29 towards the prototype and the experiment that designed it. This list
+ *  shipped `background`, `related literature` and `purpose`, which 141 does not name, and lacked
+ *  `rationale`, `context` and `finding`, which it settles. A closed vocabulary that disagrees
+ *  with the experiment that closed it is not a tidy-up; the practitioner decided it: *"Reconcile
+ *  the vocabulary towards the earlier prototype."*
+ *
+ *  `verification` is the seventh and comes from neither the prototype nor the original six. 141
+ *  found it by trying the design on a real write-up: two of the strongest sections of the example
+ *  repository's README -- a 36-person arithmetic error traced to its origin, and a printed rate
+ *  that does not follow from the columns beside it -- *"are neither `source` nor `limitation`.
+ *  They record checking the source and finding it wrong, which is a distinct act and arguably the
+ *  most valuable prose in the file."*
+ *
+ *  Ordered as a reader meets them inside a section: what this is about, why it was done, what it
+ *  was made from, how, what checking it found, what it showed, and what it cannot show. The order
+ *  decides grouping only -- `groupNotes` ranks known functions first -- and a function outside
+ *  this list is kept and sorted after, never refused. Somebody else's word for what their note
+ *  does is not ours to drop. */
+export const KNOWN_NOTE_FUNCTIONS=['context','rationale','source','method','verification',
+  'finding','limitation'];
 
 export interface QuotedNote {
   kind:'quoted';

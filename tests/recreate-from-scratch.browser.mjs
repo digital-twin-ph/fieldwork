@@ -19,6 +19,20 @@ import {fileURLToPath} from 'node:url';
  *  implemented and unit-tested while its features could be set only by editing a workflow file,
  *  which is how the worked example came to be the only thing that could configure it.
  *
+ *  WHICH CLAIM THIS PROVES, because two are called "from scratch" and they are not the same. The
+ *  practitioner drew the line on 2026-10-29: *"if the Thames polygons are provided, the end to
+ *  end claim holds. But if the start begins from PBF download, that may well be a different story
+ *  if Thames selection is bespoke."*
+ *
+ *  This is claim A: given the published inputs, an empty canvas reaches the same result, so every
+ *  widget, parameter and connection the example needs is reachable from the palette and the
+ *  panels. It is NOT claim B, that the study is reproducible from a primary source. B fails at one
+ *  step and for one reason: `geo/thames-reaches.geojson` was SELECTED out of the water areas, and
+ *  nothing here selects. No geometry was cut to make it -- the file's own method says "Nothing is
+ *  cut at the limit: OpenStreetMap already divides the water area at the lock" -- so a reader
+ *  starting from the extract obtains both reaches in the read, along with every pond and basin in
+ *  the box, and has no way to keep the two they came for.
+ *
  *  Nothing here imports the bundle. The widgets are clicked out of the palette, the data is read
  *  from the published files beside this repository, and the numbers asserted at the end are the
  *  example's own. `geo/water-intakes.geojson` was written on the day this was asked, because

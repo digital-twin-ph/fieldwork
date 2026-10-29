@@ -160,17 +160,8 @@ Across the shipped examples, **11 nodes carry data and declare no source**. That
   one exists: `tests/recreate-from-scratch.browser.mjs` builds `south-london/ground` from an
   empty canvas and the published files. The other five South London workflows and all
   11 shipped examples are unproven on this point.
-- **That a published input could be DERIVED in the application.** This is the sharpest limit on
-  the rebuild test and it was found by the practitioner on 2026-10-29: *"The way we selected the
-  Thames waterways polygons seem to be bespoke."* It is. `geo/thames-reaches.geojson` records its
-  own method — OpenStreetMap water-area multipolygons *"partitioned where relations 308126 and
-  318374 meet at Teddington Lock"*, then clipped to the study box — and no widget performs that.
-  Two capability gaps put it out of reach: nothing selects or removes features from a polygon
-  layer by their attributes, and nothing splits a polygon at a line, since no widget reads a
-  LineString at all. So a rebuild from published inputs proves ONE link. The chain from a primary
-  source to a published input is unproven, and for this layer it currently runs outside the
-  application. An input whose provenance is recorded is not the same as an input a practitioner
-  could produce.
+- **That a published input could be DERIVED in the application.** See the two claims below,
+  which is where this belongs rather than in a list of caveats.
 - **That an unused widget should be retired.** D11 asks whether a residual function remains
   that nothing else performs. A widget may be unused because no example poses its problem yet,
   which is a gap in the examples rather than in the palette.
@@ -203,6 +194,50 @@ same structural reason: a shipped example's data lives in this repository's sour
 as files a reader fetches. Only the pinned example publishes its inputs, which is what made a
 from-scratch rebuild possible for it and impossible for the rest. That is one decision, not
 eleven oversights — and it is the decision to revisit if more examples are to become robust.
+
+### Two claims, two starting points
+
+The practitioner drew the distinction on 2026-10-29, and it is the one this section turns on:
+
+> For the from scratch claim, if the Thames polygons are provided, the end to end claim holds.
+> But if the start begins from PBF download, that may well be a different story if Thames
+> selection is bespoke.
+
+Both are called "from scratch" and they are not the same claim.
+
+|  | Starts from | Status |
+| --- | --- | --- |
+| **A · The workflow is reproducible** | the published inputs and an empty canvas | **Holds.** `tests/recreate-from-scratch.browser.mjs`, green on both engines |
+| **B · The study is reproducible** | a primary source — the `.osm.pbf` a reader downloads | **Does not hold today** |
+
+A is the claim about this application: given the inputs, every widget, parameter and connection
+needed is reachable from the palette and the panels. It is proved for one workflow.
+
+B is the claim about the whole chain, and it fails at **one step, for one reason**:
+`geo/thames-reaches.geojson` was SELECTED out of the water areas, and nothing in this
+application selects.
+
+No geometry was cut to make it. The file says so in its own method: *"Nothing is cut at the
+limit: OpenStreetMap already divides the water area at the lock, and the two reaches are the
+polygons joined to either side of that shared edge."* Both reaches are OpenStreetMap
+multipolygons as published, and the clip to the study box is what the extract reader already
+does. So a reader starting from the Greater London extract obtains both reaches in the read —
+together with every pond, basin and boating lake in the box — and has no way to keep the two
+they came for.
+
+The gap is selection and nothing else. The function already exists one port type over:
+`select_rows`, *"Keep only the rows whose key column holds one of the values you name, in that
+order"*, which takes a table and emits a table. D2 asks whether a widget already does the job
+before another is added, and here one does — for the wrong port type.
+
+**An input whose provenance is recorded is not the same as an input a practitioner could
+produce.** The provenance here is unusually good — the method is in the file, in its own
+properties, naming the relations it used. That is what makes the gap visible rather than what
+causes it, and it is why B is a question that can be asked at all.
+
+What would close B: a way to keep or drop features of a polygon layer by their attributes or
+their identifiers. That is all. The two reaches would then be read, selected and named inside
+the application, and claim B would hold for this layer.
 
 ### The pinned example
 

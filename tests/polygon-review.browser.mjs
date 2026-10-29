@@ -33,6 +33,11 @@ const layer=async page=>{
   await page.locator('#polygon-file').setInputFiles(FILE);
   await page.locator('#polygon-name-field').fill('subdist');
   await page.locator('#polygon-name-field').press('Tab');
+  // NOTHING IS READ UNTIL APPLY, which is the point of it: every setting above can be changed in
+  // any order first. Choosing the file used to start the read on the spot.
+  await expect(page.locator('#polygon-apply')).toBeEnabled();
+  await page.locator('#polygon-apply').click();
+  await expect(page.locator('[data-review-polygons]')).toBeVisible();
   return id;
 };
 const open=async page=>{
@@ -107,4 +112,47 @@ test('cancel keeps what was there before',{skip},async({page})=>{
   await page.locator('#polygon-review-cancel').click();
   await expect(page.locator('#polygon-dialog')).not.toBeVisible();
   expect((await saved(page)).nodes.find(n=>n.id===id).params.hidden).toBe(undefined);
+});
+
+/** THE OTHER DIRECTION: CHOOSE ON THE MAP, THEN ACT ON THE SET.
+ *
+ *  The practitioner, 2026-10-29: *"Is it possible to also do the reverse, select the polygons and
+ *  have a few actions - keep, discard, cancel."* The rows answer "is this one kept"; the map
+ *  answers "which ones are these". Two questions, two marks, and the action is what decides. */
+/** Choosing through the rows rather than the map. The same set and the same actions: the map is
+ *  drawn on a canvas, so a test cannot aim at one polygon among 279, and a practitioner without a
+ *  mouse cannot either -- which is why the rows choose too. */
+const choose=async(page,count)=>{
+  for(let i=0;i<count;i++)
+    await page.locator('.polygon-review-row').nth(i).locator('.muted').click();
+};
+
+test('polygons chosen on the map can be kept, and the rest set aside',{skip},async({page})=>{
+  const id=await layer(page);
+  await open(page);
+  await choose(page,2);
+  await expect(page.locator('#polygon-review-selection')).toBeVisible();
+  await expect(page.locator('#polygon-review-selected')).toContainText('2 chosen on the map');
+  await page.locator('#polygon-review-keep-only').click();
+  // Keep only these: everything NOT chosen is set aside, in one action.
+  await expect(page.locator('#polygon-review-status')).toContainText('2 of 32 features kept, 30 set aside');
+  await page.locator('#polygon-review-apply').click();
+  expect((await saved(page)).nodes.find(n=>n.id===id).params.hidden.length).toBe(30);
+});
+
+test('polygons chosen on the map can be discarded instead',{skip},async({page})=>{
+  await layer(page);
+  await open(page);
+  await choose(page,3);
+  await page.locator('#polygon-review-discard').click();
+  await expect(page.locator('#polygon-review-status')).toContainText('29 of 32 features kept, 3 set aside');
+});
+
+test('clearing the selection decides nothing',{skip},async({page})=>{
+  await layer(page);
+  await open(page);
+  await choose(page,2);
+  await page.locator('#polygon-review-clear').click();
+  await expect(page.locator('#polygon-review-selection')).toBeHidden();
+  await expect(page.locator('#polygon-review-status')).toContainText('32 of 32 features kept');
 });

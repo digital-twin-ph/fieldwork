@@ -191,6 +191,12 @@ export function polygonInputInspector(n:WorkflowNode<'polygon_input'>,esc:Escape
         +'refused for another.'
       :'A layer read from a file is read as published, so it is not scoped to anything.'
     }</small></div>`
-    +layerCard(n,esc);
+    +layerCard(n,esc)
+    // CHOOSE FEATURES, where there are features to choose among. A read of 606 water areas is
+    // answered by looking at them, not by naming values nobody has seen yet.
+    +(n.params.data.features.length
+      ?`<button class="button" data-review-polygons="${esc(n.id)}">Choose features`
+        +`${n.params.hidden?.length?` \u00b7 ${n.params.hidden.length} set aside`:''}</button>`
+      :'');
   return html;
 }

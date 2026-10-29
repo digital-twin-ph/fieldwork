@@ -224,7 +224,8 @@ export interface ParamsByType {
    *  READ AS PUBLISHED. Nothing is clipped, simplified or reprojected on the way in. A file whose
    *  coordinates are not CRS84 degrees is refused rather than converted, because converting it
    *  silently would hand on a different shape from the one its author published. */
-  polygon_input:{label:string;
+  polygon_input:{
+    hidden?:string[];label:string;
     /** The features, as parsed. Empty until a file is imported, which is the state `core.ts`
      *  already allows for a raster or a network with no file. */
     data:{features:{id:string;name:string;geometry:import('./types.js').Boundary;

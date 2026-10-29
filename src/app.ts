@@ -66,6 +66,7 @@ import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from './old-naledi-ui.js';
 import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
+import {openPolygonReview} from './polygon-review.js';
 import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
 import {isPointPort} from './point-layers.js';
 import {EXAMPLE_TEMPLATES,hasExampleTemplate,EXAMPLE_KEYS,WORKED_EXAMPLE_KEYS} from './example-templates.js';
@@ -6130,6 +6131,21 @@ document.addEventListener('click',event=>{
   if(!open)return;
   layerDialogNode=open.getAttribute('data-manage-layers');renderLayerDialog();
   ($('#layer-dialog') as HTMLDialogElement).showModal();
+});
+// THE FEATURE VIEWER, opened from the polygon layer's own panel.
+document.addEventListener('click',event=>{
+  const open=(event.target as HTMLElement).closest('[data-review-polygons]') as HTMLElement|null;
+  if(!open)return;
+  const id=open.getAttribute('data-review-polygons')!;
+  openPolygonReview(getNode(workflow,id,'polygon_input'),esc,hidden=>{
+    change(w=>{
+      const target=getNode(w,id,'polygon_input');
+      if(hidden.length)target.params.hidden=hidden;else delete target.params.hidden;
+    });
+    toast(hidden.length
+      ?`${hidden.length} feature${hidden.length===1?'':'s'} set aside. Rerun to update results.`
+      :'Every feature kept. Rerun to update results.');
+  });
 });
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});

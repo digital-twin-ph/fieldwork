@@ -1,6 +1,6 @@
 # Polygon layer
 
-_Created 2026-10-28 · Updated 2026-10-28_
+_Created 2026-10-28 · Updated 2026-10-29_
 
 **An input widget.** It supplies a layer of polygons — many areas, each with its own name and
 attributes — as distinct from a study area, which is the single boundary your work sits inside.
@@ -102,9 +102,33 @@ which published file covers your box and links it; your browser does the downloa
 **It will not keep the extract.** Only the areas read out of it are kept. Reading again means
 choosing the file again.
 
-**It is not a basemap.** Past about five hundred features, or two hundred thousand vertices, a
-layer stops being your study's own geometry and the widget refuses it. If you want context behind
-your work, that is a basemap, not a layer.
+**How many features is not a limit.** It was, until 2026-10-29: a read stopped at five hundred,
+and a practitioner holding the Greater London extract on their own disk was refused 606 water
+features. The number stood on a definition — that past it "a layer is a basemap rather than a
+study's own geometry" — and on a vertex budget that is checked separately, on its real total. What
+refuses now is vertices, two hundred thousand of them, because that is the thing that costs. The
+refusal tells you which vertex floor would fit, read off the features the read actually found.
+
+## Choosing which features to keep
+
+A read of a published extract gives you everything of the kinds you asked for inside your box.
+Greater London's water areas are 606 features; the Thames is two of them. The rest are ponds,
+basins and a boating lake.
+
+**Choose features** opens a viewer: every feature the read returned, as a row, beside a map of
+all of them. Select a row and its polygon is marked on the map, so you can tell which one it is
+before deciding. Clear a row's box and that feature leaves the layer.
+
+Nothing is deleted. The read is unchanged, so a feature you set aside comes back by ticking it
+again rather than by reading 124 MB a second time. The receipt records how many the read returned
+and how many you set aside, because a layer of two drawn from a read of 606 is a choice, and a
+reader of your evidence should be able to see that you made it.
+
+Setting every feature aside is refused: a layer that holds nothing is not a layer.
+
+*Why looking rather than typing:* the first design for this filtered at read time by a property
+name and a list of values. You cannot name values you have not seen, and nobody knows in advance
+what OpenStreetMap calls the boating lake.
 
 ## Worked examples that use it
 

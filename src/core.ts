@@ -1167,8 +1167,17 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // READ AS PUBLISHED. The features were parsed and refused at import; this emits them as the
         // `polygons` value the seven existing consumers already accept, which is why the widget
         // needed no new port type.
-        const features=node.params.data.features;
-        if(!features.length)throw new Error('Import a polygon layer before running.');
+        const imported=node.params.data.features;
+        if(!imported.length)throw new Error('Import a polygon layer before running.');
+        // WHAT THE PRACTITIONER SET ASIDE IN THE FEATURE VIEWER. A read of Greater London's water
+        // areas returns 606 features where two are wanted, and the way to find those two is to
+        // look at them -- so they are hidden by id here rather than filtered by a predicate typed
+        // before anything had been seen. The read is untouched and repeatable; this is what the
+        // layer carries.
+        const setAside=new Set(node.params.hidden||[]);
+        const features=setAside.size?imported.filter(f=>!setAside.has(String(f.id))):imported;
+        if(!features.length)throw new Error(`Every feature in "${node.params.label||node.id}" is `
+          +'set aside, so this layer holds nothing. Open Choose features and tick at least one.');
         // A LAYER READ FOR ONE STUDY AREA IS STALE FOR ANOTHER, and this is the one thing the
         // optional `area` port is checked for at run time. Acquisition happens at import, so a
         // study area nudged afterwards leaves a layer that provably holds no features for part of
@@ -1193,7 +1202,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         value=polygonLayer(features,{...node.params,
           layerName:node.params.layerName||node.params.label}) as unknown as DisplayValue;
         const {facts,vertices}=polygonLayerFacts(features,node.params,{runId,nodeId:node.id});
-        receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
+        // SAID IN THE RECEIPT, because a layer of two drawn from a read of 606 is a choice a
+        // reader of the evidence has to be able to see.
+        const kept=setAside.size
+          ?`<urn:fieldwork:run:${runId}:${node.id}> fw:featuresSetAside ${setAside.size}; `
+            +`fw:featuresRead ${imported.length}.\n`
+          :'';
+        receipts.push({nodeId:node.id,kind:'computation',facts:facts+kept,rules:'',
+          input:facts+kept,conclusions:[],
           method:read
             ? `${features.length} ${read.kinds.join(' and ')} feature`
               +`${features.length===1?'':'s'} read from ${node.params.source?.filename

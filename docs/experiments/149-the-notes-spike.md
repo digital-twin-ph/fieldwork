@@ -89,6 +89,15 @@ the Southwark and Vauxhall indigo, the Lambeth oxide red, and the purple of the 
 companies' pipes are intermingled. `quoted`, which is what `notes.ts` ships, **does not appear in
 it at all.**
 
+**Its fourteen notes contain no quotations — and that is a gap in the prototype, not in the
+model.** The practitioner, 2026-10-29: *"We can keep the quotes from John Snow as those form part
+of the verification we did for ensuring our epi and mapping methods were aligned."* They do. Two
+of the nine are verification in 141's strict sense — the act of checking, not of citing:
+`geo/thames-reaches.geojson` records that OpenStreetMap carries no tidal tag on the reach above
+Teddington, so the assignment rests on Snow naming the boundary twice. A modern source was
+checked against the historical one and came up silent. `quoted` therefore stays a kind; the
+prototype simply had none to show.
+
 **And its fourteen notes contain no quotations.** They are the example's own declarations: the
 source of each table, the title and caption of the choropleth, the rate ratio `two_by_two`
 machined, the empty cell `group_table` reported. Its subtitle says so — *"Harvested from the

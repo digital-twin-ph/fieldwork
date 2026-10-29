@@ -16,7 +16,7 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "159c726784d2bbb5fad18e48c648f6a25649f509",
+      "commit": "abd29fc4185e2dd42f02f5ea699d3777c843d88e",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause and geo/thames-reaches.geojson and geo/thames-tidal-limit.geojson which are ODbL-1.0",
@@ -33,8 +33,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "8780381c35f26b2812463efbc5d2b1b33dfe73cd1383259a8454de4254f2090b",
-          "bytes": 394493
+          "sha256": "4571b9b04205765cbd33c94dd9ed3a8963b8e32bc83825077c21a44e04c837fd",
+          "bytes": 394503
         },
         {
           "path": "README.md",
@@ -108,8 +108,8 @@
         },
         {
           "path": "notes/snow-quotations.json",
-          "bytes": 6965,
-          "sha256": "76894a9b44bdbce0fec7365eaad36c10687f80bfc1ffdd64f5c68826fd0487b4"
+          "bytes": 6975,
+          "sha256": "a7c757e1976a80a5bf0b0cf969ad29d964db3f8f742d8034caec10c8ecbe70b3"
         },
         {
           "path": "geo/water-intakes.geojson",

@@ -175,8 +175,21 @@ console.log(`  field use: ${evidence.widgets.filter(w=>w.fieldUse.length).length
 //
 // The companion number is the one beneath it: a widget used by exactly one example has one
 // workflow's worth of evidence, and if that example changes it has none.
+//
+// WHAT THIS COUNT DOES NOT SETTLE, and is deliberately left unsettled. The practitioner,
+// 2026-10-29: *"The isochrone and its composition is a special case -- we should treat use of
+// isochrone as use of its components. We are not there yet to resolve this issue if indeed it's
+// an issue."* Four of the names below are the members of `compute_walking_catchment`, measured
+// equivalent to the `isochrone` widget at 2 parts in 100,000, so a workflow running the monolith
+// performs their work without placing them. This ledger already propagates use the other way --
+// a micro_workflow node is its members -- and not this way, which is an asymmetry between two
+// things that compute the same answer. The count is left as it is rather than quietly fixed,
+// because what a monolith and a decomposition owe each other in evidence is a question about the
+// admission criteria. Experiment 64 carries it.
 const unused=evidence.widgets.filter(w=>!w.exampleUseCount).map(w=>w.nodeType);
 const once=evidence.widgets.filter(w=>w.exampleUseCount===1).length;
 console.log(`  used by no workflow: ${unused.length}${unused.length?` \u2014 ${unused.join(', ')}`:''}`);
+console.log('  (a decomposition whose monolith a workflow uses is counted here as unused; '
+  +'open, see experiment 64)');
 console.log(`  used by exactly one: ${once}, so ${evidence.widgets.length-unused.length-once} of `
   +`${evidence.widgets.length} are reached by two workflows or more`);

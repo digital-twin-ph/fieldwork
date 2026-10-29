@@ -431,6 +431,9 @@ export interface ParamsByType {
      *  stack, and a layer wired afterwards arrives with its own default rather than at the
      *  bottom of a list made before it existed. */
     layers?:Record<string,import("./map-layer-list.js").LayerSetting>;
+    /** The groups declared on this map, which layers are then added to. Declared rather than
+     *  spelled: a group has an identity, so renaming it renames one thing. */
+    layerGroups?:import("./map-layer-list.js").LayerGroupDeclaration[];
     /** How each point layer is drawn, keyed by the node that produced it -- a source keeps its
      *  symbol when layers are rewired or reordered. Absent means derived from the layer's
      *  position, which is what every map did before a practitioner could choose. */

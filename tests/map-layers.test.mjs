@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateWorkflow,executeWorkflow,requiredInputs,nodeInputs} from '../build/core.js';
 import {categoricalSteps,FIGURE_PALETTE} from '../build/presentation.js';
-import {mapPresentation} from '../build/map-communication.js';
+
 import {blankWorkflow,newStudyArea,bboxPolygon} from '../build/study-area.js';
 
 const ready=async()=>[{subject:'urn:fieldwork:area:extent',
@@ -100,4 +100,77 @@ test('collecting polygon layers needs one layer, not six',()=>{
   const node={type:'stack_polygons',params:{label:'Collected'}};
   assert.equal(nodeInputs(node).length,6,'six slots are offered');
   assert.deepEqual(requiredInputs(node),[['polygons','polygons']],'and one is required');
+});
+
+/** THE DESCRIPTION IS THE SOURCE, AND THE RECEIPT CAN BE ASKED ABOUT IT.
+ *
+ *  The practitioner, 2026-10-29: *"Let's begin with the ontology representation in mind so the
+ *  exhaust becomes more logical and can be queried after render."* These ask of a finished run
+ *  exactly what experiment 148 says must be answerable from the receipt alone: which layers, in
+ *  what order, under what names, and in which groups. */
+import {mapLayerList,validateLayerSettings,assertSomethingToDraw} from '../build/map-layer-list.js';
+import {mapSpecificationFacts,mapPresentation} from '../build/map-communication.js';
+
+const mapWith=(params={})=>{
+  const w=blankWorkflow();
+  w.nodes=[{...newStudyArea(),id:'extent',x:20,y:20},
+    {id:'where',type:'map_output',x:400,y:100,params:{label:'Where',...params}}];
+  w.nodes[0].params={...w.nodes[0].params,label:'South London',selectionMode:'bbox',
+    geometry:bboxPolygon(-0.26,51.41,-0.03,51.51)};
+  w.edges=[{id:'a',from:'extent',to:'where',port:'area'}];
+  return w;
+};
+
+test('every drawable wired port becomes a layer, and a kind never refuses one', () => {
+  const w=mapWith();
+  const list=mapLayerList(w.nodes[1],w.edges,id=>w.nodes.find(n=>n.id===id)?.params.label);
+  assert.equal(list.length,1);
+  assert.equal(list[0].kind,'AreaLayer');
+  // The node's own label, not the port name: the words the practitioner already chose.
+  assert.equal(list[0].label,'South London');
+  assert.equal(list[0].drawn,true);
+  assert.equal(list[0].origin,'port');
+});
+
+test('a layer added to a group nobody declared is refused, and the message says to declare it', () => {
+  const node={id:'where',type:'map_output',params:{label:'Where',layers:{area:{group:'g1'}}}};
+  assert.throws(()=>validateLayerSettings(node),/not declared on this map/);
+  node.params.layerGroups=[{id:'g1',label:'Water',index:0}];
+  assert.doesNotThrow(()=>validateLayerSettings(node));
+});
+
+test('a declared group is one thing to rename, and moves as a block', () => {
+  const w=mapWith({layerGroups:[{id:'g1',label:'Water',index:0}],
+    layers:{area:{group:'g1',label:'The extent'}}});
+  const node=w.nodes[1];
+  const list=mapLayerList(node,w.edges,id=>w.nodes.find(n=>n.id===id)?.params.label);
+  assert.equal(list[0].group.label,'Water');
+  assert.equal(list[0].label,'The extent');
+  // Renaming the group is one edit, not one per member: the layer carries a reference.
+  node.params.layerGroups[0].label='Water features';
+  const again=mapLayerList(node,w.edges,id=>w.nodes.find(n=>n.id===id)?.params.label);
+  assert.equal(again[0].group.label,'Water features');
+});
+
+test('a map with every layer switched off refuses, and says where to switch one back on', () => {
+  assert.throws(()=>assertSomethingToDraw([{id:'area',drawn:false}],'Where'),/Manage layers/);
+  assert.doesNotThrow(()=>assertSomethingToDraw([{id:'area',drawn:true}],'Where'));
+});
+
+test('the receipt states the layers the renderer read, queryable by name, order and group', async () => {
+  const w=mapWith({layerGroups:[{id:'g1',label:'Water',index:0}],
+    layers:{area:{group:'g1',label:'The study extent'}}});
+  const run=await executeWorkflow(validateWorkflow(w),ready);
+  const output=run.outputs.find(o=>o.nodeId==='where');
+  assert.ok(output.mapLayers?.length,'the run attaches the layer list to the value');
+  const node=w.nodes.find(n=>n.id==='where');
+  const n3=mapSpecificationFacts(node,output,w,'r1',
+    {nodeId:'where',kind:'presentation',facts:'',input:'',rules:'',conclusions:[]});
+  // What a reader of the receipt alone can now answer.
+  assert.match(n3,/fw:layerLabel "The study extent"/);
+  assert.match(n3,/fw:layerIndex 0/);
+  assert.match(n3,/fw:layerDrawn true/);
+  assert.match(n3,/a fw:LayerGroup; fw:groupLabel "Water"; fw:groupIndex 0/);
+  assert.match(n3,/fw:layerGroup </);
+  assert.match(n3,/fw:layerKind <urn:fieldwork:AreaLayer>/);
 });

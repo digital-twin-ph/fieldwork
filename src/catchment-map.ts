@@ -156,14 +156,14 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // (ordering, labeling, grouping)."*
   const byId=new Map((layers.mapLayers||[]).map(l=>[l.id,l]));
   const placed:{order:number;key:string;layer:L.Layer}[]=[];
-  const hiddenPort=(id:string)=>byId.get(id)?.hidden===true;
+  const hiddenPort=(id:string)=>byId.get(id)?.drawn===false;
   /** The name a reader sees. A group prefixes its members, which is the most a Leaflet layer
    *  control can show without a plugin: the grouping is the practitioner's reading of the map,
    *  so it is carried into the key rather than kept in the dialog. */
   const place=(port:string,fallback:string,layer:L.Layer)=>{
     const found=byId.get(port);
-    const key=(found?.group?`${found.group} \u00b7 `:'')+(found?.label||fallback);
-    placed.push({order:found?.order??100+placed.length,key,layer});
+    const key=(found?.group?`${found.group.label} \u00b7 `:'')+(found?.label||fallback);
+    placed.push({order:found?.index??100+placed.length,key,layer});
   };
   // POINT MARKS GET THEIR OWN PANE, under the markers. They used to be circleMarkers, which
   // Leaflet draws in the overlay pane -- below every marker. Drawing each mark as an icon so it

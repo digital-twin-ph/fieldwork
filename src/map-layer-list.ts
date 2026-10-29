@@ -27,17 +27,40 @@ import {pointPort} from './point-layers.js';
 export type LayerKind='AreaLayer'|'PointsLayer'|'PolygonsLayer'|'RasterLayer'|'NetworkLayer'|'BasemapLayer';
 export type LayerOrigin='port'|'within'|'tileProvider';
 
-/** What a practitioner decided about one layer. Absent fields mean "as it comes": a map nobody
- *  has opened this dialog on keeps the defaults below, and a layer wired after they did arrives
- *  with its own default rather than at the bottom of somebody's old list. */
-export interface LayerSetting{label?:string;group?:string;order?:number;hidden?:boolean}
+/** What a practitioner decided about one layer, named for the terms that already describe it:
+ *  `fw:layerLabel`, `fw:layerIndex`, `fw:layerDrawn` and `fw:layerGroup`. Absent fields mean "as
+ *  it comes": a map nobody has opened the dialog on keeps the defaults below, and a layer wired
+ *  afterwards arrives with its own default rather than at the bottom of somebody's old list.
+ *
+ *  These were `order`, `hidden` and a free-text `group` for one day. The practitioner,
+ *  2026-10-29: *"Let's stop the backward direction. Let's begin with the ontology representation
+ *  in mind so the exhaust becomes more logical and can be queried after render."* Experiment 148
+ *  records what that day cost: a model written in TypeScript whose `order` was `fw:layerIndex`
+ *  and whose `label` was `fw:layerLabel`, both already declared, because the declaration was not
+ *  where anyone looked. */
+export interface LayerSetting{label?:string;index?:number;drawn?:boolean;group?:string}
+
+/** A GROUP IS DECLARED, THEN JOINED. *"Groupings can be declared, and then existing artifacts
+ *  added to it."* So it is an entity with an identity -- `fw:LayerGroup` -- and not a string
+ *  repeated on each member, where two layers belong together only by being spelled identically
+ *  and renaming the group means editing every member.
+ *
+ *  A group is drawn as a block: its members keep their order within it and the block takes
+ *  `fw:groupIndex` in the stack. Without that a group would be a label that changes nothing
+ *  about the picture. */
+export interface LayerGroupDeclaration{id:string;label:string;index:number}
 
 export interface MapLayer{
   /** Stable across runs, because the settings are keyed by it: the port for a port layer, and
    *  the containing port plus the member's own name for one that arrived inside a value. */
   id:string;
   kind:LayerKind;origin:LayerOrigin;port:string;sourceNodeId?:string;within?:string;
-  label:string;group?:string;order:number;hidden:boolean;
+  label:string;index:number;
+  /** `fw:layerDrawn`. A layer switched off is still connected and still described; it was simply
+   *  not drawn, and a receipt that says so can tell a map that showed three of five layers from
+   *  one that was only ever wired to three. */
+  drawn:boolean;
+  group?:LayerGroupDeclaration;
   /** How many features the layer holds, where that is known. A value-classed layer's parts are
    *  ONE layer -- 33 sub-districts shaded by a rate are not 33 things to switch on and off -- so
    *  this is a count to show, never a reason to split. */
@@ -120,7 +143,7 @@ export function mapLayerList(node:WorkflowNode<'map_output'>,
   edges:readonly {to:string;from:string;port:string}[],
   sourceLabel:(nodeId:string)=>string|undefined,
   within:readonly WithinSource[]=[]):MapLayer[]{
-  const settings=node.params.layers||{};
+  const settings=node.params.layers||{},groups=node.params.layerGroups||[];
   const wired=edges.filter(e=>e.to===node.id&&drawablePort(e.port));
   const layers:MapLayer[]=[];
   for(const edge of wired){
@@ -132,25 +155,36 @@ export function mapLayerList(node:WorkflowNode<'map_output'>,
       for(const member of members){
         const id=`${edge.port}/${member.name}`;
         layers.push({id,kind,origin:'within',port:edge.port,sourceNodeId:edge.from,within:edge.port,
-          parts:member.parts,...resolved(settings[id],member.name,kind,id)});
+          parts:member.parts,...resolved(settings[id],member.name,kind,groups)});
       }
       continue;
     }
     layers.push({id:edge.port,kind,origin:'port',port:edge.port,sourceNodeId:edge.from,
-      ...resolved(settings[edge.port],defaultLabel(edge.port,sourceLabel(edge.from)),kind,edge.port)});
+      ...resolved(settings[edge.port],defaultLabel(edge.port,sourceLabel(edge.from)),kind,groups)});
   }
-  // The practitioner's order where they gave one, the default stack where they did not, and the
-  // id last so the list a dialog shows does not reshuffle between two runs of the same workflow.
-  return layers.sort((a,b)=>a.order-b.order||KIND_DEPTH[a.kind]-KIND_DEPTH[b.kind]||a.id.localeCompare(b.id))
-    .map((layer,index)=>({...layer,order:index}));
+  // A GROUP IS DRAWN AS A BLOCK. Its members sort by their own index within it, and the block
+  // sorts by `fw:groupIndex` among the ungrouped layers -- so moving a group moves everything in
+  // it, which is the point of having declared one. An ungrouped layer sorts on its own index.
+  const blockIndex=(layer:MapLayer)=>layer.group?layer.group.index:layer.index;
+  return layers
+    .sort((a,b)=>blockIndex(a)-blockIndex(b)
+      ||(a.group?.id===b.group?.id?0:(a.group?.id||'').localeCompare(b.group?.id||''))
+      ||a.index-b.index||KIND_DEPTH[a.kind]-KIND_DEPTH[b.kind]||a.id.localeCompare(b.id))
+    .map((layer,index)=>({...layer,index}));
 }
 
-const resolved=(setting:LayerSetting|undefined,fallbackLabel:string,kind:LayerKind,id:string)=>({
-  label:setting?.label?.trim()||fallbackLabel,
-  ...(setting?.group?.trim()?{group:setting.group.trim()}:{}),
-  order:typeof setting?.order==='number'&&Number.isFinite(setting.order)?setting.order:KIND_DEPTH[kind],
-  hidden:setting?.hidden===true,
-});
+const resolved=(setting:LayerSetting|undefined,fallbackLabel:string,kind:LayerKind,
+  groups:readonly LayerGroupDeclaration[])=>{
+  const group=setting?.group?groups.find(g=>g.id===setting.group):undefined;
+  return {
+    label:setting?.label?.trim()||fallbackLabel,
+    index:typeof setting?.index==='number'&&Number.isFinite(setting.index)?setting.index:KIND_DEPTH[kind],
+    // Drawn unless it was switched off. The default is yes, because a layer somebody connected is
+    // a layer they wanted to see.
+    drawn:setting?.drawn!==false,
+    ...(group?{group}:{}),
+  };
+};
 
 /** WHAT A LAYER LIST REFUSES, and nothing else.
  *
@@ -160,42 +194,55 @@ const resolved=(setting:LayerSetting|undefined,fallbackLabel:string,kind:LayerKi
  *  not about kinds. No combination of kinds is refused here, because a kind decides how a layer
  *  is drawn and never whether it may be there. */
 export function validateLayerSettings(node:WorkflowNode<'map_output'>):void{
+  const groups=node.params.layerGroups||[];
+  const seen=new Set<string>();
+  for(const group of groups){
+    if(typeof group.id!=='string'||!group.id.trim())throw new Error('A layer group needs an identifier.');
+    if(seen.has(group.id))throw new Error(`Two layer groups share the identifier "${group.id}", so a layer added to one would belong to both.`);
+    seen.add(group.id);
+    if(typeof group.label!=='string'||!group.label.trim()||group.label.length>LAYER_LABEL_LIMIT)
+      throw new Error(`Name the layer group using 1\u2013${LAYER_LABEL_LIMIT} characters.`);
+    if(!Number.isInteger(group.index)||group.index<0||group.index>=MAX_MANAGED_LAYERS)
+      throw new Error(`The position for the group "${group.label}" must be a whole number between 0 and ${MAX_MANAGED_LAYERS-1}.`);
+  }
   for(const [id,setting] of Object.entries(node.params.layers||{})){
     if(setting.label!==undefined&&(typeof setting.label!=='string'||setting.label.length>LAYER_LABEL_LIMIT))
       throw new Error(`Name the layer "${id}" using at most ${LAYER_LABEL_LIMIT} characters, or leave it as it comes.`);
-    if(setting.group!==undefined&&(typeof setting.group!=='string'||setting.group.length>LAYER_LABEL_LIMIT))
-      throw new Error(`Name the group for "${id}" using at most ${LAYER_LABEL_LIMIT} characters, or leave it ungrouped.`);
-    if(setting.order!==undefined&&(!Number.isInteger(setting.order)||setting.order<0||setting.order>=MAX_MANAGED_LAYERS))
+    if(setting.index!==undefined&&(!Number.isInteger(setting.index)||setting.index<0||setting.index>=MAX_MANAGED_LAYERS))
       throw new Error(`The position for "${id}" must be a whole number between 0 and ${MAX_MANAGED_LAYERS-1}.`);
-    if(setting.hidden!==undefined&&typeof setting.hidden!=='boolean')
+    if(setting.drawn!==undefined&&typeof setting.drawn!=='boolean')
       throw new Error(`Whether "${id}" is drawn is yes or no.`);
+    // A layer added to a group nobody declared is the failure a declared group exists to prevent,
+    // so it is said here rather than silently ignored at the point of drawing.
+    if(setting.group!==undefined&&!seen.has(setting.group))
+      throw new Error(`"${id}" was added to a layer group that is not declared on this map. Declare the group first, then add layers to it.`);
   }
 }
 
 /** A map whose every layer is switched off is a blank picture with a legend. Said here, once,
  *  rather than drawn and left for the practitioner to wonder about. */
 export function assertSomethingToDraw(layers:readonly MapLayer[],label:string):void{
-  if(layers.length&&layers.every(l=>l.hidden))
+  if(layers.length&&layers.every(l=>!l.drawn))
     throw new Error(`Every layer on "${label}" is switched off, so there is nothing to draw. Switch one back on in Manage layers.`);
   if(layers.length>MAX_MANAGED_LAYERS)
     throw new Error(`"${label}" has ${layers.length} layers and a reader can tell at most ${MAX_MANAGED_LAYERS} apart in one key. Split this into two maps.`);
 }
 
-export const visibleLayers=(layers:readonly MapLayer[])=>layers.filter(l=>!l.hidden);
+export const visibleLayers=(layers:readonly MapLayer[])=>layers.filter(l=>l.drawn);
 export const layerByPort=(layers:readonly MapLayer[],port:string)=>layers.find(l=>l.port===port&&l.origin==='port');
 /** Whether a port's layer is drawn. A port with no layer -- nothing wired -- is not hidden; it is
  *  absent, and the caller's own `inputs` check is what answers that. */
 export const portIsDrawn=(layers:readonly MapLayer[],port:string)=>
-  layers.some(l=>l.port===port&&!l.hidden);
+  layers.some(l=>l.port===port&&l.drawn);
 
 /** The groups a practitioner made, in the order their first layer is drawn. A group is a reading
  *  of the map rather than a property of the data -- the same judgement the glossary records as
  *  subject and context -- so an ungrouped layer is not forced into one. */
-export function layerGroups(layers:readonly MapLayer[]):{group:string;layers:MapLayer[]}[]{
-  const groups:{group:string;layers:MapLayer[]}[]=[];
+export function layerGroups(layers:readonly MapLayer[]):{group:LayerGroupDeclaration;layers:MapLayer[]}[]{
+  const groups:{group:LayerGroupDeclaration;layers:MapLayer[]}[]=[];
   for(const layer of layers){
     if(!layer.group)continue;
-    const found=groups.find(g=>g.group===layer.group);
+    const found=groups.find(g=>g.group.id===layer.group!.id);
     if(found)found.layers.push(layer);else groups.push({group:layer.group,layers:[layer]});
   }
   return groups;

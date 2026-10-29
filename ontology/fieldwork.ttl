@@ -787,6 +787,20 @@ fw:layerFeatureCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
 fw:layerRole a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "What this layer is in the map's reading";
   rdfs:comment "observations, sites, context. A READING and not a property of the data: the same pumps are the subject of a map asking where the pumps are and context in a map asking how deaths fell around one. Recorded because the renderer takes its emphasis from these names -- it draws sites red at radius 3.5 and observations gray at 2.7 -- so a reader can see which way round the map was built.".
+fw:LayerGroup a owl:Class;
+  rdfs:label "A group of layers, declared once and joined";
+  rdfs:comment "A bundle a practitioner declares and then adds existing layers to. Declared on 2026-10-29 on the practitioner's instruction -- \"Groupings can be declared, and then existing artifacts added to it\" -- which rules out the alternative it replaced: a free-text group name repeated on every layer, where two layers join a group only by being spelled identically. A group has an identity, so renaming it renames one thing. Distinct from fw:layerRole, which is a READING of a layer (observations, sites, context) and not a bundle: a group may hold layers of different roles and different kinds. The established term in the surrounding tools is the same one -- a group layer in Esri, a group in QGIS -- so no new word is coined here. See experiment 148.".
+fw:layerGroup a owl:ObjectProperty; rdfs:range fw:LayerGroup;
+  rdfs:label "The group this layer was added to";
+  rdfs:comment "Membership as a relation rather than a repeated string. A layer belongs to at most one group, because the thing being managed is a drawing order and a layer cannot sit in two places in one stack.".
+fw:groupLabel a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "What this group is called".
+fw:groupIndex a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Where this group falls in the drawing order";
+  rdfs:comment "A group is drawn as a block: its members keep their order within it, and the block takes this position in the stack. Without it a group would be a label that changes nothing about the picture.".
+fw:layerDrawn a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "Whether this layer was drawn";
+  rdfs:comment "A layer switched off is still connected, still described and still in the specification -- it was simply not drawn. Recording it as false rather than omitting the layer is what lets a reader of a receipt tell a map that showed three of five layers from a map that was only ever wired to three. fw:layerCount counts what is described; the layers with this false are the difference.".
 fw:layerWithin a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "The port whose value carried this layer, when it arrived at no port of its own";
   rdfs:comment "summarize_polygons keeps the points it counted on the value it returns, so 250 death locations reach a map that was never wired to them. Such a layer is displayed and has no port, and saying so is the difference between a count of what is shown and a count of what is connected.".

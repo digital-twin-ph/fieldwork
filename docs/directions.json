@@ -461,11 +461,15 @@
       ],
       "workItem": "Add the remaining twenty-one files to widgets/caps.json watchedFiles and declare what that surfaces; then extend the validator past named constants to the literals a refusal compares against. The ledger was built while chasing the street network widget and has the scope of that chase: twenty-six caps, four files, one subsystem. The practitioner met MAX_RASTER_CELLS the way they met attempt-seconds -- by being refused -- which is the thing the ledger exists to prevent.",
       "status": "open",
-      "lastChecked": "2026-10-22",
+      "lastChecked": "2026-10-29",
       "checks": [
         {
           "date": "2026-10-22",
           "found": "Stated on being shown that the WorldPop raster path would find the file, window it and then be refused by MAX_RASTER_CELLS, a number carrying no evidence, no basis and no lift test because src/raster.ts is not watched. Counted the same day: 52 exported numeric constants across 25 files, 26 of them outside the ledger's reach."
+        },
+        {
+          "date": "2026-10-29",
+          "found": "Re-checked by adding caps and watching the ratchet not notice. MAX_MANAGED_LAYERS=24 and LAYER_LABEL_LIMIT=60 were added to src/map-layer-list.ts today, both able to refuse a practitioner's work -- the first refuses a map with more layers than a key can distinguish -- and `npm run validate:caps` passes unchanged at 31 declared. Nor are the layer caps that predate today declared: MAX_POINT_LAYERS=8 refuses a ninth point layer with \"Use at most 8 point layers and 2,000 records combined per operation\", MAX_POLYGON_LAYERS=6 refuses a seventh polygon layer, and neither appears in widgets/caps.json. Searched it: no declared cap has LAYER in its constant or its id. So the gap this direction names is not only the 26 constants counted on 2026-10-22; the ledger also does not notice a cap added after it was written, which is the case that matters for a project that adds widgets in days. Still open, and the number is now 4 more than it was."
         }
       ]
     },
@@ -483,11 +487,15 @@
       ],
       "workItem": "Fieldwork already carries what the Epi kernel design depends on: a Rust/WASM kernel in vendor/street-engine.wasm, a parity ledger and validation lab for parity-tested primitives, and since 2026-10-22 a caps ledger whose budgets are measured rather than chosen. The piece missing is ownership of the graph. Worth scoping against what it would NOT fix, which is most of what cost days: a borrowed 180-second clock, an undeclared MAX_RASTER_CELLS, a 20 MB import limit, Geofabrik links nobody could find and a project export behind a storage readout. A kernel raises the ceiling; it does not make a number measured or a door visible.",
       "status": "open",
-      "lastChecked": "2026-10-22",
+      "lastChecked": "2026-10-29",
       "checks": [
         {
           "date": "2026-10-22",
           "found": "Stated when asked whether a Rust GIS kernel would have helped with the province-scale failures, and answered that it is the approach already decided for Epi Info AI. The natural experiment is in this repository: the extract path reads a province through the Rust engine while the download path holds four copies of the response in JavaScript and dies."
+        },
+        {
+          "date": "2026-10-29",
+          "found": "Re-checked against the map's presentation, which moved toward this direction today rather than away from it. Until 2026-10-29 the layer description was exhaust: map-communication.ts assembled its own array of layers for the sole purpose of emitting N3 after the picture had been decided, and nothing read it back, so the receipt could disagree with the drawing and never say so. It now emits from the same list the renderer and the Manage layers dialog work from, keyed on terms the ontology already declared -- fw:layerIndex, fw:layerLabel, fw:layerKind -- plus fw:LayerGroup, fw:layerGroup, fw:groupLabel, fw:groupIndex and fw:layerDrawn declared the same day. A unit test now queries a finished run's receipt for which layers were drawn, in what order, under what names and in which groups. What this does NOT establish: the graph is the source of the description, not a participant in the render loop, and the static figure still orders its layers by its own draw calls. Experiment 148 records the rest."
         }
       ]
     },

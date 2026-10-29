@@ -740,3 +740,5 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .layer-row input[type=text],.layer-row-label,.layer-row-group{min-width:0;width:100%}
 #layer-dialog{max-width:46rem;width:92vw}
 #layer-dialog-rows{max-height:50vh;overflow-y:auto}
+.layer-group-declare{display:flex;gap:.4rem;align-items:center;margin-right:auto}
+.layer-group-declare input{min-width:12rem}

@@ -227,7 +227,7 @@
         "slr_site_assignment"
       ],
       "recorded": "2026-10-13",
-      "lastRevisited": "2026-10-22",
+      "lastRevisited": "2026-10-29",
       "status": "standing",
       "liftTest": "A CandidateCondition can bind its values to a column of a connected input, and the sea-level example produces its assignments from `nearest` with that binding, agreeing row for row with `slr_site_assignment` on the 194 Manila facilities.",
       "measured": "Measured 2026-10-13 against src/sea-level-example.ts: the extract's site ids and the site layer's site ids are the identical set of eight (145, 260, 394, 522, 537, 664, 1708, 1711), so the validity rule that is this widget's entire domain residue excludes nothing in the only workflow that runs it. That is a property of this example's data and not a guarantee, which is why the filter must be bindable rather than dropped.",
@@ -241,6 +241,10 @@
         {
           "date": "2026-10-22",
           "found": "Re-derived from src/types.ts: candidateFilter on measure_distance is still CandidateCondition[], literal values a person authored, with no way to read them from a connected port at run time. slr_site_assignment still cannot filter by extract.siteIds. Unchanged."
+        },
+        {
+          "date": "2026-10-29",
+          "found": "Re-derived from src/types.ts:503: CandidateCondition is still {field, comparator:'in'|'notIn', values:Scalar[]} -- literal scalars a person authored -- and measure_distance.candidateFilter is still CandidateCondition[]. Nothing added a way to bind those values to a column of a connected input. Claim stands unchanged. Noted while building the map layer list the same day: the layer settings deliberately take the OTHER road, keyed by a layer id the run resolves rather than by values typed twice, which is the shape this blocker says the filters still lack."
         }
       ]
     },
@@ -296,7 +300,7 @@
         "Experiment 113's composite, which fixes a ruleset pin"
       ],
       "recorded": "2026-10-14",
-      "lastRevisited": "2026-10-22",
+      "lastRevisited": "2026-10-29",
       "status": "standing",
       "liftTest": "A receipt carries a digest of the ruleset document it applied, and resolving a pin checks it, so a changed ruleset at an unchanged version fails rather than runs. Composition members already work this way: a member pin is {node, type, version, sha256} and validateComposition refuses a mismatch.",
       "why": "Found 2026-10-14 by asking whether a pin is unique. It is unique as a lookup key within a build and not as a content identity, which is the sense reproducibility needs.",
@@ -308,6 +312,10 @@
         {
           "date": "2026-10-22",
           "found": "Re-derived from src/rulesets.ts: rulesetCitation still returns {id, version, title, basis} and nothing else. No digest of the rule text is recorded by a pin or by a receipt, so neither can prove WHICH TEXT was applied. Unchanged."
+        },
+        {
+          "date": "2026-10-29",
+          "found": "Re-derived from src/types.ts:304-305: a pin is still {id, version, title, inputs, output} with no digest, and the only digest in src/rulesets.ts belongs to EvidenceReference, not to the pin. Nothing verifies that the ruleset resolved at run time is the text the pin was made against. Claim stands unchanged."
         }
       ]
     },

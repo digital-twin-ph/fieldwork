@@ -6037,22 +6037,26 @@ function renderLayerDialog(){
     +`<button class="icon-button" data-layer-move="${esc(layer.id)}" data-direction="up" aria-label="Draw ${esc(layer.label)} lower" ${index===0?'disabled':''}>↑</button>`
     +`<button class="icon-button" data-layer-move="${esc(layer.id)}" data-direction="down" aria-label="Draw ${esc(layer.label)} higher" ${index===list.length-1?'disabled':''}>↓</button>`
     +`</span>`
-    +`<label class="layer-row-visible"><input type="checkbox" data-layer-visible="${esc(layer.id)}" ${layer.hidden?'':'checked'}><span class="visually-hidden">Draw ${esc(layer.label)}</span></label>`
+    +`<label class="layer-row-visible"><input type="checkbox" data-layer-visible="${esc(layer.id)}" ${layer.drawn?'checked':''}><span class="visually-hidden">Draw ${esc(layer.label)}</span></label>`
     +`<input class="layer-row-label" data-layer-label="${esc(layer.id)}" value="${esc(layer.label)}" maxlength="${LAYER_LABEL_LIMIT}" aria-label="Name for ${esc(layer.label)}">`
-    +`<input class="layer-row-group" data-layer-group="${esc(layer.id)}" value="${esc(layer.group||'')}" maxlength="${LAYER_LABEL_LIMIT}" placeholder="No group" aria-label="Group for ${esc(layer.label)}">`
+    +`<select class="layer-row-group" data-layer-group="${esc(layer.id)}" aria-label="Group for ${esc(layer.label)}">`
+      +`<option value="">No group</option>`
+      +(node.params.layerGroups||[]).map(group=>
+        `<option value="${esc(group.id)}" ${layer.group?.id===group.id?'selected':''}>${esc(group.label)}</option>`).join('')
+      +`</select>`
     +`<span class="muted layer-row-kind">${esc(KIND_WORD[layer.kind]||layer.kind)}${layer.parts?` · ${layer.parts} parts`:''}${layer.origin==='within'?' · inside a collection':''}</span>`
     +`</div>`).join('')
     :'<p class="muted">Nothing is connected to this map yet, so it has no layers to manage.</p>';
   // WHAT IS REFUSED IS SAID HERE, and it is never a combination of kinds. A kind decides how a
   // layer is drawn, not whether it may be there.
-  const drawn=list.filter(l=>!l.hidden);
+  const drawn=list.filter(l=>l.drawn);
   $('#layer-dialog-note').textContent=!list.length
     ?'Connect a study area, points, polygons, a raster or a street network.'
     :!drawn.length?'Every layer is switched off, so this map has nothing to draw. Switch one back on.'
     :`Drawn bottom to top: ${drawn.map(l=>l.label).join(' → ')}.`
       +(drawn.length<list.length?` ${list.length-drawn.length} switched off, still connected.`:'');
 }
-function editLayer(id:string,patch:{label?:string;group?:string;hidden?:boolean}){
+function editLayer(id:string,patch:{label?:string;group?:string;drawn?:boolean}){
   if(!layerDialogNode)return;
   change(w=>{
     const node=getNode(w,layerDialogNode!,'map_output');
@@ -6060,8 +6064,8 @@ function editLayer(id:string,patch:{label?:string;group?:string;hidden?:boolean}
     // A setting that says nothing is removed rather than stored empty, so a layer the
     // practitioner cleared behaves exactly like one they never touched -- including taking a new
     // default when the node it comes from is renamed.
-    for(const key of ['label','group'])if(typeof next[key]==='string'&&!next[key].trim())delete next[key];
-    if(next.hidden===false)delete next.hidden;
+    for(const key of ['label','group'])if(typeof next[key]==='string'&&!(next[key] as string).trim())delete next[key];
+    if(next.drawn===true)delete next.drawn;
     if(Object.keys(next).length)held[id]=next as typeof held[string];else delete held[id];
     node.params.layers=held;
   });
@@ -6069,13 +6073,14 @@ function editLayer(id:string,patch:{label?:string;group?:string;hidden?:boolean}
 }
 $('#layer-dialog-rows').addEventListener('input',event=>{
   const target=event.target as HTMLInputElement;
-  const forLabel=target.getAttribute('data-layer-label'),forGroup=target.getAttribute('data-layer-group');
+  const forLabel=target.getAttribute('data-layer-label');
   if(forLabel)editLayer(forLabel,{label:target.value});
-  else if(forGroup)editLayer(forGroup,{group:target.value});
 });
 $('#layer-dialog-rows').addEventListener('change',event=>{
   const target=event.target as HTMLInputElement,id=target.getAttribute('data-layer-visible');
-  if(id)editLayer(id,{hidden:!target.checked});
+  if(id){editLayer(id,{drawn:target.checked});return;}
+  const grouped=target.getAttribute('data-layer-group');
+  if(grouped)editLayer(grouped,{group:target.value});
 });
 $('#layer-dialog-rows').addEventListener('click',event=>{
   const button=(event.target as HTMLElement).closest('[data-layer-move]') as HTMLElement|null;
@@ -6089,15 +6094,33 @@ $('#layer-dialog-rows').addEventListener('click',event=>{
   const next=[...list];[next[at],next[swap]]=[next[swap],next[at]];
   change(w=>{
     const node=getNode(w,layerDialogNode!,'map_output'),held={...(node.params.layers||{})};
-    next.forEach((layer,index)=>{held[layer.id]={...held[layer.id],order:index};});
+    next.forEach((layer,index)=>{held[layer.id]={...held[layer.id],index};});
     node.params.layers=held;
   });
   renderLayerDialog();
   ($('#layer-dialog-rows').querySelector(`[data-layer-row="${CSS.escape(id)}"] [data-direction="${up?'up':'down'}"]`) as HTMLElement|null)?.focus();
 });
+$('#layer-dialog-declare').onclick=()=>{
+  if(!layerDialogNode)return;
+  // DECLARED FIRST, JOINED AFTER. The group exists with a name and a position before any layer is
+  // in it, which is what makes it one thing to rename and one block to move.
+  const node=getNode(workflow,layerDialogNode,'map_output');
+  const held=node.params.layerGroups||[];
+  const field=$('#layer-group-name') as HTMLInputElement;
+  const label=field.value.trim();
+  if(!label){$('#layer-dialog-note').textContent='A group needs a name before layers can be added to it.';field.focus();return;}
+  change(w=>{
+    const target=getNode(w,layerDialogNode!,'map_output');
+    target.params.layerGroups=[...held,
+      {id:`group-${Date.now().toString(36)}-${held.length}`,label:label.slice(0,LAYER_LABEL_LIMIT),index:held.length}];
+  });
+  field.value='';
+  renderLayerDialog();
+};
 $('#layer-dialog-reset').onclick=()=>{
   if(!layerDialogNode)return;
-  change(w=>{delete getNode(w,layerDialogNode!,'map_output').params.layers;});
+  change(w=>{const node=getNode(w,layerDialogNode!,'map_output');
+    delete node.params.layers;delete node.params.layerGroups;});
   renderLayerDialog();
 };
 for(const id of ['#layer-dialog-close','#layer-dialog-done'] as const)

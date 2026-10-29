@@ -250,7 +250,30 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   if(!output.polygons&&!output.raster&&output.rows?.length)
     drawn.push({kind:'PointsLayer',features:output.rows.filter(r=>r.coordinates).length,port:portOf('points')?.port});
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n<${iri}> a fw:MapSpecification, prov:Plan; dcterms:title ${JSON.stringify(spec.title)}; dcterms:description ${JSON.stringify(spec.subtitle)}; fw:mapLegend ${spec.legend}; fw:mapPresentation ${JSON.stringify(spec.presentation)}; fw:mapBasemap ${JSON.stringify(spec.basemap)}; fw:mapSourceNote ${JSON.stringify(spec.sourceNote)}; prov:wasDerivedFrom ${sources.join(', ')}.\n<${activity}> fw:mapSpecification <${iri}>; prov:used <${iri}>.\n`;
-  const layerFacts=`<${iri}> fw:layerCount ${drawn.length}.\n`
+  // THE DESCRIPTION IS EMITTED FROM THE LIST THE RENDERER READ, where there is one.
+  //
+  // This array was assembled here, separately, for the sole purpose of emitting N3 after the
+  // picture had been decided: a description nothing read back, which could disagree with the
+  // drawing and never say so. The practitioner, 2026-10-29: *"Let's stop the backward direction.
+  // Let's begin with the ontology representation in mind so the exhaust becomes more logical and
+  // can be queried after render."* So where the run attached a layer list -- the same one the
+  // interactive control and the dialog work from -- the receipt states THAT, with the names and
+  // the grouping the practitioner gave, and whether each layer was actually drawn. Experiment 148.
+  const stated=output.mapLayers?.length?output.mapLayers:null;
+  const groupIri=(id:string)=>`${iri}:group:${id}`;
+  const layerFacts=stated
+    ?`<${iri}> fw:layerCount ${stated.length}.\n`
+      +[...new Map(stated.filter(l=>l.group).map(l=>[l.group!.id,l.group!])).values()]
+        .map(group=>`<${groupIri(group.id)}> a fw:LayerGroup; fw:groupLabel ${JSON.stringify(group.label)}; `
+          +`fw:groupIndex ${group.index}.\n`).join('')
+      +stated.map(layer=>`<${iri}> fw:layer [ fw:layerIndex ${layer.index}; `
+        +`fw:layerKind <urn:fieldwork:${layer.kind}>; fw:layerLabel ${JSON.stringify(layer.label)}; `
+        +`fw:layerDrawn ${layer.drawn}; `
+        +`${layer.parts!==undefined?`fw:layerFeatureCount ${layer.parts}; `:''}`
+        +`${layer.group?`fw:layerGroup <${groupIri(layer.group.id)}>; `:''}`
+        +`${layer.origin==='within'?`fw:layerWithin ${JSON.stringify(layer.within||'the value')}`
+          :`fw:layerPort ${JSON.stringify(layer.port)}`} ].\n`).join('')
+    :`<${iri}> fw:layerCount ${drawn.length}.\n`
     +drawn.map((layer,index)=>`<${iri}> fw:layer [ fw:layerIndex ${index}; fw:layerKind <urn:fieldwork:${layer.kind}>; `
       +`${layer.features!==undefined?`fw:layerFeatureCount ${layer.features}; `:''}`
       +`${layer.role?`fw:layerRole ${JSON.stringify(layer.role)}; `:''}`

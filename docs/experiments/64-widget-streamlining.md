@@ -520,6 +520,71 @@ each admitted through D1 individually. The set grew because the work grew, not b
 was watching. What was not watched is this table: the audit's counts were never brought forward,
 which is why the growth was invisible until someone asked.
 
+## Amendment, 2026-10-29 — a workflow is the evidence of usefulness, and the gate now says so
+
+The practitioner, on the six South London workflows:
+
+> There are six workflows in South London, enough to exercise our widgets in the palette. This is
+> one way we can assess which widgets are really useful in workflows and which are not (these
+> deserve targeted revisits).
+
+Measured the same day, and the numbers are sharper than the ladder made them look:
+
+| | |
+| --- | --- |
+| Live widgets | 54 |
+| Used by **no** workflow | **12** |
+| Used by exactly one workflow | 30 |
+| Reached by two workflows or more | **12** |
+| Used by South London alone | 17, of which **11 are used by no other example** |
+
+The twelve no workflow uses: `buffer_point`, `deduplicate_points`, `fill_interior_gaps`,
+`measure_area`, `micro_workflow`, `reachable_corridor`, `reachable_nodes`, `sample_raster`,
+`slr_threshold_comparison`, `snap_to_network`, `summarize_combined_area`, `travel_time_band`.
+
+**Ten of those twelve are `parity only`**, which is the distinction worth stating plainly: a lab
+check establishes that a widget is RIGHT, and appearing in a workflow is the only evidence here
+that it is USEFUL. Those are not the same claim, and the ladder's rungs let the first stand in
+for the second. `scripts/widget-evidence.mjs` now names them on every run, the way
+`compositionsUsedByNoExample` already named its own.
+
+The second number is a fragility this measurement was not looking for. Eleven widgets have South
+London as their only evidence; restructuring that example on 2026-10-28 and again on 2026-10-29
+could have taken eleven widgets' entire case with it, and nothing would have reported that. A
+widget reached by exactly one workflow has one workflow's worth of evidence.
+
+### And the Snow examples already reach most of the palette
+
+The practitioner, the same day: *"Between the two John Snow related examples, many widgets can be
+exercised at least once."* Measured:
+
+| | |
+| --- | --- |
+| Exercised by the five Snow-related examples | **32 of 54** |
+| Exercised only by a non-Snow example | 10 |
+| Exercised by nothing | 12 |
+
+The ten outside are the ones whose problems Snow's data does not pose: facilities and facility
+audits, health-facility search, sea-level site assignment, rasters, a point grid, travel time,
+clipping points to an area, measured distance.
+
+**And one workflow would reach five of the twelve.** `compute_walking_catchment` — the
+composition in `compositionsUsedByNoExample` — is assembled from `snap_to_network`,
+`reachable_nodes`, `reachable_corridor` and `travel_time_band`, every one of which is in the
+unused twelve. `micro_workflow`, the widget that runs a composition at all, is a sixth. They are
+unused for one reason: `snow-isochrone` uses the monolithic `isochrone` widget, and the
+decomposition that was built beside it, parity-checked at 2 parts in 100,000 on the John Snow
+network, is reached by no workflow. A Snow workflow built from the composition rather than the
+monolith would exercise the composition, its four members and the widget that runs them.
+
+That is the targeted revisit this measurement was asked for, and it is one workflow rather than
+six retirements.
+
+What this does **not** establish: that an unused widget should be retired. D11 asks whether a
+residual function remains that nothing else performs, and nothing here answers that — a widget
+may be unused because no example needed its problem yet, which is a gap in the examples rather
+than in the palette. It establishes only which twelve the question is owed about.
+
 ## What would close it
 
 Phases 2 to 6 executed, or each remaining phase explicitly withdrawn with a reason. Phase 1 is

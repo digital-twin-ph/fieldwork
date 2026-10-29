@@ -161,3 +161,22 @@ if(weakest.length)console.log(`  weakest rung: ${weakest.join(', ')}`);
 const most=[...evidence.widgets].sort((a,b)=>b.exampleUseCount-a.exampleUseCount).slice(0,3);
 console.log(`  most used: ${most.map(w=>`${w.nodeType} (${w.exampleUseCount})`).join(', ')}`);
 console.log(`  field use: ${evidence.widgets.filter(w=>w.fieldUse.length).length} widgets`);
+
+// WHICH WIDGETS NO WORKFLOW USES, named rather than left to be inferred from two rungs.
+//
+// The practitioner, 2026-10-29, on the six South London workflows: *"This is one way we can
+// assess which widgets are really useful in workflows and which are not (these deserve targeted
+// revisits)."* The counts above already held this and did not say it: a widget with no example
+// is spread across `parity only` -- it computes correctly against a reference and no workflow
+// needs it -- and `declared only`, which is neither. Passing a lab check is evidence that a
+// widget is RIGHT; appearing in a workflow is the only evidence here that it is USEFUL, and the
+// two are not the same claim. Named the same way `compositionsUsedByNoExample` already names
+// its own.
+//
+// The companion number is the one beneath it: a widget used by exactly one example has one
+// workflow's worth of evidence, and if that example changes it has none.
+const unused=evidence.widgets.filter(w=>!w.exampleUseCount).map(w=>w.nodeType);
+const once=evidence.widgets.filter(w=>w.exampleUseCount===1).length;
+console.log(`  used by no workflow: ${unused.length}${unused.length?` \u2014 ${unused.join(', ')}`:''}`);
+console.log(`  used by exactly one: ${once}, so ${evidence.widgets.length-unused.length-once} of `
+  +`${evidence.widgets.length} are reached by two workflows or more`);

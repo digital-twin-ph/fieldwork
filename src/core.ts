@@ -1185,7 +1185,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               +`${n.toFixed(4)}, so part of it has no features because none were read there. `
               +'Read the extract again.');
         }
-        value=polygonLayer(features,node.params) as unknown as DisplayValue;
+        // THE LAYER IS CALLED WHAT THE NODE IS CALLED, unless it was given a name of its own.
+        // Without this a collected layer reached `stack_polygons` anonymous and came out as
+        // "Layer 1" and "Layer 2", so a map carrying the sub-districts and the Thames offered a
+        // reader two toggles named after nothing. The words on the canvas are the words the
+        // practitioner already chose.
+        value=polygonLayer(features,{...node.params,
+          layerName:node.params.layerName||node.params.label}) as unknown as DisplayValue;
         const {facts,vertices}=polygonLayerFacts(features,node.params,{runId,nodeId:node.id});
         receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
           method:read

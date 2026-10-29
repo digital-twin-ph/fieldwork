@@ -102,12 +102,10 @@ which published file covers your box and links it; your browser does the downloa
 **It will not keep the extract.** Only the areas read out of it are kept. Reading again means
 choosing the file again.
 
-**How many features is not a limit.** It was, until 2026-10-29: a read stopped at five hundred,
-and a practitioner holding the Greater London extract on their own disk was refused 606 water
-features. The number stood on a definition — that past it "a layer is a basemap rather than a
-study's own geometry" — and on a vertex budget that is checked separately, on its real total. What
-refuses now is vertices, two hundred thousand of them, because that is the thing that costs. The
-refusal tells you which vertex floor would fit, read off the features the read actually found.
+**How many features is not a limit.** What refuses is vertices — two hundred thousand of them,
+because that is the thing that costs. A read of Greater London's water areas returns six hundred
+features and comes through. If a layer does pass the vertex budget, the refusal tells you which
+vertex floor would fit, read off the features the read actually found.
 
 ## Choosing which features to keep
 
@@ -125,6 +123,26 @@ and how many you set aside, because a layer of two drawn from a read of 606 is a
 reader of your evidence should be able to see that you made it.
 
 Setting every feature aside is refused: a layer that holds nothing is not a layer.
+
+**Three reductions, and a name.**
+
+| | What it does |
+| --- | --- |
+| **Keep or discard** | Choose features on the map or in the list, then keep only those or discard them. Or clear a single row's box. |
+| **Clip to the box** | Cut every feature to the box the read used. What falls wholly outside drops; what straddles the edge is cut at it. |
+| **Merge** | Union the features you chose into one, keeping the group's first name. Two reaches of one river, or a dock drawn as four touching basins, are one thing your workflow counts once. |
+
+Adjacency is not checked before a merge. Features that do not touch become one feature of two
+parts, which is a real answer — a river above and below a lock is one river whether or not the
+data drew it sharing an edge — and refusing it would need a tolerance nobody has measured.
+
+**And you can name them.** Type over any feature's name. A map whose polygons read "Feature 37"
+names nothing a reader can use, and the file does not always carry a property worth naming them
+by. **Set aside the unnamed** does it in bulk: it asks whether the property you nominated carried
+a value for each feature, never whether the name looks automatic.
+
+All four are decisions applied when the workflow runs, not edits to the data. The read stays as
+it was published, so every one of them is reversible, and the receipt records what you chose.
 
 *Why looking rather than typing:* the first design for this filtered at read time by a property
 name and a list of values. You cannot name values you have not seen, and nobody knows in advance

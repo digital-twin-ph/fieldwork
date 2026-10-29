@@ -6266,15 +6266,22 @@ document.addEventListener('click',event=>{
   const bounds=area?geometryBounds(area):undefined;
   const frame=node.params.retrieval?.bbox
     ??(bounds?[bounds[0],bounds[1],bounds[2],bounds[3]] as [number,number,number,number]:undefined);
-  openPolygonReview(node,esc,(hidden,clipped)=>{
+  openPolygonReview(node,esc,({hidden,clipped,names,merges})=>{
     change(w=>{
       const target=getNode(w,id,'polygon_input');
+      // Each decision is stored only where it was made, so a layer nobody reduced carries
+      // nothing and behaves exactly as it was read.
       if(hidden.length)target.params.hidden=hidden;else delete target.params.hidden;
       if(clipped)target.params.clipToBox=true;else delete target.params.clipToBox;
+      if(Object.keys(names).length)target.params.names=names;else delete target.params.names;
+      if(merges.length)target.params.merges=merges;else delete target.params.merges;
     });
-    toast(hidden.length
-      ?`${hidden.length} feature${hidden.length===1?'':'s'} set aside. Rerun to update results.`
-      :'Every feature kept. Rerun to update results.');
+    const said=[hidden.length?`${hidden.length} set aside`:'',
+      merges.length?`${merges.length} merge${merges.length===1?'':'s'}`:'',
+      Object.keys(names).length?`${Object.keys(names).length} renamed`:'',
+      clipped?'cut to the box':''].filter(Boolean);
+    toast(said.length?`${said.join(', ')}. Rerun to update results.`
+      :'Every feature kept as read. Rerun to update results.');
   },frame);
 });
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();

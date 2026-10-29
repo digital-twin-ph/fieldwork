@@ -61,6 +61,72 @@ export const MAX_LAYER_VERTICES=200_000;
  *  rectangle the read was scoped to, which is the frame the viewer draws. Where the study area IS
  *  a bounding box the two agree; where it is a drawn polygon, clipping to the box is the looser
  *  cut, and `a-study-area-clips-to-its-polygon` is the open direction about that. */
+/** WHETHER A FEATURE WAS NAMED BY THE FILE, which is not the same as what it is called.
+ *
+ *  A read numbers what it could not name -- "Feature 37" -- so the name is always populated and
+ *  tells you nothing about whether anything was found. This asks the exact question instead: did
+ *  the property the practitioner nominated carry a value for this feature. No guessing from the
+ *  shape of a name, which is the same rule the naming field itself follows.
+ *
+ *  With no naming property chosen, nothing is named, and saying so is more use than reporting
+ *  that every feature is anonymous. */
+export const namedByFile=(feature:{properties?:Record<string,Scalar>},nameField?:string):boolean=>{
+  const key=nameField?.trim();
+  if(!key)return false;
+  const held=feature.properties?.[key];
+  return held!==undefined&&held!==null&&String(held).trim()!=='';
+};
+
+/** The names a practitioner gave features here, over the names the file gave them.
+ *
+ *  The practitioner, 2026-10-29: *"Technically, I should be able to name the kept polygons in the
+ *  polygon input."* Applied at run time like everything else the viewer decides, so the read is
+ *  untouched and a name is a choice rather than an edit to somebody's published data. */
+export function applyNames<T extends {id:string;name:string}>(
+  features:readonly T[],names:Record<string,string>|undefined):T[]{
+  if(!names||!Object.keys(names).length)return [...features];
+  return features.map(feature=>{
+    const given=names[String(feature.id)]?.trim();
+    return given?{...feature,name:given}:feature;
+  });
+}
+
+/** Groups of features unioned into one, each keeping the group's first name.
+ *
+ *  The practitioner, 2026-10-29: *"I would also like to be able to merge adjacent polygons in the
+ *  polygon input filter dialog modal."* Two reaches of one river, or a dock drawn as four
+ *  touching basins, are one thing a workflow wants to count once.
+ *
+ *  ADJACENCY IS NOT CHECKED, and that is deliberate. A union of polygons that do not touch is a
+ *  MultiPolygon with two parts, which is a legitimate answer -- the Thames above and below a lock
+ *  are one river whether or not OpenStreetMap drew them sharing an edge. Refusing non-adjacent
+ *  merges would need a tolerance nobody has measured, and would refuse exactly the case this was
+ *  asked for. */
+export function applyMerges<T extends {id:string;name:string;geometry:Boundary}>(
+  features:readonly T[],merges:readonly (readonly string[])[]|undefined):T[]{
+  if(!merges?.length)return [...features];
+  const byId=new Map(features.map(f=>[String(f.id),f]));
+  const taken=new Set<string>();
+  const made:T[]=[];
+  for(const group of merges){
+    const members=group.map(id=>byId.get(String(id))).filter((f):f is T=>!!f&&!taken.has(String(f.id)));
+    if(members.length<2)continue;
+    for(const member of members)taken.add(String(member.id));
+    const parts=members.map(m=>m.geometry.type==='Polygon'
+      ?[m.geometry.coordinates]:m.geometry.coordinates);
+    const union=parts.reduce((all,next)=>polygonClipping.union(all as never,next as never),
+      parts[0] as never) as unknown as number[][][][];
+    made.push({...members[0],geometry:{type:'MultiPolygon' as const,coordinates:union}});
+  }
+  // In the order they were read, with each merged feature standing where its first member stood.
+  return features.flatMap(feature=>{
+    const id=String(feature.id);
+    if(!taken.has(id))return [feature];
+    const built=made.find(m=>String(m.id)===id);
+    return built?[built]:[];
+  });
+}
+
 export function clipToBox<T extends {geometry:Boundary}>(features:readonly T[],
   box:readonly [number,number,number,number]):T[]{
   const [west,south,east,north]=box;

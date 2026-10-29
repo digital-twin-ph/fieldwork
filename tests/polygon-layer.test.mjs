@@ -147,3 +147,56 @@ test('a feature straddling the edge is cut at it, and keeps its other fields',()
 test('a feature wholly inside the box comes through',()=>{
   assert.equal(clipToBox([box(.2,.2,.3)],[0,0,1,1]).length,1);
 });
+
+/** THE THREE REDUCTIONS AND THE NAMING, as the practitioner framed them on 2026-10-29:
+ *  *"polygon input enables three forms of reduction: keep/discard, clip and merge selected
+ *  adjacents."* Clip is tested above; these are the other two, plus the names that make a map
+ *  readable. */
+import {applyNames,applyMerges,namedByFile} from '../build/polygon-layer.js';
+
+test('a name given here wins over the name the file gave',()=>{
+  const read=[{id:'a',name:'Feature 1'},{id:'b',name:'Feature 2'}];
+  const named=applyNames(read,{a:'Thames, tidal'});
+  assert.equal(named[0].name,'Thames, tidal');
+  assert.equal(named[1].name,'Feature 2','a feature nobody renamed keeps what it had');
+  assert.equal(read[0].name,'Feature 1','the read is untouched');
+});
+
+test('a blank name is no name, not an empty one',()=>{
+  assert.equal(applyNames([{id:'a',name:'Feature 1'}],{a:'   '})[0].name,'Feature 1');
+});
+
+test('whether the file named a feature is asked of the property, never of the name',()=>{
+  assert.equal(namedByFile({properties:{subdist:'Rotherhithe'}},'subdist'),true);
+  assert.equal(namedByFile({properties:{subdist:'  '}},'subdist'),false,'blank is not a name');
+  assert.equal(namedByFile({properties:{}},'subdist'),false);
+  // With no naming property chosen, nothing was named by the file -- including a feature whose
+  // automatic name happens to read like one.
+  assert.equal(namedByFile({properties:{name:'Feature 3'}}),false);
+});
+
+test('merged features become one, keeping the group’s first name and place',()=>{
+  const read=[box(0,0,1),box(1,0,1),box(5,5,1)].map((f,i)=>
+    ({...f,id:String.fromCharCode(97+i),name:`Feature ${i+1}`}));
+  const merged=applyMerges(read,[['a','b']]);
+  assert.equal(merged.length,2);
+  assert.equal(merged[0].id,'a');
+  assert.equal(merged[0].name,'Feature 1');
+  assert.equal(merged[0].geometry.type,'MultiPolygon');
+  assert.equal(merged[1].id,'c','the untouched one stays where it was read');
+});
+
+test('a merge of one, or of ids that are not there, changes nothing',()=>{
+  const read=[{...box(0,0,1),id:'a',name:'A'}];
+  assert.equal(applyMerges(read,[['a']]).length,1);
+  assert.equal(applyMerges(read,[['a','missing']]).length,1);
+});
+
+test('a feature cannot be merged into two groups',()=>{
+  const read=[box(0,0,1),box(1,0,1),box(2,0,1)].map((f,i)=>
+    ({...f,id:String.fromCharCode(97+i),name:`F${i}`}));
+  // The second group would take `b` again; it is already spent, so that group makes nothing.
+  const merged=applyMerges(read,[['a','b'],['b','c']]);
+  assert.equal(merged.length,2,'a+b merged, c left alone');
+  assert.deepEqual(merged.map(f=>f.id),['a','c']);
+});

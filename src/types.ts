@@ -229,7 +229,14 @@ export interface ParamsByType {
     /** Cut each feature to the box the read was scoped to, dropping what falls wholly outside.
      *  Applied at run time rather than baked into the stored features, so the read stays
      *  untouched and the cut is a choice the receipt records. */
-    clipToBox?:boolean;label:string;
+    clipToBox?:boolean;
+    /** What the practitioner calls each feature, over whatever the file called it. Keyed by
+     *  feature id. A map whose polygons are "Feature 37" names nothing a reader can use, and the
+     *  file is not always carrying a property worth naming them by. */
+    names?:Record<string,string>;
+    /** Groups of features unioned into one, each keeping the group's first name. Two reaches of
+     *  one river, or a dock drawn as four touching basins, are one thing a workflow counts once. */
+    merges?:string[][];label:string;
     /** The features, as parsed. Empty until a file is imported, which is the state `core.ts`
      *  already allows for a raster or a network with no file. */
     data:{features:{id:string;name:string;geometry:import('./types.js').Boundary;

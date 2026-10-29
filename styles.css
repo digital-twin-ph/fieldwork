@@ -757,3 +757,7 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .polygon-review-row.is-chosen{background:rgba(29,78,216,.22)}
 #polygon-review-selection{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
 #polygon-review-selection #polygon-review-selected{margin-right:auto}
+.polygon-review-unnamed{display:flex;gap:.35rem;align-items:center;margin-right:auto;font-size:.85rem}
+.polygon-review-name{background:transparent;border:1px solid transparent;border-radius:4px;color:inherit;font:inherit;padding:.1rem .25rem;min-width:0;width:100%}
+.polygon-review-name:hover,.polygon-review-name:focus{border-color:var(--rule,#3a4a46);background:rgba(255,255,255,.04)}
+.polygon-review-name[data-unnamed]{font-style:italic;opacity:.75}

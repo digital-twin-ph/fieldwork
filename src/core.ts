@@ -272,7 +272,7 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
  *  What this does not do is unify the renderers: a map with polygons AND a raster wired draws the
  *  raster, because no renderer draws both. That limit is the next piece of the same work, and it
  *  is now a limit of the drawing code rather than a question put to the practitioner. */
-import {clipToBox} from './polygon-layer.js';
+import {clipToBox,applyNames,applyMerges} from './polygon-layer.js';
 import {mapLayerList,validateLayerSettings,assertSomethingToDraw,membersOfPolygons,type MapLayer}
   from './map-layer-list.js';
 
@@ -1175,8 +1175,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // look at them -- so they are hidden by id here rather than filtered by a predicate typed
         // before anything had been seen. The read is untouched and repeatable; this is what the
         // layer carries.
+        // NAMED, THEN MERGED, THEN SET ASIDE, THEN CUT -- in that order and for that reason. A
+        // name is given to a feature as it was read, so it survives a merge; a merge keeps its
+        // group's first name; what is set aside is set aside by the id it was read under; and
+        // the cut is last because it changes geometry and nothing after it decides anything.
+        const named=applyNames(imported,node.params.names);
+        const merged=applyMerges(named,node.params.merges);
         const setAside=new Set(node.params.hidden||[]);
-        const features=setAside.size?imported.filter(f=>!setAside.has(String(f.id))):imported;
+        const features=setAside.size?merged.filter(f=>!setAside.has(String(f.id))):merged;
         if(!features.length)throw new Error(`Every feature in "${node.params.label||node.id}" is `
           +'set aside, so this layer holds nothing. Open Choose features and tick at least one.');
         // CUT TO THE FRAME THE READ USED, where the practitioner asked for it. The same

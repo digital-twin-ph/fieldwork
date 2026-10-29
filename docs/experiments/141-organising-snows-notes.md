@@ -303,6 +303,51 @@ ours belongs in Discussion.
 carry it are not written, and writing them is a different act from designing where they go. The
 two verification sections above exist as README prose and are not yet notes at all.
 
+## Amendment, 2026-10-29 — the DE outcome, and the rung it is on
+
+The practitioner:
+
+> If the work becomes publishable, which it could, then we have developed the critical substrate
+> on which that publication will stand. And at the same time, we have demonstrated the value of FW
+> in facilitating the production of such publication, an important DE outcome.
+
+**The first half is true now.** The substrate exists and is checkable: nine quoted notes carrying
+what each establishes, two of them recording a modern source checked against the historical one;
+a machined note per computation that states its own numbers; a functional vocabulary reconciled
+against this experiment; references the workflows can write themselves; a receipt behind every
+figure. A publication built on that would stand on something, and the something is in the
+repository rather than in anybody's memory.
+
+**The second half is the claim this project is most at risk of flattering itself about**, and its
+own instrument already says so. `scripts/widget-evidence.mjs` declares four rungs and prints the
+top one empty on every run:
+
+> 4 · field use — a practitioner used it on real work. **Nothing has this yet**, and the rung is
+> declared anyway, because an empty top rung is a measurement and a missing one is a flattering
+> omission.
+
+Facilitating a publication is that rung, one surface over. Today the notes are at rung 2: one
+worked example exercises them, and the example is one we built to exercise them. *"We have
+demonstrated the value of FW in facilitating the production of such publication"* is not yet a
+measurement — it is the hypothesis the worked example was constructed to test, and the test has
+not been run.
+
+**What would run it**, stated so it can be checked rather than asserted:
+
+- A write-up of this study whose Methods and Results sections are **assembled from the notes the
+  workflows produced**, not written beside them — with the count of sentences that had to be
+  written by hand recorded, because that number is the friction the mission promises to decrease.
+- The same for its references: 141 found roughly 75 lines of the README are `source` material with
+  no narrative home, and that *"references are the one section a workflow can write by itself"*.
+  Whether it can is a thing to measure, not to claim.
+- One author who is not the application's author doing it. An example built by the people who
+  built the tool, used by the people who built the tool, measures the tool's reach and not its
+  usefulness.
+
+Until then the honest statement is the one the ladder models: **the substrate is built, one
+example exercises it, and the top rung is empty.** Writing it down that way is what keeps the
+outcome worth claiming when it is finally earned.
+
 ## Carried over from the three superseded records
 
 ### The spine, and what travels along it (from 133)

@@ -742,3 +742,15 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 #layer-dialog-rows{max-height:50vh;overflow-y:auto}
 .layer-group-declare{display:flex;gap:.4rem;align-items:center;margin-right:auto}
 .layer-group-declare input{min-width:12rem}
+
+/* CHOOSE FEATURES. The map beside the rows, because the point is to look at a polygon and then
+   decide about its row -- two panes, not a list with a preview somewhere else. */
+.polygon-review-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:.75rem;align-items:stretch}
+#polygon-review-map{height:min(52vh,420px);border-radius:8px;overflow:hidden}
+#polygon-review-rows{max-height:min(52vh,420px);overflow-y:auto;display:flex;flex-direction:column;gap:.1rem}
+.polygon-review-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.5rem;align-items:center;padding:.25rem .4rem;border-radius:6px}
+.polygon-review-row.is-picked{background:rgba(194,65,12,.16)}
+.polygon-review-name{background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.polygon-review-name:hover{text-decoration:underline}
+#polygon-dialog{max-width:64rem;width:94vw}
+@media (max-width:720px){.polygon-review-layout{grid-template-columns:1fr}}

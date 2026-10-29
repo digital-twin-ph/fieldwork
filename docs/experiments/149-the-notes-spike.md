@@ -71,9 +71,24 @@ Add Notes button"* — is not built. The panel states that rather than looking f
   London's run makes few. Nine quoted notes is not a write-up.
 - **That the word count means anything yet.** It counts what a reader would read and nobody has
   written against a target.
-- **That editing belongs on this surface at all.** A note is produced by a widget or quoted from a
-  source; whether it should be editable afterwards, and what that does to its provenance, is the
-  question the modal would force and the spike deliberately did not touch.
+- ~~That editing belongs on this surface at all.~~ **Settled 2026-10-29 by the practitioner, and
+  the answer is better than the three options that were about to be offered:** *"A machined note
+  can also be edited but once it is, it is forked from the original and becomes an authored note
+  with two provenances."*
+
+  Editing destroys nothing. The widget goes on machining its own account every run; the edit
+  becomes a note of a **different kind**, carrying both warrants — the computation that produced
+  the wording and the person who changed it. Neither alone says what the sentence is.
+
+  It also makes the hard case reportable rather than silent. A fork keeps the machined wording it
+  was taken from, so when the run re-machines different numbers the fork still reads as it did and
+  `forkHasDrifted` can say so. The cost of being allowed to edit a computed sentence is that it
+  can stop describing the computation; the fork does not remove that cost, it makes it visible.
+
+  And it settles the quotation question by the same rule without needing a special case: a quoted
+  note has one warrant that is not ours, so there is nothing to fork it into. The prototype's
+  read-only reason — *"the place to change it is"* — is the same answer stated from the other
+  side.
 
 ## The prototype, read
 

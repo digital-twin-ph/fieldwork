@@ -140,6 +140,29 @@ export interface AuthoredNote {
   text:string;
   /** The note or node this annotates. */
   about?:string;
+  /** WHERE IT CAME FROM WHEN IT WAS NOT WRITTEN FROM NOTHING.
+   *
+   *  The practitioner, 2026-10-29: *"A machined note can also be edited but once it is, it is
+   *  forked from the original and becomes an authored note with two provenances."*
+   *
+   *  That is the answer to a question this module had been circling: whether a machined note is
+   *  editable. It is, and editing one does not overwrite it -- the widget goes on machining its
+   *  own account every run, and the edit becomes a separate note of a different kind. So nothing
+   *  is destroyed and nothing is silently claimed: the fork says a computation produced the words
+   *  and a person changed them, which are two different warrants and a reader needs both.
+   *
+   *  `text` is the machined wording AT THE MOMENT OF FORKING, kept so drift is detectable. When
+   *  the run re-machines and the numbers move, the fork still reads as it did, and the only way
+   *  to know is to compare -- which `forkHasDrifted` does, rather than leaving a reader to
+   *  believe an edited sentence still describes the current run. */
+  forkedFrom?:{
+    /** The node whose widget machined the original. */
+    nodeId?:string;
+    /** The machined wording this was forked from. */
+    text:string;
+    /** When the fork was taken. */
+    at?:string;
+  };
 }
 
 export type Note=QuotedNote|MachinedNote|AuthoredNote;
@@ -176,9 +199,17 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
     if(entry.kind==='authored'){
       const body=text(entry.text),id=text(entry.id);
       if(!body||!id){unreadable++;continue;}
+      // A fork with no original wording is not a fork: it claims a second provenance and
+      // carries nothing to check it against, so the claim is dropped and the note stands as
+      // what it plainly is -- somebody's own sentence.
+      const from=isRecord(entry.forkedFrom)?entry.forkedFrom:undefined;
+      const was=from?text(from.text):'';
       notes.push({kind:'authored',id,section,text:body,
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
-        ...(text(entry.about)?{about:text(entry.about)}:{})});
+        ...(text(entry.about)?{about:text(entry.about)}:{}),
+        ...(was?{forkedFrom:{text:was,
+          ...(text(from!.nodeId)?{nodeId:text(from!.nodeId)}:{}),
+          ...(text(from!.at)?{at:text(from!.at)}:{})}}:{})});
       continue;
     }
     if(entry.kind==='machined'){
@@ -221,6 +252,29 @@ export function groupNotes(notes:Note[]):PartGroup[]{
  *
  *  Counted over what a reader would read -- a quoted note's quote, a machined note's text -- and
  *  not over `establishes`, which is the reason for the quote rather than part of the write-up. */
+/** FORK A MACHINED NOTE, which is what editing one does.
+ *
+ *  The machined note is untouched -- the widget rewrites it on the next run either way. What this
+ *  returns is a new note of a different kind, carrying both warrants: the computation that
+ *  produced the wording, and the person who changed it. */
+export function forkMachinedNote(note:MachinedNote,id:string,text:string,at?:string):AuthoredNote{
+  return {kind:'authored',id,section:note.section,text,
+    ...(note.fn?{fn:note.fn}:{}),
+    forkedFrom:{text:note.text,...(note.nodeId?{nodeId:note.nodeId}:{}),...(at?{at}:{})}};
+}
+
+/** Whether what was machined has moved since the fork was taken.
+ *
+ *  A forked note goes on reading as it did while the run behind it changes, which is the cost of
+ *  being allowed to edit one. Nothing here resolves that -- it reports it, so a reader is not
+ *  left believing an edited sentence still describes the current numbers. */
+export function forkHasDrifted(note:AuthoredNote,machined:readonly MachinedNote[]):boolean{
+  const from=note.forkedFrom;
+  if(!from)return false;
+  const now=machined.find(m=>m.nodeId===from.nodeId&&m.section===note.section);
+  return !!now&&now.text!==from.text;
+}
+
 export function noteExtent(notes:Note[]):{notes:number; words:number; characters:number}{
   const bodies=notes.map(note=>note.kind==='quoted'?note.quote:note.text);
   return {notes:notes.length,

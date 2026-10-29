@@ -767,3 +767,18 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .visually-hidden{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 .layer-row-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .layer-row-origin{font-size:.75rem}
+
+/* THE NOTES SPIKE. The body in IMRAD order; a note is a block of someone's prose, so it is set
+   as prose rather than as a row in a table. */
+.project-notes{margin-top:1.25rem;border-top:1px solid var(--rule,#2a3a36);padding-top:1rem}
+.notes-head{display:flex;gap:.75rem;align-items:baseline;flex-wrap:wrap}
+.notes-part{margin:1rem 0}
+.notes-part h3{margin:0 0 .4rem;font-size:1rem}
+.notes-part.is-empty{opacity:.65}
+.notes-note{border-left:2px solid var(--rule,#2a3a36);padding:.1rem 0 .1rem .75rem;margin:.6rem 0}
+.notes-note blockquote{margin:.2rem 0;font-style:italic}
+.notes-labels{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;font-size:.75rem}
+.notes-kind,.notes-fn{border-radius:999px;padding:.05rem .45rem;border:1px solid var(--rule,#2a3a36)}
+.notes-kind-quoted{background:rgba(0,114,178,.18)}
+.notes-kind-machined{background:rgba(213,94,0,.18)}
+.notes-source{opacity:.7}

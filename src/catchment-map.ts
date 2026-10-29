@@ -247,9 +247,16 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     // the bottom of the map. Where the features remember which layer they came from they are
     // grouped back into it; a catchment or a time band, which carries no layer name and IS a
     // distinct thing worth toggling, keeps its own entry as before.
-    else if(f.layerName){
-      let group=members.get(f.layerName);
-      if(!group){group=L.featureGroup();members.set(f.layerName,group);}
+    // A READ LAYER'S FEATURES ARE ONE LAYER TOO. 140 water areas read from one file gave a
+    // reader 140 checkboxes on 2026-10-29, which is the granularity the classed branch learned
+    // about on 2026-10-26 and the collected branch on 2026-10-28, arriving a third time by the
+    // one route still open: features that carry no layer name of their own, in a layer that has
+    // one. A catchment or a time band is a distinct thing worth toggling and keeps its entry;
+    // everything else belongs to the layer it was read as.
+    else if(f.layerName||(p.layerName&&f.minutes===undefined&&!f.siteId)){
+      const name=f.layerName||p.layerName!;
+      let group=members.get(name);
+      if(!group){group=L.featureGroup();members.set(name,group);}
       group.addLayer(layer);
     }
     else{const label=esc(f.name);overlays[Object.hasOwn(overlays,label)?`${label} (${esc(f.id)})`:label]=layer;}

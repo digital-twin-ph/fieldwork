@@ -98,6 +98,13 @@ import type {BoundaryProvenance} from './types.js';
 import {basemapAvailable,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM} from './basemaps.js';
 import {naturalEarthMarkup,NATURAL_EARTH,NATURAL_EARTH_CREDIT} from './natural-earth.js';
 import {mapImage,mapImageMarkup,mapImageCredit,type MapImage} from './map-image.js';
+import {mapImageInspector} from './map-image-ui.js';
+import {readWorldFile,boundsFromWorldFile} from './map-image.js';
+
+/** A georeferenced plate's chosen files, waiting for Apply. Same reason as the polygon layer's:
+ *  the Inspector re-renders on every setting change and a file input cannot carry a selection
+ *  across that. */
+const pendingPlateFiles=new Map<string,{image?:File;world?:File}>();
 import {openTableEditor,dataTableMarkup} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
@@ -1771,6 +1778,8 @@ function renderInspector(){
       workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='area')
         .map(x=>({id:x.id,label:x.params.label||TYPES[x.type].title})),
       workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
+  }else if(n.type==='map_image_input'){
+    content+=mapImageInspector(n,esc);
   }else if(n.type==='table_input'){
     const p=n.params;
     content+='<section class="source-card"><span class="inspector-section">Table contract</span>'
@@ -3173,6 +3182,76 @@ function renderInspector(){
         await readPolygonExtract(file);
       else await readPolygonFile(file);
     }finally{button.textContent=was;pendingPolygonFiles.delete(n.id);announce();}
+  });
+  // THE GEOREFERENCED PLATE'S OWN CONTROLS, which did not exist until 2026-10-29. The widget was
+  // addable, its parameters declared, the map drew what it carried, and `mapImage` refused with
+  // "This step has no image yet. Choose a map image and its world file" -- naming two controls
+  // that were nowhere. Same shape as the polygon layer's: both files are held, Apply reads them,
+  // and the button says what it is still waiting for.
+  const plateFiles=()=>pendingPlateFiles.get(n.id)||{};
+  const platePending=()=>{
+    const {image,world}=plateFiles();
+    const apply=optionalElement('#map-image-apply') as HTMLButtonElement|null;
+    const note=optionalElement('#map-image-apply-note');
+    const one=optionalElement('#map-image-pending'),two=optionalElement('#map-image-world-pending');
+    if(one)one.textContent=image?`Chosen: ${image.name}`:'';
+    if(two)two.textContent=world?`Chosen: ${world.name}`:'';
+    if(!apply||!note)return;
+    const missing=!image?'Choose a map image in step 1.'
+      :!world?'Choose its world file in step 2.':'';
+    apply.disabled=!!missing;
+    note.textContent=missing||'Ready. Nothing is placed until you choose this.';
+  };
+  optionalElement('#map-image-label')?.addEventListener('change',event=>change(w=>{
+    getNode(w,n.id,'map_image_input').params.label=(event.target as HTMLInputElement).value;}));
+  optionalElement('#map-image-file')?.addEventListener('change',event=>{
+    pendingPlateFiles.set(n.id,{...plateFiles(),
+      image:(event.target as HTMLInputElement).files?.[0]});platePending();});
+  optionalElement('#map-image-world')?.addEventListener('change',event=>{
+    pendingPlateFiles.set(n.id,{...plateFiles(),
+      world:(event.target as HTMLInputElement).files?.[0]});platePending();});
+  optionalElement('#map-image-opacity')?.addEventListener('input',event=>{
+    const shown=optionalElement('#map-image-opacity-value');
+    if(shown)shown.textContent=`${Math.round(Number((event.target as HTMLInputElement).value)*100)}%`;});
+  optionalElement('#map-image-opacity')?.addEventListener('change',event=>change(w=>{
+    getNode(w,n.id,'map_image_input').params.opacity=
+      Number((event.target as HTMLInputElement).value);}));
+  platePending();
+  optionalElement('#map-image-apply')?.addEventListener('click',async event=>{
+    const button=event.currentTarget as HTMLButtonElement;
+    const {image,world}=plateFiles();
+    if(!image||!world)return;
+    button.disabled=true;const was=button.textContent;button.textContent='Placing\u2026';
+    try{
+      const bytes=new Uint8Array(await image.arrayBuffer());
+      // THE IMAGE'S OWN PIXEL SIZE, read from the image rather than asked for: a world file says
+      // what ONE pixel covers, so the extent needs the count of them and nobody should type it.
+      const bitmap=await createImageBitmap(image);
+      const {width,height}=bitmap;bitmap.close();
+      const data=await new Promise<string>((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(String(reader.result));
+        reader.onerror=()=>reject(new Error('That image could not be read.'));
+        reader.readAsDataURL(image);
+      });
+      const bounds=boundsFromWorldFile(readWorldFile(await world.text()),width,height);
+      const sha256=await contentHash(bytes);
+      const digest=await payloadDigest(data);
+      if(!await keepDataset(digest,data))
+        throw new Error('This image could not be kept on this device, so it was not placed. A '
+          +'smaller export of the same plate will fit.');
+      if(change(w=>{
+        const target=getNode(w,n.id,'map_image_input');
+        target.params.data=data;target.params.dataRef=digest;
+        target.params.image={width,height,bytes:bytes.length,sha256,filename:image.name};
+        target.params.bounds=bounds;
+      },{requirePersistence:true})){
+        pendingPlateFiles.delete(n.id);
+        toast(`Placed ${width.toLocaleString('en')} \u00d7 ${height.toLocaleString('en')} pixels `
+          +'as ground. Run the workflow to draw it.');
+      }else await dropPayload(digest);
+    }catch(error){toast(errorMessage(error),{tone:'failure'});}
+    finally{button.textContent=was;platePending();}
   });
   optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';
     // WHO ENDS AN ARRIVING DOWNLOAD. The practitioner, 2026-10-22: *"If nothing ever arrives, that

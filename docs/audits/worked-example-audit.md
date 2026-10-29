@@ -235,9 +235,30 @@ produce.** The provenance here is unusually good — the method is in the file, 
 properties, naming the relations it used. That is what makes the gap visible rather than what
 causes it, and it is why B is a question that can be asked at all.
 
-What would close B: a way to keep or drop features of a polygon layer by their attributes or
-their identifiers. That is all. The two reaches would then be read, selected and named inside
-the application, and claim B would hold for this layer.
+**What counts as reproducible, and it is not how the project happened to do it.** The
+practitioner set the criterion on 2026-10-29, about the water intakes and Teddington Lock:
+
+> These were obtained directly from John Snow text, and I think that's OK, because I could very
+> well have used input_points for that with pushpins.
+
+That is the right test: an input is reproducible when an existing widget could produce it, not
+only when it was produced that way. And the pushpin editor does carry what this one needs — it
+has a form builder (`pin-field-key`, `pin-field-label`, `pin-field-type`), so the `company`,
+`drawn_from`, `in_use` and `snow_says` fields are enterable, and the coordinates are of the
+landmarks Snow names rather than a survey nobody can repeat. Transcribing a source text and
+placing four pins is a path through this application.
+
+So claim B, taken input by input for `south-london/ground`:
+
+| Input | A practitioner's path to it | Status |
+| --- | --- | --- |
+| 32 sub-districts | a published BSD-2 file, downloaded and read by `polygon_input` | Obtainable |
+| Water intakes and the lock | `point_input` pushpins with a form, filled from Snow's text | Producible |
+| Thames reaches | read the extract, then keep the two reaches out of the water areas | **Blocked** — nothing selects |
+
+One input of three, and one capability. What would close B: a way to keep or drop features of a
+polygon layer by their attributes or their identifiers. That is all. The two reaches would then
+be read, selected and named inside the application, and claim B would hold for this workflow.
 
 ### The pinned example
 

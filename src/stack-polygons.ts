@@ -50,8 +50,13 @@ export function stackPolygons(
   const crs=new Set(layers.map(l=>l.crs));
   if(crs.size>1)
     throw new Error(`These layers were computed in different coordinate systems (${[...crs].join(', ')}). Collecting them would put incomparable geometry in one layer.`);
-  const features=layers.flatMap(l=>l.features)
-    .map(f=>({...structuredClone(f)}))
+  // EACH POLYGON REMEMBERS ITS LAYER. Without this the collection is one unnamed feature list
+  // and everything downstream -- the layer control, the key, the colouring -- has to guess at a
+  // grouping from feature names, which is what made tidal and non-tidal indistinguishable on the
+  // published figure of 2026-10-28. A feature that already carries a layer name keeps it, so a
+  // collection of collections still says where each part started.
+  const features=layers.flatMap((l,index)=>l.features.map(f=>({...structuredClone(f),
+    layerName:f.layerName??l.layerName??`Layer ${index+1}`})))
     .sort((a,b)=>ringExtent(b)-ringExtent(a));
   if(!features.length)throw new Error('These layers hold no polygons.');
   const ids=new Set(features.map(f=>f.id));

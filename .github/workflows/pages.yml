@@ -74,7 +74,14 @@ jobs:
     # timeout set to the current duration converts the next few added tests into a cancelled
     # deploy that looks like an infrastructure flake. It is still a bound, so a genuine hang is
     # caught -- 40 minutes is roughly three times the honest duration.
-    timeout-minutes: 40
+    # Raised from 40 on 2026-10-29, after 123403920638 was cancelled at 40m18s. That run is the
+    # first that ever reached the browser suite here: until the worked example was checked out
+    # beside this repository the job died in the unit tests at about 2m20s, so the 40 minutes set
+    # on 2026-10-14 had never once been measured against a complete run. The gate takes 22
+    # minutes on the machine this is developed on and 34.5 under load; a shared runner is slower
+    # than both. Raised with headroom rather than to just past the one run that has finished,
+    # for the same reason recorded above.
+    timeout-minutes: 75
     # A superseded verify is verifying a commit nobody is looking at any more, and two 30-minute
     # gates queued behind each other is how the old lag was built. The newest commit is the one
     # that gets checked; an older one that was cancelled is recorded as cancelled, not as green.

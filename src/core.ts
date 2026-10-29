@@ -272,6 +272,9 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
  *  What this does not do is unify the renderers: a map with polygons AND a raster wired draws the
  *  raster, because no renderer draws both. That limit is the next piece of the same work, and it
  *  is now a limit of the drawing code rather than a question put to the practitioner. */
+import {mapLayerList,validateLayerSettings,assertSomethingToDraw,membersOfPolygons,type MapLayer}
+  from './map-layer-list.js';
+
 export function drawnMode(node:WorkflowNode<'map_output'>,edges:{to:string;port:string}[]):
   'network'|'raster'|'polygons'|'decisions'|'spatial'{
   const wired=new Set(edges.filter(e=>e.to===node.id).map(e=>e.port));
@@ -1001,6 +1004,18 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     const pointInputs=():{layers:import('./types.js').PointLayer[]}=>({layers:nodeInputs(node).filter(([port])=>isPointPort(port)).flatMap(([port])=>{const edge=workflow.edges.find(e=>e.to===node.id&&e.port===port);if(!edge)return [];const source=workflow.nodes.find(n=>n.id===edge.from);if(!source)return [];return [{...(inputs[port as keyof ExecutionInputs] as unknown as PointCollection),
       ...layerIdentity(workflow,edge.from,inputs[port as keyof ExecutionInputs] as unknown as PointCollection,source),attributeDefinitions:[...('fields' in source.params?source.params.fields||[]:[]),...('attributeRules' in source.params?source.params.attributeRules||[]:[])]}];})});
     let value:unknown;
+    // THE LAYERS THIS NODE DRAWS, settled once and read by everything downstream. Built before
+    // the renderer is chosen, because which renderer leads and which layers survive are two
+    // different questions -- and answering them with one variable is what lost a layer five
+    // times running. `drawnMode` still answers the first; this answers the second.
+    let mapPlan:MapLayer[]|null=null;
+    if(node.type==='map_output'){
+      validateLayerSettings(node);
+      mapPlan=mapLayerList(node,workflow.edges,
+        id=>workflow.nodes.find(n=>n.id===id)?.params.label,
+        inputs.polygons?[{port:'polygons',members:membersOfPolygons(inputs.polygons)}]:[]);
+      assertSomethingToDraw(mapPlan,node.params.label||node.id);
+    }
     switch(node.type){
       case 'mean_center':{value=computeMeanCenter(inputs.points,node.params);receipts.push(meanCenterReceipt(node,value as MeanCenter,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from));break;}
       case 'compare_point_sets':{value=comparePointSets(inputs.original,inputs.moved,inputs.pumps,node.params,node.params.centers?inputs.originalCenter:undefined,node.params.centers?inputs.movedCenter:undefined);const sources=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>[e.port,e.from])) as {original:string;moved:string;pumps:string;originalCenter?:string;movedCenter?:string};receipts.push(comparisonReceipt(node,value as PointComparison,runId,sources));break;}
@@ -1794,6 +1809,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       default:value=await executeOldNode(node,inputs,reasoner,receipts,distanceKm,runId);
     }
     if(node.type==='study_area'&&isRecord(value))value.spatialReference=structuredClone(node.params.spatialReference);
+    // The list travels on the value, so the interactive map, the static figure and the key all
+    // draw the same layers in the same order under the same names -- rather than each inventing
+    // its own labels at the point of drawing, which is how the layer control came to offer
+    // "Observations (red circles)" beside a practitioner's own node label.
+    if(node.type==='map_output'&&isRecord(value)&&mapPlan)
+      (value as unknown as {mapLayers?:MapLayer[]}).mapLayers=mapPlan;
     values.set(node.id,value);trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
     // WHEN THIS STEP RAN, in the receipt, in PROV's own terms.
     //

@@ -214,7 +214,11 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // so a layer of two named reaches drew as one shape. Bands with `minutes` are a sequence and
   // keep their own treatment below; anything else is told apart by hue.
   const banded=p.features.some(f=>f.minutes!==undefined);
-  const categorical=!classed&&!banded?categoricalSteps(p.features.length):null;
+  // A HUE PER FEATURE ONLY WHERE THE FEATURES ARE NAMED THINGS. Numbered parts of one layer are
+  // not categories; the layer carries which it is, because a read numbers what it could not name
+  // and the name alone cannot tell them apart.
+  const categorical=!classed&&!banded&&p.featuresNamed!==false
+    ?categoricalSteps(p.features.length):null;
   const hueOf=new Map<string,string>(categorical?p.features.map((f,i)=>[f.id,categorical[i]]):[]);
   // One group for every part a value-classed layer draws, so the control lists the LAYER.
   const themed=L.featureGroup();

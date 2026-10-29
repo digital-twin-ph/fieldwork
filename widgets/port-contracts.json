@@ -584,7 +584,9 @@
             [
               "polygons",
               "polygons"
-            ],
+            ]
+          ],
+          "optional": [
             [
               "polygons_2",
               "polygons"
@@ -605,8 +607,7 @@
               "polygons_6",
               "polygons"
             ]
-          ],
-          "optional": []
+          ]
         }
       ]
     },

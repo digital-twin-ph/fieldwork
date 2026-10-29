@@ -1,0 +1,95 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:stack_polygons",
+  "version": "0.2.0",
+  "nodeType": "stack_polygons",
+  "title": "Collect polygon layers",
+  "released": "2026-10-28",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['stack_polygons']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "polygons",
+        "type": "polygons"
+      },
+      {
+        "name": "polygons_2",
+        "type": "polygons"
+      },
+      {
+        "name": "polygons_3",
+        "type": "polygons"
+      },
+      {
+        "name": "polygons_4",
+        "type": "polygons"
+      },
+      {
+        "name": "polygons_5",
+        "type": "polygons"
+      },
+      {
+        "name": "polygons_6",
+        "type": "polygons"
+      }
+    ],
+    "output": "polygons"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:PolygonCollection",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Emits an fw:PolygonCollection activity carrying fw:layerCount, fw:polygonCount, fw:bandedPolygonCount and fw:drawOrder, and prov:used every connected layer. The banded count is asserted because a collection whose every polygon carries a travel time is a set of nested bands, where a count per polygon is cumulative rather than disjoint.",
+    "emits": {
+      "classes": [
+        "PolygonCollection"
+      ],
+      "properties": [
+        "bandedPolygonCount",
+        "drawOrder",
+        "layerCount",
+        "polygonCount"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/core.ts",
+      "src/stack-polygons.ts"
+    ],
+    "definition": "src/stack-polygons.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "changed",
+      "description": "A COLLECTOR TAKES WHAT IT IS GIVEN. Six polygon ports were declared and all six were REQUIRED, so a widget whose description is \"gather several polygon layers into one\" and whose implementation refuses with \"Connect at least one polygon layer to collect\" could only ever run with exactly six connected. Found on 2026-10-28 wiring two layers -- a sub-district layer and a river -- into one map: \"Collect polygon layers needs its polygons_3 input connected.\" The first port is required, because a collector of nothing has nothing to emit; the other five are the extra slots they were always meant to be. The widget was addable, implemented, unit tested and unusable, which is the third widget this year found in that state."
+    },
+    {
+      "kind": "initial",
+      "description": "Gathers up to six polygon layers into one with nothing merged, ordered largest area first so smaller polygons draw on top. Needed because the isochrone rings arrive as one corridor per band and every output node takes a single polygons input: unioning them with summarize_combined_area would give one blob the size of the largest band with the walking times gone. Numbered ports follow the point-layer convention in src/point-layers.ts, capped at six because isochrone accepts at most six thresholds. Takes no UTM zone: ring extent in degrees decides draw order and is never reported, so there is no area to get wrong. Refuses layers computed in different coordinate systems, and refuses polygons sharing an identifier, which could not be told apart once collected."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Five unit checks cover collection without merging in largest-first order; bands being recognised with the cumulative-count warning stated; refusal of layers in different coordinate systems, of duplicate identifiers, of an empty connection and of a blank label; and the numbered ports matching the point-layer convention. The fifth runs the whole output stage on the John Snow example: one traversal, four bands, four corridors, collected into one layer, with the 250 recorded death locations counted per band -- 48 within one minute of the Broad Street pump, 216 within five, 250 within ten and none beyond. Both the geometry and the counts are checked to be nested. Not established: that nested bands are the right presentation, or that the disjoint counts NB04 charts can be produced here. Taking the difference between neighbouring bands is not an operation any widget performs yet."
+  }
+}

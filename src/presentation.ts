@@ -89,6 +89,33 @@ export function orderedSteps(n:number):string[]{
   return Array.from({length:n},(_,i)=>ORDERED_PALETTE[Math.min(i,ORDERED_PALETTE.length-1)]);
 }
 
+/** CATEGORIES ARE NOT A SEQUENCE. Hues for polygons that carry a name and no number.
+ *
+ *  Two kinds of valueless polygon layer were being coloured the same wrong way. The interactive
+ *  map gave EVERY feature one hard-coded `#1f77b4`, so the Thames above and below Teddington Lock
+ *  -- the one distinction that example exists to draw -- arrived as a single blue shape over a
+ *  blue river. The static plot used `orderedSteps`, which is YlGnBu: a SEQUENTIAL ramp, whose
+ *  whole design is that lightness falls monotonically so a reader can rank the classes. Tidal and
+ *  non-tidal have no rank, and a ramp asserts one.
+ *
+ *  So: an ordered thing keeps the ordered palette, and a named thing takes `FIGURE_PALETTE`, which
+ *  is Okabe-Ito -- categorical, colourblind-safe, and already what this application uses to say
+ *  WHICH SOURCE a point came from. Past its length the hues repeat, which a key makes readable
+ *  because each entry carries its own name.
+ *
+ *  The practitioner, 2026-10-28: *"Map tidal and non-tidal polygons are indistinguishable from
+ *  each other because of the shade color - this should be categorical."* */
+export function categoricalSteps(n:number):string[]|null{
+  if(n<=0)return null;
+  // MORE REGIONS THAN HUES IS NOT A CATEGORICAL FIGURE. Cycling the palette over 33
+  // sub-districts would hand the same hue to four of them, and a reader who sees one colour
+  // twice reads a grouping that nobody asserted -- a worse error than a single neutral wash,
+  // because it is invisible. Past the palette's length the answer is null and the caller keeps
+  // its neutral fill, with the layer control and the popups doing the naming.
+  if(n>FIGURE_PALETTE.length)return null;
+  return Array.from({length:n},(_,i)=>FIGURE_PALETTE[i]);
+}
+
 /** One layer, one look: a hue that says WHICH SOURCE, and a shape that says it again.
  *
  *  The practitioner, 2026-10-20, with two facility sources on one map: *"they are both rendered

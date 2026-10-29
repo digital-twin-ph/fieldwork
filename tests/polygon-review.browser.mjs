@@ -58,7 +58,8 @@ test('selecting a row marks it, so one feature can be found among many',{skip},a
   await layer(page);
   await open(page);
   const third=page.locator('.polygon-review-row').nth(2);
-  await third.locator('.polygon-review-name').click();
+  // Focusing a feature's name is what finds it on the map now that the name is editable.
+  await third.locator('.polygon-review-name').focus();
   await expect(third).toHaveClass(/is-picked/);
   // One at a time: the mark is a pointer, and two pointers point at nothing.
   await expect(page.locator('.polygon-review-row.is-picked')).toHaveCount(1);
@@ -191,4 +192,49 @@ test('the clip is offered only where there is a frame to clip to',{skip},async({
   // A file layer connected to no study area has no box, so there is nothing to cut to and the
   // button is not offered rather than offered and refusing.
   await expect(page.locator('#polygon-review-clip')).toBeHidden();
+});
+
+/** THREE REDUCTIONS AND A NAME. The practitioner, 2026-10-29: *"polygon input enables three forms
+ *  of reduction: keep/discard, clip and merge selected adjacents."* And on naming: *"That's a
+ *  major gap if we were to have maps showing polygons with meaningful names."* */
+test('a feature can be named here, and the name is kept',{skip},async({page})=>{
+  const id=await layer(page);
+  await open(page);
+  const first=page.locator('[data-name]').first();
+  await first.fill('Rotherhithe, 1854');
+  await page.locator('#polygon-review-apply').click();
+  const saved1=(await saved(page)).nodes.find(n=>n.id===id);
+  expect(Object.values(saved1.params.names)).toContain('Rotherhithe, 1854');
+  await open(page);
+  await expect(page.locator('[data-name]').first()).toHaveValue('Rotherhithe, 1854');
+});
+
+test('two chosen features merge into one, keeping the first name',{skip},async({page})=>{
+  await layer(page);
+  await open(page);
+  const before=await page.locator('.polygon-review-row').count();
+  const firstName=await page.locator('[data-name]').first().inputValue();
+  await choose(page,2);
+  await page.locator('#polygon-review-merge').click();
+  await expect(page.locator('.polygon-review-row')).toHaveCount(before-1);
+  await expect(page.locator('[data-name]').first()).toHaveValue(firstName);
+  // The selection is spent by the action, the way keep and discard spend theirs.
+  await expect(page.locator('#polygon-review-selection')).toBeHidden();
+});
+
+test('merging needs two, and says so rather than doing nothing',{skip},async({page})=>{
+  await layer(page);
+  await open(page);
+  await choose(page,1);
+  await page.locator('#polygon-review-merge').click();
+  await expect(page.locator('#polygon-review-status')).toContainText('at least two features to merge');
+});
+
+test('the unnamed can be set aside in one go',{skip},async({page})=>{
+  await layer(page);
+  await open(page);
+  // Every sub-district carries `subdist`, so with that nominated none is unnamed and the
+  // checkbox has nothing to set aside -- which is the honest result, not a bug.
+  await page.locator('#polygon-review-hide-unnamed').check();
+  await expect(page.locator('#polygon-review-status')).toContainText('32 of 32 features kept');
 });

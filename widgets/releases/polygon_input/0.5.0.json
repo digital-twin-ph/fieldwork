@@ -1,0 +1,78 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:polygon_input",
+  "version": "0.5.0",
+  "nodeType": "polygon_input",
+  "title": "Polygon layer",
+  "released": "2026-10-29",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['polygon_input']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "note": "Ring closure, winding and CRS84 bounds are checked when the file is read. What is NOT checkable here is whether the lines are where the author meant them to be: a traced territory is a reading of a printed wash, and experiment 145 records that as not established. The acquisition parameters are stated and never inferred: a kind is chosen from a closed list, the vertex threshold defaults to nothing, and the margin defaults to zero. An acquired layer carries `dataRef`, so its features are held once on the device rather than in the workflow."
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      }
+    ],
+    "output": "polygons",
+    "optionalInputs": [
+      "area"
+    ],
+    "note": "One OPTIONAL input, `area`, which scopes acquisition rather than enabling the widget: connected, it supplies the bounding box and the country a published OpenStreetMap extract is read for, which is what `network_input` already does with the same port. Absent, the widget still reads a GeoJSON file as published, so `required` stays empty and this remains an input-stage widget -- `INPUT_STAGE` is derived from `required`, not from `optional`, so the palette's blank-canvas behaviour is unchanged. At run time the port is checked for one thing: a layer whose retrieval box no longer covers the connected area is REFUSED, because acquisition happens at import and a study area nudged afterwards leaves a layer that provably holds no features for part of it. Emits the existing `polygons` port type, as before."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No mapping to an external vocabulary yet. The receipt states the file, its digest, the feature count, the property each feature was named by, and that nothing was clipped, simplified or reprojected. An acquired layer adds no terms of its own: its licence and retrieval are recorded through `input-provenance.ts`, whose `fw:licence`, `fw:retrievedFrom` and `fw:retrievedAt` are already declared and whose KNOWN_OBLIGATIONS already carries `ODbL-1.0` with its attribution and share-alike obligation. Asserting a parallel vocabulary here would have earned a receipt nothing else reads.",
+    "emits": {
+      "classes": [
+        "PolygonLayer"
+      ],
+      "properties": [
+        "featureCount",
+        "layerFile",
+        "layerFileDigest",
+        "namedBy",
+        "readAsPublished",
+        "vertexCount"
+      ]
+    }
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "implementation": {
+    "files": [
+      "src/polygon-layer.ts",
+      "src/osm-areas.ts",
+      "src/osm-areas-worker.ts",
+      "src/polygon-input-ui.ts",
+      "src/core.ts",
+      "src/app.ts",
+      "src/types.ts"
+    ],
+    "definition": "src/polygon-layer.ts"
+  },
+  "changes": [
+    "Three reductions and a name, the practitioner's framing on 2026-10-29: \"polygon input enables three forms of reduction: keep/discard, clip and merge selected adjacents.\"",
+    "Keep or discard: choose features on the map or in the row list, then keep only those or discard them. Clip to the box: cut every feature to the box the read used, with a live preview that runs the same function the run does. Merge: union the chosen features into one, keeping the group's first name. Adjacency is not checked -- features that do not touch become one feature of two parts, which is a real answer, and refusing it would need a tolerance nobody has measured.",
+    "Features can be named here. The practitioner, 2026-10-29: \"That's a major gap if we were to have maps showing polygons with meaningful names.\" A map whose polygons read \"Feature 37\" names nothing a reader can use, and the file does not always carry a property worth naming them by.",
+    "Set aside the unnamed, in bulk, by asking whether the property you nominated carried a value for each feature -- never whether the name looks automatic, which is the same rule the naming field itself follows.",
+    "All four are decisions applied when the workflow runs, in a fixed order: named, then merged, then set aside, then cut. A name survives a merge, a merge keeps its group's first name, what is set aside goes by the id it was read under, and the cut is last because it changes geometry and nothing after it decides anything."
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested against the three MultiPolygon territories the South London repository ships, which is the layer the widget was built for: 153, 128 and 107 vertices across six rings, every vertex preserved, the attributes carried as published, and the three supply categories read from the property the practitioner named. The HOLES are asserted explicitly, because they are what makes reading as published worth enforcing: Lambeth's territory is one part of three rings -- an outer boundary of 107 positions and two interior rings of 9 and 12 -- so there are enclaves inside the Lambeth zone that Lambeth did not supply, which no count of features reveals and which a simplifier would take first. Refusals covered: coordinates outside CRS84 bounds (easting and northing in metres, which is what an export from a projected CRS gives), a geometry that is not a polygon, an unclosed ring, a named property no feature carries, a file that is not a FeatureCollection, an empty one, and one larger than a study's own geometry. What this does not establish is whether the traced lines are where Snow's printed wash actually was: the geometry is a reading of a colour boundary on a scanned plate, and experiment 145 records it as a reading rather than a measurement. The acquisition half is tested against a .osm.pbf the test writes itself, there being no fixture in this repository and no decode test for the street engine either: eight cases over tag matching, multipolygon assembly from reversed fragments, the box, the vertex threshold, the measured refusal and the granularity assumption. Three further cases cover the port -- that a layer read for the study area runs and states its obligation, that one read for a different area is refused by name, and that a plain read file is unaffected. Verified end to end against the real extract: all six water relations the hand-built South London partition used are present and the one outside the box is excluded."
+  }
+}

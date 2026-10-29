@@ -577,8 +577,31 @@ decomposition that was built beside it, parity-checked at 2 parts in 100,000 on 
 network, is reached by no workflow. A Snow workflow built from the composition rather than the
 monolith would exercise the composition, its four members and the widget that runs them.
 
-That is the targeted revisit this measurement was asked for, and it is one workflow rather than
-six retirements.
+**The practitioner ruled on this the same day, and it corrects the paragraph above:**
+
+> The isochrone and its composition is a special case — we should treat use of isochrone as use
+> of its components. We are not there yet to resolve this issue if indeed it's an issue.
+
+So those four are not unexercised in function. `isochrone` and `compute_walking_catchment` were
+measured equivalent at 2 parts in 100,000 on the John Snow network, and a workflow that runs the
+monolith is exercising the same four steps the composition is assembled from. Counting them as
+untouched measures which NODE a workflow placed, not which work it did.
+
+The ledger already propagates use in the other direction and says so: *"Use counts through a
+composition, because a `micro_workflow` node is its members."* Using the composition counts for
+its members; using the equivalent monolith does not. That asymmetry is the finding here, and it
+is arbitrary — the two compute the same answer.
+
+**Not resolved, on the practitioner's instruction**, and the counting is left as it is. Resolving
+it means deciding what a monolith and a decomposition owe each other in evidence, which is a
+question about the admission criteria and not about these four widgets. Recorded so the number
+is read correctly in the meantime: of the twelve, four are a decomposition whose work a workflow
+does perform, and `micro_workflow` is a fifth case of its own — it is the widget that runs a
+composition, not a member of one, so nothing above speaks to it.
+
+The residue the measurement still asks about cleanly is therefore seven: `buffer_point`,
+`deduplicate_points`, `fill_interior_gaps`, `measure_area`, `sample_raster`,
+`slr_threshold_comparison`, `summarize_combined_area`.
 
 What this does **not** establish: that an unused widget should be retired. D11 asks whether a
 residual function remains that nothing else performs, and nothing here answers that — a widget

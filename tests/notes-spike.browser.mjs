@@ -48,8 +48,11 @@ test('each note says what it is and what it does',{skip},async({page})=>{
   await expect(page.locator('.notes-kind-quoted').first()).toBeVisible();
   await expect(page.locator('#notes-view')).toContainText('Establishes:');
   const functions=await page.locator('.notes-fn').allTextContents();
-  // Read off the notes, never invented: these are the four the example carries.
-  for(const fn of ['purpose','background','method','source'])expect(functions).toContain(fn);
+  // Read off the notes, never invented: these are the four the example carries, in the
+  // vocabulary reconciled towards the prototype on 2026-10-29. `purpose` and `background` were
+  // this list's own words and are not in the design that settled it.
+  for(const fn of ['rationale','context','method','source'])expect(functions).toContain(fn);
+  for(const retired of ['purpose','background'])expect(functions).not.toContain(retired);
 });
 
 test('the tab counts what it holds',{skip},async({page})=>{

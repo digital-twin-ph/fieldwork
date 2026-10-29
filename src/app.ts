@@ -67,6 +67,8 @@ import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from './old-naledi-ui.js';
 import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {openPolygonReview} from './polygon-review.js';
+import {notesPanel} from './notes-ui.js';
+import {readNotes} from './notes.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
  *  Inspector re-renders on every setting change. */
@@ -4941,6 +4943,11 @@ function renderProjectDetails(){
   $('#project-stats').textContent=project
     ?`${held.length===1?'1 workflow':`${held.length} workflows`}: ${named.join(' · ')}. Project id ${project.id}.`
     :'This canvas belongs to no investigation. Choose one below, or create a project to group the questions you are asking.';
+  // THE NOTES, read from the project and the last run together. A spike: `notes.ts` has existed
+  // since 2026-10-28 and nothing imported it, so notes were produced, stored, grouped and counted
+  // where no practitioner could see one.
+  $('#project-notes').innerHTML=notesPanel(project?.notes||[],result?.machined,
+    id=>workflow.nodes.find(node=>node.id===id)?.params.label,esc);
 }
 function applyProjectDetails(){
   const key=storageKey(workflow);
@@ -5903,6 +5910,15 @@ async function importProjectDocument(raw:unknown):Promise<string[]>{
   const document=readProjectDocument(raw);
   const existing=readProjects();
   const project=newProject(document.project.name,document.project.subject,allProjects());
+  // THE NOTES COME WITH IT. A new project was minted from the name and the subject and nothing
+  // else, so an imported investigation arrived without a word of the author it is about: South
+  // London ships nine of Snow's own sentences and a reader who opened the example got none of
+  // them. Found by the notes spike on 2026-10-29, which is what a spike is for.
+  //
+  // Read tolerantly on the way in, like every other note: one that cannot be read is dropped
+  // rather than coerced under a heading its author did not choose.
+  const carried=readNotes((document.project as {notes?:unknown}).notes).notes;
+  if(carried.length)project.notes=carried;
   const keys:string[]=[];
   const workflows:Workflow[]=[];
   for(const entry of document.workflows){

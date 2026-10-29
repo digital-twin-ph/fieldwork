@@ -1777,6 +1777,25 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // 2026-10-23: where an area is wired, the spatial map is built from it and from every
         // point layer beside it, and the polygons join it as a layer rather than replacing it.
         const beside=pointInputs().layers;
+        // POINTS WIRED AND NO AREA IS A REFUSAL, NOT A QUIET LOSS. Reported 2026-10-29: a map
+        // carrying a polygon layer and a point layer drew the polygons and nothing else, because
+        // the composition below is gated on an area and this branch simply fell past it. That is
+        // the fifth time this widget has dropped a connected layer without saying so -- the study
+        // area on 2026-10-20, the facilities on 2026-10-22, the raster on 2026-10-23, the
+        // polygons on 2026-10-28 -- and the fourth of those was fixed by composing WHERE AN AREA
+        // EXISTS, which left this case exactly as it was.
+        //
+        // A map places its points by their relation to an area, and there is no vocabulary here
+        // for "no area was connected": `SpatialRelation` is Inside, Boundary, Outside or
+        // MissingLocation. So the honest answer is the one the spatial branch already gives, in
+        // the same words, rather than inventing a fifth relation or drawing points that claim a
+        // relation to nothing.
+        if(beside.length&&!inputs.area)
+          throw new Error(`Connect a study area to "${node.params.label||node.id}". A Map places `
+            +`its points by their relation to an area \u2014 inside it, on its boundary, or `
+            +`outside \u2014 so the ${beside.length} point layer`
+            +`${beside.length===1?'':'s'} connected here have nothing to be placed against. The `
+            +`same Study area the rest of this workflow uses will do.`);
         if(inputs.area){
           const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);
           value={...mapped.value,polygons:shown.polygons,

@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {deflateSync} from 'node:zlib';
-import {areasFromExtract,AREA_KINDS} from '../build/osm-areas.js';
+import {areasFromExtract,readBox,AREA_KINDS} from '../build/osm-areas.js';
 
 const varint=n=>{const out=[];let v=n;do{let b=v&0x7f;v=Math.floor(v/128);if(v)b|=0x80;out.push(b);}while(v);return out;};
 const zig=n=>n<0?-n*2-1:n*2;
@@ -178,4 +178,45 @@ test('the refusals a caller can rely on',async()=>{
   await assert.rejects(()=>areasFromExtract(file,{kinds:[],bbox:BOX}),/at least one kind/);
   await assert.rejects(()=>areasFromExtract(file,{kinds:['water'],bbox:[0,0,0,0]}),/no area/);
   assert.deepEqual([...AREA_KINDS],['water','building']);
+});
+
+/** THE BOX THE INSPECTOR OFFERS AND THE BOX THE READ USES ARE THE SAME BOX.
+ *
+ *  Two computations would be a widget that names Greater London as the extract to download and
+ *  then reads outside it. The figures below are the ones measured on 2026-10-28 against the real
+ *  study area, so a change to the conversion fails here rather than in a 124 MB read. */
+test('the read box widens per axis, and reproduces the measured one',()=>{
+  const bounds=[-0.2594,51.4117,-0.0313,51.5086];   // South London's own bounds
+  const box=readBox(bounds,5000).map(c=>Number(c.toFixed(4)));
+  assert.deepEqual(box,[-0.3316,51.3667,0.0409,51.5536],
+    'the box measured at 51.5°N for the 5,000 m South London needs');
+  // A DEGREE OF LONGITUDE IS NOT A DEGREE OF LATITUDE anywhere but the equator, and the uniform
+  // /111195 the street engine uses would have under-covered east and west by about 2,800 m --
+  // more than half the margin, against a lock 4,460 m outside the bounds.
+  const [west,south,east,north]=readBox(bounds,5000);
+  const dx=bounds[0]-west,dy=bounds[1]-south;
+  assert.ok(dx>dy*1.5,`longitude widened by ${dx.toFixed(4)}°, latitude by ${dy.toFixed(4)}°`);
+  assert.ok(Math.abs((east-bounds[2])-dx)<1e-12,'both east and west widen by the same amount');
+  assert.ok(Math.abs((north-bounds[3])-dy)<1e-12,'both north and south widen by the same amount');
+});
+
+test('the margin has no ceiling, and the box stays on the Earth',()=>{
+  const bounds=[-0.2594,51.4117,-0.0313,51.5086];
+  // 2,000 m is where the Overpass path caps its margin and where the network extract's control
+  // stops. South London needs 5,000, so a ceiling here would refuse the study this was built
+  // for; 50,000 is not refused either, because the cost of a larger box is a local read.
+  for(const margin of [0,2000,5000,50_000]){
+    const box=readBox(bounds,margin);
+    assert.ok(box[0]<=bounds[0]&&box[2]>=bounds[2],`margin ${margin} covers the bounds`);
+  }
+  // A margin that would run off the edge of the world is clamped rather than refused: a box with
+  // a latitude of 94 is not a box any reader can use.
+  const [w,s2,e,nth]=readBox([-179,-89,179,89],500_000);
+  assert.deepEqual([w,s2,e,nth],[-180,-90,180,90]);
+});
+
+test('a zero margin is the bounds themselves',()=>{
+  const bounds=[-0.2594,51.4117,-0.0313,51.5086];
+  assert.deepEqual(readBox(bounds,0),bounds,
+    'so an unset margin reads exactly the study area’s own box');
 });

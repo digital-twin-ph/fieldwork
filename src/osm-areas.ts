@@ -215,7 +215,8 @@ function stitch(fragments:number[][]):{rings:number[][]; unclosed:number}{
  *  `extract-catalogue.ts` records: Geofabrik serves no `Access-Control-Allow-Origin`, so this
  *  application never fetches one -- the download is the browser's own and the file stays on the
  *  device. Nothing here reaches the network. */
-export async function areasFromExtract(bytes:Uint8Array,request:AreaRequest):Promise<{
+export async function areasFromExtract(bytes:Uint8Array,request:AreaRequest,
+  onPhase?:(phase:string)=>void):Promise<{
   features:ParsedFeature[]; retrieval:AreaRetrieval;
 }>{
   if(!request.kinds.length)throw new Error('Choose at least one kind of area to read.');
@@ -226,6 +227,11 @@ export async function areasFromExtract(bytes:Uint8Array,request:AreaRequest):Pro
   const maxVertices=request.maxVertices??MAX_LAYER_VERTICES;
   const matches=(tags:Record<string,string>):boolean=>
     request.kinds.some(kind=>MATCHES[kind](tags));
+  // WHAT IT IS DOING, for a reader watching 17 s pass. Three passes are three phases because
+  // that is what the file shape forces, so the count is honest rather than a progress bar whose
+  // fractions were invented.
+  const say=(phase:string)=>onPhase?.(phase);
+  say(`Reading ${(bytes.length/1e6).toFixed(0)} MB of extract\u2026`);
 
   // PASS ONE: the relations that are areas of a requested kind, and the ways they are built from.
   const relations:{id:number; tags:Record<string,string>; outer:number[]; inner:number[]}[]=[];
@@ -257,6 +263,8 @@ export async function areasFromExtract(bytes:Uint8Array,request:AreaRequest):Pro
   }
 
   // PASS TWO: those member ways, and the closed ways that are areas in their own right.
+  say(`${relations.length.toLocaleString()} multipolygon${relations.length===1?'':'s'}; `
+    +'finding the ways they are built from\u2026');
   const ways=new Map<number,WayRecord>();
   const closed:{id:number; tags:Record<string,string>; refs:number[]}[]=[];
   for await (const [strings,group] of groups(bytes)){
@@ -280,6 +288,7 @@ export async function areasFromExtract(bytes:Uint8Array,request:AreaRequest):Pro
   }
 
   // PASS THREE: the coordinates, for the nodes those ways name and no others.
+  say(`${(ways.size+closed.length).toLocaleString()} ways; reading their coordinates\u2026`);
   const needed=new Set<number>();
   for(const w of ways.values())for(const r of w.refs)needed.add(r);
   for(const c of closed)for(const r of c.refs)needed.add(r);
@@ -311,6 +320,7 @@ export async function areasFromExtract(bytes:Uint8Array,request:AreaRequest):Pro
   const inBox=(points:[number,number][]):boolean=>
     points.some(([x,y])=>x>=west&&x<=east&&y>=south&&y<=north);
 
+  say(`${position.size.toLocaleString()} coordinates; building the areas\u2026`);
   const dropped={outsideBox:0,unclosed:0,noGeometry:0,belowMinVertices:0};
   const minVertices=request.minVertices??0;
   const found:{feature:ParsedFeature; vertices:number}[]=[];
@@ -392,4 +402,63 @@ export function retrievalProvenance(retrieval:AreaRetrieval,
     retrievedFrom:file?.filename??retrieval.source,
     retrievedAt:retrieval.at.slice(0,10),
   } as InputProvenance;
+}
+
+/** The same read, in a worker, which is how the application calls it.
+ *
+ *  `networkInWorker` is the model: the bytes are transferred so a copy of the extract is not
+ *  held twice, and the caller's own view is left intact by slicing first. A worker per read and
+ *  terminated after, rather than one kept alive: a read holds the whole decoded file, and there
+ *  is nothing to keep warm between two reads of different files.
+ *
+ *  Nothing here touches the network. The .osm.pbf is a file the practitioner already downloaded
+ *  -- Geofabrik serves no `Access-Control-Allow-Origin`, which `extract-catalogue.ts` records --
+ *  so the file stays on the device and only what was read out of it is kept. */
+export async function areasInWorker(bytes:Uint8Array,request:AreaRequest,
+  onPhase?:(phase:string)=>void):Promise<{features:ParsedFeature[]; retrieval:AreaRetrieval}>{
+  const worker=new Worker('./build/osm-areas-worker.js');
+  try{
+    return await new Promise((resolve,reject)=>{
+      worker.onmessage=({data})=>{
+        if(data.phase){onPhase?.(data.phase);return;}
+        if(data.error){reject(new Error(data.error));return;}
+        resolve(data);
+      };
+      worker.onerror=event=>reject(new Error(event.message
+        ||'The polygon reader worker did not start.'));
+      const copy=bytes.slice();   // transferred, so the caller's view is left intact
+      worker.postMessage({bytes:copy.buffer,request},[copy.buffer]);
+    });
+  }finally{worker.terminate();}
+}
+
+/** The box to read, from the study area's bounds and a margin in metres.
+ *
+ *  ONE FUNCTION, because two would disagree. The Inspector uses this box to work out which
+ *  published extracts cover the read, and the acquisition uses it to decide what to keep; a box
+ *  computed twice is a widget that offers Greater London and then reads outside it.
+ *
+ *  The margin is converted PER AXIS. `street-engine.ts` divides by 111,195 for both, which is a
+ *  degree of latitude; a degree of longitude is shorter everywhere but the equator, so the same
+ *  division under-covers east and west. At South London's 51.5°N a degree of longitude is about
+ *  69,200 m, so a 5,000 m margin is 0.0722° of longitude and 0.0450° of latitude -- the uniform
+ *  form would have given 0.0450° both ways and missed 2,800 m of the margin the practitioner
+ *  asked for. Teddington Lock sits 4,460 m outside South London's bounds, which is the distance
+ *  that margin exists to cross, so under-covering it by that much is not a rounding matter.
+ *
+ *  NO CEILING ON THE MARGIN. The `osmQuery` path caps its own at 2,000 m and the network
+ *  extract's control stops at the same number; South London needs 5,000, so a cap here would
+ *  refuse the one study area this was built for. */
+export function readBox(bounds:readonly [number,number,number,number],
+  marginM:number):[number,number,number,number]{
+  const [west,south,east,north]=bounds;
+  const lat=(south+north)/2;
+  const perDegreeLat=111_195;
+  // cos(lat) at the box's middle rather than at each edge: the difference across a study area is
+  // metres, and a box whose north and south edges were widened by different amounts would not be
+  // a box.
+  const perDegreeLon=Math.max(1,perDegreeLat*Math.cos(lat*Math.PI/180));
+  const dx=marginM/perDegreeLon,dy=marginM/perDegreeLat;
+  return [Math.max(-180,west-dx),Math.max(-90,south-dy),
+          Math.min(180,east+dx),Math.min(90,north+dy)];
 }

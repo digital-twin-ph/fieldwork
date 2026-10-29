@@ -96,6 +96,10 @@ import {openTableEditor,dataTableMarkup} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview,rasterOfNode} from './raster-preview.js';
+import {polygonInputInspector} from './polygon-input-ui.js';
+import {areasInWorker,retrievalProvenance,readBox,AREA_KINDS,type AreaKind} from './osm-areas.js';
+import {readPolygonFeatures} from './polygon-layer.js';
+import {contentHash} from './project-files.js';
 import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT_SCHEMA} from './project-document.js';
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
@@ -1730,6 +1734,17 @@ function renderInspector(){
         +`here can check it.</p>`;
     content+=tabular?'<div class="notice">Rows are shown as imported, with absent values displayed as unknown and an unstated unit named as unstated. Search covers every key column and the value. Works offline.</div>':raster?'<div class="notice">Colors show relative cell values; gray cells are NoData. Download GeoTIFF preserves native values and georeferencing.</div>':reasoning?'<div class="notice">This is a presentation of existing results, with no new inference or exclusion.</div>':outputType==='table'?'<div class="notice">Rows include coordinates and all point attributes. Missing coordinates and excluded records remain visible. Search covers all rows and attributes; large tables use row and attribute pages. Works offline.</div>':'<div class="notice">The map fits the polygon and every located point, including outside records. Missing coordinates appear in a selectable list. This local map works offline.</div>';
     // map_output has its own branch above; this one is table_output alone.
+  }else if(n.type==='polygon_input'){
+    // The connected study area, which scopes an acquisition. `previewArea` throws when nothing is
+    // connected, and that is a legitimate state: a layer read from a file needs no area at all,
+    // which is why the port is optional. The panel then says the box cannot be worked out,
+    // instead of implying a read would cover something.
+    let areaBoundary;
+    try{areaBoundary=previewArea(workflow,n.id).boundary;}catch{areaBoundary=undefined;}
+    content+=polygonInputInspector(n,esc,areaBoundary,
+      workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='area')
+        .map(x=>({id:x.id,label:x.params.label||TYPES[x.type].title})),
+      workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
   }else if(n.type==='table_input'){
     const p=n.params;
     content+='<section class="source-card"><span class="inspector-section">Table contract</span>'
@@ -2926,6 +2941,123 @@ function renderInspector(){
       if(change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=network;target.params.dataRef=digest;},{requirePersistence:true})){
         say('');
         toast(`${network.nodes.length.toLocaleString('en')} junctions read from the extract and saved on this device. Run the workflow to update results.`);
+      }else await dropPayload(digest);
+    }catch(error){say('');toast(errorMessage(error),{tone:'failure'});}
+    finally{input.value='';}
+  });
+  // A POLYGON LAYER, read from a file or acquired from an extract.
+  //
+  // The two paths put the same thing in the same place and differ in where it came from, so they
+  // share the keeping: features go to the payload store and the workflow keeps a reference.
+  // Measured 2026-10-28, South London's water at 45 vertices minimum: 186 features, 32,999
+  // vertices, 788 kB of params against a 5,226,496-byte store written twice per save. A layer
+  // that an example SHIPS stays inline, because there the workflow file is the publication.
+  optionalElement('#polygon-input-method')?.addEventListener('change',e=>change(w=>{
+    const target=getNode(w,n.id,'polygon_input');
+    target.params.inputMethod=control(e).value==='extract'?'extract':'file';
+  }));
+  document.querySelectorAll<HTMLInputElement>('[data-area-kind]').forEach(el=>el.onchange=()=>change(w=>{
+    const target=getNode(w,n.id,'polygon_input');
+    const kind=required(el.dataset.areaKind) as AreaKind;
+    const held=new Set(target.params.kinds??[]);
+    if(el.checked)held.add(kind);else held.delete(kind);
+    target.params.kinds=AREA_KINDS.filter(k=>held.has(k));
+  }));
+  // UNSET IS A VALUE HERE, not zero: unset reads every area of the chosen kinds, and the refusal
+  // that follows names the threshold that would fit. A blank box that became 0 would read the
+  // same way and say it was asked for.
+  optionalElement('#polygon-min-vertices')?.addEventListener('change',e=>change(w=>{
+    const target=getNode(w,n.id,'polygon_input'),raw=control(e).value.trim();
+    if(raw==='')delete target.params.minVertices;else target.params.minVertices=Number(raw);
+  }));
+  optionalElement('#polygon-margin')?.addEventListener('change',e=>change(w=>{
+    const target=getNode(w,n.id,'polygon_input'),raw=control(e).value.trim();
+    target.params.marginM=raw===''?0:Number(raw);
+  }));
+  optionalElement('#polygon-name-field')?.addEventListener('change',e=>change(w=>{
+    const target=getNode(w,n.id,'polygon_input'),raw=control(e).value.trim();
+    if(raw==='')delete target.params.nameField;else target.params.nameField=raw;
+  }));
+  optionalElement('#polygon-layer-name')?.addEventListener('change',e=>change(w=>{
+    const target=getNode(w,n.id,'polygon_input'),raw=control(e).value.trim();
+    if(raw==='')delete target.params.layerName;else target.params.layerName=raw;
+  }));
+  optionalElement('#polygon-file')?.addEventListener('change',async event=>{
+    const input=event.target as HTMLInputElement;
+    const file=input.files?.[0];
+    if(!file)return;
+    const baseline=JSON.stringify(workflow);
+    try{
+      const node=getNode(workflow,n.id,'polygon_input');
+      const bytes=new Uint8Array(await file.arrayBuffer());
+      const features=readPolygonFeatures(JSON.parse(new TextDecoder().decode(bytes)),
+        {nameField:node.params.nameField,layerName:node.params.layerName});
+      if(JSON.stringify(workflow)!==baseline)
+        throw new Error('The workflow changed while the file was read. Choose it again.');
+      const data={features};
+      const digest=await payloadDigest(data);
+      if(!await keepDataset(digest,data))
+        throw new Error(`This layer could not be kept on this device, so it was not saved. Export `
+          +`the workflow to a file to keep it.`);
+      const sha256=await contentHash(bytes);
+      if(change(w=>{
+        const target=getNode(w,n.id,'polygon_input');
+        target.params.data=data;target.params.dataRef=digest;
+        target.params.source={filename:file.name,bytes:bytes.length,sha256,features:features.length};
+        // A FILE LAYER HAS NO RETRIEVAL, and leaving the previous one behind would leave the run's
+        // staleness check comparing this file against a box it was never read for.
+        delete target.params.retrieval;
+      },{requirePersistence:true}))
+        toast(`${features.length.toLocaleString('en')} polygon feature`
+          +`${features.length===1?'':'s'} read. Run the workflow to use them.`);
+      else await dropPayload(digest);
+    }catch(error){toast(errorMessage(error),{tone:'failure'});}
+    finally{input.value='';}
+  });
+  // AN EXTRACT ON THIS DEVICE, on the arrangement `#network-extract` already uses: Geofabrik
+  // sends no CORS header, so the file is the browser's own download and is read where it sits.
+  // Nothing of the 124 MB is kept -- the filename and its digest are the whole trace of which
+  // build was read, which matters because `-latest` redirects to a dated file that changes.
+  optionalElement('#polygon-extract')?.addEventListener('change',async event=>{
+    const input=event.target as HTMLInputElement;
+    const file=input.files?.[0];
+    if(!file)return;
+    const status=document.querySelector<HTMLElement>('#polygon-extract-status');
+    const say=(message:string)=>{if(status)status.textContent=message;};
+    const baseline=JSON.stringify(workflow);
+    try{
+      const node=getNode(workflow,n.id,'polygon_input');
+      const kinds=node.params.kinds??[];
+      if(!kinds.length)throw new Error('Choose at least one kind of area to read.');
+      // THE SCOPE IS THE STUDY AREA'S, which is why the port exists. previewArea refuses when
+      // nothing is connected, and that refusal is the right one: a read with no box is a read of
+      // whatever the file happens to hold.
+      const {boundary}=previewArea(workflow,n.id);
+      const bounds=geometryBounds(boundary);
+      const bbox=readBox([bounds[0],bounds[1],bounds[2],bounds[3]],node.params.marginM??0);
+      const bytes=new Uint8Array(await file.arrayBuffer());
+      const {features,retrieval}=await areasInWorker(bytes,{kinds,bbox,
+        nameTag:node.params.nameField,minVertices:node.params.minVertices},say);
+      if(JSON.stringify(workflow)!==baseline)
+        throw new Error('The workflow changed while the extract was read. Choose the file again.');
+      say('Keeping the areas on this device…');
+      const sha256=await contentHash(bytes);
+      const read={...retrieval,filename:file.name,sha256,bytes:bytes.length};
+      const data={features};
+      const digest=await payloadDigest(data);
+      if(!await keepDataset(digest,data))
+        throw new Error(`These ${features.length.toLocaleString('en')} features could not be kept `
+          +`on this device, so they were not saved. A higher vertex threshold reads fewer of them.`);
+      if(change(w=>{
+        const target=getNode(w,n.id,'polygon_input');
+        target.params.data=data;target.params.dataRef=digest;target.params.retrieval=read;
+        target.params.provenance=retrievalProvenance(read,{filename:file.name,sha256});
+        target.params.source={filename:file.name,bytes:bytes.length,sha256,features:features.length};
+      },{requirePersistence:true})){
+        say('');
+        toast(`${features.length.toLocaleString('en')} ${kinds.join(' and ')} feature`
+          +`${features.length===1?'':'s'} read from the extract and saved on this device. `
+          +`Run the workflow to use them.`);
       }else await dropPayload(digest);
     }catch(error){say('');toast(errorMessage(error),{tone:'failure'});}
     finally{input.value='';}

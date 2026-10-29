@@ -1704,8 +1704,33 @@ function renderInspector(){
         const sources=workflow.edges.filter(edge=>edge.to===n.id&&isPointPort(edge.port))
           .map(edge=>workflow.nodes.find(node=>node.id===edge.from)).filter(Boolean) as WorkflowNode[];
         if(!sources.length)return '';
+        // THE PIN CLASS, per layer. The practitioner, 2026-10-29: *"I should be able to name pins
+        // to classes ... So the pins get classified when they get onto the map."* The attribute is
+        // nominated, never guessed from a property name -- the same rule the polygon layer's
+        // naming property follows -- so the offer is the keys the records actually carry.
+        const classPicker=sources.map(source=>{
+          const records=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}})
+            .data?.features??[];
+          const keys=[...new Set(records.flatMap(f=>Object.keys(f.properties??{})))]
+            .filter(key=>!['name','capturedAt'].includes(key)).sort();
+          if(!keys.length)return '';
+          const chosen=n.params.pinClassField?.[source.id]||'';
+          return `<div class="field"><label class="field-label" for="pin-class-${esc(source.id)}">`
+            +`Pin class for ${esc(source.params.label||TYPES[source.type].title)}</label>`
+            +`<select id="pin-class-${esc(source.id)}" data-pin-class="${esc(source.id)}">`
+            +`<option value="">Not classed \u00b7 one mark for the layer</option>`
+            +keys.map(key=>`<option value="${esc(key)}" ${chosen===key?'selected':''}>`
+              +`${esc(key)}</option>`).join('')
+            +`</select></div>`;
+        }).join('');
+        const classed=classPicker
+          ?`<span class="inspector-section">Pin class</span>`
+            +`<p class="muted">What each record IS, drawn with a mark of its own and named in the `
+            +`key. A layer is where records came from; a class is what they are.</p>`+classPicker
+          :'';
+
         const chosen=n.params.layerSymbols||{};
-        return `<span class="inspector-section">Layer symbols</span>`
+        return classed+`<span class="inspector-section">Layer symbols</span>`
           +`<p class="muted">Hue and mark say which source a point came from; whether it is filled says whether it is inside the study area. Marks are named as OGC Symbology Encoding names them.</p>`
           +sources.map((source,index)=>{
             const held=chosen[source.id],resolved=resolveLayerSymbol(index,held);
@@ -3202,6 +3227,17 @@ function renderInspector(){
     apply.disabled=!!missing;
     note.textContent=missing||'Ready. Nothing is placed until you choose this.';
   };
+  // WHICH ATTRIBUTE HOLDS A LAYER'S PIN CLASS. Stored per source node, the way the symbols are.
+  document.querySelectorAll<HTMLSelectElement>('[data-pin-class]').forEach(select=>{
+    select.onchange=()=>change(w=>{
+      const target=getNode(w,n.id,'map_output');
+      const held={...(target.params.pinClassField||{})};
+      if(select.value)held[select.dataset.pinClass!]=select.value;
+      else delete held[select.dataset.pinClass!];
+      if(Object.keys(held).length)target.params.pinClassField=held;
+      else delete target.params.pinClassField;
+    });
+  });
   optionalElement('#map-image-label')?.addEventListener('change',event=>change(w=>{
     getNode(w,n.id,'map_image_input').params.label=(event.target as HTMLInputElement).value;}));
   optionalElement('#map-image-file')?.addEventListener('change',event=>{
@@ -6160,13 +6196,18 @@ function renderLayerDialog(){
     +`<button class="icon-button" data-layer-move="${esc(layer.id)}" data-direction="down" aria-label="Draw ${esc(layer.label)} higher" ${index===list.length-1?'disabled':''}>↓</button>`
     +`</span>`
     +`<label class="layer-row-visible"><input type="checkbox" data-layer-visible="${esc(layer.id)}" ${layer.drawn?'checked':''}><span class="visually-hidden">Draw ${esc(layer.label)}</span></label>`
-    +`<input class="layer-row-label" data-layer-label="${esc(layer.id)}" value="${esc(layer.label)}" maxlength="${LAYER_LABEL_LIMIT}" aria-label="Name for ${esc(layer.label)}">`
+    // A LAYER'S NAME IS NOT EDITED HERE. The practitioner, 2026-10-29: *"this form allow me to
+    // edit the inherited label of the polygon layer. It should not be editable."* It inherits
+    // from the thing that owns it -- the widget's own label, a collected layer's name, a pin
+    // class's value -- and a second place to type it is a second name for one thing, free to
+    // disagree with the first. Shown, with where it came from, and changed at the source.
+    +`<span class="layer-row-label" data-layer-label="${esc(layer.id)}">${esc(layer.label)}</span>`
     +`<select class="layer-row-group" data-layer-group="${esc(layer.id)}" aria-label="Group for ${esc(layer.label)}">`
       +`<option value="">No group</option>`
       +(node.params.layerGroups||[]).map(group=>
         `<option value="${esc(group.id)}" ${layer.group?.id===group.id?'selected':''}>${esc(group.label)}</option>`).join('')
       +`</select>`
-    +`<span class="muted layer-row-kind">${esc(KIND_WORD[layer.kind]||layer.kind)}${layer.parts?` · ${layer.parts} parts`:''}${layer.origin==='within'?' · inside a collection':''}</span>`
+    +`<span class="muted layer-row-kind">${esc(KIND_WORD[layer.kind]||layer.kind)}${layer.parts?` · ${layer.parts} parts`:''}<br><span class="layer-row-origin">${layer.origin==='within'?'named by the data':'named by the widget'}</span></span>`
     +`</div>`).join('')
     :'<p class="muted">Nothing is connected to this map yet, so it has no layers to manage.</p>';
   // WHAT IS REFUSED IS SAID HERE, and it is never a combination of kinds. A kind decides how a
@@ -6193,11 +6234,6 @@ function editLayer(id:string,patch:{label?:string;group?:string;drawn?:boolean})
   });
   renderLayerDialog();
 }
-$('#layer-dialog-rows').addEventListener('input',event=>{
-  const target=event.target as HTMLInputElement;
-  const forLabel=target.getAttribute('data-layer-label');
-  if(forLabel)editLayer(forLabel,{label:target.value});
-});
 $('#layer-dialog-rows').addEventListener('change',event=>{
   const target=event.target as HTMLInputElement,id=target.getAttribute('data-layer-visible');
   if(id){editLayer(id,{drawn:target.checked});return;}

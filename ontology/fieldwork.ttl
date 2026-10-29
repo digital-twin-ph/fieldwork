@@ -797,6 +797,12 @@ fw:featuresRead a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
 fw:featuresSetAside a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "How many of them the practitioner set aside";
   rdfs:comment "A read of Greater London's water areas returns six hundred features where two are wanted, and which two is a question answered by looking rather than by a predicate typed in advance. The practitioner sets the rest aside in the feature viewer and the layer carries what survives. Recorded because a layer of two drawn from a read of 606 is a choice, and a reader of the evidence has to be able to see that it was made. The read itself is unchanged and repeatable; nothing is deleted.".
+fw:pinClass a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "What this point record is";
+  rdfs:comment "A point record's kind, read from an attribute the practitioner nominates for its layer -- \"water intake\", \"tidal limit\". Distinct from the layer it arrived in: a layer is a source and is toggled, a class is a kind and is symbolised and keyed, and one layer may hold several. Recorded per record so a reader of the receipt can see which mark meant what, rather than inferring it from a colour.".
+fw:pinClassField a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "The attribute a layer's pin class is read from";
+  rdfs:comment "Nominated by the practitioner per layer, never guessed from a property name -- the same rule the polygon layer's naming property follows.".
 fw:LayerGroup a owl:Class;
   rdfs:label "A group of layers, declared once and joined";
   rdfs:comment "A bundle a practitioner declares and then adds existing layers to. Declared on 2026-10-29 on the practitioner's instruction -- \"Groupings can be declared, and then existing artifacts added to it\" -- which rules out the alternative it replaced: a free-text group name repeated on every layer, where two layers join a group only by being spelled identically. A group has an identity, so renaming it renames one thing. Distinct from fw:layerRole, which is a READING of a layer (observations, sites, context) and not a bundle: a group may hold layers of different roles and different kinds. The established term in the surrounding tools is the same one -- a group layer in Esri, a group in QGIS -- so no new word is coined here. See experiment 148.".

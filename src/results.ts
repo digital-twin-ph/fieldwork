@@ -34,7 +34,10 @@ export interface LayerSummary {sourceNodeId:string; label:string; count:number}
 export interface PointRow {id:string; recordId:string; sourceNodeId:string; layerLabel:string; attributeTypes:Record<string,AttributeType>; name:string; attributes:Record<string,Scalar>; coordinates:Position|null}
 /** `fill` is the class the map RESOLVED this row to, by its own fillEncoding. The renderer draws
  *  the class; it does not read the variable. */
-export interface MapRow extends PointRow {relation:SpatialRelation; status:Status; fill?:FillClass}
+export interface MapRow extends PointRow {relation:SpatialRelation; status:Status; fill?:FillClass;
+  /** This record's PIN CLASS, where its layer has a class field. The value as the record carries
+   *  it -- never a label invented here. */
+  pinClass?:string}
 export interface CoverageRow extends MapRow {excluded:boolean; exclusionReason:string; signature:string; iri:string; decision:'Accept'|'Review'|'Excluded'}
 /** `units` are the NAMED PARTS of an acquired boundary, carried on the value rather than left on
  *  the node that produced it. Without this a downstream widget can see 33 rings and no way to

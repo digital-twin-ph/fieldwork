@@ -4,7 +4,7 @@ import {test,expect} from '@playwright/test';
 // Evidence ... It would be easier to see the whole workflow or the whole Result panel than to see
 // half of each."* The split had a divider, a remembered height and an Expand button that toggled
 // which half won -- three controls managing a compromise a tab removes.
-test('project, workflow, results and N3 are four tabs, and only one is on screen',async({page})=>{
+test('project, workflow, results, N3 and notes are five tabs, and only one is on screen',async({page})=>{
   await page.goto('/?example=hagelloch');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 
@@ -14,7 +14,11 @@ test('project, workflow, results and N3 are four tabs, and only one is on screen
   // alongside Workflow, and N3" -- turned out to have a fourth answer.
   // Project comes FIRST, at the practitioner's direction on 2026-10-23: setting up precedes
   // analysing, and the order of the tabs should say so.
-  await expect(page.locator('[data-view]')).toHaveText([/^Project/,/^Workflow/,/^Results/,/N3/]);
+  // Notes joined them on 2026-10-29, at the practitioner's direction -- *"It should be a tab."*
+  // It comes last because a write-up is what the rest is for: the stage after the evidence, not
+  // a corner of the project record.
+  await expect(page.locator('[data-view]'))
+    .toHaveText([/^Project/,/^Workflow/,/^Results/,/N3/,/^Notes/]);
 
   // A finished run does not move you: the canvas is still what is on screen, and the tab says
   // how many outputs are waiting -- read from the run rather than announced.

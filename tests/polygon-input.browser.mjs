@@ -54,8 +54,11 @@ test('the widget has a panel, and offers both ways in',async({page})=>{
   await expect(page.locator('#polygon-input-method')).toHaveValue('file');
   await expect(page.locator('#polygon-file')).toBeVisible();
   await expect(page.locator('#inspector-content')).toContainText('Read as published');
-  // The naming property is asked for and never guessed, which is the layer's own rule.
-  await expect(page.locator('#inspector-content')).toContainText('Nothing is guessed from a property name');
+  // The naming property is asked for and never guessed, which is the layer's own rule. The panel
+  // was rewritten as guided steps on 2026-10-29 and says it in fewer words; the rule is the same
+  // one, and a test that asserts the old sentence is testing the copy rather than the rule.
+  await expect(page.locator('#inspector-content'))
+    .toContainText('A property the file does not carry is refused rather than left blank');
   await expect(page.locator('#polygon-extract')).toHaveCount(0);
 });
 
@@ -68,8 +71,11 @@ test('a file layer is kept in the payload store, not in the workflow',async({pag
     {type:'Feature',properties:{name:'Second parish'},
      geometry:{type:'Polygon',coordinates:[[[-0.13,51.51],[-0.12,51.51],[-0.12,51.52],[-0.13,51.51]]]}},
   ]};
+  // NOTHING IS READ UNTIL APPLY, since 2026-10-29: choosing a file used to start the read, so
+  // every setting above it had to be right before the file was picked.
   await page.locator('#polygon-file').setInputFiles(
     {name:'parishes.geojson',mimeType:'application/geo+json',buffer:Buffer.from(JSON.stringify(layer))});
+  await page.locator('#polygon-apply').click();
   // WHAT LANDED, shown in the panel: an import a practitioner cannot see is an import they
   // cannot check.
   await expect(page.locator('#inspector-content')).toContainText('parishes.geojson');
@@ -117,7 +123,12 @@ test('the extract path states its box, and offers the extract that covers it',as
   // network extract's control stops; South London needs 5,000, and Teddington Lock is why.
   await page.locator('#polygon-margin').fill('5000');
   await page.locator('#polygon-margin').dispatchEvent('change');
-  await expect(page.locator('#inspector-content')).toContainText('widened by 5,000 m');
+  // Asserted as the BOX rather than as a sentence about it. The guided panel of 2026-10-29 says
+  // "Reading <box>" and dropped the prose that named the margin; what matters is that the box a
+  // reader is shown actually widened, and per axis -- a degree of longitude is shorter than a
+  // degree of latitude at 51.5 north, so the two sides move by different amounts.
+  await expect(page.locator('#inspector-content')).toContainText('-0.2273, 51.4570');
+  await expect(page.locator('#inspector-content')).not.toContainText('-0.1550, 51.5020, -0.1190');
 });
 
 test('the extract offered is the one covering the READ box, not the boundary',async({page})=>{
@@ -135,7 +146,10 @@ test('without a study area the panel says the box cannot be worked out',async({p
   await blank(page);
   await place(page,'polygon_input','Polygon layer');
   await page.locator('#polygon-input-method').selectOption('extract');
-  await expect(page.locator('#inspector-content')).toContainText('Connect a Study area');
+  // Step 2 is the study area, and it says it is required rather than leaving a reader to find
+  // out at the read. The sentence changed with the guided panel; the refusal did not.
+  await expect(page.locator('#inspector-content'))
+    .toContainText('The box to read comes from this area');
   // Offering a download with no box to cover would be a guess, so nothing is offered.
   await expect(page.locator('.extract-links')).toHaveCount(0);
 });
@@ -154,6 +168,11 @@ test('the panel can connect a study area, which nothing could before',async({pag
   // The port was declared, optional and unreachable: two widgets on a canvas and no control that
   // could join them.
   await expect(page.locator('.react-flow__edge')).toHaveCount(0);
+  // THE PICKER MOVED TO THE PATH THAT NEEDS IT, with the guided panel of 2026-10-29: the study
+  // area is step 2 of reading an extract, because the box to read comes from it, and a file layer
+  // is read as published and scoped to nothing. The port is still optional and still connectable;
+  // what changed is that the control is no longer offered on a path where it governs nothing.
+  await page.locator('#polygon-input-method').selectOption('extract');
   await page.locator('#polygon-area').selectOption('area-test');
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);

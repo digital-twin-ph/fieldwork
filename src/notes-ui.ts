@@ -25,13 +25,15 @@ import {groupNotes,noteExtent,forkHasDrifted,WRITE_UP_PARTS,
  */
 export function notesPanel(notes:readonly Note[],
   machined:Record<string,MachinedNote[]>|undefined,
-  labelOf:(nodeId:string)=>string|undefined,esc:Escape):string{
+  labelOf:(nodeId:string)=>string|undefined,esc:Escape,
+  /** The sources the run read back from its inputs' declarations. */
+  derived:readonly Note[]=[]):string{
   // THE PROJECT'S AND THE RUN'S, READ TOGETHER. A quoted sentence belongs to the investigation
   // and a machined one to the step that produced it; a write-up does not care which, so the
   // surface does not separate them. It says which is which on each note instead.
   const fromRun:Note[]=Object.entries(machined||{})
     .flatMap(([nodeId,list])=>list.map(note=>({...note,nodeId})));
-  const all=[...notes,...fromRun];
+  const all=[...notes,...derived,...fromRun];
   const extent=noteExtent(all);
   const parts=groupNotes(all);
 
@@ -63,7 +65,10 @@ export function notesPanel(notes:readonly Note[],
         const where=note.kind==='machined'&&note.nodeId
           ?`<span class="notes-source">from ${esc(labelOf(note.nodeId)||note.nodeId)}</span>`
           :note.kind==='authored'&&note.about
-          ?`<span class="notes-source">on ${esc(labelOf(note.about)||note.about)}</span>`:'';
+          ?`<span class="notes-source">on ${esc(labelOf(note.about)||note.about)}</span>`
+          :note.kind==='derived'&&note.nodeId
+          ?`<span class="notes-source">declared by ${esc(labelOf(note.nodeId)||note.nodeId)}</span>`
+          :'';
         // BOTH WARRANTS, ON A FORK. A machined note that was edited carries the computation that
         // produced the wording and the person who changed it, and a reader needs both: neither
         // alone says what the sentence is.
@@ -81,7 +86,9 @@ export function notesPanel(notes:readonly Note[],
           +(note.kind==='quoted'
             ?`<blockquote>${esc(body)}</blockquote>`
               +(note.establishes?`<p class="muted">Establishes: ${esc(note.establishes)}</p>`:'')
-            :`<p>${esc(body)}</p>`)
+            :`<p>${esc(body)}</p>`
+              +(note.kind==='derived'&&note.detail
+                ?`<p class="muted">${esc(note.detail)}</p>`:''))
           +`</article>`;
       }).join('')).join('')
       +`</section>`;
@@ -91,7 +98,8 @@ export function notesPanel(notes:readonly Note[],
   // and is not is worse than one that says where it stops.
   // WHAT THIS SPIKE DOES NOT DO, said here rather than discovered.
   const gap=`<p class="notice">A spike: notes can be read here and not yet written, edited or `
-    +`added. Quoted and authored notes come from the project, machined ones from the last run. `
+    +`added. Quoted and authored notes come from the project; derived and machined ones from the `
+    +`last run, so they are this workflow's sources and findings rather than the investigation's. `
     +`Only an authored note would be editable here \u2014 a quotation is somebody else\u2019s `
     +`sentence, and a machined one is rewritten by running the workflow again.</p>`;
   return head+body+gap;

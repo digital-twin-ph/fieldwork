@@ -952,6 +952,11 @@ function render(){
   // Project view after an export, the view again after a project was renamed. Scattering a
   // call at each site is how the fourth one happens, so it renders where every other surface
   // renders and the individual calls are no longer load-bearing.
+  // AND THE NOTES, WHICH A RUN CHANGES. Derived and machined notes come from the run, so the
+  // tab a practitioner is already looking at has to be rebuilt when one finishes: `switchView`
+  // returns early for the view you are on, so clicking the tab again does nothing. Found by a
+  // test that ran the workflow with Notes open and saw none of what the run had produced.
+  if(currentView==='notes')renderNotesView();
   if(currentView==='project')renderProjectView();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
   // SAID ONLY WHILE IT IS STILL TRUE. The four captions below are set from the example key; the
   // block after them withdraws the two that describe a RECIPE once the canvas no longer matches
@@ -4961,8 +4966,8 @@ function renderNotesView(){
   const project=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId)
     :projectOfWorkflow(key,readProjects());
   $('#notes-view').innerHTML=notesPanel(project?.notes||[],result?.machined,
-    id=>workflow.nodes.find(node=>node.id===id)?.params.label,esc);
-  const total=(project?.notes||[]).length
+    id=>workflow.nodes.find(node=>node.id===id)?.params.label,esc,result?.derived||[]);
+  const total=(project?.notes||[]).length+(result?.derived||[]).length
     +Object.values(result?.machined||{}).reduce((n,list)=>n+list.length,0);
   $('#notes-view-count').textContent=total?String(total):'';
 }

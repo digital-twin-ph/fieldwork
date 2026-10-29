@@ -180,6 +180,10 @@ export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; proven
    *  should be in fact a machined note from the widget."* Sibling of the quoted notes the South
    *  London repository carries -- Snow's own sentences are quoted, this is machined. */
   machined?:Record<string,import('./notes.js').MachinedNote[]>;
+  /** THE SOURCES THE WORKFLOW CITED, read back from what its inputs declare. One per input that
+   *  states its provenance, which experiment 141 found is the one section of a write-up a
+   *  workflow can produce by itself. */
+  derived?:import('./notes.js').DerivedNote[];
   /** The table each step produced, by node id, for the steps that produced one.
    *
    *  Only an output widget makes a result tab, so without this a table computed in the middle of

@@ -56,6 +56,7 @@ import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAcc
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
+import {derivedNotes} from './notes-derived.js';
 import {polygonLayer,polygonLayerFacts} from './polygon-layer.js';
 import {shareAlike} from './input-provenance.js';
 import type {MachinedNote} from './notes.js';
@@ -955,6 +956,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   const relations:Record<string,RelateOutcome>={};
   // NOTES THE WIDGETS MACHINED, for the write-up rather than for a panel. One producer so far.
   const machined:Record<string,MachinedNote[]>={};
+  const sources=derivedNotes(workflow.nodes);
   const expansion=expandMicroWorkflows(workflow,resolveComposition,runId);
   workflow=expansion.workflow;receipts.push(...expansion.receipts);
   const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];
@@ -1944,5 +1946,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     ...(Object.keys(tables).length?{tables}:{}),
     ...(Object.keys(linkages).length?{linkages}:{}),
     ...(Object.keys(relations).length?{relations}:{}),
-    ...(Object.keys(machined).length?{machined}:{})};
+    ...(Object.keys(machined).length?{machined}:{}),
+    // THE SOURCES THIS WORKFLOW CITES, read back from what its inputs declare rather than asked
+    // for again. Experiment 141, trying the design on a real write-up: "References are the one
+    // section a workflow can write by itself."
+    ...(sources.length?{derived:sources}:{})};
 }

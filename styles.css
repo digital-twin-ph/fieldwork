@@ -786,3 +786,4 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .notes-view .notes-part h3{border-bottom:1px solid var(--rule,#2a3a36);padding-bottom:.25rem}
 .notes-kind-authored{background:rgba(156,59,46,.18)}
 .notes-fork{color:#9c3b2e;opacity:.85}
+.notes-kind-derived{background:rgba(95,74,120,.2)}

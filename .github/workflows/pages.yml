@@ -129,6 +129,30 @@ jobs:
           ref: ${{ steps.deeper.outputs.commit }}
           fetch-depth: 0
           path: dive-deeper-checkout
+      # AND THE WORKED EXAMPLE, for the third time and for the same reason. The unit suite reads
+      # ../example-1855-cholera-south-london/data/*.csv directly -- Table VIII, Table IX and
+      # Table XII are the subject of the relate, melt, rate and contingency tests, which assert
+      # against Snow's own published arithmetic rather than a fixture -- so on a clean runner
+      # they fail with ENOENT, and every push since 2026-10-26 has deployed with a red verify.
+      # The same clean-runner-versus-this-machine difference as the lab (2026-10-14) and the
+      # lessons (2026-10-20), reported for three days before anyone read the log. It is written
+      # down three times now: a test whose subject is a sibling repository needs that sibling
+      # checked out here, or the gate is only ever green where the developer happens to stand.
+      #
+      # Public, so no token: digital-twin-ph/example-1855-cholera-south-london, visibility public.
+      #
+      # Pinned at the commit widgets/examples.json pins, read by repository rather than by index
+      # so that a second pinned example cannot quietly take this checkout's place. The browser
+      # catalog test serves these same bytes and verifies their digest, so an unpinned checkout
+      # would be checked against something other than what the catalog claims.
+      - id: example
+        run: echo "commit=$(jq -r '.examples[] | select(.repository|endswith("/example-1855-cholera-south-london")) | .commit' widgets/examples.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          repository: digital-twin-ph/example-1855-cholera-south-london
+          ref: ${{ steps.example.outputs.commit }}
+          fetch-depth: 0
+          path: example-south-london-checkout
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
@@ -159,5 +183,7 @@ jobs:
         run: mv validation-lab-checkout ../validation-lab
       - name: Place the lessons beside this repository
         run: mv dive-deeper-checkout ../dive-deeper
+      - name: Place the worked example beside this repository
+        run: mv example-south-london-checkout ../example-1855-cholera-south-london
       - name: Type check, build and run regression tests
         run: npm run check

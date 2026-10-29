@@ -1,5 +1,6 @@
 import type {Escape} from './types.js';
-import {groupNotes,noteExtent,WRITE_UP_PARTS,type Note,type MachinedNote} from './notes.js';
+import {groupNotes,noteExtent,forkHasDrifted,WRITE_UP_PARTS,
+  type Note,type MachinedNote} from './notes.js';
 
 /** THE NOTES SURFACE. A SPIKE.
  *
@@ -63,11 +64,20 @@ export function notesPanel(notes:readonly Note[],
           ?`<span class="notes-source">from ${esc(labelOf(note.nodeId)||note.nodeId)}</span>`
           :note.kind==='authored'&&note.about
           ?`<span class="notes-source">on ${esc(labelOf(note.about)||note.about)}</span>`:'';
+        // BOTH WARRANTS, ON A FORK. A machined note that was edited carries the computation that
+        // produced the wording and the person who changed it, and a reader needs both: neither
+        // alone says what the sentence is.
+        const forked=note.kind==='authored'&&note.forkedFrom
+          ?`<span class="notes-fork">edited from ${note.forkedFrom.nodeId
+              ?esc(labelOf(note.forkedFrom.nodeId)||note.forkedFrom.nodeId):'a machined note'}`
+            +`${forkHasDrifted(note,fromRun as MachinedNote[])
+              ?' \u00b7 the run has moved since':''}</span>`
+          :'';
         return `<article class="notes-note">`
           +`<div class="notes-labels">`
           +`<span class="notes-kind notes-kind-${note.kind}">${note.kind}</span>`
           +(group.fn?`<span class="notes-fn">${esc(group.fn)}</span>`:'')
-          +where+`</div>`
+          +where+forked+`</div>`
           +(note.kind==='quoted'
             ?`<blockquote>${esc(body)}</blockquote>`
               +(note.establishes?`<p class="muted">Establishes: ${esc(note.establishes)}</p>`:'')

@@ -785,3 +785,4 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .notes-view{padding:1rem 0;max-width:52rem}
 .notes-view .notes-part h3{border-bottom:1px solid var(--rule,#2a3a36);padding-bottom:.25rem}
 .notes-kind-authored{background:rgba(156,59,46,.18)}
+.notes-fork{color:#9c3b2e;opacity:.85}

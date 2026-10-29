@@ -40,15 +40,20 @@ function classedItems(polygons:{features:{value?:number}[]}):{label:string;color
  *  the layer control already gives.
  *
  *  Every region is still drawn either way: what changes is whether hue carries the naming. */
-function categoricalKey(polygons:{features:{id:string;name:string;value?:number;minutes?:number}[]}):
+function categoricalKey(polygons:{layerName?:string;features:{id:string;name:string;value?:number;minutes?:number}[]}):
   {label:string;color:string}[]|null{
+  const name=polygons.layerName?.trim();
   const features=polygons.features;
   if(!features.length||features.some(f=>f.minutes!==undefined))return null;
   if(features.some(f=>typeof f.value==='number'))return null;
   const hues=categoricalSteps(features.length);
   // Past the palette there are no distinct hues to key, so the entry says what the layer is and
   // how many parts it has -- which is what the layer control and the popups already answer.
-  if(!hues)return [{label:`${features.length} named regions \u00b7 see the layer list`,
+  // A PUBLISHED FIGURE CANNOT SEND ITS READER TO A CONTROL. This said "see the layer list",
+  // which is a panel in the application and nothing at all on paper -- reported 2026-10-29 off a
+  // figure of 279 Thames water areas. The key says what the layer is and how many parts it has,
+  // which is everything the figure itself can support.
+  if(!hues)return [{label:`${name||'Polygons'} \u00b7 ${features.length.toLocaleString()} features`,
     color:FIGURE_ROLE.primary}];
   return features.map((f,i)=>({label:f.name||f.id,color:hues[i]}));
 }

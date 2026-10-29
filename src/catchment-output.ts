@@ -126,7 +126,14 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   if((p.observations?.features||[]).some(f=>f.geometry))marks.push('dots: observations');
   // What the polygons ARE differs with what they carry. A catchment is modeled; a boundary
   // shaded by a joined value is measured, and calling it modeled would misreport its standing.
-  marks.push(classed?'polygon shade: the joined value':'polygons: modeled catchments');
+  // WHAT THE POLYGONS ARE, in the layer's own name where it has one. "Polygons: modeled
+  // catchments" was printed under a figure of the Thames on 2026-10-29: these were read from a
+  // published extract and modelled by nobody. A catchment is modelled; a read water body is not,
+  // and the key is the one part of a figure a reader trusts without checking.
+  marks.push(classed?'polygon shade: the joined value'
+    :p.layerName?.trim()?`polygons: ${p.layerName.trim()}`
+    :p.features.some(f=>f.minutes!==undefined)?'polygons: modeled catchments'
+    :'polygons: the layer drawn');
   // The method belongs on the key line, not beside the ramp: set beside it, the sentence ran
   // across the polygons it was explaining.
   const method=classed?` · ${classed.classes} ${classed.method==='quantile'

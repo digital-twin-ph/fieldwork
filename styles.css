@@ -754,3 +754,6 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .polygon-review-name:hover{text-decoration:underline}
 #polygon-dialog{max-width:64rem;width:94vw}
 @media (max-width:720px){.polygon-review-layout{grid-template-columns:1fr}}
+.polygon-review-row.is-chosen{background:rgba(29,78,216,.22)}
+#polygon-review-selection{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+#polygon-review-selection #polygon-review-selected{margin-right:auto}

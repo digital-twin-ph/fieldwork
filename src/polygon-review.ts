@@ -30,6 +30,11 @@ const markup=`<dialog id="polygon-dialog" aria-labelledby="polygon-dialog-title"
 <p class="description">Every feature the read returned. Select a row to find it on the map; clear its box to leave it out of the layer. Nothing is deleted — the read is unchanged, and a feature you set aside comes back by ticking it again.</p>
 <div class="polygon-review-layout"><div id="polygon-review-map"></div>
 <div id="polygon-review-rows" role="listbox" aria-label="Features this read returned"></div></div>
+<p id="polygon-review-selection" class="notice" hidden>
+<span id="polygon-review-selected"></span>
+<button id="polygon-review-keep-only" class="button small">Keep only these</button>
+<button id="polygon-review-discard" class="button small">Discard these</button>
+<button id="polygon-review-clear" class="button small">Clear selection</button></p>
 <p id="polygon-review-status" class="notice" role="status"></p>
 <div class="area-dialog-actions"><button id="polygon-review-all" class="button">Keep all</button>
 <button id="polygon-review-cancel" class="button">Cancel</button>
@@ -46,9 +51,18 @@ const HIDDEN={color:'#8C8C8C',weight:1,fillColor:'#8C8C8C',fillOpacity:.06,dashA
 /** The selected row's feature, drawn so it can be found among six hundred. Not a hue from the
  *  figure palette: this is a pointer on a working surface, not a category in a published map. */
 const PICKED={color:'#C2410C',weight:3,fillColor:'#C2410C',fillOpacity:.35};
+/** Chosen on the map for a bulk action. Distinct from PICKED, which marks the one row you are
+ *  looking at: these are the ones an action is about to apply to. */
+const CHOSEN={color:'#1D4ED8',weight:3,fillColor:'#1D4ED8',fillOpacity:.4};
+/** The box the read was scoped to. A frame, so it is drawn as one and takes no clicks. */
+const BOX={color:'#4D4D4D',weight:1.5,dashArray:'6 4',fill:false,interactive:false};
 
 export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
-  esc:(value:unknown)=>string,onApply:(hidden:string[])=>boolean|void){
+  esc:(value:unknown)=>string,onApply:(hidden:string[])=>boolean|void,
+  /** The box the read was scoped to, drawn for reference. The practitioner, 2026-10-29: *"can we
+   *  also show the study area bounding box?"* -- which is the frame everything here was read
+   *  inside, and without it a river running off the edge looks like a river that was cut. */
+  box?:readonly [number,number,number,number]){
   if(!document.querySelector('#polygon-dialog'))document.body.insertAdjacentHTML('beforeend',markup);
   const dialog=element('#polygon-dialog') as HTMLDialogElement;
   const $=<S extends string>(s:S)=>element(s,dialog);
@@ -56,8 +70,13 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
   const hidden=new Set(node.params.hidden||[]);
   const layers=new Map<string,L.GeoJSON>();
   let picked:string|null=null,map:L.Map|null=null;
+  /** CHOSEN ON THE MAP, which is the other direction. The rows answer "is this one kept"; the map
+   *  answers "which ones are these". The practitioner, 2026-10-29: *"Is it possible to also do
+   *  the reverse, select the polygons and have a few actions - keep, discard, cancel."* A
+   *  selection is transient and decides nothing by itself -- the action does. */
+  const selected=new Set<string>();
 
-  const style=(id:string)=>id===picked?PICKED:hidden.has(id)?HIDDEN:KEPT;
+  const style=(id:string)=>selected.has(id)?CHOSEN:id===picked?PICKED:hidden.has(id)?HIDDEN:KEPT;
   const restyle=(id:string)=>layers.get(id)?.setStyle(style(id) as L.PathOptions);
 
   const status=()=>{
@@ -69,10 +88,31 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
     ($('#polygon-review-apply') as HTMLButtonElement).disabled=!kept;
   };
 
+  const selection=()=>{
+    const bar=$('#polygon-review-selection');
+    bar.hidden=selected.size===0;
+    $('#polygon-review-selected').textContent=selected.size
+      ?`${selected.size.toLocaleString()} chosen on the map.`:'';
+  };
+  const act=(keepOnly:boolean)=>{
+    if(!selected.size)return;
+    // KEEP ONLY sets aside everything that was not chosen; DISCARD sets aside what was. Both
+    // leave the read alone -- this is the same hiding the boxes do, applied to a set at once.
+    if(keepOnly)for(const feature of features){
+      const id=String(feature.id);
+      if(selected.has(id))hidden.delete(id);else hidden.add(id);
+    }
+    else for(const id of selected)hidden.add(id);
+    selected.clear();
+    for(const id of layers.keys())restyle(id);
+    rows();selection();status();
+  };
   const rows=()=>{
     $('#polygon-review-rows').innerHTML=features.map(feature=>{
       const id=String(feature.id);
-      return `<div class="polygon-review-row${picked===id?' is-picked':''}" data-feature="${esc(id)}" role="option" aria-selected="${picked===id}">`
+      return `<div class="polygon-review-row${picked===id?' is-picked':''}`
+        +`${selected.has(id)?' is-chosen':''}" data-feature="${esc(id)}" role="option" `
+        +`aria-selected="${picked===id}">`
         +`<input type="checkbox" data-keep="${esc(id)}" ${hidden.has(id)?'':'checked'} aria-label="Keep ${esc(feature.name||id)}">`
         +`<button class="polygon-review-name" data-pick="${esc(id)}">${esc(feature.name||id)}</button>`
         +`<span class="muted">${verticesOf(feature).toLocaleString()} vertices</span></div>`;
@@ -91,8 +131,15 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
 
   $('#polygon-review-rows').onclick=event=>{
     const target=event.target as HTMLElement;
-    const id=target.closest('[data-pick]')?.getAttribute('data-pick');
-    if(id)pick(id);
+    const named=target.closest('[data-pick]')?.getAttribute('data-pick');
+    if(named){pick(named);return;}
+    // THE ROW CHOOSES TOO, not only the map. Selecting on a map needs a mouse and good aim at a
+    // 25-vertex island; the list is the same decision for anyone who would rather read than
+    // point, and it is the only route for a keyboard.
+    const row=target.closest('[data-feature]')?.getAttribute('data-feature');
+    if(!row||target.closest('input'))return;
+    if(selected.has(row))selected.delete(row);else selected.add(row);
+    restyle(row);rows();selection();
   };
   $('#polygon-review-rows').onchange=event=>{
     const box=event.target as HTMLInputElement;
@@ -102,12 +149,19 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
     restyle(id);status();
   };
   $('#polygon-review-all').onclick=()=>{hidden.clear();rows();for(const id of layers.keys())restyle(id);status();};
+  $('#polygon-review-keep-only').onclick=()=>act(true);
+  $('#polygon-review-discard').onclick=()=>act(false);
+  $('#polygon-review-clear').onclick=()=>{
+    const was=[...selected];selected.clear();
+    for(const id of was)restyle(id);
+    rows();selection();
+  };
   const close=()=>{dialog.close();};
   $('#polygon-review-close').onclick=close;
   $('#polygon-review-cancel').onclick=close;
   $('#polygon-review-apply').onclick=()=>{if(onApply([...hidden] as string[])!==false)close();};
 
-  rows();status();
+  rows();status();selection();
   dialog.showModal();
 
   // AFTER THE DIALOG IS OPEN, because Leaflet measures a container that has no size until then.
@@ -119,8 +173,18 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
       const id=String(feature.id);
       const layer=L.geoJSON(feature.geometry as never,
         {renderer:L.canvas(),style:style(id)} as L.GeoJSONOptions);
-      layer.on('click',()=>pick(id));
+      // A CLICK ON THE MAP CHOOSES, and choosing is what the actions act on. Picking a row still
+      // marks one feature to look at; these are two different questions and two different marks.
+      layer.on('click',()=>{
+        if(selected.has(id))selected.delete(id);else selected.add(id);
+        restyle(id);rows();selection();
+      });
       layer.addTo(group);layers.set(id,layer);
+    }
+    // THE BOX THE READ WAS SCOPED TO, behind everything and taking no clicks.
+    if(box){
+      const [west,south,east,north]=box;
+      L.rectangle([[south,west],[north,east]],BOX as L.PathOptions).addTo(map);
     }
     if(group.getLayers().length)map.fitBounds(group.getBounds(),{padding:[16,16]});
     else map.setView([51.5,-0.12],10);

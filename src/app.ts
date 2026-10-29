@@ -67,6 +67,10 @@ import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from './old-naledi-ui.js';
 import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {openPolygonReview} from './polygon-review.js';
+
+/** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
+ *  Inspector re-renders on every setting change. */
+const pendingPolygonFiles=new Map<string,File>();
 import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
 import {isPointPort} from './point-layers.js';
 import {EXAMPLE_TEMPLATES,hasExampleTemplate,EXAMPLE_KEYS,WORKED_EXAMPLE_KEYS} from './example-templates.js';
@@ -3052,10 +3056,40 @@ function renderInspector(){
     const target=getNode(w,n.id,'polygon_input'),raw=control(e).value.trim();
     if(raw==='')delete target.params.layerName;else target.params.layerName=raw;
   }));
-  optionalElement('#polygon-file')?.addEventListener('change',async event=>{
-    const input=event.target as HTMLInputElement;
-    const file=input.files?.[0];
-    if(!file)return;
+  // THE FILE IS HELD, NOT READ. Choosing one used to start the read on the spot, so every
+  // setting above it had to be right BEFORE the file was picked: change a kind afterwards and the
+  // layer still held what the old kinds matched, with nothing saying so.
+  // HELD OUTSIDE THE DOM, because the panel re-renders on every setting change and a file input
+  // cannot carry a selection across that. Choose the extract, then change a kind, and the input
+  // is new and empty -- so the file lived for exactly as long as you changed nothing, which is
+  // the opposite of what Apply is for.
+  const held=()=>pendingPolygonFiles.get(n.id);
+  const remember=(event:Event)=>{
+    const file=(event.target as HTMLInputElement).files?.[0];
+    if(file)pendingPolygonFiles.set(n.id,file);else pendingPolygonFiles.delete(n.id);
+    announce();
+  };
+  const announce=()=>{
+    const file=held();
+    const apply=optionalElement('#polygon-apply') as HTMLButtonElement|null;
+    const note=optionalElement('#polygon-apply-note'),pending=optionalElement('#polygon-pending');
+    if(pending)pending.textContent=file?`Chosen: ${file.name}`:'';
+    if(!apply||!note)return;
+    const node=getNode(workflow,n.id,'polygon_input');
+    // ONE THING AT A TIME, named. A disabled button that does not say why is a dead end.
+    const missing=node.params.inputMethod==='extract'
+      ?(!workflow.edges.some(e=>e.to===n.id&&e.port==='area')?'Connect a study area in step 2.'
+        :!(node.params.kinds??[]).length?'Choose at least one kind in step 3.'
+        :!file?'Choose an extract file in step 4.':'')
+      :(!file?'Choose a file in step 2.':'');
+    apply.disabled=!!missing;
+    note.textContent=missing||'Ready. Nothing is read until you choose this.';
+  };
+  for(const id of ['#polygon-file','#polygon-extract'] as const)
+    optionalElement(id)?.addEventListener('change',remember);
+  announce();
+
+  const readPolygonFile=async(file:File)=>{
     const baseline=JSON.stringify(workflow);
     try{
       const node=getNode(workflow,n.id,'polygon_input');
@@ -3082,16 +3116,12 @@ function renderInspector(){
           +`${features.length===1?'':'s'} read. Run the workflow to use them.`);
       else await dropPayload(digest);
     }catch(error){toast(errorMessage(error),{tone:'failure'});}
-    finally{input.value='';}
-  });
+  };
   // AN EXTRACT ON THIS DEVICE, on the arrangement `#network-extract` already uses: Geofabrik
   // sends no CORS header, so the file is the browser's own download and is read where it sits.
   // Nothing of the 124 MB is kept -- the filename and its digest are the whole trace of which
   // build was read, which matters because `-latest` redirects to a dated file that changes.
-  optionalElement('#polygon-extract')?.addEventListener('change',async event=>{
-    const input=event.target as HTMLInputElement;
-    const file=input.files?.[0];
-    if(!file)return;
+  const readPolygonExtract=async(file:File)=>{
     const status=document.querySelector<HTMLElement>('#polygon-extract-status');
     const say=(message:string)=>{if(status)status.textContent=message;};
     const baseline=JSON.stringify(workflow);
@@ -3130,7 +3160,19 @@ function renderInspector(){
           +`Run the workflow to use them.`);
       }else await dropPayload(digest);
     }catch(error){say('');toast(errorMessage(error),{tone:'failure'});}
-    finally{input.value='';}
+  };
+  // APPLY IS THE READ. Nothing happens until the practitioner says so, which is what lets every
+  // setting above be changed in any order before it runs.
+  optionalElement('#polygon-apply')?.addEventListener('click',async event=>{
+    const button=event.currentTarget as HTMLButtonElement;
+    const file=held();
+    if(!file)return;
+    button.disabled=true;const was=button.textContent;button.textContent='Reading\u2026';
+    try{
+      if(getNode(workflow,n.id,'polygon_input').params.inputMethod==='extract')
+        await readPolygonExtract(file);
+      else await readPolygonFile(file);
+    }finally{button.textContent=was;pendingPolygonFiles.delete(n.id);announce();}
   });
   optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';
     // WHO ENDS AN ARRIVING DOWNLOAD. The practitioner, 2026-10-22: *"If nothing ever arrives, that
@@ -6137,7 +6179,15 @@ document.addEventListener('click',event=>{
   const open=(event.target as HTMLElement).closest('[data-review-polygons]') as HTMLElement|null;
   if(!open)return;
   const id=open.getAttribute('data-review-polygons')!;
-  openPolygonReview(getNode(workflow,id,'polygon_input'),esc,hidden=>{
+  const node=getNode(workflow,id,'polygon_input');
+  // THE FRAME THE READ USED, where there is one. An extract read records its own box; a file
+  // layer has none, so the connected study area's bounds stand in and a layer connected to
+  // nothing simply has no frame to draw.
+  const area=(()=>{try{return previewArea(workflow,id).boundary;}catch{return undefined;}})();
+  const bounds=area?geometryBounds(area):undefined;
+  const frame=node.params.retrieval?.bbox
+    ??(bounds?[bounds[0],bounds[1],bounds[2],bounds[3]] as [number,number,number,number]:undefined);
+  openPolygonReview(node,esc,hidden=>{
     change(w=>{
       const target=getNode(w,id,'polygon_input');
       if(hidden.length)target.params.hidden=hidden;else delete target.params.hidden;
@@ -6145,7 +6195,7 @@ document.addEventListener('click',event=>{
     toast(hidden.length
       ?`${hidden.length} feature${hidden.length===1?'':'s'} set aside. Rerun to update results.`
       :'Every feature kept. Rerun to update results.');
-  });
+  },frame);
 });
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});

@@ -133,6 +133,34 @@ export function membersOfPolygons(polygons:unknown):{name:string;parts:number}[]
   return counts.size>1?[...counts].map(([name,parts])=>({name,parts})):[];
 }
 
+/** A CLASSED PIN LAYER'S CLASSES, as layers inside it.
+ *
+ *  The practitioner, 2026-10-29: *"So in the Map layer management pin class becomes their
+ *  group?"* Not a group -- a layer. A group is a bundle the practitioner DECLARES and then adds
+ *  layers to; a pin class is a kind of record inside one layer, and it reaches the list the same
+ *  way a collected polygon member does: `fw:layerWithin`, one port carrying several layers.
+ *
+ *  So "water intake" and "tidal limit" each get a row, a name, a position and a switch, and if
+ *  they belong together the practitioner can then declare a group and add both to it. The two
+ *  ideas stay separate because they answer different questions: a group is one practitioner's
+ *  bundle, a class is what a record IS.
+ *
+ *  A layer with one class is not split. One kind of thing is one layer, and offering a reader a
+ *  single checkbox nested under a single layer is a tree with nothing in it. */
+export function classesOfPoints(rows:unknown,sourceNodeId:string):{name:string;parts:number}[]{
+  const records=rows as {sourceNodeId?:string;pinClass?:string}[]|undefined;
+  if(!Array.isArray(records))return [];
+  const counts=new Map<string,number>();
+  for(const row of records){
+    if(row.sourceNodeId!==sourceNodeId)continue;
+    // One unclassed record and the layer is one layer, honestly -- the same rule the collected
+    // polygons follow. Half a classification is not a classification.
+    if(!row.pinClass)return [];
+    counts.set(row.pinClass,(counts.get(row.pinClass)||0)+1);
+  }
+  return counts.size>1?[...counts].map(([name,parts])=>({name,parts})):[];
+}
+
 /** THE LIST ITSELF: every drawable port that is wired, every member inside those values, each
  *  carrying what the practitioner decided about it, ordered bottom to top.
  *

@@ -761,3 +761,9 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .polygon-review-name{background:transparent;border:1px solid transparent;border-radius:4px;color:inherit;font:inherit;padding:.1rem .25rem;min-width:0;width:100%}
 .polygon-review-name:hover,.polygon-review-name:focus{border-color:var(--rule,#3a4a46);background:rgba(255,255,255,.04)}
 .polygon-review-name[data-unnamed]{font-style:italic;opacity:.75}
+
+/* Text for a screen reader and nobody else. Its absence put "Draw Polygon layer" on screen
+   beside the checkbox it was labelling, reported 2026-10-29. */
+.visually-hidden{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+.layer-row-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.layer-row-origin{font-size:.75rem}

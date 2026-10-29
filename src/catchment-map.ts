@@ -89,7 +89,7 @@ export interface MapLayers {
    *  show the population they are to be read against. */
   raster?:import('./raster.js').RasterGrid;
   /** Points carried on a value rather than arriving at a port of their own. */
-  rows?:{id:string;name:string;coordinates?:Position|null;status?:string;relation?:string;excluded?:boolean;sourceNodeId?:string;fill?:FillClass}[];
+  rows?:{id:string;name:string;coordinates?:Position|null;status?:string;relation?:string;excluded?:boolean;sourceNodeId?:string;fill?:FillClass;pinClass?:string}[];
   /** What the fill channel stands for. The renderer prints the words and draws the classes; it
    *  does not know which variable produced them. */
   fillEncoding?:FillEncoding;
@@ -115,6 +115,9 @@ export interface MapLayers {
    *  map draws exactly what it drew before: the names below are the defaults, not a fallback
    *  that loses anything. */
   mapLayers?:import('./map-layer-list.js').MapLayer[];
+  /** A SYMBOL PER PIN CLASS, per source, resolved by the map so every renderer reads one answer.
+   *  Absent where a layer is not classed, which is the ordinary case. */
+  pinClasses?:Record<string,{value:string;colour:string;shape?:LayerShape}[]>;
 }
 
 /** Presentation only: never changes polygons, memberships, or source points. */
@@ -350,7 +353,18 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       // derives a colour and a mark from the layer's position and has no opinion on radius.
       const symbol:{colour:string;shape:LayerShape;size?:number}=
         layers.layerSymbols?.[source]??{...layerSymbol(index)};
-      const group=L.featureGroup();
+      // ONE GROUP PER PIN CLASS, where the layer has them. A class is what a record IS, so it
+      // gets its own mark and its own row in the layer list -- not a nested checkbox under the
+      // layer, and not a group, which is a bundle the practitioner declares.
+      const classes=layers.pinClasses?.[source]??[];
+      const classColour=new Map(classes.map(entry=>[entry.value,entry.colour]));
+      const groups=new Map<string,L.FeatureGroup>();
+      const groupFor=(row:{pinClass?:string}):L.FeatureGroup=>{
+        const key=classes.length&&row.pinClass?row.pinClass:'';
+        let found=groups.get(key);
+        if(!found){found=L.featureGroup();groups.set(key,found);}
+        return found;
+      };
       for(const row of rows){
         if(!row.coordinates)continue;
         const [lon,lat]=row.coordinates;
@@ -363,7 +377,8 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         const encoding=layers.fillEncoding||SPATIAL_RELATION_FILL;
         const state=row.excluded?'Excluded':row.relation??row.status??'';
         const paint=row.fill??fillClass(encoding,state);
-        const ink=paint==='absent'?'#8C8C8C':symbol.colour;
+        const ink=paint==='absent'?'#8C8C8C'
+          :(row.pinClass&&classColour.get(row.pinClass))||symbol.colour;
         const inside=paint==='solid';
         // The mark is DRAWN, not just named. The layer control said "(square)" while every point
         // on the map was a circleMarker, so the mark channel existed in the label and the receipt
@@ -403,14 +418,22 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
             +`stroke="${ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`})})
           .bindPopup(`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}`
             +`<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`)
-          .addTo(group);
+          .addTo(groupFor(row));
       }
-      if(group.getLayers().length){
-        group.addTo(map);all.addLayer(group);
-        // Two widgets born with the same default label are the common case, so the key can
-        // collide; the node id is what tells them apart when the label does not.
-        const key=`${named[source]||source} (${symbol.shape})`;
-        overlays[Object.hasOwn(overlays,key)?`${key} · ${esc(source)}`:key]=group;
+      // NAMED THROUGH THE LAYER LIST, so Manage layers governs these the way it governs the
+      // rest. The port is the layer's id; a class is that port plus its own name, which is the
+      // id `mapLayerList` builds for a layer that arrived inside a value.
+      const port=layers.mapLayers?.find(entry=>entry.sourceNodeId===source)?.port;
+      for(const [className,group] of groups){
+        if(!group.getLayers().length)continue;
+        const id=className&&port?`${port}/${className}`:port;
+        const fallback=className||named[source]||source;
+        if(id)place(id,fallback,group);
+        else{
+          const key=named[source]||source;
+          overlays[Object.hasOwn(overlays,key)?`${key} \u00b7 ${esc(source)}`:key]=group;
+        }
+        if(!hiddenPort(id||'')){group.addTo(map);all.addLayer(group);}
       }
       index++;
     }

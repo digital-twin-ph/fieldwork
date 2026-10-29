@@ -40,7 +40,7 @@ const openDialog=async page=>{
 const rows=page=>page.locator('#layer-dialog-rows .layer-row');
 /** The value of every matched field. `inputValues` is not a locator method; this is the
  *  equivalent for a set of them. */
-const values=locator=>locator.evaluateAll(fields=>fields.map(field=>field.value));
+const values=locator=>locator.evaluateAll(cells=>cells.map(cell=>cell.textContent.trim()));
 
 test('every connected input is listed, and a collection is listed as its parts',{skip},async({page})=>{
   await ground(page);
@@ -58,19 +58,16 @@ test('every connected input is listed, and a collection is listed as its parts',
   await expect(page.locator('#layer-dialog-note')).toContainText('Drawn bottom to top');
 });
 
-test('a layer is renamed to what a reader should see',{skip},async({page})=>{
+test('a layer\u2019s name is inherited and cannot be forked here',{skip},async({page})=>{
   await ground(page);
   await openDialog(page);
-  const districts=page.locator('[data-layer-label]').nth(
-    (await values(page.locator('[data-layer-label]'))).indexOf('Registration sub-districts'));
-  await districts.fill('Registration sub-districts, 1854');
-  await expect(page.locator('#layer-dialog-note')).toContainText('Registration sub-districts, 1854');
-  // It survives the dialog, because it is the workflow that was edited and not the view.
-  await page.locator('#layer-dialog-done').click();
-  await openDialog(page);
-  await expect(page.locator('[data-layer-label]').nth(
-    (await values(page.locator('[data-layer-label]'))).indexOf('Registration sub-districts, 1854')))
-    .toHaveValue('Registration sub-districts, 1854');
+  // The practitioner, 2026-10-29: *"this form allow me to edit the inherited label of the polygon
+  // layer. It should not be editable."* A second place to type a name is a second name for one
+  // thing, free to disagree with the first.
+  await expect(page.locator('#layer-dialog-rows input[data-layer-label]')).toHaveCount(0);
+  await expect(page.locator('span[data-layer-label]').first()).toBeVisible();
+  // And it says where the name came from, so it is clear where to change it.
+  await expect(page.locator('.layer-row-origin').first()).toContainText(/named by the (widget|data)/);
 });
 
 test('a group is declared first and layers are added to it afterwards',{skip},async({page})=>{

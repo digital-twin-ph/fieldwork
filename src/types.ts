@@ -450,6 +450,12 @@ export interface ParamsByType {
      *  symbol when layers are rewired or reordered. Absent means derived from the layer's
      *  position, which is what every map did before a practitioner could choose. */
     layerSymbols?:Record<string,{mark?:import('./presentation.js').LayerShape;colour?:string;size?:number}>;
+    /** WHICH ATTRIBUTE HOLDS EACH LAYER'S PIN CLASS, keyed by the source node the way
+     *  `layerSymbols` is. The practitioner's term, 2026-10-29: *"We can call it pin class."* A
+     *  layer whose records carry "water intake" and "tidal limit" is two kinds of thing on one
+     *  map, and until this existed they were drawn identically and the class lived only in the
+     *  popup. */
+    pinClassField?:Record<string,string>;
     /** Whether every point mark is drawn over a dark halo. On by default, because the reason it
      *  exists is a terrain basemap: a mark in the palette's own values over OpenTopoMap was hard
      *  to pick out. It is a checkbox rather than a rule because a map on a pale ground, or one

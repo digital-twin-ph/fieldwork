@@ -273,7 +273,7 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
  *  raster, because no renderer draws both. That limit is the next piece of the same work, and it
  *  is now a limit of the drawing code rather than a question put to the practitioner. */
 import {clipToBox,applyNames,applyMerges} from './polygon-layer.js';
-import {mapLayerList,validateLayerSettings,assertSomethingToDraw,membersOfPolygons,type MapLayer}
+import {mapLayerList,validateLayerSettings,assertSomethingToDraw,membersOfPolygons,classesOfPoints,type MapLayer}
   from './map-layer-list.js';
 
 export function drawnMode(node:WorkflowNode<'map_output'>,edges:{to:string;port:string}[]):
@@ -1009,14 +1009,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     // the renderer is chosen, because which renderer leads and which layers survive are two
     // different questions -- and answering them with one variable is what lost a layer five
     // times running. `drawnMode` still answers the first; this answers the second.
-    let mapPlan:MapLayer[]|null=null;
-    if(node.type==='map_output'){
-      validateLayerSettings(node);
-      mapPlan=mapLayerList(node,workflow.edges,
-        id=>workflow.nodes.find(n=>n.id===id)?.params.label,
-        inputs.polygons?[{port:'polygons',members:membersOfPolygons(inputs.polygons)}]:[]);
-      assertSomethingToDraw(mapPlan,node.params.label||node.id);
-    }
+    // VALIDATED BEFORE THE RUN, because a setting that cannot be honoured should refuse before
+    // anything is computed. The LIST itself is built after, where the value exists: a classed pin
+    // layer's classes are read off the rows the map actually produced.
+    if(node.type==='map_output')validateLayerSettings(node);
     switch(node.type){
       case 'mean_center':{value=computeMeanCenter(inputs.points,node.params);receipts.push(meanCenterReceipt(node,value as MeanCenter,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from));break;}
       case 'compare_point_sets':{value=comparePointSets(inputs.original,inputs.moved,inputs.pumps,node.params,node.params.centers?inputs.originalCenter:undefined,node.params.centers?inputs.movedCenter:undefined);const sources=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>[e.port,e.from])) as {original:string;moved:string;pumps:string;originalCenter?:string;movedCenter?:string};receipts.push(comparisonReceipt(node,value as PointComparison,runId,sources));break;}
@@ -1873,8 +1869,20 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     // draw the same layers in the same order under the same names -- rather than each inventing
     // its own labels at the point of drawing, which is how the layer control came to offer
     // "Observations (red circles)" beside a practitioner's own node label.
-    if(node.type==='map_output'&&isRecord(value)&&mapPlan)
-      (value as unknown as {mapLayers?:MapLayer[]}).mapLayers=mapPlan;
+    if(node.type==='map_output'&&isRecord(value)){
+      const plan=mapLayerList(node,workflow.edges,
+        id=>workflow.nodes.find(n=>n.id===id)?.params.label,
+        [...(inputs.polygons?[{port:'polygons',members:membersOfPolygons(inputs.polygons)}]:[]),
+          // A classed pin layer's classes are layers inside its port, the same shape as a
+          // collected polygon's members. Read from the rows the map just built, so the list and
+          // the picture are one answer rather than two.
+          ...workflow.edges.filter(e=>e.to===node.id&&isPointPort(e.port)).flatMap(edge=>{
+            const classes=classesOfPoints((value as {rows?:unknown}).rows,edge.from);
+            return classes.length?[{port:edge.port,members:classes}]:[];
+          })]);
+      assertSomethingToDraw(plan,node.params.label||node.id);
+      (value as unknown as {mapLayers?:MapLayer[]}).mapLayers=plan;
+    }
     values.set(node.id,value);trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
     // WHEN THIS STEP RAN, in the receipt, in PROV's own terms.
     //

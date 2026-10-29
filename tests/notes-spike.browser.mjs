@@ -27,12 +27,13 @@ const southLondon=async page=>{
   await page.locator('[data-view="project"]').click();
   await page.locator('[data-open-example]').click();
   await expect(page.locator('[data-example-status]')).toContainText('digest matched',{timeout:20000});
-  await page.locator('[data-view="project"]').click();
+  // THE WRITE-UP IS ITS OWN TAB. The practitioner, 2026-10-29: *"It should be a tab."*
+  await page.locator('[data-view="notes"]').click();
 };
 
 test('Snow’s own sentences are readable, in the order a reader meets them',{skip},async({page})=>{
   await southLondon(page);
-  await expect(page.locator('#project-notes')).toContainText('9 notes');
+  await expect(page.locator('#notes-view')).toContainText('9 notes');
   // The body in IMRAD order, every part shown -- an absent Results section is a fact about the
   // write-up, not something to hide.
   const parts=await page.locator('.notes-part h3').allTextContents();
@@ -45,15 +46,28 @@ test('each note says what it is and what it does',{skip},async({page})=>{
   // Snow's words are quoted, with the claim they support -- which is the reason for the quote and
   // not part of the write-up, so it is shown apart from it.
   await expect(page.locator('.notes-kind-quoted').first()).toBeVisible();
-  await expect(page.locator('#project-notes')).toContainText('Establishes:');
+  await expect(page.locator('#notes-view')).toContainText('Establishes:');
   const functions=await page.locator('.notes-fn').allTextContents();
   // Read off the notes, never invented: these are the four the example carries.
   for(const fn of ['purpose','background','method','source'])expect(functions).toContain(fn);
 });
 
+test('the tab counts what it holds',{skip},async({page})=>{
+  await southLondon(page);
+  await expect(page.locator('#notes-view-count')).toHaveText('9');
+});
+
+test('an empty section is where a note goes, and says the button is not built',{skip},async({page})=>{
+  await southLondon(page);
+  const results=page.locator('.notes-part').nth(2);
+  await expect(results).toContainText('Results');
+  await expect(results.locator('[data-add-note]')).toBeDisabled();
+  await expect(results).toContainText('not built yet');
+});
+
 test('the spike says where it stops',{skip},async({page})=>{
   await southLondon(page);
   // A surface that looks finished and is not is worse than one that says so.
-  await expect(page.locator('#project-notes .notice'))
+  await expect(page.locator('#notes-view .notice'))
     .toContainText('not yet written, edited or added');
 });

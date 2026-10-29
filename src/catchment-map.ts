@@ -111,6 +111,10 @@ export interface MapLayers {
    *  interactive and could carry no basemap, because the static branch returned before the
    *  interactive one was reached. */
   network?:{nodes:{id:string;coordinates:Position}[];edges:{from:string;to:string;geometry?:Position[]}[]};
+  /** THE LAYERS, as the practitioner ordered, named and grouped them. Where this is absent the
+   *  map draws exactly what it drew before: the names below are the defaults, not a fallback
+   *  that loses anything. */
+  mapLayers?:import('./map-layer-list.js').MapLayer[];
 }
 
 /** Presentation only: never changes polygons, memberships, or source points. */
@@ -143,6 +147,24 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // Views can disappear immediately on tab/workspace changes. Avoid delayed zoom
   // transition callbacks that outlive Leaflet's removed panes.
   const map=L.map(canvas,{scrollWheelZoom:false,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false}),all=L.featureGroup(),overlays:Record<string,L.Layer>=Object.create(null);
+  // EVERY OVERLAY'S NAME AND POSITION COMES FROM THE LAYER LIST, not from the line that happens
+  // to construct it. Each of these used to invent its own string where it was built -- "Study
+  // area", "Population raster", "Observations (red circles)", "Sites / context (blue squares)" --
+  // so a control listing a practitioner's own node labels also offered them two entries named
+  // after the colour of a mark, and nothing could be renamed, reordered or grouped. The
+  // practitioner, 2026-10-29: *"Map output should have a dialog modal for layer management
+  // (ordering, labeling, grouping)."*
+  const byId=new Map((layers.mapLayers||[]).map(l=>[l.id,l]));
+  const placed:{order:number;key:string;layer:L.Layer}[]=[];
+  const hiddenPort=(id:string)=>byId.get(id)?.hidden===true;
+  /** The name a reader sees. A group prefixes its members, which is the most a Leaflet layer
+   *  control can show without a plugin: the grouping is the practitioner's reading of the map,
+   *  so it is carried into the key rather than kept in the dialog. */
+  const place=(port:string,fallback:string,layer:L.Layer)=>{
+    const found=byId.get(port);
+    const key=(found?.group?`${found.group} \u00b7 `:'')+(found?.label||fallback);
+    placed.push({order:found?.order??100+placed.length,key,layer});
+  };
   // POINT MARKS GET THEIR OWN PANE, under the markers. They used to be circleMarkers, which
   // Leaflet draws in the overlay pane -- below every marker. Drawing each mark as an icon so it
   // could carry a halo put them in the MARKER pane instead, where a dense facility layer covered
@@ -160,21 +182,24 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const [west,south,east,north]=layers.plate.bounds;
     const plate=L.imageOverlay(layers.plate.data,[[south,west],[north,east]],
       {opacity:layers.plate.opacity,interactive:false,className:'map-plate-image'});
-    plate.addTo(map);plate.bringToBack();all.addLayer(plate);
-    overlays[layers.plate.label]=plate;
+    if(!hiddenPort('plate')){plate.addTo(map);plate.bringToBack();all.addLayer(plate);}
+    place('plate',layers.plate.label,plate);
   }
   if(layers.raster?.metadata){
     const [west,south,east,north]=layers.raster.metadata.bounds;
     const overlay=L.imageOverlay(rasterImage(layers.raster),[[south,west],[north,east]],
       {opacity:.75,interactive:false,className:'raster-result-image'});
-    overlay.addTo(map);all.addLayer(overlay);overlays['Population raster']=overlay;
+    if(!hiddenPort('raster')){overlay.addTo(map);all.addLayer(overlay);}
+    place('raster','Population raster',overlay);
   }
   if(layers.boundary){
     // Canvas for the same reason the streets use it: a published boundary can be tens of
     // thousands of vertices, and an SVG path that long is seconds of paint on every redraw.
     const area=L.geoJSON(layers.boundary as never,{renderer:L.canvas(),interactive:false,style:{color:'#176b59',weight:2,fillColor:'#dbe8d6',fillOpacity:.25}} as L.GeoJSONOptions);
-    area.addTo(map);all.addLayer(area);overlays['Study area']=area;
+    if(!hiddenPort('area')){area.addTo(map);all.addLayer(area);}
+    place('area','Study area',area);
   }
+  const members=new Map<string,L.FeatureGroup>();
   const sorted=[...p.features].sort((a,b)=>(b.minutes||0)-(a.minutes||0));
   // COLOURED BY VALUE WHERE THERE IS ONE, as the static plot already is. Every feature took one
   // hard-coded blue, so a choropleth switched to this presentation lost its classes entirely --
@@ -216,10 +241,22 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     // mortality per sub-district, provider by sub-district." Making the list scroll treated the
     // symptom; this is the granularity.
     if(classed)themed.addLayer(layer);
+    // THE SAME GRANULARITY QUESTION, ON THE OTHER BRANCH. The classed path learned on 2026-10-26
+    // that a choropleth's parts are one layer and not thirty-three; this one was left listing a
+    // checkbox per feature, so 32 unshaded sub-districts collected beside a river still ran off
+    // the bottom of the map. Where the features remember which layer they came from they are
+    // grouped back into it; a catchment or a time band, which carries no layer name and IS a
+    // distinct thing worth toggling, keeps its own entry as before.
+    else if(f.layerName){
+      let group=members.get(f.layerName);
+      if(!group){group=L.featureGroup();members.set(f.layerName,group);}
+      group.addLayer(layer);
+    }
     else{const label=esc(f.name);overlays[Object.hasOwn(overlays,label)?`${label} (${esc(f.id)})`:label]=layer;}
   }
+  for(const [name,group] of members)place(`polygons/${name}`,esc(name),group);
   if(classed&&themed.getLayers().length)
-    overlays[esc(p.layerName||'Shaded by value')]=themed;
+    place('polygons',esc(p.layerName||'Shaded by value'),themed);
   // The streets, as ONE multi-polyline on a canvas renderer rather than a layer per segment.
   // A town-sized graph is tens of thousands of segments -- Bunia is an estimated 94,000 directed
   // ones -- and a Leaflet layer each would not draw. Each undirected segment arrives twice, once
@@ -266,14 +303,19 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // squares)."* Both were listed, both were empty, and a layer control that offers a layer which
   // cannot appear is a claim that the workflow has data it does not have -- on a map whose whole
   // job is to say what is there. The two below already guard this way; these two did not.
-  if(observations.getLayers().length){observations.addTo(map);all.addLayer(observations);overlays['Observations (red circles)']=observations;}
+  // A LAYER IS NAMED FOR WHAT IT IS, not for the colour it is drawn in. "Observations (red
+  // circles)" told a reader the mark and not the meaning, and said it in a control that already
+  // draws the mark beside the name.
+  if(observations.getLayers().length){if(!hiddenPort('observations')){observations.addTo(map);all.addLayer(observations);}
+    place('observations','Observations',observations);}
   const pumps=L.featureGroup(),points=context?.features||p.sites;
   for(const f of points){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates;
     if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
     const marker=L.marker([lat,lon],{zIndexOffset:1000,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
     marker.on('add',()=>{const icon=marker.getElement();if(icon){L.DomEvent.disableClickPropagation(icon);icon.addEventListener('mousedown',event=>event.preventDefault());icon.addEventListener('click',event=>{event.stopPropagation();marker.openPopup();});}});
   }
-  if(pumps.getLayers().length){pumps.addTo(map);all.addLayer(pumps);overlays['Sites / context (blue squares)']=pumps;}
+  if(pumps.getLayers().length){if(!hiddenPort('sites')){pumps.addTo(map);all.addLayer(pumps);}
+    place('sites','Sites',pumps);}
   // Points a value carried rather than a port delivered -- a spatial map's rows, and the centers
   // it measured against. Drawn with the status each row was given, because that is what the map
   // is about.
@@ -380,8 +422,14 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       L.marker([lat,lon],{zIndexOffset:1000,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:center.name})
         .bindPopup(`<b>${esc(center.name??'Center')}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`).addTo(group);
     }
-    if(group.getLayers().length){group.addTo(map);all.addLayer(group);overlays['Centers']=group;}
+    if(group.getLayers().length){if(!hiddenPort('centers')){group.addTo(map);all.addLayer(group);}
+      place('centers','Centers',group);}
   }
+  // BOTTOM TO TOP, as the list says. Insertion order decided this until now, which meant the
+  // order the constructing lines happen to run in -- defensible for the drawing, meaningless for
+  // the reader, and impossible for a practitioner to change.
+  for(const {key,layer} of placed.sort((a,b)=>a.order-b.order))
+    overlays[Object.hasOwn(overlays,key)?`${key} (2)`:key]=layer;
   L.control.layers({},overlays,{collapsed:false}).addTo(map);L.control.scale({imperial:false}).addTo(map);
   // THE SAME LEGEND THE STATIC FIGURE CARRIES. A choropleth here had its classes and no key to
   // read them by: a reader could see five shades and had no way to turn one into a number, which

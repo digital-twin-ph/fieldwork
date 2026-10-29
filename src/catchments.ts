@@ -225,7 +225,15 @@ export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
  *  `a-label-cannot-be-pinned-to-one-study`: a Voronoi cell models proximity rather than service
  *  delivery, so `Catchment` overclaims even for the producer it was named after, and it now also
  *  carries H3 cells, a hull, a union and administrative units. */
-export interface Catchment {id:string;name:string;siteId?:string;geometry:Boundary;properties?:Record<string,import('./types.js').Scalar>;value?:number;status?:'Review'|'NoFlag'|'Unknown';explanation?:string;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
+export interface Catchment {id:string;name:string;
+  /** WHICH LAYER THIS POLYGON CAME FROM, where it came from one that was collected.
+   *
+   *  `stack_polygons` concatenated several layers into one feature list and kept no record of
+   *  which was which, so two water layers wired to one map could not be told apart on
+   *  2026-10-28: by the time the map saw them they were not two layers, and the legend had to be
+   *  rebuilt by guessing from feature names. Carried per feature rather than per collection
+   *  because a collection is exactly the case where one name for the whole will not do. */
+  layerName?:string;siteId?:string;geometry:Boundary;properties?:Record<string,import('./types.js').Scalar>;value?:number;status?:'Review'|'NoFlag'|'Unknown';explanation?:string;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
 /** `unconnected` lists the sites that got no catchment, and `offNetwork` the sites that got one
  *  across a leg no street covers.
  *

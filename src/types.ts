@@ -426,6 +426,11 @@ export interface ParamsByType {
    *  can be migrated rather than refused. Nothing adds one, nothing runs one. */
   coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
   map_output:{label:string; pointInputCount?:number;
+    /** What the practitioner decided about each layer in Manage layers, keyed by layer id.
+     *  Absent means "as it comes": a map nobody has opened that dialog on draws the default
+     *  stack, and a layer wired afterwards arrives with its own default rather than at the
+     *  bottom of a list made before it existed. */
+    layers?:Record<string,import("./map-layer-list.js").LayerSetting>;
     /** How each point layer is drawn, keyed by the node that produced it -- a source keeps its
      *  symbol when layers are rewired or reordered. Absent means derived from the layer's
      *  position, which is what every map did before a practitioner could choose. */

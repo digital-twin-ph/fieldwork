@@ -92,15 +92,25 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   const banded=p.features.some(f=>f.minutes!==undefined);
   // Null past the palette's length: more regions than hues is a neutral wash, not a repeat.
   const categorical=classed||banded?null:categoricalSteps(p.features.length);
+  // THE WASH THE PALETTE PROMISES. `categoricalSteps` returns null past its length and says in
+  // its own comment that "the caller keeps its neutral fill"; this caller fell through to
+  // `orderedSteps`, which is YlGnBu -- a SEQUENTIAL ramp. So 34 named regions with no value and
+  // no rank were drawn in a lightness sequence a reader is meant to rank, which is the precise
+  // misreading the categorical work of 2026-10-28 was done to prevent. Written into the comment
+  // that day and not into the line beneath it; reported 2026-10-29 off a published figure.
+  //
+  // Bands keep the ramp, because minutes DO have an order. Everything else past the palette is
+  // one neutral: no hue competing, and the naming left to the labels and the key.
+  const wash=!classed&&!banded&&!categorical;
   const colors=classed?classed.colours
-    :categorical??orderedSteps(p.features.length);
+    :categorical??(wash?[FIGURE_ROLE.unknown]:orderedSteps(p.features.length));
   return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;const at=classed?classed.classOf(f.value):null;
     // A part with no value is drawn in a neutral, never in the lowest class: an unmatched
     // boundary would otherwise read as a finding of low incidence rather than as no data.
     const fill=classed?(at===null?FIGURE_ROLE.unknown:colors[at]):colors[i%colors.length];
     // Value-bearing fills are readable at full strength; a catchment's identity wash is not
     // the same thing and keeps the lighter tint it has always had.
-    const opacity=classed?(at===null?'.18':'.78'):categorical?'.55':'.22';
+    const opacity=classed?(at===null?'.18':'.78'):categorical?'.55':wash?'.16':'.22';
     return `<path data-catchment="${esc(f.id)}"${classed&&f.value!==undefined?` data-value="${f.value}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${classed?'.6':'1'}"><title>${esc(f.name)}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+plotKey(p,classed,esc);
 }
 

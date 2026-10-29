@@ -110,6 +110,10 @@ export interface DisplayValue {
   checkNodeId?:string; areaNodeId?:string; reviewCount?:number; excludedCount?:number; canProceed?:boolean;
   eligibleCount?:number; candidateCount?:number; thresholdMin?:number; threshold?:number; alert?:ParamsByType['alert'];
   spatialReference?:SpatialReference; method?:string;
+  /** The layers this map draws, ordered bottom to top, carrying the names and grouping the
+   *  practitioner set in Manage layers. Every renderer reads this rather than naming layers at
+   *  the point of drawing. */
+  mapLayers?:import('./map-layer-list.js').MapLayer[];
 }
 export interface Output extends DisplayValue {nodeId:string; label:string; view:'map'|'table'|'bars'}
 /** Something a run FOUND that the practitioner has to act on, carried per node so the widget that

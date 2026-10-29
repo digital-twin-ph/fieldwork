@@ -169,10 +169,15 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
     map=L.map($('#polygon-review-map'),{scrollWheelZoom:false,zoomAnimation:false,
       fadeAnimation:false,markerZoomAnimation:false});
     const group=L.featureGroup().addTo(map);
+    // ONE RENDERER FOR ALL OF THEM. Each feature used to get its own `L.canvas()`, which is one
+    // canvas element each: 279 of them stacked, and only the topmost receives a pointer event. So
+    // the map drew correctly and answered no clicks, reported 2026-10-29 -- *"I still cannot
+    // select polygons from the map canvas."* A shared renderer hit-tests across every layer on it.
+    const surface=L.canvas();
     for(const feature of features){
       const id=String(feature.id);
       const layer=L.geoJSON(feature.geometry as never,
-        {renderer:L.canvas(),style:style(id)} as L.GeoJSONOptions);
+        {renderer:surface,style:style(id)} as L.GeoJSONOptions);
       // A CLICK ON THE MAP CHOOSES, and choosing is what the actions act on. Picking a row still
       // marks one feature to look at; these are two different questions and two different marks.
       layer.on('click',()=>{

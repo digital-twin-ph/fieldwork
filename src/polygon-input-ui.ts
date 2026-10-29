@@ -1,6 +1,6 @@
 import type {WorkflowNode,Escape,Boundary} from './types.js';
 import {AREA_KINDS,readBox,type AreaKind} from './osm-areas.js';
-import {MAX_LAYER_FEATURES,MAX_LAYER_VERTICES} from './polygon-layer.js';
+import {MAX_LAYER_VERTICES} from './polygon-layer.js';
 import {extractsFor,EXTRACT_CATALOGUE_TAKEN} from './extract-catalogue.js';
 import {geometryBounds} from './study-area.js';
 import {labelField} from './catchment-ui.js';
@@ -88,10 +88,9 @@ export function polygonInputInspector(n:WorkflowNode<'polygon_input'>,esc:Escape
   const kinds=p.kinds??[];
   let html=labelField(p.label||'',100,esc)
     +`<div class="notice">Read as published. Nothing is clipped, simplified or reprojected, and `
-    +`a file whose coordinates are not CRS84 degrees is refused rather than converted. At most `
-    +`${MAX_LAYER_FEATURES.toLocaleString()} features and `
-    +`${MAX_LAYER_VERTICES.toLocaleString()} vertices: past that a layer is a basemap rather than `
-    +`a study's own geometry.</div>`
+    +`a file whose coordinates are not CRS84 degrees is refused rather than converted. How many `
+    +`features is not a limit; ${MAX_LAYER_VERTICES.toLocaleString()} vertices is, because that `
+    +`is the thing that costs.</div>`
     +`<div class="field"><label class="field-label" for="polygon-input-method">Where the features `
     +`come from</label><select id="polygon-input-method">`
     +`<option value="file" ${method==='file'?'selected':''}>A published GeoJSON layer</option>`
@@ -122,10 +121,10 @@ export function polygonInputInspector(n:WorkflowNode<'polygon_input'>,esc:Escape
       +`<input id="polygon-min-vertices" type="number" min="0" step="1" `
       +`value="${p.minVertices===undefined?'':p.minVertices}" placeholder="Not set">`
       // STATED, NEVER INFERRED, and the measurement is given instead of a default.
-      +`<small>Unset reads every area of the chosen kinds. Measured on South London's box, `
-      +`2026-10-28: water returns 1,030 features at no threshold, 511 at 20 vertices and 186 at `
-      +`45 — and the layer cap is ${MAX_LAYER_FEATURES}, so the first read without a `
-      +`threshold refuses and says which one would fit.</small></div>`
+      +`<small>Unset reads every area of the chosen kinds, which is usually what you want. `
+      +`Measured on South London's box, 2026-10-28: water returns 1,030 features at no `
+      +`threshold, 511 at 20 vertices and 186 at 45. A threshold is for dropping ponds and `
+      +`basins you did not come for, not for getting under a limit.</small></div>`
       +`<div class="field"><label class="field-label" for="polygon-margin">Read this far outside `
       +`the study area's bounds (metres)</label>`
       +`<input id="polygon-margin" type="number" min="0" step="100" value="${margin}">`

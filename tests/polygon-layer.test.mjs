@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
-import {readPolygonFeatures,polygonLayer,MAX_LAYER_FEATURES} from '../build/polygon-layer.js';
+import {readPolygonFeatures,polygonLayer,MAX_LAYER_VERTICES} from '../build/polygon-layer.js';
 
 const ZONES='../example-1855-cholera-south-london/geo/map2-water-supply-zones.geojson';
 const skip=existsSync(ZONES)?false
@@ -104,8 +104,23 @@ test('an empty file is refused rather than imported as an empty layer',()=>{
   assert.throws(()=>readPolygonFeatures({type:'Feature'},{}),/not a GeoJSON FeatureCollection/);
 });
 
-test('a layer larger than a study\'s own geometry is refused with its count',()=>{
-  const many=collection(Array.from({length:MAX_LAYER_FEATURES+1},()=>polygon()));
-  assert.throws(()=>readPolygonFeatures(many,{}),
-    new RegExp(`holds ${MAX_LAYER_FEATURES+1} features`));
+/** HOW MANY FEATURES IS NOT A LIMIT, and this used to assert that it was.
+ *
+ *  `MAX_LAYER_FEATURES=500` refused a layer by its count on the grounds that past it "a layer is
+ *  a basemap rather than a study's own geometry" -- a definition asserted, guarding a resource
+ *  the vertex budget below already guards on its measured total. It refused a practitioner
+ *  holding the Greater London extract 606 water features on 2026-10-29, and a South London water
+ *  read before that. Removed; what remains counts. */
+test('a thousand small features import, because how many is not what costs',()=>{
+  const many=collection(Array.from({length:1000},()=>polygon()));
+  assert.equal(readPolygonFeatures(many,{}).length,1000);
+});
+
+test('a layer past the vertex budget is refused on the total it actually carries',()=>{
+  // A ring of 1,002 positions is 1,001 vertices; 220 of them pass 200,000.
+  const ring=[...Array.from({length:1001},(_,i)=>[-0.1+i*1e-6,51.5]),[-0.1,51.5]];
+  const heavy=collection(Array.from({length:220},()=>({type:'Feature',properties:{},
+    geometry:{type:'Polygon',coordinates:[ring]}})));
+  assert.throws(()=>readPolygonFeatures(heavy,{}),
+    new RegExp(`${MAX_LAYER_VERTICES.toLocaleString()} vertices`));
 });

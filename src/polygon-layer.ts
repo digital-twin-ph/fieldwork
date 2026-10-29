@@ -23,9 +23,25 @@ import type {Polygons} from './catchments.js';
  *  numbered -- but a name the practitioner asked for and the file does not carry is a refusal.
  */
 
-/** Beyond this, a layer is a basemap rather than a study's own geometry, and the vertex budget the
- *  rest of the application assumes no longer holds. Snow's three territories are 367 vertices. */
-export const MAX_LAYER_FEATURES=500;
+/** HOW MUCH GEOMETRY, measured in the thing that costs: vertices.
+ *
+ *  There were two caps here and only one of them counted anything. `MAX_LAYER_FEATURES=500`
+ *  refused a layer by how many features it held, on the grounds that "beyond this, a layer is a
+ *  basemap rather than a study's own geometry, and the vertex budget the rest of the application
+ *  assumes no longer holds". The first half is a definition asserted, not a constraint measured.
+ *  The second half names this cap, which is checked separately and on the real total -- so the
+ *  feature count guarded nothing that was not already guarded, and refused work that fit.
+ *
+ *  It had refused twice before it was removed. On 2026-10-28 a `water` read over South London
+ *  returned 1,030 features and the first realistic request was refused; the workaround was a
+ *  vertex floor. On 2026-10-29 a practitioner with the Greater London extract on their own disk
+ *  was refused 606 water features: *"The file is already downloaded and it seems to be now an
+ *  import cap which I do not understand what is the rationale."* There was not one that held.
+ *
+ *  `network-tiles.ts` had already written the rule this breaks: *"nothing here decides in advance
+ *  how much a practitioner may have."* Snow's three territories are 367 vertices, which is what
+ *  the old comment offered as its evidence -- a vertex figure, for a feature cap, from the
+ *  smallest case in the project. */
 export const MAX_LAYER_VERTICES=200_000;
 
 export interface PolygonLayerRequest {
@@ -67,9 +83,6 @@ export function readPolygonFeatures(raw:unknown,request:PolygonLayerRequest):Par
   if(!collection.features.length)
     throw new Error('That file holds no features. An empty layer is not a layer, and importing one '
       +'would put a legend on the map with nothing under it.');
-  if(collection.features.length>MAX_LAYER_FEATURES)
-    throw new Error(`That file holds ${collection.features.length} features, and this reads at most `
-      +`${MAX_LAYER_FEATURES}. Beyond that a layer is a basemap rather than a study's own geometry.`);
 
   const name=request.nameField?.trim();
   const features:ParsedFeature[]=[];

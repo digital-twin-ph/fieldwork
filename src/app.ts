@@ -6187,10 +6187,11 @@ document.addEventListener('click',event=>{
   const bounds=area?geometryBounds(area):undefined;
   const frame=node.params.retrieval?.bbox
     ??(bounds?[bounds[0],bounds[1],bounds[2],bounds[3]] as [number,number,number,number]:undefined);
-  openPolygonReview(node,esc,hidden=>{
+  openPolygonReview(node,esc,(hidden,clipped)=>{
     change(w=>{
       const target=getNode(w,id,'polygon_input');
       if(hidden.length)target.params.hidden=hidden;else delete target.params.hidden;
+      if(clipped)target.params.clipToBox=true;else delete target.params.clipToBox;
     });
     toast(hidden.length
       ?`${hidden.length} feature${hidden.length===1?'':'s'} set aside. Rerun to update results.`

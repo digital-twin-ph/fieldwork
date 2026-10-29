@@ -124,3 +124,26 @@ test('a layer past the vertex budget is refused on the total it actually carries
   assert.throws(()=>readPolygonFeatures(heavy,{}),
     new RegExp(`${MAX_LAYER_VERTICES.toLocaleString()} vertices`));
 });
+
+/** CLIP TO THE BOX, the one function the viewer's preview and the run both use. */
+import {clipToBox} from '../build/polygon-layer.js';
+const box=(x,y,d)=>({geometry:{type:'Polygon',
+  coordinates:[[[x,y],[x+d,y],[x+d,y+d],[x,y+d],[x,y]]]}});
+
+test('a feature wholly outside the box yields nothing and is dropped',()=>{
+  assert.equal(clipToBox([box(10,10,1)],[0,0,1,1]).length,0);
+});
+
+test('a feature straddling the edge is cut at it, and keeps its other fields',()=>{
+  const [cut]=clipToBox([{...box(.5,.5,1),id:'a',name:'Half in'}],[0,0,1,1]);
+  assert.equal(cut.id,'a');
+  assert.equal(cut.name,'Half in');
+  assert.equal(cut.geometry.type,'MultiPolygon');
+  // Every position that survives is inside the box, which is what being cut at the edge means.
+  for(const ring of cut.geometry.coordinates.flat())
+    for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1,`${x},${y} is outside`);
+});
+
+test('a feature wholly inside the box comes through',()=>{
+  assert.equal(clipToBox([box(.2,.2,.3)],[0,0,1,1]).length,1);
+});

@@ -272,6 +272,7 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
  *  What this does not do is unify the renderers: a map with polygons AND a raster wired draws the
  *  raster, because no renderer draws both. That limit is the next piece of the same work, and it
  *  is now a limit of the drawing code rather than a question put to the practitioner. */
+import {clipToBox} from './polygon-layer.js';
 import {mapLayerList,validateLayerSettings,assertSomethingToDraw,membersOfPolygons,type MapLayer}
   from './map-layer-list.js';
 
@@ -1178,6 +1179,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const features=setAside.size?imported.filter(f=>!setAside.has(String(f.id))):imported;
         if(!features.length)throw new Error(`Every feature in "${node.params.label||node.id}" is `
           +'set aside, so this layer holds nothing. Open Choose features and tick at least one.');
+        // CUT TO THE FRAME THE READ USED, where the practitioner asked for it. The same
+        // `clipToBox` the viewer previews with, so what was on screen before Apply is what the
+        // layer carries. Applied here rather than baked into the stored features: the read stays
+        // untouched and reversible, and the cut is a choice the receipt records.
+        const frame=node.params.clipToBox?node.params.retrieval?.bbox:undefined;
+        const shown=frame?clipToBox(features,frame):features;
+        if(frame&&!shown.length)throw new Error(`Nothing in "${node.params.label||node.id}" falls `
+          +'inside the box it was read for, so clipping to it leaves an empty layer.');
         // A LAYER READ FOR ONE STUDY AREA IS STALE FOR ANOTHER, and this is the one thing the
         // optional `area` port is checked for at run time. Acquisition happens at import, so a
         // study area nudged afterwards leaves a layer that provably holds no features for part of
@@ -1199,17 +1208,21 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // "Layer 1" and "Layer 2", so a map carrying the sub-districts and the Thames offered a
         // reader two toggles named after nothing. The words on the canvas are the words the
         // practitioner already chose.
-        value=polygonLayer(features,{...node.params,
+        value=polygonLayer(shown,{...node.params,
           layerName:node.params.layerName||node.params.label}) as unknown as DisplayValue;
-        const {facts,vertices}=polygonLayerFacts(features,node.params,{runId,nodeId:node.id});
+        const {facts,vertices}=polygonLayerFacts(shown,node.params,{runId,nodeId:node.id});
         // SAID IN THE RECEIPT, because a layer of two drawn from a read of 606 is a choice a
         // reader of the evidence has to be able to see.
         const kept=setAside.size
           ?`<urn:fieldwork:run:${runId}:${node.id}> fw:featuresSetAside ${setAside.size}; `
             +`fw:featuresRead ${imported.length}.\n`
           :'';
-        receipts.push({nodeId:node.id,kind:'computation',facts:facts+kept,rules:'',
-          input:facts+kept,conclusions:[],
+        const cutFacts=frame
+          ?`<urn:fieldwork:run:${runId}:${node.id}> fw:clippedToReadBox true; `
+            +`fw:featuresAfterClip ${shown.length}.\n`
+          :'';
+        receipts.push({nodeId:node.id,kind:'computation',facts:facts+kept+cutFacts,rules:'',
+          input:facts+kept+cutFacts,conclusions:[],
           method:read
             ? `${features.length} ${read.kinds.join(' and ')} feature`
               +`${features.length===1?'':'s'} read from ${node.params.source?.filename

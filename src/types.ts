@@ -225,7 +225,11 @@ export interface ParamsByType {
    *  coordinates are not CRS84 degrees is refused rather than converted, because converting it
    *  silently would hand on a different shape from the one its author published. */
   polygon_input:{
-    hidden?:string[];label:string;
+    hidden?:string[];
+    /** Cut each feature to the box the read was scoped to, dropping what falls wholly outside.
+     *  Applied at run time rather than baked into the stored features, so the read stays
+     *  untouched and the cut is a choice the receipt records. */
+    clipToBox?:boolean;label:string;
     /** The features, as parsed. Empty until a file is imported, which is the state `core.ts`
      *  already allows for a raster or a network with no file. */
     data:{features:{id:string;name:string;geometry:import('./types.js').Boundary;

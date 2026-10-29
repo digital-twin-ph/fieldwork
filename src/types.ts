@@ -229,6 +229,17 @@ export interface ParamsByType {
      *  already allows for a raster or a network with no file. */
     data:{features:{id:string;name:string;geometry:import('./types.js').Boundary;
       properties:Record<string,Scalar>}[]};
+    /** The digest of those features, when they were ACQUIRED rather than read from a file.
+     *
+     *  Measured 2026-10-28 on South London's water: 186 features at 45 vertices minimum are
+     *  32,999 vertices and 788 kB of params, against a 5,226,496-byte store written twice per
+     *  save -- 15% of the whole workspace for one layer. A traced layer is nothing like it:
+     *  Snow's three territories are 367 vertices. So `data` in the workflow was right for every
+     *  polygon layer that existed before acquisition did, and stops being right the moment a
+     *  widget can read a region. An acquired layer goes to the payload store once and the
+     *  workflow keeps this reference, which is what `network_input` already does and for the
+     *  same reason -- see docs/experiments/121. A layer read from a file keeps neither. */
+    dataRef?:string;
     /** Which property names each feature, chosen by the practitioner rather than guessed. Nothing
      *  here is inferred from a column name -- the same rule the records table states. */
     nameField?:string;

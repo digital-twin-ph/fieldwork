@@ -56,7 +56,8 @@
 <urn:fieldwork:widget:point_input> a fw:WidgetDefinition; fw:nodeType "point_input"; rdfs:label "Point data";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/point_input.md>.
 <urn:fieldwork:widget:policy> a fw:WidgetDefinition; fw:nodeType "policy"; rdfs:label "Outreach criteria".
-<urn:fieldwork:widget:polygon_input> a fw:WidgetDefinition; fw:nodeType "polygon_input"; rdfs:label "Polygon layer".
+<urn:fieldwork:widget:polygon_input> a fw:WidgetDefinition; fw:nodeType "polygon_input"; rdfs:label "Polygon layer";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/polygon_input.md>.
 <urn:fieldwork:widget:raster_input> a fw:WidgetDefinition; fw:nodeType "raster_input"; rdfs:label "Raster input".
 <urn:fieldwork:widget:rate> a fw:WidgetDefinition; fw:nodeType "rate"; rdfs:label "Rate with a denominator".
 <urn:fieldwork:widget:rate_ratio> a fw:WidgetDefinition; fw:nodeType "rate_ratio"; rdfs:label "Rate ratio with an interval";

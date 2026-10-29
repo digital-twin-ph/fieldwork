@@ -10,6 +10,23 @@ _A note on the number: `package.json` read 0.11.0 while the newest section below
 earlier sections are left as written rather than reshuffled — the dated record is the point — and
 this section covers the work of 2026-10-25 and 26._
 
+- **Polygon layer acquires its own features, and has a panel to do it from.** The widget could
+  read a GeoJSON file, and nothing in the application could tell it to: its naming property, its
+  layer name and its optional study-area port could be set only by editing a workflow file, so the
+  only polygon layers anyone ever saw were the ones a worked example shipped. It now has an
+  Inspector with both ways in. The new one reads areas of a kind you choose — water, buildings —
+  out of a published OpenStreetMap extract on your own computer, within the connected study area's
+  bounds plus a margin you set, and offers a download link for the smallest catalogued extract that
+  covers that box. The extract is read where it sits and never copied in; the panel records its
+  name and digest, says how many features came back and how many were below your vertex threshold
+  or outside the box, and states the ODbL terms and that they are share-alike. The read runs in a
+  worker and reports each pass by name — a London-sized extract takes about sixteen seconds, which
+  on the main thread is sixteen seconds of a page that answers nothing. Acquired features are kept
+  on the device by digest rather than inside the workflow: one water layer measured 788 kB of
+  workflow against a 5.2 MB budget written twice per save, which is a sixth of everything you have
+  saved for one layer. The margin has no ceiling, because the lock this was built to reach sits
+  4,460 m outside the study area's bounds. A layer read for one study area is refused for another
+  rather than drawing a map with a hole in it. There is a manual page for it now too.
 - **A run whose canvas moved on reports honestly instead of looking like a failure.** Opening a
   worked example from the catalog while another run was still computing threw an error, so a run
   that had finished said *"Workflow stopped"*. The results of that run belong to the workflow that

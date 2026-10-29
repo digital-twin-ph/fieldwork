@@ -1,0 +1,77 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:polygon_input",
+  "version": "0.3.0",
+  "nodeType": "polygon_input",
+  "title": "Polygon layer",
+  "released": "2026-10-28",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['polygon_input']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "note": "Ring closure, winding and CRS84 bounds are checked when the file is read. What is NOT checkable here is whether the lines are where the author meant them to be: a traced territory is a reading of a printed wash, and experiment 145 records that as not established. The acquisition parameters are stated and never inferred: a kind is chosen from a closed list, the vertex threshold defaults to nothing, and the margin defaults to zero. An acquired layer carries `dataRef`, so its features are held once on the device rather than in the workflow."
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      }
+    ],
+    "output": "polygons",
+    "optionalInputs": [
+      "area"
+    ],
+    "note": "One OPTIONAL input, `area`, which scopes acquisition rather than enabling the widget: connected, it supplies the bounding box and the country a published OpenStreetMap extract is read for, which is what `network_input` already does with the same port. Absent, the widget still reads a GeoJSON file as published, so `required` stays empty and this remains an input-stage widget -- `INPUT_STAGE` is derived from `required`, not from `optional`, so the palette's blank-canvas behaviour is unchanged. At run time the port is checked for one thing: a layer whose retrieval box no longer covers the connected area is REFUSED, because acquisition happens at import and a study area nudged afterwards leaves a layer that provably holds no features for part of it. Emits the existing `polygons` port type, as before."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No mapping to an external vocabulary yet. The receipt states the file, its digest, the feature count, the property each feature was named by, and that nothing was clipped, simplified or reprojected. An acquired layer adds no terms of its own: its licence and retrieval are recorded through `input-provenance.ts`, whose `fw:licence`, `fw:retrievedFrom` and `fw:retrievedAt` are already declared and whose KNOWN_OBLIGATIONS already carries `ODbL-1.0` with its attribution and share-alike obligation. Asserting a parallel vocabulary here would have earned a receipt nothing else reads.",
+    "emits": {
+      "classes": [
+        "PolygonLayer"
+      ],
+      "properties": [
+        "featureCount",
+        "layerFile",
+        "layerFileDigest",
+        "namedBy",
+        "readAsPublished",
+        "vertexCount"
+      ]
+    }
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "implementation": {
+    "files": [
+      "src/polygon-layer.ts",
+      "src/osm-areas.ts",
+      "src/osm-areas-worker.ts",
+      "src/polygon-input-ui.ts",
+      "src/core.ts",
+      "src/app.ts",
+      "src/types.ts"
+    ],
+    "definition": "src/polygon-layer.ts"
+  },
+  "changes": [
+    {
+      "kind": "changed",
+      "description": "AN INSPECTOR, WHERE THERE WAS NONE. The widget shipped at 0.2.0 addable, implemented, unit tested and unreachable: every parameter it declares -- the naming property, the layer name, the kinds, the vertex threshold, the margin -- could be set only by editing a workflow file, and the optional `area` port had no control that could connect it. South London's layers reached a canvas because the worked example's own file carried them. That is the gap `reachable_nodes` had on 2026-10-17, and it is invisible to a palette audit: addable is not configurable. src/polygon-input-ui.ts now builds both paths in -- a published GeoJSON layer and areas from a published .osm.pbf -- with the kinds, the threshold, the margin, the study-area picker, and a card stating what came back and under what terms.\n\nTHE READ RUNS IN A WORKER. Measured on a 129,796,300-byte Greater London extract: 15.9 s for South London's water, three passes over every blob because a relation names ways, a way names nodes, and a .osm.pbf gives no index to either. On the main thread that is 16 s in which the page answers nothing and Chrome offers to kill it, which is the finding the street engine already records for its own 416 MB case. src/osm-areas-worker.ts moves it off, transferring the extract rather than copying it, and reports each pass by name.\n\nAN ACQUIRED LAYER GOES TO THE PAYLOAD STORE. `dataRef` was the one input mechanism this widget lacked. Measured 2026-10-28: South London's water at 45 vertices minimum is 186 features, 32,999 vertices and 788 kB of params, against a 5,226,496-byte store written twice per save -- 15% of the whole workspace for one layer. `data` in the workflow was right for every polygon layer that existed before acquisition did, and stopped being right the moment the widget could read a region: Snow's three traced territories are 367 vertices, two orders of magnitude less. Both paths now keep the features once, by digest, and the workflow keeps the reference; a layer a worked example SHIPS stays inline, because there the workflow file is the publication.\n\nTHE MARGIN IS CONVERTED PER AXIS, in one function both the suggestion and the read use. A degree of longitude is shorter than a degree of latitude everywhere but the equator, so the uniform /111195 the street engine applies under-covers east and west: at South London's 51.5 degrees north a 5,000 m margin is 0.0722 degrees of longitude and 0.0450 of latitude, and the uniform form would have missed 2,800 m of a margin that exists to cross the 4,460 m to Teddington Lock. The extract the panel offers is the one covering that widened box rather than the boundary, because a margin reaching into the next region is a margin whose extract must cover it. There is no ceiling on the margin: the Overpass path caps its own at 2,000 m and the network extract's control stops there too, and South London needs 5,000."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested against the three MultiPolygon territories the South London repository ships, which is the layer the widget was built for: 153, 128 and 107 vertices across six rings, every vertex preserved, the attributes carried as published, and the three supply categories read from the property the practitioner named. The HOLES are asserted explicitly, because they are what makes reading as published worth enforcing: Lambeth's territory is one part of three rings -- an outer boundary of 107 positions and two interior rings of 9 and 12 -- so there are enclaves inside the Lambeth zone that Lambeth did not supply, which no count of features reveals and which a simplifier would take first. Refusals covered: coordinates outside CRS84 bounds (easting and northing in metres, which is what an export from a projected CRS gives), a geometry that is not a polygon, an unclosed ring, a named property no feature carries, a file that is not a FeatureCollection, an empty one, and one larger than a study's own geometry. What this does not establish is whether the traced lines are where Snow's printed wash actually was: the geometry is a reading of a colour boundary on a scanned plate, and experiment 145 records it as a reading rather than a measurement. The acquisition half is tested against a .osm.pbf the test writes itself, there being no fixture in this repository and no decode test for the street engine either: eight cases over tag matching, multipolygon assembly from reversed fragments, the box, the vertex threshold, the measured refusal and the granularity assumption. Three further cases cover the port -- that a layer read for the study area runs and states its obligation, that one read for a different area is refused by name, and that a plain read file is unaffected. Verified end to end against the real extract: all six water relations the hand-built South London partition used are present and the one outside the box is excluded."
+  }
+}

@@ -65,6 +65,7 @@ import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from './old-naledi-ui.js';
+import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
 import {isPointPort} from './point-layers.js';
 import {EXAMPLE_TEMPLATES,hasExampleTemplate,EXAMPLE_KEYS,WORKED_EXAMPLE_KEYS} from './example-templates.js';
@@ -1684,6 +1685,9 @@ function renderInspector(){
       // potential point layer in the map gets a configurable/selectable symbol." Only the point
       // layers actually wired are offered, because a control for a layer that does not exist is
       // a setting nobody can check against the picture.
+      +`<span class="inspector-section">Layers</span>`
+      +`<p class="muted">Ports receive; layers are displayed. Order them, name them as a reader should see them, and group the ones that belong together.</p>`
+      +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
       +(()=>{
         const sources=workflow.edges.filter(edge=>edge.to===n.id&&isPointPort(edge.port))
           .map(edge=>workflow.nodes.find(node=>node.id===edge.from)).filter(Boolean) as WorkflowNode[];
@@ -6003,6 +6007,107 @@ $('#download-evidence').onclick=async()=>{if(!result||!runWorkflow){toast('Run t
   // into it would grow an export by the size of the data it describes.
   const snapshot=structuredClone({schema:'fieldwork/run/1',workflow:runWorkflow,...reported});try{const attachments=await exportEvidenceFiles(snapshot.workflow);download('fieldwork-run-receipt.json',JSON.stringify({...snapshot,...(attachments.length?{attachments}:{})},null,2));}catch(error){toast(errorMessage(error),{tone:'failure'});}};
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view!));
+/** MANAGE LAYERS. The practitioner, 2026-10-29: *"Map output should have a dialog modal for
+ *  layer management (ordering, labeling, grouping). It should honor all the mappable inputs,
+ *  refusing only when there are rule violations."*
+ *
+ *  The list is recomputed from the workflow on every edit rather than held in the dialog, so
+ *  what it shows is what the map draws -- including a layer wired while it is open, and the
+ *  members inside a collected value, which come from the last run's polygons.
+ *
+ *  What this does NOT yet replace: `#map-layer-list`, the per-point-layer checkboxes under the
+ *  static map, whose state lives in `hiddenMapLayers` -- a Map in memory, lost on reload and
+ *  absent from the saved workflow. Two visibility controls for one map is one too many, and the
+ *  one that persists should win; that is the next step and is recorded rather than half-done. */
+let layerDialogNode:string|null=null;
+const layersFor=(node:WorkflowNode<'map_output'>):MapLayer[]=>{
+  const out=result?.outputs.find(o=>o.nodeId===node.id);
+  return mapLayerList(node,workflow.edges,
+    id=>workflow.nodes.find(n=>n.id===id)?.params.label,
+    out?.polygons?[{port:'polygons',members:membersOfPolygons(out.polygons)}]:[]);
+};
+const KIND_WORD:Record<string,string>={AreaLayer:'study area',PointsLayer:'points',
+  PolygonsLayer:'polygons',RasterLayer:'raster',NetworkLayer:'street network',BasemapLayer:'basemap'};
+function renderLayerDialog(){
+  if(!layerDialogNode)return;
+  const node=getNode(workflow,layerDialogNode,'map_output'),list=layersFor(node);
+  $('#layer-dialog-rows').innerHTML=list.length?list.map((layer,index)=>
+    `<div class="layer-row" role="listitem" data-layer-row="${esc(layer.id)}">`
+    +`<span class="layer-row-move">`
+    +`<button class="icon-button" data-layer-move="${esc(layer.id)}" data-direction="up" aria-label="Draw ${esc(layer.label)} lower" ${index===0?'disabled':''}>↑</button>`
+    +`<button class="icon-button" data-layer-move="${esc(layer.id)}" data-direction="down" aria-label="Draw ${esc(layer.label)} higher" ${index===list.length-1?'disabled':''}>↓</button>`
+    +`</span>`
+    +`<label class="layer-row-visible"><input type="checkbox" data-layer-visible="${esc(layer.id)}" ${layer.hidden?'':'checked'}><span class="visually-hidden">Draw ${esc(layer.label)}</span></label>`
+    +`<input class="layer-row-label" data-layer-label="${esc(layer.id)}" value="${esc(layer.label)}" maxlength="${LAYER_LABEL_LIMIT}" aria-label="Name for ${esc(layer.label)}">`
+    +`<input class="layer-row-group" data-layer-group="${esc(layer.id)}" value="${esc(layer.group||'')}" maxlength="${LAYER_LABEL_LIMIT}" placeholder="No group" aria-label="Group for ${esc(layer.label)}">`
+    +`<span class="muted layer-row-kind">${esc(KIND_WORD[layer.kind]||layer.kind)}${layer.parts?` · ${layer.parts} parts`:''}${layer.origin==='within'?' · inside a collection':''}</span>`
+    +`</div>`).join('')
+    :'<p class="muted">Nothing is connected to this map yet, so it has no layers to manage.</p>';
+  // WHAT IS REFUSED IS SAID HERE, and it is never a combination of kinds. A kind decides how a
+  // layer is drawn, not whether it may be there.
+  const drawn=list.filter(l=>!l.hidden);
+  $('#layer-dialog-note').textContent=!list.length
+    ?'Connect a study area, points, polygons, a raster or a street network.'
+    :!drawn.length?'Every layer is switched off, so this map has nothing to draw. Switch one back on.'
+    :`Drawn bottom to top: ${drawn.map(l=>l.label).join(' → ')}.`
+      +(drawn.length<list.length?` ${list.length-drawn.length} switched off, still connected.`:'');
+}
+function editLayer(id:string,patch:{label?:string;group?:string;hidden?:boolean}){
+  if(!layerDialogNode)return;
+  change(w=>{
+    const node=getNode(w,layerDialogNode!,'map_output');
+    const held={...(node.params.layers||{})},next:Record<string,unknown>={...held[id],...patch};
+    // A setting that says nothing is removed rather than stored empty, so a layer the
+    // practitioner cleared behaves exactly like one they never touched -- including taking a new
+    // default when the node it comes from is renamed.
+    for(const key of ['label','group'])if(typeof next[key]==='string'&&!next[key].trim())delete next[key];
+    if(next.hidden===false)delete next.hidden;
+    if(Object.keys(next).length)held[id]=next as typeof held[string];else delete held[id];
+    node.params.layers=held;
+  });
+  renderLayerDialog();
+}
+$('#layer-dialog-rows').addEventListener('input',event=>{
+  const target=event.target as HTMLInputElement;
+  const forLabel=target.getAttribute('data-layer-label'),forGroup=target.getAttribute('data-layer-group');
+  if(forLabel)editLayer(forLabel,{label:target.value});
+  else if(forGroup)editLayer(forGroup,{group:target.value});
+});
+$('#layer-dialog-rows').addEventListener('change',event=>{
+  const target=event.target as HTMLInputElement,id=target.getAttribute('data-layer-visible');
+  if(id)editLayer(id,{hidden:!target.checked});
+});
+$('#layer-dialog-rows').addEventListener('click',event=>{
+  const button=(event.target as HTMLElement).closest('[data-layer-move]') as HTMLElement|null;
+  if(!button||!layerDialogNode)return;
+  const id=button.getAttribute('data-layer-move')!,up=button.getAttribute('data-direction')==='up';
+  const list=layersFor(getNode(workflow,layerDialogNode,'map_output'));
+  const at=list.findIndex(l=>l.id===id),swap=up?at-1:at+1;
+  if(at<0||swap<0||swap>=list.length)return;
+  // THE WHOLE STACK IS WRITTEN, not the two that moved. A position is relative, so recording
+  // only the pair would leave the rest at defaults that no longer sit either side of them.
+  const next=[...list];[next[at],next[swap]]=[next[swap],next[at]];
+  change(w=>{
+    const node=getNode(w,layerDialogNode!,'map_output'),held={...(node.params.layers||{})};
+    next.forEach((layer,index)=>{held[layer.id]={...held[layer.id],order:index};});
+    node.params.layers=held;
+  });
+  renderLayerDialog();
+  ($('#layer-dialog-rows').querySelector(`[data-layer-row="${CSS.escape(id)}"] [data-direction="${up?'up':'down'}"]`) as HTMLElement|null)?.focus();
+});
+$('#layer-dialog-reset').onclick=()=>{
+  if(!layerDialogNode)return;
+  change(w=>{delete getNode(w,layerDialogNode!,'map_output').params.layers;});
+  renderLayerDialog();
+};
+for(const id of ['#layer-dialog-close','#layer-dialog-done'] as const)
+  $(id).onclick=()=>{($('#layer-dialog') as HTMLDialogElement).close();layerDialogNode=null;};
+document.addEventListener('click',event=>{
+  const open=(event.target as HTMLElement).closest('[data-manage-layers]') as HTMLElement|null;
+  if(!open)return;
+  layerDialogNode=open.getAttribute('data-manage-layers');renderLayerDialog();
+  ($('#layer-dialog') as HTMLDialogElement).showModal();
+});
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});
 const requestedExample=new URLSearchParams(location.search).get('example');

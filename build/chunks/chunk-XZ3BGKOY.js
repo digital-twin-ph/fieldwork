@@ -37,4 +37,4 @@ northing meters`+t;var d=f/2,w=0,c=0,N,b,T,E,O;return d>0&&(N=1e5/Math.pow(10,d)
 `),e.offNetwork?.length&&(f+=`<${l}> fw:offNetworkSiteCount ${e.offNetwork.length}; fw:offNetworkSites ${JSON.stringify(JSON.stringify(e.offNetwork))}.
 `);for(let d of e.features)d.offNetworkMetres!==void 0&&(f+=`<${h}:cell:${encodeURIComponent(d.id)}> fw:offNetworkMetres ${d.offNetworkMetres}.
 `)}return"nodes"in e&&(f+=ji(l,zi({maxNodes:t.params.maxNodes}))),f+=Ki(t,e,h,l,i),{nodeId:t.id,kind:"computation",facts:f,input:f,rules:"",conclusions:[],method:a}}export{qi as a,pg as b,_g as c,yg as d,nn as e,p0 as f,Zr as g,Mg as h,vg as i,_0 as j,xg as k,y0 as l,wg as m,tn as n,M0 as o,v0 as p,x0 as q,Eg as r,w0 as s,Sg as t,Pg as u,E0 as v,an as w,en as x,on as y,P0 as z,bg as A,Gg as B,sn as C,G0 as D,rn as E,N0 as F,A0 as G,Ng as H,Ag as I};
-//# sourceMappingURL=chunk-6V7UZNSJ.js.map
+//# sourceMappingURL=chunk-XZ3BGKOY.js.map

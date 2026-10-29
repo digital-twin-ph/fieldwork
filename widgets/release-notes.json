@@ -430,9 +430,13 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.15.0",
-   "released": "2026-10-27",
+   "version": "0.16.0",
+   "released": "2026-10-28",
    "changes": [
+    {
+     "kind": "changed",
+     "description": "A MAP DRAWS EVERY LAYER IT IS GIVEN, including when polygons are among them. The ports stopped depending on a mode on 2026-10-14; the VALUE did not. `drawnMode` still picked one winner and the branch that won built the value alone, so a map wired to a study area, a point layer and a polygon layer drew the polygons and discarded the other two -- while the Sources line beneath it, built from the edges, named all three. The practitioner, 2026-10-28: \"workflow shows much more connected but did not show up as layers.\" This is the fourth layer lost the same way: the study area on 2026-10-20, the facilities on 2026-10-22, the raster on 2026-10-23, each patched one layer at a time. The polygons branch now composes as the raster branch learned to, building the spatial map from the wired area and every point layer beside it and joining the polygons to it as a layer. One receipt still, with the map's facts appended to the polygon presentation's rather than replacing them.\n\nA NAMED LAYER IS CATEGORICAL AND IS ITS OWN KEY. Every valueless polygon took one hard-coded `#1f77b4` on the interactive map, so the Thames above and below Teddington Lock -- the one distinction that example exists to draw -- arrived as a single blue shape over a blue river; the static plot used YlGnBu, a SEQUENTIAL ramp whose design is that a reader can rank the classes, over two categories that have no rank. Bands carrying `minutes` keep the ordered palette; named regions take Okabe-Ito, and only while the hues stay distinct -- past the palette's length there is no categorical figure to draw and the neutral wash is kept, because a repeated hue over 33 sub-districts reads as a grouping nobody asserted. The legend is built from those same names and hues. Its fallback named a modelled catchment, observations and sites over a figure drawing none of them, which is the THIRD report of a stale key on this widget -- twice fixed for the case in front of it and twice left to catch the next case wrongly."
+    },
     {
      "kind": "minor",
      "description": "Takes a `ground` layer: a georeferenced image drawn under everything the workflow produced. Additive and backward-compatible -- a map with nothing on that port draws exactly as before. The port type is separate from `raster` on purpose: a raster carries measurements and exists to be clipped and sampled, and ground carries a picture, so the two must not be interchangeable at a connector. See docs/experiments/143-a-georeferenced-plate-as-ground.md."
@@ -836,9 +840,13 @@
    "migrationFrom": []
   },
   "stack_polygons": {
-   "version": "0.1.0",
-   "released": "2026-10-10",
+   "version": "0.2.0",
+   "released": "2026-10-28",
    "changes": [
+    {
+     "kind": "changed",
+     "description": "A COLLECTOR TAKES WHAT IT IS GIVEN. Six polygon ports were declared and all six were REQUIRED, so a widget whose description is \"gather several polygon layers into one\" and whose implementation refuses with \"Connect at least one polygon layer to collect\" could only ever run with exactly six connected. Found on 2026-10-28 wiring two layers -- a sub-district layer and a river -- into one map: \"Collect polygon layers needs its polygons_3 input connected.\" The first port is required, because a collector of nothing has nothing to emit; the other five are the extra slots they were always meant to be. The widget was addable, implemented, unit tested and unusable, which is the third widget this year found in that state."
+    },
     {
      "kind": "initial",
      "description": "Gathers up to six polygon layers into one with nothing merged, ordered largest area first so smaller polygons draw on top. Needed because the isochrone rings arrive as one corridor per band and every output node takes a single polygons input: unioning them with summarize_combined_area would give one blob the size of the largest band with the walking times gone. Numbered ports follow the point-layer convention in src/point-layers.ts, capped at six because isochrone accepts at most six thresholds. Takes no UTM zone: ring extent in degrees decides draw order and is never reported, so there is no area to get wrong. Refuses layers computed in different coordinate systems, and refuses polygons sharing an identifier, which could not be told apart once collected."

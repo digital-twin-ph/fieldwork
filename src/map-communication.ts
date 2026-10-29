@@ -4,7 +4,7 @@ import type {WorkflowNode,Workflow} from './types.js';
 import {basemapAvailable} from './basemaps.js';
 import {attributionsFor,provenanceOf} from './input-provenance.js';
 import type {LayerShape} from './presentation.js';
-import {markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues} from './presentation.js';
+import {markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues,categoricalSteps} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
 
 export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:LayerShape;hollow?:boolean}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
@@ -31,6 +31,28 @@ function classedItems(polygons:{features:{value?:number}[]}):{label:string;color
     ({label:`${round(edges[i])} to ${round(edges[i+1])}`,color}));
 }
 
+/** One entry per named region, in the hues the renderers draw them in.
+ *
+ *  Null where the features are a SEQUENCE rather than a set of names -- travel-time bands carry
+ *  `minutes` and are keyed by the band, not one entry each -- and null where there are more
+ *  regions than there are distinct hues. 33 sub-districts is a layer, not a legend; the entry
+ *  then says what the layer is and how many parts it has, which is the honest answer and the one
+ *  the layer control already gives.
+ *
+ *  Every region is still drawn either way: what changes is whether hue carries the naming. */
+function categoricalKey(polygons:{features:{id:string;name:string;value?:number;minutes?:number}[]}):
+  {label:string;color:string}[]|null{
+  const features=polygons.features;
+  if(!features.length||features.some(f=>f.minutes!==undefined))return null;
+  if(features.some(f=>typeof f.value==='number'))return null;
+  const hues=categoricalSteps(features.length);
+  // Past the palette there are no distinct hues to key, so the entry says what the layer is and
+  // how many parts it has -- which is what the layer control and the popups already answer.
+  if(!hues)return [{label:`${features.length} named regions \u00b7 see the layer list`,
+    color:FIGURE_ROLE.primary}];
+  return features.map((f,i)=>({label:f.name||f.id,color:hues[i]}));
+}
+
 export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,workflow:Workflow):MapPresentation{
   const upstream=workflow.edges.filter(e=>e.to===node.id).map(e=>workflow.nodes.find(n=>n.id===e.from)?.params.label||e.from);
   const sourceNote=node.params.mapSourceNote?.trim()||`Sources: ${upstream.join(', ')||'connected workflow inputs'} · CRS84. ${output.polygons?.method||output.method||'See N3 & evidence for method.'}`;
@@ -51,6 +73,15 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
       // different surface: the figure's own key said the same thing until 2026-10-25. Classed
       // polygons are read from the same `classifyValues` the renderer colours with, so the two
       // cannot drift again.
+      // A NAMED LAYER IS ITS OWN KEY. The fallback below named a modelled catchment, some
+      // observations and some sites over a figure drawing two reaches of a river and none of
+      // those three things, which is the THIRD report of a stale key on this widget: the figure's
+      // own key on 2026-10-25, this one on a choropleth on 2026-10-26, and this one again on a
+      // polygon layer on 2026-10-28 -- *"Map also still shows stale legends (modeled catchment,
+      // observations, sites)"*. Twice it was fixed for the case in front of it and the fallback
+      // was left to catch the next case wrongly. A layer whose features are named needs no
+      // fallback: it has the names, and now the hues that go with them.
+      ??categoricalKey(output.polygons)
       ??[{label:'Modeled catchment',color:R.primary},{label:'Observations',color:R.secondary},{label:'Sites',color:R.site,shape:'square'}];
   }else if(output.raster){
     // The raster's own two entries, and then the layers drawn ON it. This read `else if` and

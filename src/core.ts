@@ -226,6 +226,14 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // canvas, which is where a source widget has to be.
   if(node.type==='network_input'||node.type==='polygon_input')
     return all.filter(([port])=>port!=='area');
+  // A COLLECTOR TAKES WHAT IT IS GIVEN. `stack_polygons` declares six polygon ports and required
+  // all six, so a widget whose own description is "gather SEVERAL polygon layers" and whose
+  // implementation refuses with *"Connect at least one polygon layer to collect"* could only run
+  // with exactly six connected. Found on 2026-10-28 wiring two layers -- sub-districts and the
+  // river -- into one map: "Collect polygon layers needs its polygons_3 input connected." The
+  // first is required because a collector of nothing has nothing to emit; the rest are extra
+  // slots, which is what they were always meant to be.
+  if(node.type==='stack_polygons')return all.filter(([port])=>port==='polygons');
   // `chart_output` joins them on 2026-10-28, the day it stopped choosing its ports by a mode.
   // A chart insists on nothing for the same reason a map and a table do not: it draws what it is
   // given, and declaring three ports while requiring them all turned one unconnected node into
@@ -1702,7 +1710,46 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push({nodeId:node.id,kind:'presentation',facts,input:facts,rules:'',conclusions:[],
           method:'Draw the downloaded street graph as itself; no routing, no simplification and no new inference.'});
         break;}
-      if(mode==='polygons'){value=polygonDisplay(inputs.polygons,'map');(value as DisplayValue).polygonPresentation=node.params.presentation||'plot';if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(mode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;
+      if(mode==='polygons'){
+        const shown=polygonDisplay(inputs.polygons,'map') as DisplayValue;
+        const polygonSource=workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from;
+        const contextSource=workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from;
+        const receipt=polygonPresentationReceipt(node,polygonSource,runId,contextSource);
+        // THE FOURTH TIME A WINNING MODE THREW THE OTHER LAYERS AWAY. The study area went on
+        // 2026-10-20, the facilities on 2026-10-22, the raster on 2026-10-23 -- each patched one
+        // layer at a time -- and on 2026-10-28 a practitioner wired a study area, four points and
+        // a polygon layer to one map and got the polygons alone: *"workflow shows much more
+        // connected but did not show up as layers."* The Sources line named all three, because it
+        // is built from the EDGES, while the value was built from the winner.
+        //
+        // `drawnMode` still picks which renderer leads, and it is no longer what decides which
+        // layers survive. This branch composes the same way the raster branch learned to on
+        // 2026-10-23: where an area is wired, the spatial map is built from it and from every
+        // point layer beside it, and the polygons join it as a layer rather than replacing it.
+        const beside=pointInputs().layers;
+        if(inputs.area){
+          const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);
+          value={...mapped.value,polygons:shown.polygons,
+            polygonPresentation:node.params.presentation||'plot'} as unknown as DisplayValue;
+          if(node.params.contextPoints)
+            (value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;
+          // ONE RECEIPT, so what the polygon presentation already states is untouched and the
+          // map's own facts about the area and the points it drew are added to it.
+          if(mapped.receipt){
+            receipt.facts+=mapped.receipt.facts;
+            receipt.input=receipt.facts;
+            receipt.method=`${receipt.method} Drawn over the connected study area`
+              +`${beside.length?` with ${beside.length} point layer${beside.length===1?'':'s'} `
+                +'wired beside it':''}; no clipping and no new inference.`;
+          }
+          receipts.push(receipt);
+          break;
+        }
+        value=shown;
+        (value as DisplayValue).polygonPresentation=node.params.presentation||'plot';
+        if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;
+        receipts.push(receipt);
+        break;}if(mode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;
         // THE SAME FIX THE NETWORK BRANCH ABOVE ALREADY HAS. `rows:[]` threw away every point
         // layer wired beside the raster before a renderer could see one, so the map drew cells
         // alone and the layer list under it had nothing to list. The network branch learned this

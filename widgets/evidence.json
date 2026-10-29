@@ -30,9 +30,9 @@
  "counts": {
   "declared only": 2,
   "example only": 13,
-  "parity only": 10,
+  "parity only": 9,
   "example, lab not applicable": 12,
-  "example+parity": 16,
+  "example+parity": 17,
   "neither applies": 1
  },
  "compositionsUsedByNoExample": [
@@ -530,12 +530,14 @@
   },
   {
    "nodeType": "stack_polygons",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "south-london-1854"
+   ],
+   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "parity only"
+   "rung": "example+parity"
   },
   {
    "nodeType": "study_area",

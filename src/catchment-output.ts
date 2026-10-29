@@ -1,4 +1,4 @@
-import {orderedSteps,classifyValues,FIGURE_ROLE,markPath} from './presentation.js';
+import {orderedSteps,categoricalSteps,classifyValues,FIGURE_ROLE,markPath} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
 import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
@@ -86,14 +86,21 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   // first is the misreading this whole figure exists to avoid. `classifyValues` returns null
   // when nothing carries a value, which is every figure this renderer drew before today.
   const classed=classifyValues(p.features.map(f=>f.value));
-  const colors=classed?classed.colours:orderedSteps(p.features.length);
+  // ORDERED WHERE THERE IS AN ORDER. Bands carry `minutes` and rank; named regions do not, and
+  // YlGnBu's whole design is a lightness ramp a reader is meant to rank. Tidal and non-tidal
+  // drawn in two steps of it assert a sequence the categories do not have.
+  const banded=p.features.some(f=>f.minutes!==undefined);
+  // Null past the palette's length: more regions than hues is a neutral wash, not a repeat.
+  const categorical=classed||banded?null:categoricalSteps(p.features.length);
+  const colors=classed?classed.colours
+    :categorical??orderedSteps(p.features.length);
   return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;const at=classed?classed.classOf(f.value):null;
     // A part with no value is drawn in a neutral, never in the lowest class: an unmatched
     // boundary would otherwise read as a finding of low incidence rather than as no data.
     const fill=classed?(at===null?FIGURE_ROLE.unknown:colors[at]):colors[i%colors.length];
     // Value-bearing fills are readable at full strength; a catchment's identity wash is not
     // the same thing and keeps the lighter tint it has always had.
-    const opacity=classed?(at===null?'.18':'.78'):'.22';
+    const opacity=classed?(at===null?'.18':'.78'):categorical?'.55':'.22';
     return `<path data-catchment="${esc(f.id)}"${classed&&f.value!==undefined?` data-value="${f.value}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${classed?'.6':'1'}"><title>${esc(f.name)}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+plotKey(p,classed,esc);
 }
 

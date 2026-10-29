@@ -6,7 +6,7 @@ import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
 import {BASEMAP_CHOICES,basemapAvailable,basemapOptions,BASEMAP_LABELS,type BasemapChoice} from './basemaps.js';
-import {layerSymbol,markPath,markRadius,classifyValues,FIGURE_ROLE} from './presentation.js';
+import {layerSymbol,markPath,markRadius,classifyValues,categoricalSteps,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
 import {rasterImage} from './raster-image.js';
@@ -182,6 +182,12 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // Both renderers now read the same `classifyValues`, because a figure whose meaning depends on
   // which renderer drew it is two different figures.
   const classed=classifyValues(p.features.map(f=>f.value));
+  // A NAMED LAYER IS CATEGORICAL. Every feature without a value took one hard-coded `#1f77b4`,
+  // so a layer of two named reaches drew as one shape. Bands with `minutes` are a sequence and
+  // keep their own treatment below; anything else is told apart by hue.
+  const banded=p.features.some(f=>f.minutes!==undefined);
+  const categorical=!classed&&!banded?categoricalSteps(p.features.length):null;
+  const hueOf=new Map<string,string>(categorical?p.features.map((f,i)=>[f.id,categorical[i]]):[]);
   // One group for every part a value-classed layer draws, so the control lists the LAYER.
   const themed=L.featureGroup();
   const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
@@ -189,9 +195,12 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const at=classed?classed.classOf(f.value):null;
     // A part with no value is neutral, never the lowest class: pale-for-absent reads as a
     // finding of low incidence, which is the opposite of what it means.
-    const fillColor=classed?(at===null?FIGURE_ROLE.unknown:classed.colours[at]):'#1f77b4';
-    const fillOpacity=classed?(at===null?.18:.78):.2;
-    const layer=L.geoJSON(f.geometry,{style:{color:classed?FIGURE_ROLE.quietInk:'#39779e',weight:1,fillColor,fillOpacity}});
+    const hue=hueOf.get(f.id);
+    const fillColor=classed?(at===null?FIGURE_ROLE.unknown:classed.colours[at]):hue??'#1f77b4';
+    // A categorical fill is readable at the strength a value-bearing one is: the identity wash
+    // was tuned for nested catchments drawn over each other, and two named regions are not that.
+    const fillOpacity=classed?(at===null?.18:.78):hue?.55:.2;
+    const layer=L.geoJSON(f.geometry,{style:{color:classed?FIGURE_ROLE.quietInk:hue??'#39779e',weight:1,fillColor,fillOpacity}});
     // THE VALUE THE SHADE ENCODES, in the popup. A choropleth whose popup names only the polygon
     // leaves a reader with a colour and no number, and reading a value off a five-class ramp is
     // exactly what a legend cannot do. The practitioner, 2026-10-26.

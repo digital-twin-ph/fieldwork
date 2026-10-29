@@ -10,6 +10,31 @@ _A note on the number: `package.json` read 0.11.0 while the newest section below
 earlier sections are left as written rather than reshuffled — the dated record is the point — and
 this section covers the work of 2026-10-25 and 26._
 
+- **A map draws every layer you connect.** Wire a study area, a point layer and a polygon layer
+  to one map and you got the polygons alone — while the Sources line under the figure, built from
+  the connections rather than from what was drawn, named all three. A map's *ports* stopped
+  depending on a mode in October; its *value* did not, so whichever port ranked highest built the
+  figure and the rest were discarded before anything could draw them. That is the fourth layer lost
+  this way — the study area, the facilities and the raster each went the same way and were each
+  patched one at a time. The map now composes: the study area it sits on, every point layer beside
+  it, and the polygons as a layer among them.
+- **Polygon layers that carry names are told apart by colour.** Two reaches of a river were drawn
+  in one hard-coded blue on the interactive map, and in two steps of a sequential ramp on the
+  static plot — a ramp whose whole design is that a reader can rank the shades, over categories
+  that have no rank. Named regions now take the categorical palette, and only while the colours
+  stay distinct: past eight regions the colours would repeat, and a repeated colour reads as a
+  grouping nobody claimed, so the layer keeps a single neutral fill and the names stay in the layer
+  list and the popups. Travel-time bands are a sequence and keep the ordered ramp.
+- **The map legend names what is on the map.** A figure drawing two reaches of a river carried a
+  key reading *Modeled catchment, Observations, Sites* — none of which it drew. The fallback behind
+  that had been left in place twice while the case in front of it was fixed. A layer whose features
+  are named is now its own key.
+- **Collect polygon layers works with the layers you have.** It offers six slots and required all
+  six, so a widget for gathering *several* layers refused two with *"needs its polygons_3 input
+  connected"*. One layer is required now; the rest are spare slots.
+- **A study area reports its own size correctly.** A boundary of several parts — South London's
+  32 sub-districts are one shape with 33 — reported *"0 vertices"* on its node, because the count
+  read the first part's rings instead of its points. It reads 2,182 now.
 - **A chart draws a table.** A rate, a total within groups, a derived value, a two-by-two — every
   one of them produces a table, and no chart in the application could receive one. Chart declared a
   single port, *Reasoning result*, and its Input mode offered a choice between two things that were

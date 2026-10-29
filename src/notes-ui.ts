@@ -56,8 +56,13 @@ export function notesPanel(notes:readonly Note[],
       +`<span class="muted">${part.count}</span></h3>`
       +part.groups.map(group=>group.notes.map(note=>{
         const body=note.kind==='quoted'?note.quote:note.text;
+        // WHERE IT COMES FROM, which differs by kind: a machined note names the node that wrote
+        // it, an authored one names what it annotates. A quoted note's source is its citation,
+        // which belongs to the reference list rather than to the card.
         const where=note.kind==='machined'&&note.nodeId
-          ?`<span class="notes-source">from ${esc(labelOf(note.nodeId)||note.nodeId)}</span>`:'';
+          ?`<span class="notes-source">from ${esc(labelOf(note.nodeId)||note.nodeId)}</span>`
+          :note.kind==='authored'&&note.about
+          ?`<span class="notes-source">on ${esc(labelOf(note.about)||note.about)}</span>`:'';
         return `<article class="notes-note">`
           +`<div class="notes-labels">`
           +`<span class="notes-kind notes-kind-${note.kind}">${note.kind}</span>`
@@ -74,8 +79,11 @@ export function notesPanel(notes:readonly Note[],
 
   // WHAT THIS SPIKE DOES NOT DO, said here rather than discovered. A surface that looks finished
   // and is not is worse than one that says where it stops.
+  // WHAT THIS SPIKE DOES NOT DO, said here rather than discovered.
   const gap=`<p class="notice">A spike: notes can be read here and not yet written, edited or `
-    +`added. Quoted notes come from the project, machined ones from the last run.</p>`;
+    +`added. Quoted and authored notes come from the project, machined ones from the last run. `
+    +`Only an authored note would be editable here \u2014 a quotation is somebody else\u2019s `
+    +`sentence, and a machined one is rewritten by running the workflow again.</p>`;
   return head+body+gap;
 }
 

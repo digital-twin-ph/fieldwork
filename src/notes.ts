@@ -118,7 +118,31 @@ export interface MachinedNote {
   nodeId?:string;
 }
 
-export type Note=QuotedNote|MachinedNote;
+/** THE EXAMPLE'S AUTHORS, IN THEIR OWN WORDS.
+ *
+ *  The practitioner, 2026-10-29: *"Since we are the authors of the worked example, we can add our
+ *  annotations to the discovered methods, and definitely to our methods."*
+ *
+ *  The third kind the Notes Board prototype carries and this module did not. A quoted note is
+ *  somebody else's sentence and may not be edited here; a machined note is a widget's account of
+ *  a computation and is rewritten by re-running it. An authored note is ours, and is the only
+ *  kind this application has any business letting a practitioner edit -- which is why the
+ *  distinction is a kind rather than a flag.
+ *
+ *  `about` is what it annotates: another note's id, or a node's. An annotation on Snow's chloride
+ *  test is not a free-standing remark, and a reader who cannot see what it is about has half of
+ *  it. Absent where the note stands on its own. */
+export interface AuthoredNote {
+  kind:'authored';
+  id:string;
+  section:WriteUpPart;
+  fn?:string;
+  text:string;
+  /** The note or node this annotates. */
+  about?:string;
+}
+
+export type Note=QuotedNote|MachinedNote|AuthoredNote;
 
 const part=(value:unknown):WriteUpPart|null=>
   WRITE_UP_PARTS.includes(value as WriteUpPart)?value as WriteUpPart:null;
@@ -147,6 +171,14 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
       notes.push({kind:'quoted',id,section,quote,
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
         ...(text(entry.establishes)?{establishes:text(entry.establishes)}:{})});
+      continue;
+    }
+    if(entry.kind==='authored'){
+      const body=text(entry.text),id=text(entry.id);
+      if(!body||!id){unreadable++;continue;}
+      notes.push({kind:'authored',id,section,text:body,
+        ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
+        ...(text(entry.about)?{about:text(entry.about)}:{})});
       continue;
     }
     if(entry.kind==='machined'){

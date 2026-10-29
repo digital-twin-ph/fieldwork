@@ -160,3 +160,58 @@ test('the worked example is rebuilt from an empty canvas and the published input
   expect(named).toContain('Registration sub-districts');
   expect(named).toContain('Thames reaches');
 });
+
+/** THE INTAKES ARE PRODUCIBLE, NOT ONLY IMPORTABLE.
+ *
+ *  The practitioner, 2026-10-29, on the one input that existed nowhere but the bundle until that
+ *  day: *"These were obtained directly from John Snow text, and I think that's OK, because I
+ *  could very well have used input_points for that with pushpins."* And then: *"So in the end to
+ *  end, we could add the input points for the water intakes."*
+ *
+ *  So this does. It is the criterion the audit now states — an input is reproducible when an
+ *  existing widget COULD produce it, not only when it was produced that way — and the criterion
+ *  is worth no more than a check of it, because these four features carry `company`,
+ *  `drawn_from`, `in_use` and `snow_says`, and a pushpin that took only a name and a position
+ *  would not reach them.
+ *
+ *  What this does NOT claim: that clicking a map reproduces Snow's coordinates. Those are
+ *  geocoded from the landmarks he names, and the test asserts the path exists, not that a click
+ *  lands on Vauxhall Bridge. */
+test('the water intakes can be made with pushpins and a form, from Snow’s text',{skip},async({page})=>{
+  test.slow();
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await add(page,'point_input');
+  const intakes=await idOf(page,'point_input');
+  await page.locator(`.react-flow__node[data-id="${intakes}"]`).click();
+  await page.locator('#edit-input-data').click();
+  await page.locator('#input-mode').selectOption('pins');
+  await page.locator('#pins-online').uncheck();
+
+  // A FIELD SNOW'S TEXT FILLS, declared before the pins so each one takes it by default. This is
+  // the part a name-and-position pin could not do.
+  await page.locator('#input-pins details summary').click();
+  await page.locator('#pin-field-key').fill('company');
+  await page.locator('#pin-field-label').fill('Water company');
+  await page.locator('#pin-field-default').fill('Southwark and Vauxhall Company');
+  await page.locator('#pin-add-field').click();
+
+  // Four pins: three intakes and the lock. Positions are wherever the click lands -- what is
+  // being shown is that a practitioner reading Snow can place and describe them here.
+  const map=page.locator('#pin-map');
+  await expect(map).toBeVisible();
+  const box=await map.boundingBox();
+  for(const [dx,dy] of [[.3,.4],[.45,.35],[.6,.55],[.7,.45]])
+    await page.mouse.click(box.x+box.width*dx,box.y+box.height*dy);
+
+  await page.getByRole('button',{name:'Save Edits',exact:true}).click();
+  await expect(page.locator('#input-dialog')).not.toBeVisible();
+
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
+  const made=saved.nodes.find(n=>n.type==='point_input').params;
+  expect(made.data.features.length).toBe(4);
+  // The declared field reached every pin, which is what makes this a layer and not four dots.
+  for(const feature of made.data.features)
+    expect(feature.properties.company).toBe('Southwark and Vauxhall Company');
+  expect(made.data.features.every(f=>f.geometry?.coordinates?.length===2)).toBe(true);
+});

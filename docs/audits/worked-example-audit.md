@@ -244,7 +244,8 @@ practitioner set the criterion on 2026-10-29, about the water intakes and Teddin
 That is the right test: an input is reproducible when an existing widget could produce it, not
 only when it was produced that way. And the pushpin editor does carry what this one needs — it
 has a form builder (`pin-field-key`, `pin-field-label`, `pin-field-type`), so the `company`,
-`drawn_from`, `in_use` and `snow_says` fields are enterable, and the coordinates are of the
+`drawn_from`, `in_use` and `snow_says` fields are enterable — checked by a test rather than
+read off the markup — and the coordinates are of the
 landmarks Snow names rather than a survey nobody can repeat. Transcribing a source text and
 placing four pins is a path through this application.
 
@@ -253,7 +254,7 @@ So claim B, taken input by input for `south-london/ground`:
 | Input | A practitioner's path to it | Status |
 | --- | --- | --- |
 | 32 sub-districts | a published BSD-2 file, downloaded and read by `polygon_input` | Obtainable |
-| Water intakes and the lock | `point_input` pushpins with a form, filled from Snow's text | Producible |
+| Water intakes and the lock | `point_input` pushpins with a form, filled from Snow's text | **Producible** — proven, not inspected: a test places four pins, declares a `company` field and checks it reached every one |
 | Thames reaches | read the extract, then keep the two reaches out of the water areas | **Blocked** — nothing selects |
 
 One input of three, and one capability. What would close B: a way to keep or drop features of a

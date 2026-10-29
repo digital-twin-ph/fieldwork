@@ -1,6 +1,7 @@
 import type {WorkflowNode} from './types.js';
 import {element} from './dom.js';
 import L from 'leaflet';
+import {clipToBox} from './polygon-layer.js';
 
 /** SEE THE POLYGONS, THEN KEEP THE ONES YOU CAME FOR.
  *
@@ -36,7 +37,8 @@ const markup=`<dialog id="polygon-dialog" aria-labelledby="polygon-dialog-title"
 <button id="polygon-review-discard" class="button small">Discard these</button>
 <button id="polygon-review-clear" class="button small">Clear selection</button></p>
 <p id="polygon-review-status" class="notice" role="status"></p>
-<div class="area-dialog-actions"><button id="polygon-review-all" class="button">Keep all</button>
+<div class="area-dialog-actions"><button id="polygon-review-clip" class="button" hidden>Clip to the box</button>
+<button id="polygon-review-all" class="button">Keep all</button>
 <button id="polygon-review-cancel" class="button">Cancel</button>
 <button id="polygon-review-apply" class="button primary">Keep selection</button></div></dialog>`;
 
@@ -58,7 +60,7 @@ const CHOSEN={color:'#1D4ED8',weight:3,fillColor:'#1D4ED8',fillOpacity:.4};
 const BOX={color:'#4D4D4D',weight:1.5,dashArray:'6 4',fill:false,interactive:false};
 
 export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
-  esc:(value:unknown)=>string,onApply:(hidden:string[])=>boolean|void,
+  esc:(value:unknown)=>string,onApply:(hidden:string[],clipped:boolean)=>boolean|void,
   /** The box the read was scoped to, drawn for reference. The practitioner, 2026-10-29: *"can we
    *  also show the study area bounding box?"* -- which is the frame everything here was read
    *  inside, and without it a river running off the edge looks like a river that was cut. */
@@ -70,20 +72,28 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
   const hidden=new Set(node.params.hidden||[]);
   const layers=new Map<string,L.GeoJSON>();
   let picked:string|null=null,map:L.Map|null=null;
+  let group:L.FeatureGroup|null=null,surface:L.Canvas|null=null;
+  /** What the clip leaves of each feature, or null where it leaves nothing. Empty while the layer
+   *  is uncut. */
+  const cut=new Map<string,unknown>();
   /** CHOSEN ON THE MAP, which is the other direction. The rows answer "is this one kept"; the map
    *  answers "which ones are these". The practitioner, 2026-10-29: *"Is it possible to also do
    *  the reverse, select the polygons and have a few actions - keep, discard, cancel."* A
    *  selection is transient and decides nothing by itself -- the action does. */
   const selected=new Set<string>();
+  /** Whether the layer is cut to the frame. Shown here the moment it is pressed, and carried out
+   *  again by the run -- the same function both times, so the preview is the answer. */
+  let clipped=node.params.clipToBox===true;
 
   const style=(id:string)=>selected.has(id)?CHOSEN:id===picked?PICKED:hidden.has(id)?HIDDEN:KEPT;
   const restyle=(id:string)=>layers.get(id)?.setStyle(style(id) as L.PathOptions);
 
   const status=()=>{
-    const kept=features.length-hidden.size;
+    const kept=features.filter(f=>!hidden.has(String(f.id))&&!outside(String(f.id))).length;
     $('#polygon-review-status').textContent=kept
       ? `${kept.toLocaleString()} of ${features.length.toLocaleString()} features kept`
-        +`${hidden.size?`, ${hidden.size.toLocaleString()} set aside`:''}.`
+        +`${hidden.size?`, ${hidden.size.toLocaleString()} set aside`:''}`
+        +`${clipped?', cut to the box':''}.`
       : 'Every feature is set aside, so this layer would hold nothing. Tick at least one.';
     ($('#polygon-review-apply') as HTMLButtonElement).disabled=!kept;
   };
@@ -107,6 +117,32 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
     for(const id of layers.keys())restyle(id);
     rows();selection();status();
   };
+  /** DRAW WHAT THE LAYER WOULD HOLD. The same `clipToBox` the run uses, so what is on screen
+   *  before Apply is what the layer carries after it. */
+  const recut=()=>{
+    cut.clear();
+    if(clipped&&box)for(const feature of features){
+      const kept=clipToBox([feature],box);
+      cut.set(String(feature.id),kept.length?kept[0].geometry:null);
+    }
+  };
+  const outside=(id:string)=>clipped&&box&&cut.get(id)===null;
+  const redraw=()=>{
+    if(!map||!group||!surface)return;
+    group.clearLayers();layers.clear();
+    for(const feature of features){
+      const id=String(feature.id);
+      const geometry=clipped&&box?cut.get(id):feature.geometry;
+      if(!geometry)continue;
+      const layer=L.geoJSON(geometry as never,
+        {renderer:surface,style:style(id)} as L.GeoJSONOptions);
+      layer.on('click',()=>{
+        if(selected.has(id))selected.delete(id);else selected.add(id);
+        restyle(id);rows();selection();
+      });
+      layer.addTo(group);layers.set(id,layer);
+    }
+  };
   const rows=()=>{
     $('#polygon-review-rows').innerHTML=features.map(feature=>{
       const id=String(feature.id);
@@ -115,7 +151,8 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
         +`aria-selected="${picked===id}">`
         +`<input type="checkbox" data-keep="${esc(id)}" ${hidden.has(id)?'':'checked'} aria-label="Keep ${esc(feature.name||id)}">`
         +`<button class="polygon-review-name" data-pick="${esc(id)}">${esc(feature.name||id)}</button>`
-        +`<span class="muted">${verticesOf(feature).toLocaleString()} vertices</span></div>`;
+        +`<span class="muted">${outside(id)?'outside the box'
+          :`${verticesOf(feature).toLocaleString()} vertices`}</span></div>`;
     }).join('');
   };
 
@@ -149,6 +186,12 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
     restyle(id);status();
   };
   $('#polygon-review-all').onclick=()=>{hidden.clear();rows();for(const id of layers.keys())restyle(id);status();};
+  $('#polygon-review-clip').onclick=()=>{
+    clipped=!clipped;
+    ($('#polygon-review-clip') as HTMLButtonElement).textContent=clipped
+      ?'Undo the clip':'Clip to the box';
+    recut();redraw();rows();status();
+  };
   $('#polygon-review-keep-only').onclick=()=>act(true);
   $('#polygon-review-discard').onclick=()=>act(false);
   $('#polygon-review-clear').onclick=()=>{
@@ -159,33 +202,27 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
   const close=()=>{dialog.close();};
   $('#polygon-review-close').onclick=close;
   $('#polygon-review-cancel').onclick=close;
-  $('#polygon-review-apply').onclick=()=>{if(onApply([...hidden] as string[])!==false)close();};
+  $('#polygon-review-apply').onclick=()=>{
+    if(onApply([...hidden] as string[],clipped)!==false)close();};
 
-  rows();status();selection();
+  // The clip is only offered where there is a frame to clip to.
+  ($('#polygon-review-clip') as HTMLButtonElement).hidden=!box;
+  ($('#polygon-review-clip') as HTMLButtonElement).textContent=clipped
+    ?'Undo the clip':'Clip to the box';
+  recut();rows();status();selection();
   dialog.showModal();
 
   // AFTER THE DIALOG IS OPEN, because Leaflet measures a container that has no size until then.
   if(!map){
     map=L.map($('#polygon-review-map'),{scrollWheelZoom:false,zoomAnimation:false,
       fadeAnimation:false,markerZoomAnimation:false});
-    const group=L.featureGroup().addTo(map);
+    group=L.featureGroup().addTo(map);
     // ONE RENDERER FOR ALL OF THEM. Each feature used to get its own `L.canvas()`, which is one
     // canvas element each: 279 of them stacked, and only the topmost receives a pointer event. So
     // the map drew correctly and answered no clicks, reported 2026-10-29 -- *"I still cannot
     // select polygons from the map canvas."* A shared renderer hit-tests across every layer on it.
-    const surface=L.canvas();
-    for(const feature of features){
-      const id=String(feature.id);
-      const layer=L.geoJSON(feature.geometry as never,
-        {renderer:surface,style:style(id)} as L.GeoJSONOptions);
-      // A CLICK ON THE MAP CHOOSES, and choosing is what the actions act on. Picking a row still
-      // marks one feature to look at; these are two different questions and two different marks.
-      layer.on('click',()=>{
-        if(selected.has(id))selected.delete(id);else selected.add(id);
-        restyle(id);rows();selection();
-      });
-      layer.addTo(group);layers.set(id,layer);
-    }
+    surface=L.canvas();
+    recut();redraw();
     // THE BOX THE READ WAS SCOPED TO, behind everything and taking no clicks.
     if(box){
       const [west,south,east,north]=box;

@@ -174,3 +174,21 @@ test('the features share one canvas, so the map can be clicked at all',{skip},as
   await expect(page.locator('#polygon-review-map canvas')).toHaveCount(1);
   await expect(page.locator('.polygon-review-row')).toHaveCount(32);
 });
+
+/** CLIP TO THE BOX, SEEN BEFORE IT IS APPLIED.
+ *
+ *  The practitioner, 2026-10-29, looking at a read of the Thames with a hundred islands and docks
+ *  scattered outside the frame: *"can I discard the polygons outside the bounding box, and
+ *  essentially clip those that overlap with the bounding box?"* and *"So that's a realtime button
+ *  clip to bounding box so I can see it."*
+ *
+ *  The preview and the run share one `clipToBox`, so what is on screen before Apply is what the
+ *  layer carries after it. This drives a layer read for a study area, because the frame comes
+ *  from the read and a file layer connected to nothing has none. */
+test('the clip is offered only where there is a frame to clip to',{skip},async({page})=>{
+  await layer(page);
+  await open(page);
+  // A file layer connected to no study area has no box, so there is nothing to cut to and the
+  // button is not offered rather than offered and refusing.
+  await expect(page.locator('#polygon-review-clip')).toBeHidden();
+});

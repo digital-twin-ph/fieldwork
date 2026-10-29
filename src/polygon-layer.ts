@@ -1,3 +1,4 @@
+import * as polygonClipping from 'polyclip-ts';
 import type {Boundary,Scalar} from './types.js';
 import type {Polygons} from './catchments.js';
 
@@ -43,6 +44,35 @@ import type {Polygons} from './catchments.js';
  *  the old comment offered as its evidence -- a vertex figure, for a feature cap, from the
  *  smallest case in the project. */
 export const MAX_LAYER_VERTICES=200_000;
+
+/** CUT EACH FEATURE TO A BOX, keeping only what falls inside it.
+ *
+ *  The practitioner, 2026-10-29, looking at a read of the Thames with a hundred islands and docks
+ *  scattered outside the frame: *"can I discard the polygons outside the bounding box, and
+ *  essentially clip those that overlap with the bounding box?"* And then: *"So that's a realtime
+ *  button clip to bounding box so I can see it."*
+ *
+ *  One function, used by the viewer's preview and by the run, so what you saw before applying and
+ *  what the layer holds afterwards cannot disagree. A feature wholly outside yields nothing and
+ *  is dropped; one that straddles the edge is cut at it.
+ *
+ *  This is NOT `clip_polygons`, and the difference matters. That widget clips to the study AREA --
+ *  the polygon a practitioner drew -- and is a step with a receipt of its own. This clips to the
+ *  rectangle the read was scoped to, which is the frame the viewer draws. Where the study area IS
+ *  a bounding box the two agree; where it is a drawn polygon, clipping to the box is the looser
+ *  cut, and `a-study-area-clips-to-its-polygon` is the open direction about that. */
+export function clipToBox<T extends {geometry:Boundary}>(features:readonly T[],
+  box:readonly [number,number,number,number]):T[]{
+  const [west,south,east,north]=box;
+  const frame=[[[[west,south],[east,south],[east,north],[west,north],[west,south]]]];
+  return features.flatMap(feature=>{
+    const parts=feature.geometry.type==='Polygon'
+      ?[feature.geometry.coordinates]:feature.geometry.coordinates;
+    const cut=polygonClipping.intersection(parts as never,frame as never);
+    return cut.length
+      ?[{...feature,geometry:{type:'MultiPolygon' as const,coordinates:cut}} as T]:[];
+  });
+}
 
 export interface PolygonLayerRequest {
   /** The property each feature is named by. Absent numbers them. */

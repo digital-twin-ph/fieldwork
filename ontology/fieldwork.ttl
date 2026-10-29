@@ -787,6 +787,11 @@ fw:layerFeatureCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
 fw:layerRole a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "What this layer is in the map's reading";
   rdfs:comment "observations, sites, context. A READING and not a property of the data: the same pumps are the subject of a map asking where the pumps are and context in a map asking how deaths fell around one. Recorded because the renderer takes its emphasis from these names -- it draws sites red at radius 3.5 and observations gray at 2.7 -- so a reader can see which way round the map was built.".
+fw:clippedToReadBox a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "Whether the layer was cut to the box it was read for";
+  rdfs:comment "A cut to the rectangle the read was scoped to, which is not the same as clip_polygons: that widget clips to the study AREA, the polygon a practitioner drew, and is a step with a receipt of its own. Where the study area is itself a bounding box the two agree. Recorded because a feature that straddles the frame comes out a different shape than its publisher released, and a reader has to be able to see that it was cut.".
+fw:featuresAfterClip a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "How many features survived the cut".
 fw:featuresRead a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "How many features the read returned".
 fw:featuresSetAside a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;

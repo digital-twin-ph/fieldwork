@@ -109,6 +109,11 @@ test('the worked example is rebuilt from an empty canvas and the published input
   await page.locator('#polygon-name-field').press('Tab');
   await page.locator('#polygon-layer-name').fill('Registration sub-districts');
   await page.locator('#polygon-layer-name').press('Tab');
+  // NOTHING IS READ UNTIL APPLY, which is the point of it: every setting above can be set in any
+  // order first, and changing one afterwards no longer leaves the layer holding what the old
+  // settings matched.
+  await page.locator('#polygon-apply').click();
+  await expect(page.locator('[data-review-polygons]')).toBeVisible();
 
   // 3. THE RIVER, the same way.
   await add(page,'polygon_input');
@@ -119,6 +124,8 @@ test('the worked example is rebuilt from an empty canvas and the published input
   await page.locator('#polygon-name-field').press('Tab');
   await page.locator('#polygon-layer-name').fill('Thames reaches');
   await page.locator('#polygon-layer-name').press('Tab');
+  await page.locator('#polygon-apply').click();
+  await expect(page.locator('[data-review-polygons]')).toBeVisible();
 
   // 4. THE INTAKES. The layer that existed only inside the bundle until 2026-10-29.
   await add(page,'point_input');
@@ -151,12 +158,30 @@ test('the worked example is rebuilt from an empty canvas and the published input
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('34 polygons');
 
+  // THE CONTROL AND THE MAP ARE ONE FACT. The practitioner, 2026-10-29, over a drawn river:
+  // *"look at the Polygon layer checkbox, it's unchecked but the waterway polygon layer is
+  // showing."* Every feature was added to the map individually AND collected into a group, and
+  // the group was what the control listed -- so the box reported the group, never added, while
+  // the features it held were plainly drawn. This workflow is the shape that produced it: two
+  // named polygon layers collected into one port.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator(`.react-flow__node[data-id="${where}"]`).click();
+  await page.locator('#polygon-presentation').selectOption('interactive');
+  await page.locator('[data-view="results"]').click();
+  const boxes=page.locator('.leaflet-control-layers-overlays input[type="checkbox"]');
+  await expect(boxes.first()).toBeVisible({timeout:20000});
+  const listed=await boxes.count();
+  for(let i=0;i<listed;i++)
+    await expect(boxes.nth(i),`overlay ${i} is listed but not on the map`).toBeChecked();
+
   // AND THE LAYERS ARE THE EXAMPLE'S LAYERS: four of them, the collection listed as its parts.
   await page.locator('[data-view="workflow"]').click();
   await page.locator(`.react-flow__node[data-id="${where}"]`).click();
   await page.locator('[data-manage-layers]').click();
   await expect(page.locator('#layer-dialog-rows .layer-row')).toHaveCount(4);
-  const named=await page.locator('[data-layer-label]').evaluateAll(f=>f.map(x=>x.value));
+  // Read as text: a layer's name is shown, not typed. It is inherited from the widget or the
+  // data, and a second place to edit it would be a second name for one thing.
+  const named=await page.locator('[data-layer-label]').evaluateAll(f=>f.map(x=>x.textContent.trim()));
   expect(named).toContain('Registration sub-districts');
   expect(named).toContain('Thames reaches');
 });

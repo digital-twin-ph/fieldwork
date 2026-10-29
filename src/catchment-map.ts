@@ -239,7 +239,12 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const shade=f.value===undefined||!classed?''
       :`<br>${round(f.value)}${at===null?'':` · class ${at+1} of ${classed.classes}`}`;
     layer.bindPopup(`<b>${esc(f.name)}</b>${shade}${f.minutes===undefined?'':`<br>Within ${f.minutes} minutes (cumulative)`}${f.count===undefined?'':`<br>${f.count} locations${p.summary?.valueField?`<br>${esc(p.summary.valueField)}: ${f.total}`:''}`}`);
-    layer.addTo(map);all.addLayer(layer);
+    // NOT ADDED TO THE MAP HERE. A feature that belongs to a group is drawn BY that group, and
+    // adding it individually as well is what made the control lie: the checkbox reflects the
+    // group, which was never on the map, while the features were -- so "Polygon layer" sat
+    // unchecked over a river that was plainly drawn, reported 2026-10-29. Whatever ends up
+    // standing alone is added below.
+    all.addLayer(layer);
     // A CHOROPLETH'S PARTS ARE ONE LAYER, NOT THIRTY-THREE. A catchment or an isochrone band is
     // a distinct thing worth toggling; a sub-district shaded by a rate is one of many parts of a
     // single thematic layer, and listing each gave south London 33 checkboxes that ran off the
@@ -266,11 +271,25 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       if(!group){group=L.featureGroup();members.set(name,group);}
       group.addLayer(layer);
     }
-    else{const label=esc(f.name);overlays[Object.hasOwn(overlays,label)?`${label} (${esc(f.id)})`:label]=layer;}
+    else{
+      // A distinct thing worth toggling, on its own. It IS the layer the control lists, so it is
+      // the thing added to the map.
+      const label=esc(f.name);
+      if(!hiddenPort('polygons'))layer.addTo(map);
+      overlays[Object.hasOwn(overlays,label)?`${label} (${esc(f.id)})`:label]=layer;
+    }
   }
-  for(const [name,group] of members)place(`polygons/${name}`,esc(name),group);
-  if(classed&&themed.getLayers().length)
+  // EACH GROUP IS DRAWN BY BEING ADDED, so the box the control draws and the shapes on the map
+  // are the same fact rather than two.
+  for(const [name,group] of members){
+    const id=`polygons/${name}`;
+    if(!hiddenPort(id))group.addTo(map);
+    place(id,esc(name),group);
+  }
+  if(classed&&themed.getLayers().length){
+    if(!hiddenPort('polygons'))themed.addTo(map);
     place('polygons',esc(p.layerName||'Shaded by value'),themed);
+  }
   // The streets, as ONE multi-polyline on a canvas renderer rather than a layer per segment.
   // A town-sized graph is tens of thousands of segments -- Bunia is an estimated 94,000 directed
   // ones -- and a Leaflet layer each would not draw. Each undirected segment arrives twice, once

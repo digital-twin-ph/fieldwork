@@ -137,3 +137,29 @@ test('sized study boundaries and independent buffer preserve reporting geometry'
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="study"]').click();await page.locator('#edit-study-area').click();await page.locator('#area-sized-box summary').click();await page.locator('#area-box-shape').selectOption('rectangle');await page.locator('#area-box-width').fill('2000');await page.locator('#area-box-height').fill('1000');await page.locator('#area-box-create').click();await page.locator('#area-apply').click();w=await saved(page);const ring=w.nodes.find(n=>n.id==='study').params.geometry.coordinates[0];assert.ok(ring[1][0]-ring[0][0]>original.coordinates[0][1][0]-original.coordinates[0][0][0]);
 });
+
+/** THE CONTROL AND THE MAP ARE ONE FACT, NOT TWO.
+ *
+ *  The practitioner, 2026-10-29, over a drawn river: *"look at the Polygon layer checkbox, it's
+ *  unchecked but the waterway polygon layer is showing."*
+ *
+ *  It was. Every feature was added to the map individually AND collected into a group, and the
+ *  group was what the control listed. Leaflet draws a checkbox from whether the listed layer is
+ *  on the map, so the box reported the group -- never added -- while the features it contained
+ *  were plainly drawn. A group is now drawn BY being added, so the box and the shapes are the
+ *  same fact.
+ *
+ *  Asserted on every overlay rather than on one, because the defect was structural: anything
+ *  registered in the control and drawn by another route reads as off while showing. */
+test('every layer the control lists is one the map actually holds',async({page})=>{
+  await page.goto('/?example=snow-isochrone');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
+  // The interactive presentation is the one with a layer control; this example ships both.
+  await page.locator('#result-tab-interactive').click();
+  const boxes=page.locator('.leaflet-control-layers-overlays input[type="checkbox"]');
+  await expect(boxes.first()).toBeVisible({timeout:20000});
+  const count=await boxes.count();
+  for(let i=0;i<count;i++)
+    await expect(boxes.nth(i),`overlay ${i} is listed but not on the map`).toBeChecked();
+});

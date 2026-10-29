@@ -257,6 +257,52 @@ free-text field. A report that assembles itself from typed notes and live output
 regenerated after a rerun and will either still be true or visibly fail; one that is written once
 is a document that can quietly contradict its own analysis.
 
+## Amendment, 2026-10-29 — the narrative, and why verification earns it
+
+The practitioner, on keeping `verification` in the reconciled vocabulary:
+
+> we can put a spin to the narrative. Because we used some novel methods for the workflows, we can
+> treat the exercise as the past meeting the future. Where we stand on the shoulders of a giant in
+> epidemiology (John Snow, the father of epidemiology) and reconcile his methods with modern ones,
+> especially GIS.
+
+**The framing holds, and the evidence makes it sharper than reverence.** The obvious version of
+"the past meeting the future" is that modern tools check an old master and find him wanting. That
+is not what this example found, and writing it that way would be false.
+
+What re-transcription actually found, already in the example's README:
+
+- Snow's deaths column sums to **1,514**, exactly the printed total, and **all six** of Table
+  XII's group totals come out exactly. The arithmetic of 1855 is correct.
+- The populations sum 36 short of the printed total — and *"three independent sources settle it,
+  and none of them blames Snow"*. One digitisation reads 26,748 where the same e-text's Table VII
+  and Coleman's transcription from the archive.org scan both read 26,784. **The error entered in
+  the copying, not in the original.**
+- One figure is still not reproduced under either rounding rule: Rest of London, printed 59 where
+  the quotient is 55.46. That one is unexplained and is left so.
+
+So the honest narrative is not that the modern tools corrected the giant. It is that **they
+checked him, found him right, and located the error in the century and a half of copying in
+between** — with one residue nobody can yet account for.
+
+**That is what makes `verification` load-bearing rather than decorative.** Standing on a
+predecessor's shoulders is a claim you are only entitled to make about work you have checked, and
+`verification` is the function that records the checking. A vocabulary with `source` and
+`limitation` and no `verification` can say where a number came from and what it cannot show, and
+cannot say *we re-did this and here is what we found* — which, on this example, is the only reason
+the rest of the write-up is trustworthy.
+
+**Where the GIS half lands.** Snow's method was the natural experiment and the comparison; the
+map was his illustration of it. What is modern here is not the idea but the apparatus: boundaries
+digitised and georeferenced, a join whose unmatched rows are reported rather than dropped, a rate
+with its denominator declared, an interval around the rate ratio, and a receipt for each. Those
+belong to `method` notes in the Methods section, and the comparison between his apparatus and
+ours belongs in Discussion.
+
+**What this does not settle:** whether the example should *say* any of this. The notes that would
+carry it are not written, and writing them is a different act from designing where they go. The
+two verification sections above exist as README prose and are not yet notes at all.
+
 ## Carried over from the three superseded records
 
 ### The spine, and what travels along it (from 133)

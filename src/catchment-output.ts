@@ -91,7 +91,11 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   // drawn in two steps of it assert a sequence the categories do not have.
   const banded=p.features.some(f=>f.minutes!==undefined);
   // Null past the palette's length: more regions than hues is a neutral wash, not a repeat.
-  const categorical=classed||banded?null:categoricalSteps(p.features.length);
+  // A HUE PER FEATURE ONLY WHERE THE FEATURES ARE NAMED THINGS, for the reason `categoricalKey`
+  // gives: numbered parts of one layer are not categories, and colouring them as though they
+  // were asserts a grouping nobody made.
+  const categorical=classed||banded||p.featuresNamed===false?null
+    :categoricalSteps(p.features.length);
   // THE WASH THE PALETTE PROMISES. `categoricalSteps` returns null past its length and says in
   // its own comment that "the caller keeps its neutral fill"; this caller fell through to
   // `orderedSteps`, which is YlGnBu -- a SEQUENTIAL ramp. So 34 named regions with no value and

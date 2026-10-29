@@ -232,6 +232,16 @@ export function polygonLayer(features:ParsedFeature[],request:PolygonLayerReques
   const named=request.nameField?.trim();
   return {
     ...(request.layerName?.trim()?{layerName:request.layerName.trim()}:{}),
+    // WHETHER THESE FEATURES ARE NAMED THINGS OR NUMBERED PARTS, carried on the value because a
+    // renderer cannot tell by looking: a read numbers what it could not name, so every feature
+    // arrives with a name either way.
+    //
+    // It decides whether a hue per feature means anything. Five water polygons read with no
+    // naming property were drawn in five colours and keyed as "Feature 2, Feature 5, Feature 33"
+    // on 2026-10-29 -- five categories asserted over one layer of five parts, which is the error
+    // the glossary already names for the value-classed case: 33 sub-districts shaded by a rate
+    // are not 33 things.
+    featuresNamed:!!named&&features.some(f=>f.properties&&namedByFile(f,named)),
     features:features.map(feature=>({id:feature.id,name:feature.name,geometry:feature.geometry,
       properties:feature.properties})),
     sites:[],

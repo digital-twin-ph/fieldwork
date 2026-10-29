@@ -4299,8 +4299,18 @@ function renderMap(){
       // practitioner had chosen in order to judge the change they were making.
       mapNode?.id);
     if(result.polygons){
-      const method=document.createElement('p');method.className='muted';
-      method.textContent=result.polygons.method+' / '+result.polygons.notes.join(' ');
+      // ONE OF THESE, NOT ONE PER RENDER. This was inserted into the panel on every render and
+      // nothing removed the last, so a map rendered three times carried the same paragraph three
+      // times, reported 2026-10-29.
+      //
+      // And the method sentence is not repeated here: the Sources line above the figure already
+      // carries it, which is where a reader of a published figure looks. What is left is what
+      // the notes add -- how many features, how they were named, and that clipping is a separate
+      // step. The full method and its provenance are in the receipt, which is the record.
+      document.querySelector('#polygon-method')?.remove();
+      const method=document.createElement('p');
+      method.id='polygon-method';method.className='muted';
+      method.textContent=result.polygons.notes.join(' ');
       $('#map-panel').insertBefore(method,$('#map-communication-key'));
     }
     return;
@@ -4326,7 +4336,9 @@ function renderMap(){
     const polygonGround=banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons);
     if(polygonGround)void drawStaticBasemap(result,svg,
       {bounds:polygonGround.bounds,project:c=>polygonGround.project(c) as [number,number]});
-    const method=document.createElement('p');method.className='muted';method.textContent=result.polygons.method+' / '+result.polygons.notes.join(' ');note.append(method);return;
+    const method=document.createElement('p');method.className='muted';
+    method.id='polygon-method';method.textContent=result.polygons.notes.join(' ');
+    note.append(method);return;
   }
   // THE RASTER IS GROUND, NOT A MODE. Fourth instance of one defect, and the comments in
   // core.ts name the first three: the study area was dropped on 2026-10-20, the facilities on

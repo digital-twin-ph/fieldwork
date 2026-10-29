@@ -40,9 +40,16 @@ function classedItems(polygons:{features:{value?:number}[]}):{label:string;color
  *  the layer control already gives.
  *
  *  Every region is still drawn either way: what changes is whether hue carries the naming. */
-function categoricalKey(polygons:{layerName?:string;features:{id:string;name:string;value?:number;minutes?:number}[]}):
+function categoricalKey(polygons:{layerName?:string;featuresNamed?:boolean;features:{id:string;name:string;value?:number;minutes?:number}[]}):
   {label:string;color:string}[]|null{
   const name=polygons.layerName?.trim();
+  // A HUE PER FEATURE ONLY WHERE THE FEATURES ARE NAMED THINGS. Five water polygons read with no
+  // naming property were drawn in five colours and keyed "Feature 2, Feature 5, Feature 33" on
+  // 2026-10-29: five categories asserted over one layer of five parts. A read numbers what it
+  // could not name, so the name alone cannot tell them apart -- the layer says which it is.
+  if(polygons.featuresNamed===false)
+    return [{label:`${name||'Polygons'} \u00b7 ${polygons.features.length.toLocaleString()} features`,
+      color:FIGURE_ROLE.primary}];
   const features=polygons.features;
   if(!features.length||features.some(f=>f.minutes!==undefined))return null;
   if(features.some(f=>typeof f.value==='number'))return null;

@@ -283,6 +283,10 @@ export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;
    *  ONE layer -- 33 sub-districts shaded by a rate are not 33 things to switch on and off
    *  -- so the control needs a name for the whole rather than one per part. */
   layerName?:string;
+  /** Whether the features are NAMED THINGS or numbered parts of one layer. A read numbers what
+   *  it could not name, so a renderer cannot tell by looking, and the difference decides whether
+   *  a hue per feature says anything at all. */
+  featuresNamed?:boolean;
   features:Catchment[];sites:PointFeature[];method:string;crs:string;boundary?:Boundary;notes:string[];observations?:PointCollection;summary?:{records:number;matched:number;unmatched:number;missingLocation:number;multiple:number;valueField:string};snaps?:{siteId:string;nodeId:string;distanceM:number}[];unconnected?:UnconnectedSite[];offNetwork?:OffNetworkSite[]}
 export const CATCHMENT_TYPES:Record<'voronoi'|'network_input'|'isochrone'|'clip_polygons'|'summarize_points_to_polygon',NodeDefinition>={
   voronoi:{title:'Voronoi catchments',group:'Spatial operations',icon:'◇',color:'teal',description:'Allocate an extent to the nearest site in a metric CRS',inputs:[['area','area'],['sites','points']],output:'polygons'},

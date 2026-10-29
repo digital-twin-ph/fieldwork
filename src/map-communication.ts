@@ -112,9 +112,21 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
     // one overlay per source arrived, and this list went on naming three relations in three hues
     // -- a legend for an encoding the renderer no longer used. One entry per LAYER in that layer's
     // hue and mark, then the relations in the fill channel, where they live.
-    items=(output.pointLayers||[]).map((layer,index)=>{
+    // A CLASSED LAYER IS KEYED BY ITS CLASSES, not by itself. A layer drawn in two hues and keyed
+    // in one is a legend that disagrees with its plot, which is worse than no legend because the
+    // reader trusts it. Where a layer has no classes it keeps its single entry.
+    const pinClasses=(output as {pinClasses?:Record<string,{value:string;colour:string;shape?:LayerShape}[]>}).pinClasses;
+    items=(output.pointLayers||[]).flatMap((layer,index)=>{
       const symbol=resolveLayerSymbol(index,node.params.layerSymbols?.[layer.sourceNodeId]);
-      return {label:`${layer.label} (${layer.count})`,color:symbol.colour,shape:symbol.shape};
+      const classes=pinClasses?.[layer.sourceNodeId];
+      if(classes?.length){
+        const counted=(value:string)=>(output.rows||[])
+          .filter(row=>(row as {sourceNodeId?:string}).sourceNodeId===layer.sourceNodeId
+            &&(row as {pinClass?:string}).pinClass===value).length;
+        return classes.map(entry=>({label:`${entry.value} (${counted(entry.value)})`,
+          color:entry.colour,shape:entry.shape||symbol.shape}));
+      }
+      return [{label:`${layer.label} (${layer.count})`,color:symbol.colour,shape:symbol.shape}];
     });
     // The fill entries are the map's own encoding, printed. They used to be three literals here
     // and three more decisions in the renderer, which is two places to change a meaning and one

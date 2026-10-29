@@ -85,6 +85,13 @@ export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Es
   // Where no symbols are declared the status colours stand, so every example that predates layer
   // symbols looks exactly as it did.
   const symbols=(output as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0];size?:number}>}).layerSymbols;
+  // AND THE PIN CLASS, WHERE THE LAYER HAS ONE. The interactive map drew "water intake" and
+  // "tidal limit" in two hues while this one drew both in the layer's single colour -- the same
+  // disagreement between a figure and its key that this comment block records for the pumps, one
+  // encoding further on. A class is what a record IS; the layer is where it came from.
+  const classes=(output as {pinClasses?:Record<string,{value:string;colour:string}[]>}).pinClasses;
+  const classColour=(source?:string,pinClass?:string):string|undefined=>
+    pinClass?classes?.[source||'']?.find(entry=>entry.value===pinClass)?.colour:undefined;
   for(const r of output.rows){if(!r.coordinates!)continue;const [x,y]=project(r.coordinates!),label=['spatial-coverage','spatial-map'].includes(output.kind||'')?(r.excluded?'Excluded':r.relation):output.kind==='facility-evidence'?tierLabel(r.tier||'Unknown'):statusLabel(r.status);
     const symbol=symbols?.[r.sourceNodeId||''];
     // The layer's own radius, or the default where none was chosen. A focused mark is drawn
@@ -96,8 +103,9 @@ export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Es
     // `hollow` is the declared fill for a point outside the area, and `absent` for one a clip set
     // aside: drawn as an outline and as a neutral, never as a second hue competing with a layer.
     const hollow=r.relation==='Outside',aside=r.excluded||r.relation==='MissingLocation';
+    const ink=classColour(r.sourceNodeId,(r as {pinClass?:string}).pinClass)||symbol?.colour;
     const mark=symbol
-      ?`<path d="${markPath(symbol.shape,x,y,radius)}" fill="${hollow?'none':aside?'#a89b87':symbol.colour}" stroke="${aside?'#a89b87':symbol.colour}" stroke-width="1.6"/>`
+      ?`<path d="${markPath(symbol.shape,x,y,radius)}" fill="${hollow?'none':aside?'#a89b87':ink}" stroke="${aside?'#a89b87':ink}" stroke-width="1.6"/>`
       :`<circle cx="${x}" cy="${y}" r="${radius}" fill="${statusFill}" stroke="white" stroke-width="1.2"/>`;
     svg+=`<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}" data-layer="${esc(r.sourceNodeId||'')}" aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}"><title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title>${mark}</g>`;}
   return svg+`<text x="18" y="281" style="font-size:10px">${['spatial-coverage','spatial-map'].includes(output.kind||'')?'Select a point to review its relation to the study boundary':output.kind==='access'?'Grid samples · straight-line proxy · select a point for evidence':'Historical facility registry · source evidence assignments'}</text><text x="826" y="25" text-anchor="middle">N ↑</text>`;

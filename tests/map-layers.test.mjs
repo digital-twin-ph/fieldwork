@@ -174,3 +174,50 @@ test('the receipt states the layers the renderer read, queryable by name, order 
   assert.match(n3,/fw:layerGroup </);
   assert.match(n3,/fw:layerKind <urn:fieldwork:AreaLayer>/);
 });
+
+/** PIN CLASS: what a record IS, as against which layer it came from.
+ *
+ *  The practitioner, 2026-10-29: *"I should be able to name pins to classes ... So the pins get
+ *  classified when they get onto the map."* The data side already existed -- the pin editor's
+ *  form builder defines the field -- and nothing used it: every pin in a layer drew identically
+ *  and the class reached a reader only by clicking a popup. */
+import {mapOutput} from '../build/map-output.js';
+
+const placed=(properties)=>({type:'Feature',id:`p${properties.name}`,properties,
+  geometry:{type:'Point',coordinates:[-0.14,51.46]}});
+const intakes={sourceNodeId:'intakes',label:'Intakes',features:[
+  placed({name:'Battersea',kind:'water intake'}),
+  placed({name:'Hungerford',kind:'water intake'}),
+  placed({name:'Teddington',kind:'tidal limit'})]};
+const extent={kind:'study-area',areaId:'urn:fieldwork:area:extent',geometryId:'urn:g',
+  boundary:bboxPolygon(-0.26,51.41,-0.03,51.51),rows:[],centers:[]};
+const mapNode=(params={})=>({id:'where',type:'map_output',x:400,y:100,
+  params:{label:'Where',...params}});
+
+test('a record carries the pin class its layer nominates', () => {
+  const {value}=mapOutput(mapNode({pinClassField:{intakes:'kind'}}),
+    {area:extent,points:intakes},'r1');
+  assert.deepEqual(value.rows.map(r=>r.pinClass),['water intake','water intake','tidal limit']);
+});
+
+test('each class gets a symbol of its own, in the order it was first seen', () => {
+  const {value}=mapOutput(mapNode({pinClassField:{intakes:'kind'}}),
+    {area:extent,points:intakes},'r1');
+  const classes=value.pinClasses.intakes;
+  assert.deepEqual(classes.map(c=>c.value),['water intake','tidal limit']);
+  assert.notEqual(classes[0].colour,classes[1].colour,'two kinds, two hues');
+});
+
+test('a layer with no class field is not classed, and carries no classes', () => {
+  const {value}=mapOutput(mapNode(),{area:extent,points:intakes},'r1');
+  assert.equal(value.rows.every(r=>r.pinClass===undefined),true);
+  assert.equal(value.pinClasses,undefined);
+});
+
+test('a blank or missing class value is no class, not a class called empty', () => {
+  const mixed={...intakes,features:[...intakes.features,placed({name:'Unknown',kind:'  '})]};
+  const {value}=mapOutput(mapNode({pinClassField:{intakes:'kind'}}),
+    {area:extent,points:mixed},'r1');
+  assert.equal(value.rows[3].pinClass,undefined);
+  assert.deepEqual(value.pinClasses.intakes.map(c=>c.value),['water intake','tidal limit']);
+});

@@ -232,6 +232,118 @@ repository question itself rather than a step before it.
 one name in it. A conflict, a stale `sha`, an unfamiliar login in a receipt — none of those can be
 observed with one person at one keyboard.
 
+### Step 0 — the repository, the token, and where the token is kept
+
+The practitioner, 2026-10-29: *"Steps begin with creating the repo, obtaining API token including
+what permissions to give to the token, (this becomes a spec) and recording them in credentials
+manager."* So the three things below come before everything that follows, and the middle one is
+written as a specification because a token granted too widely is the kind of mistake that is
+discovered later and cannot be undone by apologising.
+
+**0a. Create the repository — from a template.** The practitioner, 2026-10-29: *"What we should
+have is a template repo to clone."* GitHub has this natively: a repository with `is_template` set,
+instantiated by *Use this template* or by `POST /repos/{template_owner}/{template_repo}/generate`.
+Owned by the account or organisation that will hold the project, with the colleague added as a
+collaborator with write access. Co-ownership is GitHub's model and the permission layer is GitHub's;
+nothing in this application decides who may write.
+
+**Two things follow from the template, and the first protects the token spec below.**
+
+**Creating the repository stays a human action in the browser.** The generate endpoint's own
+documentation says *"OAuth app tokens and personal access tokens (classic) need the `public_repo`
+or `repo` scope to create a public repository, and `repo` scope to create a private repository"* —
+repository *creation* is an account-level power, not a per-repository permission, so a token that
+could do it would be far broader than the one 0b specifies. There is no reason for this application
+to hold that power: a practitioner clicking *Use this template* once per project costs nothing, and
+the token stays confined to the contents of one repository. **The template makes repository creation
+cheaper without making the token stronger**, which is the best possible outcome for this step.
+
+**And making the template IS deciding competency question 1.** A template is a directory layout, and
+the layout is the format — so whatever the template ships with becomes the project format by
+default, for every project anyone starts from it. A template built today around a single
+`fieldwork-project.json.gz` would entrench the one thing the measurement above rules out, and it
+would do it quietly, in every repository created afterwards. So the template is not a step before
+the granularity decision; it is that decision, written down where it will be copied. **Step 5 moves
+here, or the template waits for step 5.**
+
+Worth checking when the template is made, because the documentation does not say: what is actually
+copied. The page documents `include_all_branches` — *"Set to true to include the directory structure
+and files from all branches in the template repository, and not just the default branch"* — and says
+nothing about whether git history comes across. A project repository whose history begins at the
+template's first commit is the expected behaviour and the one the contributions statement would want;
+it should be confirmed rather than assumed.
+
+**0b. The token specification.** Checked against GitHub's own permissions reference on 2026-10-29
+rather than written from memory.
+
+| | |
+| --- | --- |
+| **Kind** | **Fine-grained** personal access token. **Not** a token (classic) |
+| **Resource owner** | the account or organisation that owns the project repository |
+| **Repository access** | *Only select repositories* → the one project repository |
+| **Repository permissions** | **Contents: Read and write** — and nothing else |
+| **Expiration** | short, and reissued rather than extended |
+
+Why each line is there:
+
+- **Not classic.** A classic token's `repo` scope reaches *every* repository the account can see, and
+  the endpoint docs say so plainly: *"OAuth app tokens and personal access tokens (classic) need the
+  repo scope to use this endpoint."* A fine-grained token can be confined to one repository, and
+  this one should be.
+- **Contents: Read and write** is the exact permission. `PUT /repos/{owner}/{repo}/contents/{path}`
+  is listed under **Contents** with **write** access.
+- **Do not grant Workflows.** The same endpoint also appears under **Workflows (write)**, which is
+  needed *only* to write files under `.github/workflows`. A project repository may well carry a
+  Pages workflow, and the token that saves a practitioner's notes has no business being able to
+  rewrite CI. If a workflow file ever needs changing, that is a separate token and a separate
+  decision.
+- **No user permission is needed for attestation**, which is the useful finding. `GET /user` does
+  not appear in the permission tables at all, and the users documentation says tokens without
+  `read:user` *"receive the public user response"* — which still carries `login`. Attestation needs
+  the login and nothing else, so turning a `declared` identity into an `attested` one costs no
+  additional grant.
+- **Reads need no token.** `raw.githubusercontent.com` serves a public repository unauthenticated,
+  which is how the example catalogue already works. The cost is the rate limit measured above:
+  `x-ratelimit-limit: 60` per hour unauthenticated, which a fetch-heavy session could reach.
+
+**0c. Record it in the credentials manager.** The store exists, encrypts at rest and locks after
+fifteen idle minutes. The fields it validates map onto this without being bent:
+
+| field | value |
+| --- | --- |
+| `provider` | `github` |
+| `origin` | `https://api.github.com` — exactly, no path; the validator refuses anything else |
+| `ref` | a name of the practitioner's choosing, letter-initial |
+| `secret` | the token |
+
+Two honest notes on this step. **The credential store has never made an authenticated request** —
+`credentials-ui.ts` says so in its own copy, *"Existing input nodes do not yet make authenticated
+requests"* — so the pilot is its first consumer and the plumbing from a stored credential to a
+`fetch` is unbuilt. And **a credential carries one origin**, so an authenticated *read* of
+`raw.githubusercontent.com` would need a second entry. Today it needs none, because reads are
+public.
+
+### The authorship default: the repo owner is the first author
+
+The practitioner, 2026-10-29: *"But a project starts from scratch so the owner of the repo is first
+author by default."*
+
+This completes a rule whose other half shipped the same day, and the two are consistent because
+**authorship follows creating, not opening**:
+
+- **Creating** a project makes you its author, and its first — which is the byline position, and
+  `contributions()` already preserves the author order it is given rather than re-sorting by volume.
+- **Importing** somebody's project does not. `importProjectDocument` deliberately does not add the
+  person importing, because an application that quietly appended the importer would manufacture
+  authorship on a publication.
+
+**What this depends on, and it is not yet built.** `newProject(name, subject, all)` takes no
+identity, because the application has no notion of who is using it: there is no current identity
+anywhere in `src/`. The default cannot be applied until there is somewhere for *my own* login to
+live — which is also what step 3 below needs in order to add a colleague. So the sequence is:
+a current identity first, then this default, then step 3.
+
+
 ### Step 1 — identity in a downloaded project. **Done 2026-10-29, and it found a defect.**
 
 The practitioner put this first, and it was the right place to start because the answer was no.
@@ -267,8 +379,9 @@ author survives the round trip, which is step 2's first task.
 4. **Make sea level rise a sibling repository**, pinned like South London — commit, `sha256` and
    `bytes` per file, `validate:examples` refusing on drift. This is the clone-by-manifest path that
    already works, so it should be unremarkable; if it is not, the format is why.
-5. **Decide granularity before writing anything back — competency question 1.** The pilot is the
-   forcing function. South London's bundle is one gzipped file and its notes are stored *twice*, and
+5. **Decide granularity before writing anything back — competency question 1.** Which is also what
+   step 0a's template settles, since a template's layout *is* the format; whichever happens first
+   decides for the other. The pilot is the forcing function. South London's bundle is one gzipped file and its notes are stored *twice*, and
    on 2026-10-29 the two copies diverged within hours: nine edges written to the plain file reached
    the bundle only when they were synced by hand. Two authors will reproduce that divergence
    continuously rather than once.

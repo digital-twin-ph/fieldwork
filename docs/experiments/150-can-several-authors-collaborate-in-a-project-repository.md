@@ -2,7 +2,7 @@
 
 _Created 2026-10-29 · Updated 2026-10-29_
 
-**Status:** asked — the question is posed and nothing is built. What exists was measured, and the
+**Status:** asked — the question is posed and the architecture is unbuilt. Step 1 of the pilot below is done, and what exists was measured; those measurements already rule one option out. What exists was measured, and the
 measurement already rules one option out. What would answer the rest is named at the end.
 
 The practitioner, 2026-10-29, after [149](149-the-notes-spike.md) showed that notes carry their own
@@ -212,6 +212,89 @@ have to separate."*
 The boundary, so it stays put: **this document is about the repository** — its format, its
 granularity, its assets, its write path, and who is entitled to change it. Anything about what the
 write-up itself says belongs with the notes.
+
+## The pilot: sea level rise, with a second author
+
+The practitioner, 2026-10-29: *"We can prototype the collaborative project with sea level rise. I
+have a colleague working with me on this project and we can develop the workflows together and test
+the collaboration aspect on GitHub, beginning with tracking identity in downloaded projects."*
+
+**Why this is the right example to pilot on, and it is not convenience.** Sea level rise is one the
+practitioner already named as unfinished — *"Old Naledi, sea level rise (incomplete), heat,
+raster"* — and the worked-example audit measures the gap: two of its nodes carry data and declare no
+source, `facilities` from `find_health_facilities` and `projections` from `table_input`. So the
+workflows have to be **developed**, not demonstrated, and a collaboration test over work that is
+already finished would test nothing. It is also **not** a sibling repository yet: unlike South
+London it ships bundled in the application, so the pilot includes making it one, which is the
+repository question itself rather than a step before it.
+
+**And there is a second author who is a real person.** Every measurement in this document so far has
+one name in it. A conflict, a stale `sha`, an unfamiliar login in a receipt — none of those can be
+observed with one person at one keyboard.
+
+### Step 1 — identity in a downloaded project. **Done 2026-10-29, and it found a defect.**
+
+The practitioner put this first, and it was the right place to start because the answer was no.
+`importProjectDocument` mints a project from the name and the subject:
+
+```
+const project=newProject(document.project.name,document.project.subject,allProjects());
+```
+
+So a downloaded investigation arrived **crediting nobody** — and a project whose notes name an
+author it does not list is a publication with an unlisted author. This is the same omission, in the
+same function, that [149](149-the-notes-spike.md) found for the notes nine hours earlier, and the
+notes fix sitting two lines above it did not generalise on its own.
+
+Fixed: `project.authors` is carried, read tolerantly, an unreadable identity dropped. **What is
+deliberately not done: the importer is not added as an author.** Opening somebody's project does not
+make you an author of it, and an application that quietly appended the importer would manufacture
+authorship on a publication.
+
+Proven at unit level (`readAuthors`, and the `AuthoredNote.author` reader fixed the same day). **Not
+yet proven in the browser** — the import path has browser tests and none of them yet asserts an
+author survives the round trip, which is step 2's first task.
+
+### The remaining steps, in order, with what each one answers
+
+2. **Round-trip one author through export and import, in a browser test.** Cheapest possible check
+   that identity survives the only path a colleague will use. Answers nothing architectural; it
+   stops step 1 from being a claim.
+3. **Give the colleague a login, in the application, and both authors to the project.** The first
+   time `Project.authors` holds two names. Watch the author contributions statement, which is now
+   assembled from the record ([141](141-organising-snows-notes.md)) and which has only ever been
+   rendered for one person.
+4. **Make sea level rise a sibling repository**, pinned like South London — commit, `sha256` and
+   `bytes` per file, `validate:examples` refusing on drift. This is the clone-by-manifest path that
+   already works, so it should be unremarkable; if it is not, the format is why.
+5. **Decide granularity before writing anything back — competency question 1.** The pilot is the
+   forcing function. South London's bundle is one gzipped file and its notes are stored *twice*, and
+   on 2026-10-29 the two copies diverged within hours: nine edges written to the plain file reached
+   the bundle only when they were synced by hand. Two authors will reproduce that divergence
+   continuously rather than once.
+6. **Attest one identity.** `GET /user` with a fine-grained token, turning a `declared` login into
+   an `attested` one. The preflight is measured and the token also writes, so this is the same
+   credential as step 7.
+7. **Write one file back through the Contents API**, with the blob `sha` as the precondition. One
+   author, one file, no conflict: establishes the path works from the browser.
+8. **Then collide on purpose.** Both authors change the same note from stale state. Does GitHub
+   refuse the second write, and does the application say something a person can act on? This is
+   the question the whole document exists for, and it cannot be answered alone.
+9. **Then collide on different files.** Both authors change different workflows of the same project.
+   This must *not* conflict. If it does, step 5 was decided wrongly, and that is the finding.
+
+### What the pilot cannot settle
+
+- **Two authors is not a team.** Ordering, review, and who arbitrates a conflict are social
+  questions that two cooperating people will not surface.
+- **A colleague who is also a co-owner tests no permission model.** Everything here runs with write
+  access on both sides. A reviewer, a reader, and someone whose access was removed are untested, and
+  authorization is GitHub's rather than ours precisely so that it need not be built — but that is an
+  argument, not a measurement.
+- **Nothing about the epidemiology.** Whether the sea level rise workflows are any good is
+  [147](147-table-shells-begin-with-the-end-in-mind.md)'s question and the study-design audit's, not
+  this document's.
+
 
 ## What would answer it
 

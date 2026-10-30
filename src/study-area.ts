@@ -1,6 +1,7 @@
 import type {AreaParams,Boundary,Bounds,Escape,NodeSpec,Polygon,Position,Workflow,WorkflowNode} from './types.js';
 import type {ReasonerQuad} from './worker-types.js';
 import {isRecord} from './guards.js';
+import {validLogin} from './identity.js';
 export const CRS84='http://www.opengis.net/def/crs/OGC/1.3/CRS84';
 export const blankWorkflow=():Workflow=>({schema:'fieldwork/workflow/1',exampleId:'blank',name:'Study area experiment',nodes:[],edges:[]});
 export const newStudyArea=():NodeSpec<'study_area'>=>({type:'study_area',params:{source:'drawn',label:'My study area',selectionMode:'polygon',geometry:null}});
@@ -323,9 +324,13 @@ export function studyAreaN3(node:Pick<WorkflowNode<'study_area'>,'id'|'params'>)
   // dcterms and prov already say all of this. No new vocabulary is coined for it.
   const acquired=p.boundary;
   let provenance='';
+  // Whether the published shape still is the published shape. Lifted out of the block below
+  // because the human attribution turns on it: an unaltered boundary is the source's work and
+  // naming a person beside it would credit them with somebody else's line.
+  let unchanged=false;
   if(acquired&&p.geometry){
     const now=boundaryFingerprint(p.geometry);
-    const unchanged=now===acquired.publishedHash;
+    unchanged=now===acquired.publishedHash;
     const vertices=p.geometry.coordinates.reduce((n,r)=>n+r.length-1,0);
     const state=unchanged
       ?`Admitted as published from ${acquired.source}; the geometry was not simplified, generalised or edited.`
@@ -347,7 +352,30 @@ export function studyAreaN3(node:Pick<WorkflowNode<'study_area'>,'id'|'params'>)
       +(acquired.retrievedFrom?`  prov:wasDerivedFrom <${acquired.retrievedFrom}>;\n`:'')
       +(acquired.retrievedAt?`  prov:generatedAtTime ${JSON.stringify(acquired.retrievedAt)}^^xsd:dateTime;\n`:'');
   }
-  const facts=`${prefix}\n${subject} a geo:Feature, fw:StudyArea;\n  rdfs:label ${JSON.stringify(p.label)};\n  fw:selectionMode fw:${p.selectionMode==='bbox'?'BoundingBox':p.selectionMode==='circle'?'Circle':'Polygon'};\n  geo:hasGeometry ${geometry}.\n\n${geometry} a geo:Geometry;\n${provenance}${history}  geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(p.geometry))}^^geo:wktLiteral;\n  fw:geometryValidated true;\n  fw:west ${west.toFixed(9)}; fw:south ${south.toFixed(9)};\n  fw:east ${east.toFixed(9)}; fw:north ${north.toFixed(9)}.\n`;
+  // WHO DREW IT, for the shape no source can be cited for.
+  //
+  // The practitioner, 2026-10-29: *"any study area sourced from geoboundaries gets that
+  // provenance. Anything else will either be the user or someone else, depends on who created the
+  // study area if collaborative project."*
+  //
+  // Emitted for a DRAWN area, and for an acquired one that was then altered -- which is the author
+  // the sentence above leaves unnamed when it says the source "is cited for what this was derived
+  // from, not as the author of this shape". NOT emitted for an unaltered published boundary: that
+  // line is geoBoundaries', and attributing it to whoever selected it would be the receipt
+  // crediting a person with somebody else's work.
+  //
+  // The agent IRI is the account's GitHub page, which dereferences, and the basis travels with it
+  // so a reader can tell a name that was typed from one GitHub returned. prov:wasAttributedTo is
+  // PROV's own term; no vocabulary is coined for this.
+  const drew=p.drawnBy&&validLogin(p.drawnBy.login)&&!(acquired&&unchanged)?p.drawnBy:null;
+  const agentIri=drew?`<https://github.com/${drew.login}>`:'';
+  const attribution=drew?`  prov:wasAttributedTo ${agentIri};\n`:'';
+  const agent=drew
+    ?`\n${agentIri} a prov:Agent, fw:Author;\n  fw:githubLogin ${JSON.stringify(drew.login)};\n`
+      +`  fw:identityBasis ${JSON.stringify(drew.basis)}`
+      +(drew.at?`;\n  prov:generatedAtTime ${JSON.stringify(drew.at)}^^xsd:dateTime`:'')+'.\n'
+    :'';
+  const facts=`${prefix}\n${subject} a geo:Feature, fw:StudyArea;\n  rdfs:label ${JSON.stringify(p.label)};\n  fw:selectionMode fw:${p.selectionMode==='bbox'?'BoundingBox':p.selectionMode==='circle'?'Circle':'Polygon'};\n  geo:hasGeometry ${geometry}.\n\n${geometry} a geo:Geometry;\n${provenance}${attribution}${history}  geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(p.geometry))}^^geo:wktLiteral;\n  fw:geometryValidated true;\n  fw:west ${west.toFixed(9)}; fw:south ${south.toFixed(9)};\n  fw:east ${east.toFixed(9)}; fw:north ${north.toFixed(9)}.\n${agent}`;
   const rules=`# Geometry checks run in the drawing widget. This rule consumes their explicit result.\n{ ?area a fw:StudyArea; geo:hasGeometry ?shape.\n  ?shape geo:asWKT ?wkt; fw:geometryValidated true.\n} => { ?area fw:readyForSpatialAnalysis true. }.\n`;
   return {facts,rules:prefix+rules,input:facts+'\n'+rules};
 }

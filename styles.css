@@ -811,7 +811,14 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 #note-dialog .field{display:flex;flex-direction:column;gap:.15rem}
 #note-dialog .field label{font-size:.66rem;letter-spacing:.04em;text-transform:uppercase;opacity:.7}
 #note-dialog .readonly{border:1px solid var(--rule,#2a3a36);border-radius:.3rem;padding:.7rem .8rem;background:rgba(255,255,255,.03)}
+#note-dialog .note-text{display:block;width:100%;box-sizing:border-box;margin:0;min-height:11rem;font:inherit;line-height:1.5}
+#note-dialog select{font:inherit;padding:.3rem .4rem;border:1px solid var(--line);border-radius:5px;background:var(--surface-raised-1);color:var(--ink)}
+#note-dialog .dlg-head .muted{font-size:.8rem;font-weight:400}
 #note-dialog .why{font-size:.8rem;opacity:.8}
+#note-dialog .note-status{font-size:.8rem;margin:.5rem 0 0}
+#note-dialog .note-status:empty{display:none}
+#note-dialog .note-status.is-failure{color:var(--danger-3)}
+.notes-note .unwritten{opacity:.6;font-style:italic}
 #note-dialog .panel{margin-top:.8rem;padding-top:.7rem;border-top:1px solid var(--rule,#2a3a36)}
 #note-dialog .dlg-foot{display:flex;gap:.6rem;align-items:center}
 #note-dialog .grow{margin-left:auto}

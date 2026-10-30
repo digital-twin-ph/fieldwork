@@ -638,6 +638,103 @@ WebKit, 2026-10-30.
 **What it cost to find: one drag.** The feature had a green gate, seven unit tests and a correct
 primitive, and the first gesture a person would try was broken.
 
+## Amendment, 2026-10-30 — writing, and the two things keeping an edit can mean
+
+The practitioner: *"Let's build the writing in the modal dialog."* Two of the four kinds said
+*"Not built yet"* in that dialog, and they now do two different things. The difference is the
+whole of the rule settled on 2026-10-29.
+
+| Kind | What Save does | Why |
+| --- | --- | --- |
+| **authored** | Rewrites the note where it sits | It is ours. Nothing else has a claim on the words. |
+| **machined** | **Forks** it into an authored note and leaves the machined note alone | The widget goes on machining its own account every run. An overwrite would be undone by the next run and would have destroyed the computation's wording in the meantime. |
+| **quoted** | Nothing to write | An edited quotation is not a quotation. |
+| **derived** | Nothing to write | It restates what an input declares. The place to change it is the input, or the receipt goes on asserting the input's own words. |
+
+So the dialog says which of the two is about to happen **before the button is pressed**, and the
+split lives in `app.ts` rather than in `notes-ui.ts`, because only the application knows where a
+project's notes are kept.
+
+**A fork records two warrants separately rather than merging them.** `forkedFrom` keeps the
+machined wording as it stood, which is what makes drift detectable; `author` takes the current
+GitHub login where there is one, and stays absent otherwise, as `src/identity.ts` requires. A
+reader of the fork can see that a computation produced the sentence and a person changed it, which
+are two different things to trust.
+
+**An added note now opens for writing.** It did not before: adding one produced a card reading
+*"(empty — writing is not built yet)"* and a toast, which is a card nobody could do anything with.
+The marker is now `(unwritten)`, and it exists for a reason that is worth stating because it looks
+like a placeholder and is not: `readNotes` **drops a note with no words**, so an empty note would
+not survive the next open. The dialog opens the marker as an empty page rather than as prose to
+delete first, and refuses to keep a note still carrying no words — giving the reader's own rule as
+the reason rather than enforcing it silently.
+
+**Closing says what it costs.** Once there is something to lose, the exit reads *Discard changes*.
+A dialog whose only exit is labelled *Close* throws away an edit without ever having said so.
+
+### Held against the prototype
+
+The practitioner produced the Notes Board prototype's own dialog mid-build. Comparing the two
+closed four gaps and left one open.
+
+| In the prototype | What was here | Now |
+| --- | --- | --- |
+| Section and function are **drop-downs** | Both labelled *fixed* | Chosen, **for an authored note only**. The other three keep the label: a derived note's coordinates are decided by what it restates, a machined note's by the widget, a quotation's by the claim it establishes. |
+| `PRODUCED BY — written here — no workflow` | The field was omitted when there was no node | Said. A note with no workflow behind it is a fact about the note, not a blank. |
+| `New note`, with the kind and id beside it | `Note — authored` | The heading says which it is, and the id is shown — shortened to eight characters when it is a UUID, whole when it is readable like `snow-chloride-test`. |
+| `Discard` / `Add note` | `Close` / `Save` | A note being written for the first time has nothing to go back to, so its exit is *Discard* throughout and its button is *Add note*. An existing note keeps *Save*, and its exit becomes *Discard changes* once there is an edit to lose. |
+| A **formatting toolbar** — bold, italic, lists, quote | Nothing | **Not built.** See below. |
+
+**One word in the prototype is retired.** Its function drop-down offers `background`, which with
+`purpose` was this list's own vocabulary and is not in the one that settled on 2026-10-29. The
+drop-down offers the seven that survived, and a test asserts the two retired words are not on it —
+because a screenshot is a reasonable place to reintroduce a withdrawn term without noticing.
+
+**The toolbar is a decision, not an omission.** A note's `text` is plain prose everywhere it is
+read: the word and character counts, the contributions statement, the N3 receipt, and whatever
+assembles a report. A toolbar means choosing a markup and teaching every one of those consumers to
+expect it, and the obvious candidate interacts with a decision this experiment has already taken —
+equations are to be carried as LaTeX. Inserting `**bold**` into a field nothing renders would be
+worse than leaving the toolbar out, because the asterisks would reach the write-up. Recorded as
+open rather than built.
+
+**Two more things the dialog still will not do**, both deliberate: it does not edit a quotation or
+a derived note, and nothing here deletes a note. Deletion was not asked for and has no gesture yet.
+
+### Seen, not only tested
+
+Three defects came out of looking at a screenshot of the dialog rather than from any assertion:
+the textarea rendered at **182 pixels** and in a monospace face, because the stylesheet's generic
+`textarea` rules do not reach inside this dialog, and the primary button sat to the left of the
+exit. None of the twelve passing tests could see any of it. This is the same lesson as the drag
+earlier the same day, from the other direction: a test says whether the mechanism works, and says
+nothing about whether anybody can use it.
+
+### The gate was already red, on an assertion about this example
+
+Starting a gate found `notes-spike.browser.mjs` failing two assertions at the previous commit,
+before any of this work: it claimed **9 notes**, and the example has carried **13** since
+2026-10-29, when the lessons of this experiment were exercised on it. Nine of Snow's sentences and
+four the investigation wrote. The assertions now say both numbers, because a total alone would go
+stale the same way.
+
+That is the second time in two days that **a count in a test outlived the thing it counted**. The
+example is the shared fixture of ten browser suites, and editing it moves numbers in files nobody
+is editing at the time.
+
+**Validation.** `tests/notes-writing.browser.mjs`, 7 tests: an added note opens and what is written
+is what the write-up says and survives a reload; a note with no words is refused with the reason;
+closing after writing says it discards; a quotation has nothing to write; a derived note is still
+changed at the input; the section and function of an authored note are the author's to choose and
+the retired words are not on offer; and editing a machined note forks it, leaving the machined note
+reading exactly as it did. 36 passed across the three notes suites, Chromium and WebKit.
+
+**One mechanical note.** The fork test had to be pointed at a different workflow. `relate` is the
+only widget that machines a note, and no example reached from the picker uses one — South London's
+contingency table is the single workflow that joins two of Snow's tables, and it is selected by
+name after the bundle is imported. The first version of the test ran against the workflow the
+example opens on, where there is no machined note to edit, and failed by finding nothing.
+
 ## What this does not establish
 
 That notes make a workflow legible. Nothing was built and nobody read a workflow through one.

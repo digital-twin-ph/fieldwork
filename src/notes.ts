@@ -254,6 +254,14 @@ const edges=(value:unknown):string[]=>Array.isArray(value)
  *  page is a surface nobody reads in order. */
 export const MAX_NOTES=200;
 
+/** WHAT AN ADDED NOTE SAYS BEFORE ANYBODY HAS WRITTEN IT.
+ *
+ *  A note has to carry words or `readNotes` drops it on the next open: a note with no words is
+ *  not a note, and that rule is older than writing. So an added note carries a marker instead of
+ *  nothing, and the dialog treats the marker as an empty page rather than as prose to delete
+ *  first. Short, and plainly not a sentence, because it is read on a card. */
+export const UNWRITTEN='(unwritten)';
+
 /** Read notes back, tolerantly, and say nothing about the ones that cannot be read.
  *
  *  A note whose section is not a part of the body is DROPPED rather than coerced into one: putting

@@ -26,6 +26,7 @@
  *  grouped together cannot be read in one place.
  */
 import {isRecord} from './guards.js';
+import {validLogin} from './identity.js';
 
 /** The parts of a write-up a note can TARGET, which is the IMRAD body and nothing else.
  *
@@ -293,8 +294,16 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
       // what it plainly is -- somebody's own sentence.
       const from=isRecord(entry.forkedFrom)?entry.forkedFrom:undefined;
       const was=from?text(from.text):'';
+      // The author is read back only if GitHub could have issued the login. A malformed one is
+      // DROPPED rather than carried: an author list and a contributions statement are the two
+      // places a half-read name would be published as though it had been checked. Added 2026-10-29
+      // after exercising the statement on the South London example found the field written, stored
+      // and silently lost here -- the defect shape experiment 149 recorded, "a field that exists,
+      // travels as far as the door, and is dropped by the one step that rebuilds the object".
+      const author=validLogin(text(entry.author))?text(entry.author):'';
       notes.push({kind:'authored',id,section,text:body,
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
+        ...(author?{author}:{}),
         ...(text(entry.about)?{about:text(entry.about)}:{}),
         ...(was?{forkedFrom:{text:was,
           ...(text(from!.nodeId)?{nodeId:text(from!.nodeId)}:{}),

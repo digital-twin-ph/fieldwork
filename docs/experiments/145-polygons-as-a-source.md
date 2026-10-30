@@ -1,6 +1,6 @@
 # 145 — Polygons as a source
 
-_Created 2026-10-27 · Updated 2026-10-27_
+_Created 2026-10-27 · Updated 2026-10-28_
 
 **Status:** asked — the question is recorded here and deliberately not answered.
 

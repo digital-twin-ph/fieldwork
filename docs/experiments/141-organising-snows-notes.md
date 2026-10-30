@@ -1,6 +1,6 @@
 # 141 — Notes, the story, and the report: one record
 
-_Created 2026-10-26 · Updated 2026-10-29_
+_Created 2026-10-26 · Updated 2026-10-30_
 
 **Status:** tried — the design is proposed and was tested against a publication that already
 exists, before anything was built. Nothing in `src/` carries a note today.
@@ -596,6 +596,47 @@ the internal order is a position in a list, and `co:` is how it leaves.
   the whole value of having run it first.
 - **That a contributions statement has ever been assembled from a real project.** It was exercised
   on constructed authors and on South London's notes in a scratch run, not published.
+
+## Amendment, 2026-10-30 — the gesture was tested, and two of its three tests were asserting nothing
+
+Reordering notes within an IMRaD section landed on 2026-10-29 with seven unit tests on `moveNote`
+and a green gate. The practitioner asked for the running application. Dragging a card in it found
+a defect those tests could not reach, and the attempt to test the defect found two more that were
+in the test, not in the code. All three are recorded because the shape is the finding.
+
+**The defect.** A card dropped on its own body was sent to the end of its section. `moveNote`
+was correct throughout; the handler in `app.ts` read the drop position as `before=null` whenever
+the card under the cursor was the dragged card itself — which is exactly what a drop into the
+empty space below the last card means. Two gestures that mean opposite things shared one code
+path, and only the DOM could tell them apart: once the position is `null`, the handler no longer
+knows which gesture it was. The fix tests for it *before* reading the position rather than
+inferring it from the result.
+
+This is not the defect shape experiment 149 records (a field dropped by the one step that rebuilds
+the object). It is a new one: **two distinguishable gestures collapsing into one indistinguishable
+argument.** A unit test cannot see it, because the collapse happens upstream of the unit — by the
+time `moveNote` is called, the information is already gone.
+
+**The two tests that asserted nothing.** Both passed, and both were no-ops:
+
+| What it looked like | What it actually did |
+| --- | --- |
+| A drag from one card onto another | Landed on `<html>`. Playwright reports a bounding box for a card the viewport cannot show; a synthetic drag to those coordinates fires no `dragstart` at all, so nothing moves and the "before" and "after" orders match for the wrong reason. |
+| A drop on the card itself | Moved two pixels, which never crosses the browser's drag threshold. No `dragstart`, no drop, no move — and the assertion that nothing moved passed. |
+
+The second one is the instructive case: it **still passed with the fix removed**, which is how it
+was caught. Removing the fix and re-running is cheap and it is the only thing that distinguishes a
+test that holds a defect out from a test that happens to agree with the code. Both rules are now
+written into `tests/notes-order.browser.mjs` beside the code that obeys them, because both failures
+are silent.
+
+`tests/notes-order.browser.mjs` drives the three gestures on the published South London bundle:
+a reorder that survives a reload, a drop on itself that does nothing and says nothing, and a drop
+below the last card that ends *that section* rather than the write-up. 6 passed, Chromium and
+WebKit, 2026-10-30.
+
+**What it cost to find: one drag.** The feature had a green gate, seven unit tests and a correct
+primitive, and the first gesture a person would try was broken.
 
 ## What this does not establish
 

@@ -1,6 +1,6 @@
 # Study area
 
-_Created 2026-10-19 · Updated 2026-10-19_
+_Created 2026-10-19 · Updated 2026-10-29_
 
 **An input widget.** It defines where your work takes place: one shape, kept on this device, that
 every later step can be scoped to.

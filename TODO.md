@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-10-29_
+_Created 2026-10-10 · Updated 2026-10-30_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -55,6 +55,28 @@ so in its own closing section: its beneficiaries are us and future contributors,
 not a practitioner in the field.
 
 ## Urgent
+
+**Three assertions outlived what they asserted, in two days, and the fast gate cannot see any of
+them.** Found 2026-10-30, by starting a gate rather than by any check run while the changes were
+made. `notes-spike.browser.mjs` claimed the South London example holds **9 notes** — it has held
+**13** since 2026-10-29, when the lessons of experiment 141 were exercised on it. `layer-marks`
+asserted the Leaflet layer control says `(circle)` and `(star)` — it has named the layer the
+practitioner owns since `879d56c`, also 2026-10-29, which was a deliberate change and left the
+label composed from the shape behind. All three were fixed on 2026-10-30, and all three are the
+same shape: **a deliberate change moved the thing, and an assertion elsewhere went on describing
+where it used to be.**
+
+The residual is the method. `npm run check:fast` does not run browser tests, so the loop that is
+cheap enough to run constantly is blind to exactly the assertions that go stale this way — and the
+two files affected were ones nobody was editing at the time, because the example and the layer
+control are shared by ten suites. `c73002f` recorded the same failure mode on 2026-10-29 in its
+own commit message (*"The fast gate does not run browser tests and I reran only the suites I had
+touched"*), so this is the second recording and not a new finding.
+
+What would close it is not more discipline. It is either a cheap way to run the suites that touch
+a shared fixture when that fixture changes, or a count that is read rather than written — the
+notes assertions now name the breakdown as well as the total, which makes the next drift legible
+but does not prevent it.
 
 **Verify a deploy by reaching it the way a reader does, not only by rerunning the suite there.**
 Done 2026-10-27 and recorded because the finding was free: the first open of the published South

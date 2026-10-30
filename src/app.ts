@@ -68,6 +68,7 @@ import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from 
 import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {openPolygonReview} from './polygon-review.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
+import {typeset} from './prose.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachinedNote,
   UNWRITTEN} from './notes.js';
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel} from './identity.js';
@@ -4992,6 +4993,10 @@ function renderNotesView(){
   shownNotes=[...(project?.notes||[]),...(result?.derived||[]),...fromRun] as Note[];
   $('#notes-view').innerHTML=notesPanel(project?.notes||[],result?.machined,
     labelOf,esc,result?.derived||[]);
+  // THE FORMULAE, ONCE THE PANEL IS IN THE DOCUMENT. `notesPanel` returns the LaTeX on the
+  // element that will hold it, so a note reads correctly before the converter has loaded and on
+  // any machine where it never does. See `src/prose.ts`.
+  void typeset($('#notes-view'));
   const total=(project?.notes||[]).length+(result?.derived||[]).length
     +Object.values(result?.machined||{}).reduce((n,list)=>n+list.length,0);
   $('#notes-view-count').textContent=total?String(total):'';

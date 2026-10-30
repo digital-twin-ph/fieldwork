@@ -690,13 +690,18 @@ closed four gaps and left one open.
 drop-down offers the seven that survived, and a test asserts the two retired words are not on it —
 because a screenshot is a reasonable place to reintroduce a withdrawn term without noticing.
 
-**The toolbar is a decision, not an omission.** A note's `text` is plain prose everywhere it is
-read: the word and character counts, the contributions statement, the N3 receipt, and whatever
-assembles a report. A toolbar means choosing a markup and teaching every one of those consumers to
-expect it, and the obvious candidate interacts with a decision this experiment has already taken —
-equations are to be carried as LaTeX. Inserting `**bold**` into a field nothing renders would be
-worse than leaving the toolbar out, because the asterisks would reach the write-up. Recorded as
-open rather than built.
+**The toolbar was a decision, not an omission — and it was taken the same day.** A note's `text` is
+plain prose everywhere it is read: the counts, the contributions statement, the N3 receipt, and
+whatever assembles a report. A toolbar means choosing a markup and teaching every one of those
+consumers, and the obvious candidate interacts with the equations decision above. Both were settled
+together in [151](151-typesetting-an-equation-a-practitioner-wrote.md): the markup is **markdown**,
+because markdown is plain text and so none of those readers changes, and an equation is **LaTeX
+converted to MathML**, which the browser typesets with nothing fetched and no fonts shipped. The
+toolbar writes markdown a person could have typed by hand.
+
+What this experiment claimed and 151 does **not** establish: that an equation is ever constructed
+automatically. *"All of our computations have equations"* remains the claim; what exists now is a
+place to put one and a renderer that will draw it. The first machined equation is unwritten.
 
 **Two more things the dialog still will not do**, both deliberate: it does not edit a quotation or
 a derived note, and nothing here deletes a note. Deletion was not asked for and has no gesture yet.

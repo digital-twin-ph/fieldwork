@@ -493,12 +493,43 @@ make you an author of it. Conversion *must* add somebody — otherwise a solo pr
 collaborative one with an empty byline — so the refusal is not available and the distinction has to
 carry the honesty instead.
 
-### Competency question
+### Ruled on the same day, and it retires most of the question
 
-12. **Does an authorship claim record whether it was observed or asserted?** Today it does not, and
-    `fw:identityBasis` must not be stretched to cover it: that term is about the login. A second
-    term, or conversion is the one path by which an unearned author can enter a publication's
-    byline with a confirmed-looking login beside it.
+The practitioner, 2026-10-29: *"Login and Work attestation are two different things but related, and
+the fact that this is a browser based app on one laptop means there is only one user, and that's the
+one logging into GitHub."*
+
+Which is right, and for a reason stronger than the framing above gave it credit for. **An attested
+login means the person held that account's token.** One browser profile, one `localStorage`, one
+current identity — so work created in this browser while an attested identity is current was done by
+the holder of that account's credential. For work going forward, login attestation *is* work
+attestation, and no second term is needed. The two claims are different, as the practitioner says,
+and under a single-user assumption one entails the other.
+
+**The code already draws the line the assumption needs**, which is why nothing has to be built for
+it. `newProject` and `importProjectDocument` are separate paths, and they already behave
+differently: the first records its creator, the second deliberately records nobody. So:
+
+| how it got here | what can be said |
+| --- | --- |
+| created locally under a current identity | **observed** — single user, credential held |
+| imported | **not ours** — the import adds nobody, and demonstrably the work was not done here |
+| created locally **before** any identity existed | the only ambiguous case |
+
+And the moment is already recorded: an attested `Author` carries `at`, and a project created under
+one keeps it, so a project's author list states when its attestation happened without a `createdAt`
+being added for the purpose.
+
+**What survives of question 12 is the third row only** — work done on this device before identities
+existed, which is finite, shrinking, and attributable by the same single-user argument with the
+honest caveat that nobody was watching. The assumption to record rather than prove: one laptop, one
+practitioner. A shared lab machine breaks it, and the breakage is social rather than technical.
+
+12. ~~Does an authorship claim record whether it was observed or asserted?~~ **Narrowed and largely
+    answered.** Under one laptop and one user, an attested login entails the work attestation for
+    anything created locally under it, and the created/imported paths already distinguish the rest.
+    What remains is pre-identity local work, and a conversion that claims it should say it is
+    claiming rather than reporting.
 
 
 ## What would answer it

@@ -24,8 +24,19 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
 
   // The first layer's default mark is a circle, and it is drawn as a mark like every other one:
   // a circleMarker has a single stroke, which cannot be both the dark halo and the layer hue.
+  //
+  // THE CONTROL NAMES THE LAYER, NOT THE SHAPE. This asserted "(circle)" until 2026-10-30, and
+  // had been failing since 879d56c on 2026-10-29, which gave a layer the name the practitioner
+  // owns in Manage layers instead of composing one from the label and the shape. That was the
+  // point of this test's original defect read backwards: the shape belonged in the label only
+  // while it was missing from the map. It is drawn now -- which is what the assertions below
+  // check -- and the figure's key carries the symbol itself, so naming it again in a checkbox
+  // would be the third place to keep in step.
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('.catchment-leaflet .leaflet-control-layers-list')).toContainText('(circle)');
+  await expect(page.locator('.catchment-leaflet .leaflet-control-layers-list'))
+    .toContainText('Hagelloch, 1861');
+  await expect(page.locator('.catchment-leaflet .leaflet-control-layers-list'))
+    .not.toContainText('(circle)');
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('.catchment-point-mark')).toHaveCount(asCircles);
   // Every mark carries the halo: a dark path drawn first and wider than the coloured one, so the
@@ -60,8 +71,12 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
   // Every point that was a circle is now a star: the same points, drawn with the chosen mark.
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('.catchment-point-mark')).toHaveCount(asCircles);
+  // And the control still names the layer rather than the new shape, for the reason above: the
+  // mark changed, and the checkbox is not where that is reported. The ten-point path below and
+  // the figure's key are.
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('.catchment-leaflet .leaflet-control-layers-list')).toContainText('(star)');
+  await expect(page.locator('.catchment-leaflet .leaflet-control-layers-list'))
+    .not.toContainText('(star)');
   await page.locator('[data-view="results"]').click();
   const path=await page.locator('.catchment-point-mark svg path').first().getAttribute('d');
   expect(path.split('L').length).toBeGreaterThan(8); // ten points, not an arc

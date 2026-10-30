@@ -1657,3 +1657,12 @@ fw:identityBasis a owl:DatatypeProperty; rdfs:domain fw:Author; rdfs:range xsd:s
 fw:wroteNote a owl:ObjectProperty; rdfs:range fw:Author;
   rdfs:label "The author who wrote this note";
   rdfs:comment "Attribution for an authored note, which is the only kind a person writes: quoted notes belong to their source, derived and machined notes to the widget that produced them. Absent means unattributed, which is the honest reading for every note written before identity existed, and is not filled in with the identity of whoever opens the file.".
+fw:contributorRole a owl:ObjectProperty; rdfs:domain fw:Author;
+  rdfs:label "A CRediT contributor role this author is credited with";
+  rdfs:comment "Points at a role IRI under https://credit.niso.org/contributor-roles/, the NISO Contributor Roles Taxonomy that journals already require for an author contributions statement. All fourteen were checked to resolve on 2026-10-29. An external standard, so the set is CLOSED -- unlike fw:noteFunction, which is open because its producers do not exist yet. Nothing is coined here: a publication's author contributions section is a form this application fills in, not a vocabulary it invents.".
+fw:roleConfirmed a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "Whether an author confirmed this role, or the application proposed it";
+  rdfs:comment "False means PROPOSED FROM EVIDENCE and confirmed by nobody. A CRediT role is a claim about intellectual contribution, and the record shows acts -- a note written, a boundary drawn -- not intent. Drawing a study area may be Investigation or Methodology depending on what the author was doing, and that is the author's call and not a thing to infer from a shape. So the application states the evidence and proposes the role; a true value means a human agreed.".
+fw:contributionEvidence a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "The acts in the record that a proposed role rests on";
+  rdfs:comment "What was observed, in the units it was observed in -- \"4 authored notes in Methods and Discussion\", \"2 study areas drawn\". NEVER A SHARE OR A RANK. A percentage of contribution would be a judgement wearing a number's clothes: one decisive limitation note can outweigh forty drawn boxes, and no count available to this application can tell the difference. Counting is offered as evidence for a reader, not as a measure of worth.".

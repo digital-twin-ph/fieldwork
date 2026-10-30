@@ -169,6 +169,16 @@ export interface AuthoredNote {
   section:WriteUpPart;
   fn?:string;
   text:string;
+  /** WHO WROTE IT, as a GitHub login carried in `Project.authors`.
+   *
+   *  Only this kind takes one. A quoted note belongs to its source, and a derived or machined note
+   *  to the widget that produced it -- attributing either to a person would credit them with words
+   *  they did not write.
+   *
+   *  Absent means UNATTRIBUTED, and stays absent. Every note written before identity existed is in
+   *  that state, and the identity of whoever opens the file is not the identity of whoever wrote
+   *  the sentence. See `src/identity.ts` and experiment 150. */
+  author?:string;
   /** The note or node this annotates. */
   about?:string;
   /** WHERE IT CAME FROM WHEN IT WAS NOT WRITTEN FROM NOTHING.

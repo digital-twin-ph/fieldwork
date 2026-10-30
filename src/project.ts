@@ -1,5 +1,6 @@
 import {isRecord} from './guards.js';
 import {readNotes} from './notes.js';
+import {readAuthors} from './identity.js';
 
 /** A project is one investigation. One subject, several questions, one workflow per question.
  *
@@ -65,6 +66,16 @@ export interface Project {
    *  download machinery and loses sight of it, unable to read the filesystem or tell whether the
    *  file was kept, moved or deleted. This ages the process, not the file. */
   exportedAt?:string;
+  /** THE PEOPLE WHO AUTHORED THE INVESTIGATION, in the order a publication would list them.
+   *
+   *  On the project rather than on a workflow, for the reason the notes are: six workflows are six
+   *  analyses of one investigation, and an author list is a claim about the investigation.
+   *
+   *  Absent means nobody is recorded, which is the state every project is in today -- including
+   *  the published South London example, whose content names no human being while its git history
+   *  names one across 34 commits. Carrying the identity the repository already has into the
+   *  artifacts is the point. See `src/identity.ts` and experiment 150. */
+  authors?:import('./identity.js').Author[];
 }
 
 /** The workflows a built-in project holds, in reading order, with the label each carries in the
@@ -174,10 +185,13 @@ export function validateProject(raw:unknown):Project{
   // somebody's sentence under a heading they did not choose is worse than leaving it out. A project
   // that carries none is the ordinary case and says so by having no field.
   const {notes}=readNotes(raw.notes);
+  // Authors likewise: an identity that cannot be read is dropped rather than half kept, because an
+  // author list is the one place a malformed name would be published as though it had been checked.
+  const authors=readAuthors(raw.authors);
   return {schema:'fieldwork/project/2',id:raw.id,name:raw.name,subject:raw.subject,
     workflows:[...new Set(raw.workflows as string[])],
     ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(work?{exportedWork:work}:{}),
-    ...(notes.length?{notes}:{})};
+    ...(notes.length?{notes}:{}),...(authors.length?{authors}:{})};
 }
 
 /** The input widgets whose payload two workflows can genuinely share.

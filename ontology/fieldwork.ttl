@@ -1645,3 +1645,15 @@ fw:capValueInForce a owl:DatatypeProperty;
   fw:capEvidence "How long this client waits for an instance's /api/status before calling it unreachable for the purposes of choosing one. Chosen.";
   fw:capRefuses "Nothing a practitioner asked for: a slow status read only removes an instance from the preference order.";
   fw:capLiftTest "Not applicable: it bounds this client's own impatience, not what can be found.".
+fw:Author a owl:Class; rdfs:subClassOf prov:Agent;
+  rdfs:label "A person who authored part of an investigation";
+  rdfs:comment "A human contributor, identified by a GitHub login. The practitioner, 2026-10-29: \"We can establish identity through GitHub accounts.\" Chosen because the identity is ALREADY THERE and is the only one the project has: example-1855-cholera-south-london names no human anywhere in its content -- not in its 33,306-byte README, not in provenance.json, which says four tables were \"transcribed by hand\" and never says by whom -- while its git history names exactly one, across 34 commits. The co-ownership model for a project repository is GitHub's, so the identity is GitHub's too, and nothing new is coined. Distinct from a credential: a credential is a secret for a service and is encrypted, a login is a public name and is published. See experiment 150.".
+fw:githubLogin a owl:DatatypeProperty; rdfs:domain fw:Author; rdfs:range xsd:string;
+  rdfs:label "The author's GitHub login";
+  rdfs:comment "The account name, validated to GitHub's own rule: at most 39 characters of alphanumerics and single hyphens, not beginning or ending with one. Not an email address, which GitHub itself avoids publishing -- the commits this decision was measured on carry a users.noreply.github.com address rather than a personal one.".
+fw:identityBasis a owl:DatatypeProperty; rdfs:domain fw:Author; rdfs:range xsd:string;
+  rdfs:label "What is known about this identity";
+  rdfs:comment "\"declared\" or \"attested\", and never collapsed into one. DECLARED means somebody typed the login into this application, which asserts nothing: an offline browser cannot check that an account exists or that the person at the keyboard holds it. ATTESTED means GitHub returned the login for a presented credential. Recorded because a publication's author list is a claim about who did the work, and the strongest claim this application can make unaided is that a name was entered. Two tiers from the start rather than a single term later narrowed: this repository carries a withdrawn-term ratchet, and a term that quietly means both would have to be withdrawn the moment attestation shipped.".
+fw:wroteNote a owl:ObjectProperty; rdfs:range fw:Author;
+  rdfs:label "The author who wrote this note";
+  rdfs:comment "Attribution for an authored note, which is the only kind a person writes: quoted notes belong to their source, derived and machined notes to the widget that produced them. Absent means unattributed, which is the honest reading for every note written before identity existed, and is not filled in with the identity of whoever opens the file.".

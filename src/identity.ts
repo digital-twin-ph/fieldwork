@@ -92,3 +92,94 @@ export const BASIS_GLOSS:Record<IdentityBasis,string>={
   declared:'Entered here, not checked against GitHub',
   attested:'GitHub returned this login for a presented credential',
 };
+
+/** THE ONE ENDPOINT THAT TURNS A TOKEN INTO A NAME.
+ *
+ *  The practitioner, 2026-10-29: *"The first thing user does when working on a project is
+ *  authenticate."* Which settles where an identity comes from, and resolves a dependency rather
+ *  than moving a button: the authorship default — *"the owner of the repo is first author by
+ *  default"* — needs to know who is using the application, and nothing in `src/` knew. Unlocking a
+ *  credential is where it can be learnt.
+ *
+ *  AND IT COSTS NO ADDITIONAL GRANT, which is why this is cheap. Checked against GitHub's
+ *  permissions reference on 2026-10-29: `GET /user` appears in no permission table at all, and the
+ *  users documentation says a token without `read:user` still *"receive[s] the public user
+ *  response"* — which carries `login`. A token specified for `Contents: Read and write` on one
+ *  repository therefore attests its own holder without being widened by a single scope. */
+export const GITHUB_API='https://api.github.com';
+
+/** The token is passed, used once, and never stored, logged or put in an error message. A failure
+ *  says what happened and nothing about the secret that caused it. */
+export async function attestIdentity(token:string,
+  fetchImpl:typeof fetch=fetch,api=GITHUB_API):Promise<Author>{
+  let response:Response;
+  try {
+    response=await fetchImpl(`${api}/user`,{headers:{
+      Authorization:`Bearer ${token}`,
+      Accept:'application/vnd.github+json',
+      'X-GitHub-Api-Version':'2022-11-28'}});
+  } catch {
+    // Offline-first: not reaching GitHub is an ordinary state, not a fault, and it leaves a
+    // declared identity exactly as valid as it was.
+    throw new Error('GitHub could not be reached, so the login was not confirmed. '
+      +'A login entered here still works; it stays marked as unconfirmed.');
+  }
+  if(response.status===401)
+    throw new Error('GitHub refused the token. Check that it has not expired and that it was '
+      +'copied whole.');
+  if(response.status===403)
+    throw new Error('GitHub accepted the token and refused the request. A fine-grained token '
+      +'needs the project repository among its selected repositories.');
+  if(!response.ok)
+    throw new Error(`GitHub answered ${response.status} and the login was not confirmed.`);
+  const body:unknown=await response.json().catch(()=>null);
+  const login=isRecord(body)&&typeof body.login==='string'?body.login:'';
+  // A login GitHub itself returned should always be well formed. Checked anyway, because the one
+  // thing worse than an unconfirmed name is a malformed one recorded as confirmed.
+  if(!validLogin(login))
+    throw new Error('GitHub answered without a usable login, so nothing was confirmed.');
+  const name=isRecord(body)&&typeof body.name==='string'&&body.name.trim()
+    ?body.name.trim().slice(0,120):undefined;
+  return {login,...(name?{name}:{}),basis:'attested',at:new Date().toISOString()};
+}
+
+/** WHO IS USING THIS APPLICATION, kept per device.
+ *
+ *  Deliberately not a login and not a session: there is nothing to sign in to. It is the answer to
+ *  "whose name goes on what I make here", which is why it survives a reload and why it is cleared
+ *  explicitly rather than expiring. A credential locks after fifteen idle minutes because a leaked
+ *  secret is a breach; a name is not a secret and locking it would only make the application forget
+ *  who wrote something while they were still writing it. */
+const CURRENT='fieldwork/identity/1';
+
+/** The three methods this needs, named structurally rather than as `Storage`.
+ *
+ *  Not a DOM type, because `project.ts` imports this module and `project.ts` is compiled for the
+ *  workers too, where there is no `localStorage` and no `Storage` to refer to. Caught by the
+ *  worker typecheck rather than by review. Passing the store in is the better layering regardless:
+ *  this module decides what an identity IS, and where a device keeps one is the application's
+ *  business. */
+export interface IdentityStore {
+  getItem(key:string):string|null;
+  setItem(key:string,value:string):void;
+  removeItem(key:string):void;
+}
+
+export function currentIdentity(store:Pick<IdentityStore,'getItem'>|null):Author|null{
+  try { return store?readAuthor(JSON.parse(store.getItem(CURRENT)||'null')):null; }
+  catch { return null; }
+}
+
+/** Returns whether it was kept. Storage can refuse, and an identity that was not stored must not be
+ *  reported as stored: the next project would be attributed to somebody the device has forgotten. */
+export function setCurrentIdentity(author:Author|null,
+  store:Pick<IdentityStore,'setItem'|'removeItem'>|null):boolean{
+  if(!store)return false;
+  try {
+    if(!author){store.removeItem(CURRENT);return true;}
+    const kept=readAuthor(author);
+    if(!kept)return false;
+    store.setItem(CURRENT,JSON.stringify(kept));
+    return true;
+  } catch { return false; }
+}

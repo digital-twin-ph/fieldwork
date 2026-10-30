@@ -109,12 +109,26 @@ export const multiWorkflowProjects=(projects:readonly Project[]=BUILT_IN_PROJECT
 /** A practitioner-created project. The id is derived from the name so it reads in a URL, and
  *  suffixed rather than rejected on collision: refusing a name because another project took it is
  *  a worse answer than numbering it. */
-export function newProject(name:string,subject:string,existing:readonly Project[]=BUILT_IN_PROJECTS):Project{
+/** `author` is whoever is making it, and they become its FIRST author.
+ *
+ *  The practitioner, 2026-10-29: *"a project starts from scratch so the owner of the repo is first
+ *  author by default."* First is the byline position, which is why it is the head of the list and
+ *  why `contributions()` keeps the order it is given rather than re-sorting by volume.
+ *
+ *  AUTHORSHIP FOLLOWS CREATING, NOT OPENING, which is the rule that makes this and
+ *  `importProjectDocument` consistent rather than contradictory: making a project makes you its
+ *  author, and importing somebody else's does not add you to theirs.
+ *
+ *  Absent when nobody is recorded on this device, and then the project has no author rather than a
+ *  guessed one. */
+export function newProject(name:string,subject:string,existing:readonly Project[]=BUILT_IN_PROJECTS,
+  author?:import('./identity.js').Author|null):Project{
   const base=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'project';
   let id=base;for(let n=2;existing.some(p=>p.id===id);n++)id=`${base}-${n}`;
   // A project made now knows when it began and that nothing has been exported of it yet.
   return {schema:'fieldwork/project/2',id,name:name.trim()||'Untitled project',
-    subject:subject.trim(),workflows:[],changedAt:new Date().toISOString()};
+    subject:subject.trim(),workflows:[],changedAt:new Date().toISOString(),
+    ...(author?{authors:[author]}:{})};
 }
 /** WHETHER A COPY OF THIS WORK EXISTS ANYWHERE ELSE, in the glossary's three words.
  *

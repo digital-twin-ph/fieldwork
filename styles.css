@@ -782,7 +782,7 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .notes-kind-quoted{background:rgba(0,114,178,.18)}
 .notes-kind-machined{background:rgba(213,94,0,.18)}
 .notes-source{opacity:.7}
-.notes-view{padding:1rem 0;max-width:52rem}
+.notes-view{padding:16px 18px;overflow:auto;max-width:calc(52rem + 36px)} /* The horizontal padding was 0, so every line sat flush against the panel edge and the first glyph of each heading was clipped -- "Notes" read as "lotes". Matches .project-view, the sibling tab panel, rather than inventing a gutter: 16px 18px, overflow auto. The measure is still 52rem of text; the max-width carries the new padding so the reading width is unchanged by the fix. Reported from a screenshot 2026-10-29. */
 .notes-view .notes-part h3{border-bottom:1px solid var(--rule,#2a3a36);padding-bottom:.25rem}
 .notes-kind-authored{background:rgba(156,59,46,.18)}
 .notes-fork{color:#9c3b2e;opacity:.85}

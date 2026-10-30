@@ -68,7 +68,7 @@ import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from 
 import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {openPolygonReview} from './polygon-review.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
-import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart} from './notes.js';
+import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote} from './notes.js';
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel} from './identity.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
@@ -6480,9 +6480,19 @@ document.addEventListener('drop',event=>{
       +'that produced it put it, and a quotation where its claim belongs.',{tone:'failure'});
     return;
   }
-  if(held[at].section===into)return;
-  held[at]={...held[at],section:into};
-  if(writeNotes(held)){renderNotesView();toast(`Moved to ${into}.`);}
+  // WHERE IN THE SECTION, not only which section. A drop onto a card puts the note before it; a
+  // drop into the empty space below the last card puts it at the end of that part. Reordering
+  // within a part is the practitioner's request of 2026-10-29 -- "we should be able to move around
+  // notes within IMRaD sections" -- and it is the same gesture as moving between them, so it is the
+  // same handler rather than a second one with its own rules.
+  const onto=(event.target as HTMLElement).closest?.('[data-note]') as HTMLElement|null;
+  const before=onto&&onto.getAttribute('data-note')!==key?onto.getAttribute('data-note'):null;
+  const moved=held[at].section===into?held:held.map((n,i)=>i===at?{...n,section:into}:n);
+  const next=moveNote(moved,key,before,noteKey);
+  // Nothing changed: dropped on itself, or back where it already was. Silence is right -- a toast
+  // saying a note moved when it did not is the interface reporting work it did not do.
+  if(next.every((n,i)=>n===held[i])&&held[at].section===into)return;
+  if(writeNotes(next))renderNotesView();
 });
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});

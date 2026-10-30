@@ -316,6 +316,51 @@ fifteen idle minutes. The fields it validates map onto this without being bent:
 | `ref` | a name of the practitioner's choosing, letter-initial |
 | `secret` | the token |
 
+**Tested 2026-10-29, before anything was built on it**, at the practitioner's direction: *"let's
+test credentials manager first."* Exercised against the built module with the credential the spec
+above describes, not against a simplified one:
+
+| check | result |
+| --- | --- |
+| the spec'd GitHub credential validates | accepted |
+| `list()` withholds the secret | only `ref`, `provider`, `label`, `origin` returned |
+| `resolve` binds the **origin** too | `github` @ `api.github.com` resolves; the same ref at `raw.githubusercontent.com` is **refused** |
+| `resolve` binds the **provider** | `gitlab` @ `api.github.com` refused |
+| encrypted file | 468 bytes; the token does **not** appear in it, and neither `provider` nor `label` leaks in plaintext |
+| round trip | the secret is recovered byte for byte |
+| wrong passphrase | refused, with a message that does not say which part was wrong |
+| passphrase under 12 characters | refused at encryption |
+| idle lock | unlocked at 14 minutes, locked at 15 minutes and one millisecond |
+
+Its four unit tests and three browser tests pass. **The store itself is not the risk in this plan.**
+The origin binding is worth noting as measured rather than assumed, because it confirms the
+consequence stated above: an authenticated read of `raw.githubusercontent.com` genuinely cannot
+reuse this credential.
+
+### Authenticating first, and what that reorders
+
+The practitioner, 2026-10-29: *"The first thing user does when working on a project is
+authenticate."*
+
+**Today it is neither first nor prompted.** `Credentials` is a button in the project bar beside
+Import, Back up and Run — a detour a practitioner has to know to take — and `openProjectDialog`
+collects a name and a subject and nothing else. Authentication is optional and late.
+
+**And the reordering solves a dependency rather than just moving a button.** The authorship default
+above needs a *current identity*, and there is none anywhere in `src/`. Unlocking a credential is
+exactly where one can be obtained: the token answers `GET /user`, which returns a `login`, which is
+an **attested** identity at no additional grant. So authentication and identity are one step, not
+two features — unlock, and the application knows who you are well enough to make you the first
+author of what you create.
+
+**One tension to settle before it is built, because it cuts against the mission.** A credential is a
+file plus a passphrase. Putting that in front of *every* project would charge a passphrase to a
+practitioner who wants to draw a study area and go home — and most projects need no token at all,
+South London included, since reads are public. So the honest form of the rule is **authenticate
+first when opening a *collaborative* project** — one that names a repository — and not as a gate on
+all work. A decrease in friction for evidence generation that adds friction to everything else has
+not been measured, only relocated.
+
 Two honest notes on this step. **The credential store has never made an authenticated request** —
 `credentials-ui.ts` says so in its own copy, *"Existing input nodes do not yet make authenticated
 requests"* — so the pilot is its first consumer and the plumbing from a stored credential to a

@@ -454,6 +454,53 @@ author survives the round trip, which is step 2's first task.
   this document's.
 
 
+## Can a solo project become collaborative?
+
+The practitioner, 2026-10-29. The answer is yes, and most of the conversion is mechanical — a
+repository from the template, the contents written into it, collaborators added, an identity
+attested. Three of those four are steps 0a, 5, 0a and 6 above. **What is not mechanical is the
+authorship**, and measuring the current state shows why.
+
+**Nothing today records when a project began.** `Project` carries `changedAt` (when any workflow
+last changed) and `exportedAt`, and **no `createdAt`**. A converted project therefore cannot say
+when it started, only when it was last touched.
+
+**Every project that exists is unattributed.** All seven built-in projects have no `authors` field,
+and so does every project any practitioner has made before 2026-10-29.
+
+**And the record of a converted project begins at conversion.** Notes written before carry no
+author — only `authored` notes take one, and none of the existing ones were written under an
+identity. Study areas drawn before carry no `drawnBy`. So the contributions statement, which is
+assembled from exactly those two surfaces ([141](141-organising-snows-notes.md)), will **under-credit
+the solo author for all of their prior work** and say so honestly, because it reports the record and
+the record starts late.
+
+### The distinction this exposes, which has no term yet
+
+`fw:identityBasis` answers **"is this login real?"** — `declared` or `attested`. It does not answer
+**"did this person do this work?"**, and those are two different claims:
+
+- **Observed.** The application saw it happen: a project created while an identity was current, a
+  note written under one, a study area drawn under one.
+- **Asserted.** Somebody said so at conversion time, about work done before anything was watching.
+
+An `attested` login on an asserted authorship claim is the dangerous combination, because the
+confirmation attaches to the wrong half: GitHub confirmed *who is typing*, not *who did the work*.
+
+**And conversion is the one moment this matters**, which is the mirror of a rule already shipped.
+`importProjectDocument` refuses to add the importer, because opening somebody's project does not
+make you an author of it. Conversion *must* add somebody — otherwise a solo project becomes a
+collaborative one with an empty byline — so the refusal is not available and the distinction has to
+carry the honesty instead.
+
+### Competency question
+
+12. **Does an authorship claim record whether it was observed or asserted?** Today it does not, and
+    `fw:identityBasis` must not be stretched to cover it: that term is about the login. A second
+    term, or conversion is the one path by which an unearned author can enter a publication's
+    byline with a confirmed-looking login beside it.
+
+
 ## What would answer it
 
 Not a design document. The measurement above came from unpacking one file, and the next step is the

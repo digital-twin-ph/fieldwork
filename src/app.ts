@@ -68,7 +68,8 @@ import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from 
 import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {openPolygonReview} from './polygon-review.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
-import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote} from './notes.js';
+import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachinedNote,
+  UNWRITTEN} from './notes.js';
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel} from './identity.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
@@ -4995,6 +4996,53 @@ function renderNotesView(){
     +Object.values(result?.machined||{}).reduce((n,list)=>n+list.length,0);
   $('#notes-view-count').textContent=total?String(total):'';
 }
+/** OPEN A NOTE, AND LET THE TWO EDITABLE KINDS BE WRITTEN.
+ *
+ *  Keeping an edit means two different things, and the difference is the whole of the
+ *  practitioner's rule of 2026-10-29. An authored note is rewritten where it sits. A machined
+ *  note is NOT: the widget goes on machining its own account every run, so the edit becomes a
+ *  separate authored note carrying both warrants, and nothing is overwritten or silently claimed.
+ *
+ *  `notes-ui` says which of the two is about to happen before the button is pressed; this does
+ *  it. The split lives here because only this module knows where a project's notes are kept. */
+function writeInNoteDialog(note:Note){
+  openNoteDialog(note,{
+    labelOf:id=>workflow.nodes.find(n=>n.id===id)?.params.label,
+    machined:Object.values(result?.machined||{}).flat(),
+    write:(which,draft)=>{
+      const project=projectNow();
+      if(!project)return false;
+      const held=[...(project.notes||[])] as Note[];
+      const {text,section,fn}=draft;
+      if(which.kind==='authored'){
+        const at=held.findIndex(n=>n.kind==='authored'&&n.id===which.id);
+        if(at<0)return false;
+        // THE FUNCTION IS DROPPED WHEN IT IS CLEARED, not stored empty: `readNotes` keeps `fn`
+        // only when it has a value, so an empty string here would be written and then read back
+        // as absent -- two states that look the same and are not.
+        const {fn:_was,...rest}=held[at] as Note&{fn?:string};
+        held[at]={...rest,text,section,...(fn?{fn}:{})} as Note;
+        if(!writeNotes(held))return false;
+        renderNotesView();
+        toast('Your note was kept.');
+        return true;
+      }
+      if(which.kind==='machined'){
+        const fork=forkMachinedNote(which,crypto.randomUUID(),text,new Date().toISOString());
+        // WHO CHANGED THE WORDS, when there is a GitHub login to say so. Absent means
+        // unattributed and stays absent: see `src/identity.ts`. The computation's warrant is
+        // already in `forkedFrom`, so the two are recorded separately rather than merged.
+        const who=currentIdentity(localStorage);
+        if(who)fork.author=who.login;
+        if(!writeNotes([...held,fork]))return false;
+        renderNotesView();
+        toast('Forked into a note of your own. The machined note is unchanged, and the next run '
+          +'will rewrite it.');
+        return true;
+      }
+      return false;
+    }},esc);
+}
 function applyProjectDetails(){
   const key=storageKey(workflow);
   const project=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,readProjects());
@@ -6423,8 +6471,7 @@ document.addEventListener('click',event=>{
   const opened=target.closest('[data-note-open]')?.getAttribute('data-note-open');
   if(opened){
     const note=shownNotes.find(n=>noteKey(n)===opened);
-    if(note)openNoteDialog(note,{labelOf:id=>workflow.nodes.find(n=>n.id===id)?.params.label,
-      machined:Object.values(result?.machined||{}).flat()},esc);
+    if(note)writeInNoteDialog(note);
     return;
   }
   // THE NODE THAT PRODUCED IT, which the prototype links and the practitioner asked of it:
@@ -6433,8 +6480,9 @@ document.addEventListener('click',event=>{
   if(node){switchView('workflow');selected=node;render();return;}
   const section=target.closest('[data-add-note]')?.getAttribute('data-add-note');
   if(!section)return;
-  // ADDED AS AUTHORED, because that is the only kind a person writes here. It starts empty and
-  // says so: a note with placeholder prose in it is a note somebody has to notice and delete.
+  // ADDED AS AUTHORED, because that is the only kind a person writes here. It carries a marker
+  // rather than prose: a note with placeholder sentences in it is a note somebody has to notice
+  // and delete, and `readNotes` drops one carrying nothing at all.
   const project=projectNow();
   if(!project){toast('A note belongs to an investigation. File this workflow under a project first.',
     {tone:'failure'});return;}
@@ -6443,9 +6491,13 @@ document.addEventListener('click',event=>{
   // that another note can point at it. `Date.now()` collides within a millisecond, which is never
   // by hand and certain under a loop.
   const made:Note={kind:'authored',id:crypto.randomUUID(),
-    section:section as WriteUpPart,text:'(empty \u2014 writing is not built yet)'};
-  if(writeNotes([...held,made])){renderNotesView();toast(`A note was added to ${section}.`);}
-  else toast('That note could not be kept on this device.',{tone:'failure'});
+    section:section as WriteUpPart,text:UNWRITTEN};
+  if(!writeNotes([...held,made])){
+    toast('That note could not be kept on this device.',{tone:'failure'});return;}
+  renderNotesView();
+  // AND IT OPENS FOR WRITING, which is the point of adding one. Before writing existed this
+  // toasted and stopped, leaving a card nobody could do anything with.
+  writeInNoteDialog(made);
 });
 // MOVING A NOTE BETWEEN SECTIONS, which the prototype does by dragging. A note's section is where
 // it belongs in the write-up, and that is the practitioner's judgement -- but only for a note

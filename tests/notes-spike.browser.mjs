@@ -39,7 +39,14 @@ const andRun=async page=>{
 
 test('Snow’s own sentences are readable, in the order a reader meets them',{skip},async({page})=>{
   await southLondon(page);
-  await expect(page.locator('#notes-view')).toContainText('9 notes');
+  // THIRTEEN, not the nine quotations this started as. The example gained four notes of its own
+  // on 2026-10-29, when the lessons of experiment 141 were exercised on it, and these two
+  // assertions were left claiming nine -- which is what a gate found on 2026-10-30. The count is
+  // read off the bundle, so it is written as what the bundle holds: nine of Snow's sentences and
+  // four the investigation wrote.
+  await expect(page.locator('#notes-view')).toContainText('13 notes');
+  await expect(page.locator('#notes-view')).toContainText('4 authored');
+  await expect(page.locator('#notes-view')).toContainText('9 quoted');
   // The body in IMRAD order, every part shown -- an absent Results section is a fact about the
   // write-up, not something to hide.
   const parts=await page.locator('.notes-part h3').allTextContents();
@@ -63,7 +70,7 @@ test('each note says what it is and what it does',{skip},async({page})=>{
 
 test('the tab counts what it holds',{skip},async({page})=>{
   await southLondon(page);
-  await expect(page.locator('#notes-view-count')).toHaveText('9');
+  await expect(page.locator('#notes-view-count')).toHaveText('13');
 });
 
 test('an empty section says why it is empty, and offers a note',{skip},async({page})=>{

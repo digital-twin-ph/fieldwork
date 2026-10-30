@@ -69,6 +69,7 @@ import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './
 import {openPolygonReview} from './polygon-review.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart} from './notes.js';
+import {readAuthors} from './identity.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
  *  Inspector re-renders on every setting change. */
@@ -5961,6 +5962,19 @@ async function importProjectDocument(raw:unknown):Promise<string[]>{
   // rather than coerced under a heading its author did not choose.
   const carried=readNotes((document.project as {notes?:unknown}).notes).notes;
   if(carried.length)project.notes=carried;
+  // AND THE AUTHORS COME WITH IT, for the same reason and by the same omission. `newProject` mints
+  // from the name and the subject, so a downloaded investigation arrived crediting nobody -- and a
+  // project whose notes name an author it does not list is a publication with an unlisted author.
+  //
+  // Found 2026-10-29 while planning the collaborative pilot, whose first step the practitioner
+  // named as "tracking identity in downloaded projects": this is what that step found. Read
+  // tolerantly, so an identity that cannot be read is dropped rather than half carried.
+  //
+  // What is deliberately NOT done here: the person importing is not added. Opening somebody's
+  // project does not make you an author of it, and an application that quietly appended the
+  // importer would manufacture authorship on a publication.
+  const authors=readAuthors((document.project as {authors?:unknown}).authors);
+  if(authors.length)project.authors=authors;
   const keys:string[]=[];
   const workflows:Workflow[]=[];
   for(const entry of document.workflows){

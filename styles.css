@@ -815,6 +815,26 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 #note-dialog select{font:inherit;padding:.3rem .4rem;border:1px solid var(--line);border-radius:5px;background:var(--surface-raised-1);color:var(--ink)}
 #note-dialog .dlg-head .muted{font-size:.8rem;font-weight:400}
 #note-dialog .why{font-size:.8rem;opacity:.8}
+
+/* WRITTEN PROSE, as a note renders it. The dialect is in src/prose.ts: no headings and no
+   tables, so nothing here styles one. */
+.prose p{margin:.4rem 0}
+.prose p:first-child{margin-top:0}
+.prose p:last-child{margin-bottom:0}
+.prose ul,.prose ol{margin:.4rem 0;padding-left:1.4rem}
+.prose li{margin:.15rem 0}
+.prose blockquote{margin:.5rem 0;padding:.1rem 0 .1rem .8rem;border-left:3px solid var(--line-soft-1);opacity:.9}
+.prose code{font-size:.92em;padding:.05rem .25rem;border-radius:.2rem;background:var(--surface-tint-1)}
+.prose .prose-display{margin:.7rem 0;text-align:center;overflow-x:auto}
+/* A FORMULA BEFORE IT IS TYPESET reads as the LaTeX somebody wrote, which is a true account of
+   the note rather than a blank where a formula should be. */
+.prose-math{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.95em}
+.prose-math[data-typeset]{font-family:inherit;font-size:inherit}
+.prose-math[data-typeset="failed"]{text-decoration:underline wavy var(--danger-3);text-underline-offset:3px}
+.prose-math math{font-size:1.05em}
+#note-dialog .note-toolbar{display:flex;flex-wrap:wrap;gap:.3rem;margin:0 0 .4rem}
+#note-dialog .note-toolbar .chip{min-width:2.1rem;cursor:pointer}
+#note-dialog .note-preview{margin-top:.6rem;padding:.6rem .7rem;border:1px dashed var(--line-soft-1);border-radius:.3rem}
 #note-dialog .note-status{font-size:.8rem;margin:.5rem 0 0}
 #note-dialog .note-status:empty{display:none}
 #note-dialog .note-status.is-failure{color:var(--danger-3)}

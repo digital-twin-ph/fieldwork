@@ -1,5 +1,6 @@
 import type {Escape} from './types.js';
 import {element} from './dom.js';
+import {toHTML,typeset,hasMarkup} from './prose.js';
 import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,UNWRITTEN,
   WRITE_UP_PARTS,type Note,type MachinedNote,type WriteUpPart} from './notes.js';
 
@@ -136,6 +137,12 @@ export function notesPanel(notes:readonly Note[],
           +(note.kind==='quoted'
             ?`<blockquote>${esc(text)}</blockquote>`
               +(note.establishes?`<p class="muted">Establishes: ${esc(note.establishes)}</p>`:'')
+            // READ AS MARKUP ONLY WHERE IT WAS WRITTEN. The kinds a practitioner may edit are
+            // exactly the kinds whose asterisks and dollars are meant as markup; a quotation is
+            // carried verbatim, and a derived note restates what somebody typed into a widget,
+            // so neither is reinterpreted here.
+            :EDITABLE[note.kind]&&text!==UNWRITTEN
+            ?`<div class="prose">${toHTML(text)}</div>`
             :`<p${text===UNWRITTEN?' class="unwritten"':''}>${esc(text)}</p>`
               +(note.kind==='derived'&&note.detail
                 ?`<p class="muted">${esc(note.detail)}</p>`:''))
@@ -158,8 +165,18 @@ const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">
 <div class="dlg"><div class="dlg-head"><h3 id="note-dialog-title">Note</h3>
 <div id="note-coords" class="coords"></div><p id="note-gloss" class="gloss"></p></div>
 <div class="dlg-body"><div id="note-body" class="readonly"></div>
+<div id="note-toolbar" class="note-toolbar" role="toolbar" aria-label="Formatting" hidden>
+<button type="button" class="chip" data-wrap="**" title="Bold"><strong>B</strong></button>
+<button type="button" class="chip" data-wrap="*" title="Italic"><em>I</em></button>
+<button type="button" class="chip" data-wrap="\`" title="Code">&lt;/&gt;</button>
+<button type="button" class="chip" data-line="- " title="Bulleted list">&bull;&mdash;</button>
+<button type="button" class="chip" data-line="1. " title="Numbered list">1.</button>
+<button type="button" class="chip" data-line="&gt; " title="Quotation">&ldquo;</button>
+<button type="button" class="chip" data-wrap="$" title="Formula, written in LaTeX">&fnof;(x)</button>
+</div>
 <textarea id="note-text" class="note-text" rows="9" hidden
   aria-label="The note" spellcheck="true"></textarea>
+<div id="note-preview" class="prose note-preview" hidden aria-live="polite"></div>
 <p id="note-why" class="why"></p><p id="note-status" class="note-status" role="status"></p>
 <div id="note-detail" class="panel"></div></div>
 <div class="dlg-foot"><span id="note-count"></span>
@@ -257,6 +274,10 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
   const close=$('#note-close') as HTMLButtonElement;
   const body=$('#note-body');
   const count=$('#note-count');
+  const toolbar=$('#note-toolbar');
+  const preview=$('#note-preview');
+  toolbar.hidden=!writing;
+  preview.hidden=true;
   body.hidden=writing;
   area.hidden=!writing;
   save.hidden=!writing;
@@ -282,13 +303,56 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     // the first time has nothing to go back to, so its exit is "Discard" throughout.
     const relabel=()=>{close.textContent=fresh?'Discard'
       :unchanged()?'Close':'Discard changes';};
+    // WHAT IT WILL LOOK LIKE, while it is being written. Markdown with no preview is a format
+    // somebody has to hold in their head, and a formula with no preview cannot be checked at all
+    // -- which is the whole reason the formula is written here rather than pasted in finished.
+    // Shown only once there is markup to read: for a note of plain prose it would be the same
+    // words twice.
+    const show=()=>{
+      const marked=hasMarkup(area.value);
+      preview.hidden=!marked;
+      if(!marked){preview.innerHTML='';return;}
+      preview.innerHTML=toHTML(area.value);
+      void typeset(preview);
+    };
     const touched=()=>{
       tell(area.value);
       status.textContent='';
       status.classList.remove('is-failure');
       relabel();
+      show();
     };
     area.oninput=touched;
+    show();
+    // THE TOOLBAR WRITES MARKDOWN, rather than holding formatting of its own. A button wraps the
+    // selection or starts the lines it covers, so what it produces is what somebody could have
+    // typed -- and what is stored stays the text that was typed either way.
+    toolbar.onclick=event=>{
+      const pressed=(event.target as HTMLElement).closest('[data-wrap],[data-line]');
+      if(!pressed)return;
+      event.preventDefault();
+      const start=area.selectionStart,end=area.selectionEnd;
+      const chosen=area.value.slice(start,end);
+      const wrap=pressed.getAttribute('data-wrap');
+      if(wrap){
+        // Nothing selected: the markers go in with the caret between them, ready to be typed in.
+        area.value=area.value.slice(0,start)+wrap+chosen+wrap+area.value.slice(end);
+        area.selectionStart=start+wrap.length;
+        area.selectionEnd=start+wrap.length+chosen.length;
+      }else{
+        const prefix=pressed.getAttribute('data-line')||'';
+        const from=area.value.lastIndexOf('\n',start-1)+1;
+        const to=area.value.indexOf('\n',end);
+        const until=to<0?area.value.length:to;
+        const lines=area.value.slice(from,until).split('\n')
+          .map((line,at)=>prefix==='1. '?`${at+1}. ${line}`:prefix+line);
+        area.value=area.value.slice(0,from)+lines.join('\n')+area.value.slice(until);
+        area.selectionStart=from;
+        area.selectionEnd=from+lines.join('\n').length;
+      }
+      area.focus();
+      touched();
+    };
     if(section)section.onchange=touched;
     if(workFn)workFn.onchange=()=>{sayGloss(workFn.value);touched();};
     relabel();

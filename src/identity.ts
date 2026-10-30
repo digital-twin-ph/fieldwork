@@ -183,3 +183,44 @@ export function setCurrentIdentity(author:Author|null,
     return true;
   } catch { return false; }
 }
+
+/** THE REPOSITORY A PROJECT IS CO-OWNED IN, and attaching one is what conversion IS.
+ *
+ *  The practitioner, 2026-10-29: *"Can a project that did not start as collaborative become
+ *  one?"* — and then: *"let's address the mechanical gaps above."* This is the first of them. A
+ *  project had no way to name a repository at all, so there was nothing a conversion could do.
+ *
+ *  **Its presence is the whole definition.** A project with a repository is collaborative and a
+ *  project without one is not; there is no separate flag to disagree with it, and no state where a
+ *  project believes it is collaborative and cannot say where. */
+export interface ProjectRepository {
+  owner:string;
+  repo:string;
+  /** When it was attached. The moment a project became collaborative, which for a converted
+   *  project is later than the work it already holds — and that gap is the honest reason a
+   *  contributions statement under-credits earlier work rather than a defect in it. */
+  attachedAt:string;
+}
+
+/** GitHub's rule for a repository name: letters, digits, hyphen, underscore and period, at most
+ *  100 characters, and never `.` or `..` alone. Narrower than the owner rule, which is a login. */
+export const GITHUB_REPO=/^(?!\.{1,2}$)[A-Za-z0-9._-]{1,100}$/;
+
+export const validRepo=(value:unknown):boolean=>
+  typeof value==='string'&&GITHUB_REPO.test(value);
+
+export function readRepository(raw:unknown):ProjectRepository|null{
+  if(!isRecord(raw)||!validLogin(raw.owner)||!validRepo(raw.repo))return null;
+  const attachedAt=typeof raw.attachedAt==='string'&&raw.attachedAt?raw.attachedAt:'';
+  // Without the moment there is no conversion to speak of: the field exists to say WHEN a project
+  // stopped being solo, and a repository with no date cannot answer the question it is here for.
+  if(!attachedAt)return null;
+  return {owner:raw.owner as string,repo:raw.repo as string,attachedAt};
+}
+
+/** `owner/repo`, which is how GitHub writes it and how a practitioner will read it back. */
+export const repositoryLabel=(repository:ProjectRepository):string=>
+  `${repository.owner}/${repository.repo}`;
+
+export const repositoryURL=(repository:ProjectRepository):string=>
+  `https://github.com/${repository.owner}/${repository.repo}`;

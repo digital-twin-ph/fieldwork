@@ -69,7 +69,7 @@ import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './
 import {openPolygonReview} from './polygon-review.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart} from './notes.js';
-import {readAuthors,currentIdentity} from './identity.js';
+import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel} from './identity.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
  *  Inspector re-renders on every setting change. */
@@ -6177,7 +6177,17 @@ function setFullScreen(on:boolean){
 }
 $('#fullscreen-workbench').onclick=()=>setFullScreen(!fullScreen);
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&fullScreen){setFullScreen(false);event.preventDefault();}});
-credentials=installCredentials(document.querySelector<HTMLButtonElement>('#credentials-button')!);
+credentials=installCredentials(document.querySelector<HTMLButtonElement>('#credentials-button')!,
+  // The token is handed over, used once and not kept here. What is kept is the NAME it resolved
+  // to, which is not a secret -- so it survives a reload, where the credential deliberately does
+  // not. See `attestIdentity` for why this costs no additional grant on the token.
+  async token=>{
+    const who=await attestIdentity(token);
+    if(!setCurrentIdentity(who,localStorage))
+      throw new Error(`GitHub confirmed ${authorLabel(who)}, but this device could not store it, `
+        +'so projects you create will not carry the name.');
+    return authorLabel(who);
+  });
 const showCatalog=()=>{try{openCatalogDialog(esc,servingBuild);}catch(error){toast(errorMessage(error),{tone:'failure'});}};
 $('#open-catalog').onclick=showCatalog;
 $('#header-catalog').onclick=showCatalog;

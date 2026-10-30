@@ -1,6 +1,6 @@
 import {isRecord} from './guards.js';
 import {readNotes} from './notes.js';
-import {readAuthors} from './identity.js';
+import {readAuthors,readRepository} from './identity.js';
 
 /** A project is one investigation. One subject, several questions, one workflow per question.
  *
@@ -76,6 +76,39 @@ export interface Project {
    *  names one across 34 commits. Carrying the identity the repository already has into the
    *  artifacts is the point. See `src/identity.ts` and experiment 150. */
   authors?:import('./identity.js').Author[];
+  /** WHEN THIS PROJECT BEGAN, as distinct from when it last changed.
+   *
+   *  Added 2026-10-29 while answering whether a solo project can become collaborative, where the
+   *  measured answer was that nothing recorded a project's own beginning: `changedAt` says when a
+   *  workflow last moved and `exportedAt` whether a copy exists, and neither says when the work
+   *  started. Absent on every project carried over, and not guessed from `changedAt` — a project
+   *  edited today would otherwise claim to have begun today. */
+  createdAt?:string;
+  /** THE REPOSITORY IT IS CO-OWNED IN, and the presence of this field is what makes a project
+   *  collaborative. Attaching one is the conversion. See `src/identity.ts` and experiment 150. */
+  repository?:import('./identity.js').ProjectRepository;
+}
+
+/** Whether this project is collaborative, which is one question and not a flag to keep in step. */
+export const isCollaborative=(project:Project):boolean=>!!project.repository;
+
+/** CONVERSION: a solo project becomes a collaborative one by being given a repository.
+ *
+ *  Returns a new project rather than mutating, and refuses a malformed owner or name rather than
+ *  storing one — a repository that cannot be resolved is worse than none, because the interface
+ *  would show the project as collaborative and every write to it would fail.
+ *
+ *  It deliberately does NOT add the converter to the author list. Under one laptop and one user an
+ *  attested identity speaks for work done here, but attaching a repository is not doing work, and
+ *  a conversion that quietly appended whoever performed it would be the import defect in a
+ *  different coat. Authors are added as authors. */
+export function attachRepository(project:Project,owner:string,repo:string,
+  at:string=new Date().toISOString()):Project{
+  const repository=readRepository({owner,repo,attachedAt:at});
+  if(!repository)
+    throw new Error('Name the repository as an owner and a repository name, '
+      +'as GitHub writes them: digital-twin-ph and example-1855-cholera-south-london.');
+  return {...project,repository};
 }
 
 /** The workflows a built-in project holds, in reading order, with the label each carries in the
@@ -126,8 +159,9 @@ export function newProject(name:string,subject:string,existing:readonly Project[
   const base=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'project';
   let id=base;for(let n=2;existing.some(p=>p.id===id);n++)id=`${base}-${n}`;
   // A project made now knows when it began and that nothing has been exported of it yet.
+  const now=new Date().toISOString();
   return {schema:'fieldwork/project/2',id,name:name.trim()||'Untitled project',
-    subject:subject.trim(),workflows:[],changedAt:new Date().toISOString(),
+    subject:subject.trim(),workflows:[],changedAt:now,createdAt:now,
     ...(author?{authors:[author]}:{})};
 }
 /** WHETHER A COPY OF THIS WORK EXISTS ANYWHERE ELSE, in the glossary's three words.
@@ -202,10 +236,17 @@ export function validateProject(raw:unknown):Project{
   // Authors likewise: an identity that cannot be read is dropped rather than half kept, because an
   // author list is the one place a malformed name would be published as though it had been checked.
   const authors=readAuthors(raw.authors);
+  const createdAt=moment(raw.createdAt);
+  // A repository that cannot be read is dropped, which leaves the project SOLO rather than
+  // collaborative-but-unaddressable. Failing closed is the right direction here: a project wrongly
+  // shown as solo is an inconvenience, and one shown as collaborative with nowhere to write is a
+  // sequence of failures a practitioner cannot diagnose.
+  const repository=readRepository(raw.repository);
   return {schema:'fieldwork/project/2',id:raw.id,name:raw.name,subject:raw.subject,
     workflows:[...new Set(raw.workflows as string[])],
     ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(work?{exportedWork:work}:{}),
-    ...(notes.length?{notes}:{}),...(authors.length?{authors}:{})};
+    ...(notes.length?{notes}:{}),...(authors.length?{authors}:{}),
+    ...(createdAt?{createdAt}:{}),...(repository?{repository}:{})};
 }
 
 /** The input widgets whose payload two workflows can genuinely share.

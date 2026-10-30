@@ -329,6 +329,45 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
 export interface NoteGroup {fn:string; notes:Note[]}
 export interface PartGroup {section:WriteUpPart; groups:NoteGroup[]; count:number}
 
+/** THE NOTES OF ONE PART, IN THE ORDER A PERSON PUT THEM.
+ *
+ *  The practitioner, 2026-10-29: *"In the Notes UI we should be able to move around notes within
+ *  IMRaD sections."*
+ *
+ *  `groupNotes` sorts a part by what each note DOES, known functions first. That is a good default
+ *  and a bad cage: it means a practitioner's own order has nowhere to live, because any arrangement
+ *  they drag into is re-sorted by function on the next render. So order within a part is the order
+ *  of the project's own list, and the function stays as a label on the card rather than a bracket
+ *  that reorders around it.
+ *
+ *  Nothing is stored for this. A position IS an index in the list that already exists, which is why
+ *  reordering needs no new field and why two orders cannot disagree. When it leaves, it leaves as
+ *  `co:List` with `co:firstItem` and `co:nextItem` -- DoCO defines no sequence of its own, and the
+ *  Collections Ontology is what it points at, so a published order is borrowed rather than coined. */
+export const notesOfPart=(notes:readonly Note[],section:WriteUpPart):Note[]=>
+  notes.filter(note=>note.section===section);
+
+/** Move one note to sit immediately before another, within the whole list.
+ *
+ *  Returns a new list. `before` naming a note that is not there, or the note itself, puts it at the
+ *  end of its part rather than failing: a drop past the last card is an ordinary gesture and
+ *  refusing it would teach a practitioner that the bottom of a section is not a place. */
+export function moveNote(notes:readonly Note[],moving:string,before:string|null,
+  key:(note:Note)=>string):Note[]{
+  const from=notes.findIndex(note=>key(note)===moving);
+  if(from<0)return [...notes];
+  const held=[...notes];
+  const [note]=held.splice(from,1);
+  const at=before?held.findIndex(n=>key(n)===before):-1;
+  if(at<0){
+    // The end of its OWN part, not the end of the list: a note dropped below the last card in
+    // Methods belongs under Methods, not after the Discussion.
+    const last=held.map(n=>n.section).lastIndexOf(note.section);
+    held.splice(last+1,0,note);
+  } else held.splice(at,0,note);
+  return held;
+}
+
 /** Grouped for reading: the body in IMRAD order, and within a part the known functions first.
  *
  *  Every part is returned, including the empty ones. An absent Results section is a fact about the

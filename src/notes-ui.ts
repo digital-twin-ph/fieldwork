@@ -1,6 +1,6 @@
 import type {Escape} from './types.js';
 import {element} from './dom.js';
-import {groupNotes,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,
+import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,
   type Note,type MachinedNote} from './notes.js';
 
 /** THE NOTES SURFACE, reaching for the Notes Board prototype.
@@ -85,13 +85,16 @@ export function notesPanel(notes:readonly Note[],
       +`<div class="notes-empty"><p class="muted">${esc(EMPTINESS[part.section]||'')}</p>`
       +`<button class="button" data-add-note="${esc(part.section)}">`
       +`Add note to ${esc(part.section)}</button></div></section>`;
-    const inPart=part.groups.flatMap(group=>group.notes);
+    // IN THE ORDER A PERSON PUT THEM, not re-sorted by function on every render. The function
+    // survives as the chip on the card; what it no longer does is bracket the part and undo a
+    // practitioner's arrangement. See `notesOfPart`.
+    const inPart=notesOfPart(all,part.section);
     const extentOf=noteExtent(inPart);
     return `<section class="notes-part" data-section="${esc(part.section)}">`
       +`<h3>${esc(part.section)} <span class="muted">${part.count} note`
       +`${part.count===1?'':'s'} · ${extentOf.words.toLocaleString()} words</span>${add}</h3>`
       +`<div class="notes-drop" data-drop="${esc(part.section)}">`
-      +part.groups.map(group=>group.notes.map(note=>{
+      +inPart.map(note=>{
         const text=bodyOf(note);
         ordinal++;
         const id=noteKey(note);
@@ -102,7 +105,7 @@ export function notesPanel(notes:readonly Note[],
           +`<div class="notes-labels">`
           +`<span class="ord">${ordinal}.</span>`
           +`<span class="notes-kind notes-kind-${note.kind}">${note.kind}</span>`
-          +(group.fn?`<span class="notes-fn">${esc(group.fn)}</span>`:'')
+          +(('fn' in note&&note.fn)?`<span class="notes-fn">${esc(note.fn)}</span>`:'')
           +(from?`<button class="chip flowlink" data-open-node="${esc(from)}">`
             +`${esc(labelOf(from)||from)}</button>`:'')
           +(note.kind==='authored'&&note.forkedFrom
@@ -119,7 +122,7 @@ export function notesPanel(notes:readonly Note[],
                 ?`<p class="muted">${esc(note.detail)}</p>`:''))
           +`<p class="len muted">${words(text)} words · ${text.length} chars</p>`
           +`</article>`;
-      }).join('')).join('')
+      }).join('')
       +`</div></section>`;
   }).join('');
 

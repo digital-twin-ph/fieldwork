@@ -529,6 +529,56 @@ apparatus rather than one of the four IMRaD parts a note can target.
 
 **Nothing is built.**
 
+### Reusing a document ontology, checked 2026-10-29
+
+The practitioner: *"Can we reuse a document ontology to organize our Notes assets?"* Checked against
+the vocabularies themselves rather than from memory, because the answer determines whether terms
+get coined or borrowed.
+
+**Yes — SPAR, and specifically DEO and DoCO.** DEO (Discourse Elements Ontology,
+`http://purl.org/spar/deo/`) defines **45 classes**; DoCO (Document Components Ontology,
+`http://purl.org/spar/doco/`) imports it and covers structure.
+
+**Every one of the four IMRaD parts already exists there.** `deo:Introduction`, `deo:Methods`,
+`deo:Results`, `deo:Discussion`. This application coined nothing it needed to, and the mapping is
+exact rather than approximate.
+
+**And DEO corroborates a ruling already made here, by omission.** It has **no Limitations class** —
+it has Discussion, Background, Motivation, Conclusion, Evaluation, and no Limitations. Which is
+precisely the ruling `notes.ts` records: *"LIMITATIONS IS A FUNCTION, NOT A FIFTH PART. In IMRAD it
+is a subsection of Discussion."* An external standard agreeing by omission is worth more than one
+agreeing by assertion.
+
+**There is a class for the thing built this morning.** `deo:AuthorContribution`. The author
+contributions statement has a term waiting for it.
+
+Known `fn` values against DEO: `background` → `deo:Background`; `rationale`, `purpose` →
+`deo:Motivation`; `method` → `deo:Methods`; `related literature` → `deo:RelatedWork`; `finding` →
+`deo:Results`; `source` → `deo:BibliographicReference` or `deo:ExternalResourceDescription`.
+Unmatched: `verification` and `limitation` — the first has no DEO class (`deo:Evaluation` means
+something else), the second is a function by the ruling above.
+
+**What does NOT map, and should not be made to.** The four note *kinds* — quoted, machined,
+authored, derived — are a **provenance** distinction, not a discourse one: they record who or what
+produced the words. DEO models what a passage DOES in an argument and is silent on where it came
+from. That half stays PROV's and this application's, and conflating them would lose the thing the
+kinds exist to carry.
+
+**Recommended shape: align, do not replace.** `fn` is deliberately an open string, for a reason
+this document's corpus already paid for — *"a vocabulary closed before its producers exist is a
+vocabulary that gets withdrawn"*, against a ratchet standing at 131 occurrences. Importing DoCO
+would close it. Declaring `rdfs:subClassOf` / `owl:equivalentClass` alignments for the terms that
+genuinely match adds no withdrawable term and makes the receipt readable by anything that speaks
+SPAR.
+
+**And it answers the ordering question that arrived the same hour.** The practitioner: *"In the
+Notes UI we should be able to move around notes within IMRaD sections."* **DoCO does not define
+sequence** — ordering is the Collections Ontology, `co:List` with `co:firstItem` and `co:nextItem`.
+So a reordering feature has a vocabulary to emit into and does not need one invented. Note that a
+linked list is the right thing to *publish* and the wrong thing to *store* for a surface people drag:
+the internal order is a position in a list, and `co:` is how it leaves.
+
+
 ### What these two do not establish
 
 - **That the MMWR survey is a survey.** One article was read in full and a handful of others were

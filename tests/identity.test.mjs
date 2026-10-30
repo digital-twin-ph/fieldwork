@@ -62,3 +62,15 @@ test('a project carries its authors, and a project with none has no field', () =
   const read=validateProject({...base,authors:[{login:'octocat',name:'Mona Lisa'},{login:'-bad'}]});
   assert.deepEqual(read.authors, [{login:'octocat',name:'Mona Lisa',basis:'declared'}]);
 });
+
+test('readNotes carries an authored note’s author, and drops a malformed one', async () => {
+  // Found by exercising the contributions statement on the South London example: four authored
+  // notes carried an author, were stored, and arrived with none, so no writing role was proposed.
+  const {readNotes}=await import('../build/notes.js');
+  const {notes}=readNotes([
+    {kind:'authored',id:'a',section:'Methods',text:'ours',author:'hermantolentino'},
+    {kind:'authored',id:'b',section:'Methods',text:'ours',author:'-not-a-login'},
+    {kind:'authored',id:'c',section:'Methods',text:'ours'},
+  ]);
+  assert.deepEqual(notes.map(n=>n.author), ['hermantolentino', undefined, undefined]);
+});

@@ -90,7 +90,9 @@ Numbered so an answer can cite one.
 
 1. **Granularity.** Is the unit of a file a project, a workflow, or a node? Two authors on different
    workflows must not conflict. Two authors on the *same* workflow probably must — a canvas is a
-   graph, and a silently merged graph is a graph neither author drew.
+   graph, and a silently merged graph is a graph neither author drew. **This is now the decision
+   that unlocks the rest**, for the reason the measurement below gives: the write path commits one
+   file at a time and detects collisions per file, so file granularity *is* the merge strategy.
 2. **Assets.** Does a workflow reference `geo/thames-reaches.geojson` by path and digest instead of
    inlining it? `examples.json` already shows the vocabulary: path, `sha256`, `bytes`. If a node
    held that instead of the coordinates, the 92% goes away and the asset has one home.
@@ -115,6 +117,72 @@ Numbered so an answer can cite one.
 8. **What a browser can do.** Fieldwork is offline-first and runs in a browser. It cannot shell out
    to `git`. Does a collaborative project mean the application speaks to GitHub's API, or that it
    reads and writes a directory a practitioner syncs by other means? This bounds every answer above.
+   **Measured 2026-10-29 and answered — see the next section.**
+
+## What a browser can do, measured 2026-10-29
+
+Question 8 bounded every other answer, so it was measured before anything was designed on top of
+it. Nothing here is a capability check against documentation; these are the responses, and the
+whole plan rested on one header.
+
+**Fieldwork already clones, read-only.** The example fetch is a clone by manifest rather than by
+git: `rawBase` plus a pinned 40-hex commit plus 19 files each with a `sha256` and a `bytes`.
+`fileURL` refuses a path the catalog does not pin and refuses a branch or a short hash, and
+fetched bytes are verified with a refusal rather than a warning. That is a narrower trust root
+than `git clone` has — path-restricted and digest-verified — and it was buildable because of the
+2026-10-23 measurement that `raw.githubusercontent` answers `access-control-allow-origin: *` even
+at a commit SHA and for a binary asset.
+
+What it is **not**: writable, complete (a sparse checkout — the 5,341,773-byte plate is
+deliberately unpinned), or historied. The last is the real constraint. **There is no merge base in
+a browser**, so three-way merge is not available at any granularity.
+
+**The write path exists.** `api.github.com` was probed from the deployed Pages origin,
+`https://digital-twin-ph.github.io`, with no credentials — a browser never sends credentials on a
+preflight, so the decisive request needs none:
+
+| request | result |
+| --- | --- |
+| `OPTIONS` preflight, `PUT`, `authorization,content-type` | **204**, `access-control-allow-origin: *` |
+| | `access-control-allow-methods: GET, POST, PATCH, PUT, DELETE` |
+| | `access-control-allow-headers: Authorization, Content-Type, If-Match, If-None-Match, …` |
+| | `access-control-max-age: 86400` |
+| `OPTIONS` preflight, `DELETE` | 204, `access-control-allow-origin: *` |
+| `GET /user`, no token | 401, `access-control-allow-origin: *`, `x-ratelimit-limit: 60` |
+| `GET` contents | 200, `access-control-allow-origin: *`, **`etag:` present** |
+| `HEAD` contents | 200, `access-control-allow-origin: *` — **no trap here** |
+| `PUT` contents, no token | 401, `access-control-allow-origin: *` |
+| preflight from `https://example.invalid` | 204, `access-control-allow-origin: *` |
+
+**So the GitHub Contents API is reachable from the browser, for writes, with no backend.** Five
+consequences, each from a line above:
+
+1. **Per-file commits with collision detection built in.** `PUT /repos/{owner}/{repo}/contents/{path}`
+   takes the blob `sha` as a precondition, and `If-Match` is an allowed header with `ETag`
+   exposed — so a stale write is refused by GitHub rather than detected by us. **This is why
+   question 1 is now the decision that unlocks the rest.** Against one 394,503-byte gzip the
+   precondition buys nothing, because every save is a whole-project collision. Against one file
+   per workflow and one per note, a collision is *"you both changed this note"* — a thing an
+   epidemiologist can adjudicate, and a thing a conflict inside a gzip cannot even express.
+2. **Conflicts are made rare and legible, not mergeable.** With no merge base, that is the only
+   honest design, and it is a reason to choose granularity on what people edit rather than on what
+   is convenient to serialise.
+3. **One credential does both jobs.** The token that writes a file also answers `GET /user`, which
+   is exactly the `attested` tier of `src/identity.ts`. Identity and persistence are not two
+   integrations.
+4. **`access-control-allow-origin` is `*`, not the echoed origin** — the last row confirms it is
+   not origin-bound. That is a security property rather than a gap: with `*` a browser refuses
+   `credentials: 'include'`, so this can never ride on the practitioner's GitHub session cookies.
+   A token has to be explicit, which is the behaviour we want and did not have to build.
+5. **Authorization is never Fieldwork's.** "Authors are co-owners of the project repo" is a GitHub
+   collaborator list. The application implements no permission model, and a write it is not
+   entitled to make is refused by GitHub with the CORS headers intact, so the refusal is readable
+   rather than an opaque network error.
+
+The credential store has never made an authenticated request — `credentials-ui.ts` says so in its
+own copy, *"Existing input nodes do not yet make authenticated requests"* — so this would be its
+first consumer, with a fine-grained token scoped to contents on one repository.
+
 
 ## What would answer it
 
@@ -142,3 +210,13 @@ same kind:
 - **That the 92% is all removable.** `choropleth` and `ground` were probed for four known files;
   what remains in those 751,686 bytes after the assets come out has not been measured.
 - **Anything about scale.** Nine notes, six workflows, one investigation, one author.
+- **That an authenticated write works.** The preflight was measured and the unauthenticated `PUT`
+  was refused with its CORS headers intact, which is what a browser needs to proceed and to read
+  the refusal. No token was presented, so no write was performed and no write is claimed here.
+- **The authenticated rate limit.** `x-ratelimit-limit: 60` is the *unauthenticated* figure, which
+  is what these probes carried. What a signed-in practitioner gets was not measured, and a
+  per-file write path makes the per-hour ceiling an architectural quantity rather than a detail.
+- **That `*` holds for every endpoint.** Contents, `/user` and the preflights were probed. GitHub
+  may answer differently elsewhere, and the 2026-10-23 `HEAD` trap is the standing reminder that
+  this is measured per request and not per host — though `HEAD` on `api.github.com` does *not*
+  reproduce it.

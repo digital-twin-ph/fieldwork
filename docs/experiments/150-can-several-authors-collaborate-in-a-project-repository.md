@@ -184,6 +184,35 @@ own copy, *"Existing input nodes do not yet make authenticated requests"* — so
 first consumer, with a fine-grained token scoped to contents on one repository.
 
 
+## What belongs to the publication thread, not here
+
+Two things were worked on 2026-10-29 that this document is **not** the home for, recorded here only
+so a reader of 150 can find them. The practitioner's ruling the same day, after they had started to
+blur: *"We are seesawing between notes/publication and collaborative projects/publications so let's
+be sure we put the documentation in the right experiment. They are connected but for clarity we
+have to separate."*
+
+- **Equations as notes**, and the MMWR survey behind them, are in
+  [141](141-organising-snows-notes.md). They concern what a report carries, not who can co-own one.
+- **The author contributions statement** is in the same place, for the same reason: it is
+  publication apparatus, assembled like a title or a reference list. It *depends* on this document
+  for the identities it names — `fw:Author`, and the two tiers of `fw:identityBasis` — and the
+  dependency runs one way. Identity is a prerequisite for co-ownership; a contributions statement
+  is a thing a publication prints.
+
+- **Degrees of reproducibility** are [54](54-degrees-of-reproducibility.md)'s, which already
+  grades inputs on a six-rung ladder — retained, pinned, versioned, dated snapshot, seeded, live —
+  and holds the two rules that matter: a figure's grade is the **minimum** over its inputs, and the
+  grade is capped by producer identity. A discussion on 2026-10-29 of what this thread contributes
+  to reproducibility re-derived a weaker version of that from the worked-example audit's counts
+  before 54 was cited. The corpus standard is explicit that this is the failure mode: *"an
+  experiment that re-derives existing work is worse than no experiment, because it adds a second
+  account to disagree with the first."* 54 is the account.
+
+The boundary, so it stays put: **this document is about the repository** — its format, its
+granularity, its assets, its write path, and who is entitled to change it. Anything about what the
+write-up itself says belongs with the notes.
+
 ## What would answer it
 
 Not a design document. The measurement above came from unpacking one file, and the next step is the

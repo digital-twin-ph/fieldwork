@@ -1,8 +1,8 @@
 # MMWR style, for prose this application machines
 
-_Created 2026-10-28 · Updated 2026-10-28_
+_Created 2026-10-28 · Updated 2026-10-29_
 
-**Status:** a probe, in two parts. Twelve titles were read and the convention below is what they
+**Status:** a probe, in three parts. The third, on equations, was added 2026-10-29. Twelve titles were read and the convention below is what they
 share. The plain-language half is thinner: MMWR's own rules could not be retrieved, and what is
 recorded is the measurement of our machined note against the criteria that could be. Nothing about
 EIS presentations specifically was verified — see the limits at the end.
@@ -175,3 +175,48 @@ read.
 - **That a machined sentence should be active.** Methods sections in practice use the passive
   heavily — *"participants were recruited"* — so "write it actively" may be a plain-language rule
   that this particular genre does not want.
+
+## Part three, 2026-10-29 — equations
+
+The practitioner: *"All of our computations have equations, and these can be automatically
+constructed in LaTex for automatic rendering as notes."* And then the way to check it: *"We can
+investigate MMWR articles for equations."* Looked up here for the same reason part one was: to find
+the convention rather than invent one.
+
+**One article read in full**, not summarised —
+[*Racial and Ethnic Disparities in COVID-19 Incidence by Age, Sex, and Period*, MMWR 70(11)](https://www.cdc.gov/mmwr/volumes/70/wr/mm7011e1.htm):
+
+- It carries **one** equation, and it is the rate: *"(cases/population) x 100,000 persons"*.
+- It appears **three times — in the footnotes to Table 1, Table 2 and the Figure.** Not in Methods.
+- It is **plain inline text. The article contains no display math and no other notation at all.**
+- **The rate ratio and its interval are given no formula.** Methods says only that *"RRs with 95%
+  confidence intervals (CIs) … were calculated"*, and names SAS 9.4.
+
+### The finding that matters
+
+**MMWR prints the formula a reader could reconstruct unaided, and substitutes a software citation
+for the two a reader cannot.** The rate is elementary and it is spelled out; the rate ratio's
+log-normal interval is not, and *"calculated … using SAS 9.4"* is what stands in its place.
+
+That inverts the obvious reading of the proposal. The equation worth machining is not the easy one
+printed in a footnote — it is the one the literature omits, which this application happens to hold:
+`rate-ratio.ts:127` states `exp(ln RR ± z·√(1/a₁ + 1/a₀))` in its own comment, and the result
+carries the interval method it used.
+
+And it settles the format question against LaTeX alone. What this genre prints is an inline
+parenthesised expression in a footnote, which is also the form that works where nothing renders
+math — and nothing here does: the dependency list holds vega, leaflet, maplibre and proj4, and no
+KaTeX or MathJax.
+
+### What part three does not establish
+
+- **That this is a survey.** One article, read in full and verified. A handful of others were seen
+  only as search summaries and are not evidence. The one source that *is* a purposive review of
+  MMWR data reporting — Heilig, 56 full reports, January 2019 to May 2022 — does not quantify how
+  often each measure appears in the chapter read, and says nothing about equations. What would make
+  this a survey is reading the Methods and footnotes of a named sample and counting.
+- **That MMWR's own guidance says any of this.** As in part two, MMWR's author rules could not be
+  retrieved. This is twelve titles' worth of practice in part one and one article's practice here,
+  not a stated rule.
+- **That the other computations state their formulas.** Three do, in code: `rate`, `rate_ratio` and
+  its interval, and `two_by_two`. The rest were not read.

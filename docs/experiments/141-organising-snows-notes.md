@@ -1,6 +1,6 @@
 # 141 — Notes, the story, and the report: one record
 
-_Created 2026-10-26 · Updated 2026-10-26_
+_Created 2026-10-26 · Updated 2026-10-29_
 
 **Status:** tried — the design is proposed and was tested against a publication that already
 exists, before anything was built. Nothing in `src/` carries a note today.
@@ -410,6 +410,142 @@ A communication product must preserve the connection between what it displays an
 results, assumptions and evidence; and a product's presentation filters must stay separable from
 the analytical decisions that produced the numbers. A filter that silently changes a finding is
 an analytical decision wearing a presentation control.
+
+## Amendment, 2026-10-29 — equations, and the author contributions statement
+
+Both arrived while [150](150-can-several-authors-collaborate-in-a-project-repository.md) was being
+written, and both were briefly recorded there before the practitioner separated the threads: *"They
+are connected but for clarity we have to separate."* 150 is about the repository — its format, its
+write path, who may change it. These two are about what the report carries, which is this document.
+
+They share one dependency and it runs one way: both name authors, and an author is
+`fw:Author` with the two tiers of `fw:identityBasis`, which 150 settled. Identity is a prerequisite
+for co-ownership; these are things a publication prints.
+
+### The author contributions statement
+
+The practitioner: *"Because we have authors modifying the artifacts, we can actually quantify the
+amount of work each co-author did in the publication. So that goes into author contributions section
+at the end of the publication."*
+
+This is the clearest member of the apparatus class this corpus already names — the parts
+*"assembled from declarations spread across a workflow rather than written into one place, so no
+single note owns them"*. Nobody writes an author contributions statement, and it is wrong exactly
+when somebody writes it from memory instead of from the record.
+
+Built 2026-10-29 in `src/contributions.ts`, over CRediT, whose fourteen role IRIs were each checked
+to resolve before any was used. The set is closed because it is somebody else's standard.
+
+**What it refuses to do is the design.** The request was to quantify, and a count of acts is the
+only quantity available — but a count is not a measure of contribution. One decisive limitation
+note can outweigh forty drawn boxes and nothing observable here tells them apart. So: no share, no
+percentage, no ranking; authors keep byline order rather than being re-sorted by volume; every role
+is marked **proposed** for the authors to confirm. Journals ask for roles, not proportions, so this
+is also the form they want. Six of the fourteen roles leave no trace in a workflow and are named as
+unevidenced rather than quietly omitted, so a reader can tell a role nobody performed from one the
+application cannot observe.
+
+Evidence base, measured rather than assumed: **two** surfaces carry an author today —
+`AuthoredNote.author` and a study area's `drawnBy`. A statement assembled from them is as thin as
+the record is, and saying so is part of the output.
+
+### Where this thread lives, so it stops seesawing
+
+The practitioner, 2026-10-29: *"It's in a lot of places, for publications. For example we talked
+about table shells (147) and what become required variables depends on study design."* Measured
+across the corpus rather than guessed — documents with more than two mentions of publication,
+write-up, IMRAD, table shell, author contribution or journal:
+
+| owner | what it owns |
+| --- | --- |
+| **141** (this) | the notes, the report they assemble into, its apparatus: equations, author contributions |
+| **147** | the chain from study design to required variables to table shells, and the open question of how a design is **declared or detected** |
+| `docs/research/fieldwork-study-designs-v1.1.md` | the design taxonomy itself — generated elsewhere, unverified here, and labelled as such |
+| `docs/audits/study-designs-and-our-computations.md` | which designs our computations actually serve, read from the code |
+| `docs/research/mmwr-style-for-machined-prose-2026-10-28.md` | MMWR house style: machined titles, and equations |
+| **149** | the Notes surface as built, and what the spike found |
+| **150** | the project **repository**: format, granularity, assets, write path, identity, who may change it |
+| **54** | degrees of reproducibility — the ladder of input classes and the minimum rule |
+| **136** | a figure that stands on its own |
+
+**The boundary that was blurring**, stated once: 150 is about the repository and who may change it;
+141 is about what the report says. Identity is 150's and is a prerequisite; a contributions
+statement is a thing a publication prints, so it is 141's.
+
+**And the boundary with 147**, which is finer and was nearly missed. 147 already writes the chain:
+
+    study design → the computations it licenses → the variables they need
+                 → what to look for in the incoming columns → the shells they fill
+
+The practitioner, 2026-10-29: *"The study designs for epi is in a docs/research note."* So the
+taxonomy is not 147's either — 147 holds the question 147 itself names as the hard one, *how the
+design is declared or detected in the first place*, and the taxonomy and the audit are the two
+documents above.
+
+So **which** equations may be computed at all is 147's question — it is downstream of a design, and
+147 records that no gating exists today: `case-control`, `cohort` and `cross-sectional` appear
+nowhere in `two-by-two.ts`, `epi-estimate.ts` or `rate-ratio.ts`. **How a licensed computation's
+equation is written into the report** is this document's. 147 anticipated the junction: *"during
+table input, the variables can be mapped to computation/equation terms already."*
+
+### Equations as notes
+
+The practitioner: *"All of our computations have equations, and these can be automatically
+constructed in LaTex for automatic rendering as notes."*
+
+**The measurement is not here.** It is a probe against a journal corpus, so it lives with the other
+one: [`docs/research/mmwr-style-for-machined-prose-2026-10-28.md`](../research/mmwr-style-for-machined-prose-2026-10-28.md),
+part three. One MMWR article read in full carries exactly one equation — the rate, as plain inline
+text in three table and figure footnotes — and gives the rate ratio and its interval no formula at
+all, naming SAS 9.4 instead.
+
+**What Fieldwork holds**, read off the implementations rather than from a textbook, because a
+formula asserted for a computation nobody read is the failure this corpus exists to prevent:
+
+| computation | the formula as implemented |
+| --- | --- |
+| `rate` | `numerator / denominator × multiplier` (`rate.ts:91`) |
+| `rate_ratio` | `(a₁/n₁) / (a₀/n₀)` — and `rate-ratio.ts:121` notes the multiplier **cancels** |
+| `rate_ratio` interval | `exp(ln RR ± z·√(1/a₁ + 1/a₀))`, stated at `rate-ratio.ts:127` |
+| `two_by_two` | risk ratio, odds ratio, risk difference, with log/Wald intervals |
+
+**Three decisions follow, and the probe changed two of them before anything was built.**
+
+1. **A note carries both forms, not LaTeX alone.** What this genre prints is an inline parenthesised
+   expression; LaTeX serves a journal that sets display math. The plain form is also the only one
+   that works today, since nothing here renders math.
+2. **The equation worth emitting is the one the literature omits.** The rate is spelled out in
+   footnotes because a reader could reconstruct it unaided. The interval is replaced by a software
+   citation — and that is the step this application can supply.
+3. **The instantiated form is the valuable one.** A symbolic formula restates a textbook; the same
+   formula with this run's numbers substituted lets a reader check the arithmetic. That is a
+   reproducibility contribution in [54](54-degrees-of-reproducibility.md)'s narrow sense, unlike
+   the identity thread, which serves accountability.
+
+An equation note is a **machined** note by that kind's own definition — *prose a widget generated
+for a part of a write-up*. Not a new kind, and the rule that editing one forks it into an authored
+note holds unchanged. Where it lands is open: MMWR puts it in a footnote, and a footnote is
+apparatus rather than one of the four IMRaD parts a note can target.
+
+**Nothing is built.**
+
+### What these two do not establish
+
+- **That the MMWR survey is a survey.** One article was read in full and a handful of others were
+  seen only as search summaries. The one source that *is* a purposive review of MMWR data
+  reporting — Heilig, 56 full reports from January 2019 to May 2022 — does not quantify how often
+  each measure appears in the chapter read here, and says nothing about equations. So the finding
+  is one article's practice, verified, and not a measured frequency across the journal. What would
+  make it one is reading the Methods and footnotes of a named sample and counting.
+- **That MMWR's practice is the right target.** It is a field-epidemiology weekly with a house
+  style, chosen because it is the genre this work sits in. A journal that sets equations as display
+  math would want the LaTeX that MMWR's style does not use, which is the argument for carrying both
+  forms rather than picking one.
+- **That any equation note exists.** Nothing is built. The formulas above were read off the
+  implementations and the survey changed the intended format before a line was written, which is
+  the whole value of having run it first.
+- **That a contributions statement has ever been assembled from a real project.** It was exercised
+  on constructed authors and on South London's notes in a scratch run, not published.
 
 ## What this does not establish
 

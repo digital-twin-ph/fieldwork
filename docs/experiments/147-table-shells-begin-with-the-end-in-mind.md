@@ -1,6 +1,6 @@
 # 147 — Table shells: begin with the end in mind
 
-_Created 2026-10-28 · Updated 2026-10-28_
+_Created 2026-10-28 · Updated 2026-10-29_
 
 **Status:** asked — and the central question was answered on the day it was asked, by the practitioner, in the section below. What remains unanswered is narrower and is named there.
 
@@ -523,6 +523,23 @@ none.
 7. **Settle the 8.40 / 5.35 remainder.** The denominator unit accounts for the gap; whether
    anything is left for ecological misclassification has not been computed. The lab is where that
    belongs, since the expectation must come from outside this application.
+
+## Where the equation itself gets written, 2026-10-29
+
+The chain above ends at the shells. One step past them belongs to
+[141](141-organising-snows-notes.md), and the boundary is worth stating because the two were
+briefly recorded in the same place: **which** computations a design licenses is this document's
+question; **how** a licensed computation's equation reaches the report is 141's.
+
+141 measured that the second question has a non-obvious answer. An MMWR report was read in full and
+carries exactly one equation — the rate, as *"(cases/population) x 100,000 persons"* — as plain
+inline text in three table and figure footnotes, with no display math anywhere, while the rate
+ratio and its interval are given no formula at all and a software citation instead. That bears on
+this document only in where it lands: a footnote is apparatus, not one of the four IMRaD parts a
+note can target.
+
+This document's own junction, already written above, is the one to build to: *"during table input,
+the variables can be mapped to computation/equation terms already."*
 
 ## What this does not establish
 

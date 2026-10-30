@@ -13,6 +13,14 @@ can draw it, or take it from a published administrative boundary.
 **Drawn.** A bounding box, a polygon you click out, or a circle around a point. Quick, and it is
 yours — nothing outside the workflow knows what it means.
 
+A drawn shape cannot be fetched by anybody else, so the thing worth recording about it is **who
+drew it**. If a GitHub login is set on the area, the receipt names that person as the author of the
+geometry and says whether the login was simply entered here or confirmed by GitHub. With no login
+set, nobody is named: the receipt reports the shape and leaves the author blank rather than
+assuming it was whoever opened the file. This also applies if you take a published boundary and
+then move it — the source is credited for what the shape came from, and you are credited for the
+shape.
+
 **From a boundary source.** Chosen by country and level from geoBoundaries: ADM1 is usually a
 province or region, ADM2 a district or city, and what each level means differs by country. The
 level is checked before anything is downloaded, so you see how many units there are and how

@@ -138,7 +138,25 @@ export interface AreaRevision {at:string; geometry:Boundary; selectionMode:'bbox
 /** `country` is the ISO3 this area is in, said once here rather than again in every widget that
  *  needs it. An acquired boundary states it in its own identifier and this is left unset; a
  *  polygon somebody drew states nothing, and then this is where they say it. */
-export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Boundary|null; spatialReference?:SpatialReference; country?:string} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference; country?:string};
+/** WHO DREW THIS SHAPE, when nothing can be fetched to reproduce it.
+ *
+ *  The practitioner, 2026-10-29, settling the seven study areas the worked-example audit counts as
+ *  carrying a geometry with no declared source: *"For study area, it's easy -- any study area
+ *  sourced from geoboundaries gets that provenance. Anything else will either be the user or
+ *  someone else, depends on who created the study area if collaborative project."*
+ *
+ *  So a drawn extent's provenance is a PERSON, not a dataset, and that is the complete answer
+ *  rather than a weaker one: a hand-drawn boundary cannot be re-fetched by anybody, and the
+ *  strongest true statement about where it came from is who drew it and when.
+ *
+ *  It also applies to an ACQUIRED boundary that was then altered. `studyAreaN3` already refuses to
+ *  attribute a modified shape to its source -- *"The source is cited for what this was derived
+ *  from, not as the author of this shape"* -- and this is the author that sentence leaves unnamed.
+ *
+ *  `basis` travels with it so a receipt cannot overstate the name: see `src/identity.ts`, where
+ *  `declared` means somebody typed it and nothing checked it. */
+export type DrawnBy = {login:string; basis:import('./identity.js').IdentityBasis; at?:string};
+export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Boundary|null; spatialReference?:SpatialReference; country?:string} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance; drawnBy?:DrawnBy} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference; country?:string};
 export interface Exclusion {sourceNodeId:string; featureId:string; signature:string; reason:string}
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';
 export interface Measurement {squareMetres:number; value:number; unit:AreaUnit; method:string}

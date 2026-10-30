@@ -74,3 +74,50 @@ test('readNotes carries an authored note’s author, and drops a malformed one',
   ]);
   assert.deepEqual(notes.map(n=>n.author), ['hermantolentino', undefined, undefined]);
 });
+
+test('a token becomes an attested identity, and the token never appears in an error', async () => {
+  const {attestIdentity}=await import('../build/identity.js');
+  const seen=[];
+  const ok=async(url,init)=>{seen.push({url,auth:init.headers.Authorization});
+    return {ok:true,status:200,json:async()=>({login:'octocat',name:'Mona Lisa'})};};
+  const who=await attestIdentity('github_pat_SECRET',ok);
+  assert.equal(who.login,'octocat');
+  assert.equal(who.name,'Mona Lisa');
+  assert.equal(who.basis,'attested');          // the whole point of the call
+  assert.ok(who.at, 'an attested identity records when GitHub answered');
+  assert.match(seen[0].url, /\/user$/);
+  assert.equal(seen[0].auth, 'Bearer github_pat_SECRET');
+  // A refusal must not carry the secret that caused it.
+  const bad=async()=>({ok:false,status:401,json:async()=>({})});
+  await assert.rejects(attestIdentity('github_pat_SECRET',bad),
+    e=>!String(e.message).includes('github_pat_SECRET')&&/expired|copied whole/.test(e.message));
+});
+
+test('being offline leaves a declared identity exactly as valid as it was', async () => {
+  const {attestIdentity}=await import('../build/identity.js');
+  const offline=async()=>{throw new Error('network down');};
+  await assert.rejects(attestIdentity('t',offline), /could not be reached/);
+});
+
+test('GitHub answering without a usable login confirms nothing', async () => {
+  const {attestIdentity}=await import('../build/identity.js');
+  const odd=async()=>({ok:true,status:200,json:async()=>({login:'-not-valid'})});
+  await assert.rejects(attestIdentity('t',odd), /without a usable login/);
+});
+
+test('the current identity survives a reload, and a refusing store is reported as refusing', async () => {
+  const {currentIdentity,setCurrentIdentity}=await import('../build/identity.js');
+  const mem=new Map();
+  const store={getItem:k=>mem.has(k)?mem.get(k):null,setItem:(k,v)=>mem.set(k,v),
+    removeItem:k=>mem.delete(k)};
+  assert.equal(currentIdentity(store), null);
+  assert.equal(setCurrentIdentity({login:'octocat',basis:'attested'},store), true);
+  assert.equal(currentIdentity(store).login, 'octocat');
+  assert.equal(setCurrentIdentity(null,store), true);
+  assert.equal(currentIdentity(store), null);
+  // A store that throws must not be reported as having kept it: the next project would be
+  // attributed to somebody this device has forgotten.
+  const refuses={setItem(){throw new Error('quota');},removeItem(){}};
+  assert.equal(setCurrentIdentity({login:'octocat',basis:'declared'},refuses), false);
+  assert.equal(currentIdentity(null), null);
+});

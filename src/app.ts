@@ -69,7 +69,7 @@ import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './
 import {openPolygonReview} from './polygon-review.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart} from './notes.js';
-import {readAuthors} from './identity.js';
+import {readAuthors,currentIdentity} from './identity.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
  *  Inspector re-renders on every setting change. */
@@ -4762,7 +4762,10 @@ function openProjectDialog(){
 function createProjectFromDialog(){
   const name=$('#project-name-input').value.trim();
   if(!name){$('#project-name-input').focus();toast('A project needs a name: what are you investigating?');return;}
-  const stored=readProjects(),project=newProject(name,$('#project-subject-input').value,allProjects());
+  // The person making it is its first author. Absent when this device records nobody, and then
+  // the project simply has none -- an unattributed project is honest, a guessed author is not.
+  const stored=readProjects(),project=newProject(name,$('#project-subject-input').value,
+    allProjects(),currentIdentity(localStorage));
   const key=`${project.id}/w1`;
   project.workflows=[key];
   if(!writeProjects([...stored,project])){$('#project-dialog').close();return;}

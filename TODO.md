@@ -1269,6 +1269,48 @@ DE mode.
    `src/attribute-schema.ts` still covers `PointCollection` only; table, raster and network have
    nothing, and that is what remains true.
 
+### Discussions as the governance surface, and two chart items the demo needs
+
+Raised 2026-10-31. The first is recorded in
+[155](experiments/155-discussions-as-the-governance-surface.md); the other two came from reading
+the running application and are not yet experiments.
+
+- **Discussions for a project — experiment 155.** The companion to 150: one made a clash legible
+  and cannot make one rare. A fine-grained token with Discussions: Read and write now exists,
+  held outside the repository. What has to be found out first is in 155: whether the WRITE path is
+  GraphQL only, whether `api.github.com`'s GraphQL endpoint answers CORS the way the Contents API
+  did, and whether a decision can be exported back into the repository — because a repository
+  clones and a discussion does not. The open design question is whether Fieldwork should post at
+  all, or only read and export.
+
+- **A bar chart should be able to order its bars.** Largest to smallest, smallest to largest, or
+  by category name, which is what it does today. **The node in South London is labelled "Deaths
+  per 1,000 people, ranked" and the bars are alphabetical** — Battersea, Borough Road, Brixton,
+  Camberwell — so the label already claims the capability that does not exist, which is the
+  sharpest argument for adding it.
+
+  Noticed in the same figure and NOT yet diagnosed: the printed values do not look proportional to
+  the bars. Brixton's bar is roughly a quarter of Battersea's and reads 0 against Battersea's 5,
+  and Dulwich has neither a bar nor a number. Either the printed value and the bar length are not
+  the same quantity, or a rate is being rounded to whole numbers and everything under 1 is
+  reported as 0. Read off a screenshot and worth ten minutes before anything is built on it.
+
+- **Snow's natural experiment is loaded and not shown.** The practitioner: *"how did John Snow
+  demonstrate change in mortality from the Lambeth Company moving their water intake beyond the
+  tidal limit. How are we visually demonstrating the difference?"* **We are not.** The workflow
+  `Cholera in 1849 compared with 1854` is two nodes — a `table_input` of Table XII and a
+  `table_output` — so the data carrying his strongest argument is loaded and printed as a grid.
+
+  Lambeth moved its intake to Thames Ditton, above the tidal limit, in **1852**, between the two
+  epidemics. So 1849 is before and 1854 is after, the sub-districts Lambeth supplied should fall
+  while Southwark and Vauxhall's should not, and the company that did not move is the control. A
+  before-and-after with a comparison group, in data this repository already holds.
+
+  **The two chart items are one piece of work.** The figure that demonstrates it is a paired
+  comparison per sub-district — two bars or a slope — coloured by supplying company and **ordered
+  by the change, largest fall first**. The chart widget today draws one value per category in the
+  order the keys arrive, so it can express neither half.
+
 ### Known defects, not blocking
 
 Recorded because they are real, ordered by nothing in particular. Each says what it waits on.

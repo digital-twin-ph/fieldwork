@@ -177,10 +177,12 @@ export function figureFor(nodeId:string,run:RunArtifacts|undefined,esc:Escape):s
   // on the table `two_by_two` emits, so anything carrying one draws as one and the port stays as
   // it was. The output's own `view` is not consulted because the author of a `table_output` node
   // did not choose to publish a generic table -- they connected a two-by-two to it.
-  const instrument=(table as unknown as {twoByTwo?:TwoByTwoResult})?.twoByTwo;
+  const carried=table as unknown as {twoByTwo?:TwoByTwoResult;unit?:string;
+    design?:{design:string;unitOfAnalysis:string;sentence:string}};
+  const instrument=carried?.twoByTwo;
   if(instrument?.kind==='two-by-two')
     return `<figure class="notes-figure" data-figure="two-by-two">`
-      +twoByTwoMarkup(instrument,esc)+`</figure>`;
+      +twoByTwoMarkup(instrument,esc,carried.design,carried.unit)+`</figure>`;
   // THE PRODUCER SAYS WHICH ARTIFACT IT IS, and this asks rather than guesses.
   //
   // The first version preferred a table wherever one existed, reasoning that `rate` emits a chart

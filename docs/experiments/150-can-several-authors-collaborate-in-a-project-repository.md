@@ -2,10 +2,12 @@
 
 _Created 2026-10-29 · Updated 2026-10-31_
 
-**Status:** asked — the question is posed and the architecture is part built. **Competency
-question 1 was decided on 2026-10-31 by the measurement this document asked for, and the layout is
-published as `digital-twin-ph/fieldwork-project-template`.** The converter between that layout and
-the application is still unbuilt, which is now the whole of the remaining work. Step 1 of the pilot below is done, and what exists was measured; those measurements already rule one option out. What exists was measured, and the
+**Status:** tried — the layout is published as `digital-twin-ph/fieldwork-project-template`,
+competency question 1 was decided by measurement, and **from 2026-10-31 the application WRITES the
+layout**: a project exports as a repository, and the 24 files it emits for South London are the
+same 24 the hand-made conversion produced. Reading one back is unbuilt, so the converter is half
+done and the half that exists is the half a practitioner needs first — it is how work leaves the
+application and reaches a colleague. Step 1 of the pilot below is done, and what exists was measured; those measurements already rule one option out. What exists was measured, and the
 measurement already rules one option out. What would answer the rest is named at the end.
 
 The practitioner, 2026-10-29, after [149](149-the-notes-spike.md) showed that notes carry their own
@@ -887,6 +889,40 @@ same kind:
   externalise stops being 44 per cent of it.
 - Question 6 is answerable separately and cheaply, because identity is a name and a handle attached
   to a note, not a login.
+
+## The application writes it — 2026-10-31
+
+The practitioner, on why this could not stay recorded-and-unbuilt: *"it is a selling point of FW,
+to decrease friction everywhere in the epidemiologist's workflow, from designing an investigation,
+implementing its workflows and managing evidence generation, and publication. That is the
+compelling vision we are trying to sell."*
+
+`src/project-repository.ts` emits the layout as paths and contents, and `exportProjectRepository`
+in `app.ts` zips it. **Measured on South London the same day: 24 files emitted against the 24 the
+hand conversion produced** — 8 workflows, 13 notes, `project.json`, `assets/manifest.json`,
+`.fieldwork/format.json` — with all eight workflow file names reproducing the published ones
+exactly, truncation rule included.
+
+**Three decisions the writing forced, none of them visible while the conversion was a script.**
+
+- **An unnamed workflow is refused, not filed under its key.** The first version fell back to the
+  storage key, which would have written `p-w1.json` — the `w7.json` problem this layout exists to
+  avoid, done silently on the one workflow nobody had named.
+- **A filename clash is refused, never suffixed.** Two workflows slugging alike means two names a
+  reader cannot tell apart either, and `-2` would hide that in a pull request.
+- **Machined notes are not committed; authored ones are.** Found by exporting and counting: the
+  first version wrote 11 files where the conversion has 24, because it read a field the write-up
+  store does not have. Fixing it exposed the better question — a machined note is prose the
+  application wrote from a run, stamped with its build, and committing it would put derived output
+  in a repository and guarantee a conflict on every re-run. **The same rule the layout already
+  applies to payloads**: the acquired thing is not committed, the declaration that reproduces it
+  is. A clone regenerates machined notes by pressing Run.
+
+**The format declaration the application writes is not the template's.** The template's says
+*"NOTHING IN FIELDWORK READS OR WRITES THIS LAYOUT"*, which stopped being true for writing and is
+still true for reading. What is emitted now says it writes and cannot yet read, because a
+declaration that implied a round trip would invite somebody to export a repository and expect to
+open it again.
 
 ## What this does not establish
 

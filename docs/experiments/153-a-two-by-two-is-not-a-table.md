@@ -177,6 +177,80 @@ count — the distinction `cellOf` already enforces when it refuses to treat an 
 These survive either option, because they describe the instrument rather than the port. Nothing
 renders them yet.
 
+## Mapping the variables onto the letters, and what it would cost
+
+The practitioner, 2026-10-31: *"What about explicitly mapping the variables to A, B, C, D or to
+margin totals? That can help make computations more deterministic."*
+
+This is the item `docs/directions.json` holds back by name — *"the import-time mapping of columns
+to equation terms"* — so what follows is an assessment and not a decision.
+
+**The letters are DERIVED today, not declared.** `two_by_two` takes six parameters
+(`exposureColumn`, `exposed`, `unexposed`, `outcomeColumn`, `caseValue`, `nonCaseValue`) and
+`cellOf` filters the table for each cell. Nobody says "this is `a`"; `a` is whatever one row
+matches two values.
+
+**The arithmetic is already deterministic; the MEANING is not.** Given a table, `cellOf` returns
+the same four numbers every time. What varies is what those numbers count, and the audit found it
+in this repository: South London carries a rate ratio of **8.40 on houses** and a risk ratio of
+**5.35 on people**, both correct, and *"in the letters one computation took a+b as houses and the
+other as people"* with nothing on either figure saying so. **That is the determinism worth
+buying**, and part of it was bought on 2026-10-31 without any mapping at all: the instrument now
+prints what the cells count beside the declared unit of analysis, so South London's ecological
+two-by-two reads *"unit of analysis: sub-district · cells count people"* — two different subjects,
+both stated, which is the ecological fallacy made legible rather than inferred.
+
+**What an explicit mapping would add beyond that.**
+
+- **A table already in two-by-two shape could be used as one.** `cellOf` requires long form with
+  exactly one row per combination; a published 2×2 has to be reshaped first.
+- **Margins as input.** Published tables often give `a`, `a+b`, `a+c` and `N` — Snow's own do —
+  and the rest is subtraction. Today all four cells are required.
+- **Declared once and reused.** The directions entry's actual argument: the mapping belongs at
+  table input, so a column's role is stated where the data enters rather than re-entered at every
+  computing widget.
+
+**And what it would cost, which is the part to design carefully.** The derivation is not only a
+convenience; it is where four refusals live, and a direct mapping gets none of them for free:
+
+| Refusal today | What it catches | Under a direct mapping |
+| --- | --- | --- |
+| more than one row matches a cell | an un-totalled table silently summed | nothing knows rows were collapsed |
+| a cell has no row | a missing combination read as zero | the cell is simply whatever was pointed at |
+| a value is not a whole number | a table of rates or percentages | the same, unchecked |
+| `strataLeftOut` | **South London's "Both companies" — N of 186,787 against a table of 486,936** | nothing knows other strata exist |
+
+The last one is the serious one. The stratum warning is the commonest way a two-by-two misleads,
+and it exists only because the widget sees the whole table and knows which values were *not*
+named. **Point at four cells directly and that check cannot be made at all.**
+
+**Margins bring a refusal of their own.** If `b` is derived as `(a+b) − a`, and the margin and the
+cell came from different rows of a published table, they can disagree — so a mapping that accepts
+margins needs a consistency check (`a + b = a+b`, and the four cells summing to `N`) that nothing
+needs today, because today the margins are computed rather than supplied.
+
+**TWO KINDS OF MAPPING, AND THE TABLE ABOVE ONLY INDICTS ONE.** The practitioner, correcting this
+the same day: *"The data tables are inputs to the computational epi widgets (2x2) so columns
+(variables) can be mapped to 2x2 cells."* That is the distinction the cost table missed.
+
+| | what is declared | refusals |
+| --- | --- | --- |
+| **cell → number** | this number is `a` | **all four lost**: the widget never sees the table |
+| **column+value → cell** | `a` is `water_supply = "Southwark and Vauxhall only"` × `measure = "deaths_seven_weeks"` | **all four kept**: the widget still reads the whole table |
+
+The second is what the practitioner means, and it is **what `two_by_two` already does** — the six
+parameters encode exactly that mapping, and `cellOf` IS the letter-to-(column, value) function.
+What is missing is not the mapping but its VISIBILITY: nothing on the Inspector or the figure says
+which column and which value define `a`. The audit's item 2a says the same thing from the other
+end — *"the parameters give the headings, `cellOf` is the letter-to-(column, value) mapping"*.
+
+So the work is **surfacing a mapping that exists**, not replacing a derivation with a pointer. The
+cost table above stands only against the cell → number form, and that form should not be built:
+it buys directness and pays with the stratum check, which is the commonest way a two-by-two
+misleads.
+
+Margins remain the one genuinely new input, and the consistency refusal above is theirs.
+
 ## What this does not establish
 
 - **That the standard formatting is one formatting.** This asserts the letters, the margins and

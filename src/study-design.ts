@@ -59,8 +59,13 @@ export const DESIGN_LICENCES:Record<StudyDesign,DesignLicence>={
   'cohort':{rowProportion:'risk',
     estimates:['risk ratio','odds ratio','risk difference'],
     unitOfAnalysis:'person',
-    because:'A cohort samples people and follows them, so the row totals are populations at risk '
-      +'and a/(a+b) is a risk.'},
+    // UNIT-NEUTRAL WORDING, because the unit is declared and may not be a person. Read off the
+    // screen on 2026-10-31: South London's water-company workflow is a cohort of HOUSES -- Snow
+    // knew the supplying company per house -- and this sentence said "samples people" directly
+    // under a declared unit of analysis of "house". A licence that contradicts the declaration
+    // beside it is worse than one that says less.
+    because:'A cohort follows the subjects it sampled, so the row totals are the populations at '
+      +'risk and a/(a+b) is a risk.'},
   // THE ONE THAT PREVENTS A WRONG NUMBER. In case-control sampling `a+b` and `c+d` are artefacts
   // of how many cases and controls somebody chose to sample, so `a/(a+b)` is not a risk, and a
   // risk ratio and a risk difference built on it are not estimable at all. Only `ad/bc` survives,
@@ -78,8 +83,8 @@ export const DESIGN_LICENCES:Record<StudyDesign,DesignLicence>={
   'cross-sectional':{rowProportion:'prevalence',
     estimates:['prevalence ratio','prevalence odds ratio','prevalence difference'],
     unitOfAnalysis:'person',
-    because:'A cross-sectional study measures everybody at one time, so a/(a+b) is a prevalence '
-      +'rather than a risk. The arithmetic is the same and the names are not.'},
+    because:'A cross-sectional study measures every subject at one time, so a/(a+b) is a '
+      +'prevalence rather than a risk. The arithmetic is the same and the names are not.'},
   'ecological':{rowProportion:'group-level proportion',
     estimates:['risk ratio','odds ratio','risk difference'],
     unitOfAnalysis:'group',
@@ -154,7 +159,11 @@ export const studyDesignSentence=(node:WorkflowNode<'study_design'>):string=>{
   const {design,period,unitOfAnalysis}=node.params;
   const licence=DESIGN_LICENCES[design];
   const unit=unitOfAnalysis.trim()||licence.unitOfAnalysis;
-  return `Declared as a ${design} study`
+  // "a ecological study" -- read off the screen on 2026-10-31. The six are a closed set, so the
+  // article is decided by the set rather than by a rule about vowels that would be wrong for a
+  // seventh nobody has added.
+  const article=design==='ecological'?'an':'a';
+  return `Declared as ${article} ${design} study`
     +(period.trim()?`, ${period.trim()}`:'')
     +`. The unit of analysis is the ${unit}. ${licence.because}`;
 };
@@ -169,6 +178,18 @@ export const studyDesignSentence=(node:WorkflowNode<'study_design'>):string=>{
  *  `fw:licensedEstimate` is written once per estimate the design permits, INCLUDING none: a
  *  case series licenses no ratio, and a receipt that simply omitted the property would be
  *  indistinguishable from one written before the property existed. */
+/** WHAT TRAVELS ON THE `design` PORT: the declaration, already worded, so a consumer reports it
+ *  rather than re-wording it. The licence rides along because step 3 gates on it and a gate that
+ *  had to look the design up again could disagree with the sentence beside it. */
+export interface DeclaredDesign {
+  kind:'study-design';
+  design:StudyDesign;
+  period:string;
+  unitOfAnalysis:string;
+  licence:DesignLicence;
+  sentence:string;
+}
+
 export function studyDesignReceipt(node:WorkflowNode<'study_design'>,runId:string){
   const entity=`<urn:fieldwork:run:${runId}:output:${node.id}>`;
   const quote=(v:string)=>JSON.stringify(v);
@@ -183,8 +204,15 @@ export function studyDesignReceipt(node:WorkflowNode<'study_design'>,runId:strin
       ?`;\n`+licence.estimates.map(name=>`  fw:licensedEstimate ${quote(name)}`).join(';\n')
       :'')
     +`.\n`;
-  return {nodeId:node.id,kind:'declaration' as const,
+  // THE SAME SHAPE EVERY OTHER RECEIPT HAS, including the empty fields. `receiptText` renders a
+  // receipt by its kind and falls through to a RULE node's shape, which reads `conclusions` --
+  // so a receipt that declared a new kind and omitted the field took the run down with
+  // "Cannot read properties of undefined (reading 'map')". Found 2026-10-31 by running the
+  // workflow rather than by any test: no unit test renders a receipt. `conclusions` is empty
+  // because a declaration infers nothing, and saying that with an empty array is different from
+  // not saying it.
+  return {nodeId:node.id,kind:'declaration' as const,facts,rules:'',input:facts,conclusions:[],
     method:studyDesignSentence(node),
     design:node.params.design,period:node.params.period,unitOfAnalysis:unit,
-    licenses:[...licence.estimates],facts};
+    licenses:[...licence.estimates]};
 }

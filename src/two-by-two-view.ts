@@ -110,10 +110,27 @@ export function twoByTwoEstimatesMarkup(result:TwoByTwoResult,esc:Escape):string
 /** The instrument whole: the table, then the estimates, then whatever the computation warned
  *  about. The warnings are drawn rather than dropped because the one that matters most here --
  *  a stratum left out of the comparison -- is what makes N smaller than the table it came from. */
-export function twoByTwoMarkup(result:TwoByTwoResult,esc:Escape):string{
+export function twoByTwoMarkup(result:TwoByTwoResult,esc:Escape,
+  declared?:{design:string;unitOfAnalysis:string;sentence:string},unit?:string):string{
   const warnings=result.warnings.length
     ?`<p class="tbt-warning muted">${result.warnings.map(w=>esc(w)).join(' ')}</p>`:'';
+  // THE DECLARED DESIGN, ABOVE THE NUMBERS RATHER THAN UNDER THEM. What a measure MEANS depends
+  // on it -- a/(a+b) is a risk in a cohort, a prevalence in a cross-sectional survey and not a
+  // quantity at all under case-control sampling -- so a reader needs it before they read the
+  // cells, not after. Absent where nothing was declared: an undeclared design is not a cohort,
+  // and a figure asserting one nobody chose would be worse than a figure asserting none.
+  // WHAT THE CELLS COUNT, beside the design. This is the determinism failure the study-design
+  // audit records: South London carries a rate ratio of 8.40 on HOUSES and a risk ratio of 5.35
+  // on PEOPLE, both correct, and in the letters one computation took a+b as houses and the other
+  // as people with nothing on either figure saying so. A letter is only as determinate as the
+  // subject it counts, so the subject is printed where the letters are.
+  const counts=unit?`<span class="tbt-unit">cells count ${esc(unit)}</span>`:'';
+  const design=declared
+    ?`<p class="tbt-design"><b>${esc(declared.design)}</b> \u00b7 unit of analysis: `
+      +`${esc(declared.unitOfAnalysis)}${counts?' \u00b7 ':''}${counts}</p>`
+    :(counts?`<p class="tbt-design">${counts}</p>`:'');
   return `<div class="two-by-two-figure" data-figure="two-by-two">`
+    +design
     +twoByTwoTableMarkup(result,esc)
     +twoByTwoEstimatesMarkup(result,esc)
     +warnings

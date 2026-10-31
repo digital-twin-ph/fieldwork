@@ -929,7 +929,7 @@
     {
       "id": "urn:fieldwork:widget:rate_ratio",
       "nodeType": "rate_ratio",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -940,6 +940,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/rate_ratio/0.2.0.json",
           "sha256": "5ec9dfad402e6e073d355c81842c57e744941e73e4daf8ce26cfada4cdf1964a"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/rate_ratio/0.3.0.json",
+          "sha256": "a55dd065a3f1b2884a8528c55932db57a588d0137984cf7c294b115655783f8b"
         }
       ]
     },
@@ -1322,7 +1327,7 @@
     {
       "id": "urn:fieldwork:widget:two_by_two",
       "nodeType": "two_by_two",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1333,6 +1338,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/two_by_two/0.2.0.json",
           "sha256": "d0ba38485f894a8f6a80469c04d6049bdb191fab3e727ca88c6c4347ff2b3c31"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/two_by_two/0.3.0.json",
+          "sha256": "2dab9f48cd2c95daeca333bc069ebad1322f7c2353e54a5e4f89485531d3f592"
         }
       ]
     },

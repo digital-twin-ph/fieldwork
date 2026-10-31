@@ -216,6 +216,9 @@ one more unguarded dereference of that kind: none. The other three reads of `res
   and `join_table_to_area` already took the word.
 - **That anybody but its author can read the output.** No epidemiologist has seen it. The demo is
   2026-10-30 and [field-questions.md](../field-questions.md) is where what to ask them belongs.
+  **Corrected 2026-10-30: the demo moved to 2026-11-06**, recorded in
+  [docs/directions.json](../directions.json). No epidemiologist has seen the output, which is the
+  claim this bullet makes and is still true.
 
 ## What would close it
 

@@ -786,6 +786,13 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .notes-view .notes-part h3{border-bottom:1px solid var(--rule,#2a3a36);padding-bottom:.25rem}
 .notes-kind-authored{background:rgba(156,59,46,.18)}
 .notes-fork{color:#9c3b2e;opacity:.85}
+/* WHICH WORKFLOW A NOTE CAME FROM, shown only for notes the open workflow did not produce.
+   A project's write-up is assembled from several, and a reader needs to place a sentence. */
+.notes-source{font-size:.78rem;color:var(--muted);opacity:.9;font-style:italic}
+/* WHY THE WRITE-UP IS THINNER THAN THE INVESTIGATION. A plain notice, not a warning: a
+   workflow nobody has run is a step not yet computed, which is an ordinary state. */
+.notes-pending{font-size:.86rem;color:var(--muted);border-left:2px solid var(--rule,#2a3a36);
+  padding:.1rem 0 .1rem .6rem;margin:.4rem 0 0}
 .notes-kind-derived{background:rgba(95,74,120,.2)}
 
 /* THE NOTES BOARD. Ordinals and counts in mono so a reader can scan them; a card's left edge

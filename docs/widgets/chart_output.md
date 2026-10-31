@@ -52,6 +52,22 @@ than the table beside it.
    because the validated palette is six hues; past that, group the tail upstream rather than ask
    for a seventh colour.
 
+### It states its own shape in the write-up
+
+Every run machines a note into **Results** on the Notes tab stating what this chart is made of. It carries the line the chart already states rather than writing over it, and adds the number of bars, the column they are one per, and a warning where a bar sits at zero — because a withheld value and a measured zero are drawn the same way.
+
+**The caption is yours.** A caption states the subject, the population, the place and the period
+in your words, and none of that can be read off a chart. What this writes is what the chart
+declares about itself — the material you write the caption from, sitting beside it in the same
+section.
+
+**And it carries no number.** A figure's number depends on where it sits in the write-up and on
+the venue you are preparing — set one figure aside and the ones after it move up — so the number
+is worked out when the document is rendered. Nothing here says "Figure 1".
+
+Edit it and it forks into a note of your own, like any machined note; the machined one goes on
+being rewritten by every run.
+
 ## What it will not do
 
 **It will not aggregate.** One bar per row, per category or per polygon — it never adds rows

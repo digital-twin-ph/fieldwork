@@ -90,6 +90,22 @@ derived it — so a figure in a publication can be attributed.
 | **Manila · coastal exposure** | facilities with their assigned projection site |
 | **Geoprivacy** | the same records before and after being moved |
 
+### It states its own shape in the write-up
+
+Every run machines a note into **Results** on the Notes tab stating what this map is made of. The layers bottom to top, their feature counts, and any layer that is connected and **not** drawn — which is a fact about the figure a reader is owed. It is read off the same layer list the figure and the key draw from, so it cannot disagree with the picture.
+
+**The caption is yours.** A caption states the subject, the population, the place and the period
+in your words, and none of that can be read off a map. What this writes is what the map
+declares about itself — the material you write the caption from, sitting beside it in the same
+section.
+
+**And it carries no number.** A figure's number depends on where it sits in the write-up and on
+the venue you are preparing — set one figure aside and the ones after it move up — so the number
+is worked out when the document is rendered. Nothing here says "Figure 1".
+
+Edit it and it forks into a note of your own, like any machined note; the machined one goes on
+being rewritten by every run.
+
 ## What it will not do
 
 - **It cannot draw everything at once.** A map with both a raster and polygons connected draws

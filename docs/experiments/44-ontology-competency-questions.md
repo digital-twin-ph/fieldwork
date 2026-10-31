@@ -49,6 +49,9 @@ a design decision with its own migration, not a bug fix.
 | P4 | Which engine and version performed the inference? | A reviewer | Recorded in the run receipt | Answerable |
 | P5 | Was this result produced by the configuration currently on the canvas, or an earlier one? | A practitioner after editing | Canvas plans and workflow plans are separate classes and now disjoint | Answerable |
 | P6 | If a source file is withdrawn, which runs are affected? | A data steward | Asset digests in receipts; `retainedInputSHA256` for rasters, file hashes for evidence | Partial: digests exist for rasters and attachments, not for every input |
+| P7 | What equation produced this estimate, and with what numbers in it? | A reader checking the arithmetic of a published figure | `fw:machinedNote` on the step, whose `fw:noteText` carries the formula and the instantiated form as LaTeX | Answerable for `rate`, `rate_ratio` and `two_by_two` since 2026-10-30 ([151](151-typesetting-an-equation-a-practitioner-wrote.md), amendment); every other computing widget emits no equation |
+| P8 | Which published work is the interval method taken from? | A reviewer, and a reader assembling a reference list | The citation rendered into `fw:noteText`, from `METHOD_REFERENCES` in `src/equations.ts` | Partial, and the partiality is stated in the note: Katz 1978 and Woolf 1955 are recorded with DOIs; the unpooled Wald and the log-normal rate-ratio interval have no primary source and the note says so |
+| P9 | Does the implementation compute what the cited work states? | Anyone relying on a figure in a publication | **Nothing.** The formula is read off the implementation, so it restates the code | **Not answerable.** This is the computations audit named in `TODO.md`, and it is the question P7 and P8 are most likely to be mistaken for |
 
 ## Spatial scope and coordinate reference
 
@@ -110,6 +113,7 @@ would be worse than one that does not.
 | R3 | Does this facility currently provide this service? | Facility evidence is a historical assignment, not current verification |
 | R4 | Is this travel time what a person would experience? | A modelled corridor under stated assumptions is not observed travel |
 | R5 | Did this workflow produce a correct result? | Structure, consistency and conformance establish none of that |
+| R6 | Is this estimate the right one for this study design? | A typeset formula for a quantity the design cannot estimate is still correctly typeset. Nothing here records a study design, so a case-control table is offered a risk ratio and the equation note renders it faithfully. Refused until a design is declared — experiment 147, and the study-design audit |
 
 ## Canvas questions: what a rule reading the current canvas can ask
 
@@ -193,4 +197,5 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-08 | Match GDAL's all-touched rule, and record which rule a clip used |
 | 2026-10-08 | Date every documentation file from git history, and check it in the gate |
 | 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
+| 2026-10-30 | P7, P8 and P9 added for [151](151-typesetting-an-equation-a-practitioner-wrote.md)'s amendment of that date, when `rate`, `rate_ratio` and `two_by_two` began machining their equations into a Methods note with citations. P7 and P8 answer; **P9 is recorded as not answerable in the same breath**, because an equation set in mathematics and attributed to Katz reads as more checked than a number, and nothing checks that the code states what Katz states. R6 added for the same reason from the other side: the note makes a non-estimable measure more legible, not less |
 | 2026-10-14 | Ten canvas questions added for experiment 112, grouped by the practitioner's hypothesis — syntactic, then semantic, then pragmatic — and executed against a real run graph by scripts/competency-canvas.mjs. Syntactic answers; semantic mostly does not, since nothing records what a point MEANS; pragmatic answers only where a widget was taught to assert the fact. C6 and C8 moved to answerable when summarize_hull began asserting the area of the POLYGON rather than only of the computation |

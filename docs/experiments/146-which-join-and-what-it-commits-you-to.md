@@ -188,6 +188,9 @@ Three things would close it, in order:
    withheld key in front of them and find out whether they notice the gap, whether they can say what
    they would want done, and whether they can say what it means for the rate ratio two steps later.
    Nothing in this document is evidence about what an epidemiologist understands.
+   **Corrected 2026-10-30: the demo moved to 2026-11-06**, recorded in
+   [docs/directions.json](../directions.json), so this was not asked on the day. It is still the
+   first thing that would close this record.
 2. ~~**Measure the asymmetry.**~~ **Taken 2026-10-28.** Relating Snow's Table VIII against the
    boundary names under exact comparison matches **23 of 32**, dropping 9 — confirming
    `area-join.ts`'s figure — and **32 of 32** once punctuation is folded. Every one of the 9

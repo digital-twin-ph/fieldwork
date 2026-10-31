@@ -146,6 +146,20 @@ export interface MachinedNote {
   /** The node that machined it, where the run recorded one. A note produced by a workflow links to
    *  the workflow, which the practitioner asked for of the prototype. */
   nodeId?:string;
+  /** WHICH WORKFLOW PRODUCED IT, where it was not the one being read.
+   *
+   *  Added 2026-10-30 when the Notes tab became the PROJECT's write-up rather than the open
+   *  workflow's, on the practitioner's ruling: *"It's supposed to hold notes from all workflows
+   *  in that project."* Two things forced it to be a field rather than something the panel could
+   *  work out. A node id is unique within a workflow and NOT across a project -- South London has
+   *  `table-viii` in three of its six -- so neither a note's handle nor its step label can be
+   *  resolved from `nodeId` alone once several workflows' notes sit in one list. And a reader of
+   *  a write-up assembled from six workflows needs to know which part of the investigation a
+   *  sentence came from.
+   *
+   *  Absent for a note from the open workflow, where the step chip already says it. */
+  workflowKey?:string;
+
   /** Other notes this one stands with: the edges of the composition. */
   relatesTo?:NoteId[];
 }
@@ -235,6 +249,20 @@ export interface DerivedNote {
   detail?:string;
   /** The input that declares it. */
   nodeId?:string;
+  /** WHICH WORKFLOW PRODUCED IT, where it was not the one being read.
+   *
+   *  Added 2026-10-30 when the Notes tab became the PROJECT's write-up rather than the open
+   *  workflow's, on the practitioner's ruling: *"It's supposed to hold notes from all workflows
+   *  in that project."* Two things forced it to be a field rather than something the panel could
+   *  work out. A node id is unique within a workflow and NOT across a project -- South London has
+   *  `table-viii` in three of its six -- so neither a note's handle nor its step label can be
+   *  resolved from `nodeId` alone once several workflows' notes sit in one list. And a reader of
+   *  a write-up assembled from six workflows needs to know which part of the investigation a
+   *  sentence came from.
+   *
+   *  Absent for a note from the open workflow, where the step chip already says it. */
+  workflowKey?:string;
+
   /** Other notes this one stands with: the edges of the composition. */
   relatesTo?:NoteId[];
 }
@@ -291,6 +319,7 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
         ...(text(entry.detail)?{detail:text(entry.detail)}:{}),
         ...(text(entry.nodeId)?{nodeId:text(entry.nodeId)}:{}),
+        ...(text(entry.workflowKey)?{workflowKey:text(entry.workflowKey)}:{}),
         ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{})});
       continue;
     }
@@ -326,6 +355,7 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
         ...(text(entry.id)?{id:text(entry.id)}:{}),
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
         ...(text(entry.nodeId)?{nodeId:text(entry.nodeId)}:{}),
+        ...(text(entry.workflowKey)?{workflowKey:text(entry.workflowKey)}:{}),
         ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{})});
       continue;
     }

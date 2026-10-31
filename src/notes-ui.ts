@@ -72,12 +72,43 @@ const FUNCTION_GLOSS:Record<string,string>={
 const bodyOf=(note:Note)=>note.kind==='quoted'?note.quote:note.text;
 const words=(text:string)=>text.split(/\s+/).filter(Boolean).length;
 
+/** THE PANEL IS THE PROJECT'S WRITE-UP, not the open workflow's results.
+ *
+ *  `machined` and `derived` arrive FLAT and already carrying `workflowKey`, because a project's
+ *  notes come from several workflows and a node id is unique only within one: South London has
+ *  `table-viii` in three of its six, so a record keyed by node id would have silently dropped two
+ *  of the three. `labelOf` and `sourceOf` are resolved per note for the same reason.
+ *
+ *  `sourceOf` returns the workflow a note came from, or undefined for the open one -- where the
+ *  step chip already says it and repeating the workflow name would be noise. */
+/** The workflows that have contributed nothing, named rather than counted.
+ *
+ *  NAMED AND CAPPED, which is `relate_table`'s rule for its gap keys: a count tells a
+ *  practitioner nothing they can act on, and a list of six long workflow names is a paragraph
+ *  nobody reads. Three, then the remainder as a number. */
+const pendingLine=(pending:readonly string[],esc:Escape):string=>{
+  const one=pending.length===1;
+  const named=pending.slice(0,3).map(name=>esc(name)).join('; ')
+    +(pending.length>3?`, and ${pending.length-3} more`:'');
+  return `<p class="notes-pending">${pending.length} of this project's workflows `
+    +`${one?'has':'have'} not run, so ${one?'its':'their'} figures and tables are not in this `
+    +`write-up yet \u2014 ${named}. `
+    // RUNNING THEM IS A BUTTON AND NOT A SIDE EFFECT OF OPENING THE TAB. South London's six run
+    // in 1.9 seconds, which made running them automatically tempting; a project with an isochrone
+    // or a raster download is not 1.9 seconds, and each run switches the open canvas, which is
+    // the run-in-flight hazard experiment 142 spent a day finding. So the practitioner asks.
+    +`<button class="button small" data-run-pending>Run `
+    +`${one?'it':`all ${pending.length}`}</button></p>`;
+};
+
 export function notesPanel(notes:readonly Note[],
-  machined:Record<string,MachinedNote[]>|undefined,
-  labelOf:(nodeId:string)=>string|undefined,esc:Escape,
-  derived:readonly Note[]=[]):string{
-  const fromRun:Note[]=Object.entries(machined||{})
-    .flatMap(([nodeId,list])=>list.map(note=>({...note,nodeId})));
+  machined:readonly MachinedNote[]|undefined,
+  labelOf:(note:Note)=>string|undefined,esc:Escape,
+  derived:readonly Note[]=[],
+  sourceOf:(note:Note)=>string|undefined=()=>undefined,
+  /** Workflows of this project that have not run, so have contributed nothing. */
+  pending:readonly string[]=[]):string{
+  const fromRun:Note[]=[...(machined||[])];
   const all=[...notes,...derived,...fromRun];
   const extent=noteExtent(all);
   const parts=groupNotes(all);
@@ -94,7 +125,21 @@ export function notesPanel(notes:readonly Note[],
     +` · ${extent.characters.toLocaleString()} characters</span></div>`
     +`<p class="description">What survives into the write-up, in the order a reader meets it. `
     +`Quoted and authored notes belong to the investigation; derived and machined ones come from `
-    +`the last run of this workflow.</p>`;
+    +`the last run of each workflow in this project.</p>`
+    // WHY THE WRITE-UP IS THINNER THAN THE INVESTIGATION, said rather than left as silence.
+    //
+    // A machined note exists only after its workflow has run, so a freshly opened project shows
+    // its quoted and authored notes and NONE of its figures or tables -- which is exactly what
+    // the practitioner met three times on 2026-10-30, and the surface gave no account of itself
+    // either time. An empty Results section is a fact about a write-up (experiment 149); a
+    // Results section missing four workflows' artifacts because nobody pressed Run is not, and
+    // the difference is the whole reason this line exists.
+    //
+    // IT REPORTS AND DOES NOT GRADE, which is 149's rule and 141's: no score, no completeness
+    // bar, no warning tone. A practitioner who has deliberately run two of six workflows is not
+    // doing anything wrong, and is told what the write-up currently contains rather than what it
+    // ought to.
+    +(pending.length?pendingLine(pending,esc):'');
 
   let ordinal=0;
   const body=parts.map(part=>{
@@ -120,14 +165,20 @@ export function notesPanel(notes:readonly Note[],
         const id=noteKey(note);
         const from=note.kind==='machined'&&note.nodeId?note.nodeId
           :note.kind==='derived'&&note.nodeId?note.nodeId:undefined;
+        // WHICH PART OF THE INVESTIGATION IT CAME FROM, for a note the open workflow did not
+        // produce. A write-up assembled from six workflows is unreadable without it.
+        const source=sourceOf(note);
         return `<article class="notes-note k-${note.kind}" draggable="true" `
           +`data-note="${esc(id)}" data-section="${esc(part.section)}">`
           +`<div class="notes-labels">`
           +`<span class="ord">${ordinal}.</span>`
           +`<span class="notes-kind notes-kind-${note.kind}">${note.kind}</span>`
           +(('fn' in note&&note.fn)?`<span class="notes-fn">${esc(note.fn)}</span>`:'')
-          +(from?`<button class="chip flowlink" data-open-node="${esc(from)}">`
-            +`${esc(labelOf(from)||from)}</button>`:'')
+          +(from?`<button class="chip flowlink" data-open-node="${esc(from)}"`
+            +`${'workflowKey' in note&&note.workflowKey
+              ?` data-open-workflow="${esc(note.workflowKey)}"`:''}>`
+            +`${esc(labelOf(note)||from)}</button>`:'')
+          +(source?`<span class="notes-source">${esc(source)}</span>`:'')
           +(note.kind==='authored'&&note.forkedFrom
             ?`<span class="notes-fork">edited from a machined note`
               +`${forkHasDrifted(note,fromRun as MachinedNote[])
@@ -155,10 +206,15 @@ export function notesPanel(notes:readonly Note[],
   return head+body;
 }
 
-/** A note's handle, stable enough to find it again in a list rebuilt from scratch. */
+/** A note's handle, stable enough to find it again in a list rebuilt from scratch.
+ *
+ *  SCOPED BY WORKFLOW where the note has one. An id of `table-viii:description` is unique within
+ *  a workflow and not within a project, and the panel now holds a project's worth: two notes
+ *  sharing a `data-note` attribute would make opening or dragging one of them act on the other. */
 export function noteKey(note:Note):string{
-  if('id' in note&&note.id)return note.id;
-  return `${note.kind}:${note.section}:${bodyOf(note).slice(0,40)}`;
+  const scope='workflowKey' in note&&note.workflowKey?`${note.workflowKey}/`:'';
+  if('id' in note&&note.id)return `${scope}${note.id}`;
+  return `${scope}${note.kind}:${note.section}:${bodyOf(note).slice(0,40)}`;
 }
 
 const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">

@@ -70,7 +70,7 @@ import {polygonLayer,polygonLayerFacts} from './polygon-layer.js';
 import {shareAlike} from './input-provenance.js';
 import type {MachinedNote} from './notes.js';
 import {groupTable} from './group-table.js';
-import {computeTwoByTwo,twoByTwoReceipt} from './two-by-two.js';
+import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence} from './two-by-two.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
@@ -1356,7 +1356,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             cell(exposed,nonCaseValue,result.cells.exposedNonCases),
             cell(unexposed,caseValue,result.cells.unexposedCases),
             cell(unexposed,nonCaseValue,result.cells.unexposedNonCases)],
-          rowCount:4,missingValueCount:0,twoByTwo:result} as unknown as DisplayValue;
+          // THE SENTENCE WAS WRITTEN AND NEVER ATTACHED. `twoByTwoSentence` has existed since
+          // this step was built, for the reason `rateRatioSentence` exists -- "the figure, the
+          // table and the receipt cannot word the same finding three ways" -- and `rate_ratio`
+          // puts its own on the value, where `app.ts` renders it as the result statement. This
+          // one did not, so the step with three estimates was the one that stated none of them
+          // on screen. Found 2026-10-31; experiment 153.
+          rowCount:4,missingValueCount:0,twoByTwo:result,
+          sentence:twoByTwoSentence(result)} as unknown as DisplayValue;
         receipts.push(twoByTwoReceipt(node,result,runId,
           workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));
         machined[node.id]=[twoByTwoEquationNote(result,node.id)];

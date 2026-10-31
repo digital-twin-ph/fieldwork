@@ -129,18 +129,26 @@ test('a stratum the comparison left out is named in the note, not only on the st
   assert.match(note.text,/186,787 and not the table/);
 });
 
-test('a method with a source is cited, and one without says no source has been read',()=>{
+test('the note NAMES its methods and does not carry their bibliography',()=>{
+  // The practitioner, 2026-10-31: *"these are citations and should be in the References."* They
+  // were in both, from the same `cites` field -- see `references()` in equations.ts. The works
+  // themselves are asserted in tests/references.test.mjs, which is where they are now rendered
+  // and which can say things a single note cannot: deduplicated across workflows, with the
+  // workflows that cite each one.
   const note=twoByTwoEquationNote(contingency(),'n3');
-  assert.match(note.text,/Katz D, Baptista J, Azen SP, Pike MC\./);
-  assert.match(note.text,/Biometrics\. 1978;34\(3\):469-474\./);
-  assert.match(note.text,/doi:10\.2307\/2530610/);
-  assert.match(note.text,/Woolf B\./);
-  assert.match(note.text,/doi:10\.1111\/j\.1469-1809\.1955\.tb01348\.x/);
-  // AND THE ABSENCE IS PRINTED. Omitting the line would leave a reader to read a missing
-  // reference as "nothing to say" when it means "nobody has looked it up" -- the distinction
-  // `epiInfoLabelSource` exists to keep, applied to the second bibliographic field.
-  assert.match(note.text,/\*\*Wald unpooled\*\*: A Wald interval on a difference of two proportions\./);
-  assert.match(note.text,/No primary source has been read for it/);
+  assert.match(note.text,/Method: .*Katz log/);
+  assert.match(note.text,/Wald log/);
+  assert.match(note.text,/The works are in References\./);
+  // NOT THE BIBLIOGRAPHY. Asserted as an absence, because this is the duplication being removed
+  // and nothing else in the suite would notice it coming back.
+  assert.doesNotMatch(note.text,/Katz D, Baptista J/);
+  assert.doesNotMatch(note.text,/Biometrics/);
+  assert.doesNotMatch(note.text,/doi:/);
+  assert.doesNotMatch(note.text,/Woolf B\./);
+  // AND AN UNSOURCED METHOD IS STILL MARKED, in three words. A reader meeting `Wald unpooled`
+  // beside two cited methods would otherwise take it for a third -- the distinction
+  // `epiInfoLabelSource` exists to keep. The full statement of it is in References.
+  assert.match(note.text,/Wald unpooled \(no primary source read\)/);
 });
 
 test('every method reference is complete enough to render, or it is null',()=>{

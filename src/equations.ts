@@ -159,20 +159,34 @@ const round=(value:number,places:number):string=>figure(
  *  by any assertion, which is the lesson experiment 141 recorded about its own drag gesture. */
 const said=(value:number):string=>value.toLocaleString('en-US');
 
-/** The reference line a note ends with, for every method it used.
+/** The method line a note ends with: WHICH estimators were used, never the works themselves.
  *
- *  BOTH OUTCOMES ARE PRINTED. A method with a source gets the source; a method without one gets
- *  the sentence saying none has been read. Omitting the second would leave a reader to infer from
- *  a missing line that there was nothing to say, when what it means is that nobody has looked it
- *  up -- which is a different claim and the one `epiInfoLabelSource` exists to keep separate. */
+ *  The practitioner, 2026-10-31, reading South London's Methods: *"This is in the South London
+ *  Notes, these are citations and should be in the References."* They are, and they were in both.
+ *  This printed every method's full citation -- authors, journal, volume, pages, DOI -- inside
+ *  the note, while `references.ts` assembled the same works into the References part from the
+ *  same `cites` field. Two copies of one bibliography, and the inline one was most of a
+ *  2,250-character note.
+ *
+ *  REFERENCES IS STRICTLY THE BETTER COPY, which is what settles where the duplication goes. It
+ *  deduplicates a work cited by several workflows into one entry, records which workflows cite it
+ *  in `citedBy`, and separates sources from methods so a venue can take one and not the other.
+ *  None of that is possible from inside a single note, which can only ever see its own.
+ *
+ *  THE NAME STAYS, because it is not a citation. Which interval a number came from is a
+ *  methodological fact a reader needs AT the number -- "Katz log" and "Wald log" give different
+ *  bounds on the same data -- and a Methods section that named no estimator would be the opposite
+ *  of the fix. What leaves is the bibliography, which is what a References part is for.
+ *
+ *  AND AN UNSOURCED METHOD IS STILL MARKED HERE, in three words rather than in a sentence. The
+ *  full statement of what has not been read moves to References with the rest, but a reader
+ *  meeting `Wald unpooled` among two cited methods would otherwise take it for a third -- the
+ *  distinction `epiInfoLabelSource` exists to keep, which was the whole reason the old line
+ *  printed both outcomes. It still prints both; it prints them shorter. */
 function references(methods:readonly string[]):string{
-  const lines=[...new Set(methods)].map(method=>{
-    const rendered=renderMethodCitation(method);
-    return `- **${method}**: `
-      +(rendered||METHOD_REFERENCES[method]?.uncited
-        ||'No source has been read for this method.');
-  });
-  return lines.length?`\n\nMethod:\n\n${lines.join('\n')}`:'';
+  const named=[...new Set(methods)].map(method=>
+    renderMethodCitation(method)?method:`${method} (no primary source read)`);
+  return named.length?`\n\nMethod: ${named.join(', ')}. The works are in References.`:'';
 }
 
 /** An estimate's interval, symbolic and then as bounds.

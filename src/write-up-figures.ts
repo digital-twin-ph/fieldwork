@@ -63,6 +63,8 @@ import type {ChartSummary} from './results.js';
 import type {Escape} from './types.js';
 import {tableViewOf} from './table-viewer.js';
 import {chartMarkup} from './chart-output.js';
+import {twoByTwoMarkup} from './two-by-two-view.js';
+import type {TwoByTwoResult} from './two-by-two.js';
 
 /** Beyond this many rows, a figure in a write-up stops being a figure. The count always tells the
  *  truth about how many there are, and the caption says when fewer are drawn -- the rule
@@ -163,6 +165,22 @@ export function figureFor(nodeId:string,run:RunArtifacts|undefined,esc:Escape):s
   if(!run)return null;
   const table=run.tables?.[nodeId];
   const output=run.outputs?.find(o=>o.nodeId===nodeId);
+  // A TWO-BY-TWO IS DRAWN AS ONE, BEFORE ANY OF THE TABLE PATHS BELOW.
+  //
+  // The practitioner, 2026-10-31: *"a 2x2 table is not a table in the data sense, but a table to
+  // represent an epidemiology tool complete with its standard formatting that epidemiologists
+  // understand."* It reached this module as an ordinary `data-table` of four rows, so the figure
+  // printed four bare counts -- no letters, no margins, and none of the three estimates -- while
+  // the Methods note beside it wrote every formula in $a$, $b$, $c$ and $d$. Experiment 153.
+  //
+  // Read off the VALUE rather than off the node type, which is 153's Option A: the result rides
+  // on the table `two_by_two` emits, so anything carrying one draws as one and the port stays as
+  // it was. The output's own `view` is not consulted because the author of a `table_output` node
+  // did not choose to publish a generic table -- they connected a two-by-two to it.
+  const instrument=(table as unknown as {twoByTwo?:TwoByTwoResult})?.twoByTwo;
+  if(instrument?.kind==='two-by-two')
+    return `<figure class="notes-figure" data-figure="two-by-two">`
+      +twoByTwoMarkup(instrument,esc)+`</figure>`;
   // THE PRODUCER SAYS WHICH ARTIFACT IT IS, and this asks rather than guesses.
   //
   // The first version preferred a table wherever one existed, reasoning that `rate` emits a chart

@@ -1,6 +1,6 @@
 # 143 — A georeferenced plate as ground
 
-_Created 2026-10-27 · Updated 2026-10-27_
+_Created 2026-10-27 · Updated 2026-10-31_
 
 **Status:** tried — built, instantiated by the South London example on 2026-10-27, and drawn as a
 figure of its own there on 2026-10-31.

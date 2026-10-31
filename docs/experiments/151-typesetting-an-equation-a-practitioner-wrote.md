@@ -237,6 +237,28 @@ One adapter is recorded rather than hidden: `renderCitation` takes an `InputProv
 module builds one and throws it away. **A paper a method comes from is not an input**, and nothing
 files it as one.
 
+**The note carried the bibliography until 2026-10-31, and should not have.** The practitioner,
+reading South London's Methods: *"This is in the South London Notes, these are citations and
+should be in the References."* They were in both. This experiment shipped the Method block before
+[the References part](150-can-several-authors-collaborate-in-a-project-repository.md) existed, so
+printing the full citation inside the note was the only way a reader could reach it; once
+`references.ts` assembled the same works from the same `cites` field, nothing went back and took
+the first copy out. The two never disagreed — they are built from one record — so no check could
+see it, and it survived until somebody read the card.
+
+**References is strictly the better copy, which is what decided the direction.** It deduplicates
+a work cited by several workflows into one entry, records which workflows cite it in `citedBy`,
+and separates sources from methods so a venue can take one and not the other. A note can only
+ever see its own citations, so none of that is reachable from inside one.
+
+What stays in the note is the method's NAME, because that is not a citation: which interval a
+bound came from is a methodological fact a reader needs at the number, and Katz log and Wald log
+give different bounds on the same data. An unsourced method is still marked there, in three words
+— `Wald unpooled (no primary source read)` — because a reader meeting it beside two cited methods
+would otherwise take it for a third. The rule above is unchanged and the line is shorter: it
+still prints both outcomes, and the sentence stating the absence in full moves to References with
+everything else. Measured on the contingency note: **2,250 characters to 1,616**.
+
 ### a, b, c, d, on a surface for the first time
 
 The two-by-two note is written in the four letters, which is

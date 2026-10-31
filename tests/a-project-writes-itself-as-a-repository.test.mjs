@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {repositoryFiles,workflowFileName,formatDeclaration,FILENAME_CEILING}
   from '../build/project-repository.js';
+import {forkMachinedNote,readNotes} from '../build/notes.js';
 
 /** A PROJECT AS A GIT REPOSITORY, WRITTEN BY THE APPLICATION THAT HOLDS IT.
  *
@@ -101,4 +102,32 @@ test('the manifest exists even with nothing in it, so a reader is not left guess
   const manifest=JSON.parse(files.get('assets/manifest.json'));
   assert.deepEqual(manifest.assets,{});
   assert.deepEqual(manifest.acquired,{});
+});
+
+test('A FORKED NOTE IS COMMITTED, and carries the wording it forked from',()=>{
+  // The practitioner asked whether forks are committed. They are, and they have to be: a fork is
+  // somebody's own sentence -- `forkMachinedNote` returns `kind:"authored"` and `writeNotes`
+  // puts it on the project -- so it is work nothing can regenerate. The machined note it came
+  // from is NOT committed, because a run rebuilds that.
+  //
+  // WHICH IS ONLY SAFE BECAUSE THE FORK IS SELF-SUFFICIENT. It embeds the machined text it
+  // diverged from, so `forkHasDrifted` can still tell a reader that the run has moved under an
+  // edited sentence -- in a clone that never carried the machined note at all. If this ever
+  // stopped travelling, a repository would hold edited prose with no record of what it edited,
+  // and nobody could tell a current sentence from a stale one.
+  const machined={kind:'machined',id:'estimates:description',section:'Results',nodeId:'estimates',
+    fn:'method',text:'The two-by-two, with risk ratio and odds ratio. 4 rows.'};
+  const fork=forkMachinedNote(machined,'fork-1','Attached per sub-district.','2026-10-31T20:00:00.000Z');
+  fork.author='hermantolentino';
+  const notes=Object.fromEntries(readNotes([fork]).notes.map(n=>[n.id,n]));
+  const files=repositoryFiles({project:project(),
+    workflows:[wf('p/w1','A question')],notes});
+  const written=JSON.parse(files.get('notes/fork-1.json'));
+  assert.equal(written.kind,'authored');
+  assert.equal(written.text,'Attached per sub-district.');
+  assert.equal(written.author,'hermantolentino');
+  assert.equal(written.forkedFrom.text,machined.text,
+    'the fork lost the wording it diverged from, so drift can no longer be detected');
+  assert.equal(written.forkedFrom.nodeId,'estimates');
+  assert.ok(written.forkedFrom.at,'the fork lost when it was taken');
 });

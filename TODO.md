@@ -1276,37 +1276,27 @@ A defect is not a blocker unless something is waiting on it — filing them as "
 highest first" overstated every one of them, and led to patching two things that need
 rebuilding (lesson 13 in [62](docs/experiments/62-workflow-traversal.md)).
 
-- **A caught fetch still raises a page error offline, and nothing explains how.** Found by the
-  gate on 2026-10-31; present since 714d7f8, so it is that commit's redness and not the one after
-  it. Ten WebKit tests fail, all of them tests that take the application offline to prove it
-  recomputes there, and all of them asserting that the page raised no errors. What they collect:
+- ~~**A caught fetch still raises a page error offline, and nothing explains how.**~~ **FIXED
+  2026-10-31, and the explanation was in the service worker rather than the page.** A rejected
+  promise handed to `FetchEvent.respondWith` is an error the WORKER raises, and WebKit surfaces it
+  on the controlled page -- so the page's own `.catch()` was never going to help, because the page
+  was not the thing erroring. Offline, anything not precached missed the cache and `sw.ts:41`
+  passed `fetch`'s rejection straight to `respondWith`.
 
-      [ 'TypeError: Load failed', '/127.0.0.1:4184/build/asset-manifest.json.' ]
+  `build/asset-manifest.json` found it only because it is deliberately NOT precached -- it reports
+  the build on disk rather than the one the worker serves -- so it was the request guaranteed to
+  miss. The defect was never about that file: **every uncached request offline raised this**, and
+  the twelve failing tests were simply the twelve that go offline.
 
-  One thing fetches that file — `app.ts:560`, at module scope on every page load, to learn which
-  build is on disk so a write-up can be stamped and a stale one told apart. **The rejection is
-  caught**, in the source and in the built bundle, and `collectPageErrors` listens on `pageerror`
-  rather than on the console — so a handled rejection is surfacing as an unhandled one, and that
-  is the part nobody understands yet.
+  Two wrong fixes on the way, both recorded in `src/sw.ts`: making the page's fetch lazy would have
+  hidden it without explaining it, and `Response.error()` traded two page errors for one, because
+  WebKit raises on a network-error response from a worker just as it does on a rejection. The
+  answer is a 504 -- offline with nothing cached IS a gateway failure, and it says so in the one
+  vocabulary every caller already branches on.
 
-  A probe on 2026-10-31 with service workers BLOCKED did not reproduce it, which points at
-  `sw.js`: for any request that is not a navigation and does not match its small regex it answers
-  `respondWith(caches.match(req).then(hit => hit || fetch(req)))`, and `asset-manifest.json` is
-  deliberately kept OUT of the precache list so that it reports the build on disk rather than the
-  one the worker is serving. Offline there is no hit, so the handler calls `fetch` and hands
-  `respondWith` a rejection. **That chain is a hypothesis and has not been confirmed.**
-
-  Two things to do, in order, and the second is not a substitute for the first. **Understand the
-  unhandled rejection**, because "caught in the source and still raising a page error" means
-  something about this worker, that fetch, or that assertion is not what it appears. **Then make
-  the fetch lazy** — read on the write-up's first use rather than on page load — so a page that
-  never opens the Notes tab never asks the network for a build it has nothing to stamp. The
-  second alone would make ten tests pass while leaving the first unanswered, which is why it is
-  not filed as the fix.
-
-  Waits on nothing. The gate is red on it, and the application behaves correctly offline: the
-  write-up is kept unstamped, which is what `runningBuild` being undefined is designed to mean.
-
+  **The sibling branch of the same handler already knew.** Its comment records the same symptom,
+  "three 'Load failed' page errors in CI WebKit", and the repair went to one of the two branches
+  that needed it.
 - **`slr_threshold_comparison` compares a projected change to an elevation on an unchecked
   datum.** Valid only when the elevation is referenced to the projection's baseline sea
   surface; the field is free text checked for non-emptiness, and the unit fixtures satisfy

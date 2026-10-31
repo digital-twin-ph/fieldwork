@@ -27,7 +27,14 @@ const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
 // to today, `validate:names` compared it against the definitions, found it drifted and failed the
 // build -- on 2026-10-28, from a stamping run that changed nothing else about it. Same reason as
 // CHANGELOG, found the same way.
-const SKIP=new Set(['CHANGELOG.md','widget-names.md']);
+//
+// worked-example-audit.md is GENERATED the same way, by scripts/audit-worked-examples.mjs, which
+// writes its own stamp at the top of the document it assembles. Third instance of one rule:
+// where a file's own generator writes the stamp, this stamper must not. Found on 2026-10-30,
+// when `--write` moved it back to the last substantive commit's date and validate:example-audit
+// then regenerated it with today's and called it stale -- the widget-names.md failure of
+// 2026-10-28 exactly, two days later and in a different file.
+const SKIP=new Set(['CHANGELOG.md','widget-names.md','worked-example-audit.md']);
 const STAMP=/^_Created (\d{4}-\d{2}-\d{2}) · Updated (\d{4}-\d{2}-\d{2})_$/;
 
 function markdownFiles(dir,found=[]){

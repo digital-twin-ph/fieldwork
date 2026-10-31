@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readWorldFile,boundsFromWorldFile,groundResolution,mapImage,mapImageMarkup,
-  mapImageCredit,DEFAULT_OPACITY} from '../build/map-image.js';
+  mapImageCredit,withGroundUnder,DEFAULT_OPACITY} from '../build/map-image.js';
 
 // geo/map2.jgw from the South London example, byte for byte.
 const JGW='0.000227723765\n0.0\n0.0\n-0.000142057361\n-0.2389834422\n51.5181208251\n';
@@ -98,4 +98,50 @@ test('it is placed through the projection it is handed, not through Web Mercator
   assert.ok(markup.includes('href="data:image/jpeg'));
   // A projection that sends it nowhere finite draws nothing rather than NaN.
   assert.equal(mapImageMarkup(image,()=>[NaN,NaN]),'');
+});
+
+/** GROUND UNDER A FIGURE COMPOSED AS A STRING.
+ *
+ *  The write-up's figure never becomes an element before it is published, so it cannot be
+ *  composited the way the live map's SVG is. Measured in the application on 2026-10-30: the same
+ *  map carried Snow's plate on the screen and not in the write-up, and nothing asserted either
+ *  way. These are the assertions that were missing.
+ */
+const CONTENT='<rect width="850" height="295" fill="#f0f3e9"/>'
+  +'<text x="18" y="22">STUDY AREA</text>'
+  +'<path data-fill-role="context" d="M1,2L3,4Z" fill="#dbe8d6" stroke="#668870" fill-rule="evenodd"/>';
+const GROUND='<image data-map-image="abc" href="data:image/jpeg;base64,AAAA"/>';
+
+test('the ground goes above the background and below everything drawn',()=>{
+  const out=withGroundUnder(CONTENT,GROUND);
+  const rect=out.indexOf('<rect'),image=out.indexOf('<image'),area=out.indexOf('<path');
+  assert.ok(rect<image,'the plate is under the background, where no reader can see it');
+  assert.ok(image<area,'the plate is over the study area, which is what it is ground for');
+});
+
+test('A WASH THAT ENCODES NOTHING IS WITHDRAWN, so the ink shows through',()=>{
+  // The same rule `drawStaticBasemap` applies in the DOM: a boundary says WHERE the study area
+  // is and measures nothing, so its pale fill is spending a visual variable on hiding the plate.
+  const out=withGroundUnder(CONTENT,GROUND);
+  assert.match(out,/data-fill-role="context"[^>]*fill="none"/);
+  assert.ok(!out.includes('fill="#dbe8d6"'));
+  // And only the fill: the stroke is what still says where the boundary runs, and `fill-rule`
+  // is a different attribute that happens to start with the same five letters.
+  assert.ok(out.includes('stroke="#668870"'));
+  assert.ok(out.includes('fill-rule="evenodd"'));
+});
+
+test('no plate leaves the figure exactly as it was',()=>{
+  // A figure with nothing wired to ground, a plate with no image chosen yet, and a projection
+  // that puts one nowhere finite all arrive here as an empty string, and none of them is a
+  // reason to touch the fills.
+  assert.equal(withGroundUnder(CONTENT,''),CONTENT);
+  assert.equal(withGroundUnder(CONTENT,'   '),CONTENT);
+});
+
+test('content with no background rect still gets its ground, underneath',()=>{
+  // `polygonSvg` returns a bare `<text>` when there is nothing to draw. A plate under that is
+  // odd but it is not wrong, and guessing at an insertion point would be.
+  const bare='<text x="30" y="40">No intersecting polygons</text>';
+  assert.equal(withGroundUnder(bare,GROUND),GROUND+bare);
 });

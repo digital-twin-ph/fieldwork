@@ -147,7 +147,8 @@ test('a drop below the last card ends that section, not the write-up',{skip},asy
   // IT IS STILL IN THE INTRODUCTION. The end of a part is not the end of the list, which is the
   // whole reason `moveNote` takes the section's last index rather than the array's length.
   const parts=await page.locator('.notes-part h3').allTextContents();
+  // References is part of the outline, machined rather than written: see `referenceList`.
   expect(parts.map(part=>part.split(' ')[0]))
-    .toEqual(['Introduction','Methods','Results','Discussion']);
+    .toEqual(['Introduction','Methods','Results','Discussion','References']);
   expect(await page.locator(cards).count()).toBe(before.length);
 });

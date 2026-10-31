@@ -233,7 +233,14 @@ export interface Catchment {id:string;name:string;
    *  2026-10-28: by the time the map saw them they were not two layers, and the legend had to be
    *  rebuilt by guessing from feature names. Carried per feature rather than per collection
    *  because a collection is exactly the case where one name for the whole will not do. */
-  layerName?:string;siteId?:string;geometry:Boundary;properties?:Record<string,import('./types.js').Scalar>;value?:number;status?:'Review'|'NoFlag'|'Unknown';explanation?:string;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
+  layerName?:string;siteId?:string;geometry:Boundary;properties?:Record<string,import('./types.js').Scalar>;value?:number;
+  /** THE CLASS THIS POLYGON BELONGS TO, where something classified it.
+   *
+   *  Separate from `value` because the two are different kinds of quantity and a renderer must
+   *  not confuse them: a value is ranked along a lightness ramp, a category is not ranked at
+   *  all. Keeping them apart is what makes it impossible to draw water companies as though one
+   *  were more than another. */
+  category?:string;status?:'Review'|'NoFlag'|'Unknown';explanation?:string;offNetworkMetres?:number;minutes?:number;count?:number;total?:number;missingValues?:number;areaSquareMetres?:number;spanMetres?:number}
 /** `unconnected` lists the sites that got no catchment, and `offNetwork` the sites that got one
  *  across a leg no street covers.
  *

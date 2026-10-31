@@ -2,7 +2,8 @@
 
 _Created 2026-10-27 · Updated 2026-10-27_
 
-**Status:** tried — built, and instantiated by the South London example on 2026-10-27.
+**Status:** tried — built, instantiated by the South London example on 2026-10-27, and drawn as a
+figure of its own there on 2026-10-31.
 
 The practitioner, 2026-10-27, on Snow's Map 2: *"We still need the original and since it's
 georeferenced, it could be overlaid as a layer. It helps learners appreciate something from the
@@ -113,13 +114,49 @@ imported, or that operation is added here later.
 - **That the small plate is enough.** 1002 × 788 over South London is **15.8 m per pixel**, measured from the world file when the example first wired one on 2026-10-27. This record said “roughly 40”, which was an estimate nobody had checked and is wrong by two and a half times.
   Legible as ground, and not a basis for reading a street.
 
+## A plate is also a figure, and the write-up was not carrying it
+
+The practitioner, 2026-10-31: *"let's include the georeferenced plate as a map as a separate
+workflow so it will render by itself in Notes and we can add it to Introduction."* Which is a
+use this record did not anticipate. Ground is drawn **under** something by definition, and the
+thing a reader of this example meets before any number is quoted is the plate itself — the
+washes are what Snow's design looks like. South London now carries a seventh workflow that is a
+plate, a frame read off its own world file, and a map: nothing computed and nothing joined.
+
+**And building it found that the write-up had never carried any plate at all.** The live map
+composites ground into its SVG element asynchronously and the SVG download copies the element
+after that; the write-up's figure is composed as a string and called neither. So the same map
+carried Snow's plate on the screen and not in Notes, which `write-up-figures.ts` had recorded in
+a comment as a known gap and nothing had asserted either way.
+
+The gap was one thing and is two. A basemap tile has to be fetched, and a figure that renders
+and then changes under a reader is worse in a write-up than one that renders once — that half
+stands. A plate is a data URI the node already holds, placed by its corners through the figure's
+own projection, which is a pure function: `withGroundUnder` composes it synchronously and the
+tile half stays open. Measured in the application on 2026-10-31: three maps in the South London
+write-up, **two of them now drawn on their plate**, where the count was zero.
+
+Two things the plate figure also found, both in renderers rather than in the plate:
+
+- **A figure named marks it does not carry.** `oldMap` headed every spatial map
+  `STUDY AREA · SPATIAL COVERAGE` and captioned it *"Select a point to review its relation to
+  the study boundary"*. On a map of an area and a plate there is no point, no coverage under
+  review, and — in a write-up — nobody to select anything. Said now only where there is a
+  located record to say it about. The same rule `polygonSvg`'s key already keeps.
+- **The static frame does not fit a near-square plate.** The figure is 850 × 295 and the content
+  is fitted inside 720 × 225, so a plate whose extent is nearly square is drawn about 285 px
+  wide in an 850 px figure with white on both sides. Not touched here: the frame is shared by
+  every static map in the application and changing it is its own piece of work.
+
 ## What would close it
 
-1. The plate drawn under the South London choropleth, with the sub-district boundaries over it,
-   and a reader asked whether the two agree.
+1. ~~The plate drawn under the South London choropleth~~ — done 2026-10-27, and as a figure of
+   its own 2026-10-31. **A reader has still not been asked whether the plate and the modern
+   boundaries agree**, which was the half of this item that mattered.
 2. The residual at the four control points measured against the modern boundaries, so the
    georeference carries a number rather than a provenance note.
 3. A second plate from a different source, to show the widget is not shaped around this one.
+4. A figure frame that follows its content's aspect, so a square plate is not two thirds white.
 
 ## What changed our minds
 

@@ -2,6 +2,7 @@ import type {WorkflowNode,Escape,Position,DistanceUnit} from './types.js';
 import type {DisplayValue,DisplayRow} from './results.js';
 import {SOURCE,tierLabel,serviceLabel,zoneLabel} from './old-naledi.js';
 import {markPath} from './presentation.js';
+import {markLabel,LABEL_CEILING} from './point-layers.js';
 const numeric=(key:string,label:string,value:number,min:number,max:number,step:number,help:string)=>`<div class="field"><label class="field-label" for="param-${key}">${label}</label><input id="param-${key}" data-param="${key}" type="number" value="${value}" min="${min}" max="${max}" step="${step}"><small>${help}</small></div>`;
 const choose=(key:string,label:string,value:string,options:[string,string][])=>`<div class="field"><label class="field-label" for="param-${key}">${label}</label><select id="param-${key}" data-param="${key}">${options.map(([v,t])=>`<option value="${v}" ${v===value?'selected':''}>${t}</option>`).join('')}</select></div>`;
 export function oldInspector(n:WorkflowNode){
@@ -57,7 +58,10 @@ export function mapFrame(output:DisplayValue){
     bounds:[xmin,ymin,xmax,ymax] as [number,number,number,number],
     project:(p:Position):[number,number]=>[425+(p[0]-(xmin+xmax)/2)*cos*scale,145-(p[1]-(ymin+ymax)/2)*scale]};
 }
-export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string){
+/** `labelField` names each layer's marks, keyed by source node, exactly as it does for the
+ *  polygon plot. Passed in rather than read here so BOTH static renderers name marks the same
+ *  way: this widget's history is a list of layers one renderer carried and another did not. */
+export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string,labelField:Record<string,string>={}){
   const {polygons,project}=mapFrame(output);
   let svg='<rect width="850" height="295" fill="#f0f3e9"/><text x="18" y="22" style="letter-spacing:1px">OLD NALEDI · SOURCE BOUNDARY</text>';
   // TAGGED AS CARRYING NO VALUE. This polygon is a boundary: it says where the study area is and
@@ -67,7 +71,14 @@ export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Es
   // hides the ground, which is what the practitioner met on the South London figure, 2026-10-25.
   // So the fill is declared here and withdrawn by whoever draws ground underneath it.
   svg+=polygons.map(rings=>`<path data-fill-role="context" d="${rings.map(ring=>'M'+ring.map(p=>project(p).join(',')).join('L')+'Z').join(' ')}" fill="#dbe8d6" stroke="#668870" stroke-width="1.5" fill-rule="evenodd"/>`).join('');
-  if(['spatial-coverage','spatial-map'].includes(output.kind||''))svg=svg.replace('OLD NALEDI · SOURCE BOUNDARY','STUDY AREA · SPATIAL COVERAGE');
+  // WHAT THE FIGURE IS, which is not always a coverage review. A map wired to an area and a
+  // georeferenced plate and nothing else has no points, so there is no record whose relation to
+  // the boundary could be reviewed -- and this heading said SPATIAL COVERAGE over one anyway,
+  // measured on the South London plate figure on 2026-10-31. The same objection `polygonSvg`'s
+  // key already answers one line down: a figure must not name marks it does not carry.
+  const located=output.rows.some(r=>r.coordinates);
+  if(['spatial-coverage','spatial-map'].includes(output.kind||''))
+    svg=svg.replace('OLD NALEDI · SOURCE BOUNDARY',located?'STUDY AREA · SPATIAL COVERAGE':'STUDY AREA');
   const focus=output.rows.find(r=>'result:'+r.id===selected);
   if(focus?.center){svg+=`<path d="M${project(focus.coordinates!).join(',')}L${project(focus.center.coordinates!).join(',')}" stroke="#587d6c" stroke-dasharray="4 4"/>`;}
   for(const c of output.centers||[]){if(!c.geometry)continue;const [x,y]=project(c.geometry!.coordinates);svg+=`<rect x="${x-5}" y="${y-5}" width="10" height="10" fill="#315d57" stroke="white"/><text x="${x+9}" y="${y-8}">${esc(c.properties.name)}</text>`;}
@@ -107,6 +118,17 @@ export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Es
     const mark=symbol
       ?`<path d="${markPath(symbol.shape,x,y,radius)}" fill="${hollow?'none':aside?'#a89b87':ink}" stroke="${aside?'#a89b87':ink}" stroke-width="1.6"/>`
       :`<circle cx="${x}" cy="${y}" r="${radius}" fill="${statusFill}" stroke="white" stroke-width="1.2"/>`;
-    svg+=`<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}" data-layer="${esc(r.sourceNodeId||'')}" aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}"><title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title>${mark}</g>`;}
-  return svg+`<text x="18" y="281" style="font-size:10px">${['spatial-coverage','spatial-map'].includes(output.kind||'')?'Select a point to review its relation to the study boundary':output.kind==='access'?'Grid samples · straight-line proxy · select a point for evidence':'Historical facility registry · source evidence assignments'}</text><text x="826" y="25" text-anchor="middle">N ↑</text>`;
+    const named=output.rows.filter(x=>x.coordinates&&x.sourceNodeId===r.sourceNodeId).length<=LABEL_CEILING
+      ?markLabel(r as never,labelField[r.sourceNodeId||''],x,y,radius,esc):'';
+    svg+=`<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}" data-layer="${esc(r.sourceNodeId||'')}" aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}"><title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title>${mark}${named}</g>`;}
+  // AND AN INSTRUCTION IS NOT A CAPTION. "Select a point to review its relation to the study
+  // boundary" was printed under every spatial figure, including one with no point on it and
+  // including one on its way into a write-up, where there is nothing to select and nobody to
+  // select it. Said where there is a point to say it about, and otherwise not said.
+  const foot=['spatial-coverage','spatial-map'].includes(output.kind||'')
+    ?(located?'Select a point to review its relation to the study boundary':'')
+    :output.kind==='access'?'Grid samples · straight-line proxy · select a point for evidence'
+    :'Historical facility registry · source evidence assignments';
+  return svg+(foot?`<text x="18" y="281" style="font-size:10px">${foot}</text>`:'')
+    +`<text x="826" y="25" text-anchor="middle">N \u2191</text>`;
 }

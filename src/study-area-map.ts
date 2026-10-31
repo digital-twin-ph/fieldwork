@@ -1,6 +1,7 @@
 import type {WorkflowNode,AreaParams,Boundary,Polygon,Position} from './types.js';
 import {element} from './dom.js';
 import {errorMessage} from './guards.js';
+import type {SiblingArea} from './project.js';
 type DrawnParams=Extract<AreaParams,{source:'drawn'}>;
 type DrawTool='pan'|'bbox'|'polygon'|'circle';
 import L from 'leaflet';
@@ -43,6 +44,8 @@ import {dimensionedBox,circleAround} from './area-buffer.js';
  *  in Chromium and kills the page in WebKit. Four hundred is comfortably more than anybody draws
  *  by hand and far below where the cost shows. */
 const HANDLE_LIMIT=400;
+/** What `newStudyArea()` names an area nobody has named. */
+const DEFAULT_AREA_LABEL='My study area';
 const PREVIEW_LINES=60;
 function preview(text:string,what:string):string{
   const lines=text.split('\n');
@@ -52,6 +55,14 @@ function preview(text:string,what:string):string{
     +`${(text.length/1e6).toFixed(1)} MB in all. The whole of it is kept on the widget and in every export.`;
 }
 export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(params:DrawnParams,options?:RasterClipOptions)=>void|boolean,context:{boundary?:Boundary;point?:{coordinates:Position|null;name:string};raster?:RasterGrid;clip?:boolean;clipOptions?:RasterClipOptions;
+  /** THE STUDY AREAS OF THE OTHER WORKFLOWS OF THIS PROJECT, handed in rather than looked up.
+   *
+   *  This module holds no import from `project.ts` or from storage and does not gain one here: the
+   *  caller knows which project is open and which workflows are saved, and this draws a map. The
+   *  type is imported for its shape alone. Absent or empty means the disclosure is not built --
+   *  "absent rather than empty", the rule the palette's own sharing group already follows, because
+   *  a source offering nothing advertises sharing before there is anything to share. */
+  areas?:readonly SiblingArea[];
   /** Why a refused save was refused, in the caller's words. "Retry Apply" is not advice when the
    *  store is full: the retry fails identically, and what the practitioner needs is the size and
    *  what to do about it. */
@@ -60,7 +71,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   const dialog=element('#area-dialog'),$=<S extends string>(s:S)=>element(s,dialog);
   let geometry:Boundary|null=node.params.source==='drawn'&&node.params.geometry?structuredClone(node.params.geometry):null,selectionMode:DrawnParams['selectionMode']=node.params.source==='drawn'?node.params.selectionMode:'polygon';
   let tool:DrawTool='pan',centre:Position|null=null,vertices:Position[]=[],firstCorner:Position|null=null,down:L.LeafletMouseEvent|null=null,ignoreClickUntil=0,map:L.Map,loaded=0,failed=0;
-  const name=$('#area-name');name.value=node.params.label||'My study area';
+  const name=$('#area-name');name.value=node.params.label||DEFAULT_AREA_LABEL;
   const nameLabel=dialog.querySelector('label[for="area-name"]')!,eyebrow=dialog.querySelector('.eyebrow')!,draftLabel=dialog.querySelector('.area-draft .inspector-section')!;
   const originalLabels=[nameLabel.textContent,eyebrow.textContent,draftLabel.textContent];
   if(context.clip){name.maxLength=60;nameLabel.textContent='Clipped raster label';eyebrow.textContent='CLIP RASTER · PROCESSING PARAMETERS';draftLabel.textContent='Cutline geometry · draft';$('#area-apply').textContent='Apply clip parameters';}
@@ -73,8 +84,59 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   L.control.scale({imperial:false}).addTo(map);
   const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,noWrap:true,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'});
   const shapes=L.layerGroup().addTo(map),handles=L.layerGroup().addTo(map);
+  /** USE A STUDY AREA THIS PROJECT ALREADY HAS, as a fifth source of a shape.
+   *
+   *  The practitioner, 2026-10-31, asked for this on the dialog's TOP ROW. It is here instead, on
+   *  their ruling once the row was examined: `.area-tools` is `aria-label="Drawing tools"`, its
+   *  four `[data-draw]` buttons are one mutually-exclusive gesture group, and the handler that
+   *  serves them sets `geometry=null` on every mode but pan -- so a source control seated among
+   *  them would have its own result destroyed by the next click on Bounding box or Polygon. The
+   *  right-hand panel is already where this question is answered: an administrative boundary, a
+   *  boundary file, bounding coordinates, centre coordinates. This is the fifth answer, and the
+   *  first one offered, because reusing an area the project has already defined is cheaper and
+   *  more exact than acquiring it again.
+   *
+   *  BUILT AT OPEN AND TORN DOWN AT CLOSE, like `boxControls` below and unlike the four static
+   *  disclosures, because what it offers depends on the project rather than on the application.
+   *
+   *  IT FILLS THIS NODE, IT DOES NOT ADD ONE. That is the whole difference from the palette's
+   *  sharing group, which exists to put a second node on the canvas. Here the practitioner has
+   *  already added the widget and opened it; what they lack is the shape. */
+  const projectAreas=context.areas?.length&&!context.clip&&!context.raster
+    ?document.createElement('details'):null;
+  if(projectAreas&&context.areas){
+    const offers=context.areas;
+    projectAreas.id='area-project-source';
+    projectAreas.innerHTML='<summary>Use a study area from this project</summary>'
+      +`<p class="muted">${offers.length===1
+        ?'One other workflow in this project has drawn a study area'
+        :`${offers.length} study areas have been drawn in the other workflows of this project`}. `
+      +'Taking one copies its geometry onto this widget: the two are then the same extent and '
+      +'stay independent of each other, so editing one does not change the other.</p>'
+      +'<label for="area-project-pick">Study area</label>'
+      +'<select id="area-project-pick"></select>'
+      +'<p id="area-project-note" class="muted"></p>'
+      +'<button id="area-project-use" type="button" class="button small">'
+      +'Use this study area</button>';
+    // THE NAMES GO IN AS TEXT, NOT AS MARKUP. A label and a workflow name are typed by a
+    // practitioner, so an angle bracket in either would otherwise end the option early; the two
+    // existing `unitPick.innerHTML` lines interpolate geoBoundaries' names the other way and are
+    // not a precedent worth copying into a field this application lets somebody type into.
+    const pick=projectAreas.querySelector('select')!;
+    for(const [index,area] of offers.entries()){
+      const option=document.createElement('option');
+      option.value=String(index);
+      option.textContent=`${area.label} \u00b7 ${area.workflowName}`;
+      pick.append(option);
+    }
+  }
   const boxControls=document.createElement('details');boxControls.id='area-sized-box';boxControls.innerHTML='<summary>Set a shape by centre coordinates</summary><label for="area-box-shape">Shape</label><select id="area-box-shape"><option value="square">Square</option><option value="rectangle">Rectangle</option><option value="circle">Circle around the centre</option></select><label for="area-box-lon">Centre longitude</label><input id="area-box-lon" type="number" step="any"><label for="area-box-lat">Centre latitude</label><input id="area-box-lat" type="number" step="any"><label for="area-box-radius">Radius (metres)</label><input id="area-box-radius" type="number" min="1" max="50000" value="5000"><label for="area-box-width">Width (metres)</label><input id="area-box-width" type="number" min="1" max="50000" value="1000"><label for="area-box-height">Height (metres)</label><input id="area-box-height" type="number" min="1" max="50000" value="1000" disabled><button id="area-box-center" type="button" class="button small">Use map centre</button><button id="area-box-create" type="button" class="button small">Use sized boundary</button><p>North-aligned bounding box. Ground dimensions are approximate at the centre, not equal degree spans. Resizing map corners afterward creates a free rectangle. Applying keeps the resulting geometry.</p>';
   boundsDetails.after(boxControls);
+  // FIRST AMONG THE SOURCES. An area the project has already defined is the cheapest and most
+  // exact answer to "where does this shape come from", so it is offered before downloading an
+  // administrative boundary or opening a file -- and it is closed like its four siblings, so a
+  // practitioner drawing by hand loses no room to it.
+  if(projectAreas)$('#area-boundary-source').before(projectAreas);
   const boxInput=(id:string)=>boxControls.querySelector<HTMLInputElement>('#area-box-'+id)!;
   const currentBounds=geometry?geometryBounds(geometry):null;
   boxInput('lon').value=String(currentBounds?(currentBounds[0]+currentBounds[2])/2:25.901);boxInput('lat').value=String(currentBounds?(currentBounds[1]+currentBounds[3])/2:-24.685);
@@ -338,6 +400,65 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   $('#area-undo-point').onclick=()=>{if(firstCorner)firstCorner=null;else vertices.pop();refresh();};
   radiusInput()?.addEventListener('input',drawCircle);
   $('#area-clear').onclick=()=>{geometry=null;vertices=[];firstCorner=null;centre=null;setTool('pan');refresh();};
+  if(projectAreas&&context.areas){
+    const offers=context.areas;
+    const pick=projectAreas.querySelector<HTMLSelectElement>('#area-project-pick')!;
+    const note=projectAreas.querySelector<HTMLElement>('#area-project-note')!;
+    // WHAT YOU ARE ABOUT TO TAKE, before you take it. A name alone does not say whether an area
+    // is a box or a traced outline, nor how much of it there is, and the two are what a
+    // practitioner is choosing between when a project holds several.
+    const describe=()=>{
+      const area=offers[Number(pick.value)];
+      if(!area){note.textContent='';return;}
+      const kind=area.selectionMode==='bbox'?'A bounding box'
+        :area.selectionMode==='circle'?'A circle around a point':'A polygon';
+      // THE OUTLINE IS NAMED, NOT LISTED. Measured on this project's own data 2026-10-31: the
+      // sub-district area was acquired as 33 units, so `unitName` is 33 names joined -- 480
+      // characters under a dropdown, which is a paragraph where a line was wanted. Several units
+      // are reported as a count, which is the fact a practitioner is choosing on; the names are
+      // on the node and in every export.
+      // COUNTED FROM `units`, NOT FROM `unitID`. The ids are joined with a single space and
+      // THEMSELVES contain spaces -- "St. James Bermondsey" -- so splitting the joined string
+      // counted 65 tokens for 33 units when this was first driven. `units` is the field that
+      // keeps each one whole, and an area acquired before 2026-10-24 has none, which is why the
+      // comma-joined names are the fallback rather than the primary.
+      const units=!area.boundary?0
+        :area.boundary.units?.length||area.boundary.unitName.split(', ').length;
+      const from=!area.boundary?''
+        :units>1?`, from a published outline of ${units.toLocaleString()} units`
+        :`, from the published outline ${area.boundary.unitName}`;
+      note.textContent=`${kind}, ${area.vertices.toLocaleString()} `
+        +`vertice${area.vertices===1?'':'s'}${from}`
+        +`. Drawn in \u201c${area.workflowName}\u201d.`;
+    };
+    pick.onchange=describe;describe();
+    projectAreas.querySelector<HTMLButtonElement>('#area-project-use')!.onclick=()=>{
+      const area=offers[Number(pick.value)];
+      if(!area){message('Choose a study area to use.');return;}
+      // THE SAME FOUR ASSIGNMENTS EVERY OTHER SOURCE MAKES, then the same three calls. A copy,
+      // not a reference: `structuredClone` is what keeps the two areas independent afterwards,
+      // which is what the disclosure promises a practitioner above.
+      geometry=structuredClone(area.geometry);
+      selectionMode=area.selectionMode;
+      // PROVENANCE TRAVELS WITH THE SHAPE. An area traced from a published outline stays an
+      // acquired area when it is reused; dropping `boundary` here would turn somebody else's
+      // published jurisdiction into a shape this workflow claims to have drawn.
+      acquired=area.boundary?structuredClone(area.boundary):undefined;
+      // THE NAME COMES TOO, BUT ONLY ONTO A WIDGET NOBODY HAS NAMED. An imported area still
+      // reading "My study area" is mislabelled in every downstream figure, so the default gives
+      // way; a name somebody chose does not, and that includes the one this node was carrying
+      // when the dialog opened.
+      //
+      // The first rule here compared the field to the NODE's label, which is what the field is
+      // initialised to -- so it was true on every open and overwrote every name. Caught by
+      // driving it on this project 2026-10-31: importing into "South London, the study extent"
+      // silently renamed it "32 South London sub-districts".
+      if(name.value.trim()===DEFAULT_AREA_LABEL)name.value=area.label;
+      setTool('pan');refresh();fit();
+      message(`Using \u201c${area.label}\u201d from \u201c${area.workflowName}\u201d. `
+        +`It is this widget's own copy now; Apply study area keeps it.`);
+    };
+  }
   $('#area-use-bounds').onclick=()=>{try{const values=['west','south','east','north'].map(k=>( $('#area-'+k) as HTMLInputElement).value.trim()===''?NaN:Number(( $('#area-'+k) as HTMLInputElement).value));geometry=bboxPolygon(values[0],values[1],values[2],values[3]);selectionMode='bbox';setTool('pan');refresh();fit();}catch(e){message(errorMessage(e));}};
   for(const key of ['west','south','east','north'])($('#area-'+key) as HTMLInputElement).oninput=()=>{$('#area-apply').disabled=true;message('Choose Use these bounds to replace the polygon with this rectangle before applying.');};
   function fit(){const scope=geometry||context.boundary;if(scope){const b=geometryBounds(scope),bounds:L.LatLngTuple[]=[[b[1],b[0]],[b[3],b[2]]];if(context.point?.coordinates)bounds.push([context.point.coordinates[1],context.point.coordinates[0]]);map.fitBounds(bounds,{padding:[35,35],maxZoom:17});}}
@@ -671,6 +792,6 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
   $('#area-cancel').onclick=()=>dialog.close();$('#area-close').onclick=()=>dialog.close();
   window.addEventListener('offline',tileStatus);window.addEventListener('online',tileStatus);
   let layoutTimer:ReturnType<typeof setTimeout>;
-  dialog.addEventListener('close',()=>{clearTimeout(layoutTimer);window.removeEventListener('offline',tileStatus);window.removeEventListener('online',tileStatus);map.stop();map.remove();rasterControls?.remove();boxControls.remove();boundsDetails.open=boundsWereOpen;name.maxLength=100;nameLabel.textContent=originalLabels[0];eyebrow.textContent=originalLabels[1];draftLabel.textContent=originalLabels[2];$('#area-apply').textContent='Apply study area';},{once:true});
+  dialog.addEventListener('close',()=>{clearTimeout(layoutTimer);window.removeEventListener('offline',tileStatus);window.removeEventListener('online',tileStatus);map.stop();map.remove();rasterControls?.remove();boxControls.remove();projectAreas?.remove();boundsDetails.open=boundsWereOpen;name.maxLength=100;nameLabel.textContent=originalLabels[0];eyebrow.textContent=originalLabels[1];draftLabel.textContent=originalLabels[2];$('#area-apply').textContent='Apply study area';},{once:true});
   setTool('pan');refresh();dialog.querySelector('.area-draft')!.scrollTop=0;layoutTimer=setTimeout(()=>{if(dialog.open){map.invalidateSize();fit();}},0);
 }

@@ -399,7 +399,16 @@ export function attributionFor(p:InputProvenance|undefined):string{
   // licence on its own. Until 2026-10-27 this fell straight through to the bare licence id.
   const names=p.source||citationShort(p);
   if(p.licence===UNSTATED||p.licence===NONE_APPLIES)return '';
-  return names?`${names} · ${p.licence}`:p.licence;
+  // A LICENCE THAT IS NOT A STRING IS NOT A LICENCE. `licence` is declared required, so this
+  // branch is a record that disagrees with its own type -- which happens, because provenance is
+  // read from files and from examples rather than constructed. Until 2026-10-30 the template
+  // interpolated it anyway and rendered "Derived in Fieldwork from the sub-district layer ·
+  // undefined", which reached the References part on South London the day that part was built.
+  // Printing the names alone credits what is known; printing `undefined` credits nothing and
+  // looks like a licence nobody has heard of.
+  const licence=typeof p.licence==='string'?p.licence.trim():'';
+  if(!licence)return names||'';
+  return names?`${names} · ${licence}`:licence;
 }
 
 /** Whether redistributing this obliges the result to carry the same terms. Unknown licences

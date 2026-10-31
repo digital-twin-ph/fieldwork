@@ -420,3 +420,48 @@ export function classifyValues(values:(number|null|undefined)[],
   for(const value of present){const at=classOf(value);if(at!==null)counts[at]++;}
   return {method,classes,breaks,counts,colours,classOf};
 }
+
+/** CLASSES THAT HAVE NO ORDER, and are drawn so no reader can rank them.
+ *
+ *  The practitioner, 2026-10-30, on Snow's exposure map: *"We can probably also shade the
+ *  subdistricts categorically whether they are served by either or both companies."*
+ *
+ *  THE SIBLING OF `classifyValues`, AND DELIBERATELY NOT THE SAME FUNCTION. A value classed by
+ *  quantile is a quantity, and the lightness ramp it is drawn in is an instruction to rank. A
+ *  water company is not more or less than another water company, and drawing three of them in
+ *  three steps of YlGnBu would assert a sequence that does not exist -- the exact misreading
+ *  `polygonSvg`'s own comment records a published figure having committed on 2026-10-29. Keeping
+ *  them as two functions over two fields is what makes that mistake unavailable rather than
+ *  merely discouraged.
+ *
+ *  THE ORDER OF THE CLASSES IS FIRST APPEARANCE, not alphabetical and not by frequency. A
+ *  reader meets them in the order the data presents them, and re-sorting by count would make
+ *  the key reorder itself when one sub-district changed hands.
+ *
+ *  NULL PAST THE PALETTE, which is `categoricalSteps`'s rule and is inherited rather than
+ *  re-decided: more classes than distinct hues is not a categorical figure, and repeating a hue
+ *  asserts a grouping nobody made -- invisibly, which is what makes it worse than a neutral. */
+export interface CategoryClasses {
+  /** The distinct class names, in the order they first appear. */
+  labels:string[];
+  colours:string[];
+  /** The class a feature falls in, or null where it carries none: unclassified is not a class,
+   *  and a part with no data must not be drawn as though it belonged to the first one. */
+  classOf:(category:string|null|undefined)=>number|null;
+}
+export function classifyCategories(values:(string|null|undefined)[]):CategoryClasses|null{
+  const labels:string[]=[];
+  for(const value of values){
+    const said=typeof value==='string'?value.trim():'';
+    if(said&&!labels.includes(said))labels.push(said);
+  }
+  if(!labels.length)return null;
+  const colours=categoricalSteps(labels.length);
+  if(!colours)return null;
+  return {labels,colours,
+    classOf:category=>{
+      const said=typeof category==='string'?category.trim():'';
+      const at=said?labels.indexOf(said):-1;
+      return at<0?null:at;
+    }};
+}

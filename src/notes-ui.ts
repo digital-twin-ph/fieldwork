@@ -3,6 +3,7 @@ import {element} from './dom.js';
 import {toHTML,typeset,hasMarkup} from './prose.js';
 import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,UNWRITTEN,
   WRITE_UP_PARTS,type Note,type MachinedNote,type WriteUpPart} from './notes.js';
+import {referenceCount,type ReferenceEntry} from './references.js';
 
 /** THE NOTES SURFACE, reaching for the Notes Board prototype.
  *
@@ -47,6 +48,9 @@ const EDITABLE:Partial<Record<Note['kind'],true>>={authored:true,machined:true};
 
 /** Why a part has nothing in it, which differs by part and is not a failure in any of them. */
 const EMPTINESS:Record<string,string>={
+  References:'References gather themselves from what the workflows cite — a source an input '
+    +'declares, a method a computation uses. Nothing has cited anything yet. A work this '
+    +'application never saw is the author’s to add here.',
   Introduction:'An introduction holds background, related literature and purpose — and no '
     +'workflow produces any of the three. All of it is the author’s to write.',
   Methods:'Methods fill themselves as inputs declare their sources and steps report what they '
@@ -81,24 +85,104 @@ const words=(text:string)=>text.split(/\s+/).filter(Boolean).length;
  *
  *  `sourceOf` returns the workflow a note came from, or undefined for the open one -- where the
  *  step chip already says it and repeating the workflow name would be noise. */
-/** The workflows that have contributed nothing, named rather than counted.
+/** WHAT THIS WRITE-UP CAN DRAW, AND THE ONE BUTTON THAT CHANGES IT.
  *
- *  NAMED AND CAPPED, which is `relate_table`'s rule for its gap keys: a count tells a
- *  practitioner nothing they can act on, and a list of six long workflow names is a paragraph
- *  nobody reads. Three, then the remainder as a number. */
-const pendingLine=(pending:readonly string[],esc:Escape):string=>{
+ *  The practitioner, 2026-10-30: *"There is no Run Workflows button on the Notes tab."* And again
+ *  on 2026-10-31, after a version that always rendered: *"Before Map 3 I still need the Run
+ *  Workflows button at the top of the Notes tab."* Both reports were true of what they met, and
+ *  the second is the more useful one, because the markup WAS there and the control was not.
+ *
+ *  THE SECOND REPORT WAS ABOUT RANK, NOT PRESENCE. What rendered was a sentence in muted 0.86rem
+ *  with a `.button.small` set inside it, under a dimmed `.notes-pending` rule, filed below the
+ *  counts and the description -- a footnote about running, in the place a footnote goes. A
+ *  practitioner looking for a button found prose. So the control is now the first thing in the
+ *  tab, a `.button.primary`, with the account of the write-up's state as the prose beside it
+ *  rather than the prose it is buried in. Same handler, same behaviour, opposite reading order.
+ *
+ *  AND IT IS ONLY A BUTTON WHERE THERE IS SOMETHING TO RUN. Found on 2026-10-31 while looking for
+ *  the button on the open `heat` example: a workflow in no project got
+ *  "every workflow in this project has run in this session" -- said over a write-up with no
+ *  project behind it, nothing run, and a handler that returned without acting, because the old
+ *  control had two states for a surface with three. A control that cannot act must not look like
+ *  one, and a surface must not report an absence as a completion.
+ *
+ *  PENDING MEANS "HAS NOT RUN IN THIS SESSION". The words of a write-up are KEPT and the figures
+ *  are drawn from the run held in memory, so a write-up reopened the next morning has every note
+ *  and no figure. The first version asked the STORE whether a workflow had contributed, found
+ *  nothing pending, and offered no way out -- which is the state the practitioner met.
+ *
+ *  REPORTED AND NOT GRADED, which is 149's rule: no score, no completeness bar, no warning tone.
+ *  A practitioner who has deliberately run two of six workflows is not doing anything wrong, and
+ *  is told what the write-up currently holds rather than what it ought to. */
+export interface RunState {
+  /** Workflows of this project with no run in memory, named rather than counted.
+   *
+   *  NAMED AND CAPPED, which is `relate_table`'s rule for its gap keys: a count tells a
+   *  practitioner nothing they can act on, and six long workflow names is a paragraph nobody
+   *  reads. Three, then the remainder as a number. */
+  pending:readonly string[];
+  /** How many workflows the project holds at all, and 0 where the open workflow is in none. */
+  total:number;
+  /** WHY A NOTE CANNOT BE KEPT HERE, or null where one can.
+   *
+   *  The practitioner, 2026-10-31: *"we can gray out the + notes to make it clear notes cannot be
+   *  added without a project."* Carried as the sentence rather than as a flag, because the two
+   *  states that reach it are not the same fact -- an unfiled canvas has nowhere to keep a note,
+   *  and a shipped example has a project that is not on this device to be written to -- and a
+   *  practitioner who is told the wrong one goes looking for the wrong thing. */
+  readOnly?:string|null;
+}
+
+const runControl=(state:RunState,esc:Escape):string=>{
+  const {pending,total}=state;
+  // THE REASON IS SAID ONCE, HERE, and the controls it disables carry it as their tooltip. A
+  // disabled button is a fact ("not here") without an account ("because..."), and a practitioner
+  // who meets ten of them and no sentence is worse off than before.
+  const why=state.readOnly?`<p class="notes-readonly">${esc(state.readOnly)}</p>`:'';
+  if(!total)
+    return `<div class="notes-run is-absent">${why||`<p>This workflow is not in a project, so `
+      +`this write-up holds its notes alone.</p>`}</div>`;
+  if(!pending.length)
+    return `<div class="notes-run is-ready">`
+      +`<button class="button primary" data-run-pending>Run workflows again</button>`
+      +`<p>All ${total} of this project's workflows have run in this session, so the tables, `
+      +`charts and maps below are drawn from those runs. Running them again redraws them from `
+      +`the data as it stands now.</p>${why}</div>`;
   const one=pending.length===1;
   const named=pending.slice(0,3).map(name=>esc(name)).join('; ')
     +(pending.length>3?`, and ${pending.length-3} more`:'');
-  return `<p class="notes-pending">${pending.length} of this project's workflows `
-    +`${one?'has':'have'} not run, so ${one?'its':'their'} figures and tables are not in this `
-    +`write-up yet \u2014 ${named}. `
-    // RUNNING THEM IS A BUTTON AND NOT A SIDE EFFECT OF OPENING THE TAB. South London's six run
-    // in 1.9 seconds, which made running them automatically tempting; a project with an isochrone
-    // or a raster download is not 1.9 seconds, and each run switches the open canvas, which is
-    // the run-in-flight hazard experiment 142 spent a day finding. So the practitioner asks.
-    +`<button class="button small" data-run-pending>Run `
-    +`${one?'it':`all ${pending.length}`}</button></p>`;
+  // RUNNING THEM IS A BUTTON AND NOT A SIDE EFFECT OF OPENING THE TAB. South London's six run in
+  // 1.9 seconds, which made running them automatically tempting; a project with an isochrone or
+  // a raster download is not 1.9 seconds, and each run switches the open canvas, which is the
+  // run-in-flight hazard experiment 142 spent a day finding. So the practitioner asks.
+  return `<div class="notes-run">`
+    +`<button class="button primary" data-run-pending>Run workflows</button>`
+    +`<p>${pending.length} of this project's ${total} workflows ${one?'has':'have'} not run in `
+    +`this session, so ${one?'its':'their'} tables, charts and maps are not in this write-up `
+    +`yet \u2014 ${named}.</p>${why}</div>`;
+};
+
+/** THE ASSEMBLED REFERENCES, above the author's own notes in the same part.
+ *
+ *  REPORTED AND NOT GRADED, which is 149's rule and the pending line's: the count says how many
+ *  works and how many lines are a stated absence, and says nothing about whether that is enough.
+ *  A write-up citing two sources is not failing at anything. */
+const referenceBlock=(list:readonly ReferenceEntry[],esc:Escape):string=>{
+  if(!list.length)return '';
+  const {works,uncited}=referenceCount(list);
+  return `<div class="notes-references">`
+    +`<p class="muted">${works} work${works===1?'':'s'} cited by this project's workflows`
+    +(uncited?` · ${uncited} method${uncited===1?'':'s'} with no source read`:'')
+    +`. Assembled from what the workflows declare, so it cannot be edited here.</p>`
+    +`<ol>`+list.map(entry=>
+      `<li class="notes-reference r-${entry.kind}${entry.uncited?' is-uncited':''}">`
+      +`${esc(entry.text)}`
+      // WHO CITES IT, because a work one workflow of six used is a different fact from one they
+      // all used, and a practitioner setting notes aside for a venue needs to know which.
+      +(entry.citedBy.length?`<span class="notes-source">${esc(entry.citedBy.join('; '))}</span>`
+        :'')
+      +`</li>`).join('')
+    +`</ol></div>`;
 };
 
 export function notesPanel(notes:readonly Note[],
@@ -106,8 +190,19 @@ export function notesPanel(notes:readonly Note[],
   labelOf:(note:Note)=>string|undefined,esc:Escape,
   derived:readonly Note[]=[],
   sourceOf:(note:Note)=>string|undefined=()=>undefined,
-  /** Workflows of this project that have not run, so have contributed nothing. */
-  pending:readonly string[]=[]):string{
+  /** Which of this project's workflows can be drawn from, and how many there are to run. */
+  run:RunState={pending:[],total:0},
+  /** THE ARTIFACT A NOTE SPEAKS FOR, as markup, or nothing where there is none to draw.
+   *
+   *  Passed in rather than built here, because drawing a table means reaching into the run that
+   *  produced it and this module renders notes. `write-up-figures.ts` owns the decision and the
+   *  application owns the runs; the panel places what it is handed. */
+  figureOf:(note:Note)=>string|undefined=()=>undefined,
+  /** THE WORKS THE WORKFLOWS CITE, assembled by `references.ts` and rendered into the References
+   *  part above whatever the author has written there. Not notes, and deliberately not editable:
+   *  what a workflow cites is a fact about the investigation, and the author's own references
+   *  are the notes beside it. */
+  references:readonly ReferenceEntry[]=[]):string{
   const fromRun:Note[]=[...(machined||[])];
   const all=[...notes,...derived,...fromRun];
   const extent=noteExtent(all);
@@ -117,7 +212,11 @@ export function notesPanel(notes:readonly Note[],
   // COUNTED BY KIND, as the prototype counts them. "14 notes" says how much there is; "9 derived,
   // 2 machined, 3 authored" says who wrote it, which is the question a reader of a write-up asks
   // about a sentence before any other.
-  const head=`<div class="notes-head"><strong>Notes</strong>`
+  // THE CONTROL FIRST, which is where the practitioner asked for it twice. A toolbar goes at the
+  // top of the surface it acts on; the counts and the description are what the tab contains, and
+  // reading order put them ahead of the one thing a practitioner comes here to press.
+  const head=runControl(run,esc)
+    +`<div class="notes-head"><strong>Notes</strong>`
     +`<span class="muted">${extent.notes} note${extent.notes===1?'':'s'}`
     +(['derived','machined','authored','quoted'] as const)
       .map(kind=>count(kind)?` · ${count(kind)} ${kind}`:'').join('')
@@ -125,30 +224,27 @@ export function notesPanel(notes:readonly Note[],
     +` · ${extent.characters.toLocaleString()} characters</span></div>`
     +`<p class="description">What survives into the write-up, in the order a reader meets it. `
     +`Quoted and authored notes belong to the investigation; derived and machined ones come from `
-    +`the last run of each workflow in this project.</p>`
-    // WHY THE WRITE-UP IS THINNER THAN THE INVESTIGATION, said rather than left as silence.
-    //
-    // A machined note exists only after its workflow has run, so a freshly opened project shows
-    // its quoted and authored notes and NONE of its figures or tables -- which is exactly what
-    // the practitioner met three times on 2026-10-30, and the surface gave no account of itself
-    // either time. An empty Results section is a fact about a write-up (experiment 149); a
-    // Results section missing four workflows' artifacts because nobody pressed Run is not, and
-    // the difference is the whole reason this line exists.
-    //
-    // IT REPORTS AND DOES NOT GRADE, which is 149's rule and 141's: no score, no completeness
-    // bar, no warning tone. A practitioner who has deliberately run two of six workflows is not
-    // doing anything wrong, and is told what the write-up currently contains rather than what it
-    // ought to.
-    +(pending.length?pendingLine(pending,esc):'');
+    +`the last run of each workflow in this project.</p>`;
 
   let ordinal=0;
+  // GRAYED OUT RATHER THAN GONE, which is the practitioner's ruling of 2026-10-31 and the better
+  // reading of today's other rule. "A control that cannot act must not look like one" was applied
+  // to the run control by REMOVING it, because the run control is one button and its absence is
+  // itself the account. Ten "+ note" buttons are different: removing them would leave a board
+  // that silently differs from every other project's, with no way to tell a surface that decided
+  // against the control from one that never had it -- the very confusion the run control was
+  // fixed for this morning. A disabled button says "here, and not for you", which is the truth,
+  // and `title` says why on each one while `.notes-readonly` says it once at the top.
+  const blocked=run.readOnly
+    ? ` disabled title="${esc(run.readOnly)}" aria-disabled="true"`:'';
   const body=parts.map(part=>{
-    const add=`<button class="button small" data-add-note="${esc(part.section)}">`
+    const add=`<button class="button small" data-add-note="${esc(part.section)}"${blocked}>`
       +`+ note</button>`;
-    if(!part.count)return `<section class="notes-part is-empty" data-section="${esc(part.section)}">`
+    const cited=part.section==='References'?referenceBlock(references,esc):'';
+    if(!part.count&&!cited)return `<section class="notes-part is-empty" data-section="${esc(part.section)}">`
       +`<h3>${esc(part.section)} <span class="muted">nothing yet</span>${add}</h3>`
       +`<div class="notes-empty"><p class="muted">${esc(EMPTINESS[part.section]||'')}</p>`
-      +`<button class="button" data-add-note="${esc(part.section)}">`
+      +`<button class="button" data-add-note="${esc(part.section)}"${blocked}>`
       +`Add note to ${esc(part.section)}</button></div></section>`;
     // IN THE ORDER A PERSON PUT THEM, not re-sorted by function on every render. The function
     // survives as the chip on the card; what it no longer does is bracket the part and undo a
@@ -158,6 +254,7 @@ export function notesPanel(notes:readonly Note[],
     return `<section class="notes-part" data-section="${esc(part.section)}">`
       +`<h3>${esc(part.section)} <span class="muted">${part.count} note`
       +`${part.count===1?'':'s'} · ${extentOf.words.toLocaleString()} words</span>${add}</h3>`
+      +cited
       +`<div class="notes-drop" data-drop="${esc(part.section)}">`
       +inPart.map(note=>{
         const text=bodyOf(note);
@@ -168,7 +265,11 @@ export function notesPanel(notes:readonly Note[],
         // WHICH PART OF THE INVESTIGATION IT CAME FROM, for a note the open workflow did not
         // produce. A write-up assembled from six workflows is unreadable without it.
         const source=sourceOf(note);
-        return `<article class="notes-note k-${note.kind}" draggable="true" `
+        // AND THE CARD IS NOT DRAGGABLE EITHER. Moving a note between parts is kept by the same
+        // call that keeps a new one, so a card that can be picked up and never put down is the
+        // same false affordance one control further on -- and its refusal blames the note's kind,
+        // which in this state is not the reason.
+        return `<article class="notes-note k-${note.kind}" draggable="${run.readOnly?'false':'true'}" `
           +`data-note="${esc(id)}" data-section="${esc(part.section)}">`
           +`<div class="notes-labels">`
           +`<span class="ord">${ordinal}.</span>`
@@ -185,6 +286,10 @@ export function notesPanel(notes:readonly Note[],
                 ?' · the run has moved since':''}</span>`:'')
           +`<button class="chip notes-open" data-note-open="${esc(id)}">open</button>`
           +`</div>`
+          // THE FIGURE ABOVE THE WORDS, because a reader of a Results section meets the table and
+          // then reads about it, and because the sentence under it was machined to be the
+          // material for its caption. A note with no figure renders exactly as it did.
+          +(figureOf(note)||'')
           +(note.kind==='quoted'
             ?`<blockquote>${esc(text)}</blockquote>`
               +(note.establishes?`<p class="muted">Establishes: ${esc(note.establishes)}</p>`:'')

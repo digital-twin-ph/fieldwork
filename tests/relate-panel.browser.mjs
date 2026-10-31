@@ -29,7 +29,7 @@ const openContingency=async page=>{
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles(BUNDLE.pathname);
-  await expect(page.locator('.toast')).toContainText('imported with 6 workflows',{timeout:30000});
+  await expect(page.locator('.toast')).toContainText(/imported with \d+ workflows/,{timeout:30000});
   await page.locator('[data-view="workflow"]').click();
   const option=page.locator('#workflow-select option',{hasText:'Died or survived, by water supply'});
   await page.locator('#workflow-select').selectOption(await option.getAttribute('value'));

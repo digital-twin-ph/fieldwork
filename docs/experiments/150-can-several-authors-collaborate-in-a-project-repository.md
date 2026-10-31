@@ -918,6 +918,19 @@ exactly, truncation rule included.
   applies to payloads**: the acquired thing is not committed, the declaration that reproduces it
   is. A clone regenerates machined notes by pressing Run.
 
+**A FORKED NOTE IS COMMITTED, and that is what makes the rule above coherent.** The practitioner
+asked. `forkMachinedNote` returns `kind:'authored'` and `writeNotes` puts it on the project, so a
+fork travels with the authored notes — as it must, being somebody's own sentence and the one
+thing in the write-up no run can regenerate.
+
+It works only because **a fork is self-sufficient**: it embeds the machined wording it diverged
+from, with the node and the moment. So `forkHasDrifted` can still tell a reader that the run has
+moved under an edited sentence **in a clone that never carried the machined note at all**. The
+repository can leave out the regenerable half precisely because the kept half carries what it
+needs to be checked. Measured and pinned by a test, because if that provenance ever stopped
+travelling a repository would hold edited prose with no record of what it edited, and nobody
+could tell a current sentence from a stale one.
+
 **The format declaration the application writes is not the template's.** The template's says
 *"NOTHING IN FIELDWORK READS OR WRITES THIS LAYOUT"*, which stopped being true for writing and is
 still true for reading. What is emitted now says it writes and cannot yet read, because a
